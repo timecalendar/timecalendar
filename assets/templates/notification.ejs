@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Notifications TimeCalendar</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato">
+    <style media="screen">
+        a { color: inherit; } .barre {text-decoration:line-through;}
+    </style>
+</head>
+<body style="background-color:#f6f6f6;margin:0;padding:0;font-family: 'Lato', sans-serif;font-size: 16px;">
+
+	<table width="100%" height="100%" cellpadding="0" style="padding: 20px 0px 20px 0px;">
+    	<tr align="center">
+	        <td style="">
+	            <!-- Header -->
+	            <table style="width:100%;max-width:680px;background:#2d2d2d;border-left:1px solid #dbdbdb;border-right:1px solid #dbdbdb;border-top:1px solid #dbdbdb;">
+		            <tr>
+		                <td valign="top" style="text-align: center;">
+		                    <h1 style="font-size:28px; color:#FFF;margin-top:26px;"> <img src="https://timecalendar.app/assets/images/logo.png" style="height:80px;vertical-align: middle;">&nbsp;&nbsp;TimeCalendar</h1>
+		                </td>
+		            </tr>
+	            </table>
+	            <!-- /Header -->
+
+	            <!-- Content -->
+	            <table cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;padding:30px 0px 0px 0px;background:#FFF;border-left:1px solid #dbdbdb;border-right:1px solid #dbdbdb;border-bottom:1px solid #dbdbdb;">
+		            <tr>
+		                <td valign="top" style="font-size:16px; padding:0px 39px 0px 47px; text-align:justify; line-height:25px;">
+		            		<h2>Notifications TimeCalendar</h2>
+		                    <p>
+                                Votre emploi du temps a été modifié. Voici les dernières modifications :
+                            </p>
+                            <% for(var key in calendars) { %>
+                            <h3><%= calendars[key].name %></h3>
+                            <% if(calendars[key].differences.oldItems.length > 0) { %>
+                            <h4>Cours supprimés</h4>
+                            <% calendars[key].differences.oldItems.forEach((event) => { %>
+                            <div style="border: 1px solid <%= event.borderColor %>;margin-bottom: 10px;">
+                                <div style="padding: 5px 10px 5px 10px; border-bottom: 1px solid <%= event.borderColor %>; background-color:<%= event.backgroundColor %>;color:white;">
+                                    🚫&nbsp;&nbsp;<%= event.title %>
+                                </div>
+                                <div style="padding: 5px;">
+                                    <div>
+                                        <strong>Date de début :</strong> <%= moment(parseInt(event.start)).format('LLLL') %><br>
+                                        <strong>Date de fin :</strong> <%= moment(parseInt(event.end)).format('LLLL') %><br>
+                                        <% if(event.location && event.location.length > 0) { %><strong>Lieu :</strong> <%= event.location %><br><% } %>
+                                        <% if(event.description && event.description.length > 0) { %><strong>Description :</strong><br> <%= event.description %><% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                            <% } %>
+
+
+                            <% if(calendars[key].differences.changedItems.length > 0) { %>
+                            <h4>Cours modifiés</h4>
+                            <% calendars[key].differences.changedItems.forEach((events) => { %>
+                            <div style="border: 1px solid <%= events[1].borderColor %>;margin-bottom: 10px;">
+                                <div style="padding: 5px 10px 5px 10px; border-bottom: 1px solid <%= events[1].borderColor %>; background-color:<%= events[1].backgroundColor %>;color:white;">
+                                    <% if(events[0].title != events[1].title) { %><span class="barre"><%= events[0].title %></span> <% }  %><%= events[1].title %>
+                                </div>
+                                <div style="padding: 5px;">
+                                    <div>
+                                        <strong>Date de début :</strong> <% if(events[0].start != events[1].start) { %><span class="barre"><%= moment(parseInt(events[0].start)).format('LLLL') %></span> <% } %><%= moment(parseInt(events[1].start)).format('LLLL') %><br>
+                                        <strong>Date de fin :</strong> <% if(events[0].end != events[1].end) { %><span class="barre"><%= moment(parseInt(events[0].end)).format('LLLL') %></span> <% } %><%= moment(parseInt(events[1].end)).format('LLLL') %><br>
+                                        <% if(events[0].location.length > 0 || events[1].location.length > 0) { %><strong>Lieu :</strong> <% if(events[0].location != events[1].location) { %><span class="barre"><%= events[0].location %></span> <% }  %><%= events[1].location %><br><% } %>
+                                        <% if(events[0].description.length > 0 || events[1].description.length > 0) { %><strong>Description :</strong><br> <%= events[1].description %><% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                            <% } %>
+
+
+                            <% if(calendars[key].differences.newItems.length > 0) { %>
+                            <h4>Nouveaux cours</h4>
+                            <% calendars[key].differences.newItems.forEach((event) => { %>
+                            <div style="border: 1px solid <%= event.borderColor %>;margin-bottom: 10px;">
+                                <div style="padding: 5px 10px 5px 10px; border-bottom: 1px solid <%= event.borderColor %>; background-color:<%= event.backgroundColor %>;color:white;">
+                                    🌟&nbsp;&nbsp;<%= event.title %>
+                                </div>
+                                <div style="padding: 5px;">
+                                    <div>
+                                        <strong>Date de début :</strong> <%= moment(parseInt(event.start)).format('LLLL') %><br>
+                                        <strong>Date de fin :</strong> <%= moment(parseInt(event.end)).format('LLLL') %><br>
+                                        <% if(event.location && event.location.length > 0) { %><strong>Lieu :</strong> <%= event.location %><br><% } %>
+                                        <% if(event.description && event.description.length > 0) { %><strong>Description :</strong><br> <%= event.description %><% } %>
+                                    </div>
+                                </div>
+                            </div>
+                            <% }); %>
+                            <% } %>
+                            <% } %>
+		                </td>
+		            </tr>
+	            </table>
+	            <!-- /Content -->
+
+	            <!-- Footer -->
+	            <table cellpadding="0" cellspacing="0" style="width:100%;max-width:680px;">
+		            <tr>
+		                <a href="https://timecalendar.app/unsubscribe/<%= subscriber.token %>">Cliquez ici pour ne plus recevoir de notifications de la part de TimeCalendar.</a>
+		            </tr>
+	            </table>
+	            <!-- /Footer -->
+	       	</td>
+       	</tr>
+    </table>
+</body>
+</html>

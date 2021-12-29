@@ -1,0 +1,68 @@
+import { BadRequestException } from "@nestjs/common"
+import { CustomError } from "../../shared/errors/custom-error"
+import { CalendarCustomData } from "../models/calendar-custom-data"
+import { parseIcal } from "../parsers/parse-ical"
+import { Fetcher } from "./fetcher"
+import { FetcherCalendarEvent } from "../models/event"
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
+
+export class IcalFetcher implements Fetcher {
+  constructor(private readonly withRetries: boolean = false) {}
+
+  async fetch(
+    url: string,
+    data?: CalendarCustomData,
+  ): Promise<FetcherCalendarEvent[]> {
+    // Some badly configured ADE instances do not return the ICal file
+    // every time. Therefore, the request must be repeated several times
+    // until the ICal file is obtained.
+    const nbRetries = this.withRetries ? 15 : 1
+
+    const axiosConfig: AxiosRequestConfig = {
+      method: "get",
+      url,
+      maxRedirects: 99,
+      timeout: 15000,
+    }
+
+    if (data?.auth) {
+      axiosConfig.auth = data.auth
+    }
+
+    let rep: AxiosResponse<any>
+
+    for (let i = 0; i < nbRetries; i++) {
+      try {
+        rep = await axios(axiosConfig)
+      } catch (e) {
+        if (e.response?.status === 401) {
+          // handle HTTP basic authorization
+          if (e.response.headers["www-authenticate"]) {
+            if (data?.auth) {
+              // Bad credentials
+              throw new CustomError("Basic Authorization required", {
+                basicAuth: "failed",
+              })
+            } else {
+              throw new CustomError("Basic Authorization required", {
+                auth: "basic",
+              })
+            }
+          }
+        }
+
+        if (!this.withRetries) {
+          throw new BadRequestException("Failed to request the API", e.message)
+        }
+      }
+    }
+
+    if (rep === undefined) {
+      throw new BadRequestException(
+        "The provider is unavailable, please try again.",
+      )
+    }
+
+    return parseIcal(rep.data)
+  }
+}
