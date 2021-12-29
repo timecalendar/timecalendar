@@ -1,0 +1,26 @@
+import firebaseAdmin from "src/config/firebase"
+
+const getData = (
+  snapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>,
+) => JSON.parse(snapshot.data().value)
+
+export class AppFirestore {
+  async get<T>(
+    key: string,
+    defaultValue: T | null = null,
+    onChange?: (value: T) => any,
+  ) {
+    const dataRef = firebaseAdmin.firestore().collection("parsers").doc(key)
+
+    dataRef.onSnapshot((snapshot) => {
+      onChange && onChange((getData(snapshot) as T) ?? defaultValue)
+    })
+  }
+
+  async set<T>(key: string, value: T) {
+    const dataRef = firebaseAdmin.firestore().collection("parsers").doc(key)
+    await dataRef.set(value)
+  }
+}
+
+export const appFirestore = new AppFirestore()
