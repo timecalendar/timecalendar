@@ -12,12 +12,7 @@ import ormconfig from "./ormconfig"
 
 @Module({
   imports: [
-    TypeOrmModule.forRootAsync({
-      useFactory: async () =>
-        Object.assign(ormconfig, {
-          autoLoadEntities: true,
-        }),
-    }),
+    TypeOrmModule.forRoot({ ...ormconfig, autoLoadEntities: true }),
     FirebaseModule,
     QueueModule,
     NotifierModule,
