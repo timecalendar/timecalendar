@@ -23,13 +23,13 @@ afterEach(() =>
     getNestTestApps()
       .map((app) => app.get(Connection))
       .filter((connection) => connection)
-      .map((connection) => {
+      .map((connection) =>
         Promise.all(
-          connection.entityMetadatas.map((entity) => {
-            connection.getRepository(entity.name).clear()
-          }),
-        )
-      }),
+          connection.entityMetadatas.map((entity) =>
+            connection.getRepository(entity.name).clear(),
+          ),
+        ),
+      ),
   ),
 )
 
