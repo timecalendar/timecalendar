@@ -16,6 +16,7 @@ export const API_TOKEN = process.env.API_TOKEN ?? ""
 
 export const DATABASE_HOST = process.env.DATABASE_HOST ?? ""
 export const DATABASE_PORT = +(process.env.DATABASE_PORT ?? "")
+export const DATABASE_TEST_PORT = +(process.env.DATABASE_TEST_PORT ?? "")
 export const DATABASE_USERNAME = process.env.DATABASE_USERNAME ?? ""
 export const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD ?? ""
 export const DATABASE_MAIN_NAME = process.env.DATABASE_MAIN_NAME ?? ""

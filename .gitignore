@@ -39,3 +39,4 @@ lerna-debug.log*
 .eslintcache
 /volumes/mysql_dev
 /volumes/mysql_test
+junit.xml

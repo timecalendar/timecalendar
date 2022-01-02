@@ -1,4 +1,4 @@
-import { ConnectionOptions } from "typeorm"
+import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions"
 import {
   DATABASE_HOST,
   DATABASE_MAIN_NAME,
@@ -7,7 +7,7 @@ import {
   DATABASE_USERNAME,
 } from "./config/constants"
 
-const ormconfig: ConnectionOptions = {
+const ormconfig: MysqlConnectionOptions = {
   type: "mysql",
   host: DATABASE_HOST,
   port: DATABASE_PORT,
