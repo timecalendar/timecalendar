@@ -1,0 +1,32 @@
+services:
+  mysql_dev:
+    image: mariadb:10
+    restart: always
+    environment:
+      MYSQL_DATABASE: $DATABASE_MAIN_NAME
+      MYSQL_USER: $DATABASE_USERNAME
+      MYSQL_PASSWORD: $DATABASE_PASSWORD
+      MYSQL_ROOT_PASSWORD: $DATABASE_PASSWORD
+    ports:
+      - '3307:3306'
+    volumes:
+      - ./volumes/mysql_dev:/var/lib/mysql
+  mysql_test:
+    image: mariadb:10
+    restart: always
+    environment:
+      MYSQL_DATABASE: $DATABASE_MAIN_NAME
+      MYSQL_USER: $DATABASE_USERNAME
+      MYSQL_PASSWORD: $DATABASE_PASSWORD
+      MYSQL_ROOT_PASSWORD: $DATABASE_PASSWORD
+    ports:
+      - '3308:3306'
+    volumes:
+      - ./volumes/mysql_test:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '3310:80'
+    volumes:
+      - ./bin/phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php

@@ -37,3 +37,5 @@ lerna-debug.log*
 
 /config/
 .eslintcache
+/volumes/mysql_dev
+/volumes/mysql_test
