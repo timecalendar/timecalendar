@@ -22,7 +22,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "husky install",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "typeorm": "ts-node ./node_modules/typeorm/cli -f ./src/ormconfig.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -92,7 +93,7 @@
     "supertest": "^6.1.3",
     "ts-jest": "^27.0.3",
     "ts-loader": "^9.2.3",
-    "ts-node": "^10.0.0",
+    "ts-node": "^10.4.0",
     "tsconfig-paths": "^3.10.1",
     "typescript": "^4.3.5"
   },

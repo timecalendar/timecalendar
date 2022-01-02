@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from "typeorm"
 
-@Entity({ name: "schools" })
+@Entity()
 export class School {
   @PrimaryColumn()
   code: string
@@ -8,7 +8,7 @@ export class School {
   @Column()
   name: string
 
-  @Column({ name: "siteurl" })
+  @Column()
   siteUrl: string
 
   @Column()
@@ -17,6 +17,6 @@ export class School {
   @Column()
   assistant: string
 
-  @Column({ name: "fallback_assistant", nullable: true })
+  @Column({ nullable: true })
   fallbackAssistant: string
 }
