@@ -1,34 +1,41 @@
+import { School } from "src/modules/school/models/school.entity"
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm"
 
 @Entity()
-export class School {
+export class Calendar {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
   @Column()
-  code: string
+  @Index({ unique: true })
+  token: string
 
   @Column()
   name: string
 
   @Column()
-  siteUrl: string
+  schoolName: string
 
   @Column()
-  visible: boolean
+  url: string
+
+  @Column("longtext")
+  customData: string
+
+  @ManyToOne(() => School)
+  school: School
 
   @Column()
-  assistant: string
-
-  @Column({ nullable: true })
-  fallbackAssistant: string
+  lastUpdatedAt: Date
 
   @CreateDateColumn()
   createdAt: Date
