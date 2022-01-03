@@ -1,3 +1,5 @@
+name: 
+
 on:
   push:
     branches:
@@ -17,11 +19,19 @@ jobs:
       uses: satackey/action-docker-layer-caching@v0.0.11
       continue-on-error: true
 
+    - name: Set environment for branch
+      run: |
+        if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+            echo "DOCKER_TAG=production" >> "$GITHUB_ENV"
+        else
+            echo "DOCKER_TAG=latest" >> "$GITHUB_ENV"
+        fi
+
     - name: Build container image
-      run: docker build -t ghcr.io/timecalendar/timecalendar:latest .
+      run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
     - name: Log in to GitHub Container Registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image to GitHub Container Registry
-      run: docker push ghcr.io/timecalendar/timecalendar:latest
+      run: docker push ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }}
