@@ -974,11 +974,6 @@
   resolved "https://registry.yarnpkg.com/@sqltools/formatter/-/formatter-1.2.3.tgz#1185726610acc37317ddab11c3c7f9066966bd20"
   integrity sha512-O3uyB/JbkAEMZaP3YqyHH7TMnex7tWyCbCI4EfJdOCoN6HIhqdJBWTM6aCCiWQ/5f5wxjgU735QAIpJbjDvmzg==
 
-"@timecalendar/common@^1.0.0":
-  version "1.0.0"
-  resolved "https://gitlab.com/api/v4/projects/29630954/packages/npm/@timecalendar/common/-/@timecalendar/common-1.0.0.tgz#41285e2e7c125cff07e3c139268b1163bd164d19"
-  integrity sha1-QSheLnwSXP8H48E5JosRY70WTRk=
-
 "@tootallnate/once@1":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
