@@ -1,0 +1,27 @@
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v2
+
+    - name: Load Docker Layer Caching
+      uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
+
+    - name: Build container image
+      run: docker build -t ghcr.io/timecalendar/timecalendar:latest .
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Push image to GitHub Container Registry
+      run: docker push ghcr.io/timecalendar/timecalendar:latest
