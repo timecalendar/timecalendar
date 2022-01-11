@@ -1,0 +1,52 @@
+# Default values for timecalendar.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/timecalendar/timecalendar
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+redis:
+  cluster:
+    enabled: false
+  master:
+    disableCommands: []
+    readinessProbe:
+      failureThreshold: 30
+    limits:
+      memory: 1000Mi
+      cpu: 1
+    requests:
+      memory: 500Mi
+      cpu: 500m
+    persistence:
+      storageClass: nfs-client
+      size: 1Mi
+  slave:
+    persistence:
+      storageClass: nfs-client
+      size: 1Mi
+
+mariadb:
+  primary:
+    persistence:
+      storageClass: nfs-client
+      size: 1Mi
+
+# TimeCalendar custom values
+timecalendar:
+  databasePassword: ""
+  apiToken: ""
+  smtpUrl: ""
+  smtpFrom: ""

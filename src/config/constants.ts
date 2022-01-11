@@ -1,4 +1,4 @@
-export const PORT = process.env.PORT ?? ""
+export const PORT = +(process.env.PORT ?? 80)
 export const CLIENT_URL = process.env.CLIENT_URL ?? ""
 
 export const SMTP_URL = process.env.SMTP_URL ?? ""

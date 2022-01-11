@@ -1,0 +1,20 @@
+{{- $fullName := include "timecalendar.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "timecalendar.labels" . | nindent 4 }}
+spec:
+  rules:
+  - host: {{ .Values.apiUrl }}
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: {{ include "timecalendar.fullname" . }}
+            port:
+              number: 80
