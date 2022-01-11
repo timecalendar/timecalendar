@@ -1,0 +1,35 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "timecalendar.fullname" . }}-configmap
+data:
+  # Node
+  NODE_ENV: "production"
+
+  # HTTP
+  PORT: "80"
+
+  # URLs
+  CLIENT_URL: "https://{{ .Values.clientUrl }}"
+
+  # Redis
+  ENABLE_REDIS: "true"
+  REDIS_QUEUE: timecalendar
+  REDIS_URL: redis://:{{ .Values.redis.password }}@{{ include "timecalendar.fullname" . }}-redis-master:6379
+  REDIS_PASSWORD: {{ .Values.redis.password }}
+
+  # MariaDB
+  DATABASE_HOST: {{ include "timecalendar.fullname" . }}-mariadb
+  DATABASE_PORT: "3306"
+  DATABASE_USERNAME: timecalendar
+  DATABASE_PASSWORD: {{ .Values.timecalendar.databasePassword }}
+  DATABASE_MAIN_NAME: timecalendar
+
+  RUN_MIGRATIONS: "true"
+
+  # SMTP
+  SMTP_FROM: {{ .Values.timecalendar.smtpFrom }}
+  SMTP_URL: {{ .Values.timecalendar.smtpUrl }}
+
+  API_TOKEN: {{ .Values.timecalendar.apiToken }}
+

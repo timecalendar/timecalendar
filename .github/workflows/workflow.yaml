@@ -1,4 +1,4 @@
-name: 
+name: Build
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
 
     - name: Set environment for branch
       run: |
-        if [[ $GITHUB_REF == 'refs/heads/master' ]]; then
+        if [[ $GITHUB_REF == 'refs/heads/main' ]]; then
             echo "DOCKER_TAG=production" >> "$GITHUB_ENV"
         else
             echo "DOCKER_TAG=latest" >> "$GITHUB_ENV"

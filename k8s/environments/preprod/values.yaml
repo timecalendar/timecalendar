@@ -1,0 +1,5 @@
+apiUrl: "preprod-api.timecalendar.app"
+clientUrl: "preprod.timecalendar.app"
+
+image:
+  tag: latest
