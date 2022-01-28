@@ -2,7 +2,7 @@ import { FirebaseService } from "./firebase.service"
 import { NotifyOptions } from "./models/notify-options.model"
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-jest.mock("src/config/firebase.ts", () => ({}))
+jest.mock("config/firebase.ts", () => ({}))
 
 describe("FirebaseService", () => {
   beforeEach(() => {
@@ -10,7 +10,7 @@ describe("FirebaseService", () => {
   })
 
   it("should notify the user with FCM", async () => {
-    jest.doMock("src/config/firebase.ts", () => {
+    jest.doMock("config/firebase.ts", () => {
       const send = jest.fn(() => Promise.resolve())
 
       return {
@@ -32,7 +32,7 @@ describe("FirebaseService", () => {
     }
 
     const module = require("./firebase.service")
-    const send = require("src/config/firebase").messaging().send
+    const send = require("config/firebase").messaging().send
     const mockedService: FirebaseService = new module.FirebaseService()
     await mockedService.notify(token, options)
 
@@ -54,7 +54,7 @@ describe("FirebaseService", () => {
   })
 
   it("should handle the error when the token does not exist", async () => {
-    jest.doMock("src/config/firebase.ts", () => {
+    jest.doMock("config/firebase.ts", () => {
       const send = jest.fn(() =>
         Promise.reject(new Error("Requested entity was not found.")),
       )
@@ -81,7 +81,7 @@ describe("FirebaseService", () => {
   })
 
   it("should throw an error when FCM returns an unknown error", async () => {
-    jest.doMock("src/config/firebase.ts", () => {
+    jest.doMock("config/firebase.ts", () => {
       const send = jest.fn(() => Promise.reject(new Error()))
 
       return {

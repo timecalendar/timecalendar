@@ -1,7 +1,7 @@
 import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
 import esieeGetUnitNamePipe from "./esiee-get-unit-name-pipe"
 
-jest.mock("src/modules/storage/firestore", () => {
+jest.mock("modules/storage/firestore", () => {
   return {
     appFirestore: {
       get: jest.fn((_, __, onChange) => {
