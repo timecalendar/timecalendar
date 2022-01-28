@@ -1,5 +1,5 @@
-import { FetcherCalendarEvent, EventType } from "../../models/event"
-import ParseTeachersPipe from "../parse-teachers-pipe"
+import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import ParseTeachersPipe from "modules/fetch/pipes/parse-teachers-pipe"
 
 describe("parseTeachersPipe", () => {
   it("should parse teachers", () => {

@@ -1,7 +1,7 @@
 import _ from "lodash"
 import { getObjectPaths } from "modules/shared/utils/object-paths"
+import { getNestTestApps } from "test-utils/create-nest-app"
 import { Connection } from "typeorm"
-import { getNestTestApps } from "../create-nest-app"
 import { AppFactory } from "./app-factory"
 
 export type AppFactoryContextParam = AppFactoryContext

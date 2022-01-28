@@ -1,5 +1,5 @@
-import colors from "../models/colors"
-import { EventType } from "../models/event"
+import colors from "modules/fetch/models/colors"
+import { EventType } from "modules/fetch/models/event"
 
 const eventTags = {
   td: { name: "TD", color: colors[EventType.TD], icon: "users-class" },

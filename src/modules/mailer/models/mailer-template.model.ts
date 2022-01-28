@@ -1,7 +1,7 @@
 import {
-  OnCalendarChangedPayload,
   OnNewSubscriptionPayload,
-} from "../../notifier/models/notifier"
+  OnCalendarChangedPayload,
+} from "modules/notifier/models/notifier"
 
 export type SubscribeMailerTemplate = {
   template: "subscribe"

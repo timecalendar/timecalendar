@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common"
-import firebaseAdmin from "../../config/firebase"
+import firebaseAdmin from "config/firebase"
 import { NotifyOptions } from "./models/notify-options.model"
 
 @Injectable()

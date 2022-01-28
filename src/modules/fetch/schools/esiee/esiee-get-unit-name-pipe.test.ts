@@ -1,4 +1,4 @@
-import { FetcherCalendarEvent, EventType } from "../../models/event"
+import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
 import esieeGetUnitNamePipe from "./esiee-get-unit-name-pipe"
 
 jest.mock("src/modules/storage/firestore", () => {

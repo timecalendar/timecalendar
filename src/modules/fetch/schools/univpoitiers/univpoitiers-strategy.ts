@@ -1,6 +1,6 @@
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
-import { ReplaceUrlRenamer } from "../../renamers/replace-url-renamer"
-import { SchoolStrategy } from "../../strategies/school-strategy"
+import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univpoitiersStrategy = new SchoolStrategy({
   school: "univpoitiers",

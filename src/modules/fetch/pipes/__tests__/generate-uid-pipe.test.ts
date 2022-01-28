@@ -1,5 +1,5 @@
-import { EventType, FetcherCalendarEvent } from "../../models/event"
-import generateUidPipe from "../generate-uid-pipe"
+import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import generateUidPipe from "modules/fetch/pipes/generate-uid-pipe"
 
 describe("generateUidPipe", () => {
   it("should generate a uid", () => {

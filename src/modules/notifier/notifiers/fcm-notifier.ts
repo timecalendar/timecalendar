@@ -1,16 +1,16 @@
 import { CalendarEvent } from "modules/fetch/models/event"
+import { FirebaseService } from "modules/firebase/firebase.service"
 import { NotifyOptions } from "modules/firebase/models/notify-options.model"
-import { FirebaseService } from "../../firebase/firebase.service"
 import {
   FcmNotifierRecipient,
   OnCalendarChangedPayload,
-} from "../models/notifier"
+} from "modules/notifier/models/notifier"
+import { Notifier } from "modules/notifier/models/notifier.interface"
 import {
   DifferenceType,
   getNotificationBody,
   mapDifferenceTitle,
 } from "./fcm-notifier-calendar-changed"
-import { Notifier } from "../models/notifier.interface"
 
 export const FCM_CALENDAR_CHANGED_ACTION = "calendar_changed"
 
