@@ -1,10 +1,6 @@
-name: Build
+name: CI test and build
 
-on:
-  push:
-    branches:
-      - main
-      - develop
+on: push
 
 jobs:
   build:
@@ -30,8 +26,19 @@ jobs:
     - name: Build container image
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
+    - name: Start MySQL
+      run: docker-compose --env-file ./ci/.env.test --profile ci up -d mysql_test
+
+    - name: Wait for MySQL
+      run: ./ci/wait.sh -h localhost -p 3308 -t 60
+
+    - name: Run tests
+      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} yarn test
+
     - name: Log in to GitHub Container Registry
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image to GitHub Container Registry
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: docker push ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }}
