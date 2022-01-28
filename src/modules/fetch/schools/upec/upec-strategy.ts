@@ -1,5 +1,5 @@
-import ParseTeachersPipe from "src/modules/fetch/pipes/parse-teachers-pipe"
-import { SchoolStrategy } from "src/modules/fetch/strategies/school-strategy"
+import ParseTeachersPipe from "modules/fetch/pipes/parse-teachers-pipe"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const upecStrategy = new SchoolStrategy({
   school: "upec",

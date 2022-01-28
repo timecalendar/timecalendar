@@ -1,6 +1,6 @@
-import { Difference } from "src/modules/difference/models/difference"
-import { EventType } from "src/modules/fetch/models/event"
-import { FirebaseService } from "src/modules/firebase/firebase.service"
+import { Difference } from "modules/difference/models/difference"
+import { EventType } from "modules/fetch/models/event"
+import { FirebaseService } from "modules/firebase/firebase.service"
 import { FcmNotifier } from "./fcm-notifier"
 import { DifferenceType } from "./fcm-notifier-calendar-changed"
 

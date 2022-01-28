@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common"
-import { FirebaseModule } from "src/modules/firebase/firebase.module"
-import { MailerModule } from "src/modules/mailer/mailer.module"
+import { FirebaseModule } from "modules/firebase/firebase.module"
+import { MailerModule } from "modules/mailer/mailer.module"
 import { NotifierService } from "./notifier.service"
 
 @Module({

@@ -1,4 +1,4 @@
-import { School } from "src/modules/school/models/school.entity"
+import { School } from "modules/school/models/school.entity"
 import {
   Column,
   CreateDateColumn,

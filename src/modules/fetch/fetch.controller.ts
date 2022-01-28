@@ -1,5 +1,5 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common"
-import { AuthGuard } from "src/modules/shared/guards/auth.guard"
+import { AuthGuard } from "modules/shared/guards/auth.guard"
 import { GetEventsDto } from "./dto/get-events.dto"
 import { FetchService } from "./fetch.service"
 

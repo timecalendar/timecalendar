@@ -1,6 +1,6 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { TestingModule } from "@nestjs/testing"
-import configureMainApp from "src/config/configure-main-app"
+import configureMainApp from "config/configure-main-app"
 
 const appInstances: NestExpressApplication[] = []
 

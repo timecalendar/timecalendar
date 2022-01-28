@@ -1,4 +1,4 @@
-import { appFirestore } from "src/modules/storage/firestore"
+import { appFirestore } from "modules/storage/firestore"
 import { ESIEE_SCHOOL } from "./esiee.constants"
 
 type UnitsMap = { [code: string]: string }

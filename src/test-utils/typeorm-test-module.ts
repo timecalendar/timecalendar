@@ -1,6 +1,6 @@
 import { TypeOrmModule } from "@nestjs/typeorm"
-import { DATABASE_TEST_PORT } from "src/config/constants"
-import ormconfig from "src/ormconfig"
+import { DATABASE_TEST_PORT } from "config/constants"
+import ormconfig from "ormconfig"
 import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions"
 
 export const ormconfigTest: MysqlConnectionOptions = {

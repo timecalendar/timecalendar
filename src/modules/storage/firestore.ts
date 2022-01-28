@@ -1,4 +1,4 @@
-import firebaseAdmin from "src/config/firebase"
+import firebaseAdmin from "config/firebase"
 
 const getData = (
   snapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>,

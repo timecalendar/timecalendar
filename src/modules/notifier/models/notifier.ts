@@ -1,4 +1,4 @@
-import { Difference } from "src/modules/difference/models/difference"
+import { Difference } from "modules/difference/models/difference"
 import { EmailFrequency } from "./email-frequency"
 
 export interface EmailNotifierRecipient {

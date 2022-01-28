@@ -1,4 +1,4 @@
-import { CalendarEvent } from "src/modules/fetch/models/event"
+import { CalendarEvent } from "modules/fetch/models/event"
 
 export interface Difference {
   oldItems: CalendarEvent[]

@@ -1,5 +1,5 @@
 import { Injectable, Type } from "@nestjs/common"
-import { ENABLE_REDIS } from "src/config/constants"
+import { ENABLE_REDIS } from "config/constants"
 import { BullQueue } from "./workers/bull-queue"
 import { AppQueue } from "./workers/app-queue"
 import { LocalQueue } from "./workers/local-queue"

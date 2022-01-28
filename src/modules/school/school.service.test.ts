@@ -1,5 +1,5 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
-import createTestApp from "src/test-utils/create-test-app"
+import createTestApp from "test-utils/create-test-app"
 import { schoolFactory } from "./factories/school.factory"
 import { SchoolModule } from "./school.module"
 import { SchoolService } from "./school.service"

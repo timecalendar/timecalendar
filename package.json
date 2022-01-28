@@ -124,6 +124,11 @@
     ],
     "setupFilesAfterEnv": [
       "./setup-tests.ts"
-    ]
+    ],
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ],
+    "runner": "./test-utils/test-runner.ts"
   }
 }

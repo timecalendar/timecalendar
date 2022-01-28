@@ -18,18 +18,16 @@ jest.setTimeout(60000)
 beforeAll(() => runMigrations(ormconfigTest, { log: false }))
 
 // Clear database
-afterEach(() =>
+afterEach(async () =>
   Promise.all(
     getNestTestApps()
       .map((app) => app.get(Connection))
       .filter((connection) => connection)
-      .map((connection) =>
-        Promise.all(
-          connection.entityMetadatas.map((entity) =>
-            connection.getRepository(entity.name).clear(),
-          ),
-        ),
-      ),
+      .map(async (connection) => {
+        for (const entity of connection.entityMetadatas) {
+          await connection.getRepository(entity.name).delete({})
+        }
+      }),
   ),
 )
 
