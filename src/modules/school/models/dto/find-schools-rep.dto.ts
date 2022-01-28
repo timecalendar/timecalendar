@@ -1,6 +1,6 @@
 import { OmitType } from "@nestjs/swagger"
-import { SchoolAssistant } from "../school-assistants"
-import { School } from "../school.entity"
+import { SchoolAssistant } from "modules/school/models/school-assistants"
+import { School } from "modules/school/models/school.entity"
 
 export class SchoolForList extends OmitType(School, [
   "assistant",

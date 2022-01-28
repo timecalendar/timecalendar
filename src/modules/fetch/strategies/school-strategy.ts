@@ -1,10 +1,10 @@
-import { FetcherCalendarEvent } from "../models/event"
-import { Fetcher } from "../fetchers/fetcher"
-import { IcalFetcher } from "../fetchers/ical-fetcher"
-import { CalendarCustomData } from "../models/calendar-custom-data"
-import { EventTransformPipe } from "../pipes/event-transform-pipe"
-import { defaultPipes } from "../pipes/pipes"
-import { UrlRenamer } from "../renamers/url-renamer"
+import { Fetcher } from "modules/fetch/fetchers/fetcher"
+import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
+import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
+import { FetcherCalendarEvent } from "modules/fetch/models/event"
+import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
+import { defaultPipes } from "modules/fetch/pipes/pipes"
+import { UrlRenamer } from "modules/fetch/renamers/url-renamer"
 
 export interface SchoolStrategyOptions {
   school: string

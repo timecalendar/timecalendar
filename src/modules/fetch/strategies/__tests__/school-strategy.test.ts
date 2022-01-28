@@ -1,5 +1,5 @@
-import { ReplaceUrlRenamer } from "../../renamers/replace-url-renamer"
-import { SchoolStrategy } from "../school-strategy"
+import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 describe("SchoolStrategy", () => {
   describe("transformUrl", () => {

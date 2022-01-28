@@ -1,6 +1,6 @@
-import firebaseAdmin from "firebase-admin"
 import { readFileSync } from "fs"
 import { join } from "path"
+import firebaseAdmin from "firebase-admin"
 import { SERVICE_ACCOUNT_KEY_PATH } from "./constants"
 
 const serviceAccountKey = JSON.parse(

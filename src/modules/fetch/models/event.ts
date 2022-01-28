@@ -56,7 +56,3 @@ export interface BasicCredentials {
   username: string
   password: string
 }
-
-export interface CalendarCustomData {
-  auth?: BasicCredentials
-}

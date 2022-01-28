@@ -1,4 +1,4 @@
-import { SchoolStrategy } from "../../strategies/school-strategy"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univsmbRenamer = (url: string) => {
   if (url.indexOf("ade6-usmb-ro.grenet.fr") === -1) return url

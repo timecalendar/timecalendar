@@ -7,7 +7,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from "class-validator"
-import { CalendarCustomData } from "../calendar-custom-data.model"
+import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
 
 export class CreateCalendarDto {
   @IsString()

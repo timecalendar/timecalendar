@@ -1,9 +1,9 @@
 import { MailerService } from "modules/mailer/mailer.service"
 import {
-  OnCalendarChangedPayload,
   OnNewSubscriptionPayload,
-} from "../models/notifier"
-import { Notifier } from "../models/notifier.interface"
+  OnCalendarChangedPayload,
+} from "modules/notifier/models/notifier"
+import { Notifier } from "modules/notifier/models/notifier.interface"
 
 export class EmailNotifier implements Notifier {
   constructor(

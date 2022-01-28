@@ -1,6 +1,6 @@
 import { Type } from "class-transformer"
 import { IsOptional, IsString, ValidateNested } from "class-validator"
-import { CalendarCustomData } from "../models/calendar-custom-data"
+import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
 
 export class GetEventsDto {
   @IsString()

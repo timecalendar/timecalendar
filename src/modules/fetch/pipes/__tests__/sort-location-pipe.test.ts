@@ -1,5 +1,5 @@
-import { FetcherCalendarEvent, EventType } from "../../models/event"
-import sortLocationPipe from "../sort-location-pipe"
+import { EventType, FetcherCalendarEvent } from "modules/fetch/models/event"
+import sortLocationPipe from "modules/fetch/pipes/sort-location-pipe"
 
 describe("sortLocationPipe", () => {
   it("should sort the location", () => {

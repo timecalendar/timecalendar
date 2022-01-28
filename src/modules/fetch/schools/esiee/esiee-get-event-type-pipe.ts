@@ -1,5 +1,9 @@
-import { FetcherCalendarEvent, EventTag, EventType } from "../../models/event"
 import eventTags from "modules/fetch/data/tags"
+import {
+  EventType,
+  EventTag,
+  FetcherCalendarEvent,
+} from "modules/fetch/models/event"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const mapUnitType: { [type: string]: { type: EventType; tags: EventTag[] } } = {

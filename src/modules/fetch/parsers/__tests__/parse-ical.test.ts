@@ -1,6 +1,6 @@
 import { readFileSync } from "fs"
 import { join } from "path/posix"
-import { parseIcal } from "../parse-ical"
+import { parseIcal } from "modules/fetch/parsers/parse-ical"
 
 describe("IcalFetcher", () => {
   describe("parseIcal", () => {
