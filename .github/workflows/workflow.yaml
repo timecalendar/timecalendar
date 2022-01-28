@@ -29,8 +29,11 @@ jobs:
     - name: Start MySQL
       run: docker-compose --env-file ./ci/.env.test --profile ci up -d
 
+    - name: Wait for MySQL
+      run: ./ci/wait.sh -h localhost -p 3308 -t 60
+
     - name: Run tests
-      run: docker run -ti --env-file="./ci/.env.test" -e CI=true ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} yarn test
+      run: docker run --env-file="./ci/.env.test" -e CI=true ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} yarn test
 
     - name: Log in to GitHub Container Registry
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
