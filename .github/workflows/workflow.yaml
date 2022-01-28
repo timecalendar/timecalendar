@@ -27,7 +27,7 @@ jobs:
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
     - name: Start MySQL
-      run: docker-compose --env-file ./ci/.env.test --profile ci up mysql_test -d
+      run: docker-compose --env-file ./ci/.env.test --profile ci up -d mysql_test
 
     - name: Wait for MySQL
       run: ./ci/wait.sh -h localhost -p 3308 -t 60
