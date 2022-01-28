@@ -3,13 +3,6 @@ name: CI test and build
 on: push
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout main
-      uses: actions/checkout@v2
-
   build:
     name: Build Docker image
     runs-on: ubuntu-latest
@@ -35,8 +28,16 @@ jobs:
     - name: Build container image
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
+    - name: Start MySQL
+      run: docker-compose --env-file ./ci/.env.test --profile ci up -d
+
+    - name: Run tests
+      run: docker run -ti --env-file="./ci/.env.test" -e CI=true ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} yarn test
+
     - name: Log in to GitHub Container Registry
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image to GitHub Container Registry
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       run: docker push ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }}

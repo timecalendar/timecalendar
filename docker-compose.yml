@@ -14,6 +14,7 @@ services:
   mysql_test:
     image: mariadb:10
     restart: always
+    profiles: ["ci"]
     environment:
       MYSQL_DATABASE: $DATABASE_MAIN_NAME
       MYSQL_USER: $DATABASE_USERNAME
