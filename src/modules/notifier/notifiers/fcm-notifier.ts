@@ -1,5 +1,5 @@
-import { CalendarEvent } from "src/modules/fetch/models/event"
-import { NotifyOptions } from "src/modules/firebase/models/notify-options.model"
+import { CalendarEvent } from "modules/fetch/models/event"
+import { NotifyOptions } from "modules/firebase/models/notify-options.model"
 import { FirebaseService } from "../../firebase/firebase.service"
 import {
   FcmNotifierRecipient,

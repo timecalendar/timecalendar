@@ -1,5 +1,5 @@
 import _ from "lodash"
-import { getObjectPaths } from "src/modules/shared/utils/object-paths"
+import { getObjectPaths } from "modules/shared/utils/object-paths"
 import { Connection } from "typeorm"
 import { getNestTestApps } from "../create-nest-app"
 import { AppFactory } from "./app-factory"

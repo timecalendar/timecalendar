@@ -1,4 +1,4 @@
-import { IcalFetcher } from "src/modules/fetch/fetchers/ical-fetcher"
+import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
 import { ReplaceUrlRenamer } from "../../renamers/replace-url-renamer"
 import { SchoolStrategy } from "../../strategies/school-strategy"
 

@@ -1,9 +1,5 @@
 import Queue from "bull"
-import {
-  REDIS_PASSWORD,
-  REDIS_QUEUE_NAME,
-  REDIS_URL,
-} from "src/config/constants"
+import { REDIS_PASSWORD, REDIS_QUEUE_NAME, REDIS_URL } from "config/constants"
 import { AppQueue, AppQueueConstructor, QueueHandler } from "./app-queue"
 import { QueueJob } from "./queue-job"
 

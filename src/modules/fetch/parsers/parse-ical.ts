@@ -1,8 +1,8 @@
 import { BadRequestException } from "@nestjs/common"
 import { FetcherCalendarEvent, EventType } from "../models/event"
 import { parseICS } from "node-ical"
-import { assert } from "src/modules/shared/helpers/assert"
-import { trimNewLines } from "src/modules/shared/helpers/trim"
+import { assert } from "modules/shared/helpers/assert"
+import { trimNewLines } from "modules/shared/helpers/trim"
 
 const dateToUTC = (tzDate: Date): Date =>
   new Date(Date.UTC(tzDate.getFullYear(), tzDate.getMonth(), tzDate.getDate()))

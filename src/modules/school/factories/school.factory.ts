@@ -1,5 +1,5 @@
-import { AppFactory } from "src/test-utils/factories/app-factory"
-import { factoryBuilder } from "src/test-utils/factories/factory-builder"
+import { AppFactory } from "test-utils/factories/app-factory"
+import { factoryBuilder } from "test-utils/factories/factory-builder"
 import { School } from "../models/school.entity"
 
 export class SchoolFactory extends AppFactory<School> {}

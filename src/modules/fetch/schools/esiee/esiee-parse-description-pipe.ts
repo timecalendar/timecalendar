@@ -1,6 +1,6 @@
 import { FetcherCalendarEvent } from "../../models/event"
-import { EventTransformPipe } from "src/modules/fetch/pipes/event-transform-pipe"
-import { trimNewLines } from "src/modules/shared/helpers/trim"
+import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
+import { trimNewLines } from "modules/shared/helpers/trim"
 
 const esieeParseDescriptionPipe: EventTransformPipe = (
   event: FetcherCalendarEvent,

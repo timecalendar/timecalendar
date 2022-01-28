@@ -1,6 +1,6 @@
-import { CalendarEvent } from "src/modules/fetch/models/event"
-import { format, formatRelative } from "src/modules/shared/dates/date-utils"
-import { now } from "src/modules/shared/dates/now"
+import { CalendarEvent } from "modules/fetch/models/event"
+import { format, formatRelative } from "modules/shared/dates/date-utils"
+import { now } from "modules/shared/dates/now"
 
 export enum DifferenceType {
   NEW = "new",
