@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
 import 'package:provider/provider.dart';
+import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/models/grade.dart';
 import 'package:timecalendar/models/school.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/services/url_launcher.dart';
-import 'package:timecalendar/utils/constants.dart';
 
 class SchoolSelected extends StatelessWidget {
   final School school;
@@ -48,7 +48,9 @@ class SchoolSelected extends StatelessWidget {
                         topLeft: Radius.circular(4)),
                     child: Image(
                       image: NetworkImageWithRetry(
-                        Constants.mainApiUrl + 'images/schools/' + school.code,
+                        Environment.mainApiUrl +
+                            '/images/schools/' +
+                            school.code,
                       ),
                     ),
                   ),

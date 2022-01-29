@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/grades_manager.dart';
 import 'package:timecalendar/database/schools_manager.dart';
 import 'package:timecalendar/database/units_manager.dart';
@@ -12,7 +13,6 @@ import 'package:timecalendar/models/school.dart';
 import 'package:timecalendar/models/unit.dart';
 import 'package:timecalendar/models/unit_heading_item.dart';
 import 'package:timecalendar/models/unit_item.dart';
-import 'package:timecalendar/utils/constants.dart';
 
 class SchoolProvider with ChangeNotifier {
   // Initialization
@@ -66,7 +66,8 @@ class SchoolProvider with ChangeNotifier {
   /// Load schools from api and save it in the database
   Future<void> fetchAndSetSchools() async {
     try {
-      final rep = await http.get(Uri.parse(Constants.mainApiUrl + 'schools'));
+      final rep =
+          await http.get(Uri.parse(Environment.mainApiUrl + '/schools'));
       List<dynamic> rawSchools = jsonDecode(rep.body);
 
       var schoolManager = SchoolsManager();
@@ -112,8 +113,8 @@ class SchoolProvider with ChangeNotifier {
   /// Load grades from API
   Future<void> fetchAndSetGrades() async {
     try {
-      final rep = await http.get(Uri.parse(Constants.mainApiUrl +
-          'schools/' +
+      final rep = await http.get(Uri.parse(Environment.mainApiUrl +
+          '/schools/' +
           _selectedSchool.code +
           '/grades'));
       List<dynamic> rawGrades = jsonDecode(rep.body);
@@ -150,8 +151,8 @@ class SchoolProvider with ChangeNotifier {
 
   Future<void> fetchAndSetUnits() async {
     try {
-      final rep = await http.get(Uri.parse(Constants.mainApiUrl +
-          'schools/' +
+      final rep = await http.get(Uri.parse(Environment.mainApiUrl +
+          '/schools/' +
           _selectedSchool.code +
           '/grades/' +
           _selectedGrade.id.toString() +

@@ -11,7 +11,6 @@ import 'package:timecalendar/services/theme.dart';
 void init({String environment, FirebaseOptions firebaseOptions}) async {
   WidgetsFlutterBinding.ensureInitialized();
   // Environment variables
-  print('init');
   await Environment.load(environment);
   // Orientation
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);

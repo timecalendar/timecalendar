@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/models/calendar.dart';
-import 'package:timecalendar/utils/constants.dart';
 
 typedef NotificationListener = Function(Map<String, dynamic> message);
 
@@ -53,7 +53,7 @@ class NotificationService {
       };
       body.addAll(calendar.getRequestMap());
       await http.post(
-        Uri.parse(Constants.mainApiUrl + "fcm/subscribe"),
+        Uri.parse(Environment.mainApiUrl + "/fcm/subscribe"),
         body: jsonEncode(body),
       );
     } on Exception catch (error) {

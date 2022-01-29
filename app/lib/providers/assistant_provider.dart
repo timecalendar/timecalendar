@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 import 'package:timecalendar/database/differences_manager.dart';
 import 'package:timecalendar/models/school.dart';
@@ -11,7 +12,6 @@ import 'package:timecalendar/screens/add_grade_screen.dart';
 import 'package:timecalendar/screens/assistant_screen.dart';
 import 'package:timecalendar/screens/connect_screen.dart';
 import 'package:timecalendar/screens/import_ical_screen.dart';
-import 'package:timecalendar/utils/constants.dart';
 
 class AssistantProvider with ChangeNotifier {
   String schoolCode;
@@ -104,7 +104,7 @@ class AssistantProvider with ChangeNotifier {
 
       // Create the calendar
       final rep = await http.post(
-        Uri.parse(Constants.mainApiUrl + "calendar/custom"),
+        Uri.parse(Environment.mainApiUrl + "/calendar/custom"),
         body: jsonEncode(body),
       );
 

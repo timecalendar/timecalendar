@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/database/differences_manager.dart';
@@ -112,7 +113,8 @@ class _UnitsSelectionScreenState extends State<UnitsSelectionScreen> {
                   slivers: <Widget>[
                     SliverAppBar(
                       pinned: true,
-                      brightness: Brightness.dark,
+                      systemOverlayStyle: SystemUiOverlayStyle(
+                          statusBarBrightness: Brightness.dark),
                       flexibleSpace: FlexibleSpaceBar(
                         title: ConstrainedBox(
                           constraints: BoxConstraints(
