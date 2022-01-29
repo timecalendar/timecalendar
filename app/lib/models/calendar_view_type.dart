@@ -1,0 +1,1 @@
+enum CalendarViewType { Week, Planning }

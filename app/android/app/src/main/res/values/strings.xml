@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TimeCalendar</string>
+    <string name="facebook_app_id">2272446229720075</string>
+    <string name="facebook_login_protocol_scheme">fb2272446229720075</string>
+</resources>
