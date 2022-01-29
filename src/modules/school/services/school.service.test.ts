@@ -1,8 +1,8 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
+import { schoolFactory } from "modules/school/factories/school.factory"
+import { SchoolModule } from "modules/school/school.module"
+import { SchoolService } from "modules/school/services/school.service"
 import createTestApp from "test-utils/create-test-app"
-import { schoolFactory } from "./factories/school.factory"
-import { SchoolModule } from "./school.module"
-import { SchoolService } from "./school.service"
 
 describe("SchoolService", () => {
   let app: NestExpressApplication

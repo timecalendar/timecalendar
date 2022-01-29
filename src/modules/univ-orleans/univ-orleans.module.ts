@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common"
-import { UnivOrleansClient } from "./univ-orleans.client"
-import { UnivOrleansController } from "./univ-orleans.controller"
-import { UnivOrleansService } from "./univ-orleans.service"
+import { UnivOrleansController } from "modules/univ-orleans/controllers/univ-orleans.controller"
+import { UnivOrleansClient } from "modules/univ-orleans/clients/univ-orleans.client"
+import { UnivOrleansService } from "modules/univ-orleans/services/univ-orleans.service"
 
 @Module({
   providers: [UnivOrleansClient, UnivOrleansService],

@@ -1,7 +1,7 @@
-import { FetcherCalendarEvent, EventType } from "./models/event"
+import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 import { FetchService } from "./fetch.service"
-import { ReplaceUrlRenamer } from "./renamers/replace-url-renamer"
-import { SchoolStrategy } from "./strategies/school-strategy"
 
 describe("FetchService", () => {
   let fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>

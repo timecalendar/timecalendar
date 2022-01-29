@@ -8,7 +8,7 @@ import {
 } from "./config/constants"
 
 const ormconfig: MysqlConnectionOptions = {
-  type: "mysql",
+  type: "mariadb",
   host: DATABASE_HOST,
   port: DATABASE_PORT,
   username: DATABASE_USERNAME,

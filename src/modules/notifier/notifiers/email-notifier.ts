@@ -1,4 +1,4 @@
-import { MailerService } from "modules/mailer/mailer.service"
+import { MailerService } from "modules/mailer/services/mailer.service"
 import {
   OnNewSubscriptionPayload,
   OnCalendarChangedPayload,

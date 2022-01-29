@@ -1,3 +1,4 @@
+import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
 import { School } from "modules/school/models/school.entity"
 import {
   Column,
@@ -28,8 +29,8 @@ export class Calendar {
   @Column()
   url: string
 
-  @Column("longtext")
-  customData: string
+  @Column("json")
+  customData: CalendarCustomData
 
   @ManyToOne(() => School)
   school: School

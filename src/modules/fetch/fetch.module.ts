@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common"
+import { FetchController } from "modules/fetch/controllers/fetch.controller"
+import { FetchService } from "modules/fetch/services/fetch.service"
 import { SCHOOL_STRATEGIES } from "./constants"
-import { FetchController } from "./fetch.controller"
-import { FetchService } from "./fetch.service"
 import strategies from "./schools/schools"
 
 @Module({

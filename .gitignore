@@ -40,3 +40,5 @@ lerna-debug.log*
 /volumes/mysql_dev
 /volumes/mysql_test
 junit.xml
+
+app/

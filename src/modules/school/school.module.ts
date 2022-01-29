@@ -1,8 +1,8 @@
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
-import { School } from "./models/school.entity"
-import { SchoolController } from "./school.controller"
-import { SchoolService } from "./school.service"
+import { School } from "modules/school/models/school.entity"
+import { SchoolController } from "modules/school/school.controller"
+import { SchoolService } from "modules/school/services/school.service"
 
 @Module({
   imports: [TypeOrmModule.forFeature([School])],
