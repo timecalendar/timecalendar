@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 import 'package:timecalendar/database/differences_manager.dart';
 import 'package:timecalendar/models/difference.dart';
-import 'package:timecalendar/utils/constants.dart';
 
 class ActivityProvider with ChangeNotifier {
   List<Difference> activity = [];
@@ -34,7 +34,7 @@ class ActivityProvider with ChangeNotifier {
       final body = selectedCalendar[0].getRequestMap();
       body['lastUpdate'] = lastUpdate;
       final rep = await http.post(
-        Uri.parse(Constants.mainApiUrl + "activity"),
+        Uri.parse(Environment.mainApiUrl + "/activity"),
         body: jsonEncode(body),
       );
 

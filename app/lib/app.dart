@@ -1,13 +1,9 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timecalendar/database/simple_database.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/providers/activity_provider.dart';
 import 'package:timecalendar/providers/assistant_provider.dart';

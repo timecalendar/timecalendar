@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
-import 'package:timecalendar/utils/constants.dart';
 
 class SuggestionProvider with ChangeNotifier {
   String school;
@@ -46,7 +46,7 @@ class SuggestionProvider with ChangeNotifier {
       }
 
       var rep = await http.post(
-        Uri.parse(Constants.mainApiUrl + "report-problem"),
+        Uri.parse(Environment.mainApiUrl + "/report-problem"),
         body: jsonEncode(body),
       );
       if (rep.statusCode >= 400) {
