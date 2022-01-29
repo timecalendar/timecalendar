@@ -4,29 +4,31 @@
     // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
-
         {
             "name": "Flutter Android",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "app/lib/main.dart"
         },
         {
             "name": "Flutter iOS",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "app/lib/main.dart"
         },
         {
             "name": "Flutter (profile)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "program": "app/lib/main.dart"
         },
         {
             "name": "Flutter (release)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "program": "app/lib/main.dart"
         }
     ]
 }
