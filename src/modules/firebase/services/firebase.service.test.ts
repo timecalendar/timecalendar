@@ -1,5 +1,5 @@
+import { NotifyOptions } from "modules/firebase/models/notify-options.model"
 import { FirebaseService } from "./firebase.service"
-import { NotifyOptions } from "./models/notify-options.model"
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock("config/firebase.ts", () => ({}))

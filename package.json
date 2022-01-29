@@ -1,5 +1,5 @@
 {
-  "name": "notifier",
+  "name": "@timecalendar/timecalendar",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -55,6 +55,7 @@
     "lodash": "^4.17.21",
     "mockdate": "^3.0.5",
     "mysql2": "^2.3.3",
+    "nanoid": "^3.2.0",
     "node-ical": "^0.14.1",
     "nodemailer": "^6.6.3",
     "qs": "^6.10.1",

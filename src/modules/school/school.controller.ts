@@ -1,7 +1,7 @@
 import { Controller, Get } from "@nestjs/common"
-import { FindSchoolsRepDto } from "./models/dto/find-schools-rep.dto"
-import { getSchoolAssistant } from "./models/school-assistants"
-import { SchoolService } from "./school.service"
+import { FindSchoolsRepDto } from "modules/school/models/dto/find-schools-rep.dto"
+import { getSchoolAssistant } from "modules/school/models/school-assistants"
+import { SchoolService } from "modules/school/services/school.service"
 
 @Controller("schools")
 export class SchoolController {

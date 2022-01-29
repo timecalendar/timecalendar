@@ -6,8 +6,8 @@ import { createTransport, Transporter } from "nodemailer"
 import Mail from "nodemailer/lib/mailer"
 import SMTPTransport from "nodemailer/lib/smtp-transport"
 import { SMTP_FROM, SMTP_URL } from "config/constants"
-import { MailerRecipient } from "./models/mailer-recipient.model"
-import { AppMailerTemplate } from "./models/mailer-template.model"
+import { MailerRecipient } from "modules/mailer/models/mailer-recipient.model"
+import { AppMailerTemplate } from "modules/mailer/models/mailer-template.model"
 
 @Injectable()
 export class MailerService {

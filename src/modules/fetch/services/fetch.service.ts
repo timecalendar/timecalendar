@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common"
-import { InjectStrategies } from "./decorators/inject-strategies"
-import { CalendarCustomData } from "./models/calendar-custom-data"
-import genericStrategy from "./strategies/generic-strategy"
-import { SchoolStrategy } from "./strategies/school-strategy"
+import { InjectStrategies } from "modules/fetch/decorators/inject-strategies"
+import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
+import genericStrategy from "modules/fetch/strategies/generic-strategy"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 @Injectable()
 export class FetchService {

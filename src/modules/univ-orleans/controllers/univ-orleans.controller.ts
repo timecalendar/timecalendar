@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from "@nestjs/common"
-import { OrleansGetIcalUrlFromStudentNumberDto } from "./dto/orleans-get-ical-url-from-student-number.dto"
-import { UnivOrleansService } from "./univ-orleans.service"
+import { OrleansGetIcalUrlFromStudentNumberDto } from "modules/univ-orleans/dto/orleans-get-ical-url-from-student-number.dto"
+import { UnivOrleansService } from "modules/univ-orleans/services/univ-orleans.service"
 
 @Controller("/schools/univ-orleans")
 export class UnivOrleansController {

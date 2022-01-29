@@ -2,7 +2,13 @@ import firebaseAdmin from "config/firebase"
 
 const getData = (
   snapshot: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>,
-) => JSON.parse(snapshot.data().value)
+) => {
+  try {
+    return JSON.parse(snapshot.data()?.value)
+  } catch (err) {
+    return null
+  }
+}
 
 export class AppFirestore {
   async get<T>(

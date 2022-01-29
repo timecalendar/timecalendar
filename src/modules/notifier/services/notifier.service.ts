@@ -1,10 +1,13 @@
 import { Injectable } from "@nestjs/common"
-import { FirebaseService } from "modules/firebase/firebase.service"
-import { MailerService } from "modules/mailer/mailer.service"
-import { NotifierRecipient, NotifyUserOptions } from "./models/notifier"
-import { EmailNotifier } from "./notifiers/email-notifier"
-import { FcmNotifier } from "./notifiers/fcm-notifier"
-import { Notifier } from "./models/notifier.interface"
+import { FirebaseService } from "modules/firebase/services/firebase.service"
+import { MailerService } from "modules/mailer/services/mailer.service"
+import {
+  NotifierRecipient,
+  NotifyUserOptions,
+} from "modules/notifier/models/notifier"
+import { Notifier } from "modules/notifier/models/notifier.interface"
+import { EmailNotifier } from "modules/notifier/notifiers/email-notifier"
+import { FcmNotifier } from "modules/notifier/notifiers/fcm-notifier"
 
 @Injectable()
 export class NotifierService {

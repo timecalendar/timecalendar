@@ -5,7 +5,7 @@ import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOpti
 
 export const ormconfigTest: MysqlConnectionOptions = {
   ...ormconfig,
-  type: "mysql",
+  type: "mariadb",
   port: DATABASE_TEST_PORT,
 }
 

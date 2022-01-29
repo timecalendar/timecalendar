@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common"
-import { UnivOrleansClient } from "./univ-orleans.client"
+import { UnivOrleansClient } from "modules/univ-orleans/clients/univ-orleans.client"
 
 @Injectable()
 export class UnivOrleansService {
