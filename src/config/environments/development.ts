@@ -3,7 +3,6 @@ export const developmentEnvVariables = {
   CLIENT_URL: "https://timecalendar.host",
   DATABASE_HOST: "localhost",
   DATABASE_PORT: "3307",
-  DATABASE_TEST_PORT: "3308",
   DATABASE_USERNAME: "root",
   DATABASE_PASSWORD: "root",
   DATABASE_MAIN_NAME: "timecalendar",

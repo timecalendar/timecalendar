@@ -1,13 +1,13 @@
 import { developmentEnvVariables } from "config/environments/development"
+import { testEnvVariables } from "config/environments/test"
 
 export const NODE_ENV = process.env.NODE_ENV ?? ""
 
 const env: any = {
   ...(NODE_ENV === "development" ? developmentEnvVariables : {}),
+  ...(NODE_ENV === "test" ? testEnvVariables : {}),
   ...process.env,
 }
-
-console.log(env.SERVICE_ACCOUNT_KEY_PATH)
 
 export const PORT = +(env.PORT ?? 80)
 export const CLIENT_URL = env.CLIENT_URL ?? ""
@@ -30,5 +30,6 @@ export const DATABASE_TEST_PORT = +(env.DATABASE_TEST_PORT ?? "")
 export const DATABASE_USERNAME = env.DATABASE_USERNAME ?? ""
 export const DATABASE_PASSWORD = env.DATABASE_PASSWORD ?? ""
 export const DATABASE_MAIN_NAME = env.DATABASE_MAIN_NAME ?? ""
+export const DATABASE_TEST_MAIN_NAME = env.DATABASE_TEST_MAIN_NAME ?? ""
 
 export const RUN_MIGRATIONS = env.RUN_MIGRATIONS === "true"
