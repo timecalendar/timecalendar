@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/models/grade.dart';
+import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/providers/assistant_provider.dart';
 import 'package:timecalendar/providers/school_provider.dart';
+import 'package:timecalendar/screens/add_school_screen.dart';
 import 'package:timecalendar/utils/snackbar.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
 import 'package:timecalendar/widgets/common/search_bar.dart';
-import 'package:timecalendar/widgets/grade_selection/grade_item.dart';
-import 'package:timecalendar/widgets/grade_selection/school_selected.dart';
+import 'package:timecalendar/widgets/school_selection/school_item.dart';
+import '../../../screens/assistant_screen.dart';
+import '../../../screens/import_ical_screen.dart';
 
-import 'assistant_screen.dart';
+enum SchoolSelectionOptions { AddSchool, ImportIcal }
 
-enum GradeSelectionOptions { AddGrade }
-
-class GradeSelectionScreen extends StatefulWidget {
-  GradeSelectionScreen({Key key}) : super(key: key);
-  static const routeName = '/grade_selection';
+class SelectSchool extends StatefulWidget {
+  static const routeName = '/select_establishment';
+  SelectSchool({Key key}) : super(key: key);
 
   @override
-  _GradeSelectionScreenState createState() => _GradeSelectionScreenState();
+  _SelectSchoolState createState() => _SelectSchoolState();
 }
 
-class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
+class _SelectSchoolState extends State<SelectSchool> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool _isScrollLimitReached = true;
-  ScrollController _scrollController;
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       new GlobalKey<RefreshIndicatorState>();
   final TextEditingController _searchFieldController = TextEditingController();
+  bool _isScrollLimitReached = true;
+  ScrollController _scrollController;
 
   bool _isInit = false;
 
@@ -51,14 +51,14 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
     });
   }
 
-  refreshGrade() async {
+  refreshSchool() async {
     var firstLoad = !_isInit;
     if (!_isInit) {
       _isInit = true;
     }
     var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
     try {
-      await schoolProvider.loadGrades();
+      await schoolProvider.loadSchools();
     } on Exception catch (_) {
       if (!firstLoad)
         showSnackBar(
@@ -70,17 +70,15 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
     }
   }
 
-  void backToSchoolList(BuildContext ctx) {
-    Navigator.pop(ctx);
+  loadSchoolAssistant() {
+    Provider.of<AssistantProvider>(context, listen: false).initAssistant();
+    Navigator.of(context).pushNamed(AddSchoolScreen.routeName);
   }
 
-  loadGradeAssistant() {
-    final schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
+  loadGradeAssistant(School school) {
     final assistantProvider =
         Provider.of<AssistantProvider>(context, listen: false);
-
-    assistantProvider.initBySchool(schoolProvider.selectedSchool);
-
+    assistantProvider.initBySchool(school);
     var nextScreen = assistantProvider.getAssistantStartScreen();
 
     Navigator.of(context).pushNamed(nextScreen).then((result) {
@@ -93,30 +91,33 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
 
   Widget _itemBuilder(BuildContext context, int index) {
     var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
-    if (index == schoolProvider.grades.length) {
+    if (index == schoolProvider.schools.length) {
       return Padding(
         padding: const EdgeInsets.all(15.0),
         child: CustomButton(
-          text: 'Je ne trouve pas ma formation',
+          text: 'Je ne trouve pas mon établissement',
           outline: true,
-          onPressed: loadGradeAssistant,
+          onPressed: loadSchoolAssistant,
         ),
       );
     }
-    return GradeItem(
-      grade: schoolProvider.grades[index],
-      selectGrade: selectGrade,
-    );
+    return SchoolItem(
+        school: schoolProvider.schools[index], selection: selectSchool);
   }
 
-  void selectGrade(Grade grade) {
+  void selectSchool(School school) {
     var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
-    schoolProvider.setSelectedGrade(grade);
+    schoolProvider.setSelectedSchool(school);
+    loadGradeAssistant(school);
   }
 
-  void filterGradeList(String value) {
+  void filterSchoolList(String value) {
     var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
-    schoolProvider.filterGrade(value);
+    schoolProvider.filterSchool(value);
+  }
+
+  void back(BuildContext ctx) {
+    Navigator.pop(ctx);
   }
 
   void searchFocus() {
@@ -136,7 +137,7 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
       key: _scaffoldKey,
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
-        onRefresh: () => refreshGrade(),
+        onRefresh: () => refreshSchool(),
         child: CustomScrollView(
           controller: _scrollController,
           physics: AlwaysScrollableScrollPhysics(),
@@ -148,18 +149,27 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
                   icon: Icon(
                     Icons.more_vert,
                   ),
-                  onSelected: (GradeSelectionOptions selectedValue) {
+                  onSelected: (SchoolSelectionOptions selectedValue) {
                     switch (selectedValue) {
-                      case GradeSelectionOptions.AddGrade:
-                        loadGradeAssistant();
+                      case SchoolSelectionOptions.AddSchool:
+                        loadSchoolAssistant();
+                        break;
+                      case SchoolSelectionOptions.ImportIcal:
+                        Navigator.of(context).pushNamed(
+                            ImportIcalScreen.routeName,
+                            arguments: ImportIcalScreenArguments(true));
                         break;
                     }
                   },
                   tooltip: 'Menu',
                   itemBuilder: (_) => [
                     PopupMenuItem(
-                      child: Text('Ajouter votre formation'),
-                      value: GradeSelectionOptions.AddGrade,
+                      child: Text('Ajouter votre établissement'),
+                      value: SchoolSelectionOptions.AddSchool,
+                    ),
+                    PopupMenuItem(
+                      child: Text('Scanner un QR code'),
+                      value: SchoolSelectionOptions.ImportIcal,
                     ),
                   ],
                 ),
@@ -171,8 +181,8 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
                   ),
                   child: Text(
                     _isScrollLimitReached
-                        ? "Sélectionnez votre formation"
-                        : schoolProvider.selectedSchool.name,
+                        ? "Sélectionnez votre établissement"
+                        : "Établissement",
                     style: TextStyle(fontSize: 18),
                     overflow: _isScrollLimitReached
                         ? TextOverflow.visible
@@ -182,33 +192,20 @@ class _GradeSelectionScreenState extends State<GradeSelectionScreen> {
               ),
               expandedHeight: 200.0,
             ),
-            SliverList(
-              delegate: SliverChildListDelegate([
-                SchoolSelected(schoolProvider.selectedSchool, null),
-              ]),
-            ),
             SliverStickyHeader(
               header: Container(
-                padding: const EdgeInsets.all(15),
+                padding: EdgeInsets.all(15),
                 child: SearchBar(
                   searchFieldController: _searchFieldController,
-                  onChanged: filterGradeList,
-                  placeholder: 'Entrez le nom de votre formation',
+                  onChanged: filterSchoolList,
+                  placeholder: 'Rechercher un établissement',
                   onTap: searchFocus,
                 ),
-                // decoration: BoxDecoration(
-                //   color: ColorUtils.hexToColor('#fafafa'),
-                //   border: Border(
-                //     bottom: BorderSide(
-                //       color: Colors.grey[100],
-                //     ),
-                //   ),
-                // ),
               ),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   _itemBuilder,
-                  childCount: schoolProvider.grades.length + 1,
+                  childCount: schoolProvider.schools.length + 1,
                 ),
               ),
             ),

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/providers/suggestion_provider.dart';
 import 'package:timecalendar/screens/activity_screen.dart';
-import 'package:timecalendar/screens/school_selection_screen.dart';
+import 'package:timecalendar/modules/school/screens/school_selection_screen.dart';
 import 'package:timecalendar/screens/settings/settings_screen.dart';
 import 'package:timecalendar/screens/suggestion_screen.dart';
 import 'package:timecalendar/widgets/profile/profile_header.dart';

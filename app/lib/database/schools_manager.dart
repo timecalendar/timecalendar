@@ -1,6 +1,6 @@
 import 'package:sembast/sembast.dart';
 import 'package:timecalendar/database/simple_database.dart';
-import 'package:timecalendar/models/school.dart';
+import 'package:timecalendar/modules/school/models/school.dart';
 
 class SchoolsManager {
   static final SchoolsManager _instance = SchoolsManager._();

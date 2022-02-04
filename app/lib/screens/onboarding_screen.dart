@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/screens/school_selection_screen.dart';
+import 'package:timecalendar/modules/school/screens/school_selection_screen.dart';
 import 'package:timecalendar/utils/constants.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/providers/assistant_provider.dart';
+import 'package:timecalendar/screens/add_grade_screen.dart';
+import 'package:timecalendar/screens/import_ical_screen.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
-
-import 'add_grade_screen.dart';
-import 'import_ical_screen.dart';
 
 class AddSchoolScreen extends StatefulWidget {
   static const routeName = '/add-school';
