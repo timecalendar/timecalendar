@@ -11,13 +11,13 @@ import 'package:timecalendar/widgets/home/today_header.dart';
 class HomeScreen extends StatelessWidget {
   static const routeName = '/home';
 
-  final FirebaseAnalyticsObserver observer;
+  final FirebaseAnalyticsObserver? observer;
 
-  const HomeScreen({Key key, this.observer}) : super(key: key);
+  const HomeScreen({Key? key, this.observer}) : super(key: key);
 
   Future<void> refreshEvents(BuildContext context) async {
     try {
-      observer.analytics.logEvent(
+      observer!.analytics.logEvent(
           name: 'refresh_calendar', parameters: {'action': 'home_pull'});
       await Provider.of<EventsProvider>(context, listen: false)
           .fetchAndSetEvents();

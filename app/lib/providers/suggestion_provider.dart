@@ -6,19 +6,19 @@ import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 
 class SuggestionProvider with ChangeNotifier {
-  String school;
-  String grade;
-  String lastUrl;
+  String? school;
+  String? grade;
+  String? lastUrl;
 
   bool isFailedSuggestion = false;
 
   Future<void> sendSuggestion(
-    String subject,
-    String description,
-    String email,
+    String? subject,
+    String? description,
+    String? email,
   ) async {
     try {
-      Map<String, Object> body = {
+      Map<String, Object?> body = {
         'subject': subject,
         'description': description,
         'email': email,

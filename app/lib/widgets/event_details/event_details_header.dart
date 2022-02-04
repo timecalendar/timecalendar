@@ -10,7 +10,7 @@ enum ConfirmAction { CANCEL, ACCEPT }
 
 class EventDetailsHeader extends StatelessWidget {
   final Event event;
-  EventDetailsHeader({@required this.event});
+  EventDetailsHeader({required this.event});
 
   @override
   Widget build(BuildContext context) {

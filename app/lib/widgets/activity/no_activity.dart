@@ -3,8 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class NoActivity extends StatelessWidget {
   const NoActivity({
-    Key key,
-    @required this.appBar,
+    Key? key,
+    required this.appBar,
   }) : super(key: key);
 
   final AppBar appBar;

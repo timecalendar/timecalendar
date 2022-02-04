@@ -2,7 +2,7 @@ import 'package:timecalendar/models/calendar_event.dart';
 import 'package:timecalendar/models/event.dart';
 
 class DayEvents {
-  final List<CalendarEvent> events;
+  final List<CalendarEvent>? events;
 
   DayEvents._({ this.events });
 

@@ -12,9 +12,9 @@ import 'package:uuid/uuid.dart';
 
 class AddPersonalEventScreen extends StatefulWidget {
   static const routeName = '/add-personal-event';
-  final Event event;
+  final Event? event;
 
-  const AddPersonalEventScreen({Key key, this.event}) : super(key: key);
+  const AddPersonalEventScreen({Key? key, this.event}) : super(key: key);
 
   @override
   _AddPersonalEventScreenState createState() => _AddPersonalEventScreenState();
@@ -24,15 +24,15 @@ class AddPersonalEventScreen extends StatefulWidget {
 class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  DateTime _date;
-  TimeOfDay _timeStart;
-  TimeOfDay _timeEnd;
+  DateTime? _date;
+  TimeOfDay? _timeStart;
+  TimeOfDay? _timeEnd;
 
-  String _title;
-  String _place;
-  String _description;
-  Color _selectedColor;
-  Color _tempShadeColor;
+  String? _title;
+  String? _place;
+  String? _description;
+  Color? _selectedColor;
+  Color? _tempShadeColor;
   bool _colorChanged = false;
 
   @override
@@ -44,16 +44,16 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
 
     if (widget.event != null) {
       setState(() {
-        _title = widget.event.title;
-        _place = widget.event.location;
-        _description = widget.event.description;
+        _title = widget.event!.title;
+        _place = widget.event!.location;
+        _description = widget.event!.description;
         _selectedColor =
-            settingsProvider.getEventColorToDisplay(widget.event.color);
-        _date = widget.event.start;
+            settingsProvider.getEventColorToDisplay(widget.event!.color);
+        _date = widget.event!.start;
         _timeStart = new TimeOfDay(
-            hour: widget.event.start.hour, minute: widget.event.start.minute);
+            hour: widget.event!.start.hour, minute: widget.event!.start.minute);
         _timeEnd = new TimeOfDay(
-            hour: widget.event.end.hour, minute: widget.event.end.minute);
+            hour: widget.event!.end.hour, minute: widget.event!.end.minute);
       });
     } else {
       setState(() {
@@ -76,9 +76,9 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
   Future<Null> selectDate(BuildContext context) async {
     unfocusText(context);
 
-    final DateTime picked = await showDatePicker(
+    final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _date,
+      initialDate: _date!,
       firstDate: DateTime(1970),
       lastDate: DateTime(2100),
     );
@@ -93,9 +93,9 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
   Future<Null> selectTimeStart(BuildContext context) async {
     unfocusText(context);
 
-    final TimeOfDay picked = await showTimePicker(
+    final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _timeStart,
+      initialTime: _timeStart!,
     );
 
     if (picked != null && picked != _timeStart) {
@@ -108,9 +108,9 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
   Future<Null> selectTimeEnd(BuildContext context) async {
     unfocusText(context);
 
-    final TimeOfDay picked = await showTimePicker(
+    final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _timeEnd,
+      initialTime: _timeEnd!,
     );
 
     if (picked != null && picked != _timeEnd) {
@@ -130,35 +130,35 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
     // Set the new color if the user has picked a color
     final newColor = (_colorChanged || widget.event == null)
         ? settingsProvider.getEventColorToSave(_selectedColor)
-        : widget.event.color;
+        : widget.event!.color;
 
     Event event;
     if (widget.event != null) {
       event = new Event(
-        uid: widget.event.uid,
+        uid: widget.event!.uid,
         color: newColor,
         description: _description,
         title: _title,
         teachers: [],
         tags: [],
         shortDescription: _description,
-        exportedAt: widget.event.exportedAt,
+        exportedAt: widget.event!.exportedAt,
         unitId: -1,
         location: _place,
-        groupColor: widget.event.groupColor,
+        groupColor: widget.event!.groupColor,
         start: DateTime(
-          _date.year,
-          _date.month,
-          _date.day,
-          _timeStart.hour,
-          _timeStart.minute,
+          _date!.year,
+          _date!.month,
+          _date!.day,
+          _timeStart!.hour,
+          _timeStart!.minute,
         ),
         end: DateTime(
-          _date.year,
-          _date.month,
-          _date.day,
-          _timeEnd.hour,
-          _timeEnd.minute,
+          _date!.year,
+          _date!.month,
+          _date!.day,
+          _timeEnd!.hour,
+          _timeEnd!.minute,
         ),
       );
 
@@ -178,18 +178,18 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
         location: _place,
         groupColor: Colors.blue,
         start: DateTime(
-          _date.year,
-          _date.month,
-          _date.day,
-          _timeStart.hour,
-          _timeStart.minute,
+          _date!.year,
+          _date!.month,
+          _date!.day,
+          _timeStart!.hour,
+          _timeStart!.minute,
         ),
         end: DateTime(
-          _date.year,
-          _date.month,
-          _date.day,
-          _timeEnd.hour,
-          _timeEnd.minute,
+          _date!.year,
+          _date!.month,
+          _date!.day,
+          _timeEnd!.hour,
+          _timeEnd!.minute,
         ),
       );
 
@@ -234,9 +234,9 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
   }
 
   bool endTimeSuperior() {
-    return (_timeStart.hour < _timeEnd.hour) ||
-        (_timeStart.hour == _timeEnd.hour &&
-            _timeStart.minute < _timeEnd.minute);
+    return (_timeStart!.hour < _timeEnd!.hour) ||
+        (_timeStart!.hour == _timeEnd!.hour &&
+            _timeStart!.minute < _timeEnd!.minute);
   }
 
   @override
@@ -262,9 +262,9 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
                     ),
                     CustomButton(
                       onPressed: () {
-                        if (_formKey.currentState.validate() &&
-                            (_timeStart.hour + _timeStart.minute / 60) <
-                                (_timeEnd.hour + _timeEnd.minute / 60)) {
+                        if (_formKey.currentState!.validate() &&
+                            (_timeStart!.hour + _timeStart!.minute / 60) <
+                                (_timeEnd!.hour + _timeEnd!.minute / 60)) {
                           saveEvent(context);
                         }
                       },
@@ -291,7 +291,7 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
                         ),
                         initialValue: _title,
                         validator: (value) {
-                          if (value.isEmpty) {
+                          if (value!.isEmpty) {
                             return 'Entrer un titre';
                           }
                           _title = value;
@@ -317,10 +317,10 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
                                   ),
                                   Text(
                                     new DateFormat("EEEE dd MMMM", "fr")
-                                        .format(_date),
+                                        .format(_date!),
                                     style: Theme.of(context)
                                         .textTheme
-                                        .subtitle2
+                                        .subtitle2!
                                         .copyWith(
                                           fontWeight: FontWeight.normal,
                                         ),
@@ -367,7 +367,7 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
                                                 ),
                                               ),
                                               Text(
-                                                _timeStart.format(context),
+                                                _timeStart!.format(context),
                                                 textAlign: TextAlign.start,
                                                 style: Theme.of(context)
                                                     .textTheme
@@ -407,28 +407,28 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
                                                   textAlign: TextAlign.left,
                                                   style: Theme.of(context)
                                                       .textTheme
-                                                      .bodyText1
+                                                      .bodyText1!
                                                       .copyWith(
                                                           color: endTimeSuperior()
                                                               ? Theme.of(
                                                                       context)
                                                                   .textTheme
-                                                                  .bodyText1
+                                                                  .bodyText1!
                                                                   .color
                                                               : Colors.red),
                                                 ),
                                               ),
                                               Text(
-                                                _timeEnd.format(context),
+                                                _timeEnd!.format(context),
                                                 textAlign: TextAlign.start,
                                                 style: Theme.of(context)
                                                     .textTheme
-                                                    .bodyText2
+                                                    .bodyText2!
                                                     .copyWith(
                                                         color: endTimeSuperior()
                                                             ? Theme.of(context)
                                                                 .textTheme
-                                                                .bodyText1
+                                                                .bodyText1!
                                                                 .color
                                                             : Colors.red),
                                               ),

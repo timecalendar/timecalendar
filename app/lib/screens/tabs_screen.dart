@@ -117,7 +117,7 @@ class _TabsScreenState extends State<TabsScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    observer.subscribe(this, ModalRoute.of(context));
+    observer.subscribe(this, ModalRoute.of(context)!);
   }
 
   @override
@@ -141,10 +141,10 @@ class _TabsScreenState extends State<TabsScreen>
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
-    final appTheme = settingsProvider.currentTheme;
+    final appTheme = settingsProvider.currentTheme!;
     if (!_checkDisplayChangelog) {
-      WidgetsBinding.instance.addPostFrameCallback(
-          (_) => displayChangelog(context, settingsProvider.currentVersion));
+      WidgetsBinding.instance!.addPostFrameCallback(
+          (_) => displayChangelog(context, settingsProvider.currentVersion!));
     }
 
     return Scaffold(
@@ -205,7 +205,7 @@ class _TabsScreenState extends State<TabsScreen>
                   border: Border(
                     top: BorderSide(
                       width: 1,
-                      color: Colors.grey[700],
+                      color: Colors.grey[700]!,
                     ),
                   ),
                 )

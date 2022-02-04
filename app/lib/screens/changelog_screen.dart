@@ -15,7 +15,7 @@ class ChangelogScreen extends StatefulWidget {
 }
 
 class _ChangelogScreenState extends State<ChangelogScreen> {
-  List<Changelog> changelogList;
+  late List<Changelog?> changelogList;
   List<Widget> changelogWidgets = [];
 
   @override
@@ -23,8 +23,8 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
     super.initState();
 
     Future.delayed(Duration.zero, () {
-      final Map<String, dynamic> args =
-          ModalRoute.of(context).settings.arguments;
+      final Map<String, dynamic>? args =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
       // When called from the about page, the changelog screen should display
       // all changelogs
       var displayAllChangelog = false;
@@ -52,7 +52,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
           changelog: item,
         ),
       ));
-      for (var features in item.changelogItems) {
+      for (var features in item!.changelogItems) {
         tmp.add(Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
           child: ChangelogItemNewFeatures(
@@ -73,11 +73,11 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   }
 
   void getChangelogList(bool displayAllChangelog) {
-    int currentVersion =
+    int? currentVersion =
         Provider.of<SettingsProvider>(context, listen: false).currentVersion;
     changelogList = [];
     Constants.changelogs.keys
-        .where((item) => displayAllChangelog ? true : item > currentVersion)
+        .where((item) => displayAllChangelog ? true : item > currentVersion!)
         .toList()
         .reversed
         .forEach((elm) => {changelogList.add(Constants.changelogs[elm])});

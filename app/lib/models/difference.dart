@@ -1,27 +1,26 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:tuple/tuple.dart';
 
 import 'event.dart';
 
 class Difference {
-  final int id;
-  final int unitId;
-  final String calendarToken;
+  final int? id;
+  final int? unitId;
+  final String? calendarToken;
   final DateTime dateDiff;
   final List<Event> oldItems;
   final List<Event> newItems;
   final List<Tuple2<Event, Event>> changedItems;
 
   Difference({
-    @required this.id,
+    required this.id,
     this.unitId,
     this.calendarToken,
-    @required this.dateDiff,
-    @required this.oldItems,
-    @required this.newItems,
-    @required this.changedItems,
+    required this.dateDiff,
+    required this.oldItems,
+    required this.newItems,
+    required this.changedItems,
   });
 
   factory Difference.fromInternalDb(Map<String, dynamic> dbMap) {

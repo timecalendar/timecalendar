@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:timecalendar/utils/date_utils.dart';
 
 class TodayHeader extends StatelessWidget {
-  final DateTime eventDay;
+  final DateTime? eventDay;
 
   const TodayHeader({
-    Key key,
-    @required this.eventDay,
+    Key? key,
+    required this.eventDay,
   }) : super(key: key);
 
   @override

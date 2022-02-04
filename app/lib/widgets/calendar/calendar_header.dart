@@ -15,19 +15,19 @@ enum CalendarOptions {
 
 class CalendarHeader extends StatelessWidget {
   const CalendarHeader({
-    Key key,
-    @required this.appBarHeight,
-    @required this.currentWeek,
-    @required this.currentDateTime,
-    @required this.showToday,
-    @required this.refreshCalendar,
-    @required this.changesGroup,
-    @required this.changeView,
+    Key? key,
+    required this.appBarHeight,
+    required this.currentWeek,
+    required this.currentDateTime,
+    required this.showToday,
+    required this.refreshCalendar,
+    required this.changesGroup,
+    required this.changeView,
   }) : super(key: key);
 
   final double appBarHeight;
-  final int currentWeek;
-  final DateTime currentDateTime;
+  final int? currentWeek;
+  final DateTime? currentDateTime;
   final Function showToday;
   final Function refreshCalendar;
   final Function changesGroup;
@@ -42,13 +42,13 @@ class CalendarHeader extends StatelessWidget {
           child: Text('Vue planning'),
           value: CalendarOptions.PlanningView,
         );
-        break;
       case CalendarViewType.Planning:
         return PopupMenuItem(
           child: Text('Vue semaine'),
           value: CalendarOptions.WeekView,
         );
-        break;
+      default:
+        throw Exception();
     }
   }
 
@@ -64,7 +64,7 @@ class CalendarHeader extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              AppDateUtils.monthYearText(currentDateTime),
+              AppDateUtils.monthYearText(currentDateTime!),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,

@@ -13,14 +13,14 @@ class AddGradeScreen extends StatefulWidget {
 
 class _AddGradeScreenState extends State<AddGradeScreen> {
   final _form = GlobalKey<FormState>();
-  String gradeName;
+  String? gradeName;
 
   Future<void> _saveForm(context) async {
-    final isValid = _form.currentState.validate();
+    final isValid = _form.currentState!.validate();
     if (!isValid) {
       return;
     }
-    _form.currentState.save();
+    _form.currentState!.save();
 
     var assistantProvider =
         Provider.of<AssistantProvider>(context, listen: false);
@@ -33,7 +33,7 @@ class _AddGradeScreenState extends State<AddGradeScreen> {
         .then((result) {
       if (nextScreen == AssistantScreen.routeName) {
         // Callback assistant screen
-        assistantProvider.assistantCallback(context, result);
+        assistantProvider.assistantCallback(context, result as Map<String, dynamic>?);
       }
     });
   }
@@ -80,7 +80,7 @@ class _AddGradeScreenState extends State<AddGradeScreen> {
                               decoration: InputDecoration(
                                   labelText: 'Nom de votre formation'),
                               validator: (value) {
-                                if (value.isEmpty) {
+                                if (value!.isEmpty) {
                                   return 'Vous devez entrer le nom de votre formation.';
                                 }
                                 return null;

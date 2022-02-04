@@ -6,9 +6,9 @@ import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
 
 class ScanQrCode extends StatelessWidget {
-  final Function onScan;
+  final Function? onScan;
 
-  const ScanQrCode({Key key, this.onScan}) : super(key: key);
+  const ScanQrCode({Key? key, this.onScan}) : super(key: key);
 
   void _scanQrCodeAndGetUrl(BuildContext context) async {
     var status = await Permission.camera.request();
@@ -44,10 +44,10 @@ class ScanQrCode extends StatelessWidget {
       );
     }
 
-    QrCodeResult result =
-        await Navigator.of(context).pushNamed<dynamic>(QrCodeScreen.routeName);
+    QrCodeResult? result = await (Navigator.of(context)
+        .pushNamed<dynamic>(QrCodeScreen.routeName) as Future<QrCodeResult?>);
     if (result?.url != null) {
-      this.onScan(result.url);
+      this.onScan!(result!.url);
     }
   }
 

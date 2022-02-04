@@ -5,10 +5,10 @@ import 'package:timecalendar/utils/date_utils.dart';
 import 'difference_event.dart';
 
 class DifferenceItem extends StatelessWidget {
-  final Difference difference;
+  final Difference? difference;
 
   const DifferenceItem({
-    Key key,
+    Key? key,
     this.difference,
   }) : super(key: key);
 
@@ -25,22 +25,22 @@ class DifferenceItem extends StatelessWidget {
             right: 15,
           ),
           child: Text(
-            AppDateUtils.fullDateTimeText(difference.dateDiff),
+            AppDateUtils.fullDateTimeText(difference!.dateDiff),
           ),
         ),
-        for (var event in difference.newItems)
+        for (var event in difference!.newItems)
           new DifferenceEvent(
             event: event,
             oldEvent: null,
             type: DifferenceEventType.New,
           ),
-        for (var events in difference.changedItems)
+        for (var events in difference!.changedItems)
           new DifferenceEvent(
             event: events.item2,
             oldEvent: events.item1,
             type: DifferenceEventType.Changed,
           ),
-        for (var event in difference.oldItems)
+        for (var event in difference!.oldItems)
           new DifferenceEvent(
             event: event,
             oldEvent: null,

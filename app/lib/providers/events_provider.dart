@@ -16,7 +16,7 @@ class EventsProvider with ChangeNotifier {
   static final tomorrow = DateTime.now().add(Duration(days: 1));
   static final dayAfterTomorrow = DateTime.now().add(Duration(days: 2));
 
-  List<Event> events = [];
+  List<Event?> events = [];
   List<Event> eventsUidHidden = [];
   List<Event> eventsNamedHidden = [];
   List<EventByDay> eventsByDay = [];
@@ -40,12 +40,12 @@ class EventsProvider with ChangeNotifier {
 
   Future<void> loadEventsFromDatabase() async {
     var tmpEvents = await EventManager().getEvents();
-    List<Event> personalEvents = await PersonalEventManager().getEvents();
+    List<Event?> personalEvents = await PersonalEventManager().getEvents();
     tmpEvents = [...tmpEvents, ...personalEvents];
 
     // Sort events
     tmpEvents.sort((a, b) {
-      return a.start.compareTo(b.start);
+      return a!.start.compareTo(b!.start);
     });
 
     events = tmpEvents;
@@ -91,28 +91,28 @@ class EventsProvider with ChangeNotifier {
     var numberOfNotes = await ChecklistItemManager().findEventNumberOfNotes();
 
     events.forEach((event) {
-      if (numberOfNotes.containsKey(event.uid)) {
-        event.completedNotes = numberOfNotes[event.uid].completedNotes;
-        event.totalNotes = numberOfNotes[event.uid].totalNotes;
+      if (numberOfNotes.containsKey(event!.uid)) {
+        event.completedNotes = numberOfNotes[event.uid]!.completedNotes;
+        event.totalNotes = numberOfNotes[event.uid]!.totalNotes;
       } else {
         event.completedNotes = 0;
         event.totalNotes = 0;
       }
     });
 
-    events = List<Event>.from(events);
+    events = List<Event?>.from(events);
 
     notifyListeners();
   }
 
-  DateTime get homeDay {
+  DateTime? get homeDay {
     DateTime now = DateTime(today.year, today.month, today.day, 0, 0, 0);
 
     if (events.length == 0) return null;
 
     // Get the first event after
     var firstEvent = events.firstWhere((event) {
-      return event.start.isAfter(now);
+      return event!.start.isAfter(now);
     }, orElse: () {
       return null;
     });
@@ -122,7 +122,7 @@ class EventsProvider with ChangeNotifier {
         firstEvent.start.day, 0, 0, 0);
   }
 
-  List<Event> get homeEvents {
+  List<Event?> get homeEvents {
     if (events.length == 0) return [];
     var firstEvent = homeDay;
 
@@ -132,7 +132,7 @@ class EventsProvider with ChangeNotifier {
 
     // Get events of this day
     var dayEvents = events.where((event) {
-      return event.start.year == firstEvent.year &&
+      return event!.start.year == firstEvent.year &&
           event.start.month == firstEvent.month &&
           event.start.day == firstEvent.day;
     }).toList();
@@ -144,16 +144,16 @@ class EventsProvider with ChangeNotifier {
     var dayEvents = events.toList();
     // TODO: comprendre pourquoi c'est pas trier!
     dayEvents.sort((a, b) {
-      return a.start.compareTo(b.start);
+      return a!.start.compareTo(b!.start);
     });
 
     if (events.length == 0) return [];
 
     List<EventByDay> dayEventsList = [];
-    var currentDay = dayEvents[0].end;
-    List<Event> currentDayEvents = [];
+    var currentDay = dayEvents[0]!.end;
+    List<Event?> currentDayEvents = [];
     dayEvents.forEach((event) {
-      if (!AppDateUtils.isSameDate(event.start, currentDay)) {
+      if (!AppDateUtils.isSameDate(event!.start, currentDay)) {
         dayEventsList.add(EventByDay(currentDay, currentDayEvents));
         currentDayEvents = [];
       }
@@ -170,7 +170,7 @@ class EventsProvider with ChangeNotifier {
 
     var weekEvents = events
         .where(
-            (event) => start.isBefore(event.end) && event.start.isBefore(end))
+            (event) => start.isBefore(event!.end) && event.start.isBefore(end))
         .toList();
 
     List<List<Event>> dayEvents = [];
@@ -180,7 +180,7 @@ class EventsProvider with ChangeNotifier {
       var currentDayEvents = [];
       currentDayEvents.addAll(weekEvents
           .where((event) =>
-              startOfDay.isBefore(event.end) && event.start.isBefore(endOfDay))
+              startOfDay.isBefore(event!.end) && event.start.isBefore(endOfDay))
           .toList());
       dayEvents.add(List<Event>.from(currentDayEvents));
     }
@@ -201,24 +201,24 @@ class EventsProvider with ChangeNotifier {
 
     events = events
         .where((item) =>
-            !hiddenEvent.uidHiddenEvents.contains(item.uid) &&
+            !hiddenEvent.uidHiddenEvents.contains(item!.uid) &&
             !hiddenEvent.namedHiddenEvents.contains(item.title))
         .toList();
   }
 
-  Future<void> addUidEvent(String uidEvent) async {
+  Future<void> addUidEvent(String? uidEvent) async {
     hiddenEvent.uidHiddenEvents.add(uidEvent);
     await hiddenEventManager.setHiddenEvents(hiddenEvent);
     loadEvents();
   }
 
-  Future<void> addNamedEvent(String namedEvent) async {
+  Future<void> addNamedEvent(String? namedEvent) async {
     hiddenEvent.namedHiddenEvents.add(namedEvent);
     await hiddenEventManager.setHiddenEvents(hiddenEvent);
     loadEvents();
   }
 
-  Future<void> removeUidEvent(String uidEvent) async {
+  Future<void> removeUidEvent(String? uidEvent) async {
     hiddenEvent.uidHiddenEvents.remove(uidEvent);
     await hiddenEventManager.setHiddenEvents(hiddenEvent);
     loadEvents();
@@ -235,7 +235,7 @@ class EventsProvider with ChangeNotifier {
     loadEvents();
   }
 
-  Future<void> removePersonalEvent(String uuid) async {
+  Future<void> removePersonalEvent(String? uuid) async {
     await PersonalEventManager().removeEvent(uuid);
     loadEvents();
   }

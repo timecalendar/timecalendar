@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:timecalendar/models/changelog.dart';
 
 class ChangelogItemHeader extends StatelessWidget {
-  final Changelog changelog;
+  final Changelog? changelog;
   const ChangelogItemHeader({
-    Key key,
-    @required this.changelog,
+    Key? key,
+    required this.changelog,
   }) : super(key: key);
 
   @override
@@ -13,7 +13,7 @@ class ChangelogItemHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 15.0),
       child: Text(
-        'Version ' + changelog.version,
+        'Version ' + changelog!.version,
         style: TextStyle(fontSize: 18),
       ),
     );

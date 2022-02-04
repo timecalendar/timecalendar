@@ -4,15 +4,15 @@ class CustomButton extends StatelessWidget {
   final bool border;
   final bool outline;
   final String text;
-  final IconData icon;
+  final IconData? icon;
   final Function onPressed;
   final bool loading;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   const CustomButton({
-    Key key,
-    @required this.text,
-    @required this.onPressed,
+    Key? key,
+    required this.text,
+    required this.onPressed,
     this.outline = false,
     this.border = true,
     this.loading = false,

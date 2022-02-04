@@ -14,14 +14,14 @@ import 'package:timecalendar/screens/connect_screen.dart';
 import 'package:timecalendar/screens/import_ical_screen.dart';
 
 class AssistantProvider with ChangeNotifier {
-  String schoolCode;
-  String schoolName = 'TimeCalendar';
-  String gradeName = 'TimeCalendar';
+  String? schoolCode;
+  String? schoolName = 'TimeCalendar';
+  String? gradeName = 'TimeCalendar';
 
-  String websiteUrl;
+  String? websiteUrl;
 
-  SchoolAssistant assistant;
-  SchoolAssistant fallbackAssistant;
+  SchoolAssistant? assistant;
+  SchoolAssistant? fallbackAssistant;
 
   bool useFallback = false;
 
@@ -32,7 +32,7 @@ class AssistantProvider with ChangeNotifier {
     needsGradeName: true,
   );
 
-  SchoolAssistant get currentAssistant {
+  SchoolAssistant? get currentAssistant {
     if (useFallback && fallbackAssistant != null) return fallbackAssistant;
     if (assistant != null) return assistant;
     return defaultAssistant;
@@ -60,14 +60,14 @@ class AssistantProvider with ChangeNotifier {
   }
 
   String getAssistantStartScreen() {
-    if (currentAssistant.needsGradeName) {
+    if (currentAssistant!.needsGradeName!) {
       return AddGradeScreen.routeName;
     }
     return getAssistantConnectionScreen();
   }
 
   String getAssistantConnectionScreen() {
-    if (currentAssistant.needsConnection) {
+    if (currentAssistant!.needsConnection!) {
       return ConnectScreen.routeName;
     }
     return AssistantScreen.routeName;
@@ -109,7 +109,7 @@ class AssistantProvider with ChangeNotifier {
       );
 
       Map<String, Object> result = jsonDecode(rep.body);
-      String token = result['token'];
+      String? token = result['token'] as String?;
 
       if (token == null || token.length == 0) {
         throw new Exception("Invalid token (${rep.body})");
@@ -122,7 +122,7 @@ class AssistantProvider with ChangeNotifier {
     await this.setSelectedCalendar(selectedCalendar);
   }
 
-  void assistantCallback(BuildContext context, Map<String, dynamic> result) {
+  void assistantCallback(BuildContext context, Map<String, dynamic>? result) {
     if (result != null) {
       if (result['assistantDone'] != null) {
         Navigator.of(context).pushNamed(ImportIcalScreen.routeName,

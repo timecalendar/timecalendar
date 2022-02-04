@@ -30,7 +30,7 @@ class ColorUtils {
     PkgColor.HslColor darkenHsl =
         new PkgColor.HslColor(hsl.h, hsl.s, hsl.l * (1 - amount));
     PkgColor.RgbColor darkenRgb = darkenHsl.toRgbColor();
-    return Color.fromARGB(255, darkenRgb.r, darkenRgb.g, darkenRgb.b);
+    return Color.fromARGB(255, darkenRgb.r as int, darkenRgb.g as int, darkenRgb.b as int);
   }
 
   static Color lightenColor(Color color, double amount) {
@@ -39,7 +39,7 @@ class ColorUtils {
     PkgColor.HslColor lightenHsl =
         new PkgColor.HslColor(hsl.h, hsl.s, hsl.l / (1 - amount));
     PkgColor.RgbColor lightenRgb = lightenHsl.toRgbColor();
-    return Color.fromARGB(255, lightenRgb.r, lightenRgb.g, lightenRgb.b);
+    return Color.fromARGB(255, lightenRgb.r as int, lightenRgb.g as int, lightenRgb.b as int);
   }
 
   static Color darkenEvent(Color color) {

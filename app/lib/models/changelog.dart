@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:timecalendar/models/changelog_item.dart';
 
 class Changelog {
@@ -6,8 +5,8 @@ class Changelog {
   final List<ChangelogItem> changelogItems;
 
   const Changelog({
-    @required this.version,
-    @required this.changelogItems,
+    required this.version,
+    required this.changelogItems,
   });
 
   @override

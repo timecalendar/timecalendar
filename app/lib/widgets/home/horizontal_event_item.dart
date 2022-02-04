@@ -6,7 +6,7 @@ import 'package:timecalendar/screens/event_details_screen.dart';
 import '../../models/event.dart';
 
 class HorizontalEventItem extends StatelessWidget {
-  final Event event;
+  final Event? event;
 
   const HorizontalEventItem({this.event});
 
@@ -28,7 +28,7 @@ class HorizontalEventItem extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: settingsProvider.currentTheme.cardColor,
+          color: settingsProvider.currentTheme!.cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () {
@@ -56,24 +56,24 @@ class HorizontalEventItem extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          DateFormat.jm('fr').format(event.start) +
+                          DateFormat.jm('fr').format(event!.start) +
                               ' - ' +
-                              DateFormat.jm('fr').format(event.end),
+                              DateFormat.jm('fr').format(event!.end),
                         ),
                       ),
-                      if (event.totalNotes > 0) Container(
+                      if (event!.totalNotes > 0) Container(
                         height: 12,
                         width: 12,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          color: (event.completedNotes == event.totalNotes) ? Colors.black.withOpacity(0.2) : Theme.of(context).primaryColor,
+                          color: (event!.completedNotes == event!.totalNotes) ? Colors.black.withOpacity(0.2) : Theme.of(context).primaryColor,
                         ),
                       )
                     ],
                   ),
                   Expanded(
                     child: Text(
-                      event.title,
+                      event!.title!,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
@@ -86,14 +86,14 @@ class HorizontalEventItem extends StatelessWidget {
                   SizedBox(
                     height: 10,
                   ),
-                  if (event.location.length > 0)
+                  if (event!.location!.length > 0)
                     Row(
                       children: <Widget>[
                         Icon(Icons.location_on),
                         SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            event.location,
+                            event!.location!,
                             overflow: TextOverflow.fade,
                             softWrap: false,
                           ),

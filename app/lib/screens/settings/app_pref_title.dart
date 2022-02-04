@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pref/pref.dart';
 
 class AppPrefTitle extends StatelessWidget {
-  final Widget title;
+  final Widget? title;
 
-  const AppPrefTitle({Key key, this.title}) : super(key: key);
+  const AppPrefTitle({Key? key, this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,8 +12,8 @@ class AppPrefTitle extends StatelessWidget {
 
     return PrefTitle(
       title: DefaultTextStyle(
-        style: theme.textTheme.headline6,
-        child: title,
+        style: theme.textTheme.headline6!,
+        child: title!,
       ),
     );
   }

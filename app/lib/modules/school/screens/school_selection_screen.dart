@@ -16,7 +16,7 @@ enum SchoolSelectionOptions { AddSchool, ImportIcal }
 
 class SelectSchool extends StatefulWidget {
   static const routeName = '/select_establishment';
-  SelectSchool({Key key}) : super(key: key);
+  SelectSchool({Key? key}) : super(key: key);
 
   @override
   _SelectSchoolState createState() => _SelectSchoolState();
@@ -28,7 +28,7 @@ class _SelectSchoolState extends State<SelectSchool> {
       new GlobalKey<RefreshIndicatorState>();
   final TextEditingController _searchFieldController = TextEditingController();
   bool _isScrollLimitReached = true;
-  ScrollController _scrollController;
+  ScrollController? _scrollController;
 
   bool _isInit = false;
 
@@ -36,12 +36,12 @@ class _SelectSchoolState extends State<SelectSchool> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero)
-        .then((_) => _refreshIndicatorKey.currentState.show());
+        .then((_) => _refreshIndicatorKey.currentState!.show());
 
     _scrollController = ScrollController();
-    _scrollController.addListener(() {
-      final newState = _scrollController.offset <=
-          (_scrollController.position.minScrollExtent + 120.0);
+    _scrollController!.addListener(() {
+      final newState = _scrollController!.offset <=
+          (_scrollController!.position.minScrollExtent + 120.0);
 
       if (newState != _isScrollLimitReached) {
         setState(() {
@@ -84,7 +84,7 @@ class _SelectSchoolState extends State<SelectSchool> {
     Navigator.of(context).pushNamed(nextScreen).then((result) {
       if (nextScreen == AssistantScreen.routeName) {
         // Callback assistant screen
-        assistantProvider.assistantCallback(context, result);
+        assistantProvider.assistantCallback(context, result as Map<String, dynamic>?);
       }
     });
   }
@@ -121,8 +121,8 @@ class _SelectSchoolState extends State<SelectSchool> {
   }
 
   void searchFocus() {
-    if (_scrollController.offset < 145) {
-      _scrollController.jumpTo(145);
+    if (_scrollController!.offset < 145) {
+      _scrollController!.jumpTo(145);
     }
   }
 

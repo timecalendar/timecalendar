@@ -20,9 +20,9 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
     'Proposer une fonctionnalité',
     'Autre'
   ];
-  String subject;
-  String email;
-  String message;
+  String? subject;
+  String? email;
+  String? message;
 
   bool _isLoading = false;
 
@@ -43,11 +43,11 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
   }
 
   Future<void> _saveForm(context) async {
-    final isValid = _form.currentState.validate();
+    final isValid = _form.currentState!.validate();
     if (!isValid) {
       return;
     }
-    _form.currentState.save();
+    _form.currentState!.save();
     setState(() {
       _isLoading = true;
     });
@@ -113,7 +113,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 DropdownButton<String>(
                   isExpanded: true,
                   value: subject,
-                  onChanged: (String newValue) {
+                  onChanged: (String? newValue) {
                     setState(() {
                       subject = newValue;
                     });
@@ -128,12 +128,12 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Adresse e-mail'),
                   validator: (value) {
-                    if (value.isEmpty) {
+                    if (value!.isEmpty) {
                       return 'Vous devez entrer votre adresse e-mail.';
                     }
                     Pattern pattern =
                         r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-                    RegExp regex = RegExp(pattern);
+                    RegExp regex = RegExp(pattern as String);
                     if (!regex.hasMatch(value)) {
                       return 'Votre adresse e-mail est invalide.';
                     }
@@ -158,7 +158,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                       InputDecoration(labelText: 'Entrez votre message'),
                   focusNode: _messageFocusNode,
                   validator: (value) {
-                    if (value.isEmpty) {
+                    if (value!.isEmpty) {
                       return 'Vous devez entrer votre message.';
                     }
                     return null;

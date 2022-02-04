@@ -7,13 +7,13 @@ import 'package:timecalendar/providers/settings_provider.dart';
 
 class SchoolItem extends StatelessWidget {
   const SchoolItem({
-    Key key,
-    @required this.school,
+    Key? key,
+    required this.school,
     this.selection,
   }) : super(key: key);
 
   final School school;
-  final Function selection;
+  final Function? selection;
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +37,11 @@ class SchoolItem extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: settingsProvider.currentTheme.cardColor,
+          color: settingsProvider.currentTheme!.cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () {
-              selection(school);
+              selection!(school);
             },
             borderRadius: BorderRadius.circular(15),
             child: Row(
@@ -60,7 +60,7 @@ class SchoolItem extends StatelessWidget {
                         image: NetworkImageWithRetry(
                           Environment.mainApiUrl +
                               '/images/schools/' +
-                              school.code,
+                              school.code!,
                         ),
                       ),
                     ),
@@ -68,7 +68,7 @@ class SchoolItem extends StatelessWidget {
                 ),
                 Flexible(
                   child: Text(
-                    school.name,
+                    school.name!,
                     style: TextStyle(fontSize: 18),
                   ),
                 ),

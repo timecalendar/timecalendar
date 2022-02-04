@@ -3,27 +3,27 @@ import 'package:timecalendar/controllers/calendar/sync_scroll_controller.dart';
 
 class CalendarHoursColumn extends StatelessWidget {
   const CalendarHoursColumn({
-    Key key,
-    @required this.screenHeight,
-    @required this.leftHoursWidth,
-    @required this.headerHeight,
-    @required this.calendarHeight,
-    @required ScrollController hourScrollController,
-    @required this.hourHeight,
-    @required this.nbHours,
-    @required this.startHour,
-    @required SyncScrollController syncScroll,
+    Key? key,
+    required this.screenHeight,
+    required this.leftHoursWidth,
+    required this.headerHeight,
+    required this.calendarHeight,
+    required ScrollController? hourScrollController,
+    required this.hourHeight,
+    required this.nbHours,
+    required this.startHour,
+    required SyncScrollController? syncScroll,
   }) : _hourScrollController = hourScrollController, _syncScroll = syncScroll, super(key: key);
 
   final double screenHeight;
   final double leftHoursWidth;
   final double headerHeight;
   final double calendarHeight;
-  final ScrollController _hourScrollController;
+  final ScrollController? _hourScrollController;
   final double hourHeight;
   final int nbHours;
   final int startHour;
-  final SyncScrollController _syncScroll;
+  final SyncScrollController? _syncScroll;
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +66,10 @@ class CalendarHoursColumn extends StatelessWidget {
                   ),
                 ),
                 onNotification: (ScrollNotification scrollInfo) {
-                  _syncScroll.processNotification(
+                  _syncScroll!.processNotification(
                       scrollInfo, _hourScrollController);
                   return;
-                }),
+                } as bool Function(ScrollNotification)?),
           ),
         ],
       ),

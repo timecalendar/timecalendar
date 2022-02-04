@@ -7,14 +7,14 @@ enum HiddenOption { HiddenUid, HiddenNamedEvent }
 
 class HiddenOptionsDialog extends StatefulWidget {
   final Event event;
-  HiddenOptionsDialog({Key key, @required this.event}) : super(key: key);
+  HiddenOptionsDialog({Key? key, required this.event}) : super(key: key);
 
   @override
   _HiddenOptionsDialogState createState() => _HiddenOptionsDialogState();
 }
 
 class _HiddenOptionsDialogState extends State<HiddenOptionsDialog> {
-  var _groupValue = HiddenOption.HiddenUid;
+  HiddenOption? _groupValue = HiddenOption.HiddenUid;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +36,7 @@ class _HiddenOptionsDialogState extends State<HiddenOptionsDialog> {
                     Radio(
                       value: HiddenOption.HiddenUid,
                       groupValue: _groupValue,
-                      onChanged: (value) {
+                      onChanged: (dynamic value) {
                         setState(() {
                           _groupValue = value;
                         });
@@ -57,7 +57,7 @@ class _HiddenOptionsDialogState extends State<HiddenOptionsDialog> {
                     Radio(
                       value: HiddenOption.HiddenNamedEvent,
                       groupValue: _groupValue,
-                      onChanged: (value) {
+                      onChanged: (dynamic value) {
                         setState(() {
                           _groupValue = value;
                         });

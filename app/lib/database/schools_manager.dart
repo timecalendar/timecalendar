@@ -11,19 +11,19 @@ class SchoolsManager {
   }
 
   static const String STORE_NAME = 'schools';
-  final _store = stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => SimpleDatabase().db;
+  Database? get _db => SimpleDatabase().db;
 
   Future<List<School>> getSchools() async {
-    final records = await _store.find(_db);
+    final records = await _store.find(_db!);
     return records
         .map((record) => School.fromInternalDb(record.value))
         .toList();
   }
 
   Future<void> setSchools(List<School> schools) async {
-    await _db.transaction((txn) async {
+    await _db!.transaction((txn) async {
       // Delete all schools
       await _store.delete(txn);
 

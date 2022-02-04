@@ -4,10 +4,10 @@ import 'package:timecalendar/models/event.dart';
 import 'package:timecalendar/utils/date_utils.dart';
 
 class PlanningRectangleEvent extends StatelessWidget {
-  const PlanningRectangleEvent({Key key, @required this.event})
+  const PlanningRectangleEvent({Key? key, required this.event})
       : super(key: key);
 
-  final Event event;
+  final Event? event;
 
   @override
   Widget build(BuildContext context) {
@@ -15,25 +15,25 @@ class PlanningRectangleEvent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          event.title,
+          event!.title!,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
-        if (event.location.length > 0)
+        if (event!.location!.length > 0)
           Container(
             child: Wrap(
               children: <Widget>[
                 Text(
                   AppDateUtils.eventPlanningDateTimeText(
-                          event.start, event.end) +
-                      " (${event.location})",
+                          event!.start, event!.end) +
+                      " (${event!.location})",
                 ),
               ],
             ),
           ),
-        if (event.totalNotes > 0)
+        if (event!.totalNotes > 0)
           Container(
             padding: EdgeInsets.only(top: 10),
             child: Wrap(
@@ -44,7 +44,7 @@ class PlanningRectangleEvent extends StatelessWidget {
                 ),
                 SizedBox(width: 5),
                 Text(
-                  "${event.completedNotes}/${event.totalNotes}",
+                  "${event!.completedNotes}/${event!.totalNotes}",
                 ),
               ],
             ),

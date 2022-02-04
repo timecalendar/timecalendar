@@ -10,14 +10,14 @@ enum DifferenceEventType { New, Old, Changed }
 
 class DifferenceEvent extends StatelessWidget {
   DifferenceEvent({
-    Key key,
-    @required this.event,
-    @required this.oldEvent,
-    @required this.type,
+    Key? key,
+    required this.event,
+    required this.oldEvent,
+    required this.type,
   }) : super(key: key);
 
   final Event event;
-  final Event oldEvent;
+  final Event? oldEvent;
   final DifferenceEventType type;
 
   final types = {
@@ -47,12 +47,12 @@ class DifferenceEvent extends StatelessWidget {
         SizedBox(height: 4),
         CircleAvatar(
           child: Icon(
-            types[type]['icon'],
+            types[type]!['icon'] as IconData?,
             size: 18,
-            color: ColorUtils.hexToColor(types[type]['iconColor']),
+            color: ColorUtils.hexToColor(types[type]!['iconColor'] as String),
           ),
           backgroundColor:
-              ColorUtils.hexToColor(types[type]['backgroundColor']),
+              ColorUtils.hexToColor(types[type]!['backgroundColor'] as String),
         ),
       ],
     );
@@ -79,7 +79,7 @@ class DifferenceEvent extends StatelessWidget {
         SizedBox(width: 5),
         Expanded(
           child: Text(
-            event.location,
+            event.location!,
             style: TextStyle(
               fontSize: 14,
             ),
@@ -110,14 +110,14 @@ class DifferenceEvent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      event.title,
+                      event.title!,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
-                      types[type]['text'],
+                      types[type]!['text'] as String,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -127,7 +127,7 @@ class DifferenceEvent extends StatelessWidget {
                       height: 10,
                     ),
                     infoText(),
-                    if (event.location != null && event.location.length > 0)
+                    if (event.location != null && event.location!.length > 0)
                       locationText(),
                   ],
                 ),
@@ -136,7 +136,7 @@ class DifferenceEvent extends StatelessWidget {
           ),
         ),
         decoration: BoxDecoration(
-          color: settingsProvider.currentTheme.cardColor,
+          color: settingsProvider.currentTheme!.cardColor,
           borderRadius: BorderRadius.circular(15),
         ),
       ),

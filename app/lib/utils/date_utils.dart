@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 
 class AppDateUtils {
-  static String dayText(DateTime date, {bool showOn = false}) {
+  static String dayText(DateTime? date, {bool showOn = false}) {
     if (date == null) return "";
     final yesterday = DateTime.now().subtract(Duration(days: 1));
     final today = DateTime.now();
@@ -21,7 +21,7 @@ class AppDateUtils {
     return fullDayText(date, showOn: showOn);
   }
 
-  static String fullDayText(DateTime date, {bool showOn = false}) {
+  static String fullDayText(DateTime? date, {bool showOn = false}) {
     if (date == null) return "";
     return (showOn ? 'le ' : '') +
         DateFormat("EEEE", "fr").format(date) +
@@ -29,7 +29,7 @@ class AppDateUtils {
         DateFormat.yMMMMd('fr').format(date);
   }
 
-  static String calendarHeaderText(DateTime date) {
+  static String calendarHeaderText(DateTime? date) {
     if (date == null) return "";
     return DateFormat("E dd/MM", "fr").format(date);
   }
@@ -75,7 +75,7 @@ class AppDateUtils {
     return sameDay(DateTime.now(), date);
   }
 
-  static bool sameDay(DateTime a, DateTime b) {
+  static bool sameDay(DateTime? a, DateTime? b) {
     if (a == null || b == null) return false;
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
@@ -96,10 +96,10 @@ class AppDateUtils {
     return dateToWeekNumber(today);
   }
 
-  static int dateToWeekNumber(DateTime dt) {
+  static int dateToWeekNumber(DateTime? dt) {
     for (var weekNumber = 0; weekNumber < 9999; weekNumber++) {
       var dayWeek = dayAtWeekNumber(weekNumber);
-      if ((dt.isAfter(dayWeek) || dt.isAtSameMomentAs(dayWeek)) &&
+      if ((dt!.isAfter(dayWeek) || dt.isAtSameMomentAs(dayWeek)) &&
           dt.isBefore(dayWeek.add(Duration(days: 7)))) {
         return weekNumber;
       }
