@@ -1,0 +1,8 @@
+entity: School
+items:
+  mygamingacademia:
+    code: mygamingacademia
+    name: My Gaming Academia
+    siteUrl: https://my-gaming-academia.com
+    visible: false
+    assistant: groups
