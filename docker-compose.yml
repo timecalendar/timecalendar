@@ -3,10 +3,10 @@ services:
     image: mariadb:10
     restart: always
     environment:
-      MYSQL_DATABASE: $DATABASE_MAIN_NAME
-      MYSQL_USER: $DATABASE_USERNAME
-      MYSQL_PASSWORD: $DATABASE_PASSWORD
-      MYSQL_ROOT_PASSWORD: $DATABASE_PASSWORD
+      MYSQL_DATABASE: ${DATABASE_MAIN_NAME:-timecalendar}
+      MYSQL_USER: ${DATABASE_USERNAME:-timecalendar}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD:-root}
     ports:
       - '3307:3306'
     volumes:
@@ -15,10 +15,10 @@ services:
     image: mariadb:10
     restart: always
     environment:
-      MYSQL_DATABASE: $DATABASE_MAIN_NAME
-      MYSQL_USER: $DATABASE_USERNAME
-      MYSQL_PASSWORD: $DATABASE_PASSWORD
-      MYSQL_ROOT_PASSWORD: $DATABASE_PASSWORD
+      MYSQL_DATABASE: ${DATABASE_TEST_MAIN_NAME:-timecalendar}
+      MYSQL_USER: ${DATABASE_USERNAME:-timecalendar}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD:-root}
     ports:
       - '3308:3306'
     volumes:
