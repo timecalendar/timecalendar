@@ -16,7 +16,7 @@ You should have access to phpMyAdmin here: http://localhost:3310/
 
 ### Node.js
 
-TimeCalendar is written in JavaScript and runs with Node.js. [Install Node.js](https://nodejs.org/en/) on your environment (current version v16).
+TimeCalendar is written in TypeScript and runs with Node.js. [Install Node.js](https://nodejs.org/en/) on your environment (current version v16).
 
 Once Node.js is installed, install yarn and npm dependencies:
 
