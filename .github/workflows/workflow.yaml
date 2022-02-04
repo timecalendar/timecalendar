@@ -1,10 +1,10 @@
-name: CI test and build
+name: CI build test and deploy
 
 on: push
 
 jobs:
   build:
-    name: Build Docker image
+    name: Build image and run tests
     runs-on: ubuntu-latest
     steps:
 
@@ -15,13 +15,8 @@ jobs:
       uses: satackey/action-docker-layer-caching@v0.0.11
       continue-on-error: true
 
-    - name: Set environment for branch
-      run: |
-        if [[ $GITHUB_REF == 'refs/heads/production' ]]; then
-            echo "DOCKER_TAG=production" >> "$GITHUB_ENV"
-        else
-            echo "DOCKER_TAG=latest" >> "$GITHUB_ENV"
-        fi
+    - name: Set target environment
+      run: ./ci/set-target-env.sh
 
     - name: Build container image
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
@@ -42,3 +37,28 @@ jobs:
     - name: Push image to GitHub Container Registry
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       run: docker push ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }}
+
+  deploy:
+    name: Deploy on environment
+    needs: build
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v2
+
+    - name: Set target environment
+      run: ./ci/set-target-env.sh
+
+    - name: Set target environment Helm values
+      run: echo "${{ secrets[env.K8S_HELM_VALUES_ENV] }}" > ./k8s/environments/$TARGET_ENVIRONMENT/secret-values.yaml
+
+    - name: Set Kubernetes context
+      uses: azure/k8s-set-context@v2
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets[env.K8S_KUBECONFIG_ENV] }}
+
+    - name: Deploy
+      run: ./k8s/deploy.sh
