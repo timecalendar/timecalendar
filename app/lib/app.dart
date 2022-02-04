@@ -22,17 +22,15 @@ import 'package:timecalendar/screens/assistant_screen.dart';
 import 'package:timecalendar/screens/changelog_screen.dart';
 import 'package:timecalendar/screens/connect_screen.dart';
 import 'package:timecalendar/screens/event_details_screen.dart';
-import 'package:timecalendar/screens/grade_selection_screen.dart';
 import 'package:timecalendar/screens/hidden_events_screen.dart';
 import 'package:timecalendar/screens/import_ical_screen.dart';
 import 'package:timecalendar/screens/login_screen.dart';
 import 'package:timecalendar/screens/onboarding_screen.dart';
-import 'package:timecalendar/screens/school_selection_screen.dart';
+import 'package:timecalendar/modules/school/screens/school_selection_screen.dart';
 import 'package:timecalendar/screens/settings/settings_screen.dart';
 import 'package:timecalendar/screens/splash_screen.dart';
 import 'package:timecalendar/screens/suggestion_screen.dart';
 import 'package:timecalendar/screens/tabs_screen.dart';
-import 'package:timecalendar/screens/units_selection_screen.dart';
 import 'package:timecalendar/services/firebase.dart';
 import 'package:timecalendar/services/my_route_observer.dart';
 import 'package:timecalendar/services/notification/notification.dart';
@@ -132,10 +130,8 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
               TabsScreen.routeName: (ctx) => TabsScreen(observer),
               EventDetailsScreen.routeName: (ctx) => EventDetailsScreen(),
               SelectSchool.routeName: (ctx) => SelectSchool(),
-              GradeSelectionScreen.routeName: (ctx) => GradeSelectionScreen(),
               SettingsScreen.routeName: (ctx) => SettingsScreen(),
               ActivityScreen.routeName: (ctx) => ActivityScreen(),
-              UnitsSelectionScreen.routeName: (ctx) => UnitsSelectionScreen(),
               AboutScreen.routeName: (ctx) => AboutScreen(),
               SuggestionScreen.routeName: (ctx) => SuggestionScreen(),
               OnboardingScreen.routeName: (ctx) => OnboardingScreen(),

@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 import 'package:timecalendar/database/differences_manager.dart';
-import 'package:timecalendar/models/school.dart';
+import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/models/school_assistant.dart';
 import 'package:timecalendar/models/selected_calendar.dart';
 import 'package:timecalendar/screens/add_grade_screen.dart';

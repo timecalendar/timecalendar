@@ -3,7 +3,6 @@ import 'package:timecalendar/utils/encoded_token.dart';
 
 import 'calendar.dart';
 import 'custom_calendar.dart';
-import 'unit_calendar.dart';
 
 class SelectedCalendar {
   /// 'custom' or 'unit'
@@ -49,13 +48,7 @@ class SelectedCalendar {
   }
 
   Calendar get calendar {
-    if (type == 'unit') {
-      return UnitCalendar(
-        List<int>.from(calendarIds.map((unit) => int.parse(unit))),
-      );
-    } else {
-      return CustomCalendar(calendarIds);
-    }
+    return CustomCalendar(calendarIds);
   }
 }
 
