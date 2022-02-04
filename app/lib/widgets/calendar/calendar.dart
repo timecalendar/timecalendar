@@ -15,16 +15,16 @@ import 'calendar_week.dart';
 
 class Calendar extends StatefulWidget {
   const Calendar(
-      {Key key,
-      @required this.screenHeight,
-      @required this.calendarWidth,
-      @required this.leftHoursWidth,
-      @required this.startHour,
-      @required this.endHour,
-      @required this.nbOfVisibleDays,
-      @required this.observer,
-      @required this.updateCurrentWeek,
-      @required this.currentWeek});
+      {Key? key,
+      required this.screenHeight,
+      required this.calendarWidth,
+      required this.leftHoursWidth,
+      required this.startHour,
+      required this.endHour,
+      required this.nbOfVisibleDays,
+      required this.observer,
+      required this.updateCurrentWeek,
+      required this.currentWeek});
 
   final double screenHeight;
   final double calendarWidth;
@@ -33,20 +33,20 @@ class Calendar extends StatefulWidget {
   final int endHour;
   final int nbOfVisibleDays;
 
-  final int currentWeek;
+  final int? currentWeek;
   final ValueChanged<int> updateCurrentWeek;
 
-  final FirebaseAnalyticsObserver observer;
+  final FirebaseAnalyticsObserver? observer;
 
   @override
   _CalendarState createState() => _CalendarState();
 }
 
 class _CalendarState extends State<Calendar> {
-  SyncScrollController _syncScroll;
+  SyncScrollController? _syncScroll;
 
-  ScrollController _weekScrollController;
-  ScrollController _hourScrollController;
+  ScrollController? _weekScrollController;
+  ScrollController? _hourScrollController;
 
   final headerHeight = 60.0;
 
@@ -58,10 +58,10 @@ class _CalendarState extends State<Calendar> {
 
   var _isInit = false;
 
-  var _previousHourHeight;
-  var _previousScrollOffset;
+  late var _previousHourHeight;
+  late var _previousScrollOffset;
 
-  CalendarProvider calendarProvider;
+  late CalendarProvider calendarProvider;
 
   double get minHourHeight {
     var totalHours = widget.endHour - widget.startHour - 1;
@@ -86,7 +86,7 @@ class _CalendarState extends State<Calendar> {
 
     calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
 
-    calendarProvider.currentDayNotifier.addListener(onCurrentDayChange);
+    calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
     _syncScroll = SyncScrollController([]);
 
@@ -101,7 +101,7 @@ class _CalendarState extends State<Calendar> {
     // Load the saved scroll offset
     var savedScrollOffset = calendarProvider.savedScrollOffset;
     if (savedScrollOffset != null) {
-      _syncScroll.currentOffset = savedScrollOffset;
+      _syncScroll!.currentOffset = savedScrollOffset;
       _hourScrollController =
           ScrollController(initialScrollOffset: savedScrollOffset);
     } else {
@@ -109,25 +109,25 @@ class _CalendarState extends State<Calendar> {
     }
 
     // Init hour controller
-    _syncScroll.registerScrollController(_hourScrollController);
+    _syncScroll!.registerScrollController(_hourScrollController);
 
     // Vertical scroll listener
-    _syncScroll.addListener(onVerticalScroll);
+    _syncScroll!.addListener(onVerticalScroll);
 
     Future.delayed(Duration.zero).then((_) {
-      widget.observer.analytics.logEvent(name: 'view_calendar');
+      widget.observer!.analytics.logEvent(name: 'view_calendar');
     });
     loadCalendarUIPreferences();
   }
 
   void _onWeekPageScroll() {
-    var week = (_weekScrollController.offset / widget.calendarWidth).floor();
+    var week = (_weekScrollController!.offset / widget.calendarWidth).floor();
     if (week != widget.currentWeek) {
       // Save the current week in our provider
       Provider.of<CalendarProvider>(context, listen: false).savedWeek = week;
       setState(() {
         widget.updateCurrentWeek(
-            (_weekScrollController.offset / widget.calendarWidth).floor());
+            (_weekScrollController!.offset / widget.calendarWidth).floor());
       });
     }
   }
@@ -138,8 +138,8 @@ class _CalendarState extends State<Calendar> {
 
   @override
   void dispose() {
-    _syncScroll.removeListener(onVerticalScroll);
-    calendarProvider.currentDayNotifier.removeListener(onCurrentDayChange);
+    _syncScroll!.removeListener(onVerticalScroll);
+    calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
     super.dispose();
   }
 
@@ -150,17 +150,17 @@ class _CalendarState extends State<Calendar> {
     if (!_isInit) {
       _isInit = true;
       _weekScrollController = ScrollController(
-          initialScrollOffset: widget.calendarWidth * widget.currentWeek);
-      _weekScrollController.addListener(_onWeekPageScroll);
+          initialScrollOffset: widget.calendarWidth * widget.currentWeek!);
+      _weekScrollController!.addListener(_onWeekPageScroll);
     }
   }
 
   void onCurrentDayChange() {
-    print(calendarProvider.currentDayNotifier.value);
-    _weekScrollController.animateTo(
+    print(calendarProvider.currentDayNotifier!.value);
+    _weekScrollController!.animateTo(
         widget.calendarWidth *
             AppDateUtils.dateToWeekNumber(
-                calendarProvider.currentDayNotifier.value),
+                calendarProvider.currentDayNotifier!.value),
         duration: Duration(milliseconds: 500),
         curve: Curves.easeIn);
   }
@@ -174,17 +174,17 @@ class _CalendarState extends State<Calendar> {
 
   void _onScaleStart(ScaleStartDetails scaleDetails) {
     _previousHourHeight = hourHeight;
-    _previousScrollOffset = _syncScroll.currentOffset;
+    _previousScrollOffset = _syncScroll!.currentOffset;
   }
 
   void _onScaleUpdate(ScaleUpdateDetails scaleDetails) {
     double focusedY = scaleDetails.localFocalPoint.dy - headerHeight;
-    double diffY = focusedY + _syncScroll.currentOffset;
+    double diffY = focusedY + _syncScroll!.currentOffset;
     double offsetY =
         _previousScrollOffset + diffY * scaleDetails.verticalScale - diffY;
     double newHourHeight = min(maxHourHeight,
         max(minHourHeight, _previousHourHeight * scaleDetails.verticalScale));
-    _syncScroll.jumpTo(offsetY);
+    _syncScroll!.jumpTo(offsetY);
 
     setState(() {
       hourHeight = newHourHeight;

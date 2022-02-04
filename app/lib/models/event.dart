@@ -1,41 +1,40 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:timecalendar/models/event_tag.dart';
 import 'package:timecalendar/utils/color_utils.dart';
 
 class Event {
-  final String uid;
-  final String title;
+  final String? uid;
+  final String? title;
   final DateTime start;
   final DateTime end;
-  final DateTime exportedAt;
-  final String location;
-  final String description;
-  final String shortDescription;
-  final Color color;
+  final DateTime? exportedAt;
+  final String? location;
+  final String? description;
+  final String? shortDescription;
+  final Color? color;
   final Color groupColor;
-  final int unitId;
+  final int? unitId;
   final List<String> teachers;
   final List<EventTag> tags;
   int completedNotes = 0;
   int totalNotes = 0;
 
   Event({
-    @required this.uid,
-    @required this.title,
-    @required this.start,
-    @required this.end,
-    @required this.exportedAt,
-    @required this.location,
-    @required this.description,
-    @required this.shortDescription,
-    @required this.color,
-    @required this.groupColor,
-    @required this.unitId,
-    @required this.teachers,
-    @required this.tags,
+    required this.uid,
+    required this.title,
+    required this.start,
+    required this.end,
+    required this.exportedAt,
+    required this.location,
+    required this.description,
+    required this.shortDescription,
+    required this.color,
+    required this.groupColor,
+    required this.unitId,
+    required this.teachers,
+    required this.tags,
     this.completedNotes = 0,
     this.totalNotes = 0,
   });
@@ -45,7 +44,9 @@ class Event {
         title = map['title'],
         start = DateTime.parse(map['start']),
         end = DateTime.parse(map['end']),
-        exportedAt = (map['exportedAt'] != null) ? DateTime.parse(map['exportedAt']) : null,
+        exportedAt = (map['exportedAt'] != null)
+            ? DateTime.parse(map['exportedAt'])
+            : null,
         location = map['location'],
         description = map['description'],
         shortDescription = map['shortDescription'],
@@ -63,7 +64,9 @@ class Event {
       title: event['title'],
       start: DateTime.fromMillisecondsSinceEpoch(event['start']),
       end: DateTime.fromMillisecondsSinceEpoch(event['end']),
-      exportedAt: (event['exportedAt'] != null) ? DateTime.fromMillisecondsSinceEpoch(event['exportedAt']) : null,
+      exportedAt: (event['exportedAt'] != null)
+          ? DateTime.fromMillisecondsSinceEpoch(event['exportedAt'])
+          : null,
       description: event['description'],
       location: event['location'],
       shortDescription: event['shortDescription'],
@@ -91,11 +94,12 @@ class Event {
     map['title'] = title;
     map['start'] = start.toIso8601String();
     map['end'] = end.toIso8601String();
-    map['exportedAt'] = (exportedAt != null) ? exportedAt.toIso8601String() : null;
+    map['exportedAt'] =
+        (exportedAt != null) ? exportedAt!.toIso8601String() : null;
     map['location'] = location;
     map['description'] = description;
     map['shortDescription'] = shortDescription;
-    map['color'] = ColorUtils.colorToHex(color);
+    map['color'] = ColorUtils.colorToHex(color!);
     map['groupColor'] = ColorUtils.colorToHex(groupColor);
     map['unitId'] = unitId;
     map['teachers'] = jsonEncode(teachers);

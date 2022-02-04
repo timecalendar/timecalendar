@@ -3,7 +3,7 @@ import 'package:timecalendar/models/changelog_item.dart';
 
 class ChangelogItemNewFeatures extends StatelessWidget {
   final ChangelogItem changelogItem;
-  const ChangelogItemNewFeatures({Key key, @required this.changelogItem})
+  const ChangelogItemNewFeatures({Key? key, required this.changelogItem})
       : super(key: key);
 
   @override

@@ -3,7 +3,7 @@ import 'package:timecalendar/screens/tabs_screen.dart';
 import 'package:timecalendar/services/status_bar.dart';
 
 class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {
-  final bool darkMode;
+  final bool? darkMode;
 
   MyRouteObserver({this.darkMode});
 
@@ -11,7 +11,7 @@ class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {
     var screenName = route.settings.name;
     var statusBar = StatusBarService();
 
-    if (screenName == TabsScreen.routeName && !darkMode) {
+    if (screenName == TabsScreen.routeName && !darkMode!) {
       Future.delayed(Duration(milliseconds: 500)).then((_) {
         statusBar.setStatusBarColor(darkTextOnLightBackground: true);
       });
@@ -26,7 +26,7 @@ class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   }
 
   @override
-  void didPush(Route<dynamic> route, Route<dynamic> previousRoute) {
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPush(route, previousRoute);
     if (route is PageRoute) {
       _sendScreenView(route);
@@ -34,7 +34,7 @@ class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   }
 
   @override
-  void didReplace({Route<dynamic> newRoute, Route<dynamic> oldRoute}) {
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
     if (newRoute is PageRoute) {
       _sendScreenView(newRoute);
@@ -42,7 +42,7 @@ class MyRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   }
 
   @override
-  void didPop(Route<dynamic> route, Route<dynamic> previousRoute) {
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);
     if (previousRoute is PageRoute && route is PageRoute) {
       _sendScreenView(previousRoute);

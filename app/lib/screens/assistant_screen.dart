@@ -32,7 +32,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
     // Check if the assistant has returned a token
     RegExp regExp = RegExp(r"\/embed\/loading\/\?token=([a-zA-Z0-9-_~]+)");
     var allMatches = regExp.allMatches(url).toList();
-    String token;
+    String? token;
     if (allMatches.length > 0) {
       // The assistant has already generated a token
       // Use it
@@ -79,10 +79,10 @@ class _AssistantScreenState extends State<AssistantScreen> {
     var initialUrl = Constants.mainWebUrl +
         'creation/connect?embed=true' +
         ((assistantProvider.schoolCode != null)
-            ? ('&schoolCode=' + assistantProvider.schoolCode)
+            ? ('&schoolCode=' + assistantProvider.schoolCode!)
             : '') +
         ((assistantProvider.gradeName != null)
-            ? ('&gradeName=' + Uri.encodeComponent(assistantProvider.gradeName))
+            ? ('&gradeName=' + Uri.encodeComponent(assistantProvider.gradeName!))
             : '') +
         ((settingsProvider.darkMode) ? '&darkMode=true' : '') +
         ((assistantProvider.useFallback) ? '&fallback=true' : '');

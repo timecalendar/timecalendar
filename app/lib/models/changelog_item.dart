@@ -6,9 +6,9 @@ class ChangelogItem {
   final Icon icon;
 
   const ChangelogItem({
-    @required this.title,
-    @required this.subtitle,
-    @required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
   });
 
   @override

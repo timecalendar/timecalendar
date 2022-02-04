@@ -11,21 +11,21 @@ import 'package:timecalendar/widgets/calendar/calendar_rectangle_event.dart';
 
 class CalendarWeek extends StatefulWidget {
   const CalendarWeek({
-    Key key,
-    @required this.screenHeight,
-    @required this.calendarWidth,
-    @required this.headerHeight,
-    @required this.nbOfVisibleDays,
-    @required this.dayWidth,
-    @required this.calendarHeight,
-    @required this.hourHeight,
-    @required this.nbHours,
-    @required this.startHour,
-    @required this.columnGap,
-    @required this.firstDayOfWeek,
-    @required this.weekEvents,
-    @required this.columnPaddingTop,
-    @required SyncScrollController syncScroll,
+    Key? key,
+    required this.screenHeight,
+    required this.calendarWidth,
+    required this.headerHeight,
+    required this.nbOfVisibleDays,
+    required this.dayWidth,
+    required this.calendarHeight,
+    required this.hourHeight,
+    required this.nbHours,
+    required this.startHour,
+    required this.columnGap,
+    required this.firstDayOfWeek,
+    required this.weekEvents,
+    required this.columnPaddingTop,
+    required SyncScrollController? syncScroll,
   })  : _syncScroll = syncScroll,
         super(key: key);
 
@@ -41,7 +41,7 @@ class CalendarWeek extends StatefulWidget {
   final double columnGap;
   final double columnPaddingTop;
   final DateTime firstDayOfWeek;
-  final SyncScrollController _syncScroll;
+  final SyncScrollController? _syncScroll;
   final List<List<Event>> weekEvents;
 
   @override
@@ -49,23 +49,23 @@ class CalendarWeek extends StatefulWidget {
 }
 
 class _CalendarWeekState extends State<CalendarWeek> {
-  ScrollController _currentWeekScrollController;
+  ScrollController? _currentWeekScrollController;
 
   @override
   void initState() {
     super.initState();
     _currentWeekScrollController =
-        ScrollController(initialScrollOffset: widget._syncScroll.currentOffset);
-    widget._syncScroll.registerScrollController(_currentWeekScrollController);
+        ScrollController(initialScrollOffset: widget._syncScroll!.currentOffset);
+    widget._syncScroll!.registerScrollController(_currentWeekScrollController);
   }
 
   @override
   void dispose() {
     super.dispose();
-    widget._syncScroll.unregisterScrollController(_currentWeekScrollController);
+    widget._syncScroll!.unregisterScrollController(_currentWeekScrollController);
   }
 
-  void selectEvent(BuildContext context, Event event) {
+  void selectEvent(BuildContext context, Event? event) {
     Navigator.of(context)
         .pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
@@ -119,7 +119,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
       widgets.add(Positioned(
-        top: (calendarEvent.event.startHour - widget.startHour) *
+        top: (calendarEvent.event!.startHour - widget.startHour) *
                 widget.hourHeight +
             widget.columnPaddingTop,
         left: calendarEvent.startX * widget.dayWidth,
@@ -150,8 +150,8 @@ class _CalendarWeekState extends State<CalendarWeek> {
                   ],
                 ),
               ),
-              height: (calendarEvent.event.endHour -
-                      calendarEvent.event.startHour) *
+              height: (calendarEvent.event!.endHour -
+                      calendarEvent.event!.startHour) *
                   widget.hourHeight,
             ),
           ),
@@ -274,7 +274,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
                                         widget.dayWidth - 2 * widget.columnGap,
                                     child: Container(
                                       color: settingsProvider
-                                          .currentTheme.lineColor,
+                                          .currentTheme!.lineColor,
                                       height: 1,
                                     ),
                                   ),
@@ -288,10 +288,10 @@ class _CalendarWeekState extends State<CalendarWeek> {
                   ),
                 ),
                 onNotification: (ScrollNotification scrollInfo) {
-                  widget._syncScroll.processNotification(
+                  widget._syncScroll!.processNotification(
                       scrollInfo, _currentWeekScrollController);
                   return;
-                }),
+                } as bool Function(ScrollNotification)?),
           ),
         ],
       ),

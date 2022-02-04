@@ -4,7 +4,7 @@ enum StatusBarBackground { Transparent, AccentColor }
 
 class StatusBarService {
   setStatusBarColor(
-      {bool darkTextOnLightBackground,
+      {required bool darkTextOnLightBackground,
       StatusBarBackground statusBarBackground =
           StatusBarBackground.AccentColor}) {
     SystemChrome.setSystemUIOverlayStyle(

@@ -4,10 +4,10 @@ import 'package:timecalendar/utils/color_utils.dart';
 import 'package:timecalendar/utils/icons_helper.dart';
 
 class EventTag {
-  final String name;
-  final Color color;
-  final String icon;
-  final IconData iconData;
+  final String? name;
+  final Color? color;
+  final String? icon;
+  final IconData? iconData;
 
   EventTag({
     this.name,
@@ -36,7 +36,7 @@ class EventTag {
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'color': ColorUtils.colorToHex(color),
+      'color': ColorUtils.colorToHex(color!),
       'icon': '',
     };
   }

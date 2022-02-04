@@ -10,9 +10,9 @@ import 'package:timecalendar/providers/events_provider.dart';
 import 'event_details_checklist_item.dart';
 
 class EventDetailsChecklist extends StatefulWidget {
-  final Event event;
+  final Event? event;
 
-  EventDetailsChecklist({Key key, this.event}) : super(key: key);
+  EventDetailsChecklist({Key? key, this.event}) : super(key: key);
 
   @override
   _EventDetailsChecklistState createState() => _EventDetailsChecklistState();
@@ -22,8 +22,8 @@ class _EventDetailsChecklistState extends State<EventDetailsChecklist> {
   // Track number of items
   // To set focus to the new added item
   int nbItems = -1;
-  ChecklistProvider checklistProvider;
-  EventsProvider eventsProvider;
+  late ChecklistProvider checklistProvider;
+  late EventsProvider eventsProvider;
 
   ChecklistFocusController checklistFocusController = ChecklistFocusController([]);
 
@@ -37,7 +37,7 @@ class _EventDetailsChecklistState extends State<EventDetailsChecklist> {
       eventsProvider = Provider.of<EventsProvider>(context, listen: false);
 
       checklistProvider.addListener(onChecklistChange);
-      checklistProvider.loadEventItems(widget.event.uid);
+      checklistProvider.loadEventItems(widget.event!.uid);
     });
   }
 
@@ -67,7 +67,7 @@ class _EventDetailsChecklistState extends State<EventDetailsChecklist> {
   Widget buildChecklist(
       BuildContext context, int index, ChecklistProvider checklistProvider) {
     return EventDetailsChecklistItem(
-      key: Key(checklistProvider.items[index].uuid),
+      key: Key(checklistProvider.items[index].uuid!),
       checklistItem: checklistProvider.items[index],
       checklistFocusController: checklistFocusController,
       removeItem: onRemove,

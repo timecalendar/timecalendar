@@ -14,13 +14,13 @@ import 'package:timecalendar/widgets/calendar/planning_rectangle_event.dart';
 
 class Planning extends StatefulWidget {
   const Planning({
-    Key key,
-    @required this.updateCurrentWeek,
-    @required this.currentWeek,
-    @required this.updateCurrentDay,
+    Key? key,
+    required this.updateCurrentWeek,
+    required this.currentWeek,
+    required this.updateCurrentDay,
   });
 
-  final int currentWeek;
+  final int? currentWeek;
   final ValueChanged<int> updateCurrentWeek;
 
   final Function updateCurrentDay;
@@ -48,7 +48,7 @@ class _PlanningState extends State<Planning> {
 
   var currentDayIndex = 0;
 
-  CalendarProvider calendarProvider;
+  late CalendarProvider calendarProvider;
 
   @override
   void initState() {
@@ -56,7 +56,7 @@ class _PlanningState extends State<Planning> {
     var events = Provider.of<EventsProvider>(context, listen: false);
     calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
     events.loadEventByDay();
-    calendarProvider.currentDayNotifier.addListener(onCurrentDayChange);
+    calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
     // WidgetsBinding.instance.addPostFrameCallback((_) =>
     // _itemScrollController.scrollTo(
@@ -80,7 +80,7 @@ class _PlanningState extends State<Planning> {
   @override
   void dispose() {
     super.dispose();
-    calendarProvider.currentDayNotifier.removeListener(onCurrentDayChange);
+    calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
   }
 
   void onCurrentDayChange() {
@@ -90,22 +90,22 @@ class _PlanningState extends State<Planning> {
             events.eventsByDay, calendarProvider.currentDay));
   }
 
-  void selectEvent(BuildContext context, Event event) {
+  void selectEvent(BuildContext context, Event? event) {
     Navigator.of(context)
         .pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
 
-  String getNextUid(EventsProvider events, DateTime day) {
+  String? getNextUid(EventsProvider events, DateTime day) {
     var date = DateTime.now();
     for (var event in events.homeEvents) {
-      if (date.isBefore(event.end)) {
+      if (date.isBefore(event!.end)) {
         return event.uid;
       }
     }
     return "";
   }
 
-  int getCurrentDayIndex(List<EventByDay> eventsByDay, DateTime day) {
+  int getCurrentDayIndex(List<EventByDay> eventsByDay, DateTime? day) {
     var currentDay = 0;
     DateTime currentDateTime;
     do {
@@ -115,7 +115,7 @@ class _PlanningState extends State<Planning> {
         return currentDay - 1;
       }
       currentDay++;
-    } while (currentDateTime.isBefore(day));
+    } while (currentDateTime.isBefore(day!));
     return currentDay - 1;
   }
 
@@ -139,14 +139,14 @@ class _PlanningState extends State<Planning> {
     );
   }
 
-  List<Widget> getEventWidgets(List<Event> dayEvents, int currentDayIndex) {
+  List<Widget> getEventWidgets(List<Event?> dayEvents, int currentDayIndex) {
     var events = CalendarEvent.listFromEvents(dayEvents);
     var settingsProvider = Provider.of<SettingsProvider>(context);
     var eventsProvider = Provider.of<EventsProvider>(context);
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
-      if (getNextUid(eventsProvider, calendarEvent.event.start) ==
-          calendarEvent.event.uid) {
+      if (getNextUid(eventsProvider, calendarEvent.event!.start) ==
+          calendarEvent.event!.uid) {
         widgets.add(drawIndicator());
       }
       widgets.add(Container(

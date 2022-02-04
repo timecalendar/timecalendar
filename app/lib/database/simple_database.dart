@@ -6,7 +6,7 @@ import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 
 class SimpleDatabase {
-  Database db;
+  Database? db;
 
   static final SimpleDatabase _instance = SimpleDatabase._();
   SimpleDatabase._();

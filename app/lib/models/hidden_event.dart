@@ -1,12 +1,10 @@
-import 'package:flutter/foundation.dart';
-
 class HiddenEvent {
-  final List<String> uidHiddenEvents;
-  final List<String> namedHiddenEvents;
+  final List<String?> uidHiddenEvents;
+  final List<String?> namedHiddenEvents;
 
   HiddenEvent({
-    @required this.uidHiddenEvents,
-    @required this.namedHiddenEvents,
+    required this.uidHiddenEvents,
+    required this.namedHiddenEvents,
   });
 
   factory HiddenEvent.fromMap(Map<String, dynamic> map) {

@@ -11,13 +11,13 @@ class SchoolProvider with ChangeNotifier {
   // Initialization
   List<School> _schools = [];
   List<School> _schoolsFiltered = [];
-  School _selectedSchool;
+  School? _selectedSchool;
 
   // End of initialization
 
   // Getter
   List<School> get schools => _schoolsFiltered;
-  School get selectedSchool => _selectedSchool;
+  School? get selectedSchool => _selectedSchool;
 
   // End of getter
 
@@ -37,7 +37,7 @@ class SchoolProvider with ChangeNotifier {
   Future<void> loadSchoolFromDatabase() async {
     _schools = await SchoolsManager().getSchools();
     _schools
-        .sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        .sort((a, b) => a.name!.toLowerCase().compareTo(b.name!.toLowerCase()));
     _schoolsFiltered = [..._schools];
     notifyListeners();
   }
@@ -62,7 +62,7 @@ class SchoolProvider with ChangeNotifier {
   Future<void> filterSchool(String filter) async {
     _schoolsFiltered = _schools
         .where((item) =>
-            includes(filter, item.name) || includes(filter, item.code))
+            includes(filter, item.name!) || includes(filter, item.code!))
         .toList();
     notifyListeners();
   }

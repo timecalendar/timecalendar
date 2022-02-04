@@ -6,20 +6,20 @@ import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/utils/date_utils.dart';
 
 class HiddenEventItem extends StatelessWidget {
-  final Event event;
-  final String namedEvent;
+  final Event? event;
+  final String? namedEvent;
   final int index;
   final Function removeItem;
   const HiddenEventItem({
-    Key key,
+    Key? key,
     this.event,
     this.namedEvent,
-    @required this.index,
-    @required this.removeItem,
+    required this.index,
+    required this.removeItem,
   }) : super(key: key);
 
   Widget infoText() {
-    var text = AppDateUtils.eventDateTimeText(event.start, event.end);
+    var text = AppDateUtils.eventDateTimeText(event!.start, event!.end);
     return Text(
       text,
       style: TextStyle(
@@ -80,7 +80,7 @@ class HiddenEventItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          (event != null) ? event.title : this.namedEvent,
+                          (event != null) ? event!.title! : this.namedEvent!,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -100,13 +100,13 @@ class HiddenEventItem extends StatelessWidget {
                         padding: EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: settingsProvider.currentTheme.primaryColor,
+                          color: settingsProvider.currentTheme!.primaryColor,
                         ),
                         child: IconButton(
                           tooltip: (event != null)
                               ? "Afficher l'événement"
                               : "Afficher les événements",
-                          color: settingsProvider.currentTheme.cardColor,
+                          color: settingsProvider.currentTheme!.cardColor,
                           icon: Icon(Icons.event_busy),
                           onPressed: () => this.removeItem(),
                         ),
@@ -117,7 +117,7 @@ class HiddenEventItem extends StatelessWidget {
               ),
             ),
             decoration: BoxDecoration(
-              color: settingsProvider.currentTheme.cardColor,
+              color: settingsProvider.currentTheme!.cardColor,
               borderRadius: BorderRadius.circular(15),
             ),
           ),

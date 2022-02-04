@@ -8,7 +8,7 @@ import 'package:timecalendar/database/simple_database.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/services/theme.dart';
 
-void init({String environment, FirebaseOptions firebaseOptions}) async {
+void init({required String environment, FirebaseOptions? firebaseOptions}) async {
   WidgetsFlutterBinding.ensureInitialized();
   // Environment variables
   await Environment.load(environment);

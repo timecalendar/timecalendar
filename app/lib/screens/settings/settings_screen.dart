@@ -17,7 +17,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  int _oldDateLimit;
+  int? _oldDateLimit;
 
   @override
   void initState() {
@@ -32,7 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
-  String _dateLimitText(int dateLimit) {
+  String _dateLimitText(int? dateLimit) {
     switch (dateLimit) {
       case 0:
         return 'Tous les cours à venir';
@@ -49,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  String _startupScreenText(String value) {
+  String _startupScreenText(String? value) {
     switch (value) {
       case 'calendar':
         return "Le calendrier";
@@ -60,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  String _themeText(String value) {
+  String _themeText(String? value) {
     switch (value) {
       case 'light':
         return "Clair";
@@ -98,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     print(String.fromEnvironment('API_URL'));
 
     return PrefService(
-      service: settingsProvider.prefServiceShared,
+      service: settingsProvider.prefServiceShared!,
       child: Scaffold(
         appBar: AppBar(
           title: Text('Paramètres'),
@@ -173,7 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       content: Text('Aucune connexion.'),
                     ),
                   );
-                  prefs.setInt('date_limit', _oldDateLimit);
+                  prefs.setInt('date_limit', _oldDateLimit!);
                   await _onSettingsChanged();
                 }
               },

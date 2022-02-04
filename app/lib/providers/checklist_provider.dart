@@ -4,16 +4,15 @@ import 'package:timecalendar/models/checklist_item.dart';
 
 class ChecklistProvider with ChangeNotifier {
   List<ChecklistItem> items = [];
-  ChecklistItem focusedItem;
+  late ChecklistItem focusedItem;
   ChecklistItemManager checklistItemManager = ChecklistItemManager();
 
-  Future<void> addItem(String eventUid) async {
+  Future<void> addItem(String? eventUid) async {
     var checklistItem = ChecklistItem(
-      eventUid: eventUid,
-      content: '',
-      isChecked: false,
-      order: items.length + 1
-    );
+        eventUid: eventUid,
+        content: '',
+        isChecked: false,
+        order: items.length + 1);
     // Add into the list
     items = List<ChecklistItem>.from(items)..add(checklistItem);
     // Insert into database
@@ -22,7 +21,7 @@ class ChecklistProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeItem(String uuid) async {
+  Future<void> removeItem(String? uuid) async {
     // Remove from the list
     items = List<ChecklistItem>.from(items)
       ..removeWhere((item) => item.uuid == uuid);
@@ -46,7 +45,7 @@ class ChecklistProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void loadEventItems(String eventUid) async {
+  void loadEventItems(String? eventUid) async {
     final checklistItemManager = ChecklistItemManager();
     items = await checklistItemManager.findAllByEventUid(eventUid);
 

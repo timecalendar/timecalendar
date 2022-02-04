@@ -3,9 +3,9 @@ import 'package:timecalendar/widgets/common/custom_button.dart';
 
 class AskForIcalUrl extends StatelessWidget {
   final TextEditingController _textFieldController = TextEditingController();
-  final Function onSubmit;
+  final Function? onSubmit;
 
-  AskForIcalUrl({Key key, this.onSubmit}) : super(key: key);
+  AskForIcalUrl({Key? key, this.onSubmit}) : super(key: key);
 
   _displayDialog(BuildContext context) async {
     return showDialog(
@@ -32,7 +32,7 @@ class AskForIcalUrl extends StatelessWidget {
 
                 await Future.delayed(Duration(milliseconds: 200));
 
-                onSubmit(_textFieldController.text);
+                onSubmit!(_textFieldController.text);
               },
             )
           ],

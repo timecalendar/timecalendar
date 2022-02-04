@@ -9,10 +9,10 @@ class ProfileItem extends StatelessWidget {
   final bool unread;
 
   const ProfileItem({
-    Key key,
-    @required this.title,
-    @required this.icon,
-    @required this.action,
+    Key? key,
+    required this.title,
+    required this.icon,
+    required this.action,
     this.unread = false,
   }) : super(key: key);
 
@@ -64,7 +64,7 @@ class ProfileItem extends StatelessWidget {
         decoration: BoxDecoration(
             border: Border(
               bottom:
-                  BorderSide(color: settingsProvider.currentTheme.lineColor),
+                  BorderSide(color: settingsProvider.currentTheme!.lineColor!),
             ),
             color: unread
                 ? Theme.of(context).primaryColorLight

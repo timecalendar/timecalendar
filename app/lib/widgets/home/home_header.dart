@@ -3,13 +3,13 @@ import 'package:timecalendar/models/event.dart';
 import 'package:timecalendar/utils/date_utils.dart';
 
 class HomeHeader extends StatelessWidget {
-  final List<Event> events;
-  final DateTime eventDay;
+  final List<Event?> events;
+  final DateTime? eventDay;
 
   const HomeHeader({
-    Key key,
-    @required this.eventDay,
-    @required this.events,
+    Key? key,
+    required this.eventDay,
+    required this.events,
   }) : super(key: key);
 
   @override

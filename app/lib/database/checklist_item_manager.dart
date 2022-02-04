@@ -9,23 +9,23 @@ class ChecklistItemEventCount {
 
 class ChecklistItemManager {
   static const String STORE_NAME = 'checklist_items';
-  final _store = stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => SimpleDatabase().db;
+  Database? get _db => SimpleDatabase().db;
 
   Future insert(ChecklistItem checklistItem) async {
     checklistItem.createdAt = DateTime.now();
     checklistItem.updatedAt = DateTime.now();
-    await _store.record(checklistItem.uuid).put(_db, checklistItem.toMap());
+    await _store.record(checklistItem.uuid).put(_db!, checklistItem.toMap());
   }
 
   Future update(ChecklistItem checklistItem) async {
     checklistItem.updatedAt = DateTime.now();
-    await _store.record(checklistItem.uuid).put(_db, checklistItem.toMap());
+    await _store.record(checklistItem.uuid).put(_db!, checklistItem.toMap());
   }
 
   Future updateAll(List<ChecklistItem> checklistItems) async {
-    await _db.transaction((txn) async {
+    await _db!.transaction((txn) async {
       for (var i = 0; i < checklistItems.length; i++) {
         await _store
             .record(checklistItems[i].uuid)
@@ -34,15 +34,15 @@ class ChecklistItemManager {
     });
   }
 
-  Future delete(String uuid) async {
+  Future delete(String? uuid) async {
     final finder = Finder(filter: Filter.byKey(uuid));
     await _store.delete(
-      _db,
+      _db!,
       finder: finder,
     );
   }
 
-  Future<List<ChecklistItem>> findAllByEventUid(String eventUid) async {
+  Future<List<ChecklistItem>> findAllByEventUid(String? eventUid) async {
     final finder = Finder(
       filter: Filter.equals('eventUid', eventUid),
       sortOrders: [
@@ -51,7 +51,7 @@ class ChecklistItemManager {
     );
 
     final records = await _store.find(
-      _db,
+      _db!,
       finder: finder,
     );
 
@@ -62,11 +62,11 @@ class ChecklistItemManager {
     }).toList();
   }
 
-  Future<Map<String, ChecklistItemEventCount>> findEventNumberOfNotes() async {
+  Future<Map<String?, ChecklistItemEventCount>> findEventNumberOfNotes() async {
     final records = await _store.find(
-      _db,
+      _db!,
     );
-    final numberOfNotes = Map<String, ChecklistItemEventCount>();
+    final numberOfNotes = Map<String?, ChecklistItemEventCount>();
 
     records.forEach((record) {
       final checklistItem = ChecklistItem.fromMap(record.value);
@@ -75,13 +75,13 @@ class ChecklistItemManager {
         numberOfNotes[checklistItem.eventUid] = ChecklistItemEventCount();
       }
 
-      if (checklistItem.isChecked) {
+      if (checklistItem.isChecked!) {
         // Add to completed
-      numberOfNotes[checklistItem.eventUid].completedNotes++;
+      numberOfNotes[checklistItem.eventUid]!.completedNotes++;
       }
 
       // Add to the total
-      numberOfNotes[checklistItem.eventUid].totalNotes++;
+      numberOfNotes[checklistItem.eventUid]!.totalNotes++;
     });
 
     return numberOfNotes;

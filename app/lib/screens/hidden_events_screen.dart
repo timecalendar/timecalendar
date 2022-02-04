@@ -5,7 +5,7 @@ import 'package:timecalendar/providers/events_provider.dart';
 import 'package:timecalendar/widgets/hidden_event/hidden_event_item.dart';
 
 class HiddenEventsScreen extends StatefulWidget {
-  HiddenEventsScreen({Key key}) : super(key: key);
+  HiddenEventsScreen({Key? key}) : super(key: key);
   static const routeName = '/hidden_events';
 
   @override

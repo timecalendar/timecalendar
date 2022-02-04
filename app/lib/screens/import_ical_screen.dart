@@ -26,7 +26,7 @@ class ImportIcalScreen extends StatefulWidget {
 
 class _ImportIcalScreenState extends State<ImportIcalScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  BuildContext dialogContext;
+  BuildContext? dialogContext;
 
   @override
   void initState() {
@@ -168,7 +168,7 @@ class _ImportIcalScreenState extends State<ImportIcalScreen> {
 
   void closeLoadingDialog() {
     if (dialogContext != null) {
-      Navigator.of(dialogContext).pop();
+      Navigator.of(dialogContext!).pop();
       dialogContext = null;
     }
   }
@@ -176,7 +176,7 @@ class _ImportIcalScreenState extends State<ImportIcalScreen> {
   @override
   Widget build(BuildContext context) {
     final ImportIcalScreenArguments args =
-        ModalRoute.of(context).settings.arguments;
+        ModalRoute.of(context)!.settings.arguments as ImportIcalScreenArguments;
     final isInternal = args.isInternal;
 
     final mediaQuery = MediaQuery.of(context);

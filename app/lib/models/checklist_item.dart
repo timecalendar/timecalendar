@@ -1,14 +1,14 @@
 import 'package:uuid/uuid.dart';
 
 class ChecklistItem {
-  String uuid;
-  String eventUid;
-  String content;
-  bool isChecked;
-  int order;
-  DateTime createdAt;
-  DateTime updatedAt;
-  DateTime deletedAt;
+  String? uuid;
+  String? eventUid;
+  String? content;
+  bool? isChecked;
+  int? order;
+  DateTime? createdAt;
+  DateTime? updatedAt;
+  DateTime? deletedAt;
 
   ChecklistItem({
     this.uuid,
@@ -48,9 +48,9 @@ class ChecklistItem {
     map['content'] = content;
     map['isChecked'] = isChecked;
     map['order'] = order;
-    map['createdAt'] = createdAt != null ? createdAt.toIso8601String() : null;
-    map['updatedAt'] = updatedAt != null ? updatedAt.toIso8601String() : null;
-    map['deletedAt'] = deletedAt != null ? deletedAt.toIso8601String() : null;
+    map['createdAt'] = createdAt != null ? createdAt!.toIso8601String() : null;
+    map['updatedAt'] = updatedAt != null ? updatedAt!.toIso8601String() : null;
+    map['deletedAt'] = deletedAt != null ? deletedAt!.toIso8601String() : null;
     return map;
   }
 

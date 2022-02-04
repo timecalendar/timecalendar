@@ -16,12 +16,11 @@ class EventDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Event event = ModalRoute.of(context).settings.arguments;
+    Event event = ModalRoute.of(context)!.settings.arguments as Event;
     final checklistProvider =
         Provider.of<ChecklistProvider>(context, listen: false);
     final eventsProvider = Provider.of<EventsProvider>(context, listen: false);
 
-    assert(event != null);
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -31,14 +30,14 @@ class EventDetailsScreen extends StatelessWidget {
                 EventDetailsHeader(event: event),
                 EventDetailsTitle(event: event),
                 if (event.tags.length > 0) EventDetailsTags(event: event),
-                if (event.location.length > 0)
+                if (event.location!.length > 0)
                   EventDetailsLine(
                       icon: Icons.location_on, text: event.location),
                 if (event.teachers.length > 0)
                   EventDetailsLine(
                       icon: FontAwesomeIcons.graduationCap,
                       text: event.teachers.join("\n")),
-                if (event.description.length > 0)
+                if (event.description!.length > 0)
                   EventDetailsLine(
                       icon: Icons.comment, text: event.description),
                 SizedBox(
@@ -91,7 +90,7 @@ class EventDetailsScreen extends StatelessWidget {
                       children: <Widget>[
                         Text(
                           'Mis à jour ' +
-                              AppDateUtils.fullDateTimeText(event.exportedAt),
+                              AppDateUtils.fullDateTimeText(event.exportedAt!),
                           style: TextStyle(color: Colors.grey),
                         ),
                       ],

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:timecalendar/utils/encoded_token.dart';
 
 import 'calendar.dart';
@@ -6,19 +5,19 @@ import 'custom_calendar.dart';
 
 class SelectedCalendar {
   /// 'custom' or 'unit'
-  String type;
-  String name;
-  bool enabled;
-  List<String> calendarIds;
+  String? type;
+  String? name;
+  bool? enabled;
+  List<String?> calendarIds;
 
   SelectedCalendar({
-    @required this.type,
-    @required this.name,
-    @required this.enabled,
-    @required this.calendarIds,
+    required this.type,
+    required this.name,
+    required this.enabled,
+    required this.calendarIds,
   });
 
-  factory SelectedCalendar.fromToken(String token) {
+  factory SelectedCalendar.fromToken(String? token) {
     return SelectedCalendar(
       type: 'custom',
       name: 'TimeCalendar',
@@ -57,7 +56,7 @@ class SelectedCalendar {
 /// The user can import his calendars from the web version,
 /// If the URL matches the TimeCalendar ICal URL format, we parse it and
 /// return a SelectedCalendar
-SelectedCalendar findSelectedCalendarFromUrl(String url) {
+SelectedCalendar? findSelectedCalendarFromUrl(String url) {
   RegExp regExp = RegExp(
       r"https:\/\/api\.timecalendar\.app\/calendar\/custom\/([a-zA-Z0-9-_~]+)\.ics");
   var allMatches = regExp.allMatches(url).toList();
@@ -66,7 +65,7 @@ SelectedCalendar findSelectedCalendarFromUrl(String url) {
     return null;
   }
   // Decode the calendar token
-  final encodedToken = allMatches[0].group(1);
+  final encodedToken = allMatches[0].group(1)!;
   final calendars = decodeEncodedToken(encodedToken);
 
   // Create a selected calendar

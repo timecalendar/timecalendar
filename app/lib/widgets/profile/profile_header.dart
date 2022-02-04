@@ -5,7 +5,7 @@ import 'package:timecalendar/providers/settings_provider.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
-    Key key,
+    Key? key,
   }) : super(key: key);
 
   @override

@@ -1,12 +1,12 @@
 import 'package:timecalendar/models/calendar.dart';
 
 class CustomCalendar extends Calendar {
-  final List<String> customCalendars;
+  final List<String?> customCalendars;
 
   CustomCalendar(this.customCalendars);
 
   @override
-  List<Object> getCalendarIds() {
+  List<Object?> getCalendarIds() {
     return customCalendars;
   }
 

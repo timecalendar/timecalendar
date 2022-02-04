@@ -15,10 +15,10 @@ import 'package:timecalendar/widgets/calendar/planning.dart';
 
 class CalendarScreen extends StatefulWidget {
   static const routeName = '/';
-  final BuildContext parentContext;
-  final FirebaseAnalyticsObserver observer;
+  final BuildContext? parentContext;
+  final FirebaseAnalyticsObserver? observer;
 
-  const CalendarScreen({Key key, this.parentContext, this.observer})
+  const CalendarScreen({Key? key, this.parentContext, this.observer})
       : super(key: key);
 
   @override
@@ -26,7 +26,7 @@ class CalendarScreen extends StatefulWidget {
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
-  int _currentWeek;
+  int? _currentWeek;
 
   final startHour = 7;
 
@@ -38,14 +38,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   var _isLoading = false;
 
-  CalendarProvider calendarProvider;
+  late CalendarProvider calendarProvider;
 
   void refreshCalendar() async {
     setState(() {
       _isLoading = true;
     });
     try {
-      widget.observer.analytics.logEvent(
+      widget.observer!.analytics.logEvent(
         name: 'refresh_calendar',
         parameters: {'action': 'calendar_menu_bar'},
       );
@@ -93,7 +93,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         mediaQuery.padding.top -
         appBarHeight -
         TabsScreen.navigationBarHeight -
-        MediaQuery.of(widget.parentContext).padding.bottom;
+        MediaQuery.of(widget.parentContext!).padding.bottom;
   }
 
   double get screenWidth {
@@ -139,7 +139,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
             updateCurrentDay: _updateCurrentDay,
           ),
         );
-        break;
       case CalendarViewType.Week:
         return Calendar(
           currentWeek: _currentWeek,
@@ -147,14 +146,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
           calendarWidth: calendarWidth,
           startHour: startHour,
           endHour: endHour,
-          nbOfVisibleDays: settingsProvider.showWeekends ? 7 : 5,
+          nbOfVisibleDays: settingsProvider.showWeekends! ? 7 : 5,
           observer: widget.observer,
           leftHoursWidth: leftHoursWidth,
           updateCurrentWeek: _updateCurrentWeek,
         );
-        break;
       default:
-        return null;
+        throw Exception();
     }
   }
 

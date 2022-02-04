@@ -13,10 +13,10 @@ class DifferencesManager {
   static const String STORE_NAME = 'differences';
   final _store = stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => SimpleDatabase().db;
+  Database? get _db => SimpleDatabase().db;
 
   Future<List<Difference>> getDifferences() async {
-    final records = await _store.find(_db,
+    final records = await _store.find(_db!,
         finder: Finder(
           sortOrders: [SortOrder('dateDiff', false)],
         ));
@@ -26,7 +26,7 @@ class DifferencesManager {
   }
 
   Future<void> addDifferences(List<Difference> differences) async {
-    await _db.transaction((txn) async {
+    await _db!.transaction((txn) async {
       // Insert new differences
       for (var i = 0; i < differences.length; i++) {
         await _store
@@ -37,6 +37,6 @@ class DifferencesManager {
   }
 
   Future<void> deleteAll() async {
-    await _store.delete(_db);
+    await _store.delete(_db!);
   }
 }

@@ -11,23 +11,23 @@ class EventManager {
   }
 
   static const String STORE_NAME = 'events';
-  final _store = stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => SimpleDatabase().db;
+  Database? get _db => SimpleDatabase().db;
 
-  Future<List<Event>> getEvents() async {
-    final records = await _store.find(_db);
+  Future<List<Event?>> getEvents() async {
+    final records = await _store.find(_db!);
     return records.map((record) => Event.fromDb(record.value)).toList();
   }
 
-  Future<void> setEvents(List<Event> events) async {
-    await _db.transaction((txn) async {
+  Future<void> setEvents(List<Event?> events) async {
+    await _db!.transaction((txn) async {
       // Delete all events
       await _store.delete(txn);
 
       // Insert new events
       for (var i = 0; i < events.length; i++) {
-        await _store.record(events[i].uid).put(txn, events[i].toMap());
+        await _store.record(events[i]!.uid).put(txn, events[i]!.toMap());
       }
     });
   }

@@ -12,12 +12,12 @@ class EventDetailsChecklistItem extends StatefulWidget {
   final ChecklistFocusController checklistFocusController;
 
   EventDetailsChecklistItem(
-      {Key key,
-      @required this.checklistItem,
-      @required this.removeItem,
-      @required this.onContentChanged,
-      @required this.onCheckChanged,
-      @required this.checklistFocusController})
+      {Key? key,
+      required this.checklistItem,
+      required this.removeItem,
+      required this.onContentChanged,
+      required this.onCheckChanged,
+      required this.checklistFocusController})
       : super(key: key);
 
   @override
@@ -28,7 +28,7 @@ class EventDetailsChecklistItem extends StatefulWidget {
 class _EventDetailsChecklistItemState extends State<EventDetailsChecklistItem> {
   final contentController = TextEditingController();
 
-  FocusNode focusNode;
+  FocusNode? focusNode;
 
   @override
   void initState() {
@@ -44,12 +44,12 @@ class _EventDetailsChecklistItemState extends State<EventDetailsChecklistItem> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    contentController.text = widget.checklistItem.content;
+    contentController.text = widget.checklistItem.content!;
   }
 
   @override
   void dispose() {
-    focusNode.dispose();
+    focusNode!.dispose();
     widget.checklistFocusController.removeListener(onRequestFocus);
 
     super.dispose();
@@ -89,7 +89,7 @@ class _EventDetailsChecklistItemState extends State<EventDetailsChecklistItem> {
                 TextField(
                   focusNode: focusNode,
                   maxLines: null,
-                  key: Key(widget.checklistItem.uuid),
+                  key: Key(widget.checklistItem.uuid!),
                   controller: contentController,
                   decoration: InputDecoration(
                     border: InputBorder.none,

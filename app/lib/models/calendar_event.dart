@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:timecalendar/models/event.dart';
 
 class CalendarEvent {
-  final Event event;
+  final Event? event;
 
   /// The start column
   int startColumn = 0;
@@ -23,21 +22,21 @@ class CalendarEvent {
     return endColumn / columns;
   }
 
-  CalendarEvent({@required this.event});
+  CalendarEvent({required this.event});
 
   /// Create a list of calendar events, with the position of each event in its column.
   ///
   /// * `events` A list of events
-  static List<CalendarEvent> listFromEvents(List<Event> events) {
+  static List<CalendarEvent> listFromEvents(List<Event?> events) {
     List<CalendarEvent> calendarEvents = [];
 
-    for (Event event in events) {
+    for (Event? event in events) {
       calendarEvents.add(CalendarEvent(event: event));
     }
 
     // Sort by start date
     calendarEvents.sort((a, b) {
-      return a.event.start.compareTo(b.event.start);
+      return a.event!.start.compareTo(b.event!.start);
     });
 
     // Check overlap events
@@ -92,7 +91,7 @@ class CalendarEvent {
           // Find the largest column where we can fit the event
           bool eventOverlapInColumn = false;
           for (CalendarEvent overlapOfColumn in overlapsOfColumn) {
-            if (calendarEvent.event.isOverlap(overlapOfColumn.event)) {
+            if (calendarEvent.event!.isOverlap(overlapOfColumn.event!)) {
               eventOverlapInColumn = true;
               // print(
               //     '      > OVERLAP - Overlap by ${overlapOfColumn.event.title}');
@@ -174,7 +173,7 @@ class CalendarEvent {
       // Do not add current event
       if (overlap == calendarEvent) continue;
 
-      if (calendarEvent.event.isOverlap(overlap.event)) {
+      if (calendarEvent.event!.isOverlap(overlap.event!)) {
         // Check if the event is already added
         if (!overlapEvents.contains(overlap)) {
           // Event overlap

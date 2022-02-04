@@ -4,8 +4,8 @@ import 'package:timecalendar/models/onboarding_page.dart';
 class PageContent extends StatelessWidget {
   final PageModel page;
   const PageContent({
-    Key key,
-    @required this.page,
+    Key? key,
+    required this.page,
   }) : super(key: key);
 
   @override

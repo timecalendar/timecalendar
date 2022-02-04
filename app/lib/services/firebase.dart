@@ -18,7 +18,7 @@ class FirebaseService {
         name: 'app_theme', value: darkMode ? 'dark' : 'light');
   }
 
-  static void setStartupScreen(String startupScreen) {
+  static void setStartupScreen(String? startupScreen) {
     analytics.setUserProperty(name: 'startup_screen', value: startupScreen);
   }
 }

@@ -1,5 +1,5 @@
 class QrCodeResult {
-  String url;
+  String? url;
 
   QrCodeResult({this.url});
 }

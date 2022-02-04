@@ -15,7 +15,7 @@ class ConnectScreen extends StatelessWidget {
     // Show assistant screen
     Navigator.pushNamed(context, AssistantScreen.routeName).then((result) {
       // Callback assistant screen
-      assistantProvider.assistantCallback(context, result);
+      assistantProvider.assistantCallback(context, result as Map<String, dynamic>?);
     });
   }
 
@@ -58,14 +58,14 @@ class ConnectScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 40),
                           if (assistantProvider.websiteUrl != null &&
-                              assistantProvider.websiteUrl.length > 0)
+                              assistantProvider.websiteUrl!.length > 0)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 CustomButton(
                                   onPressed: () {
                                     UrlLauncher.launchUrl(
-                                        assistantProvider.websiteUrl);
+                                        assistantProvider.websiteUrl!);
                                   },
                                   icon: FontAwesomeIcons.externalLinkAlt,
                                   text: assistantProvider.schoolName ??

@@ -5,17 +5,17 @@ import 'package:timecalendar/providers/settings_provider.dart';
 
 class SearchBar extends StatelessWidget {
   const SearchBar({
-    Key key,
+    Key? key,
     this.onChanged,
     this.placeholder,
     this.onTap,
-    @required TextEditingController searchFieldController,
+    required TextEditingController searchFieldController,
   })  : _searchFieldController = searchFieldController,
         super(key: key);
 
-  final Function onChanged;
-  final Function onTap;
-  final String placeholder;
+  final Function? onChanged;
+  final Function? onTap;
+  final String? placeholder;
   final TextEditingController _searchFieldController;
 
   @override
@@ -33,7 +33,7 @@ class SearchBar extends StatelessWidget {
         ],
       ),
       child: Material(
-        color: settingsProvider.currentTheme.cardColor,
+        color: settingsProvider.currentTheme!.cardColor,
         borderRadius: BorderRadius.circular(15),
         child: Padding(
           padding: const EdgeInsets.only(
@@ -43,14 +43,14 @@ class SearchBar extends StatelessWidget {
             right: 15,
           ),
           child: TextField(
-            onChanged: onChanged,
+            onChanged: onChanged as void Function(String)?,
             controller: _searchFieldController,
             decoration: InputDecoration(
               icon: Icon(FontAwesomeIcons.search),
               hintText: placeholder,
             ),
             onTap: () {
-              if (onTap != null) onTap();
+              if (onTap != null) onTap!();
             },
           ),
         ),

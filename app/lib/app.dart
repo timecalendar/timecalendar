@@ -100,8 +100,8 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
 
           SystemUiOverlayStyle style =
               darkMode ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark;
-          AppTheme appTheme = settingsProvider.currentTheme;
-          ThemeData theme = appTheme.theme;
+          AppTheme appTheme = settingsProvider.currentTheme!;
+          ThemeData? theme = appTheme.theme;
 
           SystemChrome.setSystemUIOverlayStyle(style.copyWith(
             statusBarColor: Colors.transparent,

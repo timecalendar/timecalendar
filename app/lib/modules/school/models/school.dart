@@ -1,25 +1,24 @@
-import 'package:flutter/foundation.dart';
 import 'package:timecalendar/models/school_assistant.dart';
 
 class School {
-  final String code;
-  final String name;
-  final String siteurl;
+  final String? code;
+  final String? name;
+  final String? siteurl;
   final bool visible;
-  final int nbGrades;
-  final String calendarUrl;
-  final SchoolAssistant assistant;
-  final SchoolAssistant fallbackAssistant;
+  final int? nbGrades;
+  final String? calendarUrl;
+  final SchoolAssistant? assistant;
+  final SchoolAssistant? fallbackAssistant;
 
   School({
-    @required this.code,
-    @required this.name,
-    @required this.siteurl,
-    @required this.visible,
-    @required this.nbGrades,
-    @required this.calendarUrl,
-    @required this.assistant,
-    @required this.fallbackAssistant,
+    required this.code,
+    required this.name,
+    required this.siteurl,
+    required this.visible,
+    required this.nbGrades,
+    required this.calendarUrl,
+    required this.assistant,
+    required this.fallbackAssistant,
   });
 
   factory School.fromInternalDb(Map<String, dynamic> dbMap) {
@@ -65,8 +64,9 @@ class School {
       'visible': visible,
       'nbGrades': nbGrades,
       'calendarUrl': calendarUrl,
-      'assistant': (assistant == null) ? null : assistant.toMap(),
-      'fallbackAssistant': (fallbackAssistant == null) ? null : fallbackAssistant.toMap(),
+      'assistant': (assistant == null) ? null : assistant!.toMap(),
+      'fallbackAssistant':
+          (fallbackAssistant == null) ? null : fallbackAssistant!.toMap(),
     };
     return map;
   }

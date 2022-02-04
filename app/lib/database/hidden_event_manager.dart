@@ -13,10 +13,10 @@ class HiddenEventManager {
   static const String STORE_NAME = 'hidden_events';
   final _store = stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => SimpleDatabase().db;
+  Database? get _db => SimpleDatabase().db;
 
   Future<HiddenEvent> getHiddenEvents() async {
-    final records = await _store.find(_db);
+    final records = await _store.find(_db!);
 
     return (records.length > 0)
         ? records.map((record) => HiddenEvent.fromMap(record.value)).toList()[0]
@@ -24,7 +24,7 @@ class HiddenEventManager {
   }
 
   Future<void> setHiddenEvents(HiddenEvent hiddenEvents) async {
-    await _db.transaction((txn) async {
+    await _db!.transaction((txn) async {
       // Delete hidden events
       await _store.delete(txn);
 

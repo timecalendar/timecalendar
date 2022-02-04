@@ -1,8 +1,8 @@
 class SchoolAssistant {
-  final String code;
-  final bool isNative;
-  final bool needsConnection;
-  final bool needsGradeName;
+  final String? code;
+  final bool? isNative;
+  final bool? needsConnection;
+  final bool? needsGradeName;
 
   SchoolAssistant({
     this.code,
@@ -12,7 +12,6 @@ class SchoolAssistant {
   });
 
   factory SchoolAssistant.fromInternalDb(Map<String, dynamic> dbMap) {
-    if (dbMap == null) return null;
     Map<String, dynamic> map = Map.from(dbMap);
     return SchoolAssistant(
       code: map['code'],
@@ -23,7 +22,6 @@ class SchoolAssistant {
   }
 
   factory SchoolAssistant.fromApi(Map<String, dynamic> dbMap) {
-    if (dbMap == null) return null;
     Map<String, dynamic> map = Map.from(dbMap);
     return SchoolAssistant(
       code: map['code'],

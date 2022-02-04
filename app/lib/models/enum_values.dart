@@ -9,11 +9,11 @@ class EnumValues<T> {
     });
   }
 
-  String stringValue(T val) {
+  String? stringValue(T val) {
     return reverseMap[val];
   }
 
-  T fromString(String val) {
+  T? fromString(String val) {
     return map[val];
   }
 

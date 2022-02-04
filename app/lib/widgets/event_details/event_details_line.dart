@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class EventDetailsLine extends StatelessWidget {
   const EventDetailsLine({
-    Key key,
-    @required this.text,
-    @required this.icon,
+    Key? key,
+    required this.text,
+    required this.icon,
   }) : super(key: key);
 
   final IconData icon;
-  final String text;
+  final String? text;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class EventDetailsLine extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              text,
+              text!,
               style: TextStyle(fontSize: 16),
             ),
           ),

@@ -14,14 +14,14 @@ class AddSchoolScreen extends StatefulWidget {
 
 class _AddSchoolScreenState extends State<AddSchoolScreen> {
   final _form = GlobalKey<FormState>();
-  String schoolName;
+  String? schoolName;
 
   Future<void> _saveForm() async {
-    final isValid = _form.currentState.validate();
+    final isValid = _form.currentState!.validate();
     if (!isValid) {
       return;
     }
-    _form.currentState.save();
+    _form.currentState!.save();
 
     var assistantProvider =
         Provider.of<AssistantProvider>(context, listen: false);
@@ -77,7 +77,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                               decoration: InputDecoration(
                                   labelText: 'Nom de votre établissement'),
                               validator: (value) {
-                                if (value.isEmpty) {
+                                if (value!.isEmpty) {
                                   return 'Vous devez entrer le nom de votre établissement.';
                                 }
                                 return null;

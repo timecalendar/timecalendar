@@ -62,13 +62,13 @@ class NotificationService {
   }
 
   void handleNotification(Map<String, dynamic> message) {
-    String action = message['action'];
+    String? action = message['action'];
 
     if (!this.listeners.containsKey(action)) {
       return;
     }
 
-    this.listeners[action].forEach((listener) {
+    this.listeners[action!]!.forEach((listener) {
       listener(message);
     });
   }
@@ -78,7 +78,7 @@ class NotificationService {
       this.listeners[action] = [];
     }
 
-    this.listeners[action].add(listener);
+    this.listeners[action]!.add(listener);
   }
 
   void removeEventListener(String action, NotificationListener listener) {
@@ -86,7 +86,7 @@ class NotificationService {
       return;
     }
 
-    this.listeners[action].remove(listener);
+    this.listeners[action]!.remove(listener);
   }
 
   Future<void> subscribe() async {

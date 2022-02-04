@@ -6,8 +6,8 @@ import 'package:timecalendar/utils/date_utils.dart';
 
 class EventDetailsTitle extends StatelessWidget {
   const EventDetailsTitle({
-    Key key,
-    @required this.event,
+    Key? key,
+    required this.event,
   }) : super(key: key);
 
   final Event event;
@@ -39,7 +39,7 @@ class EventDetailsTitle extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  event.title,
+                  event.title!,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,

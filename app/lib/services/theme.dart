@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:timecalendar/utils/color_utils.dart';
 
 class AppTheme {
-  static AppTheme _lightTheme;
-  static AppTheme _darkTheme;
+  static AppTheme? _lightTheme;
+  static AppTheme? _darkTheme;
 
-  static AppTheme get lightTheme => _lightTheme;
-  static AppTheme get darkTheme => _darkTheme;
+  static AppTheme? get lightTheme => _lightTheme;
+  static AppTheme? get darkTheme => _darkTheme;
 
-  ThemeData theme;
-  final Color backgroundColor;
-  final Color cardColor;
-  final Color lineColor;
+  ThemeData? theme;
+  final Color? backgroundColor;
+  final Color? cardColor;
+  final Color? lineColor;
   final Color primaryColor = Colors.pink;
-  final Color primaryColorLight = Colors.pink[100];
-  final Color primaryColorDark = Colors.pink[700];
+  final Color? primaryColorLight = Colors.pink[100];
+  final Color? primaryColorDark = Colors.pink[700];
   final Color accentColor = Colors.pinkAccent;
 
   AppTheme(
-      {bool darkMode, this.backgroundColor, this.cardColor, this.lineColor}) {
+      {required bool darkMode, this.backgroundColor, this.cardColor, this.lineColor}) {
     this.theme = ThemeData(
       buttonTheme: ButtonThemeData(
         minWidth: 10,
@@ -45,13 +45,13 @@ class AppTheme {
       appBarTheme: AppBarTheme(backgroundColor: primaryColor),
     );
 
-    this.theme = this.theme.copyWith(
+    this.theme = this.theme!.copyWith(
           snackBarTheme: SnackBarThemeData(
             backgroundColor: cardColor,
-            contentTextStyle: theme.textTheme.bodyText2,
+            contentTextStyle: theme!.textTheme.bodyText2,
           ),
           colorScheme: this
-              .theme
+              .theme!
               .colorScheme
               .copyWith(primary: primaryColor, secondary: accentColor),
         );
