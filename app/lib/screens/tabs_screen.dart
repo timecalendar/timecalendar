@@ -140,7 +140,7 @@ class _TabsScreenState extends State<TabsScreen>
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
-    final appTheme = settingsProvider.currentTheme!;
+    final appTheme = settingsProvider.currentTheme;
     if (!_checkDisplayChangelog) {
       WidgetsBinding.instance!.addPostFrameCallback(
           (_) => displayChangelog(context, settingsProvider.currentVersion!));

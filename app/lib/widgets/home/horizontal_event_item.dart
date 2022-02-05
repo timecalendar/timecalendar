@@ -28,7 +28,7 @@ class HorizontalEventItem extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: settingsProvider.currentTheme!.cardColor,
+          color: settingsProvider.currentTheme.cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () {

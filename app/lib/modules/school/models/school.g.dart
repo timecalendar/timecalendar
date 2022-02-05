@@ -6,7 +6,7 @@ part of 'school.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-School _$SchoolFromJson(Map<String, dynamic> json) => School(
+_$_School _$$_SchoolFromJson(Map<String, dynamic> json) => _$_School(
       code: json['code'] as String,
       name: json['name'] as String,
       siteUrl: json['siteUrl'] as String,
@@ -21,7 +21,7 @@ School _$SchoolFromJson(Map<String, dynamic> json) => School(
               json['fallbackAssistant'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$SchoolToJson(School instance) => <String, dynamic>{
+Map<String, dynamic> _$$_SchoolToJson(_$_School instance) => <String, dynamic>{
       'code': instance.code,
       'name': instance.name,
       'siteUrl': instance.siteUrl,

@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
-import 'package:timecalendar/modules/school/providers/school_selection_provider.dart';
-import 'package:timecalendar/modules/school/screens/school_selection/school_list.dart';
+import 'package:timecalendar/modules/school/screens/school_selection/school_selection_content.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_header.dart';
 import 'package:timecalendar/providers/assistant_provider.dart';
 import 'package:timecalendar/providers/old_school_provider.dart';
 import 'package:timecalendar/screens/add_school_screen.dart';
-import 'package:timecalendar/utils/snackbar.dart';
-import 'package:timecalendar/widgets/common/search_bar.dart';
 import 'package:timecalendar/screens/assistant_screen.dart';
+import 'package:timecalendar/utils/snackbar.dart';
 
 class SelectSchool extends ConsumerStatefulWidget {
   static const routeName = '/select_establishment';
@@ -23,23 +21,7 @@ class SelectSchool extends ConsumerStatefulWidget {
 
 class _SelectSchoolState extends ConsumerState<SelectSchool> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _searchFieldController = TextEditingController();
-
-  refreshSchool() async {
-    final schoolList = ref.refresh(schoolListProvider);
-
-    schoolList.whenOrNull(
-      error: (err, stack) => showSnackBar(
-        context,
-        SnackBar(
-          content: Text('Aucune connexion.'),
-        ),
-      ),
-    );
-  }
 
   loadSchoolAssistant() {
     provider.Provider.of<AssistantProvider>(context, listen: false)
@@ -47,7 +29,7 @@ class _SelectSchoolState extends ConsumerState<SelectSchool> {
     Navigator.of(context).pushNamed(AddSchoolScreen.routeName);
   }
 
-  loadGradeAssistant(School school) {
+  void selectSchool(School school) {
     final assistantProvider =
         provider.Provider.of<AssistantProvider>(context, listen: false);
     assistantProvider.initBySchool(school);
@@ -60,10 +42,6 @@ class _SelectSchoolState extends ConsumerState<SelectSchool> {
             context, result as Map<String, dynamic>?);
       }
     });
-  }
-
-  void selectSchool(School school) {
-    loadGradeAssistant(school);
   }
 
   void filterSchoolList(String value) {
@@ -80,11 +58,21 @@ class _SelectSchoolState extends ConsumerState<SelectSchool> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<List<School>>>(schoolSelectionControllerProvider,
+        (_, value) {
+      value.whenOrNull(
+        error: (e, st) => showSnackBar(
+          context,
+          SnackBar(content: Text('Aucune connexion.')),
+        ),
+      );
+    });
+
     return Scaffold(
       key: _scaffoldKey,
       body: RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: () => refreshSchool(),
+        onRefresh: () =>
+            ref.read(schoolSelectionControllerProvider.notifier).fetch(),
         child: CustomScrollView(
           controller: _scrollController,
           physics: AlwaysScrollableScrollPhysics(),
@@ -93,17 +81,10 @@ class _SelectSchoolState extends ConsumerState<SelectSchool> {
               loadSchoolAssistant: loadSchoolAssistant,
               scrollController: _scrollController,
             ),
-            SliverStickyHeader(
-              header: Container(
-                padding: EdgeInsets.all(15),
-                child: SearchBar(
-                  searchFieldController: _searchFieldController,
-                  onChanged: filterSchoolList,
-                  placeholder: 'Rechercher un établissement',
-                  onTap: searchFocus,
-                ),
-              ),
-              sliver: SchoolList(),
+            SchoolSelectionContent(
+              onTap: searchFocus,
+              onSchoolSelect: selectSchool,
+              onSchoolNotFoundPressed: loadSchoolAssistant,
             ),
           ],
         ),
