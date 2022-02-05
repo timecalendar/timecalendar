@@ -104,7 +104,7 @@ class AssistantProvider with ChangeNotifier {
 
       // Create the calendar
       final rep = await http.post(
-        Uri.parse(Environment.mainApiUrl + "/calendar/custom"),
+        Uri.parse(Environment.oldApiUrl + "/calendar/custom"),
         body: jsonEncode(body),
       );
 

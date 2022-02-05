@@ -3,7 +3,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/providers/assistant_provider.dart';
-import 'package:timecalendar/providers/school_provider.dart';
+import 'package:timecalendar/providers/old_school_provider.dart';
 import 'package:timecalendar/screens/add_school_screen.dart';
 import 'package:timecalendar/utils/snackbar.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
@@ -56,7 +56,8 @@ class _SelectSchoolState extends State<SelectSchool> {
     if (!_isInit) {
       _isInit = true;
     }
-    var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
+    var schoolProvider =
+        Provider.of<OLD_SchoolProvider>(context, listen: false);
     try {
       await schoolProvider.loadSchools();
     } on Exception catch (_) {
@@ -84,13 +85,15 @@ class _SelectSchoolState extends State<SelectSchool> {
     Navigator.of(context).pushNamed(nextScreen).then((result) {
       if (nextScreen == AssistantScreen.routeName) {
         // Callback assistant screen
-        assistantProvider.assistantCallback(context, result as Map<String, dynamic>?);
+        assistantProvider.assistantCallback(
+            context, result as Map<String, dynamic>?);
       }
     });
   }
 
   Widget _itemBuilder(BuildContext context, int index) {
-    var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
+    var schoolProvider =
+        Provider.of<OLD_SchoolProvider>(context, listen: false);
     if (index == schoolProvider.schools.length) {
       return Padding(
         padding: const EdgeInsets.all(15.0),
@@ -106,13 +109,15 @@ class _SelectSchoolState extends State<SelectSchool> {
   }
 
   void selectSchool(School school) {
-    var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
+    var schoolProvider =
+        Provider.of<OLD_SchoolProvider>(context, listen: false);
     schoolProvider.setSelectedSchool(school);
     loadGradeAssistant(school);
   }
 
   void filterSchoolList(String value) {
-    var schoolProvider = Provider.of<SchoolProvider>(context, listen: false);
+    var schoolProvider =
+        Provider.of<OLD_SchoolProvider>(context, listen: false);
     schoolProvider.filterSchool(value);
   }
 
@@ -128,7 +133,7 @@ class _SelectSchoolState extends State<SelectSchool> {
 
   @override
   Widget build(BuildContext context) {
-    var schoolProvider = Provider.of<SchoolProvider>(context);
+    var schoolProvider = Provider.of<OLD_SchoolProvider>(context);
 
     final mediaQuery = MediaQuery.of(context);
     final availableWidth = mediaQuery.size.width - 160;

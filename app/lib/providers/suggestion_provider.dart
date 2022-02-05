@@ -46,7 +46,7 @@ class SuggestionProvider with ChangeNotifier {
       }
 
       var rep = await http.post(
-        Uri.parse(Environment.mainApiUrl + "/report-problem"),
+        Uri.parse(Environment.oldApiUrl + "/report-problem"),
         body: jsonEncode(body),
       );
       if (rep.statusCode >= 400) {

@@ -53,7 +53,7 @@ class NotificationService {
       };
       body.addAll(calendar.getRequestMap());
       await http.post(
-        Uri.parse(Environment.mainApiUrl + "/fcm/subscribe"),
+        Uri.parse(Environment.oldApiUrl + "/fcm/subscribe"),
         body: jsonEncode(body),
       );
     } on Exception catch (error) {
