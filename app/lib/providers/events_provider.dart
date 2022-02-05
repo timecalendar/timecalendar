@@ -8,8 +8,7 @@ import 'package:timecalendar/models/hidden_event.dart';
 import 'package:timecalendar/models/event_by_day.dart';
 import 'package:timecalendar/services/notification/notification.dart';
 import 'package:timecalendar/utils/date_utils.dart';
-
-import '../models/event.dart';
+import 'package:timecalendar/models/event.dart';
 
 class EventsProvider with ChangeNotifier {
   static final today = DateTime.now();

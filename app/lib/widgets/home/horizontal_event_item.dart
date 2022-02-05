@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/screens/event_details_screen.dart';
-import '../../models/event.dart';
+import 'package:timecalendar/models/event.dart';
 
 class HorizontalEventItem extends StatelessWidget {
   final Event? event;
@@ -61,14 +61,17 @@ class HorizontalEventItem extends StatelessWidget {
                               DateFormat.jm('fr').format(event!.end),
                         ),
                       ),
-                      if (event!.totalNotes > 0) Container(
-                        height: 12,
-                        width: 12,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: (event!.completedNotes == event!.totalNotes) ? Colors.black.withOpacity(0.2) : Theme.of(context).primaryColor,
-                        ),
-                      )
+                      if (event!.totalNotes > 0)
+                        Container(
+                          height: 12,
+                          width: 12,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: (event!.completedNotes == event!.totalNotes)
+                                ? Colors.black.withOpacity(0.2)
+                                : Theme.of(context).primaryColor,
+                          ),
+                        )
                     ],
                   ),
                   Expanded(

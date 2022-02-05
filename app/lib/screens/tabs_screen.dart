@@ -13,8 +13,7 @@ import 'package:timecalendar/screens/profile_screen.dart';
 import 'package:timecalendar/services/notification/notification.dart';
 import 'package:timecalendar/utils/constants.dart';
 import 'package:timecalendar/utils/snackbar.dart';
-
-import 'activity_screen.dart';
+import 'package:timecalendar/screens/activity_screen.dart';
 
 class TabsScreen extends StatefulWidget {
   TabsScreen(this.observer);

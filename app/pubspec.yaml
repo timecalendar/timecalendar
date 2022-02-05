@@ -36,7 +36,6 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_material_color_picker: ^1.1.0+2
-  flutter_riverpod: ^1.0.3
   flutter_sticky_header: ^0.6.0
   font_awesome_flutter: ^9.2.0
   freezed: ^1.1.1

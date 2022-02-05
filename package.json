@@ -31,7 +31,9 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --cache --fix"
-    ]
+    ],
+    "*.js": "eslint --cache --fix",
+    "*.dart": ["flutter format", "./bin/flutter-analyze.sh"]
   },
   "dependencies": {
     "@nestjs/common": "^8.0.0",

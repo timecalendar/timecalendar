@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:timecalendar/modules/school/models/school.dart';
@@ -11,8 +11,7 @@ import 'package:timecalendar/providers/old_school_provider.dart';
 import 'package:timecalendar/screens/add_school_screen.dart';
 import 'package:timecalendar/utils/snackbar.dart';
 import 'package:timecalendar/widgets/common/search_bar.dart';
-
-import '../../../../screens/assistant_screen.dart';
+import 'package:timecalendar/screens/assistant_screen.dart';
 
 class SelectSchool extends ConsumerStatefulWidget {
   static const routeName = '/select_establishment';

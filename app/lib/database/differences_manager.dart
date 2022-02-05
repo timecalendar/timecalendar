@@ -1,6 +1,6 @@
 import 'package:sembast/sembast.dart';
 import 'package:timecalendar/models/difference.dart';
-import 'simple_database.dart';
+import 'package:timecalendar/database/simple_database.dart';
 
 class DifferencesManager {
   static final DifferencesManager _instance = DifferencesManager._();

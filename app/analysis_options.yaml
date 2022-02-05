@@ -5,3 +5,8 @@ analyzer:
     deprecated_member_use_from_same_package: ignore
   exclude:
     - "**/*.g.dart"
+
+linter:
+  rules:
+    - always_use_package_imports
+    - avoid_relative_lib_imports

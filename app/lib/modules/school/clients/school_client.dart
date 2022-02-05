@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:timecalendar/modules/dio/providers/dio_provider.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
@@ -26,3 +26,5 @@ class FetchSchoolsResponse {
   factory FetchSchoolsResponse.fromJson(Map<String, Object?> json) =>
       _$FetchSchoolsResponseFromJson(json);
 }
+
+final schoolClientProvider = Provider((ref) => SchoolClient(ref.read));
