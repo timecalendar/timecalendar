@@ -11,7 +11,7 @@ import 'package:timecalendar/providers/auth_provider.dart';
 import 'package:timecalendar/providers/calendar_provider.dart';
 import 'package:timecalendar/providers/checklist_provider.dart';
 import 'package:timecalendar/providers/note_provider.dart';
-import 'package:timecalendar/providers/school_provider.dart';
+import 'package:timecalendar/providers/old_school_provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/providers/suggestion_provider.dart';
 import 'package:timecalendar/screens/activity_screen.dart';
@@ -25,7 +25,7 @@ import 'package:timecalendar/screens/event_details_screen.dart';
 import 'package:timecalendar/screens/hidden_events_screen.dart';
 import 'package:timecalendar/screens/import_ical_screen.dart';
 import 'package:timecalendar/screens/login_screen.dart';
-import 'package:timecalendar/screens/onboarding_screen.dart';
+import 'package:timecalendar/modules/onboarding/screens/onboarding_screen.dart';
 import 'package:timecalendar/modules/school/screens/school_selection_screen.dart';
 import 'package:timecalendar/screens/settings/settings_screen.dart';
 import 'package:timecalendar/screens/splash_screen.dart';
@@ -69,7 +69,7 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
           create: (_) => ActivityProvider(),
         ),
         ChangeNotifierProvider(
-          create: (_) => SchoolProvider(),
+          create: (_) => OLD_SchoolProvider(),
         ),
         ChangeNotifierProvider(
           create: (_) => SettingsProvider(),

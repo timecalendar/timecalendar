@@ -34,7 +34,7 @@ class ActivityProvider with ChangeNotifier {
       final body = selectedCalendar[0].getRequestMap();
       body['lastUpdate'] = lastUpdate;
       final rep = await http.post(
-        Uri.parse(Environment.mainApiUrl + "/activity"),
+        Uri.parse(Environment.oldApiUrl + "/activity"),
         body: jsonEncode(body),
       );
 

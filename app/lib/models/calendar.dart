@@ -8,7 +8,7 @@ import 'event.dart';
 abstract class Calendar {
   Future<List<Event?>> fetchEventsFromApi() async {
     final rep = await http.post(
-      Uri.parse(Environment.mainApiUrl + "/calendar"),
+      Uri.parse(Environment.oldApiUrl + "/calendar"),
       body: jsonEncode(getRequestMap()),
     );
 

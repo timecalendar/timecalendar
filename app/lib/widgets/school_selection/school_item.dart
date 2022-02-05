@@ -58,7 +58,7 @@ class SchoolItem extends StatelessWidget {
                       padding: const EdgeInsets.all(5.0),
                       child: Image(
                         image: NetworkImageWithRetry(
-                          Environment.mainApiUrl +
+                          Environment.oldApiUrl +
                               '/images/schools/' +
                               school.code!,
                         ),

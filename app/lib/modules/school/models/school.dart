@@ -39,7 +39,7 @@ class School {
     );
   }
 
-  factory School.fromApi(Map<String, dynamic> map) {
+  factory School.oldFromApi(Map<String, dynamic> map) {
     return School(
       code: map['code'],
       name: map['name'],
@@ -64,9 +64,8 @@ class School {
       'visible': visible,
       'nbGrades': nbGrades,
       'calendarUrl': calendarUrl,
-      'assistant': (assistant == null) ? null : assistant!.toMap(),
-      'fallbackAssistant':
-          (fallbackAssistant == null) ? null : fallbackAssistant!.toMap(),
+      'assistant': assistant?.toMap(),
+      'fallbackAssistant': fallbackAssistant?.toMap(),
     };
     return map;
   }

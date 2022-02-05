@@ -7,7 +7,7 @@ import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/schools_manager.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
 
-class SchoolProvider with ChangeNotifier {
+class OLD_SchoolProvider with ChangeNotifier {
   // Initialization
   List<School> _schools = [];
   List<School> _schoolsFiltered = [];
@@ -45,13 +45,12 @@ class SchoolProvider with ChangeNotifier {
   /// Load schools from api and save it in the database
   Future<void> fetchAndSetSchools() async {
     try {
-      final rep =
-          await http.get(Uri.parse(Environment.mainApiUrl + '/schools'));
+      final rep = await http.get(Uri.parse(Environment.oldApiUrl + '/schools'));
       List<dynamic> rawSchools = jsonDecode(rep.body);
 
       var schoolManager = SchoolsManager();
-      await schoolManager
-          .setSchools(rawSchools.map((item) => School.fromApi(item)).toList());
+      await schoolManager.setSchools(
+          rawSchools.map((item) => School.oldFromApi(item)).toList());
 
       await loadSchoolFromDatabase();
     } on Exception catch (error) {

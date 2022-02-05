@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 import 'package:timecalendar/providers/events_provider.dart';
-import 'package:timecalendar/screens/onboarding_screen.dart';
+import 'package:timecalendar/modules/onboarding/screens/onboarding_screen.dart';
 import 'package:timecalendar/screens/tabs_screen.dart';
 
 class SplashScreen extends StatefulWidget {
