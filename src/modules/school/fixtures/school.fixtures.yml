@@ -4,5 +4,6 @@ items:
     code: mygamingacademia
     name: My Gaming Academia
     siteUrl: https://my-gaming-academia.com
-    visible: false
+    visible: true
     assistant: groups
+    imageUrl: /schools/mygamingacademia.png

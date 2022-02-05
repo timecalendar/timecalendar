@@ -5,7 +5,7 @@ import 'package:timecalendar/models/calendar_view_type.dart';
 import 'package:timecalendar/providers/calendar_provider.dart';
 import 'package:timecalendar/providers/events_provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
-import 'package:timecalendar/modules/school/screens/school_selection_screen.dart';
+import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
 import 'package:timecalendar/screens/tabs_screen.dart';
 import 'package:timecalendar/utils/date_utils.dart';
 import 'package:timecalendar/utils/snackbar.dart';

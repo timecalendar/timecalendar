@@ -33,3 +33,4 @@ export const DATABASE_MAIN_NAME = env.DATABASE_MAIN_NAME ?? ""
 export const DATABASE_TEST_MAIN_NAME = env.DATABASE_TEST_MAIN_NAME ?? ""
 
 export const RUN_MIGRATIONS = env.RUN_MIGRATIONS === "true"
+export const S3_PUBLIC_BUCKET_CLIENT_URL = env.S3_PUBLIC_BUCKET_CLIENT_URL ?? ""
