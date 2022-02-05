@@ -1,4 +1,4 @@
-import { CalendarEvent } from "modules/fetch/models/event"
+import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { format, formatRelative } from "modules/shared/dates/date-utils"
 import { now } from "modules/shared/dates/now"
 

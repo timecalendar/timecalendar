@@ -23,6 +23,7 @@ describe("SchoolService", () => {
       await schoolFactory().create()
       const schools = await service.findAll()
       expect(schools.length).toBe(1)
+      expect(schools[0].name).toBe("My Gaming Academia")
     })
 
     it("does not return hidden schools", async () => {

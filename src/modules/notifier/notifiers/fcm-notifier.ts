@@ -1,4 +1,3 @@
-import { CalendarEvent } from "modules/fetch/models/event"
 import { FirebaseService } from "modules/firebase/services/firebase.service"
 import { NotifyOptions } from "modules/firebase/models/notify-options.model"
 import {
@@ -6,6 +5,7 @@ import {
   OnCalendarChangedPayload,
 } from "modules/notifier/models/notifier"
 import { Notifier } from "modules/notifier/models/notifier.interface"
+import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import {
   DifferenceType,
   getNotificationBody,

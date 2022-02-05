@@ -1,6 +1,13 @@
-export interface EventTag {
+import { IsString } from "class-validator"
+
+export class EventTag {
+  @IsString()
   name: string
+
+  @IsString()
   color: string
+
+  @IsString()
   icon: string
 }
 
@@ -14,11 +21,11 @@ export enum EventType {
   CLASS = "class",
 }
 
-export interface CalendarEventCustomFields {
+export class CalendarEventCustomFields {
   canceled?: boolean
   shortDescription?: string
   subject?: string
-  groupColor?: string
+  groupColor?: string;
   [key: string]: any
 }
 
@@ -36,16 +43,8 @@ export interface FetcherCalendarEvent {
   fields: CalendarEventCustomFields
 }
 
-export interface CalendarEvent
-  extends Omit<FetcherCalendarEvent, "start" | "end"> {
-  start: number
-  end: number
-  startsAt: Date
-  endsAt: Date
-  exportedAt: number
-}
-
-export interface RepCalendarEvent extends CalendarEvent {
+// TODO: move it in CalendarSync
+export interface RepCalendarEvent {
   backgroundColor: string
   borderColor: string
   groupColor: string

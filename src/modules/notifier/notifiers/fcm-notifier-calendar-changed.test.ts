@@ -1,4 +1,4 @@
-import { CalendarEvent } from "modules/fetch/models/event"
+import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { getNotificationBody } from "./fcm-notifier-calendar-changed"
 
 describe("getNotificationBody", () => {

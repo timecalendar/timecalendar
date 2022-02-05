@@ -1,7 +1,16 @@
-import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import { readFileSync } from "fs"
+import { join } from "path"
+import { NestExpressApplication } from "@nestjs/platform-express"
+import axios from "axios"
+import { FetchModule } from "modules/fetch/fetch.module"
+import { EventType, FetcherCalendarEvent } from "modules/fetch/models/event"
 import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
+import { clearNestTestApp } from "test-utils/create-nest-app"
+import createTestApp from "test-utils/create-test-app"
 import { FetchService } from "./fetch.service"
+
+const axiosMock = axios as unknown as jest.Mock
 
 describe("FetchService", () => {
   let fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
@@ -112,6 +121,34 @@ describe("FetchService", () => {
 
       expect(events.length).toBe(1)
       expect(events[0].uid).toBe("1")
+    })
+
+    describe("with FetchModule", () => {
+      let app: NestExpressApplication
+
+      beforeAll(async () => {
+        app = await createTestApp({ imports: [FetchModule] })
+        fetchService = app.get(FetchService)
+      })
+
+      it("should use the default strategy from FetchModule", async () => {
+        const ical = readFileSync(
+          join(__dirname, "../parsers/__tests__/ical.ics"),
+          "utf-8",
+        )
+
+        axiosMock.mockResolvedValueOnce({ data: ical })
+
+        const events = await fetchService.fetchEvents(
+          "https://google.com",
+          "generic",
+        )
+
+        expect(events.length).toBe(1)
+        expect(events[0].title).toBe("Cours")
+      })
+
+      afterAll(() => clearNestTestApp(app))
     })
   })
 })
