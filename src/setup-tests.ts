@@ -12,6 +12,11 @@ import { ormconfigTest } from "./test-utils/typeorm-test-module"
 
 /** Modules mock */
 jest.mock("axios")
+jest.mock("config/firebase.ts", () => ({}))
+// todo: export esiee as provider
+jest.mock("modules/storage/firestore", () => ({
+  appFirestore: { get: () => Promise.resolve({}) },
+}))
 
 jest.setTimeout(60000)
 
@@ -24,6 +29,7 @@ afterEach(async () =>
       .map((app) => app.get(Connection))
       .filter((connection) => connection)
       .map(async (connection) => {
+        if (!connection.isConnected) return
         for (const entity of connection.entityMetadatas) {
           await connection.getRepository(entity.name).delete({})
         }
