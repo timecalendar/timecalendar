@@ -6,9 +6,9 @@ import 'package:timecalendar/app.dart';
 import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/simple_database.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
-import 'package:timecalendar/services/theme.dart';
 
-void init({required String environment, FirebaseOptions? firebaseOptions}) async {
+void init(
+    {required String environment, FirebaseOptions? firebaseOptions}) async {
   WidgetsFlutterBinding.ensureInitialized();
   // Environment variables
   await Environment.load(environment);
@@ -21,8 +21,6 @@ void init({required String environment, FirebaseOptions? firebaseOptions}) async
   final prefs = await SharedPreferences.getInstance();
   final settings = SettingsProvider();
   await settings.loadSettings(prefs);
-  // Init themes
-  AppTheme.initDefaultThemes();
   // Load database
   await SimpleDatabase().init();
   runApp(new TimeCalendarApp(prefs));

@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
 
 class SchoolNotFoundButton extends StatelessWidget {
-  const SchoolNotFoundButton({Key? key}) : super(key: key);
+  final Function onPressed;
+
+  const SchoolNotFoundButton({
+    Key? key,
+    required this.onPressed,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -11,8 +16,7 @@ class SchoolNotFoundButton extends StatelessWidget {
       child: CustomButton(
         text: 'Je ne trouve pas mon établissement',
         outline: true,
-        onPressed: () {},
-        // onPressed: loadSchoolAssistant,
+        onPressed: onPressed,
       ),
     );
   }

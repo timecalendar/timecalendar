@@ -100,7 +100,7 @@ class TodayEvents extends StatelessWidget {
               left: hourColumnWidth,
               right: 0,
               child: Container(
-                color: settingsProvider.currentTheme!.lineColor,
+                color: settingsProvider.currentTheme.lineColor,
                 height: 1,
               ),
             ),

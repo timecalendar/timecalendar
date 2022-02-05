@@ -8,22 +8,19 @@ class SchoolItem extends StatelessWidget {
   const SchoolItem({
     Key? key,
     required this.school,
-    this.selection,
+    required this.onSchoolSelect,
   }) : super(key: key);
 
   final School school;
-  final Function? selection;
+  final Function(School) onSchoolSelect;
 
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return Container(
-      width: 220,
-      padding: EdgeInsets.only(
-        right: 15,
-        left: 15,
-        bottom: 7,
-        top: 7,
+      padding: EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 8,
       ),
       child: Container(
         decoration: BoxDecoration(
@@ -36,23 +33,21 @@ class SchoolItem extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: settingsProvider.currentTheme!.cardColor,
+          color: settingsProvider.currentTheme.cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
-            onTap: () {
-              selection!(school);
-            },
+            onTap: () => onSchoolSelect(school),
             borderRadius: BorderRadius.circular(15),
             child: Row(
               children: <Widget>[
                 Container(
                   height: 100,
                   width: 100,
-                  margin: EdgeInsets.only(right: 10),
                   child: ClipRRect(
                     borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(15),
-                        topLeft: Radius.circular(15)),
+                      bottomLeft: Radius.circular(15),
+                      topLeft: Radius.circular(15),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Image(
@@ -61,6 +56,7 @@ class SchoolItem extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(width: 10),
                 Flexible(
                   child: Text(
                     school.name,
