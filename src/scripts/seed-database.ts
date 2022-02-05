@@ -10,6 +10,7 @@ import {
   Parser,
   Resolver,
 } from "typeorm-fixtures-cli/dist"
+import { runMigrations } from "modules/shared/utils/run-migrations"
 
 program.option("--drop")
 program.parse()
@@ -40,7 +41,11 @@ const main = async () => {
   const options = program.opts<{ drop: boolean }>()
 
   const connection = await createConnection(ormconfig)
-  await connection.synchronize(options.drop)
+
+  if (options.drop) {
+    await connection.dropDatabase()
+    await connection.runMigrations()
+  }
 
   const files = await glob("./**/fixtures/*.yml")
   for (const file of files) {

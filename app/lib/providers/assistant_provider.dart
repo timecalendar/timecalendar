@@ -6,8 +6,8 @@ import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 import 'package:timecalendar/database/differences_manager.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
-import 'package:timecalendar/models/school_assistant.dart';
 import 'package:timecalendar/models/selected_calendar.dart';
+import 'package:timecalendar/modules/school/models/school_assistant.dart';
 import 'package:timecalendar/screens/add_grade_screen.dart';
 import 'package:timecalendar/screens/assistant_screen.dart';
 import 'package:timecalendar/screens/connect_screen.dart';
@@ -26,10 +26,10 @@ class AssistantProvider with ChangeNotifier {
   bool useFallback = false;
 
   SchoolAssistant defaultAssistant = SchoolAssistant(
-    code: 'select',
+    slug: 'select',
     isNative: false,
-    needsConnection: true,
-    needsGradeName: true,
+    requireIntranetAccess: true,
+    requireCalendarName: true,
   );
 
   SchoolAssistant? get currentAssistant {
@@ -54,20 +54,20 @@ class AssistantProvider with ChangeNotifier {
     initAssistant();
     schoolCode = school.code;
     schoolName = school.name;
-    websiteUrl = school.calendarUrl;
+    websiteUrl = school.intranetUrl;
     assistant = school.assistant;
     fallbackAssistant = school.fallbackAssistant;
   }
 
   String getAssistantStartScreen() {
-    if (currentAssistant!.needsGradeName!) {
+    if (currentAssistant!.requireCalendarName) {
       return AddGradeScreen.routeName;
     }
     return getAssistantConnectionScreen();
   }
 
   String getAssistantConnectionScreen() {
-    if (currentAssistant!.needsConnection!) {
+    if (currentAssistant!.requireIntranetAccess) {
       return ConnectScreen.routeName;
     }
     return AssistantScreen.routeName;

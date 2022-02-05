@@ -11,15 +11,14 @@ class SchoolsManager {
   }
 
   static const String STORE_NAME = 'schools';
-  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store =
+      stringMapStoreFactory.store(STORE_NAME);
 
   Database? get _db => SimpleDatabase().db;
 
   Future<List<School>> getSchools() async {
     final records = await _store.find(_db!);
-    return records
-        .map((record) => School.fromInternalDb(record.value))
-        .toList();
+    return records.map((record) => School.fromJson(record.value)).toList();
   }
 
   Future<void> setSchools(List<School> schools) async {
@@ -29,7 +28,7 @@ class SchoolsManager {
 
       // Insert new schools
       for (var i = 0; i < schools.length; i++) {
-        await _store.record(schools[i].code).put(txn, schools[i].toMap());
+        await _store.record(schools[i].code).put(txn, schools[i].toJson());
       }
     });
   }

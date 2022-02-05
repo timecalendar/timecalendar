@@ -22,6 +22,12 @@ export class School {
   siteUrl: string
 
   @Column()
+  imageUrl: string
+
+  @Column({ nullable: true })
+  intranetUrl: string | null
+
+  @Column({ default: true })
   visible: boolean
 
   @Column()

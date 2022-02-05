@@ -42,6 +42,15 @@ Copy the file `.env.sample` to a new file named `.env`.
 
 Get the local IP address of your computer running the API server. Add it in `MAIN_API_URL` (e.g. `http://192.168.0.10:3005`).
 
+### Run the app
+
+In a terminal, run the following command to build code parts when the code changes:
+
+```bash
+flutter pub run build_runner watch
+```
+
+Run the app from your IDE.
 
 ## Build on Android
 

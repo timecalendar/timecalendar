@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 
@@ -57,18 +56,14 @@ class SchoolItem extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: Image(
-                        image: NetworkImageWithRetry(
-                          Environment.oldApiUrl +
-                              '/images/schools/' +
-                              school.code!,
-                        ),
+                        image: NetworkImageWithRetry(school.imageUrl),
                       ),
                     ),
                   ),
                 ),
                 Flexible(
                   child: Text(
-                    school.name!,
+                    school.name,
                     style: TextStyle(fontSize: 18),
                   ),
                 ),

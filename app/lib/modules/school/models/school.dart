@@ -1,77 +1,36 @@
-import 'package:timecalendar/models/school_assistant.dart';
+import 'package:json_annotation/json_annotation.dart';
+import 'package:timecalendar/modules/school/models/school_assistant.dart';
 
+part 'school.g.dart';
+
+@JsonSerializable()
 class School {
-  final String? code;
-  final String? name;
-  final String? siteurl;
+  final String code;
+  final String name;
+  final String siteUrl;
+  final String imageUrl;
   final bool visible;
-  final int? nbGrades;
-  final String? calendarUrl;
-  final SchoolAssistant? assistant;
+  final String? intranetUrl;
+  final SchoolAssistant assistant;
   final SchoolAssistant? fallbackAssistant;
 
   School({
     required this.code,
     required this.name,
-    required this.siteurl,
+    required this.siteUrl,
+    required this.imageUrl,
     required this.visible,
-    required this.nbGrades,
-    required this.calendarUrl,
+    required this.intranetUrl,
     required this.assistant,
     required this.fallbackAssistant,
   });
 
-  factory School.fromInternalDb(Map<String, dynamic> dbMap) {
-    Map<String, dynamic> map = Map.from(dbMap);
-    return School(
-      code: map['code'],
-      name: map['name'],
-      siteurl: map['siteurl'],
-      visible: (map['visible'] == 1) ? true : false,
-      nbGrades: map['nbGrades'],
-      calendarUrl: map['calendarUrl'],
-      assistant: (map['assistant'] == null)
-          ? null
-          : SchoolAssistant.fromInternalDb(map['assistant']),
-      fallbackAssistant: (map['fallbackAssistant'] == null)
-          ? null
-          : SchoolAssistant.fromInternalDb(map['fallbackAssistant']),
-    );
-  }
+  factory School.fromJson(Map<String, dynamic> json) => _$SchoolFromJson(json);
 
-  factory School.oldFromApi(Map<String, dynamic> map) {
-    return School(
-      code: map['code'],
-      name: map['name'],
-      siteurl: map['siteurl'],
-      visible: (map['visible'] == 1) ? true : false,
-      nbGrades: map['nbGrades'],
-      calendarUrl: map['calendar_url'],
-      assistant: (map['assistant'] == null)
-          ? null
-          : SchoolAssistant.fromApi(map['assistant']),
-      fallbackAssistant: (map['fallback_assistant'] == null)
-          ? null
-          : SchoolAssistant.fromApi(map['fallback_assistant']),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    Map<String, dynamic> map = {
-      'code': code,
-      'name': name,
-      'siteurl': siteurl,
-      'visible': visible,
-      'nbGrades': nbGrades,
-      'calendarUrl': calendarUrl,
-      'assistant': assistant?.toMap(),
-      'fallbackAssistant': fallbackAssistant?.toMap(),
-    };
-    return map;
-  }
+  Map<String, dynamic> toJson() => _$SchoolToJson(this);
 
   @override
   String toString() {
-    return toMap().toString();
+    return toJson().toString();
   }
 }
