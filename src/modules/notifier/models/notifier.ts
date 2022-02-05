@@ -1,4 +1,4 @@
-import { Difference } from "modules/difference/models/difference"
+import { CalendarChange } from "modules/calendar-log/models/difference"
 import { EmailFrequency } from "./email-frequency"
 
 export interface EmailNotifierRecipient {
@@ -19,7 +19,7 @@ export interface OnNewSubscriptionPayload {
 }
 
 export interface OnCalendarChangedPayload {
-  difference: Difference
+  difference: CalendarChange
 }
 
 export interface OnNewSubscriptionData {
