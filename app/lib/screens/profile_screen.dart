@@ -9,8 +9,7 @@ import 'package:timecalendar/screens/settings/settings_screen.dart';
 import 'package:timecalendar/screens/suggestion_screen.dart';
 import 'package:timecalendar/widgets/profile/profile_header.dart';
 import 'package:timecalendar/widgets/profile/profile_item.dart';
-
-import 'about_screen.dart';
+import 'package:timecalendar/screens/about_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   // Future<void> _handleSignIn() async {

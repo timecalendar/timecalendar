@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
-
-import '../../models/calendar_event.dart';
+import 'package:timecalendar/models/calendar_event.dart';
 
 class CalendarRectangleEvent extends StatelessWidget {
   const CalendarRectangleEvent({

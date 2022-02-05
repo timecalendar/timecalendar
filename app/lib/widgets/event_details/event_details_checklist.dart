@@ -6,8 +6,7 @@ import 'package:timecalendar/models/checklist_item.dart';
 import 'package:timecalendar/models/event.dart';
 import 'package:timecalendar/providers/checklist_provider.dart';
 import 'package:timecalendar/providers/events_provider.dart';
-
-import 'event_details_checklist_item.dart';
+import 'package:timecalendar/widgets/event_details/event_details_checklist_item.dart';
 
 class EventDetailsChecklist extends StatefulWidget {
   final Event? event;
@@ -25,7 +24,8 @@ class _EventDetailsChecklistState extends State<EventDetailsChecklist> {
   late ChecklistProvider checklistProvider;
   late EventsProvider eventsProvider;
 
-  ChecklistFocusController checklistFocusController = ChecklistFocusController([]);
+  ChecklistFocusController checklistFocusController =
+      ChecklistFocusController([]);
 
   @override
   void initState() {
@@ -54,10 +54,13 @@ class _EventDetailsChecklistState extends State<EventDetailsChecklist> {
   }
 
   void onChecklistChange() {
-    if (nbItems != -1 && checklistProvider.items.length > 0 && checklistProvider.items.length > nbItems) {
+    if (nbItems != -1 &&
+        checklistProvider.items.length > 0 &&
+        checklistProvider.items.length > nbItems) {
       // Focus the last text input
       Future.delayed(Duration(milliseconds: 100)).then((_) {
-        checklistFocusController.focusItem(checklistProvider.items[checklistProvider.items.length - 1]);
+        checklistFocusController.focusItem(
+            checklistProvider.items[checklistProvider.items.length - 1]);
       });
     }
 

@@ -1,5 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:timecalendar/modules/school/providers/school_client_provider.dart';
+import 'package:timecalendar/modules/school/clients/school_client.dart';
 
 final schoolListProvider = FutureProvider((ref) async {
   final client = ref.read(schoolClientProvider);

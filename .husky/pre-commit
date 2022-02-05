@@ -2,9 +2,3 @@
 . "$(dirname "$0")/_/husky.sh"
 
 npx lint-staged
-
-diff="$(git diff HEAD^ --name-only --diff-filter=ACMR app/)"
-if [ ! -z "$diff" ]
-then
-  cd app && flutter analyze
-fi

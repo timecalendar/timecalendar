@@ -2,8 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:timecalendar/constants/environment.dart';
-
-import 'event.dart';
+import 'package:timecalendar/models/event.dart';
 
 abstract class Calendar {
   Future<List<Event?>> fetchEventsFromApi() async {

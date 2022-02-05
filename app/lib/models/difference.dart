@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:tuple/tuple.dart';
-
-import 'event.dart';
+import 'package:timecalendar/models/event.dart';
 
 class Difference {
   final int? id;
