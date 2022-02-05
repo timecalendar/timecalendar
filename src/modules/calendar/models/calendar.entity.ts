@@ -29,8 +29,8 @@ export class Calendar {
   @Column()
   url: string
 
-  @Column("json")
-  customData: CalendarCustomData
+  @Column("json", { nullable: true })
+  customData: CalendarCustomData | null
 
   @ManyToOne(() => School)
   school: School

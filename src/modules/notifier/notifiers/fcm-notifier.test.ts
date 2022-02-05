@@ -1,4 +1,4 @@
-import { Difference } from "modules/difference/models/difference"
+import { CalendarChange } from "modules/calendar-log/models/difference"
 import { EventType } from "modules/fetch/models/event"
 import { FirebaseService } from "modules/firebase/services/firebase.service"
 import { FcmNotifier } from "./fcm-notifier"
@@ -22,7 +22,7 @@ describe("FcmNotifier", () => {
 
   describe("onCalendarChanged", () => {
     it("should handle a new event", async () => {
-      const difference: Difference = {
+      const difference: CalendarChange = {
         changedItems: [],
         newItems: [
           {
@@ -62,7 +62,7 @@ describe("FcmNotifier", () => {
     })
 
     it("should handle a modified event", async () => {
-      const difference: Difference = {
+      const difference: CalendarChange = {
         changedItems: [
           [
             {
@@ -118,7 +118,7 @@ describe("FcmNotifier", () => {
     })
 
     it("should handle a canceled event", async () => {
-      const difference: Difference = {
+      const difference: CalendarChange = {
         changedItems: [],
         newItems: [],
         oldItems: [
