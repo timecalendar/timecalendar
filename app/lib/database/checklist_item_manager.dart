@@ -1,5 +1,5 @@
 import 'package:sembast/sembast.dart';
-import 'package:timecalendar/database/simple_database.dart';
+import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/models/checklist_item.dart';
 
 class ChecklistItemEventCount {
@@ -9,7 +9,8 @@ class ChecklistItemEventCount {
 
 class ChecklistItemManager {
   static const String STORE_NAME = 'checklist_items';
-  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store =
+      stringMapStoreFactory.store(STORE_NAME);
 
   Database? get _db => SimpleDatabase().db;
 
@@ -77,7 +78,7 @@ class ChecklistItemManager {
 
       if (checklistItem.isChecked!) {
         // Add to completed
-      numberOfNotes[checklistItem.eventUid]!.completedNotes++;
+        numberOfNotes[checklistItem.eventUid]!.completedNotes++;
       }
 
       // Add to the total

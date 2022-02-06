@@ -1,44 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
-import 'package:timecalendar/screens/add_grade_screen.dart';
-import 'package:timecalendar/screens/import_ical_screen.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
+import 'package:timecalendar/modules/assistant/models/assistant_step.dart';
+import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
 
-class AddSchoolScreen extends StatefulWidget {
-  static const routeName = '/add-school';
+class AddGradeScreen extends HookConsumerWidget {
+  static const routeName = '/add-grade';
 
   @override
-  _AddSchoolScreenState createState() => _AddSchoolScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(assistantProvider.notifier);
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final name = useState("");
 
-class _AddSchoolScreenState extends State<AddSchoolScreen> {
-  final _form = GlobalKey<FormState>();
-  String? schoolName;
-
-  Future<void> _saveForm() async {
-    final isValid = _form.currentState!.validate();
-    if (!isValid) {
-      return;
-    }
-    _form.currentState!.save();
-
-    var assistantProvider =
-        Provider.of<AssistantProvider>(context, listen: false);
-    assistantProvider.schoolName = schoolName;
-
-    Navigator.of(context).pushNamed(AddGradeScreen.routeName).then((result) {
-      if (result == 'end') {
-        Navigator.of(context).pushNamed(ImportIcalScreen.routeName,
-            arguments: ImportIcalScreenArguments(false));
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final availableWidth = mediaQuery.size.width - 200;
+
+    Future<void> _saveForm() async {
+      final isValid = formKey.currentState!.validate();
+      if (!isValid) return;
+      formKey.currentState!.save();
+      print(name.value);
+      ref.read(addGradeNameProvider.notifier).state = name.value;
+      provider.navigateToNextStep(context, AssistantStepEnum.ADD_GRADE);
+    }
 
     return Scaffold(
       body: Column(
@@ -55,7 +42,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                         maxWidth: availableWidth,
                       ),
                       child: Text(
-                        "Ajouter un établissement",
+                        "Importer votre calendrier",
                         style: TextStyle(fontSize: 18),
                       ),
                     ),
@@ -67,26 +54,23 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                     Padding(
                       padding: const EdgeInsets.all(15.0),
                       child: Form(
-                        key: _form,
+                        key: formKey,
                         child: Column(
                           children: <Widget>[
                             Text(
-                                'Pour importer votre emploi du temps, entrez le nom de votre établissement.'),
+                              'Pour importer votre emploi du temps, entrez le nom de votre formation.',
+                            ),
                             SizedBox(height: 15),
                             TextFormField(
                               decoration: InputDecoration(
-                                  labelText: 'Nom de votre établissement'),
+                                labelText: 'Nom de votre formation',
+                              ),
                               validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Vous devez entrer le nom de votre établissement.';
-                                }
-                                return null;
+                                return (value!.isEmpty)
+                                    ? 'Vous devez entrer le nom de votre formation.'
+                                    : null;
                               },
-                              onSaved: (value) {
-                                setState(() {
-                                  schoolName = value;
-                                });
-                              },
+                              onSaved: (value) => name.value = value ?? '',
                               textInputAction: TextInputAction.next,
                               onFieldSubmitted: (_) {
                                 _saveForm();
@@ -117,9 +101,7 @@ class _AddSchoolScreenState extends State<AddSchoolScreen> {
                 ),
                 CustomButton(
                   text: 'Suivant',
-                  onPressed: () {
-                    _saveForm();
-                  },
+                  onPressed: () => _saveForm(),
                 ),
               ],
             ),

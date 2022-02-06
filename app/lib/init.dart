@@ -4,10 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/app.dart';
 import 'package:timecalendar/constants/environment.dart';
-import 'package:timecalendar/database/simple_database.dart';
+import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 
-void init(
+Future<void> init(
     {required String environment, FirebaseOptions? firebaseOptions}) async {
   WidgetsFlutterBinding.ensureInitialized();
   // Environment variables

@@ -1,63 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as provider;
+import 'package:timecalendar/modules/assistant/models/assistant_step.dart';
+import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_content.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_header.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
-import 'package:timecalendar/providers/old_school_provider.dart';
-import 'package:timecalendar/screens/add_school_screen.dart';
-import 'package:timecalendar/screens/assistant_screen.dart';
 import 'package:timecalendar/utils/snackbar.dart';
 
-class SelectSchool extends ConsumerStatefulWidget {
+class SelectSchool extends HookConsumerWidget {
   static const routeName = '/select_establishment';
   SelectSchool({Key? key}) : super(key: key);
 
-  @override
-  _SelectSchoolState createState() => _SelectSchoolState();
-}
-
-class _SelectSchoolState extends ConsumerState<SelectSchool> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final ScrollController _scrollController = ScrollController();
-
-  loadSchoolAssistant() {
-    provider.Provider.of<AssistantProvider>(context, listen: false)
-        .initAssistant();
-    Navigator.of(context).pushNamed(AddSchoolScreen.routeName);
-  }
-
-  void selectSchool(School school) {
-    final assistantProvider =
-        provider.Provider.of<AssistantProvider>(context, listen: false);
-    assistantProvider.initBySchool(school);
-    var nextScreen = assistantProvider.getAssistantStartScreen();
-
-    Navigator.of(context).pushNamed(nextScreen).then((result) {
-      if (nextScreen == AssistantScreen.routeName) {
-        // Callback assistant screen
-        assistantProvider.assistantCallback(
-            context, result as Map<String, dynamic>?);
-      }
-    });
-  }
-
-  void filterSchoolList(String value) {
-    var schoolProvider =
-        provider.Provider.of<OLD_SchoolProvider>(context, listen: false);
-    schoolProvider.filterSchool(value);
-  }
-
-  void searchFocus() {
-    if (_scrollController.offset < 145) {
-      _scrollController.jumpTo(145);
-    }
+  void selectSchool(BuildContext context, WidgetRef ref, School? school) {
+    final notifier = ref.read(assistantProvider.notifier);
+    notifier.school = school;
+    notifier.navigateToNextStep(context, AssistantStepEnum.SELECT_SCHOOL);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scrollController = useScrollController();
+
     ref.listen<AsyncValue<List<School>>>(schoolSelectionControllerProvider,
         (_, value) {
       value.whenOrNull(
@@ -69,22 +34,23 @@ class _SelectSchoolState extends ConsumerState<SelectSchool> {
     });
 
     return Scaffold(
-      key: _scaffoldKey,
       body: RefreshIndicator(
         onRefresh: () =>
             ref.read(schoolSelectionControllerProvider.notifier).fetch(),
         child: CustomScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           physics: AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
             SchoolSelectionHeader(
-              loadSchoolAssistant: loadSchoolAssistant,
-              scrollController: _scrollController,
+              loadSchoolAssistant: () => selectSchool(context, ref, null),
+              scrollController: scrollController,
             ),
             SchoolSelectionContent(
-              onTap: searchFocus,
-              onSchoolSelect: selectSchool,
-              onSchoolNotFoundPressed: loadSchoolAssistant,
+              onTap: () {
+                if (scrollController.offset < 145) scrollController.jumpTo(145);
+              },
+              onSchoolSelect: (school) => selectSchool(context, ref, school),
+              onSchoolNotFoundPressed: () => selectSchool(context, ref, null),
             ),
           ],
         ),

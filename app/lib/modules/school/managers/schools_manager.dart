@@ -1,5 +1,5 @@
 import 'package:sembast/sembast.dart';
-import 'package:timecalendar/database/simple_database.dart';
+import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
 
 class SchoolsManager {
