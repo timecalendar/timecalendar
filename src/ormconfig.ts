@@ -17,7 +17,7 @@ const ormconfig: MysqlConnectionOptions = {
   entities: [__dirname + "/**/*.entity.{ts,js}"],
   migrations: [__dirname + "/migrations/*.{ts,js}"],
   cli: {
-    migrationsDir: __dirname + "/migrations",
+    migrationsDir: "./src/migrations",
   },
 }
 
