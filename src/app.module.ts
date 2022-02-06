@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
+import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { FetchModule } from "./modules/fetch/fetch.module"
 import { FirebaseModule } from "./modules/firebase/firebase.module"
 import { MailerModule } from "./modules/mailer/mailer.module"
@@ -20,6 +21,7 @@ import ormconfig from "./ormconfig"
     FetchModule,
     UnivOrleansModule,
     SchoolModule,
+    CalendarSyncModule,
   ],
   controllers: [],
   providers: [QueueService],

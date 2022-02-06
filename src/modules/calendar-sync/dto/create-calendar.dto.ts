@@ -1,4 +1,3 @@
-import { Optional } from "@nestjs/common"
 import { Type } from "class-transformer"
 import {
   IsOptional,
@@ -27,6 +26,6 @@ export class CreateCalendarDto {
 
   @Type(() => CalendarCustomData)
   @ValidateNested()
-  @Optional()
+  @IsOptional()
   customData?: CalendarCustomData
 }
