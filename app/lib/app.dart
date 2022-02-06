@@ -8,18 +8,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
 import 'package:timecalendar/providers/activity_provider.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
+import 'package:timecalendar/providers/old_assistant_provider.dart';
 import 'package:timecalendar/providers/auth_provider.dart';
 import 'package:timecalendar/providers/calendar_provider.dart';
 import 'package:timecalendar/providers/checklist_provider.dart';
 import 'package:timecalendar/providers/note_provider.dart';
-import 'package:timecalendar/providers/old_school_provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/providers/suggestion_provider.dart';
 import 'package:timecalendar/screens/activity_screen.dart';
-import 'package:timecalendar/screens/add_grade_screen.dart';
+import 'package:timecalendar/modules/add_grade/screens/add_grade_screen.dart';
 import 'package:timecalendar/screens/add_personal_event.dart';
-import 'package:timecalendar/screens/add_school_screen.dart';
+import 'package:timecalendar/modules/add_school/screens/add_school_screen.dart';
 import 'package:timecalendar/screens/assistant_screen.dart';
 import 'package:timecalendar/screens/changelog_screen.dart';
 import 'package:timecalendar/screens/connect_screen.dart';
@@ -72,16 +71,13 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
               create: (_) => ActivityProvider(),
             ),
             ChangeNotifierProvider(
-              create: (_) => OLD_SchoolProvider(),
-            ),
-            ChangeNotifierProvider(
               create: (_) => SettingsProvider(),
             ),
             ChangeNotifierProvider(
               create: (_) => SuggestionProvider(),
             ),
             ChangeNotifierProvider(
-              create: (_) => AssistantProvider(),
+              create: (_) => OldAssistantProvider(),
             ),
             ChangeNotifierProvider(
               create: (_) => NoteProvider(),

@@ -1,5 +1,5 @@
 import 'package:sembast/sembast.dart';
-import 'package:timecalendar/database/simple_database.dart';
+import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/models/event.dart';
 
 class EventManager {
@@ -11,7 +11,8 @@ class EventManager {
   }
 
   static const String STORE_NAME = 'events';
-  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store =
+      stringMapStoreFactory.store(STORE_NAME);
 
   Database? get _db => SimpleDatabase().db;
 

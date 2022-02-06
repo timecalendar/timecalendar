@@ -1,6 +1,6 @@
 import 'package:sembast/sembast.dart';
 import 'package:timecalendar/models/selected_calendar.dart';
-import 'package:timecalendar/database/simple_database.dart';
+import 'package:timecalendar/modules/database/providers/simple_database.dart';
 
 class SelectedCalendarManager {
   static final SelectedCalendarManager _instance = SelectedCalendarManager._();

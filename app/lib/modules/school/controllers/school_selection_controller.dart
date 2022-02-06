@@ -30,9 +30,9 @@ final schoolSelectionControllerProvider =
     ..fetch();
 });
 
-final schoolSearchProvider = StateProvider((ref) => '');
+final schoolSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
-final schoolFilteredProvider = Provider<List<School>>((ref) {
+final schoolFilteredProvider = Provider.autoDispose<List<School>>((ref) {
   final schools = ref.watch(schoolSelectionControllerProvider);
   final search = ref.watch(schoolSearchProvider);
 

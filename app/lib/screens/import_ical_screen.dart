@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/database/differences_manager.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
+import 'package:timecalendar/providers/old_assistant_provider.dart';
 import 'package:timecalendar/providers/events_provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/providers/suggestion_provider.dart';
@@ -39,7 +39,7 @@ class _ImportIcalScreenState extends State<ImportIcalScreen> {
     // final isInternal = args.isInternal;
 
     final assistantProvider =
-        Provider.of<AssistantProvider>(context, listen: false);
+        Provider.of<OldAssistantProvider>(context, listen: false);
     final suggestionProvider =
         Provider.of<SuggestionProvider>(context, listen: false);
     final settingsProvider =
