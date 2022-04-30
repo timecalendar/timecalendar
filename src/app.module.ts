@@ -1,11 +1,11 @@
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
+import { RedisModule } from "modules/redis/redis.module"
 import { FetchModule } from "./modules/fetch/fetch.module"
 import { FirebaseModule } from "./modules/firebase/firebase.module"
 import { MailerModule } from "./modules/mailer/mailer.module"
 import { NotifierModule } from "./modules/notifier/notifier.module"
 import { QueueModule } from "./modules/queue/queue.module"
-import { QueueService } from "./modules/queue/queue.service"
 import { SchoolModule } from "./modules/school/school.module"
 import { UnivOrleansModule } from "./modules/univ-orleans/univ-orleans.module"
 import ormconfig from "./ormconfig"
@@ -20,9 +20,10 @@ import ormconfig from "./ormconfig"
     FetchModule,
     UnivOrleansModule,
     SchoolModule,
+    RedisModule,
   ],
   controllers: [],
-  providers: [QueueService],
-  exports: [QueueService],
+  providers: [],
+  exports: [],
 })
 export class AppModule {}

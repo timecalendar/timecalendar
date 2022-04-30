@@ -13,7 +13,6 @@ data:
   CLIENT_URL: "https://{{ .Values.clientUrl }}"
 
   # Redis
-  ENABLE_REDIS: "true"
   REDIS_QUEUE: timecalendar
   REDIS_URL: redis://:{{ .Values.redis.password }}@{{ include "timecalendar.fullname" . }}-redis-master:6379
   REDIS_PASSWORD: {{ .Values.redis.password }}
