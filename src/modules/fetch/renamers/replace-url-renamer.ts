@@ -1,4 +1,4 @@
-import { UrlRenamer } from "./url-renamer"
+import { UrlRenamer } from "modules/fetch/renamers/url-renamer"
 
 export class ReplaceUrlRenamer implements UrlRenamer {
   constructor(

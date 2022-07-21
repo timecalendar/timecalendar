@@ -8,7 +8,7 @@ import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 import { clearNestTestApp } from "test-utils/create-nest-app"
 import createTestApp from "test-utils/create-test-app"
-import { FetchService } from "./fetch.service"
+import { FetchService } from "modules/fetch/services/fetch.service"
 
 const axiosMock = axios as unknown as jest.Mock
 

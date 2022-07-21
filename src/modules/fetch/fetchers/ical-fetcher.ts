@@ -1,10 +1,10 @@
 import { BadRequestException } from "@nestjs/common"
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
+import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
 import { CustomError } from "modules/shared/errors/custom-error"
-import { Fetcher } from "./fetcher"
 
 export class IcalFetcher implements Fetcher {
   constructor(private readonly withRetries: boolean = false) {}

@@ -53,7 +53,7 @@ class SettingsProvider with ChangeNotifier {
   String? get startupScreen => _startupScreen;
   bool get darkMode {
     if (_theme == 'system') {
-      return SchedulerBinding.instance!.window.platformBrightness ==
+      return SchedulerBinding.instance.window.platformBrightness ==
           Brightness.dark;
     } else if (_theme == 'light') {
       return false;

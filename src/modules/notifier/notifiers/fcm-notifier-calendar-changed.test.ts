@@ -1,5 +1,5 @@
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
-import { getNotificationBody } from "./fcm-notifier-calendar-changed"
+import { getNotificationBody } from "modules/notifier/notifiers/fcm-notifier-calendar-changed"
 
 describe("getNotificationBody", () => {
   it("should handle an event today", () => {

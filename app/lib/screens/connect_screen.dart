@@ -53,7 +53,7 @@ class ConnectScreen extends HookConsumerWidget {
                               children: <Widget>[
                                 CustomButton(
                                   onPressed: () {
-                                    UrlLauncher.launchUrl(
+                                    UrlLauncher.openUrl(
                                       provider.school!.intranetUrl!,
                                     );
                                   },

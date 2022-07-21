@@ -1,5 +1,5 @@
 import nbWeeksRenamer from "modules/fetch/renamers/nb-weeks-renamer"
-import { SchoolStrategy } from "./school-strategy"
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const genericStrategy = new SchoolStrategy({
   school: "generic",

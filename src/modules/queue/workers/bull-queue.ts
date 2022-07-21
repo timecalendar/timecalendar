@@ -1,8 +1,8 @@
 import Queue from "bull"
 import { REDIS_QUEUE_NAME } from "config/constants"
+import { AppQueue, QueueHandler } from "modules/queue/workers/app-queue"
+import { QueueJob } from "modules/queue/workers/queue-job"
 import { RedisConfig } from "modules/redis/models/redis-config.interface"
-import { AppQueue, QueueHandler } from "./app-queue"
-import { QueueJob } from "./queue-job"
 
 export class BullQueue implements AppQueue {
   private queue: Queue.Queue<QueueJob>
