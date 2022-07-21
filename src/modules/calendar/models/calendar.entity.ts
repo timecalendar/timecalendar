@@ -1,13 +1,13 @@
-import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
+import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { School } from "modules/school/models/school.entity"
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
+  RelationId,
   UpdateDateColumn,
 } from "typeorm"
 
@@ -17,14 +17,10 @@ export class Calendar {
   id: string
 
   @Column()
-  @Index({ unique: true })
-  token: string
-
-  @Column()
   name: string
 
-  @Column()
-  schoolName: string
+  @Column({ nullable: true })
+  schoolName: string | null
 
   @Column()
   url: string
@@ -33,7 +29,10 @@ export class Calendar {
   customData: CalendarCustomData | null
 
   @ManyToOne(() => School)
-  school: School
+  school?: School
+
+  @RelationId((calendar: Calendar) => calendar.school)
+  schoolId: string
 
   @Column()
   lastUpdatedAt: Date

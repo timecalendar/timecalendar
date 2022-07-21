@@ -1,4 +1,4 @@
-import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
+import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
 
 export interface Fetcher {

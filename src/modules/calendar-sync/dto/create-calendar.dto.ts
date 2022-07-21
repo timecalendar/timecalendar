@@ -6,7 +6,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from "class-validator"
-import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
+import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 
 export class CreateCalendarDto {
   @IsString()
@@ -14,15 +14,15 @@ export class CreateCalendarDto {
 
   @IsUUID()
   @ValidateIf((o) => o.schoolName === undefined)
-  schoolId: string
+  schoolId?: string
 
   @IsString()
   @ValidateIf((o) => o.schoolId === undefined)
-  schoolName: string
+  schoolName?: string
 
   @IsString()
   @IsOptional()
-  name: string
+  name?: string
 
   @Type(() => CalendarCustomData)
   @ValidateNested()
