@@ -1,4 +1,4 @@
-import { EventType } from "./event"
+import { EventType } from "modules/fetch/models/event"
 
 const colors: { [type in EventType]: string } = {
   [EventType.CM]: "#d7d0fc",

@@ -1,4 +1,4 @@
-import univsmbStrategy from "./univsmb-strategy"
+import univsmbStrategy from "modules/fetch/schools/univsmb/univsmb-strategy"
 
 describe("Savoie Mont Blanc University strategy", () => {
   describe("URL renamer", () => {

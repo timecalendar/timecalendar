@@ -1,5 +1,5 @@
 import { NotifyOptions } from "modules/firebase/models/notify-options.model"
-import { FirebaseService } from "./firebase.service"
+import { FirebaseService } from "modules/firebase/services/firebase.service"
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 jest.mock("config/firebase.ts", () => ({}))
@@ -31,7 +31,7 @@ describe("FirebaseService", () => {
       },
     }
 
-    const module = require("./firebase.service")
+    const module = require("modules/firebase/services/firebase.service")
     const send = require("config/firebase").messaging().send
     const mockedService: FirebaseService = new module.FirebaseService()
     await mockedService.notify(token, options)
@@ -75,7 +75,7 @@ describe("FirebaseService", () => {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const module = require("./firebase.service")
+    const module = require("modules/firebase/services/firebase.service")
     const mockedService: FirebaseService = new module.FirebaseService()
     await mockedService.notify(token, options)
   })
@@ -100,7 +100,7 @@ describe("FirebaseService", () => {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const module = require("./firebase.service")
+    const module = require("modules/firebase/services/firebase.service")
     const mockedService: FirebaseService = new module.FirebaseService()
 
     await expect(async () => {

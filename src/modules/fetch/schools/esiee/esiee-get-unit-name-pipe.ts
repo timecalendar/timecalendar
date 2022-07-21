@@ -1,6 +1,6 @@
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
-import { esieeUnitsManager } from "./esiee-units-manager"
+import { esieeUnitsManager } from "modules/fetch/schools/esiee/esiee-units-manager"
 
 const esieeGetUnitNamePipe: EventTransformPipe = (
   event: FetcherCalendarEvent,

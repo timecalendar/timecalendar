@@ -1,23 +1,28 @@
 import Queue from "bull"
-import { REDIS_PASSWORD, REDIS_QUEUE_NAME, REDIS_URL } from "config/constants"
-import { AppQueue, AppQueueConstructor, QueueHandler } from "./app-queue"
-import { QueueJob } from "./queue-job"
+import { REDIS_QUEUE_NAME } from "config/constants"
+import { AppQueue, QueueHandler } from "modules/queue/workers/app-queue"
+import { QueueJob } from "modules/queue/workers/queue-job"
+import { RedisConfig } from "modules/redis/models/redis-config.interface"
 
-export const BullQueue: AppQueueConstructor = class BullQueue
-  implements AppQueue
-{
-  private queue = new Queue<QueueJob>(REDIS_QUEUE_NAME, REDIS_URL, {
-    redis: { password: REDIS_PASSWORD },
-    defaultJobOptions: { removeOnComplete: true, removeOnFail: true },
-  })
+export class BullQueue implements AppQueue {
+  private queue: Queue.Queue<QueueJob>
 
-  constructor(handler: QueueHandler) {
-    // Create the processor
+  constructor({ url, password }: RedisConfig) {
+    this.queue = new Queue<QueueJob>(REDIS_QUEUE_NAME, url, {
+      redis: { password },
+      defaultJobOptions: { removeOnComplete: true, removeOnFail: true },
+    })
+  }
+
+  async init(handler: QueueHandler) {
     this.queue.process(({ data }) => handler(data))
   }
 
   async add(job: QueueJob) {
-    // Add the job in the Bull queue
     await this.queue.add(job)
+  }
+
+  async close() {
+    await this.queue.close()
   }
 }

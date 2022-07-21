@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timecalendar/models/difference.dart';
 import 'package:timecalendar/utils/date_utils.dart';
-
-import 'difference_event.dart';
+import 'package:timecalendar/widgets/activity/difference_event.dart';
 
 class DifferenceItem extends StatelessWidget {
   final Difference? difference;

@@ -1,110 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_sticky_header/flutter_sticky_header.dart';
-import 'package:provider/provider.dart' as provider;
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/assistant/models/assistant_step.dart';
+import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
+import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/school/models/school.dart';
-import 'package:timecalendar/modules/school/providers/school_selection_provider.dart';
-import 'package:timecalendar/modules/school/screens/school_selection/school_list.dart';
+import 'package:timecalendar/modules/school/screens/school_selection/school_selection_content.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_header.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
-import 'package:timecalendar/providers/old_school_provider.dart';
-import 'package:timecalendar/screens/add_school_screen.dart';
 import 'package:timecalendar/utils/snackbar.dart';
-import 'package:timecalendar/widgets/common/search_bar.dart';
 
-import '../../../../screens/assistant_screen.dart';
-
-class SelectSchool extends ConsumerStatefulWidget {
+class SelectSchool extends HookConsumerWidget {
   static const routeName = '/select_establishment';
   SelectSchool({Key? key}) : super(key: key);
 
+  void selectSchool(BuildContext context, WidgetRef ref, School? school) {
+    final notifier = ref.read(assistantProvider.notifier);
+    notifier.school = school;
+    notifier.navigateToNextStep(context, AssistantStepEnum.SELECT_SCHOOL);
+  }
+
   @override
-  _SelectSchoolState createState() => _SelectSchoolState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scrollController = useScrollController();
 
-class _SelectSchoolState extends ConsumerState<SelectSchool> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
-  final ScrollController _scrollController = ScrollController();
-  final TextEditingController _searchFieldController = TextEditingController();
-
-  refreshSchool() async {
-    final schoolList = ref.refresh(schoolListProvider);
-
-    schoolList.whenOrNull(
-      error: (err, stack) => showSnackBar(
-        context,
-        SnackBar(
-          content: Text('Aucune connexion.'),
+    ref.listen<AsyncValue<List<School>>>(schoolSelectionControllerProvider,
+        (_, value) {
+      value.whenOrNull(
+        error: (e, st) => showSnackBar(
+          context,
+          SnackBar(content: Text('Aucune connexion.')),
         ),
-      ),
-    );
-  }
-
-  loadSchoolAssistant() {
-    provider.Provider.of<AssistantProvider>(context, listen: false)
-        .initAssistant();
-    Navigator.of(context).pushNamed(AddSchoolScreen.routeName);
-  }
-
-  loadGradeAssistant(School school) {
-    final assistantProvider =
-        provider.Provider.of<AssistantProvider>(context, listen: false);
-    assistantProvider.initBySchool(school);
-    var nextScreen = assistantProvider.getAssistantStartScreen();
-
-    Navigator.of(context).pushNamed(nextScreen).then((result) {
-      if (nextScreen == AssistantScreen.routeName) {
-        // Callback assistant screen
-        assistantProvider.assistantCallback(
-            context, result as Map<String, dynamic>?);
-      }
+      );
     });
-  }
 
-  void selectSchool(School school) {
-    loadGradeAssistant(school);
-  }
-
-  void filterSchoolList(String value) {
-    var schoolProvider =
-        provider.Provider.of<OLD_SchoolProvider>(context, listen: false);
-    schoolProvider.filterSchool(value);
-  }
-
-  void searchFocus() {
-    if (_scrollController.offset < 145) {
-      _scrollController.jumpTo(145);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       body: RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: () => refreshSchool(),
+        onRefresh: () =>
+            ref.read(schoolSelectionControllerProvider.notifier).fetch(),
         child: CustomScrollView(
-          controller: _scrollController,
+          controller: scrollController,
           physics: AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
             SchoolSelectionHeader(
-              loadSchoolAssistant: loadSchoolAssistant,
-              scrollController: _scrollController,
+              loadSchoolAssistant: () => selectSchool(context, ref, null),
+              scrollController: scrollController,
             ),
-            SliverStickyHeader(
-              header: Container(
-                padding: EdgeInsets.all(15),
-                child: SearchBar(
-                  searchFieldController: _searchFieldController,
-                  onChanged: filterSchoolList,
-                  placeholder: 'Rechercher un établissement',
-                  onTap: searchFocus,
-                ),
-              ),
-              sliver: SchoolList(),
+            SchoolSelectionContent(
+              onTap: () {
+                if (scrollController.offset < 145) scrollController.jumpTo(145);
+              },
+              onSchoolSelect: (school) => selectSchool(context, ref, school),
+              onSchoolNotFoundPressed: () => selectSchool(context, ref, null),
             ),
           ],
         ),

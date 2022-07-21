@@ -1,5 +1,5 @@
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
-import { EventTransformPipe } from "./event-transform-pipe"
+import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const ParseTeachersPipe: (regex?: RegExp) => EventTransformPipe =
   (regex = /^([a-zA-Z-]{2,} )+[a-zA-Z-]{2,}$/) =>

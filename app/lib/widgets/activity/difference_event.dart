@@ -136,7 +136,7 @@ class DifferenceEvent extends StatelessWidget {
           ),
         ),
         decoration: BoxDecoration(
-          color: settingsProvider.currentTheme!.cardColor,
+          color: settingsProvider.currentTheme.cardColor,
           borderRadius: BorderRadius.circular(15),
         ),
       ),

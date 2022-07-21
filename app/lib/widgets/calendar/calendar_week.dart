@@ -54,15 +54,16 @@ class _CalendarWeekState extends State<CalendarWeek> {
   @override
   void initState() {
     super.initState();
-    _currentWeekScrollController =
-        ScrollController(initialScrollOffset: widget._syncScroll!.currentOffset);
+    _currentWeekScrollController = ScrollController(
+        initialScrollOffset: widget._syncScroll!.currentOffset);
     widget._syncScroll!.registerScrollController(_currentWeekScrollController);
   }
 
   @override
   void dispose() {
     super.dispose();
-    widget._syncScroll!.unregisterScrollController(_currentWeekScrollController);
+    widget._syncScroll!
+        .unregisterScrollController(_currentWeekScrollController);
   }
 
   void selectEvent(BuildContext context, Event? event) {
@@ -274,7 +275,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
                                         widget.dayWidth - 2 * widget.columnGap,
                                     child: Container(
                                       color: settingsProvider
-                                          .currentTheme!.lineColor,
+                                          .currentTheme.lineColor,
                                       height: 1,
                                     ),
                                   ),

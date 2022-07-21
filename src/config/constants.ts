@@ -1,7 +1,10 @@
 import { developmentEnvVariables } from "config/environments/development"
 import { testEnvVariables } from "config/environments/test"
 
-export const NODE_ENV = process.env.NODE_ENV ?? ""
+type Environment = "development" | "test" | "production"
+
+export const NODE_ENV: Environment = (process.env.NODE_ENV ??
+  "development") as Environment
 
 const env: any = {
   ...(NODE_ENV === "development" ? developmentEnvVariables : {}),
@@ -17,7 +20,6 @@ export const SMTP_FROM = env.SMTP_FROM ?? ""
 export const SERVICE_ACCOUNT_KEY_PATH =
   env.SERVICE_ACCOUNT_KEY_PATH ?? "./config/serviceAccountKey.json"
 
-export const ENABLE_REDIS = env.ENABLE_REDIS ?? ""
 export const REDIS_QUEUE_NAME = env.REDIS_QUEUE ?? "timecalendar-notifier"
 export const REDIS_URL = env.REDIS_URL ?? ""
 export const REDIS_PASSWORD = env.REDIS_PASSWORD ?? ""

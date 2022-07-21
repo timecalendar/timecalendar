@@ -1,7 +1,6 @@
 import 'package:timecalendar/utils/encoded_token.dart';
-
-import 'calendar.dart';
-import 'custom_calendar.dart';
+import 'package:timecalendar/models/calendar.dart';
+import 'package:timecalendar/models/custom_calendar.dart';
 
 class SelectedCalendar {
   /// 'custom' or 'unit'
