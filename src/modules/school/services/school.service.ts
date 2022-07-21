@@ -11,6 +11,6 @@ export class SchoolService {
   ) {}
 
   findAll() {
-    return this.repository.find({ visible: true })
+    return this.repository.findBy({ visible: true })
   }
 }

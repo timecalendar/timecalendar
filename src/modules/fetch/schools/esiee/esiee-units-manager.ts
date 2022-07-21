@@ -1,5 +1,5 @@
+import { ESIEE_SCHOOL } from "modules/fetch/schools/esiee/esiee.constants"
 import { appFirestore } from "modules/storage/firestore"
-import { ESIEE_SCHOOL } from "./esiee.constants"
 
 type UnitsMap = { [code: string]: string }
 

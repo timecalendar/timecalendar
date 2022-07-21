@@ -1,8 +1,8 @@
 import * as path from "path"
 import { program } from "commander"
+import { dataSourceOptions } from "data-source"
 import glob from "glob-promise"
-import ormconfig from "ormconfig"
-import { Connection, createConnection, getRepository } from "typeorm"
+import { DataSource } from "typeorm"
 import {
   Builder,
   fixturesIterator,
@@ -10,46 +10,52 @@ import {
   Parser,
   Resolver,
 } from "typeorm-fixtures-cli/dist"
-import { runMigrations } from "modules/shared/utils/run-migrations"
+
+interface Options {
+  drop?: boolean
+}
 
 program.option("--drop")
 program.parse()
 
-const loadFixtures = async (connection: Connection, fixturesPath: string) => {
+const loadFixtures = async (dataSource: DataSource, fixturesPath: string) => {
   try {
     const loader = new Loader()
     loader.load(path.resolve(fixturesPath))
 
     const resolver = new Resolver()
     const fixtures = resolver.resolve(loader.fixtureConfigs)
-    const builder = new Builder(connection, new Parser())
+    const builder = new Builder(dataSource, new Parser(), false)
 
     for (const fixture of fixturesIterator(fixtures)) {
       const entity = await builder.build(fixture)
-      await getRepository(entity.constructor.name).save(entity)
+      await dataSource.getRepository(entity.constructor.name).save(entity)
     }
   } catch (err) {
     throw err
   } finally {
-    if (connection) {
-      await connection.close()
+    if (dataSource) {
+      await dataSource.destroy()
     }
   }
 }
 
 const main = async () => {
-  const options = program.opts<{ drop: boolean }>()
+  const options = program.opts<Options>()
 
-  const connection = await createConnection(ormconfig)
+  const dataSource = await new DataSource({
+    ...dataSourceOptions,
+    logging: true,
+  }).initialize()
 
   if (options.drop) {
-    await connection.dropDatabase()
-    await connection.runMigrations()
+    await dataSource.dropDatabase()
+    await dataSource.runMigrations()
   }
 
   const files = await glob("./**/fixtures/*.yml")
   for (const file of files) {
-    loadFixtures(connection, file)
+    loadFixtures(dataSource, file)
   }
 }
 

@@ -35,7 +35,7 @@ class AboutScreen extends StatelessWidget {
               CustomButton(
                 text: 'Voir la politique de confidentialité',
                 outline: true,
-                onPressed: () => UrlLauncher.launchUrl(
+                onPressed: () => UrlLauncher.openUrl(
                     Constants.mainWebUrl + 'privacy-policy'),
               ),
               SizedBox(height: 15),
@@ -109,7 +109,7 @@ class AboutScreen extends StatelessWidget {
                           TextStyle(color: Colors.blue, fontFamily: 'Poppins'),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () {
-                          UrlLauncher.launchUrl('https://www.samuelprak.fr/');
+                          UrlLauncher.openUrl('https://www.samuelprak.fr/');
                         },
                     ),
                   ],
@@ -128,7 +128,7 @@ class AboutScreen extends StatelessWidget {
                           TextStyle(color: Colors.blue, fontFamily: 'Poppins'),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () {
-                          UrlLauncher.launchUrl('https://www.eddymonnot.com/');
+                          UrlLauncher.openUrl('https://www.eddymonnot.com/');
                         },
                     ),
                   ],

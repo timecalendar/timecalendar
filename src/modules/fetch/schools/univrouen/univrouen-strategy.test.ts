@@ -1,4 +1,4 @@
-import univrouenStrategy from "./univrouen-strategy"
+import univrouenStrategy from "modules/fetch/schools/univrouen/univrouen-strategy"
 
 describe("Rouen University strategy", () => {
   describe("URL renamer", () => {

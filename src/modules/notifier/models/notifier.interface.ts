@@ -1,4 +1,7 @@
-import { OnNewSubscriptionPayload, OnCalendarChangedPayload } from "./notifier"
+import {
+  OnCalendarChangedPayload,
+  OnNewSubscriptionPayload,
+} from "modules/notifier/models/notifier"
 
 export interface Notifier {
   onNewSubscription(payload: OnNewSubscriptionPayload): Promise<void>

@@ -1,7 +1,7 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 import firebaseAdmin from "firebase-admin"
-import { SERVICE_ACCOUNT_KEY_PATH } from "./constants"
+import { SERVICE_ACCOUNT_KEY_PATH } from "config/constants"
 
 const serviceAccountKey = JSON.parse(
   readFileSync(join(__dirname, "../..", SERVICE_ACCOUNT_KEY_PATH), "utf-8"),

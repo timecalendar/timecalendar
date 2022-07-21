@@ -142,7 +142,7 @@ class _TabsScreenState extends State<TabsScreen>
     final settingsProvider = Provider.of<SettingsProvider>(context);
     final appTheme = settingsProvider.currentTheme;
     if (!_checkDisplayChangelog) {
-      WidgetsBinding.instance!.addPostFrameCallback(
+      WidgetsBinding.instance.addPostFrameCallback(
           (_) => displayChangelog(context, settingsProvider.currentVersion!));
     }
 
