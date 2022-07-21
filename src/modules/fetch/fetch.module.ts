@@ -13,5 +13,6 @@ import { FetchService } from "modules/fetch/services/fetch.service"
     FetchService,
   ],
   controllers: [FetchController],
+  exports: [FetchService],
 })
 export class FetchModule {}

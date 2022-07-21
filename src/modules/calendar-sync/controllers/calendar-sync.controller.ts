@@ -4,9 +4,10 @@ import { CalendarSyncService } from "modules/calendar-sync/services/calendar-syn
 
 @Controller("calendars")
 export class CalendarSyncController {
-  constructor(private readonly calendarSyncService: CalendarSyncService) {}
+  constructor(private readonly service: CalendarSyncService) {}
+
   @Post()
-  createCalendar(@Body() dto: CreateCalendarDto) {
-    return this.calendarSyncService.create(dto)
+  createCalendar(@Body() payload: CreateCalendarDto) {
+    return this.service.create(payload)
   }
 }

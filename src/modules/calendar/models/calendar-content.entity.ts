@@ -1,3 +1,5 @@
+import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
+import { Calendar } from "modules/calendar/models/calendar.entity"
 import {
   Column,
   Entity,
@@ -5,8 +7,6 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm"
-import { CalendarEvent } from "./calendar-event.model"
-import { Calendar } from "./calendar.entity"
 
 @Entity()
 export class CalendarContent {

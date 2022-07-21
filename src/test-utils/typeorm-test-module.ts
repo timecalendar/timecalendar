@@ -7,6 +7,7 @@ export const dataSourceOptionsForTest = {
   ...dataSourceOptions,
   port: DATABASE_TEST_PORT,
   database: DATABASE_TEST_MAIN_NAME,
+  multipleStatements: true,
 } as DataSourceOptions
 
 export const typeOrmTestModuleForRoot = () =>
