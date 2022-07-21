@@ -1,4 +1,4 @@
-import enseaStrategy from "./ensea-strategy"
+import enseaStrategy from "modules/fetch/schools/ensea/ensea-strategy"
 
 describe("ENSEA strategy", () => {
   describe("URL renamer", () => {

@@ -1,5 +1,5 @@
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
-import { EventTransformPipe } from "./event-transform-pipe"
+import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const hyperplanningDescriptionPipe: EventTransformPipe = (
   event: FetcherCalendarEvent,

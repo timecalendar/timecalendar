@@ -1,6 +1,6 @@
 import { ModuleMetadata } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
-import { typeOrmTestModuleForRoot } from "./typeorm-test-module"
+import { typeOrmTestModuleForRoot } from "test-utils/typeorm-test-module"
 
 const createTestModule = async (metadata: ModuleMetadata) => {
   const addedImports: ModuleMetadata["imports"] = []

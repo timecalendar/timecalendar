@@ -36,4 +36,4 @@ services:
     ports:
       - '6370:6379'
     volumes: 
-      - ./bin/redis:/data
+      - ./volumes/redis:/data

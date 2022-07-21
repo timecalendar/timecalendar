@@ -1,13 +1,13 @@
 import _ from "lodash"
 import { getObjectPaths } from "modules/shared/utils/object-paths"
 import { getNestTestApps } from "test-utils/create-nest-app"
-import { Connection } from "typeorm"
-import { AppFactory } from "./app-factory"
+import { AppFactory } from "test-utils/factories/app-factory"
+import { DataSource } from "typeorm"
 
 export type AppFactoryContextParam = AppFactoryContext
 
 export interface AppFactoryContext {
-  connection?: Connection
+  dataSource?: DataSource
 }
 
 export type AppBuildFactoryGenerator<T, U> = (
@@ -25,21 +25,21 @@ export const factoryBuilder = <T, U = null>(
   ) => {
     const buildContext: AppFactoryContext = context || {}
 
-    if (!buildContext.connection) {
-      const connections = getNestTestApps()
-        .map((app) => app.get(Connection))
-        .filter((connection) => connection)
-      buildContext.connection = connections[0] || undefined
+    if (!buildContext.dataSource) {
+      const dataSources = getNestTestApps()
+        .map((app) => app.get(DataSource))
+        .filter((dataSource) => dataSource)
+      buildContext.dataSource = dataSources[0] || undefined
     }
 
     const [model, factory] = generator(
       buildContext,
       customFactoryClass ?? factoryClass,
     )
-    const { connection } = buildContext
+    const { dataSource } = buildContext
 
     return (factory as any).onCreate(async (obj: any) => {
-      if (!connection) return obj
+      if (!dataSource) return obj
       const paths = getObjectPaths(obj)
         .map((path: any) => [path, _.get(obj, path)])
         .filter(([, val]: any) => val instanceof AppFactory)
@@ -48,12 +48,12 @@ export const factoryBuilder = <T, U = null>(
       )
       paths.forEach(([path]: any, i: any) => _.set(obj, path, promises[i]))
 
-      const entity = connection.entityMetadatas.find(
+      const entity = dataSource.entityMetadatas.find(
         (entity) => entity.name === model.name,
       )
       if (!entity) throw new Error("Entity not found: " + model.name)
 
-      const repository = connection.getRepository(entity.name)
+      const repository = dataSource.getRepository(entity.name)
       repository.insert(obj)
     }) as T
   }

@@ -1,4 +1,4 @@
-import { ReplaceUrlRenamer } from "./replace-url-renamer"
+import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
 
 /**
  * Change the nbWeeks parameter in the ADE URLs to a period.
