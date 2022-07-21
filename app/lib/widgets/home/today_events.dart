@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'package:timecalendar/models/calendar_event.dart';
 import 'package:timecalendar/models/event.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/screens/event_details_screen.dart';
 import 'package:timecalendar/utils/color_utils.dart';
 import 'package:timecalendar/utils/date_utils.dart';
-
-import 'home_rectangle_event.dart';
+import 'package:timecalendar/widgets/home/home_rectangle_event.dart';
 
 class TodayEvents extends StatelessWidget {
   final List<Event?> events;
@@ -102,7 +100,7 @@ class TodayEvents extends StatelessWidget {
               left: hourColumnWidth,
               right: 0,
               child: Container(
-                color: settingsProvider.currentTheme!.lineColor,
+                color: settingsProvider.currentTheme.lineColor,
                 height: 1,
               ),
             ),

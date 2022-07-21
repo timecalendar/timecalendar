@@ -21,11 +21,13 @@ jobs:
     - name: Build container image
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
-    - name: Start MySQL
-      run: docker-compose --env-file ./ci/.env.test --profile ci up -d mysql_test
+    - name: Start MySQL and Redis
+      run: docker-compose --env-file ./ci/.env.test --profile ci up -d mysql_test redis
 
-    - name: Wait for MySQL
-      run: ./ci/wait.sh -h localhost -p 3308 -t 60
+    - name: Wait for MySQL and Redis
+      run: |
+        ./ci/wait.sh -h localhost -p 3308 -t 60
+        ./ci/wait.sh -h localhost -p 6370 -t 60
 
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} yarn test

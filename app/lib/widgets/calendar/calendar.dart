@@ -9,9 +9,8 @@ import 'package:timecalendar/providers/events_provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/utils/date_utils.dart';
 import 'package:timecalendar/utils/snapping_list_scroll_physics.dart';
-
-import 'calendar_hours_column.dart';
-import 'calendar_week.dart';
+import 'package:timecalendar/widgets/calendar/calendar_hours_column.dart';
+import 'package:timecalendar/widgets/calendar/calendar_week.dart';
 
 class Calendar extends StatefulWidget {
   const Calendar(

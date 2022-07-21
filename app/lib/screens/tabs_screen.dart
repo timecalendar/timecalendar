@@ -13,8 +13,7 @@ import 'package:timecalendar/screens/profile_screen.dart';
 import 'package:timecalendar/services/notification/notification.dart';
 import 'package:timecalendar/utils/constants.dart';
 import 'package:timecalendar/utils/snackbar.dart';
-
-import 'activity_screen.dart';
+import 'package:timecalendar/screens/activity_screen.dart';
 
 class TabsScreen extends StatefulWidget {
   TabsScreen(this.observer);
@@ -141,9 +140,9 @@ class _TabsScreenState extends State<TabsScreen>
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
-    final appTheme = settingsProvider.currentTheme!;
+    final appTheme = settingsProvider.currentTheme;
     if (!_checkDisplayChangelog) {
-      WidgetsBinding.instance!.addPostFrameCallback(
+      WidgetsBinding.instance.addPostFrameCallback(
           (_) => displayChangelog(context, settingsProvider.currentVersion!));
     }
 

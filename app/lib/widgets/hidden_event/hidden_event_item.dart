@@ -100,13 +100,13 @@ class HiddenEventItem extends StatelessWidget {
                         padding: EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: settingsProvider.currentTheme!.primaryColor,
+                          color: settingsProvider.currentTheme.primaryColor,
                         ),
                         child: IconButton(
                           tooltip: (event != null)
                               ? "Afficher l'événement"
                               : "Afficher les événements",
-                          color: settingsProvider.currentTheme!.cardColor,
+                          color: settingsProvider.currentTheme.cardColor,
                           icon: Icon(Icons.event_busy),
                           onPressed: () => this.removeItem(),
                         ),
@@ -117,7 +117,7 @@ class HiddenEventItem extends StatelessWidget {
               ),
             ),
             decoration: BoxDecoration(
-              color: settingsProvider.currentTheme!.cardColor,
+              color: settingsProvider.currentTheme.cardColor,
               borderRadius: BorderRadius.circular(15),
             ),
           ),

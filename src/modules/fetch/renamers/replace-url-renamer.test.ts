@@ -1,4 +1,4 @@
-import { ReplaceUrlRenamer } from "./replace-url-renamer"
+import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
 
 describe("ReplaceUrlRenamer", () => {
   it("should replace the url", () => {

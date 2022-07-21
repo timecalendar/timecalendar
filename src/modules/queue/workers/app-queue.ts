@@ -1,15 +1,9 @@
-import { QueueJob } from "./queue-job"
+import { QueueJob } from "modules/queue/workers/queue-job"
 
 export type QueueHandler = (job: QueueJob) => Promise<any>
 
-export interface AppQueueConstructor {
-  new (handler: QueueHandler)
-}
-
 export interface AppQueue {
-  /**
-   * Add a job in the queue
-   * @param name The job name
-   */
+  init(handler: QueueHandler): Promise<void>
   add(job: QueueJob): Promise<void>
+  close(): Promise<void>
 }

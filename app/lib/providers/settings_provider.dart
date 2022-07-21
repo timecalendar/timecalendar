@@ -53,7 +53,7 @@ class SettingsProvider with ChangeNotifier {
   String? get startupScreen => _startupScreen;
   bool get darkMode {
     if (_theme == 'system') {
-      return SchedulerBinding.instance!.window.platformBrightness ==
+      return SchedulerBinding.instance.window.platformBrightness ==
           Brightness.dark;
     } else if (_theme == 'light') {
       return false;
@@ -86,8 +86,8 @@ class SettingsProvider with ChangeNotifier {
     _notificationCalendar = this.prefs.getBool('notification_calendar');
     if (_notificationCalendar == null) {
       _notificationCalendar = _notificationCalendarDefault;
-      await prefs!.setBool(
-          'notification_calendar', _notificationCalendarDefault);
+      await prefs!
+          .setBool('notification_calendar', _notificationCalendarDefault);
     }
 
     _colorsByGroup = this.prefs.getBool('colors_by_group');
@@ -111,7 +111,8 @@ class SettingsProvider with ChangeNotifier {
     _calendarHourHeight = this.prefs.getDouble('calendar_hour_height');
     if (_calendarHourHeight == null) {
       _calendarHourHeight = _calendarHourHeightDefault;
-      await prefs!.setDouble('calendar_hour_height', _calendarHourHeightDefault);
+      await prefs!
+          .setDouble('calendar_hour_height', _calendarHourHeightDefault);
     }
 
     _startupScreen = this.prefs.getString('startup_screen');
@@ -224,7 +225,7 @@ class SettingsProvider with ChangeNotifier {
     prefs.setBool('show_weekends', _showWeekends!);
   }
 
-  AppTheme? get currentTheme {
+  AppTheme get currentTheme {
     return darkMode ? AppTheme.darkTheme : AppTheme.lightTheme;
   }
 

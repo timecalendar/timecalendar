@@ -1,91 +1,87 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/models/selected_calendar.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
+import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
+import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
+import 'package:timecalendar/modules/assistant/states/assistant_finished_result.dart';
+import 'package:timecalendar/providers/old_assistant_provider.dart';
 import 'package:timecalendar/providers/events_provider.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
 import 'package:timecalendar/screens/tabs_screen.dart';
 import 'package:timecalendar/services/notification/notification.dart';
 import 'package:timecalendar/utils/constants.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:provider/provider.dart' as oldProvider;
 
-class AssistantScreen extends StatefulWidget {
+class AssistantScreen extends HookConsumerWidget {
   static const routeName = '/assistant';
 
   @override
-  _AssistantScreenState createState() => _AssistantScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(assistantProvider);
 
-class _AssistantScreenState extends State<AssistantScreen> {
-  // final flutterWebviewPlugin = new FlutterWebviewPlugin();
-
-  void onPageChanged(String url) async {
-    final assistantProvider =
-        Provider.of<AssistantProvider>(context, listen: false);
-
-    // Handle assistant return
-    if (!url.contains('/embed/loading')) {
-      return;
-    }
-
-    // Check if the assistant has returned a token
-    RegExp regExp = RegExp(r"\/embed\/loading\/\?token=([a-zA-Z0-9-_~]+)");
-    var allMatches = regExp.allMatches(url).toList();
-    String? token;
-    if (allMatches.length > 0) {
-      // The assistant has already generated a token
-      // Use it
-      token = allMatches[0].group(1);
-      await assistantProvider
-          .setSelectedCalendar(SelectedCalendar.fromToken(token));
-
-      // Refresh calendar
-      await Provider.of<EventsProvider>(context, listen: false)
-          .fetchAndSetEvents();
-
-      // Then redirect to the main page
-      await Future.delayed(Duration(milliseconds: 200));
-
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          TabsScreen.routeName, (Route<dynamic> route) => false);
-
-      // And ask notification permission
-      await NotificationService().subscribeDelay();
-
-      return null;
-    }
-
-    // Check if the assistant called the fallback assistant
-    regExp = RegExp(r"\/embed\/loading\/\?fallback=true");
-    allMatches = regExp.allMatches(url).toList();
-    if (allMatches.length > 0) {
-      // Redirect to fallback assistant
-      Navigator.of(context).pop({'fallback': true});
-
-      return null;
-    }
-
-    Navigator.of(context).pop({'assistantDone': true, 'token': token});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final assistantProvider =
-        Provider.of<AssistantProvider>(context, listen: false);
+    final oldprovider =
+        oldProvider.Provider.of<OldAssistantProvider>(context, listen: false);
     final settingsProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
+        oldProvider.Provider.of<SettingsProvider>(context, listen: false);
+    final gradeName = ref.watch(addGradeNameProvider);
 
-    var initialUrl = Constants.mainWebUrl +
-        'creation/connect?embed=true' +
-        ((assistantProvider.schoolCode != null)
-            ? ('&schoolCode=' + assistantProvider.schoolCode!)
-            : '') +
-        ((assistantProvider.gradeName != null)
-            ? ('&gradeName=' + Uri.encodeComponent(assistantProvider.gradeName!))
-            : '') +
-        ((settingsProvider.darkMode) ? '&darkMode=true' : '') +
-        ((assistantProvider.useFallback) ? '&fallback=true' : '');
+    void _onPageChanged(String url) async {
+      // Handle assistant return
+      if (!url.contains('/embed/loading')) {
+        return;
+      }
+
+      // Check if the assistant has returned a token
+      RegExp regExp = RegExp(r"\/embed\/loading\/\?token=([a-zA-Z0-9-_~]+)");
+      var allMatches = regExp.allMatches(url).toList();
+      String token = "";
+      if (allMatches.length > 0) {
+        // The assistant has already generated a token
+        // Use it
+        token = allMatches[0].group(1)!;
+        await oldprovider
+            .setSelectedCalendar(SelectedCalendar.fromToken(token));
+
+        // Refresh calendar
+        await oldProvider.Provider.of<EventsProvider>(context, listen: false)
+            .fetchAndSetEvents();
+
+        // Then redirect to the main page
+        await Future.delayed(Duration(milliseconds: 200));
+
+        Navigator.of(context).pushNamedAndRemoveUntil(
+            TabsScreen.routeName, (Route<dynamic> route) => false);
+
+        // And ask notification permission
+        await NotificationService().subscribeDelay();
+
+        return null;
+      }
+
+      // Check if the assistant called the fallback assistant
+      regExp = RegExp(r"\/embed\/loading\/\?fallback=true");
+      allMatches = regExp.allMatches(url).toList();
+      if (allMatches.length > 0) {
+        Navigator.of(context).pop(AssistantFinishedResult.fallback());
+      } else {
+        Navigator.of(context).pop(AssistantFinishedResult.done(token: token));
+      }
+    }
+
+    final Map<String, dynamic> queryParameters = {
+      'embed': 'true',
+      ...provider.school != null ? {'schoolCode': provider.school!.code} : {},
+      ...provider.fallback ? {'fallback': 'true'} : {},
+      ...settingsProvider.darkMode ? {'darkMode': 'true'} : {},
+      ...gradeName.length > 0 ? {'gradeName': gradeName} : {},
+    };
+
+    var initialUrl = Uri.parse(Constants.mainWebUrl)
+        .replace(queryParameters: queryParameters, path: '/creation/connect')
+        .toString();
+
+    print(initialUrl);
 
     return Scaffold(
       appBar: AppBar(
@@ -97,7 +93,7 @@ class _AssistantScreenState extends State<AssistantScreen> {
             child: WebView(
               initialUrl: initialUrl,
               javascriptMode: JavascriptMode.unrestricted,
-              onPageStarted: this.onPageChanged,
+              onPageStarted: _onPageChanged,
             ),
           )
         ],

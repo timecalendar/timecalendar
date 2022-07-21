@@ -28,6 +28,8 @@ const configureMainApp = (module: any, app: NestExpressApplication) => {
   app.enableCors({
     origin: "*",
   })
+
+  app.enableShutdownHooks()
 }
 
 export default configureMainApp

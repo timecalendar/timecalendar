@@ -1,28 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/providers/assistant_provider.dart';
-import 'package:timecalendar/screens/assistant_screen.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/assistant/models/assistant_step.dart';
+import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/services/url_launcher.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
 
-class ConnectScreen extends StatelessWidget {
+class ConnectScreen extends HookConsumerWidget {
   static const routeName = '/connect';
 
-  void loadAssistant(BuildContext context) {
-    var assistantProvider =
-        Provider.of<AssistantProvider>(context, listen: false);
-    // Show assistant screen
-    Navigator.pushNamed(context, AssistantScreen.routeName).then((result) {
-      // Callback assistant screen
-      assistantProvider.assistantCallback(context, result as Map<String, dynamic>?);
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
-    var assistantProvider =
-        Provider.of<AssistantProvider>(context, listen: false);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = ref.watch(assistantProvider);
+
     final mediaQuery = MediaQuery.of(context);
     final availableWidth = mediaQuery.size.width - 200;
 
@@ -57,19 +47,18 @@ class ConnectScreen extends StatelessWidget {
                             "Sur votre ordinateur, ou dans le navigateur de votre appareil, connectez-vous sur le site de votre établissement afin d'accéder à votre emploi du temps.",
                           ),
                           SizedBox(height: 40),
-                          if (assistantProvider.websiteUrl != null &&
-                              assistantProvider.websiteUrl!.length > 0)
+                          if ((provider.school?.intranetUrl?.length ?? 0) > 0)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 CustomButton(
                                   onPressed: () {
-                                    UrlLauncher.launchUrl(
-                                        assistantProvider.websiteUrl!);
+                                    UrlLauncher.openUrl(
+                                      provider.school!.intranetUrl!,
+                                    );
                                   },
                                   icon: FontAwesomeIcons.externalLinkAlt,
-                                  text: assistantProvider.schoolName ??
-                                      'Se connecter',
+                                  text: provider.school?.name ?? 'Se connecter',
                                 )
                               ],
                             )
@@ -97,9 +86,11 @@ class ConnectScreen extends StatelessWidget {
                 ),
                 CustomButton(
                   text: 'Suivant',
-                  onPressed: () {
-                    loadAssistant(context);
-                  },
+                  onPressed: () =>
+                      ref.read(assistantProvider.notifier).navigateToNextStep(
+                            context,
+                            AssistantStepEnum.CONNECT_TO_INTRANET,
+                          ),
                 ),
               ],
             ),
