@@ -1,15 +1,17 @@
-import { createConnection } from "typeorm"
-import { MysqlConnectionOptions } from "typeorm/driver/mysql/MysqlConnectionOptions"
+import { DataSource, DataSourceOptions } from "typeorm"
 
 export type RunMigrationParams = {
   log: boolean
 }
 
 export const runMigrations = async (
-  options: MysqlConnectionOptions,
+  dataSourceOptions: DataSourceOptions,
   params: RunMigrationParams = { log: false },
 ) => {
-  const connection = await createConnection({ ...options, logging: params.log })
+  const connection = await new DataSource({
+    ...dataSourceOptions,
+    logging: params.log,
+  }).initialize()
   await connection.runMigrations()
-  await connection.close()
+  await connection.destroy()
 }

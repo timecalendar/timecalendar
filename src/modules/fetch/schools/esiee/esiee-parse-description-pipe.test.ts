@@ -1,5 +1,5 @@
 import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
-import esieeParseDescriptionPipe from "./esiee-parse-description-pipe"
+import esieeParseDescriptionPipe from "modules/fetch/schools/esiee/esiee-parse-description-pipe"
 
 describe("esieeParseDescriptionPipe", () => {
   it("should remove useless description lines", () => {

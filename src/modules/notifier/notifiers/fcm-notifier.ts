@@ -8,9 +8,9 @@ import { Notifier } from "modules/notifier/models/notifier.interface"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import {
   DifferenceType,
-  getNotificationBody,
   mapDifferenceTitle,
-} from "./fcm-notifier-calendar-changed"
+  getNotificationBody,
+} from "modules/notifier/notifiers/fcm-notifier-calendar-changed"
 
 export const FCM_CALENDAR_CHANGED_ACTION = "calendar_changed"
 

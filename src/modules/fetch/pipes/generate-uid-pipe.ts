@@ -1,7 +1,7 @@
 import slug from "slug"
 import { v5 } from "uuid"
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
-import { EventTransformPipe } from "./event-transform-pipe"
+import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const generateUid = (event: FetcherCalendarEvent) => {
   // Create uuid hash

@@ -3,8 +3,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:timecalendar/modules/shared/test_utils/test_utils.dart';
 
 void main() {
-  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized()
-      as IntegrationTestWidgetsFlutterBinding;
+  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   binding.framePolicy = LiveTestWidgetsFlutterBindingFramePolicy.fullyLive;
 

@@ -18,11 +18,10 @@ You should have access to phpMyAdmin here: http://localhost:3310/
 
 TimeCalendar is written in TypeScript and runs with Node.js. [Install Node.js](https://nodejs.org/en/) on your environment (current version v16).
 
-Once Node.js is installed, install yarn and npm dependencies:
+Once Node.js is installed, install npm dependencies:
 
 ```bash
-corepack enable
-yarn
+npm install
 ```
 
 ### Init your environment
@@ -44,7 +43,7 @@ You also need to create a Firestore Database. In the left bar, click on Firestor
 To start the server, run the following command:
 
 ```bash
-yarn dev
+npm run dev
 ```
 
 ## Tests
@@ -52,7 +51,7 @@ yarn dev
 To run tests:
 
 ```bash
-yarn test
+npm run test
 ```
 
 ## Migrations
@@ -60,12 +59,12 @@ yarn test
 Create a migration
 
 ```
-yarn typeorm migration:generate -n MigrationName
+npm run typeorm migration:generate -n MigrationName
 ```
 
 Run migrations
 
 
 ```
-yarn typeorm migration:run
+npm run typeorm migration:run
 ```

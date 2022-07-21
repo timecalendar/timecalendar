@@ -1,4 +1,4 @@
-import { QueueJob } from "./queue-job"
+import { QueueJob } from "modules/queue/workers/queue-job"
 
 export type QueueHandler = (job: QueueJob) => Promise<any>
 

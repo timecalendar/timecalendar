@@ -1,8 +1,8 @@
 import { CalendarChange } from "modules/calendar-log/models/difference"
 import { EventType } from "modules/fetch/models/event"
 import { FirebaseService } from "modules/firebase/services/firebase.service"
-import { FcmNotifier } from "./fcm-notifier"
-import { DifferenceType } from "./fcm-notifier-calendar-changed"
+import { FcmNotifier } from "modules/notifier/notifiers/fcm-notifier"
+import { DifferenceType } from "modules/notifier/notifiers/fcm-notifier-calendar-changed"
 
 describe("FcmNotifier", () => {
   const notify = jest.fn()

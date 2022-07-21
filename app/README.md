@@ -10,7 +10,9 @@ To start working on the TimeCalendar app, you must first install [Flutter](https
 
 ### Firebase
 
-You first need a Firebase account and project setup. If you don't have one yet, refer to the API server [README](../README.md) to create your own Firebase application and database.
+You first need a Firebase account and project setup. You can either use the private development Firebase account or create your own. If you are using the private development account, skip this step.
+
+If you don't have one yet, refer to the API server [README](../README.md) to create your own Firebase application and database.
 
 Install the [Firebase CLI](https://firebase.google.com/docs/cli). Select your operating system, and follow the instructions to install the Firebase CLI.
 
