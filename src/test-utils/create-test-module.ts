@@ -5,7 +5,7 @@ import {
   ValueProvider,
 } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
-import { typeOrmTestModuleForRoot } from "test-utils/typeorm-test-module"
+import { typeOrmTestModuleForRoot } from "test-utils/typeorm/typeorm-test-module"
 
 type Provider<T> = ClassProvider<T> | ValueProvider<T> | FactoryProvider<T>
 

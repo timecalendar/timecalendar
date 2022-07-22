@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
+import { CreateCalendarRepDto } from "modules/calendar-sync/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/dto/create-calendar.dto"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
-import { DeepPartial } from "typeorm"
+import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 
 @Injectable()
 export class CalendarSyncService {
@@ -16,7 +17,7 @@ export class CalendarSyncService {
     private readonly calendarContentRepository: CalendarContentRepository,
   ) {}
 
-  async create(body: CreateCalendarDto) {
+  async create(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
     const { url, schoolId, schoolName, customData, name } = body
 
     const source = { url, customData }
@@ -25,7 +26,7 @@ export class CalendarSyncService {
     if (events.length === 0) throw new NotFoundException("No events found")
 
     const calendar = await this.sync({
-      school: schoolId ? { id: schoolId } : null,
+      school: schoolId ? idToEntity(schoolId) : null,
       schoolName: schoolId ? null : schoolName,
       url,
       customData,
@@ -33,13 +34,10 @@ export class CalendarSyncService {
       lastUpdatedAt: new Date(),
     })
 
-    return calendar
+    return { id: calendar.id }
   }
 
-  async sync(
-    calendar: Partial<Omit<Calendar, "school">> &
-      DeepPartial<Pick<Calendar, "school">>,
-  ) {
+  async sync(calendar: Partial<Calendar>) {
     const { id, url, customData, schoolId } = calendar
     const source = { url, customData }
     const code = await this.findSchoolCode(schoolId)
