@@ -2,7 +2,7 @@
 require("dotenv").config({ path: `${__dirname}/../.env` })
 
 import MockDate from "mockdate"
-import { dataSourceOptionsForTest } from "test-utils/typeorm-test-module"
+import { dataSourceOptionsForTest } from "test-utils/typeorm/typeorm-test-module"
 import { DataSource } from "typeorm"
 import { runMigrations } from "modules/shared/utils/run-migrations"
 import { clearNestTestApps, getNestTestApps } from "test-utils/create-nest-app"
