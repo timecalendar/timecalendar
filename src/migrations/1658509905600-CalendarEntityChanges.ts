@@ -1,9 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm"
 
-export class CalendarRemoveTokenAndNullableSchoolName1658431670586
-  implements MigrationInterface
-{
-  name = "CalendarRemoveTokenAndNullableSchoolName1658431670586"
+export class CalendarEntityChanges1658509905600 implements MigrationInterface {
+  name = "CalendarEntityChanges1658509905600"
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

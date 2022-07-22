@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
+import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event"
@@ -49,6 +50,14 @@ describe("CalendarSyncService", () => {
       expect(calendar.id).toBe(created.id)
       expect(calendar.schoolId).toBe(school.id)
       expect(calendar.schoolName).toBeNull()
+
+      const calendarContents = await dataSource
+        .getRepository(CalendarContent)
+        .findBy({ calendar: { id: calendar.id } })
+      expect(calendarContents).toHaveLength(1)
+      const [content] = calendarContents
+      expect(content.events.length).toBe(1)
+      expect(content.events[0].uid).toBe(events[0].uid)
     })
 
     it("creates a calendar with a custom school", async () => {
@@ -64,6 +73,14 @@ describe("CalendarSyncService", () => {
       expect(calendar.id).toBe(created.id)
       expect(calendar.school).toBeUndefined()
       expect(calendar.schoolName).toBe("My school")
+
+      const calendarContents = await dataSource
+        .getRepository(CalendarContent)
+        .findBy({ calendar: { id: calendar.id } })
+      expect(calendarContents).toHaveLength(1)
+      const [content] = calendarContents
+      expect(content.events.length).toBe(1)
+      expect(content.events[0].uid).toBe(events[0].uid)
     })
 
     it("throws when the school does not exist", async () => {
@@ -78,6 +95,10 @@ describe("CalendarSyncService", () => {
       )
       const calendars = await dataSource.getRepository(Calendar).find()
       expect(calendars).toHaveLength(0)
+      const calendarContents = await dataSource
+        .getRepository(CalendarContent)
+        .find()
+      expect(calendarContents).toHaveLength(0)
     })
 
     it("throws when there are no events", async () => {
@@ -93,6 +114,10 @@ describe("CalendarSyncService", () => {
       )
       const calendars = await dataSource.getRepository(Calendar).find()
       expect(calendars).toHaveLength(0)
+      const calendarContents = await dataSource
+        .getRepository(CalendarContent)
+        .find()
+      expect(calendarContents).toHaveLength(0)
     })
   })
 })

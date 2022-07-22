@@ -28,7 +28,7 @@ export class Calendar {
   @Column("json", { nullable: true })
   customData: CalendarCustomData | null
 
-  @ManyToOne(() => School)
+  @ManyToOne(() => School, { nullable: true })
   school?: School
 
   @RelationId((calendar: Calendar) => calendar.school)
