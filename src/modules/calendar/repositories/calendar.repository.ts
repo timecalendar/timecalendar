@@ -10,7 +10,7 @@ export class CalendarRepository {
     private readonly repository: Repository<Calendar>,
   ) {}
 
-  create(calendar: DeepPartial<Calendar>) {
+  save(calendar: DeepPartial<Calendar>) {
     return this.repository.save(calendar)
   }
 }

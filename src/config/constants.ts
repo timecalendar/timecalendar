@@ -28,11 +28,9 @@ export const API_TOKEN = env.API_TOKEN ?? ""
 
 export const DATABASE_HOST = env.DATABASE_HOST ?? ""
 export const DATABASE_PORT = +(env.DATABASE_PORT ?? "")
-export const DATABASE_TEST_PORT = +(env.DATABASE_TEST_PORT ?? "")
 export const DATABASE_USERNAME = env.DATABASE_USERNAME ?? ""
 export const DATABASE_PASSWORD = env.DATABASE_PASSWORD ?? ""
 export const DATABASE_MAIN_NAME = env.DATABASE_MAIN_NAME ?? ""
-export const DATABASE_TEST_MAIN_NAME = env.DATABASE_TEST_MAIN_NAME ?? ""
 
 export const RUN_MIGRATIONS = env.RUN_MIGRATIONS === "true"
 export const S3_PUBLIC_BUCKET_CLIENT_URL = env.S3_PUBLIC_BUCKET_CLIENT_URL ?? ""

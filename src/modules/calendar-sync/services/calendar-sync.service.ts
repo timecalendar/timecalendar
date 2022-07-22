@@ -1,8 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
 import { CreateCalendarDto } from "modules/calendar-sync/dto/create-calendar.dto"
+import { Calendar } from "modules/calendar/models/calendar.entity"
+import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
+import { DeepPartial } from "typeorm"
 
 @Injectable()
 export class CalendarSyncService {
@@ -10,6 +13,7 @@ export class CalendarSyncService {
     private readonly fetchService: FetchService,
     private readonly schoolRepository: SchoolRepository,
     private readonly calendarRepository: CalendarRepository,
+    private readonly calendarContentRepository: CalendarContentRepository,
   ) {}
 
   async create(body: CreateCalendarDto) {
@@ -20,7 +24,7 @@ export class CalendarSyncService {
     const events = await this.fetchService.fetchEvents(source, code)
     if (events.length === 0) throw new NotFoundException("No events found")
 
-    const calendar = await this.calendarRepository.create({
+    const calendar = await this.sync({
       school: schoolId ? { id: schoolId } : null,
       schoolName: schoolId ? null : schoolName,
       url,
@@ -32,7 +36,29 @@ export class CalendarSyncService {
     return calendar
   }
 
-  // async sync(calendar: Calendar) {}
+  async sync(
+    calendar: Partial<Omit<Calendar, "school">> &
+      DeepPartial<Pick<Calendar, "school">>,
+  ) {
+    const { id, url, customData, schoolId } = calendar
+    const source = { url, customData }
+    const code = await this.findSchoolCode(schoolId)
+    const events = await this.fetchService.fetchEvents(source, code)
+    if (events.length === 0) throw new NotFoundException("No events found")
+
+    const fieldsToUpdate = { lastUpdatedAt: new Date() }
+    const savedCalendar = await this.calendarRepository.save({
+      ...(id ? { id } : calendar),
+      ...fieldsToUpdate,
+    })
+
+    await this.calendarContentRepository.save({
+      calendar: { id: savedCalendar.id },
+      events,
+    })
+
+    return savedCalendar
+  }
 
   private async findSchoolCode(schoolId?: string) {
     if (!schoolId) return null

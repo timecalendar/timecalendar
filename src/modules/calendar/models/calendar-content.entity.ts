@@ -6,6 +6,7 @@ import {
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
+  RelationId,
 } from "typeorm"
 
 @Entity()
@@ -19,4 +20,7 @@ export class CalendarContent {
   @OneToOne(() => Calendar)
   @JoinColumn()
   calendar: Calendar
+
+  @RelationId((calendarContent: CalendarContent) => calendarContent.calendar)
+  calendarId: string
 }
