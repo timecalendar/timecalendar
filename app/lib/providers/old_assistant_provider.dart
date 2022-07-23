@@ -5,7 +5,6 @@ import 'package:timecalendar/constants/environment.dart';
 import 'package:timecalendar/database/calendar_manager.dart';
 import 'package:timecalendar/database/differences_manager.dart';
 import 'package:timecalendar/models/selected_calendar.dart';
-import 'package:timecalendar/modules/school/models/school_assistant.dart';
 
 class OldAssistantProvider with ChangeNotifier {
   String? schoolCode;
@@ -14,8 +13,8 @@ class OldAssistantProvider with ChangeNotifier {
 
   String? websiteUrl;
 
-  SchoolAssistant? assistant;
-  SchoolAssistant? fallbackAssistant;
+  // SchoolAssistant? assistant;
+  // SchoolAssistant? fallbackAssistant;
 
   bool useFallback = false;
 

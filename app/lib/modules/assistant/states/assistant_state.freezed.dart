@@ -18,7 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 class _$AssistantStateTearOff {
   const _$AssistantStateTearOff();
 
-  _AssistantState call({School? school = null, bool fallback = false}) {
+  _AssistantState call({SchoolForList? school = null, bool fallback = false}) {
     return _AssistantState(
       school: school,
       fallback: fallback,
@@ -31,7 +31,7 @@ const $AssistantState = _$AssistantStateTearOff();
 
 /// @nodoc
 mixin _$AssistantState {
-  School? get school => throw _privateConstructorUsedError;
+  SchoolForList? get school => throw _privateConstructorUsedError;
   bool get fallback => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -44,9 +44,7 @@ abstract class $AssistantStateCopyWith<$Res> {
   factory $AssistantStateCopyWith(
           AssistantState value, $Res Function(AssistantState) then) =
       _$AssistantStateCopyWithImpl<$Res>;
-  $Res call({School? school, bool fallback});
-
-  $SchoolCopyWith<$Res>? get school;
+  $Res call({SchoolForList? school, bool fallback});
 }
 
 /// @nodoc
@@ -67,23 +65,12 @@ class _$AssistantStateCopyWithImpl<$Res>
       school: school == freezed
           ? _value.school
           : school // ignore: cast_nullable_to_non_nullable
-              as School?,
+              as SchoolForList?,
       fallback: fallback == freezed
           ? _value.fallback
           : fallback // ignore: cast_nullable_to_non_nullable
               as bool,
     ));
-  }
-
-  @override
-  $SchoolCopyWith<$Res>? get school {
-    if (_value.school == null) {
-      return null;
-    }
-
-    return $SchoolCopyWith<$Res>(_value.school!, (value) {
-      return _then(_value.copyWith(school: value));
-    });
   }
 }
 
@@ -94,10 +81,7 @@ abstract class _$AssistantStateCopyWith<$Res>
           _AssistantState value, $Res Function(_AssistantState) then) =
       __$AssistantStateCopyWithImpl<$Res>;
   @override
-  $Res call({School? school, bool fallback});
-
-  @override
-  $SchoolCopyWith<$Res>? get school;
+  $Res call({SchoolForList? school, bool fallback});
 }
 
 /// @nodoc
@@ -120,7 +104,7 @@ class __$AssistantStateCopyWithImpl<$Res>
       school: school == freezed
           ? _value.school
           : school // ignore: cast_nullable_to_non_nullable
-              as School?,
+              as SchoolForList?,
       fallback: fallback == freezed
           ? _value.fallback
           : fallback // ignore: cast_nullable_to_non_nullable
@@ -136,7 +120,7 @@ class _$_AssistantState extends _AssistantState {
 
   @JsonKey()
   @override
-  final School? school;
+  final SchoolForList? school;
   @JsonKey()
   @override
   final bool fallback;
@@ -168,11 +152,12 @@ class _$_AssistantState extends _AssistantState {
 }
 
 abstract class _AssistantState extends AssistantState {
-  factory _AssistantState({School? school, bool fallback}) = _$_AssistantState;
+  factory _AssistantState({SchoolForList? school, bool fallback}) =
+      _$_AssistantState;
   _AssistantState._() : super._();
 
   @override
-  School? get school;
+  SchoolForList? get school;
   @override
   bool get fallback;
   @override

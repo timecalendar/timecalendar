@@ -20,7 +20,6 @@ class AddPersonalEventScreen extends StatefulWidget {
   _AddPersonalEventScreenState createState() => _AddPersonalEventScreenState();
 }
 
-// TODO: refactoring code
 class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
   final _formKey = GlobalKey<FormState>();
 

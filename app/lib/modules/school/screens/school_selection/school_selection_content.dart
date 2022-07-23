@@ -3,13 +3,13 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
-import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_list.dart';
 import 'package:timecalendar/widgets/common/search_bar.dart';
+import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolSelectionContent extends HookConsumerWidget {
   final Function onSchoolNotFoundPressed;
-  final Function(School) onSchoolSelect;
+  final Function(SchoolForList) onSchoolSelect;
   final Function onTap;
 
   const SchoolSelectionContent({

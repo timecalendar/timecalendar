@@ -1,4 +1,5 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common"
+import { ApiExcludeEndpoint } from "@nestjs/swagger"
 import { GetEventsDto } from "modules/fetch/dto/get-events.dto"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { AuthGuard } from "modules/shared/guards/auth.guard"
@@ -8,6 +9,7 @@ import { AuthGuard } from "modules/shared/guards/auth.guard"
 export class FetchController {
   constructor(private readonly fetchService: FetchService) {}
 
+  @ApiExcludeEndpoint()
   @Post("events")
   getEvents(@Body() { school, source }: GetEventsDto) {
     return this.fetchService.fetchEvents(source, school)

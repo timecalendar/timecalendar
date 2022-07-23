@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
-import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_item.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_not_found_button.dart';
+import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolList extends HookConsumerWidget {
-  final Function(School) onSchoolSelect;
+  final Function(SchoolForList) onSchoolSelect;
   final Function onSchoolNotFoundPressed;
 
   const SchoolList({
@@ -15,7 +15,7 @@ class SchoolList extends HookConsumerWidget {
     required this.onSchoolNotFoundPressed,
   }) : super(key: key);
 
-  Widget _itemBuilder(School school) {
+  Widget _itemBuilder(SchoolForList school) {
     return SchoolItem(
       school: school,
       onSchoolSelect: onSchoolSelect,

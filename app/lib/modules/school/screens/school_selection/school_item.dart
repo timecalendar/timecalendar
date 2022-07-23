@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/providers/settings_provider.dart';
+import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolItem extends StatelessWidget {
   const SchoolItem({
@@ -11,8 +11,8 @@ class SchoolItem extends StatelessWidget {
     required this.onSchoolSelect,
   }) : super(key: key);
 
-  final School school;
-  final Function(School) onSchoolSelect;
+  final SchoolForList school;
+  final Function(SchoolForList) onSchoolSelect;
 
   @override
   Widget build(BuildContext context) {
