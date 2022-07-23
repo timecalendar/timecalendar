@@ -27,7 +27,6 @@ class SuggestionProvider with ChangeNotifier {
       // Load calendar
       final calendars = await CalendarManager.loadCalendars();
 
-      // TODO: multicalendar
       if (!isFailedSuggestion && calendars.length > 0) {
         final calendar = calendars[0];
         body['mode'] = calendar.getMode();

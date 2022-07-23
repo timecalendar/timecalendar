@@ -1,5 +1,5 @@
 import { OmitType } from "@nestjs/swagger"
-import { SchoolAssistant } from "modules/school/models/school-assistants"
+import { SchoolAssistant } from "modules/school/models/school-assistant.model"
 import { School } from "modules/school/models/school.entity"
 
 export class SchoolForList extends OmitType(School, [
@@ -7,7 +7,7 @@ export class SchoolForList extends OmitType(School, [
   "fallbackAssistant",
 ] as const) {
   assistant: SchoolAssistant
-  fallbackAssistant: SchoolAssistant | null
+  fallbackAssistant?: SchoolAssistant
 }
 
 export class FindSchoolsRepDto {

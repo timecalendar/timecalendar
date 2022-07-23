@@ -6,6 +6,7 @@ import 'package:timecalendar/screens/add_personal_event.dart';
 import 'package:timecalendar/widgets/event_details/event_details_hidden_dialog.dart';
 
 enum EventOption { HideEvent, RemoveEvent, UpdateEvent }
+
 enum ConfirmAction { CANCEL, ACCEPT }
 
 class EventDetailsHeader extends StatelessWidget {
@@ -36,7 +37,7 @@ class EventDetailsHeader extends StatelessWidget {
       );
     }
 
-    // TODO: put the dialog in widget
+    // todo put the dialog in widget
     Future<void> _removeEventConfirmDialog(BuildContext context) async {
       return showDialog<ConfirmAction>(
         context: context,

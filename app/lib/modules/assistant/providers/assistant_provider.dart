@@ -4,13 +4,13 @@ import 'package:timecalendar/modules/assistant/data/assistant_steps.dart';
 import 'package:timecalendar/modules/assistant/models/assistant_step.dart';
 import 'package:timecalendar/modules/assistant/states/assistant_finished_result.dart';
 import 'package:timecalendar/modules/assistant/states/assistant_state.dart';
-import 'package:timecalendar/modules/school/models/school.dart';
 import 'package:timecalendar/screens/import_ical_screen.dart';
+import 'package:timecalendar_api/timecalendar_api.dart';
 
 class AssistantNotifier extends StateNotifier<AssistantState> {
   AssistantNotifier() : super(AssistantState());
 
-  set school(School? school) {
+  set school(SchoolForList? school) {
     state = state.copyWith(school: school);
   }
 
