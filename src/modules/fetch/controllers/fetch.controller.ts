@@ -9,7 +9,7 @@ export class FetchController {
   constructor(private readonly fetchService: FetchService) {}
 
   @Post("events")
-  getEvents(@Body() { school, url, data }: GetEventsDto) {
-    return this.fetchService.fetchEvents(url, school, data)
+  getEvents(@Body() { school, source }: GetEventsDto) {
+    return this.fetchService.fetchEvents(source, school)
   }
 }

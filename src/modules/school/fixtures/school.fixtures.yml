@@ -7,3 +7,10 @@ items:
     visible: true
     assistant: groups
     imageUrl: /schools/mygamingacademia.png
+  univeiffel:
+    code: univeiffel
+    name: Université Gustave Eiffel
+    siteUrl: https://www.univ-gustave-eiffel.fr/
+    visible: true
+    assistant: groups
+    imageUrl: /schools/univeiffel.png

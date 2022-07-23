@@ -2,10 +2,11 @@
 require("dotenv").config({ path: `${__dirname}/../.env` })
 
 import MockDate from "mockdate"
-import { dataSourceOptionsForTest } from "test-utils/typeorm-test-module"
+import { dataSourceOptionsForTest } from "test-utils/typeorm/typeorm-test-module"
 import { DataSource } from "typeorm"
 import { runMigrations } from "modules/shared/utils/run-migrations"
 import { clearNestTestApps, getNestTestApps } from "test-utils/create-nest-app"
+import { clearDatabase } from "modules/shared/utils/clear-database"
 
 /** Modules mock */
 jest.mock("axios")
@@ -19,22 +20,16 @@ jest.setTimeout(60000)
 
 beforeAll(() => runMigrations(dataSourceOptionsForTest))
 
-// Clear database
-afterEach(async () =>
+beforeEach(async () =>
   Promise.all(
     getNestTestApps()
       .map((app) => app.get(DataSource))
       .filter((dataSource) => dataSource)
-      .map(async (dataSource) => {
-        if (!dataSource.isInitialized) return
-        for (const entity of dataSource.entityMetadatas) {
-          await dataSource.getRepository(entity.name).delete({})
-        }
-      }),
+      .map(clearDatabase),
   ),
 )
 
-afterEach(() => MockDate.reset())
+beforeEach(() => MockDate.reset())
 
 afterAll(async () => {
   await Promise.all([clearNestTestApps()])

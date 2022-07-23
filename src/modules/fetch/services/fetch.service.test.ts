@@ -75,7 +75,7 @@ describe("FetchService", () => {
       const url = "https://google.com/search?export=json&format=1"
       const school = "rouen"
 
-      const events = await fetchService.fetchEvents(url, school)
+      const events = await fetchService.fetchEvents({ url }, school)
 
       expect(fetch).toBeCalled()
       expect(pipe).toBeCalled()
@@ -117,7 +117,7 @@ describe("FetchService", () => {
       const url = "https://google.com/search?export=json&format=1"
       const school = "rouen"
 
-      const events = await fetchService.fetchEvents(url, school)
+      const events = await fetchService.fetchEvents({ url }, school)
 
       expect(events.length).toBe(1)
       expect(events[0].uid).toBe("1")
@@ -140,7 +140,7 @@ describe("FetchService", () => {
         axiosMock.mockResolvedValueOnce({ data: ical })
 
         const events = await fetchService.fetchEvents(
-          "https://google.com",
+          { url: "https://google.com" },
           "generic",
         )
 

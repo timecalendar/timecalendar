@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common"
 import { InjectStrategies } from "modules/fetch/decorators/inject-strategies"
-import { CalendarCustomData } from "modules/fetch/models/calendar-custom-data"
+import { CalendarSource } from "modules/fetch/models/calendar-source"
 import genericStrategy from "modules/fetch/strategies/generic-strategy"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
@@ -26,18 +26,11 @@ export class FetchService {
     )
   }
 
-  async fetchEvents(url: string, school: string, data?: CalendarCustomData) {
+  async fetchEvents({ url, customData }: CalendarSource, school?: string) {
     const strategy = this.getStrategy(school)
-
-    // Transform the URL
     const transformedUrl = this.transformUrl(url, school)
-
-    // Fetch events
-    const rawEvents = await strategy.fetchEvents(transformedUrl, data)
-
-    // Format events
+    const rawEvents = await strategy.fetchEvents(transformedUrl, customData)
     const events = strategy.transformEvents(rawEvents)
-
     return events.filter((event) => !event.fields.canceled)
   }
 }

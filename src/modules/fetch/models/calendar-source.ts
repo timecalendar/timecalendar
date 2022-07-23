@@ -15,3 +15,13 @@ export class CalendarCustomData {
   @ValidateNested()
   auth?: BasicCredentials
 }
+
+export class CalendarSource {
+  @IsString()
+  url: string
+
+  @IsOptional()
+  @Type(() => CalendarCustomData)
+  @ValidateNested()
+  customData?: CalendarCustomData
+}
