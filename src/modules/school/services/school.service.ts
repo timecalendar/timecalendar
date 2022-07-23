@@ -3,6 +3,7 @@ import { S3_PUBLIC_BUCKET_CLIENT_URL } from "config/constants"
 import { FindSchoolsRepDto } from "modules/school/models/dto/find-schools-rep.dto"
 import { getSchoolAssistant } from "modules/school/models/school-assistants"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
+import ensureNotNull from "modules/shared/utils/types/ensure-not-null"
 
 @Injectable()
 export class SchoolService {
@@ -15,7 +16,7 @@ export class SchoolService {
       schools: schools.map(({ assistant, fallbackAssistant, ...school }) => ({
         ...school,
         imageUrl: S3_PUBLIC_BUCKET_CLIENT_URL + school.imageUrl,
-        assistant: getSchoolAssistant(assistant),
+        assistant: ensureNotNull(getSchoolAssistant(assistant)),
         fallbackAssistant: getSchoolAssistant(fallbackAssistant),
       })),
     }

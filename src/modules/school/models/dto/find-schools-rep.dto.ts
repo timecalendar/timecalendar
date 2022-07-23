@@ -7,7 +7,7 @@ export class SchoolForList extends OmitType(School, [
   "fallbackAssistant",
 ] as const) {
   assistant: SchoolAssistant
-  fallbackAssistant: SchoolAssistant
+  fallbackAssistant: SchoolAssistant | null
 }
 
 export class FindSchoolsRepDto {

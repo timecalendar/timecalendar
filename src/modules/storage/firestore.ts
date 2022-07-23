@@ -19,7 +19,7 @@ export class AppFirestore {
     const dataRef = firebaseAdmin.firestore().collection("parsers").doc(key)
 
     dataRef.onSnapshot((snapshot) => {
-      onChange && onChange((getData(snapshot) as T) ?? defaultValue)
+      onChange && onChange((getData(snapshot) as T) ?? (defaultValue as T))
     })
   }
 

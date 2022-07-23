@@ -41,7 +41,7 @@ const createTestModule = async (
     imports: [...(metadata.imports ?? []), ...addedImports],
   })
 
-  const defaultOverrides = []
+  const defaultOverrides: Provider<unknown>[] = []
 
   const moduleOverrides = [
     ...overrides,

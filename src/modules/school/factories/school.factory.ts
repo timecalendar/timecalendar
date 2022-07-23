@@ -6,13 +6,16 @@ export class SchoolFactory extends AppFactory<School> {}
 
 export const schoolFactory = factoryBuilder(() => [
   School,
-  SchoolFactory.define(() => ({
-    code: "mygamingacademia",
-    name: "My Gaming Academia",
-    assistant: "groups",
-    fallbackAssistant: null,
-    siteUrl: "https://gaming-academia.com",
-    imageUrl: "",
-    visible: true,
-  })),
+  SchoolFactory.define(
+    () =>
+      ({
+        code: "mygamingacademia",
+        name: "My Gaming Academia",
+        assistant: "groups",
+        fallbackAssistant: null,
+        siteUrl: "https://gaming-academia.com",
+        imageUrl: "",
+        visible: true,
+      } as School),
+  ),
 ])

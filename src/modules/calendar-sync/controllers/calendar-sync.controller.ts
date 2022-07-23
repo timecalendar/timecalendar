@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from "@nestjs/common"
-import { CreateCalendarDto } from "modules/calendar-sync/dto/create-calendar.dto"
+import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
+import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 
 @Controller("calendars")
@@ -8,6 +9,11 @@ export class CalendarSyncController {
 
   @Post()
   createCalendar(@Body() payload: CreateCalendarDto) {
-    return this.service.create(payload)
+    return this.service.createCalendar(payload)
+  }
+
+  @Post("sync")
+  syncCalendars(@Body() payload: SyncCalendarsDto) {
+    return this.service.syncCalendars(payload)
   }
 }
