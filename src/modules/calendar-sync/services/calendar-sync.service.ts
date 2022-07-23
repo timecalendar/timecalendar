@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
-import { CreateCalendarRepDto } from "modules/calendar-sync/dto/create-calendar-rep.dto"
-import { CreateCalendarDto } from "modules/calendar-sync/dto/create-calendar.dto"
+import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
+import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
+import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
+import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
+import { CalendarService } from "modules/calendar/services/calendar.service"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
@@ -15,9 +18,11 @@ export class CalendarSyncService {
     private readonly schoolRepository: SchoolRepository,
     private readonly calendarRepository: CalendarRepository,
     private readonly calendarContentRepository: CalendarContentRepository,
+    private readonly calendarEventHelper: CalendarEventHelper,
+    private readonly calendarService: CalendarService,
   ) {}
 
-  async create(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
+  async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
     const { url, schoolId, schoolName, customData, name } = body
 
     const source = { url, customData }
@@ -26,7 +31,7 @@ export class CalendarSyncService {
     if (events.length === 0) throw new NotFoundException("No events found")
 
     const calendar = await this.sync({
-      school: schoolId ? idToEntity(schoolId) : null,
+      school: schoolId ? idToEntity(schoolId) : undefined,
       schoolName: schoolId ? null : schoolName,
       url,
       customData,
@@ -37,21 +42,44 @@ export class CalendarSyncService {
     return { id: calendar.id }
   }
 
-  async sync(calendar: Partial<Calendar>) {
+  async syncCalendars({ calendarIds }: SyncCalendarsDto) {
+    const calendars = await this.calendarRepository.findByIdsWithContent(
+      calendarIds,
+    )
+
+    await Promise.all(
+      calendars.map((calendar) =>
+        this.sync(calendar).catch((err) => console.error(err)),
+      ),
+    )
+
+    return this.calendarService.calendarsForPublic(
+      calendars.map(({ id }) => id),
+    )
+  }
+
+  async sync(
+    calendar: Pick<Calendar, "url" | "customData"> &
+      Partial<Omit<Calendar, "url">>,
+  ) {
     const { id, url, customData, schoolId } = calendar
     const source = { url, customData }
     const code = await this.findSchoolCode(schoolId)
-    const events = await this.fetchService.fetchEvents(source, code)
-    if (events.length === 0) throw new NotFoundException("No events found")
+    const fetchedEvents = await this.fetchService.fetchEvents(source, code)
+    if (fetchedEvents.length === 0)
+      throw new NotFoundException("No events found")
 
     const fieldsToUpdate = { lastUpdatedAt: new Date() }
-    const savedCalendar = await this.calendarRepository.save({
-      ...(id ? { id } : calendar),
-      ...fieldsToUpdate,
-    })
+    const events = fetchedEvents.map((event) =>
+      this.calendarEventHelper.fromFetcherCalendarEvent(event),
+    )
 
-    await this.calendarContentRepository.save({
-      calendar: { id: savedCalendar.id },
+    const savedCalendar = await this.calendarRepository.save({
+      ...(id ? idToEntity(id) : calendar),
+      ...fieldsToUpdate,
+      content: undefined, // content is set just after
+    })
+    await this.calendarContentRepository.save(savedCalendar.id, {
       events,
     })
 

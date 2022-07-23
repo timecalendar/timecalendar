@@ -24,7 +24,7 @@ export class School {
   @Column()
   imageUrl: string
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   intranetUrl: string | null
 
   @Column({ default: true })
@@ -33,8 +33,8 @@ export class School {
   @Column()
   assistant: string
 
-  @Column({ nullable: true })
-  fallbackAssistant: string
+  @Column({ type: "varchar", nullable: true })
+  fallbackAssistant: string | null
 
   @CreateDateColumn()
   createdAt: Date

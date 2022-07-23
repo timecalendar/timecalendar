@@ -29,7 +29,7 @@ export class IcalFetcher implements Fetcher {
       axiosConfig.auth = data.auth
     }
 
-    let rep: AxiosResponse<any>
+    let rep: AxiosResponse<any> | undefined = undefined
 
     for (let i = 0; i < nbRetries; i++) {
       try {

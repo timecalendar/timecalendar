@@ -27,5 +27,5 @@ export class CreateCalendarDto {
   @Type(() => CalendarCustomData)
   @ValidateNested()
   @IsOptional()
-  customData?: CalendarCustomData
+  customData: CalendarCustomData | null = null
 }

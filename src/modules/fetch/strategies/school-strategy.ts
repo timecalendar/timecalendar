@@ -37,7 +37,7 @@ export class SchoolStrategy {
     }
   }
 
-  transformUrl(url: string, school: string) {
+  transformUrl(url: string, school: string | null) {
     return this.options.urlRenamers.reduce((acc, renamer) => {
       // Extract renamer object
       const onlyThisSchool =
@@ -56,7 +56,7 @@ export class SchoolStrategy {
     return events.map((event) => pipes.reduce((acc, pipe) => pipe(acc), event))
   }
 
-  fetchEvents(url: string, data: CalendarCustomData) {
-    return this.options.fetcher.fetch(url, data)
+  fetchEvents(url: string, data: CalendarCustomData | null) {
+    return this.options.fetcher.fetch(url, data ?? {})
   }
 }

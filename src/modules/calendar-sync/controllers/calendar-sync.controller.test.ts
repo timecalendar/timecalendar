@@ -1,6 +1,7 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
+import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
@@ -14,18 +15,12 @@ describe("CalendarSyncController", () => {
   let app: NestExpressApplication
   let dataSource: DataSource
   const events: FetcherCalendarEvent[] = [fetcherCalendarEventFactory.build()]
+  const mockFetchService = { fetchEvents: jest.fn(async () => events) }
 
   beforeAll(async () => {
     app = await createTestApp(
       { imports: [CalendarSyncModule] },
-      {
-        overrides: [
-          {
-            provide: FetchService,
-            useValue: { fetchEvents: async () => events },
-          },
-        ],
-      },
+      { overrides: [{ provide: FetchService, useValue: mockFetchService }] },
     )
     dataSource = app.get(DataSource)
   })
@@ -65,6 +60,27 @@ describe("CalendarSyncController", () => {
           name: "My Calendar",
         })
         .expect(400)
+    })
+  })
+
+  describe("POST /calendars/sync", () => {
+    let calendar: Calendar
+
+    beforeEach(async () => {
+      calendar = await calendarFactory().school().create()
+    })
+
+    it("fetches a calendar", async () => {
+      const { body } = await request(app)
+        .post("/calendars/sync")
+        .send({
+          calendarIds: [calendar.id],
+        })
+
+      expect(body).toHaveLength(1)
+      expect(body[0].calendar.id).toBe(calendar.id)
+      expect(body[0].events).toHaveLength(1)
+      expect(body[0].events[0].uid).toBe(events[0].uid)
     })
   })
 })

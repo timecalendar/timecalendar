@@ -1,3 +1,3 @@
 export interface UrlRenamer {
-  rename(url: string, school: string): string
+  rename(url: string, school: string | null): string
 }
