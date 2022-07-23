@@ -54,7 +54,7 @@ class OldAssistantProvider with ChangeNotifier {
         body: jsonEncode(body),
       );
 
-      Map<String, Object> result = jsonDecode(rep.body);
+      Map<String, dynamic> result = jsonDecode(rep.body);
       String? token = result['token'] as String?;
 
       if (token == null || token.length == 0) {

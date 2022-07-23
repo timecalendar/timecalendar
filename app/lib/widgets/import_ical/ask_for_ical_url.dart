@@ -15,8 +15,8 @@ class AskForIcalUrl extends StatelessWidget {
           title: Text("Entrez l'URL de votre calendrier"),
           content: TextField(
             controller: _textFieldController,
-            decoration: InputDecoration(
-                hintText: "Collez ici l'URL de votre calendrier"),
+            decoration:
+                InputDecoration(hintText: "Collez ici le lien du calendrier"),
           ),
           actions: <Widget>[
             TextButton(

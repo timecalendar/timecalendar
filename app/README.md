@@ -54,6 +54,10 @@ flutter pub run build_runner watch
 
 Run the app from your IDE.
 
+### Add certificates
+
+On MacOS, drag and drop the file `ci/certificates/cert.pem` in the simulator.
+
 ## Build on Android
 
 Copy the file `android/app/key.properties.sample` into `android/app/key.properties`.
