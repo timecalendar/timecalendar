@@ -13,6 +13,7 @@ import {
 
 interface Options {
   drop?: boolean
+  test?: boolean
 }
 
 program.option("--drop")

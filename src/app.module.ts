@@ -9,6 +9,7 @@ import { NotifierModule } from "modules/notifier/notifier.module"
 import { QueueModule } from "modules/queue/queue.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
+import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
     FetchModule,
     UnivOrleansModule,
     SchoolModule,
+    CalendarSyncModule,
     RedisModule,
   ],
   controllers: [],

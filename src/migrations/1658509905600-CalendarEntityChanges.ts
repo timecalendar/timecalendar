@@ -1,0 +1,27 @@
+import { MigrationInterface, QueryRunner } from "typeorm"
+
+export class CalendarEntityChanges1658509905600 implements MigrationInterface {
+  name = "CalendarEntityChanges1658509905600"
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP INDEX \`IDX_f1e34ed082e59a751c045963d4\` ON \`calendar\``,
+    )
+    await queryRunner.query(`ALTER TABLE \`calendar\` DROP COLUMN \`token\``)
+    await queryRunner.query(
+      `ALTER TABLE \`calendar\` CHANGE \`schoolName\` \`schoolName\` varchar(255) NULL`,
+    )
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE \`calendar\` CHANGE \`schoolName\` \`schoolName\` varchar(255) NOT NULL`,
+    )
+    await queryRunner.query(
+      `ALTER TABLE \`calendar\` ADD \`token\` varchar(255) NOT NULL`,
+    )
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX \`IDX_f1e34ed082e59a751c045963d4\` ON \`calendar\` (\`token\`)`,
+    )
+  }
+}

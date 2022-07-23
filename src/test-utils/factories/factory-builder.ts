@@ -54,7 +54,8 @@ export const factoryBuilder = <T, U = null>(
       if (!entity) throw new Error("Entity not found: " + model.name)
 
       const repository = dataSource.getRepository(entity.name)
-      repository.insert(obj)
+      const inserted = await repository.save(obj)
+      return inserted
     }) as T
   }
 }
