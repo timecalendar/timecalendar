@@ -78,6 +78,6 @@ const assistants = [
 
 const schoolAssistants = _.keyBy(assistants, "slug")
 
-export const getSchoolAssistant = (assistant: string) => {
-  return schoolAssistants[assistant] ?? null
+export const getSchoolAssistant = (assistant: string | null) => {
+  return assistant === null ? null : schoolAssistants[assistant] ?? null
 }

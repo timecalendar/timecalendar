@@ -55,10 +55,4 @@ export class CalendarEvent {
   @Type(() => Date)
   @IsDate()
   exportedAt: Date
-
-  @IsString()
-  color: string
-
-  @IsString()
-  groupColor: string
 }

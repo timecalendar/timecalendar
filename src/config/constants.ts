@@ -3,6 +3,9 @@ import { testEnvVariables } from "config/environments/test"
 
 type Environment = "development" | "test" | "production"
 
+const isEnvTrue = (value?: string) =>
+  Boolean(value && (value === "1" || value === "true"))
+
 export const NODE_ENV: Environment = (process.env.NODE_ENV ??
   "development") as Environment
 
@@ -31,6 +34,7 @@ export const DATABASE_PORT = +(env.DATABASE_PORT ?? "")
 export const DATABASE_USERNAME = env.DATABASE_USERNAME ?? ""
 export const DATABASE_PASSWORD = env.DATABASE_PASSWORD ?? ""
 export const DATABASE_MAIN_NAME = env.DATABASE_MAIN_NAME ?? ""
+export const DATABASE_LOGGING = isEnvTrue(env.DATABASE_LOGGING)
 
-export const RUN_MIGRATIONS = env.RUN_MIGRATIONS === "true"
+export const RUN_MIGRATIONS = isEnvTrue(env.RUN_MIGRATIONS)
 export const S3_PUBLIC_BUCKET_CLIENT_URL = env.S3_PUBLIC_BUCKET_CLIENT_URL ?? ""

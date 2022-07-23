@@ -5,15 +5,15 @@ import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const generateUid = (event: FetcherCalendarEvent) => {
   // Create uuid hash
-  const hashComponents = []
+  const hashComponents: string[] = []
   if (event.title) hashComponents.push(event.title)
   if (event.start) hashComponents.push(event.start.toISOString())
   const hash = hashComponents.join("-")
   const uuid = v5(hash, v5.URL)
 
   // Format event uid
-  const components = []
-  if (event.title) components.push(slug(event.title.substr(0, 10)) + "-")
+  const components: string[] = []
+  if (event.title) components.push(slug(event.title.substring(0, 10)) + "-")
   components.push(uuid)
   components.push("@timecalendar.app")
   return components.join("")
