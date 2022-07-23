@@ -23,5 +23,5 @@ export class CalendarSource {
   @IsOptional()
   @Type(() => CalendarCustomData)
   @ValidateNested()
-  customData?: CalendarCustomData
+  customData: CalendarCustomData | null
 }

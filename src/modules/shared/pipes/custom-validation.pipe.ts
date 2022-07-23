@@ -7,7 +7,7 @@ export class CustomValidationPipe extends ValidationPipe {
   async transform(value: any, metadata: ArgumentMetadata) {
     const options = Reflect.getMetadata(
       REWRITE_VALIDATION_OPTIONS,
-      metadata.metatype,
+      (metadata as any).metatype,
     )
     let originOptions: any
     if (options) {

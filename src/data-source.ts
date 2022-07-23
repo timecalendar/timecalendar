@@ -1,5 +1,6 @@
 import {
   DATABASE_HOST,
+  DATABASE_LOGGING,
   DATABASE_MAIN_NAME,
   DATABASE_PASSWORD,
   DATABASE_PORT,
@@ -16,6 +17,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: DATABASE_MAIN_NAME,
   entities: [__dirname + "/**/*.entity.{ts,js}"],
   migrations: [__dirname + "/migrations/*.{ts,js}"],
+  logging: DATABASE_LOGGING,
 }
 
 const AppDataSource = new DataSource(dataSourceOptions)

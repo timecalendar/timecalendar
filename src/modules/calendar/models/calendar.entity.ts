@@ -1,3 +1,4 @@
+import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { School } from "modules/school/models/school.entity"
 import {
@@ -6,6 +7,7 @@ import {
   DeleteDateColumn,
   Entity,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   RelationId,
   UpdateDateColumn,
@@ -19,7 +21,7 @@ export class Calendar {
   @Column()
   name: string
 
-  @Column({ nullable: true })
+  @Column({ type: "varchar", nullable: true })
   schoolName: string | null
 
   @Column()
@@ -45,4 +47,10 @@ export class Calendar {
 
   @DeleteDateColumn()
   deletedAt?: Date
+
+  @OneToOne(
+    () => CalendarContent,
+    (calendarContent) => calendarContent.calendar,
+  )
+  content: CalendarContent
 }
