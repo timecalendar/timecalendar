@@ -1,7 +1,6 @@
 import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import MockDate from "lib/mock-date"
-import { Partial } from "lodash"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
@@ -22,8 +21,10 @@ describe("CalendarSyncService", () => {
   let app: NestExpressApplication
   let service: CalendarSyncService
   let dataSource: DataSource
-  let events: FetcherCalendarEvent[] = [fetcherCalendarEventFactory.build()]
-  const mockFetchService: FetchService = {} as FetchService
+  let events: FetcherCalendarEvent[]
+  const mockFetchService = {
+    fetchEvents: jest.fn(),
+  }
 
   beforeAll(async () => {
     app = await createTestApp(
@@ -34,9 +35,10 @@ describe("CalendarSyncService", () => {
     dataSource = app.get(DataSource)
   })
 
-  beforeEach(
-    () => ((mockFetchService as any).fetchEvents = jest.fn(() => events)),
-  )
+  beforeEach(() => {
+    events = [fetcherCalendarEventFactory.build()]
+    mockFetchService.fetchEvents = jest.fn(() => events)
+  })
 
   describe("createCalendar", () => {
     it("creates a calendar with an existing school", async () => {
