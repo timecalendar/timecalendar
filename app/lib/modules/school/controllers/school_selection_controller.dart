@@ -1,19 +1,21 @@
+import 'package:built_collection/built_collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:timecalendar/modules/school/clients/school_client.dart';
-import 'package:timecalendar/modules/school/models/school.dart';
+import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/utils/string_includes.dart';
+import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolSelectionController
-    extends StateNotifier<AsyncValue<List<School>>> {
-  final SchoolClient client;
+    extends StateNotifier<AsyncValue<BuiltList<SchoolForList>>> {
+  final ApiClient client;
 
   SchoolSelectionController({
     required this.client,
   }) : super(AsyncValue.loading());
 
-  Future<List<School>> fetch() async {
+  Future<BuiltList<SchoolForList>> fetch() async {
     try {
-      final schools = await client.fetchSchools();
+      final rep = await client.schoolsApi().findSchools();
+      final schools = rep.data!.schools;
       if (mounted) state = AsyncValue.data(schools);
       return schools;
     } catch (e, stackTrace) {
@@ -23,16 +25,16 @@ class SchoolSelectionController
   }
 }
 
-final schoolSelectionControllerProvider =
-    StateNotifierProvider<SchoolSelectionController, AsyncValue<List<School>>>(
-        (ref) {
-  return SchoolSelectionController(client: ref.read(schoolClientProvider))
+final schoolSelectionControllerProvider = StateNotifierProvider<
+    SchoolSelectionController, AsyncValue<BuiltList<SchoolForList>>>((ref) {
+  return SchoolSelectionController(client: ref.read(apiClientProvider))
     ..fetch();
 });
 
 final schoolSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
-final schoolFilteredProvider = Provider.autoDispose<List<School>>((ref) {
+final schoolFilteredProvider =
+    Provider.autoDispose<BuiltList<SchoolForList>>((ref) {
   final schools = ref.watch(schoolSelectionControllerProvider);
   final search = ref.watch(schoolSearchProvider);
 
@@ -43,7 +45,7 @@ final schoolFilteredProvider = Provider.autoDispose<List<School>>((ref) {
                   stringIncludes(search, item.name) ||
                   stringIncludes(search, item.code),
             )
-            .toList(),
+            .toBuiltList(),
       ) ??
-      [];
+      BuiltList<SchoolForList>();
 });

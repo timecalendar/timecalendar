@@ -63,7 +63,6 @@ class EventsProvider with ChangeNotifier {
       // Load calendar
       final calendar = await CalendarManager.loadCalendars();
       if (calendar.length == 0) return;
-      // TODO: multicalendar
       events = await calendar[0].fetchEventsFromApi();
 
       // Save events into database
@@ -141,7 +140,7 @@ class EventsProvider with ChangeNotifier {
 
   List<EventByDay> getDayEventsList() {
     var dayEvents = events.toList();
-    // TODO: comprendre pourquoi c'est pas trier!
+    // comprendre pourquoi c'est pas trier!
     dayEvents.sort((a, b) {
       return a!.start.compareTo(b!.start);
     });

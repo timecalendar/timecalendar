@@ -18,10 +18,8 @@ async function bootstrap() {
   configureMainApp(app.select(AppModule), app)
 
   setupSwagger(app)
-
-  app.enableCors({
-    origin: CLIENT_URL,
-  })
+  app.enableCors({ origin: CLIENT_URL })
+  app.enableShutdownHooks()
 
   await app.listen(PORT)
 }

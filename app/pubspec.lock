@@ -86,7 +86,7 @@ packages:
     source: hosted
     version: "7.2.3"
   built_collection:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: built_collection
       url: "https://pub.dartlang.org"
@@ -1007,6 +1007,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.4.9"
+  timecalendar_api:
+    dependency: "direct main"
+    description:
+      path: "../openapi/dart"
+      relative: true
+    source: path
+    version: "0.0.1"
   timezone:
     dependency: transitive
     description:
