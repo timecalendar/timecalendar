@@ -49,7 +49,9 @@ export class CalendarSyncService {
 
     await Promise.all(
       calendars.map((calendar) =>
-        this.sync(calendar).catch((err) => console.error(err)),
+        this.sync(calendar).catch(() => {
+          // nothing for now
+        }),
       ),
     )
 
