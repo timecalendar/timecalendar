@@ -37,4 +37,12 @@ module.exports = {
     ],
     "prettier/prettier": ["error", { endOfLine: "auto" }],
   },
+  overrides: [
+    {
+      files: ["openapi/scripts/**/*.ts"],
+      parserOptions: {
+        project: ["openapi/scripts/tsconfig.json"],
+      },
+    },
+  ],
 }

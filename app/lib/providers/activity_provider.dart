@@ -30,7 +30,6 @@ class ActivityProvider with ChangeNotifier {
       // Load calendar
       final selectedCalendar = await CalendarManager.loadCalendars();
       if (selectedCalendar.length == 0) return;
-      // TODO: multicalendar - import all activities
       final body = selectedCalendar[0].getRequestMap();
       body['lastUpdate'] = lastUpdate;
       final rep = await http.post(
