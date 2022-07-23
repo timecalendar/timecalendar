@@ -98,7 +98,7 @@ class _ImportIcalScreenState extends State<ImportIcalScreen> {
         // And ask notification permission
         return NotificationService().subscribeDelay();
       });
-    } on Exception {
+    } catch (e) {
       Future.delayed(Duration(milliseconds: 50)).then((_) {
         closeLoadingDialog();
       });

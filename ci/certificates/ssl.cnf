@@ -1,0 +1,33 @@
+HOME = .
+
+[req]
+default_bits = 2048
+distinguished_name = req_distinguished_name
+prompt = no
+req_extensions = v3_req
+x509_extensions = v3_ca
+
+[req_distinguished_name]
+countryName = FR
+stateOrProvinceName = France
+localityName = Paris
+organizationName = TimeCalendar
+organizationalUnitName=	Dev
+commonName = TimeCalendar Dev
+emailAddress = hello@timecalendar.app
+
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment
+extendedKeyUsage = clientAuth, serverAuth
+
+[v3_ca]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always, issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = timecalendar.host
+DNS.2 = api.timecalendar.host

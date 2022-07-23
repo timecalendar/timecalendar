@@ -18,7 +18,7 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
     final nextStep = nextAssistantStep(currentStep, state);
 
     Navigator.of(context).pushNamed(nextStep.route).then((result) {
-      if (nextStep == AssistantStepEnum.ASSISTANT && result != null)
+      if (nextStep.step == AssistantStepEnum.ASSISTANT && result != null)
         onAssistantFinished(context, result as AssistantFinishedResult);
     });
   }
@@ -27,19 +27,18 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
     BuildContext context,
     AssistantFinishedResult result,
   ) {
-    result.when(
-      fallback: () {
-        state = state.copyWith(fallback: true);
-        navigateToNextStep(
-          context,
-          AssistantStepEnum.SELECT_SCHOOL,
-        );
-      },
-      done: (token) => Navigator.of(context).pushNamed(
+    result.when(fallback: () {
+      state = state.copyWith(fallback: true);
+      navigateToNextStep(
+        context,
+        AssistantStepEnum.SELECT_SCHOOL,
+      );
+    }, done: (token) {
+      Navigator.of(context).pushNamed(
         ImportIcalScreen.routeName,
         arguments: ImportIcalScreenArguments(false),
-      ),
-    );
+      );
+    });
   }
 }
 

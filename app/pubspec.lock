@@ -812,7 +812,7 @@ packages:
       name: qr_code_scanner
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.6.1"
+    version: "1.0.0"
   quiver:
     dependency: transitive
     description:
@@ -826,7 +826,7 @@ packages:
       name: reorderables
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.4"
+    version: "0.5.0"
   riverpod:
     dependency: transitive
     description:
@@ -840,7 +840,7 @@ packages:
       name: scrollable_positioned_list
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.3"
+    version: "0.3.2"
   sembast:
     dependency: "direct main"
     description:
@@ -1153,7 +1153,7 @@ packages:
       name: webview_flutter_android
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.9.1"
+    version: "2.9.2"
   webview_flutter_platform_interface:
     dependency: transitive
     description:
