@@ -6,7 +6,7 @@ import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/widgets/common/custom_button.dart';
 
 class ScanQrCode extends StatelessWidget {
-  final Function? onScan;
+  final Function(String url)? onScan;
 
   const ScanQrCode({Key? key, this.onScan}) : super(key: key);
 
@@ -47,7 +47,7 @@ class ScanQrCode extends StatelessWidget {
     QrCodeResult? result = await (Navigator.of(context)
         .pushNamed<dynamic>(QrCodeScreen.routeName) as Future<QrCodeResult?>);
     if (result?.url != null) {
-      this.onScan!(result!.url);
+      this.onScan!(result!.url!);
     }
   }
 

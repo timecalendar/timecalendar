@@ -81,8 +81,6 @@ class AssistantScreen extends HookConsumerWidget {
         .replace(queryParameters: queryParameters, path: '/creation/connect')
         .toString();
 
-    print(initialUrl);
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Importer votre calendrier'),

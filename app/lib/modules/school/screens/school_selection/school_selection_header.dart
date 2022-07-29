@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:timecalendar/screens/import_ical_screen.dart';
+import 'package:timecalendar/modules/import_ical/screens/import_ical/import_ical_screen.dart';
 
 enum SchoolSelectionOptions { AddSchool, ImportIcal }
 

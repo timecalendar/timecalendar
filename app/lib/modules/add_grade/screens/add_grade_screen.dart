@@ -22,7 +22,6 @@ class AddGradeScreen extends HookConsumerWidget {
       final isValid = formKey.currentState!.validate();
       if (!isValid) return;
       formKey.currentState!.save();
-      print(name.value);
       ref.read(addGradeNameProvider.notifier).state = name.value;
       provider.navigateToNextStep(context, AssistantStepEnum.ADD_GRADE);
     }

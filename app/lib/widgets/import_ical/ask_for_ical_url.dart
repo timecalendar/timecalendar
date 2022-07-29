@@ -3,7 +3,7 @@ import 'package:timecalendar/widgets/common/custom_button.dart';
 
 class AskForIcalUrl extends StatelessWidget {
   final TextEditingController _textFieldController = TextEditingController();
-  final Function? onSubmit;
+  final void Function(String)? onSubmit;
 
   AskForIcalUrl({Key? key, this.onSubmit}) : super(key: key);
 
