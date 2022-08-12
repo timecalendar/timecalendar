@@ -6,7 +6,7 @@
 
 To start working on TimeCalendar, you must first [install Docker](https://docs.docker.com/get-docker/).
 
-Once Docker is installed, start the MySQL server in background:
+Once Docker is installed, start the Postgres server in background:
 
 ```bash
 docker-compose up -d

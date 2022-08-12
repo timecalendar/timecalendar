@@ -23,6 +23,7 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "import/no-unresolved": "off",
     "no-restricted-imports": ["error", { patterns: ["../*"] }],
+    "prefer-template": "error",
     "import/order": [
       "error",
       {

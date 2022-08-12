@@ -4,7 +4,6 @@ import { calendarEventFactory } from "modules/calendar/factories/calendar-event.
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarService } from "modules/calendar/services/calendar.service"
 import createTestApp from "test-utils/create-test-app"
-import { DataSource } from "typeorm"
 
 describe("CalendarService", () => {
   let app: NestExpressApplication
