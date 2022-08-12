@@ -1,4 +1,5 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
+import MockDate from "lib/mock-date"
 import { CalendarModule } from "modules/calendar/calendar.module"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
@@ -22,6 +23,27 @@ describe("CalendarRepository", () => {
         lastUpdatedAt: new Date(),
       })
       expect(calendar.id).toBeDefined()
+    })
+  })
+
+  describe("findLastUpdatedBeforeWithContent", () => {
+    beforeEach(() => {
+      MockDate.set(new Date("2022-01-05T12:00:00Z"))
+    })
+
+    it("finds calendars updated before a date", async () => {
+      await calendarFactory().create({})
+      const expected = await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      const calendars = await repository.findLastUpdatedBeforeWithContent(
+        new Date("2022-01-05T11:30:00Z"),
+      )
+
+      expect(calendars.length).toBe(1)
+      expect(calendars[0].id).toBe(expected.id)
+      expect(calendars[0].content.events.length).toBe(0)
     })
   })
 
