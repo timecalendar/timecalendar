@@ -9,6 +9,7 @@ import configureMainApp from "config/configure-main-app"
 import { CLIENT_URL, PORT, RUN_MIGRATIONS } from "config/constants"
 import { setupSwagger } from "config/swagger"
 import { runMigrations } from "modules/shared/utils/run-migrations"
+import bullBoardAdapter from "modules/shared/adapters/bull-board.adapter"
 
 async function bootstrap() {
   if (RUN_MIGRATIONS) await runMigrations(dataSourceOptions)
@@ -20,6 +21,7 @@ async function bootstrap() {
   setupSwagger(app)
   app.enableCors({ origin: CLIENT_URL })
   app.enableShutdownHooks()
+  bullBoardAdapter(app)
 
   await app.listen(PORT)
 }

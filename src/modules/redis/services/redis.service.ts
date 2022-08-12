@@ -1,13 +1,47 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, OnModuleDestroy } from "@nestjs/common"
 import { REDIS_PASSWORD, REDIS_URL } from "config/constants"
-import { RedisConfig } from "modules/redis/models/redis-config.interface"
+import Redis, { RedisOptions } from "ioredis"
+import { isTestEnv } from "modules/shared/helpers/check-environment"
 
 @Injectable()
-export class RedisService {
-  getRedisConfig(): RedisConfig {
-    return {
-      url: REDIS_URL,
-      password: REDIS_PASSWORD,
+export class RedisService implements OnModuleDestroy {
+  private client: Redis | null = null
+  private clients: Redis[] = []
+
+  onModuleDestroy() {
+    if (isTestEnv()) return this.closeForTests()
+    return this.close()
+  }
+
+  defaultRedisInstance() {
+    if (!this.client) {
+      this.client = this.newRedisInstance()
     }
+    return this.client
+  }
+
+  newRedisInstance(options: RedisOptions = {}) {
+    const redis = new Redis(REDIS_URL, { password: REDIS_PASSWORD, ...options })
+    redis.on("error", (err) => console.error(err))
+    this.clients.push(redis)
+    return redis
+  }
+
+  public async get(key: string) {
+    return this.defaultRedisInstance().get(key)
+  }
+
+  async close() {
+    if (this.client) {
+      await this.client.quit()
+      this.client = null
+    }
+  }
+
+  async closeForTests() {
+    for (const client of this.clients) {
+      await client.quit()
+    }
+    this.clients = []
   }
 }

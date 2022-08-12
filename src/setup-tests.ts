@@ -2,11 +2,17 @@
 require("dotenv").config({ path: `${__dirname}/../.env` })
 
 import MockDate from "mockdate"
+import wtf from "wtfnode"
 import { dataSourceOptionsForTest } from "test-utils/typeorm/typeorm-test-module"
 import { DataSource } from "typeorm"
 import { runMigrations } from "modules/shared/utils/run-migrations"
 import { clearNestTestApps, getNestTestApps } from "test-utils/create-nest-app"
 import { clearDatabase } from "modules/shared/utils/clear-database"
+import { WTF_DEBUG } from "config/constants"
+import { sleep } from "modules/shared/helpers/sleep"
+
+// Enable wtfDebug to debug the "Jest did not exit one second after the test run has completed." error
+const wtfDebug = WTF_DEBUG
 
 /** Modules mock */
 jest.mock("axios")
@@ -33,4 +39,9 @@ beforeEach(() => MockDate.reset())
 
 afterAll(async () => {
   await Promise.all([clearNestTestApps()])
+
+  if (wtfDebug) {
+    wtf.dump()
+    await sleep(5000).then(() => wtf.dump())
+  }
 })

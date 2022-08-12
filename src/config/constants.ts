@@ -17,6 +17,9 @@ const env: any = {
 
 export const PORT = +(env.PORT ?? 80)
 export const CLIENT_URL = env.CLIENT_URL ?? ""
+export const ENABLE_QUEUE = isEnvTrue(env.ENABLE_QUEUE)
+
+export const K8S_POD_NAME = env.K8S_POD_NAME ?? ""
 
 export const SMTP_URL = env.SMTP_URL ?? ""
 export const SMTP_FROM = env.SMTP_FROM ?? ""
@@ -27,6 +30,7 @@ export const REDIS_QUEUE_NAME = env.REDIS_QUEUE ?? "timecalendar-notifier"
 export const REDIS_URL = env.REDIS_URL ?? ""
 export const REDIS_PASSWORD = env.REDIS_PASSWORD ?? ""
 
+export const API_USERNAME = env.API_USERNAME ?? ""
 export const API_TOKEN = env.API_TOKEN ?? ""
 
 export const DATABASE_HOST = env.DATABASE_HOST ?? ""
@@ -38,3 +42,5 @@ export const DATABASE_LOGGING = isEnvTrue(env.DATABASE_LOGGING)
 
 export const RUN_MIGRATIONS = isEnvTrue(env.RUN_MIGRATIONS)
 export const S3_PUBLIC_BUCKET_CLIENT_URL = env.S3_PUBLIC_BUCKET_CLIENT_URL ?? ""
+
+export const WTF_DEBUG = isEnvTrue(env.WTF_DEBUG)
