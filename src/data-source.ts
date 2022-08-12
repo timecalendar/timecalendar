@@ -9,14 +9,14 @@ import {
 import { DataSource, DataSourceOptions } from "typeorm"
 
 export const dataSourceOptions: DataSourceOptions = {
-  type: "mariadb",
+  type: "postgres",
   host: DATABASE_HOST,
   port: DATABASE_PORT,
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_MAIN_NAME,
-  entities: [__dirname + "/**/*.entity.{ts,js}"],
-  migrations: [__dirname + "/migrations/*.{ts,js}"],
+  entities: [`${__dirname}/**/*.entity.{ts,js}`],
+  migrations: [`${__dirname}/migrations/*.{ts,js}`],
   logging: DATABASE_LOGGING,
 }
 

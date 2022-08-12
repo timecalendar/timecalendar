@@ -13,7 +13,7 @@ const generateUid = (event: FetcherCalendarEvent) => {
 
   // Format event uid
   const components: string[] = []
-  if (event.title) components.push(slug(event.title.substring(0, 10)) + "-")
+  if (event.title) components.push(`${slug(event.title.substring(0, 10))}-`)
   components.push(uuid)
   components.push("@timecalendar.app")
   return components.join("")

@@ -4,7 +4,6 @@ import { calendarEventFactory } from "modules/calendar/factories/calendar-event.
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarHelper } from "modules/calendar/helpers/calendar.helper"
 import { Calendar } from "modules/calendar/models/calendar.entity"
-import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 import createTestApp from "test-utils/create-test-app"
 import { DataSource } from "typeorm"
 
