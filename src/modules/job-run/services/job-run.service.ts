@@ -52,13 +52,11 @@ export class JobRunService {
   }
 
   logStart<T>(context: JobRunContext<T>) {
-    console.log("log start")
     context.logger.info(
       `Job ${context.params.type} ${context.params.name} started${
         K8S_POD_NAME ? ` on pod ${K8S_POD_NAME}` : ""
       }`,
     )
-    console.log("log end")
   }
 
   logEnd<T>(context: JobRunContext<T>, time: number) {
