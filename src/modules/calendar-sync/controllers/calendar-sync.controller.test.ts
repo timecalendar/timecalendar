@@ -1,4 +1,5 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
+import MockDate from "lib/mock-date"
 import request from "lib/supertest"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
@@ -67,7 +68,11 @@ describe("CalendarSyncController", () => {
     let calendar: Calendar
 
     beforeEach(async () => {
-      calendar = await calendarFactory().school().create()
+      MockDate.set(new Date("2022-01-05T12:00:00Z"))
+
+      calendar = await calendarFactory()
+        .school()
+        .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") })
     })
 
     it("fetches a calendar", async () => {

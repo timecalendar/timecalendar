@@ -3,16 +3,20 @@ import MockDate from "lib/mock-date"
 import { CalendarModule } from "modules/calendar/calendar.module"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
+import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { nanoid } from "nanoid"
 import createTestApp from "test-utils/create-test-app"
+import { DataSource } from "typeorm"
 
 describe("CalendarRepository", () => {
   let app: NestExpressApplication
   let repository: CalendarRepository
+  let dataSource: DataSource
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarModule] })
     repository = app.get(CalendarRepository)
+    dataSource = app.get(DataSource)
   })
 
   describe("save", () => {
@@ -34,7 +38,7 @@ describe("CalendarRepository", () => {
     })
 
     it("finds calendars updated before a date", async () => {
-      await calendarFactory().create({})
+      await calendarFactory().create()
       const expected = await calendarFactory().create({
         lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
       })
@@ -46,6 +50,24 @@ describe("CalendarRepository", () => {
       expect(calendars.length).toBe(1)
       expect(calendars[0].id).toBe(expected.id)
       expect(calendars[0].content.events.length).toBe(0)
+    })
+
+    it("finds calendars by token", async () => {
+      await calendarFactory().create()
+      await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+      const expected = await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      const calendars = await repository.findLastUpdatedBeforeWithContent(
+        new Date("2022-01-05T11:30:00Z"),
+        [expected.token],
+      )
+
+      expect(calendars.length).toBe(1)
+      expect(calendars[0].id).toBe(expected.id)
     })
   })
 
@@ -83,6 +105,44 @@ describe("CalendarRepository", () => {
       expect(calendars.length).toBe(1)
       const [calendar] = calendars
       expect(calendar.id).toBe(expected[0].id)
+    })
+  })
+
+  describe("setCalendarsLastAccessedAt", () => {
+    it("sets the last accessed at of the calendars", async () => {
+      const calendars = await calendarFactory().createList(2)
+      await repository.setCalendarsLastAccessedAt(
+        calendars.map(({ token }) => token),
+        new Date("2022-01-05T11:00:00Z"),
+      )
+
+      const updated = await dataSource.getRepository(Calendar).find()
+      expect(updated.length).toBe(2)
+      expect(updated[0].lastAccessedAt).toEqual(
+        new Date("2022-01-05T11:00:00Z"),
+      )
+      expect(updated[1].lastAccessedAt).toEqual(
+        new Date("2022-01-05T11:00:00Z"),
+      )
+    })
+
+    it("does not update other calendars", async () => {
+      const [calendar, other] = await calendarFactory().createList(2)
+
+      await repository.setCalendarsLastAccessedAt(
+        [calendar.token],
+        new Date("2022-01-05T11:00:00Z"),
+      )
+
+      const updated = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(updated.lastAccessedAt).toEqual(new Date("2022-01-05T11:00:00Z"))
+
+      const otherUpdated = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: other.id })
+      expect(otherUpdated.lastAccessedAt).toBeNull()
     })
   })
 })

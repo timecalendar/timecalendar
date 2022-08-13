@@ -14,10 +14,16 @@ export class CalendarRepository {
     return this.repository.save(calendar)
   }
 
-  findLastUpdatedBeforeWithContent(lastUpdatedBefore: Date) {
+  findLastUpdatedBeforeWithContent(
+    lastUpdatedBefore: Date,
+    filterByTokens?: string[],
+  ) {
     return this.repository.find({
       relations: { school: true, content: true },
-      where: { lastUpdatedAt: LessThan(lastUpdatedBefore) },
+      where: {
+        lastUpdatedAt: LessThan(lastUpdatedBefore),
+        ...(filterByTokens && { token: In(filterByTokens) }),
+      },
       order: { lastUpdatedAt: "ASC" },
     })
   }
@@ -28,5 +34,9 @@ export class CalendarRepository {
       where: { token: In(tokens) },
       order: { createdAt: "DESC" },
     })
+  }
+
+  setCalendarsLastAccessedAt(tokens: string[], lastAccessedAt: Date) {
+    return this.repository.update({ token: In(tokens) }, { lastAccessedAt })
   }
 }
