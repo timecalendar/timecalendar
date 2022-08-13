@@ -10,11 +10,9 @@ export class CalendarService {
     private readonly calendarHelper: CalendarHelper,
   ) {}
 
-  async calendarsForPublic(
-    calendarIds: string[],
-  ): Promise<CalendarWithContent[]> {
-    const calendarsWithContent = await this.repository.findByIdsWithContent(
-      calendarIds,
+  async calendarsForPublic(tokens: string[]): Promise<CalendarWithContent[]> {
+    const calendarsWithContent = await this.repository.findByTokensWithContent(
+      tokens,
     )
 
     return calendarsWithContent.map((calendar) =>

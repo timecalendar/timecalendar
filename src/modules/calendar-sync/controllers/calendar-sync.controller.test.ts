@@ -46,7 +46,7 @@ describe("CalendarSyncController", () => {
 
       const [calendar] = await dataSource.getRepository(Calendar).find()
       expect(calendar).toBeDefined()
-      expect(body.id).toBe(calendar.id)
+      expect(body.token).toBe(calendar.token)
       expect(calendar.url).toBe("https://www.google.com/calendar/ical/")
       expect(calendar.schoolName).toBe("My school")
       expect(calendar.name).toBe("My Calendar")
@@ -74,7 +74,7 @@ describe("CalendarSyncController", () => {
       const { body } = await request(app)
         .post("/calendars/sync")
         .send({
-          calendarIds: [calendar.id],
+          tokens: [calendar.token],
         })
 
       expect(body).toHaveLength(1)

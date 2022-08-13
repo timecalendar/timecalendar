@@ -22,10 +22,10 @@ export class CalendarRepository {
     })
   }
 
-  findByIdsWithContent(ids: string[]) {
+  findByTokensWithContent(tokens: string[]) {
     return this.repository.find({
       relations: { school: true, content: true },
-      where: { id: In(ids) },
+      where: { token: In(tokens) },
       order: { createdAt: "DESC" },
     })
   }

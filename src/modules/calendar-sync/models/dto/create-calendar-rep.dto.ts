@@ -1,3 +1,3 @@
 export class CreateCalendarRepDto {
-  id: string
+  token: string
 }

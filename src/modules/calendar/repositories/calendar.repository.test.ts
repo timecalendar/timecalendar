@@ -4,6 +4,7 @@ import { CalendarModule } from "modules/calendar/calendar.module"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
+import { nanoid } from "nanoid"
 import createTestApp from "test-utils/create-test-app"
 
 describe("CalendarRepository", () => {
@@ -17,6 +18,7 @@ describe("CalendarRepository", () => {
   describe("save", () => {
     it("saves a calendar", async () => {
       const calendar = await repository.save({
+        token: nanoid(),
         name: "Calendar",
         schoolName: "My school",
         url: "https://calendar.com",
@@ -47,7 +49,7 @@ describe("CalendarRepository", () => {
     })
   })
 
-  describe("findByIdsWithContent", () => {
+  describe("findByTokensWithContent", () => {
     it("returns calendars with content", async () => {
       const event = calendarEventFactory.build()
       const expected = [
@@ -57,8 +59,8 @@ describe("CalendarRepository", () => {
           .create(),
       ]
 
-      const calendars = await repository.findByIdsWithContent(
-        expected.map((calendar) => calendar.id),
+      const calendars = await repository.findByTokensWithContent(
+        expected.map((calendar) => calendar.token),
       )
 
       expect(calendars.length).toBe(2)
@@ -74,8 +76,8 @@ describe("CalendarRepository", () => {
       await calendarFactory().create()
       const expected = [await calendarFactory().create()]
 
-      const calendars = await repository.findByIdsWithContent(
-        expected.map((calendar) => calendar.id),
+      const calendars = await repository.findByTokensWithContent(
+        expected.map((calendar) => calendar.token),
       )
 
       expect(calendars.length).toBe(1)
