@@ -44,24 +44,6 @@ export class CalendarSyncService {
     return { token: calendar.token }
   }
 
-  async syncCalendars({ tokens }: SyncCalendarsDto) {
-    const calendars = await this.calendarRepository.findByTokensWithContent(
-      tokens,
-    )
-
-    await Promise.all(
-      calendars.map((calendar) =>
-        this.sync(calendar).catch(() => {
-          // nothing for now
-        }),
-      ),
-    )
-
-    return this.calendarService.calendarsForPublic(
-      calendars.map(({ token }) => token),
-    )
-  }
-
   async sync(
     calendar: Pick<Calendar, "url" | "customData"> &
       Partial<Omit<Calendar, "url">>,

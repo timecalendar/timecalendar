@@ -139,60 +139,6 @@ describe("CalendarSyncService", () => {
     })
   })
 
-  describe("syncCalendars", () => {
-    let calendar: Calendar
-
-    beforeEach(async () => {
-      MockDate.set(new Date("2022-01-01T00:00:00.000Z"))
-      calendar = await calendarFactory().school().create()
-    })
-
-    it("fetches a calendar", async () => {
-      const data = await service.syncCalendars({
-        tokens: [calendar.token],
-      })
-
-      expect(data).toHaveLength(1)
-      expect(data[0].calendar.id).toBe(calendar.id)
-      expect(data[0].events).toHaveLength(1)
-      expect(data[0].events[0].uid).toBe(events[0].uid)
-    })
-
-    it("fetches multiple calendars", async () => {
-      const expected = [
-        await calendarFactory().school().create(),
-        await calendarFactory().school().create(),
-      ]
-
-      const data = await service.syncCalendars({
-        tokens: expected.map(({ token }) => token),
-      })
-
-      expect(data).toHaveLength(2)
-      expect(data[0].calendar.id).toBe(expected[1].id)
-      expect(data[1].calendar.id).toBe(expected[0].id)
-    })
-
-    it("returns the calendar even when the sync fails", async () => {
-      const anotherEvent = calendarEventFactory.build()
-      calendar = await calendarFactory()
-        .transient({ events: [anotherEvent] })
-        .create()
-      mockFetchService.fetchEvents = jest
-        .fn()
-        .mockRejectedValueOnce(new Error())
-
-      const data = await service.syncCalendars({
-        tokens: [calendar.token],
-      })
-
-      expect(data).toHaveLength(1)
-      expect(data[0].calendar.id).toBe(calendar.id)
-      expect(data[0].events).toHaveLength(1)
-      expect(data[0].events[0].uid).toBe(anotherEvent.uid)
-    })
-  })
-
   describe("sync", () => {
     let calendar: Calendar
 

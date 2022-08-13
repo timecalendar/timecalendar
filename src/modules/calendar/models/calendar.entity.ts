@@ -44,6 +44,9 @@ export class Calendar {
   @Column()
   lastUpdatedAt: Date
 
+  @Column({ nullable: true })
+  lastAccessedAt: Date
+
   @CreateDateColumn()
   createdAt: Date
 
