@@ -7,5 +7,5 @@ export const testEnvVariables = {
   REDIS_QUEUE: "timecalendar-queue-test",
   REDIS_URL: "redis://127.0.0.1:6370",
   REDIS_PASSWORD: "",
-  ENABLE_QUEUE: false,
+  ENABLE_QUEUE: "false",
 }

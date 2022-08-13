@@ -51,6 +51,7 @@
     "@types/glob": "^7.2.0",
     "@types/lodash": "^4.14.178",
     "@types/nodemailer": "^6.4.4",
+    "@types/pretty-hrtime": "^1.0.1",
     "@types/wtfnode": "^0.7.0",
     "axios": "^0.25.0",
     "bull": "^4.8.5",
