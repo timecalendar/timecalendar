@@ -6,6 +6,7 @@ import {
   factoryToEntity,
   idToEntity,
 } from "modules/shared/utils/typeorm/id-to-entity"
+import { nanoid } from "nanoid"
 import { AppFactory } from "test-utils/factories/app-factory"
 import { factoryBuilder } from "test-utils/factories/factory-builder"
 
@@ -27,6 +28,7 @@ export const calendarFactory = factoryBuilder(() => [
   CalendarFactory.define(
     ({ associations, transientParams }) =>
       ({
+        token: nanoid(),
         name: "My Calendar",
         schoolName: associations.school ? null : "My School",
         school: associations.school,

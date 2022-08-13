@@ -54,7 +54,8 @@ describe("CalendarSyncService", () => {
       const calendars = await dataSource.getRepository(Calendar).find()
       expect(calendars).toHaveLength(1)
       const [calendar] = calendars
-      expect(calendar.id).toBe(created.id)
+      expect(calendar.token).toBeTruthy()
+      expect(calendar.token).toBe(created.token)
       expect(calendar.schoolId).toBe(school.id)
       expect(calendar.schoolName).toBeNull()
 
@@ -78,7 +79,8 @@ describe("CalendarSyncService", () => {
       const calendars = await dataSource.getRepository(Calendar).find()
       expect(calendars).toHaveLength(1)
       const [calendar] = calendars
-      expect(calendar.id).toBe(created.id)
+      expect(calendar.token).toBeTruthy()
+      expect(calendar.token).toBe(created.token)
       expect(calendar.school).toBeUndefined()
       expect(calendar.schoolName).toBe("My school")
 
@@ -147,7 +149,7 @@ describe("CalendarSyncService", () => {
 
     it("fetches a calendar", async () => {
       const data = await service.syncCalendars({
-        calendarIds: [calendar.id],
+        tokens: [calendar.token],
       })
 
       expect(data).toHaveLength(1)
@@ -163,7 +165,7 @@ describe("CalendarSyncService", () => {
       ]
 
       const data = await service.syncCalendars({
-        calendarIds: expected.map(({ id }) => id),
+        tokens: expected.map(({ token }) => token),
       })
 
       expect(data).toHaveLength(2)
@@ -181,7 +183,7 @@ describe("CalendarSyncService", () => {
         .mockRejectedValueOnce(new Error())
 
       const data = await service.syncCalendars({
-        calendarIds: [calendar.id],
+        tokens: [calendar.token],
       })
 
       expect(data).toHaveLength(1)

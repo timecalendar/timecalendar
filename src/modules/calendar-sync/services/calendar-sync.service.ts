@@ -10,6 +10,7 @@ import { CalendarService } from "modules/calendar/services/calendar.service"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
+import { nanoid } from "nanoid"
 
 @Injectable()
 export class CalendarSyncService {
@@ -31,6 +32,7 @@ export class CalendarSyncService {
     if (events.length === 0) throw new NotFoundException("No events found")
 
     const calendar = await this.sync({
+      token: nanoid(),
       school: schoolId ? idToEntity(schoolId) : undefined,
       schoolName: schoolId ? null : schoolName,
       url,
@@ -39,12 +41,12 @@ export class CalendarSyncService {
       lastUpdatedAt: new Date(),
     })
 
-    return { id: calendar.id }
+    return { token: calendar.token }
   }
 
-  async syncCalendars({ calendarIds }: SyncCalendarsDto) {
-    const calendars = await this.calendarRepository.findByIdsWithContent(
-      calendarIds,
+  async syncCalendars({ tokens }: SyncCalendarsDto) {
+    const calendars = await this.calendarRepository.findByTokensWithContent(
+      tokens,
     )
 
     await Promise.all(
@@ -56,7 +58,7 @@ export class CalendarSyncService {
     )
 
     return this.calendarService.calendarsForPublic(
-      calendars.map(({ id }) => id),
+      calendars.map(({ token }) => token),
     )
   }
 

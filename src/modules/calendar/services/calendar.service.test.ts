@@ -25,7 +25,7 @@ describe("CalendarService", () => {
       ]
 
       const calendars = await service.calendarsForPublic(
-        created.map((calendar) => calendar.id),
+        created.map((calendar) => calendar.token),
       )
 
       expect(calendars.length).toBe(2)

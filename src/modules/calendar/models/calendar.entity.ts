@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -17,6 +18,10 @@ import {
 export class Calendar {
   @PrimaryGeneratedColumn("uuid")
   id: string
+
+  @Column()
+  @Index()
+  token: string
 
   @Column()
   name: string
