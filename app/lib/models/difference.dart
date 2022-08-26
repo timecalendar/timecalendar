@@ -17,7 +17,7 @@ class Difference {
     this.calendarToken,
     required this.dateDiff,
     required this.oldItems,
-    required this.newItems,
+    required this.newItems  ,
     required this.changedItems,
   });
 

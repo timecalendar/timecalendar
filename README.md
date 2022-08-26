@@ -32,7 +32,7 @@ TimeCalendar uses Firebase to send push notifications and save application setti
 
 **Create your own service account key**
 
-On the [Firebase Console](https://console.firebase.google.com/), create your own application. Go into your Project settings > Your apps and create a web application. Then, go in the Service accounts tab, and click on "Generate new private key", it will download a file. Copy it into `config/serviceAccountKey.json`.
+On the [Firebase Console](https://console.firebase.google.com/), create your own application. Go into your Project settings > Your apps and create a web application. Then, go in the Service accounts tab, and click on "Generate new private key", it will download a file. Copy it into `server/config/serviceAccountKey.json`.
 
 You also need to create a Firestore Database. In the left bar, click on Firestore Database, then on "Create database". Select "Start in test mode", then "Next". Select any region for the Firestore location (you can select the nearest, eur3), then click on "Enable".
 
@@ -41,7 +41,7 @@ You also need to create a Firestore Database. In the left bar, click on Firestor
 To start the server, run the following command:
 
 ```bash
-npm run dev
+cd server && npm run dev
 ```
 
 ## Tests
@@ -54,13 +54,15 @@ npm run test
 
 ## Migrations
 
-Create a migration
+Run all commands in the `server` folder.
+
+**Create a migration**
 
 ```
 npm run typeorm migration:generate -n MigrationName
 ```
 
-Run migrations
+**Run migrations**
 
 
 ```

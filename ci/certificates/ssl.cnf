@@ -31,3 +31,4 @@ subjectAltName = @alt_names
 [alt_names]
 DNS.1 = timecalendar.host
 DNS.2 = api.timecalendar.host
+DNS.3 = web.timecalendar.host
