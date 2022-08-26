@@ -1,0 +1,24 @@
+{
+  "name": "@timecalendar/api-client",
+  "version": "0.0.1",
+  "description": "TimeCalendar API client",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "gen": "./generate_code.sh",
+    "dev": "./generate_code.sh"
+  },
+  "author": "TimeCalendar",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "react-query": "^3.39.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.2"
+  },
+  "files": [
+    "dist/**/*"
+  ]
+}

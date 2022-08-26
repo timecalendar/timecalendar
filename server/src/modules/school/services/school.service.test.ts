@@ -21,4 +21,12 @@ describe("SchoolService", () => {
       expect(schools[0].name).toBe("My Gaming Academia")
     })
   })
+
+  describe("findSchool", () => {
+    it("returns a school", async () => {
+      const school = await schoolFactory().create()
+      const result = await service.findSchool(school.id)
+      expect(result.name).toBe("My Gaming Academia")
+    })
+  })
 })

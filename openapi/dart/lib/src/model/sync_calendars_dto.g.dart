@@ -8,15 +8,15 @@ part of 'sync_calendars_dto.dart';
 
 class _$SyncCalendarsDto extends SyncCalendarsDto {
   @override
-  final BuiltList<String> calendarIds;
+  final BuiltList<String> tokens;
 
   factory _$SyncCalendarsDto(
           [void Function(SyncCalendarsDtoBuilder)? updates]) =>
       (new SyncCalendarsDtoBuilder()..update(updates))._build();
 
-  _$SyncCalendarsDto._({required this.calendarIds}) : super._() {
+  _$SyncCalendarsDto._({required this.tokens}) : super._() {
     BuiltValueNullFieldError.checkNotNull(
-        calendarIds, r'SyncCalendarsDto', 'calendarIds');
+        tokens, r'SyncCalendarsDto', 'tokens');
   }
 
   @override
@@ -30,18 +30,18 @@ class _$SyncCalendarsDto extends SyncCalendarsDto {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is SyncCalendarsDto && calendarIds == other.calendarIds;
+    return other is SyncCalendarsDto && tokens == other.tokens;
   }
 
   @override
   int get hashCode {
-    return $jf($jc(0, calendarIds.hashCode));
+    return $jf($jc(0, tokens.hashCode));
   }
 
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'SyncCalendarsDto')
-          ..add('calendarIds', calendarIds))
+          ..add('tokens', tokens))
         .toString();
   }
 }
@@ -50,11 +50,10 @@ class SyncCalendarsDtoBuilder
     implements Builder<SyncCalendarsDto, SyncCalendarsDtoBuilder> {
   _$SyncCalendarsDto? _$v;
 
-  ListBuilder<String>? _calendarIds;
-  ListBuilder<String> get calendarIds =>
-      _$this._calendarIds ??= new ListBuilder<String>();
-  set calendarIds(ListBuilder<String>? calendarIds) =>
-      _$this._calendarIds = calendarIds;
+  ListBuilder<String>? _tokens;
+  ListBuilder<String> get tokens =>
+      _$this._tokens ??= new ListBuilder<String>();
+  set tokens(ListBuilder<String>? tokens) => _$this._tokens = tokens;
 
   SyncCalendarsDtoBuilder() {
     SyncCalendarsDto._defaults(this);
@@ -63,7 +62,7 @@ class SyncCalendarsDtoBuilder
   SyncCalendarsDtoBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
-      _calendarIds = $v.calendarIds.toBuilder();
+      _tokens = $v.tokens.toBuilder();
       _$v = null;
     }
     return this;
@@ -86,13 +85,12 @@ class SyncCalendarsDtoBuilder
   _$SyncCalendarsDto _build() {
     _$SyncCalendarsDto _$result;
     try {
-      _$result =
-          _$v ?? new _$SyncCalendarsDto._(calendarIds: calendarIds.build());
+      _$result = _$v ?? new _$SyncCalendarsDto._(tokens: tokens.build());
     } catch (_) {
       late String _$failedField;
       try {
-        _$failedField = 'calendarIds';
-        calendarIds.build();
+        _$failedField = 'tokens';
+        tokens.build();
       } catch (e) {
         throw new BuiltValueNestedFieldError(
             r'SyncCalendarsDto', _$failedField, e.toString());

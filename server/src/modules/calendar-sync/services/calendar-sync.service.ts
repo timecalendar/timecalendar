@@ -74,7 +74,7 @@ export class CalendarSyncService {
 
   private async findSchoolCode(schoolId?: string) {
     if (!schoolId) return null
-    const school = await this.schoolRepository.findOne(schoolId)
+    const school = await this.schoolRepository.findOneOrFail(schoolId)
     if (!school) throw new NotFoundException("School not found")
     return school.code
   }

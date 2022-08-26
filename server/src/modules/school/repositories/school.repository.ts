@@ -10,8 +10,8 @@ export class SchoolRepository {
     private repository: Repository<School>,
   ) {}
 
-  findOne(id: string) {
-    return this.repository.findOneBy({ id })
+  findOneOrFail(id: string) {
+    return this.repository.findOneByOrFail({ id })
   }
 
   findAll() {

@@ -7,8 +7,7 @@ import 'package:timecalendar/models/changelog_item.dart';
 class Constants {
   @deprecated
   static final mainApiUrl = Environment.oldApiUrl;
-
-  static const mainWebUrl = "https://timecalendar.app/";
+  static final mainWebUrl = Environment.mainWebUrl;
   static const changelogs = {
     1: Changelog(version: "2.0.2", changelogItems: [
       const ChangelogItem(

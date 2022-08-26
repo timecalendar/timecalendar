@@ -10,11 +10,11 @@ part 'create_calendar_rep_dto.g.dart';
 /// CreateCalendarRepDto
 ///
 /// Properties:
-/// * [id]
+/// * [token]
 abstract class CreateCalendarRepDto
     implements Built<CreateCalendarRepDto, CreateCalendarRepDtoBuilder> {
-  @BuiltValueField(wireName: r'id')
-  String get id;
+  @BuiltValueField(wireName: r'token')
+  String get token;
 
   CreateCalendarRepDto._();
 
@@ -46,8 +46,8 @@ class _$CreateCalendarRepDtoSerializer
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object?>[];
     result
-      ..add(r'id')
-      ..add(serializers.serialize(object.id,
+      ..add(r'token')
+      ..add(serializers.serialize(object.token,
           specifiedType: const FullType(String)));
     return result;
   }
@@ -65,10 +65,10 @@ class _$CreateCalendarRepDtoSerializer
       final Object? value = iterator.current;
 
       switch (key) {
-        case r'id':
+        case r'token':
           final valueDes = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String;
-          result.id = valueDes;
+          result.token = valueDes;
           break;
       }
     }

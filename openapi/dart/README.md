@@ -66,6 +66,7 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerCreateCalendar**](doc/CalendarsApi.md#calendarsynccontrollercreatecalendar) | **POST** /calendars | 
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | 
+[*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchool**](doc/SchoolsApi.md#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchools**](doc/SchoolsApi.md#schoolcontrollerfindschools) | **GET** /schools | Find list of schools
 [*SchoolsApi*](doc/SchoolsApi.md) | [**univOrleansControllerGetIcalUrlFromStudentNumber**](doc/SchoolsApi.md#univorleanscontrollergeticalurlfromstudentnumber) | **POST** /schools/univ-orleans/students | 
 

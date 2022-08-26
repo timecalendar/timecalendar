@@ -8,14 +8,15 @@ part of 'create_calendar_rep_dto.dart';
 
 class _$CreateCalendarRepDto extends CreateCalendarRepDto {
   @override
-  final String id;
+  final String token;
 
   factory _$CreateCalendarRepDto(
           [void Function(CreateCalendarRepDtoBuilder)? updates]) =>
       (new CreateCalendarRepDtoBuilder()..update(updates))._build();
 
-  _$CreateCalendarRepDto._({required this.id}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(id, r'CreateCalendarRepDto', 'id');
+  _$CreateCalendarRepDto._({required this.token}) : super._() {
+    BuiltValueNullFieldError.checkNotNull(
+        token, r'CreateCalendarRepDto', 'token');
   }
 
   @override
@@ -30,17 +31,18 @@ class _$CreateCalendarRepDto extends CreateCalendarRepDto {
   @override
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
-    return other is CreateCalendarRepDto && id == other.id;
+    return other is CreateCalendarRepDto && token == other.token;
   }
 
   @override
   int get hashCode {
-    return $jf($jc(0, id.hashCode));
+    return $jf($jc(0, token.hashCode));
   }
 
   @override
   String toString() {
-    return (newBuiltValueToStringHelper(r'CreateCalendarRepDto')..add('id', id))
+    return (newBuiltValueToStringHelper(r'CreateCalendarRepDto')
+          ..add('token', token))
         .toString();
   }
 }
@@ -49,9 +51,9 @@ class CreateCalendarRepDtoBuilder
     implements Builder<CreateCalendarRepDto, CreateCalendarRepDtoBuilder> {
   _$CreateCalendarRepDto? _$v;
 
-  String? _id;
-  String? get id => _$this._id;
-  set id(String? id) => _$this._id = id;
+  String? _token;
+  String? get token => _$this._token;
+  set token(String? token) => _$this._token = token;
 
   CreateCalendarRepDtoBuilder() {
     CreateCalendarRepDto._defaults(this);
@@ -60,7 +62,7 @@ class CreateCalendarRepDtoBuilder
   CreateCalendarRepDtoBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
-      _id = $v.id;
+      _token = $v.token;
       _$v = null;
     }
     return this;
@@ -83,8 +85,8 @@ class CreateCalendarRepDtoBuilder
   _$CreateCalendarRepDto _build() {
     final _$result = _$v ??
         new _$CreateCalendarRepDto._(
-            id: BuiltValueNullFieldError.checkNotNull(
-                id, r'CreateCalendarRepDto', 'id'));
+            token: BuiltValueNullFieldError.checkNotNull(
+                token, r'CreateCalendarRepDto', 'token'));
     replace(_$result);
     return _$result;
   }
