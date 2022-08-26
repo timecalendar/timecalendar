@@ -40,27 +40,27 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       run: docker push ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }}
 
-  deploy:
-    name: Deploy on environment
-    needs: build
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-    runs-on: ubuntu-latest
-    steps:
+  # deploy:
+  #   name: Deploy on environment
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+  #   runs-on: ubuntu-latest
+  #   steps:
 
-    - name: Checkout main
-      uses: actions/checkout@v2
+  #   - name: Checkout main
+  #     uses: actions/checkout@v2
 
-    - name: Set target environment
-      run: ./ci/set-target-env.sh
+  #   - name: Set target environment
+  #     run: ./ci/set-target-env.sh
 
-    - name: Set target environment Helm values
-      run: echo "${{ secrets[env.K8S_HELM_VALUES_ENV] }}" > ./k8s/environments/$TARGET_ENVIRONMENT/secret-values.yaml
+  #   - name: Set target environment Helm values
+  #     run: echo "${{ secrets[env.K8S_HELM_VALUES_ENV] }}" > ./k8s/environments/$TARGET_ENVIRONMENT/secret-values.yaml
 
-    - name: Set Kubernetes context
-      uses: azure/k8s-set-context@v2
-      with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets[env.K8S_KUBECONFIG_ENV] }}
+  #   - name: Set Kubernetes context
+  #     uses: azure/k8s-set-context@v2
+  #     with:
+  #       method: kubeconfig
+  #       kubeconfig: ${{ secrets[env.K8S_KUBECONFIG_ENV] }}
 
-    - name: Deploy
-      run: ./k8s/deploy.sh
+  #   - name: Deploy
+  #     run: ./k8s/deploy.sh
