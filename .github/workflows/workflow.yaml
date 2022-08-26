@@ -19,6 +19,7 @@ jobs:
       run: ./ci/set-target-env.sh
 
     - name: Build container image
+      working-directory: ./server
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
     - name: Start Postgres and Redis

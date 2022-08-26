@@ -18,7 +18,7 @@
     "@emotion/styled": "^11.10.0",
     "@fontsource/roboto": "^4.5.8",
     "@mui/material": "^5.10.2",
-    "@timecalendar/api-client": "*",
+    "@timecalendar/api-client": "../openapi/javascript",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
     "@typescript-eslint/parser": "^5.35.1",
     "axios": "^0.27.2",

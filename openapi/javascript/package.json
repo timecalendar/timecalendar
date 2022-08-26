@@ -5,9 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "gen": "./generate_code.sh",
-    "dev": "./generate_code.sh"
+    "build": "tsc"
   },
   "author": "TimeCalendar",
   "license": "ISC",
