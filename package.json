@@ -2,12 +2,21 @@
   "name": "root",
   "private": true,
   "devDependencies": {
-    "lerna": "^5.4.3",
-    "husky": "^7.0.0"
+    "husky": "^7.0.0",
+    "lerna": "^5.4.3"
   },
   "scripts": {
     "prepare": "husky install",
     "postinstall": "lerna bootstrap --no-ci",
     "test": "lerna run test"
+  },
+  "dependencies": {
+    "lint-staged": "^13.0.3"
+  },
+  "lint-staged": {
+    "*.dart": [
+      "flutter format",
+      "./bin/flutter-analyze.sh"
+    ]
   }
 }
