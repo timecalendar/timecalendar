@@ -22,7 +22,7 @@ jobs:
       run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} .
 
     - name: Start Postgres and Redis
-      run: docker-compose --env-file ./ci/.env.test --profile ci up -d postgres redis
+      run: docker-compose --env-file ./ci/.env.test -f server/docker-compose.yml --profile ci up -d postgres redis
 
     - name: Wait for Postgres and Redis
       run: |
