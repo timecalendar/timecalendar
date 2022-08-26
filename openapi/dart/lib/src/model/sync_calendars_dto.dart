@@ -11,11 +11,11 @@ part 'sync_calendars_dto.g.dart';
 /// SyncCalendarsDto
 ///
 /// Properties:
-/// * [calendarIds]
+/// * [tokens]
 abstract class SyncCalendarsDto
     implements Built<SyncCalendarsDto, SyncCalendarsDtoBuilder> {
-  @BuiltValueField(wireName: r'calendarIds')
-  BuiltList<String> get calendarIds;
+  @BuiltValueField(wireName: r'tokens')
+  BuiltList<String> get tokens;
 
   SyncCalendarsDto._();
 
@@ -43,8 +43,8 @@ class _$SyncCalendarsDtoSerializer
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object?>[];
     result
-      ..add(r'calendarIds')
-      ..add(serializers.serialize(object.calendarIds,
+      ..add(r'tokens')
+      ..add(serializers.serialize(object.tokens,
           specifiedType: const FullType(BuiltList, [FullType(String)])));
     return result;
   }
@@ -62,11 +62,11 @@ class _$SyncCalendarsDtoSerializer
       final Object? value = iterator.current;
 
       switch (key) {
-        case r'calendarIds':
+        case r'tokens':
           final valueDes = serializers.deserialize(value,
                   specifiedType: const FullType(BuiltList, [FullType(String)]))
               as BuiltList<String>;
-          result.calendarIds.replace(valueDes);
+          result.tokens.replace(valueDes);
           break;
       }
     }

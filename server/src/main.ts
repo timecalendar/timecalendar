@@ -6,7 +6,7 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import { dataSourceOptions } from "data-source"
 import { AppModule } from "app.module"
 import configureMainApp from "config/configure-main-app"
-import { CLIENT_URL, PORT, RUN_MIGRATIONS } from "config/constants"
+import { PORT, RUN_MIGRATIONS } from "config/constants"
 import { setupSwagger } from "config/swagger"
 import { runMigrations } from "modules/shared/utils/run-migrations"
 import bullBoardAdapter from "modules/shared/adapters/bull-board.adapter"
@@ -19,7 +19,7 @@ async function bootstrap() {
   configureMainApp(app.select(AppModule), app)
 
   setupSwagger(app)
-  app.enableCors({ origin: CLIENT_URL })
+  app.enableCors({ origin: "*" })
   app.enableShutdownHooks()
   bullBoardAdapter(app)
 

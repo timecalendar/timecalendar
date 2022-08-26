@@ -9,6 +9,9 @@ class Environment {
   static String get mainApiUrl =>
       dotenv.env['MAIN_API_URL'] ?? 'https://api.timecalendar.app';
 
+  static String get mainWebUrl =>
+      dotenv.env['MAIN_WEB_URL'] ?? 'https://web.timecalendar.host';
+
   static Future<void> load() async {
     await dotenv.load();
   }

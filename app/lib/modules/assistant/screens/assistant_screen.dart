@@ -78,8 +78,10 @@ class AssistantScreen extends HookConsumerWidget {
     };
 
     var initialUrl = Uri.parse(Constants.mainWebUrl)
-        .replace(queryParameters: queryParameters, path: '/creation/connect')
+        .replace(queryParameters: queryParameters, path: '/assistants')
         .toString();
+
+    print(initialUrl);
 
     return Scaffold(
       appBar: AppBar(
