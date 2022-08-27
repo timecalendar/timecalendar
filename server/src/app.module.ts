@@ -11,6 +11,7 @@ import { NotifierModule } from "modules/notifier/notifier.module"
 import { QueueModule } from "modules/queue/queue.module"
 import { RedisModule } from "modules/redis/redis.module"
 import { RedisService } from "modules/redis/services/redis.service"
+import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
 
@@ -38,6 +39,7 @@ import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
     CalendarSyncModule,
     RedisModule,
     JobRunModule,
+    SchoolGroupModule,
   ],
   controllers: [],
   providers: [],

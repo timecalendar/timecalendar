@@ -68,6 +68,9 @@ Class | Method | HTTP request | Description
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | 
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchool**](doc/SchoolsApi.md#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchools**](doc/SchoolsApi.md#schoolcontrollerfindschools) | **GET** /schools | Find list of schools
+[*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerFindSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollerfindschoolgroups) | **GET** /schools/{schoolId}/school-group | Find school groups
+[*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerGetSchoolGroupsIcalUrl**](doc/SchoolsApi.md#schoolgroupcontrollergetschoolgroupsicalurl) | **POST** /schools/{schoolId}/school-group/ical | Get school groups ICal URL
+[*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerSetSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollersetschoolgroups) | **PUT** /schools/{schoolId}/school-group | Set school groups
 [*SchoolsApi*](doc/SchoolsApi.md) | [**univOrleansControllerGetIcalUrlFromStudentNumber**](doc/SchoolsApi.md#univorleanscontrollergeticalurlfromstudentnumber) | **POST** /schools/univ-orleans/students | 
 
 
@@ -78,10 +81,15 @@ Class | Method | HTTP request | Description
  - [CalendarWithContent](doc/CalendarWithContent.md)
  - [CreateCalendarDto](doc/CreateCalendarDto.md)
  - [CreateCalendarRepDto](doc/CreateCalendarRepDto.md)
+ - [FindSchoolGroupsRepDto](doc/FindSchoolGroupsRepDto.md)
  - [FindSchoolsRepDto](doc/FindSchoolsRepDto.md)
+ - [GetSchoolGroupsIcalUrlDto](doc/GetSchoolGroupsIcalUrlDto.md)
+ - [GetSchoolGroupsIcalUrlRepDto](doc/GetSchoolGroupsIcalUrlRepDto.md)
  - [OrleansGetIcalUrlFromStudentNumberDto](doc/OrleansGetIcalUrlFromStudentNumberDto.md)
  - [SchoolAssistant](doc/SchoolAssistant.md)
  - [SchoolForList](doc/SchoolForList.md)
+ - [SchoolGroupItem](doc/SchoolGroupItem.md)
+ - [SetSchoolGroupDto](doc/SetSchoolGroupDto.md)
  - [SyncCalendarsDto](doc/SyncCalendarsDto.md)
 
 

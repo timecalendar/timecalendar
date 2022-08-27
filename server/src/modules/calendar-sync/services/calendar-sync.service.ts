@@ -7,6 +7,7 @@ import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { CalendarService } from "modules/calendar/services/calendar.service"
+import { CalendarSource } from "modules/fetch/models/calendar-source"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
@@ -51,25 +52,46 @@ export class CalendarSyncService {
     const { id, url, customData, schoolId } = calendar
     const source = { url, customData }
     const code = await this.findSchoolCode(schoolId)
-    const fetchedEvents = await this.fetchService.fetchEvents(source, code)
-    if (fetchedEvents.length === 0)
-      throw new NotFoundException("No events found")
+    const { events, error } = await this.fetchEvents(source, code)
 
-    const fieldsToUpdate = { lastUpdatedAt: new Date() }
-    const events = fetchedEvents.map((event) =>
-      this.calendarEventHelper.fromFetcherCalendarEvent(event),
-    )
+    let calendarId = id
 
-    const savedCalendar = await this.calendarRepository.save({
-      ...(id ? idToEntity(id) : calendar),
-      ...fieldsToUpdate,
-      content: undefined, // content is set just after
-    })
-    await this.calendarContentRepository.save(savedCalendar.id, {
-      events,
-    })
+    if (events) {
+      const savedCalendar = await this.calendarRepository.save({
+        ...(id ? idToEntity(id) : calendar),
+        content: undefined, // content is set just after
+      })
+      await this.calendarContentRepository.save(savedCalendar.id, {
+        events,
+      })
+      calendarId = savedCalendar.id
+    }
 
-    return savedCalendar
+    if (calendarId) {
+      await this.calendarRepository.update(calendarId, {
+        lastUpdatedAt: new Date(),
+      })
+
+      return this.calendarRepository.findOne(calendarId)
+    } else {
+      throw error
+    }
+  }
+
+  private async fetchEvents(source: CalendarSource, code: string | null) {
+    try {
+      const fetchedEvents = await this.fetchService.fetchEvents(source, code)
+      if (fetchedEvents.length === 0)
+        throw new NotFoundException("No events found")
+
+      return {
+        events: fetchedEvents.map((event) =>
+          this.calendarEventHelper.fromFetcherCalendarEvent(event),
+        ),
+      }
+    } catch (err) {
+      return { error: err }
+    }
   }
 
   private async findSchoolCode(schoolId?: string) {

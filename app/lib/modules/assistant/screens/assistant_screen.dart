@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/models/selected_calendar.dart';
@@ -26,52 +28,28 @@ class AssistantScreen extends HookConsumerWidget {
         oldProvider.Provider.of<SettingsProvider>(context, listen: false);
     final gradeName = ref.watch(addGradeNameProvider);
 
-    void _onPageChanged(String url) async {
-      // Handle assistant return
-      if (!url.contains('/embed/loading')) {
-        return;
-      }
+    void onCalendarCreated(String token) async {
+      await oldprovider.setSelectedCalendar(SelectedCalendar.fromToken(token));
 
-      // Check if the assistant has returned a token
-      RegExp regExp = RegExp(r"\/embed\/loading\/\?token=([a-zA-Z0-9-_~]+)");
-      var allMatches = regExp.allMatches(url).toList();
-      String token = "";
-      if (allMatches.length > 0) {
-        // The assistant has already generated a token
-        // Use it
-        token = allMatches[0].group(1)!;
-        await oldprovider
-            .setSelectedCalendar(SelectedCalendar.fromToken(token));
+      // Refresh calendar
+      await oldProvider.Provider.of<EventsProvider>(context, listen: false)
+          .fetchAndSetEvents();
 
-        // Refresh calendar
-        await oldProvider.Provider.of<EventsProvider>(context, listen: false)
-            .fetchAndSetEvents();
+      // Then redirect to the main page
+      await Future.delayed(Duration(milliseconds: 200));
 
-        // Then redirect to the main page
-        await Future.delayed(Duration(milliseconds: 200));
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          TabsScreen.routeName, (Route<dynamic> route) => false);
 
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            TabsScreen.routeName, (Route<dynamic> route) => false);
+      // And ask notification permission
+      await NotificationService().subscribeDelay();
 
-        // And ask notification permission
-        await NotificationService().subscribeDelay();
-
-        return null;
-      }
-
-      // Check if the assistant called the fallback assistant
-      regExp = RegExp(r"\/embed\/loading\/\?fallback=true");
-      allMatches = regExp.allMatches(url).toList();
-      if (allMatches.length > 0) {
-        Navigator.of(context).pop(AssistantFinishedResult.fallback());
-      } else {
-        Navigator.of(context).pop(AssistantFinishedResult.done(token: token));
-      }
+      return null;
     }
 
     final Map<String, dynamic> queryParameters = {
       'embed': 'true',
-      ...provider.school != null ? {'schoolCode': provider.school!.code} : {},
+      ...provider.school != null ? {'schoolId': provider.school!.id} : {},
       ...provider.fallback ? {'fallback': 'true'} : {},
       ...settingsProvider.darkMode ? {'darkMode': 'true'} : {},
       ...gradeName.length > 0 ? {'gradeName': gradeName} : {},
@@ -93,7 +71,21 @@ class AssistantScreen extends HookConsumerWidget {
             child: WebView(
               initialUrl: initialUrl,
               javascriptMode: JavascriptMode.unrestricted,
-              onPageStarted: _onPageChanged,
+              javascriptChannels: {
+                JavascriptChannel(
+                  name: 'NativeApp',
+                  onMessageReceived: (message) async {
+                    final parsed = jsonDecode(message.message);
+                    if (parsed['name'] == 'calendarCreated')
+                      onCalendarCreated(parsed['payload']['token']);
+                    else if (parsed['name'] == 'fallbackRequested')
+                      Navigator.of(context)
+                          .pop(AssistantFinishedResult.fallback());
+                    else if (parsed['name'] == 'assistantEnded')
+                      Navigator.of(context).pop(AssistantFinishedResult.done());
+                  },
+                ),
+              },
             ),
           )
         ],

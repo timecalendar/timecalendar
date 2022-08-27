@@ -33,7 +33,7 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
         context,
         AssistantStepEnum.SELECT_SCHOOL,
       );
-    }, done: (token) {
+    }, done: () {
       Navigator.of(context).pushNamed(
         ImportIcalScreen.routeName,
         arguments: ImportIcalScreenArguments(false),

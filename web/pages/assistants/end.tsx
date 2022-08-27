@@ -1,7 +1,6 @@
+import PageCircularProgress from "modules/shared/components/PageCircularProgress"
 import React from "react"
 
-const Page = () => {
-  return <div>Chargement...</div>
-}
+const Page = () => <PageCircularProgress />
 
 export default Page

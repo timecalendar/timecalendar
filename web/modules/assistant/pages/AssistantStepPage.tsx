@@ -1,5 +1,6 @@
 import AssistantStep from "modules/assistant/components/AssistantStep"
-import { AssistantStepContent } from "modules/assistant/types/StepContent"
+import { findAssistant } from "modules/assistant/data/assistants"
+import { postNativeMessage } from "modules/shared/helpers/post-native-message"
 import { useRouter } from "next/router"
 import React, { FC } from "react"
 
@@ -8,69 +9,19 @@ type Query = {
   step: string
 }
 
-const assistants: AssistantStepContent[] = [
-  {
-    name: "ade",
-    steps: [
-      {
-        title: <>Sélectionnez vos groupes</>,
-        description: (
-          <>
-            <p>
-              Sélectionnez les groupes auxquels vous appartenez, ou les cours
-              que vous suivez. Vous pouvez en sélectionner plusieurs en
-              maintenant la touche Ctrl.
-            </p>
-            <p>
-              Votre emploi du temps devrait s'afficher. Pensez à sélectionner
-              tous vos groupes.
-            </p>
-          </>
-        ),
-      },
-      {
-        title: <>Exportez votre emploi du temps</>,
-        description: (
-          <p>
-            Exportez l'emploi du temps en cliquant sur l'icône "Exporter" en bas
-            à gauche de la fenêtre.
-          </p>
-        ),
-      },
-      {
-        title: <>Configurez l'exportation</>,
-        description: (
-          <>
-            <p>
-              Dans la fenêtre qui s'ouvre, choisissez les{" "}
-              <strong>dates de début et de fin</strong> de votre année
-              universitaire.
-            </p>
-            <p>
-              Cliquez ensuite sur <strong>générer l'URL</strong>.
-            </p>
-          </>
-        ),
-      },
-    ],
-  },
-]
-
 const AssistantStepPage: FC = () => {
   const router = useRouter()
   const query = router.query as Query
 
-  console.log(query)
-
-  const assistant = assistants.find(
-    (assistant) => assistant.name === query.assistantName,
-  )
-  if (!assistant) return null
+  const assistant = findAssistant(query.assistantName)
+  if (!assistant || !assistant.steps) return null
 
   const stepIndex = +query.step
 
   const onNext = () => {
+    if (!assistant.steps) return
     if (stepIndex === assistant.steps.length - 1) {
+      postNativeMessage({ name: "assistantEnded" })
       router.push("/assistants/end")
     } else {
       router.push(`/assistants/${assistant.name}/steps/${stepIndex + 1}`)
