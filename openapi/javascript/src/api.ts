@@ -240,6 +240,19 @@ export interface CreateCalendarRepDto {
 /**
  * 
  * @export
+ * @interface FindSchoolGroupsRepDto
+ */
+export interface FindSchoolGroupsRepDto {
+    /**
+     * 
+     * @type {Array<SchoolGroupItem>}
+     * @memberof FindSchoolGroupsRepDto
+     */
+    'groups': Array<SchoolGroupItem>;
+}
+/**
+ * 
+ * @export
  * @interface FindSchoolsRepDto
  */
 export interface FindSchoolsRepDto {
@@ -249,6 +262,32 @@ export interface FindSchoolsRepDto {
      * @memberof FindSchoolsRepDto
      */
     'schools': Array<SchoolForList>;
+}
+/**
+ * 
+ * @export
+ * @interface GetSchoolGroupsIcalUrlDto
+ */
+export interface GetSchoolGroupsIcalUrlDto {
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof GetSchoolGroupsIcalUrlDto
+     */
+    'groups': Array<string>;
+}
+/**
+ * 
+ * @export
+ * @interface GetSchoolGroupsIcalUrlRepDto
+ */
+export interface GetSchoolGroupsIcalUrlRepDto {
+    /**
+     * 
+     * @type {string}
+     * @memberof GetSchoolGroupsIcalUrlRepDto
+     */
+    'url': string;
 }
 /**
  * 
@@ -372,6 +411,50 @@ export interface SchoolForList {
      * @memberof SchoolForList
      */
     'deletedAt'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SchoolGroupItem
+ */
+export interface SchoolGroupItem {
+    /**
+     * 
+     * @type {string}
+     * @memberof SchoolGroupItem
+     */
+    'text': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SchoolGroupItem
+     */
+    'value': string;
+    /**
+     * 
+     * @type {Array<SchoolGroupItem>}
+     * @memberof SchoolGroupItem
+     */
+    'children': Array<SchoolGroupItem>;
+}
+/**
+ * 
+ * @export
+ * @interface SetSchoolGroupDto
+ */
+export interface SetSchoolGroupDto {
+    /**
+     * 
+     * @type {Array<SchoolGroupItem>}
+     * @memberof SetSchoolGroupDto
+     */
+    'groups': Array<SchoolGroupItem>;
+    /**
+     * 
+     * @type {string}
+     * @memberof SetSchoolGroupDto
+     */
+    'icalUrl': string;
 }
 /**
  * 
@@ -627,6 +710,120 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Find school groups
+         * @param {string} schoolId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        findSchoolGroups: async (schoolId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'schoolId' is not null or undefined
+            assertParamExists('findSchoolGroups', 'schoolId', schoolId)
+            const localVarPath = `/schools/{schoolId}/school-group`
+                .replace(`{${"schoolId"}}`, encodeURIComponent(String(schoolId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get school groups ICal URL
+         * @param {string} schoolId 
+         * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSchoolGroupsIcalUrl: async (schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'schoolId' is not null or undefined
+            assertParamExists('getSchoolGroupsIcalUrl', 'schoolId', schoolId)
+            // verify required parameter 'getSchoolGroupsIcalUrlDto' is not null or undefined
+            assertParamExists('getSchoolGroupsIcalUrl', 'getSchoolGroupsIcalUrlDto', getSchoolGroupsIcalUrlDto)
+            const localVarPath = `/schools/{schoolId}/school-group/ical`
+                .replace(`{${"schoolId"}}`, encodeURIComponent(String(schoolId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(getSchoolGroupsIcalUrlDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Set school groups
+         * @param {string} schoolId 
+         * @param {SetSchoolGroupDto} setSchoolGroupDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setSchoolGroups: async (schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'schoolId' is not null or undefined
+            assertParamExists('setSchoolGroups', 'schoolId', schoolId)
+            // verify required parameter 'setSchoolGroupDto' is not null or undefined
+            assertParamExists('setSchoolGroups', 'setSchoolGroupDto', setSchoolGroupDto)
+            const localVarPath = `/schools/{schoolId}/school-group`
+                .replace(`{${"schoolId"}}`, encodeURIComponent(String(schoolId)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(setSchoolGroupDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -693,6 +890,41 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Find school groups
+         * @param {string} schoolId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async findSchoolGroups(schoolId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FindSchoolGroupsRepDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.findSchoolGroups(schoolId, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Get school groups ICal URL
+         * @param {string} schoolId 
+         * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetSchoolGroupsIcalUrlRepDto>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getSchoolGroupsIcalUrl(schoolId, getSchoolGroupsIcalUrlDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Set school groups
+         * @param {string} schoolId 
+         * @param {SetSchoolGroupDto} setSchoolGroupDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.setSchoolGroups(schoolId, setSchoolGroupDto, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
          * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -729,6 +961,38 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          */
         findSchools(options?: any): AxiosPromise<FindSchoolsRepDto> {
             return localVarFp.findSchools(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Find school groups
+         * @param {string} schoolId 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        findSchoolGroups(schoolId: string, options?: any): AxiosPromise<FindSchoolGroupsRepDto> {
+            return localVarFp.findSchoolGroups(schoolId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Get school groups ICal URL
+         * @param {string} schoolId 
+         * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: any): AxiosPromise<GetSchoolGroupsIcalUrlRepDto> {
+            return localVarFp.getSchoolGroupsIcalUrl(schoolId, getSchoolGroupsIcalUrlDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Set school groups
+         * @param {string} schoolId 
+         * @param {SetSchoolGroupDto} setSchoolGroupDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: any): AxiosPromise<void> {
+            return localVarFp.setSchoolGroups(schoolId, setSchoolGroupDto, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -770,6 +1034,44 @@ export class SchoolsApi extends BaseAPI {
      */
     public findSchools(options?: AxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).findSchools(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Find school groups
+     * @param {string} schoolId 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SchoolsApi
+     */
+    public findSchoolGroups(schoolId: string, options?: AxiosRequestConfig) {
+        return SchoolsApiFp(this.configuration).findSchoolGroups(schoolId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Get school groups ICal URL
+     * @param {string} schoolId 
+     * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SchoolsApi
+     */
+    public getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: AxiosRequestConfig) {
+        return SchoolsApiFp(this.configuration).getSchoolGroupsIcalUrl(schoolId, getSchoolGroupsIcalUrlDto, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Set school groups
+     * @param {string} schoolId 
+     * @param {SetSchoolGroupDto} setSchoolGroupDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SchoolsApi
+     */
+    public setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: AxiosRequestConfig) {
+        return SchoolsApiFp(this.configuration).setSchoolGroups(schoolId, setSchoolGroupDto, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

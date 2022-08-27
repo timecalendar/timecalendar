@@ -19,10 +19,15 @@ interface Options {
 program.option("--drop")
 program.parse()
 
-const loadFixtures = async (dataSource: DataSource, fixturesPath: string) => {
+const loadFixtures = async (
+  dataSource: DataSource,
+  fixturesPaths: string[],
+) => {
   try {
     const loader = new Loader()
-    loader.load(path.resolve(fixturesPath))
+    fixturesPaths.forEach((fixturesPath) =>
+      loader.load(path.resolve(fixturesPath)),
+    )
 
     const resolver = new Resolver()
     const fixtures = resolver.resolve(loader.fixtureConfigs)
@@ -55,9 +60,7 @@ const main = async () => {
   }
 
   const files = await glob("./**/fixtures/*.yml")
-  for (const file of files) {
-    loadFixtures(dataSource, file)
-  }
+  loadFixtures(dataSource, files)
 }
 
 main()

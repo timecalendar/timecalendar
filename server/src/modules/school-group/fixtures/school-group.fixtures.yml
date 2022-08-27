@@ -1,0 +1,6 @@
+entity: SchoolGroup
+items:
+  univeiffelgroup:
+    groups: []
+    icalUrl: https://edt.univ-eiffel.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?projectId=24
+    school: '@univeiffel'

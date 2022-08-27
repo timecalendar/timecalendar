@@ -22,10 +22,8 @@ class _$AssistantFinishedResultTearOff {
     return _AssistantFinishedResultFallback();
   }
 
-  _AssistantFinishedResultDone done({required String token}) {
-    return _AssistantFinishedResultDone(
-      token: token,
-    );
+  _AssistantFinishedResultDone done() {
+    return _AssistantFinishedResultDone();
   }
 }
 
@@ -37,19 +35,19 @@ mixin _$AssistantFinishedResult {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() fallback,
-    required TResult Function(String token) done,
+    required TResult Function() done,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function()? fallback,
-    TResult Function(String token)? done,
+    TResult Function()? done,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? fallback,
-    TResult Function(String token)? done,
+    TResult Function()? done,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -138,7 +136,7 @@ class _$_AssistantFinishedResultFallback
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() fallback,
-    required TResult Function(String token) done,
+    required TResult Function() done,
   }) {
     return fallback();
   }
@@ -147,7 +145,7 @@ class _$_AssistantFinishedResultFallback
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function()? fallback,
-    TResult Function(String token)? done,
+    TResult Function()? done,
   }) {
     return fallback?.call();
   }
@@ -156,7 +154,7 @@ class _$_AssistantFinishedResultFallback
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? fallback,
-    TResult Function(String token)? done,
+    TResult Function()? done,
     required TResult orElse(),
   }) {
     if (fallback != null) {
@@ -210,7 +208,6 @@ abstract class _$AssistantFinishedResultDoneCopyWith<$Res> {
           _AssistantFinishedResultDone value,
           $Res Function(_AssistantFinishedResultDone) then) =
       __$AssistantFinishedResultDoneCopyWithImpl<$Res>;
-  $Res call({String token});
 }
 
 /// @nodoc
@@ -225,78 +222,55 @@ class __$AssistantFinishedResultDoneCopyWithImpl<$Res>
   @override
   _AssistantFinishedResultDone get _value =>
       super._value as _AssistantFinishedResultDone;
-
-  @override
-  $Res call({
-    Object? token = freezed,
-  }) {
-    return _then(_AssistantFinishedResultDone(
-      token: token == freezed
-          ? _value.token
-          : token // ignore: cast_nullable_to_non_nullable
-              as String,
-    ));
-  }
 }
 
 /// @nodoc
 
 class _$_AssistantFinishedResultDone extends _AssistantFinishedResultDone {
-  _$_AssistantFinishedResultDone({required this.token}) : super._();
-
-  @override
-  final String token;
+  _$_AssistantFinishedResultDone() : super._();
 
   @override
   String toString() {
-    return 'AssistantFinishedResult.done(token: $token)';
+    return 'AssistantFinishedResult.done()';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _AssistantFinishedResultDone &&
-            const DeepCollectionEquality().equals(other.token, token));
+            other is _AssistantFinishedResultDone);
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(token));
-
-  @JsonKey(ignore: true)
-  @override
-  _$AssistantFinishedResultDoneCopyWith<_AssistantFinishedResultDone>
-      get copyWith => __$AssistantFinishedResultDoneCopyWithImpl<
-          _AssistantFinishedResultDone>(this, _$identity);
+  int get hashCode => runtimeType.hashCode;
 
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() fallback,
-    required TResult Function(String token) done,
+    required TResult Function() done,
   }) {
-    return done(token);
+    return done();
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult Function()? fallback,
-    TResult Function(String token)? done,
+    TResult Function()? done,
   }) {
-    return done?.call(token);
+    return done?.call();
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? fallback,
-    TResult Function(String token)? done,
+    TResult Function()? done,
     required TResult orElse(),
   }) {
     if (done != null) {
-      return done(token);
+      return done();
     }
     return orElse();
   }
@@ -334,12 +308,6 @@ class _$_AssistantFinishedResultDone extends _AssistantFinishedResultDone {
 }
 
 abstract class _AssistantFinishedResultDone extends AssistantFinishedResult {
-  factory _AssistantFinishedResultDone({required String token}) =
-      _$_AssistantFinishedResultDone;
+  factory _AssistantFinishedResultDone() = _$_AssistantFinishedResultDone;
   _AssistantFinishedResultDone._() : super._();
-
-  String get token;
-  @JsonKey(ignore: true)
-  _$AssistantFinishedResultDoneCopyWith<_AssistantFinishedResultDone>
-      get copyWith => throw _privateConstructorUsedError;
 }

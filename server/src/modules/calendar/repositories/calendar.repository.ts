@@ -10,6 +10,14 @@ export class CalendarRepository {
     private readonly repository: Repository<Calendar>,
   ) {}
 
+  findOne(calendarId: string) {
+    return this.repository.findOneByOrFail({ id: calendarId })
+  }
+
+  update(calendarId: string, calendar: DeepPartial<Calendar>) {
+    return this.repository.update({ id: calendarId }, calendar)
+  }
+
   save(calendar: DeepPartial<Calendar>) {
     return this.repository.save(calendar)
   }

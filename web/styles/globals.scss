@@ -1,0 +1,17 @@
+@import "react-checkbox-tree/lib/react-checkbox-tree.css";
+@import "./checkbox-tree.scss";
+
+html,
+body,
+body > div:first-child,
+div#__next {
+  height: 100%;
+}
+
+body {
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  background-color: #f8f6f7;
+  margin: 0;
+}

@@ -3,7 +3,6 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import MockDate from "lib/mock-date"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
-import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
@@ -109,7 +108,7 @@ describe("CalendarSyncService", () => {
           })
 
           await expect(promise).rejects.toThrow(
-            new NotFoundException("School not found"),
+            'Could not find any entity of type "School" matching',
           )
         },
       )
