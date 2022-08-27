@@ -31,7 +31,7 @@ jobs:
         ./ci/wait.sh -h localhost -p 6370 -t 60
 
     - name: Run tests
-      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} yarn test
+      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} npm run test
 
     - name: Log in to GitHub Container Registry
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
