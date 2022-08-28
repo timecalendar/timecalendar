@@ -7,7 +7,7 @@ import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_content.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_header.dart';
-import 'package:timecalendar/utils/snackbar.dart';
+import 'package:timecalendar/modules/shared/utils/snackbar.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SelectSchool extends HookConsumerWidget {

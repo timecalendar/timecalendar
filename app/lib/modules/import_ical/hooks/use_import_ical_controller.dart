@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as provider;
-import 'package:timecalendar/database/differences_manager.dart';
+import 'package:provider/provider.dart' as DEPRECATED_provider;
+import 'package:timecalendar/modules/activity/repositories/difference_repository.dart';
+import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
 import 'package:timecalendar/modules/add_school/providers/add_school_provider.dart';
 import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/modules/import_ical/hooks/use_loading_dialog.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
-import 'package:timecalendar/providers/events_provider.dart';
-import 'package:timecalendar/providers/old_assistant_provider.dart';
-import 'package:timecalendar/providers/settings_provider.dart';
-import 'package:timecalendar/providers/suggestion_provider.dart';
-import 'package:timecalendar/screens/suggestion_screen.dart';
-import 'package:timecalendar/screens/tabs_screen.dart';
-import 'package:timecalendar/services/notification/notification.dart';
+import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:timecalendar/modules/assistant/providers/old_assistant_provider.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:timecalendar/modules/suggestion/providers/suggestion_provider.dart';
+import 'package:timecalendar/modules/suggestion/screens/suggestion_screen.dart';
+import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
+import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 void showErrorDialog(BuildContext context, String err) async {
@@ -57,11 +58,14 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
 
   void loadIcalUrl(String url) async {
     final oldAssistantProvider =
-        provider.Provider.of<OldAssistantProvider>(context, listen: false);
+        DEPRECATED_provider.Provider.of<OldAssistantProvider>(context,
+            listen: false);
     final suggestionProvider =
-        provider.Provider.of<SuggestionProvider>(context, listen: false);
-    final settingsProvider =
-        provider.Provider.of<SettingsProvider>(context, listen: false);
+        DEPRECATED_provider.Provider.of<SuggestionProvider>(context,
+            listen: false);
+    final settingsProvider = DEPRECATED_provider.Provider.of<SettingsProvider>(
+        context,
+        listen: false);
 
     suggestionProvider.lastUrl = url;
     suggestionProvider.school =
@@ -75,6 +79,7 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
     final schoolId = assistantState.school?.id;
     final schoolName =
         assistantState.school == null ? ref.read(addSchoolNameProvider) : null;
+    final gradeName = ref.read(addGradeNameProvider);
 
     try {
       await ref.read(apiClientProvider).calendarsApi().createCalendar(
@@ -82,6 +87,7 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
               (calendar) => calendar
                 ..schoolId = schoolId
                 ..schoolName = schoolName
+                ..name = gradeName
                 ..url = url,
             ),
           );
@@ -89,11 +95,12 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
       await oldAssistantProvider.createAndSaveCustomCalendar(url);
 
       // Delete activity
-      await DifferencesManager().deleteAll();
+      await DifferenceRepository().deleteAll();
       settingsProvider.lastActivityUpdate = 0;
 
       // Refresh calendar
-      await provider.Provider.of<EventsProvider>(context, listen: false)
+      await DEPRECATED_provider.Provider.of<EventsProvider>(context,
+              listen: false)
           .fetchAndSetEvents();
 
       // First close the dialog

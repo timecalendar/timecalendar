@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/providers/settings_provider.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolItem extends StatelessWidget {
