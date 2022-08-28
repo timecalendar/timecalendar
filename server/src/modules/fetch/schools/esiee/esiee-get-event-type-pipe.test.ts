@@ -1,6 +1,9 @@
 import eventTags from "modules/fetch/data/tags"
 import colors from "modules/fetch/models/colors"
-import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import {
+  FetcherCalendarEvent,
+  EventType,
+} from "modules/fetch/models/event.model"
 import esieeGetEventTypePipe from "modules/fetch/schools/esiee/esiee-get-event-type-pipe"
 
 describe("esieeGetEventTypePipe", () => {

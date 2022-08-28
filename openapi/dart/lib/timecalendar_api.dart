@@ -12,11 +12,15 @@ export 'package:timecalendar_api/src/model/date.dart';
 export 'package:timecalendar_api/src/api/calendars_api.dart';
 export 'package:timecalendar_api/src/api/schools_api.dart';
 
+export 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
 export 'package:timecalendar_api/src/model/calendar_event_for_public.dart';
+export 'package:timecalendar_api/src/model/calendar_event_for_public_fields.dart';
 export 'package:timecalendar_api/src/model/calendar_for_public.dart';
 export 'package:timecalendar_api/src/model/calendar_with_content.dart';
 export 'package:timecalendar_api/src/model/create_calendar_dto.dart';
 export 'package:timecalendar_api/src/model/create_calendar_rep_dto.dart';
+export 'package:timecalendar_api/src/model/event_tag.dart';
+export 'package:timecalendar_api/src/model/event_type_enum.dart';
 export 'package:timecalendar_api/src/model/find_school_groups_rep_dto.dart';
 export 'package:timecalendar_api/src/model/find_schools_rep_dto.dart';
 export 'package:timecalendar_api/src/model/get_school_groups_ical_url_dto.dart';

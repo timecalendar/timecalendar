@@ -1,4 +1,7 @@
-import { EventType, FetcherCalendarEvent } from "modules/fetch/models/event"
+import {
+  EventType,
+  FetcherCalendarEvent,
+} from "modules/fetch/models/event.model"
 import sortLocationPipe from "modules/fetch/pipes/sort-location-pipe"
 
 describe("sortLocationPipe", () => {

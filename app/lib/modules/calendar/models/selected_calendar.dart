@@ -1,4 +1,4 @@
-import 'package:timecalendar/modules/calendar/models/calendar.dart';
+import 'package:timecalendar/modules/calendar/models/deprecated_calendar.dart';
 import 'package:timecalendar/modules/calendar/models/custom_calendar.dart';
 import 'dart:convert';
 
@@ -78,7 +78,7 @@ class SelectedCalendar {
     return map;
   }
 
-  Calendar get calendar {
+  DeprecatedCalendar get calendar {
     return CustomCalendar(calendarIds);
   }
 }

@@ -1,4 +1,4 @@
-import { FetcherCalendarEvent } from "modules/fetch/models/event"
+import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const removeExportedAtPipe: EventTransformPipe = (

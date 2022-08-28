@@ -1,9 +1,9 @@
 import 'package:timecalendar/modules/calendar/repositories/selected_calendar_repository.dart';
-import 'package:timecalendar/modules/calendar/models/calendar.dart';
+import 'package:timecalendar/modules/calendar/models/deprecated_calendar.dart';
 import 'package:timecalendar/modules/calendar/models/selected_calendar.dart';
 
 class CalendarManager {
-  static Future<List<Calendar>> loadCalendars() async {
+  static Future<List<DeprecatedCalendar>> loadCalendars() async {
     final selectedCalendarManager = SelectedCalendarRepository();
 
     // Find selected calendars

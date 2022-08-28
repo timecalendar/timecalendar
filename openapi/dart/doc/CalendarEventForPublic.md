@@ -8,6 +8,7 @@ import 'package:timecalendar_api/api.dart';
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**type** | [**EventTypeEnum**](EventTypeEnum.md) |  | 
 **color** | **String** |  | 
 **groupColor** | **String** |  | 
 **uid** | **String** |  | 
@@ -18,9 +19,8 @@ Name | Type | Description | Notes
 **allDay** | **bool** |  | 
 **description** | **String** |  | 
 **teachers** | **BuiltList&lt;String&gt;** |  | 
-**tags** | [**BuiltList&lt;JsonObject&gt;**](JsonObject.md) |  | 
-**type** | **String** |  | 
-**fields** | [**JsonObject**](JsonObject.md) |  | 
+**tags** | [**BuiltList&lt;EventTag&gt;**](EventTag.md) |  | 
+**fields** | [**CalendarEventForPublicFields**](CalendarEventForPublicFields.md) |  | 
 **exportedAt** | [**DateTime**](DateTime.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

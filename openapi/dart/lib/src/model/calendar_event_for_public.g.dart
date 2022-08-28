@@ -6,100 +6,9 @@ part of 'calendar_event_for_public.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_cm =
-    const CalendarEventForPublicTypeEnum._('cm');
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_td =
-    const CalendarEventForPublicTypeEnum._('td');
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_tp =
-    const CalendarEventForPublicTypeEnum._('tp');
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_tp2 =
-    const CalendarEventForPublicTypeEnum._('tp2');
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_project =
-    const CalendarEventForPublicTypeEnum._('project');
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_exam =
-    const CalendarEventForPublicTypeEnum._('exam');
-const CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnum_class_ =
-    const CalendarEventForPublicTypeEnum._('class_');
-
-CalendarEventForPublicTypeEnum _$calendarEventForPublicTypeEnumValueOf(
-    String name) {
-  switch (name) {
-    case 'cm':
-      return _$calendarEventForPublicTypeEnum_cm;
-    case 'td':
-      return _$calendarEventForPublicTypeEnum_td;
-    case 'tp':
-      return _$calendarEventForPublicTypeEnum_tp;
-    case 'tp2':
-      return _$calendarEventForPublicTypeEnum_tp2;
-    case 'project':
-      return _$calendarEventForPublicTypeEnum_project;
-    case 'exam':
-      return _$calendarEventForPublicTypeEnum_exam;
-    case 'class_':
-      return _$calendarEventForPublicTypeEnum_class_;
-    default:
-      throw new ArgumentError(name);
-  }
-}
-
-final BuiltSet<CalendarEventForPublicTypeEnum>
-    _$calendarEventForPublicTypeEnumValues = new BuiltSet<
-        CalendarEventForPublicTypeEnum>(const <CalendarEventForPublicTypeEnum>[
-  _$calendarEventForPublicTypeEnum_cm,
-  _$calendarEventForPublicTypeEnum_td,
-  _$calendarEventForPublicTypeEnum_tp,
-  _$calendarEventForPublicTypeEnum_tp2,
-  _$calendarEventForPublicTypeEnum_project,
-  _$calendarEventForPublicTypeEnum_exam,
-  _$calendarEventForPublicTypeEnum_class_,
-]);
-
-Serializer<CalendarEventForPublicTypeEnum>
-    _$calendarEventForPublicTypeEnumSerializer =
-    new _$CalendarEventForPublicTypeEnumSerializer();
-
-class _$CalendarEventForPublicTypeEnumSerializer
-    implements PrimitiveSerializer<CalendarEventForPublicTypeEnum> {
-  static const Map<String, Object> _toWire = const <String, Object>{
-    'cm': 'cm',
-    'td': 'td',
-    'tp': 'tp',
-    'tp2': 'tp2',
-    'project': 'project',
-    'exam': 'exam',
-    'class_': 'class',
-  };
-  static const Map<Object, String> _fromWire = const <Object, String>{
-    'cm': 'cm',
-    'td': 'td',
-    'tp': 'tp',
-    'tp2': 'tp2',
-    'project': 'project',
-    'exam': 'exam',
-    'class': 'class_',
-  };
-
-  @override
-  final Iterable<Type> types = const <Type>[CalendarEventForPublicTypeEnum];
-  @override
-  final String wireName = 'CalendarEventForPublicTypeEnum';
-
-  @override
-  Object serialize(
-          Serializers serializers, CalendarEventForPublicTypeEnum object,
-          {FullType specifiedType = FullType.unspecified}) =>
-      _toWire[object.name] ?? object.name;
-
-  @override
-  CalendarEventForPublicTypeEnum deserialize(
-          Serializers serializers, Object serialized,
-          {FullType specifiedType = FullType.unspecified}) =>
-      CalendarEventForPublicTypeEnum.valueOf(
-          _fromWire[serialized] ?? (serialized is String ? serialized : ''));
-}
-
 class _$CalendarEventForPublic extends CalendarEventForPublic {
+  @override
+  final EventTypeEnum type;
   @override
   final String color;
   @override
@@ -121,11 +30,9 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
   @override
   final BuiltList<String> teachers;
   @override
-  final BuiltList<JsonObject> tags;
+  final BuiltList<EventTag> tags;
   @override
-  final CalendarEventForPublicTypeEnum type;
-  @override
-  final JsonObject? fields;
+  final CalendarEventForPublicFields? fields;
   @override
   final DateTime exportedAt;
 
@@ -134,7 +41,8 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
       (new CalendarEventForPublicBuilder()..update(updates))._build();
 
   _$CalendarEventForPublic._(
-      {required this.color,
+      {required this.type,
+      required this.color,
       required this.groupColor,
       required this.uid,
       required this.title,
@@ -145,10 +53,11 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
       this.description,
       required this.teachers,
       required this.tags,
-      required this.type,
       this.fields,
       required this.exportedAt})
       : super._() {
+    BuiltValueNullFieldError.checkNotNull(
+        type, r'CalendarEventForPublic', 'type');
     BuiltValueNullFieldError.checkNotNull(
         color, r'CalendarEventForPublic', 'color');
     BuiltValueNullFieldError.checkNotNull(
@@ -168,8 +77,6 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
     BuiltValueNullFieldError.checkNotNull(
         tags, r'CalendarEventForPublic', 'tags');
     BuiltValueNullFieldError.checkNotNull(
-        type, r'CalendarEventForPublic', 'type');
-    BuiltValueNullFieldError.checkNotNull(
         exportedAt, r'CalendarEventForPublic', 'exportedAt');
   }
 
@@ -186,6 +93,7 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
   bool operator ==(Object other) {
     if (identical(other, this)) return true;
     return other is CalendarEventForPublic &&
+        type == other.type &&
         color == other.color &&
         groupColor == other.groupColor &&
         uid == other.uid &&
@@ -197,7 +105,6 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
         description == other.description &&
         teachers == other.teachers &&
         tags == other.tags &&
-        type == other.type &&
         fields == other.fields &&
         exportedAt == other.exportedAt;
   }
@@ -216,18 +123,18 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
                                         $jc(
                                             $jc(
                                                 $jc(
-                                                    $jc($jc(0, color.hashCode),
-                                                        groupColor.hashCode),
-                                                    uid.hashCode),
-                                                title.hashCode),
-                                            startsAt.hashCode),
-                                        endsAt.hashCode),
-                                    location.hashCode),
-                                allDay.hashCode),
-                            description.hashCode),
-                        teachers.hashCode),
-                    tags.hashCode),
-                type.hashCode),
+                                                    $jc($jc(0, type.hashCode),
+                                                        color.hashCode),
+                                                    groupColor.hashCode),
+                                                uid.hashCode),
+                                            title.hashCode),
+                                        startsAt.hashCode),
+                                    endsAt.hashCode),
+                                location.hashCode),
+                            allDay.hashCode),
+                        description.hashCode),
+                    teachers.hashCode),
+                tags.hashCode),
             fields.hashCode),
         exportedAt.hashCode));
   }
@@ -235,6 +142,7 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'CalendarEventForPublic')
+          ..add('type', type)
           ..add('color', color)
           ..add('groupColor', groupColor)
           ..add('uid', uid)
@@ -246,7 +154,6 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
           ..add('description', description)
           ..add('teachers', teachers)
           ..add('tags', tags)
-          ..add('type', type)
           ..add('fields', fields)
           ..add('exportedAt', exportedAt))
         .toString();
@@ -256,6 +163,10 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
 class CalendarEventForPublicBuilder
     implements Builder<CalendarEventForPublic, CalendarEventForPublicBuilder> {
   _$CalendarEventForPublic? _$v;
+
+  EventTypeEnum? _type;
+  EventTypeEnum? get type => _$this._type;
+  set type(EventTypeEnum? type) => _$this._type = type;
 
   String? _color;
   String? get color => _$this._color;
@@ -298,18 +209,16 @@ class CalendarEventForPublicBuilder
       _$this._teachers ??= new ListBuilder<String>();
   set teachers(ListBuilder<String>? teachers) => _$this._teachers = teachers;
 
-  ListBuilder<JsonObject>? _tags;
-  ListBuilder<JsonObject> get tags =>
-      _$this._tags ??= new ListBuilder<JsonObject>();
-  set tags(ListBuilder<JsonObject>? tags) => _$this._tags = tags;
+  ListBuilder<EventTag>? _tags;
+  ListBuilder<EventTag> get tags =>
+      _$this._tags ??= new ListBuilder<EventTag>();
+  set tags(ListBuilder<EventTag>? tags) => _$this._tags = tags;
 
-  CalendarEventForPublicTypeEnum? _type;
-  CalendarEventForPublicTypeEnum? get type => _$this._type;
-  set type(CalendarEventForPublicTypeEnum? type) => _$this._type = type;
-
-  JsonObject? _fields;
-  JsonObject? get fields => _$this._fields;
-  set fields(JsonObject? fields) => _$this._fields = fields;
+  CalendarEventForPublicFieldsBuilder? _fields;
+  CalendarEventForPublicFieldsBuilder get fields =>
+      _$this._fields ??= new CalendarEventForPublicFieldsBuilder();
+  set fields(CalendarEventForPublicFieldsBuilder? fields) =>
+      _$this._fields = fields;
 
   DateTime? _exportedAt;
   DateTime? get exportedAt => _$this._exportedAt;
@@ -322,6 +231,7 @@ class CalendarEventForPublicBuilder
   CalendarEventForPublicBuilder get _$this {
     final $v = _$v;
     if ($v != null) {
+      _type = $v.type;
       _color = $v.color;
       _groupColor = $v.groupColor;
       _uid = $v.uid;
@@ -333,8 +243,7 @@ class CalendarEventForPublicBuilder
       _description = $v.description;
       _teachers = $v.teachers.toBuilder();
       _tags = $v.tags.toBuilder();
-      _type = $v.type;
-      _fields = $v.fields;
+      _fields = $v.fields?.toBuilder();
       _exportedAt = $v.exportedAt;
       _$v = null;
     }
@@ -360,6 +269,8 @@ class CalendarEventForPublicBuilder
     try {
       _$result = _$v ??
           new _$CalendarEventForPublic._(
+              type: BuiltValueNullFieldError.checkNotNull(
+                  type, r'CalendarEventForPublic', 'type'),
               color: BuiltValueNullFieldError.checkNotNull(
                   color, r'CalendarEventForPublic', 'color'),
               groupColor: BuiltValueNullFieldError.checkNotNull(
@@ -378,9 +289,7 @@ class CalendarEventForPublicBuilder
               description: description,
               teachers: teachers.build(),
               tags: tags.build(),
-              type: BuiltValueNullFieldError.checkNotNull(
-                  type, r'CalendarEventForPublic', 'type'),
-              fields: fields,
+              fields: _fields?.build(),
               exportedAt:
                   BuiltValueNullFieldError.checkNotNull(exportedAt, r'CalendarEventForPublic', 'exportedAt'));
     } catch (_) {
@@ -390,6 +299,8 @@ class CalendarEventForPublicBuilder
         teachers.build();
         _$failedField = 'tags';
         tags.build();
+        _$failedField = 'fields';
+        _fields?.build();
       } catch (e) {
         throw new BuiltValueNestedFieldError(
             r'CalendarEventForPublic', _$failedField, e.toString());

@@ -47,13 +47,13 @@ import 'package:timecalendar_api/timecalendar_api.dart';
 
 
 final api = TimecalendarApi().getCalendarsApi();
-final CreateCalendarDto createCalendarDto = ; // CreateCalendarDto | 
+final String token = token_example; // String | The calendar token
 
 try {
-    final response = await api.calendarSyncControllerCreateCalendar(createCalendarDto);
+    final response = await api.calendarControllerFindCalendarByToken(token);
     print(response);
 } catch on DioError (e) {
-    print("Exception when calling CalendarsApi->calendarSyncControllerCreateCalendar: $e\n");
+    print("Exception when calling CalendarsApi->calendarControllerFindCalendarByToken: $e\n");
 }
 
 ```
@@ -64,23 +64,28 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-[*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerCreateCalendar**](doc/CalendarsApi.md#calendarsynccontrollercreatecalendar) | **POST** /calendars | 
-[*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | 
+[*CalendarsApi*](doc/CalendarsApi.md) | [**calendarControllerFindCalendarByToken**](doc/CalendarsApi.md#calendarcontrollerfindcalendarbytoken) | **GET** /calendars/by-token/{token} | Find a calendar by its token
+[*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerCreateCalendar**](doc/CalendarsApi.md#calendarsynccontrollercreatecalendar) | **POST** /calendars | Create a calendar
+[*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | Sync calendars
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchool**](doc/SchoolsApi.md#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchools**](doc/SchoolsApi.md#schoolcontrollerfindschools) | **GET** /schools | Find list of schools
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerFindSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollerfindschoolgroups) | **GET** /schools/{schoolId}/school-group | Find school groups
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerGetSchoolGroupsIcalUrl**](doc/SchoolsApi.md#schoolgroupcontrollergetschoolgroupsicalurl) | **POST** /schools/{schoolId}/school-group/ical | Get school groups ICal URL
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerSetSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollersetschoolgroups) | **PUT** /schools/{schoolId}/school-group | Set school groups
-[*SchoolsApi*](doc/SchoolsApi.md) | [**univOrleansControllerGetIcalUrlFromStudentNumber**](doc/SchoolsApi.md#univorleanscontrollergeticalurlfromstudentnumber) | **POST** /schools/univ-orleans/students | 
+[*SchoolsApi*](doc/SchoolsApi.md) | [**univOrleansControllerGetIcalUrlFromStudentNumber**](doc/SchoolsApi.md#univorleanscontrollergeticalurlfromstudentnumber) | **POST** /schools/univ-orleans/students | Get the ICal URL from a student number
 
 
 ## Documentation For Models
 
+ - [CalendarEventCustomFields](doc/CalendarEventCustomFields.md)
  - [CalendarEventForPublic](doc/CalendarEventForPublic.md)
+ - [CalendarEventForPublicFields](doc/CalendarEventForPublicFields.md)
  - [CalendarForPublic](doc/CalendarForPublic.md)
  - [CalendarWithContent](doc/CalendarWithContent.md)
  - [CreateCalendarDto](doc/CreateCalendarDto.md)
  - [CreateCalendarRepDto](doc/CreateCalendarRepDto.md)
+ - [EventTag](doc/EventTag.md)
+ - [EventTypeEnum](doc/EventTypeEnum.md)
  - [FindSchoolGroupsRepDto](doc/FindSchoolGroupsRepDto.md)
  - [FindSchoolsRepDto](doc/FindSchoolsRepDto.md)
  - [GetSchoolGroupsIcalUrlDto](doc/GetSchoolGroupsIcalUrlDto.md)

@@ -1,6 +1,6 @@
-import 'package:timecalendar/modules/calendar/models/calendar.dart';
+import 'package:timecalendar/modules/calendar/models/deprecated_calendar.dart';
 
-class CustomCalendar extends Calendar {
+class CustomCalendar extends DeprecatedCalendar {
   final List<String?> customCalendars;
 
   CustomCalendar(this.customCalendars);

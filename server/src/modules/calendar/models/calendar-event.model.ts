@@ -1,3 +1,4 @@
+import { ApiProperty } from "@nestjs/swagger"
 import { Type } from "class-transformer"
 import {
   IsBoolean,
@@ -11,7 +12,7 @@ import {
   CalendarEventCustomFields,
   EventTag,
   EventType,
-} from "modules/fetch/models/event"
+} from "modules/fetch/models/event.model"
 
 export class CalendarEvent {
   @IsString()
@@ -47,6 +48,10 @@ export class CalendarEvent {
   tags: EventTag[]
 
   @IsEnum(EventType)
+  @ApiProperty({
+    enum: EventType,
+    enumName: "EventTypeEnum",
+  })
   type: EventType
 
   @Type(() => CalendarEventCustomFields)

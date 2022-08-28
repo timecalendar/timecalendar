@@ -1,4 +1,7 @@
-import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import {
+  FetcherCalendarEvent,
+  EventType,
+} from "modules/fetch/models/event.model"
 import esieeParseDescriptionPipe from "modules/fetch/schools/esiee/esiee-parse-description-pipe"
 
 describe("esieeParseDescriptionPipe", () => {

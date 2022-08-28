@@ -16,7 +16,8 @@ cd ..
 cd scripts
 npm install
 npm run dart
-cd $OLDPWD
+cd ..
+flutter format dart
 
 # JavaScript
 ./scripts/openapi-generator-cli.sh generate \
