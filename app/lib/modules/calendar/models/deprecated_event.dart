@@ -54,9 +54,7 @@ class DeprecatedEvent {
         groupColor = ColorUtils.hexToColor(map['groupColor']),
         unitId = map['unitId'],
         teachers = List<String>.from(jsonDecode(map['teachers'])),
-        tags = List<EventTag>.from(
-            List<Map<String, dynamic>>.from(jsonDecode(map['tags'] ?? []))
-                .map((tag) => EventTag.fromApi(tag)));
+        tags = [];
 
   factory DeprecatedEvent.fromApi(Map<String, dynamic> event) {
     return DeprecatedEvent(
@@ -74,9 +72,7 @@ class DeprecatedEvent {
       groupColor: ColorUtils.hexToColor(event['groupColor']),
       unitId: event['unit_id'],
       teachers: List<String>.from(event['teachers'] ?? []),
-      tags: List<EventTag>.from(
-          (List<Map<String, dynamic>>.from(event['tags'] ?? []))
-              .map((tag) => EventTag.fromApi(tag))),
+      tags: [],
     );
   }
 
@@ -103,7 +99,7 @@ class DeprecatedEvent {
     map['groupColor'] = ColorUtils.colorToHex(groupColor);
     map['unitId'] = unitId;
     map['teachers'] = jsonEncode(teachers);
-    map['tags'] = jsonEncode(List.from(tags.map((tag) => tag.toMap())));
+    map['tags'] = jsonEncode(List.from(tags.map((tag) => tag.toDbMap())));
     return map;
   }
 

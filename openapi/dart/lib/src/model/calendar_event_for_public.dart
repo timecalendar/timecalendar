@@ -2,8 +2,10 @@
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
 
+import 'package:timecalendar_api/src/model/event_type_enum.dart';
+import 'package:timecalendar_api/src/model/event_tag.dart';
 import 'package:built_collection/built_collection.dart';
-import 'package:built_value/json_object.dart';
+import 'package:timecalendar_api/src/model/calendar_event_for_public_fields.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -12,6 +14,7 @@ part 'calendar_event_for_public.g.dart';
 /// CalendarEventForPublic
 ///
 /// Properties:
+/// * [type]
 /// * [color]
 /// * [groupColor]
 /// * [uid]
@@ -23,11 +26,14 @@ part 'calendar_event_for_public.g.dart';
 /// * [description]
 /// * [teachers]
 /// * [tags]
-/// * [type]
 /// * [fields]
 /// * [exportedAt]
 abstract class CalendarEventForPublic
     implements Built<CalendarEventForPublic, CalendarEventForPublicBuilder> {
+  @BuiltValueField(wireName: r'type')
+  EventTypeEnum get type;
+  // enum typeEnum {  cm,  td,  tp,  tp2,  project,  exam,  class,  };
+
   @BuiltValueField(wireName: r'color')
   String get color;
 
@@ -59,14 +65,10 @@ abstract class CalendarEventForPublic
   BuiltList<String> get teachers;
 
   @BuiltValueField(wireName: r'tags')
-  BuiltList<JsonObject> get tags;
-
-  @BuiltValueField(wireName: r'type')
-  CalendarEventForPublicTypeEnum get type;
-  // enum typeEnum {  cm,  td,  tp,  tp2,  project,  exam,  class,  };
+  BuiltList<EventTag> get tags;
 
   @BuiltValueField(wireName: r'fields')
-  JsonObject? get fields;
+  CalendarEventForPublicFields? get fields;
 
   @BuiltValueField(wireName: r'exportedAt')
   DateTime get exportedAt;
@@ -101,6 +103,10 @@ class _$CalendarEventForPublicSerializer
       Serializers serializers, CalendarEventForPublic object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object?>[];
+    result
+      ..add(r'type')
+      ..add(serializers.serialize(object.type,
+          specifiedType: const FullType(EventTypeEnum)));
     result
       ..add(r'color')
       ..add(serializers.serialize(object.color,
@@ -148,17 +154,14 @@ class _$CalendarEventForPublicSerializer
     result
       ..add(r'tags')
       ..add(serializers.serialize(object.tags,
-          specifiedType: const FullType(BuiltList, [FullType(JsonObject)])));
-    result
-      ..add(r'type')
-      ..add(serializers.serialize(object.type,
-          specifiedType: const FullType(CalendarEventForPublicTypeEnum)));
+          specifiedType: const FullType(BuiltList, [FullType(EventTag)])));
     result
       ..add(r'fields')
       ..add(object.fields == null
           ? null
           : serializers.serialize(object.fields,
-              specifiedType: const FullType.nullable(JsonObject)));
+              specifiedType:
+                  const FullType.nullable(CalendarEventForPublicFields)));
     result
       ..add(r'exportedAt')
       ..add(serializers.serialize(object.exportedAt,
@@ -179,6 +182,11 @@ class _$CalendarEventForPublicSerializer
       final Object? value = iterator.current;
 
       switch (key) {
+        case r'type':
+          final valueDes = serializers.deserialize(value,
+              specifiedType: const FullType(EventTypeEnum)) as EventTypeEnum;
+          result.type = valueDes;
+          break;
         case r'color':
           final valueDes = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String;
@@ -235,22 +243,17 @@ class _$CalendarEventForPublicSerializer
         case r'tags':
           final valueDes = serializers.deserialize(value,
                   specifiedType:
-                      const FullType(BuiltList, [FullType(JsonObject)]))
-              as BuiltList<JsonObject>;
+                      const FullType(BuiltList, [FullType(EventTag)]))
+              as BuiltList<EventTag>;
           result.tags.replace(valueDes);
-          break;
-        case r'type':
-          final valueDes = serializers.deserialize(value,
-                  specifiedType: const FullType(CalendarEventForPublicTypeEnum))
-              as CalendarEventForPublicTypeEnum;
-          result.type = valueDes;
           break;
         case r'fields':
           final valueDes = serializers.deserialize(value,
-                  specifiedType: const FullType.nullable(JsonObject))
-              as JsonObject?;
+                  specifiedType:
+                      const FullType.nullable(CalendarEventForPublicFields))
+              as CalendarEventForPublicFields?;
           if (valueDes == null) continue;
-          result.fields = valueDes;
+          result.fields.replace(valueDes);
           break;
         case r'exportedAt':
           final valueDes = serializers.deserialize(value,
@@ -261,38 +264,4 @@ class _$CalendarEventForPublicSerializer
     }
     return result.build();
   }
-}
-
-class CalendarEventForPublicTypeEnum extends EnumClass {
-  @BuiltValueEnumConst(wireName: r'cm')
-  static const CalendarEventForPublicTypeEnum cm =
-      _$calendarEventForPublicTypeEnum_cm;
-  @BuiltValueEnumConst(wireName: r'td')
-  static const CalendarEventForPublicTypeEnum td =
-      _$calendarEventForPublicTypeEnum_td;
-  @BuiltValueEnumConst(wireName: r'tp')
-  static const CalendarEventForPublicTypeEnum tp =
-      _$calendarEventForPublicTypeEnum_tp;
-  @BuiltValueEnumConst(wireName: r'tp2')
-  static const CalendarEventForPublicTypeEnum tp2 =
-      _$calendarEventForPublicTypeEnum_tp2;
-  @BuiltValueEnumConst(wireName: r'project')
-  static const CalendarEventForPublicTypeEnum project =
-      _$calendarEventForPublicTypeEnum_project;
-  @BuiltValueEnumConst(wireName: r'exam')
-  static const CalendarEventForPublicTypeEnum exam =
-      _$calendarEventForPublicTypeEnum_exam;
-  @BuiltValueEnumConst(wireName: r'class')
-  static const CalendarEventForPublicTypeEnum class_ =
-      _$calendarEventForPublicTypeEnum_class_;
-
-  static Serializer<CalendarEventForPublicTypeEnum> get serializer =>
-      _$calendarEventForPublicTypeEnumSerializer;
-
-  const CalendarEventForPublicTypeEnum._(String name) : super(name);
-
-  static BuiltSet<CalendarEventForPublicTypeEnum> get values =>
-      _$calendarEventForPublicTypeEnumValues;
-  static CalendarEventForPublicTypeEnum valueOf(String name) =>
-      _$calendarEventForPublicTypeEnumValueOf(name);
 }

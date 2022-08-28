@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:timecalendar/modules/calendar/models/event_tag.dart';
 
 class EventDetailsTag extends StatelessWidget {
-  final EventTag? tag;
+  final EventTag tag;
 
-  const EventDetailsTag({Key? key, this.tag}) : super(key: key);
+  const EventDetailsTag({Key? key, required this.tag}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class EventDetailsTag extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Icon(
-            tag!.iconData,
+            tag.iconData,
             size: 14,
             color: Colors.black,
           ),
@@ -23,13 +23,13 @@ class EventDetailsTag extends StatelessWidget {
             width: 10,
           ),
           Text(
-            tag!.name!,
+            tag.name,
             style: TextStyle(color: Colors.black),
           ),
         ],
       ),
       decoration: BoxDecoration(
-        color: tag!.color,
+        color: tag.color,
         borderRadius: BorderRadius.circular(15),
       ),
     );

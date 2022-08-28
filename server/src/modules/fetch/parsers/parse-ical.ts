@@ -1,6 +1,9 @@
 import { BadRequestException } from "@nestjs/common"
 import { parseICS } from "node-ical"
-import { EventType, FetcherCalendarEvent } from "modules/fetch/models/event"
+import {
+  EventType,
+  FetcherCalendarEvent,
+} from "modules/fetch/models/event.model"
 import { assert } from "modules/shared/helpers/assert"
 import { trimNewLines } from "modules/shared/helpers/trim"
 

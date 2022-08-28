@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { CalendarEventForPublic } from "modules/calendar/models/dto/calendar-event-for-public.dto"
-import { FetcherCalendarEvent } from "modules/fetch/models/event"
+import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 
 @Injectable()
 export class CalendarEventHelper {

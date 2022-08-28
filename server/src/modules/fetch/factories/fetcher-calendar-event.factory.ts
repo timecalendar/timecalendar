@@ -1,5 +1,8 @@
 import { Factory } from "fishery"
-import { EventType, FetcherCalendarEvent } from "modules/fetch/models/event"
+import {
+  EventType,
+  FetcherCalendarEvent,
+} from "modules/fetch/models/event.model"
 import { v4 } from "uuid"
 
 export const fetcherCalendarEventFactory = Factory.define<FetcherCalendarEvent>(

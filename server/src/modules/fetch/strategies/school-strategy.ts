@@ -1,7 +1,7 @@
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
 import { CalendarCustomData } from "modules/fetch/models/calendar-source"
-import { FetcherCalendarEvent } from "modules/fetch/models/event"
+import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 import { defaultPipes } from "modules/fetch/pipes/pipes"
 import { UrlRenamer } from "modules/fetch/renamers/url-renamer"

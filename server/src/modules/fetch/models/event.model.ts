@@ -1,4 +1,4 @@
-import { IsString } from "class-validator"
+import { IsBoolean, IsString } from "class-validator"
 
 export class EventTag {
   @IsString()
@@ -22,10 +22,18 @@ export enum EventType {
 }
 
 export class CalendarEventCustomFields {
+  @IsBoolean()
   canceled?: boolean
+
+  @IsString()
   shortDescription?: string
+
+  @IsString()
   subject?: string
+
+  @IsString()
   groupColor?: string;
+
   [key: string]: any
 }
 

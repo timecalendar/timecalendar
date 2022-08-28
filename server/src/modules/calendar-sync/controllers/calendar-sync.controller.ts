@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from "@nestjs/common"
-import { ApiTags } from "@nestjs/swagger"
+import { ApiOperation, ApiTags } from "@nestjs/swagger"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
 import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
@@ -14,11 +14,13 @@ export class CalendarSyncController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: "Create a calendar" })
   createCalendar(@Body() payload: CreateCalendarDto) {
     return this.service.createCalendar(payload)
   }
 
   @Post("sync")
+  @ApiOperation({ summary: "Sync calendars" })
   async syncCalendars(@Body() payload: SyncCalendarsDto) {
     return this.calendarSyncAllService.syncAllForUser(payload)
   }

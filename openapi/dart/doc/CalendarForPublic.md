@@ -9,6 +9,7 @@ import 'package:timecalendar_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **String** |  | 
+**token** | **String** |  | 
 **name** | **String** |  | 
 **schoolName** | **String** |  | 
 **schoolId** | **String** |  | 

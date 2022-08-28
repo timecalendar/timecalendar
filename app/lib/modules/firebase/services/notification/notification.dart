@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/modules/shared/constants/environment.dart';
-import 'package:timecalendar/modules/calendar/models/calendar.dart';
+import 'package:timecalendar/modules/calendar/models/deprecated_calendar.dart';
 
 typedef NotificationListener = Function(Map<String, dynamic> message);
 
@@ -41,7 +41,7 @@ class NotificationService {
     }
   }
 
-  Future<void> subscribeToCalendar(Calendar calendar) async {
+  Future<void> subscribeToCalendar(DeprecatedCalendar calendar) async {
     var token = await _firebaseMessaging.getToken();
     var prefs = await SharedPreferences.getInstance();
 

@@ -20,6 +20,7 @@ export class CalendarHelper {
   forPublic(calendar: Calendar): CalendarForPublic {
     return {
       id: calendar.id,
+      token: calendar.token,
       name: calendar.name,
       schoolName: calendar.school?.name || calendar.schoolName,
       schoolId: calendar.schoolId,

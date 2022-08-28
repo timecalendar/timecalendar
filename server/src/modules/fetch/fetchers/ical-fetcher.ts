@@ -2,7 +2,7 @@ import { BadRequestException } from "@nestjs/common"
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { CalendarCustomData } from "modules/fetch/models/calendar-source"
-import { FetcherCalendarEvent } from "modules/fetch/models/event"
+import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
 import { CustomError } from "modules/shared/errors/custom-error"
 

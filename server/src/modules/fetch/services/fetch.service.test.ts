@@ -3,7 +3,10 @@ import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import axios from "axios"
 import { FetchModule } from "modules/fetch/fetch.module"
-import { EventType, FetcherCalendarEvent } from "modules/fetch/models/event"
+import {
+  EventType,
+  FetcherCalendarEvent,
+} from "modules/fetch/models/event.model"
 import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 import { clearNestTestApp } from "test-utils/create-nest-app"

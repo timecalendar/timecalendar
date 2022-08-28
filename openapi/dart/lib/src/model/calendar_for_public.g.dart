@@ -10,6 +10,8 @@ class _$CalendarForPublic extends CalendarForPublic {
   @override
   final String id;
   @override
+  final String token;
+  @override
   final String name;
   @override
   final String? schoolName;
@@ -26,6 +28,7 @@ class _$CalendarForPublic extends CalendarForPublic {
 
   _$CalendarForPublic._(
       {required this.id,
+      required this.token,
       required this.name,
       this.schoolName,
       required this.schoolId,
@@ -33,6 +36,7 @@ class _$CalendarForPublic extends CalendarForPublic {
       required this.createdAt})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(id, r'CalendarForPublic', 'id');
+    BuiltValueNullFieldError.checkNotNull(token, r'CalendarForPublic', 'token');
     BuiltValueNullFieldError.checkNotNull(name, r'CalendarForPublic', 'name');
     BuiltValueNullFieldError.checkNotNull(
         schoolId, r'CalendarForPublic', 'schoolId');
@@ -55,6 +59,7 @@ class _$CalendarForPublic extends CalendarForPublic {
     if (identical(other, this)) return true;
     return other is CalendarForPublic &&
         id == other.id &&
+        token == other.token &&
         name == other.name &&
         schoolName == other.schoolName &&
         schoolId == other.schoolId &&
@@ -67,7 +72,9 @@ class _$CalendarForPublic extends CalendarForPublic {
     return $jf($jc(
         $jc(
             $jc(
-                $jc($jc($jc(0, id.hashCode), name.hashCode),
+                $jc(
+                    $jc($jc($jc(0, id.hashCode), token.hashCode),
+                        name.hashCode),
                     schoolName.hashCode),
                 schoolId.hashCode),
             lastUpdatedAt.hashCode),
@@ -78,6 +85,7 @@ class _$CalendarForPublic extends CalendarForPublic {
   String toString() {
     return (newBuiltValueToStringHelper(r'CalendarForPublic')
           ..add('id', id)
+          ..add('token', token)
           ..add('name', name)
           ..add('schoolName', schoolName)
           ..add('schoolId', schoolId)
@@ -94,6 +102,10 @@ class CalendarForPublicBuilder
   String? _id;
   String? get id => _$this._id;
   set id(String? id) => _$this._id = id;
+
+  String? _token;
+  String? get token => _$this._token;
+  set token(String? token) => _$this._token = token;
 
   String? _name;
   String? get name => _$this._name;
@@ -124,6 +136,7 @@ class CalendarForPublicBuilder
     final $v = _$v;
     if ($v != null) {
       _id = $v.id;
+      _token = $v.token;
       _name = $v.name;
       _schoolName = $v.schoolName;
       _schoolId = $v.schoolId;
@@ -153,6 +166,8 @@ class CalendarForPublicBuilder
         new _$CalendarForPublic._(
             id: BuiltValueNullFieldError.checkNotNull(
                 id, r'CalendarForPublic', 'id'),
+            token: BuiltValueNullFieldError.checkNotNull(
+                token, r'CalendarForPublic', 'token'),
             name: BuiltValueNullFieldError.checkNotNull(
                 name, r'CalendarForPublic', 'name'),
             schoolName: schoolName,

@@ -11,6 +11,7 @@ part 'calendar_for_public.g.dart';
 ///
 /// Properties:
 /// * [id]
+/// * [token]
 /// * [name]
 /// * [schoolName]
 /// * [schoolId]
@@ -20,6 +21,9 @@ abstract class CalendarForPublic
     implements Built<CalendarForPublic, CalendarForPublicBuilder> {
   @BuiltValueField(wireName: r'id')
   String get id;
+
+  @BuiltValueField(wireName: r'token')
+  String get token;
 
   @BuiltValueField(wireName: r'name')
   String get name;
@@ -66,6 +70,10 @@ class _$CalendarForPublicSerializer
       ..add(serializers.serialize(object.id,
           specifiedType: const FullType(String)));
     result
+      ..add(r'token')
+      ..add(serializers.serialize(object.token,
+          specifiedType: const FullType(String)));
+    result
       ..add(r'name')
       ..add(serializers.serialize(object.name,
           specifiedType: const FullType(String)));
@@ -107,6 +115,11 @@ class _$CalendarForPublicSerializer
           final valueDes = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String;
           result.id = valueDes;
+          break;
+        case r'token':
+          final valueDes = serializers.deserialize(value,
+              specifiedType: const FullType(String)) as String;
+          result.token = valueDes;
           break;
         case r'name':
           final valueDes = serializers.deserialize(value,

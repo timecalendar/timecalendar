@@ -14,6 +14,28 @@ describe("CalendarService", () => {
     service = app.get(CalendarService)
   })
 
+  describe("findCalendarByToken", () => {
+    it("finds a school calendar by token", async () => {
+      const calendar = await calendarFactory().school().create()
+
+      const result = await service.findCalendarByToken(calendar.token)
+
+      expect(result.token).toBe(calendar.token)
+      expect(result.schoolName).toBe("My Gaming Academia")
+      expect(result.name).toBe("My Calendar")
+    })
+
+    it("finds a calendar by token", async () => {
+      const calendar = await calendarFactory().create()
+
+      const result = await service.findCalendarByToken(calendar.token)
+
+      expect(result.token).toBe(calendar.token)
+      expect(result.schoolName).toBe("My School")
+      expect(result.name).toBe("My Calendar")
+    })
+  })
+
   describe("calendarsForPublic", () => {
     it("returns multiple calendars", async () => {
       const event = calendarEventFactory.build()

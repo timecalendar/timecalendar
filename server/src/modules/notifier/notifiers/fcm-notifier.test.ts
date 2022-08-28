@@ -1,5 +1,5 @@
 import { CalendarChange } from "modules/calendar-log/models/difference"
-import { EventType } from "modules/fetch/models/event"
+import { EventType } from "modules/fetch/models/event.model"
 import { FirebaseService } from "modules/firebase/services/firebase.service"
 import { FcmNotifier } from "modules/notifier/notifiers/fcm-notifier"
 import { DifferenceType } from "modules/notifier/notifiers/fcm-notifier-calendar-changed"

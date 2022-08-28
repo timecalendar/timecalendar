@@ -7,7 +7,7 @@ import {
   Post,
   Put,
 } from "@nestjs/common"
-import { ApiOperation, ApiTags } from "@nestjs/swagger"
+import { ApiOperation, ApiParam, ApiTags } from "@nestjs/swagger"
 import { FindSchoolGroupsRepDto } from "modules/school-group/models/find-school-groups-rep.dto"
 import { GetSchoolGroupsIcalUrlRepDto } from "modules/school-group/models/get-school-groups-ical-url-rep.dto"
 import { GetSchoolGroupsIcalUrlDto } from "modules/school-group/models/get-school-groups-ical-url.dto"
@@ -20,6 +20,7 @@ export class SchoolGroupController {
   constructor(private readonly service: SchoolGroupService) {}
 
   @ApiOperation({ summary: "Find school groups" })
+  @ApiParam({ name: "schoolId", description: "The school id", type: "string" })
   @Get()
   async findSchoolGroups(
     @Param("schoolId", new ParseUUIDPipe()) schoolId: string,
@@ -28,6 +29,7 @@ export class SchoolGroupController {
   }
 
   @ApiOperation({ summary: "Set school groups" })
+  @ApiParam({ name: "schoolId", description: "The school id", type: "string" })
   @Put()
   async setSchoolGroups(
     @Param("schoolId", new ParseUUIDPipe()) schoolId: string,
@@ -37,6 +39,7 @@ export class SchoolGroupController {
   }
 
   @ApiOperation({ summary: "Get school groups ICal URL" })
+  @ApiParam({ name: "schoolId", description: "The school id", type: "string" })
   @Post("ical")
   async getSchoolGroupsIcalUrl(
     @Param("schoolId", new ParseUUIDPipe()) schoolId: string,

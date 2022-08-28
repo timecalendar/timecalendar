@@ -1,4 +1,7 @@
-import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import {
+  FetcherCalendarEvent,
+  EventType,
+} from "modules/fetch/models/event.model"
 import hyperplanningDescriptionPipe from "modules/fetch/pipes/hyperplanning-description-pipe"
 
 describe("hyperplanningDescriptionPipe", () => {

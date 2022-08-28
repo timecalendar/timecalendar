@@ -24,9 +24,46 @@ import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } fr
 /**
  * 
  * @export
+ * @interface CalendarEventCustomFields
+ */
+export interface CalendarEventCustomFields {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CalendarEventCustomFields
+     */
+    'canceled'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarEventCustomFields
+     */
+    'shortDescription'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarEventCustomFields
+     */
+    'subject'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarEventCustomFields
+     */
+    'groupColor'?: string;
+}
+/**
+ * 
+ * @export
  * @interface CalendarEventForPublic
  */
 export interface CalendarEventForPublic {
+    /**
+     * 
+     * @type {EventTypeEnum}
+     * @memberof CalendarEventForPublic
+     */
+    'type': EventTypeEnum;
     /**
      * 
      * @type {string}
@@ -89,22 +126,16 @@ export interface CalendarEventForPublic {
     'teachers': Array<string>;
     /**
      * 
-     * @type {Array<object>}
+     * @type {Array<EventTag>}
      * @memberof CalendarEventForPublic
      */
-    'tags': Array<object>;
+    'tags': Array<EventTag>;
     /**
      * 
-     * @type {string}
+     * @type {CalendarEventForPublicFields}
      * @memberof CalendarEventForPublic
      */
-    'type': CalendarEventForPublicTypeEnum;
-    /**
-     * 
-     * @type {object}
-     * @memberof CalendarEventForPublic
-     */
-    'fields': object | null;
+    'fields': CalendarEventForPublicFields | null;
     /**
      * 
      * @type {string}
@@ -112,19 +143,37 @@ export interface CalendarEventForPublic {
      */
     'exportedAt': string;
 }
-
-export const CalendarEventForPublicTypeEnum = {
-    Cm: 'cm',
-    Td: 'td',
-    Tp: 'tp',
-    Tp2: 'tp2',
-    Project: 'project',
-    Exam: 'exam',
-    Class: 'class'
-} as const;
-
-export type CalendarEventForPublicTypeEnum = typeof CalendarEventForPublicTypeEnum[keyof typeof CalendarEventForPublicTypeEnum];
-
+/**
+ * 
+ * @export
+ * @interface CalendarEventForPublicFields
+ */
+export interface CalendarEventForPublicFields {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CalendarEventForPublicFields
+     */
+    'canceled'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarEventForPublicFields
+     */
+    'shortDescription'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarEventForPublicFields
+     */
+    'subject'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarEventForPublicFields
+     */
+    'groupColor'?: string;
+}
 /**
  * 
  * @export
@@ -137,6 +186,12 @@ export interface CalendarForPublic {
      * @memberof CalendarForPublic
      */
     'id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CalendarForPublic
+     */
+    'token': string;
     /**
      * 
      * @type {string}
@@ -237,6 +292,50 @@ export interface CreateCalendarRepDto {
      */
     'token': string;
 }
+/**
+ * 
+ * @export
+ * @interface EventTag
+ */
+export interface EventTag {
+    /**
+     * 
+     * @type {string}
+     * @memberof EventTag
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof EventTag
+     */
+    'color': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof EventTag
+     */
+    'icon': string;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const EventTypeEnum = {
+    Cm: 'cm',
+    Td: 'td',
+    Tp: 'tp',
+    Tp2: 'tp2',
+    Project: 'project',
+    Exam: 'exam',
+    Class: 'class'
+} as const;
+
+export type EventTypeEnum = typeof EventTypeEnum[keyof typeof EventTypeEnum];
+
+
 /**
  * 
  * @export
@@ -478,6 +577,41 @@ export const CalendarsApiAxiosParamCreator = function (configuration?: Configura
     return {
         /**
          * 
+         * @summary Find a calendar by its token
+         * @param {string} token The calendar token
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        findCalendarByToken: async (token: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'token' is not null or undefined
+            assertParamExists('findCalendarByToken', 'token', token)
+            const localVarPath = `/calendars/by-token/{token}`
+                .replace(`{${"token"}}`, encodeURIComponent(String(token)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Create a calendar
          * @param {CreateCalendarDto} createCalendarDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -513,6 +647,7 @@ export const CalendarsApiAxiosParamCreator = function (configuration?: Configura
         },
         /**
          * 
+         * @summary Sync calendars
          * @param {SyncCalendarsDto} syncCalendarsDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -558,6 +693,18 @@ export const CalendarsApiFp = function(configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Find a calendar by its token
+         * @param {string} token The calendar token
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async findCalendarByToken(token: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CalendarForPublic>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.findCalendarByToken(token, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * 
+         * @summary Create a calendar
          * @param {CreateCalendarDto} createCalendarDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -568,6 +715,7 @@ export const CalendarsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Sync calendars
          * @param {SyncCalendarsDto} syncCalendarsDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -588,6 +736,17 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
     return {
         /**
          * 
+         * @summary Find a calendar by its token
+         * @param {string} token The calendar token
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        findCalendarByToken(token: string, options?: any): AxiosPromise<CalendarForPublic> {
+            return localVarFp.findCalendarByToken(token, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @summary Create a calendar
          * @param {CreateCalendarDto} createCalendarDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -597,6 +756,7 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
         },
         /**
          * 
+         * @summary Sync calendars
          * @param {SyncCalendarsDto} syncCalendarsDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -616,6 +776,19 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
 export class CalendarsApi extends BaseAPI {
     /**
      * 
+     * @summary Find a calendar by its token
+     * @param {string} token The calendar token
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof CalendarsApi
+     */
+    public findCalendarByToken(token: string, options?: AxiosRequestConfig) {
+        return CalendarsApiFp(this.configuration).findCalendarByToken(token, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Create a calendar
      * @param {CreateCalendarDto} createCalendarDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -627,6 +800,7 @@ export class CalendarsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Sync calendars
      * @param {SyncCalendarsDto} syncCalendarsDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -711,7 +885,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Find school groups
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -745,7 +919,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Get school groups ICal URL
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -785,7 +959,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
         /**
          * 
          * @summary Set school groups
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {SetSchoolGroupDto} setSchoolGroupDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -824,6 +998,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Get the ICal URL from a student number
          * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -891,7 +1066,7 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Find school groups
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -902,7 +1077,7 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Get school groups ICal URL
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -914,7 +1089,7 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
         /**
          * 
          * @summary Set school groups
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {SetSchoolGroupDto} setSchoolGroupDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -925,6 +1100,7 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the ICal URL from a student number
          * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -965,7 +1141,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
         /**
          * 
          * @summary Find school groups
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -975,7 +1151,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
         /**
          * 
          * @summary Get school groups ICal URL
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -986,7 +1162,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
         /**
          * 
          * @summary Set school groups
-         * @param {string} schoolId 
+         * @param {string} schoolId The school id
          * @param {SetSchoolGroupDto} setSchoolGroupDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -996,6 +1172,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Get the ICal URL from a student number
          * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -1039,7 +1216,7 @@ export class SchoolsApi extends BaseAPI {
     /**
      * 
      * @summary Find school groups
-     * @param {string} schoolId 
+     * @param {string} schoolId The school id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof SchoolsApi
@@ -1051,7 +1228,7 @@ export class SchoolsApi extends BaseAPI {
     /**
      * 
      * @summary Get school groups ICal URL
-     * @param {string} schoolId 
+     * @param {string} schoolId The school id
      * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1064,7 +1241,7 @@ export class SchoolsApi extends BaseAPI {
     /**
      * 
      * @summary Set school groups
-     * @param {string} schoolId 
+     * @param {string} schoolId The school id
      * @param {SetSchoolGroupDto} setSchoolGroupDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -1076,6 +1253,7 @@ export class SchoolsApi extends BaseAPI {
 
     /**
      * 
+     * @summary Get the ICal URL from a student number
      * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

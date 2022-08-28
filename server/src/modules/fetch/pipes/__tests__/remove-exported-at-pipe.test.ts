@@ -1,4 +1,7 @@
-import { FetcherCalendarEvent, EventType } from "modules/fetch/models/event"
+import {
+  FetcherCalendarEvent,
+  EventType,
+} from "modules/fetch/models/event.model"
 import removeExportedAtPipe from "modules/fetch/pipes/remove-exported-at-pipe"
 
 describe("removeExportedAtPipe", () => {

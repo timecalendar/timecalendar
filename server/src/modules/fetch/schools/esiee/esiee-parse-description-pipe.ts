@@ -1,4 +1,4 @@
-import { FetcherCalendarEvent } from "modules/fetch/models/event"
+import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 import { trimNewLines } from "modules/shared/helpers/trim"
 

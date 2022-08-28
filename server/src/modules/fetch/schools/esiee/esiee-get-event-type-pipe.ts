@@ -3,7 +3,7 @@ import {
   EventType,
   EventTag,
   FetcherCalendarEvent,
-} from "modules/fetch/models/event"
+} from "modules/fetch/models/event.model"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 
 const mapUnitType: { [type: string]: { type: EventType; tags: EventTag[] } } = {
