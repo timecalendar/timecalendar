@@ -1,6 +1,6 @@
 import 'package:sembast/sembast.dart';
 import 'package:timecalendar/modules/database/providers/simple_database.dart';
-import 'package:timecalendar/models/event.dart';
+import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
 
 class PersonalEventManager {
   static final PersonalEventManager _instance = PersonalEventManager._();
@@ -16,12 +16,14 @@ class PersonalEventManager {
 
   Database? get _db => SimpleDatabase().db;
 
-  Future<List<Event?>> getEvents() async {
+  Future<List<DeprecatedEvent?>> getEvents() async {
     final records = await _store.find(_db!);
-    return records.map((record) => Event.fromDb(record.value)).toList();
+    return records
+        .map((record) => DeprecatedEvent.fromDb(record.value))
+        .toList();
   }
 
-  Future<void> putEvent(Event event) async {
+  Future<void> putEvent(DeprecatedEvent event) async {
     await _db!.transaction((txn) async {
       await _store.record(event.uid).put(txn, event.toMap());
     });
@@ -33,7 +35,7 @@ class PersonalEventManager {
     });
   }
 
-  Future<void> updateEvent(Event event) async {
+  Future<void> updateEvent(DeprecatedEvent event) async {
     await _store.record(event.uid).put(_db!, event.toMap());
   }
 }

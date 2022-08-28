@@ -7,37 +7,34 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
-import 'package:timecalendar/providers/activity_provider.dart';
-import 'package:timecalendar/providers/old_assistant_provider.dart';
-import 'package:timecalendar/providers/auth_provider.dart';
-import 'package:timecalendar/providers/calendar_provider.dart';
-import 'package:timecalendar/providers/checklist_provider.dart';
-import 'package:timecalendar/providers/note_provider.dart';
-import 'package:timecalendar/providers/settings_provider.dart';
-import 'package:timecalendar/providers/suggestion_provider.dart';
-import 'package:timecalendar/screens/activity_screen.dart';
+import 'package:timecalendar/modules/activity/providers/activity_provider.dart';
+import 'package:timecalendar/modules/assistant/providers/old_assistant_provider.dart';
+import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
+import 'package:timecalendar/modules/event_details/providers/checklist_provider.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:timecalendar/modules/suggestion/providers/suggestion_provider.dart';
+import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
 import 'package:timecalendar/modules/add_grade/screens/add_grade_screen.dart';
-import 'package:timecalendar/screens/add_personal_event.dart';
+import 'package:timecalendar/modules/personal_event/screens/add_personal_event_screen.dart';
 import 'package:timecalendar/modules/add_school/screens/add_school_screen.dart';
 import 'package:timecalendar/modules/assistant/screens/assistant_screen.dart';
-import 'package:timecalendar/screens/changelog_screen.dart';
-import 'package:timecalendar/screens/connect_screen.dart';
-import 'package:timecalendar/screens/event_details_screen.dart';
-import 'package:timecalendar/screens/hidden_events_screen.dart';
+import 'package:timecalendar/modules/changelog/screens/changelog_screen.dart';
+import 'package:timecalendar/modules/assistant/screens/connect_screen.dart';
+import 'package:timecalendar/modules/event_details/screens/event_details_screen.dart';
+import 'package:timecalendar/modules/hidden_event/screens/hidden_events_screen.dart';
 import 'package:timecalendar/modules/import_ical/screens/import_ical/import_ical_screen.dart';
-import 'package:timecalendar/screens/login_screen.dart';
 import 'package:timecalendar/modules/onboarding/screens/onboarding_screen.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
-import 'package:timecalendar/screens/settings/settings_screen.dart';
-import 'package:timecalendar/screens/splash_screen.dart';
-import 'package:timecalendar/screens/suggestion_screen.dart';
-import 'package:timecalendar/screens/tabs_screen.dart';
-import 'package:timecalendar/services/firebase.dart';
-import 'package:timecalendar/services/my_route_observer.dart';
-import 'package:timecalendar/services/notification/notification.dart';
-import 'package:timecalendar/services/theme.dart';
-import 'package:timecalendar/providers/events_provider.dart';
-import 'package:timecalendar/screens/about_screen.dart';
+import 'package:timecalendar/modules/settings/screens/settings_screen.dart';
+import 'package:timecalendar/modules/splash/screens/splash_screen.dart';
+import 'package:timecalendar/modules/suggestion/screens/suggestion_screen.dart';
+import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
+import 'package:timecalendar/modules/firebase/services/firebase.dart';
+import 'package:timecalendar/modules/shared/services/my_route_observer.dart';
+import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
+import 'package:timecalendar/modules/shared/services/theme.dart';
+import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:timecalendar/modules/about/screens/about_screen.dart';
 
 class TimeCalendarApp extends StatefulWidget {
   final SharedPreferences prefs;
@@ -80,16 +77,10 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
               create: (_) => OldAssistantProvider(),
             ),
             ChangeNotifierProvider(
-              create: (_) => NoteProvider(),
-            ),
-            ChangeNotifierProvider(
               create: (_) => CalendarProvider(),
             ),
             ChangeNotifierProvider(
               create: (_) => ChecklistProvider(),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => AuthProvider(),
             ),
           ],
           child: Builder(
@@ -140,7 +131,6 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
                   AddGradeScreen.routeName: (ctx) => AddGradeScreen(),
                   ImportIcalScreen.routeName: (ctx) => ImportIcalScreen(),
                   HiddenEventsScreen.routeName: (ctx) => HiddenEventsScreen(),
-                  LoginScreen.routeName: (ctx) => LoginScreen(),
                   ConnectScreen.routeName: (ctx) => ConnectScreen(),
                   ChangelogScreen.routeName: (ctx) => ChangelogScreen(),
                   AddPersonalEventScreen.routeName: (ctx) =>

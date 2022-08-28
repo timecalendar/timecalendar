@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/import_ical/hooks/use_import_ical_controller.dart';
-import 'package:timecalendar/widgets/import_ical/ask_for_ical_url.dart';
-import 'package:timecalendar/widgets/import_ical/scan_qr_code.dart';
+import 'package:timecalendar/modules/import_ical/widgets/ask_for_ical_url.dart';
+import 'package:timecalendar/modules/import_ical/widgets/scan_qr_code.dart';
 
 class ImportIcalScreenArguments {
   final bool isInternal;

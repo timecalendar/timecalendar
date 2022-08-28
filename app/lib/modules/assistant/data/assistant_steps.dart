@@ -4,7 +4,7 @@ import 'package:timecalendar/modules/school/screens/school_selection/school_sele
 import 'package:timecalendar/modules/add_grade/screens/add_grade_screen.dart';
 import 'package:timecalendar/modules/add_school/screens/add_school_screen.dart';
 import 'package:timecalendar/modules/assistant/screens/assistant_screen.dart';
-import 'package:timecalendar/screens/connect_screen.dart';
+import 'package:timecalendar/modules/assistant/screens/connect_screen.dart';
 
 final assistantSteps = [
   AssistantStep(

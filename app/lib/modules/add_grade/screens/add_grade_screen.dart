@@ -4,7 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
 import 'package:timecalendar/modules/assistant/models/assistant_step.dart';
 import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
-import 'package:timecalendar/widgets/common/custom_button.dart';
+import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 
 class AddGradeScreen extends HookConsumerWidget {
   static const routeName = '/add-grade';

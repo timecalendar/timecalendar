@@ -2,16 +2,16 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:timecalendar/models/selected_calendar.dart';
+import 'package:timecalendar/modules/calendar/models/selected_calendar.dart';
 import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
 import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/modules/assistant/states/assistant_finished_result.dart';
-import 'package:timecalendar/providers/old_assistant_provider.dart';
-import 'package:timecalendar/providers/events_provider.dart';
-import 'package:timecalendar/providers/settings_provider.dart';
-import 'package:timecalendar/screens/tabs_screen.dart';
-import 'package:timecalendar/services/notification/notification.dart';
-import 'package:timecalendar/utils/constants.dart';
+import 'package:timecalendar/modules/assistant/providers/old_assistant_provider.dart';
+import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
+import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
+import 'package:timecalendar/modules/shared/constants/constants.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart' as oldProvider;
 

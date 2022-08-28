@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:timecalendar/widgets/common/custom_button.dart';
+import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 
 class SchoolNotFoundButton extends StatelessWidget {
   final Function onPressed;
