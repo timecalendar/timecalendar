@@ -1,21 +1,22 @@
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
-import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/personal_event/screens/add_personal_event_screen.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as oldprovider;
+import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
 import 'package:timecalendar/modules/calendar/screens/calendar_screen.dart';
+import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
 import 'package:timecalendar/modules/changelog/screens/changelog_screen.dart';
-import 'package:timecalendar/modules/home/screens/home_screen.dart';
-import 'package:timecalendar/modules/profile/screens/profile_screen.dart';
 import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
+import 'package:timecalendar/modules/home/providers/app_is_loaded_provider.dart';
+import 'package:timecalendar/modules/home/screens/home_screen.dart';
+import 'package:timecalendar/modules/personal_event/screens/add_personal_event_screen.dart';
+import 'package:timecalendar/modules/profile/screens/profile_screen.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/constants/constants.dart';
 import 'package:timecalendar/modules/shared/utils/snackbar.dart';
-import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
 
-class TabsScreen extends StatefulWidget {
+class TabsScreen extends ConsumerStatefulWidget {
   TabsScreen(this.observer);
   static const routeName = '/tabs_screen';
   static const navigationBarHeight = 60.0;
@@ -25,7 +26,7 @@ class TabsScreen extends StatefulWidget {
   _TabsScreenState createState() => _TabsScreenState(observer);
 }
 
-class _TabsScreenState extends State<TabsScreen>
+class _TabsScreenState extends ConsumerState<TabsScreen>
     with SingleTickerProviderStateMixin, RouteAware {
   _TabsScreenState(this.observer);
 
@@ -68,7 +69,8 @@ class _TabsScreenState extends State<TabsScreen>
       ),
     );
 
-    Provider.of<SettingsProvider>(context, listen: false).newActivity = true;
+    oldprovider.Provider.of<SettingsProvider>(context, listen: false)
+        .newActivity = true;
   }
 
   void _selectPage(int index) {
@@ -90,7 +92,8 @@ class _TabsScreenState extends State<TabsScreen>
     Future.delayed(Duration.zero).then((_) {
       // Get startup screen
       var startupScreen =
-          Provider.of<SettingsProvider>(context, listen: false).startupScreen;
+          oldprovider.Provider.of<SettingsProvider>(context, listen: false)
+              .startupScreen;
       setState(() {
         _selectedPageIndex = (startupScreen == 'calendar') ? 1 : 0;
       });
@@ -101,16 +104,13 @@ class _TabsScreenState extends State<TabsScreen>
   }
 
   void loadEventsOnStartup() {
-    // Load events for the first time
-    var calendarProvider =
-        Provider.of<CalendarProvider>(context, listen: false);
-    if (!calendarProvider.isLoaded) {
-      calendarProvider.isLoaded = true;
-      var eventsProvider = Provider.of<EventsProvider>(context, listen: false);
-      eventsProvider.loadEvents();
-      observer.analytics.logEvent(
-          name: 'refresh_calendar', parameters: {'action': 'on_startup'});
-    }
+    if (ref.read(appIsLoadedProvider)) return;
+    ref.read(appIsLoadedProvider.notifier).state = true;
+    ref.read(calendarSyncServiceProvider).syncCalendars();
+    observer.analytics.logEvent(
+      name: 'refresh_calendar',
+      parameters: {'action': 'on_startup'},
+    );
   }
 
   @override
@@ -139,7 +139,7 @@ class _TabsScreenState extends State<TabsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
     final appTheme = settingsProvider.currentTheme;
     if (!_checkDisplayChangelog) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -160,10 +160,6 @@ class _TabsScreenState extends State<TabsScreen>
               : null,
       backgroundColor: appTheme.backgroundColor,
       body: (_pages[_selectedPageIndex]['page'] as Function)(context, observer),
-      // body: AnnotatedRegion<SystemUiOverlayStyle>(
-      //   value: SystemUiOverlayStyle.dark,
-      //   child: (_pages[_selectedPageIndex]['page'] as Function)(context, observer),
-      // ),
       bottomNavigationBar: SizedBox(
         height: TabsScreen.navigationBarHeight +
             MediaQuery.of(context).padding.bottom,

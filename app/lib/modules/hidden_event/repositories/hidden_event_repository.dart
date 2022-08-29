@@ -1,3 +1,5 @@
+import 'package:built_collection/built_collection.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sembast/sembast.dart';
 import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/hidden_event/models/hidden_event.dart';
@@ -19,8 +21,12 @@ class HiddenEventRepository {
     final records = await _store.find(_db!);
 
     return (records.length > 0)
-        ? records.map((record) => HiddenEvent.fromMap(record.value)).toList()[0]
-        : new HiddenEvent(namedHiddenEvents: [], uidHiddenEvents: []);
+        ? HiddenEvent.fromMap(records[0].value)
+        : new HiddenEvent(
+            (hiddenEvent) => hiddenEvent
+              ..namedHiddenEvents = ListBuilder()
+              ..uidHiddenEvents = ListBuilder(),
+          );
   }
 
   Future<void> setHiddenEvents(HiddenEvent hiddenEvents) async {
@@ -30,3 +36,6 @@ class HiddenEventRepository {
     });
   }
 }
+
+final hiddenEventRepositoryProvider =
+    Provider((ref) => HiddenEventRepository());

@@ -1,26 +1,28 @@
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
-import 'package:timecalendar/modules/shared/utils/snackbar.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
+import 'package:timecalendar/modules/home/providers/home_events_provider.dart';
 import 'package:timecalendar/modules/home/widgets/home_header.dart';
 import 'package:timecalendar/modules/home/widgets/horizontal_events.dart';
 import 'package:timecalendar/modules/home/widgets/today_events.dart';
 import 'package:timecalendar/modules/home/widgets/today_header.dart';
+import 'package:timecalendar/modules/shared/utils/snackbar.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends HookConsumerWidget {
   static const routeName = '/home';
 
   final FirebaseAnalyticsObserver? observer;
 
   const HomeScreen({Key? key, this.observer}) : super(key: key);
 
-  Future<void> refreshEvents(BuildContext context) async {
+  Future<void> refreshEvents(BuildContext context, WidgetRef ref) async {
     try {
       observer!.analytics.logEvent(
-          name: 'refresh_calendar', parameters: {'action': 'home_pull'});
-      await Provider.of<EventsProvider>(context, listen: false)
-          .fetchAndSetEvents();
+        name: 'refresh_calendar',
+        parameters: {'action': 'home_pull'},
+      );
+      await ref.read(calendarSyncServiceProvider).syncCalendars();
     } on Exception catch (_) {
       showSnackBar(
         context,
@@ -32,10 +34,9 @@ class HomeScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    var eventsProvider = Provider.of<EventsProvider>(context);
-    var events = eventsProvider.homeEvents;
-    var eventDay = eventsProvider.homeDay;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events = ref.watch(homeEventsProvider);
+    final dayDisplayedOnHomePage = ref.watch(dayDisplayedOnHomePageProvider);
 
     return SafeArea(
       child: Container(
@@ -44,17 +45,23 @@ class HomeScreen extends StatelessWidget {
           child: ListView(
             children: <Widget>[
               SizedBox(height: 40),
-              HomeHeader(eventDay: eventDay, events: events),
+              HomeHeader(
+                  dayDisplayedOnHomePage: dayDisplayedOnHomePage,
+                  events: events),
               SizedBox(height: 25),
               HorizontalEvents(events: events),
               SizedBox(height: 25),
-              TodayHeader(eventDay: eventDay),
+              TodayHeader(dayDisplayedOnHomePage: dayDisplayedOnHomePage),
               SizedBox(height: 10),
-              TodayEvents(eventDay: eventDay, events: events),
+              if (dayDisplayedOnHomePage != null)
+                TodayEvents(
+                  dayDisplayedOnHomePage: dayDisplayedOnHomePage,
+                  events: events,
+                ),
             ],
           ),
           onRefresh: () {
-            return refreshEvents(context);
+            return refreshEvents(context, ref);
           },
         ),
       ),

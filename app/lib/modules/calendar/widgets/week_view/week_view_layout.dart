@@ -2,28 +2,31 @@ import 'dart:math';
 
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as oldprovider;
+import 'package:timecalendar/modules/calendar/controllers/snapping_list_scroll_physics.dart';
 import 'package:timecalendar/modules/calendar/controllers/sync_scroll_controller.dart';
+import 'package:timecalendar/modules/calendar/helpers/events_for_week_view_helper.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
 import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
-import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/shared/utils/date_utils.dart';
-import 'package:timecalendar/modules/calendar/controllers/snapping_list_scroll_physics.dart';
 import 'package:timecalendar/modules/calendar/widgets/week_view/calendar_hours_column.dart';
 import 'package:timecalendar/modules/calendar/widgets/week_view/calendar_week.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
-class WeekViewLayout extends StatefulWidget {
-  const WeekViewLayout(
-      {Key? key,
-      required this.screenHeight,
-      required this.calendarWidth,
-      required this.leftHoursWidth,
-      required this.startHour,
-      required this.endHour,
-      required this.nbOfVisibleDays,
-      required this.observer,
-      required this.updateCurrentWeek,
-      required this.currentWeek});
+class WeekViewLayout extends ConsumerStatefulWidget {
+  const WeekViewLayout({
+    Key? key,
+    required this.screenHeight,
+    required this.calendarWidth,
+    required this.leftHoursWidth,
+    required this.startHour,
+    required this.endHour,
+    required this.nbOfVisibleDays,
+    required this.observer,
+    required this.updateCurrentWeek,
+    required this.currentWeek,
+  });
 
   final double screenHeight;
   final double calendarWidth;
@@ -41,7 +44,7 @@ class WeekViewLayout extends StatefulWidget {
   _WeekViewLayoutState createState() => _WeekViewLayoutState();
 }
 
-class _WeekViewLayoutState extends State<WeekViewLayout> {
+class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   SyncScrollController? _syncScroll;
 
   ScrollController? _weekScrollController;
@@ -83,7 +86,8 @@ class _WeekViewLayoutState extends State<WeekViewLayout> {
   void initState() {
     super.initState();
 
-    calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
+    calendarProvider =
+        oldprovider.Provider.of<CalendarProvider>(context, listen: false);
 
     calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
@@ -123,7 +127,8 @@ class _WeekViewLayoutState extends State<WeekViewLayout> {
     var week = (_weekScrollController!.offset / widget.calendarWidth).floor();
     if (week != widget.currentWeek) {
       // Save the current week in our provider
-      Provider.of<CalendarProvider>(context, listen: false).savedWeek = week;
+      oldprovider.Provider.of<CalendarProvider>(context, listen: false)
+          .savedWeek = week;
       setState(() {
         widget.updateCurrentWeek(
             (_weekScrollController!.offset / widget.calendarWidth).floor());
@@ -166,8 +171,9 @@ class _WeekViewLayoutState extends State<WeekViewLayout> {
 
   void loadCalendarUIPreferences() async {
     setState(() {
-      hourHeight = Provider.of<SettingsProvider>(context, listen: false)
-          .calendarHourHeight;
+      hourHeight =
+          oldprovider.Provider.of<SettingsProvider>(context, listen: false)
+              .calendarHourHeight;
     });
   }
 
@@ -191,12 +197,14 @@ class _WeekViewLayoutState extends State<WeekViewLayout> {
   }
 
   Future _onScaleEnd(ScaleEndDetails scaleDetails) async {
-    Provider.of<SettingsProvider>(context, listen: false).calendarHourHeight =
-        hourHeight;
+    oldprovider.Provider.of<SettingsProvider>(context, listen: false)
+        .calendarHourHeight = hourHeight;
   }
 
   @override
   Widget build(BuildContext context) {
+    final events = ref.read(eventsForViewProvider);
+
     // var settingsProvider = Provider.of<SettingsProvider>(context);
     final dayWidth = widget.calendarWidth / widget.nbOfVisibleDays;
     final scrollPhysics = SnappingListScrollPhysics(
@@ -224,30 +232,26 @@ class _WeekViewLayoutState extends State<WeekViewLayout> {
             controller: _weekScrollController,
             physics: scrollPhysics,
             itemBuilder: (ctx, index) {
-              return Consumer<EventsProvider>(
-                builder: (context, events, child) {
-                  return GestureDetector(
-                    onScaleStart: _onScaleStart,
-                    onScaleUpdate: _onScaleUpdate,
-                    onScaleEnd: _onScaleEnd,
-                    child: CalendarWeek(
-                      screenHeight: widget.screenHeight,
-                      calendarWidth: widget.calendarWidth,
-                      headerHeight: headerHeight,
-                      nbOfVisibleDays: widget.nbOfVisibleDays,
-                      firstDayOfWeek: AppDateUtils.dayAtWeekNumber(index),
-                      dayWidth: dayWidth,
-                      startHour: widget.startHour,
-                      calendarHeight: calendarHeight,
-                      hourHeight: hourHeight,
-                      nbHours: nbHours,
-                      columnGap: columnGap,
-                      syncScroll: _syncScroll,
-                      weekEvents: events.getWeekEvents(index),
-                      columnPaddingTop: columnPaddingTop,
-                    ),
-                  );
-                },
+              return GestureDetector(
+                onScaleStart: _onScaleStart,
+                onScaleUpdate: _onScaleUpdate,
+                onScaleEnd: _onScaleEnd,
+                child: CalendarWeek(
+                  screenHeight: widget.screenHeight,
+                  calendarWidth: widget.calendarWidth,
+                  headerHeight: headerHeight,
+                  nbOfVisibleDays: widget.nbOfVisibleDays,
+                  firstDayOfWeek: AppDateUtils.dayAtWeekNumber(index),
+                  dayWidth: dayWidth,
+                  startHour: widget.startHour,
+                  calendarHeight: calendarHeight,
+                  hourHeight: hourHeight,
+                  nbHours: nbHours,
+                  columnGap: columnGap,
+                  syncScroll: _syncScroll,
+                  weekEvents: getEventsForWeekView(events, index),
+                  columnPaddingTop: columnPaddingTop,
+                ),
               );
             },
           ),

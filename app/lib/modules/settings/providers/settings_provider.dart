@@ -1,13 +1,13 @@
+import 'package:enum_to_string/enum_to_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pref/pref.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
 import 'package:timecalendar/modules/shared/services/theme.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
-import 'package:enum_to_string/enum_to_string.dart';
 
 class SettingsProvider with ChangeNotifier {
   static final SettingsProvider _instance = SettingsProvider._();
@@ -249,11 +249,8 @@ class SettingsProvider with ChangeNotifier {
     return color;
   }
 
-  Color? getEventColor(DeprecatedEvent? event) {
-    Color? color = this.colorsByGroup! ? event!.groupColor : event!.color;
-    if (this.darkMode) {
-      color = ColorUtils.darkenEvent(event.color!);
-    }
-    return color;
+  Color getEventInterfaceColor(EventInterface event) {
+    final color = this.colorsByGroup! ? event.groupColor : event.color;
+    return this.darkMode ? ColorUtils.darkenEvent(color) : color;
   }
 }

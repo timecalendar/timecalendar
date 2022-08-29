@@ -12,23 +12,7 @@ part of 'assistant_finished_result.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more informations: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
-
-/// @nodoc
-class _$AssistantFinishedResultTearOff {
-  const _$AssistantFinishedResultTearOff();
-
-  _AssistantFinishedResultFallback fallback() {
-    return _AssistantFinishedResultFallback();
-  }
-
-  _AssistantFinishedResultDone done() {
-    return _AssistantFinishedResultDone();
-  }
-}
-
-/// @nodoc
-const $AssistantFinishedResult = _$AssistantFinishedResultTearOff();
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
 mixin _$AssistantFinishedResult {
@@ -90,25 +74,25 @@ class _$AssistantFinishedResultCopyWithImpl<$Res>
 }
 
 /// @nodoc
-abstract class _$AssistantFinishedResultFallbackCopyWith<$Res> {
-  factory _$AssistantFinishedResultFallbackCopyWith(
-          _AssistantFinishedResultFallback value,
-          $Res Function(_AssistantFinishedResultFallback) then) =
-      __$AssistantFinishedResultFallbackCopyWithImpl<$Res>;
+abstract class _$$_AssistantFinishedResultFallbackCopyWith<$Res> {
+  factory _$$_AssistantFinishedResultFallbackCopyWith(
+          _$_AssistantFinishedResultFallback value,
+          $Res Function(_$_AssistantFinishedResultFallback) then) =
+      __$$_AssistantFinishedResultFallbackCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$AssistantFinishedResultFallbackCopyWithImpl<$Res>
+class __$$_AssistantFinishedResultFallbackCopyWithImpl<$Res>
     extends _$AssistantFinishedResultCopyWithImpl<$Res>
-    implements _$AssistantFinishedResultFallbackCopyWith<$Res> {
-  __$AssistantFinishedResultFallbackCopyWithImpl(
-      _AssistantFinishedResultFallback _value,
-      $Res Function(_AssistantFinishedResultFallback) _then)
-      : super(_value, (v) => _then(v as _AssistantFinishedResultFallback));
+    implements _$$_AssistantFinishedResultFallbackCopyWith<$Res> {
+  __$$_AssistantFinishedResultFallbackCopyWithImpl(
+      _$_AssistantFinishedResultFallback _value,
+      $Res Function(_$_AssistantFinishedResultFallback) _then)
+      : super(_value, (v) => _then(v as _$_AssistantFinishedResultFallback));
 
   @override
-  _AssistantFinishedResultFallback get _value =>
-      super._value as _AssistantFinishedResultFallback;
+  _$_AssistantFinishedResultFallback get _value =>
+      super._value as _$_AssistantFinishedResultFallback;
 }
 
 /// @nodoc
@@ -126,7 +110,7 @@ class _$_AssistantFinishedResultFallback
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _AssistantFinishedResultFallback);
+            other is _$_AssistantFinishedResultFallback);
   }
 
   @override
@@ -203,25 +187,25 @@ abstract class _AssistantFinishedResultFallback
 }
 
 /// @nodoc
-abstract class _$AssistantFinishedResultDoneCopyWith<$Res> {
-  factory _$AssistantFinishedResultDoneCopyWith(
-          _AssistantFinishedResultDone value,
-          $Res Function(_AssistantFinishedResultDone) then) =
-      __$AssistantFinishedResultDoneCopyWithImpl<$Res>;
+abstract class _$$_AssistantFinishedResultDoneCopyWith<$Res> {
+  factory _$$_AssistantFinishedResultDoneCopyWith(
+          _$_AssistantFinishedResultDone value,
+          $Res Function(_$_AssistantFinishedResultDone) then) =
+      __$$_AssistantFinishedResultDoneCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$AssistantFinishedResultDoneCopyWithImpl<$Res>
+class __$$_AssistantFinishedResultDoneCopyWithImpl<$Res>
     extends _$AssistantFinishedResultCopyWithImpl<$Res>
-    implements _$AssistantFinishedResultDoneCopyWith<$Res> {
-  __$AssistantFinishedResultDoneCopyWithImpl(
-      _AssistantFinishedResultDone _value,
-      $Res Function(_AssistantFinishedResultDone) _then)
-      : super(_value, (v) => _then(v as _AssistantFinishedResultDone));
+    implements _$$_AssistantFinishedResultDoneCopyWith<$Res> {
+  __$$_AssistantFinishedResultDoneCopyWithImpl(
+      _$_AssistantFinishedResultDone _value,
+      $Res Function(_$_AssistantFinishedResultDone) _then)
+      : super(_value, (v) => _then(v as _$_AssistantFinishedResultDone));
 
   @override
-  _AssistantFinishedResultDone get _value =>
-      super._value as _AssistantFinishedResultDone;
+  _$_AssistantFinishedResultDone get _value =>
+      super._value as _$_AssistantFinishedResultDone;
 }
 
 /// @nodoc
@@ -238,7 +222,7 @@ class _$_AssistantFinishedResultDone extends _AssistantFinishedResultDone {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _AssistantFinishedResultDone);
+            other is _$_AssistantFinishedResultDone);
   }
 
   @override

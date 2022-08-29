@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
@@ -16,8 +16,8 @@ class DifferenceEvent extends StatelessWidget {
     required this.type,
   }) : super(key: key);
 
-  final DeprecatedEvent event;
-  final DeprecatedEvent? oldEvent;
+  final EventInterface event;
+  final EventInterface oldEvent;
   final DifferenceEventType type;
 
   final types = {
@@ -59,7 +59,7 @@ class DifferenceEvent extends StatelessWidget {
   }
 
   Widget infoText() {
-    var text = AppDateUtils.eventDateTimeText(event.start, event.end);
+    var text = AppDateUtils.eventDateTimeText(event.startsAt, event.endsAt);
 
     return Text(
       text,
@@ -110,7 +110,7 @@ class DifferenceEvent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      event.title!,
+                      event.title,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,

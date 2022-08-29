@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as oldprovider;
+import 'package:timecalendar/modules/event_details/providers/event_nb_checklist_items_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
 
-class CalendarRectangleEvent extends StatelessWidget {
+class CalendarRectangleEvent extends ConsumerWidget {
   const CalendarRectangleEvent({
     Key? key,
     required this.calendarEvent,
@@ -12,20 +14,24 @@ class CalendarRectangleEvent extends StatelessWidget {
   final EventForUI calendarEvent;
 
   @override
-  Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(context, listen: true);
+  Widget build(BuildContext context, WidgetRef ref) {
+    var settingsProvider =
+        oldprovider.Provider.of<SettingsProvider>(context, listen: true);
+    final event = calendarEvent.event;
+    final eventChecklistItems =
+        ref.watch(getEventNbChecklistItemsProvider)(event.uid);
 
     return Stack(
       children: <Widget>[
-        if (calendarEvent.event!.totalNotes > 0)
+        if (eventChecklistItems.totalNotes > 0)
           Align(
             alignment: Alignment.topRight,
             child: Container(
               height: 5,
               width: 5,
               decoration: BoxDecoration(
-                color: (calendarEvent.event!.completedNotes ==
-                        calendarEvent.event!.totalNotes)
+                color: (eventChecklistItems.completedNotes ==
+                        eventChecklistItems.totalNotes)
                     ? Colors.black.withOpacity(0.4)
                     : Theme.of(context).primaryColor,
                 borderRadius: BorderRadius.circular(10),
@@ -35,9 +41,9 @@ class CalendarRectangleEvent extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            if (calendarEvent.event!.totalNotes > 0) SizedBox(height: 2),
+            if (eventChecklistItems.totalNotes > 0) SizedBox(height: 2),
             Text(
-              calendarEvent.event!.title!,
+              event.title,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
@@ -52,11 +58,11 @@ class CalendarRectangleEvent extends StatelessWidget {
                     : null),
               ),
             ),
-            if (calendarEvent.event!.location!.length > 0)
+            if (event.location != null && event.location!.length > 0)
               Wrap(
                 children: <Widget>[
                   Text(
-                    calendarEvent.event!.location!,
+                    calendarEvent.event.location!,
                     style: TextStyle(
                       fontSize: 9,
                       shadows: (settingsProvider.darkMode

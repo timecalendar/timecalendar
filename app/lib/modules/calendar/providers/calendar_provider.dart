@@ -6,7 +6,6 @@ class CalendarProvider with ChangeNotifier {
   DateTime? currentDay;
   ValueNotifier<DateTime?>? _currentDayNotifier;
   double? savedScrollOffset;
-  bool isLoaded = false;
 
   ValueNotifier<DateTime?>? get currentDayNotifier => _currentDayNotifier;
 

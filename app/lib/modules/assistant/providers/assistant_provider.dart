@@ -11,7 +11,7 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
   AssistantNotifier() : super(AssistantState());
 
   set school(SchoolForList? school) {
-    state = state.copyWith(school: school);
+    state = state.copyWith(school: school, fallback: false);
   }
 
   void navigateToNextStep(BuildContext context, AssistantStepEnum currentStep) {

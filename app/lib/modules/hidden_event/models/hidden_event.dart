@@ -1,28 +1,27 @@
-class HiddenEvent {
-  final List<String?> uidHiddenEvents;
-  final List<String?> namedHiddenEvents;
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/built_value.dart';
 
-  HiddenEvent({
-    required this.uidHiddenEvents,
-    required this.namedHiddenEvents,
-  });
+part 'hidden_event.g.dart';
+
+abstract class HiddenEvent implements Built<HiddenEvent, HiddenEventBuilder> {
+  BuiltList<String> get uidHiddenEvents;
+  BuiltList<String> get namedHiddenEvents;
+
+  HiddenEvent._();
+  factory HiddenEvent([updates(HiddenEventBuilder b)]) = _$HiddenEvent;
 
   factory HiddenEvent.fromMap(Map<String, dynamic> map) {
     return HiddenEvent(
-      uidHiddenEvents: List<String>.from(map['uidHiddenEvents']),
-      namedHiddenEvents: List<String>.from(map['namedHiddenEvents']),
+      (hiddenEvent) => hiddenEvent
+        ..uidHiddenEvents = ListBuilder<String>(map['uidHiddenEvents'])
+        ..namedHiddenEvents = ListBuilder<String>(map['namedHiddenEvents']),
     );
   }
 
   Map<String, dynamic> toMap() {
-    var map = Map<String, dynamic>();
-    map['uidHiddenEvents'] = uidHiddenEvents;
-    map['namedHiddenEvents'] = namedHiddenEvents;
-    return map;
-  }
-
-  @override
-  String toString() {
-    return this.toMap().toString();
+    return {
+      'uidHiddenEvents': uidHiddenEvents.toList(),
+      'namedHiddenEvents': namedHiddenEvents.toList(),
+    };
   }
 }

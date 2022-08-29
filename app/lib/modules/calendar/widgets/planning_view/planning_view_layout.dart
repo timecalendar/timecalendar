@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as oldprovider;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
-import 'package:timecalendar/modules/calendar/models/ui/event_by_day.dart';
+import 'package:timecalendar/modules/calendar/models/ui/events_by_day.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
+import 'package:timecalendar/modules/calendar/providers/events_for_planning_view_provider.dart';
 import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
-import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:timecalendar/modules/calendar/widgets/planning_view/planning_rectangle_event.dart';
 import 'package:timecalendar/modules/event_details/screens/event_details_screen.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
-import 'package:timecalendar/modules/calendar/widgets/planning_view/planning_rectangle_event.dart';
 
-class PlanningViewLayout extends StatefulWidget {
+class PlanningViewLayout extends ConsumerStatefulWidget {
   const PlanningViewLayout({
     Key? key,
     required this.updateCurrentWeek,
@@ -29,50 +31,38 @@ class PlanningViewLayout extends StatefulWidget {
   _PlanningViewLayoutState createState() => _PlanningViewLayoutState();
 }
 
-class _PlanningViewLayoutState extends State<PlanningViewLayout> {
+class _PlanningViewLayoutState extends ConsumerState<PlanningViewLayout> {
   final ItemPositionsListener _itemPositionsListener =
       ItemPositionsListener.create();
   final ItemScrollController _itemScrollController = ItemScrollController();
-
   final headerHeight = 60.0;
-
   final columnGap = 2.0;
-
   final columnPaddingTop = 8.0;
-
   var hourHeight = 60.0;
-
   var currentIndex = -1;
-
   var lastEnd;
-
   var currentDayIndex = 0;
-
   late CalendarProvider calendarProvider;
 
   @override
   void initState() {
     super.initState();
-    var events = Provider.of<EventsProvider>(context, listen: false);
-    calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
-    events.loadEventByDay();
+
+    var eventsByDay = ref.read(eventsForPlanningViewProvider);
+    calendarProvider =
+        oldprovider.Provider.of<CalendarProvider>(context, listen: false);
+
     calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
-    // WidgetsBinding.instance.addPostFrameCallback((_) =>
-    // _itemScrollController.scrollTo(
-    //     index: getCurrentDayIndex(
-    //         events.eventsByDay, calendarProvider.currentDay),
-    //     duration: Duration(seconds: 1)));
     _itemPositionsListener.itemPositions.addListener(() {
       // l'itemPositionsListener se lance dès lors que le widget se met à jour,
       // il faut donc ne pas changer la valeur dès le premier event sinon
       // le widget se recréera infiniement
       var value = _itemPositionsListener.itemPositions.value;
       int index = value.first.index;
-      // print(index);
       if (index !=
-          getCurrentDayIndex(events.eventsByDay, calendarProvider.currentDay)) {
-        widget.updateCurrentDay(events.eventsByDay[index].day);
+          getCurrentDayIndex(eventsByDay, calendarProvider.currentDay)) {
+        widget.updateCurrentDay(eventsByDay[index].day);
       }
     });
   }
@@ -84,28 +74,31 @@ class _PlanningViewLayoutState extends State<PlanningViewLayout> {
   }
 
   void onCurrentDayChange() {
-    var events = Provider.of<EventsProvider>(context, listen: false);
+    var eventsByDay = ref.read(eventsForPlanningViewProvider);
     _itemScrollController.jumpTo(
         index: getCurrentDayIndex(
-            events.eventsByDay, calendarProvider.currentDay));
+      eventsByDay,
+      calendarProvider.currentDay,
+    ));
   }
 
-  void selectEvent(BuildContext context, DeprecatedEvent? event) {
+  void selectEvent(BuildContext context, EventInterface event) {
     Navigator.of(context)
         .pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
 
-  String? getNextUid(EventsProvider events, DateTime day) {
+  String? getNextUid(DateTime day) {
+    final events = ref.read(eventsForViewProvider);
     var date = DateTime.now();
-    for (var event in events.homeEvents) {
-      if (date.isBefore(event!.end)) {
+    for (var event in events) {
+      if (date.isBefore(event.endsAt)) {
         return event.uid;
       }
     }
     return "";
   }
 
-  int getCurrentDayIndex(List<EventByDay> eventsByDay, DateTime? day) {
+  int getCurrentDayIndex(List<EventsByDay> eventsByDay, DateTime? day) {
     var currentDay = 0;
     DateTime currentDateTime;
     do {
@@ -140,19 +133,19 @@ class _PlanningViewLayoutState extends State<PlanningViewLayout> {
   }
 
   List<Widget> getEventWidgets(
-      List<DeprecatedEvent?> dayEvents, int currentDayIndex) {
+    List<EventInterface> dayEvents,
+    int currentDayIndex,
+  ) {
     var events = EventForUI.listFromEvents(dayEvents);
-    var settingsProvider = Provider.of<SettingsProvider>(context);
-    var eventsProvider = Provider.of<EventsProvider>(context);
+    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
-      if (getNextUid(eventsProvider, calendarEvent.event!.start) ==
-          calendarEvent.event!.uid) {
+      if (getNextUid(calendarEvent.event.startsAt) == calendarEvent.event.uid) {
         widgets.add(drawIndicator());
       }
       widgets.add(Container(
         child: Material(
-          color: settingsProvider.getEventColor(calendarEvent.event),
+          color: settingsProvider.getEventInterfaceColor(calendarEvent.event),
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () {
@@ -169,7 +162,6 @@ class _PlanningViewLayoutState extends State<PlanningViewLayout> {
                         child: PlanningRectangleEvent(
                           event: calendarEvent.event,
                         )),
-                    // height: 100,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
@@ -194,79 +186,71 @@ class _PlanningViewLayoutState extends State<PlanningViewLayout> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(context, listen: true);
-    calendarProvider = Provider.of<CalendarProvider>(context, listen: true);
-    return Consumer<EventsProvider>(builder: (context, events, child) {
-      final eventsByDay = events.eventsByDay;
-      currentDayIndex =
-          getCurrentDayIndex(eventsByDay, calendarProvider.currentDay);
-      return Container(
-          decoration: BoxDecoration(
-              color:
-                  settingsProvider.darkMode ? Color(0xff222222) : Colors.white),
-          child: ScrollablePositionedList.builder(
-            // itemExtent: widget.calendarWidth,
-            scrollDirection: Axis.vertical,
-            itemScrollController: _itemScrollController,
-            itemPositionsListener: _itemPositionsListener,
-            initialScrollIndex: currentDayIndex,
-            // physics: scrollPhysics,
-
-            itemBuilder: (ctx, index) {
-              return Container(
-                  // decoration: BoxDecoration(
-                  //   color: Colors.cyan,
-                  //   border: Border.all(color: Colors.amber[300]),
-                  // ),
-                  padding:
-                      EdgeInsets.only(right: 15, left: 8, top: 10, bottom: 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        margin: EdgeInsets.only(top: 4, right: 8),
-                        child: eventsByDay[index].events.length > 0
-                            ? Column(children: [
-                                Container(
-                                    // decoration: BoxDecoration(
-                                    //     borderRadius: BorderRadius.circular(8),
-                                    //     color: settingsProvider
-                                    //         .currentTheme.accentColor),
-                                    child: Center(
-                                        child: Text(
-                                  AppDateUtils.fullDayToShortDay(
-                                          eventsByDay[index].day)
-                                      .toUpperCase(),
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: settingsProvider.darkMode
-                                          ? Color(0xffcccccc)
-                                          : Colors.black),
-                                ))),
-                                Container(
-                                    // decoration: BoxDecoration(
-                                    //     borderRadius: BorderRadius.circular(8),
-                                    //     color: settingsProvider
-                                    //         .currentTheme.accentColor),
-                                    child: Center(
-                                        child: Text(
-                                  eventsByDay[index].day.day.toString(),
-                                  style: TextStyle(fontSize: 18),
-                                ))),
-                              ])
-                            : null,
-                      ),
-                      Expanded(
-                          // width: widget.calendarWidth,
-                          child: Column(
-                        children: getEventWidgets(
-                            eventsByDay[index].events, currentDayIndex),
-                      )),
-                    ],
-                  ));
-            },
-            itemCount: eventsByDay.length,
-          ));
-    });
+    var settingsProvider =
+        oldprovider.Provider.of<SettingsProvider>(context, listen: true);
+    calendarProvider =
+        oldprovider.Provider.of<CalendarProvider>(context, listen: true);
+    final eventsByDay = ref.watch(eventsForPlanningViewProvider);
+    currentDayIndex =
+        getCurrentDayIndex(eventsByDay, calendarProvider.currentDay);
+    return Container(
+      decoration: BoxDecoration(
+        color: settingsProvider.darkMode ? Color(0xff222222) : Colors.white,
+      ),
+      child: ScrollablePositionedList.builder(
+        scrollDirection: Axis.vertical,
+        itemScrollController: _itemScrollController,
+        itemPositionsListener: _itemPositionsListener,
+        initialScrollIndex: currentDayIndex,
+        itemBuilder: (ctx, index) {
+          return Container(
+            padding: EdgeInsets.only(right: 15, left: 8, top: 10, bottom: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: 4, right: 8),
+                  child: eventsByDay[index].events.length > 0
+                      ? Column(children: [
+                          Container(
+                            child: Center(
+                              child: Text(
+                                AppDateUtils.fullDayToShortDay(
+                                  eventsByDay[index].day,
+                                ).toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: settingsProvider.darkMode
+                                      ? Color(0xffcccccc)
+                                      : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            child: Center(
+                              child: Text(
+                                eventsByDay[index].day.day.toString(),
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            ),
+                          ),
+                        ])
+                      : null,
+                ),
+                Expanded(
+                  // width: widget.calendarWidth,
+                  child: Column(
+                    children: getEventWidgets(
+                        eventsByDay[index].events, currentDayIndex),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        itemCount: eventsByDay.length,
+      ),
+    );
   }
 }

@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:provider/provider.dart' as oldprovider;
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
+import 'package:timecalendar/modules/event_details/providers/event_nb_checklist_items_provider.dart';
 import 'package:timecalendar/modules/event_details/screens/event_details_screen.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
-class HorizontalEventItem extends StatelessWidget {
-  final DeprecatedEvent? event;
+class HorizontalEventItem extends ConsumerWidget {
+  final EventInterface event;
 
-  const HorizontalEventItem({this.event});
+  const HorizontalEventItem({required this.event});
 
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
+    final eventChecklistItems =
+        ref.watch(getEventNbChecklistItemsProvider)(event.uid);
 
     return Container(
       width: 220,
@@ -48,7 +52,7 @@ class HorizontalEventItem extends StatelessWidget {
                         width: 6,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: settingsProvider.getEventColor(event),
+                          color: settingsProvider.getEventInterfaceColor(event),
                         ),
                       ),
                       SizedBox(
@@ -56,18 +60,19 @@ class HorizontalEventItem extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          DateFormat.jm('fr').format(event!.start) +
+                          DateFormat.jm('fr').format(event.startsAt) +
                               ' - ' +
-                              DateFormat.jm('fr').format(event!.end),
+                              DateFormat.jm('fr').format(event.endsAt),
                         ),
                       ),
-                      if (event!.totalNotes > 0)
+                      if (eventChecklistItems.totalNotes > 0)
                         Container(
                           height: 12,
                           width: 12,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            color: (event!.completedNotes == event!.totalNotes)
+                            color: (eventChecklistItems.completedNotes ==
+                                    eventChecklistItems.totalNotes)
                                 ? Colors.black.withOpacity(0.2)
                                 : Theme.of(context).primaryColor,
                           ),
@@ -76,7 +81,7 @@ class HorizontalEventItem extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      event!.title!,
+                      event.title,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
@@ -89,14 +94,14 @@ class HorizontalEventItem extends StatelessWidget {
                   SizedBox(
                     height: 10,
                   ),
-                  if (event!.location!.length > 0)
+                  if (event.location != null && event.location!.length > 0)
                     Row(
                       children: <Widget>[
                         Icon(Icons.location_on),
                         SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            event!.location!,
+                            event.location!,
                             overflow: TextOverflow.fade,
                             softWrap: false,
                           ),

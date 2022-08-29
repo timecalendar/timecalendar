@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
@@ -10,7 +10,7 @@ class EventDetailsTitle extends StatelessWidget {
     required this.event,
   }) : super(key: key);
 
-  final DeprecatedEvent event;
+  final EventInterface event;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class EventDetailsTitle extends StatelessWidget {
                 height: 20,
                 width: 20,
                 decoration: BoxDecoration(
-                  color: settingsProvider.getEventColor(event),
+                  color: settingsProvider.getEventInterfaceColor(event),
                   borderRadius: BorderRadius.circular(5),
                 ),
               );
@@ -39,7 +39,7 @@ class EventDetailsTitle extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  event.title!,
+                  event.title,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
@@ -47,7 +47,7 @@ class EventDetailsTitle extends StatelessWidget {
                 ),
                 SizedBox(height: 5),
                 Text(
-                  AppDateUtils.eventDateTimeText(event.start, event.end),
+                  AppDateUtils.eventDateTimeText(event.startsAt, event.endsAt),
                   style: TextStyle(
                     fontSize: 16,
                   ),

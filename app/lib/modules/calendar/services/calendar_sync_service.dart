@@ -1,6 +1,9 @@
 import 'package:built_collection/src/list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/models/calendar_event.dart';
+import 'package:timecalendar/modules/calendar/models/user_calendar.dart';
+import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:timecalendar/modules/calendar/providers/user_calendar_provider.dart';
 import 'package:timecalendar/modules/calendar/repositories/calendar_event_repository.dart';
 import 'package:timecalendar/modules/calendar/repositories/user_calendar_repository.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
@@ -11,28 +14,44 @@ class CalendarSyncService {
 
   CalendarSyncService(this.read);
 
-  syncCalendars() async {
-    final calendar =
-        await this.read(userCalendarRepositoryProvider).getUserCalendar();
+  Future<List<UserCalendar>> loadUserCalendarsFromDatabase() async {
+    final calendars =
+        await this.read(userCalendarRepositoryProvider).getUserCalendars();
+    this.read(userCalendarsProvider.notifier).state = calendars;
+    return calendars;
+  }
 
-    if (calendar == null) return;
+  Future<List<CalendarEvent>> loadEventsFromDatabase() async {
+    final events =
+        await this.read(calendarEventRepositoryProvider).getCalendarEvents();
+    events.sort((a, b) => a.startsAt.compareTo(b.startsAt));
+    this.read(calendarEventsProvider.notifier).state = events;
+    return events;
+  }
+
+  Future<List<CalendarEventForPublic>> fetchCalendars(
+      List<UserCalendar> calendars) async {
+    if (calendars.length == 0) return [];
 
     final rep = await this.read(apiClientProvider).calendarsApi().syncCalendars(
             syncCalendarsDto: SyncCalendarsDto(
-          (dto) => dto..tokens = ListBuilder([calendar.token]),
+          (dto) => dto
+            ..tokens = ListBuilder(calendars.map((calendar) => calendar.token)),
         ));
-
     final List<CalendarEventForPublic> events = rep.data!
         .fold([], (value, element) => [...value, ...element.events.toList()]);
+    return events;
+  }
+
+  syncCalendars() async {
+    final calendars = await loadUserCalendarsFromDatabase();
+    final events = await fetchCalendars(calendars);
     final calendarEvents =
         events.map((event) => CalendarEvent.fromApi(event)).toList();
     await this
         .read(calendarEventRepositoryProvider)
         .setCalendarEvents(calendarEvents);
-
-    final savedEvents =
-        await this.read(calendarEventRepositoryProvider).getCalendarEvents();
-    print(savedEvents.length);
+    await this.loadEventsFromDatabase();
   }
 }
 

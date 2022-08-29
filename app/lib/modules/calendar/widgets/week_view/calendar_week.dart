@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/calendar/controllers/sync_scroll_controller.dart';
+import 'package:timecalendar/modules/calendar/helpers/events_helper.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/event_details/screens/event_details_screen.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
@@ -42,7 +43,7 @@ class CalendarWeek extends StatefulWidget {
   final double columnPaddingTop;
   final DateTime firstDayOfWeek;
   final SyncScrollController? _syncScroll;
-  final List<List<DeprecatedEvent>> weekEvents;
+  final List<List<EventInterface>> weekEvents;
 
   @override
   _CalendarWeekState createState() => _CalendarWeekState();
@@ -66,7 +67,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
         .unregisterScrollController(_currentWeekScrollController);
   }
 
-  void selectEvent(BuildContext context, DeprecatedEvent? event) {
+  void selectEvent(BuildContext context, EventInterface event) {
     Navigator.of(context)
         .pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
@@ -120,13 +121,13 @@ class _CalendarWeekState extends State<CalendarWeek> {
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
       widgets.add(Positioned(
-        top: (calendarEvent.event!.startHour - widget.startHour) *
+        top: (eventStartsAtHour(calendarEvent.event) - widget.startHour) *
                 widget.hourHeight +
             widget.columnPaddingTop,
         left: calendarEvent.startX * widget.dayWidth,
         width: (calendarEvent.endX - calendarEvent.startX) * widget.dayWidth,
         child: Material(
-          color: settingsProvider.getEventColor(calendarEvent.event),
+          color: settingsProvider.getEventInterfaceColor(calendarEvent.event),
           borderRadius: BorderRadius.circular(4),
           child: InkWell(
             onTap: () {
@@ -151,8 +152,8 @@ class _CalendarWeekState extends State<CalendarWeek> {
                   ],
                 ),
               ),
-              height: (calendarEvent.event!.endHour -
-                      calendarEvent.event!.startHour) *
+              height: (eventEndsAtHour(calendarEvent.event) -
+                      eventStartsAtHour(calendarEvent.event)) *
                   widget.hourHeight,
             ),
           ),
@@ -291,8 +292,8 @@ class _CalendarWeekState extends State<CalendarWeek> {
                 onNotification: (ScrollNotification scrollInfo) {
                   widget._syncScroll!.processNotification(
                       scrollInfo, _currentWeekScrollController);
-                  return;
-                } as bool Function(ScrollNotification)?),
+                  return false;
+                }),
           ),
         ],
       ),

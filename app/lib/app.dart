@@ -8,9 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
 import 'package:timecalendar/modules/activity/providers/activity_provider.dart';
-import 'package:timecalendar/modules/assistant/providers/old_assistant_provider.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
-import 'package:timecalendar/modules/event_details/providers/checklist_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/suggestion/providers/suggestion_provider.dart';
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
@@ -33,7 +31,6 @@ import 'package:timecalendar/modules/firebase/services/firebase.dart';
 import 'package:timecalendar/modules/shared/services/my_route_observer.dart';
 import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
 import 'package:timecalendar/modules/shared/services/theme.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
 import 'package:timecalendar/modules/about/screens/about_screen.dart';
 
 class TimeCalendarApp extends StatefulWidget {
@@ -62,9 +59,6 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
         child: MultiProvider(
           providers: [
             ChangeNotifierProvider(
-              create: (_) => EventsProvider(),
-            ),
-            ChangeNotifierProvider(
               create: (_) => ActivityProvider(),
             ),
             ChangeNotifierProvider(
@@ -74,13 +68,7 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
               create: (_) => SuggestionProvider(),
             ),
             ChangeNotifierProvider(
-              create: (_) => OldAssistantProvider(),
-            ),
-            ChangeNotifierProvider(
               create: (_) => CalendarProvider(),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => ChecklistProvider(),
             ),
           ],
           child: Builder(

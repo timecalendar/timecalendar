@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:timecalendar/modules/calendar/models/calendar_event_custom_fields.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/event_tag.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar_api/timecalendar_api.dart' as Api;
 
-class CalendarEvent {
+class CalendarEvent implements EventInterface {
   String uid;
   String title;
   Color color;
@@ -18,6 +19,7 @@ class CalendarEvent {
   List<EventTag> tags;
   CalendarEventCustomFields? fields;
   DateTime exportedAt;
+  EventKind get kind => EventKind.Calendar;
 
   CalendarEvent({
     required this.uid,
@@ -61,8 +63,8 @@ class CalendarEvent {
       title: map['title'],
       color: ColorUtils.hexToColor(map['color']),
       groupColor: ColorUtils.hexToColor(map['groupColor']),
-      startsAt: DateTime.parse(map['startsAt']),
-      endsAt: DateTime.parse(map['endsAt']),
+      startsAt: DateTime.parse(map['startsAt']).toLocal(),
+      endsAt: DateTime.parse(map['endsAt']).toLocal(),
       location: map['location'],
       allDay: map['allDay'],
       description: map['description'],
@@ -73,7 +75,7 @@ class CalendarEvent {
       fields: map['fields'] != null
           ? CalendarEventCustomFields.fromInternalDb(map['fields'])
           : null,
-      exportedAt: DateTime.parse(map['exportedAt']),
+      exportedAt: DateTime.parse(map['exportedAt']).toLocal(),
     );
   }
 
@@ -83,15 +85,15 @@ class CalendarEvent {
       'title': title,
       'color': ColorUtils.colorToHex(color),
       'groupColor': ColorUtils.colorToHex(groupColor),
-      'startsAt': startsAt.toIso8601String(),
-      'endsAt': endsAt.toIso8601String(),
+      'startsAt': startsAt.toUtc().toIso8601String(),
+      'endsAt': endsAt.toUtc().toIso8601String(),
       'location': location,
       'allDay': allDay,
       'description': description,
       'teachers': teachers,
       'tags': tags.map((tag) => tag.toDbMap()).toList(),
       'fields': fields?.toDbMap(),
-      'exportedAt': exportedAt.toIso8601String(),
+      'exportedAt': exportedAt.toUtc().toIso8601String(),
     };
   }
 }

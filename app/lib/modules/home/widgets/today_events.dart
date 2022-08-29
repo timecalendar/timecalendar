@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:timecalendar/modules/calendar/helpers/events_helper.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
-import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/event_details/screens/event_details_screen.dart';
+import 'package:timecalendar/modules/home/widgets/home_rectangle_event.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
-import 'package:timecalendar/modules/home/widgets/home_rectangle_event.dart';
 
 class TodayEvents extends StatelessWidget {
-  final List<DeprecatedEvent?> events;
-  final DateTime? eventDay;
+  final List<EventInterface> events;
+  final DateTime dayDisplayedOnHomePage;
 
   const TodayEvents({
     Key? key,
-    required this.eventDay,
+    required this.dayDisplayedOnHomePage,
     required this.events,
   }) : super(key: key);
 
@@ -22,13 +23,13 @@ class TodayEvents extends StatelessWidget {
   final double hourColumnWidth = 50;
   final double rightPadding = 10;
 
-  void selectEvent(BuildContext context, DeprecatedEvent? event) {
+  void selectEvent(BuildContext context, EventInterface event) {
     Navigator.of(context)
         .pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
 
   Widget? getCurrentDayIndicator(int? startHour, int endHour, double dayWidth) {
-    if (!AppDateUtils.isToday(eventDay!)) return null;
+    if (!AppDateUtils.isToday(dayDisplayedOnHomePage)) return null;
 
     DateTime now = DateTime.now();
 
@@ -62,11 +63,11 @@ class TodayEvents extends StatelessWidget {
 
     // Get events hour range
     for (var calendarEvent in events) {
-      if (startHour == null || calendarEvent.event!.start.hour < startHour) {
-        startHour = calendarEvent.event!.start.hour;
+      if (startHour == null || calendarEvent.event.startsAt.hour < startHour) {
+        startHour = calendarEvent.event.startsAt.hour;
       }
-      if (endHour == null || calendarEvent.event!.end.hour + 1 > endHour) {
-        endHour = calendarEvent.event!.end.hour;
+      if (endHour == null || calendarEvent.event.endsAt.hour + 1 > endHour) {
+        endHour = calendarEvent.event.endsAt.hour;
       }
     }
 
@@ -106,12 +107,14 @@ class TodayEvents extends StatelessWidget {
             ),
           for (var calendarEvent in events)
             Positioned(
-              top: (calendarEvent.event!.startHour - startHour) * hourHeight +
+              top: (eventStartsAtHour(calendarEvent.event) - startHour) *
+                      hourHeight +
                   10,
               left: calendarEvent.startX * dayWidth + hourColumnWidth,
               width: (calendarEvent.endX - calendarEvent.startX) * dayWidth,
               child: Material(
-                color: settingsProvider.getEventColor(calendarEvent.event),
+                color: settingsProvider
+                    .getEventInterfaceColor(calendarEvent.event),
                 borderRadius: BorderRadius.circular(15),
                 child: InkWell(
                   onTap: () {
@@ -133,8 +136,8 @@ class TodayEvents extends StatelessWidget {
                         ],
                       ),
                     ),
-                    height: (calendarEvent.event!.endHour -
-                            calendarEvent.event!.startHour) *
+                    height: (eventEndsAtHour(calendarEvent.event) -
+                            eventStartsAtHour(calendarEvent.event)) *
                         hourHeight,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(15),
