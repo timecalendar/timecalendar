@@ -1,10 +1,4 @@
-import 'dart:convert';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timecalendar/modules/shared/constants/environment.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_calendar.dart';
 
 typedef NotificationListener = Function(Map<String, dynamic> message);
 
@@ -41,25 +35,26 @@ class NotificationService {
     }
   }
 
-  Future<void> subscribeToCalendar(DeprecatedCalendar calendar) async {
-    var token = await _firebaseMessaging.getToken();
-    var prefs = await SharedPreferences.getInstance();
+  // TODO: Calendar notification
+  // Future<void> subscribeToCalendar(DeprecatedCalendar calendar) async {
+  //   var token = await _firebaseMessaging.getToken();
+  //   var prefs = await SharedPreferences.getInstance();
 
-    try {
-      var body = {
-        'token': token,
-        'dayLimit': prefs.getInt('date_limit') ?? 14,
-        'enabled': prefs.getBool('notification_calendar') ?? true,
-      };
-      body.addAll(calendar.getRequestMap());
-      await http.post(
-        Uri.parse(Environment.oldApiUrl + "/fcm/subscribe"),
-        body: jsonEncode(body),
-      );
-    } on Exception catch (error) {
-      throw error;
-    }
-  }
+  //   try {
+  //     var body = {
+  //       'token': token,
+  //       'dayLimit': prefs.getInt('date_limit') ?? 14,
+  //       'enabled': prefs.getBool('notification_calendar') ?? true,
+  //     };
+  //     body.addAll(calendar.getRequestMap());
+  //     await http.post(
+  //       Uri.parse(Environment.oldApiUrl + "/fcm/subscribe"),
+  //       body: jsonEncode(body),
+  //     );
+  //   } on Exception catch (error) {
+  //     throw error;
+  //   }
+  // }
 
   void handleNotification(Map<String, dynamic> message) {
     String? action = message['action'];

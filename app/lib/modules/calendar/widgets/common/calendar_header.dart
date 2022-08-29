@@ -33,7 +33,6 @@ class CalendarHeader extends StatelessWidget {
   final Function changesGroup;
   final Function changeView;
 
-  // ignore: missing_return
   PopupMenuItem<CalendarOptions> switchViewPopupMenuItem(
       SettingsProvider settings) {
     switch (settings.calendarViewType) {
@@ -120,7 +119,7 @@ class CalendarHeader extends StatelessWidget {
                 child: Text('Modifier les groupes'),
                 value: CalendarOptions.ChangeGroups,
               ),
-              switchViewPopupMenuItem(settingsProvider)
+              // switchViewPopupMenuItem(settingsProvider)
             ],
           ),
           SizedBox(

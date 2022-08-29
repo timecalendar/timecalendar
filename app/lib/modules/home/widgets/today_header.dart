@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
 class TodayHeader extends StatelessWidget {
-  final DateTime? eventDay;
+  final DateTime? dayDisplayedOnHomePage;
 
   const TodayHeader({
     Key? key,
-    required this.eventDay,
+    required this.dayDisplayedOnHomePage,
   }) : super(key: key);
 
   @override
@@ -17,7 +17,7 @@ class TodayHeader extends StatelessWidget {
         children: <Widget>[
           Expanded(
             child: Text(
-              AppDateUtils.fullDayText(eventDay),
+              AppDateUtils.fullDayText(dayDisplayedOnHomePage),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,

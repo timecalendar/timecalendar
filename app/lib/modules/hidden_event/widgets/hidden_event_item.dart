@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as oldprovider;
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
+import 'package:timecalendar/modules/hidden_event/providers/hidden_event_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
-class HiddenEventItem extends StatelessWidget {
-  final DeprecatedEvent? event;
+class HiddenEventItem extends ConsumerWidget {
+  final EventInterface? event;
   final String? namedEvent;
   final int index;
   final Function removeItem;
@@ -18,51 +19,51 @@ class HiddenEventItem extends StatelessWidget {
     required this.removeItem,
   }) : super(key: key);
 
-  Widget infoText() {
-    var text = AppDateUtils.eventDateTimeText(event!.start, event!.end);
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 14,
-      ),
-    );
-  }
-
-  Widget getTextCategory(BuildContext context) {
-    var eventProvider = Provider.of<EventsProvider>(context, listen: false);
-
-    if (this.index == 0 &&
-        eventProvider.hiddenEvent.namedHiddenEvents.length > 0) {
-      return Text('Groupe d\'événements masqués');
-    } else {
-      return Text('Événements masqués');
-    }
-  }
-
-  Widget infoCategory(BuildContext context) {
-    var eventProvider = Provider.of<EventsProvider>(context, listen: false);
-    if (this.index == 0 ||
-        this.index == eventProvider.hiddenEvent.namedHiddenEvents.length) {
-      return Padding(
-        padding: const EdgeInsets.only(
-          top: 20,
-          bottom: 10,
-          left: 25,
-          right: 15,
-        ),
-        child: getTextCategory(context),
-      );
-    } else {
-      return SizedBox(
-        width: 0.0,
-        height: 0.0,
-      );
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hiddenEvents = ref.watch(hiddenEventProvider);
+    final namedHiddenEvents = hiddenEvents.namedHiddenEvents;
+
+    Widget? infoText() {
+      if (event == null) return null;
+
+      var text = AppDateUtils.eventDateTimeText(event!.startsAt, event!.endsAt);
+      return Text(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+        ),
+      );
+    }
+
+    Widget getTextCategory(BuildContext context) {
+      if (this.index == 0 && namedHiddenEvents.length > 0) {
+        return Text('Groupe d\'événements masqués');
+      } else {
+        return Text('Événements masqués');
+      }
+    }
+
+    Widget infoCategory(BuildContext context) {
+      if (this.index == 0 || this.index == namedHiddenEvents.length) {
+        return Padding(
+          padding: const EdgeInsets.only(
+            top: 20,
+            bottom: 10,
+            left: 25,
+            right: 15,
+          ),
+          child: getTextCategory(context),
+        );
+      } else {
+        return SizedBox(
+          width: 0.0,
+          height: 0.0,
+        );
+      }
+    }
+
+    final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
 
     return Column(
       children: <Widget>[
@@ -80,7 +81,7 @@ class HiddenEventItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          (event != null) ? event!.title! : this.namedEvent!,
+                          (event != null) ? event!.title : this.namedEvent!,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -89,7 +90,7 @@ class HiddenEventItem extends StatelessWidget {
                         SizedBox(
                           height: 10,
                         ),
-                        (event != null) ? infoText() : SizedBox(),
+                        infoText() ?? SizedBox(),
                       ],
                     ),
                   ),
@@ -100,14 +101,12 @@ class HiddenEventItem extends StatelessWidget {
                         padding: EdgeInsets.all(5),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: settingsProvider.currentTheme.primaryColor,
                         ),
                         child: IconButton(
                           tooltip: (event != null)
                               ? "Afficher l'événement"
                               : "Afficher les événements",
-                          color: settingsProvider.currentTheme.cardColor,
-                          icon: Icon(Icons.event_busy),
+                          icon: Icon(Icons.delete_outline),
                           onPressed: () => this.removeItem(),
                         ),
                       )

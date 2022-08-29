@@ -16,13 +16,14 @@ import { useMutation, useQuery } from "react-query"
 import { createApiInstance } from "modules/shared/utils/create-api-instance"
 import { SchoolGroupItem, SchoolsApi } from "@timecalendar/api-client"
 import PageCircularProgress from "modules/shared/components/PageCircularProgress"
-import { Box, Button } from "@mui/material"
+import { Box, Button, Typography } from "@mui/material"
 import { LoadingButton } from "@mui/lab"
 import useLoading from "modules/shared/hooks/useLoading"
 import { toast } from "react-toastify"
 import AssistantLayout from "modules/assistant/components/AssistantLayout"
 import { Stack } from "@mui/system"
 import { postNativeMessage } from "modules/shared/helpers/post-native-message"
+import { grey } from "@mui/material/colors"
 
 const serverToReactTree = (groups: SchoolGroupItem[]): Node[] =>
   groups.map((group) => ({
@@ -33,7 +34,8 @@ const serverToReactTree = (groups: SchoolGroupItem[]): Node[] =>
   }))
 
 const GroupAssistant: FC = () => {
-  const { school, createCalendar } = useContext(AssistantContext)
+  const { school, createCalendar, requestFallbackAssistant } =
+    useContext(AssistantContext)
 
   const { data, isLoading } = useQuery(
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -79,18 +81,17 @@ const GroupAssistant: FC = () => {
 
   return (
     <AssistantLayout>
-      <Stack
-        sx={{ display: "flex", flexDirection: "column", height: "100vh" }}
-        spacing={2}
-      >
-        <Box>
-          <h2>Sélectionnez vos groupes</h2>
-          <Box>
+      <Stack sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+        <Box mt={2}>
+          <Typography variant="h2" gutterBottom>
+            Sélectionnez vos groupes
+          </Typography>
+        </Box>
+        <Box sx={{ flexShrink: 1, overflow: "auto" }}>
+          <Box mb={2}>
             Sélectionnez vos groupes dans la liste pour importer votre emploi du
             temps.
           </Box>
-        </Box>
-        <Box sx={{ flexShrink: 1, overflow: "auto" }}>
           <CheckboxTree
             checked={checked}
             expanded={expanded}
@@ -149,11 +150,10 @@ const GroupAssistant: FC = () => {
             onExpand={setExpanded}
           />
         </Box>
-        <Box>
+        <Stack mt={1} mb={2} spacing={1}>
           <Stack
             direction="row"
             spacing={1}
-            mb={4}
             sx={{ justifyContent: "flex-end" }}
           >
             <Button
@@ -175,7 +175,17 @@ const GroupAssistant: FC = () => {
               Valider
             </LoadingButton>
           </Stack>
-        </Box>
+          <Box>
+            <Button
+              sx={{ textTransform: "none" }}
+              fullWidth
+              color="secondary"
+              onClick={() => requestFallbackAssistant()}
+            >
+              Je ne trouve pas mes groupes
+            </Button>
+          </Box>
+        </Stack>
       </Stack>
     </AssistantLayout>
   )

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/event_details/controllers/checklist_focus_controller.dart';
 import 'package:timecalendar/modules/event_details/models/checklist_item.dart';
-import 'package:timecalendar/modules/event_details/providers/checklist_provider.dart';
 
 class EventDetailsChecklistItem extends StatefulWidget {
   final ChecklistItem checklistItem;
@@ -53,16 +51,6 @@ class _EventDetailsChecklistItemState extends State<EventDetailsChecklistItem> {
     widget.checklistFocusController.removeListener(onRequestFocus);
 
     super.dispose();
-  }
-
-  void checkFocus(BuildContext context) {
-    final checklistProvider =
-        Provider.of<ChecklistProvider>(context, listen: false);
-
-    if (checklistProvider.focusedItem.uuid == widget.checklistItem.uuid) {
-      // Focus textfield
-      FocusScope.of(context).requestFocus(focusNode);
-    }
   }
 
   void onRequestFocus(ChecklistItem item) {

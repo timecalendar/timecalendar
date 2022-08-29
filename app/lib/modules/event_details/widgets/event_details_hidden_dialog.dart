@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
+import 'package:timecalendar/modules/hidden_event/providers/hidden_event_provider.dart';
 
 enum HiddenOption { HiddenUid, HiddenNamedEvent }
 
-class HiddenOptionsDialog extends StatefulWidget {
-  final DeprecatedEvent event;
+class HiddenOptionsDialog extends ConsumerStatefulWidget {
+  final EventInterface event;
   HiddenOptionsDialog({Key? key, required this.event}) : super(key: key);
 
   @override
   _HiddenOptionsDialogState createState() => _HiddenOptionsDialogState();
 }
 
-class _HiddenOptionsDialogState extends State<HiddenOptionsDialog> {
+class _HiddenOptionsDialogState extends ConsumerState<HiddenOptionsDialog> {
   HiddenOption? _groupValue = HiddenOption.HiddenUid;
 
   @override
@@ -91,10 +91,12 @@ class _HiddenOptionsDialogState extends State<HiddenOptionsDialog> {
           child: Text('Masquer'),
           onPressed: () {
             if (_groupValue == HiddenOption.HiddenUid) {
-              Provider.of<EventsProvider>(context, listen: false)
+              ref
+                  .read(hiddenEventProvider.notifier)
                   .addUidEvent(widget.event.uid);
             } else if (_groupValue == HiddenOption.HiddenNamedEvent) {
-              Provider.of<EventsProvider>(context, listen: false)
+              ref
+                  .read(hiddenEventProvider.notifier)
                   .addNamedEvent(widget.event.title);
             }
             Navigator.of(context).pop();

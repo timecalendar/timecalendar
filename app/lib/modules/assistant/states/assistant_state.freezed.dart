@@ -12,22 +12,7 @@ part of 'assistant_state.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more informations: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
-
-/// @nodoc
-class _$AssistantStateTearOff {
-  const _$AssistantStateTearOff();
-
-  _AssistantState call({SchoolForList? school = null, bool fallback = false}) {
-    return _AssistantState(
-      school: school,
-      fallback: fallback,
-    );
-  }
-}
-
-/// @nodoc
-const $AssistantState = _$AssistantStateTearOff();
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
 mixin _$AssistantState {
@@ -75,32 +60,32 @@ class _$AssistantStateCopyWithImpl<$Res>
 }
 
 /// @nodoc
-abstract class _$AssistantStateCopyWith<$Res>
+abstract class _$$_AssistantStateCopyWith<$Res>
     implements $AssistantStateCopyWith<$Res> {
-  factory _$AssistantStateCopyWith(
-          _AssistantState value, $Res Function(_AssistantState) then) =
-      __$AssistantStateCopyWithImpl<$Res>;
+  factory _$$_AssistantStateCopyWith(
+          _$_AssistantState value, $Res Function(_$_AssistantState) then) =
+      __$$_AssistantStateCopyWithImpl<$Res>;
   @override
   $Res call({SchoolForList? school, bool fallback});
 }
 
 /// @nodoc
-class __$AssistantStateCopyWithImpl<$Res>
+class __$$_AssistantStateCopyWithImpl<$Res>
     extends _$AssistantStateCopyWithImpl<$Res>
-    implements _$AssistantStateCopyWith<$Res> {
-  __$AssistantStateCopyWithImpl(
-      _AssistantState _value, $Res Function(_AssistantState) _then)
-      : super(_value, (v) => _then(v as _AssistantState));
+    implements _$$_AssistantStateCopyWith<$Res> {
+  __$$_AssistantStateCopyWithImpl(
+      _$_AssistantState _value, $Res Function(_$_AssistantState) _then)
+      : super(_value, (v) => _then(v as _$_AssistantState));
 
   @override
-  _AssistantState get _value => super._value as _AssistantState;
+  _$_AssistantState get _value => super._value as _$_AssistantState;
 
   @override
   $Res call({
     Object? school = freezed,
     Object? fallback = freezed,
   }) {
-    return _then(_AssistantState(
+    return _then(_$_AssistantState(
       school: school == freezed
           ? _value.school
           : school // ignore: cast_nullable_to_non_nullable
@@ -118,11 +103,11 @@ class __$AssistantStateCopyWithImpl<$Res>
 class _$_AssistantState extends _AssistantState {
   _$_AssistantState({this.school = null, this.fallback = false}) : super._();
 
-  @JsonKey()
   @override
+  @JsonKey()
   final SchoolForList? school;
-  @JsonKey()
   @override
+  @JsonKey()
   final bool fallback;
 
   @override
@@ -134,7 +119,7 @@ class _$_AssistantState extends _AssistantState {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _AssistantState &&
+            other is _$_AssistantState &&
             const DeepCollectionEquality().equals(other.school, school) &&
             const DeepCollectionEquality().equals(other.fallback, fallback));
   }
@@ -147,12 +132,12 @@ class _$_AssistantState extends _AssistantState {
 
   @JsonKey(ignore: true)
   @override
-  _$AssistantStateCopyWith<_AssistantState> get copyWith =>
-      __$AssistantStateCopyWithImpl<_AssistantState>(this, _$identity);
+  _$$_AssistantStateCopyWith<_$_AssistantState> get copyWith =>
+      __$$_AssistantStateCopyWithImpl<_$_AssistantState>(this, _$identity);
 }
 
 abstract class _AssistantState extends AssistantState {
-  factory _AssistantState({SchoolForList? school, bool fallback}) =
+  factory _AssistantState({final SchoolForList? school, final bool fallback}) =
       _$_AssistantState;
   _AssistantState._() : super._();
 
@@ -162,6 +147,6 @@ abstract class _AssistantState extends AssistantState {
   bool get fallback;
   @override
   @JsonKey(ignore: true)
-  _$AssistantStateCopyWith<_AssistantState> get copyWith =>
+  _$$_AssistantStateCopyWith<_$_AssistantState> get copyWith =>
       throw _privateConstructorUsedError;
 }

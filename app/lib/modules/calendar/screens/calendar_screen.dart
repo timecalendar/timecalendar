@@ -1,19 +1,20 @@
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
-import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
-import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
-import 'package:timecalendar/modules/shared/utils/date_utils.dart';
-import 'package:timecalendar/modules/shared/utils/snackbar.dart';
-import 'package:timecalendar/modules/calendar/widgets/week_view/week_view_layout.dart';
+import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
 import 'package:timecalendar/modules/calendar/widgets/common/calendar_header.dart';
 import 'package:timecalendar/modules/calendar/widgets/planning_view/planning_view_layout.dart';
+import 'package:timecalendar/modules/calendar/widgets/week_view/week_view_layout.dart';
+import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
+import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
+import 'package:timecalendar/modules/shared/utils/date_utils.dart';
+import 'package:timecalendar/modules/shared/utils/snackbar.dart';
 
-class CalendarScreen extends StatefulWidget {
+class CalendarScreen extends ConsumerStatefulWidget {
   static const routeName = '/';
   final BuildContext? parentContext;
   final FirebaseAnalyticsObserver? observer;
@@ -25,7 +26,7 @@ class CalendarScreen extends StatefulWidget {
   _CalendarScreenState createState() => _CalendarScreenState();
 }
 
-class _CalendarScreenState extends State<CalendarScreen> {
+class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   int? _currentWeek;
 
   final startHour = 7;
@@ -49,8 +50,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         name: 'refresh_calendar',
         parameters: {'action': 'calendar_menu_bar'},
       );
-      await Provider.of<EventsProvider>(context, listen: false)
-          .fetchAndSetEvents();
+      await ref.read(calendarSyncServiceProvider).syncCalendars();
       hideSnackBar(context);
       showSnackBar(
         context,
@@ -110,7 +110,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
 
-    calendarProvider = Provider.of<CalendarProvider>(context, listen: false);
+    calendarProvider =
+        oldprovider.Provider.of<CalendarProvider>(context, listen: false);
     // Load the saved week (if the user changed tab)
     _currentWeek = AppDateUtils.dateToWeekNumber(calendarProvider.currentDay);
   }
@@ -158,8 +159,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(context, listen: true);
-    var calendarProvider = Provider.of<CalendarProvider>(context);
+    var settingsProvider =
+        oldprovider.Provider.of<SettingsProvider>(context, listen: true);
+    var calendarProvider = oldprovider.Provider.of<CalendarProvider>(context);
     return SafeArea(
       child: Stack(
         children: <Widget>[

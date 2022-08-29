@@ -12,26 +12,7 @@ part of 'assistant_step.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more informations: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
-
-/// @nodoc
-class _$AssistantStepTearOff {
-  const _$AssistantStepTearOff();
-
-  _AssistantStep call(
-      {required AssistantStepEnum step,
-      required bool Function(AssistantState) predicate,
-      required String route}) {
-    return _AssistantStep(
-      step: step,
-      predicate: predicate,
-      route: route,
-    );
-  }
-}
-
-/// @nodoc
-const $AssistantStep = _$AssistantStepTearOff();
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
 
 /// @nodoc
 mixin _$AssistantStep {
@@ -89,11 +70,11 @@ class _$AssistantStepCopyWithImpl<$Res>
 }
 
 /// @nodoc
-abstract class _$AssistantStepCopyWith<$Res>
+abstract class _$$_AssistantStepCopyWith<$Res>
     implements $AssistantStepCopyWith<$Res> {
-  factory _$AssistantStepCopyWith(
-          _AssistantStep value, $Res Function(_AssistantStep) then) =
-      __$AssistantStepCopyWithImpl<$Res>;
+  factory _$$_AssistantStepCopyWith(
+          _$_AssistantStep value, $Res Function(_$_AssistantStep) then) =
+      __$$_AssistantStepCopyWithImpl<$Res>;
   @override
   $Res call(
       {AssistantStepEnum step,
@@ -102,15 +83,15 @@ abstract class _$AssistantStepCopyWith<$Res>
 }
 
 /// @nodoc
-class __$AssistantStepCopyWithImpl<$Res>
+class __$$_AssistantStepCopyWithImpl<$Res>
     extends _$AssistantStepCopyWithImpl<$Res>
-    implements _$AssistantStepCopyWith<$Res> {
-  __$AssistantStepCopyWithImpl(
-      _AssistantStep _value, $Res Function(_AssistantStep) _then)
-      : super(_value, (v) => _then(v as _AssistantStep));
+    implements _$$_AssistantStepCopyWith<$Res> {
+  __$$_AssistantStepCopyWithImpl(
+      _$_AssistantStep _value, $Res Function(_$_AssistantStep) _then)
+      : super(_value, (v) => _then(v as _$_AssistantStep));
 
   @override
-  _AssistantStep get _value => super._value as _AssistantStep;
+  _$_AssistantStep get _value => super._value as _$_AssistantStep;
 
   @override
   $Res call({
@@ -118,7 +99,7 @@ class __$AssistantStepCopyWithImpl<$Res>
     Object? predicate = freezed,
     Object? route = freezed,
   }) {
-    return _then(_AssistantStep(
+    return _then(_$_AssistantStep(
       step: step == freezed
           ? _value.step
           : step // ignore: cast_nullable_to_non_nullable
@@ -157,7 +138,7 @@ class _$_AssistantStep implements _AssistantStep {
   bool operator ==(dynamic other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _AssistantStep &&
+            other is _$_AssistantStep &&
             const DeepCollectionEquality().equals(other.step, step) &&
             (identical(other.predicate, predicate) ||
                 other.predicate == predicate) &&
@@ -173,15 +154,15 @@ class _$_AssistantStep implements _AssistantStep {
 
   @JsonKey(ignore: true)
   @override
-  _$AssistantStepCopyWith<_AssistantStep> get copyWith =>
-      __$AssistantStepCopyWithImpl<_AssistantStep>(this, _$identity);
+  _$$_AssistantStepCopyWith<_$_AssistantStep> get copyWith =>
+      __$$_AssistantStepCopyWithImpl<_$_AssistantStep>(this, _$identity);
 }
 
 abstract class _AssistantStep implements AssistantStep {
   factory _AssistantStep(
-      {required AssistantStepEnum step,
-      required bool Function(AssistantState) predicate,
-      required String route}) = _$_AssistantStep;
+      {required final AssistantStepEnum step,
+      required final bool Function(AssistantState) predicate,
+      required final String route}) = _$_AssistantStep;
 
   @override
   AssistantStepEnum get step;
@@ -191,6 +172,6 @@ abstract class _AssistantStep implements AssistantStep {
   String get route;
   @override
   @JsonKey(ignore: true)
-  _$AssistantStepCopyWith<_AssistantStep> get copyWith =>
+  _$$_AssistantStepCopyWith<_$_AssistantStep> get copyWith =>
       throw _privateConstructorUsedError;
 }

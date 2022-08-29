@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
-
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/home/widgets/horizontal_event_item.dart';
 
 class HorizontalEvents extends StatelessWidget {
-  final List<DeprecatedEvent?> events;
+  final List<EventInterface> events;
 
   const HorizontalEvents({
     Key? key,
@@ -17,10 +16,7 @@ class HorizontalEvents extends StatelessWidget {
       height: events.length > 0 ? 240 : 0,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemBuilder: (ctx, index) {
-          final event = events[index];
-          return HorizontalEventItem(event: event);
-        },
+        itemBuilder: (ctx, index) => HorizontalEventItem(event: events[index]),
         itemCount: events.length,
       ),
     );

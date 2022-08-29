@@ -13,10 +13,11 @@ class UserCalendarRepository {
 
   Database get _db => this.read(databaseProvider);
 
-  Future<UserCalendar?> getUserCalendar() async {
-    final first = await _store.findFirst(_db);
-    if (first?.value == null) return null;
-    return UserCalendar.fromInternalDb(first!.value);
+  Future<List<UserCalendar>> getUserCalendars() async {
+    final calendars = await _store.find(_db);
+    return calendars
+        .map((calendar) => UserCalendar.fromInternalDb(calendar.value))
+        .toList();
   }
 
   setUserCalendar(UserCalendar calendar) async {

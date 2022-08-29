@@ -7,6 +7,7 @@ import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart
 import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/modules/assistant/states/assistant_finished_result.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_creation_service.dart';
+import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/constants/constants.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -25,23 +26,9 @@ class AssistantScreen extends HookConsumerWidget {
 
     void onCalendarCreated(String token) async {
       await calendarCreation.loadCalendarFromToken(token);
-
-      // await oldprovider.setSelectedCalendar(SelectedCalendar.fromToken(token));
-
-      // // Refresh calendar
-      // await oldProvider.Provider.of<EventsProvider>(context, listen: false)
-      //     .fetchAndSetEvents();
-
-      // // Then redirect to the main page
-      // await Future.delayed(Duration(milliseconds: 200));
-
-      // Navigator.of(context).pushNamedAndRemoveUntil(
-      //     TabsScreen.routeName, (Route<dynamic> route) => false);
-
-      // // And ask notification permission
-      // await NotificationService().subscribeDelay();
-
-      return null;
+      await Future.delayed(Duration(milliseconds: 200));
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          TabsScreen.routeName, (Route<dynamic> route) => false);
     }
 
     final Map<String, dynamic> queryParameters = {
@@ -55,8 +42,6 @@ class AssistantScreen extends HookConsumerWidget {
     var initialUrl = Uri.parse(Constants.mainWebUrl)
         .replace(queryParameters: queryParameters, path: '/assistants')
         .toString();
-
-    print(initialUrl);
 
     return Scaffold(
       appBar: AppBar(

@@ -42,35 +42,35 @@ class CalendarHoursColumn extends StatelessWidget {
             height: calendarHeight,
             width: leftHoursWidth,
             child: NotificationListener<ScrollNotification>(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  controller: _hourScrollController,
-                  child: Container(
-                    height: hourHeight * nbHours,
-                    width: leftHoursWidth,
-                    child: Stack(
-                      children: <Widget>[
-                        for (var hour = 0; hour < nbHours; hour++)
-                          Positioned(
-                            top: hourHeight * hour,
-                            left: 10,
-                            child: Text(
-                              (hour + startHour > 9 ? '' : '0') +
-                                  '${hour + startHour}:00',
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                physics: const AlwaysScrollableScrollPhysics(),
+                controller: _hourScrollController,
+                child: Container(
+                  height: hourHeight * nbHours,
+                  width: leftHoursWidth,
+                  child: Stack(
+                    children: <Widget>[
+                      for (var hour = 0; hour < nbHours; hour++)
+                        Positioned(
+                          top: hourHeight * hour,
+                          left: 10,
+                          child: Text(
+                            (hour + startHour > 9 ? '' : '0') +
+                                '${hour + startHour}:00',
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 ),
-                onNotification: (ScrollNotification scrollInfo) {
-                  _syncScroll!
-                      .processNotification(scrollInfo, _hourScrollController);
-                  return;
-                } as bool Function(ScrollNotification)?),
+              ),
+              onNotification: (ScrollNotification scrollInfo) {
+                _syncScroll!
+                    .processNotification(scrollInfo, _hourScrollController);
+                return false;
+              },
+            ),
           ),
         ],
       ),

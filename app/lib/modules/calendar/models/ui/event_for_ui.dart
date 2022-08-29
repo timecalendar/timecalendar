@@ -1,7 +1,8 @@
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
+import 'package:timecalendar/modules/calendar/helpers/events_helper.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 
 class EventForUI {
-  final DeprecatedEvent? event;
+  final EventInterface event;
 
   /// The start column
   int startColumn = 0;
@@ -27,16 +28,16 @@ class EventForUI {
   /// Create a list of calendar events, with the position of each event in its column.
   ///
   /// * `events` A list of events
-  static List<EventForUI> listFromEvents(List<DeprecatedEvent?> events) {
+  static List<EventForUI> listFromEvents(List<EventInterface> events) {
     List<EventForUI> calendarEvents = [];
 
-    for (DeprecatedEvent? event in events) {
+    for (final event in events) {
       calendarEvents.add(EventForUI(event: event));
     }
 
     // Sort by start date
     calendarEvents.sort((a, b) {
-      return a.event!.start.compareTo(b.event!.start);
+      return a.event.startsAt.compareTo(b.event.startsAt);
     });
 
     // Check overlap events
@@ -91,7 +92,7 @@ class EventForUI {
           // Find the largest column where we can fit the event
           bool eventOverlapInColumn = false;
           for (EventForUI overlapOfColumn in overlapsOfColumn) {
-            if (calendarEvent.event!.isOverlap(overlapOfColumn.event!)) {
+            if (eventsOverlap(calendarEvent.event, overlapOfColumn.event)) {
               eventOverlapInColumn = true;
               // print(
               //     '      > OVERLAP - Overlap by ${overlapOfColumn.event.title}');
@@ -173,7 +174,7 @@ class EventForUI {
       // Do not add current event
       if (overlap == calendarEvent) continue;
 
-      if (calendarEvent.event!.isOverlap(overlap.event!)) {
+      if (eventsOverlap(calendarEvent.event, overlap.event)) {
         // Check if the event is already added
         if (!overlapEvents.contains(overlap)) {
           // Event overlap

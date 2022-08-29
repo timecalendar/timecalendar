@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
+import 'package:timecalendar/modules/database/providers/migrations.dart';
 
 class SimpleDatabase {
   late Database db;
@@ -18,7 +19,20 @@ class SimpleDatabase {
     Directory directory = await getApplicationDocumentsDirectory();
     String dbPath = join(directory.path, 'simple_database.db');
     DatabaseFactory dbFactory = databaseFactoryIo;
-    this.db = await dbFactory.openDatabase(dbPath);
+    this.db = await dbFactory.openDatabase(
+      dbPath,
+      version: CURRENT_VERSION,
+      onVersionChanged: (db, oldVersion, newVersion) async {
+        for (int currentVersion = oldVersion + 1;
+            currentVersion <= newVersion;
+            ++currentVersion) {
+          final migrationsToRun = migrationsByVersion[currentVersion] ?? [];
+          for (final migration in migrationsToRun) {
+            await migration(db);
+          }
+        }
+      },
+    );
   }
 }
 

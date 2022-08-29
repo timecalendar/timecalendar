@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
+import 'package:provider/provider.dart' as oldprovider;
+import 'package:timecalendar/modules/personal_event/models/personal_event.dart';
+import 'package:timecalendar/modules/personal_event/providers/personal_events_provider.dart';
+import 'package:timecalendar/modules/personal_event/repositories/personal_event_repository.dart';
+import 'package:timecalendar/modules/personal_event/widgets/app_alert_dialog.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_divider.dart';
-import 'package:timecalendar/modules/personal_event/widgets/app_alert_dialog.dart';
 import 'package:uuid/uuid.dart';
 
-class AddPersonalEventScreen extends StatefulWidget {
+class AddPersonalEventScreen extends ConsumerStatefulWidget {
   static const routeName = '/add-personal-event';
-  final DeprecatedEvent? event;
+  final PersonalEvent? event;
 
   const AddPersonalEventScreen({Key? key, this.event}) : super(key: key);
 
@@ -20,15 +22,15 @@ class AddPersonalEventScreen extends StatefulWidget {
   _AddPersonalEventScreenState createState() => _AddPersonalEventScreenState();
 }
 
-class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
+class _AddPersonalEventScreenState
+    extends ConsumerState<AddPersonalEventScreen> {
   final _formKey = GlobalKey<FormState>();
 
   DateTime? _date;
   TimeOfDay? _timeStart;
   TimeOfDay? _timeEnd;
-
   String? _title;
-  String? _place;
+  String? _location;
   String? _description;
   Color? _selectedColor;
   Color? _tempShadeColor;
@@ -39,25 +41,31 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
     super.initState();
 
     var settingsProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
+        oldprovider.Provider.of<SettingsProvider>(context, listen: false);
 
     if (widget.event != null) {
+      final initialEvent = widget.event!;
+
       setState(() {
-        _title = widget.event!.title;
-        _place = widget.event!.location;
-        _description = widget.event!.description;
+        _title = initialEvent.title;
+        _location = initialEvent.location;
+        _description = initialEvent.description;
         _selectedColor =
-            settingsProvider.getEventColorToDisplay(widget.event!.color);
-        _date = widget.event!.start;
+            settingsProvider.getEventColorToDisplay(initialEvent.color);
+        _date = initialEvent.startsAt;
         _timeStart = new TimeOfDay(
-            hour: widget.event!.start.hour, minute: widget.event!.start.minute);
+          hour: initialEvent.startsAt.hour,
+          minute: initialEvent.startsAt.minute,
+        );
         _timeEnd = new TimeOfDay(
-            hour: widget.event!.end.hour, minute: widget.event!.end.minute);
+          hour: initialEvent.endsAt.hour,
+          minute: initialEvent.endsAt.minute,
+        );
       });
     } else {
       setState(() {
         _title = "";
-        _place = "";
+        _location = "";
         _description = "";
         _selectedColor = Colors.pink;
         _date = new DateTime.now();
@@ -123,79 +131,55 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
     unfocusText(context);
 
     var settingsProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
-    var eventsProvider = Provider.of<EventsProvider>(context, listen: false);
+        oldprovider.Provider.of<SettingsProvider>(context, listen: false);
 
     // Set the new color if the user has picked a color
     final newColor = (_colorChanged || widget.event == null)
         ? settingsProvider.getEventColorToSave(_selectedColor)
         : widget.event!.color;
 
-    DeprecatedEvent event;
+    final startsAt = DateTime(
+      _date!.year,
+      _date!.month,
+      _date!.day,
+      _timeStart!.hour,
+      _timeStart!.minute,
+    );
+
+    final endsAt = DateTime(
+      _date!.year,
+      _date!.month,
+      _date!.day,
+      _timeEnd!.hour,
+      _timeEnd!.minute,
+    );
+
+    PersonalEvent savedEvent;
     if (widget.event != null) {
-      event = new DeprecatedEvent(
-        uid: widget.event!.uid,
-        color: newColor,
-        description: _description,
-        title: _title,
-        teachers: [],
-        tags: [],
-        shortDescription: _description,
-        exportedAt: widget.event!.exportedAt,
-        unitId: -1,
-        location: _place,
-        groupColor: widget.event!.groupColor,
-        start: DateTime(
-          _date!.year,
-          _date!.month,
-          _date!.day,
-          _timeStart!.hour,
-          _timeStart!.minute,
-        ),
-        end: DateTime(
-          _date!.year,
-          _date!.month,
-          _date!.day,
-          _timeEnd!.hour,
-          _timeEnd!.minute,
-        ),
-      );
-
-      await eventsProvider.updatePersonalEvent(event);
-      Navigator.of(context).pop(event);
+      savedEvent = widget.event!.rebuild((event) => event
+        ..title = _title
+        ..description = _description
+        ..color = newColor
+        ..location = _location
+        ..startsAt = startsAt
+        ..endsAt = endsAt
+        ..exportedAt = DateTime.now());
     } else {
-      event = new DeprecatedEvent(
-        uid: Uuid().v4(),
-        color: settingsProvider.getEventColorToSave(_selectedColor),
-        description: _description,
-        title: _title,
-        teachers: [],
-        tags: [],
-        shortDescription: _description,
-        exportedAt: DateTime.now(),
-        unitId: -1,
-        location: _place,
-        groupColor: Colors.blue,
-        start: DateTime(
-          _date!.year,
-          _date!.month,
-          _date!.day,
-          _timeStart!.hour,
-          _timeStart!.minute,
-        ),
-        end: DateTime(
-          _date!.year,
-          _date!.month,
-          _date!.day,
-          _timeEnd!.hour,
-          _timeEnd!.minute,
-        ),
-      );
-
-      await eventsProvider.addPersonalEvent(event);
+      savedEvent = PersonalEvent((event) => event
+        ..uid = Uuid().v4()
+        ..title = _title
+        ..description = _description
+        ..color = newColor
+        ..location = _location
+        ..startsAt = startsAt
+        ..endsAt = endsAt
+        ..exportedAt = DateTime.now());
     }
 
-    Navigator.of(context).pop();
+    await ref.read(personalEventRepositoryProvider).put(savedEvent);
+    await ref.read(personalEventsProvider.notifier).update();
+
+    Navigator.of(context).pop(savedEvent);
   }
 
   void onColorChoose(bool validateColor) {
@@ -456,9 +440,9 @@ class _AddPersonalEventScreenState extends State<AddPersonalEventScreen> {
                             decoration: const InputDecoration.collapsed(
                               hintText: 'Lieu',
                             ),
-                            initialValue: _place,
+                            initialValue: _location,
                             validator: (value) {
-                              _place = value;
+                              _location = value;
                               return null;
                             },
                           ),

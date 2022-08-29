@@ -36,7 +36,7 @@ class AboutScreen extends StatelessWidget {
                 text: 'Voir la politique de confidentialité',
                 outline: true,
                 onPressed: () => UrlLauncher.openUrl(
-                    Constants.mainWebUrl + 'privacy-policy'),
+                    Constants.mainWebUrl + '/privacy-policy'),
               ),
               SizedBox(height: 15),
               Text(

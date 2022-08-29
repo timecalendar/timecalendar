@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:timecalendar/modules/calendar/models/deprecated_event.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
-class HomeHeader extends StatelessWidget {
-  final List<DeprecatedEvent?> events;
-  final DateTime? eventDay;
+class HomeHeader extends HookConsumerWidget {
+  final List<EventInterface> events;
+  final DateTime? dayDisplayedOnHomePage;
 
   const HomeHeader({
     Key? key,
-    required this.eventDay,
+    required this.dayDisplayedOnHomePage,
     required this.events,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
@@ -29,9 +30,7 @@ class HomeHeader extends StatelessWidget {
           SizedBox(height: 5),
           Text(
             events.length > 0
-                ? events.length.toString() +
-                    ' cours ' +
-                    AppDateUtils.dayText(eventDay, showOn: true)
+                ? "${events.length} cours ${AppDateUtils.dayText(dayDisplayedOnHomePage, showOn: true)}"
                 : 'Pas de cours à venir',
             style: TextStyle(
               fontSize: 16,
