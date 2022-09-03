@@ -1,0 +1,16 @@
+FROM node:16
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+WORKDIR /app
+COPY openapi ./openapi/
+COPY web/package*.json ./web/
+WORKDIR /app/openapi/javascript
+RUN npm run build
+WORKDIR /app/web
+RUN npm ci --legacy-peer-deps
+COPY web/ .
+RUN npm run build
+USER nextjs
+EXPOSE 80
+ENV PORT 80
+CMD ["node", "server.js"]
