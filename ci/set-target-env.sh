@@ -3,9 +3,12 @@
 if [[ $GITHUB_REF == 'refs/heads/production' ]]; then
   TARGET_ENVIRONMENT=production
   DOCKER_TAG=production
-else
+elif [[ $GITHUB_REF == 'refs/heads/main' ]]; then
   TARGET_ENVIRONMENT=preprod
   DOCKER_TAG=latest
+else
+  TARGET_ENVIRONMENT=test
+  DOCKER_TAG=test
 fi
 
 echo "TARGET_ENVIRONMENT=$TARGET_ENVIRONMENT" >> "$GITHUB_ENV"
