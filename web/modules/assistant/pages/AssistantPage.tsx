@@ -20,7 +20,7 @@ const AssistantPage = () => {
   }, [assistant])
 
   if (!assistant) return null
-  if (assistant.render) return assistant.render()
+  if (assistant.render) return <>{assistant.render()}</>
 
   return null
 }
