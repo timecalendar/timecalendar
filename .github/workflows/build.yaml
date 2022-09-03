@@ -32,11 +32,9 @@ jobs:
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Push image to GitHub Container Registry
-      run: |
-        docker push $IMAGE_NAME:${{ env.DOCKER_TAG }}
-        docker push $IMAGE_NAME:${{ github.sha }}
+      run: docker push $IMAGE_NAME:${{ github.sha }}
 
-    - name: Tag and push deployable version
+    - name: Push deployable version
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       run: |
         docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ env.DOCKER_TAG }}
@@ -73,7 +71,7 @@ jobs:
     - name: Push image to GitHub Container Registry
       run: docker push $IMAGE_NAME:${{ github.sha }}
 
-    - name: Tag and push deployable version
+    - name: Push deployable version
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       run: |
         docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ env.DOCKER_TAG }}
