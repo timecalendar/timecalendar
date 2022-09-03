@@ -1,0 +1,27 @@
+name: Delete old container images
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      cut-off:
+        description: The timezone-aware datetime you want to delete container versions that are older than.
+        required: false
+        type: string
+
+jobs:
+  clean-ghcr:
+    name: Delete old unused container images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old images
+        uses: snok/container-retention-policy@v1
+        with:
+          image-names: timecalendar, timecalendar-web
+          cut-off: ${{ inputs.cut-off || '1 week ago UTC' }}
+          account-type: org
+          org-name: timecalendar
+          keep-at-least: 5
+          skip-tags: latest, production
+          token: ${{ secrets.PAT }}
