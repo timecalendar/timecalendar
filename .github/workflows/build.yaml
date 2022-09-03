@@ -1,4 +1,4 @@
-name: CI build test and deploy
+name: CI build
 
 on: push
 
@@ -6,21 +6,90 @@ jobs:
   build-server:
     name: Build server image
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/timecalendar/timecalendar
     steps:
 
     - name: Checkout main
       uses: actions/checkout@v2
 
+    - name: Set target environment
+      run: ./ci/set-target-env.sh
+
     - name: Load Docker Layer Caching
       uses: satackey/action-docker-layer-caching@v0.0.11
+      with:
+        key: build-server-docker-cache-{hash}
+        restore-keys: |
+          build-server-docker-cache-
       continue-on-error: true
+
+    - name: Build container image
+      working-directory: ./server
+      run: docker build -t $IMAGE_NAME:${{ github.sha }} .
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Push image to GitHub Container Registry
+      run: |
+        docker push $IMAGE_NAME:${{ env.DOCKER_TAG }}
+        docker push $IMAGE_NAME:${{ github.sha }}
+
+    - name: Tag and push deployable version
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      run: |
+        docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ env.DOCKER_TAG }}
+        docker push $IMAGE_NAME:${{ env.DOCKER_TAG }}
+
+
+  build-web:
+    name: Build web image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/timecalendar/timecalendar-web
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v2
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
 
+    - name: Load Docker Layer Caching
+      uses: satackey/action-docker-layer-caching@v0.0.11
+      with:
+        key: build-web-docker-cache-{hash}
+        restore-keys: |
+          build-web-docker-cache-
+      continue-on-error: true
+
     - name: Build container image
-      working-directory: ./server
-      run: docker build -t ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} -t ghcr.io/timecalendar/timecalendar:${{ github.sha }} .
+      run: docker build -t $IMAGE_NAME:${{ github.sha }} -f Dockerfile.web .
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Push image to GitHub Container Registry
+      run: docker push $IMAGE_NAME:${{ github.sha }}
+
+    - name: Tag and push deployable version
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      run: |
+        docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ env.DOCKER_TAG }}
+        docker push $IMAGE_NAME:${{ env.DOCKER_TAG }}
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: build-server
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v2
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Start Postgres and Redis
       run: docker-compose --env-file ./ci/.env.test -f server/docker-compose.yml --profile ci up -d postgres redis
@@ -31,43 +100,8 @@ jobs:
         ./ci/wait.sh -h localhost -p 6370 -t 60
 
     - name: Run tests
-      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }} npm run test
+      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
-    - name: Log in to GitHub Container Registry
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-    - name: Push image to GitHub Container Registry
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: docker push ghcr.io/timecalendar/timecalendar:${{ env.DOCKER_TAG }}
-
-  build-web:
-    name: Build web image
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v2
-
-    - name: Load Docker Layer Caching
-      uses: satackey/action-docker-layer-caching@v0.0.11
-      continue-on-error: true
-
-    - name: Set target environment
-      run: ./ci/set-target-env.sh
-
-    - name: Build container image
-      run: docker build -t ghcr.io/timecalendar/timecalendar-web:${{ env.DOCKER_TAG }} -t ghcr.io/timecalendar/timecalendar-web:${{ github.sha }} -f Dockerfile.web .
-
-    - name: Log in to GitHub Container Registry
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-    - name: Push image to GitHub Container Registry
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: |
-        docker push ghcr.io/timecalendar/timecalendar-web:${{ env.DOCKER_TAG }}
-        docker push ghcr.io/timecalendar/timecalendar-web:${{ github.sha }}
 
   # deploy:
   #   name: Deploy on environment
