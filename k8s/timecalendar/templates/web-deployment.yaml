@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "timecalendar.fullname" . }}-web
+  labels:
+    {{- include "timecalendar.webLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.web.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "timecalendar.webSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "timecalendar.webSelectorLabels" . | nindent 8 }}
+    spec:
+      # {{- with .Values.imagePullSecrets }}
+      # imagePullSecrets:
+      #   {{- toYaml . | nindent 8 }}
+      # {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "ghcr.io/timecalendar/timecalendar-web:{{ .Values.web.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "80"
+            - name: MAIN_API_URL
+              value: {{ .Values.apiUrl }}

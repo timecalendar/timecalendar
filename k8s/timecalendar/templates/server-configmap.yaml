@@ -17,12 +17,13 @@ data:
   REDIS_URL: redis://:{{ .Values.redis.password }}@{{ include "timecalendar.fullname" . }}-redis-master:6379
   REDIS_PASSWORD: {{ .Values.redis.password }}
 
-  # MariaDB
-  DATABASE_HOST: {{ include "timecalendar.fullname" . }}-mariadb
-  DATABASE_PORT: "3306"
-  DATABASE_USERNAME: timecalendar
-  DATABASE_PASSWORD: {{ .Values.timecalendar.databasePassword }}
-  DATABASE_MAIN_NAME: timecalendar
+  # Postgres
+  DATABASE_HOST: {{ .Values.timecalendar.database.host }}
+  DATABASE_PORT: "{{ .Values.timecalendar.database.port }}"
+  DATABASE_USERNAME: {{ .Values.timecalendar.database.username }}
+  DATABASE_PASSWORD: {{ .Values.timecalendar.database.password }}
+  DATABASE_MAIN_NAME: {{ .Values.timecalendar.database.database }}
+  PGSSLMODE: no-verify
 
   RUN_MIGRATIONS: "true"
 

@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "timecalendar.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.server.replicaCount }}
   selector:
     matchLabels:
       {{- include "timecalendar.selectorLabels" . | nindent 6 }}
@@ -14,14 +14,14 @@ spec:
       labels:
         {{- include "timecalendar.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      # {{- with .Values.imagePullSecrets }}
+      # imagePullSecrets:
+      #   {{- toYaml . | nindent 8 }}
+      # {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "ghcr.io/timecalendar/timecalendar:{{ .Values.server.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 80

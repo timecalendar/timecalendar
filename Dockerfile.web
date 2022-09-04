@@ -1,15 +1,31 @@
-FROM node:16
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+FROM node:16 AS openapi
 WORKDIR /app
 COPY openapi ./openapi/
-COPY web/package*.json ./web/
 WORKDIR /app/openapi/javascript
 RUN npm run build
+
+FROM node:16-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY web/package*.json ./web/
 WORKDIR /app/web
 RUN npm ci --legacy-peer-deps
+
+FROM node:16-alpine AS builder
+WORKDIR /app/web
+COPY --from=openapi /app/openapi /app/openapi/
+COPY --from=deps /app/web/node_modules ./node_modules
 COPY web/ .
 RUN npm run build
+
+FROM node:16-alpine AS runner
+WORKDIR /app/web
+ENV NODE_ENV production
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+COPY --from=builder /app/web/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
 USER nextjs
 EXPOSE 80
 ENV PORT 80

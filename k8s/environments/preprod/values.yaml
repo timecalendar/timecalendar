@@ -1,5 +1,13 @@
 apiUrl: "preprod-api.timecalendar.app"
 clientUrl: "preprod.timecalendar.app"
+webUrl: "preprod-web.timecalendar.app"
 
-image:
-  tag: latest
+server:
+  replicaCount: 1
+  image:
+    tag: latest
+
+web:
+  replicaCount: 1
+  image:
+    tag: latest
