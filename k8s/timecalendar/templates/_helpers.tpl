@@ -30,6 +30,7 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* Server */}}
 {{/*
 Common labels
 */}}
@@ -47,5 +48,26 @@ Selector labels
 */}}
 {{- define "timecalendar.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "timecalendar.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/* Web */}}
+{{/*
+Common labels
+*/}}
+{{- define "timecalendar.webLabels" -}}
+helm.sh/chart: {{ include "timecalendar.chart" . }}
+{{ include "timecalendar.webSelectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "timecalendar.webSelectorLabels" -}}
+app.kubernetes.io/name: {{ include "timecalendar.name" . }}-web
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
