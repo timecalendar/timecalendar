@@ -33,7 +33,9 @@ class AssistantScreen extends HookConsumerWidget {
 
     final Map<String, dynamic> queryParameters = {
       'embed': 'true',
-      ...provider.school != null ? {'schoolId': provider.school!.id} : {},
+      ...provider.school != null
+          ? {'schoolId': provider.school!.id}
+          : {'assistant': 'select'},
       ...provider.fallback ? {'fallback': 'true'} : {},
       ...settingsProvider.darkMode ? {'darkMode': 'true'} : {},
       ...gradeName.length > 0 ? {'gradeName': gradeName} : {},

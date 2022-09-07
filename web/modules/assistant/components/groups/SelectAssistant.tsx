@@ -72,8 +72,8 @@ const SelectAssistant = () => {
           spacing={1}
           sx={{ justifyContent: "space-between" }}
         >
-          <Button>Retour</Button>
-          <Button variant="contained" onClick={() => endAssistant()}>
+          <Button color="secondary">Retour</Button>
+          <Button variant="outlined" onClick={() => endAssistant()}>
             Ajouter une URL ICal
           </Button>
         </Stack>
