@@ -3,4 +3,5 @@ export interface AssistantStartParams {
   fallback?: string
   schoolName?: string
   gradeName?: string
+  assistant?: string
 }

@@ -1,8 +1,8 @@
 import AssistantStep from "modules/assistant/components/AssistantStep"
+import { AssistantContext } from "modules/assistant/contexts/AssistantContext"
 import { findAssistant } from "modules/assistant/data/assistants"
-import { postNativeMessage } from "modules/shared/helpers/post-native-message"
 import { useRouter } from "next/router"
-import React, { FC } from "react"
+import { FC, useContext } from "react"
 
 type Query = {
   assistantName: string
@@ -10,6 +10,7 @@ type Query = {
 }
 
 const AssistantStepPage: FC = () => {
+  const { endAssistant } = useContext(AssistantContext)
   const router = useRouter()
   const query = router.query as Query
 
@@ -21,8 +22,7 @@ const AssistantStepPage: FC = () => {
   const onNext = () => {
     if (!assistant.steps) return
     if (stepIndex === assistant.steps.length - 1) {
-      postNativeMessage({ name: "assistantEnded" })
-      router.push("/assistants/end")
+      endAssistant()
     } else {
       router.push(`/assistants/${assistant.name}/steps/${stepIndex + 1}`)
     }

@@ -5,7 +5,7 @@ items:
     name: My Gaming Academia
     siteUrl: https://my-gaming-academia.com
     visible: true
-    assistant: groups
+    assistant: generic
     imageUrl: /schools/mygamingacademia.png
   univeiffel:
     code: univeiffel

@@ -16,6 +16,17 @@ const theme = createTheme({
       main: "#666666",
     },
   },
+  components: {
+    MuiCardContent: {
+      styleOverrides: {
+        root: {
+          "&:last-child": {
+            paddingBottom: "16px",
+          },
+        },
+      },
+    },
+  },
 })
 
 export const AppThemeProvider = ({ children }: { children: ReactNode }) => {
