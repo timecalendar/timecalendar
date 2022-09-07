@@ -22,8 +22,6 @@ import useLoading from "modules/shared/hooks/useLoading"
 import { toast } from "react-toastify"
 import AssistantLayout from "modules/assistant/components/AssistantLayout"
 import { Stack } from "@mui/system"
-import { postNativeMessage } from "modules/shared/helpers/post-native-message"
-import { grey } from "@mui/material/colors"
 
 const serverToReactTree = (groups: SchoolGroupItem[]): Node[] =>
   groups.map((group) => ({
@@ -73,8 +71,6 @@ const GroupAssistant: FC = () => {
 
     const { url } = await getIcalUrl(checked)
     await createCalendar(url)
-
-    console.log(url)
   })
 
   if (isLoading || !nodes) return <PageCircularProgress />
@@ -156,16 +152,6 @@ const GroupAssistant: FC = () => {
             spacing={1}
             sx={{ justifyContent: "flex-end" }}
           >
-            <Button
-              onClick={() =>
-                postNativeMessage({
-                  name: "calendarCreated",
-                  payload: { token: "B4WZQHoJk31Yir6Mvu91P" },
-                })
-              }
-            >
-              Debug
-            </Button>
             <Button>Retour</Button>
             <LoadingButton
               variant="contained"

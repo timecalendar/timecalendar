@@ -18,6 +18,7 @@ type Context = {
   initAssistant: (params: AssistantStartParams) => Promise<string>
   createCalendar: (url: string) => Promise<void>
   requestFallbackAssistant: () => void
+  endAssistant: () => void
 }
 
 type ProviderState = {
@@ -53,6 +54,7 @@ export const AssistantContextProvider = ({ children }: Props) => {
     fallback,
     gradeName,
     schoolName,
+    assistant,
   }: AssistantStartParams) => {
     if (schoolId) {
       const { data: fetchedSchool } = await createApiInstance(
@@ -69,8 +71,13 @@ export const AssistantContextProvider = ({ children }: Props) => {
         : fetchedSchool.assistant.slug
     }
 
-    setData({ school: undefined, schoolName, gradeName })
-    return "generic"
+    setData({
+      school: undefined,
+      schoolName: schoolName,
+      gradeName: gradeName,
+    })
+
+    return assistant ?? "generic"
   }
 
   const [loading, createCalendar] = useLoading(async (url: string) => {
@@ -98,6 +105,11 @@ export const AssistantContextProvider = ({ children }: Props) => {
   const requestFallbackAssistant = () =>
     postNativeMessage({ name: "fallbackRequested" })
 
+  const endAssistant = () => {
+    postNativeMessage({ name: "assistantEnded" })
+    router.push("/assistants/end")
+  }
+
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data))
   }, [data])
@@ -109,6 +121,7 @@ export const AssistantContextProvider = ({ children }: Props) => {
         initAssistant,
         createCalendar,
         requestFallbackAssistant,
+        endAssistant,
       }}
     >
       {children}
