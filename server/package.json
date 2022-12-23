@@ -59,7 +59,7 @@
     "dotenv": "^10.0.0",
     "ejs": "^3.1.7",
     "express-basic-auth": "^1.2.1",
-    "firebase-admin": "^10.0.0",
+    "firebase-admin": "^11.4.1",
     "fishery": "^2.1.0",
     "glob": "^7.2.0",
     "glob-promise": "^4.2.2",
