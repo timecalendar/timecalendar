@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
-import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"

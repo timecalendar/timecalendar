@@ -14,7 +14,7 @@ docker-compose up -d
 
 ### Node.js
 
-TimeCalendar is written in TypeScript and runs with Node.js. [Install Node.js](https://nodejs.org/en/) on your environment (current version v16).
+TimeCalendar is written in TypeScript and runs with Node.js. [Install Node.js](https://nodejs.org/en/) on your environment.
 
 Once Node.js is installed, install npm dependencies:
 
