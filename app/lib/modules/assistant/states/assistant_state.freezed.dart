@@ -1,7 +1,7 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'assistant_state.dart';
 
@@ -28,34 +28,37 @@ mixin _$AssistantState {
 abstract class $AssistantStateCopyWith<$Res> {
   factory $AssistantStateCopyWith(
           AssistantState value, $Res Function(AssistantState) then) =
-      _$AssistantStateCopyWithImpl<$Res>;
+      _$AssistantStateCopyWithImpl<$Res, AssistantState>;
+  @useResult
   $Res call({SchoolForList? school, bool fallback});
 }
 
 /// @nodoc
-class _$AssistantStateCopyWithImpl<$Res>
+class _$AssistantStateCopyWithImpl<$Res, $Val extends AssistantState>
     implements $AssistantStateCopyWith<$Res> {
   _$AssistantStateCopyWithImpl(this._value, this._then);
 
-  final AssistantState _value;
   // ignore: unused_field
-  final $Res Function(AssistantState) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? school = freezed,
-    Object? fallback = freezed,
+    Object? fallback = null,
   }) {
     return _then(_value.copyWith(
-      school: school == freezed
+      school: freezed == school
           ? _value.school
           : school // ignore: cast_nullable_to_non_nullable
               as SchoolForList?,
-      fallback: fallback == freezed
+      fallback: null == fallback
           ? _value.fallback
           : fallback // ignore: cast_nullable_to_non_nullable
               as bool,
-    ));
+    ) as $Val);
   }
 }
 
@@ -66,31 +69,30 @@ abstract class _$$_AssistantStateCopyWith<$Res>
           _$_AssistantState value, $Res Function(_$_AssistantState) then) =
       __$$_AssistantStateCopyWithImpl<$Res>;
   @override
+  @useResult
   $Res call({SchoolForList? school, bool fallback});
 }
 
 /// @nodoc
 class __$$_AssistantStateCopyWithImpl<$Res>
-    extends _$AssistantStateCopyWithImpl<$Res>
+    extends _$AssistantStateCopyWithImpl<$Res, _$_AssistantState>
     implements _$$_AssistantStateCopyWith<$Res> {
   __$$_AssistantStateCopyWithImpl(
       _$_AssistantState _value, $Res Function(_$_AssistantState) _then)
-      : super(_value, (v) => _then(v as _$_AssistantState));
+      : super(_value, _then);
 
-  @override
-  _$_AssistantState get _value => super._value as _$_AssistantState;
-
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? school = freezed,
-    Object? fallback = freezed,
+    Object? fallback = null,
   }) {
     return _then(_$_AssistantState(
-      school: school == freezed
+      school: freezed == school
           ? _value.school
           : school // ignore: cast_nullable_to_non_nullable
               as SchoolForList?,
-      fallback: fallback == freezed
+      fallback: null == fallback
           ? _value.fallback
           : fallback // ignore: cast_nullable_to_non_nullable
               as bool,
@@ -120,18 +122,17 @@ class _$_AssistantState extends _AssistantState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$_AssistantState &&
-            const DeepCollectionEquality().equals(other.school, school) &&
-            const DeepCollectionEquality().equals(other.fallback, fallback));
+            (identical(other.school, school) || other.school == school) &&
+            (identical(other.fallback, fallback) ||
+                other.fallback == fallback));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(school),
-      const DeepCollectionEquality().hash(fallback));
+  int get hashCode => Object.hash(runtimeType, school, fallback);
 
   @JsonKey(ignore: true)
   @override
+  @pragma('vm:prefer-inline')
   _$$_AssistantStateCopyWith<_$_AssistantState> get copyWith =>
       __$$_AssistantStateCopyWithImpl<_$_AssistantState>(this, _$identity);
 }

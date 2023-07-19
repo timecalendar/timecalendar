@@ -9,15 +9,15 @@ class ChecklistItemEventCount {
 }
 
 class ChecklistItemRepository {
-  Reader read;
+  Ref ref;
 
-  ChecklistItemRepository(this.read);
+  ChecklistItemRepository(this.ref);
 
   static const String STORE_NAME = 'checklist_items';
   final StoreRef<String?, Map<String, Object?>> _store =
       stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => this.read(databaseProvider);
+  Database get _db => this.ref.read(databaseProvider);
 
   Future insert(ChecklistItem checklistItem) async {
     checklistItem.createdAt = DateTime.now();
@@ -90,4 +90,4 @@ class ChecklistItemRepository {
 }
 
 final checklistItemRepositoryProvider =
-    Provider((ref) => ChecklistItemRepository(ref.read));
+    Provider((ref) => ChecklistItemRepository(ref));

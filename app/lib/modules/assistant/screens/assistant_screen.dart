@@ -24,13 +24,6 @@ class AssistantScreen extends HookConsumerWidget {
         oldProvider.Provider.of<SettingsProvider>(context, listen: false);
     final gradeName = ref.watch(addGradeNameProvider);
 
-    void onCalendarCreated(String token) async {
-      await calendarCreation.loadCalendarFromToken(token);
-      await Future.delayed(Duration(milliseconds: 200));
-      Navigator.of(context).pushNamedAndRemoveUntil(
-          TabsScreen.routeName, (Route<dynamic> route) => false);
-    }
-
     final Map<String, dynamic> queryParameters = {
       'embed': 'true',
       ...provider.school != null
@@ -41,9 +34,41 @@ class AssistantScreen extends HookConsumerWidget {
       ...gradeName.length > 0 ? {'gradeName': gradeName} : {},
     };
 
-    var initialUrl = Uri.parse(Constants.mainWebUrl)
-        .replace(queryParameters: queryParameters, path: '/assistants')
-        .toString();
+    void onCalendarCreated(String token) async {
+      await calendarCreation.loadCalendarFromToken(token);
+      await Future.delayed(Duration(milliseconds: 200));
+      Navigator.of(context).pushNamedAndRemoveUntil(
+          TabsScreen.routeName, (Route<dynamic> route) => false);
+    }
+
+    final controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel('NativeApp', onMessageReceived: (message) async {
+        final parsed = jsonDecode(message.message);
+        if (parsed['name'] == 'calendarCreated')
+          onCalendarCreated(parsed['payload']['token']);
+        else if (parsed['name'] == 'fallbackRequested')
+          Navigator.of(context).pop(AssistantFinishedResult.fallback());
+        else if (parsed['name'] == 'assistantEnded')
+          Navigator.of(context).pop(AssistantFinishedResult.done());
+      })
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {},
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            if (request.url.startsWith('https://www.youtube.com/')) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(Constants.mainWebUrl)
+          .replace(queryParameters: queryParameters, path: '/assistants'));
 
     return Scaffold(
       appBar: AppBar(
@@ -52,26 +77,8 @@ class AssistantScreen extends HookConsumerWidget {
       body: Column(
         children: [
           Expanded(
-            child: WebView(
-              initialUrl: initialUrl,
-              javascriptMode: JavascriptMode.unrestricted,
-              javascriptChannels: {
-                JavascriptChannel(
-                  name: 'NativeApp',
-                  onMessageReceived: (message) async {
-                    final parsed = jsonDecode(message.message);
-                    if (parsed['name'] == 'calendarCreated')
-                      onCalendarCreated(parsed['payload']['token']);
-                    else if (parsed['name'] == 'fallbackRequested')
-                      Navigator.of(context)
-                          .pop(AssistantFinishedResult.fallback());
-                    else if (parsed['name'] == 'assistantEnded')
-                      Navigator.of(context).pop(AssistantFinishedResult.done());
-                  },
-                ),
-              },
-            ),
-          )
+            child: WebViewWidget(controller: controller),
+          ),
         ],
       ),
     );

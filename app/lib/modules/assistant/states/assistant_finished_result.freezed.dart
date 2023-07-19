@@ -1,7 +1,7 @@
 // coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint
-// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'assistant_finished_result.dart';
 
@@ -24,8 +24,8 @@ mixin _$AssistantFinishedResult {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult Function()? fallback,
-    TResult Function()? done,
+    TResult? Function()? fallback,
+    TResult? Function()? done,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -43,8 +43,8 @@ mixin _$AssistantFinishedResult {
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
-    TResult Function(_AssistantFinishedResultFallback value)? fallback,
-    TResult Function(_AssistantFinishedResultDone value)? done,
+    TResult? Function(_AssistantFinishedResultFallback value)? fallback,
+    TResult? Function(_AssistantFinishedResultDone value)? done,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -60,17 +60,19 @@ mixin _$AssistantFinishedResult {
 abstract class $AssistantFinishedResultCopyWith<$Res> {
   factory $AssistantFinishedResultCopyWith(AssistantFinishedResult value,
           $Res Function(AssistantFinishedResult) then) =
-      _$AssistantFinishedResultCopyWithImpl<$Res>;
+      _$AssistantFinishedResultCopyWithImpl<$Res, AssistantFinishedResult>;
 }
 
 /// @nodoc
-class _$AssistantFinishedResultCopyWithImpl<$Res>
+class _$AssistantFinishedResultCopyWithImpl<$Res,
+        $Val extends AssistantFinishedResult>
     implements $AssistantFinishedResultCopyWith<$Res> {
   _$AssistantFinishedResultCopyWithImpl(this._value, this._then);
 
-  final AssistantFinishedResult _value;
   // ignore: unused_field
-  final $Res Function(AssistantFinishedResult) _then;
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
 }
 
 /// @nodoc
@@ -83,16 +85,13 @@ abstract class _$$_AssistantFinishedResultFallbackCopyWith<$Res> {
 
 /// @nodoc
 class __$$_AssistantFinishedResultFallbackCopyWithImpl<$Res>
-    extends _$AssistantFinishedResultCopyWithImpl<$Res>
+    extends _$AssistantFinishedResultCopyWithImpl<$Res,
+        _$_AssistantFinishedResultFallback>
     implements _$$_AssistantFinishedResultFallbackCopyWith<$Res> {
   __$$_AssistantFinishedResultFallbackCopyWithImpl(
       _$_AssistantFinishedResultFallback _value,
       $Res Function(_$_AssistantFinishedResultFallback) _then)
-      : super(_value, (v) => _then(v as _$_AssistantFinishedResultFallback));
-
-  @override
-  _$_AssistantFinishedResultFallback get _value =>
-      super._value as _$_AssistantFinishedResultFallback;
+      : super(_value, _then);
 }
 
 /// @nodoc
@@ -128,8 +127,8 @@ class _$_AssistantFinishedResultFallback
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult Function()? fallback,
-    TResult Function()? done,
+    TResult? Function()? fallback,
+    TResult? Function()? done,
   }) {
     return fallback?.call();
   }
@@ -159,8 +158,8 @@ class _$_AssistantFinishedResultFallback
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
-    TResult Function(_AssistantFinishedResultFallback value)? fallback,
-    TResult Function(_AssistantFinishedResultDone value)? done,
+    TResult? Function(_AssistantFinishedResultFallback value)? fallback,
+    TResult? Function(_AssistantFinishedResultDone value)? done,
   }) {
     return fallback?.call(this);
   }
@@ -196,16 +195,13 @@ abstract class _$$_AssistantFinishedResultDoneCopyWith<$Res> {
 
 /// @nodoc
 class __$$_AssistantFinishedResultDoneCopyWithImpl<$Res>
-    extends _$AssistantFinishedResultCopyWithImpl<$Res>
+    extends _$AssistantFinishedResultCopyWithImpl<$Res,
+        _$_AssistantFinishedResultDone>
     implements _$$_AssistantFinishedResultDoneCopyWith<$Res> {
   __$$_AssistantFinishedResultDoneCopyWithImpl(
       _$_AssistantFinishedResultDone _value,
       $Res Function(_$_AssistantFinishedResultDone) _then)
-      : super(_value, (v) => _then(v as _$_AssistantFinishedResultDone));
-
-  @override
-  _$_AssistantFinishedResultDone get _value =>
-      super._value as _$_AssistantFinishedResultDone;
+      : super(_value, _then);
 }
 
 /// @nodoc
@@ -240,8 +236,8 @@ class _$_AssistantFinishedResultDone extends _AssistantFinishedResultDone {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult Function()? fallback,
-    TResult Function()? done,
+    TResult? Function()? fallback,
+    TResult? Function()? done,
   }) {
     return done?.call();
   }
@@ -271,8 +267,8 @@ class _$_AssistantFinishedResultDone extends _AssistantFinishedResultDone {
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
-    TResult Function(_AssistantFinishedResultFallback value)? fallback,
-    TResult Function(_AssistantFinishedResultDone value)? done,
+    TResult? Function(_AssistantFinishedResultFallback value)? fallback,
+    TResult? Function(_AssistantFinishedResultDone value)? done,
   }) {
     return done?.call(this);
   }

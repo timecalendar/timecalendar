@@ -3,19 +3,20 @@ import 'package:timecalendar/modules/event_details/repositories/checklist_item_r
 
 class EventNbChecklistItemsNotifier
     extends StateNotifier<Map<String, ChecklistItemEventCount>> {
-  Reader read;
+  Ref ref;
 
-  EventNbChecklistItemsNotifier(this.read) : super({});
+  EventNbChecklistItemsNotifier(this.ref) : super({});
 
   update() async {
-    state =
-        await read(checklistItemRepositoryProvider).findEventNumberOfNotes();
+    state = await ref
+        .read(checklistItemRepositoryProvider)
+        .findEventNumberOfNotes();
   }
 }
 
 final eventNbChecklistItemsProvider = StateNotifierProvider<
         EventNbChecklistItemsNotifier, Map<String, ChecklistItemEventCount>>(
-    (ref) => EventNbChecklistItemsNotifier(ref.read));
+    (ref) => EventNbChecklistItemsNotifier(ref));
 
 final getEventNbChecklistItemsProvider = Provider((ref) {
   final eventNbChecklistItems = ref.watch(eventNbChecklistItemsProvider);

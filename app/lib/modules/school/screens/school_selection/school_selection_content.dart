@@ -4,7 +4,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_list.dart';
-import 'package:timecalendar/modules/shared/widgets/ui/search_bar.dart';
+import 'package:timecalendar/modules/shared/widgets/ui/app_search_bar.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolSelectionContent extends HookConsumerWidget {
@@ -26,7 +26,7 @@ class SchoolSelectionContent extends HookConsumerWidget {
     return SliverStickyHeader(
       header: Container(
         padding: EdgeInsets.all(15),
-        child: SearchBar(
+        child: AppSearchBar(
           searchFieldController: controller,
           onChanged: (text) =>
               ref.read(schoolSearchProvider.notifier).state = text,

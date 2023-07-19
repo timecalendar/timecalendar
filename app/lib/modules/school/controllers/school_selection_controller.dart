@@ -19,7 +19,7 @@ class SchoolSelectionController
       if (mounted) state = AsyncValue.data(schools);
       return schools;
     } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace: stackTrace);
+      state = AsyncValue.error(e, stackTrace);
       throw e;
     }
   }

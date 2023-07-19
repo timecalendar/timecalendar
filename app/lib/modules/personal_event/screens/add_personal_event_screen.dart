@@ -303,7 +303,7 @@ class _AddPersonalEventScreenState
                                         .format(_date!),
                                     style: Theme.of(context)
                                         .textTheme
-                                        .subtitle2!
+                                        .titleSmall!
                                         .copyWith(
                                           fontWeight: FontWeight.normal,
                                         ),
@@ -346,7 +346,7 @@ class _AddPersonalEventScreenState
                                                   textAlign: TextAlign.left,
                                                   style: Theme.of(context)
                                                       .textTheme
-                                                      .bodyText1,
+                                                      .bodyLarge,
                                                 ),
                                               ),
                                               Text(
@@ -354,7 +354,7 @@ class _AddPersonalEventScreenState
                                                 textAlign: TextAlign.start,
                                                 style: Theme.of(context)
                                                     .textTheme
-                                                    .bodyText2,
+                                                    .bodyMedium,
                                               ),
                                             ],
                                           ),
@@ -390,13 +390,13 @@ class _AddPersonalEventScreenState
                                                   textAlign: TextAlign.left,
                                                   style: Theme.of(context)
                                                       .textTheme
-                                                      .bodyText1!
+                                                      .bodyLarge!
                                                       .copyWith(
                                                           color: endTimeSuperior()
                                                               ? Theme.of(
                                                                       context)
                                                                   .textTheme
-                                                                  .bodyText1!
+                                                                  .bodyLarge!
                                                                   .color
                                                               : Colors.red),
                                                 ),
@@ -406,12 +406,12 @@ class _AddPersonalEventScreenState
                                                 textAlign: TextAlign.start,
                                                 style: Theme.of(context)
                                                     .textTheme
-                                                    .bodyText2!
+                                                    .bodyMedium!
                                                     .copyWith(
                                                         color: endTimeSuperior()
                                                             ? Theme.of(context)
                                                                 .textTheme
-                                                                .bodyText1!
+                                                                .bodyMedium!
                                                                 .color
                                                             : Colors.red),
                                               ),
@@ -495,8 +495,9 @@ class _AddPersonalEventScreenState
                                     ),
                                     Text(
                                       "Couleur de l'événement",
-                                      style:
-                                          Theme.of(context).textTheme.subtitle1,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium,
                                     )
                                   ],
                                 ),

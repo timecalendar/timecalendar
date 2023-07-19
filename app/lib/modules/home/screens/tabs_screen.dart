@@ -175,14 +175,14 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
             items: [
               BottomNavigationBarItem(
                 icon: Icon(
-                  FontAwesomeIcons.home,
+                  FontAwesomeIcons.house,
                   size: 20,
                 ),
                 label: 'Accueil',
               ),
               BottomNavigationBarItem(
                 icon: Icon(
-                  FontAwesomeIcons.calendarAlt,
+                  FontAwesomeIcons.calendarDays,
                   size: 20,
                 ),
                 label: 'Calendrier',

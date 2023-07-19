@@ -4,14 +4,14 @@ import 'package:timecalendar/modules/calendar/models/calendar_event.dart';
 import 'package:timecalendar/modules/database/providers/simple_database.dart';
 
 class CalendarEventRepository {
-  Reader read;
+  Ref ref;
 
-  CalendarEventRepository(this.read);
+  CalendarEventRepository(this.ref);
 
   static const String STORE_NAME = 'calendar_events';
   final _store = stringMapStoreFactory.store(STORE_NAME);
 
-  Database get _db => this.read(databaseProvider);
+  Database get _db => this.ref.read(databaseProvider);
 
   Future<List<CalendarEvent>> getCalendarEvents() async {
     final events = await _store.find(_db);
@@ -27,4 +27,4 @@ class CalendarEventRepository {
 }
 
 final calendarEventRepositoryProvider =
-    Provider((ref) => CalendarEventRepository(ref.read));
+    Provider((ref) => CalendarEventRepository(ref));

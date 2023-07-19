@@ -49,7 +49,7 @@ Get the local IP address of your computer running the API server. Add it in `MAI
 In a terminal, run the following command to build code parts when the code changes:
 
 ```bash
-flutter pub run build_runner watch
+dart run build_runner watch
 ```
 
 Run the app from your IDE.

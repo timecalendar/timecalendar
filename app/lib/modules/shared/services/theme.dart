@@ -43,14 +43,13 @@ class AppTheme {
       primaryColorLight: primaryColorLight,
       primaryColorDark: primaryColorDark,
       scaffoldBackgroundColor: backgroundColor,
-      toggleableActiveColor: accentColor,
       fontFamily: 'Poppins',
       textTheme: TextTheme(
-        headline6: TextStyle(
+        titleLarge: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w500,
         ),
-        button: TextStyle(
+        labelLarge: TextStyle(
           fontSize: 12,
         ),
       ),
@@ -60,7 +59,7 @@ class AppTheme {
     this.theme = this.theme.copyWith(
           snackBarTheme: SnackBarThemeData(
             backgroundColor: cardColor,
-            contentTextStyle: theme.textTheme.bodyText2,
+            contentTextStyle: theme.textTheme.bodyMedium,
           ),
           colorScheme: this
               .theme

@@ -12,7 +12,7 @@ class AppPrefTitle extends StatelessWidget {
 
     return PrefTitle(
       title: DefaultTextStyle(
-        style: theme.textTheme.headline6!,
+        style: theme.textTheme.titleLarge!,
         child: title!,
       ),
     );

@@ -4,16 +4,18 @@ import 'package:timecalendar/modules/event_details/providers/event_nb_checklist_
 import 'package:timecalendar/modules/event_details/repositories/checklist_item_repository.dart';
 
 class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
-  Reader read;
+  Ref ref;
   String eventUid;
 
-  ChecklistItemNotifier(this.read, this.eventUid) : super([]) {
+  ChecklistItemNotifier(this.ref, this.eventUid) : super([]) {
     loadEventItems();
   }
 
   loadEventItems() async {
-    state =
-        await read(checklistItemRepositoryProvider).findAllByEventUid(eventUid);
+    state = await this
+        .ref
+        .read(checklistItemRepositoryProvider)
+        .findAllByEventUid(eventUid);
   }
 
   Future<void> addItem() async {
@@ -24,8 +26,8 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
       order: state.length + 1,
     );
     state = List<ChecklistItem>.from(state)..add(checklistItem);
-    await read(checklistItemRepositoryProvider).insert(checklistItem);
-    await read(eventNbChecklistItemsProvider.notifier).update();
+    await this.ref.read(checklistItemRepositoryProvider).insert(checklistItem);
+    await this.ref.read(eventNbChecklistItemsProvider.notifier).update();
   }
 
   Future<void> editItem(ChecklistItem checklistItem) async {
@@ -34,17 +36,17 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
     final editedState = List<ChecklistItem>.from(state);
     editedState[index] = checklistItem;
     state = editedState;
-    await read(checklistItemRepositoryProvider).update(checklistItem);
-    await read(eventNbChecklistItemsProvider.notifier).update();
+    await this.ref.read(checklistItemRepositoryProvider).update(checklistItem);
+    await this.ref.read(eventNbChecklistItemsProvider.notifier).update();
   }
 
   Future<void> removeItem(String? uuid) async {
     if (uuid == null) return;
     state = List<ChecklistItem>.from(state)
       ..removeWhere((item) => item.uuid == uuid);
-    await read(checklistItemRepositoryProvider).delete(uuid);
+    await this.ref.read(checklistItemRepositoryProvider).delete(uuid);
     await updateItemOrders();
-    await read(eventNbChecklistItemsProvider.notifier).update();
+    await this.ref.read(eventNbChecklistItemsProvider.notifier).update();
   }
 
   void reorderItems(int oldIndex, int newIndex) {
@@ -61,10 +63,10 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
       orderedItems[i].order = i + 1;
     }
     state = orderedItems;
-    await read(checklistItemRepositoryProvider).updateAll(state);
+    await this.ref.read(checklistItemRepositoryProvider).updateAll(state);
   }
 }
 
 final checklistItemProvider = StateNotifierProvider.autoDispose
     .family<ChecklistItemNotifier, List<ChecklistItem>, String>(
-        (ref, eventUid) => ChecklistItemNotifier(ref.read, eventUid));
+        (ref, eventUid) => ChecklistItemNotifier(ref, eventUid));

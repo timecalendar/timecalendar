@@ -101,7 +101,7 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: 'Samuel Prak : ',
-                      style: Theme.of(context).textTheme.bodyText2,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     TextSpan(
                       text: 'https://www.samuelprak.fr/',
@@ -121,7 +121,7 @@ class AboutScreen extends StatelessWidget {
                   children: [
                     TextSpan(
                         text: 'Eddy Monnot : ',
-                        style: Theme.of(context).textTheme.bodyText2),
+                        style: Theme.of(context).textTheme.bodyMedium),
                     TextSpan(
                       text: 'https://www.eddymonnot.com/',
                       style:

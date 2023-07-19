@@ -37,7 +37,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           ProfileItem(
             title: 'Paramètres',
-            icon: FontAwesomeIcons.cog,
+            icon: FontAwesomeIcons.gear,
             action: () {
               Navigator.of(context).pushNamed(SettingsScreen.routeName);
             },
