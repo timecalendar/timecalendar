@@ -45,7 +45,7 @@ class PlanningRectangleEvent extends ConsumerWidget {
             child: Wrap(
               children: <Widget>[
                 Icon(
-                  FontAwesomeIcons.checkSquare,
+                  FontAwesomeIcons.squareCheck,
                   size: 16,
                 ),
                 SizedBox(width: 5),

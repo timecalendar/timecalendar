@@ -23,7 +23,7 @@ class Constants {
         subtitle:
             "Notez vos devoirs, projets et autres notes dans une checklist.",
         icon: Icon(
-          FontAwesomeIcons.checkSquare,
+          FontAwesomeIcons.squareCheck,
         ),
       ),
       const ChangelogItem(

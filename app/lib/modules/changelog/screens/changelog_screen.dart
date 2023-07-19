@@ -80,7 +80,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
         .where((item) => displayAllChangelog ? true : item > currentVersion!)
         .toList()
         .reversed
-        .forEach((elm) => {changelogList.add(Constants.changelogs[elm])});
+        .forEach((elm) => changelogList.add(Constants.changelogs[elm]));
 
     print('changelogList: $changelogList');
   }

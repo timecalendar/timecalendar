@@ -35,7 +35,7 @@ if [ "$COMPILE_DART" = true ]; then
   npm install
   npm run dart
   cd ..
-  flutter format dart
+  dart format dart
 fi
 
 

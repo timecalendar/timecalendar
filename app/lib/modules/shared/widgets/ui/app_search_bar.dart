@@ -3,8 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
-class SearchBar extends StatelessWidget {
-  const SearchBar({
+class AppSearchBar extends StatelessWidget {
+  const AppSearchBar({
     Key? key,
     this.onChanged,
     this.placeholder,
@@ -46,7 +46,7 @@ class SearchBar extends StatelessWidget {
             onChanged: onChanged,
             controller: _searchFieldController,
             decoration: InputDecoration(
-              icon: Icon(FontAwesomeIcons.search),
+              icon: Icon(FontAwesomeIcons.magnifyingGlass),
               hintText: placeholder,
             ),
             onTap: () {

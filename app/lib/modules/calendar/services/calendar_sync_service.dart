@@ -10,22 +10,24 @@ import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class CalendarSyncService {
-  Reader read;
+  Ref ref;
 
-  CalendarSyncService(this.read);
+  CalendarSyncService(this.ref);
 
   Future<List<UserCalendar>> loadUserCalendarsFromDatabase() async {
     final calendars =
-        await this.read(userCalendarRepositoryProvider).getUserCalendars();
-    this.read(userCalendarsProvider.notifier).state = calendars;
+        await this.ref.read(userCalendarRepositoryProvider).getUserCalendars();
+    this.ref.read(userCalendarsProvider.notifier).state = calendars;
     return calendars;
   }
 
   Future<List<CalendarEvent>> loadEventsFromDatabase() async {
-    final events =
-        await this.read(calendarEventRepositoryProvider).getCalendarEvents();
+    final events = await this
+        .ref
+        .read(calendarEventRepositoryProvider)
+        .getCalendarEvents();
     events.sort((a, b) => a.startsAt.compareTo(b.startsAt));
-    this.read(calendarEventsProvider.notifier).state = events;
+    this.ref.read(calendarEventsProvider.notifier).state = events;
     return events;
   }
 
@@ -33,11 +35,13 @@ class CalendarSyncService {
       List<UserCalendar> calendars) async {
     if (calendars.length == 0) return [];
 
-    final rep = await this.read(apiClientProvider).calendarsApi().syncCalendars(
-            syncCalendarsDto: SyncCalendarsDto(
-          (dto) => dto
-            ..tokens = ListBuilder(calendars.map((calendar) => calendar.token)),
-        ));
+    final rep =
+        await this.ref.read(apiClientProvider).calendarsApi().syncCalendars(
+                syncCalendarsDto: SyncCalendarsDto(
+              (dto) => dto
+                ..tokens =
+                    ListBuilder(calendars.map((calendar) => calendar.token)),
+            ));
     final List<CalendarEventForPublic> events = rep.data!
         .fold([], (value, element) => [...value, ...element.events.toList()]);
     return events;
@@ -49,11 +53,11 @@ class CalendarSyncService {
     final calendarEvents =
         events.map((event) => CalendarEvent.fromApi(event)).toList();
     await this
+        .ref
         .read(calendarEventRepositoryProvider)
         .setCalendarEvents(calendarEvents);
     await this.loadEventsFromDatabase();
   }
 }
 
-final calendarSyncServiceProvider =
-    Provider((ref) => CalendarSyncService(ref.read));
+final calendarSyncServiceProvider = Provider((ref) => CalendarSyncService(ref));

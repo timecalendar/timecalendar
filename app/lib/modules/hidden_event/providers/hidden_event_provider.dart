@@ -3,18 +3,18 @@ import 'package:timecalendar/modules/hidden_event/models/hidden_event.dart';
 import 'package:timecalendar/modules/hidden_event/repositories/hidden_event_repository.dart';
 
 class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
-  Reader read;
+  Ref ref;
 
-  HiddenEventNotifier(this.read) : super(new HiddenEvent());
+  HiddenEventNotifier(this.ref) : super(new HiddenEvent());
 
   loadFromDatabase() async {
-    state = await read(hiddenEventRepositoryProvider).getHiddenEvents();
+    state = await ref.read(hiddenEventRepositoryProvider).getHiddenEvents();
     print('Load from db');
     print(state);
   }
 
   saveToDatabase() async {
-    return read(hiddenEventRepositoryProvider).setHiddenEvents(state);
+    return ref.read(hiddenEventRepositoryProvider).setHiddenEvents(state);
   }
 
   Future<void> addUidEvent(String uidEvent) async {
@@ -45,4 +45,4 @@ class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
 
 final hiddenEventProvider =
     StateNotifierProvider<HiddenEventNotifier, HiddenEvent>(
-        (ref) => HiddenEventNotifier(ref.read));
+        (ref) => HiddenEventNotifier(ref));

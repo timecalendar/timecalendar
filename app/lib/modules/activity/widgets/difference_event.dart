@@ -31,13 +31,13 @@ class DifferenceEvent extends StatelessWidget {
       'text': 'Cours annulé',
       'backgroundColor': '#ffccd9',
       'iconColor': '#ff385d',
-      'icon': FontAwesomeIcons.times,
+      'icon': FontAwesomeIcons.xmark,
     },
     DifferenceEventType.Changed: {
       'text': 'Cours modifié',
       'backgroundColor': '#c7e6ff',
       'iconColor': '#43a7f7',
-      'icon': FontAwesomeIcons.pencilAlt,
+      'icon': FontAwesomeIcons.pencil,
     }
   };
 

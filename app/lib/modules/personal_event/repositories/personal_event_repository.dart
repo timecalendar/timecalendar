@@ -4,13 +4,13 @@ import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/personal_event/models/personal_event.dart';
 
 class PersonalEventRepository {
-  Reader read;
+  Ref ref;
 
-  PersonalEventRepository(this.read);
+  PersonalEventRepository(this.ref);
 
   static const String STORE_NAME = 'personal_events';
   final _store = stringMapStoreFactory.store(STORE_NAME);
-  Database get _db => this.read(databaseProvider);
+  Database get _db => this.ref.read(databaseProvider);
 
   Future<List<PersonalEvent>> findAll() async {
     final records = await _store.find(_db);
@@ -29,4 +29,4 @@ class PersonalEventRepository {
 }
 
 final personalEventRepositoryProvider =
-    Provider((ref) => PersonalEventRepository(ref.read));
+    Provider((ref) => PersonalEventRepository(ref));

@@ -12,7 +12,7 @@
   },
   "lint-staged": {
     "*.dart": [
-      "flutter format",
+      "dart format",
       "./bin/flutter-analyze.sh"
     ]
   }

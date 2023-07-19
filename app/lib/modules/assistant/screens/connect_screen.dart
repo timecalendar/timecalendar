@@ -57,7 +57,7 @@ class ConnectScreen extends HookConsumerWidget {
                                       provider.school!.intranetUrl!,
                                     );
                                   },
-                                  icon: FontAwesomeIcons.externalLinkAlt,
+                                  icon: FontAwesomeIcons.upRightFromSquare,
                                   text: provider.school?.name ?? 'Se connecter',
                                 )
                               ],
