@@ -30,7 +30,7 @@ const AssistantCard = ({ title, name, image }: AssistantCardProps) => {
         <Box sx={{ display: "flex" }}>
           {image && (
             <CardMedia sx={{ width: "130px" }}>
-              <Image src={image} />
+              <Image src={image} alt="" />
             </CardMedia>
           )}
           <CardContent sx={{ display: "flex", alignItems: "center" }}>

@@ -24,7 +24,7 @@ const AssistantStep = ({ steps, stepIndex, onNext, onPrevious }: Props) => {
           <Box mb={3} sx={{ display: { md: "none" } }}>
             {image ? (
               <Box>
-                <Image src={image} />
+                <Image src={image} alt="" />
               </Box>
             ) : null}
             {legend ? (
