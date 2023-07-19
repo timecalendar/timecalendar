@@ -25,7 +25,7 @@ export class AppFirestore {
 
   async set<T>(key: string, value: T) {
     const dataRef = firebaseAdmin.firestore().collection("parsers").doc(key)
-    await dataRef.set(value)
+    await dataRef.set(value as FirebaseFirestore.DocumentData)
   }
 }
 

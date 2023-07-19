@@ -2,6 +2,7 @@ import { calendarContentFactory } from "modules/calendar/factories/calendar-cont
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { schoolFactory } from "modules/school/factories/school.factory"
+import { School } from "modules/school/models/school.entity"
 import {
   factoryToEntity,
   idToEntity,
@@ -18,7 +19,7 @@ export class CalendarFactory extends AppFactory<Calendar, TransientParams> {
     return this.associations({
       school: schoolId
         ? idToEntity(schoolId)
-        : factoryToEntity(schoolFactory()),
+        : factoryToEntity<School>(schoolFactory()),
     })
   }
 }
@@ -39,6 +40,6 @@ export const calendarFactory = factoryBuilder(() => [
             events: transientParams.events || [],
           }),
         ),
-      } as Calendar),
+      }) as Calendar,
   ),
 ])
