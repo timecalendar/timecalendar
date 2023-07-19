@@ -60,4 +60,4 @@ On MacOS, drag and drop the file `ci/certificates/cert.pem` in the simulator.
 
 ## Build on Android
 
-Copy the file `android/app/key.properties.sample` into `android/app/key.properties`.
+Copy the file `app/android/key.properties.sample` into `app/android/key.properties`.
