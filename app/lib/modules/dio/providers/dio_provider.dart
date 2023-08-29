@@ -5,7 +5,7 @@ import 'package:timecalendar/modules/shared/constants/environment.dart';
 final dioProvider = Provider(
   (ref) => Dio(
     BaseOptions(
-      baseUrl: Environment.mainApiUrl,
+      baseUrl: ref.read(environmentProvider).mainApiUrl,
     ),
   ),
 );

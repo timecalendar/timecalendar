@@ -50,8 +50,9 @@ class SchoolItem extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
-                      child: Image(
+                      child: FadeInImage(
                         image: NetworkImageWithRetry(school.imageUrl),
+                        placeholder: AssetImage('assets/images/school.png'),
                       ),
                     ),
                   ),

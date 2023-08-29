@@ -10,6 +10,7 @@ export 'package:timecalendar_api/src/serializers.dart';
 export 'package:timecalendar_api/src/model/date.dart';
 
 export 'package:timecalendar_api/src/api/calendars_api.dart';
+export 'package:timecalendar_api/src/api/default_api.dart';
 export 'package:timecalendar_api/src/api/schools_api.dart';
 
 export 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
@@ -29,5 +30,6 @@ export 'package:timecalendar_api/src/model/orleans_get_ical_url_from_student_num
 export 'package:timecalendar_api/src/model/school_assistant.dart';
 export 'package:timecalendar_api/src/model/school_for_list.dart';
 export 'package:timecalendar_api/src/model/school_group_item.dart';
+export 'package:timecalendar_api/src/model/send_message_dto.dart';
 export 'package:timecalendar_api/src/model/set_school_group_dto.dart';
 export 'package:timecalendar_api/src/model/sync_calendars_dto.dart';

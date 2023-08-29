@@ -13,27 +13,6 @@ server:
 nameOverride: ""
 fullnameOverride: ""
 
-redis:
-  cluster:
-    enabled: false
-  master:
-    disableCommands: []
-    readinessProbe:
-      failureThreshold: 30
-    limits:
-      memory: 1000Mi
-      cpu: 1
-    requests:
-      memory: 500Mi
-      cpu: 500m
-    persistence:
-      storageClass: nfs-client
-      size: 1Mi
-  slave:
-    persistence:
-      storageClass: nfs-client
-      size: 1Mi
-
 # TimeCalendar custom values
 apiUrl: ""
 clientUrl: ""

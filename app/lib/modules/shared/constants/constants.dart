@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:timecalendar/modules/shared/constants/environment.dart';
 import 'package:timecalendar/modules/changelog/models/changelog.dart';
 import 'package:timecalendar/modules/changelog/models/changelog_item.dart';
 
 class Constants {
-  @deprecated
-  static final mainApiUrl = Environment.oldApiUrl;
-  static final mainWebUrl = Environment.mainWebUrl;
   static const changelogs = {
     1: Changelog(version: "2.0.2", changelogItems: [
       const ChangelogItem(

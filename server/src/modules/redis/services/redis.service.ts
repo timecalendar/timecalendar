@@ -1,5 +1,5 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common"
-import { REDIS_PASSWORD, REDIS_URL } from "config/constants"
+import { REDIS_KEY_PREFIX, REDIS_URL } from "config/constants"
 import Redis, { RedisOptions } from "ioredis"
 import { isTestEnv } from "modules/shared/helpers/check-environment"
 
@@ -21,7 +21,10 @@ export class RedisService implements OnModuleDestroy {
   }
 
   newRedisInstance(options: RedisOptions = {}) {
-    const redis = new Redis(REDIS_URL, { password: REDIS_PASSWORD, ...options })
+    const redis = new Redis(REDIS_URL, {
+      keyPrefix: REDIS_KEY_PREFIX,
+      ...options,
+    })
     redis.on("error", (err) => console.error(err))
     this.clients.push(redis)
     return redis

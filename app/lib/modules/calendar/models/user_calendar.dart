@@ -55,4 +55,9 @@ class UserCalendar {
       'createdAt': createdAt.toIso8601String(),
     };
   }
+
+  @override
+  String toString() {
+    return toDbMap().toString();
+  }
 }

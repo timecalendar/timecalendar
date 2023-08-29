@@ -1,18 +1,20 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider/provider.dart' as provider;
+import 'package:timecalendar/modules/debug/screens/debug_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/changelog/screens/changelog_screen.dart';
+import 'package:timecalendar/modules/shared/constants/environment.dart';
 import 'package:timecalendar/modules/shared/utils/url_launcher.dart';
-import 'package:timecalendar/modules/shared/constants/constants.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends ConsumerWidget {
   static const routeName = '/about';
 
   @override
-  Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    var settingsProvider = provider.Provider.of<SettingsProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -36,7 +38,8 @@ class AboutScreen extends StatelessWidget {
                 text: 'Voir la politique de confidentialité',
                 outline: true,
                 onPressed: () => UrlLauncher.openUrl(
-                    Constants.mainWebUrl + '/privacy-policy'),
+                    ref.read(environmentProvider).mainWebUrl +
+                        '/privacy-policy'),
               ),
               SizedBox(height: 15),
               Text(
@@ -75,7 +78,12 @@ class AboutScreen extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: Text("Version " + settingsProvider.version),
+                    child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context)
+                              .pushNamed(DebugScreen.routeName);
+                        },
+                        child: Text("Version " + settingsProvider.version)),
                   ),
                   CustomButton(
                     text: "Changelog",

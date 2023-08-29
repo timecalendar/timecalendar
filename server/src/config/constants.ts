@@ -28,7 +28,7 @@ export const SERVICE_ACCOUNT_KEY_PATH =
 
 export const REDIS_QUEUE_NAME = env.REDIS_QUEUE ?? "timecalendar-notifier"
 export const REDIS_URL = env.REDIS_URL ?? ""
-export const REDIS_PASSWORD = env.REDIS_PASSWORD ?? ""
+export const REDIS_KEY_PREFIX = env.REDIS_KEY_PREFIX ?? ""
 
 export const API_USERNAME = env.API_USERNAME ?? ""
 export const API_TOKEN = env.API_TOKEN ?? ""
@@ -44,3 +44,7 @@ export const RUN_MIGRATIONS = isEnvTrue(env.RUN_MIGRATIONS)
 export const S3_PUBLIC_BUCKET_CLIENT_URL = env.S3_PUBLIC_BUCKET_CLIENT_URL ?? ""
 
 export const WTF_DEBUG = isEnvTrue(env.WTF_DEBUG)
+
+export const CRISP_IDENTIFIER = env.CRISP_IDENTIFIER ?? ""
+export const CRISP_KEY = env.CRISP_KEY ?? ""
+export const CRISP_WEBSITE_ID = env.CRISP_WEBSITE_ID ?? ""

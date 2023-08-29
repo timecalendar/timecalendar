@@ -9,7 +9,7 @@ import 'package:timecalendar/modules/assistant/states/assistant_finished_result.
 import 'package:timecalendar/modules/calendar/services/calendar_creation_service.dart';
 import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/shared/constants/constants.dart';
+import 'package:timecalendar/modules/shared/constants/environment.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class AssistantScreen extends HookConsumerWidget {
@@ -60,15 +60,14 @@ class AssistantScreen extends HookConsumerWidget {
           onPageFinished: (String url) {},
           onWebResourceError: (WebResourceError error) {},
           onNavigationRequest: (NavigationRequest request) {
-            if (request.url.startsWith('https://www.youtube.com/')) {
-              return NavigationDecision.prevent;
-            }
             return NavigationDecision.navigate;
           },
         ),
       )
-      ..loadRequest(Uri.parse(Constants.mainWebUrl)
+      ..loadRequest(Uri.parse(ref.read(environmentProvider).mainWebUrl)
           .replace(queryParameters: queryParameters, path: '/assistants'));
+
+    print(queryParameters);
 
     return Scaffold(
       appBar: AppBar(

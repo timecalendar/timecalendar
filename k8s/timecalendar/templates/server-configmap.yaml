@@ -14,8 +14,7 @@ data:
 
   # Redis
   REDIS_QUEUE: timecalendar
-  REDIS_URL: redis://:{{ .Values.redis.password }}@{{ include "timecalendar.fullname" . }}-redis-master:6379
-  REDIS_PASSWORD: {{ .Values.redis.password }}
+  REDIS_URL: rediss://{{ .Values.timecalendar.redis.username }}:{{ .Values.timecalendar.redis.password }}@{{ .Values.timecalendar.redis.host }}:{{ .Values.timecalendar.redis.port }}
 
   # Postgres
   DATABASE_HOST: {{ .Values.timecalendar.database.host }}
