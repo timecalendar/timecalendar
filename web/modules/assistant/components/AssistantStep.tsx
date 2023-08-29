@@ -1,4 +1,4 @@
-import { Box, Button, Stack } from "@mui/material"
+import { Box, Button, Stack, Typography } from "@mui/material"
 import { grey } from "@mui/material/colors"
 import { Container } from "@mui/system"
 import AssistantLayout from "modules/assistant/components/AssistantLayout"
@@ -19,7 +19,9 @@ const AssistantStep = ({ steps, stepIndex, onNext, onPrevious }: Props) => {
     <AssistantLayout image={image} legend={legend}>
       <Box height="100vh" sx={{ display: "flex", alignItems: "center" }}>
         <Container maxWidth="sm">
-          <h2>{title}</h2>
+          <Typography variant="h2" mb={2}>
+            {title}
+          </Typography>
           <Box mb={3}>{description}</Box>
           <Box mb={3} sx={{ display: { md: "none" } }}>
             {image ? (

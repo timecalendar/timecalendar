@@ -6,6 +6,6 @@ export const testEnvVariables = {
   DATABASE_MAIN_NAME: "timecalendar_test",
   REDIS_QUEUE: "timecalendar-queue-test",
   REDIS_URL: "redis://127.0.0.1:6370",
-  REDIS_PASSWORD: "",
+  REDIS_KEY_PREFIX: "",
   ENABLE_QUEUE: "false",
 }

@@ -68,7 +68,7 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
                     ..schoolId = schoolId
                     ..schoolName = schoolName
                     ..name = gradeName
-                    ..url = url,
+                    ..url = url.trim(),
                 ),
               );
       final token = rep.data!.token;
@@ -76,14 +76,15 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
       await ref
           .read(calendarCreationServiceProvider)
           .loadCalendarFromToken(token);
+
+      loadingDialog.closeDialog();
+
       await Future.delayed(Duration(milliseconds: 200));
+
       Navigator.of(context).pushNamedAndRemoveUntil(
           TabsScreen.routeName, (Route<dynamic> route) => false);
 
-      loadingDialog.closeDialog();
       Future.delayed(Duration(milliseconds: 200)).then((_) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-            TabsScreen.routeName, (Route<dynamic> route) => false);
         return NotificationService().subscribeDelay();
       });
     } catch (e) {
@@ -91,7 +92,9 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
       Future.delayed(Duration(milliseconds: 50)).then((_) {
         loadingDialog.closeDialog();
       });
+
       await Future.delayed(Duration(milliseconds: 200));
+
       showErrorDialog(
         context,
         "Aïe, nous n'avons pas réussi à importer votre emploi du temps. Vérifiez l'URL et réessayez. Si le problème persiste, contactez-nous.",

@@ -24,6 +24,10 @@ class UserCalendarRepository {
     await _store.delete(_db);
     await _store.add(_db, calendar.toDbMap());
   }
+
+  clearUserCalendars() async {
+    await _store.delete(_db);
+  }
 }
 
 final userCalendarRepositoryProvider =

@@ -3,8 +3,7 @@ services:
     image: nginx
     restart: always
     ports:
-      - '80:80'
-      - '443:443'
+      - '1443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ../ci/certificates:/etc/nginx/certificates

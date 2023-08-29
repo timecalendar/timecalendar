@@ -67,6 +67,7 @@ Class | Method | HTTP request | Description
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarControllerFindCalendarByToken**](doc/CalendarsApi.md#calendarcontrollerfindcalendarbytoken) | **GET** /calendars/by-token/{token} | Find a calendar by its token
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerCreateCalendar**](doc/CalendarsApi.md#calendarsynccontrollercreatecalendar) | **POST** /calendars | Create a calendar
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | Sync calendars
+[*DefaultApi*](doc/DefaultApi.md) | [**contactControllerSendMessage**](doc/DefaultApi.md#contactcontrollersendmessage) | **POST** /contact | 
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchool**](doc/SchoolsApi.md#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchools**](doc/SchoolsApi.md#schoolcontrollerfindschools) | **GET** /schools | Find list of schools
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerFindSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollerfindschoolgroups) | **GET** /schools/{schoolId}/school-group | Find school groups
@@ -94,6 +95,7 @@ Class | Method | HTTP request | Description
  - [SchoolAssistant](doc/SchoolAssistant.md)
  - [SchoolForList](doc/SchoolForList.md)
  - [SchoolGroupItem](doc/SchoolGroupItem.md)
+ - [SendMessageDto](doc/SendMessageDto.md)
  - [SetSchoolGroupDto](doc/SetSchoolGroupDto.md)
  - [SyncCalendarsDto](doc/SyncCalendarsDto.md)
 

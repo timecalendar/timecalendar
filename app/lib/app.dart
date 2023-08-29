@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timecalendar/modules/debug/screens/debug_screen.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
 import 'package:timecalendar/modules/activity/providers/activity_provider.dart';
@@ -123,7 +124,8 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
                   ChangelogScreen.routeName: (ctx) => ChangelogScreen(),
                   AddPersonalEventScreen.routeName: (ctx) =>
                       AddPersonalEventScreen(),
-                  QrCodeScreen.routeName: (ctx) => QrCodeScreen()
+                  QrCodeScreen.routeName: (ctx) => QrCodeScreen(),
+                  DebugScreen.routeName: (ctx) => DebugScreen()
                 },
               );
             },

@@ -24,6 +24,7 @@ Serializers _$serializers = (new Serializers().toBuilder()
       ..add(SchoolAssistant.serializer)
       ..add(SchoolForList.serializer)
       ..add(SchoolGroupItem.serializer)
+      ..add(SendMessageDto.serializer)
       ..add(SetSchoolGroupDto.serializer)
       ..add(SyncCalendarsDto.serializer)
       ..addBuilderFactory(
@@ -42,6 +43,9 @@ Serializers _$serializers = (new Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolGroupItem)]),
           () => new ListBuilder<SchoolGroupItem>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => new ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
           () => new ListBuilder<String>())

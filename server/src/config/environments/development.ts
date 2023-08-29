@@ -12,7 +12,7 @@ export const developmentEnvVariables = {
   SMTP_FROM: "TimeCalendar <hello@timecalendar.app>",
   REDIS_QUEUE: "timecalendar-queue-dev",
   REDIS_URL: "redis://127.0.0.1:6370",
-  REDIS_PASSWORD: "",
+  REDIS_KEY_PREFIX: "dev:",
   API_USERNAME: "timecalendar",
   API_TOKEN: "timecalendar42",
   ENABLE_QUEUE: "true",

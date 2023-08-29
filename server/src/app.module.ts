@@ -3,6 +3,7 @@ import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { dataSourceOptions } from "data-source"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
+import { ContactModule } from "modules/contact/contact.module"
 import { FetchModule } from "modules/fetch/fetch.module"
 import { FirebaseModule } from "modules/firebase/firebase.module"
 import { JobRunModule } from "modules/job-run/job-run.module"
@@ -40,6 +41,7 @@ import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
     RedisModule,
     JobRunModule,
     SchoolGroupModule,
+    ContactModule,
   ],
   controllers: [],
   providers: [],
