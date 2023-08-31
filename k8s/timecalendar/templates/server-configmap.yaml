@@ -32,3 +32,4 @@ data:
 
   API_TOKEN: {{ .Values.timecalendar.apiToken }}
 
+  S3_PUBLIC_BUCKET_CLIENT_URL: {{ .Values.timecalendar.s3PublicBucketClientUrl }}

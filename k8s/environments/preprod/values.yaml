@@ -1,6 +1,6 @@
-apiUrl: "preprod-api.timecalendar.app"
-clientUrl: "preprod.timecalendar.app"
-webUrl: "preprod-web.timecalendar.app"
+apiUrl: preprod-api.timecalendar.app
+clientUrl: preprod.timecalendar.app
+webUrl: preprod-web.timecalendar.app
 
 server:
   replicaCount: 1
@@ -11,3 +11,6 @@ web:
   replicaCount: 1
   image:
     tag: latest
+
+timecalendar:
+  s3PublicBucketClientUrl: https://timecalendar-preprod-public.fra1.digitaloceanspaces.com
