@@ -93,10 +93,10 @@ jobs:
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
 
-  deploy-preprod:
-    name: Deploy on preprod
+  deploy:
+    name: Deploy
     needs: [build-server, build-web]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' ||  github.ref == 'refs/heads/production'
     runs-on: ubuntu-latest
     steps:
 
