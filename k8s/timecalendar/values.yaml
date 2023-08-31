@@ -28,3 +28,4 @@ timecalendar:
   apiToken: ""
   smtpUrl: ""
   smtpFrom: ""
+  s3PublicBucketClientUrl: ""

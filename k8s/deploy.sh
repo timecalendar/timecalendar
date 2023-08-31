@@ -27,3 +27,4 @@ kubectl apply -f $ENVIRONMENT_PATH/sealedsecret.yaml
 helm upgrade -f $ENVIRONMENT_PATH/values.yaml -f $ENVIRONMENT_PATH/secret-values.yaml timecalendar $CURRENT_PATH/timecalendar -n $KUBE_NAMESPACE --render-subchart-notes || exit 1
 
 kubectl rollout restart -n $KUBE_NAMESPACE deployment timecalendar
+kubectl rollout status -n $KUBE_NAMESPACE deployment timecalendar
