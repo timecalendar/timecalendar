@@ -11,34 +11,29 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
 
-    - name: Load Docker Layer Caching
-      uses: satackey/action-docker-layer-caching@v0.0.11
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to image repository
+      uses: docker/login-action@v2
       with:
-        key: build-server-docker-cache-{hash}
-        restore-keys: |
-          build-server-docker-cache-
-      continue-on-error: true
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build container image
-      working-directory: ./server
-      run: docker build -t $IMAGE_NAME:${{ github.sha }} .
-
-    - name: Log in to GitHub Container Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-    - name: Push image to GitHub Container Registry
-      run: docker push $IMAGE_NAME:${{ github.sha }}
-
-    - name: Push deployable version
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: |
-        docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ env.DOCKER_TAG }}
-        docker push $IMAGE_NAME:${{ env.DOCKER_TAG }}
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: ./server
+        tags: ${{ env.SERVER_IMAGES_WITH_TAG_TO_PUSH }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        push: true
 
 
   build-web:
@@ -49,33 +44,30 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
 
-    - name: Load Docker Layer Caching
-      uses: satackey/action-docker-layer-caching@v0.0.11
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to image repository
+      uses: docker/login-action@v2
       with:
-        key: build-web-docker-cache-{hash}
-        restore-keys: |
-          build-web-docker-cache-
-      continue-on-error: true
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build container image
-      run: docker build -t $IMAGE_NAME:${{ github.sha }} -f Dockerfile.web .
-
-    - name: Log in to GitHub Container Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-    - name: Push image to GitHub Container Registry
-      run: docker push $IMAGE_NAME:${{ github.sha }}
-
-    - name: Push deployable version
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      run: |
-        docker tag $IMAGE_NAME:${{ github.sha }} $IMAGE_NAME:${{ env.DOCKER_TAG }}
-        docker push $IMAGE_NAME:${{ env.DOCKER_TAG }}
+    - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./Dockerfile.web
+        tags: ${{ env.WEB_IMAGES_WITH_TAG_TO_PUSH }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        push: true
 
   test:
     name: Run tests
