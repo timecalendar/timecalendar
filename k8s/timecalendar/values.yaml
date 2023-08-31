@@ -2,13 +2,14 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+environment: ""
+
 server:
   replicaCount: 1
-  image:
-    tag: ""
-  web:
-    replicaCount: 1
-    tag: ""
+  tag: ""
+web:
+  replicaCount: 1
+  tag: ""
 
 nameOverride: ""
 fullnameOverride: ""
@@ -25,6 +26,7 @@ timecalendar:
     username: ""
     database: ""
     password: ""
+  apiUsername: ""
   apiToken: ""
   smtpUrl: ""
   smtpFrom: ""

@@ -1,0 +1,13 @@
+environment: production
+apiUrl: api-v2.timecalendar.app
+clientUrl: timecalendar.app
+webUrl: v2.timecalendar.app
+
+server:
+  replicaCount: 1
+
+web:
+  replicaCount: 1
+
+timecalendar:
+  s3PublicBucketClientUrl: https://timecalendar-public.fra1.digitaloceanspaces.com
