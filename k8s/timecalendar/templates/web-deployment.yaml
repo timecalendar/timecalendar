@@ -20,7 +20,7 @@ spec:
       # {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "ghcr.io/timecalendar/timecalendar-web:{{ .Values.web.image.tag | default .Chart.AppVersion }}"
+          image: "ghcr.io/timecalendar/timecalendar-web:{{ .Values.web.tag | default .Chart.AppVersion }}"
           imagePullPolicy: Always
           ports:
             - name: http

@@ -15,6 +15,7 @@ data:
   # Redis
   REDIS_QUEUE: timecalendar
   REDIS_URL: rediss://{{ .Values.timecalendar.redis.username }}:{{ .Values.timecalendar.redis.password }}@{{ .Values.timecalendar.redis.host }}:{{ .Values.timecalendar.redis.port }}
+  REDIS_KEY_PREFIX: {{ .Values.environment }}
 
   # Postgres
   DATABASE_HOST: {{ .Values.timecalendar.database.host }}
@@ -30,6 +31,7 @@ data:
   SMTP_FROM: {{ .Values.timecalendar.smtpFrom }}
   SMTP_URL: {{ .Values.timecalendar.smtpUrl }}
 
+  API_USERNAME: {{ .Values.timecalendar.apiUsername }}
   API_TOKEN: {{ .Values.timecalendar.apiToken }}
 
   S3_PUBLIC_BUCKET_CLIENT_URL: {{ .Values.timecalendar.s3PublicBucketClientUrl }}
