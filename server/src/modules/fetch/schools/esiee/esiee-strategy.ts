@@ -14,7 +14,7 @@ const esieeStrategy = new SchoolStrategy({
     esieeGetEventTypePipe,
     esieeParseDescriptionPipe,
     sortLocationPipe,
-    ParseTeachersPipe(/^[A-Z- ]+\ [A-Z-]+\.$/),
+    ParseTeachersPipe(/^[A-Z- ]+ [A-Z-]+\.$/),
   ],
 })
 

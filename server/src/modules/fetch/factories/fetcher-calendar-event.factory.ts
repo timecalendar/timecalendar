@@ -6,7 +6,7 @@ import {
 import { v4 } from "uuid"
 
 export const fetcherCalendarEventFactory = Factory.define<FetcherCalendarEvent>(
-  ({}) => ({
+  () => ({
     uid: v4(),
     title: "Cours",
     allDay: false,
