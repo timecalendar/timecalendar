@@ -3,7 +3,7 @@ import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { EventType } from "modules/fetch/models/event.model"
 import { v4 } from "uuid"
 
-export const calendarEventFactory = Factory.define<CalendarEvent>(({}) => ({
+export const calendarEventFactory = Factory.define<CalendarEvent>(() => ({
   uid: v4(),
   title: "Cours",
   allDay: false,

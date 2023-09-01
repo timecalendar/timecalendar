@@ -37,8 +37,6 @@ const loadFixtures = async (
       const entity = await builder.build(fixture)
       await dataSource.getRepository(entity.constructor.name).save(entity)
     }
-  } catch (err) {
-    throw err
   } finally {
     if (dataSource) {
       await dataSource.destroy()

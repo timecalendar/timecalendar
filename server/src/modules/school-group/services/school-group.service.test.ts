@@ -1,5 +1,4 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
-import dataSource from "data-source"
 import { schoolGroupFactory } from "modules/school-group/factories/school-group.factory"
 import { SchoolGroup } from "modules/school-group/models/school-group.entity"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"

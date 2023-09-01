@@ -1,5 +1,5 @@
 import { Type } from "class-transformer"
-import { IsObject, IsString, ValidateNested } from "class-validator"
+import { IsString, ValidateNested } from "class-validator"
 import { SchoolGroupItem } from "modules/school-group/models/school-group-item"
 import { School } from "modules/school/models/school.entity"
 import {

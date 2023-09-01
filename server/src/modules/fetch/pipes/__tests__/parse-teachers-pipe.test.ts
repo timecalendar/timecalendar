@@ -47,7 +47,7 @@ describe("parseTeachersPipe", () => {
       tags: [],
       fields: {},
     }
-    const pipe = ParseTeachersPipe(/^[A-Z- ]+\ [A-Z-]+\.$/)
+    const pipe = ParseTeachersPipe(/^[A-Z- ]+ [A-Z-]+\.$/)
 
     const newEvent = pipe(event)
 

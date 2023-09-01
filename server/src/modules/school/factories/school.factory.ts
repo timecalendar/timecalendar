@@ -16,6 +16,6 @@ export const schoolFactory = factoryBuilder(() => [
         siteUrl: "https://gaming-academia.com",
         imageUrl: "",
         visible: true,
-      } as School),
+      }) as School,
   ),
 ])

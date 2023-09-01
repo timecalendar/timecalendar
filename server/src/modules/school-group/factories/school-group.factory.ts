@@ -15,6 +15,6 @@ export const schoolGroupFactory = factoryBuilder(() => [
         groups: [],
         icalUrl: "http://timecalendar.app/ical?project=1",
         school: associations.school || factoryToEntity(schoolFactory()),
-      } as PartialForFactory<SchoolGroup> as SchoolGroup),
+      }) as PartialForFactory<SchoolGroup> as SchoolGroup,
   ),
 ])

@@ -7,9 +7,16 @@ import { CalendarModule } from "modules/calendar/calendar.module"
 import { FetchModule } from "modules/fetch/fetch.module"
 import { QueueModule } from "modules/queue/queue.module"
 import { SchoolModule } from "modules/school/school.module"
+import { SubjectModule } from "modules/subject/subject.module"
 
 @Module({
-  imports: [SchoolModule, FetchModule, CalendarModule, QueueModule],
+  imports: [
+    SchoolModule,
+    FetchModule,
+    CalendarModule,
+    QueueModule,
+    SubjectModule,
+  ],
   providers: [CalendarSyncService, CalendarSyncAllService, SyncCalendarsJob],
   controllers: [CalendarSyncController],
 })

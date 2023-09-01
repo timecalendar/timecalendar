@@ -11,6 +11,6 @@ export const calendarContentFactory = factoryBuilder(() => [
       ({
         calendar: associations.calendar,
         events: [],
-      } as Partial<CalendarContent> as CalendarContent),
+      }) as Partial<CalendarContent> as CalendarContent,
   ),
 ])

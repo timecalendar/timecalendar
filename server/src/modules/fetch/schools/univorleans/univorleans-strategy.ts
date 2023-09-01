@@ -3,7 +3,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univorleansStrategy = new SchoolStrategy({
   school: "univorleans",
-  eventPipes: [ParseTeachersPipe(/^[A-Z \*-]+$/)],
+  eventPipes: [ParseTeachersPipe(/^[A-Z *-]+$/)],
 })
 
 export default univorleansStrategy

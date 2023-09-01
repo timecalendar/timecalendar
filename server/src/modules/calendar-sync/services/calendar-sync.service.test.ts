@@ -11,6 +11,7 @@ import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
+import { CalendarSubject } from "modules/subject/models/calendar-subject.entity"
 import createTestApp from "test-utils/create-test-app"
 import { assertChanges } from "test-utils/typeorm/assert-changes"
 import { DataSource } from "typeorm"
@@ -36,7 +37,7 @@ describe("CalendarSyncService", () => {
 
   beforeEach(() => {
     events = [fetcherCalendarEventFactory.build()]
-    mockFetchService.fetchEvents = jest.fn(() => events)
+    mockFetchService.fetchEvents = jest.fn(async () => events)
   })
 
   describe("createCalendar", () => {
@@ -147,7 +148,12 @@ describe("CalendarSyncService", () => {
     })
 
     it("syncs events for an existing calendar", async () => {
-      events = [fetcherCalendarEventFactory.build({ uid: "new-event" })]
+      events = [
+        fetcherCalendarEventFactory.build({
+          uid: "new-event",
+          title: "Physics",
+        }),
+      ]
 
       await service.sync(calendar)
 
@@ -160,6 +166,17 @@ describe("CalendarSyncService", () => {
       expect(content.events[0].uid).toBe("new-event")
       expect(content.events[0].startsAt).toEqual(events[0].start)
       expect(content.events[0].endsAt).toEqual(events[0].end)
+
+      const subject = await dataSource
+        .getRepository(CalendarSubject)
+        .findOneByOrFail({ calendar: { id: calendar.id } })
+
+      expect(subject.subjects).toMatchObject([
+        {
+          name: "physics",
+          color: expect.stringMatching(/^#[0-9a-f]{6}$/),
+        },
+      ])
     })
 
     it("creates a new calendar with events", async () => {
@@ -183,6 +200,46 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+    })
+
+    it("does not create a calendar when there is an error", async () => {
+      mockFetchService.fetchEvents = jest.fn(async () => {
+        throw new Error("Something went wrong")
+      })
+
+      calendar = calendarFactory().build()
+
+      await assertChanges(
+        dataSource,
+        [
+          [Calendar, 0],
+          [CalendarContent, 0],
+        ],
+        async () => {
+          const promise = service.sync(calendar)
+
+          await expect(promise).rejects.toThrow(
+            new Error("Something went wrong"),
+          )
+        },
+      )
+    })
+
+    it("updates the calendar lastUpdatedAt when there is an error", async () => {
+      MockDate.set(new Date("2022-01-01T00:00:01.000Z"))
+      mockFetchService.fetchEvents = jest.fn(async () => {
+        throw new Error("Something went wrong")
+      })
+
+      const promise = service.sync(calendar)
+
+      await expect(promise).rejects.toThrow(new Error("Something went wrong"))
+
+      const updatedCalendar = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+
+      expect(updatedCalendar.lastUpdatedAt).not.toEqual(calendar.lastUpdatedAt)
     })
   })
 })
