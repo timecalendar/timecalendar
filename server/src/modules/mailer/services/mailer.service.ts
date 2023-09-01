@@ -51,6 +51,8 @@ export class MailerService {
     try {
       const rep = await this.transporter.sendMail(options)
       return rep
-    } catch (err) {}
+    } catch (err) {
+      // error
+    }
   }
 }

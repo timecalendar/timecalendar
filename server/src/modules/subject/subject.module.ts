@@ -1,8 +1,12 @@
 import { Module } from "@nestjs/common"
+import { TypeOrmModule } from "@nestjs/typeorm"
+import { CalendarSubject } from "modules/subject/models/calendar-subject.entity"
+import { CalendarSubjectRepository } from "modules/subject/repositories/calendar-subject.repository"
 import { SubjectService } from "modules/subject/services/subject.service"
 
 @Module({
-  providers: [SubjectService],
+  imports: [TypeOrmModule.forFeature([CalendarSubject])],
+  providers: [CalendarSubjectRepository, SubjectService],
   exports: [SubjectService],
 })
 export class SubjectModule {}
