@@ -20,6 +20,9 @@ export class CalendarSubject {
   @JoinColumn()
   calendar: Calendar
 
+  @Column()
+  calendarId: string
+
   @Column("json")
   subjects: EventSubject[]
 

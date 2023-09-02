@@ -3,13 +3,20 @@ import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { CalendarEventForPublic } from "modules/calendar/models/dto/calendar-event-for-public.dto"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 
+export const DEFAULT_COLOR = "#ff80ff"
+
+type ForPublicParams = {
+  calendarEvent: CalendarEvent
+  color: string | null
+}
+
 @Injectable()
 export class CalendarEventHelper {
-  forPublic(calendarEvent: CalendarEvent): CalendarEventForPublic {
+  forPublic({ calendarEvent, color }: ForPublicParams): CalendarEventForPublic {
     return {
       ...calendarEvent,
-      color: "#ff00ff",
-      groupColor: "#ff00ff",
+      color: color ?? DEFAULT_COLOR,
+      groupColor: DEFAULT_COLOR,
     }
   }
 

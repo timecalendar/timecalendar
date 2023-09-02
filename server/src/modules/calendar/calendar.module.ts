@@ -8,9 +8,13 @@ import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { CalendarService } from "modules/calendar/services/calendar.service"
+import { SubjectModule } from "modules/subject/subject.module"
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Calendar, CalendarContent])],
+  imports: [
+    TypeOrmModule.forFeature([Calendar, CalendarContent]),
+    SubjectModule,
+  ],
   providers: [
     CalendarService,
     CalendarRepository,

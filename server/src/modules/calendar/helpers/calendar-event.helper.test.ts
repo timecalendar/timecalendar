@@ -19,12 +19,29 @@ describe("CalendarEventHelper", () => {
     it("returns a calendar event for public", async () => {
       const event = calendarEventFactory.build()
 
-      const result = helper.forPublic(event)
+      const result = helper.forPublic({
+        calendarEvent: event,
+        color: "#ff00ff",
+      })
 
       expect(result.uid).toBe(event.uid)
       expect(result.title).toBe(event.title)
       expect(result.color).toBe("#ff00ff")
-      expect(result.groupColor).toBe("#ff00ff")
+      expect(result.groupColor).toBe("#ff80ff")
+    })
+
+    it("returns the default color", async () => {
+      const event = calendarEventFactory.build()
+
+      const result = helper.forPublic({
+        calendarEvent: event,
+        color: null,
+      })
+
+      expect(result.uid).toBe(event.uid)
+      expect(result.title).toBe(event.title)
+      expect(result.color).toBe("#ff80ff")
+      expect(result.groupColor).toBe("#ff80ff")
     })
   })
 

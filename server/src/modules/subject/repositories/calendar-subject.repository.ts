@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { CalendarSubject } from "modules/subject/models/calendar-subject.entity"
 import { EventSubject } from "modules/subject/models/event-subject.model"
-import { Repository } from "typeorm"
+import { In, Repository } from "typeorm"
 
 @Injectable()
 export class CalendarSubjectRepository {
@@ -11,13 +11,34 @@ export class CalendarSubjectRepository {
     private readonly repository: Repository<CalendarSubject>,
   ) {}
 
-  async findSubjects(calendarId: string) {
-    const calendarSubject = await this.repository.findOne({
-      where: { calendar: { id: calendarId } },
+  async findSubjectsByCalendarIds(
+    calendarIds: string[],
+  ): Promise<Record<string, EventSubject[]>> {
+    const calendarSubjects = await this.repository.find({
+      where: { calendar: { id: In(calendarIds) } },
     })
-    if (!calendarSubject) return []
 
-    return calendarSubject.subjects
+    return calendarIds.reduce(
+      (acc, calendarId) => {
+        const calendarSubject = calendarSubjects.find(
+          (calendarSubject) => calendarSubject.calendarId === calendarId,
+        )
+
+        return {
+          ...acc,
+          [calendarId]: calendarSubject ? calendarSubject.subjects : [],
+        }
+      },
+      {} as Record<string, EventSubject[]>,
+    )
+  }
+
+  async findSubjects(calendarId: string) {
+    const subjectsByCalendarIds = await this.findSubjectsByCalendarIds([
+      calendarId,
+    ])
+
+    return subjectsByCalendarIds[calendarId]
   }
 
   async updateSubjects(calendarId: string, subjects: EventSubject[]) {

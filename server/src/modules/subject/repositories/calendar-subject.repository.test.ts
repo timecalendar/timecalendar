@@ -13,6 +13,53 @@ describe("CalendarSubjectRepository", () => {
     repository = app.get(CalendarSubjectRepository)
   })
 
+  describe("findSubjectsByCalendarIds", () => {
+    it("finds the event subjects by calendar ids", async () => {
+      const calendarSubject = await calendarSubjectFactory().create({
+        subjects: [{ name: "Maths", color: "#ff00ff" }],
+      })
+      const otherCalendarSubject = await calendarSubjectFactory().create({
+        subjects: [{ name: "Physics", color: "#ff0000" }],
+      })
+
+      const result = await repository.findSubjectsByCalendarIds([
+        calendarSubject.calendarId,
+        otherCalendarSubject.calendarId,
+      ])
+
+      expect(result[calendarSubject.calendarId].length).toBe(1)
+      expect(result[calendarSubject.calendarId][0]).toMatchObject({
+        name: "Maths",
+        color: "#ff00ff",
+      })
+
+      expect(result[otherCalendarSubject.calendarId].length).toBe(1)
+      expect(result[otherCalendarSubject.calendarId][0]).toMatchObject({
+        name: "Physics",
+        color: "#ff0000",
+      })
+    })
+
+    it("returns an empty array if the calendar has no subjects", async () => {
+      const calendarSubject = await calendarSubjectFactory().create({
+        subjects: [{ name: "Maths", color: "#ff00ff" }],
+      })
+      const calendarWithoutSubject = await calendarFactory().create()
+      const result = await repository.findSubjectsByCalendarIds([
+        calendarSubject.calendarId,
+        calendarWithoutSubject.id,
+      ])
+
+      expect(result[calendarSubject.calendarId].length).toBe(1)
+      expect(result[calendarSubject.calendarId][0]).toMatchObject({
+        name: "Maths",
+        color: "#ff00ff",
+      })
+
+      expect(result[calendarWithoutSubject.id].length).toBe(0)
+    })
+  })
+
   describe("findSubjects", () => {
     it("finds the event subjects by calendar id", async () => {
       const calendarSubject = await calendarSubjectFactory().create({
