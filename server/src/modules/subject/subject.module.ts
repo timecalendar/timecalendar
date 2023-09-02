@@ -7,6 +7,6 @@ import { SubjectService } from "modules/subject/services/subject.service"
 @Module({
   imports: [TypeOrmModule.forFeature([CalendarSubject])],
   providers: [CalendarSubjectRepository, SubjectService],
-  exports: [SubjectService],
+  exports: [CalendarSubjectRepository, SubjectService],
 })
 export class SubjectModule {}
