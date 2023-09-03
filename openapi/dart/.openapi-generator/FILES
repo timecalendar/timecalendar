@@ -4,7 +4,6 @@ README.md
 analysis_options.yaml
 doc/CalendarEventCustomFields.md
 doc/CalendarEventForPublic.md
-doc/CalendarEventForPublicFields.md
 doc/CalendarForPublic.md
 doc/CalendarWithContent.md
 doc/CreateCalendarDto.md
@@ -24,7 +23,7 @@ doc/SetSchoolGroupDto.md
 doc/SyncCalendarsDto.md
 lib/src/api.dart
 lib/src/api/calendars_api.dart
-lib/src/api/default_api.dart
+lib/src/api/contact_api.dart
 lib/src/api/schools_api.dart
 lib/src/api_util.dart
 lib/src/auth/api_key_auth.dart
@@ -35,7 +34,6 @@ lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
 lib/src/model/calendar_event_custom_fields.dart
 lib/src/model/calendar_event_for_public.dart
-lib/src/model/calendar_event_for_public_fields.dart
 lib/src/model/calendar_for_public.dart
 lib/src/model/calendar_with_content.dart
 lib/src/model/create_calendar_dto.dart

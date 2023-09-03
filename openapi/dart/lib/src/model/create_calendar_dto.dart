@@ -2,6 +2,7 @@
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
 
+// ignore_for_file: unused_element
 import 'package:built_value/json_object.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
@@ -16,6 +17,7 @@ part 'create_calendar_dto.g.dart';
 /// * [schoolName]
 /// * [name]
 /// * [customData]
+@BuiltValue()
 abstract class CreateCalendarDto
     implements Built<CreateCalendarDto, CreateCalendarDtoBuilder> {
   @BuiltValueField(wireName: r'url')
@@ -35,11 +37,11 @@ abstract class CreateCalendarDto
 
   CreateCalendarDto._();
 
-  @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(CreateCalendarDtoBuilder b) => b;
-
   factory CreateCalendarDto([void updates(CreateCalendarDtoBuilder b)]) =
       _$CreateCalendarDto;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(CreateCalendarDtoBuilder b) => b..customData = null;
 
   @BuiltValueSerializer(custom: true)
   static Serializer<CreateCalendarDto> get serializer =>
@@ -47,90 +49,137 @@ abstract class CreateCalendarDto
 }
 
 class _$CreateCalendarDtoSerializer
-    implements StructuredSerializer<CreateCalendarDto> {
+    implements PrimitiveSerializer<CreateCalendarDto> {
   @override
   final Iterable<Type> types = const [CreateCalendarDto, _$CreateCalendarDto];
 
   @override
   final String wireName = r'CreateCalendarDto';
 
-  @override
-  Iterable<Object?> serialize(Serializers serializers, CreateCalendarDto object,
-      {FullType specifiedType = FullType.unspecified}) {
-    final result = <Object?>[];
-    result
-      ..add(r'url')
-      ..add(serializers.serialize(object.url,
-          specifiedType: const FullType(String)));
+  Iterable<Object?> _serializeProperties(
+    Serializers serializers,
+    CreateCalendarDto object, {
+    FullType specifiedType = FullType.unspecified,
+  }) sync* {
+    yield r'url';
+    yield serializers.serialize(
+      object.url,
+      specifiedType: const FullType(String),
+    );
     if (object.schoolId != null) {
-      result
-        ..add(r'schoolId')
-        ..add(serializers.serialize(object.schoolId,
-            specifiedType: const FullType(String)));
+      yield r'schoolId';
+      yield serializers.serialize(
+        object.schoolId,
+        specifiedType: const FullType(String),
+      );
     }
     if (object.schoolName != null) {
-      result
-        ..add(r'schoolName')
-        ..add(serializers.serialize(object.schoolName,
-            specifiedType: const FullType(String)));
+      yield r'schoolName';
+      yield serializers.serialize(
+        object.schoolName,
+        specifiedType: const FullType(String),
+      );
     }
     if (object.name != null) {
-      result
-        ..add(r'name')
-        ..add(serializers.serialize(object.name,
-            specifiedType: const FullType(String)));
+      yield r'name';
+      yield serializers.serialize(
+        object.name,
+        specifiedType: const FullType(String),
+      );
     }
-    result
-      ..add(r'customData')
-      ..add(object.customData == null
-          ? null
-          : serializers.serialize(object.customData,
-              specifiedType: const FullType.nullable(JsonObject)));
-    return result;
+    yield r'customData';
+    yield object.customData == null
+        ? null
+        : serializers.serialize(
+            object.customData,
+            specifiedType: const FullType.nullable(JsonObject),
+          );
+  }
+
+  @override
+  Object serialize(
+    Serializers serializers,
+    CreateCalendarDto object, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
+    return _serializeProperties(serializers, object,
+            specifiedType: specifiedType)
+        .toList();
+  }
+
+  void _deserializeProperties(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+    required List<Object?> serializedList,
+    required CreateCalendarDtoBuilder result,
+    required List<Object?> unhandled,
+  }) {
+    for (var i = 0; i < serializedList.length; i += 2) {
+      final key = serializedList[i] as String;
+      final value = serializedList[i + 1];
+      switch (key) {
+        case r'url':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.url = valueDes;
+          break;
+        case r'schoolId':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.schoolId = valueDes;
+          break;
+        case r'schoolName':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.schoolName = valueDes;
+          break;
+        case r'name':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.name = valueDes;
+          break;
+        case r'customData':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType.nullable(JsonObject),
+          ) as JsonObject?;
+          if (valueDes == null) continue;
+          result.customData = valueDes;
+          break;
+        default:
+          unhandled.add(key);
+          unhandled.add(value);
+          break;
+      }
+    }
   }
 
   @override
   CreateCalendarDto deserialize(
-      Serializers serializers, Iterable<Object?> serialized,
-      {FullType specifiedType = FullType.unspecified}) {
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
     final result = CreateCalendarDtoBuilder();
-
-    final iterator = serialized.iterator;
-    while (iterator.moveNext()) {
-      final key = iterator.current as String;
-      iterator.moveNext();
-      final Object? value = iterator.current;
-
-      switch (key) {
-        case r'url':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.url = valueDes;
-          break;
-        case r'schoolId':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.schoolId = valueDes;
-          break;
-        case r'schoolName':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.schoolName = valueDes;
-          break;
-        case r'name':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.name = valueDes;
-          break;
-        case r'customData':
-          final valueDes = serializers.deserialize(value,
-                  specifiedType: const FullType.nullable(JsonObject))
-              as JsonObject?;
-          if (valueDes == null) continue;
-          result.customData = valueDes;
-          break;
-      }
-    }
+    final serializedList = (serialized as Iterable<Object?>).toList();
+    final unhandled = <Object?>[];
+    _deserializeProperties(
+      serializers,
+      serialized,
+      specifiedType: specifiedType,
+      serializedList: serializedList,
+      unhandled: unhandled,
+      result: result,
+    );
     return result.build();
   }
 }

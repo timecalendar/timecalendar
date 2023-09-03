@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **schoolId** | **String** |  | [optional] 
 **schoolName** | **String** |  | [optional] 
 **name** | **String** |  | [optional] 
-**customData** | [**JsonObject**](JsonObject.md) |  | 
+**customData** | [**JsonObject**](.md) |  | [default to null]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

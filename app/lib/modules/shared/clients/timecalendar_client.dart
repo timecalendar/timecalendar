@@ -12,6 +12,7 @@ class ApiClient {
 
   SchoolsApi schoolsApi() => this._api.getSchoolsApi();
   CalendarsApi calendarsApi() => this._api.getCalendarsApi();
+  ContactApi contactApi() => this._api.getContactApi();
 }
 
 final apiClientProvider = Provider((ref) => ApiClient(ref));

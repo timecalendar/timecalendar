@@ -9,14 +9,14 @@ import 'package:dio/dio.dart';
 
 import 'package:timecalendar_api/src/model/send_message_dto.dart';
 
-class DefaultApi {
+class ContactApi {
   final Dio _dio;
 
   final Serializers _serializers;
 
-  const DefaultApi(this._dio, this._serializers);
+  const ContactApi(this._dio, this._serializers);
 
-  /// sendMessage
+  /// Contact the developers
   ///
   ///
   /// Parameters:
@@ -29,7 +29,7 @@ class DefaultApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future]
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<void>> sendMessage({
     required SendMessageDto sendMessageDto,
     CancelToken? cancelToken,
@@ -59,14 +59,15 @@ class DefaultApi {
       const _type = FullType(SendMessageDto);
       _bodyData = _serializers.serialize(sendMessageDto, specifiedType: _type);
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _options.compose(
           _dio.options,
           _path,
         ),
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     final _response = await _dio.request<Object>(

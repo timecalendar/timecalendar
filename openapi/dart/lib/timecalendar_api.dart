@@ -10,12 +10,11 @@ export 'package:timecalendar_api/src/serializers.dart';
 export 'package:timecalendar_api/src/model/date.dart';
 
 export 'package:timecalendar_api/src/api/calendars_api.dart';
-export 'package:timecalendar_api/src/api/default_api.dart';
+export 'package:timecalendar_api/src/api/contact_api.dart';
 export 'package:timecalendar_api/src/api/schools_api.dart';
 
 export 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
 export 'package:timecalendar_api/src/model/calendar_event_for_public.dart';
-export 'package:timecalendar_api/src/model/calendar_event_for_public_fields.dart';
 export 'package:timecalendar_api/src/model/calendar_for_public.dart';
 export 'package:timecalendar_api/src/model/calendar_with_content.dart';
 export 'package:timecalendar_api/src/model/create_calendar_dto.dart';

@@ -13,13 +13,15 @@
  */
 
 
-import { Configuration } from './configuration';
-import globalAxios, { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { Configuration } from './configuration';
+import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common';
+import type { RequestArgs } from './base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from './base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
 
 /**
  * 
@@ -132,10 +134,10 @@ export interface CalendarEventForPublic {
     'tags': Array<EventTag>;
     /**
      * 
-     * @type {CalendarEventForPublicFields}
+     * @type {CalendarEventCustomFields}
      * @memberof CalendarEventForPublic
      */
-    'fields': CalendarEventForPublicFields | null;
+    'fields': CalendarEventCustomFields | null;
     /**
      * 
      * @type {string}
@@ -143,37 +145,8 @@ export interface CalendarEventForPublic {
      */
     'exportedAt': string;
 }
-/**
- * 
- * @export
- * @interface CalendarEventForPublicFields
- */
-export interface CalendarEventForPublicFields {
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CalendarEventForPublicFields
-     */
-    'canceled'?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublicFields
-     */
-    'shortDescription'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublicFields
-     */
-    'subject'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublicFields
-     */
-    'groupColor'?: string;
-}
+
+
 /**
  * 
  * @export
@@ -861,14 +834,16 @@ export class CalendarsApi extends BaseAPI {
 }
 
 
+
 /**
- * DefaultApi - axios parameter creator
+ * ContactApi - axios parameter creator
  * @export
  */
-export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
+export const ContactApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Contact the developers
          * @param {SendMessageDto} sendMessageDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -906,14 +881,15 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 };
 
 /**
- * DefaultApi - functional programming interface
+ * ContactApi - functional programming interface
  * @export
  */
-export const DefaultApiFp = function(configuration?: Configuration) {
-    const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
+export const ContactApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = ContactApiAxiosParamCreator(configuration)
     return {
         /**
          * 
+         * @summary Contact the developers
          * @param {SendMessageDto} sendMessageDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -926,14 +902,15 @@ export const DefaultApiFp = function(configuration?: Configuration) {
 };
 
 /**
- * DefaultApi - factory interface
+ * ContactApi - factory interface
  * @export
  */
-export const DefaultApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
-    const localVarFp = DefaultApiFp(configuration)
+export const ContactApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = ContactApiFp(configuration)
     return {
         /**
          * 
+         * @summary Contact the developers
          * @param {SendMessageDto} sendMessageDto 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -945,23 +922,25 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
 };
 
 /**
- * DefaultApi - object-oriented interface
+ * ContactApi - object-oriented interface
  * @export
- * @class DefaultApi
+ * @class ContactApi
  * @extends {BaseAPI}
  */
-export class DefaultApi extends BaseAPI {
+export class ContactApi extends BaseAPI {
     /**
      * 
+     * @summary Contact the developers
      * @param {SendMessageDto} sendMessageDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof DefaultApi
+     * @memberof ContactApi
      */
     public sendMessage(sendMessageDto: SendMessageDto, options?: AxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).sendMessage(sendMessageDto, options).then((request) => request(this.axios, this.basePath));
+        return ContactApiFp(this.configuration).sendMessage(sendMessageDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
+
 
 
 /**
@@ -1415,5 +1394,6 @@ export class SchoolsApi extends BaseAPI {
         return SchoolsApiFp(this.configuration).getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
+
 
 

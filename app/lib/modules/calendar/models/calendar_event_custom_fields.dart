@@ -1,4 +1,4 @@
-import 'package:timecalendar_api/timecalendar_api.dart';
+import 'package:timecalendar_api/timecalendar_api.dart' as api;
 
 class CalendarEventCustomFields {
   bool? canceled;
@@ -13,7 +13,7 @@ class CalendarEventCustomFields {
     this.groupColor,
   });
 
-  CalendarEventCustomFields.fromApi(CalendarEventForPublicFields fields)
+  CalendarEventCustomFields.fromApi(api.CalendarEventCustomFields fields)
       : canceled = fields.canceled,
         shortDescription = fields.shortDescription,
         subject = fields.subject,

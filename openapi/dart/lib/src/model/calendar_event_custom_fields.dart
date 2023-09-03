@@ -2,6 +2,7 @@
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
 
+// ignore_for_file: unused_element
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -14,6 +15,7 @@ part 'calendar_event_custom_fields.g.dart';
 /// * [shortDescription]
 /// * [subject]
 /// * [groupColor]
+@BuiltValue()
 abstract class CalendarEventCustomFields
     implements
         Built<CalendarEventCustomFields, CalendarEventCustomFieldsBuilder> {
@@ -31,12 +33,12 @@ abstract class CalendarEventCustomFields
 
   CalendarEventCustomFields._();
 
-  @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(CalendarEventCustomFieldsBuilder b) => b;
-
   factory CalendarEventCustomFields(
           [void updates(CalendarEventCustomFieldsBuilder b)]) =
       _$CalendarEventCustomFields;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(CalendarEventCustomFieldsBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
   static Serializer<CalendarEventCustomFields> get serializer =>
@@ -44,7 +46,7 @@ abstract class CalendarEventCustomFields
 }
 
 class _$CalendarEventCustomFieldsSerializer
-    implements StructuredSerializer<CalendarEventCustomFields> {
+    implements PrimitiveSerializer<CalendarEventCustomFields> {
   @override
   final Iterable<Type> types = const [
     CalendarEventCustomFields,
@@ -54,73 +56,117 @@ class _$CalendarEventCustomFieldsSerializer
   @override
   final String wireName = r'CalendarEventCustomFields';
 
-  @override
-  Iterable<Object?> serialize(
-      Serializers serializers, CalendarEventCustomFields object,
-      {FullType specifiedType = FullType.unspecified}) {
-    final result = <Object?>[];
+  Iterable<Object?> _serializeProperties(
+    Serializers serializers,
+    CalendarEventCustomFields object, {
+    FullType specifiedType = FullType.unspecified,
+  }) sync* {
     if (object.canceled != null) {
-      result
-        ..add(r'canceled')
-        ..add(serializers.serialize(object.canceled,
-            specifiedType: const FullType(bool)));
+      yield r'canceled';
+      yield serializers.serialize(
+        object.canceled,
+        specifiedType: const FullType(bool),
+      );
     }
     if (object.shortDescription != null) {
-      result
-        ..add(r'shortDescription')
-        ..add(serializers.serialize(object.shortDescription,
-            specifiedType: const FullType(String)));
+      yield r'shortDescription';
+      yield serializers.serialize(
+        object.shortDescription,
+        specifiedType: const FullType(String),
+      );
     }
     if (object.subject != null) {
-      result
-        ..add(r'subject')
-        ..add(serializers.serialize(object.subject,
-            specifiedType: const FullType(String)));
+      yield r'subject';
+      yield serializers.serialize(
+        object.subject,
+        specifiedType: const FullType(String),
+      );
     }
     if (object.groupColor != null) {
-      result
-        ..add(r'groupColor')
-        ..add(serializers.serialize(object.groupColor,
-            specifiedType: const FullType(String)));
+      yield r'groupColor';
+      yield serializers.serialize(
+        object.groupColor,
+        specifiedType: const FullType(String),
+      );
     }
-    return result;
+  }
+
+  @override
+  Object serialize(
+    Serializers serializers,
+    CalendarEventCustomFields object, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
+    return _serializeProperties(serializers, object,
+            specifiedType: specifiedType)
+        .toList();
+  }
+
+  void _deserializeProperties(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+    required List<Object?> serializedList,
+    required CalendarEventCustomFieldsBuilder result,
+    required List<Object?> unhandled,
+  }) {
+    for (var i = 0; i < serializedList.length; i += 2) {
+      final key = serializedList[i] as String;
+      final value = serializedList[i + 1];
+      switch (key) {
+        case r'canceled':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(bool),
+          ) as bool;
+          result.canceled = valueDes;
+          break;
+        case r'shortDescription':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.shortDescription = valueDes;
+          break;
+        case r'subject':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.subject = valueDes;
+          break;
+        case r'groupColor':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.groupColor = valueDes;
+          break;
+        default:
+          unhandled.add(key);
+          unhandled.add(value);
+          break;
+      }
+    }
   }
 
   @override
   CalendarEventCustomFields deserialize(
-      Serializers serializers, Iterable<Object?> serialized,
-      {FullType specifiedType = FullType.unspecified}) {
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
     final result = CalendarEventCustomFieldsBuilder();
-
-    final iterator = serialized.iterator;
-    while (iterator.moveNext()) {
-      final key = iterator.current as String;
-      iterator.moveNext();
-      final Object? value = iterator.current;
-
-      switch (key) {
-        case r'canceled':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(bool)) as bool;
-          result.canceled = valueDes;
-          break;
-        case r'shortDescription':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.shortDescription = valueDes;
-          break;
-        case r'subject':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.subject = valueDes;
-          break;
-        case r'groupColor':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.groupColor = valueDes;
-          break;
-      }
-    }
+    final serializedList = (serialized as Iterable<Object?>).toList();
+    final unhandled = <Object?>[];
+    _deserializeProperties(
+      serializers,
+      serialized,
+      specifiedType: specifiedType,
+      serializedList: serializedList,
+      unhandled: unhandled,
+      result: result,
+    );
     return result.build();
   }
 }

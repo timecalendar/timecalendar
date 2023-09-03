@@ -32,7 +32,7 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
   @override
   final BuiltList<EventTag> tags;
   @override
-  final CalendarEventForPublicFields? fields;
+  final CalendarEventCustomFields? fields;
   @override
   final DateTime exportedAt;
 
@@ -111,32 +111,23 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
 
   @override
   int get hashCode {
-    return $jf($jc(
-        $jc(
-            $jc(
-                $jc(
-                    $jc(
-                        $jc(
-                            $jc(
-                                $jc(
-                                    $jc(
-                                        $jc(
-                                            $jc(
-                                                $jc(
-                                                    $jc($jc(0, type.hashCode),
-                                                        color.hashCode),
-                                                    groupColor.hashCode),
-                                                uid.hashCode),
-                                            title.hashCode),
-                                        startsAt.hashCode),
-                                    endsAt.hashCode),
-                                location.hashCode),
-                            allDay.hashCode),
-                        description.hashCode),
-                    teachers.hashCode),
-                tags.hashCode),
-            fields.hashCode),
-        exportedAt.hashCode));
+    var _$hash = 0;
+    _$hash = $jc(_$hash, type.hashCode);
+    _$hash = $jc(_$hash, color.hashCode);
+    _$hash = $jc(_$hash, groupColor.hashCode);
+    _$hash = $jc(_$hash, uid.hashCode);
+    _$hash = $jc(_$hash, title.hashCode);
+    _$hash = $jc(_$hash, startsAt.hashCode);
+    _$hash = $jc(_$hash, endsAt.hashCode);
+    _$hash = $jc(_$hash, location.hashCode);
+    _$hash = $jc(_$hash, allDay.hashCode);
+    _$hash = $jc(_$hash, description.hashCode);
+    _$hash = $jc(_$hash, teachers.hashCode);
+    _$hash = $jc(_$hash, tags.hashCode);
+    _$hash = $jc(_$hash, fields.hashCode);
+    _$hash = $jc(_$hash, exportedAt.hashCode);
+    _$hash = $jf(_$hash);
+    return _$hash;
   }
 
   @override
@@ -214,10 +205,10 @@ class CalendarEventForPublicBuilder
       _$this._tags ??= new ListBuilder<EventTag>();
   set tags(ListBuilder<EventTag>? tags) => _$this._tags = tags;
 
-  CalendarEventForPublicFieldsBuilder? _fields;
-  CalendarEventForPublicFieldsBuilder get fields =>
-      _$this._fields ??= new CalendarEventForPublicFieldsBuilder();
-  set fields(CalendarEventForPublicFieldsBuilder? fields) =>
+  CalendarEventCustomFieldsBuilder? _fields;
+  CalendarEventCustomFieldsBuilder get fields =>
+      _$this._fields ??= new CalendarEventCustomFieldsBuilder();
+  set fields(CalendarEventCustomFieldsBuilder? fields) =>
       _$this._fields = fields;
 
   DateTime? _exportedAt;
@@ -312,4 +303,4 @@ class CalendarEventForPublicBuilder
   }
 }
 
-// ignore_for_file: always_put_control_body_on_new_line,always_specify_types,annotate_overrides,avoid_annotating_with_dynamic,avoid_as,avoid_catches_without_on_clauses,avoid_returning_this,deprecated_member_use_from_same_package,lines_longer_than_80_chars,no_leading_underscores_for_local_identifiers,omit_local_variable_types,prefer_expression_function_bodies,sort_constructors_first,test_types_in_equals,unnecessary_const,unnecessary_new,unnecessary_lambdas
+// ignore_for_file: deprecated_member_use_from_same_package,type=lint

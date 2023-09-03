@@ -1,5 +1,6 @@
 #!/bin/bash
 set -o xtrace
+set -e
 API_URL="${API_URL:-http://localhost:3005/api-json}"
 
 while getopts t: flag
@@ -20,7 +21,7 @@ fi
 
 # Dart
 if [ "$COMPILE_DART" = true ]; then
-  rm -r ./dart
+  rm -rf ./dart
   JAVA_OPTS='-DapiTests=false -DmodelTests=false -DapiDocs=false' ./scripts/openapi-generator-cli.sh generate \
     -i $API_URL \
     -g dart-dio \

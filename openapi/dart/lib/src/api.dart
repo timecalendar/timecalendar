@@ -10,7 +10,7 @@ import 'package:timecalendar_api/src/auth/basic_auth.dart';
 import 'package:timecalendar_api/src/auth/bearer_auth.dart';
 import 'package:timecalendar_api/src/auth/oauth.dart';
 import 'package:timecalendar_api/src/api/calendars_api.dart';
-import 'package:timecalendar_api/src/api/default_api.dart';
+import 'package:timecalendar_api/src/api/contact_api.dart';
 import 'package:timecalendar_api/src/api/schools_api.dart';
 
 class TimecalendarApi {
@@ -28,8 +28,8 @@ class TimecalendarApi {
         this.dio = dio ??
             Dio(BaseOptions(
               baseUrl: basePathOverride ?? basePath,
-              connectTimeout: 5000,
-              receiveTimeout: 3000,
+              connectTimeout: const Duration(milliseconds: 5000),
+              receiveTimeout: const Duration(milliseconds: 3000),
             )) {
     if (interceptors == null) {
       this.dio.interceptors.addAll([
@@ -84,10 +84,10 @@ class TimecalendarApi {
     return CalendarsApi(dio, serializers);
   }
 
-  /// Get DefaultApi instance, base route and serializer can be overridden by a given but be careful,
+  /// Get ContactApi instance, base route and serializer can be overridden by a given but be careful,
   /// by doing that all interceptors will not be executed
-  DefaultApi getDefaultApi() {
-    return DefaultApi(dio, serializers);
+  ContactApi getContactApi() {
+    return ContactApi(dio, serializers);
   }
 
   /// Get SchoolsApi instance, base route and serializer can be overridden by a given but be careful,

@@ -28,9 +28,6 @@ export class CrispClient {
     name,
     data,
   }: CreateConversationParams) {
-    console.log(this.enabled)
-    console.log(CRISP_IDENTIFIER, CRISP_KEY, CRISP_WEBSITE_ID)
-
     const { session_id: sessionId } =
       await this.client.website.createNewConversation(CRISP_WEBSITE_ID)
 

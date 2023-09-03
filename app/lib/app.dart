@@ -11,7 +11,6 @@ import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
 import 'package:timecalendar/modules/activity/providers/activity_provider.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/suggestion/providers/suggestion_provider.dart';
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
 import 'package:timecalendar/modules/add_grade/screens/add_grade_screen.dart';
 import 'package:timecalendar/modules/personal_event/screens/add_personal_event_screen.dart';
@@ -64,9 +63,6 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
             ),
             ChangeNotifierProvider(
               create: (_) => SettingsProvider(),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => SuggestionProvider(),
             ),
             ChangeNotifierProvider(
               create: (_) => CalendarProvider(),
