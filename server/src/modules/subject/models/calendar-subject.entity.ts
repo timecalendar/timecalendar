@@ -8,6 +8,7 @@ import {
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
+  RelationId,
   UpdateDateColumn,
 } from "typeorm"
 
@@ -20,7 +21,7 @@ export class CalendarSubject {
   @JoinColumn()
   calendar: Calendar
 
-  @Column()
+  @RelationId((calendarSubject: CalendarSubject) => calendarSubject.calendar)
   calendarId: string
 
   @Column("json")

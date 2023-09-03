@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import MockDate from "lib/mock-date"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
+import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
@@ -108,9 +109,7 @@ describe("CalendarSyncService", () => {
             customData: null,
           })
 
-          await expect(promise).rejects.toThrow(
-            'Could not find any entity of type "School" matching',
-          )
+          await expect(promise).rejects.toThrow(/insert or update on table/)
         },
       )
     })
@@ -214,6 +213,7 @@ describe("CalendarSyncService", () => {
         [
           [Calendar, 0],
           [CalendarContent, 0],
+          [CalendarFailure, 1],
         ],
         async () => {
           const promise = service.sync(calendar)
@@ -221,6 +221,18 @@ describe("CalendarSyncService", () => {
           await expect(promise).rejects.toThrow(
             new Error("Something went wrong"),
           )
+
+          const calendarFailures = await dataSource
+            .getRepository(CalendarFailure)
+            .find()
+          const [calendarFailure] = calendarFailures
+
+          expect(calendarFailure.url).toBe(calendar.url)
+          expect(JSON.parse(calendarFailure.error)).toMatchObject({
+            name: "Error",
+            message: "Something went wrong",
+            stack: expect.any(String),
+          })
         },
       )
     })
@@ -230,10 +242,11 @@ describe("CalendarSyncService", () => {
       mockFetchService.fetchEvents = jest.fn(async () => {
         throw new Error("Something went wrong")
       })
+      await assertChanges(dataSource, [[CalendarFailure, 0]], async () => {
+        const promise = service.sync(calendar)
 
-      const promise = service.sync(calendar)
-
-      await expect(promise).rejects.toThrow(new Error("Something went wrong"))
+        await expect(promise).rejects.toThrow(new Error("Something went wrong"))
+      })
 
       const updatedCalendar = await dataSource
         .getRepository(Calendar)

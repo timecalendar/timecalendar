@@ -52,7 +52,9 @@ export class IcalFetcher implements Fetcher {
         }
 
         if (!this.withRetries) {
-          throw new BadRequestException("Failed to request the API", e.message)
+          throw new BadRequestException(
+            `Failed to request the API: ${e.message}`,
+          )
         }
       }
     }
