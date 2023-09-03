@@ -1,4 +1,3 @@
-// import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timecalendar/modules/qr_code/models/qr_code_result.dart';
@@ -6,14 +5,12 @@ import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 
 class ScanQrCode extends StatelessWidget {
-  final Function(String url)? onScan;
+  final Function(String url) onScan;
 
-  const ScanQrCode({Key? key, this.onScan}) : super(key: key);
+  const ScanQrCode({Key? key, required this.onScan}) : super(key: key);
 
   void _scanQrCodeAndGetUrl(BuildContext context) async {
     var status = await Permission.camera.request();
-
-    print(status);
 
     if (status.isDenied || status.isPermanentlyDenied) {
       return showDialog(
@@ -44,10 +41,11 @@ class ScanQrCode extends StatelessWidget {
       );
     }
 
-    QrCodeResult? result = await (Navigator.of(context)
-        .pushNamed<dynamic>(QrCodeScreen.routeName) as Future<QrCodeResult?>);
-    if (result?.url != null) {
-      this.onScan!(result!.url!);
+    final result =
+        await Navigator.of(context).pushNamed(QrCodeScreen.routeName);
+
+    if (result is QrCodeResult && result.url != null) {
+      this.onScan(result.url!);
     }
   }
 
