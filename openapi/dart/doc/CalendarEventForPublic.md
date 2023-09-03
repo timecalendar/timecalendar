@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 **description** | **String** |  | 
 **teachers** | **BuiltList&lt;String&gt;** |  | 
 **tags** | [**BuiltList&lt;EventTag&gt;**](EventTag.md) |  | 
-**fields** | [**CalendarEventForPublicFields**](CalendarEventForPublicFields.md) |  | 
+**fields** | [**CalendarEventCustomFields**](CalendarEventCustomFields.md) |  | 
 **exportedAt** | [**DateTime**](DateTime.md) |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

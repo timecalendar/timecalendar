@@ -1,95 +1,91 @@
+import 'package:built_collection/built_collection.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:timecalendar/modules/suggestion/providers/suggestion_provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
+import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/utils/snackbar.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
+import 'package:timecalendar_api/timecalendar_api.dart';
 
-class SuggestionScreen extends StatefulWidget {
+List<String> SUBJECTS = [
+  'Signaler un problème',
+  'Proposer une fonctionnalité',
+  'Autre'
+];
+
+class SuggestionScreen extends HookConsumerWidget {
   static const routeName = '/suggestion';
-  @override
-  _SuggestionScreenState createState() => _SuggestionScreenState();
-}
-
-class _SuggestionScreenState extends State<SuggestionScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  var _messageFocusNode = FocusNode();
-  final _form = GlobalKey<FormState>();
-
-  List<String> subjects = [
-    'Signaler un problème',
-    'Proposer une fonctionnalité',
-    'Autre'
-  ];
-  String? subject;
-  String? email;
-  String? message;
-
-  bool _isLoading = false;
 
   @override
-  initState() {
-    super.initState();
-    resetForm();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final _messageFocusNode = useMemoized(() => FocusNode());
+    final _scaffoldKey = useMemoized(() => GlobalKey<ScaffoldState>());
+    final _formKey = useMemoized(() => GlobalKey<FormState>());
 
-  resetForm() {
-    setState(() {
-      subject = subjects[0];
-      message = '';
-      email = '';
-      _isLoading = false;
-    });
-    _form.currentState?.reset();
-  }
+    final subject = useState(SUBJECTS[0]);
+    final email = useState("");
+    final message = useState("");
+    final isLoading = useState(false);
 
-  Future<void> _saveForm(context) async {
-    final isValid = _form.currentState!.validate();
-    if (!isValid) {
-      return;
+    Future<void> _saveForm() async {
+      final isValid = _formKey.currentState!.validate();
+      if (!isValid) return;
+      _formKey.currentState!.save();
+
+      isLoading.value = true;
+
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      final deviceInfo = await deviceInfoPlugin.deviceInfo;
+
+      final calendars = await ref
+          .read(calendarSyncServiceProvider)
+          .loadUserCalendarsFromDatabase();
+
+      try {
+        await ref.read(apiClientProvider).contactApi().sendMessage(
+            sendMessageDto: SendMessageDto((dto) => dto
+              ..email = email.value
+              ..message = message.value
+              ..deviceInfo = deviceInfo.data['name'] ?? ''
+              ..calendarIds.replace(calendars.map((e) => e.id).toBuiltList())));
+
+        subject.value = SUBJECTS[0];
+        email.value = "";
+        message.value = "";
+        _formKey.currentState!.reset();
+
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            // return object of type Dialog
+            return AlertDialog(
+              title: Text("Message envoyé"),
+              content: Text("Merci pour votre message !"),
+              actions: <Widget>[
+                TextButton(
+                  child: Text("Fermer"),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } on Exception {
+        showSnackBar(
+          context,
+          SnackBar(
+            content: Text('Une erreur est survenue.'),
+          ),
+        );
+      } finally {
+        isLoading.value = false;
+      }
     }
-    _form.currentState!.save();
-    setState(() {
-      _isLoading = true;
-    });
 
-    final suggestionProvider =
-        Provider.of<SuggestionProvider>(context, listen: false);
-    try {
-      await suggestionProvider.sendSuggestion(subject, message, email);
-      resetForm();
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          // return object of type Dialog
-          return AlertDialog(
-            title: Text("Message envoyé"),
-            content: Text("Merci pour votre message !"),
-            actions: <Widget>[
-              TextButton(
-                child: Text("Fermer"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } on Exception {
-      showSnackBar(
-        context,
-        SnackBar(
-          content: Text('Une erreur est survenue.'),
-        ),
-      );
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -99,7 +95,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
         child: Padding(
           padding: const EdgeInsets.all(15.0),
           child: Form(
-            key: _form,
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -112,13 +108,11 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 ),
                 DropdownButton<String>(
                   isExpanded: true,
-                  value: subject,
+                  value: subject.value,
                   onChanged: (String? newValue) {
-                    setState(() {
-                      subject = newValue;
-                    });
+                    if (newValue != null) subject.value = newValue;
                   },
-                  items: subjects.map<DropdownMenuItem<String>>((String value) {
+                  items: SUBJECTS.map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value),
@@ -140,9 +134,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                     return null;
                   },
                   onSaved: (value) {
-                    setState(() {
-                      email = value;
-                    });
+                    if (value != null) email.value = value;
                   },
                   textInputAction: TextInputAction.next,
                   keyboardType: TextInputType.emailAddress,
@@ -164,9 +156,7 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                     return null;
                   },
                   onSaved: (value) {
-                    setState(() {
-                      message = value;
-                    });
+                    if (value != null) message.value = value;
                   },
                 ),
                 SizedBox(
@@ -174,10 +164,8 @@ class _SuggestionScreenState extends State<SuggestionScreen> {
                 ),
                 CustomButton(
                   text: 'Envoyer',
-                  onPressed: () {
-                    _saveForm(context);
-                  },
-                  loading: _isLoading,
+                  onPressed: _saveForm,
+                  loading: isLoading.value,
                 ),
               ],
             ),

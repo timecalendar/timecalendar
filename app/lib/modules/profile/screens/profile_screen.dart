@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/suggestion/providers/suggestion_provider.dart';
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
 import 'package:timecalendar/modules/settings/screens/settings_screen.dart';
@@ -53,9 +52,6 @@ class ProfileScreen extends StatelessWidget {
             title: 'Vos retours et suggestions',
             icon: FontAwesomeIcons.paperPlane,
             action: () {
-              final suggestionProvider =
-                  Provider.of<SuggestionProvider>(context, listen: false);
-              suggestionProvider.isFailedSuggestion = false;
               Navigator.of(context).pushNamed(SuggestionScreen.routeName);
             },
           ),

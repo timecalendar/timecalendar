@@ -7,6 +7,7 @@ import 'package:timecalendar/modules/calendar/services/calendar_creation_service
 import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
 import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
 import 'package:timecalendar/modules/import_ical/hooks/use_loading_dialog.dart';
+import 'package:timecalendar/modules/import_ical/providers/ical_url_provider.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/suggestion/screens/suggestion_screen.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
@@ -52,6 +53,7 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
   final loadingDialog = useLoadingDialog(context);
 
   void loadIcalUrl(String url) async {
+    ref.read(icalUrlProvider.notifier).state = url;
     loadingDialog.openDialog();
 
     final assistantState = ref.read(assistantProvider);

@@ -2,6 +2,7 @@
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
 
+// ignore_for_file: unused_element
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -11,6 +12,7 @@ part 'orleans_get_ical_url_from_student_number_dto.g.dart';
 ///
 /// Properties:
 /// * [studentNumber]
+@BuiltValue()
 abstract class OrleansGetIcalUrlFromStudentNumberDto
     implements
         Built<OrleansGetIcalUrlFromStudentNumberDto,
@@ -20,12 +22,12 @@ abstract class OrleansGetIcalUrlFromStudentNumberDto
 
   OrleansGetIcalUrlFromStudentNumberDto._();
 
-  @BuiltValueHook(initializeBuilder: true)
-  static void _defaults(OrleansGetIcalUrlFromStudentNumberDtoBuilder b) => b;
-
   factory OrleansGetIcalUrlFromStudentNumberDto(
           [void updates(OrleansGetIcalUrlFromStudentNumberDtoBuilder b)]) =
       _$OrleansGetIcalUrlFromStudentNumberDto;
+
+  @BuiltValueHook(initializeBuilder: true)
+  static void _defaults(OrleansGetIcalUrlFromStudentNumberDtoBuilder b) => b;
 
   @BuiltValueSerializer(custom: true)
   static Serializer<OrleansGetIcalUrlFromStudentNumberDto> get serializer =>
@@ -33,7 +35,7 @@ abstract class OrleansGetIcalUrlFromStudentNumberDto
 }
 
 class _$OrleansGetIcalUrlFromStudentNumberDtoSerializer
-    implements StructuredSerializer<OrleansGetIcalUrlFromStudentNumberDto> {
+    implements PrimitiveSerializer<OrleansGetIcalUrlFromStudentNumberDto> {
   @override
   final Iterable<Type> types = const [
     OrleansGetIcalUrlFromStudentNumberDto,
@@ -43,38 +45,73 @@ class _$OrleansGetIcalUrlFromStudentNumberDtoSerializer
   @override
   final String wireName = r'OrleansGetIcalUrlFromStudentNumberDto';
 
+  Iterable<Object?> _serializeProperties(
+    Serializers serializers,
+    OrleansGetIcalUrlFromStudentNumberDto object, {
+    FullType specifiedType = FullType.unspecified,
+  }) sync* {
+    yield r'studentNumber';
+    yield serializers.serialize(
+      object.studentNumber,
+      specifiedType: const FullType(String),
+    );
+  }
+
   @override
-  Iterable<Object?> serialize(
-      Serializers serializers, OrleansGetIcalUrlFromStudentNumberDto object,
-      {FullType specifiedType = FullType.unspecified}) {
-    final result = <Object?>[];
-    result
-      ..add(r'studentNumber')
-      ..add(serializers.serialize(object.studentNumber,
-          specifiedType: const FullType(String)));
-    return result;
+  Object serialize(
+    Serializers serializers,
+    OrleansGetIcalUrlFromStudentNumberDto object, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
+    return _serializeProperties(serializers, object,
+            specifiedType: specifiedType)
+        .toList();
+  }
+
+  void _deserializeProperties(
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+    required List<Object?> serializedList,
+    required OrleansGetIcalUrlFromStudentNumberDtoBuilder result,
+    required List<Object?> unhandled,
+  }) {
+    for (var i = 0; i < serializedList.length; i += 2) {
+      final key = serializedList[i] as String;
+      final value = serializedList[i + 1];
+      switch (key) {
+        case r'studentNumber':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.studentNumber = valueDes;
+          break;
+        default:
+          unhandled.add(key);
+          unhandled.add(value);
+          break;
+      }
+    }
   }
 
   @override
   OrleansGetIcalUrlFromStudentNumberDto deserialize(
-      Serializers serializers, Iterable<Object?> serialized,
-      {FullType specifiedType = FullType.unspecified}) {
+    Serializers serializers,
+    Object serialized, {
+    FullType specifiedType = FullType.unspecified,
+  }) {
     final result = OrleansGetIcalUrlFromStudentNumberDtoBuilder();
-
-    final iterator = serialized.iterator;
-    while (iterator.moveNext()) {
-      final key = iterator.current as String;
-      iterator.moveNext();
-      final Object? value = iterator.current;
-
-      switch (key) {
-        case r'studentNumber':
-          final valueDes = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          result.studentNumber = valueDes;
-          break;
-      }
-    }
+    final serializedList = (serialized as Iterable<Object?>).toList();
+    final unhandled = <Object?>[];
+    _deserializeProperties(
+      serializers,
+      serialized,
+      specifiedType: specifiedType,
+      serializedList: serializedList,
+      unhandled: unhandled,
+      result: result,
+    );
     return result.build();
   }
 }

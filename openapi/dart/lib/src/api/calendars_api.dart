@@ -8,6 +8,7 @@ import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
 import 'package:built_collection/built_collection.dart';
+import 'package:timecalendar_api/src/api_util.dart';
 import 'package:timecalendar_api/src/model/calendar_for_public.dart';
 import 'package:timecalendar_api/src/model/calendar_with_content.dart';
 import 'package:timecalendar_api/src/model/create_calendar_dto.dart';
@@ -34,7 +35,7 @@ class CalendarsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [CalendarForPublic] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<CalendarForPublic>> findCalendarByToken({
     required String token,
     CancelToken? cancelToken,
@@ -44,8 +45,10 @@ class CalendarsApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/calendars/by-token/{token}'
-        .replaceAll('{' r'token' '}', token.toString());
+    final _path = r'/calendars/by-token/{token}'.replaceAll(
+        '{' r'token' '}',
+        encodeQueryParameter(_serializers, token, const FullType(String))
+            .toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -66,21 +69,24 @@ class CalendarsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    CalendarForPublic _responseData;
+    CalendarForPublic? _responseData;
 
     try {
-      const _responseType = FullType(CalendarForPublic);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as CalendarForPublic;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType: const FullType(CalendarForPublic),
+            ) as CalendarForPublic;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<CalendarForPublic>(
@@ -108,7 +114,7 @@ class CalendarsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [CreateCalendarRepDto] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<CreateCalendarRepDto>> createCalendar({
     required CreateCalendarDto createCalendarDto,
     CancelToken? cancelToken,
@@ -139,14 +145,15 @@ class CalendarsApi {
       _bodyData =
           _serializers.serialize(createCalendarDto, specifiedType: _type);
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _options.compose(
           _dio.options,
           _path,
         ),
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     final _response = await _dio.request<Object>(
@@ -158,21 +165,24 @@ class CalendarsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    CreateCalendarRepDto _responseData;
+    CreateCalendarRepDto? _responseData;
 
     try {
-      const _responseType = FullType(CreateCalendarRepDto);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as CreateCalendarRepDto;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType: const FullType(CreateCalendarRepDto),
+            ) as CreateCalendarRepDto;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<CreateCalendarRepDto>(
@@ -200,7 +210,7 @@ class CalendarsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [BuiltList<CalendarWithContent>] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<BuiltList<CalendarWithContent>>> syncCalendars({
     required SyncCalendarsDto syncCalendarsDto,
     CancelToken? cancelToken,
@@ -231,14 +241,15 @@ class CalendarsApi {
       _bodyData =
           _serializers.serialize(syncCalendarsDto, specifiedType: _type);
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _options.compose(
           _dio.options,
           _path,
         ),
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     final _response = await _dio.request<Object>(
@@ -250,22 +261,25 @@ class CalendarsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    BuiltList<CalendarWithContent> _responseData;
+    BuiltList<CalendarWithContent>? _responseData;
 
     try {
-      const _responseType =
-          FullType(BuiltList, [FullType(CalendarWithContent)]);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as BuiltList<CalendarWithContent>;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType:
+                  const FullType(BuiltList, [FullType(CalendarWithContent)]),
+            ) as BuiltList<CalendarWithContent>;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<BuiltList<CalendarWithContent>>(

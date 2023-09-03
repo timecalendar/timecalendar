@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
+import 'package:timecalendar_api/src/api_util.dart';
 import 'package:timecalendar_api/src/model/find_school_groups_rep_dto.dart';
 import 'package:timecalendar_api/src/model/find_schools_rep_dto.dart';
 import 'package:timecalendar_api/src/model/get_school_groups_ical_url_dto.dart';
@@ -35,7 +36,7 @@ class SchoolsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [SchoolForList] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<SchoolForList>> findSchool({
     required String schoolId,
     CancelToken? cancelToken,
@@ -45,8 +46,10 @@ class SchoolsApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/schools/{schoolId}'
-        .replaceAll('{' r'schoolId' '}', schoolId.toString());
+    final _path = r'/schools/{schoolId}'.replaceAll(
+        '{' r'schoolId' '}',
+        encodeQueryParameter(_serializers, schoolId, const FullType(String))
+            .toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -67,21 +70,24 @@ class SchoolsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    SchoolForList _responseData;
+    SchoolForList? _responseData;
 
     try {
-      const _responseType = FullType(SchoolForList);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as SchoolForList;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType: const FullType(SchoolForList),
+            ) as SchoolForList;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<SchoolForList>(
@@ -108,7 +114,7 @@ class SchoolsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [FindSchoolsRepDto] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<FindSchoolsRepDto>> findSchools({
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -138,21 +144,24 @@ class SchoolsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    FindSchoolsRepDto _responseData;
+    FindSchoolsRepDto? _responseData;
 
     try {
-      const _responseType = FullType(FindSchoolsRepDto);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as FindSchoolsRepDto;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType: const FullType(FindSchoolsRepDto),
+            ) as FindSchoolsRepDto;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<FindSchoolsRepDto>(
@@ -180,7 +189,7 @@ class SchoolsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [FindSchoolGroupsRepDto] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<FindSchoolGroupsRepDto>> findSchoolGroups({
     required String schoolId,
     CancelToken? cancelToken,
@@ -190,8 +199,10 @@ class SchoolsApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/schools/{schoolId}/school-group'
-        .replaceAll('{' r'schoolId' '}', schoolId.toString());
+    final _path = r'/schools/{schoolId}/school-group'.replaceAll(
+        '{' r'schoolId' '}',
+        encodeQueryParameter(_serializers, schoolId, const FullType(String))
+            .toString());
     final _options = Options(
       method: r'GET',
       headers: <String, dynamic>{
@@ -212,21 +223,24 @@ class SchoolsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    FindSchoolGroupsRepDto _responseData;
+    FindSchoolGroupsRepDto? _responseData;
 
     try {
-      const _responseType = FullType(FindSchoolGroupsRepDto);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as FindSchoolGroupsRepDto;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType: const FullType(FindSchoolGroupsRepDto),
+            ) as FindSchoolGroupsRepDto;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<FindSchoolGroupsRepDto>(
@@ -255,7 +269,7 @@ class SchoolsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future] containing a [Response] with a [GetSchoolGroupsIcalUrlRepDto] as data
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<GetSchoolGroupsIcalUrlRepDto>> getSchoolGroupsIcalUrl({
     required String schoolId,
     required GetSchoolGroupsIcalUrlDto getSchoolGroupsIcalUrlDto,
@@ -266,8 +280,10 @@ class SchoolsApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/schools/{schoolId}/school-group/ical'
-        .replaceAll('{' r'schoolId' '}', schoolId.toString());
+    final _path = r'/schools/{schoolId}/school-group/ical'.replaceAll(
+        '{' r'schoolId' '}',
+        encodeQueryParameter(_serializers, schoolId, const FullType(String))
+            .toString());
     final _options = Options(
       method: r'POST',
       headers: <String, dynamic>{
@@ -288,14 +304,15 @@ class SchoolsApi {
       _bodyData = _serializers.serialize(getSchoolGroupsIcalUrlDto,
           specifiedType: _type);
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _options.compose(
           _dio.options,
           _path,
         ),
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     final _response = await _dio.request<Object>(
@@ -307,21 +324,24 @@ class SchoolsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    GetSchoolGroupsIcalUrlRepDto _responseData;
+    GetSchoolGroupsIcalUrlRepDto? _responseData;
 
     try {
-      const _responseType = FullType(GetSchoolGroupsIcalUrlRepDto);
-      _responseData = _serializers.deserialize(
-        _response.data!,
-        specifiedType: _responseType,
-      ) as GetSchoolGroupsIcalUrlRepDto;
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType: const FullType(GetSchoolGroupsIcalUrlRepDto),
+            ) as GetSchoolGroupsIcalUrlRepDto;
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _response.requestOptions,
         response: _response,
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     return Response<GetSchoolGroupsIcalUrlRepDto>(
@@ -350,7 +370,7 @@ class SchoolsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future]
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<void>> setSchoolGroups({
     required String schoolId,
     required SetSchoolGroupDto setSchoolGroupDto,
@@ -361,8 +381,10 @@ class SchoolsApi {
     ProgressCallback? onSendProgress,
     ProgressCallback? onReceiveProgress,
   }) async {
-    final _path = r'/schools/{schoolId}/school-group'
-        .replaceAll('{' r'schoolId' '}', schoolId.toString());
+    final _path = r'/schools/{schoolId}/school-group'.replaceAll(
+        '{' r'schoolId' '}',
+        encodeQueryParameter(_serializers, schoolId, const FullType(String))
+            .toString());
     final _options = Options(
       method: r'PUT',
       headers: <String, dynamic>{
@@ -383,14 +405,15 @@ class SchoolsApi {
       _bodyData =
           _serializers.serialize(setSchoolGroupDto, specifiedType: _type);
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _options.compose(
           _dio.options,
           _path,
         ),
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     final _response = await _dio.request<Object>(
@@ -418,7 +441,7 @@ class SchoolsApi {
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
   /// Returns a [Future]
-  /// Throws [DioError] if API call or serialization fails
+  /// Throws [DioException] if API call or serialization fails
   Future<Response<void>> getIcalUrlFromStudentNumber({
     required OrleansGetIcalUrlFromStudentNumberDto
         orleansGetIcalUrlFromStudentNumberDto,
@@ -450,14 +473,15 @@ class SchoolsApi {
       _bodyData = _serializers.serialize(orleansGetIcalUrlFromStudentNumberDto,
           specifiedType: _type);
     } catch (error, stackTrace) {
-      throw DioError(
+      throw DioException(
         requestOptions: _options.compose(
           _dio.options,
           _path,
         ),
-        type: DioErrorType.other,
+        type: DioExceptionType.unknown,
         error: error,
-      )..stackTrace = stackTrace;
+        stackTrace: stackTrace,
+      );
     }
 
     final _response = await _dio.request<Object>(

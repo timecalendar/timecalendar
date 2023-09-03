@@ -225,6 +225,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.8"
+  device_info_plus:
+    dependency: "direct main"
+    description:
+      name: device_info_plus
+      sha256: "86add5ef97215562d2e090535b0a16f197902b10c369c558a100e74ea06e8659"
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.0.3"
+  device_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: device_info_plus_platform_interface
+      sha256: d3b01d5868b50ae571cd1dc6e502fc94d956b665756180f7b16ead09e836fd64
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.0"
   diacritic:
     dependency: "direct main"
     description:
@@ -237,10 +253,10 @@ packages:
     dependency: "direct main"
     description:
       name: dio
-      sha256: "7d328c4d898a61efc3cd93655a0955858e29a0aa647f0f9e02d59b3bb275e2e8"
+      sha256: ce75a1b40947fea0a0e16ce73337122a86762e38b982e1ccb909daa3b9bc4197
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.6"
+    version: "5.3.2"
   enum_to_string:
     dependency: "direct main"
     description:
@@ -732,6 +748,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  one_of:
+    dependency: transitive
+    description:
+      name: one_of
+      sha256: "25fe0fcf181e761c6fcd604caf9d5fdf952321be17584ba81c72c06bdaa511f0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0"
+  one_of_serializer:
+    dependency: transitive
+    description:
+      name: one_of_serializer
+      sha256: "3f3dfb5c1578ba3afef1cb47fcc49e585e797af3f2b6c2cc7ed90aad0c5e7b83"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0"
   package_config:
     dependency: transitive
     description:
@@ -1360,6 +1392,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.7"
+  win32_registry:
+    dependency: transitive
+    description:
+      name: win32_registry
+      sha256: e4506d60b7244251bc59df15656a3093501c37fb5af02105a944d73eb95be4c9
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   xdg_directories:
     dependency: transitive
     description:
