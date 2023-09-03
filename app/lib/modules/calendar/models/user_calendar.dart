@@ -5,7 +5,7 @@ class UserCalendar {
   String name;
   String token;
   String? schoolName;
-  String schoolId;
+  String? schoolId;
   DateTime lastUpdatedAt;
   DateTime createdAt;
 

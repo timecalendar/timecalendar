@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **token** | **String** |  | 
 **name** | **String** |  | 
 **schoolName** | **String** |  | 
-**schoolId** | **String** |  | 
+**schoolId** | **String** |  | [optional] 
 **lastUpdatedAt** | [**DateTime**](DateTime.md) |  | 
 **createdAt** | [**DateTime**](DateTime.md) |  | 
 
