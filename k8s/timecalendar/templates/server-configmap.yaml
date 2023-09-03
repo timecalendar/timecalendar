@@ -35,3 +35,7 @@ data:
   API_TOKEN: {{ .Values.timecalendar.apiToken }}
 
   S3_PUBLIC_BUCKET_CLIENT_URL: {{ .Values.timecalendar.s3PublicBucketClientUrl }}
+
+  CRISP_IDENTIFIER: {{ .Values.timecalendar.crisp.identifier }}
+  CRISP_KEY: {{ .Values.timecalendar.crisp.key }}
+  CRISP_WEBSITE_ID: {{ .Values.timecalendar.crisp.websiteId }}
