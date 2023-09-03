@@ -31,5 +31,14 @@ describe("SchoolRepository", () => {
       const schools = await repository.findAll()
       expect(schools.length).toBe(0)
     })
+
+    it("returns schools ordered by name", async () => {
+      await schoolFactory().create({ name: "Z" })
+      await schoolFactory().create({ name: "A" })
+      const schools = await repository.findAll()
+      expect(schools.length).toBe(2)
+      expect(schools[0].name).toBe("A")
+      expect(schools[1].name).toBe("Z")
+    })
   })
 })

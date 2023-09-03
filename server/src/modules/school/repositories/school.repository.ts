@@ -15,6 +15,9 @@ export class SchoolRepository {
   }
 
   findAll() {
-    return this.repository.findBy({ visible: true })
+    return this.repository.find({
+      where: { visible: true },
+      order: { name: "ASC" },
+    })
   }
 }
