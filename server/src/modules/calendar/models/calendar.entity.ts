@@ -39,7 +39,7 @@ export class Calendar {
   school?: School
 
   @RelationId((calendar: Calendar) => calendar.school)
-  schoolId: string
+  schoolId?: string
 
   @Column()
   lastUpdatedAt: Date

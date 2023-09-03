@@ -34,7 +34,7 @@ abstract class CalendarForPublic
   String? get schoolName;
 
   @BuiltValueField(wireName: r'schoolId')
-  String get schoolId;
+  String? get schoolId;
 
   @BuiltValueField(wireName: r'lastUpdatedAt')
   DateTime get lastUpdatedAt;
@@ -90,11 +90,13 @@ class _$CalendarForPublicSerializer
             object.schoolName,
             specifiedType: const FullType.nullable(String),
           );
-    yield r'schoolId';
-    yield serializers.serialize(
-      object.schoolId,
-      specifiedType: const FullType(String),
-    );
+    if (object.schoolId != null) {
+      yield r'schoolId';
+      yield serializers.serialize(
+        object.schoolId,
+        specifiedType: const FullType(String),
+      );
+    }
     yield r'lastUpdatedAt';
     yield serializers.serialize(
       object.lastUpdatedAt,

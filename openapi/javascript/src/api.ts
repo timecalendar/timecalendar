@@ -182,7 +182,7 @@ export interface CalendarForPublic {
      * @type {string}
      * @memberof CalendarForPublic
      */
-    'schoolId': string;
+    'schoolId'?: string;
     /**
      * 
      * @type {string}

@@ -16,7 +16,7 @@ class _$CalendarForPublic extends CalendarForPublic {
   @override
   final String? schoolName;
   @override
-  final String schoolId;
+  final String? schoolId;
   @override
   final DateTime lastUpdatedAt;
   @override
@@ -31,15 +31,13 @@ class _$CalendarForPublic extends CalendarForPublic {
       required this.token,
       required this.name,
       this.schoolName,
-      required this.schoolId,
+      this.schoolId,
       required this.lastUpdatedAt,
       required this.createdAt})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(id, r'CalendarForPublic', 'id');
     BuiltValueNullFieldError.checkNotNull(token, r'CalendarForPublic', 'token');
     BuiltValueNullFieldError.checkNotNull(name, r'CalendarForPublic', 'name');
-    BuiltValueNullFieldError.checkNotNull(
-        schoolId, r'CalendarForPublic', 'schoolId');
     BuiltValueNullFieldError.checkNotNull(
         lastUpdatedAt, r'CalendarForPublic', 'lastUpdatedAt');
     BuiltValueNullFieldError.checkNotNull(
@@ -171,8 +169,7 @@ class CalendarForPublicBuilder
             name: BuiltValueNullFieldError.checkNotNull(
                 name, r'CalendarForPublic', 'name'),
             schoolName: schoolName,
-            schoolId: BuiltValueNullFieldError.checkNotNull(
-                schoolId, r'CalendarForPublic', 'schoolId'),
+            schoolId: schoolId,
             lastUpdatedAt: BuiltValueNullFieldError.checkNotNull(
                 lastUpdatedAt, r'CalendarForPublic', 'lastUpdatedAt'),
             createdAt: BuiltValueNullFieldError.checkNotNull(
