@@ -11,7 +11,7 @@ if (flutterRoot == null) {
     throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
 }
 
-def flutterVersionCode = '123'
+def flutterVersionCode = '124'
 def flutterVersionName = '3.0.0'
 
 // def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -92,7 +92,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
     implementation "androidx.core:core-ktx:1.6.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.facebook.android:facebook-login:[5,6)'
 }
 
 apply plugin: 'com.google.gms.google-services'

@@ -2,10 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:timecalendar/modules/changelog/screens/changelog_screen.dart';
 import 'package:timecalendar/modules/debug/screens/debug_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
-import 'package:timecalendar/modules/changelog/screens/changelog_screen.dart';
-import 'package:timecalendar/modules/shared/constants/environment.dart';
 import 'package:timecalendar/modules/shared/utils/url_launcher.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 
@@ -38,8 +37,8 @@ class AboutScreen extends ConsumerWidget {
                 text: 'Voir la politique de confidentialité',
                 outline: true,
                 onPressed: () => UrlLauncher.openUrl(
-                    ref.read(environmentProvider).mainWebUrl +
-                        '/privacy-policy'),
+                  'https://timecalendar.app/privacy-policy/privacy-policy',
+                ),
               ),
               SizedBox(height: 15),
               Text(
