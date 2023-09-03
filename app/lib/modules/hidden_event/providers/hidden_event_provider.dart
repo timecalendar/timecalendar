@@ -9,8 +9,6 @@ class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
 
   loadFromDatabase() async {
     state = await ref.read(hiddenEventRepositoryProvider).getHiddenEvents();
-    print('Load from db');
-    print(state);
   }
 
   saveToDatabase() async {
@@ -26,7 +24,6 @@ class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
   Future<void> addNamedEvent(String namedEvent) async {
     state = state.rebuild(
         (hiddenEvent) => hiddenEvent..namedHiddenEvents.add(namedEvent));
-    print(state);
     await this.saveToDatabase();
   }
 

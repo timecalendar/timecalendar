@@ -27,6 +27,11 @@ class DebugScreen extends HookConsumerWidget {
                       .clearUserCalendars();
 
                   ref.invalidate(debugCalendarDetailsProvider);
+                }),
+            CustomButton(
+                text: 'Throw exception',
+                onPressed: () {
+                  throw Exception('Test exception');
                 })
           ],
         ),

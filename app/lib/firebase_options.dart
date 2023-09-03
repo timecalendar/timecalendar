@@ -50,21 +50,25 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyARACv7Ou0YY0Xsy1pgI_UTUXDbTxhfOYw',
-    appId: '1:79945891752:android:21139d151875f24a3e679d',
-    messagingSenderId: '79945891752',
-    projectId: 'timecalendar-dev',
-    storageBucket: 'timecalendar-dev.appspot.com',
+    apiKey: 'AIzaSyAVaUQ67YIEJSGHvitJ53HtF5SKLd_IuKA',
+    appId: '1:425450003183:android:ce923d6bbb487bc0',
+    messagingSenderId: '425450003183',
+    projectId: 'timecalendar-samuelprak',
+    databaseURL: 'https://timecalendar-samuelprak.firebaseio.com',
+    storageBucket: 'timecalendar-samuelprak.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDpMfJsG8jpOf-vAqQADQFCiTsckTJJVHE',
-    appId: '1:79945891752:ios:31e72cb567c4c8253e679d',
-    messagingSenderId: '79945891752',
-    projectId: 'timecalendar-dev',
-    storageBucket: 'timecalendar-dev.appspot.com',
+    apiKey: 'AIzaSyCruJHHXWmT_lPib__T8iHOK8z05JdsEMY',
+    appId: '1:425450003183:ios:ce923d6bbb487bc0',
+    messagingSenderId: '425450003183',
+    projectId: 'timecalendar-samuelprak',
+    databaseURL: 'https://timecalendar-samuelprak.firebaseio.com',
+    storageBucket: 'timecalendar-samuelprak.appspot.com',
+    androidClientId:
+        '425450003183-2bjqj66dbq23tngncts04i4l9mq7jrvp.apps.googleusercontent.com',
     iosClientId:
-        '79945891752-k71chdubvfm0quncd6i6idcdihg2agu0.apps.googleusercontent.com',
+        '425450003183-1elevc6cg39idiukk9lh5sjtufis8h0r.apps.googleusercontent.com',
     iosBundleId: 'fr.samuelprak.timecalendar',
   );
 }

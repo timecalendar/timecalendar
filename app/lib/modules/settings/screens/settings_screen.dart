@@ -93,8 +93,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     var settingsProvider =
         Provider.of<SettingsProvider>(context, listen: false);
 
-    print(String.fromEnvironment('API_URL'));
-
     return PrefService(
       service: settingsProvider.prefServiceShared!,
       child: Scaffold(

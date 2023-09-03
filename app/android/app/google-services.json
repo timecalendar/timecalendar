@@ -1,40 +1,74 @@
 {
   "project_info": {
-    "project_number": "79945891752",
-    "project_id": "timecalendar-dev",
-    "storage_bucket": "timecalendar-dev.appspot.com"
+    "project_number": "425450003183",
+    "firebase_url": "https://timecalendar-samuelprak.firebaseio.com",
+    "project_id": "timecalendar-samuelprak",
+    "storage_bucket": "timecalendar-samuelprak.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:79945891752:android:21139d151875f24a3e679d",
+        "mobilesdk_app_id": "1:425450003183:android:ce923d6bbb487bc0",
         "android_client_info": {
           "package_name": "fr.samuelprak.timecalendar"
         }
       },
       "oauth_client": [
         {
-          "client_id": "79945891752-90kloob5af5v4m9atqr3qv7jj4sl9uc6.apps.googleusercontent.com",
+          "client_id": "425450003183-2bjqj66dbq23tngncts04i4l9mq7jrvp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fr.samuelprak.timecalendar",
+            "certificate_hash": "4e9467f59deeec9b6ba3eb614ca8b173e4da8e6e"
+          }
+        },
+        {
+          "client_id": "425450003183-kblmebi2bbd7crkjra7tma4oifidqpic.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fr.samuelprak.timecalendar",
+            "certificate_hash": "ca314e160f8eab65112a94013256d1e3921a0bb8"
+          }
+        },
+        {
+          "client_id": "425450003183-o1cdcpm8akr50k9p8p6oifm1c3n7ishv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fr.samuelprak.timecalendar",
+            "certificate_hash": "1b2eb31a200e84442d5f61aacb4ff54e26b4fbeb"
+          }
+        },
+        {
+          "client_id": "425450003183-qtnmf7bbv966vqr196u1m0q3bf5cp8pa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fr.samuelprak.timecalendar",
+            "certificate_hash": "1fdc9d5b42bdf54c8d51181833b2efe29ab4febb"
+          }
+        },
+        {
+          "client_id": "425450003183-mev8q7epjvu426pgt4r9pgqe50h34rg6.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyARACv7Ou0YY0Xsy1pgI_UTUXDbTxhfOYw"
+          "current_key": "AIzaSyAVaUQ67YIEJSGHvitJ53HtF5SKLd_IuKA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "79945891752-90kloob5af5v4m9atqr3qv7jj4sl9uc6.apps.googleusercontent.com",
+              "client_id": "425450003183-mev8q7epjvu426pgt4r9pgqe50h34rg6.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "79945891752-k71chdubvfm0quncd6i6idcdihg2agu0.apps.googleusercontent.com",
+              "client_id": "425450003183-1elevc6cg39idiukk9lh5sjtufis8h0r.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "fr.samuelprak.timecalendar"
+                "bundle_id": "fr.samuelprak.timecalendar",
+                "app_store_id": "1479613630"
               }
             }
           ]
