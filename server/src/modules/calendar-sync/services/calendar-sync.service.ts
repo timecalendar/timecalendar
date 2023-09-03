@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
+import { Injectable, UnprocessableEntityException } from "@nestjs/common"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
+import { CalendarFailureRepository } from "modules/calendar-sync/repositories/calendar-failure.repository"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
@@ -25,15 +26,11 @@ export class CalendarSyncService {
     private readonly calendarContentRepository: CalendarContentRepository,
     private readonly calendarEventHelper: CalendarEventHelper,
     private readonly subjectService: SubjectService,
+    private readonly calendarFailureRepository: CalendarFailureRepository,
   ) {}
 
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
     const { url, schoolId, schoolName, customData, name } = body
-
-    const source = { url, customData }
-    const code = await this.findSchoolCode(schoolId)
-    const events = await this.fetchService.fetchEvents(source, code)
-    if (events.length === 0) throw new NotFoundException("No events found")
 
     const calendar = await this.sync({
       token: nanoid(),
@@ -56,7 +53,26 @@ export class CalendarSyncService {
 
     const isError = "error" in fetchedEvents
 
-    if (isError && !id) throw fetchedEvents.error
+    if (isError && !id) {
+      const error = fetchedEvents.error
+
+      const serializedError = {
+        name: error?.name ?? null,
+        message: error?.message ?? null,
+        stack: error?.stack ?? null,
+        error: error?.error ?? null,
+      }
+
+      await this.calendarFailureRepository.create(
+        url,
+        JSON.stringify(
+          Object.fromEntries(
+            Object.entries(serializedError).filter(([, v]) => v != null),
+          ),
+        ),
+      )
+      throw fetchedEvents.error
+    }
     const savedCalendar = await this.saveCalendar(
       calendar,
       fetchedEvents.events,
@@ -97,7 +113,7 @@ export class CalendarSyncService {
     try {
       const fetchedEvents = await this.fetchService.fetchEvents(source, code)
       if (fetchedEvents.length === 0)
-        throw new NotFoundException("No events found")
+        throw new UnprocessableEntityException("No events found")
 
       return {
         events: fetchedEvents.map((event) =>
@@ -105,6 +121,7 @@ export class CalendarSyncService {
         ),
       }
     } catch (err) {
+      console.log("Error while fetching events", err)
       return { error: err, events: undefined }
     }
   }
@@ -112,7 +129,6 @@ export class CalendarSyncService {
   private async findSchoolCode(schoolId?: string) {
     if (!schoolId) return null
     const school = await this.schoolRepository.findOneOrFail(schoolId)
-    if (!school) throw new NotFoundException("School not found")
     return school.code
   }
 }
