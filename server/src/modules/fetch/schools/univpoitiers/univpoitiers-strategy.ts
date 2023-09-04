@@ -10,7 +10,7 @@ const univpoitiersStrategy = new SchoolStrategy({
       "https://upplanning.appli.univ-poitiers.fr",
     ),
   ],
-  fetcher: new IcalFetcher(true),
+  fetcher: new IcalFetcher({ withRetries: true, useProxy: true }),
   eventPipes: [],
 })
 

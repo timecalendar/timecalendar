@@ -5,9 +5,21 @@ import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
 import { CustomError } from "modules/shared/errors/custom-error"
+import { HttpsProxyAgent } from "https-proxy-agent"
+import { PROXY_URL } from "config/constants"
+
+type IcalFetcherOptions = {
+  withRetries?: boolean
+  useProxy?: boolean
+}
+
+const defaultOptions: IcalFetcherOptions = {
+  withRetries: false,
+  useProxy: false,
+}
 
 export class IcalFetcher implements Fetcher {
-  constructor(private readonly withRetries: boolean = false) {}
+  constructor(private readonly options: IcalFetcherOptions = defaultOptions) {}
 
   async fetch(
     url: string,
@@ -16,13 +28,18 @@ export class IcalFetcher implements Fetcher {
     // Some badly configured ADE instances do not return the ICal file
     // every time. Therefore, the request must be repeated several times
     // until the ICal file is obtained.
-    const nbRetries = this.withRetries ? 15 : 1
+    const nbRetries = this.options.withRetries ? 15 : 1
 
     const axiosConfig: AxiosRequestConfig = {
       method: "get",
       url,
       maxRedirects: 99,
       timeout: 15000,
+    }
+
+    if (this.options.useProxy && PROXY_URL.length > 0) {
+      const httpsAgent = new HttpsProxyAgent(PROXY_URL)
+      axiosConfig.httpsAgent = httpsAgent
     }
 
     if (data?.auth) {
@@ -51,7 +68,7 @@ export class IcalFetcher implements Fetcher {
           }
         }
 
-        if (!this.withRetries) {
+        if (!this.options.withRetries) {
           throw new BadRequestException(
             `Failed to request the API: ${e.message}`,
           )

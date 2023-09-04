@@ -48,3 +48,5 @@ export const WTF_DEBUG = isEnvTrue(env.WTF_DEBUG)
 export const CRISP_IDENTIFIER = env.CRISP_IDENTIFIER ?? ""
 export const CRISP_KEY = env.CRISP_KEY ?? ""
 export const CRISP_WEBSITE_ID = env.CRISP_WEBSITE_ID ?? ""
+
+export const PROXY_URL = env.PROXY_URL ?? ""
