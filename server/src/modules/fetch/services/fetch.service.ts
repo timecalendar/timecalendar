@@ -40,10 +40,17 @@ export class FetchService {
   async fetchEvents(
     { url, customData }: CalendarSource,
     school: string | null,
+    debugObject?: Record<string, any>,
   ) {
     const schoolStrategy = this.getStrategy(school)
     const transformedUrl = this.transformUrl(url, school, schoolStrategy)
     const strategy = schoolStrategy || genericStrategy
+
+    if (debugObject) {
+      debugObject.transformedUrl = transformedUrl
+      debugObject.strategy = schoolStrategy?.options.school || null
+    }
+
     const rawEvents = await strategy.fetchEvents(transformedUrl, customData)
     const events = strategy.transformEvents(rawEvents)
     return events.filter((event) => !event.fields.canceled)
