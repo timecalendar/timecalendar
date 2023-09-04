@@ -52,7 +52,12 @@ class ProfileScreen extends StatelessWidget {
             title: 'Vos retours et suggestions',
             icon: FontAwesomeIcons.paperPlane,
             action: () {
-              Navigator.of(context).pushNamed(SuggestionScreen.routeName);
+              Navigator.of(context).pushNamed(
+                SuggestionScreen.routeName,
+                arguments: SuggestionScreenArguments(
+                  fromFailedIcalImport: false,
+                ),
+              );
             },
           ),
         ],

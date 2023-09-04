@@ -15,6 +15,7 @@ Name | Type | Description | Notes
 **schoolName** | **String** |  | [optional] 
 **gradeName** | **String** |  | [optional] 
 **deviceInfo** | **String** |  | [optional] 
+**calendarUrl** | **String** |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

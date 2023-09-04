@@ -19,6 +19,7 @@ part 'send_message_dto.g.dart';
 /// * [schoolName]
 /// * [gradeName]
 /// * [deviceInfo]
+/// * [calendarUrl]
 @BuiltValue()
 abstract class SendMessageDto
     implements Built<SendMessageDto, SendMessageDtoBuilder> {
@@ -42,6 +43,9 @@ abstract class SendMessageDto
 
   @BuiltValueField(wireName: r'deviceInfo')
   String? get deviceInfo;
+
+  @BuiltValueField(wireName: r'calendarUrl')
+  String? get calendarUrl;
 
   SendMessageDto._();
 
@@ -111,6 +115,13 @@ class _$SendMessageDtoSerializer
       yield r'deviceInfo';
       yield serializers.serialize(
         object.deviceInfo,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.calendarUrl != null) {
+      yield r'calendarUrl';
+      yield serializers.serialize(
+        object.calendarUrl,
         specifiedType: const FullType(String),
       );
     }
@@ -187,6 +198,13 @@ class _$SendMessageDtoSerializer
             specifiedType: const FullType(String),
           ) as String;
           result.deviceInfo = valueDes;
+          break;
+        case r'calendarUrl':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.calendarUrl = valueDes;
           break;
         default:
           unhandled.add(key);

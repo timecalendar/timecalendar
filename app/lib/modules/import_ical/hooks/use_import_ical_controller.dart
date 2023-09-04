@@ -38,7 +38,12 @@ void showErrorDialog(BuildContext context, String err) async {
   );
 
   if (value == 'reportProblem')
-    Navigator.of(context).pushNamed(SuggestionScreen.routeName);
+    Navigator.of(context).pushNamed(
+      SuggestionScreen.routeName,
+      arguments: SuggestionScreenArguments(
+        fromFailedIcalImport: true,
+      ),
+    );
 }
 
 class ImportIcalState {

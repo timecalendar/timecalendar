@@ -21,6 +21,8 @@ class _$SendMessageDto extends SendMessageDto {
   final String? gradeName;
   @override
   final String? deviceInfo;
+  @override
+  final String? calendarUrl;
 
   factory _$SendMessageDto([void Function(SendMessageDtoBuilder)? updates]) =>
       (new SendMessageDtoBuilder()..update(updates))._build();
@@ -32,7 +34,8 @@ class _$SendMessageDto extends SendMessageDto {
       this.schoolId,
       this.schoolName,
       this.gradeName,
-      this.deviceInfo})
+      this.deviceInfo,
+      this.calendarUrl})
       : super._() {
     BuiltValueNullFieldError.checkNotNull(email, r'SendMessageDto', 'email');
     BuiltValueNullFieldError.checkNotNull(
@@ -57,7 +60,8 @@ class _$SendMessageDto extends SendMessageDto {
         schoolId == other.schoolId &&
         schoolName == other.schoolName &&
         gradeName == other.gradeName &&
-        deviceInfo == other.deviceInfo;
+        deviceInfo == other.deviceInfo &&
+        calendarUrl == other.calendarUrl;
   }
 
   @override
@@ -70,6 +74,7 @@ class _$SendMessageDto extends SendMessageDto {
     _$hash = $jc(_$hash, schoolName.hashCode);
     _$hash = $jc(_$hash, gradeName.hashCode);
     _$hash = $jc(_$hash, deviceInfo.hashCode);
+    _$hash = $jc(_$hash, calendarUrl.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -83,7 +88,8 @@ class _$SendMessageDto extends SendMessageDto {
           ..add('schoolId', schoolId)
           ..add('schoolName', schoolName)
           ..add('gradeName', gradeName)
-          ..add('deviceInfo', deviceInfo))
+          ..add('deviceInfo', deviceInfo)
+          ..add('calendarUrl', calendarUrl))
         .toString();
   }
 }
@@ -122,6 +128,10 @@ class SendMessageDtoBuilder
   String? get deviceInfo => _$this._deviceInfo;
   set deviceInfo(String? deviceInfo) => _$this._deviceInfo = deviceInfo;
 
+  String? _calendarUrl;
+  String? get calendarUrl => _$this._calendarUrl;
+  set calendarUrl(String? calendarUrl) => _$this._calendarUrl = calendarUrl;
+
   SendMessageDtoBuilder() {
     SendMessageDto._defaults(this);
   }
@@ -136,6 +146,7 @@ class SendMessageDtoBuilder
       _schoolName = $v.schoolName;
       _gradeName = $v.gradeName;
       _deviceInfo = $v.deviceInfo;
+      _calendarUrl = $v.calendarUrl;
       _$v = null;
     }
     return this;
@@ -168,7 +179,8 @@ class SendMessageDtoBuilder
               schoolId: schoolId,
               schoolName: schoolName,
               gradeName: gradeName,
-              deviceInfo: deviceInfo);
+              deviceInfo: deviceInfo,
+              calendarUrl: calendarUrl);
     } catch (_) {
       late String _$failedField;
       try {

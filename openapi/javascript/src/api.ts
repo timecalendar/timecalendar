@@ -557,6 +557,12 @@ export interface SendMessageDto {
      * @memberof SendMessageDto
      */
     'deviceInfo'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SendMessageDto
+     */
+    'calendarUrl'?: string;
 }
 /**
  * 

@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
+import 'package:timecalendar/modules/add_school/providers/add_school_provider.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
+import 'package:timecalendar/modules/import_ical/providers/ical_url_provider.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/utils/snackbar.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
@@ -15,11 +18,20 @@ List<String> SUBJECTS = [
   'Autre'
 ];
 
+class SuggestionScreenArguments {
+  final bool fromFailedIcalImport;
+
+  SuggestionScreenArguments({required this.fromFailedIcalImport});
+}
+
 class SuggestionScreen extends HookConsumerWidget {
   static const routeName = '/suggestion';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as SuggestionScreenArguments;
+
     final _messageFocusNode = useMemoized(() => FocusNode());
     final _scaffoldKey = useMemoized(() => GlobalKey<ScaffoldState>());
     final _formKey = useMemoized(() => GlobalKey<FormState>());
@@ -45,11 +57,20 @@ class SuggestionScreen extends HookConsumerWidget {
 
       try {
         await ref.read(apiClientProvider).contactApi().sendMessage(
-            sendMessageDto: SendMessageDto((dto) => dto
-              ..email = email.value
-              ..message = message.value
-              ..deviceInfo = deviceInfo.data['name'] ?? ''
-              ..calendarIds.replace(calendars.map((e) => e.id).toBuiltList())));
+            sendMessageDto: SendMessageDto((dto) {
+          dto
+            ..email = email.value
+            ..message = message.value
+            ..deviceInfo = deviceInfo.data['name'] ?? ''
+            ..calendarIds.replace(calendars.map((e) => e.id).toBuiltList());
+
+          if (args.fromFailedIcalImport) {
+            dto
+              ..calendarUrl = ref.read(icalUrlProvider)
+              ..gradeName = ref.read(addGradeNameProvider)
+              ..schoolName = ref.read(addSchoolNameProvider);
+          }
+        }));
 
         subject.value = SUBJECTS[0];
         email.value = "";
