@@ -1,31 +1,33 @@
-import { readFileSync } from "fs"
-import { join } from "path"
-import { NestExpressApplication } from "@nestjs/platform-express"
-import axios from "axios"
-import { FetchModule } from "modules/fetch/fetch.module"
+const icalFetcher: {
+  fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
+} = {
+  fetch: jest.fn(() => Promise.resolve([])),
+}
+
+jest.mock("modules/fetch/fetchers/ical-fetcher", () => {
+  return {
+    IcalFetcher: jest
+      .fn()
+      .mockImplementation(() => ({ fetch: icalFetcher.fetch })),
+  }
+})
+
+import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import {
   EventType,
   FetcherCalendarEvent,
 } from "modules/fetch/models/event.model"
 import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
-import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
-import { clearNestTestApp } from "test-utils/create-nest-app"
-import createTestApp from "test-utils/create-test-app"
 import { FetchService } from "modules/fetch/services/fetch.service"
-
-const axiosMock = axios as unknown as jest.Mock
+import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 describe("FetchService", () => {
-  let fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
-
   const pipe = jest.fn((event) => event)
-
   let strategies: SchoolStrategy[]
-
   let fetchService: FetchService
 
   const initService = (events: FetcherCalendarEvent[]) => {
-    fetch = jest.fn(() => Promise.resolve(events))
+    icalFetcher.fetch.mockImplementationOnce(() => Promise.resolve(events))
     strategies = [
       new SchoolStrategy({
         school: "rouen",
@@ -33,29 +35,15 @@ describe("FetchService", () => {
           new ReplaceUrlRenamer("https://google.com/", "https://bing.com/"),
           new ReplaceUrlRenamer("&format=1", ""),
         ],
-        fetcher: {
-          fetch,
-        },
         eventPipes: [pipe],
+      }),
+      new SchoolStrategy({
+        school: "crazyschool",
+        urlRenamers: [new ReplaceUrlRenamer("&crazy=true", "&crazy=false")],
       }),
     ]
     fetchService = new FetchService(strategies)
   }
-
-  describe("transformUrl", () => {
-    beforeEach(() => {
-      initService([])
-    })
-
-    it("should transform the url using all strategies", () => {
-      const url = fetchService.transformUrl(
-        "https://google.com/search?export=json&format=1",
-        "rouen",
-      )
-
-      expect(url).toBe("https://bing.com/search?export=json")
-    })
-  })
 
   describe("fetchEvents", () => {
     it("should fetch events", async () => {
@@ -83,7 +71,7 @@ describe("FetchService", () => {
         school,
       )
 
-      expect(fetch).toBeCalled()
+      expect(icalFetcher.fetch).toBeCalled()
       expect(pipe).toBeCalled()
       expect(events.length).toBe(1)
     })
@@ -132,32 +120,80 @@ describe("FetchService", () => {
       expect(events[0].uid).toBe("1")
     })
 
-    describe("with FetchModule", () => {
-      let app: NestExpressApplication
+    describe("rename url", () => {
+      it("uses only the generic and school strategy if one exists", async () => {
+        initService([fetcherCalendarEventFactory.build()])
 
-      beforeAll(async () => {
-        app = await createTestApp({ imports: [FetchModule] })
-        fetchService = app.get(FetchService)
-      })
-
-      it("should use the default strategy from FetchModule", async () => {
-        const ical = readFileSync(
-          join(__dirname, "../parsers/__tests__/ical.ics"),
-          "utf-8",
-        )
-
-        axiosMock.mockResolvedValueOnce({ data: ical })
+        const url = "https://google.com/search?export=json&crazy=true&nbWeeks=4"
+        const school = "rouen"
 
         const events = await fetchService.fetchEvents(
-          { url: "https://google.com", customData: null },
-          "generic",
+          { url, customData: null },
+          school,
         )
 
         expect(events.length).toBe(1)
-        expect(events[0].title).toBe("Cours")
+        expect(icalFetcher.fetch).toBeCalledWith(
+          "https://bing.com/search?export=json&crazy=true&firstDate=2000-01-01&lastDate=2038-01-01",
+          {},
+        )
       })
 
-      afterAll(() => clearNestTestApp(app))
+      it("uses only the school strategy if inheritGenericUrlRenamers is false", async () => {
+        strategies = [
+          new SchoolStrategy({
+            school: "oneschool",
+            inheritGenericUrlRenamers: false,
+          }),
+        ]
+        fetchService = new FetchService(strategies)
+
+        const url = "https://google.com/search?export=json&nbWeeks=4"
+        const school = "oneschool"
+
+        await fetchService.fetchEvents({ url, customData: null }, school)
+
+        expect(icalFetcher.fetch).toBeCalledWith(
+          "https://google.com/search?export=json&nbWeeks=4",
+          {},
+        )
+      })
+
+      it("uses all strategies if no school is provided", async () => {
+        initService([fetcherCalendarEventFactory.build()])
+
+        const url = "https://google.com/search?export=json&crazy=true"
+        const school = null
+
+        const events = await fetchService.fetchEvents(
+          { url, customData: null },
+          school,
+        )
+
+        expect(events.length).toBe(1)
+        expect(icalFetcher.fetch).toBeCalledWith(
+          "https://bing.com/search?export=json&crazy=false",
+          {},
+        )
+      })
+
+      it("uses all strategies if no school strategy is found", async () => {
+        initService([fetcherCalendarEventFactory.build()])
+
+        const url = "https://google.com/search?export=json&crazy=true"
+        const school = "unknown"
+
+        const events = await fetchService.fetchEvents(
+          { url, customData: null },
+          school,
+        )
+
+        expect(events.length).toBe(1)
+        expect(icalFetcher.fetch).toBeCalledWith(
+          "https://bing.com/search?export=json&crazy=false",
+          {},
+        )
+      })
     })
   })
 })
