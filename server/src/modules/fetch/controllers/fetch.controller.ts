@@ -11,7 +11,22 @@ export class FetchController {
 
   @ApiExcludeEndpoint()
   @Post("events")
-  getEvents(@Body() { school, source }: GetEventsDto) {
-    return this.fetchService.fetchEvents(source, school)
+  async getEvents(@Body() { school, source }: GetEventsDto) {
+    const debugObject: Record<string, any> = {}
+
+    try {
+      return {
+        data: await this.fetchService.fetchEvents(source, school, debugObject),
+        ...debugObject,
+      }
+    } catch (error) {
+      return {
+        name: error?.name ?? null,
+        message: error?.message ?? null,
+        stack: error?.stack ?? null,
+        error: error?.error ?? null,
+        ...debugObject,
+      }
+    }
   }
 }
