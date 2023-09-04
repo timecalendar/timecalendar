@@ -203,7 +203,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.read(eventsForViewProvider);
+    final events = ref.watch(eventsForViewProvider);
 
     // var settingsProvider = Provider.of<SettingsProvider>(context);
     final dayWidth = widget.calendarWidth / widget.nbOfVisibleDays;
