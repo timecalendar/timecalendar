@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
 import 'package:timecalendar/modules/add_school/providers/add_school_provider.dart';
+import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
 import 'package:timecalendar/modules/import_ical/providers/ical_url_provider.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
@@ -68,7 +69,8 @@ class SuggestionScreen extends HookConsumerWidget {
             dto
               ..calendarUrl = ref.read(icalUrlProvider)
               ..gradeName = ref.read(addGradeNameProvider)
-              ..schoolName = ref.read(addSchoolNameProvider);
+              ..schoolName = ref.read(addSchoolNameProvider)
+              ..schoolId = ref.read(assistantProvider).school?.id;
           }
         }));
 
