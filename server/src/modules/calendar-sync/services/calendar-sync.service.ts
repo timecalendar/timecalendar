@@ -46,9 +46,9 @@ export class CalendarSyncService {
   }
 
   async sync(calendar: CalendarForSync) {
-    const { id, url, customData, schoolId } = calendar
+    const { id, url, customData, school } = calendar
     const source = { url, customData }
-    const code = await this.findSchoolCode(schoolId)
+    const code = await this.findSchoolCode(school?.id)
     const fetchedEvents = await this.fetchEvents(source, code)
 
     const isError = "error" in fetchedEvents
