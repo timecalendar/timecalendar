@@ -3,7 +3,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univamuStrategy = new SchoolStrategy({
   school: "univamu",
-  fetcher: new IcalFetcher(true),
+  fetcher: new IcalFetcher({ withRetries: true }),
 })
 
 export default univamuStrategy

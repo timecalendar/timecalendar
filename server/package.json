@@ -80,6 +80,7 @@
     "glob": "^7.1.6",
     "glob-promise": "^4.2.2",
     "helmet": "^7.0.0",
+    "https-proxy-agent": "^7.0.2",
     "ioredis-mock": "^8.8.1",
     "jest": "^29.6.1",
     "jest-junit": "^16.0.0",

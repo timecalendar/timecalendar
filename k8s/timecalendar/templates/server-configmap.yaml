@@ -39,3 +39,5 @@ data:
   CRISP_IDENTIFIER: {{ .Values.timecalendar.crisp.identifier }}
   CRISP_KEY: {{ .Values.timecalendar.crisp.key }}
   CRISP_WEBSITE_ID: {{ .Values.timecalendar.crisp.websiteId }}
+
+  PROXY_URL: {{ .Values.timecalendar.proxyUrl }}
