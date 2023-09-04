@@ -109,7 +109,9 @@ describe("CalendarSyncService", () => {
             customData: null,
           })
 
-          await expect(promise).rejects.toThrow(/insert or update on table/)
+          await expect(promise).rejects.toThrow(
+            /Could not find any entity of type/,
+          )
         },
       )
     })
