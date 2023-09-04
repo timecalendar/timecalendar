@@ -12,6 +12,7 @@ export interface SchoolStrategyOptions {
     | UrlRenamer
     | { renamer: UrlRenamer; onlyThisSchool?: boolean }
   )[]
+  inheritGenericUrlRenamers?: boolean
   fetcher: Fetcher
   eventPipes: EventTransformPipe[]
 }
@@ -19,6 +20,7 @@ export interface SchoolStrategyOptions {
 const defaultOptions: SchoolStrategyOptions = {
   school: "generic",
   urlRenamers: [],
+  inheritGenericUrlRenamers: true,
   fetcher: new IcalFetcher(),
   eventPipes: [],
 }
