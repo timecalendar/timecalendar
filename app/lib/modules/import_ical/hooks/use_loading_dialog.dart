@@ -45,8 +45,10 @@ LoadingDialogState useLoadingDialog(BuildContext context) {
   }
 
   closeDialog() {
-    if (dialogContext.value != null) {
-      Navigator.of(dialogContext.value!).pop();
+    final value = dialogContext.value;
+
+    if (value != null) {
+      Navigator.of(value).pop();
       dialogContext.value = null;
     }
   }
