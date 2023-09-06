@@ -11,6 +11,7 @@ import 'package:timecalendar/modules/import_ical/providers/ical_url_provider.dar
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/utils/snackbar.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
+import 'package:timecalendar/modules/suggestion/utils/format_device_info.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 List<String> SUBJECTS = [
@@ -62,7 +63,7 @@ class SuggestionScreen extends HookConsumerWidget {
           dto
             ..email = email.value
             ..message = message.value
-            ..deviceInfo = deviceInfo.data['name'] ?? ''
+            ..deviceInfo = formatDeviceInfo(deviceInfo)
             ..calendarIds.replace(calendars.map((e) => e.id).toBuiltList());
 
           if (args.fromFailedIcalImport) {
