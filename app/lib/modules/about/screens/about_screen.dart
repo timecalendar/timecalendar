@@ -78,11 +78,12 @@ class AboutScreen extends ConsumerWidget {
                 children: <Widget>[
                   Expanded(
                     child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context)
-                              .pushNamed(DebugScreen.routeName);
-                        },
-                        child: Text("Version " + settingsProvider.version)),
+                      onTap: () {
+                        Navigator.of(context).pushNamed(DebugScreen.routeName);
+                      },
+                      child: Text(
+                          "Version ${settingsProvider.version} (build ${settingsProvider.buildNumber})"),
+                    ),
                   ),
                   CustomButton(
                     text: "Changelog",

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 typedef NotificationListener = Function(Map<String, dynamic> message);
@@ -23,9 +25,19 @@ class NotificationService {
       onMessage(message.data);
     });
 
-    _firebaseMessaging.getToken().then((value) {
-      print(value);
-    });
+    getFcmToken();
+  }
+
+  Future<String?> getFcmToken() async {
+    if (Platform.isIOS || Platform.isMacOS) {
+      final apnsToken = await _firebaseMessaging.getAPNSToken();
+
+      if (apnsToken == null) {
+        return null;
+      }
+    }
+
+    return _firebaseMessaging.getToken();
   }
 
   Future<dynamic> onMessage(Map<String, dynamic> message) async {
@@ -85,15 +97,19 @@ class NotificationService {
   }
 
   Future<void> subscribe() async {
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    try {
+      await _firebaseMessaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> subscribeDelay() async {
