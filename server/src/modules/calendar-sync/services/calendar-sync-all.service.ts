@@ -7,7 +7,7 @@ import { CalendarRepository } from "modules/calendar/repositories/calendar.repos
 import { CalendarService } from "modules/calendar/services/calendar.service"
 import pLimit from "p-limit"
 
-const UPDATE_AFTER_MIN = 15
+const UPDATE_AFTER_MIN = 30
 const UPDATE_CONCURRENCY = 10
 
 @Injectable()

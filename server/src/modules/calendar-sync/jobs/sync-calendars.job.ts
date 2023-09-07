@@ -12,7 +12,7 @@ export class SyncCalendarsJob {
       queue: "default-cron",
       name: "sync_calendars",
       handler: () => this.run(),
-      cron: "*/15 * * * *",
+      cron: "*/5 * * * *",
       displayName: "Sync calendars",
       description: "Sync calendars",
     })
