@@ -12,7 +12,7 @@ resource "kubernetes_service" "cachet_service" {
     port {
       protocol   = "TCP"
       port       = 80
-      target_port = 80
+      target_port = 8000
     }
   }
 }
