@@ -78,6 +78,26 @@ resource "kubernetes_deployment" "cachet_deployment" {
               }
             }
           }
+          env {
+            name  = "APP_DEBUG"
+            value = "false"
+          }
+          env {
+            name  = "DEBUG"
+            value = "false"
+          }
+          env {
+            name  = "APP_ENV"
+            value = "production"
+          }
+          env {
+            name  = "DB_DRIVER"
+            value = "pgsql"
+          }
+          env {
+            name  = "DB_PREFIX"
+            value = "chq_"
+          }
         }
       }
     }
