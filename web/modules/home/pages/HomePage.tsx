@@ -3,6 +3,8 @@ import googlePlayImg from "modules/home/assets/google_play.png"
 import appStoreImg from "modules/home/assets/app_store.png"
 import Image from "next/image"
 
+// test
+
 const HomePage = () => (
   <div className="relative overflow-hidden h-screen px-[50px] py-0">
     <span className="hidden md:block">
