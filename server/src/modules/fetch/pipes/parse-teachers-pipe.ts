@@ -1,19 +1,15 @@
-import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
+import { parseFromDescriptionPipe } from "modules/fetch/pipes/parse-from-description-pipe"
 
-const ParseTeachersPipe: (regex?: RegExp) => EventTransformPipe =
-  (regex = /^([a-zA-Z-]{2,} )+[a-zA-Z-]{2,}$/) =>
-  (event: FetcherCalendarEvent) => {
-    const lines = event.description.split("\n")
+const parseTeachersPipe: (regex?: RegExp) => EventTransformPipe = (
+  regex = /^(([a-zA-Z-]{2,} )+[a-zA-Z-]{2,})$/,
+) =>
+  parseFromDescriptionPipe([
+    {
+      regex,
+      field: "teachers",
+      removeFromDescription: true,
+    },
+  ])
 
-    const teachers = lines.filter((line) => line.match(regex))
-    const description = lines.filter((line) => !line.match(regex)).join("\n")
-
-    return {
-      ...event,
-      teachers,
-      description,
-    }
-  }
-
-export default ParseTeachersPipe
+export default parseTeachersPipe
