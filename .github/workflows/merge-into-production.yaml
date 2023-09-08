@@ -24,3 +24,4 @@ jobs:
             git push
             git checkout main
             git merge --no-ff production -m "Merge back production"
+            git push
