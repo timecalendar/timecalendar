@@ -22,3 +22,5 @@ jobs:
             git pull
             git merge --no-ff main -m "Merge main into production"
             git push
+            git checkout main
+            git merge --no-ff production -m "Merge back production"
