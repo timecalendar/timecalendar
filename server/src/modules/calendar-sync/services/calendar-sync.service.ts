@@ -121,7 +121,6 @@ export class CalendarSyncService {
         ),
       }
     } catch (err) {
-      console.log("Error while fetching events", err)
       return { error: err, events: undefined }
     }
   }

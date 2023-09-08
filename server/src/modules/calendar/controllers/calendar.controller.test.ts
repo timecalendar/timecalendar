@@ -19,8 +19,6 @@ describe("CalendarSyncController", () => {
         .get(`/calendars/by-token/${calendar.token}`)
         .expect(200)
 
-      console.log(body)
-
       expect(body.token).toBe(calendar.token)
       expect(body.schoolName).toBe("My School")
       expect(body.name).toBe("My Calendar")

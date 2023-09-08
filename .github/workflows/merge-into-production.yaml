@@ -1,0 +1,22 @@
+name: Merge into production
+
+on: workflow_dispatch
+
+jobs:
+  sync-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Git config
+        run: |
+            git config --local user.email "actions@github.com"
+            git config --local user.name "Github Actions"
+
+      - name: Merge main into production
+        run: |
+            git fetch --unshallow
+            git checkout production
+            git pull
+            git merge --no-ff main -m "Merge main into production"
+            git push

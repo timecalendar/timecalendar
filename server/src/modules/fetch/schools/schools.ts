@@ -1,6 +1,7 @@
 import enseaStrategy from "modules/fetch/schools/ensea/ensea-strategy"
 import esieeStrategy from "modules/fetch/schools/esiee/esiee-strategy"
 import univamuStrategy from "modules/fetch/schools/univamu/univamu-strategy"
+import univangersStrategy from "modules/fetch/schools/univangers/univangers-strategy"
 import univbourgogneStrategy from "modules/fetch/schools/univbourgogne/univbourgogne-strategy"
 import univeiffelStrategy from "modules/fetch/schools/univeiffel/univeiffel-strategy"
 import univlehavreStrategy from "modules/fetch/schools/univlehavre/univlehavre-strategy"
@@ -14,6 +15,7 @@ const strategies = [
   enseaStrategy,
   esieeStrategy,
   univamuStrategy,
+  univangersStrategy,
   univbourgogneStrategy,
   univeiffelStrategy,
   univlehavreStrategy,

@@ -1,4 +1,4 @@
-import ParseTeachersPipe from "modules/fetch/pipes/parse-teachers-pipe"
+import parseTeachersPipe from "modules/fetch/pipes/parse-teachers-pipe"
 import sortLocationPipe from "modules/fetch/pipes/sort-location-pipe"
 import esieeGetEventTypePipe from "modules/fetch/schools/esiee/esiee-get-event-type-pipe"
 import esieeGetUnitNamePipe from "modules/fetch/schools/esiee/esiee-get-unit-name-pipe"
@@ -14,7 +14,7 @@ const esieeStrategy = new SchoolStrategy({
     esieeGetEventTypePipe,
     esieeParseDescriptionPipe,
     sortLocationPipe,
-    ParseTeachersPipe(/^[A-Z- ]+ [A-Z-]+\.$/),
+    parseTeachersPipe(/^[A-Z- ]+ [A-Z-]+\.$/),
   ],
 })
 
