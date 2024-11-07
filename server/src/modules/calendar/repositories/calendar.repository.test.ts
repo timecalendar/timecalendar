@@ -73,7 +73,7 @@ describe("CalendarRepository", () => {
 
   describe("findByTokensWithContent", () => {
     it("returns calendars with content", async () => {
-      const event = calendarEventFactory.build()
+      const event = calendarEventFactory().build()
       const expected = [
         await calendarFactory().create(),
         await calendarFactory()

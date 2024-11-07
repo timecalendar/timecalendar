@@ -48,13 +48,14 @@ export const factoryBuilder = <T, U = null>(
       )
       paths.forEach(([path]: any, i: any) => _.set(obj, path, promises[i]))
 
-      const entity = dataSource.entityMetadatas.find(
+      const entityMetadata = dataSource.entityMetadatas.find(
         (entity) => entity.name === model.name,
       )
-      if (!entity) throw new Error(`Entity not found: ${model.name}`)
+      if (!entityMetadata) throw new Error(`Entity not found: ${model.name}`)
 
-      const repository = dataSource.getRepository(entity.name)
-      const inserted = await repository.save(obj)
+      const repository = dataSource.getRepository(entityMetadata.name)
+      const entity = repository.create(obj)
+      const inserted = await repository.save(entity)
       return inserted
     }) as T
   }

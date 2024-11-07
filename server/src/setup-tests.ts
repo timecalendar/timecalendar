@@ -34,7 +34,6 @@ beforeEach(async () =>
       .map(clearDatabase),
   ),
 )
-
 beforeEach(() => MockDate.reset())
 
 afterAll(async () => {

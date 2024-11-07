@@ -79,7 +79,7 @@ describe("CalendarSyncAllService", () => {
     })
 
     it("returns the calendar even when the sync fails", async () => {
-      const anotherEvent = calendarEventFactory.build()
+      const anotherEvent = calendarEventFactory().build()
       const calendar = await calendarFactory()
         .transient({ events: [anotherEvent] })
         .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") })

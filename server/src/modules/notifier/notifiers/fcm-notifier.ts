@@ -46,10 +46,10 @@ export class FcmNotifier implements Notifier {
     })
 
     // Modified events
-    difference.changedItems.forEach(([, event]) => {
+    difference.changedItems.forEach(({ newEvent }) => {
       events.push({
         type: DifferenceType.EDIT,
-        event,
+        event: newEvent,
       })
     })
 

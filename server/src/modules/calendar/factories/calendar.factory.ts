@@ -1,4 +1,5 @@
 import { calendarContentFactory } from "modules/calendar/factories/calendar-content.factory"
+import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { schoolFactory } from "modules/school/factories/school.factory"

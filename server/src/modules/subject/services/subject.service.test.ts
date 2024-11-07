@@ -25,9 +25,9 @@ describe("SubjectService", () => {
       })
 
       const events = [
-        calendarEventFactory.build({ title: "Advanced Physics" }),
-        calendarEventFactory.build({ title: "Maths" }),
-        calendarEventFactory.build({ title: "French" }),
+        calendarEventFactory().build({ title: "Advanced Physics" }),
+        calendarEventFactory().build({ title: "Maths" }),
+        calendarEventFactory().build({ title: "French" }),
       ]
 
       await service.syncEventSubjects(calendarSubject.calendar.id, events)
@@ -54,8 +54,8 @@ describe("SubjectService", () => {
       })
 
       const events = [
-        calendarEventFactory.build({ title: "Maths" }),
-        calendarEventFactory.build({ title: "Maths" }),
+        calendarEventFactory().build({ title: "Maths" }),
+        calendarEventFactory().build({ title: "Maths" }),
       ]
 
       await service.syncEventSubjects(calendarSubject.calendar.id, events)

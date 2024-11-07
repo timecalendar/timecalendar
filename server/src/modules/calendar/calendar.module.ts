@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
+import { CalendarEventEmitterModule } from "modules/calendar-event-emitter/calendar-event-emitter.module"
 import { CalendarController } from "modules/calendar/controllers/calendar.controller"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarHelper } from "modules/calendar/helpers/calendar.helper"
@@ -14,6 +15,7 @@ import { SubjectModule } from "modules/subject/subject.module"
   imports: [
     TypeOrmModule.forFeature([Calendar, CalendarContent]),
     SubjectModule,
+    CalendarEventEmitterModule,
   ],
   providers: [
     CalendarService,

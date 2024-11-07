@@ -2,6 +2,7 @@ import { BullModule } from "@nestjs/bull"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { dataSourceOptions } from "data-source"
+import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { ContactModule } from "modules/contact/contact.module"
 import { FetchModule } from "modules/fetch/fetch.module"
@@ -42,6 +43,7 @@ import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
     JobRunModule,
     SchoolGroupModule,
     ContactModule,
+    CalendarLogModule,
   ],
   controllers: [],
   providers: [],

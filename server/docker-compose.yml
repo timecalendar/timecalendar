@@ -1,3 +1,7 @@
+volumes:
+  postgres:
+  redis:
+
 services:
   nginx:
     image: nginx
@@ -16,7 +20,7 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
       - ./bin/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
   redis:
     image: redis
@@ -24,4 +28,4 @@ services:
     ports:
       - '6370:6379'
     volumes: 
-      - ./volumes/redis:/data
+      - redis:/data

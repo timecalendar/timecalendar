@@ -1,11 +1,15 @@
 import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import MockDate from "lib/mock-date"
+import { CalendarEventEmitterModule } from "modules/calendar-event-emitter/calendar-event-emitter.module"
+import { CalendarContentEventEmitter } from "modules/calendar-event-emitter/events/calendar-content.event-emitter"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
+import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
+import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
@@ -23,13 +27,12 @@ describe("CalendarSyncService", () => {
   let service: CalendarSyncService
   let dataSource: DataSource
   let events: FetcherCalendarEvent[]
-  const mockFetchService = {
-    fetchEvents: jest.fn(),
-  }
+  const mockFetchService = { fetchEvents: jest.fn() }
+  let updatedListener: jest.Mock
 
   beforeAll(async () => {
     app = await createTestApp(
-      { imports: [CalendarSyncModule] },
+      { imports: [CalendarSyncModule, CalendarEventEmitterModule] },
       { overrides: [{ provide: FetchService, useValue: mockFetchService }] },
     )
     service = app.get(CalendarSyncService)
@@ -39,6 +42,13 @@ describe("CalendarSyncService", () => {
   beforeEach(() => {
     events = [fetcherCalendarEventFactory.build()]
     mockFetchService.fetchEvents = jest.fn(async () => events)
+  })
+
+  beforeEach(() => {
+    updatedListener = jest.fn()
+    app
+      .get(CalendarContentEventEmitter)
+      .on("calendarContentUpdated", updatedListener)
   })
 
   describe("createCalendar", () => {
@@ -67,6 +77,8 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+
+      expect(updatedListener).not.toHaveBeenCalled()
     })
 
     it("creates a calendar with a custom school", async () => {
@@ -92,6 +104,8 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+
+      expect(updatedListener).not.toHaveBeenCalled()
     })
 
     it("throws when the school does not exist", async () => {
@@ -142,10 +156,14 @@ describe("CalendarSyncService", () => {
 
   describe("sync", () => {
     let calendar: Calendar
+    let oldEvents: CalendarEvent[]
 
     beforeEach(async () => {
       MockDate.set(new Date("2022-01-01T00:00:00.000Z"))
-      calendar = await calendarFactory().create()
+      oldEvents = [calendarEventFactory().build()]
+      calendar = await calendarFactory()
+        .transient({ events: oldEvents })
+        .create()
     })
 
     it("syncs events for an existing calendar", async () => {
@@ -178,6 +196,16 @@ describe("CalendarSyncService", () => {
           color: expect.stringMatching(/^#[0-9a-f]{6}$/),
         },
       ])
+
+      expect(updatedListener).toHaveBeenCalled()
+      const updatedListenerParams = updatedListener.mock.calls[0][0]
+      expect(updatedListenerParams.calendarId).toBe(calendar.id)
+      expect(updatedListenerParams.oldCalendarEvents[0].uid).toEqual(
+        oldEvents[0].uid,
+      )
+      expect(updatedListenerParams.newCalendarEvents[0].uid).toEqual(
+        "new-event",
+      )
     })
 
     it("creates a new calendar with events", async () => {
@@ -201,6 +229,8 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+
+      expect(updatedListener).not.toHaveBeenCalled()
     })
 
     it("does not create a calendar when there is an error", async () => {

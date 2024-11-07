@@ -38,7 +38,7 @@ describe("CalendarService", () => {
 
   describe("calendarsForPublic", () => {
     it("returns multiple calendars", async () => {
-      const event = calendarEventFactory.build()
+      const event = calendarEventFactory().build()
       const created = [
         await calendarFactory().school().create(),
         await calendarFactory()

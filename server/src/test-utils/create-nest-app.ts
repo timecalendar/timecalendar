@@ -1,12 +1,15 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { TestingModule } from "@nestjs/testing"
 import configureMainApp from "config/configure-main-app"
+import { clearDatabase } from "modules/shared/utils/clear-database"
+import { DataSource } from "typeorm"
 
 const appInstances: NestExpressApplication[] = []
 
 export const createNestTestApp = async (module: TestingModule) => {
   const app = module.createNestApplication<NestExpressApplication>()
   configureMainApp(module, app)
+  await clearDatabase(app.get(DataSource))
   await app.init()
   appInstances.push(app)
   return app

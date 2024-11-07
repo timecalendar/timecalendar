@@ -1,4 +1,4 @@
-import { CalendarChange } from "modules/calendar-log/models/difference"
+import { CalendarChange } from "modules/calendar-log/models/calendar-change.model"
 import { EventType } from "modules/fetch/models/event.model"
 import { FirebaseService } from "modules/firebase/services/firebase.service"
 import { FcmNotifier } from "modules/notifier/notifiers/fcm-notifier"
@@ -64,8 +64,8 @@ describe("FcmNotifier", () => {
     it("should handle a modified event", async () => {
       const difference: CalendarChange = {
         changedItems: [
-          [
-            {
+          {
+            oldEvent: {
               uid: "event1",
               title: "Cours",
               allDay: false,
@@ -79,7 +79,7 @@ describe("FcmNotifier", () => {
               fields: {},
               exportedAt: new Date("2021-09-30T08:00:00.000Z"),
             },
-            {
+            newEvent: {
               uid: "event1",
               title: "Cours",
               allDay: false,
@@ -93,7 +93,7 @@ describe("FcmNotifier", () => {
               fields: {},
               exportedAt: new Date("2021-09-30T08:00:00.000Z"),
             },
-          ],
+          },
         ],
         newItems: [],
         oldItems: [],
@@ -111,7 +111,7 @@ describe("FcmNotifier", () => {
           action: "calendar_changed",
           payload: JSON.stringify({
             type: DifferenceType.EDIT,
-            event: difference.changedItems[0][1],
+            event: difference.changedItems[0].newEvent,
           }),
         },
       })

@@ -17,7 +17,7 @@ describe("CalendarEventHelper", () => {
 
   describe("forPublic", () => {
     it("returns a calendar event for public", async () => {
-      const event = calendarEventFactory.build()
+      const event = calendarEventFactory().build()
 
       const result = helper.forPublic({
         calendarEvent: event,
@@ -31,7 +31,7 @@ describe("CalendarEventHelper", () => {
     })
 
     it("returns the default color", async () => {
-      const event = calendarEventFactory.build()
+      const event = calendarEventFactory().build()
 
       const result = helper.forPublic({
         calendarEvent: event,

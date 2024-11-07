@@ -20,7 +20,7 @@ describe("CalendarContentEntity", () => {
 
   describe("events transform", () => {
     it("transforms dates from json data", async () => {
-      const event = calendarEventFactory.build()
+      const event = calendarEventFactory().build()
       const created = await calendarContentFactory().create({
         events: [event],
       })

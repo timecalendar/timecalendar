@@ -21,7 +21,7 @@ describe("CalendarHelper", () => {
 
   describe("withContentForPublic", () => {
     it("returns a calendar with content", async () => {
-      const event = calendarEventFactory.build()
+      const event = calendarEventFactory().build()
       const created = await calendarFactory()
         .transient({ events: [event] })
         .create()
@@ -50,8 +50,8 @@ describe("CalendarHelper", () => {
       const created = await calendarFactory()
         .transient({
           events: [
-            calendarEventFactory.build({ title: "Maths" }),
-            calendarEventFactory.build({ title: "New event" }),
+            calendarEventFactory().build({ title: "Maths" }),
+            calendarEventFactory().build({ title: "New event" }),
           ],
         })
         .create()
