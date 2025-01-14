@@ -19,6 +19,6 @@ export class SyncCalendarsJob {
   }
 
   async run() {
-    await this.calendarSyncAllService.syncAllForCronJob()
+    // await this.calendarSyncAllService.syncAllForCronJob()
   }
 }
