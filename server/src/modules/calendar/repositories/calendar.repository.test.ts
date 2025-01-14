@@ -179,7 +179,9 @@ describe("CalendarRepository", () => {
     })
 
     it("does not update other calendars", async () => {
-      const [calendar, other] = await calendarFactory().createList(2)
+      const [calendar, other] = await calendarFactory().createList(2, {
+        lastAccessedAt: null,
+      })
 
       await repository.setCalendarsLastAccessedAt(
         [calendar.token],
