@@ -21,6 +21,13 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           image: "ghcr.io/timecalendar/timecalendar-web:{{ .Values.web.tag | default .Chart.AppVersion }}"
+          resources:
+            requests:
+              memory: "768Mi"
+              cpu: "512m"
+            limits:
+              memory: "768Mi"
+              cpu: "512m"
           imagePullPolicy: Always
           ports:
             - name: http
