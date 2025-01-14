@@ -79,16 +79,15 @@ jobs:
     - name: Checkout main
       uses: actions/checkout@v4
 
-    - name: Log in to GitHub Container Registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Start Postgres and Redis
-      run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml --profile ci up -d postgres redis
-
-    - name: Wait for Postgres and Redis
-      run: |
-        ./ci/wait.sh -h localhost -p 5433 -t 60
-        ./ci/wait.sh -h localhost -p 6370 -t 60
+      run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d
 
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test

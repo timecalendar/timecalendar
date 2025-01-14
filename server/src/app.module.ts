@@ -1,7 +1,5 @@
-import { BullModule } from "@nestjs/bull"
 import { Module } from "@nestjs/common"
-import { TypeOrmModule } from "@nestjs/typeorm"
-import { dataSourceOptions } from "data-source"
+import { COMMON_IMPORTS } from "common-imports"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { ContactModule } from "modules/contact/contact.module"
 import { FetchModule } from "modules/fetch/fetch.module"
@@ -11,27 +9,15 @@ import { MailerModule } from "modules/mailer/mailer.module"
 import { NotifierModule } from "modules/notifier/notifier.module"
 import { QueueModule } from "modules/queue/queue.module"
 import { RedisModule } from "modules/redis/redis.module"
-import { RedisService } from "modules/redis/services/redis.service"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({ ...dataSourceOptions, autoLoadEntities: true }),
-    BullModule.forRootAsync({
-      imports: [RedisModule],
-      useFactory: async (RedisService: RedisService) => ({
-        createClient: () =>
-          RedisService.newRedisInstance({
-            maxRetriesPerRequest: null,
-            enableReadyCheck: false,
-          }),
-      }),
-      inject: [RedisService],
-    }),
-    FirebaseModule,
+    ...COMMON_IMPORTS,
     QueueModule,
+    FirebaseModule,
     NotifierModule,
     MailerModule,
     FetchModule,

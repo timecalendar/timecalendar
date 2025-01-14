@@ -35,6 +35,7 @@ export const calendarFactory = factoryBuilder(() => [
         school: associations.school,
         url: "https://timecalendar.app/calendar/ical",
         lastUpdatedAt: new Date(),
+        lastAccessedAt: new Date(),
         content: factoryToEntity(
           calendarContentFactory().params({
             events: transientParams.events || [],

@@ -1,5 +1,4 @@
 import { JobHandler } from "modules/job-run/models/job-handler.model"
-import { AppQueueName } from "modules/queue/queue.constants"
 
 export interface QueueJob<T> {
   /**
@@ -18,11 +17,6 @@ export interface QueueJob<T> {
   description?: string
 
   /**
-   * The queue name in Bull
-   */
-  queue: AppQueueName
-
-  /**
    * The name logged in the job log
    */
   displayName?: string
@@ -31,9 +25,4 @@ export interface QueueJob<T> {
    * Cron expression for the job
    */
   cron?: string
-
-  /**
-   * Whether to log the job run
-   */
-  logJobRun?: boolean
 }

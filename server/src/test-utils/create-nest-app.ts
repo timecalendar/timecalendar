@@ -16,10 +16,3 @@ export const getNestTestApps = () => appInstances
 
 export const clearNestTestApps = () =>
   Promise.all(appInstances.map((app) => app.close()))
-
-export const clearNestTestApp = (app: NestExpressApplication) => {
-  const index = appInstances.indexOf(app)
-  if (index === -1) return
-  appInstances.splice(index, 1)
-  return app.close()
-}

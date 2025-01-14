@@ -1,7 +1,13 @@
 import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
-import { DeepPartial, In, LessThan, Repository } from "typeorm"
+import { DeepPartial, In, LessThan, MoreThan, Repository } from "typeorm"
 import { Calendar } from "modules/calendar/models/calendar.entity"
+
+type FindLastUpdatedBeforeWithContentParams = {
+  lastUpdatedBefore: Date
+  lastAccessedAtAfter?: Date
+  filterByTokens?: string[]
+}
 
 @Injectable()
 export class CalendarRepository {
@@ -32,14 +38,18 @@ export class CalendarRepository {
     return this.repository.save(calendar)
   }
 
-  findLastUpdatedBeforeWithContent(
-    lastUpdatedBefore: Date,
-    filterByTokens?: string[],
-  ) {
+  findLastUpdatedBeforeWithContent({
+    lastUpdatedBefore,
+    lastAccessedAtAfter,
+    filterByTokens,
+  }: FindLastUpdatedBeforeWithContentParams) {
     return this.repository.find({
       relations: { school: true, content: true },
       where: {
         lastUpdatedAt: LessThan(lastUpdatedBefore),
+        ...(lastAccessedAtAfter && {
+          lastAccessedAt: MoreThan(lastAccessedAtAfter),
+        }),
         ...(filterByTokens && { token: In(filterByTokens) }),
       },
       order: { lastUpdatedAt: "ASC" },

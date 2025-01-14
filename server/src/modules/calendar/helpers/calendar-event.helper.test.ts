@@ -1,5 +1,4 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
-import MockDate from "lib/mock-date"
 import { CalendarModule } from "modules/calendar/calendar.module"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
@@ -46,9 +45,15 @@ describe("CalendarEventHelper", () => {
   })
 
   describe("fromFetcherCalendarEvent", () => {
+    beforeEach(async () => {
+      jest.useFakeTimers({ now: new Date("2022-07-01T00:00:00.000Z") })
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
     it("returns a calendar event from a fetcher calendar event", async () => {
-      const date = new Date("2022-07-01T00:00:00.000Z")
-      MockDate.set(date)
       const fetcherCalendarEvent = fetcherCalendarEventFactory.build()
 
       const result = helper.fromFetcherCalendarEvent(fetcherCalendarEvent)
@@ -57,7 +62,7 @@ describe("CalendarEventHelper", () => {
       expect(result.title).toBe(fetcherCalendarEvent.title)
       expect(result.startsAt).toEqual(fetcherCalendarEvent.start)
       expect(result.endsAt).toEqual(fetcherCalendarEvent.end)
-      expect(result.exportedAt).toEqual(date)
+      expect(result.exportedAt).toEqual(new Date("2022-07-01T00:00:00.000Z"))
     })
   })
 })

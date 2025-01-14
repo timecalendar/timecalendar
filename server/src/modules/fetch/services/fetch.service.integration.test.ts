@@ -4,14 +4,12 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import axios from "axios"
 import { FetchModule } from "modules/fetch/fetch.module"
 import { FetchService } from "modules/fetch/services/fetch.service"
-import { clearNestTestApp } from "test-utils/create-nest-app"
 import createTestApp from "test-utils/create-test-app"
 
 const axiosMock = axios as unknown as jest.Mock
 
 describe("FetchService", () => {
   let fetchService: FetchService
-
   let app: NestExpressApplication
 
   beforeAll(async () => {
@@ -35,6 +33,4 @@ describe("FetchService", () => {
     expect(events.length).toBe(1)
     expect(events[0].title).toBe("Cours")
   })
-
-  afterAll(() => clearNestTestApp(app))
 })
