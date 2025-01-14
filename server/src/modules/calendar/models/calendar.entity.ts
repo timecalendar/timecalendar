@@ -44,8 +44,8 @@ export class Calendar {
   @Column()
   lastUpdatedAt: Date
 
-  @Column({ nullable: true })
-  lastAccessedAt: Date
+  @Column({ type: "timestamp", nullable: true })
+  lastAccessedAt: Date | null
 
   @CreateDateColumn()
   createdAt: Date

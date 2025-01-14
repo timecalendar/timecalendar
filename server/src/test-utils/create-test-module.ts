@@ -5,7 +5,7 @@ import {
   ValueProvider,
 } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
-import { typeOrmTestModuleForRoot } from "test-utils/typeorm/typeorm-test-module"
+import { COMMON_IMPORTS } from "common-imports"
 
 type Provider<T> = ClassProvider<T> | ValueProvider<T> | FactoryProvider<T>
 
@@ -33,12 +33,9 @@ const createTestModule = async (
 ) => {
   const { overrides = [] } = { ...defaultOptions, ...options }
 
-  const addedImports: ModuleMetadata["imports"] = []
-  addedImports.push(typeOrmTestModuleForRoot())
-
   let module = Test.createTestingModule({
     ...metadata,
-    imports: [...(metadata.imports ?? []), ...addedImports],
+    imports: [...COMMON_IMPORTS, ...(metadata.imports ?? [])],
   })
 
   const defaultOverrides: Provider<unknown>[] = []

@@ -1,4 +1,4 @@
-import { Queue } from "bull"
+import { Queue } from "bullmq"
 import { QueueJob } from "modules/queue/models/queue-job.model"
 
 export const registerCronjobToQueue = async <T>(
@@ -7,14 +7,13 @@ export const registerCronjobToQueue = async <T>(
 ) => {
   if (!cron) return
 
-  const jobs = await queue.getRepeatableJobs()
-
+  const jobs = await queue.getJobSchedulers()
   const jobsToDelete = jobs.filter(
-    (job) => job.id === name && job.cron !== cron,
+    (job) => job.key === name && job.pattern !== cron,
   )
   await Promise.allSettled(
-    jobsToDelete.map((job) => queue.removeRepeatableByKey(job.key)),
+    jobsToDelete.map((job) => queue.removeJobScheduler(job.key)),
   )
 
-  queue.add({ name }, { repeat: { cron }, jobId: name })
+  await queue.upsertJobScheduler(name, { pattern: cron }, { name })
 }

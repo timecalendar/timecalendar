@@ -1,6 +1,5 @@
 import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
-import MockDate from "lib/mock-date"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
@@ -144,8 +143,14 @@ describe("CalendarSyncService", () => {
     let calendar: Calendar
 
     beforeEach(async () => {
-      MockDate.set(new Date("2022-01-01T00:00:00.000Z"))
+      const mockDate = new Date("2022-01-01T00:00:00.000Z")
+      jest.useFakeTimers({ advanceTimers: true, now: mockDate })
+
       calendar = await calendarFactory().create()
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
     })
 
     it("syncs events for an existing calendar", async () => {
@@ -240,7 +245,11 @@ describe("CalendarSyncService", () => {
     })
 
     it("updates the calendar lastUpdatedAt when there is an error", async () => {
-      MockDate.set(new Date("2022-01-01T00:00:01.000Z"))
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: new Date("2022-01-01T00:00:01.000Z"),
+      })
+
       mockFetchService.fetchEvents = jest.fn(async () => {
         throw new Error("Something went wrong")
       })

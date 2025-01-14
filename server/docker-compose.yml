@@ -16,12 +16,22 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
       - ./bin/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready -U postgres"]
   redis:
     image: redis
     restart: always
     ports:
       - '6370:6379'
     volumes: 
-      - ./volumes/redis:/data
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

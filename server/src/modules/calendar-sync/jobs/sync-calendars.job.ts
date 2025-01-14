@@ -9,7 +9,6 @@ export class SyncCalendarsJob {
     private readonly calendarSyncAllService: CalendarSyncAllService,
   ) {
     this.queueService.register({
-      queue: "default-cron",
       name: "sync_calendars",
       handler: () => this.run(),
       cron: "*/5 * * * *",

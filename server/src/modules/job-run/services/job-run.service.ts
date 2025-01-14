@@ -53,21 +53,17 @@ export class JobRunService {
 
   logStart<T>(context: JobRunContext<T>) {
     context.logger.info(
-      `Job ${context.params.type} ${context.params.name} started${
+      `Job ${context.params.name} started${
         K8S_POD_NAME ? ` on pod ${K8S_POD_NAME}` : ""
       }`,
     )
   }
 
   logEnd<T>(context: JobRunContext<T>, time: number) {
-    context.logger.info(
-      `Job ${context.params.type} ${context.params.name} done in ${time}ms`,
-    )
+    context.logger.info(`Job ${context.params.name} done in ${time}ms`)
   }
 
   logError<T>(context: JobRunContext<T>, time: number) {
-    context.logger.error(
-      `Job ${context.params.type} ${context.params.name} failed in ${time}ms`,
-    )
+    context.logger.error(`Job ${context.params.name} failed in ${time}ms`)
   }
 }

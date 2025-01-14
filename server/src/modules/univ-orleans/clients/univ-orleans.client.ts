@@ -4,7 +4,6 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common"
 import axios, { AxiosResponse } from "axios"
-import qs from "qs"
 
 @Injectable()
 export class UnivOrleansClient {
@@ -13,11 +12,11 @@ export class UnivOrleansClient {
     "http://www.univ-orleans.fr/EDTWeb/export?project={project}&resources={resource}&type=ical"
 
   async getStudentIcal(studentNumber: string) {
-    const postData = {
+    const postData = new URLSearchParams({
       project: this.PROJECT,
       action: "displayWeeksPeople",
       person: studentNumber,
-    }
+    })
 
     let rep: AxiosResponse<any>
 
@@ -25,7 +24,8 @@ export class UnivOrleansClient {
       rep = await axios({
         method: "post",
         url: "http://www.univ-orleans.fr/EDTWeb/edt",
-        data: qs.stringify(postData),
+        data: postData.toString(),
+
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },

@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 require("dotenv").config({ path: `${__dirname}/../.env` })
 
-import MockDate from "mockdate"
-import wtf from "wtfnode"
-import { dataSourceOptionsForTest } from "test-utils/typeorm/typeorm-test-module"
-import { DataSource } from "typeorm"
-import { runMigrations } from "modules/shared/utils/run-migrations"
-import { clearNestTestApps, getNestTestApps } from "test-utils/create-nest-app"
-import { clearDatabase } from "modules/shared/utils/clear-database"
 import { WTF_DEBUG } from "config/constants"
 import { sleep } from "modules/shared/helpers/sleep"
+import { clearDatabase } from "modules/shared/utils/clear-database"
+import { runMigrations } from "modules/shared/utils/run-migrations"
+import { clearNestTestApps, getNestTestApps } from "test-utils/create-nest-app"
+import { dataSourceOptionsForTest } from "test-utils/typeorm/typeorm-test-module"
+import { DataSource } from "typeorm"
+import wtf from "wtfnode"
 
 // Enable wtfDebug to debug the "Jest did not exit one second after the test run has completed." error
 const wtfDebug = WTF_DEBUG
@@ -34,8 +33,6 @@ beforeEach(async () =>
       .map(clearDatabase),
   ),
 )
-
-beforeEach(() => MockDate.reset())
 
 afterAll(async () => {
   await Promise.all([clearNestTestApps()])
