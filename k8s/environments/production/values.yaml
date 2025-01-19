@@ -14,4 +14,4 @@ timecalendar:
 
 otel:
   enabled: "true"
-  exporterUrl: " http://otelcol-dev-collector.lyro-opentelemetry.svc.cluster.local:4317"
+  exporterUrl: "http://otelcol-dev-collector.lyro-opentelemetry.svc.cluster.local:4317"
