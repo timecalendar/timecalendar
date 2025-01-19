@@ -142,5 +142,8 @@
     ],
     "runner": "./test-utils/test-runner.ts",
     "clearMocks": true
+  },
+  "devDependencies": {
+    "msw": "^2.7.0"
   }
 }

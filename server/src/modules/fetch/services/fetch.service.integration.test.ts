@@ -1,12 +1,13 @@
 import { readFileSync } from "fs"
 import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
-import axios from "axios"
 import { FetchModule } from "modules/fetch/fetch.module"
 import { FetchService } from "modules/fetch/services/fetch.service"
+import { http, HttpResponse } from "msw"
 import createTestApp from "test-utils/create-test-app"
+import { setupMsw } from "test-utils/setup-msw"
 
-const axiosMock = axios as unknown as jest.Mock
+const server = setupMsw()
 
 describe("FetchService", () => {
   let fetchService: FetchService
@@ -23,7 +24,7 @@ describe("FetchService", () => {
       "utf-8",
     )
 
-    axiosMock.mockResolvedValueOnce({ data: ical })
+    server.use(http.get("https://google.com", () => new HttpResponse(ical)))
 
     const events = await fetchService.fetchEvents(
       { url: "https://google.com", customData: null },
