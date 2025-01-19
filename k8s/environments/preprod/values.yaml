@@ -11,3 +11,7 @@ web:
 
 timecalendar:
   s3PublicBucketClientUrl: https://timecalendar-preprod-public.fra1.digitaloceanspaces.com
+
+otel:
+  enabled: "true"
+  exporterUrl: "http://otelcol-dev-collector.lyro-opentelemetry.svc.cluster.local:4317"
