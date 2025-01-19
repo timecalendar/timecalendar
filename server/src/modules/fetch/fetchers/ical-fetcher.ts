@@ -1,5 +1,5 @@
 import { BadRequestException } from "@nestjs/common"
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
+import axios, { AxiosError, AxiosRequestConfig } from "axios"
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
@@ -46,15 +46,19 @@ export class IcalFetcher implements Fetcher {
       axiosConfig.auth = data.auth
     }
 
-    let rep: AxiosResponse<any> | undefined = undefined
+    let lastError: unknown
 
     for (let i = 0; i < nbRetries; i++) {
       try {
-        rep = await axios(axiosConfig)
-      } catch (e) {
-        if (e.response?.status === 401) {
+        const rep = await axios.request(axiosConfig)
+
+        return parseIcal(rep.data)
+      } catch (error: unknown) {
+        lastError = error
+
+        if (error instanceof AxiosError && error.response?.status === 401) {
           // handle HTTP basic authorization
-          if (e.response.headers["www-authenticate"]) {
+          if (error.response.headers["www-authenticate"]) {
             if (data?.auth) {
               // Bad credentials
               throw new CustomError("Basic Authorization required", {
@@ -67,21 +71,13 @@ export class IcalFetcher implements Fetcher {
             }
           }
         }
-
-        if (!this.options.withRetries) {
-          throw new BadRequestException(
-            `Failed to request the API: ${e.message}`,
-          )
-        }
       }
     }
 
-    if (rep === undefined) {
-      throw new BadRequestException(
-        "The provider is unavailable, please try again.",
-      )
-    }
-
-    return parseIcal(rep.data)
+    throw new BadRequestException(
+      `Failed to request the API: ${
+        lastError instanceof Error ? lastError.message : lastError
+      }`,
+    )
   }
 }

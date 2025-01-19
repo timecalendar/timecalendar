@@ -26,6 +26,8 @@ describe("FetchService", () => {
   let strategies: SchoolStrategy[]
   let fetchService: FetchService
 
+  const crazyschoolFetcher = jest.fn(() => Promise.resolve([]))
+
   const initService = (events: FetcherCalendarEvent[]) => {
     icalFetcher.fetch.mockImplementationOnce(() => Promise.resolve(events))
     strategies = [
@@ -40,6 +42,7 @@ describe("FetchService", () => {
       new SchoolStrategy({
         school: "crazyschool",
         urlRenamers: [new ReplaceUrlRenamer("&crazy=true", "&crazy=false")],
+        fetcher: { fetch: crazyschoolFetcher },
       }),
     ]
     fetchService = new FetchService(strategies)
@@ -71,8 +74,8 @@ describe("FetchService", () => {
         school,
       )
 
-      expect(icalFetcher.fetch).toBeCalled()
-      expect(pipe).toBeCalled()
+      expect(icalFetcher.fetch).toHaveBeenCalled()
+      expect(pipe).toHaveBeenCalled()
       expect(events.length).toBe(1)
     })
 
@@ -120,6 +123,20 @@ describe("FetchService", () => {
       expect(events[0].uid).toBe("1")
     })
 
+    it("should use the correct strategy", async () => {
+      initService([fetcherCalendarEventFactory.build()])
+
+      const url = "https://google.com/search?export=json&format=1"
+      const school = "crazyschool"
+
+      await fetchService.fetchEvents({ url, customData: null }, school)
+
+      expect(crazyschoolFetcher).toHaveBeenCalledWith(
+        "https://google.com/search?export=json&format=1",
+        {},
+      )
+    })
+
     describe("rename url", () => {
       it("uses only the generic and school strategy if one exists", async () => {
         initService([fetcherCalendarEventFactory.build()])
@@ -133,7 +150,7 @@ describe("FetchService", () => {
         )
 
         expect(events.length).toBe(1)
-        expect(icalFetcher.fetch).toBeCalledWith(
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=true&firstDate=2000-01-01&lastDate=2038-01-01",
           {},
         )
@@ -153,7 +170,7 @@ describe("FetchService", () => {
 
         await fetchService.fetchEvents({ url, customData: null }, school)
 
-        expect(icalFetcher.fetch).toBeCalledWith(
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://google.com/search?export=json&nbWeeks=4",
           {},
         )
@@ -171,7 +188,7 @@ describe("FetchService", () => {
         )
 
         expect(events.length).toBe(1)
-        expect(icalFetcher.fetch).toBeCalledWith(
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
           {},
         )
@@ -189,7 +206,7 @@ describe("FetchService", () => {
         )
 
         expect(events.length).toBe(1)
-        expect(icalFetcher.fetch).toBeCalledWith(
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
           {},
         )

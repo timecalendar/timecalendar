@@ -13,9 +13,9 @@ export class FetchService {
     this.strategies = [genericStrategy, ...strategies]
   }
 
-  private getStrategy(school: string | null) {
-    return this.strategies.find(
-      (strategy) => strategy.options.school === school,
+  private getStrategy(school: string | null, calendarSource: CalendarSource) {
+    return this.strategies.find((strategy) =>
+      strategy.isMatchingCalendarSource(school, calendarSource),
     )
   }
 
@@ -38,11 +38,13 @@ export class FetchService {
   }
 
   async fetchEvents(
-    { url, customData }: CalendarSource,
+    calendarSource: CalendarSource,
     school: string | null,
     debugObject?: Record<string, any>,
   ) {
-    const schoolStrategy = this.getStrategy(school)
+    const { url, customData } = calendarSource
+
+    const schoolStrategy = this.getStrategy(school, calendarSource)
     const transformedUrl = this.transformUrl(url, school, schoolStrategy)
     const strategy = schoolStrategy || genericStrategy
 
