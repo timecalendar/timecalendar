@@ -9,14 +9,11 @@ import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions"
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating"
 import { APP_STAGE, OTEL_ENABLED, OTEL_EXPORTER_URL } from "config/constants"
 
-const METRICS_EXPORT_INTERVAL_MS = 1000
-
 const sdk = new NodeSDK({
   traceExporter: new OTLPTraceExporter({
     url: OTEL_EXPORTER_URL || "http://localhost:4317",
   }),
   metricReader: new PeriodicExportingMetricReader({
-    exportIntervalMillis: METRICS_EXPORT_INTERVAL_MS,
     exporter: new OTLPMetricExporter({
       url: OTEL_EXPORTER_URL || "http://localhost:4317",
     }),
