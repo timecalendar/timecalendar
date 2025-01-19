@@ -43,5 +43,5 @@ data:
   PROXY_URL: {{ .Values.timecalendar.proxyUrl }}
 
   # OTEL
-  OTEL_ENABLED: {{ .Values.timecalendar.otel.enabled }}
+  OTEL_ENABLED: {{ .Values.timecalendar.otel.enabled | quote }}
   OTEL_EXPORTER_URL: {{ .Values.timecalendar.otel.exporterUrl }}
