@@ -64,14 +64,6 @@ export class CalendarSyncService {
       action: isNewCalendar ? "create" : "update",
     })
 
-    console.log({
-      school: code ?? undefined,
-      domain: this.parseDomain(url),
-      status: isError ? "error" : "success",
-      error: isError ? fetchedEvents.error?.message : undefined,
-      action: isNewCalendar ? "create" : "update",
-    })
-
     if (isError && isNewCalendar) {
       const error = fetchedEvents.error
 
