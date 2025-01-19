@@ -1,10 +1,10 @@
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
-const univamuStrategy = new SchoolStrategy({
-  school: "univamu",
-  match: ["univ-amu.fr"],
+const univrennes1Strategy = new SchoolStrategy({
+  school: "univrennes1",
+  match: ["univ-rennes1.fr"],
   fetcher: new IcalFetcher({ withRetries: true }),
 })
 
-export default univamuStrategy
+export default univrennes1Strategy

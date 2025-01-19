@@ -140,6 +140,7 @@
       "node_modules",
       "src"
     ],
-    "runner": "./test-utils/test-runner.ts"
+    "runner": "./test-utils/test-runner.ts",
+    "clearMocks": true
   }
 }

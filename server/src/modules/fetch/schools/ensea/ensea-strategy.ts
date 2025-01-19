@@ -11,6 +11,7 @@ export const enseaRenamer = (url: string) => {
 
 const enseaStrategy = new SchoolStrategy({
   school: "ensea",
+  match: ["ensea.fr"],
   urlRenamers: [{ rename: enseaRenamer }],
   eventPipes: [],
 })
