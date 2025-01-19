@@ -17,9 +17,7 @@ const configureMainApp = (module: any, app: NestExpressApplication) => {
   )
   app.use(compression())
   app.use(helmet({ contentSecurityPolicy: false }))
-  app.enableCors({
-    origin: "*",
-  })
+  app.enableCors({ origin: "*" })
   app.useGlobalInterceptors(new ErrorsInterceptor())
   app.enableShutdownHooks()
 }

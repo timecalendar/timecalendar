@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 require("dotenv").config({ path: `${__dirname}/../.env` })
 
+import "config/observability/tracer"
+import "lib/dayjs"
 import { NestFactory } from "@nestjs/core"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { dataSourceOptions } from "data-source"

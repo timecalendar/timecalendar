@@ -5,6 +5,7 @@ metadata:
 data:
   # Node
   NODE_ENV: "production"
+  APP_STAGE: {{ .Values.environment }}
 
   # HTTP
   PORT: "80"
@@ -41,3 +42,7 @@ data:
   CRISP_WEBSITE_ID: {{ .Values.timecalendar.crisp.websiteId }}
 
   PROXY_URL: {{ .Values.timecalendar.proxyUrl }}
+
+  # OTEL
+  OTEL_ENABLED: {{ .Values.timecalendar.otel.enabled | quote }}
+  OTEL_EXPORTER_URL: {{ .Values.timecalendar.otel.exporterUrl }}

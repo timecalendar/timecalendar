@@ -1,5 +1,4 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
-import MockDate from "lib/mock-date"
 import request from "lib/supertest"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
@@ -68,11 +67,19 @@ describe("CalendarSyncController", () => {
     let calendar: Calendar
 
     beforeEach(async () => {
-      MockDate.set(new Date("2022-01-05T12:00:00Z"))
+      const mockDate = new Date("2022-01-05T12:00:00Z")
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: mockDate,
+      })
 
       calendar = await calendarFactory()
         .school()
         .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") })
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
     })
 
     it("fetches a calendar", async () => {

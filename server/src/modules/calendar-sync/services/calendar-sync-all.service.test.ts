@@ -1,5 +1,4 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
-import MockDate from "lib/mock-date"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
@@ -36,8 +35,16 @@ describe("CalendarSyncAllService", () => {
   })
 
   describe("syncAllForUser", () => {
-    beforeEach(() => {
-      MockDate.set(new Date("2022-01-05T12:00:00Z"))
+    beforeEach(async () => {
+      const mockDate = new Date("2022-01-05T12:00:00Z")
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: mockDate,
+      })
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
     })
 
     it("fetches a calendar", async () => {
@@ -155,8 +162,16 @@ describe("CalendarSyncAllService", () => {
   })
 
   describe("syncAllForCronJob", () => {
-    beforeEach(() => {
-      MockDate.set(new Date("2022-01-05T12:00:00Z"))
+    beforeEach(async () => {
+      const mockDate = new Date("2022-01-05T12:00:00Z")
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: mockDate,
+      })
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
     })
 
     it("syncs all calendars", async () => {
@@ -193,6 +208,22 @@ describe("CalendarSyncAllService", () => {
       await service.syncAllForCronJob()
 
       expect(calendar.lastUpdatedAt).toEqual(new Date("2022-01-05T11:50:00Z"))
+      const content = await dataSource
+        .getRepository(CalendarContent)
+        .findOneByOrFail({ calendar: { id: calendar.id } })
+      expect(content.events.length).toBe(0)
+      expect(mockFetchService.fetchEvents).not.toHaveBeenCalled()
+    })
+
+    it("does not update a calendar accessed more than 14 days ago", async () => {
+      const calendar = await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        lastAccessedAt: new Date("2021-12-21T11:00:00Z"),
+      })
+
+      await service.syncAllForCronJob()
+
+      expect(calendar.lastUpdatedAt).toEqual(new Date("2022-01-05T11:00:00Z"))
       const content = await dataSource
         .getRepository(CalendarContent)
         .findOneByOrFail({ calendar: { id: calendar.id } })

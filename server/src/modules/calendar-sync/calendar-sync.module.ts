@@ -11,6 +11,7 @@ import { FetchModule } from "modules/fetch/fetch.module"
 import { QueueModule } from "modules/queue/queue.module"
 import { SchoolModule } from "modules/school/school.module"
 import { SubjectModule } from "modules/subject/subject.module"
+import { CalendarSyncMetricsService } from "./services/calendar-sync-metrics.service"
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SubjectModule } from "modules/subject/subject.module"
     CalendarSyncAllService,
     SyncCalendarsJob,
     CalendarFailureRepository,
+    CalendarSyncMetricsService,
   ],
   controllers: [CalendarSyncController],
 })
