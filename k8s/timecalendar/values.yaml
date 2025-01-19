@@ -31,3 +31,6 @@ timecalendar:
   smtpUrl: ""
   smtpFrom: ""
   s3PublicBucketClientUrl: ""
+  otel:
+    enabled: ""
+    exporterUrl: ""
