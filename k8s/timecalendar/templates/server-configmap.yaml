@@ -5,6 +5,7 @@ metadata:
 data:
   # Node
   NODE_ENV: "production"
+  APP_STAGE: {{ .Values.environment }}
 
   # HTTP
   PORT: "80"
