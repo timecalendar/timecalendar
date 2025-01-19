@@ -18,7 +18,9 @@ const env: any = {
 export const APP_STAGE = env.APP_STAGE ?? "development"
 export const PORT = +(env.PORT ?? 80)
 export const CLIENT_URL = env.CLIENT_URL ?? ""
+
 export const ENABLE_QUEUE = isEnvTrue(env.ENABLE_QUEUE)
+export const QUEUE_CONCURRENCY = +(env.QUEUE_CONCURRENCY ?? 100)
 
 export const K8S_POD_NAME = env.K8S_POD_NAME ?? ""
 
