@@ -14,7 +14,6 @@ import wtf from "wtfnode"
 const wtfDebug = WTF_DEBUG
 
 /** Modules mock */
-jest.mock("axios")
 jest.mock("config/firebase.ts", () => ({}))
 // todo: export esiee as provider
 jest.mock("modules/storage/firestore", () => ({

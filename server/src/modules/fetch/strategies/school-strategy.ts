@@ -39,8 +39,6 @@ export class SchoolStrategy {
 
     if (this.options.match !== undefined) {
       return this.options.match.some((matcher) => {
-        console.log(matcher)
-
         if (typeof matcher === "string") {
           return calendarSource.url.includes(matcher)
         }
