@@ -4,6 +4,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univpoitiersStrategy = new SchoolStrategy({
   school: "univpoitiers",
+  match: ["univ-poitiers.fr"],
   urlRenamers: [
     new ReplaceUrlRenamer(
       "http://upplanning.appli.univ-poitiers.fr",

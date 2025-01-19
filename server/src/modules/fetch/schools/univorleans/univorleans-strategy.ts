@@ -3,6 +3,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univorleansStrategy = new SchoolStrategy({
   school: "univorleans",
+  match: ["univ-orleans.fr"],
   eventPipes: [parseTeachersPipe(/^[A-Z *-]+$/)],
 })
 

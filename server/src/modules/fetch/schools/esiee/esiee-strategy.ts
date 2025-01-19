@@ -8,6 +8,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const esieeStrategy = new SchoolStrategy({
   school: ESIEE_SCHOOL,
+  match: ["esiee.fr"],
   urlRenamers: [],
   eventPipes: [
     esieeGetUnitNamePipe,

@@ -12,6 +12,7 @@ const univsmbRenamer = (url: string) => {
 
 const univsmbStrategy = new SchoolStrategy({
   school: "univsmb",
+  match: ["ade6-usmb-ro.grenet.fr"],
   urlRenamers: [{ rename: univsmbRenamer }],
   eventPipes: [],
 })

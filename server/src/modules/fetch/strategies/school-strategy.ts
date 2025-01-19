@@ -1,21 +1,11 @@
-import { Fetcher } from "modules/fetch/fetchers/fetcher"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
-import { CalendarCustomData } from "modules/fetch/models/calendar-source"
+import {
+  CalendarCustomData,
+  CalendarSource,
+} from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
-import { EventTransformPipe } from "modules/fetch/pipes/event-transform-pipe"
 import { defaultPipes } from "modules/fetch/pipes/pipes"
-import { UrlRenamer } from "modules/fetch/renamers/url-renamer"
-
-export interface SchoolStrategyOptions {
-  school: string
-  urlRenamers: (
-    | UrlRenamer
-    | { renamer: UrlRenamer; onlyThisSchool?: boolean }
-  )[]
-  inheritGenericUrlRenamers?: boolean
-  fetcher: Fetcher
-  eventPipes: EventTransformPipe[]
-}
+import { SchoolStrategyOptions } from "modules/fetch/strategies/school-strategy-options.type"
 
 const defaultOptions: SchoolStrategyOptions = {
   school: "generic",
@@ -37,6 +27,35 @@ export class SchoolStrategy {
       ...defaultOptions,
       ...options,
     }
+  }
+
+  isMatchingCalendarSource(
+    school: string | null,
+    calendarSource: CalendarSource,
+  ) {
+    if (this.options.school === school) {
+      return true
+    }
+
+    if (this.options.match !== undefined) {
+      return this.options.match.some((matcher) => {
+        console.log(matcher)
+
+        if (typeof matcher === "string") {
+          return calendarSource.url.includes(matcher)
+        }
+        if (typeof matcher === "function") {
+          return matcher({ source: calendarSource })
+        }
+        if (matcher instanceof RegExp) {
+          return matcher.test(calendarSource.url)
+        }
+
+        throw new Error("Invalid matcher")
+      })
+    }
+
+    return false
   }
 
   transformUrl(url: string, school: string | null) {

@@ -3,6 +3,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univangersStrategy = new SchoolStrategy({
   school: "univangers",
+  match: ["univ-angers.fr"],
   eventPipes: [
     parseFromDescriptionPipe([
       {
