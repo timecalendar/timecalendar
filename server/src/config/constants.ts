@@ -15,6 +15,7 @@ const env: any = {
   ...process.env,
 }
 
+export const APP_STAGE = env.APP_STAGE ?? "development"
 export const PORT = +(env.PORT ?? 80)
 export const CLIENT_URL = env.CLIENT_URL ?? ""
 export const ENABLE_QUEUE = isEnvTrue(env.ENABLE_QUEUE)
@@ -50,3 +51,6 @@ export const CRISP_KEY = env.CRISP_KEY ?? ""
 export const CRISP_WEBSITE_ID = env.CRISP_WEBSITE_ID ?? ""
 
 export const PROXY_URL = env.PROXY_URL ?? ""
+
+export const OTEL_ENABLED = isEnvTrue(env.OTEL_ENABLED)
+export const OTEL_EXPORTER_URL = env.OTEL_EXPORTER_URL ?? ""

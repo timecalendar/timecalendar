@@ -1,4 +1,5 @@
 export const testEnvVariables = {
+  APP_STAGE: "test",
   DATABASE_HOST: "localhost",
   DATABASE_USERNAME: "postgres",
   DATABASE_PASSWORD: "",

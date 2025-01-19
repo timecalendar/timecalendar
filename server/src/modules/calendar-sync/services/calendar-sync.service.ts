@@ -13,6 +13,7 @@ import { SchoolRepository } from "modules/school/repositories/school.repository"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 import { SubjectService } from "modules/subject/services/subject.service"
 import { nanoid } from "nanoid"
+import { CalendarSyncMetricsService } from "./calendar-sync-metrics.service"
 
 type CalendarForSync = Pick<Calendar, "url" | "customData"> &
   Partial<Omit<Calendar, "url">>
@@ -27,6 +28,7 @@ export class CalendarSyncService {
     private readonly calendarEventHelper: CalendarEventHelper,
     private readonly subjectService: SubjectService,
     private readonly calendarFailureRepository: CalendarFailureRepository,
+    private readonly calendarSyncMetricsService: CalendarSyncMetricsService,
   ) {}
 
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
@@ -52,8 +54,25 @@ export class CalendarSyncService {
     const fetchedEvents = await this.fetchEvents(source, code)
 
     const isError = "error" in fetchedEvents
+    const isNewCalendar = !id
 
-    if (isError && !id) {
+    this.calendarSyncMetricsService.calendarSyncCounter.add(1, {
+      school: code ?? undefined,
+      domain: this.parseDomain(url),
+      status: isError ? "error" : "success",
+      error: isError ? fetchedEvents.error?.message : undefined,
+      action: isNewCalendar ? "create" : "update",
+    })
+
+    console.log({
+      school: code ?? undefined,
+      domain: this.parseDomain(url),
+      status: isError ? "error" : "success",
+      error: isError ? fetchedEvents.error?.message : undefined,
+      action: isNewCalendar ? "create" : "update",
+    })
+
+    if (isError && isNewCalendar) {
       const error = fetchedEvents.error
 
       const serializedError = {
@@ -73,6 +92,7 @@ export class CalendarSyncService {
       )
       throw fetchedEvents.error
     }
+
     const savedCalendar = await this.saveCalendar(
       calendar,
       fetchedEvents.events,
@@ -129,5 +149,13 @@ export class CalendarSyncService {
     if (!schoolId) return null
     const school = await this.schoolRepository.findOneOrFail(schoolId)
     return school.code
+  }
+
+  private parseDomain(url: string) {
+    try {
+      return new URL(url).hostname
+    } catch {
+      return undefined
+    }
   }
 }
