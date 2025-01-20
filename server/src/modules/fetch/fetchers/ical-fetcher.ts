@@ -34,7 +34,7 @@ export class IcalFetcher implements Fetcher {
       method: "get",
       url,
       maxRedirects: 99,
-      timeout: 15000,
+      timeout: 10000,
     }
 
     if (this.options.useProxy && PROXY_URL.length > 0) {
