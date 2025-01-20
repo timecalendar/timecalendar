@@ -18,6 +18,12 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
+  const server = app.getHttpServer()
+
+  server.setTimeout(120000)
+  server.keepAliveTimeout = 120000
+  server.headersTimeout = 125000
+
   configureMainApp(app.select(AppModule), app)
 
   setupSwagger(app)
