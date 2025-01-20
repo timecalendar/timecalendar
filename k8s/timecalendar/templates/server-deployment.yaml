@@ -34,14 +34,14 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
             failureThreshold: 4
             periodSeconds: 30
             timeoutSeconds: 30
           readinessProbe:
             httpGet:
-              path: /
+              path: /health
               port: http
             failureThreshold: 120
             periodSeconds: 2
