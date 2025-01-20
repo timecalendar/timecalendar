@@ -12,6 +12,7 @@ import { RedisModule } from "modules/redis/redis.module"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
+import { HealthModule } from "modules/health/health.module"
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
     JobRunModule,
     SchoolGroupModule,
     ContactModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
