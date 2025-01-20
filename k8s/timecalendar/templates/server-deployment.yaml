@@ -32,18 +32,19 @@ spec:
             - name: http
               containerPort: 80
               protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          #   failureThreshold: 2
-          #   periodSeconds: 60
-          # readinessProbe:
-          #   httpGet:
-          #     path: /
-          #     port: http
-          #   failureThreshold: 60
-          #   periodSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 4
+            periodSeconds: 30
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 120
+            periodSeconds: 2
           envFrom:
             - configMapRef:
                 name: {{ include "timecalendar.fullname" . }}-configmap
