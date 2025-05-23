@@ -4,7 +4,7 @@ import 'package:timecalendar_api/timecalendar_api.dart';
 part 'assistant_state.freezed.dart';
 
 @freezed
-class AssistantState with _$AssistantState {
+abstract class AssistantState with _$AssistantState {
   factory AssistantState({
     @Default(null) SchoolForList? school,
     @Default(false) bool fallback,
@@ -13,11 +13,14 @@ class AssistantState with _$AssistantState {
 
   SchoolAssistant get assistant {
     if (school == null) {
-      return SchoolAssistant((assistant) => assistant
-        ..isNative = false
-        ..requireCalendarName = true
-        ..requireIntranetAccess = false
-        ..slug = "generic");
+      return SchoolAssistant(
+        (assistant) =>
+            assistant
+              ..isNative = false
+              ..requireCalendarName = true
+              ..requireIntranetAccess = false
+              ..slug = "generic",
+      );
     }
     if (fallback && school!.fallbackAssistant != null) {
       return school!.fallbackAssistant!;

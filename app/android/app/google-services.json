@@ -3,7 +3,7 @@
     "project_number": "425450003183",
     "firebase_url": "https://timecalendar-samuelprak.firebaseio.com",
     "project_id": "timecalendar-samuelprak",
-    "storage_bucket": "timecalendar-samuelprak.appspot.com"
+    "storage_bucket": "timecalendar-samuelprak.firebasestorage.app"
   },
   "client": [
     {

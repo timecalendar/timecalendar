@@ -14,10 +14,7 @@ enum ConfirmAction { CANCEL, ACCEPT }
 class EventDetailsHeader extends ConsumerWidget {
   final EventInterface event;
   final void Function(EventInterface) onEventChange;
-  EventDetailsHeader({
-    required this.event,
-    required this.onEventChange,
-  });
+  EventDetailsHeader({required this.event, required this.onEventChange});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,9 +23,7 @@ class EventDetailsHeader extends ConsumerWidget {
         context: context,
         barrierDismissible: false, // user must tap button!
         builder: (BuildContext context) {
-          return HiddenOptionsDialog(
-            event: event,
-          );
+          return HiddenOptionsDialog(event: event);
         },
       );
     }
@@ -36,15 +31,17 @@ class EventDetailsHeader extends ConsumerWidget {
     void _updateEvent(BuildContext context) {
       Navigator.of(context)
           .push(
-        MaterialPageRoute(
-            builder: (context) =>
-                AddPersonalEventScreen(event: event as PersonalEvent)),
-      )
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      AddPersonalEventScreen(event: event as PersonalEvent),
+            ),
+          )
           .then((value) {
-        if (value != null) {
-          onEventChange(value);
-        }
-      });
+            if (value != null) {
+              onEventChange(value);
+            }
+          });
     }
 
     // todo put the dialog in widget
@@ -68,7 +65,7 @@ class EventDetailsHeader extends ConsumerWidget {
                 onPressed: () {
                   Navigator.of(context).pop(ConfirmAction.ACCEPT);
                 },
-              )
+              ),
             ],
           );
         },
@@ -86,10 +83,7 @@ class EventDetailsHeader extends ConsumerWidget {
 
       if (event.kind == EventKind.Calendar) {
         listMenu.add(
-          PopupMenuItem(
-            child: Text('Masquer'),
-            value: EventOption.HideEvent,
-          ),
+          PopupMenuItem(child: Text('Masquer'), value: EventOption.HideEvent),
         );
       }
 
@@ -123,14 +117,9 @@ class EventDetailsHeader extends ConsumerWidget {
             },
             iconSize: 30,
           ),
-          Expanded(
-            child: Container(),
-          ),
+          Expanded(child: Container()),
           PopupMenuButton(
-            icon: Icon(
-              Icons.more_vert,
-              size: 30,
-            ),
+            icon: Icon(Icons.more_vert, size: 30),
             tooltip: 'Menu',
             itemBuilder: menuItemBuilder,
             onSelected: (EventOption event) {
@@ -145,9 +134,6 @@ class EventDetailsHeader extends ConsumerWidget {
 
                 case EventOption.UpdateEvent:
                   _updateEvent(context);
-                  break;
-
-                default:
                   break;
               }
             },

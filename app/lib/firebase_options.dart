@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '425450003183',
     projectId: 'timecalendar-samuelprak',
     databaseURL: 'https://timecalendar-samuelprak.firebaseio.com',
-    storageBucket: 'timecalendar-samuelprak.appspot.com',
+    storageBucket: 'timecalendar-samuelprak.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '425450003183',
     projectId: 'timecalendar-samuelprak',
     databaseURL: 'https://timecalendar-samuelprak.firebaseio.com',
-    storageBucket: 'timecalendar-samuelprak.appspot.com',
+    storageBucket: 'timecalendar-samuelprak.firebasestorage.app',
     androidClientId:
         '425450003183-2bjqj66dbq23tngncts04i4l9mq7jrvp.apps.googleusercontent.com',
     iosClientId:

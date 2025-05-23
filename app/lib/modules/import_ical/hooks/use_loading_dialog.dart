@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 class LoadingDialogState {
-  LoadingDialogState({
-    required this.openDialog,
-    required this.closeDialog,
-  });
+  LoadingDialogState({required this.openDialog, required this.closeDialog});
 
   final void Function() openDialog;
   final void Function() closeDialog;
@@ -21,8 +18,7 @@ LoadingDialogState useLoadingDialog(BuildContext context) {
         barrierDismissible: false,
         builder: (context) {
           dialogContext.value = context;
-          return WillPopScope(
-            onWillPop: () async => false,
+          return PopScope(
             child: Dialog(
               child: Padding(
                 padding: const EdgeInsets.all(30.0),
@@ -53,8 +49,5 @@ LoadingDialogState useLoadingDialog(BuildContext context) {
     }
   }
 
-  return LoadingDialogState(
-    openDialog: openDialog,
-    closeDialog: closeDialog,
-  );
+  return LoadingDialogState(openDialog: openDialog, closeDialog: closeDialog);
 }
