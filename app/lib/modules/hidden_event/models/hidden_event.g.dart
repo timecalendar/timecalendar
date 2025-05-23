@@ -15,13 +15,20 @@ class _$HiddenEvent extends HiddenEvent {
   factory _$HiddenEvent([void Function(HiddenEventBuilder)? updates]) =>
       (new HiddenEventBuilder()..update(updates))._build();
 
-  _$HiddenEvent._(
-      {required this.uidHiddenEvents, required this.namedHiddenEvents})
-      : super._() {
+  _$HiddenEvent._({
+    required this.uidHiddenEvents,
+    required this.namedHiddenEvents,
+  }) : super._() {
     BuiltValueNullFieldError.checkNotNull(
-        uidHiddenEvents, r'HiddenEvent', 'uidHiddenEvents');
+      uidHiddenEvents,
+      r'HiddenEvent',
+      'uidHiddenEvents',
+    );
     BuiltValueNullFieldError.checkNotNull(
-        namedHiddenEvents, r'HiddenEvent', 'namedHiddenEvents');
+      namedHiddenEvents,
+      r'HiddenEvent',
+      'namedHiddenEvents',
+    );
   }
 
   @override
@@ -101,10 +108,12 @@ class HiddenEventBuilder implements Builder<HiddenEvent, HiddenEventBuilder> {
   _$HiddenEvent _build() {
     _$HiddenEvent _$result;
     try {
-      _$result = _$v ??
+      _$result =
+          _$v ??
           new _$HiddenEvent._(
-              uidHiddenEvents: uidHiddenEvents.build(),
-              namedHiddenEvents: namedHiddenEvents.build());
+            uidHiddenEvents: uidHiddenEvents.build(),
+            namedHiddenEvents: namedHiddenEvents.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
@@ -114,7 +123,10 @@ class HiddenEventBuilder implements Builder<HiddenEvent, HiddenEventBuilder> {
         namedHiddenEvents.build();
       } catch (e) {
         throw new BuiltValueNestedFieldError(
-            r'HiddenEvent', _$failedField, e.toString());
+          r'HiddenEvent',
+          _$failedField,
+          e.toString(),
+        );
       }
       rethrow;
     }

@@ -10,7 +10,7 @@ enum CalendarOptions {
   Refresh,
   ChangeGroups,
   WeekView,
-  PlanningView
+  PlanningView,
 }
 
 class CalendarHeader extends StatelessWidget {
@@ -34,7 +34,8 @@ class CalendarHeader extends StatelessWidget {
   final Function changeView;
 
   PopupMenuItem<CalendarOptions> switchViewPopupMenuItem(
-      SettingsProvider settings) {
+    SettingsProvider settings,
+  ) {
     switch (settings.calendarViewType) {
       case CalendarViewType.Week:
         return PopupMenuItem(
@@ -58,31 +59,22 @@ class CalendarHeader extends StatelessWidget {
       height: appBarHeight,
       child: Row(
         children: <Widget>[
-          SizedBox(
-            width: 20,
-          ),
+          SizedBox(width: 20),
           Expanded(
             child: Text(
               AppDateUtils.monthYearText(currentDateTime!),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
-            icon: Icon(
-              Icons.calendar_today,
-            ),
+            icon: Icon(Icons.calendar_today),
             onPressed: () {
               showToday();
             },
             tooltip: 'Aujourd\'hui',
           ),
           PopupMenuButton(
-            icon: Icon(
-              Icons.more_vert,
-            ),
+            icon: Icon(Icons.more_vert),
             onSelected: (CalendarOptions selectedValue) {
               switch (selectedValue) {
                 case CalendarOptions.Subscribe:
@@ -104,27 +96,23 @@ class CalendarHeader extends StatelessWidget {
                 case CalendarOptions.PlanningView:
                   changeView(CalendarViewType.Planning, settingsProvider);
                   break;
-
-                default:
-                  break;
               }
             },
             tooltip: 'Menu',
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                child: Text('Rafraîchir'),
-                value: CalendarOptions.Refresh,
-              ),
-              PopupMenuItem(
-                child: Text('Modifier les groupes'),
-                value: CalendarOptions.ChangeGroups,
-              ),
-              // switchViewPopupMenuItem(settingsProvider)
-            ],
+            itemBuilder:
+                (_) => [
+                  PopupMenuItem(
+                    child: Text('Rafraîchir'),
+                    value: CalendarOptions.Refresh,
+                  ),
+                  PopupMenuItem(
+                    child: Text('Modifier les groupes'),
+                    value: CalendarOptions.ChangeGroups,
+                  ),
+                  // switchViewPopupMenuItem(settingsProvider)
+                ],
           ),
-          SizedBox(
-            width: 10,
-          ),
+          SizedBox(width: 10),
         ],
       ),
     );

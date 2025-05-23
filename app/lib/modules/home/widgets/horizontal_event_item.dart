@@ -15,8 +15,9 @@ class HorizontalEventItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
-    final eventChecklistItems =
-        ref.watch(getEventNbChecklistItemsProvider)(event.uid);
+    final eventChecklistItems = ref.watch(getEventNbChecklistItemsProvider)(
+      event.uid,
+    );
 
     return Container(
       width: 220,
@@ -36,8 +37,9 @@ class HorizontalEventItem extends ConsumerWidget {
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () {
-              Navigator.of(context)
-                  .pushNamed(EventDetailsScreen.routeName, arguments: event);
+              Navigator.of(
+                context,
+              ).pushNamed(EventDetailsScreen.routeName, arguments: event);
             },
             borderRadius: BorderRadius.circular(15),
             child: Padding(
@@ -55,9 +57,7 @@ class HorizontalEventItem extends ConsumerWidget {
                           color: settingsProvider.getEventInterfaceColor(event),
                         ),
                       ),
-                      SizedBox(
-                        width: 6,
-                      ),
+                      SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           DateFormat.jm('fr').format(event.startsAt) +
@@ -71,12 +71,13 @@ class HorizontalEventItem extends ConsumerWidget {
                           width: 12,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            color: (eventChecklistItems.completedNotes ==
-                                    eventChecklistItems.totalNotes)
-                                ? Colors.black.withOpacity(0.2)
-                                : Theme.of(context).primaryColor,
+                            color:
+                                (eventChecklistItems.completedNotes ==
+                                        eventChecklistItems.totalNotes)
+                                    ? Colors.black.withValues(alpha: 0.2)
+                                    : Theme.of(context).primaryColor,
                           ),
-                        )
+                        ),
                     ],
                   ),
                   Expanded(
@@ -91,9 +92,7 @@ class HorizontalEventItem extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 10,
-                  ),
+                  SizedBox(height: 10),
                   if (event.location != null && event.location!.length > 0)
                     Row(
                       children: <Widget>[
@@ -107,7 +106,7 @@ class HorizontalEventItem extends ConsumerWidget {
                           ),
                         ),
                       ],
-                    )
+                    ),
                 ],
               ),
             ),

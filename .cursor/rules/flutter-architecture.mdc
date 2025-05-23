@@ -1,0 +1,105 @@
+---
+description: 
+globs: app/**
+alwaysApply: false
+---
+# Flutter Feature Module Architecture: Calendar Example
+
+This document describes the folder structure and code patterns for feature modules in this Flutter project.
+
+## How to Implement a Feature
+
+To implement a new feature in this architecture:
+
+1. **Model Creation**:  
+   Start by defining a data model representing your core entity (e.g., Event, Calendar). Use Freezed for immutability and type safety, and json_serializable for easy serialization.
+
+2. **Repository Implementation**:  
+   Create a repository responsible for all data access and persistence related to the model. The repository abstracts away the details of APIs, databases, or other data sources.
+
+3. **Service Layer (Optional)**:  
+   If your feature requires business logic, workflows, or coordination between multiple repositories, implement a service. The service encapsulates these operations and exposes them via clean, asynchronous methods.
+
+4. **Provider Setup**:  
+   Use Riverpod to create providers that expose your repositories, services, and any UI state. Providers connect your data/business logic to the UI in a testable and modular way.
+
+5. **UI Development**:  
+   Build reusable widgets and compose them into screens. Widgets consume providers for state and data, ensuring a clear separation between UI and logic.
+
+## Folder Structure
+
+### `models/` — Data Models
+
+- Define core data models representing entities in the app, such as events, calendars, users, etc.
+- Use the `freezed` package extensively to create immutable, type-safe model classes (see `assistant_step.dart` for an example).
+- Models can represent:
+  - **Persistent entities**: Objects that are stored in a database (e.g., `calendar_event.dart`, `user_calendar.dart`).
+  - **UI-specific models**: Data structures used only for UI state or presentation, typically placed in the `models/ui/` subfolder.
+- Prefer using `json_serializable` (often integrated with `freezed`) for easy JSON parsing and serialization.
+- Keep model classes focused on data representation; avoid embedding business logic.
+- When possible, provide factory constructors for mapping from API responses, database maps, or other sources.
+- Document the intended use of each model (e.g., persistent vs. UI-only) for clarity and maintainability.
+- Ensure models are modular and only expose what is necessary for their intended use.
+
+### `repositories/` — Data Access & Storage
+
+- Encapsulate all data access and storage logic within repository classes.
+- Repositories are responsible for interfacing with APIs, local databases (such as Sembast), or other data sources.
+- Expose clear, asynchronous methods for CRUD operations (e.g., `getUserCalendars()`, `setCalendarEvents()`).
+- Use dependency injection (e.g., via Riverpod's `Provider`) to manage repository lifecycles and dependencies.
+- Each repository exposes its own provider.
+- Keep repository methods focused on data retrieval, persistence, and mapping between storage formats and model objects.
+- Prefer stateless or singleton patterns for repositories that do not require per-user or per-session state (see `HiddenEventRepository`).
+- Use model factory constructors (e.g., `fromInternalDb`, `fromMap`) and serialization methods (e.g., `toDbMap`, `toMap`) to convert between raw data and strongly-typed models.
+- Avoid embedding business logic in repositories; keep them focused on data concerns.
+- Document the data source(s) each repository interacts with (e.g., which Sembast store, which API endpoint).
+- Ensure all database operations are performed asynchronously to avoid blocking the UI.
+
+### `providers/` — State Management
+Contains Riverpod providers for managing and exposing state. Providers connect repositories, services, and UI.
+
+### `widgets/` — Reusable UI Components
+Contains reusable UI components, organized by feature. These widgets are shared across screens and encapsulate presentational logic.
+
+### `screens/` — Top-Level UI Screens
+Contains the main UI screens/pages for the module (e.g., `calendar_screen.dart`). Screens compose widgets and connect to providers for state management.
+
+### `services/` — Business Logic & Integrations
+
+- Service classes encapsulate business logic, orchestration, or external integrations that go beyond simple data access.
+- **Best Practice:** Services should focus on coordinating multiple repositories, handling workflows, or integrating with external APIs/services. Avoid duplicating repository logic.
+- Services typically depend on one or more repositories, which are injected via Riverpod's `Ref` object.
+- Use Riverpod's `Provider` (or `AutoDisposeProvider` if appropriate) to expose each service as a singleton or scoped instance. This enables easy dependency injection and testability.
+- Services should be stateless when possible. If state is required, prefer using providers for state management, not instance variables.
+- Keep service methods asynchronous and return `Future` results for all operations that involve I/O or repository calls.
+- Avoid embedding UI logic in services; keep them focused on business rules and orchestration.
+- Document the responsibilities and dependencies of each service for maintainability.
+- Example pattern:
+
+```dart
+class MyService {
+  final Ref ref;
+  MyService(this.ref);
+
+  Future<void> doSomething() async {
+    final repo = ref.read(myRepositoryProvider);
+    // ... business logic ...
+  }
+}
+
+final myServiceProvider = Provider((ref) => MyService(ref));
+```
+### `controllers/` — Logic Controllers
+Holds controller classes for managing UI logic or feature-specific behaviors (e.g., `snapping_list_scroll_physics.dart`, `sync_scroll_controller.dart`).
+
+### `helpers/` — Utility Functions
+Utility and helper functions for common operations (e.g., `events_helper.dart`, `events_for_week_view_helper.dart`).
+
+---
+
+## Code Patterns
+
+- **State Management**: Use `hooks_riverpod` for providers and hooks.
+- **Data Models**: Use `freezed` for model classes, often with `json_serializable` for JSON parsing.
+- **Persistence**: Use `sembast` for local storage, typically abstracted in repositories.
+- **Modularity**: Each feature/module is self-contained with its own subfolders.

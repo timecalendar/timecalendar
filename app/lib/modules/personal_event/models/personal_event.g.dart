@@ -27,24 +27,30 @@ class _$PersonalEvent extends PersonalEvent {
   factory _$PersonalEvent([void Function(PersonalEventBuilder)? updates]) =>
       (new PersonalEventBuilder()..update(updates))._build();
 
-  _$PersonalEvent._(
-      {required this.uid,
-      required this.title,
-      required this.color,
-      required this.startsAt,
-      required this.endsAt,
-      this.location,
-      this.description,
-      required this.exportedAt})
-      : super._() {
+  _$PersonalEvent._({
+    required this.uid,
+    required this.title,
+    required this.color,
+    required this.startsAt,
+    required this.endsAt,
+    this.location,
+    this.description,
+    required this.exportedAt,
+  }) : super._() {
     BuiltValueNullFieldError.checkNotNull(uid, r'PersonalEvent', 'uid');
     BuiltValueNullFieldError.checkNotNull(title, r'PersonalEvent', 'title');
     BuiltValueNullFieldError.checkNotNull(color, r'PersonalEvent', 'color');
     BuiltValueNullFieldError.checkNotNull(
-        startsAt, r'PersonalEvent', 'startsAt');
+      startsAt,
+      r'PersonalEvent',
+      'startsAt',
+    );
     BuiltValueNullFieldError.checkNotNull(endsAt, r'PersonalEvent', 'endsAt');
     BuiltValueNullFieldError.checkNotNull(
-        exportedAt, r'PersonalEvent', 'exportedAt');
+      exportedAt,
+      r'PersonalEvent',
+      'exportedAt',
+    );
   }
 
   @override
@@ -167,22 +173,42 @@ class PersonalEventBuilder
   PersonalEvent build() => _build();
 
   _$PersonalEvent _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         new _$PersonalEvent._(
-            uid: BuiltValueNullFieldError.checkNotNull(
-                uid, r'PersonalEvent', 'uid'),
-            title: BuiltValueNullFieldError.checkNotNull(
-                title, r'PersonalEvent', 'title'),
-            color: BuiltValueNullFieldError.checkNotNull(
-                color, r'PersonalEvent', 'color'),
-            startsAt: BuiltValueNullFieldError.checkNotNull(
-                startsAt, r'PersonalEvent', 'startsAt'),
-            endsAt: BuiltValueNullFieldError.checkNotNull(
-                endsAt, r'PersonalEvent', 'endsAt'),
-            location: location,
-            description: description,
-            exportedAt: BuiltValueNullFieldError.checkNotNull(
-                exportedAt, r'PersonalEvent', 'exportedAt'));
+          uid: BuiltValueNullFieldError.checkNotNull(
+            uid,
+            r'PersonalEvent',
+            'uid',
+          ),
+          title: BuiltValueNullFieldError.checkNotNull(
+            title,
+            r'PersonalEvent',
+            'title',
+          ),
+          color: BuiltValueNullFieldError.checkNotNull(
+            color,
+            r'PersonalEvent',
+            'color',
+          ),
+          startsAt: BuiltValueNullFieldError.checkNotNull(
+            startsAt,
+            r'PersonalEvent',
+            'startsAt',
+          ),
+          endsAt: BuiltValueNullFieldError.checkNotNull(
+            endsAt,
+            r'PersonalEvent',
+            'endsAt',
+          ),
+          location: location,
+          description: description,
+          exportedAt: BuiltValueNullFieldError.checkNotNull(
+            exportedAt,
+            r'PersonalEvent',
+            'exportedAt',
+          ),
+        );
     replace(_$result);
     return _$result;
   }
