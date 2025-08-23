@@ -27,7 +27,7 @@ class _$PersonalEvent extends PersonalEvent {
   final String? userCalendarId;
 
   factory _$PersonalEvent([void Function(PersonalEventBuilder)? updates]) =>
-      (new PersonalEventBuilder()..update(updates))._build();
+      (PersonalEventBuilder()..update(updates))._build();
 
   _$PersonalEvent._({
     required this.uid,
@@ -39,29 +39,13 @@ class _$PersonalEvent extends PersonalEvent {
     this.description,
     required this.exportedAt,
     this.userCalendarId,
-  }) : super._() {
-    BuiltValueNullFieldError.checkNotNull(uid, r'PersonalEvent', 'uid');
-    BuiltValueNullFieldError.checkNotNull(title, r'PersonalEvent', 'title');
-    BuiltValueNullFieldError.checkNotNull(color, r'PersonalEvent', 'color');
-    BuiltValueNullFieldError.checkNotNull(
-      startsAt,
-      r'PersonalEvent',
-      'startsAt',
-    );
-    BuiltValueNullFieldError.checkNotNull(endsAt, r'PersonalEvent', 'endsAt');
-    BuiltValueNullFieldError.checkNotNull(
-      exportedAt,
-      r'PersonalEvent',
-      'exportedAt',
-    );
-  }
-
+  }) : super._();
   @override
   PersonalEvent rebuild(void Function(PersonalEventBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  PersonalEventBuilder toBuilder() => new PersonalEventBuilder()..replace(this);
+  PersonalEventBuilder toBuilder() => PersonalEventBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -172,7 +156,6 @@ class PersonalEventBuilder
 
   @override
   void replace(PersonalEvent other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$PersonalEvent;
   }
 
@@ -187,7 +170,7 @@ class PersonalEventBuilder
   _$PersonalEvent _build() {
     final _$result =
         _$v ??
-        new _$PersonalEvent._(
+        _$PersonalEvent._(
           uid: BuiltValueNullFieldError.checkNotNull(
             uid,
             r'PersonalEvent',
