@@ -1,16 +1,15 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class Environment {
-  String get mainApiUrl =>
-      dotenv.env['MAIN_API_URL'] ?? 'https://api.timecalendar.app';
+  String get mainApiUrl => const String.fromEnvironment(
+    'MAIN_API_URL',
+    defaultValue: 'https://api.timecalendar.app',
+  );
 
-  String get mainWebUrl =>
-      dotenv.env['MAIN_WEB_URL'] ?? 'https://web.timecalendar.host';
-
-  Future<void> load() async {
-    await dotenv.load();
-  }
+  String get mainWebUrl => const String.fromEnvironment(
+    'MAIN_WEB_URL',
+    defaultValue: 'https://web.timecalendar.host',
+  );
 }
 
 final environmentProvider = Provider((ref) => Environment());

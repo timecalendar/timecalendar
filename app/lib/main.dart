@@ -10,7 +10,6 @@ import 'package:flutter_image/network.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/app.dart';
-import 'package:timecalendar/modules/shared/constants/environment.dart';
 import 'package:timecalendar/firebase_options.dart';
 import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
@@ -20,8 +19,8 @@ main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Environment variables
-  await container.read(environmentProvider).load();
+  // Environment variables are now loaded at compile time with --dart-define
+  // No longer need to load them at runtime
   // Orientation
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // Firebase
@@ -37,7 +36,8 @@ main() async {
       if (error.error is SocketException || error.error is HttpException)
         return true;
       if (error.response?.statusCode != null &&
-          error.response!.statusCode! < 400) return true;
+          error.response!.statusCode! < 400)
+        return true;
     }
 
     FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

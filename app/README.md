@@ -40,9 +40,22 @@ Next, on the [Firebase Console](https://console.firebase.google.com/), go into y
 
 ### Environment variables
 
-Copy the file `.env.sample` to a new file named `.env`.
+This project uses Flutter's `--dart-define` for environment configuration.
 
-Get the local IP address of your computer running the API server. Add it in `MAIN_API_URL` (e.g. `http://192.168.0.10:3005`).
+**For local development with simulator/emulator:**
+```bash
+flutter run --dart-define=MAIN_API_URL=http://localhost:3005 \
+            --dart-define=MAIN_WEB_URL=http://localhost:3000
+```
+
+**For local development on real device:**
+Get the local IP address of your computer running the API server, then run:
+```bash
+flutter run --dart-define=MAIN_API_URL=http://YOUR_LOCAL_IP:3005 \
+            --dart-define=MAIN_WEB_URL=http://YOUR_LOCAL_IP:3000
+```
+Replace `YOUR_LOCAL_IP` with your computer's network IP (e.g. `192.168.0.10`).
+
 
 ### Run the app
 
