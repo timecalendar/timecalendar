@@ -13,30 +13,18 @@ class _$HiddenEvent extends HiddenEvent {
   final BuiltList<String> namedHiddenEvents;
 
   factory _$HiddenEvent([void Function(HiddenEventBuilder)? updates]) =>
-      (new HiddenEventBuilder()..update(updates))._build();
+      (HiddenEventBuilder()..update(updates))._build();
 
   _$HiddenEvent._({
     required this.uidHiddenEvents,
     required this.namedHiddenEvents,
-  }) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-      uidHiddenEvents,
-      r'HiddenEvent',
-      'uidHiddenEvents',
-    );
-    BuiltValueNullFieldError.checkNotNull(
-      namedHiddenEvents,
-      r'HiddenEvent',
-      'namedHiddenEvents',
-    );
-  }
-
+  }) : super._();
   @override
   HiddenEvent rebuild(void Function(HiddenEventBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  HiddenEventBuilder toBuilder() => new HiddenEventBuilder()..replace(this);
+  HiddenEventBuilder toBuilder() => HiddenEventBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -69,13 +57,13 @@ class HiddenEventBuilder implements Builder<HiddenEvent, HiddenEventBuilder> {
 
   ListBuilder<String>? _uidHiddenEvents;
   ListBuilder<String> get uidHiddenEvents =>
-      _$this._uidHiddenEvents ??= new ListBuilder<String>();
+      _$this._uidHiddenEvents ??= ListBuilder<String>();
   set uidHiddenEvents(ListBuilder<String>? uidHiddenEvents) =>
       _$this._uidHiddenEvents = uidHiddenEvents;
 
   ListBuilder<String>? _namedHiddenEvents;
   ListBuilder<String> get namedHiddenEvents =>
-      _$this._namedHiddenEvents ??= new ListBuilder<String>();
+      _$this._namedHiddenEvents ??= ListBuilder<String>();
   set namedHiddenEvents(ListBuilder<String>? namedHiddenEvents) =>
       _$this._namedHiddenEvents = namedHiddenEvents;
 
@@ -93,7 +81,6 @@ class HiddenEventBuilder implements Builder<HiddenEvent, HiddenEventBuilder> {
 
   @override
   void replace(HiddenEvent other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$HiddenEvent;
   }
 
@@ -110,7 +97,7 @@ class HiddenEventBuilder implements Builder<HiddenEvent, HiddenEventBuilder> {
     try {
       _$result =
           _$v ??
-          new _$HiddenEvent._(
+          _$HiddenEvent._(
             uidHiddenEvents: uidHiddenEvents.build(),
             namedHiddenEvents: namedHiddenEvents.build(),
           );
@@ -122,7 +109,7 @@ class HiddenEventBuilder implements Builder<HiddenEvent, HiddenEventBuilder> {
         _$failedField = 'namedHiddenEvents';
         namedHiddenEvents.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
           r'HiddenEvent',
           _$failedField,
           e.toString(),
