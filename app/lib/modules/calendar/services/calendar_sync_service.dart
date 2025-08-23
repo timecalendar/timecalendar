@@ -28,11 +28,7 @@ class CalendarSyncService {
     final userCalendars = await ref.read(userCalendarProvider.future);
     if (userCalendars.isEmpty) return;
     final calendarsWithContent = await _fetchCalendars(userCalendars);
-
-    userCalendars.asMap().forEach((i, userCalendar) {
-      _saveEventsToDatabase(calendarsWithContent[i], userCalendar);
-    });
-
+    await _putEventsToDatabase(calendarsWithContent);
     await loadEventsFromDatabase();
   }
 
@@ -54,20 +50,22 @@ class CalendarSyncService {
     return response.data!.toList();
   }
 
-  Future<void> _saveEventsToDatabase(
-    CalendarWithContent calendarWithContent,
-    UserCalendar userCalendar,
+  Future<void> _putEventsToDatabase(
+    List<CalendarWithContent> calendarsWithContent,
   ) async {
     final events =
-        calendarWithContent.events
+        calendarsWithContent
             .map(
-              (event) =>
-                  CalendarEvent.fromApi(event, userCalendarId: userCalendar.id),
+              (calendar) => calendar.events.map(
+                (event) => CalendarEvent.fromApi(
+                  event,
+                  userCalendarId: calendar.calendar.id,
+                ),
+              ),
             )
+            .expand((calendar) => calendar)
             .toList();
-    await ref
-        .read(calendarEventRepositoryProvider)
-        .setCalendarEvents(events, userCalendar.id);
+    await ref.read(calendarEventRepositoryProvider).putCalendarEvents(events);
   }
 }
 

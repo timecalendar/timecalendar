@@ -30,14 +30,6 @@ class WeekView extends HookConsumerWidget {
     );
     final eventsProvider = ref.watch(eventsForViewProvider);
 
-    print(
-      eventsProvider.whenOrNull(
-        data: (events) => "data",
-        error: (error, stackTrace) => "error",
-        loading: () => "loading",
-      ),
-    );
-
     final events = eventsProvider.maybeWhen(
       orElse: () => List<EventInterface>.empty(),
       data: (events) => events,

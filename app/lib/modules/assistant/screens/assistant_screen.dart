@@ -55,7 +55,6 @@ class AssistantScreen extends HookConsumerWidget {
           ..addJavaScriptChannel(
             'NativeApp',
             onMessageReceived: (message) async {
-              print(message.message);
               final parsed = jsonDecode(message.message);
               if (parsed['name'] == 'calendarCreated')
                 onCalendarCreated(parsed['payload']['token']);

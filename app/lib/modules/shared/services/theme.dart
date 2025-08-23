@@ -50,6 +50,7 @@ class AppTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: primaryColor,
