@@ -11,44 +11,101 @@ class HiddenEventsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(eventsProvider);
+    final eventsAsync = ref.watch(eventsProvider);
     final hiddenEvents = ref.watch(hiddenEventProvider);
-    final namedHiddenEvents = hiddenEvents.namedHiddenEvents;
-    final uidHiddenEvents = hiddenEvents.uidHiddenEvents;
+    final namedHiddenEvents = hiddenEvents.namedHiddenEvents.toList();
+    final uidHiddenEvents = hiddenEvents.uidHiddenEvents.toList();
 
-    Widget _itemBuilder(BuildContext context, int index) {
-      return (index < namedHiddenEvents.length)
-          ? HiddenEventItem(
-              namedEvent: namedHiddenEvents[index],
-              index: index,
-              removeItem: () => ref
-                  .read(hiddenEventProvider.notifier)
-                  .removeNamedEventByIndex(index),
-            )
-          : HiddenEventItem(
-              event: events.firstWhere((event) =>
-                  event.uid ==
-                  uidHiddenEvents[index - namedHiddenEvents.length]),
-              index: index,
-              removeItem: () => ref
-                  .read(hiddenEventProvider.notifier)
-                  .removeUidEventByIndex(index - namedHiddenEvents.length),
-            );
-    }
+    return eventsAsync.when(
+      data: (events) {
+        Widget _itemBuilder(BuildContext context, int index) {
+          return (index < namedHiddenEvents.length)
+              ? HiddenEventItem(
+                namedEvent: namedHiddenEvents[index],
+                index: index,
+                removeItem:
+                    () => ref
+                        .read(hiddenEventProvider.notifier)
+                        .removeNamedEventByIndex(index),
+              )
+              : HiddenEventItem(
+                event: events.firstWhere(
+                  (event) =>
+                      event.uid ==
+                      uidHiddenEvents[index - namedHiddenEvents.length],
+                ),
+                index: index,
+                removeItem:
+                    () => ref
+                        .read(hiddenEventProvider.notifier)
+                        .removeUidEventByIndex(
+                          index - namedHiddenEvents.length,
+                        ),
+              );
+        }
 
+        return _buildScaffold(_itemBuilder, namedHiddenEvents, uidHiddenEvents);
+      },
+      loading:
+          () => _buildScaffold(
+            null,
+            namedHiddenEvents,
+            uidHiddenEvents,
+            isLoading: true,
+          ),
+      error:
+          (error, stack) => _buildScaffold(
+            null,
+            namedHiddenEvents,
+            uidHiddenEvents,
+            error: error,
+          ),
+    );
+  }
+
+  Widget _buildScaffold(
+    Widget Function(BuildContext, int)? itemBuilder,
+    List<String> namedHiddenEvents,
+    List<String> uidHiddenEvents, {
+    bool isLoading = false,
+    Object? error,
+  }) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text('Événements masqués'),
+      appBar: AppBar(title: Text('Événements masqués')),
+      body: _buildBody(
+        itemBuilder,
+        namedHiddenEvents,
+        uidHiddenEvents,
+        isLoading: isLoading,
+        error: error,
       ),
-      body: (namedHiddenEvents.length + uidHiddenEvents.length > 0)
-          ? ListView.builder(
-              itemBuilder: _itemBuilder,
-              itemCount: namedHiddenEvents.length + uidHiddenEvents.length,
-            )
-          : Center(
-              child: Text('Aucun événement masqué'),
-            ),
     );
+  }
+
+  Widget _buildBody(
+    Widget Function(BuildContext, int)? itemBuilder,
+    List<String> namedHiddenEvents,
+    List<String> uidHiddenEvents, {
+    bool isLoading = false,
+    Object? error,
+  }) {
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null) {
+      return Center(child: Text('Erreur: $error'));
+    }
+
+    if (namedHiddenEvents.length + uidHiddenEvents.length > 0 &&
+        itemBuilder != null) {
+      return ListView.builder(
+        itemBuilder: itemBuilder,
+        itemCount: namedHiddenEvents.length + uidHiddenEvents.length,
+      );
+    }
+
+    return Center(child: Text('Aucun événement masqué'));
   }
 }

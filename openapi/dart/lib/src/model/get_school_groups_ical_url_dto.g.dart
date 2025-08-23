@@ -12,13 +12,9 @@ class _$GetSchoolGroupsIcalUrlDto extends GetSchoolGroupsIcalUrlDto {
 
   factory _$GetSchoolGroupsIcalUrlDto(
           [void Function(GetSchoolGroupsIcalUrlDtoBuilder)? updates]) =>
-      (new GetSchoolGroupsIcalUrlDtoBuilder()..update(updates))._build();
+      (GetSchoolGroupsIcalUrlDtoBuilder()..update(updates))._build();
 
-  _$GetSchoolGroupsIcalUrlDto._({required this.groups}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        groups, r'GetSchoolGroupsIcalUrlDto', 'groups');
-  }
-
+  _$GetSchoolGroupsIcalUrlDto._({required this.groups}) : super._();
   @override
   GetSchoolGroupsIcalUrlDto rebuild(
           void Function(GetSchoolGroupsIcalUrlDtoBuilder) updates) =>
@@ -26,7 +22,7 @@ class _$GetSchoolGroupsIcalUrlDto extends GetSchoolGroupsIcalUrlDto {
 
   @override
   GetSchoolGroupsIcalUrlDtoBuilder toBuilder() =>
-      new GetSchoolGroupsIcalUrlDtoBuilder()..replace(this);
+      GetSchoolGroupsIcalUrlDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -56,8 +52,7 @@ class GetSchoolGroupsIcalUrlDtoBuilder
   _$GetSchoolGroupsIcalUrlDto? _$v;
 
   ListBuilder<String>? _groups;
-  ListBuilder<String> get groups =>
-      _$this._groups ??= new ListBuilder<String>();
+  ListBuilder<String> get groups => _$this._groups ??= ListBuilder<String>();
   set groups(ListBuilder<String>? groups) => _$this._groups = groups;
 
   GetSchoolGroupsIcalUrlDtoBuilder() {
@@ -75,7 +70,6 @@ class GetSchoolGroupsIcalUrlDtoBuilder
 
   @override
   void replace(GetSchoolGroupsIcalUrlDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$GetSchoolGroupsIcalUrlDto;
   }
 
@@ -90,15 +84,17 @@ class GetSchoolGroupsIcalUrlDtoBuilder
   _$GetSchoolGroupsIcalUrlDto _build() {
     _$GetSchoolGroupsIcalUrlDto _$result;
     try {
-      _$result =
-          _$v ?? new _$GetSchoolGroupsIcalUrlDto._(groups: groups.build());
+      _$result = _$v ??
+          _$GetSchoolGroupsIcalUrlDto._(
+            groups: groups.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'groups';
         groups.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'GetSchoolGroupsIcalUrlDto', _$failedField, e.toString());
       }
       rethrow;

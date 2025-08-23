@@ -2,7 +2,7 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
-import 'package:timecalendar/modules/home/providers/home_events_provider.dart';
+import 'package:timecalendar/modules/home/providers/home_screen_data_provider.dart';
 import 'package:timecalendar/modules/home/widgets/home_header.dart';
 import 'package:timecalendar/modules/home/widgets/horizontal_events.dart';
 import 'package:timecalendar/modules/home/widgets/today_events.dart';
@@ -22,43 +22,47 @@ class HomeScreen extends HookConsumerWidget {
         name: 'refresh_calendar',
         parameters: {'action': 'home_pull'},
       );
-      await ref.read(calendarSyncServiceProvider).syncCalendars();
+      await ref.read(calendarSyncServiceProvider).syncAndLoadCalendars();
     } on Exception catch (_) {
-      showSnackBar(
-        context,
-        SnackBar(
-          content: Text('Aucune connexion.'),
-        ),
-      );
+      showSnackBar(context, SnackBar(content: Text('Aucune connexion.')));
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(homeEventsProvider);
-    final dayDisplayedOnHomePage = ref.watch(dayDisplayedOnHomePageProvider);
+    final homeScreenData = ref.watch(homeScreenDataProvider);
 
     return SafeArea(
       child: Container(
         height: double.infinity,
         child: RefreshIndicator(
-          child: ListView(
-            children: <Widget>[
-              SizedBox(height: 40),
-              HomeHeader(
-                  dayDisplayedOnHomePage: dayDisplayedOnHomePage,
-                  events: events),
-              SizedBox(height: 25),
-              HorizontalEvents(events: events),
-              SizedBox(height: 25),
-              TodayHeader(dayDisplayedOnHomePage: dayDisplayedOnHomePage),
-              SizedBox(height: 10),
-              if (dayDisplayedOnHomePage != null)
-                TodayEvents(
-                  dayDisplayedOnHomePage: dayDisplayedOnHomePage,
-                  events: events,
+          child: homeScreenData.when(
+            data:
+                (data) => ListView(
+                  children: <Widget>[
+                    SizedBox(height: 40),
+                    HomeHeader(
+                      dayDisplayedOnHomePage: data.dayDisplayedOnHomePage,
+                      events: data.events,
+                    ),
+                    SizedBox(height: 25),
+                    HorizontalEvents(events: data.events),
+                    SizedBox(height: 25),
+                    TodayHeader(
+                      dayDisplayedOnHomePage: data.dayDisplayedOnHomePage,
+                    ),
+                    SizedBox(height: 10),
+                    if (data.dayDisplayedOnHomePage != null)
+                      TodayEvents(
+                        dayDisplayedOnHomePage: data.dayDisplayedOnHomePage!,
+                        events: data.events,
+                      ),
+                  ],
                 ),
-            ],
+            loading: () => Center(child: CircularProgressIndicator()),
+            error:
+                (e, st) =>
+                    Center(child: Text('Error loading home screen data')),
           ),
           onRefresh: () {
             return refreshEvents(context, ref);

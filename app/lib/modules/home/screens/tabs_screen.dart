@@ -41,8 +41,9 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
       'slug': 'home',
     },
     {
-      'page': (ctx, observer) =>
-          CalendarScreen(parentContext: ctx, observer: observer),
+      'page':
+          (ctx, observer) =>
+              CalendarScreen(parentContext: ctx, observer: observer),
       'title': 'Calendrier',
       'slug': 'calendar',
     },
@@ -92,8 +93,10 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
     Future.delayed(Duration.zero).then((_) {
       // Get startup screen
       var startupScreen =
-          oldprovider.Provider.of<SettingsProvider>(context, listen: false)
-              .startupScreen;
+          oldprovider.Provider.of<SettingsProvider>(
+            context,
+            listen: false,
+          ).startupScreen;
       setState(() {
         _selectedPageIndex = (startupScreen == 'calendar') ? 1 : 0;
       });
@@ -106,7 +109,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
   void loadEventsOnStartup() {
     if (ref.read(appIsLoadedProvider)) return;
     ref.read(appIsLoadedProvider.notifier).state = true;
-    ref.read(calendarSyncServiceProvider).syncCalendars();
+    ref.read(calendarSyncServiceProvider).syncAndLoadCalendars();
     observer.analytics.logEvent(
       name: 'refresh_calendar',
       parameters: {'action': 'on_startup'},
@@ -143,7 +146,8 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
     final appTheme = settingsProvider.currentTheme;
     if (!_checkDisplayChangelog) {
       WidgetsBinding.instance.addPostFrameCallback(
-          (_) => displayChangelog(context, settingsProvider.currentVersion!));
+        (_) => displayChangelog(context, settingsProvider.currentVersion!),
+      );
     }
 
     return Scaffold(
@@ -151,17 +155,20 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
       floatingActionButton:
           (this._pages[_selectedPageIndex]['slug'] == 'calendar')
               ? FloatingActionButton(
-                  onPressed: () {
-                    Navigator.of(context)
-                        .pushNamed(AddPersonalEventScreen.routeName);
-                  },
-                  child: Icon(Icons.add),
-                )
+                onPressed: () {
+                  Navigator.of(
+                    context,
+                  ).pushNamed(AddPersonalEventScreen.routeName);
+                },
+                child: Icon(Icons.add),
+                tooltip: 'Ajouter un événement',
+              )
               : null,
       backgroundColor: appTheme.backgroundColor,
       body: (_pages[_selectedPageIndex]['page'] as Function)(context, observer),
       bottomNavigationBar: SizedBox(
-        height: TabsScreen.navigationBarHeight +
+        height:
+            TabsScreen.navigationBarHeight +
             MediaQuery.of(context).padding.bottom,
         child: Container(
           child: BottomNavigationBar(
@@ -174,37 +181,27 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
             type: BottomNavigationBarType.fixed,
             items: [
               BottomNavigationBarItem(
-                icon: Icon(
-                  FontAwesomeIcons.house,
-                  size: 20,
-                ),
+                icon: Icon(FontAwesomeIcons.house, size: 20),
                 label: 'Accueil',
               ),
               BottomNavigationBarItem(
-                icon: Icon(
-                  FontAwesomeIcons.calendarDays,
-                  size: 20,
-                ),
+                icon: Icon(FontAwesomeIcons.calendarDays, size: 20),
                 label: 'Calendrier',
               ),
               BottomNavigationBarItem(
-                icon: Icon(
-                  FontAwesomeIcons.user,
-                ),
+                icon: Icon(FontAwesomeIcons.user),
                 label: 'Profil',
               ),
             ],
           ),
-          decoration: settingsProvider.darkMode
-              ? BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      width: 1,
-                      color: Colors.grey[700]!,
+          decoration:
+              settingsProvider.darkMode
+                  ? BoxDecoration(
+                    border: Border(
+                      top: BorderSide(width: 1, color: Colors.grey[700]!),
                     ),
-                  ),
-                )
-              : null,
+                  )
+                  : null,
         ),
       ),
     );
@@ -221,7 +218,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
   }
 
   void _sendCurrentTabToAnalytics() {
-    observer.analytics.setCurrentScreen(
+    observer.analytics.logScreenView(
       screenName:
           '${TabsScreen.routeName}/tab_${_pages[_selectedPageIndex]['slug']}',
     );

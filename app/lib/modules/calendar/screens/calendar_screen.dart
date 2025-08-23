@@ -7,7 +7,7 @@ import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
 import 'package:timecalendar/modules/calendar/widgets/common/calendar_header.dart';
 import 'package:timecalendar/modules/calendar/widgets/planning_view/planning_view_layout.dart';
-import 'package:timecalendar/modules/calendar/widgets/week_view/week_view_layout.dart';
+import 'package:timecalendar/modules/calendar/widgets/week_view/week_view.dart';
 import 'package:timecalendar/modules/home/screens/tabs_screen.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
@@ -20,7 +20,7 @@ class CalendarScreen extends ConsumerStatefulWidget {
   final FirebaseAnalyticsObserver? observer;
 
   const CalendarScreen({Key? key, this.parentContext, this.observer})
-      : super(key: key);
+    : super(key: key);
 
   @override
   _CalendarScreenState createState() => _CalendarScreenState();
@@ -29,12 +29,7 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   int? _currentWeek;
 
-  final startHour = 7;
-
-  final endHour = 21;
-
   final leftHoursWidth = 50.0;
-
   final appBarHeight = 60.0;
 
   var _isLoading = false;
@@ -50,22 +45,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         name: 'refresh_calendar',
         parameters: {'action': 'calendar_menu_bar'},
       );
-      await ref.read(calendarSyncServiceProvider).syncCalendars();
+      await ref.read(calendarSyncServiceProvider).syncAndLoadCalendars();
       hideSnackBar(context);
-      showSnackBar(
-        context,
-        SnackBar(
-          content: Text('Calendrier rechargé.'),
-        ),
-      );
+      showSnackBar(context, SnackBar(content: Text('Calendrier rechargé.')));
     } on Exception catch (_) {
       hideSnackBar(context);
-      showSnackBar(
-        context,
-        SnackBar(
-          content: Text('Aucune connexion.'),
-        ),
-      );
+      showSnackBar(context, SnackBar(content: Text('Aucune connexion.')));
     } finally {
       setState(() {
         _isLoading = false;
@@ -82,7 +67,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void changeView(
-      CalendarViewType calendarViewType, SettingsProvider settingsProvider) {
+    CalendarViewType calendarViewType,
+    SettingsProvider settingsProvider,
+  ) {
     settingsProvider.calendarViewType = calendarViewType;
   }
 
@@ -110,8 +97,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void initState() {
     super.initState();
 
-    calendarProvider =
-        oldprovider.Provider.of<CalendarProvider>(context, listen: false);
+    calendarProvider = oldprovider.Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
     // Load the saved week (if the user changed tab)
     _currentWeek = AppDateUtils.dateToWeekNumber(calendarProvider.currentDay);
   }
@@ -141,14 +130,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
         );
       case CalendarViewType.Week:
-        return WeekViewLayout(
+        return WeekView(
           currentWeek: _currentWeek,
           screenHeight: screenHeight,
           calendarWidth: calendarWidth,
-          startHour: startHour,
-          endHour: endHour,
-          nbOfVisibleDays: settingsProvider.showWeekends! ? 7 : 5,
-          observer: widget.observer,
           leftHoursWidth: leftHoursWidth,
           updateCurrentWeek: _updateCurrentWeek,
         );
@@ -159,8 +144,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider =
-        oldprovider.Provider.of<SettingsProvider>(context, listen: true);
+    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
+      context,
+      listen: true,
+    );
     var calendarProvider = oldprovider.Provider.of<CalendarProvider>(context);
     return SafeArea(
       child: Stack(
@@ -177,15 +164,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 changeView: changeView,
                 currentDateTime: calendarProvider.currentDay,
               ),
-              calendarView(settingsProvider)
+              calendarView(settingsProvider),
             ],
           ),
           if (_isLoading)
-            new Center(
-              child: new CircularProgressIndicator(
-                valueColor: null,
-              ),
-            ),
+            new Center(child: new CircularProgressIndicator(valueColor: null)),
         ],
       ),
     );

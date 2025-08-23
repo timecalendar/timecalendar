@@ -14,16 +14,10 @@ class _$CalendarWithContent extends CalendarWithContent {
 
   factory _$CalendarWithContent(
           [void Function(CalendarWithContentBuilder)? updates]) =>
-      (new CalendarWithContentBuilder()..update(updates))._build();
+      (CalendarWithContentBuilder()..update(updates))._build();
 
   _$CalendarWithContent._({required this.calendar, required this.events})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        calendar, r'CalendarWithContent', 'calendar');
-    BuiltValueNullFieldError.checkNotNull(
-        events, r'CalendarWithContent', 'events');
-  }
-
+      : super._();
   @override
   CalendarWithContent rebuild(
           void Function(CalendarWithContentBuilder) updates) =>
@@ -31,7 +25,7 @@ class _$CalendarWithContent extends CalendarWithContent {
 
   @override
   CalendarWithContentBuilder toBuilder() =>
-      new CalendarWithContentBuilder()..replace(this);
+      CalendarWithContentBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -65,13 +59,13 @@ class CalendarWithContentBuilder
 
   CalendarForPublicBuilder? _calendar;
   CalendarForPublicBuilder get calendar =>
-      _$this._calendar ??= new CalendarForPublicBuilder();
+      _$this._calendar ??= CalendarForPublicBuilder();
   set calendar(CalendarForPublicBuilder? calendar) =>
       _$this._calendar = calendar;
 
   ListBuilder<CalendarEventForPublic>? _events;
   ListBuilder<CalendarEventForPublic> get events =>
-      _$this._events ??= new ListBuilder<CalendarEventForPublic>();
+      _$this._events ??= ListBuilder<CalendarEventForPublic>();
   set events(ListBuilder<CalendarEventForPublic>? events) =>
       _$this._events = events;
 
@@ -91,7 +85,6 @@ class CalendarWithContentBuilder
 
   @override
   void replace(CalendarWithContent other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$CalendarWithContent;
   }
 
@@ -107,8 +100,10 @@ class CalendarWithContentBuilder
     _$CalendarWithContent _$result;
     try {
       _$result = _$v ??
-          new _$CalendarWithContent._(
-              calendar: calendar.build(), events: events.build());
+          _$CalendarWithContent._(
+            calendar: calendar.build(),
+            events: events.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
@@ -117,7 +112,7 @@ class CalendarWithContentBuilder
         _$failedField = 'events';
         events.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'CalendarWithContent', _$failedField, e.toString());
       }
       rethrow;

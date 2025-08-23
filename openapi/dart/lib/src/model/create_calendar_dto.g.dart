@@ -20,7 +20,7 @@ class _$CreateCalendarDto extends CreateCalendarDto {
 
   factory _$CreateCalendarDto(
           [void Function(CreateCalendarDtoBuilder)? updates]) =>
-      (new CreateCalendarDtoBuilder()..update(updates))._build();
+      (CreateCalendarDtoBuilder()..update(updates))._build();
 
   _$CreateCalendarDto._(
       {required this.url,
@@ -28,17 +28,14 @@ class _$CreateCalendarDto extends CreateCalendarDto {
       this.schoolName,
       this.name,
       this.customData})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(url, r'CreateCalendarDto', 'url');
-  }
-
+      : super._();
   @override
   CreateCalendarDto rebuild(void Function(CreateCalendarDtoBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
   CreateCalendarDtoBuilder toBuilder() =>
-      new CreateCalendarDtoBuilder()..replace(this);
+      CreateCalendarDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -118,7 +115,6 @@ class CreateCalendarDtoBuilder
 
   @override
   void replace(CreateCalendarDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$CreateCalendarDto;
   }
 
@@ -132,13 +128,14 @@ class CreateCalendarDtoBuilder
 
   _$CreateCalendarDto _build() {
     final _$result = _$v ??
-        new _$CreateCalendarDto._(
-            url: BuiltValueNullFieldError.checkNotNull(
-                url, r'CreateCalendarDto', 'url'),
-            schoolId: schoolId,
-            schoolName: schoolName,
-            name: name,
-            customData: customData);
+        _$CreateCalendarDto._(
+          url: BuiltValueNullFieldError.checkNotNull(
+              url, r'CreateCalendarDto', 'url'),
+          schoolId: schoolId,
+          schoolName: schoolName,
+          name: name,
+          customData: customData,
+        );
     replace(_$result);
     return _$result;
   }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:timecalendar/modules/calendar/screens/user_calendars_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
-import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
 import 'package:timecalendar/modules/settings/screens/settings_screen.dart';
 import 'package:timecalendar/modules/suggestion/screens/suggestion_screen.dart';
 import 'package:timecalendar/modules/profile/widgets/profile_header.dart';
@@ -28,10 +28,10 @@ class ProfileScreen extends StatelessWidget {
             unread: settingsProvider.newActivity,
           ),
           ProfileItem(
-            title: 'Groupes',
-            icon: FontAwesomeIcons.users,
+            title: 'Calendriers',
+            icon: FontAwesomeIcons.calendar,
             action: () {
-              Navigator.of(context).pushNamed(SelectSchool.routeName);
+              Navigator.of(context).pushNamed(UserCalendarsScreen.routeName);
             },
           ),
           ProfileItem(

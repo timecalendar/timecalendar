@@ -23,28 +23,37 @@ class _$PersonalEvent extends PersonalEvent {
   final String? description;
   @override
   final DateTime exportedAt;
+  @override
+  final String? userCalendarId;
 
   factory _$PersonalEvent([void Function(PersonalEventBuilder)? updates]) =>
       (new PersonalEventBuilder()..update(updates))._build();
 
-  _$PersonalEvent._(
-      {required this.uid,
-      required this.title,
-      required this.color,
-      required this.startsAt,
-      required this.endsAt,
-      this.location,
-      this.description,
-      required this.exportedAt})
-      : super._() {
+  _$PersonalEvent._({
+    required this.uid,
+    required this.title,
+    required this.color,
+    required this.startsAt,
+    required this.endsAt,
+    this.location,
+    this.description,
+    required this.exportedAt,
+    this.userCalendarId,
+  }) : super._() {
     BuiltValueNullFieldError.checkNotNull(uid, r'PersonalEvent', 'uid');
     BuiltValueNullFieldError.checkNotNull(title, r'PersonalEvent', 'title');
     BuiltValueNullFieldError.checkNotNull(color, r'PersonalEvent', 'color');
     BuiltValueNullFieldError.checkNotNull(
-        startsAt, r'PersonalEvent', 'startsAt');
+      startsAt,
+      r'PersonalEvent',
+      'startsAt',
+    );
     BuiltValueNullFieldError.checkNotNull(endsAt, r'PersonalEvent', 'endsAt');
     BuiltValueNullFieldError.checkNotNull(
-        exportedAt, r'PersonalEvent', 'exportedAt');
+      exportedAt,
+      r'PersonalEvent',
+      'exportedAt',
+    );
   }
 
   @override
@@ -65,7 +74,8 @@ class _$PersonalEvent extends PersonalEvent {
         endsAt == other.endsAt &&
         location == other.location &&
         description == other.description &&
-        exportedAt == other.exportedAt;
+        exportedAt == other.exportedAt &&
+        userCalendarId == other.userCalendarId;
   }
 
   @override
@@ -79,6 +89,7 @@ class _$PersonalEvent extends PersonalEvent {
     _$hash = $jc(_$hash, location.hashCode);
     _$hash = $jc(_$hash, description.hashCode);
     _$hash = $jc(_$hash, exportedAt.hashCode);
+    _$hash = $jc(_$hash, userCalendarId.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -93,7 +104,8 @@ class _$PersonalEvent extends PersonalEvent {
           ..add('endsAt', endsAt)
           ..add('location', location)
           ..add('description', description)
-          ..add('exportedAt', exportedAt))
+          ..add('exportedAt', exportedAt)
+          ..add('userCalendarId', userCalendarId))
         .toString();
   }
 }
@@ -134,6 +146,11 @@ class PersonalEventBuilder
   DateTime? get exportedAt => _$this._exportedAt;
   set exportedAt(DateTime? exportedAt) => _$this._exportedAt = exportedAt;
 
+  String? _userCalendarId;
+  String? get userCalendarId => _$this._userCalendarId;
+  set userCalendarId(String? userCalendarId) =>
+      _$this._userCalendarId = userCalendarId;
+
   PersonalEventBuilder();
 
   PersonalEventBuilder get _$this {
@@ -147,6 +164,7 @@ class PersonalEventBuilder
       _location = $v.location;
       _description = $v.description;
       _exportedAt = $v.exportedAt;
+      _userCalendarId = $v.userCalendarId;
       _$v = null;
     }
     return this;
@@ -167,22 +185,43 @@ class PersonalEventBuilder
   PersonalEvent build() => _build();
 
   _$PersonalEvent _build() {
-    final _$result = _$v ??
+    final _$result =
+        _$v ??
         new _$PersonalEvent._(
-            uid: BuiltValueNullFieldError.checkNotNull(
-                uid, r'PersonalEvent', 'uid'),
-            title: BuiltValueNullFieldError.checkNotNull(
-                title, r'PersonalEvent', 'title'),
-            color: BuiltValueNullFieldError.checkNotNull(
-                color, r'PersonalEvent', 'color'),
-            startsAt: BuiltValueNullFieldError.checkNotNull(
-                startsAt, r'PersonalEvent', 'startsAt'),
-            endsAt: BuiltValueNullFieldError.checkNotNull(
-                endsAt, r'PersonalEvent', 'endsAt'),
-            location: location,
-            description: description,
-            exportedAt: BuiltValueNullFieldError.checkNotNull(
-                exportedAt, r'PersonalEvent', 'exportedAt'));
+          uid: BuiltValueNullFieldError.checkNotNull(
+            uid,
+            r'PersonalEvent',
+            'uid',
+          ),
+          title: BuiltValueNullFieldError.checkNotNull(
+            title,
+            r'PersonalEvent',
+            'title',
+          ),
+          color: BuiltValueNullFieldError.checkNotNull(
+            color,
+            r'PersonalEvent',
+            'color',
+          ),
+          startsAt: BuiltValueNullFieldError.checkNotNull(
+            startsAt,
+            r'PersonalEvent',
+            'startsAt',
+          ),
+          endsAt: BuiltValueNullFieldError.checkNotNull(
+            endsAt,
+            r'PersonalEvent',
+            'endsAt',
+          ),
+          location: location,
+          description: description,
+          exportedAt: BuiltValueNullFieldError.checkNotNull(
+            exportedAt,
+            r'PersonalEvent',
+            'exportedAt',
+          ),
+          userCalendarId: userCalendarId,
+        );
     replace(_$result);
     return _$result;
   }

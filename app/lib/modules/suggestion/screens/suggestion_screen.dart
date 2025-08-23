@@ -1,12 +1,12 @@
 import 'package:built_collection/built_collection.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
 import 'package:timecalendar/modules/add_school/providers/add_school_provider.dart';
 import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
-import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
+import 'package:timecalendar/modules/calendar/providers/user_calendar_provider.dart';
 import 'package:timecalendar/modules/import_ical/providers/ical_url_provider.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/utils/snackbar.dart';
@@ -17,7 +17,7 @@ import 'package:timecalendar_api/timecalendar_api.dart';
 List<String> SUBJECTS = [
   'Signaler un problème',
   'Proposer une fonctionnalité',
-  'Autre'
+  'Autre',
 ];
 
 class SuggestionScreenArguments {
@@ -53,27 +53,31 @@ class SuggestionScreen extends HookConsumerWidget {
       final deviceInfoPlugin = DeviceInfoPlugin();
       final deviceInfo = await deviceInfoPlugin.deviceInfo;
 
-      final calendars = await ref
-          .read(calendarSyncServiceProvider)
-          .loadUserCalendarsFromDatabase();
+      final calendars = await ref.read(userCalendarProvider.future);
 
       try {
-        await ref.read(apiClientProvider).contactApi().sendMessage(
-            sendMessageDto: SendMessageDto((dto) {
-          dto
-            ..email = email.value
-            ..message = message.value
-            ..deviceInfo = formatDeviceInfo(deviceInfo)
-            ..calendarIds.replace(calendars.map((e) => e.id).toBuiltList());
+        await ref
+            .read(apiClientProvider)
+            .contactApi()
+            .sendMessage(
+              sendMessageDto: SendMessageDto((dto) {
+                dto
+                  ..email = email.value
+                  ..message = message.value
+                  ..deviceInfo = formatDeviceInfo(deviceInfo)
+                  ..calendarIds.replace(
+                    calendars.map((e) => e.id).toBuiltList(),
+                  );
 
-          if (args.fromFailedIcalImport) {
-            dto
-              ..calendarUrl = ref.read(icalUrlProvider)
-              ..gradeName = ref.read(addGradeNameProvider)
-              ..schoolName = ref.read(addSchoolNameProvider)
-              ..schoolId = ref.read(assistantProvider).school?.id;
-          }
-        }));
+                if (args.fromFailedIcalImport) {
+                  dto
+                    ..calendarUrl = ref.read(icalUrlProvider)
+                    ..gradeName = ref.read(addGradeNameProvider)
+                    ..schoolName = ref.read(addSchoolNameProvider)
+                    ..schoolId = ref.read(assistantProvider).school?.id;
+                }
+              }),
+            );
 
         subject.value = SUBJECTS[0];
         email.value = "";
@@ -101,9 +105,7 @@ class SuggestionScreen extends HookConsumerWidget {
       } on Exception {
         showSnackBar(
           context,
-          SnackBar(
-            content: Text('Une erreur est survenue.'),
-          ),
+          SnackBar(content: Text('Une erreur est survenue.')),
         );
       } finally {
         isLoading.value = false;
@@ -112,9 +114,7 @@ class SuggestionScreen extends HookConsumerWidget {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text('Vos suggestions'),
-      ),
+      appBar: AppBar(title: Text('Vos suggestions')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(15.0),
@@ -124,7 +124,8 @@ class SuggestionScreen extends HookConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Text(
-                    'Merci d\'utiliser TimeCalendar ! Si vous constatez des bugs, ou que vous avez une suggestion, vous pouvez nous contacter ici.'),
+                  'Merci d\'utiliser TimeCalendar ! Si vous constatez des bugs, ou que vous avez une suggestion, vous pouvez nous contacter ici.',
+                ),
                 SizedBox(height: 20),
                 Text(
                   'Vous souhaitez',
@@ -136,12 +137,13 @@ class SuggestionScreen extends HookConsumerWidget {
                   onChanged: (String? newValue) {
                     if (newValue != null) subject.value = newValue;
                   },
-                  items: SUBJECTS.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
+                  items:
+                      SUBJECTS.map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
                 ),
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Adresse e-mail'),
@@ -170,8 +172,9 @@ class SuggestionScreen extends HookConsumerWidget {
                   minLines: 3,
                   maxLines: 6,
                   keyboardType: TextInputType.multiline,
-                  decoration:
-                      InputDecoration(labelText: 'Entrez votre message'),
+                  decoration: InputDecoration(
+                    labelText: 'Entrez votre message',
+                  ),
                   focusNode: _messageFocusNode,
                   validator: (value) {
                     if (value!.isEmpty) {
@@ -183,9 +186,7 @@ class SuggestionScreen extends HookConsumerWidget {
                     if (value != null) message.value = value;
                   },
                 ),
-                SizedBox(
-                  height: 15,
-                ),
+                SizedBox(height: 15),
                 CustomButton(
                   text: 'Envoyer',
                   onPressed: _saveForm,

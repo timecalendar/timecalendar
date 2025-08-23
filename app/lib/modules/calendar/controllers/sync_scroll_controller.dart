@@ -15,10 +15,13 @@ class SyncScrollController {
   }
 
   void jumpTo(double value) {
-    var offset = min(_registeredScrollControllers[0]!.position.maxScrollExtent,
-        max(0.0, value));
-    _registeredScrollControllers
-        .forEach((controller) => controller!.jumpTo(offset));
+    var offset = min(
+      _registeredScrollControllers[0]!.position.maxScrollExtent,
+      max(0.0, value),
+    );
+    _registeredScrollControllers.forEach(
+      (controller) => controller!.jumpTo(offset),
+    );
     _listeners.forEach((listener) => listener(offset));
   }
 
@@ -39,7 +42,9 @@ class SyncScrollController {
   }
 
   void processNotification(
-      ScrollNotification notification, ScrollController? sender) {
+    ScrollNotification notification,
+    ScrollController? sender,
+  ) {
     if (notification is ScrollStartNotification && !_scrollingActive) {
       _scrollingController = sender;
       _scrollingActive = true;
@@ -55,10 +60,10 @@ class SyncScrollController {
 
       if (notification is ScrollUpdateNotification) {
         var offset = _scrollingController!.offset;
-        _registeredScrollControllers.forEach((controller) => {
-              if (!identical(_scrollingController, controller))
-                controller!..jumpTo(offset)
-            });
+        _registeredScrollControllers.forEach((controller) {
+          if (!identical(_scrollingController, controller))
+            controller!..jumpTo(offset);
+        });
         _listeners.forEach((listener) => listener(offset));
         currentOffset = offset;
         return;
