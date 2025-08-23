@@ -10,21 +10,20 @@ class CalendarCreationService {
   CalendarCreationService(this.ref);
 
   loadCalendarFromToken(String token) async {
-    final rep = await this
-        .ref
+    final rep = await this.ref
         .read(apiClientProvider)
         .calendarsApi()
         .findCalendarByToken(token: token);
     final calendarForPublic = rep.data!;
     final userCalendar = UserCalendar.fromCalendarForPublic(calendarForPublic);
-    await this
-        .ref
+    await this.ref
         .read(userCalendarRepositoryProvider)
-        .setUserCalendar(userCalendar);
+        .addUserCalendar(userCalendar);
 
-    await this.ref.read(calendarSyncServiceProvider).syncCalendars();
+    await this.ref.read(calendarSyncServiceProvider).syncAndLoadCalendars();
   }
 }
 
-final calendarCreationServiceProvider =
-    Provider((ref) => CalendarCreationService(ref));
+final calendarCreationServiceProvider = Provider(
+  (ref) => CalendarCreationService(ref),
+);

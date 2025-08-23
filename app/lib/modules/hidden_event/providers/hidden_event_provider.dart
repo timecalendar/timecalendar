@@ -16,30 +16,35 @@ class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
   }
 
   Future<void> addUidEvent(String uidEvent) async {
-    state = state
-        .rebuild((hiddenEvent) => hiddenEvent..uidHiddenEvents.add(uidEvent));
+    state = state.rebuild(
+      (hiddenEvent) => hiddenEvent..uidHiddenEvents.add(uidEvent),
+    );
     await this.saveToDatabase();
   }
 
   Future<void> addNamedEvent(String namedEvent) async {
     state = state.rebuild(
-        (hiddenEvent) => hiddenEvent..namedHiddenEvents.add(namedEvent));
+      (hiddenEvent) => hiddenEvent..namedHiddenEvents.add(namedEvent),
+    );
     await this.saveToDatabase();
   }
 
   Future<void> removeUidEventByIndex(int index) async {
-    state = state
-        .rebuild((hiddenEvent) => hiddenEvent..uidHiddenEvents.removeAt(index));
+    state = state.rebuild(
+      (hiddenEvent) => hiddenEvent..uidHiddenEvents.removeAt(index),
+    );
     await this.saveToDatabase();
   }
 
   Future<void> removeNamedEventByIndex(int index) async {
     state = state.rebuild(
-        (hiddenEvent) => hiddenEvent..namedHiddenEvents.removeAt(index));
+      (hiddenEvent) => hiddenEvent..namedHiddenEvents.removeAt(index),
+    );
     await this.saveToDatabase();
   }
 }
 
 final hiddenEventProvider =
     StateNotifierProvider<HiddenEventNotifier, HiddenEvent>(
-        (ref) => HiddenEventNotifier(ref));
+      (ref) => HiddenEventNotifier(ref),
+    );

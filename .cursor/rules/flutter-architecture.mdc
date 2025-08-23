@@ -61,6 +61,44 @@ Contains Riverpod providers for managing and exposing state. Providers connect r
 ### `widgets/` — Reusable UI Components
 Contains reusable UI components, organized by feature. These widgets are shared across screens and encapsulate presentational logic.
 
+- **Component Size:**
+  - Prefer creating small, focused components. The smaller, the better! Don't hesitate to split widgets into multiple files and folders for clarity and reusability.
+- **State Management:**
+  - Use `HookConsumerWidget` (from `hooks_riverpod`) for all widgets that require state management, provider access, or hooks. This is the default for most widgets in the codebase.
+  - **Never use `StatefulWidget`**. All stateful logic should be handled via hooks and providers.
+  - Use `StatelessWidget` only for pure UI widgets that do not require any state, provider access, or hooks.
+- **Why?**
+  - `HookConsumerWidget` enables concise, testable, and modular widgets with access to both hooks and Riverpod providers.
+  - This approach ensures a consistent, modern, and maintainable codebase.
+- **Example:**
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+class MyWidget extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myState = ref.watch(myProvider);
+    // ... use hooks and providers ...
+    return Container();
+  }
+}
+```
+
+- Use `StatelessWidget` for simple, presentational widgets:
+
+```dart
+import 'package:flutter/material.dart';
+
+class MySimpleWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Text('Hello');
+  }
+}
+```
+
 ### `screens/` — Top-Level UI Screens
 Contains the main UI screens/pages for the module (e.g., `calendar_screen.dart`). Screens compose widgets and connect to providers for state management.
 

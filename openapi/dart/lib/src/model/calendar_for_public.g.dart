@@ -24,7 +24,7 @@ class _$CalendarForPublic extends CalendarForPublic {
 
   factory _$CalendarForPublic(
           [void Function(CalendarForPublicBuilder)? updates]) =>
-      (new CalendarForPublicBuilder()..update(updates))._build();
+      (CalendarForPublicBuilder()..update(updates))._build();
 
   _$CalendarForPublic._(
       {required this.id,
@@ -34,23 +34,14 @@ class _$CalendarForPublic extends CalendarForPublic {
       this.schoolId,
       required this.lastUpdatedAt,
       required this.createdAt})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(id, r'CalendarForPublic', 'id');
-    BuiltValueNullFieldError.checkNotNull(token, r'CalendarForPublic', 'token');
-    BuiltValueNullFieldError.checkNotNull(name, r'CalendarForPublic', 'name');
-    BuiltValueNullFieldError.checkNotNull(
-        lastUpdatedAt, r'CalendarForPublic', 'lastUpdatedAt');
-    BuiltValueNullFieldError.checkNotNull(
-        createdAt, r'CalendarForPublic', 'createdAt');
-  }
-
+      : super._();
   @override
   CalendarForPublic rebuild(void Function(CalendarForPublicBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
   CalendarForPublicBuilder toBuilder() =>
-      new CalendarForPublicBuilder()..replace(this);
+      CalendarForPublicBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -147,7 +138,6 @@ class CalendarForPublicBuilder
 
   @override
   void replace(CalendarForPublic other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$CalendarForPublic;
   }
 
@@ -161,19 +151,20 @@ class CalendarForPublicBuilder
 
   _$CalendarForPublic _build() {
     final _$result = _$v ??
-        new _$CalendarForPublic._(
-            id: BuiltValueNullFieldError.checkNotNull(
-                id, r'CalendarForPublic', 'id'),
-            token: BuiltValueNullFieldError.checkNotNull(
-                token, r'CalendarForPublic', 'token'),
-            name: BuiltValueNullFieldError.checkNotNull(
-                name, r'CalendarForPublic', 'name'),
-            schoolName: schoolName,
-            schoolId: schoolId,
-            lastUpdatedAt: BuiltValueNullFieldError.checkNotNull(
-                lastUpdatedAt, r'CalendarForPublic', 'lastUpdatedAt'),
-            createdAt: BuiltValueNullFieldError.checkNotNull(
-                createdAt, r'CalendarForPublic', 'createdAt'));
+        _$CalendarForPublic._(
+          id: BuiltValueNullFieldError.checkNotNull(
+              id, r'CalendarForPublic', 'id'),
+          token: BuiltValueNullFieldError.checkNotNull(
+              token, r'CalendarForPublic', 'token'),
+          name: BuiltValueNullFieldError.checkNotNull(
+              name, r'CalendarForPublic', 'name'),
+          schoolName: schoolName,
+          schoolId: schoolId,
+          lastUpdatedAt: BuiltValueNullFieldError.checkNotNull(
+              lastUpdatedAt, r'CalendarForPublic', 'lastUpdatedAt'),
+          createdAt: BuiltValueNullFieldError.checkNotNull(
+              createdAt, r'CalendarForPublic', 'createdAt'),
+        );
     replace(_$result);
     return _$result;
   }

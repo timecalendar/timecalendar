@@ -14,15 +14,11 @@ class _$OrleansGetIcalUrlFromStudentNumberDto
   factory _$OrleansGetIcalUrlFromStudentNumberDto(
           [void Function(OrleansGetIcalUrlFromStudentNumberDtoBuilder)?
               updates]) =>
-      (new OrleansGetIcalUrlFromStudentNumberDtoBuilder()..update(updates))
+      (OrleansGetIcalUrlFromStudentNumberDtoBuilder()..update(updates))
           ._build();
 
   _$OrleansGetIcalUrlFromStudentNumberDto._({required this.studentNumber})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(studentNumber,
-        r'OrleansGetIcalUrlFromStudentNumberDto', 'studentNumber');
-  }
-
+      : super._();
   @override
   OrleansGetIcalUrlFromStudentNumberDto rebuild(
           void Function(OrleansGetIcalUrlFromStudentNumberDtoBuilder)
@@ -31,7 +27,7 @@ class _$OrleansGetIcalUrlFromStudentNumberDto
 
   @override
   OrleansGetIcalUrlFromStudentNumberDtoBuilder toBuilder() =>
-      new OrleansGetIcalUrlFromStudentNumberDtoBuilder()..replace(this);
+      OrleansGetIcalUrlFromStudentNumberDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -83,7 +79,6 @@ class OrleansGetIcalUrlFromStudentNumberDtoBuilder
 
   @override
   void replace(OrleansGetIcalUrlFromStudentNumberDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$OrleansGetIcalUrlFromStudentNumberDto;
   }
 
@@ -98,9 +93,10 @@ class OrleansGetIcalUrlFromStudentNumberDtoBuilder
 
   _$OrleansGetIcalUrlFromStudentNumberDto _build() {
     final _$result = _$v ??
-        new _$OrleansGetIcalUrlFromStudentNumberDto._(
-            studentNumber: BuiltValueNullFieldError.checkNotNull(studentNumber,
-                r'OrleansGetIcalUrlFromStudentNumberDto', 'studentNumber'));
+        _$OrleansGetIcalUrlFromStudentNumberDto._(
+          studentNumber: BuiltValueNullFieldError.checkNotNull(studentNumber,
+              r'OrleansGetIcalUrlFromStudentNumberDto', 'studentNumber'),
+        );
     replace(_$result);
     return _$result;
   }

@@ -33,14 +33,12 @@ class ImportIcalScreen extends HookConsumerWidget {
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
                     title: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: availableWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: availableWidth),
                       child: Text(
                         isInternal
                             ? "Importer depuis le web"
                             : "Importer votre calendrier",
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),

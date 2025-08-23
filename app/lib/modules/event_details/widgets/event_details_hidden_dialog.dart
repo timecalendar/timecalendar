@@ -1,103 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/hidden_event/providers/hidden_event_provider.dart';
 
 enum HiddenOption { HiddenUid, HiddenNamedEvent }
 
-class HiddenOptionsDialog extends ConsumerStatefulWidget {
+class HiddenOptionsDialog extends HookConsumerWidget {
   final EventInterface event;
-  HiddenOptionsDialog({Key? key, required this.event}) : super(key: key);
+  const HiddenOptionsDialog({Key? key, required this.event}) : super(key: key);
 
   @override
-  _HiddenOptionsDialogState createState() => _HiddenOptionsDialogState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupValue = useState<HiddenOption?>(HiddenOption.HiddenUid);
 
-class _HiddenOptionsDialogState extends ConsumerState<HiddenOptionsDialog> {
-  HiddenOption? _groupValue = HiddenOption.HiddenUid;
-
-  @override
-  Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      title: Text(
-        'Masquer l\'événement',
-        style: TextStyle(fontSize: 20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      title: const Text('Masquer l\'événement', style: TextStyle(fontSize: 20)),
       content: SingleChildScrollView(
         child: ListBody(
           children: <Widget>[
-            Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Radio(
-                      value: HiddenOption.HiddenUid,
-                      groupValue: _groupValue,
-                      onChanged: (dynamic value) {
-                        setState(() {
-                          _groupValue = value;
-                        });
-                      },
-                    ),
-                    GestureDetector(
-                      child: Text('Masquer cet événement'),
-                      onTap: () => {
-                        setState(() {
-                          _groupValue = HiddenOption.HiddenUid;
-                        }),
-                      },
-                    ),
-                  ],
-                ),
-                Row(
-                  children: <Widget>[
-                    Radio(
-                      value: HiddenOption.HiddenNamedEvent,
-                      groupValue: _groupValue,
-                      onChanged: (dynamic value) {
-                        setState(() {
-                          _groupValue = value;
-                        });
-                      },
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        child: Text('Masquer tous les événements de même nom'),
-                        onTap: () => {
-                          setState(() {
-                            _groupValue = HiddenOption.HiddenNamedEvent;
-                          }),
+            RadioGroup<HiddenOption>(
+              groupValue: groupValue.value,
+              onChanged: (HiddenOption? value) {
+                groupValue.value = value;
+              },
+              child: Column(
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Radio<HiddenOption>(value: HiddenOption.HiddenUid),
+                      GestureDetector(
+                        child: const Text('Masquer cet événement'),
+                        onTap: () {
+                          groupValue.value = HiddenOption.HiddenUid;
                         },
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            )
+                    ],
+                  ),
+                  Row(
+                    children: <Widget>[
+                      const Radio<HiddenOption>(
+                        value: HiddenOption.HiddenNamedEvent,
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          child: const Text(
+                            'Masquer tous les événements de même nom',
+                          ),
+                          onTap: () {
+                            groupValue.value = HiddenOption.HiddenNamedEvent;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
       actions: <Widget>[
         TextButton(
-          child: Text('Annuler'),
+          child: const Text('Annuler'),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
         TextButton(
-          child: Text('Masquer'),
+          child: const Text('Masquer'),
           onPressed: () {
-            if (_groupValue == HiddenOption.HiddenUid) {
-              ref
-                  .read(hiddenEventProvider.notifier)
-                  .addUidEvent(widget.event.uid);
-            } else if (_groupValue == HiddenOption.HiddenNamedEvent) {
-              ref
-                  .read(hiddenEventProvider.notifier)
-                  .addNamedEvent(widget.event.title);
+            if (groupValue.value == HiddenOption.HiddenUid) {
+              ref.read(hiddenEventProvider.notifier).addUidEvent(event.uid);
+            } else if (groupValue.value == HiddenOption.HiddenNamedEvent) {
+              ref.read(hiddenEventProvider.notifier).addNamedEvent(event.title);
             }
             Navigator.of(context).pop();
             Navigator.of(context).pop();

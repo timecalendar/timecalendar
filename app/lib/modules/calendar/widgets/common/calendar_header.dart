@@ -4,11 +4,12 @@ import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart'
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
+import 'package:timecalendar/modules/calendar/screens/user_calendars_screen.dart';
 
 enum CalendarOptions {
   Subscribe,
   Refresh,
-  ChangeGroups,
+  ChangeCalendars,
   WeekView,
   PlanningView,
 }
@@ -85,8 +86,10 @@ class CalendarHeader extends StatelessWidget {
                   refreshCalendar();
                   break;
 
-                case CalendarOptions.ChangeGroups:
-                  changesGroup();
+                case CalendarOptions.ChangeCalendars:
+                  Navigator.of(
+                    context,
+                  ).pushNamed(UserCalendarsScreen.routeName);
                   break;
 
                 case CalendarOptions.WeekView:
@@ -106,8 +109,8 @@ class CalendarHeader extends StatelessWidget {
                     value: CalendarOptions.Refresh,
                   ),
                   PopupMenuItem(
-                    child: Text('Modifier les groupes'),
-                    value: CalendarOptions.ChangeGroups,
+                    child: Text('Modifier les calendriers'),
+                    value: CalendarOptions.ChangeCalendars,
                   ),
                   // switchViewPopupMenuItem(settingsProvider)
                 ],

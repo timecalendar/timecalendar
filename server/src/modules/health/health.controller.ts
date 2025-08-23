@@ -1,9 +1,6 @@
 import { Controller, Get } from "@nestjs/common"
-import {
-  HealthCheck,
-  HealthCheckService,
-  TypeOrmHealthIndicator,
-} from "@nestjs/terminus"
+import { ApiExcludeEndpoint } from "@nestjs/swagger"
+import { HealthCheckService, TypeOrmHealthIndicator } from "@nestjs/terminus"
 
 @Controller("health")
 export class HealthController {
@@ -13,7 +10,7 @@ export class HealthController {
   ) {}
 
   @Get()
-  @HealthCheck()
+  @ApiExcludeEndpoint()
   check() {
     return this.health.check([() => this.db.pingCheck("database")])
   }

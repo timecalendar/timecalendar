@@ -15,24 +15,17 @@ class _$SchoolGroupItem extends SchoolGroupItem {
   final BuiltList<SchoolGroupItem> children;
 
   factory _$SchoolGroupItem([void Function(SchoolGroupItemBuilder)? updates]) =>
-      (new SchoolGroupItemBuilder()..update(updates))._build();
+      (SchoolGroupItemBuilder()..update(updates))._build();
 
   _$SchoolGroupItem._(
       {required this.text, required this.value, required this.children})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(text, r'SchoolGroupItem', 'text');
-    BuiltValueNullFieldError.checkNotNull(value, r'SchoolGroupItem', 'value');
-    BuiltValueNullFieldError.checkNotNull(
-        children, r'SchoolGroupItem', 'children');
-  }
-
+      : super._();
   @override
   SchoolGroupItem rebuild(void Function(SchoolGroupItemBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  SchoolGroupItemBuilder toBuilder() =>
-      new SchoolGroupItemBuilder()..replace(this);
+  SchoolGroupItemBuilder toBuilder() => SchoolGroupItemBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -77,7 +70,7 @@ class SchoolGroupItemBuilder
 
   ListBuilder<SchoolGroupItem>? _children;
   ListBuilder<SchoolGroupItem> get children =>
-      _$this._children ??= new ListBuilder<SchoolGroupItem>();
+      _$this._children ??= ListBuilder<SchoolGroupItem>();
   set children(ListBuilder<SchoolGroupItem>? children) =>
       _$this._children = children;
 
@@ -98,7 +91,6 @@ class SchoolGroupItemBuilder
 
   @override
   void replace(SchoolGroupItem other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$SchoolGroupItem;
   }
 
@@ -114,19 +106,20 @@ class SchoolGroupItemBuilder
     _$SchoolGroupItem _$result;
     try {
       _$result = _$v ??
-          new _$SchoolGroupItem._(
-              text: BuiltValueNullFieldError.checkNotNull(
-                  text, r'SchoolGroupItem', 'text'),
-              value: BuiltValueNullFieldError.checkNotNull(
-                  value, r'SchoolGroupItem', 'value'),
-              children: children.build());
+          _$SchoolGroupItem._(
+            text: BuiltValueNullFieldError.checkNotNull(
+                text, r'SchoolGroupItem', 'text'),
+            value: BuiltValueNullFieldError.checkNotNull(
+                value, r'SchoolGroupItem', 'value'),
+            children: children.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'children';
         children.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'SchoolGroupItem', _$failedField, e.toString());
       }
       rethrow;

@@ -14,23 +14,17 @@ class _$SetSchoolGroupDto extends SetSchoolGroupDto {
 
   factory _$SetSchoolGroupDto(
           [void Function(SetSchoolGroupDtoBuilder)? updates]) =>
-      (new SetSchoolGroupDtoBuilder()..update(updates))._build();
+      (SetSchoolGroupDtoBuilder()..update(updates))._build();
 
   _$SetSchoolGroupDto._({required this.groups, required this.icalUrl})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        groups, r'SetSchoolGroupDto', 'groups');
-    BuiltValueNullFieldError.checkNotNull(
-        icalUrl, r'SetSchoolGroupDto', 'icalUrl');
-  }
-
+      : super._();
   @override
   SetSchoolGroupDto rebuild(void Function(SetSchoolGroupDtoBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
   SetSchoolGroupDtoBuilder toBuilder() =>
-      new SetSchoolGroupDtoBuilder()..replace(this);
+      SetSchoolGroupDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -64,7 +58,7 @@ class SetSchoolGroupDtoBuilder
 
   ListBuilder<SchoolGroupItem>? _groups;
   ListBuilder<SchoolGroupItem> get groups =>
-      _$this._groups ??= new ListBuilder<SchoolGroupItem>();
+      _$this._groups ??= ListBuilder<SchoolGroupItem>();
   set groups(ListBuilder<SchoolGroupItem>? groups) => _$this._groups = groups;
 
   String? _icalUrl;
@@ -87,7 +81,6 @@ class SetSchoolGroupDtoBuilder
 
   @override
   void replace(SetSchoolGroupDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$SetSchoolGroupDto;
   }
 
@@ -103,17 +96,18 @@ class SetSchoolGroupDtoBuilder
     _$SetSchoolGroupDto _$result;
     try {
       _$result = _$v ??
-          new _$SetSchoolGroupDto._(
-              groups: groups.build(),
-              icalUrl: BuiltValueNullFieldError.checkNotNull(
-                  icalUrl, r'SetSchoolGroupDto', 'icalUrl'));
+          _$SetSchoolGroupDto._(
+            groups: groups.build(),
+            icalUrl: BuiltValueNullFieldError.checkNotNull(
+                icalUrl, r'SetSchoolGroupDto', 'icalUrl'),
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'groups';
         groups.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'SetSchoolGroupDto', _$failedField, e.toString());
       }
       rethrow;

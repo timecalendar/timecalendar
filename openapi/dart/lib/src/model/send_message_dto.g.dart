@@ -25,7 +25,7 @@ class _$SendMessageDto extends SendMessageDto {
   final String? calendarUrl;
 
   factory _$SendMessageDto([void Function(SendMessageDtoBuilder)? updates]) =>
-      (new SendMessageDtoBuilder()..update(updates))._build();
+      (SendMessageDtoBuilder()..update(updates))._build();
 
   _$SendMessageDto._(
       {required this.email,
@@ -36,19 +36,13 @@ class _$SendMessageDto extends SendMessageDto {
       this.gradeName,
       this.deviceInfo,
       this.calendarUrl})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(email, r'SendMessageDto', 'email');
-    BuiltValueNullFieldError.checkNotNull(
-        message, r'SendMessageDto', 'message');
-  }
-
+      : super._();
   @override
   SendMessageDto rebuild(void Function(SendMessageDtoBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  SendMessageDtoBuilder toBuilder() =>
-      new SendMessageDtoBuilder()..replace(this);
+  SendMessageDtoBuilder toBuilder() => SendMessageDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -108,7 +102,7 @@ class SendMessageDtoBuilder
 
   ListBuilder<String>? _calendarIds;
   ListBuilder<String> get calendarIds =>
-      _$this._calendarIds ??= new ListBuilder<String>();
+      _$this._calendarIds ??= ListBuilder<String>();
   set calendarIds(ListBuilder<String>? calendarIds) =>
       _$this._calendarIds = calendarIds;
 
@@ -154,7 +148,6 @@ class SendMessageDtoBuilder
 
   @override
   void replace(SendMessageDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$SendMessageDto;
   }
 
@@ -170,24 +163,25 @@ class SendMessageDtoBuilder
     _$SendMessageDto _$result;
     try {
       _$result = _$v ??
-          new _$SendMessageDto._(
-              email: BuiltValueNullFieldError.checkNotNull(
-                  email, r'SendMessageDto', 'email'),
-              message: BuiltValueNullFieldError.checkNotNull(
-                  message, r'SendMessageDto', 'message'),
-              calendarIds: _calendarIds?.build(),
-              schoolId: schoolId,
-              schoolName: schoolName,
-              gradeName: gradeName,
-              deviceInfo: deviceInfo,
-              calendarUrl: calendarUrl);
+          _$SendMessageDto._(
+            email: BuiltValueNullFieldError.checkNotNull(
+                email, r'SendMessageDto', 'email'),
+            message: BuiltValueNullFieldError.checkNotNull(
+                message, r'SendMessageDto', 'message'),
+            calendarIds: _calendarIds?.build(),
+            schoolId: schoolId,
+            schoolName: schoolName,
+            gradeName: gradeName,
+            deviceInfo: deviceInfo,
+            calendarUrl: calendarUrl,
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'calendarIds';
         _calendarIds?.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'SendMessageDto', _$failedField, e.toString());
       }
       rethrow;

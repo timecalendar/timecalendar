@@ -12,70 +12,98 @@ part of 'assistant_finished_result.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$AssistantFinishedResult {
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is AssistantFinishedResult);
-  }
 
-  @override
-  int get hashCode => runtimeType.hashCode;
 
-  @override
-  String toString() {
-    return 'AssistantFinishedResult()';
-  }
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssistantFinishedResult);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AssistantFinishedResult()';
+}
+
+
 }
 
 /// @nodoc
-class $AssistantFinishedResultCopyWith<$Res> {
-  $AssistantFinishedResultCopyWith(
-      AssistantFinishedResult _, $Res Function(AssistantFinishedResult) __);
+class $AssistantFinishedResultCopyWith<$Res>  {
+$AssistantFinishedResultCopyWith(AssistantFinishedResult _, $Res Function(AssistantFinishedResult) __);
 }
+
 
 /// @nodoc
 
-class _AssistantFinishedResultFallback extends AssistantFinishedResult {
-  _AssistantFinishedResultFallback() : super._();
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _AssistantFinishedResultFallback);
-  }
+class AssistantFinishedResultFallback extends AssistantFinishedResult {
+   AssistantFinishedResultFallback(): super._();
+  
 
-  @override
-  int get hashCode => runtimeType.hashCode;
 
-  @override
-  String toString() {
-    return 'AssistantFinishedResult.fallback()';
-  }
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssistantFinishedResultFallback);
 }
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AssistantFinishedResult.fallback()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 
-class _AssistantFinishedResultDone extends AssistantFinishedResult {
-  _AssistantFinishedResultDone() : super._();
 
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _AssistantFinishedResultDone);
-  }
+class AssistantFinishedResultDone extends AssistantFinishedResult {
+   AssistantFinishedResultDone(): super._();
+  
 
-  @override
-  int get hashCode => runtimeType.hashCode;
 
-  @override
-  String toString() {
-    return 'AssistantFinishedResult.done()';
-  }
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AssistantFinishedResultDone);
 }
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AssistantFinishedResult.done()';
+}
+
+
+}
+
+
+
 
 // dart format on
