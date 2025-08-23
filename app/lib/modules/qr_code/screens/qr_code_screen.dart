@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:timecalendar/modules/qr_code/models/qr_code_result.dart';
 
 class QrCodeScreen extends StatefulWidget {
@@ -10,19 +9,40 @@ class QrCodeScreen extends StatefulWidget {
   _QrCodeScreenState createState() => _QrCodeScreenState();
 }
 
-class _QrCodeScreenState extends State<QrCodeScreen> {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
+class _QrCodeScreenState extends State<QrCodeScreen>
+    with WidgetsBindingObserver {
+  final MobileScannerController controller = MobileScannerController(
+    autoStart: false,
+    formats: [BarcodeFormat.qrCode],
+  );
 
-  // In order to get hot reload to work we need to pause the camera if the platform
-  // is android, or resume the camera if the platform is iOS.
   @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      controller!.pauseCamera();
-    } else if (Platform.isIOS) {
-      controller!.resumeCamera();
+  void initState() {
+    super.initState();
+    // Start listening to lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+    // Start the scanner
+    controller.start();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // If the controller is not ready, do not try to start or stop it
+    if (!controller.value.hasCameraPermission) {
+      return;
+    }
+
+    switch (state) {
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        return;
+      case AppLifecycleState.resumed:
+        // Restart the scanner when the app is resumed
+        controller.start();
+      case AppLifecycleState.inactive:
+        // Stop the scanner when the app is paused
+        controller.stop();
     }
   }
 
@@ -32,10 +52,9 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
       body: Column(
         children: <Widget>[
           Expanded(
-            child: QRView(
-              key: qrKey,
-              onQRViewCreated: _onQRViewCreated,
-              overlay: QrScannerOverlayShape(),
+            child: MobileScanner(
+              controller: controller,
+              onDetect: _onQRCodeRead,
             ),
           ),
         ],
@@ -43,21 +62,21 @@ class _QrCodeScreenState extends State<QrCodeScreen> {
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      this._onQRCodeRead(scanData);
-    });
-  }
-
-  void _onQRCodeRead(Barcode scanData) async {
-    this.controller?.pauseCamera();
-    Navigator.of(context).pop(QrCodeResult(url: scanData.code));
+  void _onQRCodeRead(BarcodeCapture barcodeCapture) async {
+    final barcode = barcodeCapture.barcodes.first;
+    if (barcode.rawValue != null) {
+      // Stop the scanner to prevent multiple scans
+      await controller.stop();
+      Navigator.of(context).pop(QrCodeResult(url: barcode.rawValue));
+    }
   }
 
   @override
-  void dispose() {
-    controller?.dispose();
+  Future<void> dispose() async {
+    // Stop listening to lifecycle changes
+    WidgetsBinding.instance.removeObserver(this);
+    // Dispose the controller
+    await controller.dispose();
     super.dispose();
   }
 }
