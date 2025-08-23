@@ -30,6 +30,16 @@ class UserCalendarsNotifier extends AsyncNotifier<List<UserCalendar>> {
     });
   }
 
+  Future<void> addUserCalendar(UserCalendar calendar) async {
+    final repo = ref.read(userCalendarRepositoryProvider);
+    await repo.addUserCalendar(calendar);
+    // Refresh state
+    state = await AsyncValue.guard(() async {
+      final calendars = await repo.getUserCalendars();
+      return calendars;
+    });
+  }
+
   Future<void> deleteCalendar(String id) async {
     final repo = ref.read(userCalendarRepositoryProvider);
     await repo.deleteUserCalendar(id);

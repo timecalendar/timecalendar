@@ -20,26 +20,13 @@ class CalendarEventRepository {
         .toList();
   }
 
-  Future<void> setCalendarEvents(
-    List<CalendarEvent> events,
-    String userCalendarId,
-  ) async {
-    await _deleteCalendarEventsForUserCalendar(userCalendarId);
+  Future<void> putCalendarEvents(List<CalendarEvent> events) async {
+    await _dropAll();
     await _store.addAll(_db, events.map((event) => event.toDbMap()).toList());
   }
 
-  Future<void> _deleteCalendarEventsForUserCalendar(
-    String userCalendarId,
-  ) async {
-    final finder = Finder(
-      filter: Filter.or([
-        Filter.equals('userCalendarId', userCalendarId),
-        Filter.isNull(
-          'userCalendarId',
-        ), // delete old events for backward compatibility
-      ]),
-    );
-    await _store.delete(_db, finder: finder);
+  Future<void> _dropAll() async {
+    await _store.drop(_db);
   }
 }
 

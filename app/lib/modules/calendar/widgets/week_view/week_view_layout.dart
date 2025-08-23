@@ -162,7 +162,6 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   }
 
   void onCurrentDayChange() {
-    print(calendarProvider.currentDayNotifier!.value);
     _weekScrollController!.animateTo(
       widget.calendarWidth *
           AppDateUtils.dateToWeekNumber(
