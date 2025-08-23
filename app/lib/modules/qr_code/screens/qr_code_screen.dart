@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:timecalendar/modules/qr_code/models/qr_code_result.dart';
 
 class QrCodeScreen extends StatefulWidget {
