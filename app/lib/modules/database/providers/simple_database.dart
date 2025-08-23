@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:timecalendar/modules/database/providers/migrations.dart';
 
@@ -23,9 +22,11 @@ class SimpleDatabase {
       dbPath,
       version: CURRENT_VERSION,
       onVersionChanged: (db, oldVersion, newVersion) async {
-        for (int currentVersion = oldVersion + 1;
-            currentVersion <= newVersion;
-            ++currentVersion) {
+        for (
+          int currentVersion = oldVersion + 1;
+          currentVersion <= newVersion;
+          ++currentVersion
+        ) {
           final migrationsToRun = migrationsByVersion[currentVersion] ?? [];
           for (final migration in migrationsToRun) {
             await migration(db);
