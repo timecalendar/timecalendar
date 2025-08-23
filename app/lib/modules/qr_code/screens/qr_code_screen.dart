@@ -13,6 +13,7 @@ class _QrCodeScreenState extends State<QrCodeScreen>
     with WidgetsBindingObserver {
   final MobileScannerController controller = MobileScannerController(
     autoStart: false,
+    formats: [BarcodeFormat.qrCode],
   );
 
   @override
