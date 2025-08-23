@@ -81,8 +81,6 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
         .toList()
         .reversed
         .forEach((elm) => changelogList.add(Constants.changelogs[elm]));
-
-    print('changelogList: $changelogList');
   }
 
   @override

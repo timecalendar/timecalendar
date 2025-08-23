@@ -31,12 +31,12 @@ EventTypeEnum _$valueOf(String name) {
     case 'class_':
       return _$class_;
     default:
-      throw new ArgumentError(name);
+      throw ArgumentError(name);
   }
 }
 
 final BuiltSet<EventTypeEnum> _$values =
-    new BuiltSet<EventTypeEnum>(const <EventTypeEnum>[
+    BuiltSet<EventTypeEnum>(const <EventTypeEnum>[
   _$cm,
   _$td,
   _$tp,
@@ -65,7 +65,7 @@ abstract class _$EventTypeEnumMixin {
 }
 
 Serializer<EventTypeEnum> _$eventTypeEnumSerializer =
-    new _$EventTypeEnumSerializer();
+    _$EventTypeEnumSerializer();
 
 class _$EventTypeEnumSerializer implements PrimitiveSerializer<EventTypeEnum> {
   static const Map<String, Object> _toWire = const <String, Object>{

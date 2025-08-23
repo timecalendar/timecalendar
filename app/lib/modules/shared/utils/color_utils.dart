@@ -8,25 +8,21 @@ class ColorUtils {
     return new Color(int.parse(code.substring(1, 7), radix: 16) + 0xFF000000);
   }
 
-  static String numberToHex(num value) {
-    var color = value.toInt().toRadixString(16);
-    if (color.length < 2) {
-      color = "0" + color;
-    }
-    return color;
+  static String colorToHex(Color color) {
+    return "#" + color.toARGB32().toRadixString(16).substring(2);
   }
 
-  static String colorToHex(Color color) {
-    var red = numberToHex(color.r);
-    var green = numberToHex(color.g);
-    var blue = numberToHex(color.b);
+  static PkgColor.RgbColor colorToRgbColor(Color color) {
+    var hexColor = color.toARGB32().toRadixString(16).substring(2);
+    var red = int.parse(hexColor.substring(0, 2), radix: 16);
+    var green = int.parse(hexColor.substring(2, 4), radix: 16);
+    var blue = int.parse(hexColor.substring(4, 6), radix: 16);
 
-    return "#" + red + green + blue;
+    return PkgColor.RgbColor(red, green, blue);
   }
 
   static Color darkenColor(Color color, double amount) {
-    PkgColor.HslColor hsl =
-        new PkgColor.RgbColor(color.r, color.g, color.b).toHslColor();
+    PkgColor.HslColor hsl = colorToRgbColor(color).toHslColor();
     PkgColor.HslColor darkenHsl = new PkgColor.HslColor(
       hsl.h,
       hsl.s,
@@ -42,8 +38,7 @@ class ColorUtils {
   }
 
   static Color lightenColor(Color color, double amount) {
-    PkgColor.HslColor hsl =
-        new PkgColor.RgbColor(color.r, color.g, color.b).toHslColor();
+    PkgColor.HslColor hsl = colorToRgbColor(color).toHslColor();
     PkgColor.HslColor lightenHsl = new PkgColor.HslColor(
       hsl.h,
       hsl.s,

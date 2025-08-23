@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timecalendar/modules/calendar/screens/user_calendars_screen.dart';
 import 'package:timecalendar/modules/debug/screens/debug_screen.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
@@ -58,30 +59,25 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
       child: Unfocus(
         child: MultiProvider(
           providers: [
-            ChangeNotifierProvider(
-              create: (_) => ActivityProvider(),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => SettingsProvider(),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => CalendarProvider(),
-            ),
+            ChangeNotifierProvider(create: (_) => ActivityProvider()),
+            ChangeNotifierProvider(create: (_) => SettingsProvider()),
+            ChangeNotifierProvider(create: (_) => CalendarProvider()),
           ],
           child: Builder(
             builder: (BuildContext context) {
               final settingsProvider = Provider.of<SettingsProvider>(context);
               final darkMode = settingsProvider.darkMode;
 
-              SystemUiOverlayStyle style = darkMode
-                  ? SystemUiOverlayStyle.light
-                  : SystemUiOverlayStyle.dark;
+              SystemUiOverlayStyle style =
+                  darkMode
+                      ? SystemUiOverlayStyle.light
+                      : SystemUiOverlayStyle.dark;
               AppTheme appTheme = settingsProvider.currentTheme;
               ThemeData? theme = appTheme.theme;
 
-              SystemChrome.setSystemUIOverlayStyle(style.copyWith(
-                statusBarColor: Colors.transparent,
-              ));
+              SystemChrome.setSystemUIOverlayStyle(
+                style.copyWith(statusBarColor: Colors.transparent),
+              );
 
               return MaterialApp(
                 navigatorObservers: [
@@ -93,10 +89,7 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
                   GlobalWidgetsLocalizations.delegate,
                   GlobalCupertinoLocalizations.delegate,
                 ],
-                supportedLocales: [
-                  const Locale('fr'),
-                  const Locale('en'),
-                ],
+                supportedLocales: [const Locale('fr'), const Locale('en')],
                 debugShowCheckedModeBanner: false,
                 title: 'TimeCalendar',
                 theme: theme,
@@ -118,10 +111,11 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
                   HiddenEventsScreen.routeName: (ctx) => HiddenEventsScreen(),
                   ConnectScreen.routeName: (ctx) => ConnectScreen(),
                   ChangelogScreen.routeName: (ctx) => ChangelogScreen(),
-                  AddPersonalEventScreen.routeName: (ctx) =>
-                      AddPersonalEventScreen(),
+                  AddPersonalEventScreen.routeName:
+                      (ctx) => AddPersonalEventScreen(),
                   QrCodeScreen.routeName: (ctx) => QrCodeScreen(),
-                  DebugScreen.routeName: (ctx) => DebugScreen()
+                  DebugScreen.routeName: (ctx) => DebugScreen(),
+                  UserCalendarsScreen.routeName: (ctx) => UserCalendarsScreen(),
                 },
               );
             },

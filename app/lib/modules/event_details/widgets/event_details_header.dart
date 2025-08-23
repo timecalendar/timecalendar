@@ -4,7 +4,7 @@ import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/event_details/widgets/event_details_hidden_dialog.dart';
 import 'package:timecalendar/modules/personal_event/models/personal_event.dart';
 import 'package:timecalendar/modules/personal_event/providers/personal_events_provider.dart';
-import 'package:timecalendar/modules/personal_event/repositories/personal_event_repository.dart';
+
 import 'package:timecalendar/modules/personal_event/screens/add_personal_event_screen.dart';
 
 enum EventOption { HideEvent, RemoveEvent, UpdateEvent }
@@ -71,8 +71,9 @@ class EventDetailsHeader extends ConsumerWidget {
         },
       ).then((confirm) async {
         if (confirm == ConfirmAction.ACCEPT) {
-          await ref.read(personalEventRepositoryProvider).delete(event.uid);
-          await ref.read(personalEventsProvider.notifier).update();
+          await ref
+              .read(personalEventsProvider.notifier)
+              .deletePersonalEvent(event.uid);
           Navigator.of(context).pop();
         }
       });

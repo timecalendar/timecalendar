@@ -37,12 +37,10 @@ class AddGradeScreen extends HookConsumerWidget {
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
                     title: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: availableWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: availableWidth),
                       child: Text(
                         "Importer votre calendrier",
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -78,7 +76,7 @@ class AddGradeScreen extends HookConsumerWidget {
                           ],
                         ),
                       ),
-                    )
+                    ),
                   ]),
                 ),
               ],
@@ -95,13 +93,8 @@ class AddGradeScreen extends HookConsumerWidget {
                     Navigator.of(context).pop();
                   },
                 ),
-                Expanded(
-                  child: Container(),
-                ),
-                CustomButton(
-                  text: 'Suivant',
-                  onPressed: () => _saveForm(),
-                ),
+                Expanded(child: Container()),
+                CustomButton(text: 'Suivant', onPressed: () => _saveForm()),
               ],
             ),
           ),

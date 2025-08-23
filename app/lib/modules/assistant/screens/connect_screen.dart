@@ -27,11 +27,10 @@ class ConnectScreen extends HookConsumerWidget {
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
                     title: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: availableWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: availableWidth),
                       child: Text(
                         "Connectez-vous sur votre intranet",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -59,12 +58,12 @@ class ConnectScreen extends HookConsumerWidget {
                                   },
                                   icon: FontAwesomeIcons.upRightFromSquare,
                                   text: provider.school?.name ?? 'Se connecter',
-                                )
+                                ),
                               ],
-                            )
+                            ),
                         ],
                       ),
-                    )
+                    ),
                   ]),
                 ),
               ],
@@ -81,13 +80,13 @@ class ConnectScreen extends HookConsumerWidget {
                     Navigator.of(context).pop();
                   },
                 ),
-                Expanded(
-                  child: Container(),
-                ),
+                Expanded(child: Container()),
                 CustomButton(
                   text: 'Suivant',
-                  onPressed: () =>
-                      ref.read(assistantProvider.notifier).navigateToNextStep(
+                  onPressed:
+                      () => ref
+                          .read(assistantProvider.notifier)
+                          .navigateToNextStep(
                             context,
                             AssistantStepEnum.CONNECT_TO_INTRANET,
                           ),

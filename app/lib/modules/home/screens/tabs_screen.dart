@@ -109,7 +109,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
   void loadEventsOnStartup() {
     if (ref.read(appIsLoadedProvider)) return;
     ref.read(appIsLoadedProvider.notifier).state = true;
-    ref.read(calendarSyncServiceProvider).syncCalendars();
+    ref.read(calendarSyncServiceProvider).syncAndLoadCalendars();
     observer.analytics.logEvent(
       name: 'refresh_calendar',
       parameters: {'action': 'on_startup'},
@@ -161,6 +161,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
                   ).pushNamed(AddPersonalEventScreen.routeName);
                 },
                 child: Icon(Icons.add),
+                tooltip: 'Ajouter un événement',
               )
               : null,
       backgroundColor: appTheme.backgroundColor,

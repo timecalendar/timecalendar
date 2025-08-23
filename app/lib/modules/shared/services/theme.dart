@@ -45,26 +45,38 @@ class AppTheme {
       scaffoldBackgroundColor: backgroundColor,
       fontFamily: 'Poppins',
       textTheme: TextTheme(
-        titleLarge: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-        ),
-        labelLarge: TextStyle(
-          fontSize: 12,
-        ),
+        titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+        labelLarge: TextStyle(fontSize: 12),
       ),
-      appBarTheme: AppBarTheme(backgroundColor: primaryColor),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryColor,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'Poppins',
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
+        actionsIconTheme: IconThemeData(color: Colors.white),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.all(Colors.white),
+      ),
     );
 
     this.theme = this.theme.copyWith(
-          snackBarTheme: SnackBarThemeData(
-            backgroundColor: cardColor,
-            contentTextStyle: theme.textTheme.bodyMedium,
-          ),
-          colorScheme: this
-              .theme
-              .colorScheme
-              .copyWith(primary: primaryColor, secondary: accentColor),
-        );
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: cardColor,
+        contentTextStyle: theme.textTheme.bodyMedium,
+      ),
+      colorScheme: this.theme.colorScheme.copyWith(
+        primary: primaryColor,
+        secondary: accentColor,
+      ),
+    );
   }
 }

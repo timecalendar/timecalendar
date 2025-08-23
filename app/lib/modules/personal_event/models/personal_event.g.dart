@@ -23,6 +23,8 @@ class _$PersonalEvent extends PersonalEvent {
   final String? description;
   @override
   final DateTime exportedAt;
+  @override
+  final String? userCalendarId;
 
   factory _$PersonalEvent([void Function(PersonalEventBuilder)? updates]) =>
       (new PersonalEventBuilder()..update(updates))._build();
@@ -36,6 +38,7 @@ class _$PersonalEvent extends PersonalEvent {
     this.location,
     this.description,
     required this.exportedAt,
+    this.userCalendarId,
   }) : super._() {
     BuiltValueNullFieldError.checkNotNull(uid, r'PersonalEvent', 'uid');
     BuiltValueNullFieldError.checkNotNull(title, r'PersonalEvent', 'title');
@@ -71,7 +74,8 @@ class _$PersonalEvent extends PersonalEvent {
         endsAt == other.endsAt &&
         location == other.location &&
         description == other.description &&
-        exportedAt == other.exportedAt;
+        exportedAt == other.exportedAt &&
+        userCalendarId == other.userCalendarId;
   }
 
   @override
@@ -85,6 +89,7 @@ class _$PersonalEvent extends PersonalEvent {
     _$hash = $jc(_$hash, location.hashCode);
     _$hash = $jc(_$hash, description.hashCode);
     _$hash = $jc(_$hash, exportedAt.hashCode);
+    _$hash = $jc(_$hash, userCalendarId.hashCode);
     _$hash = $jf(_$hash);
     return _$hash;
   }
@@ -99,7 +104,8 @@ class _$PersonalEvent extends PersonalEvent {
           ..add('endsAt', endsAt)
           ..add('location', location)
           ..add('description', description)
-          ..add('exportedAt', exportedAt))
+          ..add('exportedAt', exportedAt)
+          ..add('userCalendarId', userCalendarId))
         .toString();
   }
 }
@@ -140,6 +146,11 @@ class PersonalEventBuilder
   DateTime? get exportedAt => _$this._exportedAt;
   set exportedAt(DateTime? exportedAt) => _$this._exportedAt = exportedAt;
 
+  String? _userCalendarId;
+  String? get userCalendarId => _$this._userCalendarId;
+  set userCalendarId(String? userCalendarId) =>
+      _$this._userCalendarId = userCalendarId;
+
   PersonalEventBuilder();
 
   PersonalEventBuilder get _$this {
@@ -153,6 +164,7 @@ class PersonalEventBuilder
       _location = $v.location;
       _description = $v.description;
       _exportedAt = $v.exportedAt;
+      _userCalendarId = $v.userCalendarId;
       _$v = null;
     }
     return this;
@@ -208,6 +220,7 @@ class PersonalEventBuilder
             r'PersonalEvent',
             'exportedAt',
           ),
+          userCalendarId: userCalendarId,
         );
     replace(_$result);
     return _$result;

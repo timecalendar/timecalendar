@@ -18,12 +18,11 @@ class _$CalendarEventCustomFields extends CalendarEventCustomFields {
 
   factory _$CalendarEventCustomFields(
           [void Function(CalendarEventCustomFieldsBuilder)? updates]) =>
-      (new CalendarEventCustomFieldsBuilder()..update(updates))._build();
+      (CalendarEventCustomFieldsBuilder()..update(updates))._build();
 
   _$CalendarEventCustomFields._(
       {this.canceled, this.shortDescription, this.subject, this.groupColor})
       : super._();
-
   @override
   CalendarEventCustomFields rebuild(
           void Function(CalendarEventCustomFieldsBuilder) updates) =>
@@ -31,7 +30,7 @@ class _$CalendarEventCustomFields extends CalendarEventCustomFields {
 
   @override
   CalendarEventCustomFieldsBuilder toBuilder() =>
-      new CalendarEventCustomFieldsBuilder()..replace(this);
+      CalendarEventCustomFieldsBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -105,7 +104,6 @@ class CalendarEventCustomFieldsBuilder
 
   @override
   void replace(CalendarEventCustomFields other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$CalendarEventCustomFields;
   }
 
@@ -119,11 +117,12 @@ class CalendarEventCustomFieldsBuilder
 
   _$CalendarEventCustomFields _build() {
     final _$result = _$v ??
-        new _$CalendarEventCustomFields._(
-            canceled: canceled,
-            shortDescription: shortDescription,
-            subject: subject,
-            groupColor: groupColor);
+        _$CalendarEventCustomFields._(
+          canceled: canceled,
+          shortDescription: shortDescription,
+          subject: subject,
+          groupColor: groupColor,
+        );
     replace(_$result);
     return _$result;
   }

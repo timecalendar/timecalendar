@@ -17,30 +17,20 @@ class _$SchoolAssistant extends SchoolAssistant {
   final bool isNative;
 
   factory _$SchoolAssistant([void Function(SchoolAssistantBuilder)? updates]) =>
-      (new SchoolAssistantBuilder()..update(updates))._build();
+      (SchoolAssistantBuilder()..update(updates))._build();
 
   _$SchoolAssistant._(
       {required this.slug,
       required this.requireIntranetAccess,
       required this.requireCalendarName,
       required this.isNative})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(slug, r'SchoolAssistant', 'slug');
-    BuiltValueNullFieldError.checkNotNull(
-        requireIntranetAccess, r'SchoolAssistant', 'requireIntranetAccess');
-    BuiltValueNullFieldError.checkNotNull(
-        requireCalendarName, r'SchoolAssistant', 'requireCalendarName');
-    BuiltValueNullFieldError.checkNotNull(
-        isNative, r'SchoolAssistant', 'isNative');
-  }
-
+      : super._();
   @override
   SchoolAssistant rebuild(void Function(SchoolAssistantBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  SchoolAssistantBuilder toBuilder() =>
-      new SchoolAssistantBuilder()..replace(this);
+  SchoolAssistantBuilder toBuilder() => SchoolAssistantBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -114,7 +104,6 @@ class SchoolAssistantBuilder
 
   @override
   void replace(SchoolAssistant other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$SchoolAssistant;
   }
 
@@ -128,17 +117,18 @@ class SchoolAssistantBuilder
 
   _$SchoolAssistant _build() {
     final _$result = _$v ??
-        new _$SchoolAssistant._(
-            slug: BuiltValueNullFieldError.checkNotNull(
-                slug, r'SchoolAssistant', 'slug'),
-            requireIntranetAccess: BuiltValueNullFieldError.checkNotNull(
-                requireIntranetAccess,
-                r'SchoolAssistant',
-                'requireIntranetAccess'),
-            requireCalendarName: BuiltValueNullFieldError.checkNotNull(
-                requireCalendarName, r'SchoolAssistant', 'requireCalendarName'),
-            isNative: BuiltValueNullFieldError.checkNotNull(
-                isNative, r'SchoolAssistant', 'isNative'));
+        _$SchoolAssistant._(
+          slug: BuiltValueNullFieldError.checkNotNull(
+              slug, r'SchoolAssistant', 'slug'),
+          requireIntranetAccess: BuiltValueNullFieldError.checkNotNull(
+              requireIntranetAccess,
+              r'SchoolAssistant',
+              'requireIntranetAccess'),
+          requireCalendarName: BuiltValueNullFieldError.checkNotNull(
+              requireCalendarName, r'SchoolAssistant', 'requireCalendarName'),
+          isNative: BuiltValueNullFieldError.checkNotNull(
+              isNative, r'SchoolAssistant', 'isNative'),
+        );
     replace(_$result);
     return _$result;
   }

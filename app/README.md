@@ -56,7 +56,29 @@ Run the app from your IDE.
 
 ### Add certificates
 
-On MacOS, drag and drop the file `ci/certificates/cert.pem` in the simulator.
+For the app to communicate with the local development server, you need to add the development certificate to your system's trusted certificates.
+
+#### macOS
+
+1. **For iOS Simulator**: Drag and drop the file `ci/certificates/cert.pem` into the simulator.
+2. **For system-wide trust**: Double-click the `ci/certificates/cert.pem` file to add it to Keychain Access, then mark it as trusted for SSL.
+
+#### Windows
+
+1. Double-click the `ci/certificates/cert.pem` file.
+2. Click "Install Certificate".
+3. Choose "Local Machine" and click "Next".
+4. Select "Place all certificates in the following store" and browse to "Trusted Root Certification Authorities".
+5. Click "Next" and then "Finish".
+
+#### Linux
+
+Add the certificate to your system's certificate store:
+
+```bash
+sudo cp ci/certificates/cert.pem /usr/local/share/ca-certificates/timecalendar-dev.crt
+sudo update-ca-certificates
+```
 
 ## Build on Android
 

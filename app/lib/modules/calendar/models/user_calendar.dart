@@ -8,6 +8,7 @@ class UserCalendar {
   String? schoolId;
   DateTime lastUpdatedAt;
   DateTime createdAt;
+  bool visible;
 
   UserCalendar({
     required this.id,
@@ -17,6 +18,7 @@ class UserCalendar {
     required this.schoolId,
     required this.lastUpdatedAt,
     required this.createdAt,
+    this.visible = true,
   });
 
   factory UserCalendar.fromInternalDb(Map<String, dynamic> dbMap) {
@@ -29,6 +31,7 @@ class UserCalendar {
       schoolId: map['schoolId'],
       lastUpdatedAt: DateTime.parse(map['lastUpdatedAt']),
       createdAt: DateTime.parse(map['createdAt']),
+      visible: map.containsKey('visible') ? map['visible'] as bool : true,
     );
   }
 
@@ -41,6 +44,7 @@ class UserCalendar {
       schoolId: calendar.schoolId,
       lastUpdatedAt: calendar.lastUpdatedAt,
       createdAt: calendar.createdAt,
+      visible: true,
     );
   }
 
@@ -53,6 +57,7 @@ class UserCalendar {
       'schoolId': schoolId,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
+      'visible': visible,
     };
   }
 

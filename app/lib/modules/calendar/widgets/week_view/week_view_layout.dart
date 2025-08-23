@@ -1,16 +1,16 @@
 import 'dart:math';
 
-import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/controllers/snapping_list_scroll_physics.dart';
 import 'package:timecalendar/modules/calendar/controllers/sync_scroll_controller.dart';
 import 'package:timecalendar/modules/calendar/helpers/events_for_week_view_helper.dart';
+import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
-import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
 import 'package:timecalendar/modules/calendar/widgets/week_view/calendar_hours_column.dart';
 import 'package:timecalendar/modules/calendar/widgets/week_view/calendar_week.dart';
+import 'package:timecalendar/modules/firebase/services/firebase.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
@@ -20,25 +20,22 @@ class WeekViewLayout extends ConsumerStatefulWidget {
     required this.screenHeight,
     required this.calendarWidth,
     required this.leftHoursWidth,
-    required this.startHour,
-    required this.endHour,
     required this.nbOfVisibleDays,
-    required this.observer,
     required this.updateCurrentWeek,
     required this.currentWeek,
+    required this.events,
   });
 
   final double screenHeight;
   final double calendarWidth;
   final double leftHoursWidth;
-  final int startHour;
-  final int endHour;
+  final int startHour = 7;
+  final int endHour = 21;
   final int nbOfVisibleDays;
+  final List<EventInterface> events;
 
   final int? currentWeek;
   final ValueChanged<int> updateCurrentWeek;
-
-  final FirebaseAnalyticsObserver? observer;
 
   @override
   _WeekViewLayoutState createState() => _WeekViewLayoutState();
@@ -86,8 +83,10 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   void initState() {
     super.initState();
 
-    calendarProvider =
-        oldprovider.Provider.of<CalendarProvider>(context, listen: false);
+    calendarProvider = oldprovider.Provider.of<CalendarProvider>(
+      context,
+      listen: false,
+    );
 
     calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
@@ -105,8 +104,9 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     var savedScrollOffset = calendarProvider.savedScrollOffset;
     if (savedScrollOffset != null) {
       _syncScroll!.currentOffset = savedScrollOffset;
-      _hourScrollController =
-          ScrollController(initialScrollOffset: savedScrollOffset);
+      _hourScrollController = ScrollController(
+        initialScrollOffset: savedScrollOffset,
+      );
     } else {
       _hourScrollController = ScrollController();
     }
@@ -118,7 +118,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     _syncScroll!.addListener(onVerticalScroll);
 
     Future.delayed(Duration.zero).then((_) {
-      widget.observer!.analytics.logEvent(name: 'view_calendar');
+      FirebaseService.observer.analytics.logEvent(name: 'view_calendar');
     });
     loadCalendarUIPreferences();
   }
@@ -131,7 +131,8 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
           .savedWeek = week;
       setState(() {
         widget.updateCurrentWeek(
-            (_weekScrollController!.offset / widget.calendarWidth).floor());
+          (_weekScrollController!.offset / widget.calendarWidth).floor(),
+        );
       });
     }
   }
@@ -154,7 +155,8 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     if (!_isInit) {
       _isInit = true;
       _weekScrollController = ScrollController(
-          initialScrollOffset: widget.calendarWidth * widget.currentWeek!);
+        initialScrollOffset: widget.calendarWidth * widget.currentWeek!,
+      );
       _weekScrollController!.addListener(_onWeekPageScroll);
     }
   }
@@ -162,18 +164,22 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   void onCurrentDayChange() {
     print(calendarProvider.currentDayNotifier!.value);
     _weekScrollController!.animateTo(
-        widget.calendarWidth *
-            AppDateUtils.dateToWeekNumber(
-                calendarProvider.currentDayNotifier!.value),
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeIn);
+      widget.calendarWidth *
+          AppDateUtils.dateToWeekNumber(
+            calendarProvider.currentDayNotifier!.value,
+          ),
+      duration: Duration(milliseconds: 500),
+      curve: Curves.easeIn,
+    );
   }
 
   void loadCalendarUIPreferences() async {
     setState(() {
       hourHeight =
-          oldprovider.Provider.of<SettingsProvider>(context, listen: false)
-              .calendarHourHeight;
+          oldprovider.Provider.of<SettingsProvider>(
+            context,
+            listen: false,
+          ).calendarHourHeight;
     });
   }
 
@@ -187,8 +193,10 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     double diffY = focusedY + _syncScroll!.currentOffset;
     double offsetY =
         _previousScrollOffset + diffY * scaleDetails.verticalScale - diffY;
-    double newHourHeight = min(maxHourHeight,
-        max(minHourHeight, _previousHourHeight * scaleDetails.verticalScale));
+    double newHourHeight = min(
+      maxHourHeight,
+      max(minHourHeight, _previousHourHeight * scaleDetails.verticalScale),
+    );
     _syncScroll!.jumpTo(offsetY);
 
     setState(() {
@@ -203,12 +211,11 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final events = ref.watch(eventsForViewProvider);
-
-    // var settingsProvider = Provider.of<SettingsProvider>(context);
     final dayWidth = widget.calendarWidth / widget.nbOfVisibleDays;
     final scrollPhysics = SnappingListScrollPhysics(
-        mainAxisStartPadding: 0, itemExtent: widget.calendarWidth);
+      mainAxisStartPadding: 0,
+      itemExtent: widget.calendarWidth,
+    );
 
     return Row(
       children: <Widget>[
@@ -249,7 +256,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
                   nbHours: nbHours,
                   columnGap: columnGap,
                   syncScroll: _syncScroll,
-                  weekEvents: getEventsForWeekView(events, index),
+                  weekEvents: getEventsForWeekView(widget.events, index),
                   columnPaddingTop: columnPaddingTop,
                 ),
               );

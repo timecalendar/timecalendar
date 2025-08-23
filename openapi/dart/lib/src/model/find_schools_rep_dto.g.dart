@@ -12,20 +12,16 @@ class _$FindSchoolsRepDto extends FindSchoolsRepDto {
 
   factory _$FindSchoolsRepDto(
           [void Function(FindSchoolsRepDtoBuilder)? updates]) =>
-      (new FindSchoolsRepDtoBuilder()..update(updates))._build();
+      (FindSchoolsRepDtoBuilder()..update(updates))._build();
 
-  _$FindSchoolsRepDto._({required this.schools}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        schools, r'FindSchoolsRepDto', 'schools');
-  }
-
+  _$FindSchoolsRepDto._({required this.schools}) : super._();
   @override
   FindSchoolsRepDto rebuild(void Function(FindSchoolsRepDtoBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
   FindSchoolsRepDtoBuilder toBuilder() =>
-      new FindSchoolsRepDtoBuilder()..replace(this);
+      FindSchoolsRepDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -55,7 +51,7 @@ class FindSchoolsRepDtoBuilder
 
   ListBuilder<SchoolForList>? _schools;
   ListBuilder<SchoolForList> get schools =>
-      _$this._schools ??= new ListBuilder<SchoolForList>();
+      _$this._schools ??= ListBuilder<SchoolForList>();
   set schools(ListBuilder<SchoolForList>? schools) => _$this._schools = schools;
 
   FindSchoolsRepDtoBuilder() {
@@ -73,7 +69,6 @@ class FindSchoolsRepDtoBuilder
 
   @override
   void replace(FindSchoolsRepDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$FindSchoolsRepDto;
   }
 
@@ -88,14 +83,17 @@ class FindSchoolsRepDtoBuilder
   _$FindSchoolsRepDto _build() {
     _$FindSchoolsRepDto _$result;
     try {
-      _$result = _$v ?? new _$FindSchoolsRepDto._(schools: schools.build());
+      _$result = _$v ??
+          _$FindSchoolsRepDto._(
+            schools: schools.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'schools';
         schools.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'FindSchoolsRepDto', _$failedField, e.toString());
       }
       rethrow;
