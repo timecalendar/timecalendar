@@ -12,13 +12,9 @@ class _$FindSchoolGroupsRepDto extends FindSchoolGroupsRepDto {
 
   factory _$FindSchoolGroupsRepDto(
           [void Function(FindSchoolGroupsRepDtoBuilder)? updates]) =>
-      (new FindSchoolGroupsRepDtoBuilder()..update(updates))._build();
+      (FindSchoolGroupsRepDtoBuilder()..update(updates))._build();
 
-  _$FindSchoolGroupsRepDto._({required this.groups}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        groups, r'FindSchoolGroupsRepDto', 'groups');
-  }
-
+  _$FindSchoolGroupsRepDto._({required this.groups}) : super._();
   @override
   FindSchoolGroupsRepDto rebuild(
           void Function(FindSchoolGroupsRepDtoBuilder) updates) =>
@@ -26,7 +22,7 @@ class _$FindSchoolGroupsRepDto extends FindSchoolGroupsRepDto {
 
   @override
   FindSchoolGroupsRepDtoBuilder toBuilder() =>
-      new FindSchoolGroupsRepDtoBuilder()..replace(this);
+      FindSchoolGroupsRepDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -56,7 +52,7 @@ class FindSchoolGroupsRepDtoBuilder
 
   ListBuilder<SchoolGroupItem>? _groups;
   ListBuilder<SchoolGroupItem> get groups =>
-      _$this._groups ??= new ListBuilder<SchoolGroupItem>();
+      _$this._groups ??= ListBuilder<SchoolGroupItem>();
   set groups(ListBuilder<SchoolGroupItem>? groups) => _$this._groups = groups;
 
   FindSchoolGroupsRepDtoBuilder() {
@@ -74,7 +70,6 @@ class FindSchoolGroupsRepDtoBuilder
 
   @override
   void replace(FindSchoolGroupsRepDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$FindSchoolGroupsRepDto;
   }
 
@@ -89,14 +84,17 @@ class FindSchoolGroupsRepDtoBuilder
   _$FindSchoolGroupsRepDto _build() {
     _$FindSchoolGroupsRepDto _$result;
     try {
-      _$result = _$v ?? new _$FindSchoolGroupsRepDto._(groups: groups.build());
+      _$result = _$v ??
+          _$FindSchoolGroupsRepDto._(
+            groups: groups.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'groups';
         groups.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'FindSchoolGroupsRepDto', _$failedField, e.toString());
       }
       rethrow;

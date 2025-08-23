@@ -6,7 +6,7 @@ part of 'serializers.dart';
 // BuiltValueGenerator
 // **************************************************************************
 
-Serializers _$serializers = (new Serializers().toBuilder()
+Serializers _$serializers = (Serializers().toBuilder()
       ..add(CalendarEventCustomFields.serializer)
       ..add(CalendarEventForPublic.serializer)
       ..add(CalendarForPublic.serializer)
@@ -29,34 +29,34 @@ Serializers _$serializers = (new Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(
               BuiltList, const [const FullType(CalendarEventForPublic)]),
-          () => new ListBuilder<CalendarEventForPublic>())
+          () => ListBuilder<CalendarEventForPublic>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolForList)]),
-          () => new ListBuilder<SchoolForList>())
+          () => ListBuilder<SchoolForList>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolGroupItem)]),
-          () => new ListBuilder<SchoolGroupItem>())
+          () => ListBuilder<SchoolGroupItem>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolGroupItem)]),
-          () => new ListBuilder<SchoolGroupItem>())
+          () => ListBuilder<SchoolGroupItem>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolGroupItem)]),
-          () => new ListBuilder<SchoolGroupItem>())
+          () => ListBuilder<SchoolGroupItem>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
-          () => new ListBuilder<String>())
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
-          () => new ListBuilder<String>())
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
-          () => new ListBuilder<String>())
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
-          () => new ListBuilder<String>())
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(EventTag)]),
-          () => new ListBuilder<EventTag>()))
+          () => ListBuilder<EventTag>()))
     .build();
 
 // ignore_for_file: deprecated_member_use_from_same_package,type=lint

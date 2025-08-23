@@ -27,22 +27,20 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
     BuildContext context,
     AssistantFinishedResult result,
   ) {
-    result.when(fallback: () {
-      state = state.copyWith(fallback: true);
-      navigateToNextStep(
-        context,
-        AssistantStepEnum.SELECT_SCHOOL,
-      );
-    }, done: () {
-      Navigator.of(context).pushNamed(
-        ImportIcalScreen.routeName,
-        arguments: ImportIcalScreenArguments(false),
-      );
-    });
+    switch (result) {
+      case AssistantFinishedResultFallback():
+        state = state.copyWith(fallback: true);
+        navigateToNextStep(context, AssistantStepEnum.SELECT_SCHOOL);
+      case AssistantFinishedResultDone():
+        Navigator.of(context).pushNamed(
+          ImportIcalScreen.routeName,
+          arguments: ImportIcalScreenArguments(false),
+        );
+    }
   }
 }
 
 final assistantProvider =
     StateNotifierProvider<AssistantNotifier, AssistantState>(
-  (ref) => AssistantNotifier(),
-);
+      (ref) => AssistantNotifier(),
+    );

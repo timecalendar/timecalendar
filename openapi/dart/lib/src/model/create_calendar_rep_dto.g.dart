@@ -12,13 +12,9 @@ class _$CreateCalendarRepDto extends CreateCalendarRepDto {
 
   factory _$CreateCalendarRepDto(
           [void Function(CreateCalendarRepDtoBuilder)? updates]) =>
-      (new CreateCalendarRepDtoBuilder()..update(updates))._build();
+      (CreateCalendarRepDtoBuilder()..update(updates))._build();
 
-  _$CreateCalendarRepDto._({required this.token}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        token, r'CreateCalendarRepDto', 'token');
-  }
-
+  _$CreateCalendarRepDto._({required this.token}) : super._();
   @override
   CreateCalendarRepDto rebuild(
           void Function(CreateCalendarRepDtoBuilder) updates) =>
@@ -26,7 +22,7 @@ class _$CreateCalendarRepDto extends CreateCalendarRepDto {
 
   @override
   CreateCalendarRepDtoBuilder toBuilder() =>
-      new CreateCalendarRepDtoBuilder()..replace(this);
+      CreateCalendarRepDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -73,7 +69,6 @@ class CreateCalendarRepDtoBuilder
 
   @override
   void replace(CreateCalendarRepDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$CreateCalendarRepDto;
   }
 
@@ -87,9 +82,10 @@ class CreateCalendarRepDtoBuilder
 
   _$CreateCalendarRepDto _build() {
     final _$result = _$v ??
-        new _$CreateCalendarRepDto._(
-            token: BuiltValueNullFieldError.checkNotNull(
-                token, r'CreateCalendarRepDto', 'token'));
+        _$CreateCalendarRepDto._(
+          token: BuiltValueNullFieldError.checkNotNull(
+              token, r'CreateCalendarRepDto', 'token'),
+        );
     replace(_$result);
     return _$result;
   }

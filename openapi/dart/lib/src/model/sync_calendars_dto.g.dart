@@ -12,20 +12,16 @@ class _$SyncCalendarsDto extends SyncCalendarsDto {
 
   factory _$SyncCalendarsDto(
           [void Function(SyncCalendarsDtoBuilder)? updates]) =>
-      (new SyncCalendarsDtoBuilder()..update(updates))._build();
+      (SyncCalendarsDtoBuilder()..update(updates))._build();
 
-  _$SyncCalendarsDto._({required this.tokens}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        tokens, r'SyncCalendarsDto', 'tokens');
-  }
-
+  _$SyncCalendarsDto._({required this.tokens}) : super._();
   @override
   SyncCalendarsDto rebuild(void Function(SyncCalendarsDtoBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
   SyncCalendarsDtoBuilder toBuilder() =>
-      new SyncCalendarsDtoBuilder()..replace(this);
+      SyncCalendarsDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -54,8 +50,7 @@ class SyncCalendarsDtoBuilder
   _$SyncCalendarsDto? _$v;
 
   ListBuilder<String>? _tokens;
-  ListBuilder<String> get tokens =>
-      _$this._tokens ??= new ListBuilder<String>();
+  ListBuilder<String> get tokens => _$this._tokens ??= ListBuilder<String>();
   set tokens(ListBuilder<String>? tokens) => _$this._tokens = tokens;
 
   SyncCalendarsDtoBuilder() {
@@ -73,7 +68,6 @@ class SyncCalendarsDtoBuilder
 
   @override
   void replace(SyncCalendarsDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$SyncCalendarsDto;
   }
 
@@ -88,14 +82,17 @@ class SyncCalendarsDtoBuilder
   _$SyncCalendarsDto _build() {
     _$SyncCalendarsDto _$result;
     try {
-      _$result = _$v ?? new _$SyncCalendarsDto._(tokens: tokens.build());
+      _$result = _$v ??
+          _$SyncCalendarsDto._(
+            tokens: tokens.build(),
+          );
     } catch (_) {
       late String _$failedField;
       try {
         _$failedField = 'tokens';
         tokens.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'SyncCalendarsDto', _$failedField, e.toString());
       }
       rethrow;

@@ -20,15 +20,19 @@ class UserCalendarRepository {
         .toList();
   }
 
-  setUserCalendar(UserCalendar calendar) async {
-    await _store.delete(_db);
-    await _store.add(_db, calendar.toDbMap());
+  Future<void> addUserCalendar(UserCalendar calendar) async {
+    await _store.record(calendar.id).put(_db, calendar.toDbMap());
   }
 
-  clearUserCalendars() async {
-    await _store.delete(_db);
+  Future<void> updateUserCalendar(UserCalendar calendar) async {
+    await _store.record(calendar.id).update(_db, calendar.toDbMap());
+  }
+
+  Future<void> deleteUserCalendar(String id) async {
+    await _store.record(id).delete(_db);
   }
 }
 
-final userCalendarRepositoryProvider =
-    Provider((ref) => UserCalendarRepository(ref));
+final userCalendarRepositoryProvider = Provider(
+  (ref) => UserCalendarRepository(ref),
+);

@@ -25,7 +25,8 @@ class _SchoolSelectionHeaderState extends ConsumerState<SchoolSelectionHeader> {
   void initState() {
     super.initState();
     widget.scrollController.addListener(() {
-      final newState = widget.scrollController.offset <=
+      final newState =
+          widget.scrollController.offset <=
           (widget.scrollController.position.minScrollExtent + 120.0);
 
       if (newState != _isScrollLimitReached) {
@@ -45,9 +46,7 @@ class _SchoolSelectionHeaderState extends ConsumerState<SchoolSelectionHeader> {
       pinned: true,
       actions: <Widget>[
         PopupMenuButton(
-          icon: Icon(
-            Icons.more_vert,
-          ),
+          icon: Icon(Icons.more_vert),
           onSelected: (SchoolSelectionOptions selectedValue) {
             switch (selectedValue) {
               case SchoolSelectionOptions.AddSchool:
@@ -62,31 +61,31 @@ class _SchoolSelectionHeaderState extends ConsumerState<SchoolSelectionHeader> {
             }
           },
           tooltip: 'Menu',
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              child: Text('Ajouter votre établissement'),
-              value: SchoolSelectionOptions.AddSchool,
-            ),
-            PopupMenuItem(
-              child: Text('Scanner un QR code'),
-              value: SchoolSelectionOptions.ImportIcal,
-            ),
-          ],
+          itemBuilder:
+              (_) => [
+                PopupMenuItem(
+                  child: Text('Ajouter votre établissement'),
+                  value: SchoolSelectionOptions.AddSchool,
+                ),
+                PopupMenuItem(
+                  child: Text('Scanner un QR code'),
+                  value: SchoolSelectionOptions.ImportIcal,
+                ),
+              ],
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
         title: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: availableWidth,
-          ),
+          constraints: BoxConstraints(maxWidth: availableWidth),
           child: Text(
             _isScrollLimitReached
                 ? "Sélectionnez votre établissement"
                 : "Établissement",
-            style: TextStyle(fontSize: 18),
-            overflow: _isScrollLimitReached
-                ? TextOverflow.visible
-                : TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 18, color: Colors.white),
+            overflow:
+                _isScrollLimitReached
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
           ),
         ),
       ),

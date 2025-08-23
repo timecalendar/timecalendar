@@ -14,7 +14,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - '5433:5432'
+      - '37291:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./bin/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
@@ -24,7 +24,7 @@ services:
     image: redis
     restart: always
     ports:
-      - '6370:6379'
+      - '37292:6379'
     volumes: 
       - redis_data:/data
     healthcheck:

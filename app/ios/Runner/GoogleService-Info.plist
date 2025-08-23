@@ -3,21 +3,23 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>79945891752-k71chdubvfm0quncd6i6idcdihg2agu0.apps.googleusercontent.com</string>
+	<string>425450003183-1elevc6cg39idiukk9lh5sjtufis8h0r.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.79945891752-k71chdubvfm0quncd6i6idcdihg2agu0</string>
+	<string>com.googleusercontent.apps.425450003183-1elevc6cg39idiukk9lh5sjtufis8h0r</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>425450003183-2bjqj66dbq23tngncts04i4l9mq7jrvp.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyDpMfJsG8jpOf-vAqQADQFCiTsckTJJVHE</string>
+	<string>AIzaSyCruJHHXWmT_lPib__T8iHOK8z05JdsEMY</string>
 	<key>GCM_SENDER_ID</key>
-	<string>79945891752</string>
+	<string>425450003183</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>fr.samuelprak.timecalendar</string>
 	<key>PROJECT_ID</key>
-	<string>timecalendar-dev</string>
+	<string>timecalendar-samuelprak</string>
 	<key>STORAGE_BUCKET</key>
-	<string>timecalendar-dev.appspot.com</string>
+	<string>timecalendar-samuelprak.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +31,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:79945891752:ios:31e72cb567c4c8253e679d</string>
+	<string>1:425450003183:ios:ce923d6bbb487bc0</string>
+	<key>DATABASE_URL</key>
+	<string>https://timecalendar-samuelprak.firebaseio.com</string>
 </dict>
 </plist>

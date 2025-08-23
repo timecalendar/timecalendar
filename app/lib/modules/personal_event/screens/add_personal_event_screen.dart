@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/personal_event/models/personal_event.dart';
 import 'package:timecalendar/modules/personal_event/providers/personal_events_provider.dart';
-import 'package:timecalendar/modules/personal_event/repositories/personal_event_repository.dart';
+
 import 'package:timecalendar/modules/personal_event/widgets/app_alert_dialog.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
@@ -40,8 +40,10 @@ class _AddPersonalEventScreenState
   void initState() {
     super.initState();
 
-    var settingsProvider =
-        oldprovider.Provider.of<SettingsProvider>(context, listen: false);
+    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    );
 
     if (widget.event != null) {
       final initialEvent = widget.event!;
@@ -50,8 +52,9 @@ class _AddPersonalEventScreenState
         _title = initialEvent.title;
         _location = initialEvent.location;
         _description = initialEvent.description;
-        _selectedColor =
-            settingsProvider.getEventColorToDisplay(initialEvent.color);
+        _selectedColor = settingsProvider.getEventColorToDisplay(
+          initialEvent.color,
+        );
         _date = initialEvent.startsAt;
         _timeStart = new TimeOfDay(
           hour: initialEvent.startsAt.hour,
@@ -130,13 +133,16 @@ class _AddPersonalEventScreenState
   void saveEvent(BuildContext context) async {
     unfocusText(context);
 
-    var settingsProvider =
-        oldprovider.Provider.of<SettingsProvider>(context, listen: false);
+    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    );
 
     // Set the new color if the user has picked a color
-    final newColor = (_colorChanged || widget.event == null)
-        ? settingsProvider.getEventColorToSave(_selectedColor)
-        : widget.event!.color;
+    final newColor =
+        (_colorChanged || widget.event == null)
+            ? settingsProvider.getEventColorToSave(_selectedColor)
+            : widget.event!.color;
 
     final startsAt = DateTime(
       _date!.year,
@@ -156,28 +162,35 @@ class _AddPersonalEventScreenState
 
     PersonalEvent savedEvent;
     if (widget.event != null) {
-      savedEvent = widget.event!.rebuild((event) => event
-        ..title = _title
-        ..description = _description
-        ..color = newColor
-        ..location = _location
-        ..startsAt = startsAt
-        ..endsAt = endsAt
-        ..exportedAt = DateTime.now());
+      savedEvent = widget.event!.rebuild(
+        (event) =>
+            event
+              ..title = _title
+              ..description = _description
+              ..color = newColor
+              ..location = _location
+              ..startsAt = startsAt
+              ..endsAt = endsAt
+              ..exportedAt = DateTime.now(),
+      );
     } else {
-      savedEvent = PersonalEvent((event) => event
-        ..uid = Uuid().v4()
-        ..title = _title
-        ..description = _description
-        ..color = newColor
-        ..location = _location
-        ..startsAt = startsAt
-        ..endsAt = endsAt
-        ..exportedAt = DateTime.now());
+      savedEvent = PersonalEvent(
+        (event) =>
+            event
+              ..uid = Uuid().v4()
+              ..title = _title
+              ..description = _description
+              ..color = newColor
+              ..location = _location
+              ..startsAt = startsAt
+              ..endsAt = endsAt
+              ..exportedAt = DateTime.now(),
+      );
     }
 
-    await ref.read(personalEventRepositoryProvider).put(savedEvent);
-    await ref.read(personalEventsProvider.notifier).update();
+    await ref
+        .read(personalEventsProvider.notifier)
+        .addPersonalEvent(savedEvent);
 
     Navigator.of(context).pop(savedEvent);
   }
@@ -197,22 +210,28 @@ class _AddPersonalEventScreenState
 
     showDialog(
       context: context,
-      builder: (_) => AppAlertDialog(
-        title: "Choisir une couleur",
-        content: Container(
-          height: 220,
-          child: MaterialColorPicker(
-            selectedColor: _selectedColor,
-            onColorChange: (color) => setState(() => _tempShadeColor = color),
+      builder:
+          (_) => AppAlertDialog(
+            title: "Choisir une couleur",
+            content: Container(
+              height: 220,
+              child: MaterialColorPicker(
+                selectedColor: _selectedColor,
+                onColorChange:
+                    (color) => setState(() => _tempShadeColor = color),
+              ),
+            ),
+            actions: [
+              AppAlertDialogAction(
+                text: 'Annuler',
+                onPressed: () => onColorChoose(false),
+              ),
+              AppAlertDialogAction(
+                text: 'Choisir',
+                onPressed: () => onColorChoose(true),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          AppAlertDialogAction(
-              text: 'Annuler', onPressed: () => onColorChoose(false)),
-          AppAlertDialogAction(
-              text: 'Choisir', onPressed: () => onColorChoose(true)),
-        ],
-      ),
     );
   }
 
@@ -231,8 +250,10 @@ class _AddPersonalEventScreenState
           child: Column(
             children: <Widget>[
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -252,13 +273,11 @@ class _AddPersonalEventScreenState
                         }
                       },
                       text: 'Enregistrer',
-                    )
+                    ),
                   ],
                 ),
               ),
-              SizedBox(
-                height: 16,
-              ),
+              SizedBox(height: 16),
               Expanded(
                 child: ListView(
                   shrinkWrap: true,
@@ -269,9 +288,7 @@ class _AddPersonalEventScreenState
                         decoration: const InputDecoration.collapsed(
                           hintText: 'Saisir un titre',
                         ),
-                        style: TextStyle(
-                          fontSize: 24,
-                        ),
+                        style: TextStyle(fontSize: 24),
                         initialValue: _title,
                         validator: (value) {
                           if (value!.isEmpty) {
@@ -295,25 +312,24 @@ class _AddPersonalEventScreenState
                               child: Row(
                                 children: <Widget>[
                                   Icon(Icons.calendar_today),
-                                  SizedBox(
-                                    width: 15,
-                                  ),
+                                  SizedBox(width: 15),
                                   Text(
-                                    new DateFormat("EEEE dd MMMM", "fr")
-                                        .format(_date!),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall!
-                                        .copyWith(
-                                          fontWeight: FontWeight.normal,
-                                        ),
+                                    new DateFormat(
+                                      "EEEE dd MMMM",
+                                      "fr",
+                                    ).format(_date!),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall!.copyWith(
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                             onPressed: () => selectDate(context),
                           ),
-                        )
+                        ),
                       ],
                     ),
                     Divider(),
@@ -321,7 +337,11 @@ class _AddPersonalEventScreenState
                       children: <Widget>[
                         Padding(
                           padding: EdgeInsets.only(
-                              top: 16.0, bottom: 16.0, left: 20, right: 5),
+                            top: 16.0,
+                            bottom: 16.0,
+                            left: 20,
+                            right: 5,
+                          ),
                           child: Icon(Icons.access_alarm),
                         ),
                         Expanded(
@@ -329,107 +349,110 @@ class _AddPersonalEventScreenState
                             children: <Widget>[
                               Expanded(
                                 child: TextButton(
-                                    onPressed: () => selectTimeStart(context),
-                                    child: Stack(
-                                      children: <Widget>[
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 5),
-                                                child: Text(
-                                                  'Début',
-                                                  textAlign: TextAlign.left,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyLarge,
-                                                ),
+                                  onPressed: () => selectTimeStart(context),
+                                  child: Stack(
+                                    children: <Widget>[
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 5,
                                               ),
-                                              Text(
-                                                _timeStart!.format(context),
-                                                textAlign: TextAlign.start,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium,
+                                              child: Text(
+                                                'Début',
+                                                textAlign: TextAlign.left,
+                                                style:
+                                                    Theme.of(
+                                                      context,
+                                                    ).textTheme.bodyLarge,
                                               ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    )),
-                              )
+                                            ),
+                                            Text(
+                                              _timeStart!.format(context),
+                                              textAlign: TextAlign.start,
+                                              style:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodyMedium,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        VerticalDivider(
-                          color: Colors.black,
-                        ),
+                        VerticalDivider(color: Colors.black),
                         Expanded(
                           child: Row(
                             children: <Widget>[
                               Expanded(
                                 child: TextButton(
-                                    onPressed: () => selectTimeEnd(context),
-                                    child: Stack(
-                                      children: <Widget>[
-                                        Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 5),
-                                                child: Text(
-                                                  'Fin',
-                                                  textAlign: TextAlign.left,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodyLarge!
-                                                      .copyWith(
-                                                          color: endTimeSuperior()
-                                                              ? Theme.of(
-                                                                      context)
-                                                                  .textTheme
-                                                                  .bodyLarge!
-                                                                  .color
-                                                              : Colors.red),
+                                  onPressed: () => selectTimeEnd(context),
+                                  child: Stack(
+                                    children: <Widget>[
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 5,
+                                              ),
+                                              child: Text(
+                                                'Fin',
+                                                textAlign: TextAlign.left,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodyLarge!.copyWith(
+                                                  color:
+                                                      endTimeSuperior()
+                                                          ? Theme.of(context)
+                                                              .textTheme
+                                                              .bodyLarge!
+                                                              .color
+                                                          : Colors.red,
                                                 ),
                                               ),
-                                              Text(
-                                                _timeEnd!.format(context),
-                                                textAlign: TextAlign.start,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodyMedium!
-                                                    .copyWith(
-                                                        color: endTimeSuperior()
-                                                            ? Theme.of(context)
-                                                                .textTheme
-                                                                .bodyMedium!
-                                                                .color
-                                                            : Colors.red),
+                                            ),
+                                            Text(
+                                              _timeEnd!.format(context),
+                                              textAlign: TextAlign.start,
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium!.copyWith(
+                                                color:
+                                                    endTimeSuperior()
+                                                        ? Theme.of(context)
+                                                            .textTheme
+                                                            .bodyMedium!
+                                                            .color
+                                                        : Colors.red,
                                               ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    )),
-                              )
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                        )
+                        ),
                       ],
                     ),
                     Divider(),
-                    SizedBox(
-                      height: 8,
-                    ),
+                    SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
@@ -471,45 +494,41 @@ class _AddPersonalEventScreenState
                         ),
                       ],
                     ),
-                    SizedBox(
-                      height: 8,
-                    ),
+                    SizedBox(height: 8),
                     Divider(),
                     Row(
                       children: <Widget>[
                         Expanded(
                           child: TextButton(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                  horizontal: 10,
-                                ),
-                                child: Row(
-                                  children: <Widget>[
-                                    CircleAvatar(
-                                      backgroundColor: _selectedColor,
-                                      radius: 12.0,
-                                    ),
-                                    SizedBox(
-                                      width: 20,
-                                    ),
-                                    Text(
-                                      "Couleur de l'événement",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium,
-                                    )
-                                  ],
-                                ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 8.0,
+                                horizontal: 10,
                               ),
-                              onPressed: _openColorPicker),
-                        )
+                              child: Row(
+                                children: <Widget>[
+                                  CircleAvatar(
+                                    backgroundColor: _selectedColor,
+                                    radius: 12.0,
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text(
+                                    "Couleur de l'événement",
+                                    style:
+                                        Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            onPressed: _openColorPicker,
+                          ),
+                        ),
                       ],
                     ),
                     Divider(),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),
