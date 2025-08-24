@@ -1,0 +1,122 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Backend NestJS Module Structure
+
+This document outlines the standardized structure for NestJS modules in the backend codebase.
+
+## Module Organization
+
+Each feature module follows a consistent directory structure organized by responsibility:
+
+```
+src/[feature]/
+├── [feature].module.ts          # NestJS module definition
+├── controllers/                 # HTTP endpoints and API routes
+├── services/                    # Business logic layer
+├── repositories/                # Data access layer
+├── models/                      # Data models and types
+│   ├── entities/               # TypeORM database entities
+│   ├── dto/                    # Data Transfer Objects for OpenAPI
+│   └── [other-models].ts       # Non-entity classes (types, interfaces)
+├── factories/                   # Test data factories
+└── mappers/                     # Data transformation utilities
+
+```
+
+## Layer Responsibilities
+
+### Models Directory Structure
+
+- **`models/entities/`**: TypeORM database entities decorated with `@Entity()`, representing database tables
+  - Use proper decorators (`@Column`, `@PrimaryGeneratedColumn("uuid")`, `@ManyToOne`, etc.)
+  - Include createdAt and updatedAt with `@CreateDateColumn()` and `@UpdateDateColumn()`
+  - Example: `user.entity.ts`, `product.entity.ts`
+
+- **`models/dto/`**: Data Transfer Objects for OpenAPI specification
+  - Use class-validator decorators (`@IsString()`, `@IsUUID()`, `@ValidateNested()`, etc.)
+  - Include class-transformer decorators (`@Type()`, `@Transform()`)
+  - Follow naming pattern: `[entity]-[action].dto.ts` (e.g., `user-create.dto.ts`, `product-update.dto.ts`)
+  - Response DTOs should have static `fromEntity()` methods for transformation
+  - The plugin @nestjs/swagger is installed, you don't need to add `@ApiProperty` decorator to DTO properties.
+  - Example: `user-create.dto.ts`, `product-response.dto.ts`
+
+- **`models/`** (root): Non-database classes, types, interfaces, and utility models
+  - Enums (e.g., `user-status.enum.ts`, `order-status.enum.ts`)
+  - Type definitions and interfaces
+  - Utility classes and aggregates
+  - Example: `payment-client.ts`, `notification-config.ts`
+
+### Repositories Layer
+
+- **Purpose**: Data access layer that encapsulates database operations
+- **Pattern**: Inject TypeORM repositories and DataSource for transactions
+- **Methods**: Domain-specific query methods (e.g., `findByUserId()`, `findActiveOrders()`)
+- **Transactions**: Use DataSource manager for multi-table operations
+- **Example**: `user.repository.ts`, `order.repository.ts`
+
+### Services Layer
+
+- **Purpose**: Business logic layer containing domain-specific operations
+- **Dependencies**: Inject repositories, other services, and external modules
+- **Methods**: High-level business operations that orchestrate multiple data operations
+- **Error Handling**: Handle business logic validation and error scenarios
+- **Example**: `user.service.ts`, `order.service.ts`
+
+### Controllers Layer
+
+- **Purpose**: HTTP endpoints that expose API routes
+- **Decorators**: Use `@Controller()`, `@Get()`, `@Post()`, etc.
+- **OpenAPI**: Include `@ApiTags()` and `@ApiOperation()` for documentation
+- **Validation**: Use DTOs with validation pipes (`@Body()`, `@Param()`)
+- **Path Structure**: Follow RESTful conventions (e.g., `/users/:id/orders`, `/products/:id`)
+- **Example**: `user.controller.ts`, `order.controller.ts`
+
+### Factories Directory
+
+- **Purpose**: Test data generation using custom AppFactory pattern
+- **Pattern**: Extend `AppFactory<Entity, TransientParams>` from `test-utils/factories/app-factory`
+- **Usage**: Create realistic test data for unit and integration tests
+- **Structure**: 
+  - Define a class extending `AppFactory` with association methods
+  - Export a factory function using `factoryBuilder`
+  - Use `factoryToEntity` and `idToEntity` for relationships
+- **Relationships**: Use association methods and `factoryToEntity` for entity relationships
+- **Example**: `user.factory.ts`, `order.factory.ts`
+
+## Module Definition Pattern
+
+The main module file should:
+1. Import TypeORM entities via `TypeOrmModule.forFeature([...])`
+2. Import related feature modules as dependencies
+3. Provide all repositories and services in the providers array
+4. Export controllers for HTTP routing
+5. Example: `user.module.ts`, `order.module.ts`
+
+## Testing Structure
+
+- Place test files adjacent to source files with `.spec.ts` extension
+- Repository tests should focus on data access patterns
+- Service tests should mock dependencies and test business logic
+- Controller tests should test HTTP request/response handling
+- Use factories for generating test data consistently
+
+## Naming Conventions
+
+- **Files**: Use kebab-case (e.g., `user-create.dto.ts`, `order-status.enum.ts`)
+- **Classes**: Use PascalCase (e.g., `UserService`, `OrderController`)
+- **DTOs**: Include action suffix (e.g., `UserCreate`, `OrderGetResponse`)
+- **Repositories**: End with `Repository` (e.g., `UserRepository`, `OrderRepository`)
+- **Services**: End with `Service` (e.g., `UserService`, `OrderService`)
+- **Controllers**: End with `Controller` (e.g., `UserController`, `OrderController`)
+
+## Key Dependencies
+
+Standard NestJS module dependencies include:
+- `@nestjs/common` - Core decorators and utilities
+- `@nestjs/typeorm` - Database integration
+- `class-validator` - DTO validation
+- `class-transformer` - Data transformation
+- `@nestjs/swagger` - OpenAPI documentation
