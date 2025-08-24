@@ -29,6 +29,34 @@ describe("CalendarRepository", () => {
       })
       expect(calendar.id).toBeDefined()
     })
+
+    it("does not override existing calendar content when content is undefined", async () => {
+      // Create a calendar with content
+      const initialCalendar = await calendarFactory()
+        .transient({
+          events: [calendarEventFactory.build({ uid: "existing-event" })],
+        })
+        .create()
+
+      // Verify initial content exists
+      const calendarWithContent = await repository.findOne(initialCalendar.id)
+      expect(calendarWithContent.content.events).toHaveLength(1)
+      expect(calendarWithContent.content.events[0].uid).toBe("existing-event")
+
+      // Update the calendar with content: undefined (simulating the sync service behavior)
+      const updatedCalendar = await repository.save({
+        id: initialCalendar.id,
+        name: "Updated Calendar Name",
+        content: undefined, // This should not clear existing content
+        lastUpdatedAt: new Date(),
+      })
+
+      // Verify the content still exists after the update
+      const calendarAfterUpdate = await repository.findOne(updatedCalendar.id)
+      expect(calendarAfterUpdate.content.events).toHaveLength(1)
+      expect(calendarAfterUpdate.content.events[0].uid).toBe("existing-event")
+      expect(calendarAfterUpdate.name).toBe("Updated Calendar Name")
+    })
   })
 
   describe("findLastUpdatedBeforeWithContent", () => {

@@ -25,7 +25,8 @@
     "typeorm": "npm run app:tsnode ./node_modules/typeorm/cli -- -d src/data-source.ts",
     "db:seed": "npm run app:tsnode ./src/scripts/seed-database.ts",
     "db:init": "npm run app:tsnode ./src/scripts/seed-database.ts -- --drop",
-    "db:migrate": "npm run typeorm migration:run"
+    "db:migrate": "npm run typeorm migration:run",
+    "db:generate": "npm run typeorm -- migration:generate ./src/migrations/migration && eslint src/migrations/* --fix"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -38,6 +39,7 @@
     "@nestjs/cli": "^10.1.10",
     "@nestjs/common": "^10.1.0",
     "@nestjs/core": "^10.1.0",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/microservices": "^10.1.0",
     "@nestjs/platform-express": "^10.1.0",
     "@nestjs/schematics": "^10.0.1",

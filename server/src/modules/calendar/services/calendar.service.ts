@@ -18,7 +18,9 @@ export class CalendarService {
     return this.calendarHelper.forPublic(calendar)
   }
 
-  async calendarsForPublic(tokens: string[]): Promise<CalendarWithContent[]> {
+  async findCalendarsForPublic(
+    tokens: string[],
+  ): Promise<CalendarWithContent[]> {
     const calendarsWithContent =
       await this.repository.findByTokensWithContent(tokens)
 

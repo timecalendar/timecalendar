@@ -1,3 +1,4 @@
+import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { School } from "modules/school/models/school.entity"
@@ -8,6 +9,7 @@ import {
   Entity,
   Index,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   RelationId,
@@ -61,4 +63,7 @@ export class Calendar {
     (calendarContent) => calendarContent.calendar,
   )
   content: CalendarContent
+
+  @OneToMany(() => CalendarLog, (calendarLog) => calendarLog.calendar)
+  logs: CalendarLog[]
 }

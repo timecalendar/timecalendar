@@ -1,6 +1,8 @@
 import { NotFoundException } from "@nestjs/common"
+import { EventEmitter2 } from "@nestjs/event-emitter"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
+import { CalendarContentUpdatedEvent } from "modules/calendar-sync/events/calendar-content-updated.event"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
@@ -21,6 +23,7 @@ describe("CalendarSyncService", () => {
   let app: NestExpressApplication
   let service: CalendarSyncService
   let dataSource: DataSource
+  let eventEmitter: EventEmitter2
   let events: FetcherCalendarEvent[]
   const mockFetchService = {
     fetchEvents: jest.fn(),
@@ -33,11 +36,13 @@ describe("CalendarSyncService", () => {
     )
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
+    eventEmitter = app.get(EventEmitter2)
   })
 
   beforeEach(() => {
     events = [fetcherCalendarEventFactory.build()]
     mockFetchService.fetchEvents = jest.fn(async () => events)
+    jest.spyOn(eventEmitter, "emitAsync")
   })
 
   describe("createCalendar", () => {
@@ -66,6 +71,12 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+
+      // Verify no event was emitted for calendar creation
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
+        "calendar.content.updated",
+        expect.any(CalendarContentUpdatedEvent),
+      )
     })
 
     it("creates a calendar with a custom school", async () => {
@@ -185,6 +196,50 @@ describe("CalendarSyncService", () => {
       ])
     })
 
+    it("emits CalendarContentUpdatedEvent when updating existing calendar", async () => {
+      // First sync to create initial content
+      const initialEvents = [
+        fetcherCalendarEventFactory.build({
+          uid: "initial-event",
+          title: "Initial Event",
+        }),
+      ]
+      mockFetchService.fetchEvents = jest.fn(async () => initialEvents)
+      await service.sync(calendar)
+
+      // Clear the emit spy
+      jest.clearAllMocks()
+
+      // Update with new events
+      const newEvents = [
+        fetcherCalendarEventFactory.build({
+          uid: "updated-event",
+          title: "Updated Event",
+        }),
+      ]
+      mockFetchService.fetchEvents = jest.fn(async () => newEvents)
+
+      await service.sync(calendar)
+
+      // Verify event was emitted
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        "calendar.content.updated",
+        expect.any(CalendarContentUpdatedEvent),
+      )
+
+      // Verify the event contains correct data
+      const emitCall = (eventEmitter.emitAsync as jest.Mock).mock.calls.find(
+        (call) => call[0] === "calendar.content.updated",
+      )
+      expect(emitCall).toBeDefined()
+      const emittedEvent = emitCall[1] as CalendarContentUpdatedEvent
+      expect(emittedEvent.calendarId).toBe(calendar.id)
+      expect(emittedEvent.oldEvents).toHaveLength(1)
+      expect(emittedEvent.oldEvents[0].uid).toBe("initial-event")
+      expect(emittedEvent.newEvents).toHaveLength(1)
+      expect(emittedEvent.newEvents[0].uid).toBe("updated-event")
+    })
+
     it("creates a new calendar with events", async () => {
       calendar = calendarFactory().build()
 
@@ -206,6 +261,12 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+
+      // Verify no event was emitted for calendar creation
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
+        "calendar.content.updated",
+        expect.any(CalendarContentUpdatedEvent),
+      )
     })
 
     it("does not create a calendar when there is an error", async () => {
@@ -240,6 +301,12 @@ describe("CalendarSyncService", () => {
             message: "Something went wrong",
             stack: expect.any(String),
           })
+
+          // Verify no event was emitted when calendar creation fails
+          expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
+            "calendar.content.updated",
+            expect.any(CalendarContentUpdatedEvent),
+          )
         },
       )
     })
@@ -264,6 +331,73 @@ describe("CalendarSyncService", () => {
         .findOneByOrFail({ id: calendar.id })
 
       expect(updatedCalendar.lastUpdatedAt).not.toEqual(calendar.lastUpdatedAt)
+
+      // Verify no event was emitted when existing calendar update fails
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
+        "calendar.content.updated",
+        expect.any(CalendarContentUpdatedEvent),
+      )
+    })
+
+    it("preserves existing events when sync fails for existing calendar", async () => {
+      // First, sync the calendar with some events to establish existing content
+      const initialEvents = [
+        fetcherCalendarEventFactory.build({
+          uid: "existing-event",
+          title: "Existing Event",
+        }),
+      ]
+      mockFetchService.fetchEvents = jest.fn(async () => initialEvents)
+      await service.sync(calendar)
+
+      // Verify initial content was saved
+      const initialContent = await dataSource
+        .getRepository(CalendarContent)
+        .findOneByOrFail({ calendar: { id: calendar.id } })
+      expect(initialContent.events).toHaveLength(1)
+      expect(initialContent.events[0].uid).toBe("existing-event")
+
+      // Clear the emitAsync spy after the successful sync
+      jest.clearAllMocks()
+
+      // Now make the fetch fail
+      mockFetchService.fetchEvents = jest.fn(async () => {
+        throw new Error("Network error")
+      })
+
+      // Attempt to sync again - this should fail but preserve existing events
+      await assertChanges(
+        dataSource,
+        [
+          [Calendar, 0],
+          [CalendarContent, 0],
+          [CalendarFailure, 0],
+        ],
+        async () => {
+          const promise = service.sync(calendar)
+          await expect(promise).rejects.toThrow(new Error("Network error"))
+        },
+      )
+
+      // Verify that the existing events are still there (not cleared)
+      const contentAfterError = await dataSource
+        .getRepository(CalendarContent)
+        .findOneByOrFail({ calendar: { id: calendar.id } })
+      expect(contentAfterError.events).toHaveLength(1)
+      expect(contentAfterError.events[0].uid).toBe("existing-event")
+      expect(contentAfterError.events[0].title).toBe("Existing Event")
+
+      // Verify lastUpdatedAt was still updated despite the error
+      const updatedCalendar = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(updatedCalendar.lastUpdatedAt).not.toEqual(calendar.lastUpdatedAt)
+
+      // Verify no event was emitted when existing calendar sync fails
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalledWith(
+        "calendar.content.updated",
+        expect.any(CalendarContentUpdatedEvent),
+      )
     })
   })
 })
