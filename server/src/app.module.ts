@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common"
 import { COMMON_IMPORTS } from "common-imports"
+import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { ContactModule } from "modules/contact/contact.module"
 import { FetchModule } from "modules/fetch/fetch.module"
@@ -24,6 +25,7 @@ import { HealthModule } from "modules/health/health.module"
     FetchModule,
     UnivOrleansModule,
     SchoolModule,
+    CalendarLogModule,
     CalendarSyncModule,
     RedisModule,
     JobRunModule,

@@ -1,15 +1,16 @@
 import { Injectable } from "@nestjs/common"
 import dayjs from "dayjs"
+import {
+  INACTIVITY_DAYS,
+  UPDATE_AFTER_MIN,
+  UPDATE_CONCURRENCY,
+} from "modules/calendar-sync/calendar-sync.constants"
 import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { CalendarService } from "modules/calendar/services/calendar.service"
 import pLimit from "p-limit"
-
-const INACTIVITY_DAYS = 14
-const UPDATE_AFTER_MIN = 30
-const UPDATE_CONCURRENCY = 10
 
 type FindCalendarsToSyncParams = {
   tokens?: string[]
@@ -31,7 +32,7 @@ export class CalendarSyncAllService {
     })
     await this.syncAll(calendars)
     await this.calendarRepository.setCalendarsLastAccessedAt(tokens, new Date())
-    return this.calendarService.calendarsForPublic(tokens)
+    return this.calendarService.findCalendarsForPublic(tokens)
   }
 
   async syncAllForCronJob() {

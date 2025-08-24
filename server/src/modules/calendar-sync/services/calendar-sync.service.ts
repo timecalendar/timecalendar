@@ -1,6 +1,8 @@
 import { Injectable, UnprocessableEntityException } from "@nestjs/common"
+import { EventEmitter2 } from "@nestjs/event-emitter"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
+import { CalendarContentUpdatedEvent } from "modules/calendar-sync/events/calendar-content-updated.event"
 import { CalendarFailureRepository } from "modules/calendar-sync/repositories/calendar-failure.repository"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
@@ -29,6 +31,7 @@ export class CalendarSyncService {
     private readonly subjectService: SubjectService,
     private readonly calendarFailureRepository: CalendarFailureRepository,
     private readonly calendarSyncMetricsService: CalendarSyncMetricsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
@@ -99,6 +102,15 @@ export class CalendarSyncService {
     events: CalendarEvent[] | undefined,
   ) {
     let { id: calendarId } = calendar
+    const isUpdate = !!calendarId
+
+    // Get old events before updating (only for existing calendars)
+    let oldEvents: CalendarEvent[] = []
+    if (isUpdate && events && calendarId) {
+      const existingContent =
+        await this.calendarContentRepository.findByCalendarId(calendarId)
+      oldEvents = existingContent?.events ?? []
+    }
 
     const savedCalendar = await this.calendarRepository.save({
       ...(calendarId ? idToEntity(calendarId) : calendar),
@@ -109,6 +121,14 @@ export class CalendarSyncService {
     if (events) {
       await this.calendarContentRepository.save(calendarId, { events })
       await this.subjectService.syncEventSubjects(calendarId, events)
+
+      // Emit event only for updates (not creation)
+      if (isUpdate) {
+        this.eventEmitter.emitAsync(
+          "calendar.content.updated",
+          new CalendarContentUpdatedEvent(calendarId, oldEvents, events),
+        )
+      }
     }
 
     await this.calendarRepository.update(calendarId, {

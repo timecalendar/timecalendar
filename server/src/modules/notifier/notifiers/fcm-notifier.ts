@@ -5,7 +5,7 @@ import {
   OnCalendarChangedPayload,
 } from "modules/notifier/models/notifier"
 import { Notifier } from "modules/notifier/models/notifier.interface"
-import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
+import { EventForChangeDetection } from "modules/calendar-log/models/change-detection/find-event-changes"
 import {
   DifferenceType,
   mapDifferenceTitle,
@@ -27,7 +27,10 @@ export class FcmNotifier implements Notifier {
     const { difference } = payload
     const { token } = this.recipient
 
-    const events: { type: DifferenceType; event: CalendarEvent }[] = []
+    const events: {
+      type: DifferenceType
+      event: EventForChangeDetection
+    }[] = []
 
     // New events
     difference.newItems.forEach((event) => {

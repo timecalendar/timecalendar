@@ -3,6 +3,7 @@ import { ModuleMetadata } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import { REDIS_KEY_PREFIX, REDIS_URL } from "config/constants"
 import { dataSourceOptions } from "data-source"
+import { EventEmitterModule } from "@nestjs/event-emitter"
 
 export const COMMON_IMPORTS: NonNullable<ModuleMetadata["imports"]> = [
   BullModule.forRoot({
@@ -13,4 +14,5 @@ export const COMMON_IMPORTS: NonNullable<ModuleMetadata["imports"]> = [
     ...dataSourceOptions,
     autoLoadEntities: true,
   }),
+  EventEmitterModule.forRoot(),
 ]
