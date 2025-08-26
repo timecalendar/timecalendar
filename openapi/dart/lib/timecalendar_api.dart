@@ -12,6 +12,8 @@ export 'package:timecalendar_api/src/model/date.dart';
 
 export 'package:timecalendar_api/src/api/calendars_api.dart';
 export 'package:timecalendar_api/src/api/contact_api.dart';
+export 'package:timecalendar_api/src/api/feature_flags_api.dart';
+export 'package:timecalendar_api/src/api/notification_subscription_api.dart';
 export 'package:timecalendar_api/src/api/schools_api.dart';
 
 export 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
@@ -26,6 +28,7 @@ export 'package:timecalendar_api/src/model/find_school_groups_rep_dto.dart';
 export 'package:timecalendar_api/src/model/find_schools_rep_dto.dart';
 export 'package:timecalendar_api/src/model/get_school_groups_ical_url_dto.dart';
 export 'package:timecalendar_api/src/model/get_school_groups_ical_url_rep_dto.dart';
+export 'package:timecalendar_api/src/model/notification_subscription_create.dart';
 export 'package:timecalendar_api/src/model/orleans_get_ical_url_from_student_number_dto.dart';
 export 'package:timecalendar_api/src/model/school_assistant.dart';
 export 'package:timecalendar_api/src/model/school_for_list.dart';

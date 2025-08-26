@@ -15,6 +15,7 @@ import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
 import { HealthModule } from "modules/health/health.module"
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
+import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { NotificationSubscriptionModule } from "modules/notification-subscriptio
     ContactModule,
     HealthModule,
     NotificationSubscriptionModule,
+    FeatureFlagModule,
   ],
   controllers: [],
   providers: [],

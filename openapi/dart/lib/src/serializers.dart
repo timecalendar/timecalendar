@@ -26,6 +26,7 @@ import 'package:timecalendar_api/src/model/find_school_groups_rep_dto.dart';
 import 'package:timecalendar_api/src/model/find_schools_rep_dto.dart';
 import 'package:timecalendar_api/src/model/get_school_groups_ical_url_dto.dart';
 import 'package:timecalendar_api/src/model/get_school_groups_ical_url_rep_dto.dart';
+import 'package:timecalendar_api/src/model/notification_subscription_create.dart';
 import 'package:timecalendar_api/src/model/orleans_get_ical_url_from_student_number_dto.dart';
 import 'package:timecalendar_api/src/model/school_assistant.dart';
 import 'package:timecalendar_api/src/model/school_for_list.dart';
@@ -49,6 +50,7 @@ part 'serializers.g.dart';
   FindSchoolsRepDto,
   GetSchoolGroupsIcalUrlDto,
   GetSchoolGroupsIcalUrlRepDto,
+  NotificationSubscriptionCreate,
   OrleansGetIcalUrlFromStudentNumberDto,
   SchoolAssistant,
   SchoolForList,

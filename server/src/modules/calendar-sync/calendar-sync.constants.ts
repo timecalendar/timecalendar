@@ -9,7 +9,7 @@ export const INACTIVITY_DAYS = 14
  * Number of minutes after the last update before a calendar is considered
  * outdated and should be synced.
  */
-export const UPDATE_AFTER_MIN = 0
+export const UPDATE_AFTER_MIN = 30
 
 /**
  * Maximum number of concurrent updates

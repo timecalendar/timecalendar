@@ -101,6 +101,22 @@ export interface GetSchoolGroupsIcalUrlDto {
 export interface GetSchoolGroupsIcalUrlRepDto {
     'url': string;
 }
+export interface NotificationSubscriptionCreate {
+    'frequency': NotificationSubscriptionCreateFrequencyEnum;
+    'nbDaysAhead': number;
+    'isActive': boolean;
+    'calendarIds': Array<string>;
+    'fcmToken': string;
+}
+
+export const NotificationSubscriptionCreateFrequencyEnum = {
+    Immediately: 'immediately',
+    Hourly: 'hourly',
+    Daily: 'daily'
+} as const;
+
+export type NotificationSubscriptionCreateFrequencyEnum = typeof NotificationSubscriptionCreateFrequencyEnum[keyof typeof NotificationSubscriptionCreateFrequencyEnum];
+
 export interface OrleansGetIcalUrlFromStudentNumberDto {
     'studentNumber': string;
 }
@@ -486,6 +502,213 @@ export class ContactApi extends BaseAPI {
      */
     public sendMessage(sendMessageDto: SendMessageDto, options?: RawAxiosRequestConfig) {
         return ContactApiFp(this.configuration).sendMessage(sendMessageDto, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * FeatureFlagsApi - axios parameter creator
+ */
+export const FeatureFlagsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Evaluate multiple feature flags
+         * @param {string} keys 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        evaluateFlags: async (keys: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'keys' is not null or undefined
+            assertParamExists('evaluateFlags', 'keys', keys)
+            const localVarPath = `/feature-flags/evaluate`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (keys !== undefined) {
+                localVarQueryParameter['keys'] = keys;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * FeatureFlagsApi - functional programming interface
+ */
+export const FeatureFlagsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = FeatureFlagsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Evaluate multiple feature flags
+         * @param {string} keys 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async evaluateFlags(keys: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.evaluateFlags(keys, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FeatureFlagsApi.evaluateFlags']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * FeatureFlagsApi - factory interface
+ */
+export const FeatureFlagsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = FeatureFlagsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Evaluate multiple feature flags
+         * @param {string} keys 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        evaluateFlags(keys: string, options?: RawAxiosRequestConfig): AxiosPromise<object> {
+            return localVarFp.evaluateFlags(keys, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * FeatureFlagsApi - object-oriented interface
+ */
+export class FeatureFlagsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Evaluate multiple feature flags
+     * @param {string} keys 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public evaluateFlags(keys: string, options?: RawAxiosRequestConfig) {
+        return FeatureFlagsApiFp(this.configuration).evaluateFlags(keys, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * NotificationSubscriptionApi - axios parameter creator
+ */
+export const NotificationSubscriptionApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Create or update notification subscription
+         * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOrUpdateSubscription: async (notificationSubscriptionCreate: NotificationSubscriptionCreate, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'notificationSubscriptionCreate' is not null or undefined
+            assertParamExists('createOrUpdateSubscription', 'notificationSubscriptionCreate', notificationSubscriptionCreate)
+            const localVarPath = `/notification-subscription`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(notificationSubscriptionCreate, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * NotificationSubscriptionApi - functional programming interface
+ */
+export const NotificationSubscriptionApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = NotificationSubscriptionApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Create or update notification subscription
+         * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createOrUpdateSubscription(notificationSubscriptionCreate: NotificationSubscriptionCreate, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOrUpdateSubscription(notificationSubscriptionCreate, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['NotificationSubscriptionApi.createOrUpdateSubscription']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * NotificationSubscriptionApi - factory interface
+ */
+export const NotificationSubscriptionApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = NotificationSubscriptionApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Create or update notification subscription
+         * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOrUpdateSubscription(notificationSubscriptionCreate: NotificationSubscriptionCreate, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.createOrUpdateSubscription(notificationSubscriptionCreate, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * NotificationSubscriptionApi - object-oriented interface
+ */
+export class NotificationSubscriptionApi extends BaseAPI {
+    /**
+     * 
+     * @summary Create or update notification subscription
+     * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public createOrUpdateSubscription(notificationSubscriptionCreate: NotificationSubscriptionCreate, options?: RawAxiosRequestConfig) {
+        return NotificationSubscriptionApiFp(this.configuration).createOrUpdateSubscription(notificationSubscriptionCreate, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

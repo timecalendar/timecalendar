@@ -14,6 +14,7 @@ doc/FindSchoolGroupsRepDto.md
 doc/FindSchoolsRepDto.md
 doc/GetSchoolGroupsIcalUrlDto.md
 doc/GetSchoolGroupsIcalUrlRepDto.md
+doc/NotificationSubscriptionCreate.md
 doc/OrleansGetIcalUrlFromStudentNumberDto.md
 doc/SchoolAssistant.md
 doc/SchoolForList.md
@@ -24,6 +25,8 @@ doc/SyncCalendarsDto.md
 lib/src/api.dart
 lib/src/api/calendars_api.dart
 lib/src/api/contact_api.dart
+lib/src/api/feature_flags_api.dart
+lib/src/api/notification_subscription_api.dart
 lib/src/api/schools_api.dart
 lib/src/api_util.dart
 lib/src/auth/api_key_auth.dart
@@ -45,6 +48,7 @@ lib/src/model/find_school_groups_rep_dto.dart
 lib/src/model/find_schools_rep_dto.dart
 lib/src/model/get_school_groups_ical_url_dto.dart
 lib/src/model/get_school_groups_ical_url_rep_dto.dart
+lib/src/model/notification_subscription_create.dart
 lib/src/model/orleans_get_ical_url_from_student_number_dto.dart
 lib/src/model/school_assistant.dart
 lib/src/model/school_for_list.dart
