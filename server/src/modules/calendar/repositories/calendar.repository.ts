@@ -30,6 +30,16 @@ export class CalendarRepository {
     })
   }
 
+  findByIds(calendarIds: string[]) {
+    if (calendarIds.length === 0) {
+      return Promise.resolve([])
+    }
+    return this.repository.find({
+      relations: { school: true, content: true },
+      where: { id: In(calendarIds) },
+    })
+  }
+
   update(calendarId: string, calendar: Partial<Calendar>) {
     return this.repository.update({ id: calendarId }, calendar)
   }

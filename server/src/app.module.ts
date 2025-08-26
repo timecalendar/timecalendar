@@ -14,6 +14,7 @@ import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
 import { HealthModule } from "modules/health/health.module"
+import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { HealthModule } from "modules/health/health.module"
     SchoolGroupModule,
     ContactModule,
     HealthModule,
+    NotificationSubscriptionModule,
   ],
   controllers: [],
   providers: [],
