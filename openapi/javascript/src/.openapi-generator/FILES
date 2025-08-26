@@ -14,10 +14,13 @@ docs/CreateCalendarDto.md
 docs/CreateCalendarRepDto.md
 docs/EventTag.md
 docs/EventTypeEnum.md
+docs/FeatureFlagsApi.md
 docs/FindSchoolGroupsRepDto.md
 docs/FindSchoolsRepDto.md
 docs/GetSchoolGroupsIcalUrlDto.md
 docs/GetSchoolGroupsIcalUrlRepDto.md
+docs/NotificationSubscriptionApi.md
+docs/NotificationSubscriptionCreate.md
 docs/OrleansGetIcalUrlFromStudentNumberDto.md
 docs/SchoolAssistant.md
 docs/SchoolForList.md

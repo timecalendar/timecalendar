@@ -69,6 +69,8 @@ Class | Method | HTTP request | Description
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerCreateCalendar**](doc/CalendarsApi.md#calendarsynccontrollercreatecalendar) | **POST** /calendars | Create a calendar
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | Sync calendars
 [*ContactApi*](doc/ContactApi.md) | [**contactControllerSendMessage**](doc/ContactApi.md#contactcontrollersendmessage) | **POST** /contact | Contact the developers
+[*FeatureFlagsApi*](doc/FeatureFlagsApi.md) | [**featureFlagControllerEvaluateFlags**](doc/FeatureFlagsApi.md#featureflagcontrollerevaluateflags) | **GET** /feature-flags/evaluate | Evaluate multiple feature flags
+[*NotificationSubscriptionApi*](doc/NotificationSubscriptionApi.md) | [**notificationSubscriptionControllerCreateOrUpdateSubscription**](doc/NotificationSubscriptionApi.md#notificationsubscriptioncontrollercreateorupdatesubscription) | **PUT** /notification-subscription | Create or update notification subscription
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchool**](doc/SchoolsApi.md#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchools**](doc/SchoolsApi.md#schoolcontrollerfindschools) | **GET** /schools | Find list of schools
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerFindSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollerfindschoolgroups) | **GET** /schools/{schoolId}/school-group | Find school groups
@@ -91,6 +93,7 @@ Class | Method | HTTP request | Description
  - [FindSchoolsRepDto](doc/FindSchoolsRepDto.md)
  - [GetSchoolGroupsIcalUrlDto](doc/GetSchoolGroupsIcalUrlDto.md)
  - [GetSchoolGroupsIcalUrlRepDto](doc/GetSchoolGroupsIcalUrlRepDto.md)
+ - [NotificationSubscriptionCreate](doc/NotificationSubscriptionCreate.md)
  - [OrleansGetIcalUrlFromStudentNumberDto](doc/OrleansGetIcalUrlFromStudentNumberDto.md)
  - [SchoolAssistant](doc/SchoolAssistant.md)
  - [SchoolForList](doc/SchoolForList.md)

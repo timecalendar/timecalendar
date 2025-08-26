@@ -11,6 +11,8 @@ import 'package:timecalendar_api/src/auth/bearer_auth.dart';
 import 'package:timecalendar_api/src/auth/oauth.dart';
 import 'package:timecalendar_api/src/api/calendars_api.dart';
 import 'package:timecalendar_api/src/api/contact_api.dart';
+import 'package:timecalendar_api/src/api/feature_flags_api.dart';
+import 'package:timecalendar_api/src/api/notification_subscription_api.dart';
 import 'package:timecalendar_api/src/api/schools_api.dart';
 
 class TimecalendarApi {
@@ -88,6 +90,18 @@ class TimecalendarApi {
   /// by doing that all interceptors will not be executed
   ContactApi getContactApi() {
     return ContactApi(dio, serializers);
+  }
+
+  /// Get FeatureFlagsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  FeatureFlagsApi getFeatureFlagsApi() {
+    return FeatureFlagsApi(dio, serializers);
+  }
+
+  /// Get NotificationSubscriptionApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  NotificationSubscriptionApi getNotificationSubscriptionApi() {
+    return NotificationSubscriptionApi(dio, serializers);
   }
 
   /// Get SchoolsApi instance, base route and serializer can be overridden by a given but be careful,

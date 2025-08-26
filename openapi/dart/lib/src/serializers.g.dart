@@ -19,6 +19,8 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(FindSchoolsRepDto.serializer)
       ..add(GetSchoolGroupsIcalUrlDto.serializer)
       ..add(GetSchoolGroupsIcalUrlRepDto.serializer)
+      ..add(NotificationSubscriptionCreate.serializer)
+      ..add(NotificationSubscriptionCreateFrequencyEnum.serializer)
       ..add(OrleansGetIcalUrlFromStudentNumberDto.serializer)
       ..add(SchoolAssistant.serializer)
       ..add(SchoolForList.serializer)
@@ -42,6 +44,9 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolGroupItem)]),
           () => ListBuilder<SchoolGroupItem>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
           () => ListBuilder<String>())
