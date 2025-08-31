@@ -26,7 +26,11 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 export interface CalendarChangeGet {
     'oldItems': Array<CalendarLogEventGet>;
     'newItems': Array<CalendarLogEventGet>;
-    'changedItems': Array<string>;
+    'changedItems': Array<CalendarChangedItem>;
+}
+export interface CalendarChangedItem {
+    'previousItem': CalendarLogEventGet;
+    'newItem': CalendarLogEventGet;
 }
 export interface CalendarEventCustomFields {
     'canceled'?: boolean;

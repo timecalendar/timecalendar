@@ -18,6 +18,7 @@ export 'package:timecalendar_api/src/api/notification_subscription_api.dart';
 export 'package:timecalendar_api/src/api/schools_api.dart';
 
 export 'package:timecalendar_api/src/model/calendar_change_get.dart';
+export 'package:timecalendar_api/src/model/calendar_changed_item.dart';
 export 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
 export 'package:timecalendar_api/src/model/calendar_event_for_public.dart';
 export 'package:timecalendar_api/src/model/calendar_for_public.dart';

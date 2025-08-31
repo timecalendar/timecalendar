@@ -12,7 +12,7 @@ class _$CalendarChangeGet extends CalendarChangeGet {
   @override
   final BuiltList<CalendarLogEventGet> newItems;
   @override
-  final BuiltList<String> changedItems;
+  final BuiltList<CalendarChangedItem> changedItems;
 
   factory _$CalendarChangeGet(
           [void Function(CalendarChangeGetBuilder)? updates]) =>
@@ -76,10 +76,10 @@ class CalendarChangeGetBuilder
   set newItems(ListBuilder<CalendarLogEventGet>? newItems) =>
       _$this._newItems = newItems;
 
-  ListBuilder<String>? _changedItems;
-  ListBuilder<String> get changedItems =>
-      _$this._changedItems ??= ListBuilder<String>();
-  set changedItems(ListBuilder<String>? changedItems) =>
+  ListBuilder<CalendarChangedItem>? _changedItems;
+  ListBuilder<CalendarChangedItem> get changedItems =>
+      _$this._changedItems ??= ListBuilder<CalendarChangedItem>();
+  set changedItems(ListBuilder<CalendarChangedItem>? changedItems) =>
       _$this._changedItems = changedItems;
 
   CalendarChangeGetBuilder() {

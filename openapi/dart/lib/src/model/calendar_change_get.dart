@@ -5,6 +5,7 @@
 // ignore_for_file: unused_element
 import 'package:built_collection/built_collection.dart';
 import 'package:timecalendar_api/src/model/calendar_log_event_get.dart';
+import 'package:timecalendar_api/src/model/calendar_changed_item.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -26,7 +27,7 @@ abstract class CalendarChangeGet
   BuiltList<CalendarLogEventGet> get newItems;
 
   @BuiltValueField(wireName: r'changedItems')
-  BuiltList<String> get changedItems;
+  BuiltList<CalendarChangedItem> get changedItems;
 
   CalendarChangeGet._();
 
@@ -67,7 +68,7 @@ class _$CalendarChangeGetSerializer
     yield r'changedItems';
     yield serializers.serialize(
       object.changedItems,
-      specifiedType: const FullType(BuiltList, [FullType(String)]),
+      specifiedType: const FullType(BuiltList, [FullType(CalendarChangedItem)]),
     );
   }
 
@@ -113,8 +114,9 @@ class _$CalendarChangeGetSerializer
         case r'changedItems':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(BuiltList, [FullType(String)]),
-          ) as BuiltList<String>;
+            specifiedType:
+                const FullType(BuiltList, [FullType(CalendarChangedItem)]),
+          ) as BuiltList<CalendarChangedItem>;
           result.changedItems.replace(valueDes);
           break;
         default:

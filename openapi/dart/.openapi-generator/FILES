@@ -3,6 +3,7 @@
 README.md
 analysis_options.yaml
 doc/CalendarChangeGet.md
+doc/CalendarChangedItem.md
 doc/CalendarEventCustomFields.md
 doc/CalendarEventForPublic.md
 doc/CalendarForPublic.md
@@ -41,6 +42,7 @@ lib/src/auth/bearer_auth.dart
 lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
 lib/src/model/calendar_change_get.dart
+lib/src/model/calendar_changed_item.dart
 lib/src/model/calendar_event_custom_fields.dart
 lib/src/model/calendar_event_for_public.dart
 lib/src/model/calendar_for_public.dart

@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **oldItems** | [**Array&lt;CalendarLogEventGet&gt;**](CalendarLogEventGet.md) |  | [default to undefined]
 **newItems** | [**Array&lt;CalendarLogEventGet&gt;**](CalendarLogEventGet.md) |  | [default to undefined]
-**changedItems** | **Array&lt;string&gt;** |  | [default to undefined]
+**changedItems** | [**Array&lt;CalendarChangedItem&gt;**](CalendarChangedItem.md) |  | [default to undefined]
 
 ## Example
 

@@ -186,7 +186,7 @@ describe("CalendarLogController", () => {
 
     it("validates request payload - missing tokens", async () => {
       // Act
-      await request(app).post("/calendar-logs").send({}).expect(400)
+      await request(app).post("/calendar-logs/search").send({}).expect(400)
     })
   })
 })
