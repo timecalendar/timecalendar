@@ -35,13 +35,11 @@ final homeEventsProvider = FutureProvider<List<EventInterface>>((ref) async {
 
   if (events.length == 0 || dayDisplayedOnHomePage == null) return [];
 
-  var dayEvents =
-      events
-          .where(
-            (event) =>
-                AppDateUtils.sameDay(dayDisplayedOnHomePage, event.startsAt),
-          )
-          .toList();
+  var dayEvents = events
+      .where(
+        (event) => AppDateUtils.sameDay(dayDisplayedOnHomePage, event.startsAt),
+      )
+      .toList();
 
   return dayEvents;
 });

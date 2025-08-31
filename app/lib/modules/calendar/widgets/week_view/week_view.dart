@@ -43,9 +43,9 @@ class WeekView extends HookConsumerWidget {
       calendarWidth: calendarWidth,
       nbOfVisibleDays:
           settingsProvider.showWeekends != null &&
-                  settingsProvider.showWeekends!
-              ? 7
-              : 5,
+              settingsProvider.showWeekends!
+          ? 7
+          : 5,
       leftHoursWidth: leftHoursWidth,
       updateCurrentWeek: updateCurrentWeek,
       events: events,

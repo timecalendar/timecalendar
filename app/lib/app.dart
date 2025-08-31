@@ -68,10 +68,9 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
               final settingsProvider = Provider.of<SettingsProvider>(context);
               final darkMode = settingsProvider.darkMode;
 
-              SystemUiOverlayStyle style =
-                  darkMode
-                      ? SystemUiOverlayStyle.light
-                      : SystemUiOverlayStyle.dark;
+              SystemUiOverlayStyle style = darkMode
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark;
               AppTheme appTheme = settingsProvider.currentTheme;
               ThemeData? theme = appTheme.theme;
 
@@ -111,8 +110,8 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
                   HiddenEventsScreen.routeName: (ctx) => HiddenEventsScreen(),
                   ConnectScreen.routeName: (ctx) => ConnectScreen(),
                   ChangelogScreen.routeName: (ctx) => ChangelogScreen(),
-                  AddPersonalEventScreen.routeName:
-                      (ctx) => AddPersonalEventScreen(),
+                  AddPersonalEventScreen.routeName: (ctx) =>
+                      AddPersonalEventScreen(),
                   QrCodeScreen.routeName: (ctx) => QrCodeScreen(),
                   DebugScreen.routeName: (ctx) => DebugScreen(),
                   UserCalendarsScreen.routeName: (ctx) => UserCalendarsScreen(),

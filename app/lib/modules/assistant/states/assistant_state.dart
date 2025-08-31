@@ -14,12 +14,11 @@ abstract class AssistantState with _$AssistantState {
   SchoolAssistant get assistant {
     if (school == null) {
       return SchoolAssistant(
-        (assistant) =>
-            assistant
-              ..isNative = false
-              ..requireCalendarName = true
-              ..requireIntranetAccess = false
-              ..slug = "generic",
+        (assistant) => assistant
+          ..isNative = false
+          ..requireCalendarName = true
+          ..requireIntranetAccess = false
+          ..slug = "generic",
       );
     }
     if (fallback && school!.fallbackAssistant != null) {

@@ -16,9 +16,7 @@ class AboutScreen extends ConsumerWidget {
     var settingsProvider = provider.Provider.of<SettingsProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('À propos'),
-      ),
+      appBar: AppBar(title: Text('À propos')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(15.0),
@@ -27,51 +25,42 @@ class AboutScreen extends ConsumerWidget {
             children: <Widget>[
               Text(
                 "Politique de confidentialité",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 10),
               CustomButton(
                 text: 'Voir la politique de confidentialité',
                 outline: true,
                 onPressed: () => UrlLauncher.openUrl(
-                  'https://timecalendar.app/privacy-policy/privacy-policy',
+                  'https://timecalendar.app/privacy-policy',
                 ),
               ),
               SizedBox(height: 15),
               Text(
                 "A propos de TimeCalendar",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 10),
               Text(
-                  "Avec TimeCalendar, accédez facilement à votre emploi du temps universitaire. L'application récupère votre emploi du temps directement auprès du calendrier de votre établissement. Recevez une notification en cas d'ajout, de modification ou de suppression de cours."),
+                "Avec TimeCalendar, accédez facilement à votre emploi du temps universitaire. L'application récupère votre emploi du temps directement auprès du calendrier de votre établissement. Recevez une notification en cas d'ajout, de modification ou de suppression de cours.",
+              ),
               SizedBox(height: 10),
               Text(
-                  "Cette application a été créée dans le but de faciliter l\'accès et la lecture des emplois du temps universitaires, en proposant une interface intuitive."),
+                "Cette application a été créée dans le but de faciliter l\'accès et la lecture des emplois du temps universitaires, en proposant une interface intuitive.",
+              ),
               SizedBox(height: 15),
               Text(
                 "Nous contacter",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 10),
               Text(
-                  "Si vous constatez des problèmes, que vous avez une question ou une suggestion, n'hésitez pas à utiliser le formulaire \"Vos retours et suggestions\", ou à nous contacter par e-mail à hello@timecalendar.app."),
+                "Si vous constatez des problèmes, que vous avez une question ou une suggestion, n'hésitez pas à utiliser le formulaire \"Vos retours et suggestions\", ou à nous contacter par e-mail à hello@timecalendar.app.",
+              ),
               SizedBox(height: 15),
               Text(
                 "Version de l'application",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 10),
               Row(
@@ -82,15 +71,18 @@ class AboutScreen extends ConsumerWidget {
                         Navigator.of(context).pushNamed(DebugScreen.routeName);
                       },
                       child: Text(
-                          "Version ${settingsProvider.version} (build ${settingsProvider.buildNumber})"),
+                        "Version ${settingsProvider.version} (build ${settingsProvider.buildNumber})",
+                      ),
                     ),
                   ),
                   CustomButton(
                     text: "Changelog",
                     outline: true,
                     onPressed: () {
-                      Navigator.of(context).pushNamed(ChangelogScreen.routeName,
-                          arguments: {'displayAllChangelog': true});
+                      Navigator.of(context).pushNamed(
+                        ChangelogScreen.routeName,
+                        arguments: {'displayAllChangelog': true},
+                      );
                     },
                   ),
                 ],
@@ -98,10 +90,7 @@ class AboutScreen extends ConsumerWidget {
               SizedBox(height: 15),
               Text(
                 "Développeurs",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
               ),
               SizedBox(height: 10),
               RichText(
@@ -113,8 +102,10 @@ class AboutScreen extends ConsumerWidget {
                     ),
                     TextSpan(
                       text: 'https://www.samuelprak.fr/',
-                      style:
-                          TextStyle(color: Colors.blue, fontFamily: 'Poppins'),
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontFamily: 'Poppins',
+                      ),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () {
                           UrlLauncher.openUrl('https://www.samuelprak.fr/');
@@ -128,12 +119,15 @@ class AboutScreen extends ConsumerWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                        text: 'Eddy Monnot : ',
-                        style: Theme.of(context).textTheme.bodyMedium),
+                      text: 'Eddy Monnot : ',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                     TextSpan(
                       text: 'https://www.eddymonnot.com/',
-                      style:
-                          TextStyle(color: Colors.blue, fontFamily: 'Poppins'),
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontFamily: 'Poppins',
+                      ),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () {
                           UrlLauncher.openUrl('https://www.eddymonnot.com/');

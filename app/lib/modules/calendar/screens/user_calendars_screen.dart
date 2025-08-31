@@ -18,21 +18,19 @@ class UserCalendarsScreen extends HookConsumerWidget {
       body: calendars.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Erreur: $err')),
-        data:
-            (list) =>
-                list.isEmpty
-                    ? const Center(child: Text('Aucun calendrier importé.'))
-                    : ListView.builder(
-                      itemCount: list.length,
-                      itemBuilder: (context, index) {
-                        final calendar = list[index];
-                        return UserCalendarListItem(
-                          calendar: calendar,
-                          onToggle: () => notifier.toggleVisibility(calendar),
-                          onDelete: () => notifier.deleteCalendar(calendar.id),
-                        );
-                      },
-                    ),
+        data: (list) => list.isEmpty
+            ? const Center(child: Text('Aucun calendrier importé.'))
+            : ListView.builder(
+                itemCount: list.length,
+                itemBuilder: (context, index) {
+                  final calendar = list[index];
+                  return UserCalendarListItem(
+                    calendar: calendar,
+                    onToggle: () => notifier.toggleVisibility(calendar),
+                    onDelete: () => notifier.deleteCalendar(calendar.id),
+                  );
+                },
+              ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

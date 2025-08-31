@@ -13,10 +13,9 @@ void useSplashController(BuildContext context, WidgetRef ref) {
   void navigateTo() async {
     final calendars = await ref.read(userCalendarProvider.future);
 
-    final screen =
-        calendars.length > 0
-            ? TabsScreen.routeName
-            : OnboardingScreen.routeName;
+    final screen = calendars.length > 0
+        ? TabsScreen.routeName
+        : OnboardingScreen.routeName;
 
     await Future.delayed(Duration(seconds: 1));
     Navigator.pushReplacementNamed(context, screen);

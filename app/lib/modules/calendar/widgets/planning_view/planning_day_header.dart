@@ -22,10 +22,9 @@ class PlanningDayHeader extends StatelessWidget {
               AppDateUtils.fullDayToShortDay(day).toUpperCase(),
               style: TextStyle(
                 fontSize: 12,
-                color:
-                    Theme.of(context).brightness == Brightness.dark
-                        ? Color(0xffcccccc)
-                        : Colors.black,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Color(0xffcccccc)
+                    : Colors.black,
               ),
             ),
           ),

@@ -155,10 +155,9 @@ class SettingsProvider with ChangeNotifier {
     }
 
     var stringPref = this.prefs.getString('calendar_view_type');
-    _calendarViewType =
-        stringPref != null
-            ? EnumToString.fromString(CalendarViewType.values, stringPref)
-            : null;
+    _calendarViewType = stringPref != null
+        ? EnumToString.fromString(CalendarViewType.values, stringPref)
+        : null;
     if (_calendarViewType == null) {
       _calendarViewType = _calendarViewTypeDefault;
       await prefs!.setString(

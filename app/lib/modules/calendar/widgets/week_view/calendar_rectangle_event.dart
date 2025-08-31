@@ -33,9 +33,9 @@ class CalendarRectangleEvent extends ConsumerWidget {
               decoration: BoxDecoration(
                 color:
                     (eventChecklistItems.completedNotes ==
-                            eventChecklistItems.totalNotes)
-                        ? Colors.black.withValues(alpha: 0.4)
-                        : Theme.of(context).primaryColor,
+                        eventChecklistItems.totalNotes)
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Theme.of(context).primaryColor,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -49,16 +49,15 @@ class CalendarRectangleEvent extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                shadows:
-                    (settingsProvider.darkMode
-                        ? <Shadow>[
-                          Shadow(
-                            offset: Offset(1.0, 1.0),
-                            blurRadius: 2.0,
-                            color: Color.fromARGB(50, 0, 0, 0),
-                          ),
-                        ]
-                        : null),
+                shadows: (settingsProvider.darkMode
+                    ? <Shadow>[
+                        Shadow(
+                          offset: Offset(1.0, 1.0),
+                          blurRadius: 2.0,
+                          color: Color.fromARGB(50, 0, 0, 0),
+                        ),
+                      ]
+                    : null),
               ),
             ),
             if (event.location != null && event.location!.length > 0)
@@ -68,16 +67,15 @@ class CalendarRectangleEvent extends ConsumerWidget {
                     calendarEvent.event.location!,
                     style: TextStyle(
                       fontSize: 9,
-                      shadows:
-                          (settingsProvider.darkMode
-                              ? <Shadow>[
-                                Shadow(
-                                  offset: Offset(1.0, 1.0),
-                                  blurRadius: 2.0,
-                                  color: Color.fromARGB(50, 0, 0, 0),
-                                ),
-                              ]
-                              : null),
+                      shadows: (settingsProvider.darkMode
+                          ? <Shadow>[
+                              Shadow(
+                                offset: Offset(1.0, 1.0),
+                                blurRadius: 2.0,
+                                color: Color.fromARGB(50, 0, 0, 0),
+                              ),
+                            ]
+                          : null),
                     ),
                   ),
                 ],

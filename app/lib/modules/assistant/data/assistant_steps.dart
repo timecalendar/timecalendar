@@ -38,8 +38,9 @@ AssistantStep nextAssistantStep(
   AssistantStepEnum currentStep,
   AssistantState state,
 ) {
-  final index =
-      assistantSteps.indexWhere((element) => element.step == currentStep);
+  final index = assistantSteps.indexWhere(
+    (element) => element.step == currentStep,
+  );
   final nextSteps = assistantSteps.sublist(index + 1);
 
   return nextSteps.firstWhere(

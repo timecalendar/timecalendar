@@ -61,17 +61,16 @@ class _SchoolSelectionHeaderState extends ConsumerState<SchoolSelectionHeader> {
             }
           },
           tooltip: 'Menu',
-          itemBuilder:
-              (_) => [
-                PopupMenuItem(
-                  child: Text('Ajouter votre établissement'),
-                  value: SchoolSelectionOptions.AddSchool,
-                ),
-                PopupMenuItem(
-                  child: Text('Scanner un QR code'),
-                  value: SchoolSelectionOptions.ImportIcal,
-                ),
-              ],
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              child: Text('Ajouter votre établissement'),
+              value: SchoolSelectionOptions.AddSchool,
+            ),
+            PopupMenuItem(
+              child: Text('Scanner un QR code'),
+              value: SchoolSelectionOptions.ImportIcal,
+            ),
+          ],
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -82,10 +81,9 @@ class _SchoolSelectionHeaderState extends ConsumerState<SchoolSelectionHeader> {
                 ? "Sélectionnez votre établissement"
                 : "Établissement",
             style: TextStyle(fontSize: 18, color: Colors.white),
-            overflow:
-                _isScrollLimitReached
-                    ? TextOverflow.visible
-                    : TextOverflow.ellipsis,
+            overflow: _isScrollLimitReached
+                ? TextOverflow.visible
+                : TextOverflow.ellipsis,
           ),
         ),
       ),

@@ -22,20 +22,14 @@ class HomeHeader extends HookConsumerWidget {
         children: <Widget>[
           Text(
             'TimeCalendar',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
           ),
           SizedBox(height: 5),
           Text(
             events.length > 0
                 ? "${events.length} cours ${AppDateUtils.dayText(dayDisplayedOnHomePage, showOn: true)}"
                 : 'Pas de cours à venir',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
         ],
       ),

@@ -127,8 +127,10 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     var week = (_weekScrollController!.offset / widget.calendarWidth).floor();
     if (week != widget.currentWeek) {
       // Save the current week in our provider
-      oldprovider.Provider.of<CalendarProvider>(context, listen: false)
-          .savedWeek = week;
+      oldprovider.Provider.of<CalendarProvider>(
+        context,
+        listen: false,
+      ).savedWeek = week;
       setState(() {
         widget.updateCurrentWeek(
           (_weekScrollController!.offset / widget.calendarWidth).floor(),
@@ -174,11 +176,10 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
 
   void loadCalendarUIPreferences() async {
     setState(() {
-      hourHeight =
-          oldprovider.Provider.of<SettingsProvider>(
-            context,
-            listen: false,
-          ).calendarHourHeight;
+      hourHeight = oldprovider.Provider.of<SettingsProvider>(
+        context,
+        listen: false,
+      ).calendarHourHeight;
     });
   }
 
@@ -204,8 +205,10 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   }
 
   Future _onScaleEnd(ScaleEndDetails scaleDetails) async {
-    oldprovider.Provider.of<SettingsProvider>(context, listen: false)
-        .calendarHourHeight = hourHeight;
+    oldprovider.Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    ).calendarHourHeight = hourHeight;
   }
 
   @override

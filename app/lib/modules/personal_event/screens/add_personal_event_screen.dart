@@ -139,10 +139,9 @@ class _AddPersonalEventScreenState
     );
 
     // Set the new color if the user has picked a color
-    final newColor =
-        (_colorChanged || widget.event == null)
-            ? settingsProvider.getEventColorToSave(_selectedColor)
-            : widget.event!.color;
+    final newColor = (_colorChanged || widget.event == null)
+        ? settingsProvider.getEventColorToSave(_selectedColor)
+        : widget.event!.color;
 
     final startsAt = DateTime(
       _date!.year,
@@ -163,28 +162,26 @@ class _AddPersonalEventScreenState
     PersonalEvent savedEvent;
     if (widget.event != null) {
       savedEvent = widget.event!.rebuild(
-        (event) =>
-            event
-              ..title = _title
-              ..description = _description
-              ..color = newColor
-              ..location = _location
-              ..startsAt = startsAt
-              ..endsAt = endsAt
-              ..exportedAt = DateTime.now(),
+        (event) => event
+          ..title = _title
+          ..description = _description
+          ..color = newColor
+          ..location = _location
+          ..startsAt = startsAt
+          ..endsAt = endsAt
+          ..exportedAt = DateTime.now(),
       );
     } else {
       savedEvent = PersonalEvent(
-        (event) =>
-            event
-              ..uid = Uuid().v4()
-              ..title = _title
-              ..description = _description
-              ..color = newColor
-              ..location = _location
-              ..startsAt = startsAt
-              ..endsAt = endsAt
-              ..exportedAt = DateTime.now(),
+        (event) => event
+          ..uid = Uuid().v4()
+          ..title = _title
+          ..description = _description
+          ..color = newColor
+          ..location = _location
+          ..startsAt = startsAt
+          ..endsAt = endsAt
+          ..exportedAt = DateTime.now(),
       );
     }
 
@@ -210,28 +207,26 @@ class _AddPersonalEventScreenState
 
     showDialog(
       context: context,
-      builder:
-          (_) => AppAlertDialog(
-            title: "Choisir une couleur",
-            content: Container(
-              height: 220,
-              child: MaterialColorPicker(
-                selectedColor: _selectedColor,
-                onColorChange:
-                    (color) => setState(() => _tempShadeColor = color),
-              ),
-            ),
-            actions: [
-              AppAlertDialogAction(
-                text: 'Annuler',
-                onPressed: () => onColorChoose(false),
-              ),
-              AppAlertDialogAction(
-                text: 'Choisir',
-                onPressed: () => onColorChoose(true),
-              ),
-            ],
+      builder: (_) => AppAlertDialog(
+        title: "Choisir une couleur",
+        content: Container(
+          height: 220,
+          child: MaterialColorPicker(
+            selectedColor: _selectedColor,
+            onColorChange: (color) => setState(() => _tempShadeColor = color),
           ),
+        ),
+        actions: [
+          AppAlertDialogAction(
+            text: 'Annuler',
+            onPressed: () => onColorChoose(false),
+          ),
+          AppAlertDialogAction(
+            text: 'Choisir',
+            onPressed: () => onColorChoose(true),
+          ),
+        ],
+      ),
     );
   }
 
@@ -318,11 +313,12 @@ class _AddPersonalEventScreenState
                                       "EEEE dd MMMM",
                                       "fr",
                                     ).format(_date!),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall!.copyWith(
-                                      fontWeight: FontWeight.normal,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall!
+                                        .copyWith(
+                                          fontWeight: FontWeight.normal,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -365,19 +361,17 @@ class _AddPersonalEventScreenState
                                               child: Text(
                                                 'Début',
                                                 textAlign: TextAlign.left,
-                                                style:
-                                                    Theme.of(
-                                                      context,
-                                                    ).textTheme.bodyLarge,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodyLarge,
                                               ),
                                             ),
                                             Text(
                                               _timeStart!.format(context),
                                               textAlign: TextAlign.start,
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyMedium,
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium,
                                             ),
                                           ],
                                         ),
@@ -411,33 +405,33 @@ class _AddPersonalEventScreenState
                                               child: Text(
                                                 'Fin',
                                                 textAlign: TextAlign.left,
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyLarge!.copyWith(
-                                                  color:
-                                                      endTimeSuperior()
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge!
+                                                    .copyWith(
+                                                      color: endTimeSuperior()
                                                           ? Theme.of(context)
-                                                              .textTheme
-                                                              .bodyLarge!
-                                                              .color
+                                                                .textTheme
+                                                                .bodyLarge!
+                                                                .color
                                                           : Colors.red,
-                                                ),
+                                                    ),
                                               ),
                                             ),
                                             Text(
                                               _timeEnd!.format(context),
                                               textAlign: TextAlign.start,
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.bodyMedium!.copyWith(
-                                                color:
-                                                    endTimeSuperior()
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium!
+                                                  .copyWith(
+                                                    color: endTimeSuperior()
                                                         ? Theme.of(context)
-                                                            .textTheme
-                                                            .bodyMedium!
-                                                            .color
+                                                              .textTheme
+                                                              .bodyMedium!
+                                                              .color
                                                         : Colors.red,
-                                              ),
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -514,8 +508,9 @@ class _AddPersonalEventScreenState
                                   SizedBox(width: 20),
                                   Text(
                                     "Couleur de l'événement",
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                 ],
                               ),

@@ -31,10 +31,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
     if (!_isInit) {
       _isInit = true;
     }
-    var activityProvider =
-        Provider.of<ActivityProvider>(context, listen: false);
-    var settingsProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
+    var activityProvider = Provider.of<ActivityProvider>(
+      context,
+      listen: false,
+    );
+    var settingsProvider = Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    );
     try {
       // Load activity
       await activityProvider.loadActivity(settingsProvider.lastActivityUpdate);
@@ -45,20 +49,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
       settingsProvider.newActivity = false;
     } on Exception catch (_) {
       if (!firstLoad)
-        showSnackBar(
-          context,
-          SnackBar(
-            content: Text('Aucune connexion.'),
-          ),
-        );
+        showSnackBar(context, SnackBar(content: Text('Aucune connexion.')));
     } finally {
       _initDone = true;
     }
   }
 
   Widget _itemBuilder(BuildContext context, int index) {
-    var activityProvider =
-        Provider.of<ActivityProvider>(context, listen: false);
+    var activityProvider = Provider.of<ActivityProvider>(
+      context,
+      listen: false,
+    );
     return DifferenceItem(difference: activityProvider.activity[index]);
   }
 
@@ -66,9 +67,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   Widget build(BuildContext context) {
     var activityProvider = Provider.of<ActivityProvider>(context);
 
-    var appBar = AppBar(
-      title: Text('Activité'),
-    );
+    var appBar = AppBar(title: Text('Activité'));
 
     return Scaffold(
       key: _scaffoldKey,

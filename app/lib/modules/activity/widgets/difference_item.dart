@@ -4,10 +4,7 @@ import 'package:timecalendar/modules/activity/models/difference.dart';
 class DifferenceItem extends StatelessWidget {
   final Difference? difference;
 
-  const DifferenceItem({
-    Key? key,
-    this.difference,
-  }) : super(key: key);
+  const DifferenceItem({Key? key, this.difference}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

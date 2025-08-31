@@ -5,10 +5,7 @@ import 'package:timecalendar/modules/home/widgets/horizontal_event_item.dart';
 class HorizontalEvents extends StatelessWidget {
   final List<EventInterface> events;
 
-  const HorizontalEvents({
-    Key? key,
-    required this.events,
-  }) : super(key: key);
+  const HorizontalEvents({Key? key, required this.events}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

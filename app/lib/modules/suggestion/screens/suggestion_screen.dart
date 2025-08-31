@@ -137,13 +137,12 @@ class SuggestionScreen extends HookConsumerWidget {
                   onChanged: (String? newValue) {
                     if (newValue != null) subject.value = newValue;
                   },
-                  items:
-                      SUBJECTS.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                  items: SUBJECTS.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
                 ),
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Adresse e-mail'),

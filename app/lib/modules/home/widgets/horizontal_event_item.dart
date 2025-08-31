@@ -73,9 +73,9 @@ class HorizontalEventItem extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(10),
                             color:
                                 (eventChecklistItems.completedNotes ==
-                                        eventChecklistItems.totalNotes)
-                                    ? Colors.black.withValues(alpha: 0.2)
-                                    : Theme.of(context).primaryColor,
+                                    eventChecklistItems.totalNotes)
+                                ? Colors.black.withValues(alpha: 0.2)
+                                : Theme.of(context).primaryColor,
                           ),
                         ),
                     ],

@@ -15,16 +15,6 @@ platform :android do
       UI.user_error!("google_service_account.json file not found. Please add it to `/ci/keys/google_service_account.json`.")
     end
 
-    # Verify version number is correct
-    if !is_ci && (!options[:version_number])
-      version_number = get_version_from_pubspec()
-      continue = UI.confirm("Deploying version #{version_number} to Play Store. Continue?")
-
-      unless continue
-        UI.user_error!("Aborted")
-      end
-    end
-
     build_flutter_app(
       type: options[:type] || "appbundle",
       no_codesign: options[:no_codesign],

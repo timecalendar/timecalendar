@@ -84,19 +84,17 @@ class HiddenEventsScreen extends ConsumerWidget {
             return HiddenEventItem(
               namedEvent: item.namedEvent!,
               index: index,
-              removeItem:
-                  () => ref
-                      .read(hiddenEventProvider.notifier)
-                      .removeNamedEventByIndex(item.originalNamedIndex),
+              removeItem: () => ref
+                  .read(hiddenEventProvider.notifier)
+                  .removeNamedEventByIndex(item.originalNamedIndex),
             );
           } else {
             return HiddenEventItem(
               event: item.event,
               index: index,
-              removeItem:
-                  () => ref
-                      .read(hiddenEventProvider.notifier)
-                      .removeUidEventByIndex(item.originalUidIndex),
+              removeItem: () => ref
+                  .read(hiddenEventProvider.notifier)
+                  .removeUidEventByIndex(item.originalUidIndex),
             );
           }
         }

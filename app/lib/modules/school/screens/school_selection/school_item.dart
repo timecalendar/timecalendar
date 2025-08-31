@@ -18,10 +18,7 @@ class SchoolItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 15,
-        vertical: 8,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -59,10 +56,7 @@ class SchoolItem extends StatelessWidget {
                 ),
                 SizedBox(width: 10),
                 Flexible(
-                  child: Text(
-                    school.name,
-                    style: TextStyle(fontSize: 18),
-                  ),
+                  child: Text(school.name, style: TextStyle(fontSize: 18)),
                 ),
               ],
             ),

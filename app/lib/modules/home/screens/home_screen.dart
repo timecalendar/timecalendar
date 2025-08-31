@@ -37,32 +37,30 @@ class HomeScreen extends HookConsumerWidget {
         height: double.infinity,
         child: RefreshIndicator(
           child: homeScreenData.when(
-            data:
-                (data) => ListView(
-                  children: <Widget>[
-                    SizedBox(height: 40),
-                    HomeHeader(
-                      dayDisplayedOnHomePage: data.dayDisplayedOnHomePage,
-                      events: data.events,
-                    ),
-                    SizedBox(height: 25),
-                    HorizontalEvents(events: data.events),
-                    SizedBox(height: 25),
-                    TodayHeader(
-                      dayDisplayedOnHomePage: data.dayDisplayedOnHomePage,
-                    ),
-                    SizedBox(height: 10),
-                    if (data.dayDisplayedOnHomePage != null)
-                      TodayEvents(
-                        dayDisplayedOnHomePage: data.dayDisplayedOnHomePage!,
-                        events: data.events,
-                      ),
-                  ],
+            data: (data) => ListView(
+              children: <Widget>[
+                SizedBox(height: 40),
+                HomeHeader(
+                  dayDisplayedOnHomePage: data.dayDisplayedOnHomePage,
+                  events: data.events,
                 ),
+                SizedBox(height: 25),
+                HorizontalEvents(events: data.events),
+                SizedBox(height: 25),
+                TodayHeader(
+                  dayDisplayedOnHomePage: data.dayDisplayedOnHomePage,
+                ),
+                SizedBox(height: 10),
+                if (data.dayDisplayedOnHomePage != null)
+                  TodayEvents(
+                    dayDisplayedOnHomePage: data.dayDisplayedOnHomePage!,
+                    events: data.events,
+                  ),
+              ],
+            ),
             loading: () => Center(child: CircularProgressIndicator()),
-            error:
-                (e, st) =>
-                    Center(child: Text('Error loading home screen data')),
+            error: (e, st) =>
+                Center(child: Text('Error loading home screen data')),
           ),
           onRefresh: () {
             return refreshEvents(context, ref);

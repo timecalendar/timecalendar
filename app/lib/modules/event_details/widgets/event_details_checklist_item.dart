@@ -9,14 +9,14 @@ class EventDetailsChecklistItem extends StatefulWidget {
   final Function onCheckChanged;
   final ChecklistFocusController checklistFocusController;
 
-  EventDetailsChecklistItem(
-      {Key? key,
-      required this.checklistItem,
-      required this.removeItem,
-      required this.onContentChanged,
-      required this.onCheckChanged,
-      required this.checklistFocusController})
-      : super(key: key);
+  EventDetailsChecklistItem({
+    Key? key,
+    required this.checklistItem,
+    required this.removeItem,
+    required this.onContentChanged,
+    required this.onCheckChanged,
+    required this.checklistFocusController,
+  }) : super(key: key);
 
   @override
   _EventDetailsChecklistItemState createState() =>

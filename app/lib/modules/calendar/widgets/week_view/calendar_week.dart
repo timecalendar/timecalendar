@@ -150,12 +150,12 @@ class _CalendarWeekState extends State<CalendarWeek> {
                         right: 0,
                         child:
                             (calendarEvent.endX - calendarEvent.startX) *
-                                        widget.dayWidth >=
-                                    20
-                                ? CalendarRectangleEvent(
-                                  calendarEvent: calendarEvent,
-                                )
-                                : Container(),
+                                    widget.dayWidth >=
+                                20
+                            ? CalendarRectangleEvent(
+                                calendarEvent: calendarEvent,
+                              )
+                            : Container(),
                       ),
                     ],
                   ),
@@ -204,12 +204,12 @@ class _CalendarWeekState extends State<CalendarWeek> {
                             style: TextStyle(
                               color:
                                   AppDateUtils.isToday(
-                                        widget.firstDayOfWeek.add(
-                                          Duration(days: day),
-                                        ),
-                                      )
-                                      ? Theme.of(context).colorScheme.secondary
-                                      : Colors.grey[500],
+                                    widget.firstDayOfWeek.add(
+                                      Duration(days: day),
+                                    ),
+                                  )
+                                  ? Theme.of(context).colorScheme.secondary
+                                  : Colors.grey[500],
                             ),
                           ),
                           Container(
@@ -234,23 +234,23 @@ class _CalendarWeekState extends State<CalendarWeek> {
                             ),
                             decoration:
                                 (AppDateUtils.isToday(
-                                      widget.firstDayOfWeek.add(
-                                        Duration(days: day),
+                                  widget.firstDayOfWeek.add(
+                                    Duration(days: day),
+                                  ),
+                                ))
+                                ? BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        offset: Offset(0, 3),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondary
+                                            .withValues(alpha: 0.4),
                                       ),
-                                    ))
-                                    ? BoxDecoration(
-                                      borderRadius: BorderRadius.circular(15),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          offset: Offset(0, 3),
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .secondary
-                                              .withValues(alpha: 0.4),
-                                        ),
-                                      ],
-                                    )
-                                    : null,
+                                    ],
+                                  )
+                                : null,
                           ),
                         ],
                       ),

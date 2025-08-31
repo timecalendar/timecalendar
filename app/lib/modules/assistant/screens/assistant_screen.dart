@@ -49,34 +49,33 @@ class AssistantScreen extends HookConsumerWidget {
       ref.read(environmentProvider).mainWebUrl,
     ).replace(queryParameters: queryParameters, path: '/assistants');
 
-    final controller =
-        WebViewController()
-          ..setJavaScriptMode(JavaScriptMode.unrestricted)
-          ..addJavaScriptChannel(
-            'NativeApp',
-            onMessageReceived: (message) async {
-              final parsed = jsonDecode(message.message);
-              if (parsed['name'] == 'calendarCreated')
-                onCalendarCreated(parsed['payload']['token']);
-              else if (parsed['name'] == 'fallbackRequested')
-                Navigator.of(context).pop(AssistantFinishedResult.fallback());
-              else if (parsed['name'] == 'assistantEnded')
-                Navigator.of(context).pop(AssistantFinishedResult.done());
-            },
-          )
-          ..setBackgroundColor(const Color(0x00000000))
-          ..setNavigationDelegate(
-            NavigationDelegate(
-              onProgress: (int progress) {},
-              onPageStarted: (String url) {},
-              onPageFinished: (String url) {},
-              onWebResourceError: (WebResourceError error) {},
-              onNavigationRequest: (NavigationRequest request) {
-                return NavigationDecision.navigate;
-              },
-            ),
-          )
-          ..loadRequest(url);
+    final controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'NativeApp',
+        onMessageReceived: (message) async {
+          final parsed = jsonDecode(message.message);
+          if (parsed['name'] == 'calendarCreated')
+            onCalendarCreated(parsed['payload']['token']);
+          else if (parsed['name'] == 'fallbackRequested')
+            Navigator.of(context).pop(AssistantFinishedResult.fallback());
+          else if (parsed['name'] == 'assistantEnded')
+            Navigator.of(context).pop(AssistantFinishedResult.done());
+        },
+      )
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {},
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
+      ..loadRequest(url);
 
     return Scaffold(
       appBar: AppBar(title: Text('Importer votre calendrier')),

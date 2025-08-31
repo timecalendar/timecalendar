@@ -40,11 +40,10 @@ class CalendarSyncService {
     final apiClient = ref.read(apiClientProvider);
     final response = await apiClient.calendarsApi().syncCalendars(
       syncCalendarsDto: SyncCalendarsDto(
-        (dto) =>
-            dto
-              ..tokens = ListBuilder(
-                userCalendars.map((calendar) => calendar.token),
-              ),
+        (dto) => dto
+          ..tokens = ListBuilder(
+            userCalendars.map((calendar) => calendar.token),
+          ),
       ),
     );
     return response.data!.toList();
@@ -53,18 +52,17 @@ class CalendarSyncService {
   Future<void> _putEventsToDatabase(
     List<CalendarWithContent> calendarsWithContent,
   ) async {
-    final events =
-        calendarsWithContent
-            .map(
-              (calendar) => calendar.events.map(
-                (event) => CalendarEvent.fromApi(
-                  event,
-                  userCalendarId: calendar.calendar.id,
-                ),
-              ),
-            )
-            .expand((calendar) => calendar)
-            .toList();
+    final events = calendarsWithContent
+        .map(
+          (calendar) => calendar.events.map(
+            (event) => CalendarEvent.fromApi(
+              event,
+              userCalendarId: calendar.calendar.id,
+            ),
+          ),
+        )
+        .expand((calendar) => calendar)
+        .toList();
     await ref.read(calendarEventRepositoryProvider).putCalendarEvents(events);
   }
 }

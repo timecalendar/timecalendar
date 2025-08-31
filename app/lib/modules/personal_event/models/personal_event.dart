@@ -27,16 +27,15 @@ abstract class PersonalEvent
 
   factory PersonalEvent.fromInternalDb(Map<String, dynamic> map) {
     return PersonalEvent(
-      (event) =>
-          event
-            ..uid = map['uid']
-            ..title = map['title']
-            ..color = ColorUtils.hexToColor(map['color'])
-            ..startsAt = DateTime.parse(map['startsAt']).toLocal()
-            ..endsAt = DateTime.parse(map['endsAt']).toLocal()
-            ..location = map['location']
-            ..description = map['description']
-            ..exportedAt = DateTime.parse(map['exportedAt']).toLocal(),
+      (event) => event
+        ..uid = map['uid']
+        ..title = map['title']
+        ..color = ColorUtils.hexToColor(map['color'])
+        ..startsAt = DateTime.parse(map['startsAt']).toLocal()
+        ..endsAt = DateTime.parse(map['endsAt']).toLocal()
+        ..location = map['location']
+        ..description = map['description']
+        ..exportedAt = DateTime.parse(map['exportedAt']).toLocal(),
     );
   }
 
