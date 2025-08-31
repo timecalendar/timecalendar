@@ -50,14 +50,17 @@ class ConnectScreen extends HookConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
-                                CustomButton(
-                                  onPressed: () {
-                                    UrlLauncher.openUrl(
-                                      provider.school!.intranetUrl!,
-                                    );
-                                  },
-                                  icon: FontAwesomeIcons.upRightFromSquare,
-                                  text: provider.school?.name ?? 'Se connecter',
+                                Flexible(
+                                  child: CustomButton(
+                                    onPressed: () {
+                                      UrlLauncher.openUrl(
+                                        provider.school!.intranetUrl!,
+                                      );
+                                    },
+                                    icon: FontAwesomeIcons.upRightFromSquare,
+                                    text:
+                                        provider.school?.name ?? 'Se connecter',
+                                  ),
                                 ),
                               ],
                             ),

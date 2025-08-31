@@ -57,4 +57,7 @@ class Constants {
     ),
   };
   static const currentVersion = 3;
+
+  // Status page URL
+  static const statusPageUrl = 'https://status.timecalendar.app/';
 }

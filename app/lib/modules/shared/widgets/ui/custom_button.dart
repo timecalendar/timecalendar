@@ -47,6 +47,7 @@ class CustomButton extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     if (loading)
                       Container(
@@ -75,13 +76,16 @@ class CustomButton extends StatelessWidget {
                         ),
                         margin: EdgeInsets.only(right: 12),
                       ),
-                    Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: 15.0,
-                        color: outline
-                            ? Theme.of(context).primaryColor
-                            : Colors.white,
+                    Flexible(
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: 15.0,
+                          color: outline
+                              ? Theme.of(context).primaryColor
+                              : Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],
