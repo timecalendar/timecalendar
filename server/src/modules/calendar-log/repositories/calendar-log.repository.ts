@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
-import { DeepPartial, Repository } from "typeorm"
+import { DeepPartial, Repository, In } from "typeorm"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 
 @Injectable()
@@ -18,6 +18,14 @@ export class CalendarLogRepository {
     return this.repository.find({
       relations: { calendar: true },
       where: { calendar: { id: calendarId } },
+      order: { createdAt: "DESC" },
+    })
+  }
+
+  findByCalendarTokens(tokens: string[]) {
+    return this.repository.find({
+      relations: { calendar: true },
+      where: { calendar: { token: In(tokens) } },
       order: { createdAt: "DESC" },
     })
   }

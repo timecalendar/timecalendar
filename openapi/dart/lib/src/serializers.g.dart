@@ -7,9 +7,12 @@ part of 'serializers.dart';
 // **************************************************************************
 
 Serializers _$serializers = (Serializers().toBuilder()
+      ..add(CalendarChangeGet.serializer)
       ..add(CalendarEventCustomFields.serializer)
       ..add(CalendarEventForPublic.serializer)
       ..add(CalendarForPublic.serializer)
+      ..add(CalendarLogEventGet.serializer)
+      ..add(CalendarLogGet.serializer)
       ..add(CalendarWithContent.serializer)
       ..add(CreateCalendarDto.serializer)
       ..add(CreateCalendarRepDto.serializer)
@@ -17,6 +20,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(EventTypeEnum.serializer)
       ..add(FindSchoolGroupsRepDto.serializer)
       ..add(FindSchoolsRepDto.serializer)
+      ..add(GetCalendarLogsDto.serializer)
       ..add(GetSchoolGroupsIcalUrlDto.serializer)
       ..add(GetSchoolGroupsIcalUrlRepDto.serializer)
       ..add(NotificationSubscriptionCreate.serializer)
@@ -33,6 +37,17 @@ Serializers _$serializers = (Serializers().toBuilder()
               BuiltList, const [const FullType(CalendarEventForPublic)]),
           () => ListBuilder<CalendarEventForPublic>())
       ..addBuilderFactory(
+          const FullType(
+              BuiltList, const [const FullType(CalendarLogEventGet)]),
+          () => ListBuilder<CalendarLogEventGet>())
+      ..addBuilderFactory(
+          const FullType(
+              BuiltList, const [const FullType(CalendarLogEventGet)]),
+          () => ListBuilder<CalendarLogEventGet>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
+      ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolForList)]),
           () => ListBuilder<SchoolForList>())
       ..addBuilderFactory(
@@ -44,6 +59,9 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolGroupItem)]),
           () => ListBuilder<SchoolGroupItem>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(String)]),
           () => ListBuilder<String>())
