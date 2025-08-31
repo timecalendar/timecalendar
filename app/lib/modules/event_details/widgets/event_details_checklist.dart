@@ -37,7 +37,10 @@ class EventDetailsChecklist extends HookConsumerWidget {
     }
 
     Widget buildChecklist(
-        BuildContext context, int index, List<ChecklistItem> items) {
+      BuildContext context,
+      int index,
+      List<ChecklistItem> items,
+    ) {
       return EventDetailsChecklistItem(
         key: Key(items[index].uuid!),
         checklistItem: items[index],

@@ -3,7 +3,9 @@ import 'package:timecalendar/modules/event_details/controllers/checklist_focus_c
 import 'package:timecalendar/modules/event_details/models/checklist_item.dart';
 
 useChecklistAutoFocus(
-    ChecklistFocusController controller, List<ChecklistItem> items) {
+  ChecklistFocusController controller,
+  List<ChecklistItem> items,
+) {
   final nbItems = useState(-1);
 
   useEffect(() {

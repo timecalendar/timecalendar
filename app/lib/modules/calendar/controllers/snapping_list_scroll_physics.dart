@@ -6,11 +6,11 @@ class SnappingListScrollPhysics extends ScrollPhysics {
   final double mainAxisStartPadding;
   final double itemExtent;
 
-  const SnappingListScrollPhysics(
-      {ScrollPhysics? parent,
-      this.mainAxisStartPadding = 0.0,
-      required this.itemExtent})
-      : super(parent: parent);
+  const SnappingListScrollPhysics({
+    ScrollPhysics? parent,
+    this.mainAxisStartPadding = 0.0,
+    required this.itemExtent,
+  }) : super(parent: parent);
 
   @override
   SnappingListScrollPhysics applyTo(ScrollPhysics? ancestor) {
@@ -30,7 +30,10 @@ class SnappingListScrollPhysics extends ScrollPhysics {
   }
 
   double _getTargetPixels(
-      ScrollPosition position, Tolerance tolerance, double velocity) {
+    ScrollPosition position,
+    Tolerance tolerance,
+    double velocity,
+  ) {
     double item = _getItem(position);
     if (velocity < -tolerance.velocity) {
       item -= 0.5;
@@ -42,13 +45,18 @@ class SnappingListScrollPhysics extends ScrollPhysics {
 
   @override
   Simulation? createBallisticSimulation(
-      ScrollMetrics position, double velocity) {
+    ScrollMetrics position,
+    double velocity,
+  ) {
     if ((velocity <= 0.0 && position.pixels <= position.minScrollExtent) ||
         (velocity >= 0.0 && position.pixels >= position.maxScrollExtent))
       return super.createBallisticSimulation(position, velocity);
     final Tolerance tolerance = this.toleranceFor(position);
-    final double target =
-        _getTargetPixels(position as ScrollPosition, tolerance, velocity);
+    final double target = _getTargetPixels(
+      position as ScrollPosition,
+      tolerance,
+      velocity,
+    );
     if (target != position.pixels) {
       return ScrollSpringSimulation(
         spring,

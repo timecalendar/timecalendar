@@ -28,5 +28,6 @@ class PersonalEventRepository {
   }
 }
 
-final personalEventRepositoryProvider =
-    Provider((ref) => PersonalEventRepository(ref));
+final personalEventRepositoryProvider = Provider(
+  (ref) => PersonalEventRepository(ref),
+);

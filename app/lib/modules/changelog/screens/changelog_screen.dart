@@ -73,8 +73,10 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   }
 
   void getChangelogList(bool displayAllChangelog) {
-    int? currentVersion =
-        Provider.of<SettingsProvider>(context, listen: false).currentVersion;
+    int? currentVersion = Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    ).currentVersion;
     changelogList = [];
     Constants.changelogs.keys
         .where((item) => displayAllChangelog ? true : item > currentVersion!)

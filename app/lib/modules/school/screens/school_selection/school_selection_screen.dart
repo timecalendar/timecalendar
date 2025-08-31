@@ -15,7 +15,10 @@ class SelectSchool extends HookConsumerWidget {
   SelectSchool({Key? key}) : super(key: key);
 
   void selectSchool(
-      BuildContext context, WidgetRef ref, SchoolForList? school) {
+    BuildContext context,
+    WidgetRef ref,
+    SchoolForList? school,
+  ) {
     final notifier = ref.read(assistantProvider.notifier);
     notifier.school = school;
     notifier.navigateToNextStep(context, AssistantStepEnum.SELECT_SCHOOL);
@@ -26,14 +29,16 @@ class SelectSchool extends HookConsumerWidget {
     final scrollController = useScrollController();
 
     ref.listen<AsyncValue<BuiltList<SchoolForList>>>(
-        schoolSelectionControllerProvider, (_, value) {
-      value.whenOrNull(
-        error: (e, st) => showSnackBar(
-          context,
-          SnackBar(content: Text('Aucune connexion.')),
-        ),
-      );
-    });
+      schoolSelectionControllerProvider,
+      (_, value) {
+        value.whenOrNull(
+          error: (e, st) => showSnackBar(
+            context,
+            SnackBar(content: Text('Aucune connexion.')),
+          ),
+        );
+      },
+    );
 
     return Scaffold(
       body: RefreshIndicator(

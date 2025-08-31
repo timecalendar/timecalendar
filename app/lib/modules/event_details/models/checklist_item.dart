@@ -32,12 +32,15 @@ class ChecklistItem {
       content: map['content'],
       isChecked: map['isChecked'],
       order: map['order'],
-      createdAt:
-          map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
-      updatedAt:
-          map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
-      deletedAt:
-          map['deletedAt'] != null ? DateTime.parse(map['deletedAt']) : null,
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
+          : null,
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.parse(map['updatedAt'])
+          : null,
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.parse(map['deletedAt'])
+          : null,
     );
   }
 

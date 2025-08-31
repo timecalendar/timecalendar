@@ -55,10 +55,9 @@ class CalendarEvent implements EventInterface {
       description: calendar.description,
       teachers: calendar.teachers.toList(),
       tags: calendar.tags.map((tag) => EventTag.fromApi(tag)).toList(),
-      fields:
-          calendar.fields != null
-              ? CalendarEventCustomFields.fromApi(calendar.fields!)
-              : null,
+      fields: calendar.fields != null
+          ? CalendarEventCustomFields.fromApi(calendar.fields!)
+          : null,
       exportedAt: calendar.exportedAt,
       userCalendarId: userCalendarId ?? '',
     );
@@ -76,14 +75,12 @@ class CalendarEvent implements EventInterface {
       allDay: map['allDay'],
       description: map['description'],
       teachers: List<String>.from(map['teachers']),
-      tags:
-          List<Map<String, dynamic>>.from(
-            map['tags'],
-          ).map((tag) => EventTag.fromDb(tag)).toList(),
-      fields:
-          map['fields'] != null
-              ? CalendarEventCustomFields.fromInternalDb(map['fields'])
-              : null,
+      tags: List<Map<String, dynamic>>.from(
+        map['tags'],
+      ).map((tag) => EventTag.fromDb(tag)).toList(),
+      fields: map['fields'] != null
+          ? CalendarEventCustomFields.fromInternalDb(map['fields'])
+          : null,
       exportedAt: DateTime.parse(map['exportedAt']).toLocal(),
       userCalendarId:
           map['userCalendarId'] ?? '', // null safety for backward compatibility

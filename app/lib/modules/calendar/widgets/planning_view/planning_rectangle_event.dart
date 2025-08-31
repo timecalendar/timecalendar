@@ -7,34 +7,29 @@ import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
 class PlanningRectangleEvent extends ConsumerWidget {
   const PlanningRectangleEvent({Key? key, required this.event})
-      : super(key: key);
+    : super(key: key);
 
   final EventInterface event;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final eventChecklistItems =
-        ref.watch(getEventNbChecklistItemsProvider)(event.uid);
+    final eventChecklistItems = ref.watch(getEventNbChecklistItemsProvider)(
+      event.uid,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
           event.title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         if (event.location != null && event.location!.length > 0)
           Container(
             child: Wrap(
               children: <Widget>[
                 Text(
-                  "${AppDateUtils.eventPlanningDateTimeText(
-                    event.startsAt,
-                    event.endsAt,
-                  )} (${event.location})",
+                  "${AppDateUtils.eventPlanningDateTimeText(event.startsAt, event.endsAt)} (${event.location})",
                 ),
               ],
             ),
@@ -44,10 +39,7 @@ class PlanningRectangleEvent extends ConsumerWidget {
             padding: EdgeInsets.only(top: 10),
             child: Wrap(
               children: <Widget>[
-                Icon(
-                  FontAwesomeIcons.squareCheck,
-                  size: 16,
-                ),
+                Icon(FontAwesomeIcons.squareCheck, size: 16),
                 SizedBox(width: 5),
                 Text(
                   "${eventChecklistItems.completedNotes}/${eventChecklistItems.totalNotes}",

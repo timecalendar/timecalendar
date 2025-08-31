@@ -32,16 +32,8 @@ class ProfileItem extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: <Widget>[
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ),
-                    if (unread)
-                      SizedBox(
-                        width: 10,
-                      ),
+                    Text(title, style: TextStyle(fontSize: 18)),
+                    if (unread) SizedBox(width: 10),
                     if (unread)
                       Container(
                         height: 6,
@@ -54,21 +46,18 @@ class ProfileItem extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                icon,
-                size: 20,
-              ),
+              Icon(icon, size: 20),
             ],
           ),
         ),
         decoration: BoxDecoration(
-            border: Border(
-              bottom:
-                  BorderSide(color: settingsProvider.currentTheme.lineColor),
-            ),
-            color: unread
-                ? Theme.of(context).primaryColorLight
-                : Colors.transparent),
+          border: Border(
+            bottom: BorderSide(color: settingsProvider.currentTheme.lineColor),
+          ),
+          color: unread
+              ? Theme.of(context).primaryColorLight
+              : Colors.transparent,
+        ),
       ),
     );
   }

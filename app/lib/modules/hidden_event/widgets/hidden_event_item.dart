@@ -28,12 +28,7 @@ class HiddenEventItem extends ConsumerWidget {
       if (event == null) return null;
 
       var text = AppDateUtils.eventDateTimeText(event!.startsAt, event!.endsAt);
-      return Text(
-        text,
-        style: TextStyle(
-          fontSize: 14,
-        ),
-      );
+      return Text(text, style: TextStyle(fontSize: 14));
     }
 
     Widget getTextCategory(BuildContext context) {
@@ -56,10 +51,7 @@ class HiddenEventItem extends ConsumerWidget {
           child: getTextCategory(context),
         );
       } else {
-        return SizedBox(
-          width: 0.0,
-          height: 0.0,
-        );
+        return SizedBox(width: 0.0, height: 0.0);
       }
     }
 
@@ -87,9 +79,7 @@ class HiddenEventItem extends ConsumerWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        SizedBox(
-                          height: 10,
-                        ),
+                        SizedBox(height: 10),
                         infoText() ?? SizedBox(),
                       ],
                     ),
@@ -99,9 +89,7 @@ class HiddenEventItem extends ConsumerWidget {
                     children: <Widget>[
                       Container(
                         padding: EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(shape: BoxShape.circle),
                         child: IconButton(
                           tooltip: (event != null)
                               ? "Afficher l'événement"
@@ -109,9 +97,9 @@ class HiddenEventItem extends ConsumerWidget {
                           icon: Icon(Icons.delete_outline),
                           onPressed: () => this.removeItem(),
                         ),
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -120,7 +108,7 @@ class HiddenEventItem extends ConsumerWidget {
               borderRadius: BorderRadius.circular(15),
             ),
           ),
-        )
+        ),
       ],
     );
   }

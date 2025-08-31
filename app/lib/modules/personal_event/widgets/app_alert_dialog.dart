@@ -16,7 +16,7 @@ class AppAlertDialog extends StatelessWidget {
   final List<AppAlertDialogAction>? actions;
 
   const AppAlertDialog({Key? key, this.title, this.content, this.actions})
-      : super(key: key);
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,10 +25,12 @@ class AppAlertDialog extends StatelessWidget {
       title: Text(title!),
       content: content,
       actions: actions!
-          .map((action) => TextButton(
-                child: Text(action.text!),
-                onPressed: action.onPressed,
-              ))
+          .map(
+            (action) => TextButton(
+              child: Text(action.text!),
+              onPressed: action.onPressed,
+            ),
+          )
           .toList(),
     );
   }

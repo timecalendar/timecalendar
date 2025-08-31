@@ -15,10 +15,7 @@ class SplashScreen extends HookConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Container(
-              width: 150,
-              child: Image.asset('assets/images/logo.png'),
-            ),
+            Container(width: 150, child: Image.asset('assets/images/logo.png')),
           ],
         ),
       ),

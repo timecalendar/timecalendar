@@ -11,32 +11,25 @@ class HomeRectangleEvent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final eventChecklistItems =
-        ref.watch(getEventNbChecklistItemsProvider)(event.uid);
+    final eventChecklistItems = ref.watch(getEventNbChecklistItemsProvider)(
+      event.uid,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
           event.title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
         ),
         if (event.location != null && event.location!.length > 0)
           Container(
             padding: EdgeInsets.only(top: 10),
             child: Wrap(
               children: <Widget>[
-                Icon(
-                  Icons.location_on,
-                  size: 16,
-                ),
+                Icon(Icons.location_on, size: 16),
                 SizedBox(width: 5),
-                Text(
-                  event.location!,
-                ),
+                Text(event.location!),
               ],
             ),
           ),
@@ -45,10 +38,7 @@ class HomeRectangleEvent extends ConsumerWidget {
             padding: EdgeInsets.only(top: 10),
             child: Wrap(
               children: <Widget>[
-                Icon(
-                  FontAwesomeIcons.squareCheck,
-                  size: 16,
-                ),
+                Icon(FontAwesomeIcons.squareCheck, size: 16),
                 SizedBox(width: 5),
                 Text(
                   "${eventChecklistItems.completedNotes}/${eventChecklistItems.totalNotes}",

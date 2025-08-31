@@ -37,5 +37,6 @@ class HiddenEventRepository {
   }
 }
 
-final hiddenEventRepositoryProvider =
-    Provider((ref) => HiddenEventRepository());
+final hiddenEventRepositoryProvider = Provider(
+  (ref) => HiddenEventRepository(),
+);

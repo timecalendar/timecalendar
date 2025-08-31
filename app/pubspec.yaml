@@ -15,7 +15,7 @@ publish_to: none
 version: 3.1.0+134
 
 environment:
-  sdk: ">=3.7.2 <4.0.0"
+  sdk: ">=3.9.0 <4.0.0"
 
 dependencies:
   build_runner: ^2.1.7
@@ -50,7 +50,7 @@ dependencies:
   hooks_riverpod: ^2.6.1
   http: ^1.1.0
   intl: ^0.20.2
-  json_annotation: ^4.4.0
+  json_annotation: ^4.9.0
   json_serializable: ^6.1.4
   mobile_scanner: ^7.0.1
   package_info_plus: ^8.3.0

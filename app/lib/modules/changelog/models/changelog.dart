@@ -4,10 +4,7 @@ class Changelog {
   final String version;
   final List<ChangelogItem> changelogItems;
 
-  const Changelog({
-    required this.version,
-    required this.changelogItems,
-  });
+  const Changelog({required this.version, required this.changelogItems});
 
   @override
   String toString() {

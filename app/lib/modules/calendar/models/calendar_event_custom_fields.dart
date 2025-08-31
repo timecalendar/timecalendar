@@ -14,16 +14,16 @@ class CalendarEventCustomFields {
   });
 
   CalendarEventCustomFields.fromApi(api.CalendarEventCustomFields fields)
-      : canceled = fields.canceled,
-        shortDescription = fields.shortDescription,
-        subject = fields.subject,
-        groupColor = fields.groupColor;
+    : canceled = fields.canceled,
+      shortDescription = fields.shortDescription,
+      subject = fields.subject,
+      groupColor = fields.groupColor;
 
   CalendarEventCustomFields.fromInternalDb(Map<String, dynamic> map)
-      : canceled = map['canceled'],
-        shortDescription = map['shortDescription'],
-        subject = map['subject'],
-        groupColor = map['groupColor'];
+    : canceled = map['canceled'],
+      shortDescription = map['shortDescription'],
+      subject = map['subject'],
+      groupColor = map['groupColor'];
 
   Map<String, dynamic> toDbMap() {
     return {

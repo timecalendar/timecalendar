@@ -48,9 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _indicator(bool isActive) {
     return AnimatedContainer(
       duration: Duration(milliseconds: 150),
-      margin: EdgeInsets.symmetric(
-        horizontal: 8.0,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 8.0),
       height: 8.0,
       width: isActive ? 24.0 : 16.0,
       decoration: BoxDecoration(
@@ -62,7 +60,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void closeOnboarding(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(
-        context, SelectSchool.routeName, (_) => false);
+      context,
+      SelectSchool.routeName,
+      (_) => false,
+    );
   }
 
   @override
@@ -76,10 +77,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: [0.1, 0.9],
-            colors: [
-              Color(0xFFF76262),
-              Color(0xFFE66B9A),
-            ],
+            colors: [Color(0xFFF76262), Color(0xFFE66B9A)],
           ),
         ),
         child: Padding(
@@ -130,20 +128,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               height: mediaQuery.size.height * 0.25,
                             ),
                           ),
-                          SizedBox(
-                            height: 30.0,
-                          ),
-                          Text(
-                            'Consultez votre agenda',
-                            style: kTitleStyle,
-                          ),
-                          SizedBox(
-                            height: 15.0,
-                          ),
+                          SizedBox(height: 30.0),
+                          Text('Consultez votre agenda', style: kTitleStyle),
+                          SizedBox(height: 15.0),
                           Text(
                             'Nous récupérons votre calendrier directement auprès de votre établissement',
                             style: kSubtitleStyle,
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -155,25 +146,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         children: <Widget>[
                           Center(
                             child: Image(
-                              image:
-                                  AssetImage('assets/images/notifications.png'),
+                              image: AssetImage(
+                                'assets/images/notifications.png',
+                              ),
                               height: mediaQuery.size.height * 0.25,
                             ),
                           ),
-                          SizedBox(
-                            height: 30.0,
-                          ),
-                          Text(
-                            'Recevez des notifications',
-                            style: kTitleStyle,
-                          ),
-                          SizedBox(
-                            height: 15.0,
-                          ),
+                          SizedBox(height: 30.0),
+                          Text('Recevez des notifications', style: kTitleStyle),
+                          SizedBox(height: 15.0),
                           Text(
                             'Soyez alerté lors d\'un ajout, d\'une modification ou d\'une suppression de cours',
                             style: kSubtitleStyle,
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -189,16 +174,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               height: mediaQuery.size.height * 0.25,
                             ),
                           ),
-                          SizedBox(
-                            height: 30.0,
-                          ),
+                          SizedBox(height: 30.0),
                           Text(
                             'Bienvenue dans TimeCalendar !',
                             style: kTitleStyle,
                           ),
-                          SizedBox(
-                            height: 15.0,
-                          ),
+                          SizedBox(height: 15.0),
                           Text(
                             'Consultez votre emploi du temps universitaire',
                             style: kSubtitleStyle,
@@ -241,9 +222,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     fontSize: 20.0,
                                   ),
                                 ),
-                                SizedBox(
-                                  width: 10.0,
-                                ),
+                                SizedBox(width: 10.0),
                                 Icon(
                                   Icons.arrow_forward,
                                   color: Colors.white,
@@ -265,9 +244,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               height: 80.0 + paddingBottom,
               width: double.infinity,
               color: Colors.white,
-              padding: EdgeInsets.only(
-                bottom: paddingBottom,
-              ),
+              padding: EdgeInsets.only(bottom: paddingBottom),
               child: TextButton(
                 onPressed: () {
                   closeOnboarding(context);

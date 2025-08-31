@@ -16,10 +16,7 @@ class SchoolList extends HookConsumerWidget {
   }) : super(key: key);
 
   Widget _itemBuilder(SchoolForList school) {
-    return SchoolItem(
-      school: school,
-      onSchoolSelect: onSchoolSelect,
-    );
+    return SchoolItem(school: school, onSchoolSelect: onSchoolSelect);
   }
 
   @override
@@ -27,10 +24,12 @@ class SchoolList extends HookConsumerWidget {
     final schools = ref.watch(schoolSelectionControllerProvider);
     final filtered = ref.watch(schoolFilteredProvider);
 
-    schools.whenOrNull(error: (err, stack) {
-      print(err);
-      print(stack);
-    });
+    schools.whenOrNull(
+      error: (err, stack) {
+        print(err);
+        print(stack);
+      },
+    );
 
     return schools.when(
       data: (_) => SliverList(
@@ -42,11 +41,8 @@ class SchoolList extends HookConsumerWidget {
         ),
       ),
       error: (err, stack) => SliverToBoxAdapter(),
-      loading: () => SliverToBoxAdapter(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      loading: () =>
+          SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
     );
   }
 }

@@ -41,10 +41,6 @@ class EventTag {
   }
 
   Map<String, dynamic> toDbMap() {
-    return {
-      'name': name,
-      'color': ColorUtils.colorToHex(color),
-      'icon': icon,
-    };
+    return {'name': name, 'color': ColorUtils.colorToHex(color), 'icon': icon};
   }
 }

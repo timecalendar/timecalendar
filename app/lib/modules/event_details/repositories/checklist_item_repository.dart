@@ -14,8 +14,8 @@ class ChecklistItemRepository {
   ChecklistItemRepository(this.ref);
 
   static const String STORE_NAME = 'checklist_items';
-  final StoreRef<String?, Map<String, Object?>> _store =
-      stringMapStoreFactory.store(STORE_NAME);
+  final StoreRef<String?, Map<String, Object?>> _store = stringMapStoreFactory
+      .store(STORE_NAME);
 
   Database get _db => this.ref.read(databaseProvider);
 
@@ -42,24 +42,16 @@ class ChecklistItemRepository {
 
   Future delete(String? uuid) async {
     final finder = Finder(filter: Filter.byKey(uuid));
-    await _store.delete(
-      _db,
-      finder: finder,
-    );
+    await _store.delete(_db, finder: finder);
   }
 
   Future<List<ChecklistItem>> findAllByEventUid(String? eventUid) async {
     final finder = Finder(
       filter: Filter.equals('eventUid', eventUid),
-      sortOrders: [
-        SortOrder('order'),
-      ],
+      sortOrders: [SortOrder('order')],
     );
 
-    final records = await _store.find(
-      _db,
-      finder: finder,
-    );
+    final records = await _store.find(_db, finder: finder);
 
     return records.map((record) {
       final checklistItem = ChecklistItem.fromMap(record.value);
@@ -89,5 +81,6 @@ class ChecklistItemRepository {
   }
 }
 
-final checklistItemRepositoryProvider =
-    Provider((ref) => ChecklistItemRepository(ref));
+final checklistItemRepositoryProvider = Provider(
+  (ref) => ChecklistItemRepository(ref),
+);

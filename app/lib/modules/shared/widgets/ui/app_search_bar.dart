@@ -10,8 +10,8 @@ class AppSearchBar extends StatelessWidget {
     this.placeholder,
     this.onTap,
     required TextEditingController searchFieldController,
-  })  : _searchFieldController = searchFieldController,
-        super(key: key);
+  }) : _searchFieldController = searchFieldController,
+       super(key: key);
 
   final Function(String)? onChanged;
   final Function? onTap;

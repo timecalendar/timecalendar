@@ -32,11 +32,10 @@ class EventsForViewNotifier extends AsyncNotifier<List<EventInterface>> {
     final hiddenEvents = ref.watch(hiddenEventProvider);
     final userCalendars = await ref.watch(userCalendarProvider.future);
 
-    final visibleUserCalendarIds =
-        userCalendars
-            .where((calendar) => calendar.visible)
-            .map((calendar) => calendar.id)
-            .toSet();
+    final visibleUserCalendarIds = userCalendars
+        .where((calendar) => calendar.visible)
+        .map((calendar) => calendar.id)
+        .toSet();
 
     return events
         .where(

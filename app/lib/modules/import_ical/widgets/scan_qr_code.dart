@@ -20,7 +20,8 @@ class ScanQrCode extends StatelessWidget {
           return AlertDialog(
             title: new Text("Permission refusée"),
             content: new Text(
-                "Vous devez autoriser l'application à utiliser votre appareil photo pour scanner le QR code."),
+              "Vous devez autoriser l'application à utiliser votre appareil photo pour scanner le QR code.",
+            ),
             actions: <Widget>[
               new TextButton(
                 child: new Text("Paramètres"),
@@ -41,8 +42,9 @@ class ScanQrCode extends StatelessWidget {
       );
     }
 
-    final result =
-        await Navigator.of(context).pushNamed(QrCodeScreen.routeName);
+    final result = await Navigator.of(
+      context,
+    ).pushNamed(QrCodeScreen.routeName);
 
     if (result is QrCodeResult && result.url != null) {
       this.onScan(result.url!);

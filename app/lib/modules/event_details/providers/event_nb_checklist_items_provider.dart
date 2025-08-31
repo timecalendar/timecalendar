@@ -14,9 +14,11 @@ class EventNbChecklistItemsNotifier
   }
 }
 
-final eventNbChecklistItemsProvider = StateNotifierProvider<
-        EventNbChecklistItemsNotifier, Map<String, ChecklistItemEventCount>>(
-    (ref) => EventNbChecklistItemsNotifier(ref));
+final eventNbChecklistItemsProvider =
+    StateNotifierProvider<
+      EventNbChecklistItemsNotifier,
+      Map<String, ChecklistItemEventCount>
+    >((ref) => EventNbChecklistItemsNotifier(ref));
 
 final getEventNbChecklistItemsProvider = Provider((ref) {
   final eventNbChecklistItems = ref.watch(eventNbChecklistItemsProvider);

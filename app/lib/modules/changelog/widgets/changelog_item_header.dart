@@ -3,10 +3,8 @@ import 'package:timecalendar/modules/changelog/models/changelog.dart';
 
 class ChangelogItemHeader extends StatelessWidget {
   final Changelog? changelog;
-  const ChangelogItemHeader({
-    Key? key,
-    required this.changelog,
-  }) : super(key: key);
+  const ChangelogItemHeader({Key? key, required this.changelog})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {

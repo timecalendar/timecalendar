@@ -13,9 +13,9 @@ class CalendarHoursColumn extends StatelessWidget {
     required this.nbHours,
     required this.startHour,
     required SyncScrollController? syncScroll,
-  })  : _hourScrollController = hourScrollController,
-        _syncScroll = syncScroll,
-        super(key: key);
+  }) : _hourScrollController = hourScrollController,
+       _syncScroll = syncScroll,
+       super(key: key);
 
   final double screenHeight;
   final double leftHoursWidth;
@@ -34,10 +34,7 @@ class CalendarHoursColumn extends StatelessWidget {
       width: leftHoursWidth,
       child: Column(
         children: <Widget>[
-          Container(
-            height: headerHeight,
-            width: leftHoursWidth,
-          ),
+          Container(height: headerHeight, width: leftHoursWidth),
           Container(
             height: calendarHeight,
             width: leftHoursWidth,
@@ -66,8 +63,10 @@ class CalendarHoursColumn extends StatelessWidget {
                 ),
               ),
               onNotification: (ScrollNotification scrollInfo) {
-                _syncScroll!
-                    .processNotification(scrollInfo, _hourScrollController);
+                _syncScroll!.processNotification(
+                  scrollInfo,
+                  _hourScrollController,
+                );
                 return false;
               },
             ),

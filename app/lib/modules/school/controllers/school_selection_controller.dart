@@ -8,9 +8,8 @@ class SchoolSelectionController
     extends StateNotifier<AsyncValue<BuiltList<SchoolForList>>> {
   final ApiClient client;
 
-  SchoolSelectionController({
-    required this.client,
-  }) : super(AsyncValue.loading());
+  SchoolSelectionController({required this.client})
+    : super(AsyncValue.loading());
 
   Future<BuiltList<SchoolForList>> fetch() async {
     try {
@@ -25,16 +24,20 @@ class SchoolSelectionController
   }
 }
 
-final schoolSelectionControllerProvider = StateNotifierProvider<
-    SchoolSelectionController, AsyncValue<BuiltList<SchoolForList>>>((ref) {
-  return SchoolSelectionController(client: ref.read(apiClientProvider))
-    ..fetch();
-});
+final schoolSelectionControllerProvider =
+    StateNotifierProvider<
+      SchoolSelectionController,
+      AsyncValue<BuiltList<SchoolForList>>
+    >((ref) {
+      return SchoolSelectionController(client: ref.read(apiClientProvider))
+        ..fetch();
+    });
 
 final schoolSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
-final schoolFilteredProvider =
-    Provider.autoDispose<BuiltList<SchoolForList>>((ref) {
+final schoolFilteredProvider = Provider.autoDispose<BuiltList<SchoolForList>>((
+  ref,
+) {
   final schools = ref.watch(schoolSelectionControllerProvider);
   final search = ref.watch(schoolSearchProvider);
 

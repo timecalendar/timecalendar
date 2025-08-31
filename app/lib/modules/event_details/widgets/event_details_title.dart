@@ -5,10 +5,7 @@ import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
 class EventDetailsTitle extends StatelessWidget {
-  const EventDetailsTitle({
-    Key? key,
-    required this.event,
-  }) : super(key: key);
+  const EventDetailsTitle({Key? key, required this.event}) : super(key: key);
 
   final EventInterface event;
 
@@ -40,21 +37,16 @@ class EventDetailsTitle extends StatelessWidget {
               children: <Widget>[
                 Text(
                   event.title,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 5),
                 Text(
                   AppDateUtils.eventDateTimeText(event.startsAt, event.endsAt),
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontSize: 16),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

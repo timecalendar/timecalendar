@@ -41,8 +41,10 @@ class CustomButton extends StatelessWidget {
             },
             child: Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
@@ -52,9 +54,11 @@ class CustomButton extends StatelessWidget {
                         child: SizedBox(
                           child: CircularProgressIndicator(
                             strokeWidth: 2.0,
-                            valueColor: AlwaysStoppedAnimation<Color>(outline
-                                ? Theme.of(context).primaryColor
-                                : Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              outline
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white,
+                            ),
                           ),
                           height: 16.0,
                           width: 16.0,
@@ -74,10 +78,11 @@ class CustomButton extends StatelessWidget {
                     Text(
                       text,
                       style: TextStyle(
-                          fontSize: 15.0,
-                          color: outline
-                              ? Theme.of(context).primaryColor
-                              : Colors.white),
+                        fontSize: 15.0,
+                        color: outline
+                            ? Theme.of(context).primaryColor
+                            : Colors.white,
+                      ),
                     ),
                   ],
                 ),

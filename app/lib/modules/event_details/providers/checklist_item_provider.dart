@@ -12,8 +12,7 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
   }
 
   loadEventItems() async {
-    state = await this
-        .ref
+    state = await this.ref
         .read(checklistItemRepositoryProvider)
         .findAllByEventUid(eventUid);
   }
@@ -69,4 +68,5 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
 
 final checklistItemProvider = StateNotifierProvider.autoDispose
     .family<ChecklistItemNotifier, List<ChecklistItem>, String>(
-        (ref, eventUid) => ChecklistItemNotifier(ref, eventUid));
+      (ref, eventUid) => ChecklistItemNotifier(ref, eventUid),
+    );

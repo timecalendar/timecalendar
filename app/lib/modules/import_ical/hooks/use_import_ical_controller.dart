@@ -40,16 +40,12 @@ void showErrorDialog(BuildContext context, String err) async {
   if (value == 'reportProblem')
     Navigator.of(context).pushNamed(
       SuggestionScreen.routeName,
-      arguments: SuggestionScreenArguments(
-        fromFailedIcalImport: true,
-      ),
+      arguments: SuggestionScreenArguments(fromFailedIcalImport: true),
     );
 }
 
 class ImportIcalState {
-  ImportIcalState({
-    required this.loadIcalUrl,
-  });
+  ImportIcalState({required this.loadIcalUrl});
 
   final void Function(String url) loadIcalUrl;
 }
@@ -63,21 +59,24 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
 
     final assistantState = ref.read(assistantProvider);
     final schoolId = assistantState.school?.id;
-    final schoolName =
-        assistantState.school == null ? ref.read(addSchoolNameProvider) : null;
+    final schoolName = assistantState.school == null
+        ? ref.read(addSchoolNameProvider)
+        : null;
     final gradeName = ref.read(addGradeNameProvider);
 
     try {
-      final rep =
-          await ref.read(apiClientProvider).calendarsApi().createCalendar(
-                createCalendarDto: CreateCalendarDto(
-                  (calendar) => calendar
-                    ..schoolId = schoolId
-                    ..schoolName = schoolName
-                    ..name = gradeName
-                    ..url = url.trim(),
-                ),
-              );
+      final rep = await ref
+          .read(apiClientProvider)
+          .calendarsApi()
+          .createCalendar(
+            createCalendarDto: CreateCalendarDto(
+              (calendar) => calendar
+                ..schoolId = schoolId
+                ..schoolName = schoolName
+                ..name = gradeName
+                ..url = url.trim(),
+            ),
+          );
       final token = rep.data!.token;
 
       await ref
@@ -89,7 +88,9 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
       await Future.delayed(Duration(milliseconds: 200));
 
       Navigator.of(context).pushNamedAndRemoveUntil(
-          TabsScreen.routeName, (Route<dynamic> route) => false);
+        TabsScreen.routeName,
+        (Route<dynamic> route) => false,
+      );
 
       Future.delayed(Duration(milliseconds: 200)).then((_) {
         return NotificationService().subscribeDelay();
@@ -109,7 +110,5 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
     }
   }
 
-  return ImportIcalState(
-    loadIcalUrl: loadIcalUrl,
-  );
+  return ImportIcalState(loadIcalUrl: loadIcalUrl);
 }

@@ -102,18 +102,17 @@ class CalendarHeader extends StatelessWidget {
               }
             },
             tooltip: 'Menu',
-            itemBuilder:
-                (_) => [
-                  PopupMenuItem(
-                    child: Text('Rafraîchir'),
-                    value: CalendarOptions.Refresh,
-                  ),
-                  PopupMenuItem(
-                    child: Text('Modifier les calendriers'),
-                    value: CalendarOptions.ChangeCalendars,
-                  ),
-                  // switchViewPopupMenuItem(settingsProvider)
-                ],
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                child: Text('Rafraîchir'),
+                value: CalendarOptions.Refresh,
+              ),
+              PopupMenuItem(
+                child: Text('Modifier les calendriers'),
+                value: CalendarOptions.ChangeCalendars,
+              ),
+              // switchViewPopupMenuItem(settingsProvider)
+            ],
           ),
           SizedBox(width: 10),
         ],

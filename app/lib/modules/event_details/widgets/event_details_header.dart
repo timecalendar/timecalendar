@@ -32,9 +32,8 @@ class EventDetailsHeader extends ConsumerWidget {
       Navigator.of(context)
           .push(
             MaterialPageRoute(
-              builder:
-                  (context) =>
-                      AddPersonalEventScreen(event: event as PersonalEvent),
+              builder: (context) =>
+                  AddPersonalEventScreen(event: event as PersonalEvent),
             ),
           )
           .then((value) {

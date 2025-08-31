@@ -4,10 +4,8 @@ import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 class TodayHeader extends StatelessWidget {
   final DateTime? dayDisplayedOnHomePage;
 
-  const TodayHeader({
-    Key? key,
-    required this.dayDisplayedOnHomePage,
-  }) : super(key: key);
+  const TodayHeader({Key? key, required this.dayDisplayedOnHomePage})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +16,7 @@ class TodayHeader extends StatelessWidget {
           Expanded(
             child: Text(
               AppDateUtils.fullDayText(dayDisplayedOnHomePage),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
         ],

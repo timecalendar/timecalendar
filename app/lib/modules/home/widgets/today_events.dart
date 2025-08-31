@@ -24,8 +24,9 @@ class TodayEvents extends StatelessWidget {
   final double rightPadding = 10;
 
   void selectEvent(BuildContext context, EventInterface event) {
-    Navigator.of(context)
-        .pushNamed(EventDetailsScreen.routeName, arguments: event);
+    Navigator.of(
+      context,
+    ).pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
 
   Widget? getCurrentDayIndicator(int? startHour, int endHour, double dayWidth) {
@@ -45,9 +46,7 @@ class TodayEvents extends StatelessWidget {
       top: (start - startHour) * hourHeight,
       width: dayWidth,
       height: 2,
-      child: Container(
-        color: ColorUtils.hexToColor('#ff91b1'),
-      ),
+      child: Container(color: ColorUtils.hexToColor('#ff91b1')),
     );
   }
 
@@ -107,14 +106,16 @@ class TodayEvents extends StatelessWidget {
             ),
           for (var calendarEvent in events)
             Positioned(
-              top: (eventStartsAtHour(calendarEvent.event) - startHour) *
+              top:
+                  (eventStartsAtHour(calendarEvent.event) - startHour) *
                       hourHeight +
                   10,
               left: calendarEvent.startX * dayWidth + hourColumnWidth,
               width: (calendarEvent.endX - calendarEvent.startX) * dayWidth,
               child: Material(
-                color: settingsProvider
-                    .getEventInterfaceColor(calendarEvent.event),
+                color: settingsProvider.getEventInterfaceColor(
+                  calendarEvent.event,
+                ),
                 borderRadius: BorderRadius.circular(15),
                 child: InkWell(
                   onTap: () {
@@ -130,13 +131,15 @@ class TodayEvents extends StatelessWidget {
                             top: 0,
                             left: 0,
                             right: 0,
-                            child:
-                                HomeRectangleEvent(event: calendarEvent.event),
+                            child: HomeRectangleEvent(
+                              event: calendarEvent.event,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    height: (eventEndsAtHour(calendarEvent.event) -
+                    height:
+                        (eventEndsAtHour(calendarEvent.event) -
                             eventStartsAtHour(calendarEvent.event)) *
                         hourHeight,
                     decoration: BoxDecoration(
@@ -153,7 +156,7 @@ class TodayEvents extends StatelessWidget {
                 ),
               ),
             ),
-          if (dayIndicator != null) dayIndicator
+          if (dayIndicator != null) dayIndicator,
         ],
       ),
     );

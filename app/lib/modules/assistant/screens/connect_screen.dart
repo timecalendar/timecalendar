@@ -83,13 +83,12 @@ class ConnectScreen extends HookConsumerWidget {
                 Expanded(child: Container()),
                 CustomButton(
                   text: 'Suivant',
-                  onPressed:
-                      () => ref
-                          .read(assistantProvider.notifier)
-                          .navigateToNextStep(
-                            context,
-                            AssistantStepEnum.CONNECT_TO_INTRANET,
-                          ),
+                  onPressed: () => ref
+                      .read(assistantProvider.notifier)
+                      .navigateToNextStep(
+                        context,
+                        AssistantStepEnum.CONNECT_TO_INTRANET,
+                      ),
                 ),
               ],
             ),

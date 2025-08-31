@@ -38,7 +38,7 @@ class DifferenceEvent extends StatelessWidget {
       'backgroundColor': '#c7e6ff',
       'iconColor': '#43a7f7',
       'icon': FontAwesomeIcons.pencil,
-    }
+    },
   };
 
   Widget eventIcon() {
@@ -51,8 +51,9 @@ class DifferenceEvent extends StatelessWidget {
             size: 18,
             color: ColorUtils.hexToColor(types[type]!['iconColor'] as String),
           ),
-          backgroundColor:
-              ColorUtils.hexToColor(types[type]!['backgroundColor'] as String),
+          backgroundColor: ColorUtils.hexToColor(
+            types[type]!['backgroundColor'] as String,
+          ),
         ),
       ],
     );
@@ -61,30 +62,15 @@ class DifferenceEvent extends StatelessWidget {
   Widget infoText() {
     var text = AppDateUtils.eventDateTimeText(event.startsAt, event.endsAt);
 
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 14,
-      ),
-    );
+    return Text(text, style: TextStyle(fontSize: 14));
   }
 
   Widget locationText() {
     return Row(
       children: <Widget>[
-        Icon(
-          Icons.location_on,
-          size: 14,
-        ),
+        Icon(Icons.location_on, size: 14),
         SizedBox(width: 5),
-        Expanded(
-          child: Text(
-            event.location!,
-            style: TextStyle(
-              fontSize: 14,
-            ),
-          ),
-        ),
+        Expanded(child: Text(event.location!, style: TextStyle(fontSize: 14))),
       ],
     );
   }
@@ -102,9 +88,7 @@ class DifferenceEvent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               eventIcon(),
-              SizedBox(
-                width: 15,
-              ),
+              SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,14 +102,9 @@ class DifferenceEvent extends StatelessWidget {
                     ),
                     Text(
                       types[type]!['text'] as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
-                    SizedBox(
-                      height: 10,
-                    ),
+                    SizedBox(height: 10),
                     infoText(),
                     if (event.location != null && event.location!.length > 0)
                       locationText(),

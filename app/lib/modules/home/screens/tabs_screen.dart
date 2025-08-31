@@ -41,9 +41,8 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
       'slug': 'home',
     },
     {
-      'page':
-          (ctx, observer) =>
-              CalendarScreen(parentContext: ctx, observer: observer),
+      'page': (ctx, observer) =>
+          CalendarScreen(parentContext: ctx, observer: observer),
       'title': 'Calendrier',
       'slug': 'calendar',
     },
@@ -70,8 +69,10 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
       ),
     );
 
-    oldprovider.Provider.of<SettingsProvider>(context, listen: false)
-        .newActivity = true;
+    oldprovider.Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    ).newActivity = true;
   }
 
   void _selectPage(int index) {
@@ -92,11 +93,10 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
 
     Future.delayed(Duration.zero).then((_) {
       // Get startup screen
-      var startupScreen =
-          oldprovider.Provider.of<SettingsProvider>(
-            context,
-            listen: false,
-          ).startupScreen;
+      var startupScreen = oldprovider.Provider.of<SettingsProvider>(
+        context,
+        listen: false,
+      ).startupScreen;
       setState(() {
         _selectedPageIndex = (startupScreen == 'calendar') ? 1 : 0;
       });
@@ -154,16 +154,16 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
       key: _scaffoldKey,
       floatingActionButton:
           (this._pages[_selectedPageIndex]['slug'] == 'calendar')
-              ? FloatingActionButton(
-                onPressed: () {
-                  Navigator.of(
-                    context,
-                  ).pushNamed(AddPersonalEventScreen.routeName);
-                },
-                child: Icon(Icons.add),
-                tooltip: 'Ajouter un événement',
-              )
-              : null,
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).pushNamed(AddPersonalEventScreen.routeName);
+              },
+              child: Icon(Icons.add),
+              tooltip: 'Ajouter un événement',
+            )
+          : null,
       backgroundColor: appTheme.backgroundColor,
       body: (_pages[_selectedPageIndex]['page'] as Function)(context, observer),
       bottomNavigationBar: SizedBox(
@@ -174,8 +174,9 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
           child: BottomNavigationBar(
             onTap: _selectPage,
             backgroundColor: appTheme.backgroundColor,
-            unselectedItemColor:
-                settingsProvider.darkMode ? Colors.grey[500] : Colors.grey[600],
+            unselectedItemColor: settingsProvider.darkMode
+                ? Colors.grey[500]
+                : Colors.grey[600],
             selectedItemColor: Theme.of(context).colorScheme.secondary,
             currentIndex: _selectedPageIndex,
             type: BottomNavigationBarType.fixed,
@@ -194,14 +195,13 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
               ),
             ],
           ),
-          decoration:
-              settingsProvider.darkMode
-                  ? BoxDecoration(
-                    border: Border(
-                      top: BorderSide(width: 1, color: Colors.grey[700]!),
-                    ),
-                  )
-                  : null,
+          decoration: settingsProvider.darkMode
+              ? BoxDecoration(
+                  border: Border(
+                    top: BorderSide(width: 1, color: Colors.grey[700]!),
+                  ),
+                )
+              : null,
         ),
       ),
     );
