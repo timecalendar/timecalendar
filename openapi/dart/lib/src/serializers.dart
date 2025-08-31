@@ -15,6 +15,7 @@ import 'package:timecalendar_api/src/date_serializer.dart';
 import 'package:timecalendar_api/src/model/date.dart';
 
 import 'package:timecalendar_api/src/model/calendar_change_get.dart';
+import 'package:timecalendar_api/src/model/calendar_changed_item.dart';
 import 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
 import 'package:timecalendar_api/src/model/calendar_event_for_public.dart';
 import 'package:timecalendar_api/src/model/calendar_for_public.dart';
@@ -43,6 +44,7 @@ part 'serializers.g.dart';
 
 @SerializersFor([
   CalendarChangeGet,
+  CalendarChangedItem,
   CalendarEventCustomFields,
   CalendarEventForPublic,
   CalendarForPublic,

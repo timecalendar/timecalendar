@@ -5,6 +5,7 @@ base.ts
 common.ts
 configuration.ts
 docs/CalendarChangeGet.md
+docs/CalendarChangedItem.md
 docs/CalendarEventCustomFields.md
 docs/CalendarEventForPublic.md
 docs/CalendarForPublic.md

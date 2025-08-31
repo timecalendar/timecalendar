@@ -8,6 +8,7 @@ part of 'serializers.dart';
 
 Serializers _$serializers = (Serializers().toBuilder()
       ..add(CalendarChangeGet.serializer)
+      ..add(CalendarChangedItem.serializer)
       ..add(CalendarEventCustomFields.serializer)
       ..add(CalendarEventForPublic.serializer)
       ..add(CalendarForPublic.serializer)
@@ -45,8 +46,9 @@ Serializers _$serializers = (Serializers().toBuilder()
               BuiltList, const [const FullType(CalendarLogEventGet)]),
           () => ListBuilder<CalendarLogEventGet>())
       ..addBuilderFactory(
-          const FullType(BuiltList, const [const FullType(String)]),
-          () => ListBuilder<String>())
+          const FullType(
+              BuiltList, const [const FullType(CalendarChangedItem)]),
+          () => ListBuilder<CalendarChangedItem>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolForList)]),
           () => ListBuilder<SchoolForList>())

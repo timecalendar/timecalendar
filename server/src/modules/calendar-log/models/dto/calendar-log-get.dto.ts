@@ -1,6 +1,5 @@
 import { Type } from "class-transformer"
 import { IsDate, IsString, ValidateNested } from "class-validator"
-import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarChangeGet } from "./calendar-change-get.dto"
 
 export class CalendarLogGet {
@@ -27,16 +26,4 @@ export class CalendarLogGet {
   @Type(() => Date)
   @IsDate()
   updatedAt: Date
-
-  static fromEntity(entity: CalendarLog): CalendarLogGet {
-    const dto = new CalendarLogGet()
-    dto.id = entity.id
-    dto.calendarId = entity.calendar.id
-    dto.calendarToken = entity.calendar.token
-    dto.calendarName = entity.calendar.name
-    dto.calendarChange = entity.calendarChange
-    dto.createdAt = entity.createdAt
-    dto.updatedAt = entity.updatedAt
-    return dto
-  }
 }

@@ -102,22 +102,22 @@ describe("CalendarLogMapper", () => {
             },
           ],
           changedItems: [
-            [
-              {
+            {
+              previousItem: {
                 uid: "changed-event-1",
                 title: "Old Title",
                 location: "Old Location",
                 startsAt: new Date("2025-01-03T10:00:00Z"),
                 endsAt: new Date("2025-01-03T11:00:00Z"),
               },
-              {
+              newItem: {
                 uid: "changed-event-1",
                 title: "New Title",
                 location: "New Location",
                 startsAt: new Date("2025-01-03T12:00:00Z"),
                 endsAt: new Date("2025-01-03T13:00:00Z"),
               },
-            ],
+            },
           ],
         },
         createdAt: new Date("2025-01-01T12:00:00Z"),

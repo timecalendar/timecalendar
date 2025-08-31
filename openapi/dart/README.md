@@ -83,6 +83,7 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [CalendarChangeGet](doc/CalendarChangeGet.md)
+ - [CalendarChangedItem](doc/CalendarChangedItem.md)
  - [CalendarEventCustomFields](doc/CalendarEventCustomFields.md)
  - [CalendarEventForPublic](doc/CalendarEventForPublic.md)
  - [CalendarForPublic](doc/CalendarForPublic.md)

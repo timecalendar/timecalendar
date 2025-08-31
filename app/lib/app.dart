@@ -9,7 +9,6 @@ import 'package:timecalendar/modules/calendar/screens/user_calendars_screen.dart
 import 'package:timecalendar/modules/debug/screens/debug_screen.dart';
 import 'package:timecalendar/modules/qr_code/screens/qr_code_screen.dart';
 import 'package:timecalendar/modules/shared/widgets/unfocus.dart';
-import 'package:timecalendar/modules/activity/providers/activity_provider.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
@@ -59,7 +58,6 @@ class _TimeCalendarAppState extends State<TimeCalendarApp> {
       child: Unfocus(
         child: MultiProvider(
           providers: [
-            ChangeNotifierProvider(create: (_) => ActivityProvider()),
             ChangeNotifierProvider(create: (_) => SettingsProvider()),
             ChangeNotifierProvider(create: (_) => CalendarProvider()),
           ],

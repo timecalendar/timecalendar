@@ -3,6 +3,7 @@ import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarLogGet } from "modules/calendar-log/models/dto/calendar-log-get.dto"
 import { CalendarChangeGet } from "modules/calendar-log/models/dto/calendar-change-get.dto"
 import { CalendarLogEventGet } from "modules/calendar-log/models/dto/calendar-log-event-get.dto"
+import { CalendarChangedItem } from "modules/calendar-log/models/dto/calendar-changed-item.dto"
 import { CalendarChange } from "modules/calendar-log/models/calendar-change"
 import { EventForChangeDetection } from "modules/calendar-log/models/change-detection/find-event-changes"
 
@@ -25,10 +26,12 @@ export class CalendarLogMapper {
     changeDto.oldItems = change.oldItems.map(this.mapCalendarEvent)
     changeDto.newItems = change.newItems.map(this.mapCalendarEvent)
     changeDto.changedItems = change.changedItems.map(
-      ([old, newEvent]: [EventForChangeDetection, EventForChangeDetection]) => [
-        this.mapCalendarEvent(old),
-        this.mapCalendarEvent(newEvent),
-      ],
+      ([old, newEvent]: [EventForChangeDetection, EventForChangeDetection]) => {
+        const changedItem = new CalendarChangedItem()
+        changedItem.previousItem = this.mapCalendarEvent(old)
+        changedItem.newItem = this.mapCalendarEvent(newEvent)
+        return changedItem
+      },
     )
     return changeDto
   }

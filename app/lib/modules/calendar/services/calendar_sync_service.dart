@@ -1,5 +1,6 @@
 import 'package:built_collection/src/list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/activity/providers/activity_provider.dart';
 import 'package:timecalendar/modules/calendar/models/calendar_event.dart';
 import 'package:timecalendar/modules/calendar/models/user_calendar.dart';
 import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
@@ -30,6 +31,14 @@ class CalendarSyncService {
     final calendarsWithContent = await _fetchCalendars(userCalendars);
     await _putEventsToDatabase(calendarsWithContent);
     await loadEventsFromDatabase();
+
+    // Refresh calendar logs after syncing calendars
+    try {
+      await ref.read(calendarLogsProvider.notifier).refresh();
+    } catch (error) {
+      // Silently fail if calendar logs refresh fails
+      // The main calendar sync should not be affected
+    }
   }
 
   /// Fetches calendars with their content from the remote API.

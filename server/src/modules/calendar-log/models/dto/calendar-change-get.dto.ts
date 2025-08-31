@@ -1,6 +1,7 @@
 import { Type } from "class-transformer"
 import { ValidateNested } from "class-validator"
 import { CalendarLogEventGet } from "./calendar-log-event-get.dto"
+import { CalendarChangedItem } from "./calendar-changed-item.dto"
 
 export class CalendarChangeGet {
   @Type(() => CalendarLogEventGet)
@@ -11,7 +12,7 @@ export class CalendarChangeGet {
   @ValidateNested({ each: true })
   newItems: CalendarLogEventGet[]
 
-  @Type(() => CalendarLogEventGet)
+  @Type(() => CalendarChangedItem)
   @ValidateNested({ each: true })
-  changedItems: [CalendarLogEventGet, CalendarLogEventGet][]
+  changedItems: CalendarChangedItem[]
 }
