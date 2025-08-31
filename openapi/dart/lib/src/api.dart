@@ -9,6 +9,7 @@ import 'package:timecalendar_api/src/auth/api_key_auth.dart';
 import 'package:timecalendar_api/src/auth/basic_auth.dart';
 import 'package:timecalendar_api/src/auth/bearer_auth.dart';
 import 'package:timecalendar_api/src/auth/oauth.dart';
+import 'package:timecalendar_api/src/api/calendar_logs_api.dart';
 import 'package:timecalendar_api/src/api/calendars_api.dart';
 import 'package:timecalendar_api/src/api/contact_api.dart';
 import 'package:timecalendar_api/src/api/feature_flags_api.dart';
@@ -78,6 +79,12 @@ class TimecalendarApi {
               as ApiKeyAuthInterceptor)
           .apiKeys[name] = apiKey;
     }
+  }
+
+  /// Get CalendarLogsApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  CalendarLogsApi getCalendarLogsApi() {
+    return CalendarLogsApi(dio, serializers);
   }
 
   /// Get CalendarsApi instance, base route and serializer can be overridden by a given but be careful,

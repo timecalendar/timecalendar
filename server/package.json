@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@bull-board/express": "^5.6.1",
+    "@golevelup/ts-jest": "^0.7.0",
     "@nestjs/bullmq": "^10.2.3",
     "@nestjs/cli": "^10.1.10",
     "@nestjs/common": "^10.1.0",

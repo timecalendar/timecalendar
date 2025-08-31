@@ -23,6 +23,11 @@ import type { RequestArgs } from './base';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
+export interface CalendarChangeGet {
+    'oldItems': Array<CalendarLogEventGet>;
+    'newItems': Array<CalendarLogEventGet>;
+    'changedItems': Array<string>;
+}
 export interface CalendarEventCustomFields {
     'canceled'?: boolean;
     'shortDescription'?: string;
@@ -55,6 +60,22 @@ export interface CalendarForPublic {
     'schoolId'?: string;
     'lastUpdatedAt': string;
     'createdAt': string;
+}
+export interface CalendarLogEventGet {
+    'uid': string;
+    'title': string;
+    'startsAt': string;
+    'endsAt': string;
+    'location': string | null;
+}
+export interface CalendarLogGet {
+    'id': string;
+    'calendarId': string;
+    'calendarToken': string;
+    'calendarName': string;
+    'calendarChange': CalendarChangeGet;
+    'createdAt': string;
+    'updatedAt': string;
 }
 export interface CalendarWithContent {
     'calendar': CalendarForPublic;
@@ -94,6 +115,9 @@ export interface FindSchoolGroupsRepDto {
 }
 export interface FindSchoolsRepDto {
     'schools': Array<SchoolForList>;
+}
+export interface GetCalendarLogsDto {
+    'tokens': Array<string>;
 }
 export interface GetSchoolGroupsIcalUrlDto {
     'groups': Array<string>;
@@ -162,6 +186,109 @@ export interface SetSchoolGroupDto {
 export interface SyncCalendarsDto {
     'tokens': Array<string>;
 }
+
+/**
+ * CalendarLogsApi - axios parameter creator
+ */
+export const CalendarLogsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get calendar logs for given tokens
+         * @param {GetCalendarLogsDto} getCalendarLogsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCalendarLogs: async (getCalendarLogsDto: GetCalendarLogsDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'getCalendarLogsDto' is not null or undefined
+            assertParamExists('getCalendarLogs', 'getCalendarLogsDto', getCalendarLogsDto)
+            const localVarPath = `/calendar-logs/search`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(getCalendarLogsDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * CalendarLogsApi - functional programming interface
+ */
+export const CalendarLogsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = CalendarLogsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Get calendar logs for given tokens
+         * @param {GetCalendarLogsDto} getCalendarLogsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getCalendarLogs(getCalendarLogsDto: GetCalendarLogsDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CalendarLogGet>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getCalendarLogs(getCalendarLogsDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['CalendarLogsApi.getCalendarLogs']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * CalendarLogsApi - factory interface
+ */
+export const CalendarLogsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = CalendarLogsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Get calendar logs for given tokens
+         * @param {GetCalendarLogsDto} getCalendarLogsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCalendarLogs(getCalendarLogsDto: GetCalendarLogsDto, options?: RawAxiosRequestConfig): AxiosPromise<Array<CalendarLogGet>> {
+            return localVarFp.getCalendarLogs(getCalendarLogsDto, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * CalendarLogsApi - object-oriented interface
+ */
+export class CalendarLogsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get calendar logs for given tokens
+     * @param {GetCalendarLogsDto} getCalendarLogsDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getCalendarLogs(getCalendarLogsDto: GetCalendarLogsDto, options?: RawAxiosRequestConfig) {
+        return CalendarLogsApiFp(this.configuration).getCalendarLogs(getCalendarLogsDto, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
 
 /**
  * CalendarsApi - axios parameter creator

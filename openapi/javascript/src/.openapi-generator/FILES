@@ -4,9 +4,13 @@ api.ts
 base.ts
 common.ts
 configuration.ts
+docs/CalendarChangeGet.md
 docs/CalendarEventCustomFields.md
 docs/CalendarEventForPublic.md
 docs/CalendarForPublic.md
+docs/CalendarLogEventGet.md
+docs/CalendarLogGet.md
+docs/CalendarLogsApi.md
 docs/CalendarWithContent.md
 docs/CalendarsApi.md
 docs/ContactApi.md
@@ -17,6 +21,7 @@ docs/EventTypeEnum.md
 docs/FeatureFlagsApi.md
 docs/FindSchoolGroupsRepDto.md
 docs/FindSchoolsRepDto.md
+docs/GetCalendarLogsDto.md
 docs/GetSchoolGroupsIcalUrlDto.md
 docs/GetSchoolGroupsIcalUrlRepDto.md
 docs/NotificationSubscriptionApi.md

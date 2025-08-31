@@ -2,9 +2,12 @@
 .openapi-generator-ignore
 README.md
 analysis_options.yaml
+doc/CalendarChangeGet.md
 doc/CalendarEventCustomFields.md
 doc/CalendarEventForPublic.md
 doc/CalendarForPublic.md
+doc/CalendarLogEventGet.md
+doc/CalendarLogGet.md
 doc/CalendarWithContent.md
 doc/CreateCalendarDto.md
 doc/CreateCalendarRepDto.md
@@ -12,6 +15,7 @@ doc/EventTag.md
 doc/EventTypeEnum.md
 doc/FindSchoolGroupsRepDto.md
 doc/FindSchoolsRepDto.md
+doc/GetCalendarLogsDto.md
 doc/GetSchoolGroupsIcalUrlDto.md
 doc/GetSchoolGroupsIcalUrlRepDto.md
 doc/NotificationSubscriptionCreate.md
@@ -23,6 +27,7 @@ doc/SendMessageDto.md
 doc/SetSchoolGroupDto.md
 doc/SyncCalendarsDto.md
 lib/src/api.dart
+lib/src/api/calendar_logs_api.dart
 lib/src/api/calendars_api.dart
 lib/src/api/contact_api.dart
 lib/src/api/feature_flags_api.dart
@@ -35,9 +40,12 @@ lib/src/auth/basic_auth.dart
 lib/src/auth/bearer_auth.dart
 lib/src/auth/oauth.dart
 lib/src/date_serializer.dart
+lib/src/model/calendar_change_get.dart
 lib/src/model/calendar_event_custom_fields.dart
 lib/src/model/calendar_event_for_public.dart
 lib/src/model/calendar_for_public.dart
+lib/src/model/calendar_log_event_get.dart
+lib/src/model/calendar_log_get.dart
 lib/src/model/calendar_with_content.dart
 lib/src/model/create_calendar_dto.dart
 lib/src/model/create_calendar_rep_dto.dart
@@ -46,6 +54,7 @@ lib/src/model/event_tag.dart
 lib/src/model/event_type_enum.dart
 lib/src/model/find_school_groups_rep_dto.dart
 lib/src/model/find_schools_rep_dto.dart
+lib/src/model/get_calendar_logs_dto.dart
 lib/src/model/get_school_groups_ical_url_dto.dart
 lib/src/model/get_school_groups_ical_url_rep_dto.dart
 lib/src/model/notification_subscription_create.dart

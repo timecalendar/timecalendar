@@ -14,9 +14,12 @@ import 'package:built_value/iso_8601_date_time_serializer.dart';
 import 'package:timecalendar_api/src/date_serializer.dart';
 import 'package:timecalendar_api/src/model/date.dart';
 
+import 'package:timecalendar_api/src/model/calendar_change_get.dart';
 import 'package:timecalendar_api/src/model/calendar_event_custom_fields.dart';
 import 'package:timecalendar_api/src/model/calendar_event_for_public.dart';
 import 'package:timecalendar_api/src/model/calendar_for_public.dart';
+import 'package:timecalendar_api/src/model/calendar_log_event_get.dart';
+import 'package:timecalendar_api/src/model/calendar_log_get.dart';
 import 'package:timecalendar_api/src/model/calendar_with_content.dart';
 import 'package:timecalendar_api/src/model/create_calendar_dto.dart';
 import 'package:timecalendar_api/src/model/create_calendar_rep_dto.dart';
@@ -24,6 +27,7 @@ import 'package:timecalendar_api/src/model/event_tag.dart';
 import 'package:timecalendar_api/src/model/event_type_enum.dart';
 import 'package:timecalendar_api/src/model/find_school_groups_rep_dto.dart';
 import 'package:timecalendar_api/src/model/find_schools_rep_dto.dart';
+import 'package:timecalendar_api/src/model/get_calendar_logs_dto.dart';
 import 'package:timecalendar_api/src/model/get_school_groups_ical_url_dto.dart';
 import 'package:timecalendar_api/src/model/get_school_groups_ical_url_rep_dto.dart';
 import 'package:timecalendar_api/src/model/notification_subscription_create.dart';
@@ -38,9 +42,12 @@ import 'package:timecalendar_api/src/model/sync_calendars_dto.dart';
 part 'serializers.g.dart';
 
 @SerializersFor([
+  CalendarChangeGet,
   CalendarEventCustomFields,
   CalendarEventForPublic,
   CalendarForPublic,
+  CalendarLogEventGet,
+  CalendarLogGet,
   CalendarWithContent,
   CreateCalendarDto,
   CreateCalendarRepDto,
@@ -48,6 +55,7 @@ part 'serializers.g.dart';
   EventTypeEnum,
   FindSchoolGroupsRepDto,
   FindSchoolsRepDto,
+  GetCalendarLogsDto,
   GetSchoolGroupsIcalUrlDto,
   GetSchoolGroupsIcalUrlRepDto,
   NotificationSubscriptionCreate,
@@ -60,6 +68,10 @@ part 'serializers.g.dart';
   SyncCalendarsDto,
 ])
 Serializers serializers = (_$serializers.toBuilder()
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(CalendarLogGet)]),
+        () => ListBuilder<CalendarLogGet>(),
+      )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(CalendarWithContent)]),
         () => ListBuilder<CalendarWithContent>(),

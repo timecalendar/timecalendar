@@ -47,14 +47,14 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 
-final api = TimecalendarApi().getCalendarsApi();
-final String token = token_example; // String | The calendar token
+final api = TimecalendarApi().getCalendarLogsApi();
+final GetCalendarLogsDto getCalendarLogsDto = ; // GetCalendarLogsDto | 
 
 try {
-    final response = await api.calendarControllerFindCalendarByToken(token);
+    final response = await api.calendarLogControllerGetCalendarLogs(getCalendarLogsDto);
     print(response);
 } catch on DioException (e) {
-    print("Exception when calling CalendarsApi->calendarControllerFindCalendarByToken: $e\n");
+    print("Exception when calling CalendarLogsApi->calendarLogControllerGetCalendarLogs: $e\n");
 }
 
 ```
@@ -65,6 +65,7 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*CalendarLogsApi*](doc/CalendarLogsApi.md) | [**calendarLogControllerGetCalendarLogs**](doc/CalendarLogsApi.md#calendarlogcontrollergetcalendarlogs) | **POST** /calendar-logs/search | Get calendar logs for given tokens
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarControllerFindCalendarByToken**](doc/CalendarsApi.md#calendarcontrollerfindcalendarbytoken) | **GET** /calendars/by-token/{token} | Find a calendar by its token
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerCreateCalendar**](doc/CalendarsApi.md#calendarsynccontrollercreatecalendar) | **POST** /calendars | Create a calendar
 [*CalendarsApi*](doc/CalendarsApi.md) | [**calendarSyncControllerSyncCalendars**](doc/CalendarsApi.md#calendarsynccontrollersynccalendars) | **POST** /calendars/sync | Sync calendars
@@ -81,9 +82,12 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [CalendarChangeGet](doc/CalendarChangeGet.md)
  - [CalendarEventCustomFields](doc/CalendarEventCustomFields.md)
  - [CalendarEventForPublic](doc/CalendarEventForPublic.md)
  - [CalendarForPublic](doc/CalendarForPublic.md)
+ - [CalendarLogEventGet](doc/CalendarLogEventGet.md)
+ - [CalendarLogGet](doc/CalendarLogGet.md)
  - [CalendarWithContent](doc/CalendarWithContent.md)
  - [CreateCalendarDto](doc/CreateCalendarDto.md)
  - [CreateCalendarRepDto](doc/CreateCalendarRepDto.md)
@@ -91,6 +95,7 @@ Class | Method | HTTP request | Description
  - [EventTypeEnum](doc/EventTypeEnum.md)
  - [FindSchoolGroupsRepDto](doc/FindSchoolGroupsRepDto.md)
  - [FindSchoolsRepDto](doc/FindSchoolsRepDto.md)
+ - [GetCalendarLogsDto](doc/GetCalendarLogsDto.md)
  - [GetSchoolGroupsIcalUrlDto](doc/GetSchoolGroupsIcalUrlDto.md)
  - [GetSchoolGroupsIcalUrlRepDto](doc/GetSchoolGroupsIcalUrlRepDto.md)
  - [NotificationSubscriptionCreate](doc/NotificationSubscriptionCreate.md)

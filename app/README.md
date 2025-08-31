@@ -96,3 +96,19 @@ sudo update-ca-certificates
 ## Build on Android
 
 Copy the file `app/android/key.properties.sample` into `app/android/key.properties`.
+
+## Release to Stores
+
+### Android (Play Store)
+```bash
+cd android
+fastlane release_play_store build_number:137
+```
+
+### iOS (App Store)
+```bash
+cd ios
+fastlane release_app_store build_number:137
+```
+
+Use the latest build number for each release.
