@@ -11,7 +11,7 @@ import 'package:timecalendar/modules/personal_event/providers/personal_events_pr
 
 void useSplashController(BuildContext context, WidgetRef ref) {
   void navigateTo() async {
-    final calendars = await ref.read(userCalendarsProvider);
+    final calendars = await ref.read(userCalendarProvider.future);
 
     final screen = calendars.length > 0
         ? TabsScreen.routeName
@@ -22,11 +22,11 @@ void useSplashController(BuildContext context, WidgetRef ref) {
   }
 
   Future initAppData() async {
-    await ref.read(calendarSyncServiceProvider).loadUserCalendarsFromDatabase();
+    await ref.read(userCalendarProvider.future);
     await ref.read(calendarSyncServiceProvider).loadEventsFromDatabase();
     await ref.read(hiddenEventProvider.notifier).loadFromDatabase();
     await ref.read(eventNbChecklistItemsProvider.notifier).update();
-    await ref.read(personalEventsProvider.notifier).update();
+    await ref.read(personalEventsProvider.notifier).refresh();
     navigateTo();
   }
 

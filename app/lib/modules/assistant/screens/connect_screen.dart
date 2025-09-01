@@ -27,11 +27,10 @@ class ConnectScreen extends HookConsumerWidget {
                   pinned: true,
                   flexibleSpace: FlexibleSpaceBar(
                     title: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: availableWidth,
-                      ),
+                      constraints: BoxConstraints(maxWidth: availableWidth),
                       child: Text(
                         "Connectez-vous sur votre intranet",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -51,20 +50,23 @@ class ConnectScreen extends HookConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
-                                CustomButton(
-                                  onPressed: () {
-                                    UrlLauncher.openUrl(
-                                      provider.school!.intranetUrl!,
-                                    );
-                                  },
-                                  icon: FontAwesomeIcons.upRightFromSquare,
-                                  text: provider.school?.name ?? 'Se connecter',
-                                )
+                                Flexible(
+                                  child: CustomButton(
+                                    onPressed: () {
+                                      UrlLauncher.openUrl(
+                                        provider.school!.intranetUrl!,
+                                      );
+                                    },
+                                    icon: FontAwesomeIcons.upRightFromSquare,
+                                    text:
+                                        provider.school?.name ?? 'Se connecter',
+                                  ),
+                                ),
                               ],
-                            )
+                            ),
                         ],
                       ),
-                    )
+                    ),
                   ]),
                 ),
               ],
@@ -81,16 +83,15 @@ class ConnectScreen extends HookConsumerWidget {
                     Navigator.of(context).pop();
                   },
                 ),
-                Expanded(
-                  child: Container(),
-                ),
+                Expanded(child: Container()),
                 CustomButton(
                   text: 'Suivant',
-                  onPressed: () =>
-                      ref.read(assistantProvider.notifier).navigateToNextStep(
-                            context,
-                            AssistantStepEnum.CONNECT_TO_INTRANET,
-                          ),
+                  onPressed: () => ref
+                      .read(assistantProvider.notifier)
+                      .navigateToNextStep(
+                        context,
+                        AssistantStepEnum.CONNECT_TO_INTRANET,
+                      ),
                 ),
               ],
             ),

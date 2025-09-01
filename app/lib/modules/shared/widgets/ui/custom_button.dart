@@ -41,10 +41,13 @@ class CustomButton extends StatelessWidget {
             },
             child: Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     if (loading)
                       Container(
@@ -52,9 +55,11 @@ class CustomButton extends StatelessWidget {
                         child: SizedBox(
                           child: CircularProgressIndicator(
                             strokeWidth: 2.0,
-                            valueColor: AlwaysStoppedAnimation<Color>(outline
-                                ? Theme.of(context).primaryColor
-                                : Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              outline
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white,
+                            ),
                           ),
                           height: 16.0,
                           width: 16.0,
@@ -71,13 +76,17 @@ class CustomButton extends StatelessWidget {
                         ),
                         margin: EdgeInsets.only(right: 12),
                       ),
-                    Text(
-                      text,
-                      style: TextStyle(
+                    Flexible(
+                      child: Text(
+                        text,
+                        style: TextStyle(
                           fontSize: 15.0,
                           color: outline
                               ? Theme.of(context).primaryColor
-                              : Colors.white),
+                              : Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ],
                 ),

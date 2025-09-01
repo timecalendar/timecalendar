@@ -1035,7 +1035,7 @@ const Map<String, IconData> IconsMap = <String, IconData>{
   'youtube_searched_for': Icons.youtube_searched_for,
   'zoom_in': Icons.zoom_in,
   'zoom_out': Icons.zoom_out,
-  'zoom_out_map': Icons.zoom_out_map
+  'zoom_out_map': Icons.zoom_out_map,
 };
 
 /// Icon data map for FontAwesome

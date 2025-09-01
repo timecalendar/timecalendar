@@ -5,16 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Flutter Android",
+            "name": "Flutter (development)",
             "request": "launch",
             "type": "dart",
             "program": "app/lib/main.dart"
         },
         {
-            "name": "Flutter iOS",
+            "name": "Flutter (production)",
             "request": "launch",
             "type": "dart",
-            "program": "app/lib/main.dart"
+            "program": "app/lib/main.dart",
+            "args": ["--dart-define=MAIN_API_URL=https://api-v2.timecalendar.app", "--dart-define=MAIN_WEB_URL=https://v2.timecalendar.app"]
         },
         {
             "name": "Flutter (profile)",

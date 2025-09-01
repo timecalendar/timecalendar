@@ -1,4 +1,4 @@
-import { CalendarChange } from "modules/calendar-log/models/difference"
+import { CalendarChange } from "modules/calendar-log/models/calendar-change"
 import { EmailFrequency } from "modules/notifier/models/email-frequency"
 
 export interface EmailNotifierRecipient {

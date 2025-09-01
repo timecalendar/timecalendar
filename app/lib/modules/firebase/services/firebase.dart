@@ -4,8 +4,9 @@ class FirebaseService {
   static final FirebaseService _instance = FirebaseService._();
 
   static FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-  static FirebaseAnalyticsObserver observer =
-      FirebaseAnalyticsObserver(analytics: analytics);
+  static FirebaseAnalyticsObserver observer = FirebaseAnalyticsObserver(
+    analytics: analytics,
+  );
 
   factory FirebaseService() {
     return _instance;
@@ -15,7 +16,9 @@ class FirebaseService {
 
   static void setAppTheme(bool darkMode) {
     analytics.setUserProperty(
-        name: 'app_theme', value: darkMode ? 'dark' : 'light');
+      name: 'app_theme',
+      value: darkMode ? 'dark' : 'light',
+    );
   }
 
   static void setStartupScreen(String? startupScreen) {

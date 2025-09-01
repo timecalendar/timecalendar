@@ -14,287 +14,92 @@
 
 
 import type { Configuration } from './configuration';
-import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common';
 import type { RequestArgs } from './base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerMap } from './base';
 
-/**
- * 
- * @export
- * @interface CalendarEventCustomFields
- */
+export interface CalendarChangeGet {
+    'oldItems': Array<CalendarLogEventGet>;
+    'newItems': Array<CalendarLogEventGet>;
+    'changedItems': Array<CalendarChangedItem>;
+}
+export interface CalendarChangedItem {
+    'previousItem': CalendarLogEventGet;
+    'newItem': CalendarLogEventGet;
+}
 export interface CalendarEventCustomFields {
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CalendarEventCustomFields
-     */
     'canceled'?: boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventCustomFields
-     */
     'shortDescription'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventCustomFields
-     */
     'subject'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventCustomFields
-     */
     'groupColor'?: string;
 }
-/**
- * 
- * @export
- * @interface CalendarEventForPublic
- */
 export interface CalendarEventForPublic {
-    /**
-     * 
-     * @type {EventTypeEnum}
-     * @memberof CalendarEventForPublic
-     */
     'type': EventTypeEnum;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'color': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'groupColor': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'uid': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'title': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'startsAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'endsAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'location': string | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof CalendarEventForPublic
-     */
     'allDay': boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'description': string | null;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof CalendarEventForPublic
-     */
     'teachers': Array<string>;
-    /**
-     * 
-     * @type {Array<EventTag>}
-     * @memberof CalendarEventForPublic
-     */
     'tags': Array<EventTag>;
-    /**
-     * 
-     * @type {CalendarEventCustomFields}
-     * @memberof CalendarEventForPublic
-     */
     'fields': CalendarEventCustomFields | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarEventForPublic
-     */
     'exportedAt': string;
 }
 
 
-/**
- * 
- * @export
- * @interface CalendarForPublic
- */
 export interface CalendarForPublic {
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'id': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'token': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'name': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'schoolName': string | null;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'schoolId'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'lastUpdatedAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CalendarForPublic
-     */
     'createdAt': string;
 }
-/**
- * 
- * @export
- * @interface CalendarWithContent
- */
+export interface CalendarLogEventGet {
+    'uid': string;
+    'title': string;
+    'startsAt': string;
+    'endsAt': string;
+    'location': string | null;
+}
+export interface CalendarLogGet {
+    'id': string;
+    'calendarId': string;
+    'calendarToken': string;
+    'calendarName': string;
+    'calendarChange': CalendarChangeGet;
+    'createdAt': string;
+    'updatedAt': string;
+}
 export interface CalendarWithContent {
-    /**
-     * 
-     * @type {CalendarForPublic}
-     * @memberof CalendarWithContent
-     */
     'calendar': CalendarForPublic;
-    /**
-     * 
-     * @type {Array<CalendarEventForPublic>}
-     * @memberof CalendarWithContent
-     */
     'events': Array<CalendarEventForPublic>;
 }
-/**
- * 
- * @export
- * @interface CreateCalendarDto
- */
 export interface CreateCalendarDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCalendarDto
-     */
     'url': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCalendarDto
-     */
     'schoolId'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCalendarDto
-     */
     'schoolName'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCalendarDto
-     */
     'name'?: string;
-    /**
-     * 
-     * @type {object}
-     * @memberof CreateCalendarDto
-     */
     'customData': object | null;
 }
-/**
- * 
- * @export
- * @interface CreateCalendarRepDto
- */
 export interface CreateCalendarRepDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof CreateCalendarRepDto
-     */
     'token': string;
 }
-/**
- * 
- * @export
- * @interface EventTag
- */
 export interface EventTag {
-    /**
-     * 
-     * @type {string}
-     * @memberof EventTag
-     */
     'name': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EventTag
-     */
     'color': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof EventTag
-     */
     'icon': string;
 }
-/**
- * 
- * @export
- * @enum {string}
- */
 
 export const EventTypeEnum = {
     Cm: 'cm',
@@ -309,297 +114,188 @@ export const EventTypeEnum = {
 export type EventTypeEnum = typeof EventTypeEnum[keyof typeof EventTypeEnum];
 
 
-/**
- * 
- * @export
- * @interface FindSchoolGroupsRepDto
- */
 export interface FindSchoolGroupsRepDto {
-    /**
-     * 
-     * @type {Array<SchoolGroupItem>}
-     * @memberof FindSchoolGroupsRepDto
-     */
     'groups': Array<SchoolGroupItem>;
 }
-/**
- * 
- * @export
- * @interface FindSchoolsRepDto
- */
 export interface FindSchoolsRepDto {
-    /**
-     * 
-     * @type {Array<SchoolForList>}
-     * @memberof FindSchoolsRepDto
-     */
     'schools': Array<SchoolForList>;
 }
-/**
- * 
- * @export
- * @interface GetSchoolGroupsIcalUrlDto
- */
+export interface GetCalendarLogsDto {
+    'tokens': Array<string>;
+}
 export interface GetSchoolGroupsIcalUrlDto {
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof GetSchoolGroupsIcalUrlDto
-     */
     'groups': Array<string>;
 }
-/**
- * 
- * @export
- * @interface GetSchoolGroupsIcalUrlRepDto
- */
 export interface GetSchoolGroupsIcalUrlRepDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof GetSchoolGroupsIcalUrlRepDto
-     */
     'url': string;
 }
-/**
- * 
- * @export
- * @interface OrleansGetIcalUrlFromStudentNumberDto
- */
+export interface NotificationSubscriptionCreate {
+    'frequency': NotificationSubscriptionCreateFrequencyEnum;
+    'nbDaysAhead': number;
+    'isActive': boolean;
+    'calendarIds': Array<string>;
+    'fcmToken': string;
+}
+
+export const NotificationSubscriptionCreateFrequencyEnum = {
+    Immediately: 'immediately',
+    Hourly: 'hourly',
+    Daily: 'daily'
+} as const;
+
+export type NotificationSubscriptionCreateFrequencyEnum = typeof NotificationSubscriptionCreateFrequencyEnum[keyof typeof NotificationSubscriptionCreateFrequencyEnum];
+
 export interface OrleansGetIcalUrlFromStudentNumberDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof OrleansGetIcalUrlFromStudentNumberDto
-     */
     'studentNumber': string;
 }
-/**
- * 
- * @export
- * @interface SchoolAssistant
- */
 export interface SchoolAssistant {
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolAssistant
-     */
     'slug': string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof SchoolAssistant
-     */
     'requireIntranetAccess': boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof SchoolAssistant
-     */
     'requireCalendarName': boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof SchoolAssistant
-     */
     'isNative': boolean;
 }
-/**
- * 
- * @export
- * @interface SchoolForList
- */
 export interface SchoolForList {
-    /**
-     * 
-     * @type {SchoolAssistant}
-     * @memberof SchoolForList
-     */
     'assistant': SchoolAssistant;
-    /**
-     * 
-     * @type {SchoolAssistant}
-     * @memberof SchoolForList
-     */
     'fallbackAssistant'?: SchoolAssistant;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'id': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'code': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'name': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'siteUrl': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'imageUrl': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'intranetUrl': string | null;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof SchoolForList
-     */
     'visible': boolean;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'createdAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'updatedAt': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolForList
-     */
     'deletedAt'?: string;
 }
-/**
- * 
- * @export
- * @interface SchoolGroupItem
- */
 export interface SchoolGroupItem {
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolGroupItem
-     */
     'text': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SchoolGroupItem
-     */
     'value': string;
-    /**
-     * 
-     * @type {Array<SchoolGroupItem>}
-     * @memberof SchoolGroupItem
-     */
     'children': Array<SchoolGroupItem>;
 }
-/**
- * 
- * @export
- * @interface SendMessageDto
- */
 export interface SendMessageDto {
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'email': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'message': string;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof SendMessageDto
-     */
     'calendarIds'?: Array<string>;
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'schoolId'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'schoolName'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'gradeName'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'deviceInfo'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SendMessageDto
-     */
     'calendarUrl'?: string;
 }
-/**
- * 
- * @export
- * @interface SetSchoolGroupDto
- */
 export interface SetSchoolGroupDto {
-    /**
-     * 
-     * @type {Array<SchoolGroupItem>}
-     * @memberof SetSchoolGroupDto
-     */
     'groups': Array<SchoolGroupItem>;
-    /**
-     * 
-     * @type {string}
-     * @memberof SetSchoolGroupDto
-     */
     'icalUrl': string;
 }
-/**
- * 
- * @export
- * @interface SyncCalendarsDto
- */
 export interface SyncCalendarsDto {
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof SyncCalendarsDto
-     */
     'tokens': Array<string>;
 }
 
 /**
+ * CalendarLogsApi - axios parameter creator
+ */
+export const CalendarLogsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Get calendar logs for given tokens
+         * @param {GetCalendarLogsDto} getCalendarLogsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCalendarLogs: async (getCalendarLogsDto: GetCalendarLogsDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'getCalendarLogsDto' is not null or undefined
+            assertParamExists('getCalendarLogs', 'getCalendarLogsDto', getCalendarLogsDto)
+            const localVarPath = `/calendar-logs/search`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(getCalendarLogsDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * CalendarLogsApi - functional programming interface
+ */
+export const CalendarLogsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = CalendarLogsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Get calendar logs for given tokens
+         * @param {GetCalendarLogsDto} getCalendarLogsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getCalendarLogs(getCalendarLogsDto: GetCalendarLogsDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CalendarLogGet>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getCalendarLogs(getCalendarLogsDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['CalendarLogsApi.getCalendarLogs']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * CalendarLogsApi - factory interface
+ */
+export const CalendarLogsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = CalendarLogsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Get calendar logs for given tokens
+         * @param {GetCalendarLogsDto} getCalendarLogsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getCalendarLogs(getCalendarLogsDto: GetCalendarLogsDto, options?: RawAxiosRequestConfig): AxiosPromise<Array<CalendarLogGet>> {
+            return localVarFp.getCalendarLogs(getCalendarLogsDto, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * CalendarLogsApi - object-oriented interface
+ */
+export class CalendarLogsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Get calendar logs for given tokens
+     * @param {GetCalendarLogsDto} getCalendarLogsDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public getCalendarLogs(getCalendarLogsDto: GetCalendarLogsDto, options?: RawAxiosRequestConfig) {
+        return CalendarLogsApiFp(this.configuration).getCalendarLogs(getCalendarLogsDto, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * CalendarsApi - axios parameter creator
- * @export
  */
 export const CalendarsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
@@ -610,7 +306,7 @@ export const CalendarsApiAxiosParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findCalendarByToken: async (token: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        findCalendarByToken: async (token: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'token' is not null or undefined
             assertParamExists('findCalendarByToken', 'token', token)
             const localVarPath = `/calendars/by-token/{token}`
@@ -644,7 +340,7 @@ export const CalendarsApiAxiosParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createCalendar: async (createCalendarDto: CreateCalendarDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createCalendar: async (createCalendarDto: CreateCalendarDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'createCalendarDto' is not null or undefined
             assertParamExists('createCalendar', 'createCalendarDto', createCalendarDto)
             const localVarPath = `/calendars`;
@@ -680,7 +376,7 @@ export const CalendarsApiAxiosParamCreator = function (configuration?: Configura
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        syncCalendars: async (syncCalendarsDto: SyncCalendarsDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        syncCalendars: async (syncCalendarsDto: SyncCalendarsDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'syncCalendarsDto' is not null or undefined
             assertParamExists('syncCalendars', 'syncCalendarsDto', syncCalendarsDto)
             const localVarPath = `/calendars/sync`;
@@ -714,7 +410,6 @@ export const CalendarsApiAxiosParamCreator = function (configuration?: Configura
 
 /**
  * CalendarsApi - functional programming interface
- * @export
  */
 export const CalendarsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = CalendarsApiAxiosParamCreator(configuration)
@@ -726,9 +421,11 @@ export const CalendarsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async findCalendarByToken(token: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CalendarForPublic>> {
+        async findCalendarByToken(token: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CalendarForPublic>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.findCalendarByToken(token, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['CalendarsApi.findCalendarByToken']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -737,9 +434,11 @@ export const CalendarsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createCalendar(createCalendarDto: CreateCalendarDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateCalendarRepDto>> {
+        async createCalendar(createCalendarDto: CreateCalendarDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateCalendarRepDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createCalendar(createCalendarDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['CalendarsApi.createCalendar']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -748,16 +447,17 @@ export const CalendarsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async syncCalendars(syncCalendarsDto: SyncCalendarsDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CalendarWithContent>>> {
+        async syncCalendars(syncCalendarsDto: SyncCalendarsDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<CalendarWithContent>>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.syncCalendars(syncCalendarsDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['CalendarsApi.syncCalendars']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
 
 /**
  * CalendarsApi - factory interface
- * @export
  */
 export const CalendarsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = CalendarsApiFp(configuration)
@@ -769,7 +469,7 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findCalendarByToken(token: string, options?: any): AxiosPromise<CalendarForPublic> {
+        findCalendarByToken(token: string, options?: RawAxiosRequestConfig): AxiosPromise<CalendarForPublic> {
             return localVarFp.findCalendarByToken(token, options).then((request) => request(axios, basePath));
         },
         /**
@@ -779,7 +479,7 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createCalendar(createCalendarDto: CreateCalendarDto, options?: any): AxiosPromise<CreateCalendarRepDto> {
+        createCalendar(createCalendarDto: CreateCalendarDto, options?: RawAxiosRequestConfig): AxiosPromise<CreateCalendarRepDto> {
             return localVarFp.createCalendar(createCalendarDto, options).then((request) => request(axios, basePath));
         },
         /**
@@ -789,7 +489,7 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        syncCalendars(syncCalendarsDto: SyncCalendarsDto, options?: any): AxiosPromise<Array<CalendarWithContent>> {
+        syncCalendars(syncCalendarsDto: SyncCalendarsDto, options?: RawAxiosRequestConfig): AxiosPromise<Array<CalendarWithContent>> {
             return localVarFp.syncCalendars(syncCalendarsDto, options).then((request) => request(axios, basePath));
         },
     };
@@ -797,9 +497,6 @@ export const CalendarsApiFactory = function (configuration?: Configuration, base
 
 /**
  * CalendarsApi - object-oriented interface
- * @export
- * @class CalendarsApi
- * @extends {BaseAPI}
  */
 export class CalendarsApi extends BaseAPI {
     /**
@@ -808,9 +505,8 @@ export class CalendarsApi extends BaseAPI {
      * @param {string} token The calendar token
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof CalendarsApi
      */
-    public findCalendarByToken(token: string, options?: AxiosRequestConfig) {
+    public findCalendarByToken(token: string, options?: RawAxiosRequestConfig) {
         return CalendarsApiFp(this.configuration).findCalendarByToken(token, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -820,9 +516,8 @@ export class CalendarsApi extends BaseAPI {
      * @param {CreateCalendarDto} createCalendarDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof CalendarsApi
      */
-    public createCalendar(createCalendarDto: CreateCalendarDto, options?: AxiosRequestConfig) {
+    public createCalendar(createCalendarDto: CreateCalendarDto, options?: RawAxiosRequestConfig) {
         return CalendarsApiFp(this.configuration).createCalendar(createCalendarDto, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -832,9 +527,8 @@ export class CalendarsApi extends BaseAPI {
      * @param {SyncCalendarsDto} syncCalendarsDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof CalendarsApi
      */
-    public syncCalendars(syncCalendarsDto: SyncCalendarsDto, options?: AxiosRequestConfig) {
+    public syncCalendars(syncCalendarsDto: SyncCalendarsDto, options?: RawAxiosRequestConfig) {
         return CalendarsApiFp(this.configuration).syncCalendars(syncCalendarsDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
@@ -843,7 +537,6 @@ export class CalendarsApi extends BaseAPI {
 
 /**
  * ContactApi - axios parameter creator
- * @export
  */
 export const ContactApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
@@ -854,7 +547,7 @@ export const ContactApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        sendMessage: async (sendMessageDto: SendMessageDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        sendMessage: async (sendMessageDto: SendMessageDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'sendMessageDto' is not null or undefined
             assertParamExists('sendMessage', 'sendMessageDto', sendMessageDto)
             const localVarPath = `/contact`;
@@ -888,7 +581,6 @@ export const ContactApiAxiosParamCreator = function (configuration?: Configurati
 
 /**
  * ContactApi - functional programming interface
- * @export
  */
 export const ContactApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = ContactApiAxiosParamCreator(configuration)
@@ -900,16 +592,17 @@ export const ContactApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async sendMessage(sendMessageDto: SendMessageDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async sendMessage(sendMessageDto: SendMessageDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.sendMessage(sendMessageDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ContactApi.sendMessage']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
 
 /**
  * ContactApi - factory interface
- * @export
  */
 export const ContactApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = ContactApiFp(configuration)
@@ -921,7 +614,7 @@ export const ContactApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        sendMessage(sendMessageDto: SendMessageDto, options?: any): AxiosPromise<void> {
+        sendMessage(sendMessageDto: SendMessageDto, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.sendMessage(sendMessageDto, options).then((request) => request(axios, basePath));
         },
     };
@@ -929,9 +622,6 @@ export const ContactApiFactory = function (configuration?: Configuration, basePa
 
 /**
  * ContactApi - object-oriented interface
- * @export
- * @class ContactApi
- * @extends {BaseAPI}
  */
 export class ContactApi extends BaseAPI {
     /**
@@ -940,9 +630,8 @@ export class ContactApi extends BaseAPI {
      * @param {SendMessageDto} sendMessageDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof ContactApi
      */
-    public sendMessage(sendMessageDto: SendMessageDto, options?: AxiosRequestConfig) {
+    public sendMessage(sendMessageDto: SendMessageDto, options?: RawAxiosRequestConfig) {
         return ContactApiFp(this.configuration).sendMessage(sendMessageDto, options).then((request) => request(this.axios, this.basePath));
     }
 }
@@ -950,8 +639,214 @@ export class ContactApi extends BaseAPI {
 
 
 /**
+ * FeatureFlagsApi - axios parameter creator
+ */
+export const FeatureFlagsApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Evaluate multiple feature flags
+         * @param {string} keys 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        evaluateFlags: async (keys: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'keys' is not null or undefined
+            assertParamExists('evaluateFlags', 'keys', keys)
+            const localVarPath = `/feature-flags/evaluate`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (keys !== undefined) {
+                localVarQueryParameter['keys'] = keys;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * FeatureFlagsApi - functional programming interface
+ */
+export const FeatureFlagsApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = FeatureFlagsApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Evaluate multiple feature flags
+         * @param {string} keys 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async evaluateFlags(keys: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<object>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.evaluateFlags(keys, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['FeatureFlagsApi.evaluateFlags']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * FeatureFlagsApi - factory interface
+ */
+export const FeatureFlagsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = FeatureFlagsApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Evaluate multiple feature flags
+         * @param {string} keys 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        evaluateFlags(keys: string, options?: RawAxiosRequestConfig): AxiosPromise<object> {
+            return localVarFp.evaluateFlags(keys, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * FeatureFlagsApi - object-oriented interface
+ */
+export class FeatureFlagsApi extends BaseAPI {
+    /**
+     * 
+     * @summary Evaluate multiple feature flags
+     * @param {string} keys 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public evaluateFlags(keys: string, options?: RawAxiosRequestConfig) {
+        return FeatureFlagsApiFp(this.configuration).evaluateFlags(keys, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * NotificationSubscriptionApi - axios parameter creator
+ */
+export const NotificationSubscriptionApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Create or update notification subscription
+         * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOrUpdateSubscription: async (notificationSubscriptionCreate: NotificationSubscriptionCreate, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'notificationSubscriptionCreate' is not null or undefined
+            assertParamExists('createOrUpdateSubscription', 'notificationSubscriptionCreate', notificationSubscriptionCreate)
+            const localVarPath = `/notification-subscription`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(notificationSubscriptionCreate, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * NotificationSubscriptionApi - functional programming interface
+ */
+export const NotificationSubscriptionApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = NotificationSubscriptionApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * 
+         * @summary Create or update notification subscription
+         * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createOrUpdateSubscription(notificationSubscriptionCreate: NotificationSubscriptionCreate, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOrUpdateSubscription(notificationSubscriptionCreate, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['NotificationSubscriptionApi.createOrUpdateSubscription']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * NotificationSubscriptionApi - factory interface
+ */
+export const NotificationSubscriptionApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = NotificationSubscriptionApiFp(configuration)
+    return {
+        /**
+         * 
+         * @summary Create or update notification subscription
+         * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOrUpdateSubscription(notificationSubscriptionCreate: NotificationSubscriptionCreate, options?: RawAxiosRequestConfig): AxiosPromise<void> {
+            return localVarFp.createOrUpdateSubscription(notificationSubscriptionCreate, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * NotificationSubscriptionApi - object-oriented interface
+ */
+export class NotificationSubscriptionApi extends BaseAPI {
+    /**
+     * 
+     * @summary Create or update notification subscription
+     * @param {NotificationSubscriptionCreate} notificationSubscriptionCreate 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public createOrUpdateSubscription(notificationSubscriptionCreate: NotificationSubscriptionCreate, options?: RawAxiosRequestConfig) {
+        return NotificationSubscriptionApiFp(this.configuration).createOrUpdateSubscription(notificationSubscriptionCreate, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * SchoolsApi - axios parameter creator
- * @export
  */
 export const SchoolsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
@@ -962,7 +857,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findSchool: async (schoolId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        findSchool: async (schoolId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'schoolId' is not null or undefined
             assertParamExists('findSchool', 'schoolId', schoolId)
             const localVarPath = `/schools/{schoolId}`
@@ -995,7 +890,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findSchools: async (options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        findSchools: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/schools`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -1026,7 +921,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findSchoolGroups: async (schoolId: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        findSchoolGroups: async (schoolId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'schoolId' is not null or undefined
             assertParamExists('findSchoolGroups', 'schoolId', schoolId)
             const localVarPath = `/schools/{schoolId}/school-group`
@@ -1061,7 +956,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSchoolGroupsIcalUrl: async (schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getSchoolGroupsIcalUrl: async (schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'schoolId' is not null or undefined
             assertParamExists('getSchoolGroupsIcalUrl', 'schoolId', schoolId)
             // verify required parameter 'getSchoolGroupsIcalUrlDto' is not null or undefined
@@ -1101,7 +996,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setSchoolGroups: async (schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        setSchoolGroups: async (schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'schoolId' is not null or undefined
             assertParamExists('setSchoolGroups', 'schoolId', schoolId)
             // verify required parameter 'setSchoolGroupDto' is not null or undefined
@@ -1140,7 +1035,7 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getIcalUrlFromStudentNumber: async (orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getIcalUrlFromStudentNumber: async (orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'orleansGetIcalUrlFromStudentNumberDto' is not null or undefined
             assertParamExists('getIcalUrlFromStudentNumber', 'orleansGetIcalUrlFromStudentNumberDto', orleansGetIcalUrlFromStudentNumberDto)
             const localVarPath = `/schools/univ-orleans/students`;
@@ -1174,7 +1069,6 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
 
 /**
  * SchoolsApi - functional programming interface
- * @export
  */
 export const SchoolsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = SchoolsApiAxiosParamCreator(configuration)
@@ -1186,9 +1080,11 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async findSchool(schoolId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SchoolForList>> {
+        async findSchool(schoolId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<SchoolForList>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.findSchool(schoolId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.findSchool']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1196,9 +1092,11 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async findSchools(options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FindSchoolsRepDto>> {
+        async findSchools(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FindSchoolsRepDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.findSchools(options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.findSchools']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1207,9 +1105,11 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async findSchoolGroups(schoolId: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FindSchoolGroupsRepDto>> {
+        async findSchoolGroups(schoolId: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<FindSchoolGroupsRepDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.findSchoolGroups(schoolId, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.findSchoolGroups']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1219,9 +1119,11 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetSchoolGroupsIcalUrlRepDto>> {
+        async getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetSchoolGroupsIcalUrlRepDto>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getSchoolGroupsIcalUrl(schoolId, getSchoolGroupsIcalUrlDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.getSchoolGroupsIcalUrl']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1231,9 +1133,11 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.setSchoolGroups(schoolId, setSchoolGroupDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.setSchoolGroups']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
          * 
@@ -1242,16 +1146,17 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
+        async getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<void>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto, options);
-            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.getIcalUrlFromStudentNumber']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
 };
 
 /**
  * SchoolsApi - factory interface
- * @export
  */
 export const SchoolsApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = SchoolsApiFp(configuration)
@@ -1263,7 +1168,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findSchool(schoolId: string, options?: any): AxiosPromise<SchoolForList> {
+        findSchool(schoolId: string, options?: RawAxiosRequestConfig): AxiosPromise<SchoolForList> {
             return localVarFp.findSchool(schoolId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1272,7 +1177,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findSchools(options?: any): AxiosPromise<FindSchoolsRepDto> {
+        findSchools(options?: RawAxiosRequestConfig): AxiosPromise<FindSchoolsRepDto> {
             return localVarFp.findSchools(options).then((request) => request(axios, basePath));
         },
         /**
@@ -1282,7 +1187,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        findSchoolGroups(schoolId: string, options?: any): AxiosPromise<FindSchoolGroupsRepDto> {
+        findSchoolGroups(schoolId: string, options?: RawAxiosRequestConfig): AxiosPromise<FindSchoolGroupsRepDto> {
             return localVarFp.findSchoolGroups(schoolId, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1293,7 +1198,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: any): AxiosPromise<GetSchoolGroupsIcalUrlRepDto> {
+        getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: RawAxiosRequestConfig): AxiosPromise<GetSchoolGroupsIcalUrlRepDto> {
             return localVarFp.getSchoolGroupsIcalUrl(schoolId, getSchoolGroupsIcalUrlDto, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1304,7 +1209,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: any): AxiosPromise<void> {
+        setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.setSchoolGroups(schoolId, setSchoolGroupDto, options).then((request) => request(axios, basePath));
         },
         /**
@@ -1314,7 +1219,7 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options?: any): AxiosPromise<void> {
+        getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options?: RawAxiosRequestConfig): AxiosPromise<void> {
             return localVarFp.getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto, options).then((request) => request(axios, basePath));
         },
     };
@@ -1322,9 +1227,6 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
 
 /**
  * SchoolsApi - object-oriented interface
- * @export
- * @class SchoolsApi
- * @extends {BaseAPI}
  */
 export class SchoolsApi extends BaseAPI {
     /**
@@ -1333,9 +1235,8 @@ export class SchoolsApi extends BaseAPI {
      * @param {string} schoolId The school id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchoolsApi
      */
-    public findSchool(schoolId: string, options?: AxiosRequestConfig) {
+    public findSchool(schoolId: string, options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).findSchool(schoolId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1344,9 +1245,8 @@ export class SchoolsApi extends BaseAPI {
      * @summary Find list of schools
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchoolsApi
      */
-    public findSchools(options?: AxiosRequestConfig) {
+    public findSchools(options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).findSchools(options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1356,9 +1256,8 @@ export class SchoolsApi extends BaseAPI {
      * @param {string} schoolId The school id
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchoolsApi
      */
-    public findSchoolGroups(schoolId: string, options?: AxiosRequestConfig) {
+    public findSchoolGroups(schoolId: string, options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).findSchoolGroups(schoolId, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1369,9 +1268,8 @@ export class SchoolsApi extends BaseAPI {
      * @param {GetSchoolGroupsIcalUrlDto} getSchoolGroupsIcalUrlDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchoolsApi
      */
-    public getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: AxiosRequestConfig) {
+    public getSchoolGroupsIcalUrl(schoolId: string, getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto, options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).getSchoolGroupsIcalUrl(schoolId, getSchoolGroupsIcalUrlDto, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1382,9 +1280,8 @@ export class SchoolsApi extends BaseAPI {
      * @param {SetSchoolGroupDto} setSchoolGroupDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchoolsApi
      */
-    public setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: AxiosRequestConfig) {
+    public setSchoolGroups(schoolId: string, setSchoolGroupDto: SetSchoolGroupDto, options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).setSchoolGroups(schoolId, setSchoolGroupDto, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -1394,9 +1291,8 @@ export class SchoolsApi extends BaseAPI {
      * @param {OrleansGetIcalUrlFromStudentNumberDto} orleansGetIcalUrlFromStudentNumberDto 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
-     * @memberof SchoolsApi
      */
-    public getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options?: AxiosRequestConfig) {
+    public getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto: OrleansGetIcalUrlFromStudentNumberDto, options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).getIcalUrlFromStudentNumber(orleansGetIcalUrlFromStudentNumberDto, options).then((request) => request(this.axios, this.basePath));
     }
 }

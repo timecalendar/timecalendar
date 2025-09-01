@@ -40,9 +40,22 @@ Next, on the [Firebase Console](https://console.firebase.google.com/), go into y
 
 ### Environment variables
 
-Copy the file `.env.sample` to a new file named `.env`.
+This project uses Flutter's `--dart-define` for environment configuration.
 
-Get the local IP address of your computer running the API server. Add it in `MAIN_API_URL` (e.g. `http://192.168.0.10:3005`).
+**For local development with simulator/emulator:**
+```bash
+flutter run --dart-define=MAIN_API_URL=http://localhost:3005 \
+            --dart-define=MAIN_WEB_URL=http://localhost:3000
+```
+
+**For local development on real device:**
+Get the local IP address of your computer running the API server, then run:
+```bash
+flutter run --dart-define=MAIN_API_URL=http://YOUR_LOCAL_IP:3005 \
+            --dart-define=MAIN_WEB_URL=http://YOUR_LOCAL_IP:3000
+```
+Replace `YOUR_LOCAL_IP` with your computer's network IP (e.g. `192.168.0.10`).
+
 
 ### Run the app
 
@@ -56,8 +69,46 @@ Run the app from your IDE.
 
 ### Add certificates
 
-On MacOS, drag and drop the file `ci/certificates/cert.pem` in the simulator.
+For the app to communicate with the local development server, you need to add the development certificate to your system's trusted certificates.
+
+#### macOS
+
+1. **For iOS Simulator**: Drag and drop the file `ci/certificates/cert.pem` into the simulator.
+2. **For system-wide trust**: Double-click the `ci/certificates/cert.pem` file to add it to Keychain Access, then mark it as trusted for SSL.
+
+#### Windows
+
+1. Double-click the `ci/certificates/cert.pem` file.
+2. Click "Install Certificate".
+3. Choose "Local Machine" and click "Next".
+4. Select "Place all certificates in the following store" and browse to "Trusted Root Certification Authorities".
+5. Click "Next" and then "Finish".
+
+#### Linux
+
+Add the certificate to your system's certificate store:
+
+```bash
+sudo cp ci/certificates/cert.pem /usr/local/share/ca-certificates/timecalendar-dev.crt
+sudo update-ca-certificates
+```
 
 ## Build on Android
 
 Copy the file `app/android/key.properties.sample` into `app/android/key.properties`.
+
+## Release to Stores
+
+### Android (Play Store)
+```bash
+cd android
+fastlane release_play_store build_number:137
+```
+
+### iOS (App Store)
+```bash
+cd ios
+fastlane release_app_store build_number:137
+```
+
+Use the latest build number for each release.

@@ -2,16 +2,42 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/personal_event/models/personal_event.dart';
 import 'package:timecalendar/modules/personal_event/repositories/personal_event_repository.dart';
 
-class PersonalEventsNotifier extends StateNotifier<List<PersonalEvent>> {
-  Ref ref;
+class PersonalEventsNotifier extends AsyncNotifier<List<PersonalEvent>> {
+  @override
+  Future<List<PersonalEvent>> build() async {
+    final repo = ref.read(personalEventRepositoryProvider);
+    return repo.findAll();
+  }
 
-  PersonalEventsNotifier(this.ref) : super([]);
+  Future<void> addPersonalEvent(PersonalEvent event) async {
+    final repo = ref.read(personalEventRepositoryProvider);
+    await repo.put(event);
 
-  update() async {
-    state = await ref.read(personalEventRepositoryProvider).findAll();
+    // Refresh state
+    state = await AsyncValue.guard(() async {
+      return repo.findAll();
+    });
+  }
+
+  Future<void> deletePersonalEvent(String uid) async {
+    final repo = ref.read(personalEventRepositoryProvider);
+    await repo.delete(uid);
+
+    // Refresh state
+    state = await AsyncValue.guard(() async {
+      return repo.findAll();
+    });
+  }
+
+  Future<void> refresh() async {
+    final repo = ref.read(personalEventRepositoryProvider);
+    state = await AsyncValue.guard(() async {
+      return repo.findAll();
+    });
   }
 }
 
 final personalEventsProvider =
-    StateNotifierProvider<PersonalEventsNotifier, List<PersonalEvent>>(
-        (ref) => PersonalEventsNotifier(ref));
+    AsyncNotifierProvider<PersonalEventsNotifier, List<PersonalEvent>>(
+      PersonalEventsNotifier.new,
+    );

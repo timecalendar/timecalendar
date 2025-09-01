@@ -33,7 +33,7 @@ class _$SchoolForList extends SchoolForList {
   final DateTime? deletedAt;
 
   factory _$SchoolForList([void Function(SchoolForListBuilder)? updates]) =>
-      (new SchoolForListBuilder()..update(updates))._build();
+      (SchoolForListBuilder()..update(updates))._build();
 
   _$SchoolForList._(
       {required this.assistant,
@@ -48,28 +48,13 @@ class _$SchoolForList extends SchoolForList {
       required this.createdAt,
       required this.updatedAt,
       this.deletedAt})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        assistant, r'SchoolForList', 'assistant');
-    BuiltValueNullFieldError.checkNotNull(id, r'SchoolForList', 'id');
-    BuiltValueNullFieldError.checkNotNull(code, r'SchoolForList', 'code');
-    BuiltValueNullFieldError.checkNotNull(name, r'SchoolForList', 'name');
-    BuiltValueNullFieldError.checkNotNull(siteUrl, r'SchoolForList', 'siteUrl');
-    BuiltValueNullFieldError.checkNotNull(
-        imageUrl, r'SchoolForList', 'imageUrl');
-    BuiltValueNullFieldError.checkNotNull(visible, r'SchoolForList', 'visible');
-    BuiltValueNullFieldError.checkNotNull(
-        createdAt, r'SchoolForList', 'createdAt');
-    BuiltValueNullFieldError.checkNotNull(
-        updatedAt, r'SchoolForList', 'updatedAt');
-  }
-
+      : super._();
   @override
   SchoolForList rebuild(void Function(SchoolForListBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  SchoolForListBuilder toBuilder() => new SchoolForListBuilder()..replace(this);
+  SchoolForListBuilder toBuilder() => SchoolForListBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -133,13 +118,13 @@ class SchoolForListBuilder
 
   SchoolAssistantBuilder? _assistant;
   SchoolAssistantBuilder get assistant =>
-      _$this._assistant ??= new SchoolAssistantBuilder();
+      _$this._assistant ??= SchoolAssistantBuilder();
   set assistant(SchoolAssistantBuilder? assistant) =>
       _$this._assistant = assistant;
 
   SchoolAssistantBuilder? _fallbackAssistant;
   SchoolAssistantBuilder get fallbackAssistant =>
-      _$this._fallbackAssistant ??= new SchoolAssistantBuilder();
+      _$this._fallbackAssistant ??= SchoolAssistantBuilder();
   set fallbackAssistant(SchoolAssistantBuilder? fallbackAssistant) =>
       _$this._fallbackAssistant = fallbackAssistant;
 
@@ -209,7 +194,6 @@ class SchoolForListBuilder
 
   @override
   void replace(SchoolForList other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$SchoolForList;
   }
 
@@ -225,27 +209,28 @@ class SchoolForListBuilder
     _$SchoolForList _$result;
     try {
       _$result = _$v ??
-          new _$SchoolForList._(
-              assistant: assistant.build(),
-              fallbackAssistant: _fallbackAssistant?.build(),
-              id: BuiltValueNullFieldError.checkNotNull(
-                  id, r'SchoolForList', 'id'),
-              code: BuiltValueNullFieldError.checkNotNull(
-                  code, r'SchoolForList', 'code'),
-              name: BuiltValueNullFieldError.checkNotNull(
-                  name, r'SchoolForList', 'name'),
-              siteUrl: BuiltValueNullFieldError.checkNotNull(
-                  siteUrl, r'SchoolForList', 'siteUrl'),
-              imageUrl: BuiltValueNullFieldError.checkNotNull(
-                  imageUrl, r'SchoolForList', 'imageUrl'),
-              intranetUrl: intranetUrl,
-              visible: BuiltValueNullFieldError.checkNotNull(
-                  visible, r'SchoolForList', 'visible'),
-              createdAt: BuiltValueNullFieldError.checkNotNull(
-                  createdAt, r'SchoolForList', 'createdAt'),
-              updatedAt: BuiltValueNullFieldError.checkNotNull(
-                  updatedAt, r'SchoolForList', 'updatedAt'),
-              deletedAt: deletedAt);
+          _$SchoolForList._(
+            assistant: assistant.build(),
+            fallbackAssistant: _fallbackAssistant?.build(),
+            id: BuiltValueNullFieldError.checkNotNull(
+                id, r'SchoolForList', 'id'),
+            code: BuiltValueNullFieldError.checkNotNull(
+                code, r'SchoolForList', 'code'),
+            name: BuiltValueNullFieldError.checkNotNull(
+                name, r'SchoolForList', 'name'),
+            siteUrl: BuiltValueNullFieldError.checkNotNull(
+                siteUrl, r'SchoolForList', 'siteUrl'),
+            imageUrl: BuiltValueNullFieldError.checkNotNull(
+                imageUrl, r'SchoolForList', 'imageUrl'),
+            intranetUrl: intranetUrl,
+            visible: BuiltValueNullFieldError.checkNotNull(
+                visible, r'SchoolForList', 'visible'),
+            createdAt: BuiltValueNullFieldError.checkNotNull(
+                createdAt, r'SchoolForList', 'createdAt'),
+            updatedAt: BuiltValueNullFieldError.checkNotNull(
+                updatedAt, r'SchoolForList', 'updatedAt'),
+            deletedAt: deletedAt,
+          );
     } catch (_) {
       late String _$failedField;
       try {
@@ -254,7 +239,7 @@ class SchoolForListBuilder
         _$failedField = 'fallbackAssistant';
         _fallbackAssistant?.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'SchoolForList', _$failedField, e.toString());
       }
       rethrow;

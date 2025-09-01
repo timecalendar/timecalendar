@@ -14,17 +14,22 @@ class CalendarEventRepository {
   Database get _db => this.ref.read(databaseProvider);
 
   Future<List<CalendarEvent>> getCalendarEvents() async {
-    final events = await _store.find(_db);
-    return events
+    var rawEvents = await _store.find(_db);
+    return rawEvents
         .map((event) => CalendarEvent.fromInternalDb(event.value))
         .toList();
   }
 
-  setCalendarEvents(List<CalendarEvent> events) async {
-    await _store.delete(_db);
+  Future<void> putCalendarEvents(List<CalendarEvent> events) async {
+    await _dropAll();
     await _store.addAll(_db, events.map((event) => event.toDbMap()).toList());
+  }
+
+  Future<void> _dropAll() async {
+    await _store.drop(_db);
   }
 }
 
-final calendarEventRepositoryProvider =
-    Provider((ref) => CalendarEventRepository(ref));
+final calendarEventRepositoryProvider = Provider(
+  (ref) => CalendarEventRepository(ref),
+);

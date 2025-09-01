@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common"
 import { COMMON_IMPORTS } from "common-imports"
+import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { ContactModule } from "modules/contact/contact.module"
 import { FetchModule } from "modules/fetch/fetch.module"
@@ -13,6 +14,8 @@ import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
 import { HealthModule } from "modules/health/health.module"
+import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
+import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 
 @Module({
   imports: [
@@ -24,12 +27,15 @@ import { HealthModule } from "modules/health/health.module"
     FetchModule,
     UnivOrleansModule,
     SchoolModule,
+    CalendarLogModule,
     CalendarSyncModule,
     RedisModule,
     JobRunModule,
     SchoolGroupModule,
     ContactModule,
     HealthModule,
+    NotificationSubscriptionModule,
+    FeatureFlagModule,
   ],
   controllers: [],
   providers: [],

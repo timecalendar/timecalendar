@@ -8,8 +8,9 @@ class CalendarDetails extends HookConsumerWidget {
     final calendarDetails = ref.watch(debugCalendarDetailsProvider);
 
     return calendarDetails.when(
-        data: (text) => Text(text),
-        loading: () => Container(),
-        error: (error, stack) => Container());
+      data: (text) => Text(text),
+      loading: () => Container(),
+      error: (error, stack) => Container(),
+    );
   }
 }

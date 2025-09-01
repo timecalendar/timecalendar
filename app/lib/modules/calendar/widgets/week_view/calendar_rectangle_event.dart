@@ -6,20 +6,21 @@ import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
 
 class CalendarRectangleEvent extends ConsumerWidget {
-  const CalendarRectangleEvent({
-    Key? key,
-    required this.calendarEvent,
-  }) : super(key: key);
+  const CalendarRectangleEvent({Key? key, required this.calendarEvent})
+    : super(key: key);
 
   final EventForUI calendarEvent;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var settingsProvider =
-        oldprovider.Provider.of<SettingsProvider>(context, listen: true);
+    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
+      context,
+      listen: true,
+    );
     final event = calendarEvent.event;
-    final eventChecklistItems =
-        ref.watch(getEventNbChecklistItemsProvider)(event.uid);
+    final eventChecklistItems = ref.watch(getEventNbChecklistItemsProvider)(
+      event.uid,
+    );
 
     return Stack(
       children: <Widget>[
@@ -30,9 +31,10 @@ class CalendarRectangleEvent extends ConsumerWidget {
               height: 5,
               width: 5,
               decoration: BoxDecoration(
-                color: (eventChecklistItems.completedNotes ==
+                color:
+                    (eventChecklistItems.completedNotes ==
                         eventChecklistItems.totalNotes)
-                    ? Colors.black.withOpacity(0.4)
+                    ? Colors.black.withValues(alpha: 0.4)
                     : Theme.of(context).primaryColor,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -77,7 +79,7 @@ class CalendarRectangleEvent extends ConsumerWidget {
                     ),
                   ),
                 ],
-              )
+              ),
           ],
         ),
       ],

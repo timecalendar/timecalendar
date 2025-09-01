@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:timecalendar/modules/activity/models/difference.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:timecalendar/modules/activity/models/calendar_log.dart';
+import 'package:timecalendar/modules/activity/widgets/calendar_log_event.dart';
+import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
-class DifferenceItem extends StatelessWidget {
-  final Difference? difference;
+class CalendarLogItem extends HookConsumerWidget {
+  final CalendarLog calendarLog;
 
-  const DifferenceItem({
-    Key? key,
-    this.difference,
-  }) : super(key: key);
+  const CalendarLogItem({Key? key, required this.calendarLog})
+    : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final change = calendarLog.calendarChange;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -21,29 +24,36 @@ class DifferenceItem extends StatelessWidget {
             left: 25,
             right: 15,
           ),
-          // child: Text(
-          //   AppDateUtils.fullDateTimeText(difference!.dateDiff),
-          // ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppDateUtils.fullDateTimeText(calendarLog.createdAt),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                calendarLog.calendarName,
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
+            ],
+          ),
         ),
-        // TODO: Calendar activity
-        // for (var event in difference!.newItems)
-        //   new DifferenceEvent(
-        //     event: event,
-        //     oldEvent: null,
-        //     type: DifferenceEventType.New,
-        //   ),
-        // for (var events in difference!.changedItems)
-        //   new DifferenceEvent(
-        //     event: events.item2,
-        //     oldEvent: events.item1,
-        //     type: DifferenceEventType.Changed,
-        //   ),
-        // for (var event in difference!.oldItems)
-        //   new DifferenceEvent(
-        //     event: event,
-        //     oldEvent: null,
-        //     type: DifferenceEventType.Old,
-        //   ),
+        // New events
+        for (var event in change.newItems)
+          CalendarLogEventWidget(event: event, type: CalendarLogEventType.New),
+        // Changed events
+        for (var eventChange in change.changedItems)
+          CalendarLogEventWidget(
+            event: eventChange.newEvent,
+            oldEvent: eventChange.oldEvent,
+            type: CalendarLogEventType.Changed,
+          ),
+        // Deleted events
+        for (var event in change.oldItems)
+          CalendarLogEventWidget(event: event, type: CalendarLogEventType.Old),
       ],
     );
   }

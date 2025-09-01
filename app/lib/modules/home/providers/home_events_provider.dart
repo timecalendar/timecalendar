@@ -4,8 +4,8 @@ import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
-final dayDisplayedOnHomePageProvider = Provider<DateTime?>((ref) {
-  final events = ref.watch(eventsForViewProvider);
+final dayDisplayedOnHomePageProvider = FutureProvider<DateTime?>((ref) async {
+  final events = await ref.watch(eventsForViewProvider.future);
   final now = DateTime.now();
   DateTime today = DateTime(now.year, now.month, now.day, 0, 0, 0);
 
@@ -17,19 +17,28 @@ final dayDisplayedOnHomePageProvider = Provider<DateTime?>((ref) {
 
   if (firstEvent == null) return today;
 
-  return DateTime(firstEvent.startsAt.year, firstEvent.startsAt.month,
-      firstEvent.startsAt.day, 0, 0, 0);
+  return DateTime(
+    firstEvent.startsAt.year,
+    firstEvent.startsAt.month,
+    firstEvent.startsAt.day,
+    0,
+    0,
+    0,
+  );
 });
 
-final homeEventsProvider = Provider<List<EventInterface>>((ref) {
-  final events = ref.watch(eventsForViewProvider);
-  final dayDisplayedOnHomePage = ref.watch(dayDisplayedOnHomePageProvider);
+final homeEventsProvider = FutureProvider<List<EventInterface>>((ref) async {
+  final events = await ref.watch(eventsForViewProvider.future);
+  final dayDisplayedOnHomePage = await ref.watch(
+    dayDisplayedOnHomePageProvider.future,
+  );
 
   if (events.length == 0 || dayDisplayedOnHomePage == null) return [];
 
   var dayEvents = events
-      .where((event) =>
-          AppDateUtils.sameDay(dayDisplayedOnHomePage, event.startsAt))
+      .where(
+        (event) => AppDateUtils.sameDay(dayDisplayedOnHomePage, event.startsAt),
+      )
       .toList();
 
   return dayEvents;

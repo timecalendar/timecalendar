@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google"
 
 const poppins = Poppins({
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-poppins",
   weight: ["300", "400", "500", "600"],
 })
@@ -19,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${poppins.variable} antialiased`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/png" href="assets/images/favicon.png" />
@@ -65,7 +66,7 @@ export default function RootLayout({
           content="https://timecalendar.app/assets/images/logo.png"
         />
       </head>
-      <body className={`${poppins.variable}`}>
+      <body>
         <AppThemeProvider>{children}</AppThemeProvider>
       </body>
     </html>

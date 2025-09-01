@@ -27,8 +27,8 @@ class CalendarWeek extends StatefulWidget {
     required this.weekEvents,
     required this.columnPaddingTop,
     required SyncScrollController? syncScroll,
-  })  : _syncScroll = syncScroll,
-        super(key: key);
+  }) : _syncScroll = syncScroll,
+       super(key: key);
 
   final double screenHeight;
   final double calendarWidth;
@@ -56,20 +56,23 @@ class _CalendarWeekState extends State<CalendarWeek> {
   void initState() {
     super.initState();
     _currentWeekScrollController = ScrollController(
-        initialScrollOffset: widget._syncScroll!.currentOffset);
+      initialScrollOffset: widget._syncScroll!.currentOffset,
+    );
     widget._syncScroll!.registerScrollController(_currentWeekScrollController);
   }
 
   @override
   void dispose() {
     super.dispose();
-    widget._syncScroll!
-        .unregisterScrollController(_currentWeekScrollController);
+    widget._syncScroll!.unregisterScrollController(
+      _currentWeekScrollController,
+    );
   }
 
   void selectEvent(BuildContext context, EventInterface event) {
-    Navigator.of(context)
-        .pushNamed(EventDetailsScreen.routeName, arguments: event);
+    Navigator.of(
+      context,
+    ).pushNamed(EventDetailsScreen.routeName, arguments: event);
   }
 
   List<Widget> getCurrentDayIndicator(int day) {
@@ -89,17 +92,17 @@ class _CalendarWeekState extends State<CalendarWeek> {
     return [
       Positioned(
         left: 2,
-        top: (startHour - widget.startHour) * widget.hourHeight +
+        top:
+            (startHour - widget.startHour) * widget.hourHeight +
             widget.columnPaddingTop,
         width: widget.dayWidth,
         height: 2,
-        child: Container(
-          color: ColorUtils.hexToColor('#ff6385'),
-        ),
+        child: Container(color: ColorUtils.hexToColor('#ff6385')),
       ),
       Positioned(
         left: 0,
-        top: (startHour - widget.startHour) * widget.hourHeight +
+        top:
+            (startHour - widget.startHour) * widget.hourHeight +
             widget.columnPaddingTop -
             2,
         width: 6,
@@ -110,7 +113,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
             borderRadius: BorderRadius.circular(4),
           ),
         ),
-      )
+      ),
     ];
   }
 
@@ -120,45 +123,52 @@ class _CalendarWeekState extends State<CalendarWeek> {
 
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
-      widgets.add(Positioned(
-        top: (eventStartsAtHour(calendarEvent.event) - widget.startHour) *
-                widget.hourHeight +
-            widget.columnPaddingTop,
-        left: calendarEvent.startX * widget.dayWidth,
-        width: (calendarEvent.endX - calendarEvent.startX) * widget.dayWidth,
-        child: Material(
-          color: settingsProvider.getEventInterfaceColor(calendarEvent.event),
-          borderRadius: BorderRadius.circular(4),
-          child: InkWell(
-            onTap: () {
-              selectEvent(context, calendarEvent.event);
-            },
+      widgets.add(
+        Positioned(
+          top:
+              (eventStartsAtHour(calendarEvent.event) - widget.startHour) *
+                  widget.hourHeight +
+              widget.columnPaddingTop,
+          left: calendarEvent.startX * widget.dayWidth,
+          width: (calendarEvent.endX - calendarEvent.startX) * widget.dayWidth,
+          child: Material(
+            color: settingsProvider.getEventInterfaceColor(calendarEvent.event),
             borderRadius: BorderRadius.circular(4),
-            child: Container(
+            child: InkWell(
+              onTap: () {
+                selectEvent(context, calendarEvent.event);
+              },
+              borderRadius: BorderRadius.circular(4),
               child: Container(
-                padding: EdgeInsets.all(4),
-                child: Stack(
-                  children: <Widget>[
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: (calendarEvent.endX - calendarEvent.startX) *
-                                  widget.dayWidth >=
-                              20
-                          ? CalendarRectangleEvent(calendarEvent: calendarEvent)
-                          : Container(),
-                    ),
-                  ],
+                child: Container(
+                  padding: EdgeInsets.all(4),
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child:
+                            (calendarEvent.endX - calendarEvent.startX) *
+                                    widget.dayWidth >=
+                                20
+                            ? CalendarRectangleEvent(
+                                calendarEvent: calendarEvent,
+                              )
+                            : Container(),
+                      ),
+                    ],
+                  ),
                 ),
+                height:
+                    (eventEndsAtHour(calendarEvent.event) -
+                        eventStartsAtHour(calendarEvent.event)) *
+                    widget.hourHeight,
               ),
-              height: (eventEndsAtHour(calendarEvent.event) -
-                      eventStartsAtHour(calendarEvent.event)) *
-                  widget.hourHeight,
             ),
           ),
         ),
-      ));
+      );
     }
     return widgets;
   }
@@ -192,8 +202,12 @@ class _CalendarWeekState extends State<CalendarWeek> {
                               widget.firstDayOfWeek.add(Duration(days: day)),
                             ),
                             style: TextStyle(
-                              color: AppDateUtils.isToday(widget.firstDayOfWeek
-                                      .add(Duration(days: day)))
+                              color:
+                                  AppDateUtils.isToday(
+                                    widget.firstDayOfWeek.add(
+                                      Duration(days: day),
+                                    ),
+                                  )
                                   ? Theme.of(context).colorScheme.secondary
                                   : Colors.grey[500],
                             ),
@@ -208,20 +222,22 @@ class _CalendarWeekState extends State<CalendarWeek> {
                                   height: 20,
                                   child: Text(
                                     AppDateUtils.calendarDayNumberText(
-                                      widget.firstDayOfWeek
-                                          .add(Duration(days: day)),
+                                      widget.firstDayOfWeek.add(
+                                        Duration(days: day),
+                                      ),
                                     ),
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                    ),
+                                    style: TextStyle(fontSize: 17),
                                   ),
                                 ),
                               ],
                             ),
-                            decoration: (AppDateUtils.isToday(widget
-                                    .firstDayOfWeek
-                                    .add(Duration(days: day))))
+                            decoration:
+                                (AppDateUtils.isToday(
+                                  widget.firstDayOfWeek.add(
+                                    Duration(days: day),
+                                  ),
+                                ))
                                 ? BoxDecoration(
                                     borderRadius: BorderRadius.circular(15),
                                     boxShadow: [
@@ -230,7 +246,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
                                         color: Theme.of(context)
                                             .colorScheme
                                             .secondary
-                                            .withOpacity(0.4),
+                                            .withValues(alpha: 0.4),
                                       ),
                                     ],
                                   )
@@ -238,7 +254,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
                           ),
                         ],
                       ),
-                    )
+                    ),
                 ],
               ),
             ),
@@ -249,51 +265,52 @@ class _CalendarWeekState extends State<CalendarWeek> {
             height: widget.calendarHeight,
             width: widget.calendarWidth,
             child: NotificationListener<ScrollNotification>(
-                child: SingleChildScrollView(
-                  controller: _currentWeekScrollController,
-                  child: Container(
-                    height: widget.hourHeight * widget.nbHours,
-                    width: widget.calendarWidth,
-                    child: Stack(
-                      children: <Widget>[
-                        // For each column (each day)
-                        for (var day = 0; day < widget.nbOfVisibleDays; day++)
-                          Positioned(
-                            height: widget.hourHeight * widget.nbHours,
-                            top: 0,
-                            left: day * widget.dayWidth,
-                            width: widget.dayWidth,
-                            child: Stack(
-                              children: <Widget>[
-                                for (var hour = 0;
-                                    hour < widget.nbHours;
-                                    hour++)
-                                  Positioned(
-                                    top: widget.hourHeight * hour +
-                                        widget.columnPaddingTop,
-                                    left: widget.columnGap,
-                                    width:
-                                        widget.dayWidth - 2 * widget.columnGap,
-                                    child: Container(
-                                      color: settingsProvider
-                                          .currentTheme.lineColor,
-                                      height: 1,
-                                    ),
+              child: SingleChildScrollView(
+                controller: _currentWeekScrollController,
+                child: Container(
+                  height: widget.hourHeight * widget.nbHours,
+                  width: widget.calendarWidth,
+                  child: Stack(
+                    children: <Widget>[
+                      // For each column (each day)
+                      for (var day = 0; day < widget.nbOfVisibleDays; day++)
+                        Positioned(
+                          height: widget.hourHeight * widget.nbHours,
+                          top: 0,
+                          left: day * widget.dayWidth,
+                          width: widget.dayWidth,
+                          child: Stack(
+                            children: <Widget>[
+                              for (var hour = 0; hour < widget.nbHours; hour++)
+                                Positioned(
+                                  top:
+                                      widget.hourHeight * hour +
+                                      widget.columnPaddingTop,
+                                  left: widget.columnGap,
+                                  width: widget.dayWidth - 2 * widget.columnGap,
+                                  child: Container(
+                                    color:
+                                        settingsProvider.currentTheme.lineColor,
+                                    height: 1,
                                   ),
-                                ...getEventWidgets(day),
-                                ...getCurrentDayIndicator(day)
-                              ],
-                            ),
+                                ),
+                              ...getEventWidgets(day),
+                              ...getCurrentDayIndicator(day),
+                            ],
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 ),
-                onNotification: (ScrollNotification scrollInfo) {
-                  widget._syncScroll!.processNotification(
-                      scrollInfo, _currentWeekScrollController);
-                  return false;
-                }),
+              ),
+              onNotification: (ScrollNotification scrollInfo) {
+                widget._syncScroll!.processNotification(
+                  scrollInfo,
+                  _currentWeekScrollController,
+                );
+                return false;
+              },
+            ),
           ),
         ],
       ),

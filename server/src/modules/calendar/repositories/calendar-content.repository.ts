@@ -25,4 +25,10 @@ export class CalendarContentRepository {
       calendar: idToEntity<CalendarContent>(calendarId),
     })
   }
+
+  async findByCalendarId(calendarId: string) {
+    return this.repository.findOneBy({
+      calendar: idToEntity(calendarId),
+    })
+  }
 }

@@ -19,6 +19,7 @@ class CalendarEvent implements EventInterface {
   List<EventTag> tags;
   CalendarEventCustomFields? fields;
   DateTime exportedAt;
+  String userCalendarId;
   EventKind get kind => EventKind.Calendar;
 
   CalendarEvent({
@@ -35,9 +36,13 @@ class CalendarEvent implements EventInterface {
     required this.tags,
     required this.fields,
     required this.exportedAt,
+    required this.userCalendarId,
   });
 
-  factory CalendarEvent.fromApi(Api.CalendarEventForPublic calendar) {
+  factory CalendarEvent.fromApi(
+    Api.CalendarEventForPublic calendar, {
+    String? userCalendarId,
+  }) {
     return CalendarEvent(
       uid: calendar.uid,
       title: calendar.title,
@@ -54,6 +59,7 @@ class CalendarEvent implements EventInterface {
           ? CalendarEventCustomFields.fromApi(calendar.fields!)
           : null,
       exportedAt: calendar.exportedAt,
+      userCalendarId: userCalendarId ?? '',
     );
   }
 
@@ -69,13 +75,15 @@ class CalendarEvent implements EventInterface {
       allDay: map['allDay'],
       description: map['description'],
       teachers: List<String>.from(map['teachers']),
-      tags: List<Map<String, dynamic>>.from(map['tags'])
-          .map((tag) => EventTag.fromDb(tag))
-          .toList(),
+      tags: List<Map<String, dynamic>>.from(
+        map['tags'],
+      ).map((tag) => EventTag.fromDb(tag)).toList(),
       fields: map['fields'] != null
           ? CalendarEventCustomFields.fromInternalDb(map['fields'])
           : null,
       exportedAt: DateTime.parse(map['exportedAt']).toLocal(),
+      userCalendarId:
+          map['userCalendarId'] ?? '', // null safety for backward compatibility
     );
   }
 
@@ -94,6 +102,7 @@ class CalendarEvent implements EventInterface {
       'tags': tags.map((tag) => tag.toDbMap()).toList(),
       'fields': fields?.toDbMap(),
       'exportedAt': exportedAt.toUtc().toIso8601String(),
+      'userCalendarId': userCalendarId,
     };
   }
 }

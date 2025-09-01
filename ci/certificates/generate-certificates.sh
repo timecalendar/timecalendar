@@ -9,3 +9,4 @@ openssl req \
   -config ssl.cnf
 
 # To add it in MacOS, open Keychain Access > System > add cert.pem here
+# security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain cert.pem

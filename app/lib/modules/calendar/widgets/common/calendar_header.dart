@@ -4,13 +4,14 @@ import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart'
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
+import 'package:timecalendar/modules/calendar/screens/user_calendars_screen.dart';
 
 enum CalendarOptions {
   Subscribe,
   Refresh,
-  ChangeGroups,
+  ChangeCalendars,
   WeekView,
-  PlanningView
+  PlanningView,
 }
 
 class CalendarHeader extends StatelessWidget {
@@ -34,7 +35,8 @@ class CalendarHeader extends StatelessWidget {
   final Function changeView;
 
   PopupMenuItem<CalendarOptions> switchViewPopupMenuItem(
-      SettingsProvider settings) {
+    SettingsProvider settings,
+  ) {
     switch (settings.calendarViewType) {
       case CalendarViewType.Week:
         return PopupMenuItem(
@@ -58,31 +60,22 @@ class CalendarHeader extends StatelessWidget {
       height: appBarHeight,
       child: Row(
         children: <Widget>[
-          SizedBox(
-            width: 20,
-          ),
+          SizedBox(width: 20),
           Expanded(
             child: Text(
               AppDateUtils.monthYearText(currentDateTime!),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
-            icon: Icon(
-              Icons.calendar_today,
-            ),
+            icon: Icon(Icons.calendar_today),
             onPressed: () {
               showToday();
             },
             tooltip: 'Aujourd\'hui',
           ),
           PopupMenuButton(
-            icon: Icon(
-              Icons.more_vert,
-            ),
+            icon: Icon(Icons.more_vert),
             onSelected: (CalendarOptions selectedValue) {
               switch (selectedValue) {
                 case CalendarOptions.Subscribe:
@@ -93,8 +86,10 @@ class CalendarHeader extends StatelessWidget {
                   refreshCalendar();
                   break;
 
-                case CalendarOptions.ChangeGroups:
-                  changesGroup();
+                case CalendarOptions.ChangeCalendars:
+                  Navigator.of(
+                    context,
+                  ).pushNamed(UserCalendarsScreen.routeName);
                   break;
 
                 case CalendarOptions.WeekView:
@@ -103,9 +98,6 @@ class CalendarHeader extends StatelessWidget {
 
                 case CalendarOptions.PlanningView:
                   changeView(CalendarViewType.Planning, settingsProvider);
-                  break;
-
-                default:
                   break;
               }
             },
@@ -116,15 +108,13 @@ class CalendarHeader extends StatelessWidget {
                 value: CalendarOptions.Refresh,
               ),
               PopupMenuItem(
-                child: Text('Modifier les groupes'),
-                value: CalendarOptions.ChangeGroups,
+                child: Text('Modifier les calendriers'),
+                value: CalendarOptions.ChangeCalendars,
               ),
               // switchViewPopupMenuItem(settingsProvider)
             ],
           ),
-          SizedBox(
-            width: 10,
-          ),
+          SizedBox(width: 10),
         ],
       ),
     );

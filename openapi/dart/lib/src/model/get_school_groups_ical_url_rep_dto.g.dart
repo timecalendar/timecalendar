@@ -12,13 +12,9 @@ class _$GetSchoolGroupsIcalUrlRepDto extends GetSchoolGroupsIcalUrlRepDto {
 
   factory _$GetSchoolGroupsIcalUrlRepDto(
           [void Function(GetSchoolGroupsIcalUrlRepDtoBuilder)? updates]) =>
-      (new GetSchoolGroupsIcalUrlRepDtoBuilder()..update(updates))._build();
+      (GetSchoolGroupsIcalUrlRepDtoBuilder()..update(updates))._build();
 
-  _$GetSchoolGroupsIcalUrlRepDto._({required this.url}) : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        url, r'GetSchoolGroupsIcalUrlRepDto', 'url');
-  }
-
+  _$GetSchoolGroupsIcalUrlRepDto._({required this.url}) : super._();
   @override
   GetSchoolGroupsIcalUrlRepDto rebuild(
           void Function(GetSchoolGroupsIcalUrlRepDtoBuilder) updates) =>
@@ -26,7 +22,7 @@ class _$GetSchoolGroupsIcalUrlRepDto extends GetSchoolGroupsIcalUrlRepDto {
 
   @override
   GetSchoolGroupsIcalUrlRepDtoBuilder toBuilder() =>
-      new GetSchoolGroupsIcalUrlRepDtoBuilder()..replace(this);
+      GetSchoolGroupsIcalUrlRepDtoBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -75,7 +71,6 @@ class GetSchoolGroupsIcalUrlRepDtoBuilder
 
   @override
   void replace(GetSchoolGroupsIcalUrlRepDto other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$GetSchoolGroupsIcalUrlRepDto;
   }
 
@@ -89,9 +84,10 @@ class GetSchoolGroupsIcalUrlRepDtoBuilder
 
   _$GetSchoolGroupsIcalUrlRepDto _build() {
     final _$result = _$v ??
-        new _$GetSchoolGroupsIcalUrlRepDto._(
-            url: BuiltValueNullFieldError.checkNotNull(
-                url, r'GetSchoolGroupsIcalUrlRepDto', 'url'));
+        _$GetSchoolGroupsIcalUrlRepDto._(
+          url: BuiltValueNullFieldError.checkNotNull(
+              url, r'GetSchoolGroupsIcalUrlRepDto', 'url'),
+        );
     replace(_$result);
     return _$result;
   }

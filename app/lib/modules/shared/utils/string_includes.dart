@@ -8,8 +8,10 @@ bool stringIncludes(String needle, String haystack) {
   haystack = haystack.replaceAll(RegExp(r'[ -]'), '');
 
   // Escape search
-  String search =
-      needle.replaceAll(RegExp(r'/[-\/\\$*+?.()|[\]{}]/g'), r'\\$&');
+  String search = needle.replaceAll(
+    RegExp(r'/[-\/\\$*+?.()|[\]{}]/g'),
+    r'\\$&',
+  );
 
   RegExp regExp = RegExp(search, caseSensitive: false);
   return regExp.hasMatch(haystack);

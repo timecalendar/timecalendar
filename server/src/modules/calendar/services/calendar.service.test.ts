@@ -46,7 +46,7 @@ describe("CalendarService", () => {
           .create(),
       ]
 
-      const calendars = await service.calendarsForPublic(
+      const calendars = await service.findCalendarsForPublic(
         created.map((calendar) => calendar.token),
       )
 

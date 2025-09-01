@@ -162,10 +162,11 @@ class EventForUI {
   }
 
   static getOverlapEventsBefore(
-      List<EventForUI> calendarEvents,
-      int eventsBeforeIndex,
-      int searchBeforeIndex,
-      List<EventForUI> overlapEvents) {
+    List<EventForUI> calendarEvents,
+    int eventsBeforeIndex,
+    int searchBeforeIndex,
+    List<EventForUI> overlapEvents,
+  ) {
     EventForUI calendarEvent = calendarEvents[eventsBeforeIndex];
 
     for (int i = 0; i < searchBeforeIndex; i++) {

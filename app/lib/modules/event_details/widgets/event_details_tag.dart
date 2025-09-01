@@ -14,18 +14,9 @@ class EventDetailsTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(
-            tag.iconData,
-            size: 14,
-            color: Colors.black,
-          ),
-          SizedBox(
-            width: 10,
-          ),
-          Text(
-            tag.name,
-            style: TextStyle(color: Colors.black),
-          ),
+          Icon(tag.iconData, size: 14, color: Colors.black),
+          SizedBox(width: 10),
+          Text(tag.name, style: TextStyle(color: Colors.black)),
         ],
       ),
       decoration: BoxDecoration(

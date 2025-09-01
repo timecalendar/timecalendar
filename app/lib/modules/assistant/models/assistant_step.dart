@@ -12,7 +12,7 @@ enum AssistantStepEnum {
 }
 
 @freezed
-class AssistantStep with _$AssistantStep {
+abstract class AssistantStep with _$AssistantStep {
   factory AssistantStep({
     required AssistantStepEnum step,
     required bool Function(AssistantState) predicate,

@@ -15,21 +15,16 @@ class _$EventTag extends EventTag {
   final String icon;
 
   factory _$EventTag([void Function(EventTagBuilder)? updates]) =>
-      (new EventTagBuilder()..update(updates))._build();
+      (EventTagBuilder()..update(updates))._build();
 
   _$EventTag._({required this.name, required this.color, required this.icon})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(name, r'EventTag', 'name');
-    BuiltValueNullFieldError.checkNotNull(color, r'EventTag', 'color');
-    BuiltValueNullFieldError.checkNotNull(icon, r'EventTag', 'icon');
-  }
-
+      : super._();
   @override
   EventTag rebuild(void Function(EventTagBuilder) updates) =>
       (toBuilder()..update(updates)).build();
 
   @override
-  EventTagBuilder toBuilder() => new EventTagBuilder()..replace(this);
+  EventTagBuilder toBuilder() => EventTagBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -92,7 +87,6 @@ class EventTagBuilder implements Builder<EventTag, EventTagBuilder> {
 
   @override
   void replace(EventTag other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$EventTag;
   }
 
@@ -106,13 +100,14 @@ class EventTagBuilder implements Builder<EventTag, EventTagBuilder> {
 
   _$EventTag _build() {
     final _$result = _$v ??
-        new _$EventTag._(
-            name: BuiltValueNullFieldError.checkNotNull(
-                name, r'EventTag', 'name'),
-            color: BuiltValueNullFieldError.checkNotNull(
-                color, r'EventTag', 'color'),
-            icon: BuiltValueNullFieldError.checkNotNull(
-                icon, r'EventTag', 'icon'));
+        _$EventTag._(
+          name:
+              BuiltValueNullFieldError.checkNotNull(name, r'EventTag', 'name'),
+          color: BuiltValueNullFieldError.checkNotNull(
+              color, r'EventTag', 'color'),
+          icon:
+              BuiltValueNullFieldError.checkNotNull(icon, r'EventTag', 'icon'),
+        );
     replace(_$result);
     return _$result;
   }

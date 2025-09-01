@@ -38,7 +38,7 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
 
   factory _$CalendarEventForPublic(
           [void Function(CalendarEventForPublicBuilder)? updates]) =>
-      (new CalendarEventForPublicBuilder()..update(updates))._build();
+      (CalendarEventForPublicBuilder()..update(updates))._build();
 
   _$CalendarEventForPublic._(
       {required this.type,
@@ -55,31 +55,7 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
       required this.tags,
       this.fields,
       required this.exportedAt})
-      : super._() {
-    BuiltValueNullFieldError.checkNotNull(
-        type, r'CalendarEventForPublic', 'type');
-    BuiltValueNullFieldError.checkNotNull(
-        color, r'CalendarEventForPublic', 'color');
-    BuiltValueNullFieldError.checkNotNull(
-        groupColor, r'CalendarEventForPublic', 'groupColor');
-    BuiltValueNullFieldError.checkNotNull(
-        uid, r'CalendarEventForPublic', 'uid');
-    BuiltValueNullFieldError.checkNotNull(
-        title, r'CalendarEventForPublic', 'title');
-    BuiltValueNullFieldError.checkNotNull(
-        startsAt, r'CalendarEventForPublic', 'startsAt');
-    BuiltValueNullFieldError.checkNotNull(
-        endsAt, r'CalendarEventForPublic', 'endsAt');
-    BuiltValueNullFieldError.checkNotNull(
-        allDay, r'CalendarEventForPublic', 'allDay');
-    BuiltValueNullFieldError.checkNotNull(
-        teachers, r'CalendarEventForPublic', 'teachers');
-    BuiltValueNullFieldError.checkNotNull(
-        tags, r'CalendarEventForPublic', 'tags');
-    BuiltValueNullFieldError.checkNotNull(
-        exportedAt, r'CalendarEventForPublic', 'exportedAt');
-  }
-
+      : super._();
   @override
   CalendarEventForPublic rebuild(
           void Function(CalendarEventForPublicBuilder) updates) =>
@@ -87,7 +63,7 @@ class _$CalendarEventForPublic extends CalendarEventForPublic {
 
   @override
   CalendarEventForPublicBuilder toBuilder() =>
-      new CalendarEventForPublicBuilder()..replace(this);
+      CalendarEventForPublicBuilder()..replace(this);
 
   @override
   bool operator ==(Object other) {
@@ -197,17 +173,16 @@ class CalendarEventForPublicBuilder
 
   ListBuilder<String>? _teachers;
   ListBuilder<String> get teachers =>
-      _$this._teachers ??= new ListBuilder<String>();
+      _$this._teachers ??= ListBuilder<String>();
   set teachers(ListBuilder<String>? teachers) => _$this._teachers = teachers;
 
   ListBuilder<EventTag>? _tags;
-  ListBuilder<EventTag> get tags =>
-      _$this._tags ??= new ListBuilder<EventTag>();
+  ListBuilder<EventTag> get tags => _$this._tags ??= ListBuilder<EventTag>();
   set tags(ListBuilder<EventTag>? tags) => _$this._tags = tags;
 
   CalendarEventCustomFieldsBuilder? _fields;
   CalendarEventCustomFieldsBuilder get fields =>
-      _$this._fields ??= new CalendarEventCustomFieldsBuilder();
+      _$this._fields ??= CalendarEventCustomFieldsBuilder();
   set fields(CalendarEventCustomFieldsBuilder? fields) =>
       _$this._fields = fields;
 
@@ -243,7 +218,6 @@ class CalendarEventForPublicBuilder
 
   @override
   void replace(CalendarEventForPublic other) {
-    ArgumentError.checkNotNull(other, 'other');
     _$v = other as _$CalendarEventForPublic;
   }
 
@@ -259,30 +233,31 @@ class CalendarEventForPublicBuilder
     _$CalendarEventForPublic _$result;
     try {
       _$result = _$v ??
-          new _$CalendarEventForPublic._(
-              type: BuiltValueNullFieldError.checkNotNull(
-                  type, r'CalendarEventForPublic', 'type'),
-              color: BuiltValueNullFieldError.checkNotNull(
-                  color, r'CalendarEventForPublic', 'color'),
-              groupColor: BuiltValueNullFieldError.checkNotNull(
-                  groupColor, r'CalendarEventForPublic', 'groupColor'),
-              uid: BuiltValueNullFieldError.checkNotNull(
-                  uid, r'CalendarEventForPublic', 'uid'),
-              title: BuiltValueNullFieldError.checkNotNull(
-                  title, r'CalendarEventForPublic', 'title'),
-              startsAt: BuiltValueNullFieldError.checkNotNull(
-                  startsAt, r'CalendarEventForPublic', 'startsAt'),
-              endsAt: BuiltValueNullFieldError.checkNotNull(
-                  endsAt, r'CalendarEventForPublic', 'endsAt'),
-              location: location,
-              allDay: BuiltValueNullFieldError.checkNotNull(
-                  allDay, r'CalendarEventForPublic', 'allDay'),
-              description: description,
-              teachers: teachers.build(),
-              tags: tags.build(),
-              fields: _fields?.build(),
-              exportedAt:
-                  BuiltValueNullFieldError.checkNotNull(exportedAt, r'CalendarEventForPublic', 'exportedAt'));
+          _$CalendarEventForPublic._(
+            type: BuiltValueNullFieldError.checkNotNull(
+                type, r'CalendarEventForPublic', 'type'),
+            color: BuiltValueNullFieldError.checkNotNull(
+                color, r'CalendarEventForPublic', 'color'),
+            groupColor: BuiltValueNullFieldError.checkNotNull(
+                groupColor, r'CalendarEventForPublic', 'groupColor'),
+            uid: BuiltValueNullFieldError.checkNotNull(
+                uid, r'CalendarEventForPublic', 'uid'),
+            title: BuiltValueNullFieldError.checkNotNull(
+                title, r'CalendarEventForPublic', 'title'),
+            startsAt: BuiltValueNullFieldError.checkNotNull(
+                startsAt, r'CalendarEventForPublic', 'startsAt'),
+            endsAt: BuiltValueNullFieldError.checkNotNull(
+                endsAt, r'CalendarEventForPublic', 'endsAt'),
+            location: location,
+            allDay: BuiltValueNullFieldError.checkNotNull(
+                allDay, r'CalendarEventForPublic', 'allDay'),
+            description: description,
+            teachers: teachers.build(),
+            tags: tags.build(),
+            fields: _fields?.build(),
+            exportedAt: BuiltValueNullFieldError.checkNotNull(
+                exportedAt, r'CalendarEventForPublic', 'exportedAt'),
+          );
     } catch (_) {
       late String _$failedField;
       try {
@@ -293,7 +268,7 @@ class CalendarEventForPublicBuilder
         _$failedField = 'fields';
         _fields?.build();
       } catch (e) {
-        throw new BuiltValueNestedFieldError(
+        throw BuiltValueNestedFieldError(
             r'CalendarEventForPublic', _$failedField, e.toString());
       }
       rethrow;

@@ -86,8 +86,10 @@ class SettingsProvider with ChangeNotifier {
     _notificationCalendar = this.prefs.getBool('notification_calendar');
     if (_notificationCalendar == null) {
       _notificationCalendar = _notificationCalendarDefault;
-      await prefs!
-          .setBool('notification_calendar', _notificationCalendarDefault);
+      await prefs!.setBool(
+        'notification_calendar',
+        _notificationCalendarDefault,
+      );
     }
 
     _colorsByGroup = this.prefs.getBool('colors_by_group');
@@ -111,8 +113,10 @@ class SettingsProvider with ChangeNotifier {
     _calendarHourHeight = this.prefs.getDouble('calendar_hour_height');
     if (_calendarHourHeight == null) {
       _calendarHourHeight = _calendarHourHeightDefault;
-      await prefs!
-          .setDouble('calendar_hour_height', _calendarHourHeightDefault);
+      await prefs!.setDouble(
+        'calendar_hour_height',
+        _calendarHourHeightDefault,
+      );
     }
 
     _startupScreen = this.prefs.getString('startup_screen');
@@ -156,8 +160,10 @@ class SettingsProvider with ChangeNotifier {
         : null;
     if (_calendarViewType == null) {
       _calendarViewType = _calendarViewTypeDefault;
-      await prefs!.setString('calendar_view_type',
-          EnumToString.convertToString(_calendarViewType));
+      await prefs!.setString(
+        'calendar_view_type',
+        EnumToString.convertToString(_calendarViewType),
+      );
     }
 
     _showWeekends = this.prefs.getBool('show_weekends');
@@ -172,19 +178,21 @@ class SettingsProvider with ChangeNotifier {
     buildNumber = packageInfo.buildNumber;
 
     // PrefService
-    this._prefServiceShared = await PrefServiceShared.init(defaults: {
-      'date_limit': _dateLimitDefault,
-      'notification_calendar': _notificationCalendar,
-      'colors_by_group': _colorsByGroup,
-      'new_activity': _newActivity,
-      'calendar_hour_height': _calendarHourHeight,
-      'startup_screen': _startupScreen,
-      'dark_mode': _darkModeDefault,
-      'theme': _themeDefault,
-      'last_activity_update': _lastActivityUpdateDefault,
-      'calendar_view_type': _calendarViewTypeDefault,
-      'show_weekends': _showWeekendsDefault,
-    });
+    this._prefServiceShared = await PrefServiceShared.init(
+      defaults: {
+        'date_limit': _dateLimitDefault,
+        'notification_calendar': _notificationCalendar,
+        'colors_by_group': _colorsByGroup,
+        'new_activity': _newActivity,
+        'calendar_hour_height': _calendarHourHeight,
+        'startup_screen': _startupScreen,
+        'dark_mode': _darkModeDefault,
+        'theme': _themeDefault,
+        'last_activity_update': _lastActivityUpdateDefault,
+        'calendar_view_type': _calendarViewTypeDefault,
+        'show_weekends': _showWeekendsDefault,
+      },
+    );
 
     notifyListeners();
   }
@@ -234,16 +242,24 @@ class SettingsProvider with ChangeNotifier {
   /// The color stored in the database is the one in light mode,
   /// if the user is in dark mode, we must lighten its color before storing it.
   Color? getEventColorToSave(Color? color) {
+    if (color == null) {
+      return null;
+    }
+
     if (this.darkMode) {
-      color = ColorUtils.lightenEvent(color!);
+      color = ColorUtils.lightenEvent(color);
     }
 
     return color;
   }
 
   Color? getEventColorToDisplay(Color? color) {
+    if (color == null) {
+      return null;
+    }
+
     if (this.darkMode) {
-      color = ColorUtils.darkenEvent(color!);
+      color = ColorUtils.darkenEvent(color);
     }
 
     return color;

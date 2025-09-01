@@ -46,19 +46,19 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   void generateWidgetsChangelog() {
     List<Widget> tmp = [];
     for (var item in changelogList) {
-      tmp.add(Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: ChangelogItemHeader(
-          changelog: item,
-        ),
-      ));
-      for (var features in item!.changelogItems) {
-        tmp.add(Padding(
+      tmp.add(
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: ChangelogItemNewFeatures(
-            changelogItem: features,
+          child: ChangelogItemHeader(changelog: item),
+        ),
+      );
+      for (var features in item!.changelogItems) {
+        tmp.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: ChangelogItemNewFeatures(changelogItem: features),
           ),
-        ));
+        );
       }
       tmp.add(Divider());
     }
@@ -73,65 +73,57 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   }
 
   void getChangelogList(bool displayAllChangelog) {
-    int? currentVersion =
-        Provider.of<SettingsProvider>(context, listen: false).currentVersion;
+    int? currentVersion = Provider.of<SettingsProvider>(
+      context,
+      listen: false,
+    ).currentVersion;
     changelogList = [];
     Constants.changelogs.keys
         .where((item) => displayAllChangelog ? true : item > currentVersion!)
         .toList()
         .reversed
         .forEach((elm) => changelogList.add(Constants.changelogs[elm]));
-
-    print('changelogList: $changelogList');
-  }
-
-  Future<bool> _onWillPop() async {
-    final settingProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
-    settingProvider.currentVersion = Constants.currentVersion;
-    return true;
-  }
-
-  void setCurrentVersionAndReturnHome() {
-    final settingProvider =
-        Provider.of<SettingsProvider>(context, listen: false);
-    settingProvider.currentVersion = Constants.currentVersion;
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          final settingProvider = Provider.of<SettingsProvider>(
+            context,
+            listen: false,
+          );
+          settingProvider.currentVersion = Constants.currentVersion;
+        }
+      },
       child: Scaffold(
         body: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              SizedBox(
-                height: 10,
-              ),
+              SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18.0),
                 child: IconButton(
-                  icon: Icon(
-                    Icons.close,
-                    size: 32,
-                  ),
-                  onPressed: setCurrentVersionAndReturnHome,
+                  icon: Icon(Icons.close, size: 32),
+                  onPressed: () {
+                    final settingProvider = Provider.of<SettingsProvider>(
+                      context,
+                      listen: false,
+                    );
+                    settingProvider.currentVersion = Constants.currentVersion;
+                    Navigator.of(context).pop();
+                  },
                 ),
               ),
-              SizedBox(
-                height: 32,
-              ),
+              SizedBox(height: 32),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Text(
                   'Nouveautés',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
                 ),
               ),
               Divider(),
@@ -145,15 +137,26 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
                   Padding(
-                    padding:
-                        const EdgeInsets.only(bottom: 16.0, right: 16, top: 16),
+                    padding: const EdgeInsets.only(
+                      bottom: 16.0,
+                      right: 16,
+                      top: 16,
+                    ),
                     child: CustomButton(
                       text: 'Continuer',
-                      onPressed: setCurrentVersionAndReturnHome,
+                      onPressed: () {
+                        final settingProvider = Provider.of<SettingsProvider>(
+                          context,
+                          listen: false,
+                        );
+                        settingProvider.currentVersion =
+                            Constants.currentVersion;
+                        Navigator.of(context).pop();
+                      },
                     ),
-                  )
+                  ),
                 ],
-              )
+              ),
             ],
           ),
         ),

@@ -18,7 +18,7 @@ export class CalendarRepository {
 
   findOne(calendarId: string) {
     return this.repository.findOneOrFail({
-      relations: { school: true },
+      relations: { school: true, content: true },
       where: { id: calendarId },
     })
   }
@@ -30,7 +30,17 @@ export class CalendarRepository {
     })
   }
 
-  update(calendarId: string, calendar: DeepPartial<Calendar>) {
+  findByIds(calendarIds: string[]) {
+    if (calendarIds.length === 0) {
+      return Promise.resolve([])
+    }
+    return this.repository.find({
+      relations: { school: true, content: true },
+      where: { id: In(calendarIds) },
+    })
+  }
+
+  update(calendarId: string, calendar: Partial<Calendar>) {
     return this.repository.update({ id: calendarId }, calendar)
   }
 
