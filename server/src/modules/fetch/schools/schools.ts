@@ -10,6 +10,7 @@ import univpoitiersStrategy from "modules/fetch/schools/univpoitiers/univpoitier
 import univrennes1Strategy from "modules/fetch/schools/univrennes1/univrennes1-strategy"
 import univrouenStrategy from "modules/fetch/schools/univrouen/univrouen-strategy"
 import univsmbStrategy from "modules/fetch/schools/univsmb/univsmb-strategy"
+import univstetienneStrategy from "modules/fetch/schools/univstetienne/univstetienne-strategy"
 import upecStrategy from "modules/fetch/schools/upec/upec-strategy"
 
 const strategies = [
@@ -25,6 +26,7 @@ const strategies = [
   univrennes1Strategy,
   univrouenStrategy,
   univsmbStrategy,
+  univstetienneStrategy,
   upecStrategy,
 ]
 
