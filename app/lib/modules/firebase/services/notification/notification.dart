@@ -37,7 +37,10 @@ class NotificationService {
       }
     }
 
-    return _firebaseMessaging.getToken();
+    return _firebaseMessaging.getToken().catchError((error) {
+      print('Error getting FCM token: $error');
+      return null;
+    });
   }
 
   Future<dynamic> onMessage(Map<String, dynamic> message) async {
