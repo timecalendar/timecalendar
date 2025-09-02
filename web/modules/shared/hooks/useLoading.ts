@@ -1,7 +1,9 @@
 import { toastApiError } from "modules/shared/helpers/toast"
 import { useState } from "react"
 
-const useLoading = <T extends any[]>(action: (...args: T) => any) => {
+const useLoading = <T extends unknown[]>(
+  action: (...args: T) => Promise<unknown>,
+) => {
   const [loading, setLoading] = useState(false)
 
   const fn = async (...args: T) => {

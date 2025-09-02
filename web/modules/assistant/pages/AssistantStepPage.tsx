@@ -1,23 +1,24 @@
+"use client"
+
 import AssistantStep from "modules/assistant/components/AssistantStep"
 import { AssistantContext } from "modules/assistant/contexts/AssistantContext"
 import { findAssistant } from "modules/assistant/data/assistants"
-import { useRouter } from "next/router"
+import { useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { FC, useContext } from "react"
-
-type Query = {
-  assistantName: string
-  step: string
-}
 
 const AssistantStepPage: FC = () => {
   const { endAssistant } = useContext(AssistantContext)
   const router = useRouter()
-  const query = router.query as Query
+  const params = useParams()
 
-  const assistant = findAssistant(query.assistantName)
+  const assistantName = params.assistantName as string
+  const step = params.step as string
+
+  const assistant = findAssistant(assistantName)
   if (!assistant || !assistant.steps) return null
 
-  const stepIndex = +query.step
+  const stepIndex = +step
 
   const onNext = () => {
     if (!assistant.steps) return

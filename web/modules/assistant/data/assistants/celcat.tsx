@@ -23,7 +23,11 @@ const celcatAssistant: AssistantStepContent = {
         </>
       ),
       image: selectWeeks,
-      legend: <>Sélectionnez "Toutes les semaines" dans le menu déroulant.</>,
+      legend: (
+        <>
+          Sélectionnez &quot;Toutes les semaines&quot; dans le menu déroulant.
+        </>
+      ),
     },
     {
       title: <>Copiez le lien du calendrier ICS</>,
@@ -31,14 +35,14 @@ const celcatAssistant: AssistantStepContent = {
       description: (
         <>
           En haut à gauche, faites clic droit sur <strong>ICS</strong>, puis
-          cliquez sur <strong>Copier l'adresse du lien</strong> pour copier
-          l'adresse de votre calendrier.
+          cliquez sur <strong>Copier l&apos;adresse du lien</strong> pour copier
+          l&apos;adresse de votre calendrier.
         </>
       ),
       legend: (
         <>
           Faites clic droit sur ICS, puis{" "}
-          <strong>Copier l'adresse du lien</strong>.
+          <strong>Copier l&apos;adresse du lien</strong>.
         </>
       ),
     },

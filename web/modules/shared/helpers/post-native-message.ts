@@ -8,8 +8,16 @@ type NativeMessage =
   | { name: "fallbackRequested" }
   | { name: "assistantEnded" }
 
+interface NativeChannel {
+  postMessage?: (message: string) => void
+}
+
 export const postNativeMessage = (message: NativeMessage) => {
-  const nativeChannel = (window as any)[NATIVE_CHANNEL_NAME]
+  const nativeChannel = (window as unknown as Record<string, NativeChannel>)[
+    NATIVE_CHANNEL_NAME
+  ]
   if (!nativeChannel) return
-  nativeChannel.postMessage(JSON.stringify(message))
+  if (typeof nativeChannel.postMessage === "function") {
+    nativeChannel.postMessage(JSON.stringify(message))
+  }
 }

@@ -7,7 +7,9 @@ const genericAssistant: AssistantStepContent = {
     {
       title: <>Affichez votre emploi du temps</>,
       description: (
-        <>Rendez-vous sur la page de votre emploi du temps pour l'afficher.</>
+        <>
+          Rendez-vous sur la page de votre emploi du temps pour l&apos;afficher.
+        </>
       ),
       image: showCalendar,
       legend: <>Affichez votre emploi du temps sur votre intranet.</>,
@@ -16,15 +18,17 @@ const genericAssistant: AssistantStepContent = {
       title: <>Exportez votre emploi du temps</>,
       description: (
         <>
-          Exportez l'emploi du temps au format ICal. Si besoin, configurez
-          l'exportation pour sélectionner votre période universitaire.
+          Exportez l&apos;emploi du temps au format ICal. Si besoin, configurez
+          l&apos;exportation pour sélectionner votre période universitaire.
         </>
       ),
     },
     {
-      title: <>Copiez l'URL générée</>,
+      title: <>Copiez l&apos;URL générée</>,
       description: (
-        <>Une fois l'URL ICal de votre emploi du temps généré, copiez-le.</>
+        <>
+          Une fois l&apos;URL ICal de votre emploi du temps généré, copiez-le.
+        </>
       ),
     },
   ],

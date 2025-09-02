@@ -1,11 +1,12 @@
 import {
-  Button,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogContentText,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
-} from "@mui/material"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { ReactNode } from "react"
 
 interface Props {
@@ -17,18 +18,23 @@ interface Props {
 
 const ErrorDialog = ({ title, text, open, onClose }: Props) => {
   return (
-    <Dialog open={open || false}>
-      <DialogTitle>{title}</DialogTitle>
+    <Dialog
+      open={open || false}
+      onOpenChange={(isOpen) => !isOpen && onClose()}
+    >
       <DialogContent>
-        <DialogContentText>
-          {text || "Une erreur est survenue."}
-        </DialogContentText>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription asChild>
+            <div>{text || "Une erreur est survenue."}</div>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={onClose} autoFocus>
+            Fermer
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} autoFocus>
-          Fermer
-        </Button>
-      </DialogActions>
     </Dialog>
   )
 }

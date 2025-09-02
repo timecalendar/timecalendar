@@ -1,11 +1,10 @@
 import { Configuration } from "@timecalendar/api-client"
 import { BaseAPI } from "@timecalendar/api-client/dist/base"
 import axios, { AxiosRequestConfig } from "axios"
-import getConfig from "next/config"
+import { env } from "next-runtime-env"
 
 const axiosConfig: AxiosRequestConfig = {}
 const axiosInstance = axios.create()
-const { publicRuntimeConfig } = getConfig()
 
 export const createApiInstance = <T extends typeof BaseAPI>(
   BaseApi: T,
@@ -15,8 +14,8 @@ export const createApiInstance = <T extends typeof BaseAPI>(
     new Configuration({
       baseOptions: { ...axiosConfig, ...(headers ? { headers } : {}) },
     }),
-    publicRuntimeConfig.mainApiUrl,
-    axiosInstance as any,
+    env("NEXT_PUBLIC_MAIN_API_URL"),
+    axiosInstance,
   )
 
   return instance as InstanceType<T>

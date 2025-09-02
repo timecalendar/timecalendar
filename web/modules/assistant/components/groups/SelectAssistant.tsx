@@ -1,19 +1,12 @@
-import {
-  Button,
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
-  Typography,
-} from "@mui/material"
-import { Box, Stack } from "@mui/system"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import adeImage from "modules/assistant/assets/images/select/ade.png"
 import celcatImage from "modules/assistant/assets/images/select/celcat.png"
 import hplanningImage from "modules/assistant/assets/images/select/hplanning.png"
 import AssistantLayout from "modules/assistant/components/AssistantLayout"
 import { AssistantContext } from "modules/assistant/contexts/AssistantContext"
 import Image, { StaticImageData } from "next/image"
-import { useRouter } from "next/router"
+import { useRouter } from "next/navigation"
 import { useContext } from "react"
 
 interface AssistantCardProps {
@@ -25,21 +18,20 @@ interface AssistantCardProps {
 const AssistantCard = ({ title, name, image }: AssistantCardProps) => {
   const router = useRouter()
   return (
-    <Card>
-      <CardActionArea onClick={() => router.push(`/assistants/${name}`)}>
-        <Box sx={{ display: "flex" }}>
-          {image && (
-            <CardMedia sx={{ width: "130px" }}>
-              <Image src={image} alt="" />
-            </CardMedia>
-          )}
-          <CardContent sx={{ display: "flex", alignItems: "center" }}>
-            <Typography variant="h6" component="div">
-              {title}
-            </Typography>
-          </CardContent>
-        </Box>
-      </CardActionArea>
+    <Card
+      className="cursor-pointer hover:bg-accent transition-colors"
+      onClick={() => router.push(`/assistants/${name}`)}
+    >
+      <div className="flex">
+        {image && (
+          <div className="w-[130px] flex-shrink-0">
+            <Image src={image} alt="" className="rounded-l-lg" />
+          </div>
+        )}
+        <CardContent className="flex items-center">
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </CardContent>
+      </div>
     </Card>
   )
 }
@@ -49,15 +41,15 @@ const SelectAssistant = () => {
 
   return (
     <AssistantLayout>
-      <Stack spacing={2} my={2}>
-        <Typography variant="h2" gutterBottom>
-          Sélectionnez le logiciel d'emploi du temps de votre établissement
-        </Typography>
-        <Box>
+      <div className="flex flex-col gap-4 my-4">
+        <h1 className="text-3xl font-bold mb-2">
+          Sélectionnez le logiciel d&apos;emploi du temps de votre établissement
+        </h1>
+        <p className="text-muted-foreground">
           Pour importer votre emploi du temps, sélectionnez le logiciel de votre
           établissement.
-        </Box>
-        <Stack spacing={2}>
+        </p>
+        <div className="flex flex-col gap-4">
           <AssistantCard title="ADE" name="ade" image={adeImage} />
           <AssistantCard
             title="Hyperplanning"
@@ -66,18 +58,14 @@ const SelectAssistant = () => {
           />
           <AssistantCard title="Celcat" name="celcat" image={celcatImage} />
           <AssistantCard title="Autre / Je ne sais pas" name="generic" />
-        </Stack>
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ justifyContent: "space-between" }}
-        >
-          <Button color="secondary">Retour</Button>
-          <Button variant="outlined" onClick={() => endAssistant()}>
+        </div>
+        <div className="flex flex-row gap-2 justify-between">
+          <Button variant="secondary">Retour</Button>
+          <Button variant="outline" onClick={() => endAssistant()}>
             Ajouter une URL ICal
           </Button>
-        </Stack>
-      </Stack>
+        </div>
+      </div>
     </AssistantLayout>
   )
 }
