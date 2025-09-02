@@ -3,14 +3,16 @@ import { HomeLayout } from "modules/shared/components/layouts/HomeLayout"
 import { Metadata } from "next"
 
 interface SchoolPageProps {
-  params: {
+  params: Promise<{
     universitySlug: string
-  }
+  }>
 }
 
 export async function generateMetadata({
-  params,
+  params: _params,
 }: SchoolPageProps): Promise<Metadata> {
+  const params = await _params
+
   // For now, hardcoded for Paris Nanterre, but will be dynamic later
   const universityName = "Université Paris Nanterre"
 
@@ -46,7 +48,11 @@ export async function generateMetadata({
   }
 }
 
-export default function SchoolPageRoute({ params }: SchoolPageProps) {
+export default async function SchoolPageRoute({
+  params: _params,
+}: SchoolPageProps) {
+  const params = await _params
+
   return (
     <HomeLayout>
       <SchoolPage universitySlug={params.universitySlug} />
