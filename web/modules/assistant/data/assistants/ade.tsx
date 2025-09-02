@@ -16,8 +16,8 @@ const adeAssistant = {
             touche Ctrl.
           </p>
           <p>
-            Votre emploi du temps devrait s'afficher. Pensez à sélectionner tous
-            vos groupes.
+            Votre emploi du temps devrait s&apos;afficher. Pensez à sélectionner
+            tous vos groupes.
           </p>
         </>
       ),
@@ -28,24 +28,24 @@ const adeAssistant = {
       title: <>Exportez votre emploi du temps</>,
       description: (
         <p>
-          Exportez l'emploi du temps en cliquant sur l'icône "Exporter" en bas à
-          gauche de la fenêtre.
+          Exportez l&apos;emploi du temps en cliquant sur l&apos;icône
+          &quot;Exporter&quot; en bas à gauche de la fenêtre.
         </p>
       ),
       image: adeExportIconImage,
       legend: <>Cliquez sur le calendrier.</>,
     },
     {
-      title: <>Configurez l'exportation</>,
+      title: <>Configurez l&apos;exportation</>,
       description: (
         <>
           <p>
-            Dans la fenêtre qui s'ouvre, choisissez les{" "}
+            Dans la fenêtre qui s&apos;ouvre, choisissez les{" "}
             <strong>dates de début et de fin</strong> de votre année
             universitaire.
           </p>
           <p>
-            Cliquez ensuite sur <strong>générer l'URL</strong>.
+            Cliquez ensuite sur <strong>générer l&apos;URL</strong>.
           </p>
         </>
       ),
@@ -53,16 +53,16 @@ const adeAssistant = {
       legend: <>Sélectionnez vos dates de début et de fin.</>,
     },
     {
-      title: <>Copiez l'URL générée</>,
+      title: <>Copiez l&apos;URL générée</>,
       description: (
         <>
-          L'URL de votre emploi du temps a été généré. Copiez l'URL qui
-          apparaît. Vous pouvez faire clic droit sur l'URL, puis Copier
-          l'adresse du lien.
+          L&apos;URL de votre emploi du temps a été généré. Copiez l&apos;URL
+          qui apparaît. Vous pouvez faire clic droit sur l&apos;URL, puis Copier
+          l&apos;adresse du lien.
         </>
       ),
       image: adeExportUrlImage,
-      legend: <>Copiez l'URL affichée.</>,
+      legend: <>Copiez l&apos;URL affichée.</>,
     },
   ],
 }

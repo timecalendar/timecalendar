@@ -1,10 +1,5 @@
-import {
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogContentText,
-} from "@mui/material"
-import { Stack } from "@mui/system"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Loader2 } from "lucide-react"
 
 interface Props {
   text?: string
@@ -14,11 +9,13 @@ interface Props {
 const LoadingDialog = ({ text, open }: Props) => {
   return (
     <Dialog open={open || false}>
-      <DialogContent>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <CircularProgress size={32} />
-          <DialogContentText>{text || "Chargement..."}</DialogContentText>
-        </Stack>
+      <DialogContent showCloseButton={false} className="sm:max-w-md">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">
+            {text || "Chargement..."}
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   )
