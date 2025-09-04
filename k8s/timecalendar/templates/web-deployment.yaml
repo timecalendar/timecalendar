@@ -34,5 +34,5 @@ spec:
               containerPort: 3000
               protocol: TCP
           env:
-            - name: MAIN_API_URL
+            - name: NEXT_PUBLIC_BACKEND_URL
               value: {{ .Values.apiUrl }}
