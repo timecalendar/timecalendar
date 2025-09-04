@@ -14,7 +14,7 @@ export const createApiInstance = <T extends typeof BaseAPI>(
     new Configuration({
       baseOptions: { ...axiosConfig, ...(headers ? { headers } : {}) },
     }),
-    env("NEXT_PUBLIC_MAIN_API_URL"),
+    env("NEXT_PUBLIC_BACKEND_URL"),
     axiosInstance,
   )
 

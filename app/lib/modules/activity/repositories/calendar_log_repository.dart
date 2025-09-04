@@ -28,7 +28,6 @@ class CalendarLogRepository {
   Future<List<CalendarLog>> fetchAndCacheCalendarLogs(
     List<String> tokens,
   ) async {
-    print('fetchAndCacheCalendarLogs: $tokens');
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.calendarLogsApi().getCalendarLogs(
@@ -36,8 +35,6 @@ class CalendarLogRepository {
           (dto) => dto..tokens.replace(tokens),
         ),
       );
-
-      print('response: ${response.data}');
 
       final calendarLogs =
           response.data!.map((dto) => _mapFromApiDto(dto)).toList()
