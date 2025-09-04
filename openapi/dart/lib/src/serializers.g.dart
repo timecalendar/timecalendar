@@ -15,6 +15,7 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(CalendarLogEventGet.serializer)
       ..add(CalendarLogGet.serializer)
       ..add(CalendarWithContent.serializer)
+      ..add(Campus.serializer)
       ..add(CreateCalendarDto.serializer)
       ..add(CreateCalendarRepDto.serializer)
       ..add(EventTag.serializer)
@@ -29,7 +30,10 @@ Serializers _$serializers = (Serializers().toBuilder()
       ..add(OrleansGetIcalUrlFromStudentNumberDto.serializer)
       ..add(SchoolAssistant.serializer)
       ..add(SchoolForList.serializer)
+      ..add(SchoolForSeo.serializer)
       ..add(SchoolGroupItem.serializer)
+      ..add(SchoolProfileGet.serializer)
+      ..add(SearchSchoolsDto.serializer)
       ..add(SendMessageDto.serializer)
       ..add(SetSchoolGroupDto.serializer)
       ..add(SyncCalendarsDto.serializer)
@@ -49,6 +53,18 @@ Serializers _$serializers = (Serializers().toBuilder()
           const FullType(
               BuiltList, const [const FullType(CalendarChangedItem)]),
           () => ListBuilder<CalendarChangedItem>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(Campus)]),
+          () => ListBuilder<Campus>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(String)]),
+          () => ListBuilder<String>())
       ..addBuilderFactory(
           const FullType(BuiltList, const [const FullType(SchoolForList)]),
           () => ListBuilder<SchoolForList>())

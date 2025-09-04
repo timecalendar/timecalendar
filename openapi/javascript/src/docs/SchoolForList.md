@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **id** | **string** |  | [default to undefined]
 **code** | **string** |  | [default to undefined]
 **name** | **string** |  | [default to undefined]
+**seoUrl** | **string** | The URL of the school landing page for SEO purposes | [optional] [default to undefined]
 **siteUrl** | **string** |  | [default to undefined]
 **imageUrl** | **string** |  | [default to undefined]
 **intranetUrl** | **string** |  | [default to undefined]
@@ -29,6 +30,7 @@ const instance: SchoolForList = {
     id,
     code,
     name,
+    seoUrl,
     siteUrl,
     imageUrl,
     intranetUrl,

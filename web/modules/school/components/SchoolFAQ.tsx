@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown, HelpCircle } from "lucide-react"
+import { formatUniversityName } from "@/modules/school/helpers/school"
 
 interface SchoolFAQProps {
   universityName: string
@@ -18,20 +19,20 @@ export function SchoolFAQ({ universityName }: SchoolFAQProps) {
   const faqs: FAQItem[] = [
     {
       question: `Comment consulter mon emploi du temps ${universityName} sur mobile ?`,
-      answer: `Avec TimeCalendar, choisissez simplement "${universityName}" dans l'app. Votre emploi du temps s'affiche automatiquement avec tous vos cours, TD et CM.`,
+      answer: `Avec TimeCalendar, choisissez simplement "${universityName}" dans l'app. Votre emploi du temps s'affiche automatiquement avec tous vos cours, TD et TP.`,
     },
     {
-      question: "Puis-je voir mes TD et mes CM séparément ?",
+      question: "Puis-je voir mes cours, TD et TP dans l'application ?",
       answer:
         "Oui, TimeCalendar récupère vos différents groupes (cours magistraux, TD, TP) et les affiche clairement avec les horaires et salles correspondantes.",
     },
     {
-      question: `Est-ce gratuit pour les étudiants de ${universityName.split(" ").pop()} ?`,
+      question: `Est-ce gratuit pour les étudiants de ${formatUniversityName(universityName)} ?`,
       answer:
         "Oui, l'application TimeCalendar est entièrement gratuite au téléchargement et à l'utilisation pour tous les étudiants.",
     },
     {
-      question: `Et si l'${universityName} modifie mon emploi du temps ?`,
+      question: `Et si ${formatUniversityName(universityName)} modifie mon emploi du temps ?`,
       answer:
         "L'emploi du temps se met à jour automatiquement en temps réel. Vous recevez même des notifications pour les changements importants.",
     },
@@ -115,9 +116,12 @@ export function SchoolFAQ({ universityName }: SchoolFAQProps) {
               Besoin d&apos;aide ou d&apos;un renseignement ? Notre équipe est
               disponible pour vous répondre.
             </p>
-            <button className="text-[#c44872] font-medium hover:underline">
+            <a
+              href="mailto:hello@timecalendar.app"
+              className="text-[#c44872] font-medium hover:underline"
+            >
               Nous contacter →
-            </button>
+            </a>
           </div>
         </div>
       </div>

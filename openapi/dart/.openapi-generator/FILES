@@ -10,6 +10,7 @@ doc/CalendarForPublic.md
 doc/CalendarLogEventGet.md
 doc/CalendarLogGet.md
 doc/CalendarWithContent.md
+doc/Campus.md
 doc/CreateCalendarDto.md
 doc/CreateCalendarRepDto.md
 doc/EventTag.md
@@ -23,7 +24,10 @@ doc/NotificationSubscriptionCreate.md
 doc/OrleansGetIcalUrlFromStudentNumberDto.md
 doc/SchoolAssistant.md
 doc/SchoolForList.md
+doc/SchoolForSeo.md
 doc/SchoolGroupItem.md
+doc/SchoolProfileGet.md
+doc/SearchSchoolsDto.md
 doc/SendMessageDto.md
 doc/SetSchoolGroupDto.md
 doc/SyncCalendarsDto.md
@@ -49,6 +53,7 @@ lib/src/model/calendar_for_public.dart
 lib/src/model/calendar_log_event_get.dart
 lib/src/model/calendar_log_get.dart
 lib/src/model/calendar_with_content.dart
+lib/src/model/campus.dart
 lib/src/model/create_calendar_dto.dart
 lib/src/model/create_calendar_rep_dto.dart
 lib/src/model/date.dart
@@ -63,7 +68,10 @@ lib/src/model/notification_subscription_create.dart
 lib/src/model/orleans_get_ical_url_from_student_number_dto.dart
 lib/src/model/school_assistant.dart
 lib/src/model/school_for_list.dart
+lib/src/model/school_for_seo.dart
 lib/src/model/school_group_item.dart
+lib/src/model/school_profile_get.dart
+lib/src/model/search_schools_dto.dart
 lib/src/model/send_message_dto.dart
 lib/src/model/set_school_group_dto.dart
 lib/src/model/sync_calendars_dto.dart

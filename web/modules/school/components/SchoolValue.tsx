@@ -1,6 +1,7 @@
 import { CalendarPlus, Clock, Layers, RefreshCw } from "lucide-react"
 import Image from "next/image"
 import appMockup from "modules/home/assets/mockup.png"
+import { formatUniversityName } from "@/modules/school/helpers/school"
 
 const benefits = [
   {
@@ -13,7 +14,7 @@ const benefits = [
     icon: RefreshCw,
     title: "Toujours à jour",
     description:
-      "Vos cours, TD et CM sont automatiquement synchronisés, même en cas de changement.",
+      "Vos cours, TD et TP sont automatiquement synchronisés, même en cas de changement.",
   },
   {
     icon: CalendarPlus,
@@ -38,12 +39,13 @@ export function SchoolValue({ universityName }: SchoolValueProps) {
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            Utiliser TimeCalendar à {universityName}
+            Utiliser TimeCalendar à {formatUniversityName(universityName)}
           </h2>
           <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            Avec TimeCalendar, votre emploi du temps à l&apos;{universityName}{" "}
-            est toujours accessible et à jour. Vos cours, TD et CM apparaissent
-            automatiquement sur votre smartphone, même en cas de changement.
+            Avec TimeCalendar, votre emploi du temps à{" "}
+            {formatUniversityName(universityName)} est toujours accessible et à
+            jour. Vos cours, TD et CM apparaissent automatiquement sur votre
+            smartphone, même en cas de changement.
           </p>
         </div>
 

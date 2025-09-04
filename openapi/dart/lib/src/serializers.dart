@@ -22,6 +22,7 @@ import 'package:timecalendar_api/src/model/calendar_for_public.dart';
 import 'package:timecalendar_api/src/model/calendar_log_event_get.dart';
 import 'package:timecalendar_api/src/model/calendar_log_get.dart';
 import 'package:timecalendar_api/src/model/calendar_with_content.dart';
+import 'package:timecalendar_api/src/model/campus.dart';
 import 'package:timecalendar_api/src/model/create_calendar_dto.dart';
 import 'package:timecalendar_api/src/model/create_calendar_rep_dto.dart';
 import 'package:timecalendar_api/src/model/event_tag.dart';
@@ -35,7 +36,10 @@ import 'package:timecalendar_api/src/model/notification_subscription_create.dart
 import 'package:timecalendar_api/src/model/orleans_get_ical_url_from_student_number_dto.dart';
 import 'package:timecalendar_api/src/model/school_assistant.dart';
 import 'package:timecalendar_api/src/model/school_for_list.dart';
+import 'package:timecalendar_api/src/model/school_for_seo.dart';
 import 'package:timecalendar_api/src/model/school_group_item.dart';
+import 'package:timecalendar_api/src/model/school_profile_get.dart';
+import 'package:timecalendar_api/src/model/search_schools_dto.dart';
 import 'package:timecalendar_api/src/model/send_message_dto.dart';
 import 'package:timecalendar_api/src/model/set_school_group_dto.dart';
 import 'package:timecalendar_api/src/model/sync_calendars_dto.dart';
@@ -51,6 +55,7 @@ part 'serializers.g.dart';
   CalendarLogEventGet,
   CalendarLogGet,
   CalendarWithContent,
+  Campus,
   CreateCalendarDto,
   CreateCalendarRepDto,
   EventTag,
@@ -64,7 +69,10 @@ part 'serializers.g.dart';
   OrleansGetIcalUrlFromStudentNumberDto,
   SchoolAssistant,
   SchoolForList,
+  SchoolForSeo,
   SchoolGroupItem,
+  SchoolProfileGet,
+  SearchSchoolsDto,
   SendMessageDto,
   SetSchoolGroupDto,
   SyncCalendarsDto,
@@ -73,6 +81,10 @@ Serializers serializers = (_$serializers.toBuilder()
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(CalendarLogGet)]),
         () => ListBuilder<CalendarLogGet>(),
+      )
+      ..addBuilderFactory(
+        const FullType(BuiltList, [FullType(SchoolForSeo)]),
+        () => ListBuilder<SchoolForSeo>(),
       )
       ..addBuilderFactory(
         const FullType(BuiltList, [FullType(CalendarWithContent)]),

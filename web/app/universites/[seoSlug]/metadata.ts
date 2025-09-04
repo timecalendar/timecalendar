@@ -1,27 +1,23 @@
-import { SchoolPage } from "modules/school/pages/SchoolPage"
-import { HomeLayout } from "modules/shared/components/layouts/HomeLayout"
+import { getSchool } from "@/modules/school/data/requests/schools"
 import { Metadata } from "next"
 
-interface SchoolPageProps {
-  params: Promise<{
-    universitySlug: string
-  }>
-}
+export async function generateSchoolMetadata(
+  seoUrl: string,
+): Promise<Metadata> {
+  const school = await getSchool(seoUrl)
 
-export async function generateMetadata({
-  params: _params,
-}: SchoolPageProps): Promise<Metadata> {
-  const params = await _params
+  if (!school) {
+    return {}
+  }
 
-  // For now, hardcoded for Paris Nanterre, but will be dynamic later
-  const universityName = "Université Paris Nanterre"
+  const universityName = school.name
 
   return {
     title: `Emploi du temps ${universityName} - TimeCalendar`,
     description: `Consultez votre emploi du temps ${universityName} facilement avec TimeCalendar. Vos cours, TD et CM toujours à jour sur mobile et bientôt sur web.`,
     keywords: [
       "emploi du temps",
-      "université paris nanterre",
+      school.name.toLocaleLowerCase(),
       "calendrier cours",
       "planning étudiant",
       "TimeCalendar",
@@ -43,19 +39,7 @@ export async function generateMetadata({
       description: `Consultez vos cours ${universityName} facilement avec TimeCalendar`,
     },
     alternates: {
-      canonical: `/school/${params.universitySlug}`,
+      canonical: school.seoUrl,
     },
   }
-}
-
-export default async function SchoolPageRoute({
-  params: _params,
-}: SchoolPageProps) {
-  const params = await _params
-
-  return (
-    <HomeLayout>
-      <SchoolPage universitySlug={params.universitySlug} />
-    </HomeLayout>
-  )
 }

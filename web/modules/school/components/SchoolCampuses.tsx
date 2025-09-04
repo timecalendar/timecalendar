@@ -1,35 +1,36 @@
+import { formatUniversityName } from "@/modules/school/helpers/school"
+import { SchoolForSeo } from "@timecalendar/api-client"
 import { MapPin, Users } from "lucide-react"
 
-interface Campus {
-  name: string
-  location: string
-}
-
 interface SchoolCampusesProps {
-  campuses: Campus[]
-  universityName: string
+  school: SchoolForSeo
 }
 
 export function SchoolCampuses({
-  campuses,
-  universityName,
+  school: { profile, name },
 }: SchoolCampusesProps) {
+  if (!profile || !profile.campuses || profile.campuses.length === 0)
+    return null
+
   return (
     <section className="py-16 px-4 bg-gray-100">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Les campus de l&apos;{universityName}
+            Les campus de {formatUniversityName(name)}
           </h2>
           <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-            L&apos;{universityName} compte plusieurs campus répartis en
-            Île-de-France. Retrouvez facilement votre emploi du temps selon
-            votre campus et vos cours.
+            {formatUniversityName(name)} compte plusieurs campus répartis{" "}
+            {profile?.campusLocationContext
+              ? `en ${profile.campusLocationContext}`
+              : "dans la région"}
+            . Retrouvez facilement votre emploi du temps selon votre campus et
+            vos cours.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campuses.map((campus, index) => (
+          {profile?.campuses?.map((campus, index) => (
             <div
               key={index}
               className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"

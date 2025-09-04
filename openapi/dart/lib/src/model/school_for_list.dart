@@ -17,6 +17,7 @@ part 'school_for_list.g.dart';
 /// * [id]
 /// * [code]
 /// * [name]
+/// * [seoUrl] - The URL of the school landing page for SEO purposes
 /// * [siteUrl]
 /// * [imageUrl]
 /// * [intranetUrl]
@@ -41,6 +42,10 @@ abstract class SchoolForList
 
   @BuiltValueField(wireName: r'name')
   String get name;
+
+  /// The URL of the school landing page for SEO purposes
+  @BuiltValueField(wireName: r'seoUrl')
+  String? get seoUrl;
 
   @BuiltValueField(wireName: r'siteUrl')
   String get siteUrl;
@@ -115,6 +120,13 @@ class _$SchoolForListSerializer implements PrimitiveSerializer<SchoolForList> {
       object.name,
       specifiedType: const FullType(String),
     );
+    if (object.seoUrl != null) {
+      yield r'seoUrl';
+      yield serializers.serialize(
+        object.seoUrl,
+        specifiedType: const FullType(String),
+      );
+    }
     yield r'siteUrl';
     yield serializers.serialize(
       object.siteUrl,
@@ -213,6 +225,13 @@ class _$SchoolForListSerializer implements PrimitiveSerializer<SchoolForList> {
             specifiedType: const FullType(String),
           ) as String;
           result.name = valueDes;
+          break;
+        case r'seoUrl':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.seoUrl = valueDes;
           break;
         case r'siteUrl':
           final valueDes = serializers.deserialize(

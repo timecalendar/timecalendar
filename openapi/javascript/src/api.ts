@@ -85,6 +85,10 @@ export interface CalendarWithContent {
     'calendar': CalendarForPublic;
     'events': Array<CalendarEventForPublic>;
 }
+export interface Campus {
+    'name': string;
+    'location': string;
+}
 export interface CreateCalendarDto {
     'url': string;
     'schoolId'?: string;
@@ -160,6 +164,10 @@ export interface SchoolForList {
     'id': string;
     'code': string;
     'name': string;
+    /**
+     * The URL of the school landing page for SEO purposes
+     */
+    'seoUrl'?: string;
     'siteUrl': string;
     'imageUrl': string;
     'intranetUrl': string | null;
@@ -168,10 +176,43 @@ export interface SchoolForList {
     'updatedAt': string;
     'deletedAt'?: string;
 }
+export interface SchoolForSeo {
+    'assistant': SchoolAssistant;
+    'fallbackAssistant'?: SchoolAssistant;
+    'id': string;
+    'code': string;
+    'name': string;
+    /**
+     * The URL of the school landing page for SEO purposes
+     */
+    'seoUrl'?: string;
+    'siteUrl': string;
+    'imageUrl': string;
+    'intranetUrl': string | null;
+    'visible': boolean;
+    'createdAt': string;
+    'updatedAt': string;
+    'deletedAt'?: string;
+    'profile'?: SchoolProfileGet;
+}
 export interface SchoolGroupItem {
     'text': string;
     'value': string;
     'children': Array<SchoolGroupItem>;
+}
+export interface SchoolProfileGet {
+    'campuses'?: Array<Campus>;
+    'formations'?: Array<string>;
+    'description'?: string;
+    'studentCount'?: number;
+    'domains'?: Array<string>;
+    'excellenceTitle'?: string;
+    'excellenceDescription'?: string;
+    'tags'?: Array<string>;
+    'campusLocationContext'?: string;
+}
+export interface SearchSchoolsDto {
+    'seoUrl': string;
 }
 export interface SendMessageDto {
     'email': string;
@@ -916,6 +957,42 @@ export const SchoolsApiAxiosParamCreator = function (configuration?: Configurati
         },
         /**
          * 
+         * @summary Find a school by SEO URL
+         * @param {SearchSchoolsDto} searchSchoolsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchSchools: async (searchSchoolsDto: SearchSchoolsDto, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'searchSchoolsDto' is not null or undefined
+            assertParamExists('searchSchools', 'searchSchoolsDto', searchSchoolsDto)
+            const localVarPath = `/schools/search`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(searchSchoolsDto, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Find school groups
          * @param {string} schoolId The school id
          * @param {*} [options] Override http request option.
@@ -1100,6 +1177,19 @@ export const SchoolsApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Find a school by SEO URL
+         * @param {SearchSchoolsDto} searchSchoolsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async searchSchools(searchSchoolsDto: SearchSchoolsDto, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<SchoolForSeo>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.searchSchools(searchSchoolsDto, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SchoolsApi.searchSchools']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @summary Find school groups
          * @param {string} schoolId The school id
          * @param {*} [options] Override http request option.
@@ -1182,6 +1272,16 @@ export const SchoolsApiFactory = function (configuration?: Configuration, basePa
         },
         /**
          * 
+         * @summary Find a school by SEO URL
+         * @param {SearchSchoolsDto} searchSchoolsDto 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        searchSchools(searchSchoolsDto: SearchSchoolsDto, options?: RawAxiosRequestConfig): AxiosPromise<Array<SchoolForSeo>> {
+            return localVarFp.searchSchools(searchSchoolsDto, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @summary Find school groups
          * @param {string} schoolId The school id
          * @param {*} [options] Override http request option.
@@ -1248,6 +1348,17 @@ export class SchoolsApi extends BaseAPI {
      */
     public findSchools(options?: RawAxiosRequestConfig) {
         return SchoolsApiFp(this.configuration).findSchools(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @summary Find a school by SEO URL
+     * @param {SearchSchoolsDto} searchSchoolsDto 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public searchSchools(searchSchoolsDto: SearchSchoolsDto, options?: RawAxiosRequestConfig) {
+        return SchoolsApiFp(this.configuration).searchSchools(searchSchoolsDto, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

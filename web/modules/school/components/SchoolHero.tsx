@@ -1,17 +1,13 @@
 import { AppCTAs } from "@/modules/home/components/AppCTAs"
+import { formatUniversityName } from "@/modules/school/helpers/school"
+import { SchoolForSeo } from "@timecalendar/api-client"
 import { MapPin } from "lucide-react"
 
-interface University {
-  name: string
-  logo?: string
-  slug: string
-}
-
 interface SchoolHeroProps {
-  university: University
+  school: SchoolForSeo
 }
 
-export function SchoolHero({ university }: SchoolHeroProps) {
+export function SchoolHero({ school }: SchoolHeroProps) {
   return (
     <section className="relative py-16 md:py-24 px-4">
       <div className="relative container mx-auto max-w-6xl">
@@ -22,10 +18,10 @@ export function SchoolHero({ university }: SchoolHeroProps) {
           <div className="space-y-8 text-center md:text-left md:flex-[0_1_60%]">
             <div className="flex justify-center md:justify-start mb-6">
               <div className="w-24 h-24 md:w-24 md:h-24 bg-gray-50 rounded-2xl flex items-center justify-center inset-shadow-xs border border-gray-300 overflow-hidden">
-                {university.logo && (
+                {school.imageUrl && (
                   <img
-                    src={university.logo}
-                    alt={`Logo ${university.name}`}
+                    src={school.imageUrl}
+                    alt={`Logo ${school.name}`}
                     width={96}
                     height={96}
                     className="rounded-lg"
@@ -36,11 +32,13 @@ export function SchoolHero({ university }: SchoolHeroProps) {
 
             {/* Main title */}
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold leading-12">
+              <h2 className="text-4xl font-bold leading-12">
                 Consultez votre emploi du temps
                 <br />à{" "}
-                <span className="text-primary">l&apos;{university.name}</span>
-              </h1>
+                <span className="text-primary">
+                  {formatUniversityName(school.name)}
+                </span>
+              </h2>
               <p className="text-lg">
                 Accédez facilement à vos cours et soyez averti des changements
                 en temps réel.
@@ -71,11 +69,11 @@ export function SchoolHero({ university }: SchoolHeroProps) {
                   <div className="px-3 py-2 h-full overflow-hidden">
                     {/* App Header */}
                     <div className="mb-4">
-                      <h3 className="text-lg font-bold text-primary">
+                      <p className="text-lg font-bold text-primary">
                         TimeCalendar
-                      </h3>
+                      </p>
                       <p className="text-sm text-gray-700 mb-2">
-                        Université Paris Nanterre
+                        {school.name}
                       </p>
                       <p className="text-sm text-gray-900 font-bold">
                         3 cours aujourd&apos;hui

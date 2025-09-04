@@ -9,9 +9,9 @@ const PrivacyPolicyPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mt-4">
-            <h1 className="text-3xl font-bold mb-6">
+            <h2 className="text-3xl font-bold mb-6">
               Politique de confidentialité
-            </h1>
+            </h2>
           </div>
 
           <div className="mt-4 mb-4 flex space-x-2">

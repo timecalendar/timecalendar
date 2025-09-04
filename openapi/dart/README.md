@@ -74,6 +74,7 @@ Class | Method | HTTP request | Description
 [*NotificationSubscriptionApi*](doc/NotificationSubscriptionApi.md) | [**notificationSubscriptionControllerCreateOrUpdateSubscription**](doc/NotificationSubscriptionApi.md#notificationsubscriptioncontrollercreateorupdatesubscription) | **PUT** /notification-subscription | Create or update notification subscription
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchool**](doc/SchoolsApi.md#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerFindSchools**](doc/SchoolsApi.md#schoolcontrollerfindschools) | **GET** /schools | Find list of schools
+[*SchoolsApi*](doc/SchoolsApi.md) | [**schoolControllerSearchSchools**](doc/SchoolsApi.md#schoolcontrollersearchschools) | **POST** /schools/search | Find a school by SEO URL
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerFindSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollerfindschoolgroups) | **GET** /schools/{schoolId}/school-group | Find school groups
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerGetSchoolGroupsIcalUrl**](doc/SchoolsApi.md#schoolgroupcontrollergetschoolgroupsicalurl) | **POST** /schools/{schoolId}/school-group/ical | Get school groups ICal URL
 [*SchoolsApi*](doc/SchoolsApi.md) | [**schoolGroupControllerSetSchoolGroups**](doc/SchoolsApi.md#schoolgroupcontrollersetschoolgroups) | **PUT** /schools/{schoolId}/school-group | Set school groups
@@ -90,6 +91,7 @@ Class | Method | HTTP request | Description
  - [CalendarLogEventGet](doc/CalendarLogEventGet.md)
  - [CalendarLogGet](doc/CalendarLogGet.md)
  - [CalendarWithContent](doc/CalendarWithContent.md)
+ - [Campus](doc/Campus.md)
  - [CreateCalendarDto](doc/CreateCalendarDto.md)
  - [CreateCalendarRepDto](doc/CreateCalendarRepDto.md)
  - [EventTag](doc/EventTag.md)
@@ -103,7 +105,10 @@ Class | Method | HTTP request | Description
  - [OrleansGetIcalUrlFromStudentNumberDto](doc/OrleansGetIcalUrlFromStudentNumberDto.md)
  - [SchoolAssistant](doc/SchoolAssistant.md)
  - [SchoolForList](doc/SchoolForList.md)
+ - [SchoolForSeo](doc/SchoolForSeo.md)
  - [SchoolGroupItem](doc/SchoolGroupItem.md)
+ - [SchoolProfileGet](doc/SchoolProfileGet.md)
+ - [SearchSchoolsDto](doc/SearchSchoolsDto.md)
  - [SendMessageDto](doc/SendMessageDto.md)
  - [SetSchoolGroupDto](doc/SetSchoolGroupDto.md)
  - [SyncCalendarsDto](doc/SyncCalendarsDto.md)
