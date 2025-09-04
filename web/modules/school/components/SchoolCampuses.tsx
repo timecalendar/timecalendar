@@ -22,13 +22,13 @@ export function SchoolCampuses({
               : "Le campus de " + formatUniversityName(name)}
           </h2>
           <p className="text-lg text-gray-700 max-w-3xl mx-auto">
+            {profile?.campusLocationContext
+              ? `${profile.campusLocationContext}, `
+              : ""}
             {formatUniversityName(name)} compte{" "}
             {profile?.campuses?.length > 1
-              ? "plusieurs campus répartis"
-              : "un campus"}{" "}
-            {profile?.campusLocationContext
-              ? `en ${profile.campusLocationContext}`
-              : "dans la région"}
+              ? "plusieurs campus répartis dans la région"
+              : "un campus"}
             . Retrouvez facilement votre emploi du temps selon votre campus et
             vos cours.
           </p>
