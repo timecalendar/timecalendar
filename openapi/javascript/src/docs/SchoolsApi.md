@@ -6,6 +6,7 @@ All URIs are relative to *http://localhost*
 |------------- | ------------- | -------------|
 |[**schoolControllerFindSchool**](#schoolcontrollerfindschool) | **GET** /schools/{schoolId} | Find a school|
 |[**schoolControllerFindSchools**](#schoolcontrollerfindschools) | **GET** /schools | Find list of schools|
+|[**schoolControllerSearchSchools**](#schoolcontrollersearchschools) | **POST** /schools/search | Find a school by SEO URL|
 |[**schoolGroupControllerFindSchoolGroups**](#schoolgroupcontrollerfindschoolgroups) | **GET** /schools/{schoolId}/school-group | Find school groups|
 |[**schoolGroupControllerGetSchoolGroupsIcalUrl**](#schoolgroupcontrollergetschoolgroupsicalurl) | **POST** /schools/{schoolId}/school-group/ical | Get school groups ICal URL|
 |[**schoolGroupControllerSetSchoolGroups**](#schoolgroupcontrollersetschoolgroups) | **PUT** /schools/{schoolId}/school-group | Set school groups|
@@ -101,6 +102,57 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** |  |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **schoolControllerSearchSchools**
+> Array<SchoolForSeo> schoolControllerSearchSchools(searchSchoolsDto)
+
+
+### Example
+
+```typescript
+import {
+    SchoolsApi,
+    Configuration,
+    SearchSchoolsDto
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new SchoolsApi(configuration);
+
+let searchSchoolsDto: SearchSchoolsDto; //
+
+const { status, data } = await apiInstance.schoolControllerSearchSchools(
+    searchSchoolsDto
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **searchSchoolsDto** | **SearchSchoolsDto**|  | |
+
+
+### Return type
+
+**Array<SchoolForSeo>**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**201** |  |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

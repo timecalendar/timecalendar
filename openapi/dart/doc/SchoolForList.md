@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **id** | **String** |  | 
 **code** | **String** |  | 
 **name** | **String** |  | 
+**seoUrl** | **String** | The URL of the school landing page for SEO purposes | [optional] 
 **siteUrl** | **String** |  | 
 **imageUrl** | **String** |  | 
 **intranetUrl** | **String** |  | 

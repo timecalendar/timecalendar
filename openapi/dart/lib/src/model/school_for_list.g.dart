@@ -18,6 +18,8 @@ class _$SchoolForList extends SchoolForList {
   @override
   final String name;
   @override
+  final String? seoUrl;
+  @override
   final String siteUrl;
   @override
   final String imageUrl;
@@ -41,6 +43,7 @@ class _$SchoolForList extends SchoolForList {
       required this.id,
       required this.code,
       required this.name,
+      this.seoUrl,
       required this.siteUrl,
       required this.imageUrl,
       this.intranetUrl,
@@ -65,6 +68,7 @@ class _$SchoolForList extends SchoolForList {
         id == other.id &&
         code == other.code &&
         name == other.name &&
+        seoUrl == other.seoUrl &&
         siteUrl == other.siteUrl &&
         imageUrl == other.imageUrl &&
         intranetUrl == other.intranetUrl &&
@@ -82,6 +86,7 @@ class _$SchoolForList extends SchoolForList {
     _$hash = $jc(_$hash, id.hashCode);
     _$hash = $jc(_$hash, code.hashCode);
     _$hash = $jc(_$hash, name.hashCode);
+    _$hash = $jc(_$hash, seoUrl.hashCode);
     _$hash = $jc(_$hash, siteUrl.hashCode);
     _$hash = $jc(_$hash, imageUrl.hashCode);
     _$hash = $jc(_$hash, intranetUrl.hashCode);
@@ -101,6 +106,7 @@ class _$SchoolForList extends SchoolForList {
           ..add('id', id)
           ..add('code', code)
           ..add('name', name)
+          ..add('seoUrl', seoUrl)
           ..add('siteUrl', siteUrl)
           ..add('imageUrl', imageUrl)
           ..add('intranetUrl', intranetUrl)
@@ -139,6 +145,10 @@ class SchoolForListBuilder
   String? _name;
   String? get name => _$this._name;
   set name(String? name) => _$this._name = name;
+
+  String? _seoUrl;
+  String? get seoUrl => _$this._seoUrl;
+  set seoUrl(String? seoUrl) => _$this._seoUrl = seoUrl;
 
   String? _siteUrl;
   String? get siteUrl => _$this._siteUrl;
@@ -180,6 +190,7 @@ class SchoolForListBuilder
       _id = $v.id;
       _code = $v.code;
       _name = $v.name;
+      _seoUrl = $v.seoUrl;
       _siteUrl = $v.siteUrl;
       _imageUrl = $v.imageUrl;
       _intranetUrl = $v.intranetUrl;
@@ -218,6 +229,7 @@ class SchoolForListBuilder
                 code, r'SchoolForList', 'code'),
             name: BuiltValueNullFieldError.checkNotNull(
                 name, r'SchoolForList', 'name'),
+            seoUrl: seoUrl,
             siteUrl: BuiltValueNullFieldError.checkNotNull(
                 siteUrl, r'SchoolForList', 'siteUrl'),
             imageUrl: BuiltValueNullFieldError.checkNotNull(

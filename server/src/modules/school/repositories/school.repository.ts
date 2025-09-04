@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { School } from "modules/school/models/school.entity"
 import { Repository } from "typeorm"
 
+type SearchSchools = Pick<School, "seoUrl">
 @Injectable()
 export class SchoolRepository {
   constructor(
@@ -18,6 +19,13 @@ export class SchoolRepository {
     return this.repository.find({
       where: { visible: true },
       order: { name: "ASC" },
+    })
+  }
+
+  search(payload: SearchSchools) {
+    return this.repository.find({
+      where: { seoUrl: payload.seoUrl, visible: true },
+      relations: ["profile"],
     })
   }
 }

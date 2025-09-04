@@ -1,11 +1,34 @@
 import { AppCTAs } from "@/modules/home/components/AppCTAs"
 import { Globe, Star } from "lucide-react"
 
-interface SchoolCTAProps {
-  universityName: string
+interface Testimonial {
+  quote: string
+  author: string
 }
 
-export function SchoolCTA({ universityName }: SchoolCTAProps) {
+const testimonials: Testimonial[] = [
+  {
+    quote:
+      "Enfin fini les galères avec l'ENT ! Mon emploi du temps est toujours à jour sur mon téléphone.",
+    author: "Julie, Licence Droit",
+  },
+  {
+    quote:
+      "Super pratique pour organiser ma semaine. Les notifications me sauvent la vie !",
+    author: "Thomas, Master Économie",
+  },
+  {
+    quote:
+      "Interface claire et moderne. Exactement ce qu'il fallait pour mes études !",
+    author: "Sarah, Licence Lettres",
+  },
+]
+
+interface SchoolCTAProps {
+  schoolName: string
+}
+
+export function SchoolCTA({ schoolName }: SchoolCTAProps) {
   return (
     <section className="py-20 px-4 bg-gradient-to-br from-[#e66b8c] via-[#d55a7f] to-[#c44872] relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent"></div>
@@ -26,8 +49,7 @@ export function SchoolCTA({ universityName }: SchoolCTAProps) {
               Accédez à vos cours en toute simplicité
             </h2>
             <p className="text-xl md:text-2xl font-medium text-white/90 mx-auto leading-relaxed drop-shadow-md">
-              Accédez dès aujourd&apos;hui à votre emploi du temps{" "}
-              {universityName}
+              Accédez dès aujourd&apos;hui à votre emploi du temps {schoolName}
             </p>
           </div>
 
@@ -58,57 +80,27 @@ export function SchoolCTA({ universityName }: SchoolCTAProps) {
 
             {/* Testimonial cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 max-w-5xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="flex space-x-1 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 text-yellow-300 fill-current"
-                    />
-                  ))}
+              {testimonials.map((testimonial, index) => (
+                <div
+                  key={index}
+                  className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20"
+                >
+                  <div className="flex space-x-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-4 w-4 text-yellow-300 fill-current"
+                      />
+                    ))}
+                  </div>
+                  <p className="text-white/90 text-sm italic mb-3">
+                    &quot;{testimonial.quote}&quot;
+                  </p>
+                  <p className="text-white/70 text-xs">
+                    — {testimonial.author}
+                  </p>
                 </div>
-                <p className="text-white/90 text-sm italic mb-3">
-                  &quot;Enfin fini les galères avec l&apos;ENT ! Mon emploi du
-                  temps est toujours à jour sur mon téléphone.&quot;
-                </p>
-                <p className="text-white/70 text-xs">— Julie, Licence Droit</p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="flex space-x-1 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 text-yellow-300 fill-current"
-                    />
-                  ))}
-                </div>
-                <p className="text-white/90 text-sm italic mb-3">
-                  &quot;Super pratique pour organiser ma semaine. Les
-                  notifications me sauvent la vie !&quot;
-                </p>
-                <p className="text-white/70 text-xs">
-                  — Thomas, Master Économie
-                </p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                <div className="flex space-x-1 mb-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 text-yellow-300 fill-current"
-                    />
-                  ))}
-                </div>
-                <p className="text-white/90 text-sm italic mb-3">
-                  &quot;Interface claire et moderne. Exactement ce qu&apos;il
-                  fallait pour mes études !&quot;
-                </p>
-                <p className="text-white/70 text-xs">
-                  — Sarah, Licence Lettres
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </div>
