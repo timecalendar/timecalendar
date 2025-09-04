@@ -1,10 +1,13 @@
 import { AppCTAs } from "@/modules/home/components/AppCTAs"
 import homeImg from "modules/home/assets/home.png"
 import Image from "next/image"
+import Link from "next/link"
+import { Button } from "components/ui/button"
+import { ChevronRight } from "lucide-react"
 
 export function Hero() {
   return (
-    <div className="relative overflow-hidden md:min-h-screen py-0 md:px-12 shadow-[0_5px_10px_rgba(0,0,0,0.03)] md:white z-[-1]">
+    <div className="relative overflow-hidden md:min-h-screen py-0 md:px-12 shadow-[0_5px_10px_rgba(0,0,0,0.03)] md:white">
       <span className="hidden md:block">
         <div className="absolute z-[-1] w-3/5 min-h-0 h-full bg-[#e66b8c] skew-x-[8deg] origin-top-left right-0 inset-y-0"></div>
       </span>
@@ -21,6 +24,19 @@ export function Hero() {
               Consultez votre emploi du temps et recevez des notifications lors
               de modifications de cours grâce à votre nouvel assistant.
             </p>
+            <div>
+              <Button
+                size="lg"
+                className="uppercase bg-transparent"
+                variant="outline"
+                asChild
+              >
+                <Link href="/ecoles">
+                  Démarrer
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
             <div className="flex space-x-2">
               <AppCTAs />
             </div>
