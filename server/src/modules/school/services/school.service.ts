@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common"
+import { SchoolMapper } from "modules/school/mappers/school.mapper"
 import {
   FindSchoolsRepDto,
   SchoolForList,
 } from "modules/school/models/dto/find-schools-rep.dto"
 import { SchoolForSeo } from "modules/school/models/dto/school-for-seo.dto"
 import { SearchSchoolsDto } from "modules/school/models/dto/search-schools.dto"
-import { SchoolMapper } from "modules/school/mappers/school.mapper"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
 
 @Injectable()

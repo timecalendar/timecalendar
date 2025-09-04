@@ -12,7 +12,10 @@ export class SchoolRepository {
   ) {}
 
   findOneOrFail(id: string) {
-    return this.repository.findOneByOrFail({ id })
+    return this.repository.findOneOrFail({
+      where: { id },
+      relations: ["profile"],
+    })
   }
 
   findAll() {
