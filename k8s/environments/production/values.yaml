@@ -1,7 +1,10 @@
 environment: production
 apiUrl: api-v2.timecalendar.app
 clientUrl: timecalendar.app
-webUrl: v2.timecalendar.app
+webUrl: timecalendar.app
+webRedirectUrls:
+  - www.timecalendar.app
+  - v2.timecalendar.app
 
 server:
   replicaCount: 3

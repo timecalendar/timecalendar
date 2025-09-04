@@ -17,3 +17,29 @@ spec:
             name: {{ include "timecalendar.fullname" . }}-web
             port:
               number: 80
+{{- if .Values.webRedirectUrls }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-web-redirects
+  labels:
+    {{- include "timecalendar.webLabels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      rewrite ^/(.*)$ https://{{ .Values.webUrl }}/$1 permanent;
+spec:
+  rules:
+  {{- range .Values.webRedirectUrls }}
+  - host: {{ . }}
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: {{ $fullName }}-web
+            port:
+              number: 80
+  {{- end }}
+{{- end }}
