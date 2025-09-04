@@ -35,4 +35,6 @@ spec:
               protocol: TCP
           env:
             - name: NEXT_PUBLIC_BACKEND_URL
-              value: {{ .Values.apiUrl }}
+              value: "https://{{ .Values.apiUrl }}"
+            - name: NEXT_PUBLIC_FRONTEND_URL
+              value: "https://{{ .Values.webUrl }}"
