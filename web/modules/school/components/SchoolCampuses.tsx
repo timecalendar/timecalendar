@@ -17,10 +17,15 @@ export function SchoolCampuses({
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Les campus de {formatUniversityName(name)}
+            {profile?.campuses?.length > 1
+              ? "Les campus de " + formatUniversityName(name)
+              : "Le campus de " + formatUniversityName(name)}
           </h2>
           <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-            {formatUniversityName(name)} compte plusieurs campus répartis{" "}
+            {formatUniversityName(name)} compte{" "}
+            {profile?.campuses?.length > 1
+              ? "plusieurs campus répartis"
+              : "un campus"}{" "}
             {profile?.campusLocationContext
               ? `en ${profile.campusLocationContext}`
               : "dans la région"}

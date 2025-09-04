@@ -18,4 +18,5 @@ export const developmentEnvVariables = {
   ENABLE_QUEUE: "true",
   S3_PUBLIC_BUCKET_CLIENT_URL:
     "https://timecalendar-dev-public.fra1.digitaloceanspaces.com",
+  OPENAI_API_KEY: "",
 }

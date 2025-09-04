@@ -34,6 +34,7 @@
     ]
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.23",
     "@bull-board/express": "^5.6.1",
     "@golevelup/ts-jest": "^0.7.0",
     "@nestjs/bullmq": "^10.2.3",
@@ -69,6 +70,7 @@
     "@types/wtfnode": "^0.7.0",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
+    "ai": "^5.0.30",
     "axios": "^1.4.0",
     "bullmq": "^5.34.10",
     "class-transformer": "^0.5.1",
@@ -117,7 +119,8 @@
     "typescript": "^5.1.6",
     "uuid": "^9.0.0",
     "winston": "^3.10.0",
-    "wtfnode": "^0.9.1"
+    "wtfnode": "^0.9.1",
+    "zod": "^4.1.5"
   },
   "jest": {
     "moduleFileExtensions": [
