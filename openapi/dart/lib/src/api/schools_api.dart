@@ -8,6 +8,7 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
+import 'package:built_collection/built_collection.dart';
 import 'package:timecalendar_api/src/api_util.dart';
 import 'package:timecalendar_api/src/model/find_school_groups_rep_dto.dart';
 import 'package:timecalendar_api/src/model/find_schools_rep_dto.dart';
@@ -15,6 +16,8 @@ import 'package:timecalendar_api/src/model/get_school_groups_ical_url_dto.dart';
 import 'package:timecalendar_api/src/model/get_school_groups_ical_url_rep_dto.dart';
 import 'package:timecalendar_api/src/model/orleans_get_ical_url_from_student_number_dto.dart';
 import 'package:timecalendar_api/src/model/school_for_list.dart';
+import 'package:timecalendar_api/src/model/school_for_seo.dart';
+import 'package:timecalendar_api/src/model/search_schools_dto.dart';
 import 'package:timecalendar_api/src/model/set_school_group_dto.dart';
 
 class SchoolsApi {
@@ -166,6 +169,103 @@ class SchoolsApi {
     }
 
     return Response<FindSchoolsRepDto>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// Find a school by SEO URL
+  ///
+  ///
+  /// Parameters:
+  /// * [searchSchoolsDto]
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [BuiltList<SchoolForSeo>] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<BuiltList<SchoolForSeo>>> searchSchools({
+    required SearchSchoolsDto searchSchoolsDto,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/schools/search';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(SearchSchoolsDto);
+      _bodyData =
+          _serializers.serialize(searchSchoolsDto, specifiedType: _type);
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    BuiltList<SchoolForSeo>? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null
+          ? null
+          : _serializers.deserialize(
+              rawResponse,
+              specifiedType:
+                  const FullType(BuiltList, [FullType(SchoolForSeo)]),
+            ) as BuiltList<SchoolForSeo>;
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<BuiltList<SchoolForSeo>>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

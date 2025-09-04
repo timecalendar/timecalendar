@@ -3,6 +3,7 @@ import { SchoolAssistant } from "modules/school/models/school-assistant.model"
 import { School } from "modules/school/models/school.entity"
 
 export class SchoolForList extends OmitType(School, [
+  "profile",
   "assistant",
   "fallbackAssistant",
 ] as const) {

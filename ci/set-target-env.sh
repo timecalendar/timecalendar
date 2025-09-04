@@ -42,8 +42,3 @@ if [ -n "$TARGET_ENVIRONMENT" ]; then
   echo "K8S_KUBECONFIG_ENV=K8S_KUBECONFIG_${TARGET_ENVIRONMENT^^}" >>"$GITHUB_ENV"
   echo "K8S_HELM_VALUES_ENV=K8S_HELM_VALUES_${TARGET_ENVIRONMENT^^}" >>"$GITHUB_ENV"
 fi
-
-# Web environment variables
-MAIN_API_URL=$(yq '.apiUrl' k8s/environments/$TARGET_ENVIRONMENT/values.yaml)
-echo "MAIN_API_URL=https://$MAIN_API_URL" >"web/.env"
-cat web/.env

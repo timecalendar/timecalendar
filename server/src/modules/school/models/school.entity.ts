@@ -1,8 +1,10 @@
+import { SchoolProfile } from "modules/school/models/entities/school-profile.entity"
 import {
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm"
@@ -17,6 +19,12 @@ export class School {
 
   @Column()
   name: string
+
+  /**
+   * The URL of the school landing page for SEO purposes
+   */
+  @Column({ type: "text", nullable: true })
+  seoUrl?: string
 
   @Column()
   siteUrl: string
@@ -35,6 +43,9 @@ export class School {
 
   @Column({ type: "varchar", nullable: true })
   fallbackAssistant: string | null
+
+  @OneToOne(() => SchoolProfile, (profile) => profile.school)
+  profile?: SchoolProfile
 
   @CreateDateColumn()
   createdAt: Date

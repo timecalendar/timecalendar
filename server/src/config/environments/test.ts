@@ -9,4 +9,5 @@ export const testEnvVariables = {
   REDIS_URL: "redis://127.0.0.1:37292",
   REDIS_KEY_PREFIX: "",
   ENABLE_QUEUE: "false",
+  S3_PUBLIC_BUCKET_CLIENT_URL: "https://timecalendar-test.example.com",
 }

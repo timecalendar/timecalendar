@@ -3,14 +3,19 @@ export type ApiErrorMessageMap = { [apiError: string]: string }
 const errors: { [apiError: string]: string } = {}
 
 export const getApiErrorMessage = (
-  error: any,
+  error: unknown,
   defaultError?: string | ApiErrorMessageMap,
 ) => {
-  let message: any =
-    error.response?.data?.message ??
-    error.response?.data?.error?.message ??
-    error.response?.data?.error ??
-    error.message ??
+  const errorObj = error as Record<string, unknown>
+  const response = errorObj?.response as Record<string, unknown> | undefined
+  const data = response?.data as Record<string, unknown> | undefined
+  const errorData = data?.error as Record<string, unknown> | undefined
+
+  let message: string | string[] =
+    (data?.message as string | string[]) ??
+    (errorData?.message as string | string[]) ??
+    (data?.error as string | string[]) ??
+    (errorObj?.message as string | string[]) ??
     (typeof error === "string" && error) ??
     (typeof defaultError === "string" && defaultError) ??
     "An error has occurred."

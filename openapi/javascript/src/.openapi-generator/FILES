@@ -14,6 +14,7 @@ docs/CalendarLogGet.md
 docs/CalendarLogsApi.md
 docs/CalendarWithContent.md
 docs/CalendarsApi.md
+docs/Campus.md
 docs/ContactApi.md
 docs/CreateCalendarDto.md
 docs/CreateCalendarRepDto.md
@@ -30,8 +31,11 @@ docs/NotificationSubscriptionCreate.md
 docs/OrleansGetIcalUrlFromStudentNumberDto.md
 docs/SchoolAssistant.md
 docs/SchoolForList.md
+docs/SchoolForSeo.md
 docs/SchoolGroupItem.md
+docs/SchoolProfileGet.md
 docs/SchoolsApi.md
+docs/SearchSchoolsDto.md
 docs/SendMessageDto.md
 docs/SetSchoolGroupDto.md
 docs/SyncCalendarsDto.md
