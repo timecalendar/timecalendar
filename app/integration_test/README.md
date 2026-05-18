@@ -49,7 +49,9 @@ script if missing.
 6. Resolves an Android device from `flutter devices`; exits fast with a clear
    message if none is connected.
 7. Runs `flutter test integration_test/app_test.dart` with
-   `--dart-define MAIN_API_URL=...` pointing at the local backend.
+   `--dart-define MAIN_API_URL=...` pointing at the local backend, under a
+   `timeout` backstop (`E2E_TEST_TIMEOUT`, default 720s) so a tool-level hang
+   fails the run instead of stalling to the CI job's wall-clock limit.
 8. Tears down (`trap … EXIT`): kills the backend process group and
    `docker compose down`.
 
@@ -105,19 +107,29 @@ expect(target, findsOneWidget);
 
 ## How to add a flow (for A4 / TIM-7)
 
+This harness ships **exactly one `testWidgets`** on purpose. `waitAppInitialized`
+calls `app.main()`, and `main()` calls `Firebase.initializeApp`; running that a
+second time in the same process throws `[core/duplicate-app]`. `main.dart`
+installs a `PlatformDispatcher.onError` handler that swallows errors, so that
+throw never surfaces as a failure — a second `testWidgets` simply **hangs**
+until the per-test / `run_e2e.sh` timeout fires.
+
+So before A4 can add sibling tests it must first solve **app-restart
+isolation** — one of:
+
+- make app boot idempotent (e.g. guard `Firebase.initializeApp` with
+  `Firebase.apps.isEmpty`, and reset the `SettingsProvider` / `SimpleDatabase`
+  process-wide singletons between tests), or
+- drive each flow from one `testWidgets` that boots the app once and navigates
+  between screens, or
+- split flows across separate entrypoint files, each run in its own process.
+
+Within a flow, once isolation is solved:
+
 - Use the bounded-pump pattern above for every live backend round-trip.
 - Assert on the deterministic fixture data seeded by `db:init` (e.g. the two
   seeded schools, `My Gaming Academia` and `Université Gustave Eiffel`).
-- **Test isolation is not yet handled — and a second `testWidgets` is not a
-  drop-in.** `app.main()` boots process-wide singletons (`SettingsProvider`,
-  `SimpleDatabase`, the Firebase app). A second `testWidgets` that calls
-  `app.main()` again re-enters that init against already-open singletons and
-  never reaches a fresh, settled state — the run hangs. That is why this
-  harness ships **exactly one `testWidgets`** that asserts the onboarding
-  screen and the seeded-schools round-trip in a single launch. A4 owns proper
-  cross-test isolation (resetting `SharedPreferences`, re-opening
-  `SimpleDatabase`, or navigating directly without a second `app.main()`)
-  before adding more flows.
+- Keep a per-test `timeout:` so a hang fails fast instead of stalling the job.
 
 ## Why Android only
 

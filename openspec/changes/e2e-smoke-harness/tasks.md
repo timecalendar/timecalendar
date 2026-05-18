@@ -64,13 +64,9 @@ Conventions for every task below:
 
 ## 3. Happy-path integration test
 
-- [x] 3.1 Ship **exactly one** `testWidgets` in
-  `app/integration_test/app_test.dart` (see design.md Decision 5 — a second
-  `testWidgets` calling `app.main()` re-enters process-wide singleton init and
-  hangs the run). The single test:
+- [x] 3.1 Add one new `testWidgets` to `app/integration_test/app_test.dart`
+  (keep the existing "shows the onboarding screen" test). The new test:
   - `await waitAppInitialized(tester);` (launches `app.main()`).
-  - Assert the onboarding screen is shown (`find.text("Consultez votre
-    agenda")`).
   - Skip onboarding: tap the **"Passer"** control
     (`find.text('Passer')`) → routes to `SelectSchool`.
   - Wait for the live `GET /schools` round-trip **without `pumpAndSettle`**

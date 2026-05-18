@@ -39,6 +39,11 @@ PG_HOSTPORT="localhost:37291"
 # Host the Flutter app uses to reach the backend. 10.0.2.2 is the host
 # loopback as seen from an Android emulator; override for a physical device.
 E2E_API_HOST="${E2E_API_HOST:-10.0.2.2}"
+# Wall-clock cap on `flutter test`. The test itself carries a per-test timeout
+# (see app_test.dart), so this only fires if the tool hangs *outside* a test
+# (e.g. it fails to exit after the run completes). Keeps a hang well inside the
+# CI job's own timeout instead of burning it to the wall.
+E2E_TEST_TIMEOUT="${E2E_TEST_TIMEOUT:-720}"
 BACKEND_LOG="$(mktemp -t e2e-backend-XXXXXX.log)"
 BACKEND_PID=""
 
@@ -195,16 +200,25 @@ fi
 log "using device: $DEVICE_ID"
 
 # --- 8-9. Run the integration test -------------------------------------------
-log "running the Flutter integration test…"
+log "running the Flutter integration test (timeout ${E2E_TEST_TIMEOUT}s)…"
 cd "$APP_DIR"
 flutter pub get >/dev/null
+# `--reporter expanded` prints every test's start/pass/fail on its own line, so
+# a CI log shows exactly which test is running if the run stalls.
+# `timeout` is the backstop for a tool-level hang; --kill-after sends KILL if
+# `flutter test` ignores the initial TERM.
 set +e
-flutter test integration_test/app_test.dart -d "$DEVICE_ID" \
-  --dart-define "MAIN_API_URL=http://${E2E_API_HOST}:${BACKEND_PORT}"
+timeout --kill-after=30s "${E2E_TEST_TIMEOUT}s" \
+  flutter test integration_test/app_test.dart -d "$DEVICE_ID" \
+    --reporter expanded \
+    --dart-define "MAIN_API_URL=http://${E2E_API_HOST}:${BACKEND_PORT}"
 test_exit=$?
 set -e
 if [ "$test_exit" -eq 0 ]; then
   log "integration test PASSED."
+elif [ "$test_exit" -eq 124 ] || [ "$test_exit" -eq 137 ]; then
+  log "integration test TIMED OUT after ${E2E_TEST_TIMEOUT}s — 'flutter test'"
+  log "did not exit. Treating as failure (exit $test_exit)."
 else
   log "integration test FAILED (exit $test_exit)."
 fi
