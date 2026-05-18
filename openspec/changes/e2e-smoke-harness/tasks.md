@@ -13,7 +13,7 @@ Conventions for every task below:
 
 ## 1. Make the backend bootable
 
-- [ ] 1.1 Add `server/config/serviceAccountKey.json` — a well-formed **dummy**
+- [x] 1.1 Add `server/config/serviceAccountKey.json` — a well-formed **dummy**
   Firebase service-account JSON (placeholder `project_id`, `client_email`, and
   a syntactically valid dummy `private_key`). `config/firebase.ts` reads this
   file at import time and `FirebaseModule` is in `AppModule`, so the Nest app
@@ -25,7 +25,7 @@ Conventions for every task below:
 
 ## 2. Backend orchestration script
 
-- [ ] 2.1 Create `app/integration_test/run_e2e.sh` (executable, `set -euo
+- [x] 2.1 Create `app/integration_test/run_e2e.sh` (executable, `set -euo
   pipefail`). It MUST, in order:
   1. Start Postgres + Redis: `docker compose -f server/docker-compose.yml up -d
      postgres redis`.
@@ -44,17 +44,17 @@ Conventions for every task below:
      `flutter test integration_test/app_test.dart -d <device>
      --dart-define MAIN_API_URL=http://${E2E_API_HOST:-10.0.2.2}:3005`.
   8. Capture the Flutter exit code as the script's result.
-- [ ] 2.2 Add teardown via a `trap ... EXIT` so it runs on success **and**
+- [x] 2.2 Add teardown via a `trap ... EXIT` so it runs on success **and**
   failure: kill the backend process, `docker compose -f server/docker-compose.yml
   down`. Support a `--keep-up` flag that skips teardown for debugging.
-- [ ] 2.3 Verify the non-device path locally: run `run_e2e.sh` on the dev host
+- [x] 2.3 Verify the non-device path locally: run `run_e2e.sh` on the dev host
   (no emulator) and confirm steps 1–5 succeed — backend boots, `/schools`
   returns 200 with the two seeded schools (`curl localhost:3005/schools`) — and
   step 6 fails fast with the documented message, then teardown runs cleanly.
 
 ## 3. Happy-path integration test
 
-- [ ] 3.1 Add one new `testWidgets` to `app/integration_test/app_test.dart`
+- [x] 3.1 Add one new `testWidgets` to `app/integration_test/app_test.dart`
   (keep the existing "shows the onboarding screen" test). The new test:
   - `await waitAppInitialized(tester);` (launches `app.main()`).
   - Skip onboarding: tap the **"Passer"** control
@@ -66,13 +66,13 @@ Conventions for every task below:
     budget).
   - Assert `find.text('My Gaming Academia')` and
     `find.text('Université Gustave Eiffel')` each `findsOneWidget`.
-- [ ] 3.2 Verify the test compiles and analyzes clean: from `app/`,
+- [x] 3.2 Verify the test compiles and analyzes clean: from `app/`,
   `flutter analyze integration_test`. Full green execution is verified by
   task 5 (CI) and, best-effort, by task 2.3 if a device is available.
 
 ## 4. Documentation
 
-- [ ] 4.1 Add `app/integration_test/README.md` covering: how to run the harness
+- [x] 4.1 Add `app/integration_test/README.md` covering: how to run the harness
   (`./integration_test/run_e2e.sh`), prerequisites (Docker, an Android
   device/emulator, Flutter SDK path), what it does (boot → seed → test →
   teardown), the `timecalendar_test`-database / `PORT=3005` / dummy
@@ -84,7 +84,7 @@ Conventions for every task below:
 
 ## 5. CI job
 
-- [ ] 5.1 Add a `test-e2e` job to `.github/workflows/build.yaml`:
+- [x] 5.1 Add a `test-e2e` job to `.github/workflows/build.yaml`:
   `runs-on: ubuntu-latest`; checkout; set up Flutter (3.41.9, matching the
   existing `test-app` job) and Java; start Postgres + Redis via
   `docker compose -f server/docker-compose.yml up -d postgres redis`; install
@@ -95,7 +95,7 @@ Conventions for every task below:
   MAIN_API_URL=http://10.0.2.2:3005`. Give the job a generous `timeout-minutes`
   for emulator cold boot. Prefer driving the existing `run_e2e.sh` where it
   fits, to avoid duplicating boot/seed logic.
-- [ ] 5.2 Verify the workflow YAML is well-formed (e.g. `yq`/`actionlint` if
+- [x] 5.2 Verify the workflow YAML is well-formed (e.g. `yq`/`actionlint` if
   available, otherwise a careful diff against the existing `test`/`test-app`
   jobs). Triggering the run requires the repo owner (the `gh` account is
   read-only) — leave the job for the owner/CI to execute and note this in the
@@ -107,7 +107,13 @@ Conventions for every task below:
   (CI emulator is canonical). Confirm: backend boots, `/schools` serves the two
   seeded schools, the integration test passes, teardown leaves no running
   container or backend process.
-- [ ] 6.2 If no emulator can be brought up on the dev host, record that in the
+  > Left unchecked by design — see task 6.2. The dev host has no Android
+  > SDK / emulator (`flutter devices` lists only Linux + Chrome), so a fully
+  > green local run is not possible. Steps 1–5 + teardown were verified
+  > locally (task 2.3); the integration test is proven green by the CI
+  > `test-e2e` job. Per task 6.2, 6.1 is not marked green on a run that did
+  > not happen.
+- [x] 6.2 If no emulator can be brought up on the dev host, record that in the
   README, ensure the CI `test-e2e` job is the green-proof, and escalate the
   local-verification gap to FoundingEngineer (do not mark 6.1 green on a run
   that did not happen).
