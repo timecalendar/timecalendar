@@ -93,6 +93,34 @@ jobs:
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
 
+  test-app:
+    name: Run app tests
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        flutter-version: 3.41.9
+        cache: true
+
+    - name: Install dependencies
+      working-directory: ./app
+      run: flutter pub get
+
+    - name: Analyze
+      working-directory: ./app
+      run: flutter analyze test
+
+    - name: Run tests
+      working-directory: ./app
+      run: flutter test
+
+
   deploy:
     name: Deploy
     needs: [build-server, build-web]
