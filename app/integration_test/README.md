@@ -105,16 +105,19 @@ expect(target, findsOneWidget);
 
 ## How to add a flow (for A4 / TIM-7)
 
-- Add a new `testWidgets` to `integration_test/app_test.dart`.
 - Use the bounded-pump pattern above for every live backend round-trip.
 - Assert on the deterministic fixture data seeded by `db:init` (e.g. the two
   seeded schools, `My Gaming Academia` and `Université Gustave Eiffel`).
-- **Test isolation is not yet handled.** `SettingsProvider` and
-  `SimpleDatabase` are process-wide singletons; this change ships exactly one
-  meaningful flow plus the original onboarding check, both of which route to
-  onboarding because the splash screen routes on whether any calendar exists
-  (it does not). A4 owns proper cross-test isolation (resetting
-  `SharedPreferences` / navigating directly) when it adds more flows.
+- **Test isolation is not yet handled — and a second `testWidgets` is not a
+  drop-in.** `app.main()` boots process-wide singletons (`SettingsProvider`,
+  `SimpleDatabase`, the Firebase app). A second `testWidgets` that calls
+  `app.main()` again re-enters that init against already-open singletons and
+  never reaches a fresh, settled state — the run hangs. That is why this
+  harness ships **exactly one `testWidgets`** that asserts the onboarding
+  screen and the seeded-schools round-trip in a single launch. A4 owns proper
+  cross-test isolation (resetting `SharedPreferences`, re-opening
+  `SimpleDatabase`, or navigating directly without a second `app.main()`)
+  before adding more flows.
 
 ## Why Android only
 
