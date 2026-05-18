@@ -179,11 +179,12 @@ defaulting to `10.0.2.2`.
 
 - **Local host cannot reliably run the emulator** (no KVM/SDK). Mitigated by
   making CI canonical and the script device-agnostic — see Decision 2.
-- **Dummy Firebase key.** Committing `serviceAccountKey.json` (a placeholder,
-  non-secret) is unusual; it is the pragmatic way to keep the backend bootable
-  for the harness and CI without secrets. Documented in the README. If repo
-  policy forbids committing it, the fallback is a CI-generated key — flag to
-  FoundingEngineer if so.
+- **Dummy Firebase key.** `serviceAccountKey.json` is generated at runtime by
+  `run_e2e.sh` (a fresh throwaway `openssl` RSA key) and never committed — see
+  Decision 4. GitHub Push Protection rejects any service-account-shaped JSON, so
+  committing even a dummy is not an option; generating it keeps the backend
+  bootable for the harness and CI with no credential material in the repo.
+  Documented in the README.
 - **`pumpAndSettle` spinner trap** — addressed explicitly in Decision 5 and the
   README so A4 does not re-hit it.
 - **Cold-boot time.** Even KVM-accelerated CI emulator boot is minutes; the
@@ -192,15 +193,17 @@ defaulting to `10.0.2.2`.
 
 ## Migration Plan
 
-Purely additive: new script, one new test, new README, new CI job, one
-committed dummy key file. No `lib/`, `server/src/`, `pubspec.yaml` or DTO
-changes. Reverting deletes these assets with no other effect.
+Purely additive: new script, one new test, new README, new CI job. No
+`lib/`, `server/src/`, `pubspec.yaml` or DTO changes — and no committed key
+file (the dummy key is generated at runtime). Reverting deletes these assets
+with no other effect.
 
 ## Open Questions
 
 - Should `test-e2e` be a **required** PR check, or informational until A4
   broadens coverage? Recommend informational for now; FoundingEngineer to
   confirm. Not blocking — the Applier ships the job either way.
-- Whether committing the dummy `serviceAccountKey.json` is acceptable under
-  repo policy (see Risks). Default: commit it; the Applier escalates if policy
-  says otherwise.
+- ~~Whether committing the dummy `serviceAccountKey.json` is acceptable under
+  repo policy.~~ **Resolved:** do not commit it. GitHub Push Protection rejects
+  any service-account-shaped JSON, so the key is generated at runtime by
+  `run_e2e.sh` (Decision 4).
