@@ -28,23 +28,18 @@ void main() {
       // fixed step in a bounded loop until the seeded school text appears.
       // (See integration_test/README.md — this is the template for new flows.)
       final firstSchool = find.text('My Gaming Academia');
-      var rendered = false;
       for (var i = 0; i < 100; i++) {
         await tester.pump(const Duration(milliseconds: 300));
-        if (firstSchool.evaluate().isNotEmpty) {
-          rendered = true;
-          break;
-        }
+        if (firstSchool.evaluate().isNotEmpty) break;
       }
-      expect(
-        rendered,
-        isTrue,
-        reason: 'GET /schools did not render within the ~30s budget',
-      );
 
       // Both schools seeded by `npm run db:init` must round-trip from the
       // backend through the generated API client into the UI.
-      expect(find.text('My Gaming Academia'), findsOneWidget);
+      expect(
+        firstSchool,
+        findsOneWidget,
+        reason: 'GET /schools did not render within the ~30s budget',
+      );
       expect(find.text('Université Gustave Eiffel'), findsOneWidget);
     });
   });

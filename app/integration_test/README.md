@@ -91,15 +91,11 @@ fixed step in a bounded loop until the expected widget appears, instead of
 
 ```dart
 final target = find.text('My Gaming Academia');
-var rendered = false;
 for (var i = 0; i < 100; i++) {
   await tester.pump(const Duration(milliseconds: 300));
-  if (target.evaluate().isNotEmpty) {
-    rendered = true;
-    break;
-  }
+  if (target.evaluate().isNotEmpty) break;
 }
-expect(rendered, isTrue);
+expect(target, findsOneWidget);
 ```
 
 ## How to add a flow (for A4 / TIM-7)
