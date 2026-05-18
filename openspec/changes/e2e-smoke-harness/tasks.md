@@ -13,15 +13,19 @@ Conventions for every task below:
 
 ## 1. Make the backend bootable
 
-- [x] 1.1 Add `server/config/serviceAccountKey.json` — a well-formed **dummy**
-  Firebase service-account JSON (placeholder `project_id`, `client_email`, and
-  a syntactically valid dummy `private_key`). `config/firebase.ts` reads this
-  file at import time and `FirebaseModule` is in `AppModule`, so the Nest app
-  will not boot without it. Verify: from `server/`,
+- [x] 1.1 Make the backend bootable by **generating** a well-formed **dummy**
+  `server/config/serviceAccountKey.json` at runtime in `run_e2e.sh` (see task
+  2.1, step 4) — **never commit it.** `config/firebase.ts` reads this file at
+  import time and `FirebaseModule` is in `AppModule`, so the Nest app will not
+  boot without it; the dummy JSON has a placeholder `project_id` /
+  `client_email` and a syntactically valid dummy `private_key` so
+  `firebase-admin` `cert()` accepts the shape. The file is **not** committed:
+  GitHub Push Protection rejects any service-account-shaped JSON as a
+  credential, so committing it is a dead end (see design.md Decision 4).
+  `server/.gitignore` keeps `server/config/` ignored so the generated file
+  stays untracked. Verify: from `server/`, with the file generated,
   `NODE_ENV=test PORT=3005 npm run start` boots without throwing on the
-  `serviceAccountKey` read or on `firebase-admin` `cert()`. If `cert()` rejects
-  the dummy `private_key`, use a generated throwaway key or a stub
-  `SERVICE_ACCOUNT_KEY_PATH` instead, and record the choice in task 4's README.
+  `serviceAccountKey` read or on `firebase-admin` `cert()`.
 
 ## 2. Backend orchestration script
 
@@ -33,24 +37,30 @@ Conventions for every task below:
      localhost:37291 -t 60`, or `pg_isready`).
   3. Seed deterministic state: from `server/`,
      `NODE_ENV=test PORT=3005 npm run db:init` (drop + migrate + seed).
-  4. Start the backend in the background: from `server/`,
+  4. Generate the dummy Firebase key at
+     `server/config/serviceAccountKey.json` when it is absent — mint a fresh
+     throwaway RSA private key with `openssl` and assemble the JSON around it
+     (see task 1.1, design.md Decision 4) — never commit it, and never embed a
+     PEM literal in the script; leave an existing file untouched.
+  5. Start the backend in the background: from `server/`,
      `NODE_ENV=test PORT=3005 npm run start`; capture its PID and logs.
-  5. Poll `GET http://localhost:3005/schools` until it returns HTTP 200
+  6. Poll `GET http://localhost:3005/schools` until it returns HTTP 200
      (bounded, e.g. 60 s) — this confirms the server, DB and seed are all up.
-  6. Resolve a target device from `flutter devices`. If none, exit non-zero
+  7. Resolve a target device from `flutter devices`. If none, exit non-zero
      with a clear message ("no Android device/emulator — see
      integration_test/README.md / run the `test-e2e` CI job").
-  7. Run the test: from `app/`,
+  8. Run the test: from `app/`,
      `flutter test integration_test/app_test.dart -d <device>
      --dart-define MAIN_API_URL=http://${E2E_API_HOST:-10.0.2.2}:3005`.
-  8. Capture the Flutter exit code as the script's result.
+  9. Capture the Flutter exit code as the script's result.
 - [x] 2.2 Add teardown via a `trap ... EXIT` so it runs on success **and**
   failure: kill the backend process, `docker compose -f server/docker-compose.yml
   down`. Support a `--keep-up` flag that skips teardown for debugging.
 - [x] 2.3 Verify the non-device path locally: run `run_e2e.sh` on the dev host
-  (no emulator) and confirm steps 1–5 succeed — backend boots, `/schools`
-  returns 200 with the two seeded schools (`curl localhost:3005/schools`) — and
-  step 6 fails fast with the documented message, then teardown runs cleanly.
+  (no emulator) and confirm steps 1–6 succeed — the dummy key is generated, the
+  backend boots, `/schools` returns 200 with the two seeded schools
+  (`curl localhost:3005/schools`) — and step 7 fails fast with the documented
+  message, then teardown runs cleanly.
 
 ## 3. Happy-path integration test
 

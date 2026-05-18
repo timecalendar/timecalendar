@@ -46,7 +46,7 @@ import time.
 #### Scenario: The backend starts with the harness credential
 
 - **WHEN** the harness starts the backend
-- **THEN** a committed dummy service-account key satisfies the import-time credential read and `firebase-admin` initialization, the server boots, and the schools endpoint — which makes no Firebase call — serves requests
+- **THEN** a dummy service-account key generated at runtime by `run_e2e.sh` (never committed) satisfies the import-time credential read and `firebase-admin` initialization, the server boots, and the schools endpoint — which makes no Firebase call — serves requests
 
 ### Requirement: CI executes the E2E smoke test
 

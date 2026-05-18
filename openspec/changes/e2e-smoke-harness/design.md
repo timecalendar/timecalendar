@@ -104,7 +104,7 @@ and `Université Gustave Eiffel` — which become the known state the test
 asserts on. `npm run db:init` (drop) is used rather than `db:seed` (insert) so
 re-runs do not accumulate or collide on the unique `School.code`.
 
-## Decision 4 — Make the backend bootable: dummy service-account key
+## Decision 4 — Make the backend bootable: generate the dummy key at runtime
 
 `config/firebase.ts` runs `readFileSync(serviceAccountKey.json)` at import and
 `FirebaseModule` is in `AppModule`, so `npm run start` throws at startup if the
@@ -113,13 +113,23 @@ file is missing — and `server/config/` has no key. `firebase-admin`'s
 `project_id`, `private_key`, `client_email`); it makes no network call until an
 API method runs. The schools endpoint never calls Firebase.
 
-**Decision: commit a well-formed dummy `server/config/serviceAccountKey.json`**
-(placeholder project id / client email and a syntactically valid dummy RSA
-`private_key`). The backend boots; nothing in the E2E path exercises Firebase.
-The Applier verifies the dummy key actually lets the server start; if
-`cert()` rejects the dummy `private_key`, fall back to setting a stub
-`SERVICE_ACCOUNT_KEY_PATH` or generating a throwaway key — note whichever was
-used in the README.
+**Decision: `run_e2e.sh` generates a well-formed dummy
+`server/config/serviceAccountKey.json` at runtime; it is never committed.**
+The JSON has a placeholder project id / client email and a syntactically valid
+dummy RSA `private_key` — enough for `cert()` to accept the shape and the
+backend to boot; nothing in the E2E path exercises Firebase.
+
+It is generated, not committed, because **GitHub Push Protection rejects any
+service-account-shaped JSON** (`type: service_account` + a PEM `private_key`) as
+a credential, regardless of the placeholder project id — so committing the file
+is a dead end — and so is embedding a PEM `private_key` literal in `run_e2e.sh`
+itself, which the scanner flags just the same. So `run_e2e.sh` mints a **fresh
+throwaway RSA private key with `openssl`** on every run and assembles the dummy
+JSON around it (only when the file is absent, so a developer's real key is left
+untouched): no credential material lives in any committed file.
+`server/.gitignore` keeps `server/config/` ignored so the generated file stays
+untracked. The CI `test-e2e` job runs `run_e2e.sh`, so it is covered with no
+extra step.
 
 ## Decision 5 — The happy-path flow
 

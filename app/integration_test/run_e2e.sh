@@ -31,6 +31,7 @@ APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$APP_DIR/.." && pwd)"
 SERVER_DIR="$REPO_ROOT/server"
 COMPOSE_FILE="$SERVER_DIR/docker-compose.yml"
+SERVICE_ACCOUNT_KEY="$SERVER_DIR/config/serviceAccountKey.json"
 
 # --- Config ------------------------------------------------------------------
 BACKEND_PORT=3005
@@ -54,7 +55,7 @@ teardown() {
   fi
   log "tearing down…"
   if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
-    # The backend runs in its own process group (see step 4). A negative PID
+    # The backend runs in its own process group (see step 5). A negative PID
     # signals the whole group — `npm run start` spawns `nest`, which spawns
     # the `node` server; killing only `npm` would orphan them.
     kill -TERM -- "-$BACKEND_PID" 2>/dev/null \
@@ -73,6 +74,7 @@ command -v flutter >/dev/null 2>&1 || fail \
     export PATH=\"/home/dev/flutter/bin:\$PATH\""
 command -v curl   >/dev/null 2>&1 || fail "curl is not installed."
 command -v python3 >/dev/null 2>&1 || fail "python3 is not installed."
+command -v openssl >/dev/null 2>&1 || fail "openssl is not installed."
 
 # --- 1. Start Postgres + Redis ----------------------------------------------
 log "starting Postgres + Redis…"
@@ -94,7 +96,55 @@ fi
 log "seeding the timecalendar_test database (db:init: drop + migrate + seed)…"
 ( cd "$SERVER_DIR" && NODE_ENV=test PORT="$BACKEND_PORT" npm run db:init )
 
-# --- 4. Start the backend ----------------------------------------------------
+# --- 4. Generate the dummy Firebase service-account key ----------------------
+# server/src/config/firebase.ts does readFileSync(serviceAccountKey.json) at
+# import time and FirebaseModule is in AppModule, so the Nest app cannot boot
+# without this file. firebase-admin's cert() only checks the JSON *shape* —
+# project_id, client_email and a parseable PEM private_key — and makes no
+# network call; nothing in the E2E path calls Firebase.
+#
+# The key is *generated*, never committed: GitHub Push Protection rejects any
+# service-account-shaped JSON (even a dummy, and even a PEM literal embedded in
+# a script) in any pushed file. So we mint a fresh throwaway RSA private key
+# with openssl on every run and assemble the dummy JSON around it — no
+# credential material lives in the repo. server/.gitignore keeps server/config/
+# ignored, so the generated file stays untracked. An existing file (e.g. a
+# developer's real key) is left untouched.
+if [ ! -f "$SERVICE_ACCOUNT_KEY" ]; then
+  log "generating dummy Firebase service-account key (fresh throwaway RSA key)…"
+  mkdir -p "$(dirname "$SERVICE_ACCOUNT_KEY")"
+  # PKCS#8 PEM ('BEGIN PRIVATE KEY') — the same format real service-account
+  # keys use, so firebase-admin's cert() accepts it.
+  E2E_PRIVATE_KEY="$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null)" \
+    python3 - "$SERVICE_ACCOUNT_KEY" <<'PY'
+import json, os, sys
+
+project = "timecalendar-e2e-dummy"
+email = f"e2e-dummy@{project}.iam.gserviceaccount.com"
+key = {
+    "type": "service_account",
+    "project_id": project,
+    "private_key_id": "0" * 40,
+    "private_key": os.environ["E2E_PRIVATE_KEY"].strip() + "\n",
+    "client_email": email,
+    "client_id": "0" * 21,
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url":
+        "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url":
+        "https://www.googleapis.com/robot/v1/metadata/x509/"
+        + email.replace("@", "%40"),
+}
+with open(sys.argv[1], "w") as f:
+    json.dump(key, f, indent=2)
+    f.write("\n")
+PY
+else
+  log "Firebase service-account key already present — leaving it untouched."
+fi
+
+# --- 5. Start the backend ----------------------------------------------------
 log "starting the NestJS backend on port $BACKEND_PORT…"
 # `setsid` runs the backend as its own process-group leader (PGID == PID), so
 # teardown can signal the whole tree: `npm run start` → `nest` → `node`.
@@ -106,7 +156,7 @@ setsid bash -c '
 BACKEND_PID=$!
 log "backend pid/pgid $BACKEND_PID — log: $BACKEND_LOG"
 
-# --- 5. Poll GET /schools until ready ----------------------------------------
+# --- 6. Poll GET /schools until ready ----------------------------------------
 log "waiting for GET /schools to return HTTP 200…"
 schools_ready=0
 for _ in $(seq 1 60); do
@@ -125,7 +175,7 @@ if [ "$schools_ready" -ne 1 ]; then
 fi
 log "backend is up — /schools serves the seeded schools."
 
-# --- 6. Resolve an Android target device ------------------------------------
+# --- 7. Resolve an Android target device ------------------------------------
 log "resolving an Android target device…"
 DEVICE_ID="$(flutter devices --machine 2>/dev/null | python3 -c '
 import json, sys
@@ -144,7 +194,7 @@ if [ -z "$DEVICE_ID" ]; then
 fi
 log "using device: $DEVICE_ID"
 
-# --- 7-8. Run the integration test -------------------------------------------
+# --- 8-9. Run the integration test -------------------------------------------
 log "running the Flutter integration test…"
 cd "$APP_DIR"
 flutter pub get >/dev/null

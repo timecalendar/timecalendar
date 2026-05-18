@@ -66,15 +66,20 @@ script if missing.
   unset (an empty string makes `createTransport` throw at boot). The harness
   passes a dummy `SMTP_URL=smtp://localhost:1025`; nothing in the E2E path
   sends mail.
-- **Dummy Firebase key.** `server/src/config/firebase.ts` reads
-  `config/serviceAccountKey.json` at import time and `FirebaseModule` is in
-  `AppModule`, so the backend cannot boot without that file. A well-formed
-  **dummy** key (placeholder project/email, a real throwaway RSA private key)
-  is committed at `server/config/serviceAccountKey.json` so the backend and CI
-  boot without a secret. `firebase-admin` only validates the JSON shape at
-  init; the schools endpoint never calls Firebase. The committed key is **not
-  a secret** — `server/.gitignore` ignores the rest of `config/`, and a real
-  key placed there shows as modified, so do not commit a real one.
+- **Dummy Firebase key (generated, never committed).**
+  `server/src/config/firebase.ts` reads `config/serviceAccountKey.json` at
+  import time and `FirebaseModule` is in `AppModule`, so the backend cannot
+  boot without that file. `run_e2e.sh` **generates** a well-formed **dummy**
+  key at `server/config/serviceAccountKey.json` before starting the backend —
+  it mints a fresh throwaway RSA private key with `openssl` and assembles the
+  JSON (placeholder project/email) around it — only when the file is absent, so
+  a developer's real key is left untouched. `firebase-admin` only validates the
+  JSON shape at init; the schools endpoint never calls Firebase. The key is
+  **not committed**: GitHub Push Protection rejects any service-account-shaped
+  JSON as a credential — and rejects a PEM `private_key` literal embedded in the
+  script too — so the key is generated fresh per run and no credential material
+  lives in the repo. `server/.gitignore` keeps `server/config/` ignored, so the
+  generated file stays untracked.
 - **Backend URL wiring.** The app reads `MAIN_API_URL` via
   `String.fromEnvironment` — a *compile-time* value — so it must be passed
   with `--dart-define`, not an env var. The host defaults to `10.0.2.2` (the
