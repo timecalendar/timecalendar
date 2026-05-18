@@ -15,57 +15,57 @@ Conventions for every task below:
 
 ## 1. Shared test fixtures
 
-- [ ] 1.1 Create `app/test/support/fixtures.dart` with a `buildCalendarEvent({...})`
+- [x] 1.1 Create `app/test/support/fixtures.dart` with a `buildCalendarEvent({...})`
   builder returning a `CalendarEvent` (implements `EventInterface`) with sane
   defaults for every required field, each overridable — at minimum `uid`,
   `title`, `startsAt`, `endsAt`, `color`, `groupColor`. Used by tasks 2–3.
-- [ ] 1.2 In the same file add `buildSchoolForList({...})` (built_value
+- [x] 1.2 In the same file add `buildSchoolForList({...})` (built_value
   `SchoolForListBuilder`, including the required nested `SchoolAssistant`) and
   `buildFindSchoolsRep(List<SchoolForList>)` returning a `FindSchoolsRepDto`.
   Used by task 6.
 
 ## 2. calendar — pure helpers
 
-- [ ] 2.1 `test/modules/calendar/helpers/events_helper_test.dart` —
+- [x] 2.1 `test/modules/calendar/helpers/events_helper_test.dart` —
   `eventsOverlap` true for overlapping events, false for disjoint events;
   `eventStartsAtHour` / `eventEndsAtHour` return the expected fractional hour
   (e.g. 09:30 → 9.5).
-- [ ] 2.2 `test/modules/calendar/helpers/events_for_week_view_helper_test.dart` —
+- [x] 2.2 `test/modules/calendar/helpers/events_for_week_view_helper_test.dart` —
   `getEventsForWeekView` returns a list of 7 day-buckets; an event is placed in
   the bucket for its start day; an event outside the requested week is excluded.
   Anchor fixtures to `AppDateUtils.dayAtWeekNumber(weekNumber)`.
-- [ ] 2.3 `test/modules/calendar/helpers/events_for_planning_view_helper_test.dart` —
+- [x] 2.3 `test/modules/calendar/helpers/events_for_planning_view_helper_test.dart` —
   `getEventsForPlanningView` returns `[]` for empty input; groups events into
   per-day `EventsByDay` entries; input is sorted by `startsAt`.
 
 ## 3. calendar — event layout model
 
-- [ ] 3.1 `test/modules/calendar/models/ui/event_for_ui_test.dart` —
+- [x] 3.1 `test/modules/calendar/models/ui/event_for_ui_test.dart` —
   `EventForUI.listFromEvents`: non-overlapping events each get `columns == 1`,
   `startColumn == 0`, `endColumn == 1`; two overlapping events get distinct
   columns and `columns == 2`; the result is ordered by `event.startsAt`.
 
 ## 4. calendar — model serialization
 
-- [ ] 4.1 `test/modules/calendar/models/calendar_event_test.dart` —
+- [x] 4.1 `test/modules/calendar/models/calendar_event_test.dart` —
   `CalendarEvent.fromInternalDb(map)` then `.toDbMap()` round-trips the core
   fields (uid, title, colors, dates, location, tags, fields).
-- [ ] 4.2 `test/modules/calendar/models/event_tag_test.dart` —
+- [x] 4.2 `test/modules/calendar/models/event_tag_test.dart` —
   `EventTag.fromDb` → `toDbMap` round-trip preserves `name`/`color`/`icon`;
   `iconData` is populated (a non-null `IconData`) from the `icon` string.
-- [ ] 4.3 `test/modules/calendar/models/calendar_event_custom_fields_test.dart` —
+- [x] 4.3 `test/modules/calendar/models/calendar_event_custom_fields_test.dart` —
   `CalendarEventCustomFields.fromInternalDb` → `toDbMap` round-trips
   `canceled`, `shortDescription`, `subject`, `groupColor`.
 
 ## 5. event_details
 
-- [ ] 5.1 `test/modules/event_details/models/checklist_item_test.dart` —
+- [x] 5.1 `test/modules/event_details/models/checklist_item_test.dart` —
   `ChecklistItem.fromMap` → `toMap` round-trip; the constructor auto-generates a
   `uuid` when none is passed; ISO date strings parse and serialize correctly.
-- [ ] 5.2 `test/modules/event_details/controllers/checklist_focus_controller_test.dart` —
+- [x] 5.2 `test/modules/event_details/controllers/checklist_focus_controller_test.dart` —
   listeners passed to the constructor are invoked by `focusItem`;
   `addListener` registers a new listener; `removeListener` stops notifications.
-- [ ] 5.3 `test/modules/event_details/widgets/event_details_checklist_item_test.dart`
+- [x] 5.3 `test/modules/event_details/widgets/event_details_checklist_item_test.dart`
   (widget test via `pumpApp`) — renders the item content in the `TextField`;
   the `Checkbox` reflects `checklistItem.isChecked`; tapping the checkbox calls
   `onCheckChanged` and tapping the close icon calls `removeItem`. Provide a
@@ -73,7 +73,7 @@ Conventions for every task below:
 
 ## 6. school
 
-- [ ] 6.1 `test/modules/school/controllers/school_selection_controller_test.dart` —
+- [x] 6.1 `test/modules/school/controllers/school_selection_controller_test.dart` —
   construct `SchoolSelectionController` with a `mocktail`-mocked `ApiClient`
   whose `schoolsApi().findSchools()` resolves to a `Response<FindSchoolsRepDto>`
   (built via task 1.2); assert `fetch()` sets state to `AsyncData` with the
@@ -84,7 +84,7 @@ Conventions for every task below:
 
 ## 7. settings
 
-- [ ] 7.1 `test/modules/settings/providers/settings_provider_test.dart` — in
+- [x] 7.1 `test/modules/settings/providers/settings_provider_test.dart` — in
   `setUp` call `TestWidgetsFlutterBinding.ensureInitialized()`,
   `SharedPreferences.setMockInitialValues({})` and
   `PackageInfo.setMockInitialValues(...)`. Assert `loadSettings(prefs)`
@@ -96,7 +96,7 @@ Conventions for every task below:
 
 ## 8. onboarding (widget — lowest priority, droppable)
 
-- [ ] 8.1 `test/modules/onboarding/screens/onboarding_screen_test.dart`
+- [x] 8.1 `test/modules/onboarding/screens/onboarding_screen_test.dart`
   (widget test) — wrap `OnboardingScreen` in a
   `ChangeNotifierProvider<SettingsProvider>.value` whose `SettingsProvider` has
   had `loadSettings` run against `SharedPreferences.setMockInitialValues` (so
@@ -108,7 +108,7 @@ Conventions for every task below:
 
 ## 9. Verification
 
-- [ ] 9.1 Run `flutter test` from `app/` — the whole suite is green
+- [x] 9.1 Run `flutter test` from `app/` — the whole suite is green
   (existing A1 tests plus all new tests).
-- [ ] 9.2 Run `flutter analyze` from `app/` — no new issues introduced by the
+- [x] 9.2 Run `flutter analyze` from `app/` — no new issues introduced by the
   added test files (and `test/support/fixtures.dart`).
