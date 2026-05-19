@@ -54,6 +54,7 @@ SchoolForList buildSchoolForList({
   String code = 'TC',
   String name = 'TimeCalendar University',
   String slug = 'native',
+  String imageUrl = 'https://example.com/logo.png',
 }) {
   final assistant = SchoolAssistant(
     (b) => b
@@ -69,7 +70,7 @@ SchoolForList buildSchoolForList({
       ..code = code
       ..name = name
       ..siteUrl = 'https://example.com'
-      ..imageUrl = 'https://example.com/logo.png'
+      ..imageUrl = imageUrl
       ..visible = true
       ..createdAt = DateTime.utc(2024, 1, 1)
       ..updatedAt = DateTime.utc(2024, 1, 1)
