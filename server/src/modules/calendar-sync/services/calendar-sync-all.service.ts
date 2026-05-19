@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common"
-import dayjs from "dayjs"
+import { subDays, subMinutes } from "date-fns"
 import {
   INACTIVITY_DAYS,
   UPDATE_AFTER_MIN,
@@ -45,10 +45,10 @@ export class CalendarSyncAllService {
     syncEvenIfInactive,
   }: FindCalendarsToSyncParams = {}) {
     return this.calendarRepository.findLastUpdatedBeforeWithContent({
-      lastUpdatedBefore: dayjs().subtract(UPDATE_AFTER_MIN, "minutes").toDate(),
+      lastUpdatedBefore: subMinutes(new Date(), UPDATE_AFTER_MIN),
       lastAccessedAtAfter: syncEvenIfInactive
         ? undefined
-        : dayjs().subtract(INACTIVITY_DAYS, "days").toDate(),
+        : subDays(new Date(), INACTIVITY_DAYS),
       filterByTokens: tokens,
     })
   }
