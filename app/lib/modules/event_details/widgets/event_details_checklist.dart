@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:reorderables/reorderables.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/event_details/controllers/checklist_focus_controller.dart';
 import 'package:timecalendar/modules/event_details/hooks/use_checklist_auto_focus.dart';
@@ -51,12 +50,17 @@ class EventDetailsChecklist extends HookConsumerWidget {
       );
     }
 
-    return ReorderableSliverList(
-      delegate: ReorderableSliverChildBuilderDelegate(
-        (context, index) => buildChecklist(context, index, items),
-        childCount: items.length,
+    return SliverReorderableList(
+      itemCount: items.length,
+      itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
+        key: Key(items[index].uuid!),
+        index: index,
+        child: buildChecklist(context, index, items),
       ),
-      onReorder: notifier.reorderItems,
+      onReorder: (oldIndex, newIndex) {
+        if (newIndex > oldIndex) newIndex -= 1;
+        notifier.reorderItems(oldIndex, newIndex);
+      },
     );
   }
 }
