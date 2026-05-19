@@ -69,10 +69,11 @@ Conventions for every task below:
   bump. *(`No issues found!`)*
 - [x] 4.2 Run `flutter test` from `app/` — the full unit + widget suite passes.
   *(All 48 tests passed.)*
-- [ ] 4.3 The Phase 1 E2E smoke suite (`app/integration_test/`) needs an
+- [x] 4.3 The Phase 1 E2E smoke suite (`app/integration_test/`) needs an
   Android emulator and is verified by CI, not locally. Ensure the PR's CI
-  `test-app` / integration job is green before handing to Review. *(Pending —
-  CI runs on the PR; to be confirmed before the Review handoff.)*
+  `test-app` / integration job is green before handing to Review. *(Confirmed —
+  PR [#44](https://github.com/timecalendar/timecalendar/pull/44) CI green:
+  `Run E2E smoke flows` ✓ and `Run app tests` ✓; merged to `main` as `f5dc1f0`.)*
 
 ## 5. Confirm scope
 
