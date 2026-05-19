@@ -35,28 +35,24 @@ class EventDetailsChecklist extends HookConsumerWidget {
       await notifier.editItem(checklistItem);
     }
 
-    Widget buildChecklist(
-      BuildContext context,
-      int index,
-      List<ChecklistItem> items,
-    ) {
-      return EventDetailsChecklistItem(
-        key: Key(items[index].uuid!),
-        checklistItem: items[index],
-        checklistFocusController: checklistFocusController,
-        removeItem: onRemove,
-        onContentChanged: onContentChanged,
-        onCheckChanged: onCheckChanged,
-      );
-    }
-
     return SliverReorderableList(
       itemCount: items.length,
-      itemBuilder: (context, index) => ReorderableDelayedDragStartListener(
-        key: Key(items[index].uuid!),
-        index: index,
-        child: buildChecklist(context, index, items),
-      ),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final key = Key(item.uuid!);
+        return ReorderableDelayedDragStartListener(
+          key: key,
+          index: index,
+          child: EventDetailsChecklistItem(
+            key: key,
+            checklistItem: item,
+            checklistFocusController: checklistFocusController,
+            removeItem: onRemove,
+            onContentChanged: onContentChanged,
+            onCheckChanged: onCheckChanged,
+          ),
+        );
+      },
       onReorder: (oldIndex, newIndex) {
         if (newIndex > oldIndex) newIndex -= 1;
         notifier.reorderItems(oldIndex, newIndex);

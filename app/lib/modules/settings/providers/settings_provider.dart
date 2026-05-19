@@ -154,11 +154,9 @@ class SettingsProvider with ChangeNotifier {
     }
 
     var stringPref = this.prefs.getString('calendar_view_type');
-    _calendarViewType = stringPref == null
-        ? null
-        : CalendarViewType.values
-              .cast<CalendarViewType?>()
-              .firstWhere((e) => e?.name == stringPref, orElse: () => null);
+    _calendarViewType = CalendarViewType.values
+        .cast<CalendarViewType?>()
+        .firstWhere((e) => e?.name == stringPref, orElse: () => null);
     if (_calendarViewType == null) {
       _calendarViewType = _calendarViewTypeDefault;
       await prefs!.setString(
