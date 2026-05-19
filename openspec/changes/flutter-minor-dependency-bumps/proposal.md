@@ -24,7 +24,7 @@ test-green.
 |---|---|---|
 | build_runner | 2.7.0 | 2.15.0 |
 | built_value | 8.11.1 | 8.12.6 |
-| built_value_generator | 8.11.1 | 8.12.6 |
+| built_value_generator | 8.11.1 | 8.12.5 |
 | cupertino_icons | 1.0.8 | 1.0.9 |
 | dio | 5.9.0 | 5.9.2 |
 | freezed | 3.2.0 | 3.2.5 |
@@ -40,8 +40,13 @@ test-green.
 **Note on `built_value_generator`:** TIM-37 lists 13 packages and omits
 `built_value_generator`, but `built_value` and `built_value_generator` are a
 versioned pair from the same family and must move together to avoid a
-runtime/generator skew. It is added here at the matching target (8.12.6) as an
-in-scope mechanical follow-on, not a scope expansion.
+runtime/generator skew. It is added here as an in-scope mechanical follow-on,
+not a scope expansion. Its target is **8.12.5**, not 8.12.6: 8.12.6 requires
+`analyzer ^13.0.0` → `meta ^1.18.0`, but the current stable Flutter 3.41.9 /
+Dart 3.11.5 pins `meta 1.17.0`, so `flutter pub get` rejects 8.12.6. 8.12.5 is
+the latest compatible release; runtime `built_value` 8.12.6 + generator 8.12.5
+stay within the same `8.12.x` minor (patch-level only — no skew). Reaching
+8.12.6 would need an SDK bump, which is a B2 non-goal.
 
 The four codegen packages (`build_runner`, `built_value`/`built_value_generator`,
 `freezed`, `json_serializable`) require regenerating the 11 committed

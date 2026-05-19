@@ -8,7 +8,7 @@ packages to their target minor/patch versions, with the caret floor in
 `app/pubspec.yaml` raised to each target so the resolution is deterministic.
 
 The target versions are: `build_runner` 2.15.0, `built_value` 8.12.6,
-`built_value_generator` 8.12.6, `cupertino_icons` 1.0.9, `dio` 5.9.2,
+`built_value_generator` 8.12.5, `cupertino_icons` 1.0.9, `dio` 5.9.2,
 `freezed` 3.2.5, `http` 1.6.0, `json_annotation` 4.12.0,
 `json_serializable` 6.14.0, `mobile_scanner` 7.2.0, `sembast` 3.8.7,
 `shared_preferences` 2.5.5, `uuid` 4.5.3, `webview_flutter` 4.13.1.
