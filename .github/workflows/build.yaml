@@ -121,6 +121,53 @@ jobs:
       run: flutter test
 
 
+  test-e2e:
+    name: Run E2E smoke test
+    runs-on: ubuntu-latest
+    # Emulator cold boot is slow even with KVM acceleration.
+    timeout-minutes: 30
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v4
+
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        flutter-version: 3.41.9
+        cache: true
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    # run_e2e.sh boots the backend + Postgres, seeds, runs the integration
+    # test against the emulator, and tears down. Running it as the emulator
+    # action's `script` means an Android device exists when step 6 resolves
+    # one — and the boot/seed logic is not duplicated here.
+    - name: Run E2E smoke harness
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        arch: x86_64
+        profile: pixel_6
+        script: ./app/integration_test/run_e2e.sh
+
+
   deploy:
     name: Deploy
     needs: [build-server, build-web]
