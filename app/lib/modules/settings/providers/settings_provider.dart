@@ -103,12 +103,6 @@ class SettingsProvider with ChangeNotifier {
       await prefs!.setBool('new_activity', _newActivityDefault);
     }
 
-    _newActivity = this.prefs.getBool('new_activity');
-    if (_newActivity == null) {
-      _newActivity = _newActivityDefault;
-      await prefs!.setBool('new_activity', _newActivityDefault);
-    }
-
     _calendarHourHeight = this.prefs.getDouble('calendar_hour_height');
     if (_calendarHourHeight == null) {
       _calendarHourHeight = _calendarHourHeightDefault;
