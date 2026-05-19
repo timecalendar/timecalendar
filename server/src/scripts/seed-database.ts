@@ -1,7 +1,7 @@
 import * as path from "path"
 import { program } from "commander"
 import { dataSourceOptions } from "data-source"
-import glob from "glob-promise"
+import { glob } from "glob"
 import { DataSource } from "typeorm"
 import {
   Builder,
