@@ -37,12 +37,6 @@ void main() {
     // The seeded calendar boots the app into TabsScreen, whose bottom
     // navigation bar shows the three tab labels.
     await pumpUntilFound(tester, find.text('Calendrier'));
-    // Diagnostic: which screen did the app actually land on?
-    debugPrint(
-      'E2E-DIAG calendar boot — '
-      'TabsScreen(Calendrier)=${find.text('Calendrier').evaluate().length} '
-      'Onboarding=${find.text('Consultez votre agenda').evaluate().length}',
-    );
     expect(
       find.text('Calendrier'),
       findsWidgets,

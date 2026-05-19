@@ -13,6 +13,7 @@ import 'package:timecalendar/modules/calendar/repositories/user_calendar_reposit
 import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/hidden_event/repositories/hidden_event_repository.dart';
 import 'package:timecalendar/modules/personal_event/repositories/personal_event_repository.dart';
+import 'package:timecalendar/modules/shared/constants/constants.dart';
 
 /// Boots the app (`app.main()`) and pumps through the splash screen.
 ///
@@ -122,17 +123,19 @@ Future<void> seedUserCalendar({
 
   // Mirrors `UserCalendarRepository.addUserCalendar` — same store, same record
   // key, same `toDbMap()` shape — without needing a Riverpod container.
-  final store = stringMapStoreFactory.store(UserCalendarRepository.STORE_NAME);
-  await store.record(calendar.id).put(db.db, calendar.toDbMap());
+  await stringMapStoreFactory
+      .store(UserCalendarRepository.STORE_NAME)
+      .record(calendar.id)
+      .put(db.db, calendar.toDbMap());
 
-  // Diagnostic: confirm the write is visible on a fresh open of the on-disk
-  // database — the same path `app.main()` reopens to route the splash screen.
-  await db.init();
-  final stored = await store.find(db.db);
-  debugPrint(
-    'E2E-DIAG seedUserCalendar wrote "$id"; '
-    'user_calendars store now holds ${stored.length} record(s)',
-  );
+  // A user who already has a calendar has also already seen the changelog for
+  // the current app version. Persist `current_version` accordingly: otherwise
+  // `TabsScreen` pushes `ChangelogScreen` over itself on its first frame — the
+  // pref, freshly cleared by [resetLocalAppState], reads back as 0, which is
+  // `< Constants.currentVersion` — and the modal hides the tab bar the flow
+  // asserts on.
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('current_version', Constants.currentVersion);
 }
 
 /// Sembast stores written by the app that an E2E flow should start clean.
