@@ -12,9 +12,31 @@ import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/hidden_event/repositories/hidden_event_repository.dart';
 import 'package:timecalendar/modules/personal_event/repositories/personal_event_repository.dart';
 
+/// Boots the app (`app.main()`) and pumps through the splash screen.
+///
+/// Uses a **bounded** pump, never `pumpAndSettle`: the app can boot straight
+/// into `TabsScreen`, which kicks off a calendar sync whose loading spinner is
+/// a perpetual animation — `pumpAndSettle` never settles against it and would
+/// hang to the test timeout. After this returns, each flow waits for its own
+/// first widget with [pumpUntilFound].
 Future<void> waitAppInitialized(WidgetTester tester) async {
   await app.main();
-  await tester.pumpAndSettle(Duration(seconds: 2)); // splash screen
+
+  // `app.main()` overrides `FlutterError.onError` with a Crashlytics handler
+  // that swallows errors silently — hiding real failures from the test log.
+  // Keep that handler, but echo every error to the console first so a failing
+  // flow is debuggable from the CI log.
+  final appOnError = FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.dumpErrorToConsole(details);
+    appOnError?.call(details);
+  };
+
+  // Bounded settle through the splash screen (~8s of frames). The splash
+  // controller waits 1s then routes; 8s covers boot without ever hanging.
+  for (var i = 0; i < 40; i++) {
+    await tester.pump(const Duration(milliseconds: 200));
+  }
 }
 
 /// Pumps a fixed step in a bounded loop until [finder] matches at least one

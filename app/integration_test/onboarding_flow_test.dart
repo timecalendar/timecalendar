@@ -34,11 +34,11 @@ void main() {
 
     // Finish onboarding → routes to the SelectSchool screen.
     await tester.tap(find.text('C\'est parti !'));
-    await tester.pumpAndSettle();
 
     // SchoolList shows a CircularProgressIndicator while GET /schools is in
     // flight, so wait for the seeded school text with the bounded-pump helper
-    // rather than pumpAndSettle (see integration_test/README.md).
+    // rather than pumpAndSettle — the spinner is a perpetual animation that
+    // pumpAndSettle never settles against (see integration_test/README.md).
     final firstSchool = find.text('My Gaming Academia');
     await pumpUntilFound(tester, firstSchool);
 
@@ -57,7 +57,7 @@ void main() {
     // out of scope (see design.md Decision 2) — this only asserts the native
     // routing advanced.
     await tester.tap(firstSchool);
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.text('Importer votre calendrier'));
     expect(
       find.text('Importer votre calendrier'),
       findsOneWidget,

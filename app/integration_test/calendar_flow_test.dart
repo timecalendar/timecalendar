@@ -10,6 +10,12 @@ import 'package:timecalendar/modules/shared/test_utils/test_utils.dart';
 /// before boot, so the splash controller routes straight to `TabsScreen`; the
 /// app then syncs the seeded events over `POST /calendars/sync`.
 ///
+/// Every wait uses the bounded [pumpUntilFound] helper, never `pumpAndSettle`:
+/// `TabsScreen` and the calendar screen run loading spinners (perpetual
+/// animations) while the sync is in flight, and `pumpAndSettle` never settles
+/// against those — it hangs to the test timeout (see `integration_test/
+/// README.md`).
+///
 /// These constants mirror `server/src/scripts/seed-e2e-calendar.ts`
 /// (`E2E_CALENDAR_ID` / `E2E_CALENDAR_TOKEN`). The id must match the backend
 /// `Calendar.id` so the synced events — keyed by `userCalendarId` — render.
@@ -28,15 +34,21 @@ void main() {
     await seedUserCalendar(id: _e2eCalendarId, token: _e2eCalendarToken);
     await waitAppInitialized(tester);
 
+    // The seeded calendar boots the app into TabsScreen, whose bottom
+    // navigation bar shows the three tab labels.
+    await pumpUntilFound(tester, find.text('Calendrier'));
+    expect(
+      find.text('Calendrier'),
+      findsWidgets,
+      reason: 'the app did not boot to TabsScreen with the seeded calendar',
+    );
+
     // Open the Calendrier tab.
     await tester.tap(find.text('Calendrier'));
-    await tester.pumpAndSettle();
 
-    // The seeded events sync from POST /calendars/sync. Wait for a seeded event
-    // with the bounded-pump helper — pumpAndSettle would time out against the
-    // in-flight request's spinner (see integration_test/README.md). The events
-    // are seeded on the current week (seed-e2e-calendar.ts), so they land in
-    // the default week view.
+    // The seeded events sync from POST /calendars/sync; wait for one to render.
+    // They are seeded on the current week (seed-e2e-calendar.ts), so they land
+    // in the default week view.
     final seededEvent = find.text('Cours E2E Test');
     await pumpUntilFound(tester, seededEvent);
     expect(
@@ -47,34 +59,40 @@ void main() {
 
     // Open the event → EventDetailsScreen shows its title and location.
     await tester.tap(seededEvent.first);
-    await tester.pumpAndSettle();
+    final eventLocation = find.text('Salle E2E');
+    await pumpUntilFound(tester, eventLocation);
     expect(find.text('Cours E2E Test'), findsWidgets);
     expect(
-      find.text('Salle E2E'),
+      eventLocation,
       findsOneWidget,
       reason: 'EventDetailsScreen did not show the seeded event location',
     );
 
-    // Back to the calendar, then to the Profil tab. `EventDetailsScreen` has no
-    // `AppBar`/`BackButton` — its header is a bare `IconButton` with a
-    // `keyboard_arrow_left` icon and no tooltip — so `tester.pageBack()` (which
-    // only finds a tooltipped 'Back' button or a Cupertino back button) cannot
-    // be used; tap the header's back icon directly.
+    // Back to the calendar. `EventDetailsScreen` has no `AppBar`/`BackButton` —
+    // its header is a bare `IconButton` with a `keyboard_arrow_left` icon and
+    // no tooltip — so `tester.pageBack()` (which only finds a tooltipped 'Back'
+    // button or a Cupertino back button) cannot be used; tap the icon directly.
     await tester.tap(find.byIcon(Icons.keyboard_arrow_left));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Profil'));
-    await tester.pumpAndSettle();
+    await pumpUntilFound(tester, find.text('Profil'));
 
-    // Profil → Paramètres → SettingsScreen.
+    // Profil tab → Paramètres → SettingsScreen.
+    await tester.tap(find.text('Profil'));
+    await pumpUntilFound(tester, find.text('Paramètres'));
     await tester.tap(find.text('Paramètres'));
-    await tester.pumpAndSettle();
-    expect(find.text('Paramètres'), findsWidgets);
 
     // Toggle the "Afficher les week-ends" preference and assert it flipped.
     // `PrefSwitch` (pref key `show_weekends`) renders a ListTile with a
     // trailing `Switch`, so the switch is found inside that tile's subtree.
+    final weekendsText = find.text('Afficher les week-ends');
+    await pumpUntilFound(tester, weekendsText);
+    expect(
+      weekendsText,
+      findsOneWidget,
+      reason: 'the SettingsScreen did not open',
+    );
+
     final weekendsTile = find.ancestor(
-      of: find.text('Afficher les week-ends'),
+      of: weekendsText,
       matching: find.byType(ListTile),
     );
     expect(weekendsTile, findsOneWidget);
@@ -87,7 +105,10 @@ void main() {
 
     final before = tester.widget<Switch>(weekendsSwitch).value;
     await tester.tap(weekendsSwitch);
-    await tester.pumpAndSettle();
+    // Bounded pump for the toggle animation — not pumpAndSettle.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
     final after = tester.widget<Switch>(weekendsSwitch).value;
     expect(
       after,

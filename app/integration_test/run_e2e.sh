@@ -261,5 +261,10 @@ if [ "$overall_exit" -eq 0 ]; then
   log "all flows PASSED."
 else
   log "one or more flows FAILED."
+  # Dump the backend log so a server-side error (e.g. a failed
+  # POST /calendars/sync) behind a flow failure is visible in the CI log.
+  log "----- backend log (tail) -----"
+  tail -n 120 "$BACKEND_LOG" >&2 2>/dev/null || true
+  log "----- end backend log -----"
 fi
 exit "$overall_exit"
