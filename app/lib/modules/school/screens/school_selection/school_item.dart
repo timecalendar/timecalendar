@@ -14,6 +14,10 @@ class SchoolItem extends StatelessWidget {
   final SchoolForList school;
   final Function(SchoolForList) onSchoolSelect;
 
+  /// Shown while the logo loads and whenever it fails to load — a school logo
+  /// is optional decoration, never a hard dependency of the screen.
+  static const _placeholder = AssetImage('assets/images/school.png');
+
   @override
   Widget build(BuildContext context) {
     final settingsProvider = Provider.of<SettingsProvider>(context);
@@ -49,7 +53,12 @@ class SchoolItem extends StatelessWidget {
                       padding: const EdgeInsets.all(5.0),
                       child: FadeInImage(
                         image: CachedNetworkImageProvider(school.imageUrl),
-                        placeholder: AssetImage('assets/images/school.png'),
+                        placeholder: _placeholder,
+                        // A failed logo load (offline, dead URL, DNS failure)
+                        // must degrade to the placeholder, never surface a
+                        // reported FlutterError that breaks the screen.
+                        imageErrorBuilder: (context, error, stackTrace) =>
+                            const Image(image: _placeholder),
                       ),
                     ),
                   ),
