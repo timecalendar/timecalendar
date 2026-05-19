@@ -11,22 +11,33 @@ import 'package:timecalendar/modules/personal_event/providers/personal_events_pr
 
 void useSplashController(BuildContext context, WidgetRef ref) {
   void navigateTo() async {
+    debugPrint('E2E-DIAG splash.navigateTo: start');
     final calendars = await ref.read(userCalendarProvider.future);
 
     final screen = calendars.length > 0
         ? TabsScreen.routeName
         : OnboardingScreen.routeName;
 
+    debugPrint(
+      'E2E-DIAG splash.navigateTo: calendars=${calendars.length} → $screen',
+    );
     await Future.delayed(Duration(seconds: 1));
+    debugPrint('E2E-DIAG splash.navigateTo: pushing $screen');
     Navigator.pushReplacementNamed(context, screen);
   }
 
   Future initAppData() async {
+    debugPrint('E2E-DIAG splash.initAppData: start');
     await ref.read(userCalendarProvider.future);
+    debugPrint('E2E-DIAG splash.initAppData: userCalendarProvider ok');
     await ref.read(calendarSyncServiceProvider).loadEventsFromDatabase();
+    debugPrint('E2E-DIAG splash.initAppData: loadEventsFromDatabase ok');
     await ref.read(hiddenEventProvider.notifier).loadFromDatabase();
+    debugPrint('E2E-DIAG splash.initAppData: hiddenEvent ok');
     await ref.read(eventNbChecklistItemsProvider.notifier).update();
+    debugPrint('E2E-DIAG splash.initAppData: checklistItems ok');
     await ref.read(personalEventsProvider.notifier).refresh();
+    debugPrint('E2E-DIAG splash.initAppData: personalEvents ok');
     navigateTo();
   }
 
