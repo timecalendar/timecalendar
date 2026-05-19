@@ -1,10 +1,30 @@
-# End-to-end smoke harness
+# End-to-end smoke suite
 
 `run_e2e.sh` is a single command that boots the **real NestJS backend +
-Postgres**, seeds known data, runs the Flutter `integration_test` against the
+Postgres**, seeds known data, runs the Flutter E2E smoke flows against the
 live backend, and tears everything down. It exists so a breaking change to a
 backend endpoint, its DTO, or the generated `timecalendar_api` client fails a
 test instead of shipping silently.
+
+The suite is **nominal and flake-free**, not exhaustive: it covers the
+critical user journeys (onboarding, add school, view calendar, event details,
+settings) so features can ship — and, in Phase 2, dependencies can be upgraded
+— with confidence.
+
+## The flows
+
+Each flow is one `integration_test/*_flow_test.dart` entrypoint file, run as
+its **own `flutter test` process** (see *Per-file process isolation* below):
+
+- `onboarding_flow_test.dart` — boots with an **empty** local database (→
+  onboarding): walks the three onboarding pages, loads the seeded schools over
+  the live `GET /schools`, and asserts that tapping a school advances the
+  native add-school assistant flow. Covers **onboarding** + **add school**.
+- `calendar_flow_test.dart` — seeds a local `UserCalendar` before boot (→
+  `TabsScreen`): asserts the calendar tab renders the events synced from
+  `POST /calendars/sync`, opens an event, then navigates to **Settings** and
+  toggles a preference. Covers **view calendar**, **event details**,
+  **settings**.
 
 ## Run it
 
@@ -43,15 +63,19 @@ script if missing.
 1. `docker compose -f server/docker-compose.yml up -d postgres redis`.
 2. Waits for Postgres to accept connections (`ci/wait.sh`).
 3. Seeds the database: `NODE_ENV=test PORT=3005 npm run db:init` — drop,
-   migrate, then load every `**/fixtures/*.yml`.
+   migrate, load every `**/fixtures/*.yml`, then run the guarded E2E-calendar
+   seed step (`server/src/scripts/seed-e2e-calendar.ts`).
 4. Starts the backend: `NODE_ENV=test PORT=3005 npm run start`.
 5. Polls `GET http://localhost:3005/schools` until it returns HTTP 200.
 6. Resolves an Android device from `flutter devices`; exits fast with a clear
    message if none is connected.
-7. Runs `flutter test integration_test/app_test.dart` with
-   `--dart-define MAIN_API_URL=...` pointing at the local backend, under a
-   `timeout` backstop (`E2E_TEST_TIMEOUT`, default 720s) so a tool-level hang
-   fails the run instead of stalling to the CI job's wall-clock limit.
+7. Runs **each** `integration_test/*_flow_test.dart` file as its own
+   `flutter test` invocation (a fresh process — see *Per-file process
+   isolation*), with `--dart-define MAIN_API_URL=...` pointing at the local
+   backend, each under a `timeout` backstop (`E2E_TEST_TIMEOUT`, default 720s)
+   so a tool-level hang fails the run instead of stalling to the CI job's
+   wall-clock limit. The script reports per-flow pass/fail and exits non-zero
+   if **any** flow fails.
 8. Tears down (`trap … EXIT`): kills the backend process group and
    `docker compose down`.
 
@@ -87,49 +111,84 @@ script if missing.
   with `--dart-define`, not an env var. The host defaults to `10.0.2.2` (the
   host loopback as seen from an Android emulator); override it for a physical
   device with the `E2E_API_HOST` env var.
+- **Deterministic calendar data without an external call.**
+  `server/src/scripts/seed-e2e-calendar.ts` seeds a `Calendar` +
+  `CalendarContent` under the constant token `e2e-smoke-calendar`, with events
+  dated **relative to the seed run** so they fall in the current-week view. It
+  is a guarded seed step rather than a YAML fixture because `typeorm-fixtures-cli`
+  does not evaluate its `<( )>` expressions inside a JSON column. The calendar's
+  `lastUpdatedAt` is set to "now", so `POST /calendars/sync` returns the seeded
+  events without re-fetching any external iCal URL. `E2E_CALENDAR_ID` /
+  `E2E_CALENDAR_TOKEN` there are the source of truth for the constants
+  `calendar_flow_test.dart` mirrors.
 
 ## The `pumpAndSettle` spinner gotcha — template for new flows
 
 `SchoolList` shows a `CircularProgressIndicator` while `GET /schools` is in
 flight. `tester.pumpAndSettle()` never settles against a running progress
-animation and **times out**. Any flow that waits on a live request must pump a
-fixed step in a bounded loop until the expected widget appears, instead of
-`pumpAndSettle`:
+animation and **times out**. Any flow that waits on a live request must instead
+use the `pumpUntilFound` helper from `test_utils.dart`, which pumps a fixed
+step in a bounded loop until the expected widget appears:
 
 ```dart
 final target = find.text('My Gaming Academia');
-for (var i = 0; i < 100; i++) {
-  await tester.pump(const Duration(milliseconds: 300));
-  if (target.evaluate().isNotEmpty) break;
-}
+await pumpUntilFound(tester, target);
 expect(target, findsOneWidget);
 ```
 
-## How to add a flow (for A4 / TIM-7)
+## Per-file process isolation
 
-This harness ships **exactly one `testWidgets`** on purpose. `waitAppInitialized`
-calls `app.main()`, and `main()` calls `Firebase.initializeApp`; running that a
-second time in the same process throws `[core/duplicate-app]`. `main.dart`
-installs a `PlatformDispatcher.onError` handler that swallows errors, so that
-throw never surfaces as a failure — a second `testWidgets` simply **hangs**
-until the per-test / `run_e2e.sh` timeout fires.
+`waitAppInitialized` calls `app.main()`, and `main()` calls
+`Firebase.initializeApp`; running that a second time in the **same process**
+throws `[core/duplicate-app]`. `main.dart` installs a
+`PlatformDispatcher.onError` handler that swallows errors, so that throw never
+surfaces as a failure — a second `testWidgets` in one process simply **hangs**
+until a timeout fires.
 
-So before A4 can add sibling tests it must first solve **app-restart
-isolation** — one of:
+So each flow lives in its own `integration_test/*_flow_test.dart` entrypoint
+file, and `run_e2e.sh` runs each file as a **separate `flutter test`
+invocation** — a fresh OS process, so `Firebase.initializeApp` runs exactly
+once per file. This is zero production code: no `main.dart` change, no
+process-wide singleton resets. It is slower (one device session per file) but
+the suite is small and this is a smoke suite. Adding a flow is therefore just
+adding a file — no harness change.
 
-- make app boot idempotent (e.g. guard `Firebase.initializeApp` with
-  `Firebase.apps.isEmpty`, and reset the `SettingsProvider` / `SimpleDatabase`
-  process-wide singletons between tests), or
-- drive each flow from one `testWidgets` that boots the app once and navigates
-  between screens, or
-- split flows across separate entrypoint files, each run in its own process.
+## How to add a flow
 
-Within a flow, once isolation is solved:
+1. Add `integration_test/<name>_flow_test.dart`. `run_e2e.sh` globs
+   `*_flow_test.dart`, so the new file is picked up automatically.
+2. Boot the app with `waitAppInitialized(tester)` after setting up local
+   state:
+   - `resetLocalAppState()` — clears SharedPreferences and the Sembast store
+     so the run never inherits previous state. Call it first.
+   - To boot into onboarding, leave the local DB empty.
+   - To boot into `TabsScreen`, call `seedUserCalendar(id: ..., token: ...)`
+     **before** `waitAppInitialized` — the splash controller routes to
+     `TabsScreen` when the local DB has ≥1 calendar. The `id` must match the
+     backend `Calendar.id` (`eventsForViewProvider` filters synced events by
+     `userCalendarId`); for the seeded smoke calendar use the values from
+     `server/src/scripts/seed-e2e-calendar.ts`.
+   These helpers live in `app/lib/modules/shared/test_utils/test_utils.dart`
+   — test-support code that ships in `lib/` so `integration_test/` can import
+   it.
+3. Use the bounded-pump pattern (below) for every live backend round-trip.
+4. Assert on the deterministic data seeded by `db:init` — the two seeded
+   schools (`My Gaming Academia`, `Université Gustave Eiffel`) and the
+   `e2e-smoke-calendar` events (`Cours E2E Test` / `Salle E2E`, …).
+5. Keep a per-test `timeout:` so a hang fails fast instead of stalling the job.
 
-- Use the bounded-pump pattern above for every live backend round-trip.
-- Assert on the deterministic fixture data seeded by `db:init` (e.g. the two
-  seeded schools, `My Gaming Academia` and `Université Gustave Eiffel`).
-- Keep a per-test `timeout:` so a hang fails fast instead of stalling the job.
+## Out of scope
+
+This is a *nominal* smoke suite. The following are intentionally **not**
+covered:
+
+- **Completing the add-school assistant.** `/assistant` is a WebView that loads
+  the *web* app and finishes over a JS bridge; driving a remote web embed from
+  an `integration_test` is neither nominal nor flake-free. The add-school flow
+  only asserts the native routing advances.
+- **Auth / intranet-connected schools, QR-code import, personal events.**
+- **Error-path / offline coverage** — only the happy path.
+- **Web/Linux** — the unmodified app runs on Android only (see below).
 
 ## Why Android only
 
