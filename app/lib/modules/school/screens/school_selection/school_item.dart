@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_image/network.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
@@ -48,7 +48,7 @@ class SchoolItem extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(5.0),
                       child: FadeInImage(
-                        image: NetworkImageWithRetry(school.imageUrl),
+                        image: CachedNetworkImageProvider(school.imageUrl),
                         placeholder: AssetImage('assets/images/school.png'),
                       ),
                     ),

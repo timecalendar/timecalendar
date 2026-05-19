@@ -6,7 +6,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_image/network.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timecalendar/app.dart';
@@ -27,7 +26,6 @@ main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FlutterError.onError = (FlutterErrorDetails details) async {
-    if (details.exception is FetchFailure) return;
     FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   };
 

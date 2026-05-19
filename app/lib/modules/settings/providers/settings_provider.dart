@@ -1,4 +1,3 @@
-import 'package:enum_to_string/enum_to_string.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -155,14 +154,14 @@ class SettingsProvider with ChangeNotifier {
     }
 
     var stringPref = this.prefs.getString('calendar_view_type');
-    _calendarViewType = stringPref != null
-        ? EnumToString.fromString(CalendarViewType.values, stringPref)
-        : null;
+    _calendarViewType = CalendarViewType.values
+        .cast<CalendarViewType?>()
+        .firstWhere((e) => e?.name == stringPref, orElse: () => null);
     if (_calendarViewType == null) {
       _calendarViewType = _calendarViewTypeDefault;
       await prefs!.setString(
         'calendar_view_type',
-        EnumToString.convertToString(_calendarViewType),
+        _calendarViewType!.name,
       );
     }
 
@@ -224,7 +223,7 @@ class SettingsProvider with ChangeNotifier {
   set calendarViewType(CalendarViewType? value) {
     _calendarViewType = value;
     notifyListeners();
-    prefs.setString('calendar_view_type', EnumToString.convertToString(value));
+    prefs.setString('calendar_view_type', value!.name);
   }
 
   set showWeekends(bool? value) {

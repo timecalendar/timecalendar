@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart' as oldprovider;
@@ -211,9 +211,10 @@ class _AddPersonalEventScreenState
         title: "Choisir une couleur",
         content: Container(
           height: 220,
-          child: MaterialColorPicker(
-            selectedColor: _selectedColor,
-            onColorChange: (color) => setState(() => _tempShadeColor = color),
+          child: MaterialPicker(
+            pickerColor: _selectedColor ?? Colors.pink,
+            onColorChanged: (color) => setState(() => _tempShadeColor = color),
+            enableLabel: false,
           ),
         ),
         actions: [
