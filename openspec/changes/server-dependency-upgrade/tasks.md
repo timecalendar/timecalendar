@@ -170,10 +170,17 @@ Applied by the Applier ([TIM-61](/TIM/issues/TIM-61)) in worktree branch
 | Workspace | Pre-upgrade (task 2.1) | After group 3-5 bumps | After `npm audit fix` |
 | --------- | ---------------------- | --------------------- | --------------------- |
 | `server/` | 85                     | 77                    | **19**                |
-| `web/`    | 14                     | —                     | **3**                 |
+| `web/`    | 14                     | —                     | **4** *(see note)*    |
 
 `npm audit fix` was run non-`--force`; lockfiles only, no `package.json`
 constraint changed in either workspace.
+
+*Note — `web/` axios revert ([TIM-64](/TIM/issues/TIM-64)).* `npm audit fix`
+left `web/` at 3 residual findings, but it had also re-resolved `axios`
+`1.11.0 → 1.16.1`, which broke `next build` against the `axios@1.11.0`-pinned
+`openapi/javascript` client (CI `Build web image`). `web/`'s `axios` is held
+back at `1.11.0` in lockstep with the `openapi/` client; this re-introduces
+the axios advisory cluster, taking `web/` residual 3 → 4. Documented below.
 
 ### Documented `npm audit` exceptions (residual — all need breaking changes)
 
@@ -198,13 +205,22 @@ constraint changed in either workspace.
 - **`ai` — GHSA-rwvc-j5jr-mgvh (low).** Fix = `ai@5.0.52+`, blocked by the
   AI SDK build break described above. Deferred.
 
-**`web/` (3 findings):**
+**`web/` (4 findings):**
 
 - **`next` — multiple Next.js advisories (high).** npm's offered "fix" is a
   downgrade to `next@9.3.3`; a real fix is a Next framework bump, an explicit
   B9 non-goal (no `web/` framework-major change). Deferred.
 - **`next-runtime-env` (high) + `postcss` (moderate).** Both fixed only by
   `next-runtime-env@2.0.1` (breaking major). Deferred.
+- **`axios` — multiple axios advisories (high).** `npm audit fix` re-resolved
+  `web/`'s `axios` `^1.11.0` to `1.16.1`, but the generated
+  `openapi/javascript` client pins `axios@1.11.0`. The two divergent installs
+  yield incompatible `AxiosInstance` types and break `next build` (caught by
+  CI `Build web image`, [TIM-63](/TIM/issues/TIM-63) review). `web/`'s `axios`
+  is held at `1.11.0` in lockstep with the `openapi/` client
+  ([TIM-64](/TIM/issues/TIM-64)); clearing the advisory needs `axios@1.16.1+`
+  in **both** `web/` and `openapi/javascript`, and bumping `openapi/` deps is
+  an explicit B9 non-goal. Deferred to Dependabot.
 
 All residual findings require breaking-change upgrades and are recorded here
 as documented exceptions — satisfying the TIM-46 acceptance ("`npm audit`
@@ -214,9 +230,10 @@ clean **or** every residual finding documented").
 
 - `server/`: `npm run build`, `npm run test` (jest — 58 suites, 287 tests),
   `npm run lint` all green.
-- `web/`: not built locally — `npm audit fix` changed only the lockfile
-  (non-breaking transitives); the `web/` image is covered by the CI
-  `Build web image` job.
+- `web/`: `npm run build` (`next build`) green locally after the
+  [TIM-64](/TIM/issues/TIM-64) axios revert — the build is now verified
+  locally before push (the earlier skip is what let the axios regression
+  reach CI). The `web/` image is also covered by the CI `Build web image` job.
 - CI `Build server image` + `test` jobs and the Phase 1 E2E smoke suite
   ([TIM-7](/TIM/issues/TIM-7)) run on branch push (task 7.2) — must be green
   before Review.
