@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:reorderables/reorderables.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/event_details/controllers/checklist_focus_controller.dart';
 import 'package:timecalendar/modules/event_details/hooks/use_checklist_auto_focus.dart';
@@ -36,27 +35,28 @@ class EventDetailsChecklist extends HookConsumerWidget {
       await notifier.editItem(checklistItem);
     }
 
-    Widget buildChecklist(
-      BuildContext context,
-      int index,
-      List<ChecklistItem> items,
-    ) {
-      return EventDetailsChecklistItem(
-        key: Key(items[index].uuid!),
-        checklistItem: items[index],
-        checklistFocusController: checklistFocusController,
-        removeItem: onRemove,
-        onContentChanged: onContentChanged,
-        onCheckChanged: onCheckChanged,
-      );
-    }
-
-    return ReorderableSliverList(
-      delegate: ReorderableSliverChildBuilderDelegate(
-        (context, index) => buildChecklist(context, index, items),
-        childCount: items.length,
-      ),
-      onReorder: notifier.reorderItems,
+    return SliverReorderableList(
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final key = Key(item.uuid!);
+        return ReorderableDelayedDragStartListener(
+          key: key,
+          index: index,
+          child: EventDetailsChecklistItem(
+            key: key,
+            checklistItem: item,
+            checklistFocusController: checklistFocusController,
+            removeItem: onRemove,
+            onContentChanged: onContentChanged,
+            onCheckChanged: onCheckChanged,
+          ),
+        );
+      },
+      onReorder: (oldIndex, newIndex) {
+        if (newIndex > oldIndex) newIndex -= 1;
+        notifier.reorderItems(oldIndex, newIndex);
+      },
     );
   }
 }
