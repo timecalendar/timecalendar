@@ -1,3 +1,5 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 // `Finder` is hidden: sembast also exports one, and `pumpUntilFound` takes the
@@ -20,16 +22,26 @@ import 'package:timecalendar/modules/personal_event/repositories/personal_event_
 /// hang to the test timeout. After this returns, each flow waits for its own
 /// first widget with [pumpUntilFound].
 Future<void> waitAppInitialized(WidgetTester tester) async {
+  // Capture the integration_test binding's `FlutterError.onError` *before*
+  // `app.main()` replaces it with the app's Crashlytics handler.
+  final bindingOnError = FlutterError.onError;
+
   await app.main();
 
-  // `app.main()` overrides `FlutterError.onError` with a Crashlytics handler
-  // that swallows errors silently — hiding real failures from the test log.
-  // Keep that handler, but echo every error to the console first so a failing
-  // flow is debuggable from the CI log.
-  final appOnError = FlutterError.onError;
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-    appOnError?.call(details);
+  // Restore the binding's `FlutterError.onError`. `app.main()` installs a
+  // Crashlytics handler that swallows widget errors silently — that both hides
+  // real failures and trips the "test overrode FlutterError.onError but failed
+  // to return it to its original state" assertion. Restoring it makes a widget
+  // error a proper, fast, debuggable test failure.
+  FlutterError.onError = bindingOnError;
+
+  // Async errors: `app.main()`'s `PlatformDispatcher.onError` also swallows
+  // them. Echo them to the console (visible in the CI log) so a flow that hangs
+  // on a swallowed boot exception is debuggable; return `true` so a benign
+  // async error does not by itself fail the flow.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('E2E-DIAG uncaught async error: $error\n$stack');
+    return true;
   };
 
   // Bounded settle through the splash screen (~8s of frames). The splash
@@ -110,10 +122,17 @@ Future<void> seedUserCalendar({
 
   // Mirrors `UserCalendarRepository.addUserCalendar` — same store, same record
   // key, same `toDbMap()` shape — without needing a Riverpod container.
-  await stringMapStoreFactory
-      .store(UserCalendarRepository.STORE_NAME)
-      .record(calendar.id)
-      .put(db.db, calendar.toDbMap());
+  final store = stringMapStoreFactory.store(UserCalendarRepository.STORE_NAME);
+  await store.record(calendar.id).put(db.db, calendar.toDbMap());
+
+  // Diagnostic: confirm the write is visible on a fresh open of the on-disk
+  // database — the same path `app.main()` reopens to route the splash screen.
+  await db.init();
+  final stored = await store.find(db.db);
+  debugPrint(
+    'E2E-DIAG seedUserCalendar wrote "$id"; '
+    'user_calendars store now holds ${stored.length} record(s)',
+  );
 }
 
 /// Sembast stores written by the app that an E2E flow should start clean.
