@@ -20,20 +20,40 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
+    - name: Build server image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./server
+        tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        load: true
+
+    - name: Save server image to tarball
+      run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
+
+    - name: Upload server image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: server-image
+        path: /tmp/server-image.tar
+        retention-days: 1
+
     - name: Login to image repository
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push
+    - name: Push server image
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       uses: docker/build-push-action@v4
       with:
         context: ./server
         tags: ${{ env.SERVER_IMAGES_WITH_TAG_TO_PUSH }}
         cache-from: type=gha
-        cache-to: type=gha,mode=max
         push: true
 
 
@@ -54,13 +74,14 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     - name: Login to image repository
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and push
+    - name: Build (and conditionally push) web image
       uses: docker/build-push-action@v4
       with:
         context: .
@@ -68,7 +89,7 @@ jobs:
         tags: ${{ env.WEB_IMAGES_WITH_TAG_TO_PUSH }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        push: true
+        push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production' }}
 
   test:
     name: Run tests
@@ -79,12 +100,14 @@ jobs:
     - name: Checkout main
       uses: actions/checkout@v4
 
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
+    - name: Download server image artifact
+      uses: actions/download-artifact@v4
       with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        name: server-image
+        path: /tmp
+
+    - name: Load server image
+      run: docker load -i /tmp/server-image.tar
 
     - name: Start Postgres and Redis
       run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d
