@@ -12,16 +12,16 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v4
 
     - name: Build server image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         context: ./server
         tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
@@ -33,7 +33,7 @@ jobs:
       run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
 
     - name: Upload server image artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: server-image
         path: /tmp/server-image.tar
@@ -41,7 +41,7 @@ jobs:
 
     - name: Login to image repository
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      uses: docker/login-action@v2
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -49,7 +49,7 @@ jobs:
 
     - name: Push server image
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         context: ./server
         tags: ${{ env.SERVER_IMAGES_WITH_TAG_TO_PUSH }}
@@ -65,24 +65,24 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v4
 
     - name: Login to image repository
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      uses: docker/login-action@v2
+      uses: docker/login-action@v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build (and conditionally push) web image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: ./Dockerfile.web
@@ -98,10 +98,10 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Download server image artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: server-image
         path: /tmp
@@ -122,7 +122,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
@@ -153,10 +153,10 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Java
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution: temurin
         java-version: 17
@@ -169,7 +169,7 @@ jobs:
         cache: true
 
     - name: Set up Node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 20
 
@@ -201,7 +201,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v2
+      uses: actions/checkout@v6
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
@@ -210,7 +210,7 @@ jobs:
       run: echo "${{ secrets[env.K8S_HELM_VALUES_ENV] }}" > ./k8s/environments/$TARGET_ENVIRONMENT/secret-values.yaml
 
     - name: Set Kubernetes context
-      uses: azure/k8s-set-context@v2
+      uses: azure/k8s-set-context@v5
       with:
         method: kubeconfig
         kubeconfig: ${{ secrets[env.K8S_KUBECONFIG_ENV] }}
