@@ -85,5 +85,5 @@ Conventions for every task below:
 
 ## 7. Hand-off
 
-- [ ] 7.1 Open the PR against `main`. CI jobs to gate on: `Run app tests`, `Run E2E smoke flows`, `Build server image`, `Build web image`, iOS build, Android build. All must be green before handing to the Simplifier / Reviewer.
-- [ ] 7.2 Comment on [TIM-48](/TIM/issues/TIM-48) / the parent Apply issue with the PR URL and the final task-checklist state. Hand off per the dev-cycle chain (Applier → Simplifier → Reviewer).
+- [x] 7.1 Open the PR against `main`. CI jobs to gate on: `Run app tests`, `Run E2E smoke flows`, `Build server image`, `Build web image`, iOS build, Android build. All must be green before handing to the Simplifier / Reviewer. — PR [#77](https://github.com/timecalendar/timecalendar/pull/77) opened by FoundingEngineer (Applier had moved to TIM-61 before the handoff step).
+- [x] 7.2 Comment on [TIM-48](/TIM/issues/TIM-48) / the parent Apply issue with the PR URL and the final task-checklist state. Hand off per the dev-cycle chain (Applier → Simplifier → Reviewer). — TIM-92 marked done; TIM-48 / TIM-93 (Simplify) notified.
