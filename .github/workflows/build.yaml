@@ -24,13 +24,13 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         context: ./server
-        tags: ${{ env.SERVER_IMAGE_NAME_WITH_TAG }}
+        tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         load: true
 
     - name: Save server image to tarball
-      run: docker save ${{ env.SERVER_IMAGE_NAME_WITH_TAG }} -o /tmp/server-image.tar
+      run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
 
     - name: Upload server image artifact
       uses: actions/upload-artifact@v4
