@@ -36,7 +36,7 @@ class ProfileHeader extends StatelessWidget {
                     ],
                   ),
                 ),
-                Container(child: FaIcon(FontAwesomeIcons.user, size: 50)),
+                Container(child: const FaIcon(FontAwesomeIcons.user, size: 50)),
               ],
             ),
           ),

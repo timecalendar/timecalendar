@@ -46,7 +46,7 @@ class AppSearchBar extends StatelessWidget {
             onChanged: onChanged,
             controller: _searchFieldController,
             decoration: InputDecoration(
-              icon: FaIcon(FontAwesomeIcons.magnifyingGlass),
+              icon: const FaIcon(FontAwesomeIcons.magnifyingGlass),
               hintText: placeholder,
             ),
             onTap: () {

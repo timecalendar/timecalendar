@@ -43,7 +43,7 @@ class EventDetailsChecklistAddButton extends StatelessWidget {
             padding: EdgeInsets.all(20),
             child: Row(
               children: <Widget>[
-                FaIcon(FontAwesomeIcons.plus, size: 12),
+                const FaIcon(FontAwesomeIcons.plus, size: 12),
                 SizedBox(width: 10),
                 Text('Ajouter une note'),
               ],
