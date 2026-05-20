@@ -2,6 +2,7 @@ import 'package:built_collection/built_collection.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/legacy.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
@@ -16,15 +17,17 @@ class MockSchoolsApi extends Mock implements SchoolsApi {}
 /// A [SchoolSelectionController] pre-seeded with data, so `schoolFilteredProvider`
 /// can be exercised without driving the async `fetch()`.
 class _SeededSchoolController extends SchoolSelectionController {
-  _SeededSchoolController(BuiltList<SchoolForList> schools)
-    : super(client: MockApiClient()) {
-    state = AsyncValue.data(schools);
-  }
+  _SeededSchoolController(this._schools);
+
+  final BuiltList<SchoolForList> _schools;
+
+  @override
+  Future<BuiltList<SchoolForList>> build() async => _schools;
 }
 
 void main() {
-  group('SchoolSelectionController.fetch', () {
-    test('sets state to AsyncData with the fetched schools', () async {
+  group('SchoolSelectionController.build', () {
+    test('resolves to AsyncData with the fetched schools', () async {
       final schools = [
         buildSchoolForList(id: 'a', code: 'SORB', name: 'Sorbonne'),
         buildSchoolForList(id: 'b', code: 'XYZ', name: 'Polytechnique'),
@@ -39,15 +42,20 @@ void main() {
         ),
       );
 
-      final controller = SchoolSelectionController(client: client);
-      AsyncValue<BuiltList<SchoolForList>>? observedState;
-      controller.addListener((state) => observedState = state);
+      final container = ProviderContainer(
+        overrides: [apiClientProvider.overrideWithValue(client)],
+      );
+      addTearDown(container.dispose);
 
-      final result = await controller.fetch();
+      final result = await container.read(
+        schoolSelectionControllerProvider.future,
+      );
 
       expect(result.map((s) => s.id), ['a', 'b']);
-      expect(observedState, isA<AsyncData<BuiltList<SchoolForList>>>());
-      expect(observedState!.value, equals(result));
+      expect(
+        container.read(schoolSelectionControllerProvider),
+        isA<AsyncData<BuiltList<SchoolForList>>>(),
+      );
     });
   });
 
@@ -67,7 +75,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           schoolSelectionControllerProvider.overrideWith(
-            (ref) => _SeededSchoolController(
+            () => _SeededSchoolController(
               BuiltList<SchoolForList>([sorbonne, polytechnique]),
             ),
           ),
@@ -77,8 +85,9 @@ void main() {
       return container;
     }
 
-    test('returns every school when the search is empty', () {
+    test('returns every school when the search is empty', () async {
       final container = seededContainer();
+      await container.read(schoolSelectionControllerProvider.future);
 
       expect(
         container.read(schoolFilteredProvider).map((s) => s.id),
@@ -86,8 +95,9 @@ void main() {
       );
     });
 
-    test('filters by school name', () {
+    test('filters by school name', () async {
       final container = seededContainer();
+      await container.read(schoolSelectionControllerProvider.future);
       container.read(schoolSearchProvider.notifier).state = 'sorbonne';
 
       expect(
@@ -96,8 +106,9 @@ void main() {
       );
     });
 
-    test('filters by school code', () {
+    test('filters by school code', () async {
       final container = seededContainer();
+      await container.read(schoolSelectionControllerProvider.future);
       container.read(schoolSearchProvider.notifier).state = 'xyz';
 
       expect(
