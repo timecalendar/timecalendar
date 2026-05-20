@@ -11,8 +11,8 @@
   "author": "TimeCalendar",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.11.0",
-    "react-query": "^3.39.2"
+    "axios": "^1.16.1",
+    "react-query": "^3.39.3"
   },
   "devDependencies": {
     "typescript": "^4.8.2"
