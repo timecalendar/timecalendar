@@ -130,7 +130,7 @@ Conventions for every task below:
 ## 13. Hand-off
 
 - [x] 13.1 Commit on branch `TIM-49-notifications-dep-removal-and-plus-bumps` (already created by the Planner off `main`). Commit message convention: `chore(deps): B7 — remove flutter_local_notifications + bump plus/icon/lint majors (TIM-49)`.
-- [ ] 13.2 Open the PR against `main`. CI jobs to gate on: `Run app tests`, `Run E2E smoke flows`, `Build server image`, `Build web image`, iOS build, Android build. All must be green before handing to the Simplifier / Reviewer. **(Owned by the Reviewer per the dev-cycle chain; see TIM-98.)**
+- [x] 13.2 Open the PR against `main`. CI jobs to gate on: `Run app tests`, `Run E2E smoke flows`, `Build server image`, `Build web image`, iOS build, Android build. All must be green before handing to the Simplifier / Reviewer. **(Owned by the Reviewer per the dev-cycle chain; see TIM-98.)**
 - [x] 13.3 Comment on [TIM-96](/TIM/issues/TIM-96) (the Apply issue) with the final task-checklist state. Hand off per the dev-cycle chain (Applier → Simplifier → Reviewer).
 
 ## 14. Implementation notes
