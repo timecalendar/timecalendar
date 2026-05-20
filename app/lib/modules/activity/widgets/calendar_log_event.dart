@@ -48,8 +48,8 @@ class CalendarLogEventWidget extends HookConsumerWidget {
           backgroundColor: ColorUtils.hexToColor(
             types[type]!['backgroundColor'] as String,
           ),
-          child: Icon(
-            types[type]!['icon'] as IconData?,
+          child: FaIcon(
+            types[type]!['icon'] as FaIconData?,
             size: 18,
             color: ColorUtils.hexToColor(types[type]!['iconColor'] as String),
           ),
