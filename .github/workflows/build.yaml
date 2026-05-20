@@ -27,7 +27,10 @@ jobs:
         tags: ${{ env.SERVER_IMAGE_NAME_WITH_TAG }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        outputs: type=docker,dest=/tmp/server-image.tar
+        load: true
+
+    - name: Save server image to tarball
+      run: docker save ${{ env.SERVER_IMAGE_NAME_WITH_TAG }} -o /tmp/server-image.tar
 
     - name: Upload server image artifact
       uses: actions/upload-artifact@v4
