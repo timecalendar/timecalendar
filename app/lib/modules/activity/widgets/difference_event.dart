@@ -46,8 +46,8 @@ class DifferenceEvent extends StatelessWidget {
       children: <Widget>[
         SizedBox(height: 4),
         CircleAvatar(
-          child: Icon(
-            types[type]!['icon'] as IconData?,
+          child: FaIcon(
+            types[type]!['icon'] as FaIconData?,
             size: 18,
             color: ColorUtils.hexToColor(types[type]!['iconColor'] as String),
           ),

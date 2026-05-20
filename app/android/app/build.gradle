@@ -27,8 +27,6 @@ android {
     namespace "fr.samuelprak.timecalendar"
     compileSdk 36
 
-    // flutter_local_notifications requires desugaring
-    // https://pub.dev/packages/flutter_local_notifications#gradle-setup
     compileOptions {
         // Flag to enable support for the new language APIs
         coreLibraryDesugaringEnabled true

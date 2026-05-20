@@ -182,15 +182,15 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
             type: BottomNavigationBarType.fixed,
             items: [
               BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.house, size: 20),
+                icon: const FaIcon(FontAwesomeIcons.house, size: 20),
                 label: 'Accueil',
               ),
               BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.calendarDays, size: 20),
+                icon: const FaIcon(FontAwesomeIcons.calendarDays, size: 20),
                 label: 'Calendrier',
               ),
               BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.user),
+                icon: const FaIcon(FontAwesomeIcons.user),
                 label: 'Profil',
               ),
             ],

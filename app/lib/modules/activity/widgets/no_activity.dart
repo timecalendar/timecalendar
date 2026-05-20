@@ -20,7 +20,7 @@ class NoActivity extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                Icon(FontAwesomeIcons.list, size: 70),
+                const FaIcon(FontAwesomeIcons.list, size: 70),
                 SizedBox(height: 20),
                 Text(
                   "Vous n'avez pas reçu de modification de cours.",

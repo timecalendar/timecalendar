@@ -39,7 +39,7 @@ class PlanningRectangleEvent extends ConsumerWidget {
             padding: EdgeInsets.only(top: 10),
             child: Wrap(
               children: <Widget>[
-                Icon(FontAwesomeIcons.squareCheck, size: 16),
+                const FaIcon(FontAwesomeIcons.squareCheck, size: 16),
                 SizedBox(width: 5),
                 Text(
                   "${eventChecklistItems.completedNotes}/${eventChecklistItems.totalNotes}",

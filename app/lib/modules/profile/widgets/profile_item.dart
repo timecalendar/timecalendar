@@ -4,7 +4,7 @@ import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
 class ProfileItem extends StatelessWidget {
   final String title;
-  final IconData icon;
+  final Widget icon;
   final Function action;
   final bool unread;
 
@@ -46,7 +46,10 @@ class ProfileItem extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(icon, size: 20),
+              IconTheme(
+                data: const IconThemeData(size: 20),
+                child: icon,
+              ),
             ],
           ),
         ),

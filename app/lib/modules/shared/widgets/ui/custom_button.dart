@@ -4,7 +4,7 @@ class CustomButton extends StatelessWidget {
   final bool border;
   final bool outline;
   final String text;
-  final IconData? icon;
+  final Widget? icon;
   final Function onPressed;
   final bool loading;
   final Color? backgroundColor;
@@ -67,14 +67,16 @@ class CustomButton extends StatelessWidget {
                       ),
                     if (icon != null)
                       Container(
-                        child: Icon(
-                          icon,
-                          size: 12,
-                          color: outline
-                              ? Theme.of(context).primaryColor
-                              : Colors.white,
-                        ),
                         margin: EdgeInsets.only(right: 12),
+                        child: IconTheme(
+                          data: IconThemeData(
+                            size: 12,
+                            color: outline
+                                ? Theme.of(context).primaryColor
+                                : Colors.white,
+                          ),
+                          child: icon!,
+                        ),
                       ),
                     Flexible(
                       child: Text(

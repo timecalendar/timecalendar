@@ -22,21 +22,27 @@ class EventDetailsContent extends HookConsumerWidget {
     return Column(
       children: [
         if (event.location != null && event.location!.length > 0)
-          EventDetailsLine(icon: Icons.location_on, text: event.location),
+          EventDetailsLine(
+            icon: const Icon(Icons.location_on),
+            text: event.location,
+          ),
         if (calendars != null &&
             calendars.length > 1 &&
             currentCalendarName != null)
           EventDetailsLine(
-            icon: Icons.calendar_month,
+            icon: const Icon(Icons.calendar_month),
             text: currentCalendarName,
           ),
         if (event.teachers.length > 0)
           EventDetailsLine(
-            icon: FontAwesomeIcons.graduationCap,
+            icon: const FaIcon(FontAwesomeIcons.graduationCap),
             text: event.teachers.join("\n"),
           ),
         if (event.description != null && event.description!.length > 0)
-          EventDetailsLine(icon: Icons.comment, text: event.description),
+          EventDetailsLine(
+            icon: const Icon(Icons.comment),
+            text: event.description,
+          ),
         SizedBox(height: 10),
       ],
     );

@@ -4,7 +4,7 @@ class EventDetailsLine extends StatelessWidget {
   const EventDetailsLine({Key? key, required this.text, required this.icon})
     : super(key: key);
 
-  final IconData icon;
+  final Widget icon;
   final String? text;
 
   @override
@@ -17,7 +17,10 @@ class EventDetailsLine extends StatelessWidget {
           Container(
             width: 30,
             margin: EdgeInsets.symmetric(vertical: 10),
-            child: Icon(icon, size: 25),
+            child: IconTheme(
+              data: const IconThemeData(size: 25),
+              child: icon,
+            ),
           ),
           SizedBox(width: 15),
           Expanded(child: Text(text!, style: TextStyle(fontSize: 16))),
