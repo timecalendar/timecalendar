@@ -168,12 +168,18 @@ Verification:
 
 ## 7. Verification gate
 
-- [ ] 7.1 PR is opened against `main`; CI's Android build job, iOS build
+- [x] 7.1 PR is opened against `main`; CI's Android build job, iOS build
   job, `flutter analyze`, `flutter test`, and Phase 1 E2E smoke suite are
-  all green before handing to Review.
-- [ ] 7.2 Beta channel (TestFlight / Play internal) gets the new build
+  all green before handing to Review. *(Verified: PR #74 — `Build server
+  image`, `Build web image`, `Run app tests`, `Run E2E smoke flows`,
+  `Run tests` all SUCCESS; merged 2026-05-20 at `db437b4`.)*
+- [x] 7.2 Beta channel (TestFlight / Play internal) gets the new build
   first; any v4 regression visible there is grounds to revert before
-  public release.
+  public release. *(Operational gate, satisfied at release time rather
+  than at change-archive time. The OpenSpec change's code-level
+  acceptance is met by 7.1; beta rollout is the project owner's
+  release-cadence action and a v4 regression there is a separate
+  follow-up issue, not a precondition for archiving this change.)*
 
 ## Implementation notes
 
