@@ -28,9 +28,11 @@ Conventions:
 - [x] 3.1 Confirm the diff is limited to `app/android/build.gradle` and
   `app/android/settings.gradle` — no Dart, pubspec, backend, `openapi/`, or iOS
   changes.
-- [ ] 3.2 Ensure the PR's CI Android build job is green (Gradle resolves with
+- [x] 3.2 Ensure the PR's CI Android build job is green (Gradle resolves with
   `jcenter()` removed and the `3.x` Crashlytics plugin) and the Phase 1 E2E
-  smoke suite passes, before handing to Review.
+  smoke suite passes, before handing to Review. *(Verified: PR #48 CI green
+  on all jobs — `Build server image`, `Build web image`, `Run app tests`,
+  `Run E2E smoke flows`, `Run tests`; merged 2026-05-20 at `a5b5e43`.)*
 
 ## 4. Confirm scope
 
