@@ -18,12 +18,12 @@ class Constants {
           title: "Annotez vos cours",
           subtitle:
               "Notez vos devoirs, projets et autres notes dans une checklist.",
-          icon: Icon(FontAwesomeIcons.squareCheck),
+          icon: FaIcon(FontAwesomeIcons.squareCheck),
         ),
         const ChangelogItem(
           title: "Masquer des événements",
           subtitle: "Masquez les cours où vous n'êtes pas inscrit.",
-          icon: Icon(FontAwesomeIcons.eyeSlash),
+          icon: FaIcon(FontAwesomeIcons.eyeSlash),
         ),
       ],
     ),
@@ -51,7 +51,7 @@ class Constants {
           title: "Gestion de la visibilité",
           subtitle:
               "Activez ou désactivez l'affichage de chaque calendrier selon vos besoins.",
-          icon: Icon(FontAwesomeIcons.toggleOn),
+          icon: FaIcon(FontAwesomeIcons.toggleOn),
         ),
       ],
     ),

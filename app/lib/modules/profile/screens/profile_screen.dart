@@ -21,7 +21,7 @@ class ProfileScreen extends StatelessWidget {
           ProfileHeader(),
           ProfileItem(
             title: 'Activité',
-            icon: FontAwesomeIcons.list,
+            icon: FaIcon(FontAwesomeIcons.list),
             action: () {
               Navigator.of(context).pushNamed(ActivityScreen.routeName);
             },
@@ -29,28 +29,28 @@ class ProfileScreen extends StatelessWidget {
           ),
           ProfileItem(
             title: 'Calendriers',
-            icon: FontAwesomeIcons.calendar,
+            icon: FaIcon(FontAwesomeIcons.calendar),
             action: () {
               Navigator.of(context).pushNamed(UserCalendarsScreen.routeName);
             },
           ),
           ProfileItem(
             title: 'Paramètres',
-            icon: FontAwesomeIcons.gear,
+            icon: FaIcon(FontAwesomeIcons.gear),
             action: () {
               Navigator.of(context).pushNamed(SettingsScreen.routeName);
             },
           ),
           ProfileItem(
             title: 'A propos',
-            icon: FontAwesomeIcons.info,
+            icon: FaIcon(FontAwesomeIcons.info),
             action: () {
               Navigator.of(context).pushNamed(AboutScreen.routeName);
             },
           ),
           ProfileItem(
             title: 'Vos retours et suggestions',
-            icon: FontAwesomeIcons.paperPlane,
+            icon: FaIcon(FontAwesomeIcons.paperPlane),
             action: () {
               Navigator.of(context).pushNamed(
                 SuggestionScreen.routeName,
