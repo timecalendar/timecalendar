@@ -295,6 +295,6 @@ through child `ProviderScope`s via `parent?.retry` inheritance.
   `Do NOT commit or open a PR — that is the Reviewer's job (TIM-102).`
   The Applier commits per-group (as the agent role instructs) but
   defers the push + PR to the Reviewer.
-- [ ] 7.8 Hand off to the Simplifier ([TIM-101](/TIM/issues/TIM-101))
+- [x] 7.8 Hand off to the Simplifier ([TIM-101](/TIM/issues/TIM-101))
   with a comment on TIM-100 that names the head commit and the
   verification results.
