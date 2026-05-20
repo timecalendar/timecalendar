@@ -2,10 +2,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/hidden_event/models/hidden_event.dart';
 import 'package:timecalendar/modules/hidden_event/repositories/hidden_event_repository.dart';
 
-class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
-  Ref ref;
-
-  HiddenEventNotifier(this.ref) : super(new HiddenEvent());
+class HiddenEventNotifier extends Notifier<HiddenEvent> {
+  @override
+  HiddenEvent build() => HiddenEvent();
 
   loadFromDatabase() async {
     state = await ref.read(hiddenEventRepositoryProvider).getHiddenEvents();
@@ -45,6 +44,4 @@ class HiddenEventNotifier extends StateNotifier<HiddenEvent> {
 }
 
 final hiddenEventProvider =
-    StateNotifierProvider<HiddenEventNotifier, HiddenEvent>(
-      (ref) => HiddenEventNotifier(ref),
-    );
+    NotifierProvider<HiddenEventNotifier, HiddenEvent>(HiddenEventNotifier.new);
