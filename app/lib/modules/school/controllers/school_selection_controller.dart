@@ -1,37 +1,31 @@
 import 'package:built_collection/built_collection.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/legacy.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/utils/string_includes.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolSelectionController
-    extends StateNotifier<AsyncValue<BuiltList<SchoolForList>>> {
-  final ApiClient client;
+    extends AsyncNotifier<BuiltList<SchoolForList>> {
+  @override
+  Future<BuiltList<SchoolForList>> build() => _doFetch();
 
-  SchoolSelectionController({required this.client})
-    : super(AsyncValue.loading());
+  Future<void> fetch() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(_doFetch);
+  }
 
-  Future<BuiltList<SchoolForList>> fetch() async {
-    try {
-      final rep = await client.schoolsApi().findSchools();
-      final schools = rep.data!.schools;
-      if (mounted) state = AsyncValue.data(schools);
-      return schools;
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-      throw e;
-    }
+  Future<BuiltList<SchoolForList>> _doFetch() async {
+    final client = ref.read(apiClientProvider);
+    final rep = await client.schoolsApi().findSchools();
+    return rep.data!.schools;
   }
 }
 
 final schoolSelectionControllerProvider =
-    StateNotifierProvider<
-      SchoolSelectionController,
-      AsyncValue<BuiltList<SchoolForList>>
-    >((ref) {
-      return SchoolSelectionController(client: ref.read(apiClientProvider))
-        ..fetch();
-    });
+    AsyncNotifierProvider<SchoolSelectionController, BuiltList<SchoolForList>>(
+      SchoolSelectionController.new,
+    );
 
 final schoolSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
