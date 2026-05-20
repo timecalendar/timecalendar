@@ -8,14 +8,11 @@ import 'package:timecalendar_api/timecalendar_api.dart';
 class SchoolSelectionController
     extends AsyncNotifier<BuiltList<SchoolForList>> {
   @override
-  Future<BuiltList<SchoolForList>> build() async {
-    return _doFetch();
-  }
+  Future<BuiltList<SchoolForList>> build() => _doFetch();
 
-  Future<BuiltList<SchoolForList>> fetch() async {
+  Future<void> fetch() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_doFetch);
-    return state.value ?? BuiltList<SchoolForList>();
   }
 
   Future<BuiltList<SchoolForList>> _doFetch() async {

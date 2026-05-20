@@ -14,7 +14,7 @@ class MockApiClient extends Mock implements ApiClient {}
 class MockSchoolsApi extends Mock implements SchoolsApi {}
 
 /// A [SchoolSelectionController] pre-seeded with data, so `schoolFilteredProvider`
-/// can be exercised without driving the async `fetch()`.
+/// can be exercised without driving the async `build()` against a real API.
 class _SeededSchoolController extends SchoolSelectionController {
   _SeededSchoolController(this._schools);
 
