@@ -129,8 +129,26 @@
     "rootDir": "src",
     "testRegex": ".*\\.(spec|test)\\.ts$",
     "transform": {
-      "^.+\\.ts$": "ts-jest"
+      "^.+\\.ts$": "ts-jest",
+      "^.+\\.m?js$": [
+        "babel-jest",
+        {
+          "presets": [
+            [
+              "@babel/preset-env",
+              {
+                "targets": {
+                  "node": "current"
+                }
+              }
+            ]
+          ]
+        }
+      ]
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(msw|@mswjs|@bundled-es-modules|@open-draft|headers-polyfill|rettime|until-async)/)"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
@@ -152,6 +170,9 @@
     "clearMocks": true
   },
   "devDependencies": {
-    "msw": "^2.7.0"
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.5",
+    "babel-jest": "^29.7.0",
+    "msw": "^2.14.6"
   }
 }
