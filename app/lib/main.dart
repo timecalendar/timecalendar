@@ -14,7 +14,11 @@ import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
 main() async {
-  final container = ProviderContainer();
+  // Disable Riverpod 3's default exponential-backoff retry on
+  // AsyncNotifier failures. Screens (school selection, activity,
+  // calendar) render `AsyncValue.error` directly and let the user
+  // retry — preserving v2's fail-fast UX.
+  final container = ProviderContainer(retry: (_, _) => null);
 
   WidgetsFlutterBinding.ensureInitialized();
 

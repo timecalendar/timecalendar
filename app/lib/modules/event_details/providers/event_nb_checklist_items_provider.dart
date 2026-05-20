@@ -2,10 +2,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/event_details/repositories/checklist_item_repository.dart';
 
 class EventNbChecklistItemsNotifier
-    extends StateNotifier<Map<String, ChecklistItemEventCount>> {
-  Ref ref;
-
-  EventNbChecklistItemsNotifier(this.ref) : super({});
+    extends Notifier<Map<String, ChecklistItemEventCount>> {
+  @override
+  Map<String, ChecklistItemEventCount> build() => {};
 
   update() async {
     state = await ref
@@ -15,10 +14,10 @@ class EventNbChecklistItemsNotifier
 }
 
 final eventNbChecklistItemsProvider =
-    StateNotifierProvider<
+    NotifierProvider<
       EventNbChecklistItemsNotifier,
       Map<String, ChecklistItemEventCount>
-    >((ref) => EventNbChecklistItemsNotifier(ref));
+    >(EventNbChecklistItemsNotifier.new);
 
 final getEventNbChecklistItemsProvider = Provider((ref) {
   final eventNbChecklistItems = ref.watch(eventNbChecklistItemsProvider);

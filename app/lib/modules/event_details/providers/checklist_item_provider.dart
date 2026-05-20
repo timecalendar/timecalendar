@@ -3,16 +3,19 @@ import 'package:timecalendar/modules/event_details/models/checklist_item.dart';
 import 'package:timecalendar/modules/event_details/providers/event_nb_checklist_items_provider.dart';
 import 'package:timecalendar/modules/event_details/repositories/checklist_item_repository.dart';
 
-class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
-  Ref ref;
-  String eventUid;
+class ChecklistItemNotifier extends Notifier<List<ChecklistItem>> {
+  ChecklistItemNotifier(this.eventUid);
 
-  ChecklistItemNotifier(this.ref, this.eventUid) : super([]) {
-    loadEventItems();
+  final String eventUid;
+
+  @override
+  List<ChecklistItem> build() {
+    _loadEventItems();
+    return [];
   }
 
-  loadEventItems() async {
-    state = await this.ref
+  Future<void> _loadEventItems() async {
+    state = await ref
         .read(checklistItemRepositoryProvider)
         .findAllByEventUid(eventUid);
   }
@@ -25,8 +28,8 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
       order: state.length + 1,
     );
     state = List<ChecklistItem>.from(state)..add(checklistItem);
-    await this.ref.read(checklistItemRepositoryProvider).insert(checklistItem);
-    await this.ref.read(eventNbChecklistItemsProvider.notifier).update();
+    await ref.read(checklistItemRepositoryProvider).insert(checklistItem);
+    await ref.read(eventNbChecklistItemsProvider.notifier).update();
   }
 
   Future<void> editItem(ChecklistItem checklistItem) async {
@@ -35,17 +38,17 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
     final editedState = List<ChecklistItem>.from(state);
     editedState[index] = checklistItem;
     state = editedState;
-    await this.ref.read(checklistItemRepositoryProvider).update(checklistItem);
-    await this.ref.read(eventNbChecklistItemsProvider.notifier).update();
+    await ref.read(checklistItemRepositoryProvider).update(checklistItem);
+    await ref.read(eventNbChecklistItemsProvider.notifier).update();
   }
 
   Future<void> removeItem(String? uuid) async {
     if (uuid == null) return;
     state = List<ChecklistItem>.from(state)
       ..removeWhere((item) => item.uuid == uuid);
-    await this.ref.read(checklistItemRepositoryProvider).delete(uuid);
+    await ref.read(checklistItemRepositoryProvider).delete(uuid);
     await updateItemOrders();
-    await this.ref.read(eventNbChecklistItemsProvider.notifier).update();
+    await ref.read(eventNbChecklistItemsProvider.notifier).update();
   }
 
   void reorderItems(int oldIndex, int newIndex) {
@@ -62,11 +65,13 @@ class ChecklistItemNotifier extends StateNotifier<List<ChecklistItem>> {
       orderedItems[i].order = i + 1;
     }
     state = orderedItems;
-    await this.ref.read(checklistItemRepositoryProvider).updateAll(state);
+    await ref.read(checklistItemRepositoryProvider).updateAll(state);
   }
 }
 
-final checklistItemProvider = StateNotifierProvider.autoDispose
-    .family<ChecklistItemNotifier, List<ChecklistItem>, String>(
-      (ref, eventUid) => ChecklistItemNotifier(ref, eventUid),
-    );
+final checklistItemProvider =
+    NotifierProvider.family<
+      ChecklistItemNotifier,
+      List<ChecklistItem>,
+      String
+    >(ChecklistItemNotifier.new);

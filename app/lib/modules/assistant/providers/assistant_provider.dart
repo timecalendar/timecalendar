@@ -7,8 +7,9 @@ import 'package:timecalendar/modules/assistant/states/assistant_state.dart';
 import 'package:timecalendar/modules/import_ical/screens/import_ical/import_ical_screen.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
-class AssistantNotifier extends StateNotifier<AssistantState> {
-  AssistantNotifier() : super(AssistantState());
+class AssistantNotifier extends Notifier<AssistantState> {
+  @override
+  AssistantState build() => AssistantState();
 
   set school(SchoolForList? school) {
     state = state.copyWith(school: school, fallback: false);
@@ -41,6 +42,4 @@ class AssistantNotifier extends StateNotifier<AssistantState> {
 }
 
 final assistantProvider =
-    StateNotifierProvider<AssistantNotifier, AssistantState>(
-      (ref) => AssistantNotifier(),
-    );
+    NotifierProvider<AssistantNotifier, AssistantState>(AssistantNotifier.new);
