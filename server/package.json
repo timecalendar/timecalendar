@@ -152,6 +152,6 @@
     "clearMocks": true
   },
   "devDependencies": {
-    "msw": "^2.7.0"
+    "msw": "^2.14.6"
   }
 }
