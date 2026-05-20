@@ -53,7 +53,7 @@ describe("FirebaseService", () => {
     })
   })
 
-  it("should handle the error when the token does not exist", async () => {
+  it("returns null when the token is no longer registered (legacy message match)", async () => {
     jest.doMock("config/firebase.ts", () => {
       const send = jest.fn(() =>
         Promise.reject(new Error("Requested entity was not found.")),
@@ -66,7 +66,7 @@ describe("FirebaseService", () => {
       }
     })
 
-    const token = "123"
+    const token = "abcdef1234567890"
     const options: NotifyOptions = {
       notification: {
         title: "Test notification",
@@ -74,10 +74,38 @@ describe("FirebaseService", () => {
       },
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const module = require("modules/firebase/services/firebase.service")
     const mockedService: FirebaseService = new module.FirebaseService()
-    await mockedService.notify(token, options)
+    const result = await mockedService.notify(token, options)
+
+    expect(result).toBeNull()
+  })
+
+  it("returns null when the FCM error code is registration-token-not-registered", async () => {
+    jest.doMock("config/firebase.ts", () => {
+      const error = new Error("token not registered") as Error & {
+        code: string
+      }
+      error.code = "messaging/registration-token-not-registered"
+      const send = jest.fn(() => Promise.reject(error))
+
+      return {
+        messaging: jest.fn(() => ({
+          send,
+        })),
+      }
+    })
+
+    const token = "short"
+    const options: NotifyOptions = {
+      notification: { title: "x", body: "y" },
+    }
+
+    const module = require("modules/firebase/services/firebase.service")
+    const mockedService: FirebaseService = new module.FirebaseService()
+    const result = await mockedService.notify(token, options)
+
+    expect(result).toBeNull()
   })
 
   it("should throw an error when FCM returns an unknown error", async () => {
@@ -99,7 +127,6 @@ describe("FirebaseService", () => {
       },
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const module = require("modules/firebase/services/firebase.service")
     const mockedService: FirebaseService = new module.FirebaseService()
 
