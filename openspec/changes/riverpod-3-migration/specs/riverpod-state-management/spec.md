@@ -4,15 +4,20 @@
 
 The Flutter app SHALL declare `hooks_riverpod: ^3.3.1` (or any later
 v3 line) in `app/pubspec.yaml`, and `app/pubspec.lock` SHALL resolve
-`hooks_riverpod` to a version starting with `3.`. The transitive
-`state_notifier` package SHALL no longer appear in `app/pubspec.lock`.
+`hooks_riverpod` to a version starting with `3.`.
+
+Note: the transitive `state_notifier` 1.0.0 package remains in the
+lockfile because flutter_riverpod 3.3.1 / riverpod 3.2.1 still
+depend on it for backwards-compatibility re-exports. The migration
+requirement is that no direct `StateNotifier` usage survives in the
+codebase (see the "No StateNotifier usage" requirement below) — not
+that the package drops out of the lockfile.
 
 #### Scenario: Pubspec and lockfile reflect the v3 baseline
 
 - **WHEN** `flutter pub get` is run after the bump
 - **THEN** `app/pubspec.yaml` carries `hooks_riverpod: ^3.3.1` (or higher within the 3.x line)
 - **AND** `app/pubspec.lock` resolves `hooks_riverpod` to a version whose major is `3`
-- **AND** `app/pubspec.lock` contains no `state_notifier` entry
 
 ### Requirement: No StateNotifier usage
 
@@ -40,7 +45,16 @@ Riverpod 3 `Notifier` (synchronous state) or `AsyncNotifier`
 
 ### Requirement: Provider lifetime preserves v2 keepAlive default
 
-Providers in `app/lib/` SHALL preserve their Riverpod 2 lifetime under Riverpod 3's new `autoDispose`-by-default behaviour. Every provider that previously relied on the v2 default `keepAlive` lifetime (i.e., declared without the `.autoDispose` modifier) SHALL explicitly call `ref.keepAlive()` inside its `build()` body (for `Notifier` / `AsyncNotifier`) or inside its factory function (for `Provider` / `StateProvider` / `FutureProvider`). Providers that already declared `.autoDispose` in the v2 codebase SHALL retain autoDispose semantics and MAY drop the now-redundant modifier.
+Providers in `app/lib/` SHALL preserve their Riverpod 2 lifetime
+under Riverpod 3. Verified against riverpod 3.2.1 /
+flutter_riverpod 3.3.1 (during apply): every provider constructor
+(`Provider`, `NotifierProvider`, `AsyncNotifierProvider`,
+`FutureProvider`, `StateProvider`, `StreamProvider`, …) still defaults
+to `isAutoDispose: false`, so the v2 `keepAlive` lifetime is the v3
+default without any code change. Providers that previously opted into
+`.autoDispose` MUST keep that modifier; no explicit `ref.keepAlive()`
+calls are required on providers that previously relied on the default
+lifetime.
 
 #### Scenario: Long-lived providers keep state across listener gaps
 
@@ -58,11 +72,20 @@ Providers in `app/lib/` SHALL preserve their Riverpod 2 lifetime under Riverpod 
 
 ### Requirement: AsyncNotifier preserves v2 fail-fast UX
 
-Every `AsyncNotifier` subclass in `app/lib/` SHALL explicitly override
-the v3 retry policy to `null` (no automatic retry) so that a failed
-`build()` surfaces `AsyncValue.error` to the listening widgets on the
-first failure, matching the Riverpod 2 default behaviour the screens
-were built against.
+The app SHALL disable Riverpod 3's default exponential-backoff retry
+policy on AsyncNotifier failures so that a failed `build()` surfaces
+`AsyncValue.error` to the listening widgets on the first failure,
+matching the Riverpod 2 default behaviour the screens were built
+against. The override SHALL be applied at the root
+`ProviderContainer` (via the `retry:` parameter) so that it covers
+every current and future `AsyncNotifier` without per-provider
+boilerplate. Per-provider `retry:` overrides remain permitted for
+providers that want different policies, but are not required.
+
+Note: Riverpod 3 exposes the retry policy as a `Retry?` parameter on
+provider constructors and on `ProviderContainer` / `ProviderScope`;
+there is no `retry` getter on the `Notifier` / `AsyncNotifier`
+classes to override.
 
 #### Scenario: Failed load surfaces error immediately
 
@@ -71,10 +94,14 @@ were built against.
 - **THEN** the widget observes an `AsyncValue.error` synchronously after the failure
 - **AND** the `AsyncNotifier` does not automatically re-invoke `build()` after the failure
 
-#### Scenario: No AsyncNotifier subclass omits the retry override
+#### Scenario: Root ProviderContainer disables retry
 
-- **WHEN** `grep -rn 'extends AsyncNotifier' app/lib --include='*.dart'` is paired with `grep -rn 'get retry' app/lib --include='*.dart'`
-- **THEN** every file that declares `extends AsyncNotifier<…>` also declares a `retry` getter (or equivalent override) that evaluates to `null`
+- **WHEN** `app/lib/main.dart` is inspected
+- **THEN** the root `ProviderContainer` is constructed with a
+  `retry:` callback that returns `null` for every `(retryCount, error)`
+  pair, disabling the default v3 retry policy for every provider in
+  the app (per `parent?.retry` inheritance through child
+  `ProviderScope`s).
 
 ### Requirement: ref.listen uses the v3 signature
 
