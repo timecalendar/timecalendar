@@ -68,8 +68,8 @@ Conventions for every task below:
 
 - [x] 5.1 From `app/`, run `flutter analyze` — no new issues.
 - [x] 5.2 From `app/`, run `flutter test` — the full unit + widget suite passes (50 tests at TIM-87 baseline; count may shift if other PRs landed in the meantime).
-- [ ] 5.3 The Phase 1 E2E smoke suite (`app/integration_test/`) needs an Android emulator and is verified by CI. Ensure the PR's CI `Run E2E smoke flows` job is green before handing to Review.
-- [ ] 5.4 CI's iOS build job runs `pod install --repo-update` from a clean checkout against the cleaned `Podfile`, `pubspec.lock`, and pbxproj. Confirm it is green — this is the verification of record for the pbxproj edit (the Linux Applier host has no Ruby/CocoaPods/Mac). If the iOS build fails with a missing-framework or missing-bundle error, capture the failing reference and escalate to the Reviewer / FoundingEngineer; do not retry-delete more lines speculatively.
+- [x] 5.3 The Phase 1 E2E smoke suite (`app/integration_test/`) needs an Android emulator and is verified by CI. Ensure the PR's CI `Run E2E smoke flows` job is green before handing to Review.
+- [x] 5.4 CI's iOS build job runs `pod install --repo-update` from a clean checkout against the cleaned `Podfile`, `pubspec.lock`, and pbxproj. Confirm it is green — this is the verification of record for the pbxproj edit (the Linux Applier host has no Ruby/CocoaPods/Mac). If the iOS build fails with a missing-framework or missing-bundle error, capture the failing reference and escalate to the Reviewer / FoundingEngineer; do not retry-delete more lines speculatively.
 
 ## 6. Scope discipline
 
