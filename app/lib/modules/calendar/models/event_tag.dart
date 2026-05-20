@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:timecalendar_api/timecalendar_api.dart' as Api;
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar/modules/shared/utils/icons_helper.dart';
 
@@ -20,8 +19,7 @@ class EventTag {
       icon[i] = icon[i][0].toUpperCase() + icon[i].substring(1);
     }
     var iconName = icon.join('');
-    return getIconGuessFavorFA(name: iconName) ??
-        FontAwesomeIcons.graduationCap;
+    return getIconGuessFavorFA(name: iconName) ?? Icons.school;
   }
 
   factory EventTag.fromApi(Api.EventTag eventTag) {
