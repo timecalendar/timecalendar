@@ -15,7 +15,7 @@
     "react-query": "^3.39.3"
   },
   "devDependencies": {
-    "typescript": "^4.8.2"
+    "typescript": "^6.0.3"
   },
   "files": [
     "dist/**/*"
