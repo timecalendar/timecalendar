@@ -10,6 +10,7 @@ import 'package:timecalendar/modules/import_ical/hooks/use_loading_dialog.dart';
 import 'package:timecalendar/modules/import_ical/providers/ical_url_provider.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
 import 'package:timecalendar/modules/shared/constants/constants.dart';
+import 'package:timecalendar/modules/shared/utils/app_logger.dart';
 import 'package:timecalendar/modules/shared/utils/url_launcher.dart';
 import 'package:timecalendar/modules/suggestion/screens/suggestion_screen.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
@@ -107,7 +108,11 @@ ImportIcalState useImportIcalController(BuildContext context, WidgetRef ref) {
         return NotificationService().subscribeDelay();
       });
     } catch (e) {
-      print(e);
+      AppLogger.error(
+        'Failed to import iCal calendar',
+        name: 'import_ical',
+        error: e,
+      );
       Future.delayed(Duration(milliseconds: 50)).then((_) {
         loadingDialog.closeDialog();
       });
