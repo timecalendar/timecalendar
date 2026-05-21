@@ -29,6 +29,10 @@ class AppDateUtils {
         DateFormat.yMMMMd('fr').format(date);
   }
 
+  static String eventFormDayText(DateTime date) {
+    return DateFormat("EEEE dd MMMM", "fr").format(date);
+  }
+
   static String calendarHeaderText(DateTime? date) {
     if (date == null) return "";
     return DateFormat("E dd/MM", "fr").format(date);
