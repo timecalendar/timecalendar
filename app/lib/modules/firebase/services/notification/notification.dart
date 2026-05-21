@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:timecalendar/modules/shared/utils/app_logger.dart';
 
 typedef NotificationListener = Function(Map<String, dynamic> message);
 
@@ -38,13 +39,17 @@ class NotificationService {
     }
 
     return _firebaseMessaging.getToken().catchError((error) {
-      print('Error getting FCM token: $error');
+      AppLogger.error(
+        'Error getting FCM token',
+        name: 'notification',
+        error: error,
+      );
       return null;
     });
   }
 
   Future<dynamic> onMessage(Map<String, dynamic> message) async {
-    print('New notification: ' + message.toString());
+    AppLogger.info('New notification: $message', name: 'notification');
     if (message['action'] != null) {
       handleNotification(message);
     }
@@ -111,7 +116,11 @@ class NotificationService {
         sound: true,
       );
     } catch (e) {
-      print(e);
+      AppLogger.error(
+        'Failed to request notification permission',
+        name: 'notification',
+        error: e,
+      );
     }
   }
 

@@ -1,9 +1,10 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common"
+import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common"
 import { REDIS_KEY_PREFIX, REDIS_URL } from "config/constants"
 import Redis, { RedisOptions } from "ioredis"
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
+  private readonly logger = new Logger(RedisService.name)
   private client: Redis | null = null
 
   onModuleDestroy() {
@@ -23,7 +24,7 @@ export class RedisService implements OnModuleDestroy {
 
   newRedisInstance(options: RedisOptions = {}) {
     const redis = new Redis(REDIS_URL, options)
-    redis.on("error", (err) => console.error(err))
+    redis.on("error", (err) => this.logger.error("Redis connection error", err))
     return redis
   }
 

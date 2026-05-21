@@ -5,6 +5,7 @@ import 'package:timecalendar/modules/activity/models/calendar_change.dart';
 import 'package:timecalendar/modules/activity/models/calendar_log_event.dart';
 import 'package:timecalendar/modules/database/providers/simple_database.dart';
 import 'package:timecalendar/modules/shared/clients/timecalendar_client.dart';
+import 'package:timecalendar/modules/shared/utils/app_logger.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class CalendarLogRepository {
@@ -45,7 +46,11 @@ class CalendarLogRepository {
 
       return calendarLogs;
     } catch (error) {
-      print('error: $error');
+      AppLogger.error(
+        'Failed to fetch calendar logs from API, falling back to cache',
+        name: 'activity',
+        error: error,
+      );
       // If API call fails, return cached data
       return getCalendarLogsFromCache();
     }

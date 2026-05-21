@@ -47,9 +47,6 @@ class EventForUI {
       int endColumn = 1;
       int columns = 1;
 
-      // print('---');
-      // print(calendarEvent.event.title);
-
       // Check events before the current event
       List<EventForUI> overlapEvents = [];
       getOverlapEventsBefore(
@@ -78,24 +75,17 @@ class EventForUI {
         int maxInsertPosition = -1;
         int maxInsertColumns = 0;
 
-        // print('Overlaps: ');
-        // print(overlapEvents.map((e) => e.event.title));
-
         for (int columnIndex = 0; columnIndex < oldColumns; columnIndex++) {
           // Get events of the current column
           List<EventForUI> overlapsOfColumn = overlapEvents.where((ev) {
             return ev.startColumn <= columnIndex && ev.endColumn > columnIndex;
           }).toList();
-          // print(
-          //     '    Column $columnIndex (${overlapsOfColumn.map((e) => e.event.title)}) :');
 
           // Find the largest column where we can fit the event
           bool eventOverlapInColumn = false;
           for (EventForUI overlapOfColumn in overlapsOfColumn) {
             if (eventsOverlap(calendarEvent.event, overlapOfColumn.event)) {
               eventOverlapInColumn = true;
-              // print(
-              //     '      > OVERLAP - Overlap by ${overlapOfColumn.event.title}');
               break;
             }
           }
@@ -106,8 +96,6 @@ class EventForUI {
             insertColumns = 0;
             continue;
           }
-
-          // print('      > OK - There is space !');
 
           // We can insert in this position
           if (insertPosition == -1) {
@@ -124,12 +112,9 @@ class EventForUI {
 
         if (maxInsertPosition != -1) {
           // Insert in an existing column
-          // print('Insert in existing column, $maxInsertColumns');
           startColumn = maxInsertPosition;
           endColumn = maxInsertPosition + maxInsertColumns;
           columns = oldColumns;
-
-          // print('  > EXISTING - There is space in existing column');
         } else {
           // Add a new column
           // Resize these events
@@ -143,14 +128,8 @@ class EventForUI {
           startColumn = oldColumns;
           endColumn = newColumns;
           columns = newColumns;
-
-          // print('  > NEW_COL - Add a new column');
         }
-      } else {
-        // print('  > OK - There is space');
       }
-
-      // print('  > Placed at $startColumn - $endColumn (columns: $columns)');
 
       // Set the new event column position
       calendarEvent.startColumn = startColumn;
