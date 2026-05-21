@@ -24,7 +24,10 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/web/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone ./
+# Next 16 (Turbopack) traces the monorepo directory as the workspace root, so
+# the standalone bundle nests the self-contained app under a `web/` directory.
+# Copy that inner directory so `server.js` lands at the WORKDIR root.
+COPY --from=builder --chown=nextjs:nodejs /app/web/.next/standalone/web ./
 COPY --from=builder --chown=nextjs:nodejs /app/web/.next/static ./.next/static
 USER nextjs
 EXPOSE 3000
