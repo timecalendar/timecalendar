@@ -1,3 +1,4 @@
+import { INestApplicationContext } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { useContainer } from "class-validator"
 import compression from "compression"
@@ -5,7 +6,10 @@ import helmet from "helmet"
 import { ErrorsInterceptor } from "modules/shared/interceptors/errors.interceptor"
 import { CustomValidationPipe } from "modules/shared/pipes/custom-validation.pipe"
 
-const configureMainApp = (module: any, app: NestExpressApplication) => {
+const configureMainApp = (
+  module: INestApplicationContext,
+  app: NestExpressApplication,
+) => {
   useContainer(module, { fallbackOnErrors: true })
   app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"])
   app.useGlobalPipes(

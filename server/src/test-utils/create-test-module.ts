@@ -11,13 +11,13 @@ type Provider<T> = ClassProvider<T> | ValueProvider<T> | FactoryProvider<T>
 
 const isClassProvider = <T>(
   provider: Provider<T>,
-): provider is ClassProvider<T> => (provider as any).useClass
+): provider is ClassProvider<T> => "useClass" in provider
 const isValueProvider = <T>(
   provider: Provider<T>,
-): provider is ValueProvider<T> => (provider as any).useValue
+): provider is ValueProvider<T> => "useValue" in provider
 const isFactoryProvider = <T>(
   provider: Provider<T>,
-): provider is FactoryProvider<T> => (provider as any).useFactory
+): provider is FactoryProvider<T> => "useFactory" in provider
 
 export type CreateTestModuleOptions = {
   overrides?: Provider<unknown>[]
