@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/school/controllers/school_selection_controller.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_item.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_not_found_button.dart';
+import 'package:timecalendar/modules/shared/utils/app_logger.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
 class SchoolList extends HookConsumerWidget {
@@ -26,8 +27,12 @@ class SchoolList extends HookConsumerWidget {
 
     schools.whenOrNull(
       error: (err, stack) {
-        print(err);
-        print(stack);
+        AppLogger.error(
+          'Failed to load school list',
+          name: 'school',
+          error: err,
+          stackTrace: stack,
+        );
       },
     );
 

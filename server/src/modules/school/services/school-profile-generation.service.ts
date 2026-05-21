@@ -140,7 +140,6 @@ export class SchoolProfileGenerationService {
       this.logger.log(`Successfully saved profile for school ID: ${schoolId}`)
       return savedProfile
     } catch (error) {
-      console.error(error)
       this.logger.error(
         `Failed to generate profile for school ${school.name}:`,
         error,
