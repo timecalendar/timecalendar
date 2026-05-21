@@ -3,7 +3,11 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timecalendar/modules/shared/utils/app_logger.dart';
 
-typedef NotificationListener = Function(Map<String, dynamic> message);
+/// A handler for an incoming push notification payload.
+///
+/// Named `NotificationCallback` rather than `NotificationListener` to avoid
+/// shadowing Flutter's own `NotificationListener<T>` widget.
+typedef NotificationCallback = void Function(Map<String, dynamic> message);
 
 class NotificationAction {
   static const String CALENDAR_CHANGED = 'calendar_changed';
@@ -13,8 +17,7 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
-  final List<Function> calendarUpdateListeners = [];
-  final Map<String, List<Function>> listeners = {};
+  final Map<String, List<NotificationCallback>> listeners = {};
 
   factory NotificationService() {
     return _instance;
@@ -88,7 +91,7 @@ class NotificationService {
     });
   }
 
-  void addEventListener(String action, NotificationListener listener) {
+  void addEventListener(String action, NotificationCallback listener) {
     if (!this.listeners.containsKey(action)) {
       this.listeners[action] = [];
     }
@@ -96,7 +99,7 @@ class NotificationService {
     this.listeners[action]!.add(listener);
   }
 
-  void removeEventListener(String action, NotificationListener listener) {
+  void removeEventListener(String action, NotificationCallback listener) {
     if (!this.listeners.containsKey(action)) {
       return;
     }
