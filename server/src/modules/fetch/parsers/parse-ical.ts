@@ -1,14 +1,20 @@
 import { BadRequestException } from "@nestjs/common"
-import { parseICS } from "node-ical"
+import { parseICS, ParameterValue, VEvent } from "node-ical"
 import {
   EventType,
   FetcherCalendarEvent,
 } from "modules/fetch/models/event.model"
-import { assert } from "modules/shared/helpers/assert"
 import { trimNewLines } from "modules/shared/helpers/trim"
 
 const dateToUTC = (tzDate: Date): Date =>
   new Date(Date.UTC(tzDate.getFullYear(), tzDate.getMonth(), tzDate.getDate()))
+
+/**
+ * Extracts the plain text of a node-ical `ParameterValue`, which is either the
+ * raw string or an object carrying ICalendar parameters (e.g. `LANGUAGE`).
+ */
+const paramText = (value: ParameterValue | undefined): string =>
+  typeof value === "object" ? value.val : value ?? ""
 
 /**
  * Parses a raw ICal
@@ -22,21 +28,19 @@ export const parseIcal = (strIcal: string) => {
   const raw = parseICS(strIcal)
 
   const events = Object.values(raw)
+    .filter((ev): ev is VEvent => ev?.type === "VEVENT")
     .filter((ev) => ev.start)
-    .filter((ev) => ev.type !== "VTIMEZONE")
     .map((ev) => {
-      assert(ev.type === "VEVENT")
-
       const allDay = ev.datetype === "date"
 
       const event: FetcherCalendarEvent = {
         uid: ev.uid,
-        title: (ev.summary || "").trim(),
-        allDay: ev.datetype === "date",
+        title: paramText(ev.summary).trim(),
+        allDay,
         start: allDay ? dateToUTC(ev.start) : ev.start,
         end: allDay ? dateToUTC(ev.end || ev.start) : ev.end || ev.start,
-        description: trimNewLines(ev.description || ""),
-        location: ev.location || "",
+        description: trimNewLines(paramText(ev.description)),
+        location: paramText(ev.location),
         type: EventType.CLASS,
         teachers: [],
         tags: [],

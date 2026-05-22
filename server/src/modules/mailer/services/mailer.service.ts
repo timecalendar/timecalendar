@@ -2,20 +2,15 @@ import { existsSync } from "fs"
 import { join } from "path"
 import { Injectable } from "@nestjs/common"
 import { renderFile } from "ejs"
-import { createTransport, Transporter } from "nodemailer"
+import { createTransport } from "nodemailer"
 import Mail from "nodemailer/lib/mailer"
-import SMTPTransport from "nodemailer/lib/smtp-transport"
 import { SMTP_FROM, SMTP_URL } from "config/constants"
 import { MailerRecipient } from "modules/mailer/models/mailer-recipient.model"
 import { AppMailerTemplate } from "modules/mailer/models/mailer-template.model"
 
 @Injectable()
 export class MailerService {
-  private transporter: Transporter<SMTPTransport.SentMessageInfo>
-
-  constructor() {
-    this.transporter = createTransport(SMTP_URL)
-  }
+  private readonly transporter = createTransport(SMTP_URL)
 
   private getRecipientOptions(recipient: MailerRecipient): Mail.Options {
     return {

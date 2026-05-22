@@ -75,5 +75,43 @@ describe("IcalFetcher", () => {
         },
       ])
     })
+
+    it("should read properties carrying ICalendar parameters", () => {
+      const ical = readFileSync(
+        join(__dirname, "ical-parameterized.ics"),
+        "utf-8",
+      )
+
+      const events = parseIcal(ical)
+
+      expect(events).toMatchObject([
+        {
+          uid: "PARAM-EVENT-0001",
+          title: "Parameterised Course",
+          allDay: false,
+          start: new Date("2021-08-30T07:00:00.000Z"),
+          end: new Date("2021-08-30T08:00:00.000Z"),
+          location: "Main Hall",
+        },
+      ])
+    })
+
+    it("should map a recurring event to a single entry", () => {
+      const ical = readFileSync(join(__dirname, "ical-recurring.ics"), "utf-8")
+
+      const events = parseIcal(ical)
+
+      expect(events).toHaveLength(1)
+      expect(events).toMatchObject([
+        {
+          uid: "RECURRING-EVENT-0001",
+          title: "Weekly Lecture",
+          allDay: false,
+          start: new Date("2021-08-30T07:00:00.000Z"),
+          end: new Date("2021-08-30T08:00:00.000Z"),
+          location: "Room A",
+        },
+      ])
+    })
   })
 })
