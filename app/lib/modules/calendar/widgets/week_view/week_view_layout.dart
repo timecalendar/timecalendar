@@ -46,6 +46,11 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   ScrollController? _weekScrollController;
   ScrollController? _hourScrollController;
 
+  /// Captured once in [initState] so [dispose] and the scroll callbacks can
+  /// reach the store without calling `ref` after the widget is unmounted —
+  /// `ref` is not safe to use in `State.dispose()`.
+  late final CalendarProvider _calendarProvider;
+
   final headerHeight = 60.0;
 
   final columnGap = 2.0;
@@ -80,10 +85,8 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   void initState() {
     super.initState();
 
-    ref
-        .read(calendarProvider)
-        .currentDayNotifier!
-        .addListener(onCurrentDayChange);
+    _calendarProvider = ref.read(calendarProvider);
+    _calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
     _syncScroll = SyncScrollController([]);
 
@@ -96,7 +99,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     // }
 
     // Load the saved scroll offset
-    var savedScrollOffset = ref.read(calendarProvider).savedScrollOffset;
+    var savedScrollOffset = _calendarProvider.savedScrollOffset;
     if (savedScrollOffset != null) {
       _syncScroll!.currentOffset = savedScrollOffset;
       _hourScrollController = ScrollController(
@@ -122,7 +125,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     var week = (_weekScrollController!.offset / widget.calendarWidth).floor();
     if (week != widget.currentWeek) {
       // Save the current week in our provider
-      ref.read(calendarProvider).savedWeek = week;
+      _calendarProvider.savedWeek = week;
       setState(() {
         widget.updateCurrentWeek(
           (_weekScrollController!.offset / widget.calendarWidth).floor(),
@@ -132,16 +135,13 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   }
 
   void onVerticalScroll(double offset) {
-    ref.read(calendarProvider).savedScrollOffset = offset;
+    _calendarProvider.savedScrollOffset = offset;
   }
 
   @override
   void dispose() {
     _syncScroll!.removeListener(onVerticalScroll);
-    ref
-        .read(calendarProvider)
-        .currentDayNotifier!
-        .removeListener(onCurrentDayChange);
+    _calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
     super.dispose();
   }
 
@@ -162,7 +162,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     _weekScrollController!.animateTo(
       widget.calendarWidth *
           AppDateUtils.dateToWeekNumber(
-            ref.read(calendarProvider).currentDayNotifier!.value,
+            _calendarProvider.currentDayNotifier!.value,
           ),
       duration: Duration(milliseconds: 500),
       curve: Curves.easeIn,

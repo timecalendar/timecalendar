@@ -41,22 +41,22 @@ class _PlanningViewLayoutState extends ConsumerState<PlanningViewLayout> {
   var currentDayIndex = 0;
   List<EventsByDay> _eventsByDay = [];
 
+  /// Captured once in [initState] so [dispose] and the position listener can
+  /// reach the store without calling `ref` after the widget is unmounted —
+  /// `ref` is not safe to use in `State.dispose()`.
+  late final CalendarProvider _calendarProvider;
+
   @override
   void initState() {
     super.initState();
-    ref
-        .read(calendarProvider)
-        .currentDayNotifier!
-        .addListener(onCurrentDayChange);
+    _calendarProvider = ref.read(calendarProvider);
+    _calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
     _itemPositionsListener.itemPositions.addListener(() {
       if (_eventsByDay.isEmpty) return;
       var value = _itemPositionsListener.itemPositions.value;
       int index = value.first.index;
       if (index !=
-          getCurrentDayIndex(
-            _eventsByDay,
-            ref.read(calendarProvider).currentDay,
-          )) {
+          getCurrentDayIndex(_eventsByDay, _calendarProvider.currentDay)) {
         widget.updateCurrentDay(_eventsByDay[index].day);
       }
     });
@@ -64,20 +64,14 @@ class _PlanningViewLayoutState extends ConsumerState<PlanningViewLayout> {
 
   @override
   void dispose() {
+    _calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
     super.dispose();
-    ref
-        .read(calendarProvider)
-        .currentDayNotifier!
-        .removeListener(onCurrentDayChange);
   }
 
   void onCurrentDayChange() {
     if (_eventsByDay.isEmpty) return;
     _itemScrollController.jumpTo(
-      index: getCurrentDayIndex(
-        _eventsByDay,
-        ref.read(calendarProvider).currentDay,
-      ),
+      index: getCurrentDayIndex(_eventsByDay, _calendarProvider.currentDay),
     );
   }
 
