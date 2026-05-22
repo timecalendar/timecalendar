@@ -52,8 +52,10 @@ Conventions:
 
 - [x] 4.1 `npm run build` (`nest build`) — compiles with no error, including
   `tracer.ts` and `school-profile-generation.service.ts`.
-- [x] 4.2 `npm run test` (jest) — green: 58 suites, 288 tests, 0 failures.
-  The 4 `parse-ical` unit tests (the node-ical regression gate) pass.
+- [x] 4.2 `npm run test` (jest) — green: 58 suites, 290 tests, 0 failures.
+  The 6 `parse-ical` unit tests (the node-ical regression gate) pass —
+  including 2 added in review for node-ical 0.26's parameterized-property
+  and recurring-event paths.
 - [x] 4.3 `npm run lint` — passes, exit 0, no error.
 - [x] 4.4 Run `npm audit` again — see the audit delta in the notes below.
 - [x] 4.5 The diff is `server/package.json`, `server/package-lock.json`,
@@ -118,7 +120,7 @@ need upstream releases of those packages — tracked as a follow-up issue.
 ### Verification
 
 - `npm run build` (`nest build`) — green.
-- `npm run test` (jest) — 58 suites, 288 tests, 0 failures.
+- `npm run test` (jest) — 58 suites, 290 tests, 0 failures.
 - `npm run lint` — exit 0, no error.
 - CI `Build server image` + `test` + the Phase 1 E2E smoke suite
   ([TIM-7](/TIM/issues/TIM-7)) run on PR push — must be green before merge.

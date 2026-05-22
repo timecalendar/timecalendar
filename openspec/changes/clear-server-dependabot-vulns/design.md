@@ -18,10 +18,13 @@ So the server consumes school-timetable feeds where every session is a
 materialised `VEVENT`; recurrence expansion is not part of the product path.
 The risk surface is therefore: does `parseICS()` still return the same scalar
 `VEVENT` fields, and does it still resolve `TZID` (the `ical.ics` fixture has
-`DTSTART;TZID=Europe/Paris`)? The 4 existing `parse-ical` unit tests
-(`empty`, normal, all-day, empty-event — incl. the Paris-tz conversion to
-`07:00Z`) are the regression gate. Apply runs them after the bump; any
-failure stops the change for re-assessment (fallback: keep `node-ical@0.14`
+`DTSTART;TZID=Europe/Paris`)? The `parse-ical` unit tests are the regression
+gate — the four existing cases (`empty`, normal, all-day, empty-event, incl.
+the Paris-tz conversion to `07:00Z`) plus two added during review: a
+parameterised property (node-ical 0.26's `{val, params}` object form) and a
+recurring `VEVENT` (`RRULE`) that must still map to a single entry. Apply
+runs them after the bump; any failure stops the change for re-assessment
+(fallback: keep `node-ical@0.14`
 and pin its nested `axios` to `0.31.1` via `overrides`).
 
 ## OpenTelemetry — `Resource` API migration

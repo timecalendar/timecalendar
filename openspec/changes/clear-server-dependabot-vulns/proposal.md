@@ -21,7 +21,7 @@ ESLint, `firebase-admin` all stay on their B9 baseline.
   own `axios@^1.16` was never affected. node-ical 0.14→0.26 changes recurrence
   handling, but `parse-ical.ts` does not expand recurrences — it maps top-level
   `VEVENT`s only and no `.ts` source touches `rrule` — so the blast radius is
-  the 4 `parse-ical` unit tests (see `design.md`).
+  the `parse-ical` unit tests (see `design.md`).
 - **`nodemailer` `^6.9.4` → `^8.0.7`** + **`@types/nodemailer` `^6.4.4` →
   `^8.0.0`** — clears **4 `nodemailer` advisories** (major 6→8).
 - **`@opentelemetry/sdk-node` `^0.57.1` → `^0.218.0`**,
@@ -66,6 +66,6 @@ ESLint, `firebase-admin` all stay on their B9 baseline.
   - `mailer.service.ts` — drops the explicit `Transporter` generic
     annotation (nodemailer 8 widened it), inferring it from `createTransport`.
 - The regression gate is `nest build` + `npm run test` + `npm run lint`
-  green, the 4 `parse-ical` unit tests green, and the Phase 1 E2E smoke
+  green, the `parse-ical` unit tests green, and the Phase 1 E2E smoke
   suite ([TIM-7](/TIM/issues/TIM-7)) green in CI.
 - No `app/`, `web/`, or `openapi/` change.

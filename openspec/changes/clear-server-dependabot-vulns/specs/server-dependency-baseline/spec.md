@@ -32,7 +32,7 @@ The server's runtime and observability dependencies that carry known security ad
 - **WHEN** `npm run build`, `npm run test`, and `npm run lint` are run on the
   upgraded server
 - **THEN** `nest build` compiles with no error
-- **AND** the jest suite passes, including the four `parse-ical` unit tests
+- **AND** the jest suite passes, including the `parse-ical` unit tests
   that guard `node-ical` iCal parsing
 - **AND** `npm run lint` passes with no new error
 - **AND** the Phase 1 E2E smoke suite passes in CI
