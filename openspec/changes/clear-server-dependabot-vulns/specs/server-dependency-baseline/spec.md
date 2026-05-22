@@ -11,12 +11,15 @@ The server's runtime and observability dependencies that carry known security ad
   `@opentelemetry/auto-instrumentations-node` `^0.76.0`, and
   `@opentelemetry/exporter-trace-otlp-http` `^0.218.0` (the OTel `0.x`
   packages move in lockstep)
-- `uuid` `^14.0.0`, with the redundant `@types/uuid` package removed
-  (`uuid@14` ships its own type declarations)
+- `uuid` `^11.1.1` (the patched floor; the ESM-only `uuid@14` breaks the
+  CommonJS jest runtime), with the redundant `@types/uuid` package removed
+  (`uuid@11` ships its own type declarations)
 - `ws` forced to `^8.20.1` via an npm `overrides` entry (the patched line is
   unreachable by `npm update` because `engine.io-client` pins `ws@~8.17.1`)
-- `ai` exact-pinned to `5.0.52` (a caret range floats high enough to pull
-  `@ai-sdk/gateway` 2.x and break the build via `@ai-sdk` generic-type skew)
+- `ai` (`^5.0.192`) and its companion `@ai-sdk/openai` (`^2.0.106`) bumped
+  together so the whole `@ai-sdk` family resolves to one internally consistent
+  set — bumping `ai` alone leaves it skewed against the old `@ai-sdk/openai`
+  and breaks the build via `@ai-sdk` generic-type mismatch
 
 #### Scenario: Batch B advisory clusters are cleared
 
