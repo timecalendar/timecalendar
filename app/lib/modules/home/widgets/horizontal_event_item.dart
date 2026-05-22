@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/event_details/providers/event_nb_checklist_items_provider.dart';
 import 'package:timecalendar/modules/event_details/screens/event_details_screen.dart';
@@ -14,7 +13,7 @@ class HorizontalEventItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
+    final settings = ref.watch(settingsProvider);
     final eventChecklistItems = ref.watch(getEventNbChecklistItemsProvider)(
       event.uid,
     );
@@ -33,7 +32,7 @@ class HorizontalEventItem extends ConsumerWidget {
           ],
         ),
         child: Material(
-          color: settingsProvider.currentTheme.cardColor,
+          color: settings.currentTheme.cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () {
@@ -54,7 +53,7 @@ class HorizontalEventItem extends ConsumerWidget {
                         width: 6,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(5),
-                          color: settingsProvider.getEventInterfaceColor(event),
+                          color: settings.getEventInterfaceColor(event),
                         ),
                       ),
                       SizedBox(width: 6),

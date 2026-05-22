@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/personal_event/controllers/add_personal_event_controller.dart';
 import 'package:timecalendar/modules/personal_event/models/personal_event.dart';
 import 'package:timecalendar/modules/personal_event/states/add_personal_event_form_state.dart';
+import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
 import '../../../support/settings_provider.dart';
 
@@ -35,12 +36,20 @@ PersonalEvent _buildEvent({
 
 /// Reads the controller while keeping its `autoDispose` provider alive for the
 /// duration of the test.
+///
+/// In edit mode the controller's `build` reads `settingsProvider` to convert
+/// the event colour for display, so pass [settings] (a loaded
+/// `SettingsProvider`) to override it; add mode never touches it.
 ({
   AddPersonalEventController controller,
   AddPersonalEventFormState Function() readState,
 })
-_setUp(PersonalEvent? event) {
-  final container = ProviderContainer();
+_setUp(PersonalEvent? event, {SettingsProvider? settings}) {
+  final container = ProviderContainer(
+    overrides: [
+      if (settings != null) settingsProvider.overrideWith((ref) => settings),
+    ],
+  );
   addTearDown(container.dispose);
   final provider = addPersonalEventControllerProvider(event);
   container.listen(provider, (_, __) {});
@@ -68,10 +77,10 @@ void main() {
     });
 
     test('edit mode seeds the form from the event', () async {
-      await loadSettingsProvider();
+      final settings = await loadSettingsProvider();
       final event = _buildEvent();
 
-      final state = _setUp(event).readState();
+      final state = _setUp(event, settings: settings).readState();
 
       expect(state.title, 'Original title');
       expect(state.location, 'Room A');
@@ -183,9 +192,9 @@ void main() {
     test(
       'edit mode keeps the original colour when it was not changed',
       () async {
-        await loadSettingsProvider();
+        final settings = await loadSettingsProvider();
         final event = _buildEvent(color: const Color(0xFFABCDEF));
-        final controller = _setUp(event).controller;
+        final controller = _setUp(event, settings: settings).controller;
 
         controller.setTitle('Renamed');
         // The converter would change the colour — assert it is NOT applied.
@@ -200,8 +209,8 @@ void main() {
     test(
       'edit mode applies the converter once the colour was changed',
       () async {
-        await loadSettingsProvider();
-        final controller = _setUp(_buildEvent()).controller;
+        final settings = await loadSettingsProvider();
+        final controller = _setUp(_buildEvent(), settings: settings).controller;
 
         controller.setColor(const Color(0xFF010203));
         final built = controller.buildEvent((_) => const Color(0xFF999999));

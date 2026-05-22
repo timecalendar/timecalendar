@@ -71,7 +71,8 @@ class AddPersonalEventForm extends HookConsumerWidget {
       if (!form.validate() || !ref.read(provider).isEndAfterStart) return;
       form.save();
       final saved = controller.buildEvent(
-        (color) => SettingsProvider().getEventColorToSave(color) ?? color,
+        (color) =>
+            ref.read(settingsProvider).getEventColorToSave(color) ?? color,
       );
       await ref.read(personalEventsProvider.notifier).addPersonalEvent(saved);
       if (!context.mounted) return;

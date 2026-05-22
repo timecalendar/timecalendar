@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/firebase/services/notification/notification.dart';
@@ -14,7 +14,7 @@ enum CalendarOptions {
   PlanningView,
 }
 
-class CalendarHeader extends StatelessWidget {
+class CalendarHeader extends ConsumerWidget {
   const CalendarHeader({
     Key? key,
     required this.appBarHeight,
@@ -54,8 +54,8 @@ class CalendarHeader extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
     return Container(
       height: appBarHeight,
       child: Row(
@@ -93,11 +93,11 @@ class CalendarHeader extends StatelessWidget {
                   break;
 
                 case CalendarOptions.WeekView:
-                  changeView(CalendarViewType.Week, settingsProvider);
+                  changeView(CalendarViewType.Week, settings);
                   break;
 
                 case CalendarOptions.PlanningView:
-                  changeView(CalendarViewType.Planning, settingsProvider);
+                  changeView(CalendarViewType.Planning, settings);
                   break;
               }
             },

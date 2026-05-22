@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldProvider;
 import 'package:timecalendar/modules/add_grade/providers/add_grade_provider.dart';
 import 'package:timecalendar/modules/assistant/providers/assistant_provider.dart';
 import 'package:timecalendar/modules/assistant/states/assistant_finished_result.dart';
@@ -20,10 +19,7 @@ class AssistantScreen extends HookConsumerWidget {
     final provider = ref.watch(assistantProvider);
     final calendarCreation = ref.watch(calendarCreationServiceProvider);
 
-    final settingsProvider = oldProvider.Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    );
+    final settings = ref.read(settingsProvider);
     final gradeName = ref.watch(addGradeNameProvider);
 
     final Map<String, dynamic> queryParameters = {
@@ -32,7 +28,7 @@ class AssistantScreen extends HookConsumerWidget {
           ? {'schoolId': provider.school!.id}
           : {'assistant': 'select'},
       ...provider.fallback ? {'fallback': 'true'} : {},
-      ...settingsProvider.darkMode ? {'darkMode': 'true'} : {},
+      ...settings.darkMode ? {'darkMode': 'true'} : {},
       ...gradeName.length > 0 ? {'gradeName': gradeName} : {},
     };
 

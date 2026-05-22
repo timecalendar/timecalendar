@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/screens/user_calendars_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
@@ -10,10 +10,10 @@ import 'package:timecalendar/modules/profile/widgets/profile_header.dart';
 import 'package:timecalendar/modules/profile/widgets/profile_item.dart';
 import 'package:timecalendar/modules/about/screens/about_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
 
     return SingleChildScrollView(
       child: Column(
@@ -25,7 +25,7 @@ class ProfileScreen extends StatelessWidget {
             action: () {
               Navigator.of(context).pushNamed(ActivityScreen.routeName);
             },
-            unread: settingsProvider.newActivity,
+            unread: settings.newActivity,
           ),
           ProfileItem(
             title: 'Calendriers',

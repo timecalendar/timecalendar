@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/ui/events_by_day.dart';
@@ -40,23 +39,24 @@ class _PlanningViewLayoutState extends ConsumerState<PlanningViewLayout> {
   var currentIndex = -1;
   var lastEnd;
   var currentDayIndex = 0;
-  late CalendarProvider calendarProvider;
   List<EventsByDay> _eventsByDay = [];
+
+  /// Captured once in [initState] so [dispose] and the position listener can
+  /// reach the store without calling `ref` after the widget is unmounted —
+  /// `ref` is not safe to use in `State.dispose()`.
+  late final CalendarProvider _calendarProvider;
 
   @override
   void initState() {
     super.initState();
-    calendarProvider = oldprovider.Provider.of<CalendarProvider>(
-      context,
-      listen: false,
-    );
-    calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
+    _calendarProvider = ref.read(calendarProvider);
+    _calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
     _itemPositionsListener.itemPositions.addListener(() {
       if (_eventsByDay.isEmpty) return;
       var value = _itemPositionsListener.itemPositions.value;
       int index = value.first.index;
       if (index !=
-          getCurrentDayIndex(_eventsByDay, calendarProvider.currentDay)) {
+          getCurrentDayIndex(_eventsByDay, _calendarProvider.currentDay)) {
         widget.updateCurrentDay(_eventsByDay[index].day);
       }
     });
@@ -64,14 +64,14 @@ class _PlanningViewLayoutState extends ConsumerState<PlanningViewLayout> {
 
   @override
   void dispose() {
+    _calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
     super.dispose();
-    calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
   }
 
   void onCurrentDayChange() {
     if (_eventsByDay.isEmpty) return;
     _itemScrollController.jumpTo(
-      index: getCurrentDayIndex(_eventsByDay, calendarProvider.currentDay),
+      index: getCurrentDayIndex(_eventsByDay, _calendarProvider.currentDay),
     );
   }
 
@@ -108,25 +108,16 @@ class _PlanningViewLayoutState extends ConsumerState<PlanningViewLayout> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
-      context,
-      listen: true,
-    );
-    calendarProvider = oldprovider.Provider.of<CalendarProvider>(
-      context,
-      listen: true,
-    );
+    final settings = ref.watch(settingsProvider);
+    final calendar = ref.watch(calendarProvider);
     final eventsByDayAsync = ref.watch(eventsForPlanningViewProvider);
     return eventsByDayAsync.when(
       data: (eventsByDay) {
         _eventsByDay = eventsByDay;
-        currentDayIndex = getCurrentDayIndex(
-          eventsByDay,
-          calendarProvider.currentDay,
-        );
+        currentDayIndex = getCurrentDayIndex(eventsByDay, calendar.currentDay);
         return Container(
           decoration: BoxDecoration(
-            color: settingsProvider.darkMode ? Color(0xff222222) : Colors.white,
+            color: settings.darkMode ? Color(0xff222222) : Colors.white,
           ),
           child: ScrollablePositionedList.builder(
             scrollDirection: Axis.vertical,

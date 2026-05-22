@@ -1,33 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:pref/pref.dart';
-import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/firebase/services/firebase.dart';
 import 'package:timecalendar/modules/hidden_event/screens/hidden_events_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/settings/widgets/app_pref_title.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   static const routeName = '/settings';
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // TODO: Calendar notification
   // int? _oldDateLimit;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration.zero).then((_) async {
-      // var settingsProvider =
-      //     Provider.of<SettingsProvider>(context, listen: false);
-
-      // setState(() {
-      //   _oldDateLimit = settingsProvider.dateLimit;
-      // });
-    });
-  }
 
   // String _dateLimitText(int? dateLimit) {
   //   switch (dateLimit) {
@@ -69,11 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _onSettingsChanged() async {
-    final settingsProvider = Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    );
-    await settingsProvider.loadSettings();
+    await ref.read(settingsProvider).loadSettings();
   }
 
   Future<void> changeNotificationSettings(BuildContext context) async {
@@ -92,13 +75,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    );
+    final settings = ref.read(settingsProvider);
 
     return PrefService(
-      service: settingsProvider.prefServiceShared!,
+      service: settings.prefServiceShared!,
       child: Scaffold(
         appBar: AppBar(title: Text('Paramètres')),
         body: Builder(
@@ -197,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'Afficher les cours de type similaire (CM, TD, TP) de la même couleur',
                 ),
                 onChange: (_) {
-                  settingsProvider.loadSettings();
+                  settings.loadSettings();
                 },
               ),
               PrefSwitch(
@@ -205,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 pref: 'show_weekends',
                 subtitle: Text('Afficher les week-ends dans la vue semaine'),
                 onChange: (_) {
-                  settingsProvider.loadSettings();
+                  settings.loadSettings();
                 },
               ),
               ListTile(
@@ -240,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                   dismissOnChange: true,
                 ),
-                subtitle: Text(_themeText(settingsProvider.theme)),
+                subtitle: Text(_themeText(settings.theme)),
                 onSubmit: () async {
                   _onSettingsChanged();
                 },
@@ -262,16 +242,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                   dismissOnChange: true,
                 ),
-                subtitle: Text(
-                  _startupScreenText(settingsProvider.startupScreen),
-                ),
+                subtitle: Text(_startupScreenText(settings.startupScreen)),
                 onSubmit: () async {
                   // Reload settings
                   await _onSettingsChanged();
 
-                  FirebaseService.setStartupScreen(
-                    settingsProvider.startupScreen,
-                  );
+                  FirebaseService.setStartupScreen(settings.startupScreen);
                 },
               ),
             ],

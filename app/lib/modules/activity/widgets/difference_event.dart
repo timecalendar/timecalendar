@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
@@ -8,7 +8,7 @@ import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
 enum DifferenceEventType { New, Old, Changed }
 
-class DifferenceEvent extends StatelessWidget {
+class DifferenceEvent extends ConsumerWidget {
   DifferenceEvent({
     Key? key,
     required this.event,
@@ -76,8 +76,8 @@ class DifferenceEvent extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 15),
@@ -115,7 +115,7 @@ class DifferenceEvent extends StatelessWidget {
           ),
         ),
         decoration: BoxDecoration(
-          color: settingsProvider.currentTheme.cardColor,
+          color: settings.currentTheme.cardColor,
           borderRadius: BorderRadius.circular(15),
         ),
       ),

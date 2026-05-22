@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/controllers/sync_scroll_controller.dart';
 import 'package:timecalendar/modules/calendar/helpers/events_helper.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
@@ -10,7 +10,7 @@ import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 import 'package:timecalendar/modules/calendar/widgets/week_view/calendar_rectangle_event.dart';
 
-class CalendarWeek extends StatefulWidget {
+class CalendarWeek extends ConsumerStatefulWidget {
   const CalendarWeek({
     Key? key,
     required this.screenHeight,
@@ -49,7 +49,7 @@ class CalendarWeek extends StatefulWidget {
   _CalendarWeekState createState() => _CalendarWeekState();
 }
 
-class _CalendarWeekState extends State<CalendarWeek> {
+class _CalendarWeekState extends ConsumerState<CalendarWeek> {
   ScrollController? _currentWeekScrollController;
 
   @override
@@ -117,9 +117,8 @@ class _CalendarWeekState extends State<CalendarWeek> {
     ];
   }
 
-  List<Widget> getEventWidgets(int day) {
+  List<Widget> getEventWidgets(int day, SettingsProvider settings) {
     var events = EventForUI.listFromEvents(widget.weekEvents[day]);
-    var settingsProvider = Provider.of<SettingsProvider>(context);
 
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
@@ -132,7 +131,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
           left: calendarEvent.startX * widget.dayWidth,
           width: (calendarEvent.endX - calendarEvent.startX) * widget.dayWidth,
           child: Material(
-            color: settingsProvider.getEventInterfaceColor(calendarEvent.event),
+            color: settings.getEventInterfaceColor(calendarEvent.event),
             borderRadius: BorderRadius.circular(4),
             child: InkWell(
               onTap: () {
@@ -175,7 +174,7 @@ class _CalendarWeekState extends State<CalendarWeek> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider = Provider.of<SettingsProvider>(context);
+    final settings = ref.watch(settingsProvider);
 
     return Container(
       height: widget.screenHeight,
@@ -289,12 +288,11 @@ class _CalendarWeekState extends State<CalendarWeek> {
                                   left: widget.columnGap,
                                   width: widget.dayWidth - 2 * widget.columnGap,
                                   child: Container(
-                                    color:
-                                        settingsProvider.currentTheme.lineColor,
+                                    color: settings.currentTheme.lineColor,
                                     height: 1,
                                   ),
                                 ),
-                              ...getEventWidgets(day),
+                              ...getEventWidgets(day, settings),
                               ...getCurrentDayIndicator(day),
                             ],
                           ),

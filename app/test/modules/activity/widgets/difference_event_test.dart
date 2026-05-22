@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
 import 'package:timecalendar/modules/activity/widgets/difference_event.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
@@ -21,20 +20,19 @@ void main() {
     settings = await loadSettingsProvider();
   });
 
-  Widget buildSubject(DifferenceEventType type) =>
-      ChangeNotifierProvider<SettingsProvider>.value(
-        value: settings,
-        child: DifferenceEvent(
-          event: buildCalendarEvent(title: 'Cours de mathématiques'),
-          oldEvent: buildCalendarEvent(title: 'Cours de mathématiques'),
-          type: type,
-        ),
-      );
+  Widget buildSubject(DifferenceEventType type) => DifferenceEvent(
+    event: buildCalendarEvent(title: 'Cours de mathématiques'),
+    oldEvent: buildCalendarEvent(title: 'Cours de mathématiques'),
+    type: type,
+  );
 
   group('DifferenceEvent', () {
     for (final type in DifferenceEventType.values) {
       testWidgets('renders without throwing for $type', (tester) async {
-        await tester.pumpApp(buildSubject(type));
+        await tester.pumpApp(
+          buildSubject(type),
+          overrides: [settingsProvider.overrideWith((ref) => settings)],
+        );
 
         expect(find.byType(DifferenceEvent), findsOneWidget);
         expect(find.byType(FaIcon), findsOneWidget);

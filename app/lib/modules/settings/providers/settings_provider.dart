@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:hooks_riverpod/legacy.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pref/pref.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,12 +9,12 @@ import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart'
 import 'package:timecalendar/modules/shared/services/theme.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 
+final settingsProvider = ChangeNotifierProvider<SettingsProvider>(
+  (ref) => SettingsProvider(),
+);
+
 class SettingsProvider with ChangeNotifier {
-  static final SettingsProvider _instance = SettingsProvider._();
-  SettingsProvider._();
-  factory SettingsProvider() {
-    return _instance;
-  }
+  SettingsProvider();
 
   PrefServiceShared? _prefServiceShared;
   PrefServiceShared? get prefServiceShared => _prefServiceShared;
@@ -153,10 +154,7 @@ class SettingsProvider with ChangeNotifier {
         .firstWhere((e) => e?.name == stringPref, orElse: () => null);
     if (_calendarViewType == null) {
       _calendarViewType = _calendarViewTypeDefault;
-      await prefs!.setString(
-        'calendar_view_type',
-        _calendarViewType!.name,
-      );
+      await prefs!.setString('calendar_view_type', _calendarViewType!.name);
     }
 
     _showWeekends = this.prefs.getBool('show_weekends');

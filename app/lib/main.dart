@@ -49,8 +49,7 @@ main() async {
   // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   // Load preferences
   final prefs = await SharedPreferences.getInstance();
-  final settings = SettingsProvider();
-  await settings.loadSettings(prefs);
+  await container.read(settingsProvider).loadSettings(prefs);
   // Load database
   await SimpleDatabase().init();
   runApp(

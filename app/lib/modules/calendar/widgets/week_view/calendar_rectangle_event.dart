@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/event_details/providers/event_nb_checklist_items_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
@@ -13,10 +12,7 @@ class CalendarRectangleEvent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
-      context,
-      listen: true,
-    );
+    final settings = ref.watch(settingsProvider);
     final event = calendarEvent.event;
     final eventChecklistItems = ref.watch(getEventNbChecklistItemsProvider)(
       event.uid,
@@ -49,7 +45,7 @@ class CalendarRectangleEvent extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                shadows: (settingsProvider.darkMode
+                shadows: (settings.darkMode
                     ? <Shadow>[
                         Shadow(
                           offset: Offset(1.0, 1.0),
@@ -67,7 +63,7 @@ class CalendarRectangleEvent extends ConsumerWidget {
                     calendarEvent.event.location!,
                     style: TextStyle(
                       fontSize: 9,
-                      shadows: (settingsProvider.darkMode
+                      shadows: (settings.darkMode
                           ? <Shadow>[
                               Shadow(
                                 offset: Offset(1.0, 1.0),

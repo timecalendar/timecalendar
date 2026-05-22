@@ -2,7 +2,6 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/activity/screens/activity_screen.dart';
 import 'package:timecalendar/modules/calendar/screens/calendar_screen.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
@@ -69,10 +68,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
       ),
     );
 
-    oldprovider.Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    ).newActivity = true;
+    ref.read(settingsProvider).newActivity = true;
   }
 
   void _selectPage(int index) {
@@ -93,10 +89,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
 
     Future.delayed(Duration.zero).then((_) {
       // Get startup screen
-      var startupScreen = oldprovider.Provider.of<SettingsProvider>(
-        context,
-        listen: false,
-      ).startupScreen;
+      var startupScreen = ref.read(settingsProvider).startupScreen;
       setState(() {
         _selectedPageIndex = (startupScreen == 'calendar') ? 1 : 0;
       });
@@ -142,11 +135,11 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
-    final appTheme = settingsProvider.currentTheme;
+    final settings = ref.watch(settingsProvider);
+    final appTheme = settings.currentTheme;
     if (!_checkDisplayChangelog) {
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => displayChangelog(context, settingsProvider.currentVersion!),
+        (_) => displayChangelog(context, settings.currentVersion!),
       );
     }
 
@@ -174,7 +167,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
           child: BottomNavigationBar(
             onTap: _selectPage,
             backgroundColor: appTheme.backgroundColor,
-            unselectedItemColor: settingsProvider.darkMode
+            unselectedItemColor: settings.darkMode
                 ? Colors.grey[500]
                 : Colors.grey[600],
             selectedItemColor: Theme.of(context).colorScheme.secondary,
@@ -195,7 +188,7 @@ class _TabsScreenState extends ConsumerState<TabsScreen>
               ),
             ],
           ),
-          decoration: settingsProvider.darkMode
+          decoration: settings.darkMode
               ? BoxDecoration(
                   border: Border(
                     top: BorderSide(width: 1, color: Colors.grey[700]!),

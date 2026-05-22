@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/hidden_event/providers/hidden_event_provider.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
@@ -55,7 +54,7 @@ class HiddenEventItem extends ConsumerWidget {
       }
     }
 
-    final settingsProvider = oldprovider.Provider.of<SettingsProvider>(context);
+    final settings = ref.watch(settingsProvider);
 
     return Column(
       children: <Widget>[
@@ -104,7 +103,7 @@ class HiddenEventItem extends ConsumerWidget {
               ),
             ),
             decoration: BoxDecoration(
-              color: settingsProvider.currentTheme.cardColor,
+              color: settings.currentTheme.cardColor,
               borderRadius: BorderRadius.circular(15),
             ),
           ),

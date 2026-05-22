@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/providers/events_provider.dart';
 import 'package:timecalendar/modules/calendar/widgets/week_view/week_view_layout.dart';
@@ -24,13 +23,10 @@ class WeekView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
-      context,
-      listen: true,
-    );
-    final eventsProvider = ref.watch(eventsForViewProvider);
+    final settings = ref.watch(settingsProvider);
+    final eventsAsync = ref.watch(eventsForViewProvider);
 
-    final events = eventsProvider.maybeWhen(
+    final events = eventsAsync.maybeWhen(
       orElse: () => List<EventInterface>.empty(),
       data: (events) => events,
       skipLoadingOnReload: true,
@@ -41,9 +37,7 @@ class WeekView extends HookConsumerWidget {
       currentWeek: currentWeek,
       screenHeight: screenHeight,
       calendarWidth: calendarWidth,
-      nbOfVisibleDays:
-          settingsProvider.showWeekends != null &&
-              settingsProvider.showWeekends!
+      nbOfVisibleDays: settings.showWeekends != null && settings.showWeekends!
           ? 7
           : 5,
       leftHoursWidth: leftHoursWidth,

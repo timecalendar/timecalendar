@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:timecalendar/modules/changelog/screens/changelog_screen.dart';
 import 'package:timecalendar/modules/debug/screens/debug_screen.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
@@ -13,7 +12,7 @@ class AboutScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var settingsProvider = provider.Provider.of<SettingsProvider>(context);
+    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text('À propos')),
@@ -71,7 +70,7 @@ class AboutScreen extends ConsumerWidget {
                         Navigator.of(context).pushNamed(DebugScreen.routeName);
                       },
                       child: Text(
-                        "Version ${settingsProvider.version} (build ${settingsProvider.buildNumber})",
+                        "Version ${settings.version} (build ${settings.buildNumber})",
                       ),
                     ),
                   ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/misc.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_item.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
@@ -10,9 +10,9 @@ import '../../../../support/pump_app.dart';
 import '../../../../support/settings_provider.dart';
 
 void main() {
-  // `SchoolItem` reads `SettingsProvider` through the legacy `provider`
-  // package, so the widget needs a `ChangeNotifierProvider` wrapper around a
-  // provider that has already loaded its settings.
+  // `SchoolItem` reads `SettingsProvider` through Riverpod, so the test
+  // overrides `settingsProvider` with a provider that has already loaded its
+  // settings.
   late SettingsProvider settings;
 
   setUp(() async {
@@ -20,14 +20,18 @@ void main() {
   });
 
   Widget buildSubject(SchoolForList school) =>
-      ChangeNotifierProvider<SettingsProvider>.value(
-        value: settings,
-        child: SchoolItem(school: school, onSchoolSelect: (_) {}),
-      );
+      SchoolItem(school: school, onSchoolSelect: (_) {});
+
+  List<Override> overrides() => [
+    settingsProvider.overrideWith((ref) => settings),
+  ];
 
   group('SchoolItem', () {
     testWidgets('renders the school name', (tester) async {
-      await tester.pumpApp(buildSubject(buildSchoolForList(name: 'Sorbonne')));
+      await tester.pumpApp(
+        buildSubject(buildSchoolForList(name: 'Sorbonne')),
+        overrides: overrides(),
+      );
 
       expect(find.text('Sorbonne'), findsOneWidget);
     });
@@ -40,11 +44,10 @@ void main() {
         buildSubject(
           buildSchoolForList(imageUrl: 'http://127.0.0.1:9/missing.png'),
         ),
+        overrides: overrides(),
       );
 
-      final fadeInImage = tester.widget<FadeInImage>(
-        find.byType(FadeInImage),
-      );
+      final fadeInImage = tester.widget<FadeInImage>(find.byType(FadeInImage));
       expect(
         fadeInImage.imageErrorBuilder,
         isNotNull,
