@@ -14,6 +14,19 @@
   "dependencies": {
     "lint-staged": "^13.0.3"
   },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.10"
+    },
+    "next-runtime-env": {
+      "next": "^16.2.6",
+      "react": "^19.1.1"
+    },
+    "lint-staged": {
+      "micromatch": "^4.0.8",
+      "yaml": "^2.8.3"
+    }
+  },
   "lint-staged": {
     "*.dart": [
       "dart format",
