@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:hooks_riverpod/legacy.dart';
+
+final calendarProvider = ChangeNotifierProvider<CalendarProvider>(
+  (ref) => CalendarProvider(),
+);
 
 class CalendarProvider with ChangeNotifier {
   int? savedWeek;

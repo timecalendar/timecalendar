@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar_api/timecalendar_api.dart';
 
-class SchoolItem extends StatelessWidget {
+class SchoolItem extends ConsumerWidget {
   const SchoolItem({
     Key? key,
     required this.school,
@@ -19,8 +19,8 @@ class SchoolItem extends StatelessWidget {
   static const _placeholder = AssetImage('assets/images/school.png');
 
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       child: Container(
@@ -34,7 +34,7 @@ class SchoolItem extends StatelessWidget {
           ],
         ),
         child: Material(
-          color: settingsProvider.currentTheme.cardColor,
+          color: settings.currentTheme.cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
             onTap: () => onSchoolSelect(school),

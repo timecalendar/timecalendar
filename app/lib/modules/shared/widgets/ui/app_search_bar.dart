@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
-class AppSearchBar extends StatelessWidget {
+class AppSearchBar extends ConsumerWidget {
   const AppSearchBar({
     Key? key,
     this.onChanged,
@@ -19,8 +19,8 @@ class AppSearchBar extends StatelessWidget {
   final TextEditingController _searchFieldController;
 
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -33,7 +33,7 @@ class AppSearchBar extends StatelessWidget {
         ],
       ),
       child: Material(
-        color: settingsProvider.currentTheme.cardColor,
+        color: settings.currentTheme.cardColor,
         borderRadius: BorderRadius.circular(15),
         child: Padding(
           padding: const EdgeInsets.only(

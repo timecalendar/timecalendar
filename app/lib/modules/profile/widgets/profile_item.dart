@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
-class ProfileItem extends StatelessWidget {
+class ProfileItem extends ConsumerWidget {
   final String title;
   final Widget icon;
   final Function action;
@@ -17,8 +17,8 @@ class ProfileItem extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final settingsProvider = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
 
     return InkWell(
       onTap: () {
@@ -46,16 +46,13 @@ class ProfileItem extends StatelessWidget {
                   ],
                 ),
               ),
-              IconTheme(
-                data: const IconThemeData(size: 20),
-                child: icon,
-              ),
+              IconTheme(data: const IconThemeData(size: 20), child: icon),
             ],
           ),
         ),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: settingsProvider.currentTheme.lineColor),
+            bottom: BorderSide(color: settings.currentTheme.lineColor),
           ),
           color: unread
               ? Theme.of(context).primaryColorLight
