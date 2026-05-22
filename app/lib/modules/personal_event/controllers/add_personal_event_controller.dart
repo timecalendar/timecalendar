@@ -28,7 +28,7 @@ class AddPersonalEventController extends Notifier<AddPersonalEventFormState> {
         timeStart: TimeOfDay.fromDateTime(event.startsAt),
         timeEnd: TimeOfDay.fromDateTime(event.endsAt),
         color:
-            SettingsProvider().getEventColorToDisplay(event.color) ??
+            ref.read(settingsProvider).getEventColorToDisplay(event.color) ??
             event.color,
         colorChanged: false,
       );

@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/controllers/snapping_list_scroll_physics.dart';
 import 'package:timecalendar/modules/calendar/controllers/sync_scroll_controller.dart';
 import 'package:timecalendar/modules/calendar/helpers/events_for_week_view_helper.dart';
@@ -47,6 +46,11 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   ScrollController? _weekScrollController;
   ScrollController? _hourScrollController;
 
+  /// Captured once in [initState] so [dispose] and the scroll callbacks can
+  /// reach the store without calling `ref` after the widget is unmounted —
+  /// `ref` is not safe to use in `State.dispose()`.
+  late final CalendarProvider _calendarProvider;
+
   final headerHeight = 60.0;
 
   final columnGap = 2.0;
@@ -59,8 +63,6 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
 
   late var _previousHourHeight;
   late var _previousScrollOffset;
-
-  late CalendarProvider calendarProvider;
 
   double get minHourHeight {
     var totalHours = widget.endHour - widget.startHour - 1;
@@ -83,12 +85,8 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   void initState() {
     super.initState();
 
-    calendarProvider = oldprovider.Provider.of<CalendarProvider>(
-      context,
-      listen: false,
-    );
-
-    calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
+    _calendarProvider = ref.read(calendarProvider);
+    _calendarProvider.currentDayNotifier!.addListener(onCurrentDayChange);
 
     _syncScroll = SyncScrollController([]);
 
@@ -101,7 +99,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     // }
 
     // Load the saved scroll offset
-    var savedScrollOffset = calendarProvider.savedScrollOffset;
+    var savedScrollOffset = _calendarProvider.savedScrollOffset;
     if (savedScrollOffset != null) {
       _syncScroll!.currentOffset = savedScrollOffset;
       _hourScrollController = ScrollController(
@@ -127,10 +125,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     var week = (_weekScrollController!.offset / widget.calendarWidth).floor();
     if (week != widget.currentWeek) {
       // Save the current week in our provider
-      oldprovider.Provider.of<CalendarProvider>(
-        context,
-        listen: false,
-      ).savedWeek = week;
+      _calendarProvider.savedWeek = week;
       setState(() {
         widget.updateCurrentWeek(
           (_weekScrollController!.offset / widget.calendarWidth).floor(),
@@ -140,13 +135,13 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   }
 
   void onVerticalScroll(double offset) {
-    calendarProvider.savedScrollOffset = offset;
+    _calendarProvider.savedScrollOffset = offset;
   }
 
   @override
   void dispose() {
     _syncScroll!.removeListener(onVerticalScroll);
-    calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
+    _calendarProvider.currentDayNotifier!.removeListener(onCurrentDayChange);
     super.dispose();
   }
 
@@ -167,7 +162,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
     _weekScrollController!.animateTo(
       widget.calendarWidth *
           AppDateUtils.dateToWeekNumber(
-            calendarProvider.currentDayNotifier!.value,
+            _calendarProvider.currentDayNotifier!.value,
           ),
       duration: Duration(milliseconds: 500),
       curve: Curves.easeIn,
@@ -176,10 +171,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
 
   void loadCalendarUIPreferences() async {
     setState(() {
-      hourHeight = oldprovider.Provider.of<SettingsProvider>(
-        context,
-        listen: false,
-      ).calendarHourHeight;
+      hourHeight = ref.read(settingsProvider).calendarHourHeight;
     });
   }
 
@@ -205,10 +197,7 @@ class _WeekViewLayoutState extends ConsumerState<WeekViewLayout> {
   }
 
   Future _onScaleEnd(ScaleEndDetails scaleDetails) async {
-    oldprovider.Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    ).calendarHourHeight = hourHeight;
+    ref.read(settingsProvider).calendarHourHeight = hourHeight;
   }
 
   @override

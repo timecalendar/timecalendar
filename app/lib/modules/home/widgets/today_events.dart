@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/calendar/helpers/events_helper.dart';
 import 'package:timecalendar/modules/calendar/models/event_interface.dart';
 import 'package:timecalendar/modules/calendar/models/ui/event_for_ui.dart';
@@ -9,7 +9,7 @@ import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/utils/color_utils.dart';
 import 'package:timecalendar/modules/shared/utils/date_utils.dart';
 
-class TodayEvents extends StatelessWidget {
+class TodayEvents extends ConsumerWidget {
   final List<EventInterface> events;
   final DateTime dayDisplayedOnHomePage;
 
@@ -51,11 +51,11 @@ class TodayEvents extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dayWidth =
         MediaQuery.of(context).size.width - hourColumnWidth - rightPadding;
     var events = EventForUI.listFromEvents(this.events);
-    var settingsProvider = Provider.of<SettingsProvider>(context);
+    final settings = ref.watch(settingsProvider);
 
     int? startHour;
     int? endHour;
@@ -100,7 +100,7 @@ class TodayEvents extends StatelessWidget {
               left: hourColumnWidth,
               right: 0,
               child: Container(
-                color: settingsProvider.currentTheme.lineColor,
+                color: settings.currentTheme.lineColor,
                 height: 1,
               ),
             ),
@@ -113,9 +113,7 @@ class TodayEvents extends StatelessWidget {
               left: calendarEvent.startX * dayWidth + hourColumnWidth,
               width: (calendarEvent.endX - calendarEvent.startX) * dayWidth,
               child: Material(
-                color: settingsProvider.getEventInterfaceColor(
-                  calendarEvent.event,
-                ),
+                color: settings.getEventInterfaceColor(calendarEvent.event),
                 borderRadius: BorderRadius.circular(15),
                 child: InkWell(
                   onTap: () {

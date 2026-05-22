@@ -5,10 +5,13 @@ import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
 /// Builds a [SettingsProvider] that has already run `loadSettings`.
 ///
-/// `SettingsProvider` is a process-wide singleton that reads `SharedPreferences`
-/// and `PackageInfo` on load, so this mocks both plugin channels first.
-/// `setMockInitialValues` also clears any cached `SharedPreferences` instance,
-/// giving each test a known starting state from [prefs].
+/// `SettingsProvider.loadSettings` reads `SharedPreferences` and `PackageInfo`,
+/// so this mocks both plugin channels first. `setMockInitialValues` also clears
+/// any cached `SharedPreferences` instance, giving each test a known starting
+/// state from [prefs].
+///
+/// Pass the result to `settingsProvider.overrideWith` to inject it into a
+/// Riverpod scope.
 Future<SettingsProvider> loadSettingsProvider([
   Map<String, Object> prefs = const {},
 ]) async {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/changelog/models/changelog.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 import 'package:timecalendar/modules/shared/constants/constants.dart';
@@ -7,14 +7,14 @@ import 'package:timecalendar/modules/changelog/widgets/changelog_item_header.dar
 import 'package:timecalendar/modules/changelog/widgets/changelog_item_new_features.dart';
 import 'package:timecalendar/modules/shared/widgets/ui/custom_button.dart';
 
-class ChangelogScreen extends StatefulWidget {
+class ChangelogScreen extends ConsumerStatefulWidget {
   static const routeName = '/changelog';
 
   @override
   _ChangelogScreenState createState() => _ChangelogScreenState();
 }
 
-class _ChangelogScreenState extends State<ChangelogScreen> {
+class _ChangelogScreenState extends ConsumerState<ChangelogScreen> {
   late List<Changelog?> changelogList;
   List<Widget> changelogWidgets = [];
 
@@ -73,10 +73,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   }
 
   void getChangelogList(bool displayAllChangelog) {
-    int? currentVersion = Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    ).currentVersion;
+    int? currentVersion = ref.read(settingsProvider).currentVersion;
     changelogList = [];
     Constants.changelogs.keys
         .where((item) => displayAllChangelog ? true : item > currentVersion!)
@@ -91,11 +88,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
-          final settingProvider = Provider.of<SettingsProvider>(
-            context,
-            listen: false,
-          );
-          settingProvider.currentVersion = Constants.currentVersion;
+          ref.read(settingsProvider).currentVersion = Constants.currentVersion;
         }
       },
       child: Scaffold(
@@ -109,11 +102,8 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
                 child: IconButton(
                   icon: Icon(Icons.close, size: 32),
                   onPressed: () {
-                    final settingProvider = Provider.of<SettingsProvider>(
-                      context,
-                      listen: false,
-                    );
-                    settingProvider.currentVersion = Constants.currentVersion;
+                    ref.read(settingsProvider).currentVersion =
+                        Constants.currentVersion;
                     Navigator.of(context).pop();
                   },
                 ),
@@ -145,11 +135,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
                     child: CustomButton(
                       text: 'Continuer',
                       onPressed: () {
-                        final settingProvider = Provider.of<SettingsProvider>(
-                          context,
-                          listen: false,
-                        );
-                        settingProvider.currentVersion =
+                        ref.read(settingsProvider).currentVersion =
                             Constants.currentVersion;
                         Navigator.of(context).pop();
                       },

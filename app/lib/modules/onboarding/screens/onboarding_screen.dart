@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:timecalendar/modules/school/screens/school_selection/school_selection_screen.dart';
 import 'package:timecalendar/modules/shared/constants/constants.dart';
 import 'package:timecalendar/modules/settings/providers/settings_provider.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   static const routeName = '/onboarding';
 
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final int _numPages = 3;
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPage = 0;
@@ -31,8 +31,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero).then((_) {
-      Provider.of<SettingsProvider>(context, listen: false).currentVersion =
-          Constants.currentVersion;
+      ref.read(settingsProvider).currentVersion = Constants.currentVersion;
     });
   }
 

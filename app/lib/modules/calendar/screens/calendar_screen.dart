@@ -1,7 +1,6 @@
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:provider/provider.dart' as oldprovider;
 import 'package:timecalendar/modules/calendar/models/ui/calendar_view_type.dart';
 import 'package:timecalendar/modules/calendar/providers/calendar_provider.dart';
 import 'package:timecalendar/modules/calendar/services/calendar_sync_service.dart';
@@ -34,8 +33,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   var _isLoading = false;
 
-  late CalendarProvider calendarProvider;
-
   void refreshCalendar() async {
     setState(() {
       _isLoading = true;
@@ -63,14 +60,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void showToday() {
-    calendarProvider.setCurrentDayNotifier(DateTime.now());
+    ref.read(calendarProvider).setCurrentDayNotifier(DateTime.now());
   }
 
   void changeView(
     CalendarViewType calendarViewType,
-    SettingsProvider settingsProvider,
+    SettingsProvider settings,
   ) {
-    settingsProvider.calendarViewType = calendarViewType;
+    settings.calendarViewType = calendarViewType;
   }
 
   // can be deleted
@@ -97,16 +94,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void initState() {
     super.initState();
 
-    calendarProvider = oldprovider.Provider.of<CalendarProvider>(
-      context,
-      listen: false,
-    );
     // Load the saved week (if the user changed tab)
-    _currentWeek = AppDateUtils.dateToWeekNumber(calendarProvider.currentDay);
+    _currentWeek = AppDateUtils.dateToWeekNumber(
+      ref.read(calendarProvider).currentDay,
+    );
   }
 
   _updateCurrentWeek(int currentWeek) {
-    calendarProvider.currentDay = AppDateUtils.dayAtWeekNumber(currentWeek);
+    ref.read(calendarProvider).currentDay = AppDateUtils.dayAtWeekNumber(
+      currentWeek,
+    );
     setState(() {
       _currentWeek = currentWeek;
     });
@@ -114,13 +111,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   _updateCurrentDay(DateTime dateTime) {
     setState(() {
-      calendarProvider.currentDay = dateTime;
+      ref.read(calendarProvider).currentDay = dateTime;
       _currentWeek = AppDateUtils.dateToWeekNumber(dateTime);
     });
   }
 
-  Widget calendarView(SettingsProvider settingsProvider) {
-    switch (settingsProvider.calendarViewType) {
+  Widget calendarView(SettingsProvider settings) {
+    switch (settings.calendarViewType) {
       case CalendarViewType.Planning:
         return Expanded(
           child: PlanningViewLayout(
@@ -144,11 +141,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var settingsProvider = oldprovider.Provider.of<SettingsProvider>(
-      context,
-      listen: true,
-    );
-    var calendarProvider = oldprovider.Provider.of<CalendarProvider>(context);
+    final settings = ref.watch(settingsProvider);
+    final calendar = ref.watch(calendarProvider);
     return SafeArea(
       child: Stack(
         children: <Widget>[
@@ -162,9 +156,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 refreshCalendar: refreshCalendar,
                 changesGroup: changesGroup,
                 changeView: changeView,
-                currentDateTime: calendarProvider.currentDay,
+                currentDateTime: calendar.currentDay,
               ),
-              calendarView(settingsProvider),
+              calendarView(settings),
             ],
           ),
           if (_isLoading)
