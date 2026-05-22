@@ -64,9 +64,10 @@ Conventions:
 
 ## 5. Ship
 
-- [ ] 5.1 Open the PR; confirm CI `Build server image` + `test` jobs and the
-  Phase 1 E2E smoke suite ([TIM-7](/TIM/issues/TIM-7)) are green.
-- [ ] 5.2 After merge, close Dependabot PR **#92** (uuid 9→14, superseded).
+- [x] 5.1 PR #101 opened and merged to `main` (squash `986ce05`); CI green —
+  Build server image, Build web image, Run tests, Run app tests, and the
+  Phase 1 E2E smoke suite ([TIM-7](/TIM/issues/TIM-7)) all passed.
+- [x] 5.2 Dependabot PR **#92** (uuid 9→14) closed as superseded.
 
 ## Implementation notes
 
