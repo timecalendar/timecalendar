@@ -117,9 +117,8 @@ class _CalendarWeekState extends ConsumerState<CalendarWeek> {
     ];
   }
 
-  List<Widget> getEventWidgets(int day) {
+  List<Widget> getEventWidgets(int day, SettingsProvider settings) {
     var events = EventForUI.listFromEvents(widget.weekEvents[day]);
-    final settings = ref.watch(settingsProvider);
 
     List<Widget> widgets = [];
     for (var calendarEvent in events) {
@@ -293,7 +292,7 @@ class _CalendarWeekState extends ConsumerState<CalendarWeek> {
                                     height: 1,
                                   ),
                                 ),
-                              ...getEventWidgets(day),
+                              ...getEventWidgets(day, settings),
                               ...getCurrentDayIndicator(day),
                             ],
                           ),
