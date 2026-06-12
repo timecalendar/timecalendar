@@ -1,0 +1,401 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/schools/univ-orleans/students": {
+      "post": {
+        "operationId": "UnivOrleansController_getIcalUrlFromStudentNumber",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrleansGetIcalUrlFromStudentNumberDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Get the ICal URL from a student number",
+        "tags": [
+          "Schools"
+        ]
+      }
+    },
+    "/schools": {
+      "get": {
+        "operationId": "SchoolController_findSchools",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Find list of schools",
+        "tags": [
+          "Schools"
+        ]
+      }
+    },
+    "/schools/{schoolId}": {
+      "get": {
+        "operationId": "SchoolController_findSchool",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "required": true,
+            "in": "path",
+            "description": "The school id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Find a school",
+        "tags": [
+          "Schools"
+        ]
+      }
+    },
+    "/schools/search": {
+      "post": {
+        "operationId": "SchoolController_searchSchools",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchSchoolsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Find a school by SEO URL",
+        "tags": [
+          "Schools"
+        ]
+      }
+    },
+    "/calendar-logs/search": {
+      "post": {
+        "operationId": "CalendarLogController_getCalendarLogs",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCalendarLogsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get calendar logs for given tokens",
+        "tags": [
+          "Calendar Logs"
+        ]
+      }
+    },
+    "/calendars": {
+      "post": {
+        "operationId": "CalendarSyncController_createCalendar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCalendarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Create a calendar",
+        "tags": [
+          "Calendars"
+        ]
+      }
+    },
+    "/calendars/sync": {
+      "post": {
+        "operationId": "CalendarSyncController_syncCalendars",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncCalendarsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Sync calendars",
+        "tags": [
+          "Calendars"
+        ]
+      }
+    },
+    "/calendars/by-token/{token}": {
+      "get": {
+        "operationId": "CalendarController_findCalendarByToken",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "The calendar token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Find a calendar by its token",
+        "tags": [
+          "Calendars"
+        ]
+      }
+    },
+    "/schools/{schoolId}/school-group": {
+      "get": {
+        "operationId": "SchoolGroupController_findSchoolGroups",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "required": true,
+            "in": "path",
+            "description": "The school id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Find school groups",
+        "tags": [
+          "Schools"
+        ]
+      },
+      "put": {
+        "operationId": "SchoolGroupController_setSchoolGroups",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "required": true,
+            "in": "path",
+            "description": "The school id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSchoolGroupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Set school groups",
+        "tags": [
+          "Schools"
+        ]
+      }
+    },
+    "/schools/{schoolId}/school-group/ical": {
+      "post": {
+        "operationId": "SchoolGroupController_getSchoolGroupsIcalUrl",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "required": true,
+            "in": "path",
+            "description": "The school id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSchoolGroupsIcalUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Get school groups ICal URL",
+        "tags": [
+          "Schools"
+        ]
+      }
+    },
+    "/contact": {
+      "post": {
+        "operationId": "ContactController_sendMessage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Contact the developers",
+        "tags": [
+          "Contact"
+        ]
+      }
+    },
+    "/notification-subscription": {
+      "put": {
+        "operationId": "NotificationSubscriptionController_createOrUpdateSubscription",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSubscriptionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Create or update notification subscription",
+        "tags": [
+          "notification-subscription"
+        ]
+      }
+    },
+    "/feature-flags/evaluate": {
+      "get": {
+        "operationId": "FeatureFlagController_evaluateFlags",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Evaluate multiple feature flags",
+        "tags": [
+          "feature-flags"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "TimeCalendar",
+    "description": "TimeCalendar API",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "OrleansGetIcalUrlFromStudentNumberDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SearchSchoolsDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "GetCalendarLogsDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateCalendarDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SyncCalendarsDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SetSchoolGroupDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "GetSchoolGroupsIcalUrlDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "SendMessageDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "NotificationSubscriptionCreate": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  }
+}

@@ -22,6 +22,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "app:tsnode": "ts-node -r tsconfig-paths/register -r dotenv/config",
+    "generate:openapi": "NODE_ENV=test ts-node -r tsconfig-paths/register src/generate-openapi.ts",
     "typeorm": "npm run app:tsnode ./node_modules/typeorm/cli -- -d src/data-source.ts",
     "db:seed": "npm run app:tsnode ./src/scripts/seed-database.ts",
     "db:init": "npm run app:tsnode ./src/scripts/seed-database.ts -- --drop",
