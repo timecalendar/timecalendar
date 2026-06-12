@@ -1,0 +1,52 @@
+# E2E overlay — adds the NestJS server as a compose-managed service on top of
+# docker-compose.yml's postgres/redis. Used via:
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml ...
+# driven by ci/e2e-server.sh. See openspec/changes/add-mobile-test-harness
+# (design D3) for the rationale: Docker owns the lifecycle (boot/health/teardown)
+# so no harness hand-rolls process management or readiness polling.
+services:
+  server:
+    # Local runs build from source (layer-cached). CI overrides E2E_SERVER_IMAGE
+    # to the already-loaded `build-server` artifact image, so compose reuses it
+    # without rebuilding (ci/e2e-server.sh omits --build when the var is set).
+    build:
+      context: .
+    image: ${E2E_SERVER_IMAGE:-timecalendar-server-e2e}
+    restart: "no"
+    environment:
+      NODE_ENV: test
+      PORT: "3005"
+      # Reach the sibling compose services by name — overrides the test-env
+      # defaults (localhost:37291 / 127.0.0.1:37292), which target the *host*
+      # ports and only fit native mode.
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      REDIS_URL: redis://redis:6379
+      # MailerService builds a transport at construction time; the test env
+      # leaves SMTP_URL unset, so give it a non-empty URL (nothing is sent).
+      SMTP_URL: smtp://localhost:1025
+    ports:
+      - "3005:3005"
+    volumes:
+      # The dummy Firebase key is generated on the host by ci/e2e-server.sh and
+      # mounted in — never baked into the image (Push Protection rejects
+      # service-account-shaped JSON). config/firebase.ts reads it at import time.
+      - ./config/serviceAccountKey.json:/usr/src/app/config/serviceAccountKey.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # node:24 ships global fetch — no dependency on curl being in the image.
+      # /health pings the DB connection (200 when reachable); the schema is
+      # empty until the one-shot seed runs, which is fine for readiness.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3005/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s

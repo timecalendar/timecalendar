@@ -52,32 +52,42 @@ Flags:
   platforms and `lib/main.dart` calls `Firebase.initializeApp` (no web / Linux
   support), so the unmodified app runs only on Android — see
   *Why Android only* below.
-- `curl` and `python3` (the script uses them to poll the backend and to pick
-  the Android device out of `flutter devices --machine`).
+- `python3` (the script uses it to pick the Android device out of
+  `flutter devices --machine`). The server half runs entirely inside Docker —
+  `openssl`/`python3` for the dummy key live in `ci/generate-dummy-firebase-key.sh`,
+  invoked by the lifecycle.
 
-Server (`npm`) and app (`flutter pub get`) dependencies are installed by the
-script if missing.
+App (`flutter pub get`) dependencies are installed by the script if missing;
+server dependencies live in the compose-built image, not on the host.
 
 ## What it does
 
-1. `docker compose -f server/docker-compose.yml up -d postgres redis`.
-2. Waits for Postgres to accept connections (`ci/wait.sh`).
-3. Seeds the database: `NODE_ENV=test PORT=3005 npm run db:init` — drop,
-   migrate, load every `**/fixtures/*.yml`, then run the guarded E2E-calendar
-   seed step (`server/src/scripts/seed-e2e-calendar.ts`).
-4. Starts the backend: `NODE_ENV=test PORT=3005 npm run start`.
-5. Polls `GET http://localhost:3005/schools` until it returns HTTP 200.
-6. Resolves an Android device from `flutter devices`; exits fast with a clear
+The **server half** is owned by the shared, compose-first lifecycle
+`ci/e2e-server.sh` (see `openspec/changes/add-mobile-test-harness`): Docker is
+the lifecycle manager, so boot/seed/readiness/teardown/logs are Docker's job,
+not hand-rolled bash. `run_e2e.sh` calls it and owns only the Flutter half.
+
+1. `ci/e2e-server.sh up` — ensures the dummy Firebase key, brings Postgres,
+   Redis, and the **server** up as compose-managed services with
+   `docker compose up --wait` (gated on the server's `/health` healthcheck,
+   itself gated on `postgres`/`redis` being healthy), then seeds
+   `timecalendar_test` via a one-shot `compose run --rm server npm run db:init`
+   (drop, migrate, load every `**/fixtures/*.yml`, then the guarded
+   E2E-calendar seed step `server/src/scripts/seed-e2e-calendar.ts`). The API
+   serves on host port 3005.
+2. Resolves an Android device from `flutter devices`; exits fast with a clear
    message if none is connected.
-7. Runs **each** `integration_test/*_flow_test.dart` file as its own
+3. Runs **each** `integration_test/*_flow_test.dart` file as its own
    `flutter test` invocation (a fresh process — see *Per-file process
    isolation*), with `--dart-define MAIN_API_URL=...` pointing at the local
    backend, each under a `timeout` backstop (`E2E_TEST_TIMEOUT`, default 720s)
    so a tool-level hang fails the run instead of stalling to the CI job's
    wall-clock limit. The script reports per-flow pass/fail and exits non-zero
-   if **any** flow fails.
-8. Tears down (`trap … EXIT`): kills the backend process group and
-   `docker compose down`.
+   if **any** flow fails. On failure it dumps the server logs via
+   `ci/e2e-server.sh logs`.
+4. Tears down (`trap … EXIT`): `ci/e2e-server.sh down` removes the whole compose
+   stack — no orphan server process possible by construction. `--keep-up`
+   leaves it running and prints the `logs` / `down` commands instead.
 
 ## Key facts
 
@@ -85,21 +95,28 @@ script if missing.
   the `timecalendar_test` database (`server/src/config/environments/test.ts`).
   The harness never touches a developer's `timecalendar` (dev) data, even
   though `db:init` drops the database it runs against.
-- **`PORT=3005` is passed explicitly.** The `test` environment does not set
-  `PORT`, and it defaults to `80`. The harness always passes `PORT=3005`.
-- **`SMTP_URL` is passed explicitly.** `MailerService` builds a `nodemailer`
-  transport in its constructor, and the `test` environment leaves `SMTP_URL`
-  unset (an empty string makes `createTransport` throw at boot). The harness
-  passes a dummy `SMTP_URL=smtp://localhost:1025`; nothing in the E2E path
-  sends mail.
+- **`PORT=3005` is set by the compose overlay.** The `test` environment does
+  not set `PORT`, and it defaults to `80`. The e2e overlay
+  (`server/docker-compose.e2e.yml`) sets `PORT=3005` on the server service.
+- **`SMTP_URL` is set by the compose overlay.** `MailerService` builds a
+  `nodemailer` transport in its constructor, and the `test` environment leaves
+  `SMTP_URL` unset (an empty string makes `createTransport` throw at boot). The
+  overlay sets a dummy `SMTP_URL=smtp://localhost:1025`; nothing in the E2E
+  path sends mail.
+- **Reaching Postgres/Redis.** The `test` env defaults
+  (`DATABASE_HOST=localhost:37291`, `REDIS_URL=…127.0.0.1:37292`) target the
+  *host* ports. Inside the compose network the overlay overrides them to the
+  service names (`postgres:5432`, `redis:6379`).
 - **Dummy Firebase key (generated, never committed).**
   `server/src/config/firebase.ts` reads `config/serviceAccountKey.json` at
   import time and `FirebaseModule` is in `AppModule`, so the backend cannot
-  boot without that file. `run_e2e.sh` **generates** a well-formed **dummy**
-  key at `server/config/serviceAccountKey.json` before starting the backend —
-  it mints a fresh throwaway RSA private key with `openssl` and assembles the
-  JSON (placeholder project/email) around it — only when the file is absent, so
-  a developer's real key is left untouched. `firebase-admin` only validates the
+  boot without that file. The shared lifecycle `ci/e2e-server.sh` **generates**
+  a well-formed **dummy** key at `server/config/serviceAccountKey.json` (via
+  `ci/generate-dummy-firebase-key.sh`) before bringing the server up — it mints
+  a fresh throwaway RSA private key with `openssl` and assembles the JSON
+  (placeholder project/email) around it — only when the file is absent, so a
+  developer's real key is left untouched. The overlay mounts it read-only into
+  the container. `firebase-admin` only validates the
   JSON shape at init; the schools endpoint never calls Firebase. The key is
   **not committed**: GitHub Push Protection rejects any service-account-shaped
   JSON as a credential — and rejects a PEM `private_key` literal embedded in the
@@ -201,9 +218,10 @@ Android is the only platform the unmodified app runs on.
 ## CI is the canonical green run
 
 The dev host has no `/dev/kvm` and no Android SDK, so it cannot reliably boot
-an emulator — `run_e2e.sh` fails fast at step 6 there. Its correctness
-(backend boot, seeding, `--dart-define` wiring, teardown) is still fully
-verifiable locally: steps 1–5 succeed and teardown leaves nothing running.
+an emulator — `run_e2e.sh` fails fast at the device-resolution step (step 2)
+there. Its correctness (backend boot, seeding, `--dart-define` wiring,
+teardown) is still fully verifiable locally: the server stack (step 1) comes up
+seeded and teardown leaves nothing running.
 
 The **canonical green run is the `test-e2e` GitHub Actions job** in
 `.github/workflows/build.yaml`, which runs `run_e2e.sh` inside
