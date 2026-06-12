@@ -24,7 +24,7 @@
 
 - [x] 4.1 Server gate: in `build.yaml`'s `test` job (after compose-up), run the emit script and `git diff --exit-code openapi/openapi.json`; failure output names `generate:openapi`; resolve the open question about test-DB bootstrap order here
 - [x] 4.2 Mobile gate: add a minimal `test-mobile` job to `build.yaml`: `npm ci`, `npm run generate`, `git diff --exit-code mobile/src/api/generated`, `npx tsc --noEmit`; failure output names the regen command
-- [ ] 4.3 Push the branch and confirm both gates pass green, then flip one side locally (e.g. touch a DTO) to confirm each gate actually fails on drift before reverting
+- [x] 4.3 Push the branch and confirm both gates pass green, then flip one side locally (e.g. touch a DTO) to confirm each gate actually fails on drift before reverting
 
 ## 5. Documentation (Architecture Book)
 
