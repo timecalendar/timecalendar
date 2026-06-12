@@ -5,25 +5,25 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query"
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
   UseMutationResult,
-} from '@tanstack/react-query';
+} from "@tanstack/react-query"
 
-import type { NotificationSubscriptionCreate } from '../timeCalendar.schemas';
+import type { NotificationSubscriptionCreate } from "../timeCalendar.schemas"
 
-import { customFetch } from '../../mutator';
-import type { ErrorType } from '../../mutator';
+import { customFetch } from "../../mutator"
+import type { ErrorType } from "../../mutator"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getNotificationSubscriptionControllerCreateOrUpdateSubscriptionUrl =
   () => {
-    return `/notification-subscription`;
-  };
+    return `/notification-subscription`
+  }
 
 /**
  * @summary Create or update notification subscription
@@ -37,12 +37,12 @@ export const notificationSubscriptionControllerCreateOrUpdateSubscription =
       getNotificationSubscriptionControllerCreateOrUpdateSubscriptionUrl(),
       {
         ...options,
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...options?.headers },
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...options?.headers },
         body: JSON.stringify(notificationSubscriptionCreate),
       },
-    );
-  };
+    )
+  }
 
 export const getNotificationSubscriptionControllerCreateOrUpdateSubscriptionMutationOptions =
   <TError = ErrorType<unknown>, TContext = unknown>(options?: {
@@ -55,8 +55,8 @@ export const getNotificationSubscriptionControllerCreateOrUpdateSubscriptionMuta
       TError,
       { data: NotificationSubscriptionCreate },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   }): UseMutationOptions<
     Awaited<
       ReturnType<
@@ -68,15 +68,15 @@ export const getNotificationSubscriptionControllerCreateOrUpdateSubscriptionMuta
     TContext
   > => {
     const mutationKey = [
-      'notificationSubscriptionControllerCreateOrUpdateSubscription',
-    ];
+      "notificationSubscriptionControllerCreateOrUpdateSubscription",
+    ]
     const { mutation: mutationOptions, request: requestOptions } = options
       ? options.mutation &&
-        'mutationKey' in options.mutation &&
+        "mutationKey" in options.mutation &&
         options.mutation.mutationKey
         ? options
         : { ...options, mutation: { ...options.mutation, mutationKey } }
-      : { mutation: { mutationKey }, request: undefined };
+      : { mutation: { mutationKey }, request: undefined }
 
     const mutationFn: MutationFunction<
       Awaited<
@@ -86,16 +86,16 @@ export const getNotificationSubscriptionControllerCreateOrUpdateSubscriptionMuta
       >,
       { data: NotificationSubscriptionCreate }
     > = (props) => {
-      const { data } = props ?? {};
+      const { data } = props ?? {}
 
       return notificationSubscriptionControllerCreateOrUpdateSubscription(
         data,
         requestOptions,
-      );
-    };
+      )
+    }
 
-    return { mutationFn, ...mutationOptions };
-  };
+    return { mutationFn, ...mutationOptions }
+  }
 
 export type NotificationSubscriptionControllerCreateOrUpdateSubscriptionMutationResult =
   NonNullable<
@@ -104,11 +104,11 @@ export type NotificationSubscriptionControllerCreateOrUpdateSubscriptionMutation
         typeof notificationSubscriptionControllerCreateOrUpdateSubscription
       >
     >
-  >;
+  >
 export type NotificationSubscriptionControllerCreateOrUpdateSubscriptionMutationBody =
-  NotificationSubscriptionCreate;
+  NotificationSubscriptionCreate
 export type NotificationSubscriptionControllerCreateOrUpdateSubscriptionMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Create or update notification subscription
@@ -127,8 +127,8 @@ export const useNotificationSubscriptionControllerCreateOrUpdateSubscription = <
       TError,
       { data: NotificationSubscriptionCreate },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -146,5 +146,5 @@ export const useNotificationSubscriptionControllerCreateOrUpdateSubscription = <
       options,
     ),
     queryClient,
-  );
-};
+  )
+}

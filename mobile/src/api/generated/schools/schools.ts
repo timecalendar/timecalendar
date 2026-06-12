@@ -5,7 +5,7 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query"
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -19,7 +19,7 @@ import type {
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
-} from '@tanstack/react-query';
+} from "@tanstack/react-query"
 
 import type {
   FindSchoolGroupsRepDto,
@@ -31,16 +31,16 @@ import type {
   SchoolForSeo,
   SearchSchoolsDto,
   SetSchoolGroupDto,
-} from '../timeCalendar.schemas';
+} from "../timeCalendar.schemas"
 
-import { customFetch } from '../../mutator';
-import type { ErrorType } from '../../mutator';
+import { customFetch } from "../../mutator"
+import type { ErrorType } from "../../mutator"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getUnivOrleansControllerGetIcalUrlFromStudentNumberUrl = () => {
-  return `/schools/univ-orleans/students`;
-};
+  return `/schools/univ-orleans/students`
+}
 
 /**
  * @summary Get the ICal URL from a student number
@@ -53,12 +53,12 @@ export const univOrleansControllerGetIcalUrlFromStudentNumber = async (
     getUnivOrleansControllerGetIcalUrlFromStudentNumberUrl(),
     {
       ...options,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(orleansGetIcalUrlFromStudentNumberDto),
     },
-  );
-};
+  )
+}
 
 export const getUnivOrleansControllerGetIcalUrlFromStudentNumberMutationOptions =
   <TError = ErrorType<unknown>, TContext = unknown>(options?: {
@@ -69,8 +69,8 @@ export const getUnivOrleansControllerGetIcalUrlFromStudentNumberMutationOptions 
       TError,
       { data: OrleansGetIcalUrlFromStudentNumberDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   }): UseMutationOptions<
     Awaited<
       ReturnType<typeof univOrleansControllerGetIcalUrlFromStudentNumber>
@@ -79,14 +79,14 @@ export const getUnivOrleansControllerGetIcalUrlFromStudentNumberMutationOptions 
     { data: OrleansGetIcalUrlFromStudentNumberDto },
     TContext
   > => {
-    const mutationKey = ['univOrleansControllerGetIcalUrlFromStudentNumber'];
+    const mutationKey = ["univOrleansControllerGetIcalUrlFromStudentNumber"]
     const { mutation: mutationOptions, request: requestOptions } = options
       ? options.mutation &&
-        'mutationKey' in options.mutation &&
+        "mutationKey" in options.mutation &&
         options.mutation.mutationKey
         ? options
         : { ...options, mutation: { ...options.mutation, mutationKey } }
-      : { mutation: { mutationKey }, request: undefined };
+      : { mutation: { mutationKey }, request: undefined }
 
     const mutationFn: MutationFunction<
       Awaited<
@@ -94,25 +94,25 @@ export const getUnivOrleansControllerGetIcalUrlFromStudentNumberMutationOptions 
       >,
       { data: OrleansGetIcalUrlFromStudentNumberDto }
     > = (props) => {
-      const { data } = props ?? {};
+      const { data } = props ?? {}
 
       return univOrleansControllerGetIcalUrlFromStudentNumber(
         data,
         requestOptions,
-      );
-    };
+      )
+    }
 
-    return { mutationFn, ...mutationOptions };
-  };
+    return { mutationFn, ...mutationOptions }
+  }
 
 export type UnivOrleansControllerGetIcalUrlFromStudentNumberMutationResult =
   NonNullable<
     Awaited<ReturnType<typeof univOrleansControllerGetIcalUrlFromStudentNumber>>
-  >;
+  >
 export type UnivOrleansControllerGetIcalUrlFromStudentNumberMutationBody =
-  OrleansGetIcalUrlFromStudentNumberDto;
+  OrleansGetIcalUrlFromStudentNumberDto
 export type UnivOrleansControllerGetIcalUrlFromStudentNumberMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Get the ICal URL from a student number
@@ -129,8 +129,8 @@ export const useUnivOrleansControllerGetIcalUrlFromStudentNumber = <
       TError,
       { data: OrleansGetIcalUrlFromStudentNumberDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -142,11 +142,11 @@ export const useUnivOrleansControllerGetIcalUrlFromStudentNumber = <
   return useMutation(
     getUnivOrleansControllerGetIcalUrlFromStudentNumberMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}
 export const getSchoolControllerFindSchoolsUrl = () => {
-  return `/schools`;
-};
+  return `/schools`
+}
 
 /**
  * @summary Find list of schools
@@ -156,13 +156,13 @@ export const schoolControllerFindSchools = async (
 ): Promise<FindSchoolsRepDto> => {
   return customFetch<FindSchoolsRepDto>(getSchoolControllerFindSchoolsUrl(), {
     ...options,
-    method: 'GET',
-  });
-};
+    method: "GET",
+  })
+}
 
 export const getSchoolControllerFindSchoolsQueryKey = () => {
-  return [`/schools`] as const;
-};
+  return [`/schools`] as const
+}
 
 export const getSchoolControllerFindSchoolsQueryOptions = <
   TData = Awaited<ReturnType<typeof schoolControllerFindSchools>>,
@@ -174,30 +174,29 @@ export const getSchoolControllerFindSchoolsQueryOptions = <
       TError,
       TData
     >
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {}
 
   const queryKey =
-    queryOptions?.queryKey ?? getSchoolControllerFindSchoolsQueryKey();
+    queryOptions?.queryKey ?? getSchoolControllerFindSchoolsQueryKey()
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof schoolControllerFindSchools>>
-  > = ({ signal }) =>
-    schoolControllerFindSchools({ signal, ...requestOptions });
+  > = ({ signal }) => schoolControllerFindSchools({ signal, ...requestOptions })
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof schoolControllerFindSchools>>,
     TError,
     TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
 export type SchoolControllerFindSchoolsQueryResult = NonNullable<
   Awaited<ReturnType<typeof schoolControllerFindSchools>>
->;
-export type SchoolControllerFindSchoolsQueryError = ErrorType<unknown>;
+>
+export type SchoolControllerFindSchoolsQueryError = ErrorType<unknown>
 
 export function useSchoolControllerFindSchools<
   TData = Awaited<ReturnType<typeof schoolControllerFindSchools>>,
@@ -217,14 +216,14 @@ export function useSchoolControllerFindSchools<
           TError,
           Awaited<ReturnType<typeof schoolControllerFindSchools>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useSchoolControllerFindSchools<
   TData = Awaited<ReturnType<typeof schoolControllerFindSchools>>,
   TError = ErrorType<unknown>,
@@ -243,14 +242,14 @@ export function useSchoolControllerFindSchools<
           TError,
           Awaited<ReturnType<typeof schoolControllerFindSchools>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useSchoolControllerFindSchools<
   TData = Awaited<ReturnType<typeof schoolControllerFindSchools>>,
   TError = ErrorType<unknown>,
@@ -262,13 +261,13 @@ export function useSchoolControllerFindSchools<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 /**
  * @summary Find list of schools
  */
@@ -284,26 +283,26 @@ export function useSchoolControllerFindSchools<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
+  queryKey: DataTag<QueryKey, TData, TError>
 } {
-  const queryOptions = getSchoolControllerFindSchoolsQueryOptions(options);
+  const queryOptions = getSchoolControllerFindSchoolsQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
     TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
 
-  return { ...query, queryKey: queryOptions.queryKey };
+  return { ...query, queryKey: queryOptions.queryKey }
 }
 
 export const getSchoolControllerFindSchoolUrl = (schoolId: string) => {
-  return `/schools/${schoolId}`;
-};
+  return `/schools/${schoolId}`
+}
 
 /**
  * @summary Find a school
@@ -316,14 +315,14 @@ export const schoolControllerFindSchool = async (
     getSchoolControllerFindSchoolUrl(schoolId),
     {
       ...options,
-      method: 'GET',
+      method: "GET",
     },
-  );
-};
+  )
+}
 
 export const getSchoolControllerFindSchoolQueryKey = (schoolId: string) => {
-  return [`/schools/${schoolId}`] as const;
-};
+  return [`/schools/${schoolId}`] as const
+}
 
 export const getSchoolControllerFindSchoolQueryOptions = <
   TData = Awaited<ReturnType<typeof schoolControllerFindSchool>>,
@@ -337,19 +336,19 @@ export const getSchoolControllerFindSchoolQueryOptions = <
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {}
 
   const queryKey =
-    queryOptions?.queryKey ?? getSchoolControllerFindSchoolQueryKey(schoolId);
+    queryOptions?.queryKey ?? getSchoolControllerFindSchoolQueryKey(schoolId)
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof schoolControllerFindSchool>>
   > = ({ signal }) =>
-    schoolControllerFindSchool(schoolId, { signal, ...requestOptions });
+    schoolControllerFindSchool(schoolId, { signal, ...requestOptions })
 
   return {
     queryKey,
@@ -360,13 +359,13 @@ export const getSchoolControllerFindSchoolQueryOptions = <
     Awaited<ReturnType<typeof schoolControllerFindSchool>>,
     TError,
     TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
 export type SchoolControllerFindSchoolQueryResult = NonNullable<
   Awaited<ReturnType<typeof schoolControllerFindSchool>>
->;
-export type SchoolControllerFindSchoolQueryError = ErrorType<unknown>;
+>
+export type SchoolControllerFindSchoolQueryError = ErrorType<unknown>
 
 export function useSchoolControllerFindSchool<
   TData = Awaited<ReturnType<typeof schoolControllerFindSchool>>,
@@ -387,14 +386,14 @@ export function useSchoolControllerFindSchool<
           TError,
           Awaited<ReturnType<typeof schoolControllerFindSchool>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useSchoolControllerFindSchool<
   TData = Awaited<ReturnType<typeof schoolControllerFindSchool>>,
   TError = ErrorType<unknown>,
@@ -414,14 +413,14 @@ export function useSchoolControllerFindSchool<
           TError,
           Awaited<ReturnType<typeof schoolControllerFindSchool>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useSchoolControllerFindSchool<
   TData = Awaited<ReturnType<typeof schoolControllerFindSchool>>,
   TError = ErrorType<unknown>,
@@ -434,13 +433,13 @@ export function useSchoolControllerFindSchool<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 /**
  * @summary Find a school
  */
@@ -457,29 +456,29 @@ export function useSchoolControllerFindSchool<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
+  queryKey: DataTag<QueryKey, TData, TError>
 } {
   const queryOptions = getSchoolControllerFindSchoolQueryOptions(
     schoolId,
     options,
-  );
+  )
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
     TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
 
-  return { ...query, queryKey: queryOptions.queryKey };
+  return { ...query, queryKey: queryOptions.queryKey }
 }
 
 export const getSchoolControllerSearchSchoolsUrl = () => {
-  return `/schools/search`;
-};
+  return `/schools/search`
+}
 
 /**
  * @summary Find a school by SEO URL
@@ -490,11 +489,11 @@ export const schoolControllerSearchSchools = async (
 ): Promise<SchoolForSeo[]> => {
   return customFetch<SchoolForSeo[]>(getSchoolControllerSearchSchoolsUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(searchSchoolsDto),
-  });
-};
+  })
+}
 
 export const getSchoolControllerSearchSchoolsMutationOptions = <
   TError = ErrorType<unknown>,
@@ -505,40 +504,40 @@ export const getSchoolControllerSearchSchoolsMutationOptions = <
     TError,
     { data: SearchSchoolsDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof schoolControllerSearchSchools>>,
   TError,
   { data: SearchSchoolsDto },
   TContext
 > => {
-  const mutationKey = ['schoolControllerSearchSchools'];
+  const mutationKey = ["schoolControllerSearchSchools"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof schoolControllerSearchSchools>>,
     { data: SearchSchoolsDto }
   > = (props) => {
-    const { data } = props ?? {};
+    const { data } = props ?? {}
 
-    return schoolControllerSearchSchools(data, requestOptions);
-  };
+    return schoolControllerSearchSchools(data, requestOptions)
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type SchoolControllerSearchSchoolsMutationResult = NonNullable<
   Awaited<ReturnType<typeof schoolControllerSearchSchools>>
->;
-export type SchoolControllerSearchSchoolsMutationBody = SearchSchoolsDto;
-export type SchoolControllerSearchSchoolsMutationError = ErrorType<unknown>;
+>
+export type SchoolControllerSearchSchoolsMutationBody = SearchSchoolsDto
+export type SchoolControllerSearchSchoolsMutationError = ErrorType<unknown>
 
 /**
  * @summary Find a school by SEO URL
@@ -553,8 +552,8 @@ export const useSchoolControllerSearchSchools = <
       TError,
       { data: SearchSchoolsDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -566,13 +565,13 @@ export const useSchoolControllerSearchSchools = <
   return useMutation(
     getSchoolControllerSearchSchoolsMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}
 export const getSchoolGroupControllerFindSchoolGroupsUrl = (
   schoolId: string,
 ) => {
-  return `/schools/${schoolId}/school-group`;
-};
+  return `/schools/${schoolId}/school-group`
+}
 
 /**
  * @summary Find school groups
@@ -585,16 +584,16 @@ export const schoolGroupControllerFindSchoolGroups = async (
     getSchoolGroupControllerFindSchoolGroupsUrl(schoolId),
     {
       ...options,
-      method: 'GET',
+      method: "GET",
     },
-  );
-};
+  )
+}
 
 export const getSchoolGroupControllerFindSchoolGroupsQueryKey = (
   schoolId: string,
 ) => {
-  return [`/schools/${schoolId}/school-group`] as const;
-};
+  return [`/schools/${schoolId}/school-group`] as const
+}
 
 export const getSchoolGroupControllerFindSchoolGroupsQueryOptions = <
   TData = Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>,
@@ -608,15 +607,15 @@ export const getSchoolGroupControllerFindSchoolGroupsQueryOptions = <
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {}
 
   const queryKey =
     queryOptions?.queryKey ??
-    getSchoolGroupControllerFindSchoolGroupsQueryKey(schoolId);
+    getSchoolGroupControllerFindSchoolGroupsQueryKey(schoolId)
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>
@@ -624,7 +623,7 @@ export const getSchoolGroupControllerFindSchoolGroupsQueryOptions = <
     schoolGroupControllerFindSchoolGroups(schoolId, {
       signal,
       ...requestOptions,
-    });
+    })
 
   return {
     queryKey,
@@ -635,14 +634,13 @@ export const getSchoolGroupControllerFindSchoolGroupsQueryOptions = <
     Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>,
     TError,
     TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
 export type SchoolGroupControllerFindSchoolGroupsQueryResult = NonNullable<
   Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>
->;
-export type SchoolGroupControllerFindSchoolGroupsQueryError =
-  ErrorType<unknown>;
+>
+export type SchoolGroupControllerFindSchoolGroupsQueryError = ErrorType<unknown>
 
 export function useSchoolGroupControllerFindSchoolGroups<
   TData = Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>,
@@ -663,14 +661,14 @@ export function useSchoolGroupControllerFindSchoolGroups<
           TError,
           Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useSchoolGroupControllerFindSchoolGroups<
   TData = Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>,
   TError = ErrorType<unknown>,
@@ -690,14 +688,14 @@ export function useSchoolGroupControllerFindSchoolGroups<
           TError,
           Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useSchoolGroupControllerFindSchoolGroups<
   TData = Awaited<ReturnType<typeof schoolGroupControllerFindSchoolGroups>>,
   TError = ErrorType<unknown>,
@@ -710,13 +708,13 @@ export function useSchoolGroupControllerFindSchoolGroups<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 /**
  * @summary Find school groups
  */
@@ -733,31 +731,31 @@ export function useSchoolGroupControllerFindSchoolGroups<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
+  queryKey: DataTag<QueryKey, TData, TError>
 } {
   const queryOptions = getSchoolGroupControllerFindSchoolGroupsQueryOptions(
     schoolId,
     options,
-  );
+  )
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
     TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
 
-  return { ...query, queryKey: queryOptions.queryKey };
+  return { ...query, queryKey: queryOptions.queryKey }
 }
 
 export const getSchoolGroupControllerSetSchoolGroupsUrl = (
   schoolId: string,
 ) => {
-  return `/schools/${schoolId}/school-group`;
-};
+  return `/schools/${schoolId}/school-group`
+}
 
 /**
  * @summary Set school groups
@@ -771,12 +769,12 @@ export const schoolGroupControllerSetSchoolGroups = async (
     getSchoolGroupControllerSetSchoolGroupsUrl(schoolId),
     {
       ...options,
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(setSchoolGroupDto),
     },
-  );
-};
+  )
+}
 
 export const getSchoolGroupControllerSetSchoolGroupsMutationOptions = <
   TError = ErrorType<unknown>,
@@ -787,42 +785,41 @@ export const getSchoolGroupControllerSetSchoolGroupsMutationOptions = <
     TError,
     { schoolId: string; data: SetSchoolGroupDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof schoolGroupControllerSetSchoolGroups>>,
   TError,
   { schoolId: string; data: SetSchoolGroupDto },
   TContext
 > => {
-  const mutationKey = ['schoolGroupControllerSetSchoolGroups'];
+  const mutationKey = ["schoolGroupControllerSetSchoolGroups"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof schoolGroupControllerSetSchoolGroups>>,
     { schoolId: string; data: SetSchoolGroupDto }
   > = (props) => {
-    const { schoolId, data } = props ?? {};
+    const { schoolId, data } = props ?? {}
 
-    return schoolGroupControllerSetSchoolGroups(schoolId, data, requestOptions);
-  };
+    return schoolGroupControllerSetSchoolGroups(schoolId, data, requestOptions)
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type SchoolGroupControllerSetSchoolGroupsMutationResult = NonNullable<
   Awaited<ReturnType<typeof schoolGroupControllerSetSchoolGroups>>
->;
-export type SchoolGroupControllerSetSchoolGroupsMutationBody =
-  SetSchoolGroupDto;
+>
+export type SchoolGroupControllerSetSchoolGroupsMutationBody = SetSchoolGroupDto
 export type SchoolGroupControllerSetSchoolGroupsMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Set school groups
@@ -837,8 +834,8 @@ export const useSchoolGroupControllerSetSchoolGroups = <
       TError,
       { schoolId: string; data: SetSchoolGroupDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -850,13 +847,13 @@ export const useSchoolGroupControllerSetSchoolGroups = <
   return useMutation(
     getSchoolGroupControllerSetSchoolGroupsMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}
 export const getSchoolGroupControllerGetSchoolGroupsIcalUrlUrl = (
   schoolId: string,
 ) => {
-  return `/schools/${schoolId}/school-group/ical`;
-};
+  return `/schools/${schoolId}/school-group/ical`
+}
 
 /**
  * @summary Get school groups ICal URL
@@ -870,12 +867,12 @@ export const schoolGroupControllerGetSchoolGroupsIcalUrl = async (
     getSchoolGroupControllerGetSchoolGroupsIcalUrlUrl(schoolId),
     {
       ...options,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(getSchoolGroupsIcalUrlDto),
     },
-  );
-};
+  )
+}
 
 export const getSchoolGroupControllerGetSchoolGroupsIcalUrlMutationOptions = <
   TError = ErrorType<unknown>,
@@ -886,47 +883,47 @@ export const getSchoolGroupControllerGetSchoolGroupsIcalUrlMutationOptions = <
     TError,
     { schoolId: string; data: GetSchoolGroupsIcalUrlDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof schoolGroupControllerGetSchoolGroupsIcalUrl>>,
   TError,
   { schoolId: string; data: GetSchoolGroupsIcalUrlDto },
   TContext
 > => {
-  const mutationKey = ['schoolGroupControllerGetSchoolGroupsIcalUrl'];
+  const mutationKey = ["schoolGroupControllerGetSchoolGroupsIcalUrl"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof schoolGroupControllerGetSchoolGroupsIcalUrl>>,
     { schoolId: string; data: GetSchoolGroupsIcalUrlDto }
   > = (props) => {
-    const { schoolId, data } = props ?? {};
+    const { schoolId, data } = props ?? {}
 
     return schoolGroupControllerGetSchoolGroupsIcalUrl(
       schoolId,
       data,
       requestOptions,
-    );
-  };
+    )
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type SchoolGroupControllerGetSchoolGroupsIcalUrlMutationResult =
   NonNullable<
     Awaited<ReturnType<typeof schoolGroupControllerGetSchoolGroupsIcalUrl>>
-  >;
+  >
 export type SchoolGroupControllerGetSchoolGroupsIcalUrlMutationBody =
-  GetSchoolGroupsIcalUrlDto;
+  GetSchoolGroupsIcalUrlDto
 export type SchoolGroupControllerGetSchoolGroupsIcalUrlMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Get school groups ICal URL
@@ -941,8 +938,8 @@ export const useSchoolGroupControllerGetSchoolGroupsIcalUrl = <
       TError,
       { schoolId: string; data: GetSchoolGroupsIcalUrlDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -954,5 +951,5 @@ export const useSchoolGroupControllerGetSchoolGroupsIcalUrl = <
   return useMutation(
     getSchoolGroupControllerGetSchoolGroupsIcalUrlMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}

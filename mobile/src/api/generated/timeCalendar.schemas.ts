@@ -6,268 +6,268 @@
  * OpenAPI spec version: 1.0.0
  */
 export interface OrleansGetIcalUrlFromStudentNumberDto {
-  studentNumber: string;
+  studentNumber: string
 }
 
 export interface SchoolAssistant {
-  slug: string;
-  requireIntranetAccess: boolean;
-  requireCalendarName: boolean;
-  isNative: boolean;
+  slug: string
+  requireIntranetAccess: boolean
+  requireCalendarName: boolean
+  isNative: boolean
 }
 
 export interface SchoolForList {
-  id: string;
-  code: string;
-  name: string;
+  id: string
+  code: string
+  name: string
   /** The URL of the school landing page for SEO purposes */
-  seoUrl?: string;
-  siteUrl: string;
-  imageUrl: string;
+  seoUrl?: string
+  siteUrl: string
+  imageUrl: string
   /** @nullable */
-  intranetUrl: string | null;
-  visible: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-  assistant: SchoolAssistant;
-  fallbackAssistant?: SchoolAssistant;
+  intranetUrl: string | null
+  visible: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string
+  assistant: SchoolAssistant
+  fallbackAssistant?: SchoolAssistant
 }
 
 export interface FindSchoolsRepDto {
-  schools: SchoolForList[];
+  schools: SchoolForList[]
 }
 
 export interface SearchSchoolsDto {
-  seoUrl: string;
+  seoUrl: string
 }
 
 export interface Campus {
-  name: string;
-  location: string;
+  name: string
+  location: string
 }
 
 export interface SchoolProfileGet {
   /** The exhaustive list of campuses of the school */
-  campuses?: Campus[];
+  campuses?: Campus[]
   /**
    * The formations the school is known for
    * If should contain maximum 6 formations
    */
-  formations?: string[];
+  formations?: string[]
   /** The description of the school */
-  description?: string;
+  description?: string
   /** The number of students the school has */
-  studentCount?: number;
+  studentCount?: number
   /**
    * The domains of study the school is known for
    * If should contain maximum 5 domains
    */
-  domains?: string[];
+  domains?: string[]
   /** The title of the excellence of the school */
-  excellenceTitle?: string;
+  excellenceTitle?: string
   /** A paragraph explaining why the school is known for the domains */
-  excellenceDescription?: string;
+  excellenceDescription?: string
   /** The tags of the school */
-  tags?: string[];
+  tags?: string[]
   /** The region where the school is located */
-  campusLocationContext?: string;
+  campusLocationContext?: string
 }
 
 export interface SchoolForSeo {
-  id: string;
-  code: string;
-  name: string;
+  id: string
+  code: string
+  name: string
   /** The URL of the school landing page for SEO purposes */
-  seoUrl?: string;
-  siteUrl: string;
-  imageUrl: string;
+  seoUrl?: string
+  siteUrl: string
+  imageUrl: string
   /** @nullable */
-  intranetUrl: string | null;
-  visible: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string;
-  assistant: SchoolAssistant;
-  fallbackAssistant?: SchoolAssistant;
-  profile?: SchoolProfileGet;
+  intranetUrl: string | null
+  visible: boolean
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string
+  assistant: SchoolAssistant
+  fallbackAssistant?: SchoolAssistant
+  profile?: SchoolProfileGet
 }
 
 export interface GetCalendarLogsDto {
-  tokens: string[];
+  tokens: string[]
 }
 
 export interface CalendarLogEventGet {
-  uid: string;
-  title: string;
-  startsAt: string;
-  endsAt: string;
+  uid: string
+  title: string
+  startsAt: string
+  endsAt: string
   /** @nullable */
-  location: string | null;
+  location: string | null
 }
 
 export interface CalendarChangedItem {
-  previousItem: CalendarLogEventGet;
-  newItem: CalendarLogEventGet;
+  previousItem: CalendarLogEventGet
+  newItem: CalendarLogEventGet
 }
 
 export interface CalendarChangeGet {
-  oldItems: CalendarLogEventGet[];
-  newItems: CalendarLogEventGet[];
-  changedItems: CalendarChangedItem[];
+  oldItems: CalendarLogEventGet[]
+  newItems: CalendarLogEventGet[]
+  changedItems: CalendarChangedItem[]
 }
 
 export interface CalendarLogGet {
-  id: string;
-  calendarId: string;
-  calendarToken: string;
-  calendarName: string;
-  calendarChange: CalendarChangeGet;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  calendarId: string
+  calendarToken: string
+  calendarName: string
+  calendarChange: CalendarChangeGet
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CalendarCustomData {
-  [key: string]: unknown;
+  [key: string]: unknown
 }
 
 export interface CreateCalendarDto {
-  url: string;
-  schoolId?: string;
-  schoolName?: string;
-  name?: string;
+  url: string
+  schoolId?: string
+  schoolName?: string
+  name?: string
   /** @nullable */
-  customData: CalendarCustomData | null;
+  customData: CalendarCustomData | null
 }
 
 export interface CreateCalendarRepDto {
-  token: string;
+  token: string
 }
 
 export interface SyncCalendarsDto {
-  tokens: string[];
+  tokens: string[]
 }
 
 export interface CalendarForPublic {
-  id: string;
-  token: string;
-  name: string;
+  id: string
+  token: string
+  name: string
   /** @nullable */
-  schoolName: string | null;
-  schoolId?: string;
-  lastUpdatedAt: string;
-  createdAt: string;
+  schoolName: string | null
+  schoolId?: string
+  lastUpdatedAt: string
+  createdAt: string
 }
 
-export type EventTypeEnum = (typeof EventTypeEnum)[keyof typeof EventTypeEnum];
+export type EventTypeEnum = (typeof EventTypeEnum)[keyof typeof EventTypeEnum]
 
 export const EventTypeEnum = {
-  cm: 'cm',
-  td: 'td',
-  tp: 'tp',
-  tp2: 'tp2',
-  project: 'project',
-  exam: 'exam',
-  class: 'class',
-} as const;
+  cm: "cm",
+  td: "td",
+  tp: "tp",
+  tp2: "tp2",
+  project: "project",
+  exam: "exam",
+  class: "class",
+} as const
 
 export interface EventTag {
-  name: string;
-  color: string;
-  icon: string;
+  name: string
+  color: string
+  icon: string
 }
 
 export interface CalendarEventCustomFields {
-  canceled?: boolean;
-  shortDescription?: string;
-  subject?: string;
-  groupColor?: string;
+  canceled?: boolean
+  shortDescription?: string
+  subject?: string
+  groupColor?: string
 }
 
 export interface CalendarEventForPublic {
-  type: EventTypeEnum;
-  color: string;
-  groupColor: string;
-  uid: string;
-  title: string;
-  startsAt: string;
-  endsAt: string;
+  type: EventTypeEnum
+  color: string
+  groupColor: string
+  uid: string
+  title: string
+  startsAt: string
+  endsAt: string
   /** @nullable */
-  location: string | null;
-  allDay: boolean;
+  location: string | null
+  allDay: boolean
   /** @nullable */
-  description: string | null;
-  teachers: string[];
-  tags: EventTag[];
+  description: string | null
+  teachers: string[]
+  tags: EventTag[]
   /** @nullable */
-  fields: CalendarEventCustomFields | null;
-  exportedAt: string;
+  fields: CalendarEventCustomFields | null
+  exportedAt: string
 }
 
 export interface CalendarWithContent {
-  calendar: CalendarForPublic;
-  events: CalendarEventForPublic[];
+  calendar: CalendarForPublic
+  events: CalendarEventForPublic[]
 }
 
 export interface SchoolGroupItem {
-  text: string;
-  value: string;
-  children: SchoolGroupItem[];
+  text: string
+  value: string
+  children: SchoolGroupItem[]
 }
 
 export interface FindSchoolGroupsRepDto {
-  groups: SchoolGroupItem[];
+  groups: SchoolGroupItem[]
 }
 
 export interface SetSchoolGroupDto {
-  groups: SchoolGroupItem[];
-  icalUrl: string;
+  groups: SchoolGroupItem[]
+  icalUrl: string
 }
 
 export interface GetSchoolGroupsIcalUrlDto {
-  groups: string[];
+  groups: string[]
 }
 
 export interface GetSchoolGroupsIcalUrlRepDto {
-  url: string;
+  url: string
 }
 
 export interface SendMessageDto {
-  email: string;
-  message: string;
-  calendarIds?: string[];
-  schoolId?: string;
-  schoolName?: string;
-  gradeName?: string;
-  deviceInfo?: string;
-  calendarUrl?: string;
+  email: string
+  message: string
+  calendarIds?: string[]
+  schoolId?: string
+  schoolName?: string
+  gradeName?: string
+  deviceInfo?: string
+  calendarUrl?: string
 }
 
 export type NotificationSubscriptionCreateFrequency =
-  (typeof NotificationSubscriptionCreateFrequency)[keyof typeof NotificationSubscriptionCreateFrequency];
+  (typeof NotificationSubscriptionCreateFrequency)[keyof typeof NotificationSubscriptionCreateFrequency]
 
 export const NotificationSubscriptionCreateFrequency = {
-  immediately: 'immediately',
-  hourly: 'hourly',
-  daily: 'daily',
-} as const;
+  immediately: "immediately",
+  hourly: "hourly",
+  daily: "daily",
+} as const
 
 export interface NotificationSubscriptionCreate {
-  frequency: NotificationSubscriptionCreateFrequency;
+  frequency: NotificationSubscriptionCreateFrequency
   /**
    * @minimum 1
    * @maximum 30
    */
-  nbDaysAhead: number;
-  isActive: boolean;
-  calendarIds: string[];
-  fcmToken: string;
+  nbDaysAhead: number
+  isActive: boolean
+  calendarIds: string[]
+  fcmToken: string
 }
 
 export interface FeatureFlagEvaluationResponseDto {
-  [key: string]: unknown;
+  [key: string]: unknown
 }
 
 export type FeatureFlagControllerEvaluateFlagsParams = {
-  keys: string;
-};
+  keys: string
+}

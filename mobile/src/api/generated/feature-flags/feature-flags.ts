@@ -5,7 +5,7 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query"
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -16,35 +16,35 @@ import type {
   UndefinedInitialDataOptions,
   UseQueryOptions,
   UseQueryResult,
-} from '@tanstack/react-query';
+} from "@tanstack/react-query"
 
 import type {
   FeatureFlagControllerEvaluateFlagsParams,
   FeatureFlagEvaluationResponseDto,
-} from '../timeCalendar.schemas';
+} from "../timeCalendar.schemas"
 
-import { customFetch } from '../../mutator';
-import type { ErrorType } from '../../mutator';
+import { customFetch } from "../../mutator"
+import type { ErrorType } from "../../mutator"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getFeatureFlagControllerEvaluateFlagsUrl = (
   params: FeatureFlagControllerEvaluateFlagsParams,
 ) => {
-  const normalizedParams = new URLSearchParams();
+  const normalizedParams = new URLSearchParams()
 
   Object.entries(params || {}).forEach(([key, value]) => {
     if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value));
+      normalizedParams.append(key, value === null ? "null" : String(value))
     }
-  });
+  })
 
-  const stringifiedParams = normalizedParams.toString();
+  const stringifiedParams = normalizedParams.toString()
 
   return stringifiedParams.length > 0
     ? `/feature-flags/evaluate?${stringifiedParams}`
-    : `/feature-flags/evaluate`;
-};
+    : `/feature-flags/evaluate`
+}
 
 /**
  * @summary Evaluate multiple feature flags
@@ -57,16 +57,16 @@ export const featureFlagControllerEvaluateFlags = async (
     getFeatureFlagControllerEvaluateFlagsUrl(params),
     {
       ...options,
-      method: 'GET',
+      method: "GET",
     },
-  );
-};
+  )
+}
 
 export const getFeatureFlagControllerEvaluateFlagsQueryKey = (
   params?: FeatureFlagControllerEvaluateFlagsParams,
 ) => {
-  return [`/feature-flags/evaluate`, ...(params ? [params] : [])] as const;
-};
+  return [`/feature-flags/evaluate`, ...(params ? [params] : [])] as const
+}
 
 export const getFeatureFlagControllerEvaluateFlagsQueryOptions = <
   TData = Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>,
@@ -80,32 +80,32 @@ export const getFeatureFlagControllerEvaluateFlagsQueryOptions = <
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {}
 
   const queryKey =
     queryOptions?.queryKey ??
-    getFeatureFlagControllerEvaluateFlagsQueryKey(params);
+    getFeatureFlagControllerEvaluateFlagsQueryKey(params)
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>
   > = ({ signal }) =>
-    featureFlagControllerEvaluateFlags(params, { signal, ...requestOptions });
+    featureFlagControllerEvaluateFlags(params, { signal, ...requestOptions })
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>,
     TError,
     TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
 export type FeatureFlagControllerEvaluateFlagsQueryResult = NonNullable<
   Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>
->;
-export type FeatureFlagControllerEvaluateFlagsQueryError = ErrorType<unknown>;
+>
+export type FeatureFlagControllerEvaluateFlagsQueryError = ErrorType<unknown>
 
 export function useFeatureFlagControllerEvaluateFlags<
   TData = Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>,
@@ -126,14 +126,14 @@ export function useFeatureFlagControllerEvaluateFlags<
           TError,
           Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useFeatureFlagControllerEvaluateFlags<
   TData = Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>,
   TError = ErrorType<unknown>,
@@ -153,14 +153,14 @@ export function useFeatureFlagControllerEvaluateFlags<
           TError,
           Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useFeatureFlagControllerEvaluateFlags<
   TData = Awaited<ReturnType<typeof featureFlagControllerEvaluateFlags>>,
   TError = ErrorType<unknown>,
@@ -173,13 +173,13 @@ export function useFeatureFlagControllerEvaluateFlags<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 /**
  * @summary Evaluate multiple feature flags
  */
@@ -196,22 +196,22 @@ export function useFeatureFlagControllerEvaluateFlags<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
+  queryKey: DataTag<QueryKey, TData, TError>
 } {
   const queryOptions = getFeatureFlagControllerEvaluateFlagsQueryOptions(
     params,
     options,
-  );
+  )
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
     TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
 
-  return { ...query, queryKey: queryOptions.queryKey };
+  return { ...query, queryKey: queryOptions.queryKey }
 }

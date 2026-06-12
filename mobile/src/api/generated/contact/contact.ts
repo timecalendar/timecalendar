@@ -5,24 +5,24 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query"
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
   UseMutationResult,
-} from '@tanstack/react-query';
+} from "@tanstack/react-query"
 
-import type { SendMessageDto } from '../timeCalendar.schemas';
+import type { SendMessageDto } from "../timeCalendar.schemas"
 
-import { customFetch } from '../../mutator';
-import type { ErrorType } from '../../mutator';
+import { customFetch } from "../../mutator"
+import type { ErrorType } from "../../mutator"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getContactControllerSendMessageUrl = () => {
-  return `/contact`;
-};
+  return `/contact`
+}
 
 /**
  * @summary Contact the developers
@@ -33,11 +33,11 @@ export const contactControllerSendMessage = async (
 ): Promise<void> => {
   return customFetch<void>(getContactControllerSendMessageUrl(), {
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(sendMessageDto),
-  });
-};
+  })
+}
 
 export const getContactControllerSendMessageMutationOptions = <
   TError = ErrorType<unknown>,
@@ -48,40 +48,40 @@ export const getContactControllerSendMessageMutationOptions = <
     TError,
     { data: SendMessageDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof contactControllerSendMessage>>,
   TError,
   { data: SendMessageDto },
   TContext
 > => {
-  const mutationKey = ['contactControllerSendMessage'];
+  const mutationKey = ["contactControllerSendMessage"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof contactControllerSendMessage>>,
     { data: SendMessageDto }
   > = (props) => {
-    const { data } = props ?? {};
+    const { data } = props ?? {}
 
-    return contactControllerSendMessage(data, requestOptions);
-  };
+    return contactControllerSendMessage(data, requestOptions)
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type ContactControllerSendMessageMutationResult = NonNullable<
   Awaited<ReturnType<typeof contactControllerSendMessage>>
->;
-export type ContactControllerSendMessageMutationBody = SendMessageDto;
-export type ContactControllerSendMessageMutationError = ErrorType<unknown>;
+>
+export type ContactControllerSendMessageMutationBody = SendMessageDto
+export type ContactControllerSendMessageMutationError = ErrorType<unknown>
 
 /**
  * @summary Contact the developers
@@ -96,8 +96,8 @@ export const useContactControllerSendMessage = <
       TError,
       { data: SendMessageDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -109,5 +109,5 @@ export const useContactControllerSendMessage = <
   return useMutation(
     getContactControllerSendMessageMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}

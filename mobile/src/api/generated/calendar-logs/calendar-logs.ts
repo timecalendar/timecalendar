@@ -5,27 +5,27 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from "@tanstack/react-query"
 import type {
   MutationFunction,
   QueryClient,
   UseMutationOptions,
   UseMutationResult,
-} from '@tanstack/react-query';
+} from "@tanstack/react-query"
 
 import type {
   CalendarLogGet,
   GetCalendarLogsDto,
-} from '../timeCalendar.schemas';
+} from "../timeCalendar.schemas"
 
-import { customFetch } from '../../mutator';
-import type { ErrorType } from '../../mutator';
+import { customFetch } from "../../mutator"
+import type { ErrorType } from "../../mutator"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getCalendarLogControllerGetCalendarLogsUrl = () => {
-  return `/calendar-logs/search`;
-};
+  return `/calendar-logs/search`
+}
 
 /**
  * @summary Get calendar logs for given tokens
@@ -38,12 +38,12 @@ export const calendarLogControllerGetCalendarLogs = async (
     getCalendarLogControllerGetCalendarLogsUrl(),
     {
       ...options,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(getCalendarLogsDto),
     },
-  );
-};
+  )
+}
 
 export const getCalendarLogControllerGetCalendarLogsMutationOptions = <
   TError = ErrorType<unknown>,
@@ -54,42 +54,42 @@ export const getCalendarLogControllerGetCalendarLogsMutationOptions = <
     TError,
     { data: GetCalendarLogsDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof calendarLogControllerGetCalendarLogs>>,
   TError,
   { data: GetCalendarLogsDto },
   TContext
 > => {
-  const mutationKey = ['calendarLogControllerGetCalendarLogs'];
+  const mutationKey = ["calendarLogControllerGetCalendarLogs"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof calendarLogControllerGetCalendarLogs>>,
     { data: GetCalendarLogsDto }
   > = (props) => {
-    const { data } = props ?? {};
+    const { data } = props ?? {}
 
-    return calendarLogControllerGetCalendarLogs(data, requestOptions);
-  };
+    return calendarLogControllerGetCalendarLogs(data, requestOptions)
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type CalendarLogControllerGetCalendarLogsMutationResult = NonNullable<
   Awaited<ReturnType<typeof calendarLogControllerGetCalendarLogs>>
->;
+>
 export type CalendarLogControllerGetCalendarLogsMutationBody =
-  GetCalendarLogsDto;
+  GetCalendarLogsDto
 export type CalendarLogControllerGetCalendarLogsMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Get calendar logs for given tokens
@@ -104,8 +104,8 @@ export const useCalendarLogControllerGetCalendarLogs = <
       TError,
       { data: GetCalendarLogsDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -117,5 +117,5 @@ export const useCalendarLogControllerGetCalendarLogs = <
   return useMutation(
     getCalendarLogControllerGetCalendarLogsMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}

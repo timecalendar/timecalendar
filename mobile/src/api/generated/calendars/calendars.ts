@@ -5,7 +5,7 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from "@tanstack/react-query"
 import type {
   DataTag,
   DefinedInitialDataOptions,
@@ -19,7 +19,7 @@ import type {
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
-} from '@tanstack/react-query';
+} from "@tanstack/react-query"
 
 import type {
   CalendarForPublic,
@@ -27,16 +27,16 @@ import type {
   CreateCalendarDto,
   CreateCalendarRepDto,
   SyncCalendarsDto,
-} from '../timeCalendar.schemas';
+} from "../timeCalendar.schemas"
 
-import { customFetch } from '../../mutator';
-import type { ErrorType } from '../../mutator';
+import { customFetch } from "../../mutator"
+import type { ErrorType } from "../../mutator"
 
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
 export const getCalendarSyncControllerCreateCalendarUrl = () => {
-  return `/calendars`;
-};
+  return `/calendars`
+}
 
 /**
  * @summary Create a calendar
@@ -49,12 +49,12 @@ export const calendarSyncControllerCreateCalendar = async (
     getCalendarSyncControllerCreateCalendarUrl(),
     {
       ...options,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(createCalendarDto),
     },
-  );
-};
+  )
+}
 
 export const getCalendarSyncControllerCreateCalendarMutationOptions = <
   TError = ErrorType<unknown>,
@@ -65,42 +65,41 @@ export const getCalendarSyncControllerCreateCalendarMutationOptions = <
     TError,
     { data: CreateCalendarDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof calendarSyncControllerCreateCalendar>>,
   TError,
   { data: CreateCalendarDto },
   TContext
 > => {
-  const mutationKey = ['calendarSyncControllerCreateCalendar'];
+  const mutationKey = ["calendarSyncControllerCreateCalendar"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof calendarSyncControllerCreateCalendar>>,
     { data: CreateCalendarDto }
   > = (props) => {
-    const { data } = props ?? {};
+    const { data } = props ?? {}
 
-    return calendarSyncControllerCreateCalendar(data, requestOptions);
-  };
+    return calendarSyncControllerCreateCalendar(data, requestOptions)
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type CalendarSyncControllerCreateCalendarMutationResult = NonNullable<
   Awaited<ReturnType<typeof calendarSyncControllerCreateCalendar>>
->;
-export type CalendarSyncControllerCreateCalendarMutationBody =
-  CreateCalendarDto;
+>
+export type CalendarSyncControllerCreateCalendarMutationBody = CreateCalendarDto
 export type CalendarSyncControllerCreateCalendarMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Create a calendar
@@ -115,8 +114,8 @@ export const useCalendarSyncControllerCreateCalendar = <
       TError,
       { data: CreateCalendarDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -128,11 +127,11 @@ export const useCalendarSyncControllerCreateCalendar = <
   return useMutation(
     getCalendarSyncControllerCreateCalendarMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}
 export const getCalendarSyncControllerSyncCalendarsUrl = () => {
-  return `/calendars/sync`;
-};
+  return `/calendars/sync`
+}
 
 /**
  * @summary Sync calendars
@@ -145,12 +144,12 @@ export const calendarSyncControllerSyncCalendars = async (
     getCalendarSyncControllerSyncCalendarsUrl(),
     {
       ...options,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
       body: JSON.stringify(syncCalendarsDto),
     },
-  );
-};
+  )
+}
 
 export const getCalendarSyncControllerSyncCalendarsMutationOptions = <
   TError = ErrorType<unknown>,
@@ -161,41 +160,41 @@ export const getCalendarSyncControllerSyncCalendarsMutationOptions = <
     TError,
     { data: SyncCalendarsDto },
     TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
+  >
+  request?: SecondParameter<typeof customFetch>
 }): UseMutationOptions<
   Awaited<ReturnType<typeof calendarSyncControllerSyncCalendars>>,
   TError,
   { data: SyncCalendarsDto },
   TContext
 > => {
-  const mutationKey = ['calendarSyncControllerSyncCalendars'];
+  const mutationKey = ["calendarSyncControllerSyncCalendars"]
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
-      'mutationKey' in options.mutation &&
+      "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    : { mutation: { mutationKey }, request: undefined }
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof calendarSyncControllerSyncCalendars>>,
     { data: SyncCalendarsDto }
   > = (props) => {
-    const { data } = props ?? {};
+    const { data } = props ?? {}
 
-    return calendarSyncControllerSyncCalendars(data, requestOptions);
-  };
+    return calendarSyncControllerSyncCalendars(data, requestOptions)
+  }
 
-  return { mutationFn, ...mutationOptions };
-};
+  return { mutationFn, ...mutationOptions }
+}
 
 export type CalendarSyncControllerSyncCalendarsMutationResult = NonNullable<
   Awaited<ReturnType<typeof calendarSyncControllerSyncCalendars>>
->;
-export type CalendarSyncControllerSyncCalendarsMutationBody = SyncCalendarsDto;
+>
+export type CalendarSyncControllerSyncCalendarsMutationBody = SyncCalendarsDto
 export type CalendarSyncControllerSyncCalendarsMutationError =
-  ErrorType<unknown>;
+  ErrorType<unknown>
 
 /**
  * @summary Sync calendars
@@ -210,8 +209,8 @@ export const useCalendarSyncControllerSyncCalendars = <
       TError,
       { data: SyncCalendarsDto },
       TContext
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -223,11 +222,11 @@ export const useCalendarSyncControllerSyncCalendars = <
   return useMutation(
     getCalendarSyncControllerSyncCalendarsMutationOptions(options),
     queryClient,
-  );
-};
+  )
+}
 export const getCalendarControllerFindCalendarByTokenUrl = (token: string) => {
-  return `/calendars/by-token/${token}`;
-};
+  return `/calendars/by-token/${token}`
+}
 
 /**
  * @summary Find a calendar by its token
@@ -240,16 +239,16 @@ export const calendarControllerFindCalendarByToken = async (
     getCalendarControllerFindCalendarByTokenUrl(token),
     {
       ...options,
-      method: 'GET',
+      method: "GET",
     },
-  );
-};
+  )
+}
 
 export const getCalendarControllerFindCalendarByTokenQueryKey = (
   token: string,
 ) => {
-  return [`/calendars/by-token/${token}`] as const;
-};
+  return [`/calendars/by-token/${token}`] as const
+}
 
 export const getCalendarControllerFindCalendarByTokenQueryOptions = <
   TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
@@ -263,20 +262,20 @@ export const getCalendarControllerFindCalendarByTokenQueryOptions = <
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
 ) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {}
 
   const queryKey =
     queryOptions?.queryKey ??
-    getCalendarControllerFindCalendarByTokenQueryKey(token);
+    getCalendarControllerFindCalendarByTokenQueryKey(token)
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
   > = ({ signal }) =>
-    calendarControllerFindCalendarByToken(token, { signal, ...requestOptions });
+    calendarControllerFindCalendarByToken(token, { signal, ...requestOptions })
 
   return {
     queryKey,
@@ -287,14 +286,13 @@ export const getCalendarControllerFindCalendarByTokenQueryOptions = <
     Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
     TError,
     TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-};
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+}
 
 export type CalendarControllerFindCalendarByTokenQueryResult = NonNullable<
   Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
->;
-export type CalendarControllerFindCalendarByTokenQueryError =
-  ErrorType<unknown>;
+>
+export type CalendarControllerFindCalendarByTokenQueryError = ErrorType<unknown>
 
 export function useCalendarControllerFindCalendarByToken<
   TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
@@ -315,14 +313,14 @@ export function useCalendarControllerFindCalendarByToken<
           TError,
           Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useCalendarControllerFindCalendarByToken<
   TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
   TError = ErrorType<unknown>,
@@ -342,14 +340,14 @@ export function useCalendarControllerFindCalendarByToken<
           TError,
           Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
         >,
-        'initialData'
-      >;
-    request?: SecondParameter<typeof customFetch>;
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 export function useCalendarControllerFindCalendarByToken<
   TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
   TError = ErrorType<unknown>,
@@ -362,13 +360,13 @@ export function useCalendarControllerFindCalendarByToken<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
+  queryKey: DataTag<QueryKey, TData, TError>
+}
 /**
  * @summary Find a calendar by its token
  */
@@ -385,22 +383,22 @@ export function useCalendarControllerFindCalendarByToken<
         TError,
         TData
       >
-    >;
-    request?: SecondParameter<typeof customFetch>;
+    >
+    request?: SecondParameter<typeof customFetch>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
+  queryKey: DataTag<QueryKey, TData, TError>
 } {
   const queryOptions = getCalendarControllerFindCalendarByTokenQueryOptions(
     token,
     options,
-  );
+  )
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<
     TData,
     TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
 
-  return { ...query, queryKey: queryOptions.queryKey };
+  return { ...query, queryKey: queryOptions.queryKey }
 }

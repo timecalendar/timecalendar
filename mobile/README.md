@@ -2,7 +2,7 @@
 
 The React Native rewrite of the TimeCalendar app (the Flutter app lives at `../app/`). Expo SDK 56, New Architecture + Hermes, dev-client builds.
 
-This is a **standalone npm project** — it is deliberately *not* part of the root npm workspace (own `package.json` and `package-lock.json`, like `../server/`). Rationale: Expo pins `react` to an exact version per SDK while the web app floats it; a shared hoisted tree couples the two permanently. See the scaffold change's design D7 and the Architecture Book at `../.claude/rules/mobile/`.
+This is a **standalone npm project** — it is deliberately _not_ part of the root npm workspace (own `package.json` and `package-lock.json`, like `../server/`). Rationale: Expo pins `react` to an exact version per SDK while the web app floats it; a shared hoisted tree couples the two permanently. See the scaffold change's design D7 and the Architecture Book at `../.claude/rules/mobile/`.
 
 ## Prerequisites
 
@@ -25,12 +25,12 @@ These are **development builds** (`expo-dev-client`), not Expo Go.
 
 App identity is resolved dynamically in `app.config.ts`:
 
-| `APP_VARIANT` | App name | Bundle ID / package | Scheme |
-| --- | --- | --- | --- |
-| unset / `production` | TimeCalendar | `fr.samuelprak.timecalendar` | `timecalendar` |
-| `development` | TimeCalendar (Dev) | `fr.samuelprak.timecalendar.dev` | `timecalendar-dev` |
+| `APP_VARIANT`        | App name           | Bundle ID / package              | Scheme             |
+| -------------------- | ------------------ | -------------------------------- | ------------------ |
+| unset / `production` | TimeCalendar       | `fr.samuelprak.timecalendar`     | `timecalendar`     |
+| `development`        | TimeCalendar (Dev) | `fr.samuelprak.timecalendar.dev` | `timecalendar-dev` |
 
-The `ios` / `android` / `start` npm scripts set `APP_VARIANT=development`, so local builds install side by side with the store (Flutter) app on a real device. The production identity is reserved for store builds (EAS, later) — it ultimately ships as an *update* to the existing Flutter app.
+The `ios` / `android` / `start` npm scripts set `APP_VARIANT=development`, so local builds install side by side with the store (Flutter) app on a real device. The production identity is reserved for store builds (EAS, later) — it ultimately ships as an _update_ to the existing Flutter app.
 
 **Caveat — switching variants requires a prebuild.** Native projects are generated with the identity that was active at prebuild time. If you build with a different `APP_VARIANT` than the last prebuild, regenerate first:
 
