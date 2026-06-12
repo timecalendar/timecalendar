@@ -180,6 +180,12 @@ jobs:
       working-directory: ./mobile
       run: npm run lint
 
+    # Coverage is reported, not gated: no coverageThreshold yet (K-3 deferred to
+    # the first logic-bearing feature). Same `npm test` entrypoint as local.
+    - name: Test
+      working-directory: ./mobile
+      run: npm test -- --coverage
+
 
   test-app:
     name: Run app tests
