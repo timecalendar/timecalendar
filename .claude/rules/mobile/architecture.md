@@ -36,6 +36,11 @@ Rationale for each lives in the change's `design.md` (D1–D8) unless noted.
 ### Native projects: CNG
 - `mobile/ios/` and `mobile/android/` are **generated, gitignored, never hand-edited**. All native config flows through `app.config.ts` + config plugins; `npx expo prebuild --clean` is the only way native projects change.
 
+### Navigation & route structure (established by the `add-mobile-test-harness` change, 2026-06)
+Two rules discovered when the schools route was deep-link-tested on a simulator (R-4: load-bearing, so recorded here):
+- **Route screens that need a test are thin entrypoints over a `@/components` module.** Expo Router's `require.context` bundles **every** `*.tsx` under `src/app/` as a route — a colocated `*.test.tsx` drags `@testing-library/react-native` (Node-only `console`/`picocolors`) into the Metro bundle and breaks it. The `routes-not-importable` lint then forbids importing the route from a test elsewhere. So the screen lives in `src/components/<name>-screen.tsx` (tested there), and `src/app/<name>.tsx` is a one-line `export { default } from "@/components/<name>-screen"`. Enforced indirectly by the lint boundary (R-1); the Metro-bundling half can't be a lint rule, hence this prose.
+- **Non-tab routes require a root `Stack` with the tabs in a `(tabs)` group.** Under a root `NativeTabs` layout, only declared `NativeTabs.Trigger` routes are reachable — a bare sibling route is registered but **cannot** be navigated to (verified: `/explore` navigated via deep link, `/schools` did not; `hidden` triggers are documented as unreachable too). The layout is therefore `src/app/_layout.tsx` = root `Stack` (+ the QueryClient/Theme providers), `src/app/(tabs)/_layout.tsx` = the native tabs, tab screens under `(tabs)/`, and non-tab routes (deep-link / modal / onboarding targets) as `Stack` siblings of `(tabs)`.
+
 ### App identity: `APP_VARIANT` (D4)
 - Dynamic `app.config.ts`: unset/`production` → `fr.samuelprak.timecalendar` / "TimeCalendar" / scheme `timecalendar` (preserves store identity — RN ships as an *update* to the Flutter app); `development` → `fr.samuelprak.timecalendar.dev` / "TimeCalendar (Dev)" / scheme `timecalendar-dev` (coexists with the store app on devices).
 - The `ios`/`android`/`start` npm scripts set `APP_VARIANT=development`. Switching variants requires `expo prebuild --clean`.
