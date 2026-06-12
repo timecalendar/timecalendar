@@ -83,7 +83,7 @@ We already have an npm workspace (`web`, `openapi/javascript`). The RN app joins
 │   ├── javascript/           # @timecalendar/api-client (used by web)
 │   └── ...
 ├── app/                      # current Flutter app (retired post-migration)
-├── app-rn/                   # NEW: Expo app
+├── mobile/                   # NEW: Expo app
 │   ├── app/                  # Expo Router routes (native tabs)
 │   ├── features/             # calendar, personal-event, assistant, schools, settings…
 │   ├── lib/                  # query client, db (drizzle), mmkv, theming, firebase
@@ -92,7 +92,7 @@ We already have an npm workspace (`web`, `openapi/javascript`). The RN app joins
 ```
 
 - **Feature-first** folders mirror today's `modules/*` (low conceptual migration cost).
-- **RN owns its API layer**: Orval reads the same OpenAPI spec the server emits, generates TanStack Query hooks into `app-rn`. We deliberately do **not** import web's `@timecalendar/api-client` or web's hooks (decision: keep separate). The only shared artifact is the spec.
+- **RN owns its API layer**: Orval reads the same OpenAPI spec the server emits, generates TanStack Query hooks into `mobile`. We deliberately do **not** import web's `@timecalendar/api-client` or web's hooks (decision: keep separate). The only shared artifact is the spec.
 - Keep "clean architecture" light: domain logic as plain TS, hooks as the boundary. No 5-layer DDD.
 
 ---
