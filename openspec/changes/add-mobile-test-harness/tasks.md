@@ -8,10 +8,10 @@
 
 ## 2. Schools round-trip surface (D2)
 
-- [ ] 2.1 Read the seed fixtures (`server/src/scripts/seed-database.ts`) and record the exact seeded school names for assertions
-- [ ] 2.2 Create `mobile/src/app/schools.tsx`: render `useSchoolControllerSearchSchools()` results (loading / error / list states), template-quality, file-level `TODO(i18n-step-6)` disable for any literal strings
-- [ ] 2.3 Component test for the schools screen: `jest.mock` of `src/api/mutator`, real generated hook + QueryClient, asserts seeded-shape data renders (spec: mobile-test-harness)
-- [ ] 2.4 Verify the deep link `timecalendar-dev://schools` opens the screen on the dev variant (manual, simulator or emulator)
+- [x] 2.1 Read the seed fixtures (`server/src/scripts/seed-database.ts`) and record the exact seeded school names for assertions — fixtures live in `server/src/modules/school/fixtures/school.fixtures.yml`: **"My Gaming Academia"** (`mygamingacademia`) and **"Université Gustave Eiffel"** (`univeiffel`), both `visible: true`. Recorded in `mobile/src/app/schools.test.tsx`.
+- [x] 2.2 Create `mobile/src/app/schools.tsx`: render `useSchoolControllerFindSchools()` results (loading / error / list states), template-quality, file-level `TODO(i18n-step-6)` disable for any literal strings — used the `GET /schools` **query** hook (`useSchoolControllerFindSchools`), not `useSchoolControllerSearchSchools` which is the `POST /schools/search` mutation (no on-mount fetch/loading state). Matches the proposal/design's "real `GET /schools`" round-trip.
+- [x] 2.3 Component test for the schools screen: `jest.mock` of `src/api/mutator`, real generated hook + QueryClient, asserts seeded-shape data renders (spec: mobile-test-harness)
+- [ ] 2.4 Verify the deep link `timecalendar-dev://schools` opens the screen on the dev variant (manual, simulator or emulator) — **pending manual run** (needs a built dev-variant binary on a simulator; depends on PR 3/5 for a reachable local server). `schools.tsx` is a sibling route with no `NativeTabs.Trigger`, so it is registered as a route but absent from the tab bar — reachable only by deep link, which is exactly what this step confirms.
 
 ## 3. Shared compose-first server lifecycle (D3)
 
