@@ -16,27 +16,18 @@ updates:
           - "minor"
           - "patch"
 
-  # Next.js web app
+  # Root npm workspace: web + generated OpenAPI JavaScript client.
+  # Must point at "/" (where package-lock.json lives): pointing at a
+  # workspace member updates only its package.json, leaving the root
+  # lockfile out of sync and breaking `npm ci`.
   - package-ecosystem: "npm"
-    directory: "/web"
+    directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
       dev-and-minor:
         dependency-type: "development"
-        update-types:
-          - "minor"
-          - "patch"
-
-  # Generated OpenAPI JavaScript client
-  - package-ecosystem: "npm"
-    directory: "/openapi/javascript"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    groups:
-      dev-and-minor:
         update-types:
           - "minor"
           - "patch"
