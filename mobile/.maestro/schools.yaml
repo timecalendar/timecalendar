@@ -1,0 +1,22 @@
+# Real-round-trip e2e flow: proves the app ↔ NestJS ↔ Postgres contract.
+#
+# Launches the development-variant app, deep-links to the schools screen, and
+# asserts a seeded school renders. This fails if the GET /schools endpoint, its
+# DTO, the generated Orval client, customFetch, or the QueryClient wiring is
+# broken — the screen fetches live data, nothing is mocked here.
+#
+# Requires the harness server up on host port 3005 (ci/e2e-server.sh up) and a
+# release-config dev-variant build installed on the connected device. Shared
+# across iOS and Android: the assertion is stable seeded text, no per-platform
+# selectors. Run via mobile/e2e/run_e2e.sh.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Sibling routes under the root Stack are reachable by deep link (tabs live in
+# the (tabs) group); the dev scheme is timecalendar-dev (app.config.ts).
+- openLink: timecalendar-dev://schools
+- assertVisible: "Schools"
+# "My Gaming Academia" is a visible: true fixture seeded by db:init
+# (server/src/modules/school/fixtures/school.fixtures.yml). ASCII-only on
+# purpose — avoids accent-matching fragility across platforms.
+- assertVisible: "My Gaming Academia"

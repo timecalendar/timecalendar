@@ -28,25 +28,25 @@
 
 ## 5. E2E build configuration (D5, D6)
 
-- [ ] 5.1 `app.config.ts`: when `APP_VARIANT=development`, set Android `usesCleartextTraffic: true` (expo-build-properties) and iOS `NSAppTransportSecurity.NSAllowsLocalNetworking`; confirm production variant output unchanged (`expo config` diff)
+- [x] 5.1 `app.config.ts`: when `APP_VARIANT=development`, set Android `usesCleartextTraffic: true` (expo-build-properties) and iOS `NSAppTransportSecurity.NSAllowsLocalNetworking`; confirm production variant output unchanged (`expo config` diff) — verified via `expo config --json`: dev variant carries `android.usesCleartextTraffic: true` + `ios.infoPlist.NSAppTransportSecurity.NSAllowsLocalNetworking: true`; production (APP_VARIANT unset) carries neither (`NSAppTransportSecurity: None`, android props = `{minSdkVersion: 24}` only).
 - [ ] 5.2 Build a release-config dev-variant binary per platform locally (`expo run:android --variant release`, `expo run:ios --configuration Release`) with the platform-correct `EXPO_PUBLIC_API_URL`; verify the app reaches the harness server without Metro
 
 ## 6. Maestro flows + wrapper (D7)
 
-- [ ] 6.1 Install Maestro locally; create `mobile/.maestro/schools.yaml`: launch dev-variant app → `openLink: timecalendar-dev://schools` → assert a seeded school name visible
-- [ ] 6.2 Create `mobile/e2e/run_e2e.sh`: lifecycle `up` → `maestro test .maestro/` → lifecycle `down`, with `--keep-up` passthrough and non-zero exit on flow failure
+- [x] 6.1 Install Maestro locally; create `mobile/.maestro/schools.yaml`: launch dev-variant app → `openLink: timecalendar-dev://schools` → assert a seeded school name visible — flow created (`appId: fr.samuelprak.timecalendar.dev`, `launchApp` → `openLink: timecalendar-dev://schools` → `assertVisible "Schools"` + `assertVisible "My Gaming Academia"`, the ASCII-safe `visible: true` fixture). Local Maestro install + green run are the hardware-verification tasks 6.3/6.4.
+- [x] 6.2 Create `mobile/e2e/run_e2e.sh`: lifecycle `up` → `maestro test .maestro/` → lifecycle `down`, with `--keep-up` passthrough and non-zero exit on flow failure — thin wrapper modeled on the Flutter harness: teardown-on-every-exit trap, `--keep-up` and `--native` passthrough to `ci/e2e-server.sh`, Maestro preflight, exits with Maestro's status, dumps the backend log tail on failure. Does not build/install the app (release dev-variant binary must be installed first, per the README). `bash -n` clean, `chmod +x`.
 - [ ] 6.3 Run the flow green locally on the iOS simulator
 - [ ] 6.4 Run the flow green locally on an Android emulator (JAVA_HOME→JDK 17, ANDROID_HOME per local toolchain notes)
 
 ## 7. CI (D8)
 
 - [x] 7.1 `test-mobile` job: add the Jest step (`npm test` + coverage reporting) after lint
-- [ ] 7.2 New `e2e-mobile-android` job: `needs: build-server`, load image artifact + `E2E_SERVER_IMAGE`, KVM + `reactivecircus/android-emulator-runner`, `expo prebuild` + `gradlew :app:assembleRelease` (Gradle cache), `adb install`, Maestro install (setup-java + documented installer), run flows
-- [ ] 7.3 New `e2e-mobile-ios` job: macOS runner, provision Postgres/Redis natively (pick cheapest: preinstalled service vs brew vs action), `e2e-server.sh up --native`, `expo prebuild` + `xcodebuild -configuration Release -sdk iphonesimulator` (CocoaPods/DerivedData cache), `simctl install`, run flows
-- [ ] 7.4 Both e2e jobs: upload Maestro debug artifacts + server logs on failure; set sane timeouts
+- [x] 7.2 New `e2e-mobile-android` job: `needs: build-server`, load image artifact + `E2E_SERVER_IMAGE`, KVM + `reactivecircus/android-emulator-runner`, `expo prebuild` + `gradlew :app:assembleRelease` (Gradle cache), `adb install`, Maestro install (setup-java + documented installer), run flows — added to `.github/workflows/build.yaml`; `EXPO_PUBLIC_API_URL=http://10.0.2.2:3005` baked at the Gradle step; `adb install` + `run_e2e.sh` run inside the emulator action's `script` (where a device exists). Not yet proven green — that's task 7.5.
+- [x] 7.3 New `e2e-mobile-ios` job: macOS runner, provision Postgres/Redis natively (pick cheapest: preinstalled service vs brew vs action), `e2e-server.sh up --native`, `expo prebuild` + `xcodebuild -configuration Release -sdk iphonesimulator` (CocoaPods/DerivedData cache), `simctl install`, run flows — used `brew install postgresql@14 redis` (cheapest self-contained option), Postgres started on test-env port 37291 with a `postgres` superuser + `timecalendar`/`timecalendar_test` dbs, Redis on 37292; `xcodebuild … -configuration Release -sdk iphonesimulator CODE_SIGNING_ALLOWED=NO` with the workspace/scheme discovered dynamically; `run_e2e.sh --native` boots the server from source. **Riskiest job (design D4) — likely needs CI iteration; PR description allows splitting to a follow-up 4b if it fights back.** Not yet proven green — task 7.5.
+- [x] 7.4 Both e2e jobs: upload Maestro debug artifacts + server logs on failure; set sane timeouts — `if: failure()` uploads `~/.maestro/tests` and the captured `e2e-server.sh logs` per platform; timeouts 60 min (Android) / 75 min (iOS, cold xcodebuild).
 - [ ] 7.5 Push the branch and iterate until `test-mobile`, `e2e-mobile-android`, `e2e-mobile-ios`, and the existing `test-e2e` (Flutter regression proof) are all green
 
 ## 8. Documentation (R-1 pointers, K-3 debt)
 
-- [ ] 8.1 Architecture Book (`.claude/rules/mobile/architecture.md`): add the Testing section — harness shape (jest-expo, mutator-seam mocking, Maestro layout), shared lifecycle pointer, dev-variant network exceptions, explicit K-3 deferral with trigger
-- [ ] 8.2 Brief `mobile/e2e/README.md` (or section in mobile README): how to run e2e locally, prerequisites, `--keep-up`, how to add a flow
+- [x] 8.1 Architecture Book (`.claude/rules/mobile/architecture.md`): add the Testing section — harness shape (jest-expo, mutator-seam mocking, Maestro layout), shared lifecycle pointer, dev-variant network exceptions, explicit K-3 deferral with trigger — added a "Testing" section covering the jest-expo unit harness + mutator-seam mocking, the Maestro real-round-trip flow + single-command wrapper + shared-lifecycle pointer, the release-config/no-Metro/dev-variant build rule, the D6 dev-variant network exceptions, the CI topology, and the K-3 deferral with its Settings trigger.
+- [x] 8.2 Brief `mobile/e2e/README.md` (or section in mobile README): how to run e2e locally, prerequisites, `--keep-up`, how to add a flow — created `mobile/e2e/README.md`: flow/wrapper/lifecycle overview, prerequisites (release dev-variant binary, Docker/Maestro/device), the `expo run:* --variant release` build+install commands with platform-correct `EXPO_PUBLIC_API_URL`, run modes (`--keep-up`/`--native`), how to add a flow, and the CI pointer.
