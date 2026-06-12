@@ -13,7 +13,10 @@ import type {
   UseMutationResult,
 } from '@tanstack/react-query';
 
-import type { GetCalendarLogsDto } from '../timeCalendar.schemas';
+import type {
+  CalendarLogGet,
+  GetCalendarLogsDto,
+} from '../timeCalendar.schemas';
 
 import { customFetch } from '../../mutator';
 import type { ErrorType } from '../../mutator';
@@ -30,13 +33,16 @@ export const getCalendarLogControllerGetCalendarLogsUrl = () => {
 export const calendarLogControllerGetCalendarLogs = async (
   getCalendarLogsDto: GetCalendarLogsDto,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getCalendarLogControllerGetCalendarLogsUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(getCalendarLogsDto),
-  });
+): Promise<CalendarLogGet[]> => {
+  return customFetch<CalendarLogGet[]>(
+    getCalendarLogControllerGetCalendarLogsUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(getCalendarLogsDto),
+    },
+  );
 };
 
 export const getCalendarLogControllerGetCalendarLogsMutationOptions = <

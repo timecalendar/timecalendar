@@ -1,6 +1,9 @@
 // Emits the OpenAPI spec to openapi/openapi.json without starting an HTTP
 // listener. Run via `npm run generate:openapi` (sets NODE_ENV=test), which
 // needs the local docker-compose services up — same prerequisite as `npm test`.
+// Must run from the built dist (`nest build`): the @nestjs/swagger CLI plugin
+// (nest-cli.json) injects response/property schemas at compile time, so a
+// ts-node run would emit a spec missing everything the runtime serves.
 // No dotenv here: a developer's .env would override the test env profile and
 // point the script at the dev database.
 process.env.SMTP_URL ??= "smtp://localhost:1025"

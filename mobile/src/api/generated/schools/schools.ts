@@ -22,8 +22,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  FindSchoolGroupsRepDto,
+  FindSchoolsRepDto,
   GetSchoolGroupsIcalUrlDto,
+  GetSchoolGroupsIcalUrlRepDto,
   OrleansGetIcalUrlFromStudentNumberDto,
+  SchoolForList,
+  SchoolForSeo,
   SearchSchoolsDto,
   SetSchoolGroupDto,
 } from '../timeCalendar.schemas';
@@ -148,8 +153,8 @@ export const getSchoolControllerFindSchoolsUrl = () => {
  */
 export const schoolControllerFindSchools = async (
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getSchoolControllerFindSchoolsUrl(), {
+): Promise<FindSchoolsRepDto> => {
+  return customFetch<FindSchoolsRepDto>(getSchoolControllerFindSchoolsUrl(), {
     ...options,
     method: 'GET',
   });
@@ -306,11 +311,14 @@ export const getSchoolControllerFindSchoolUrl = (schoolId: string) => {
 export const schoolControllerFindSchool = async (
   schoolId: string,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getSchoolControllerFindSchoolUrl(schoolId), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<SchoolForList> => {
+  return customFetch<SchoolForList>(
+    getSchoolControllerFindSchoolUrl(schoolId),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getSchoolControllerFindSchoolQueryKey = (schoolId: string) => {
@@ -479,8 +487,8 @@ export const getSchoolControllerSearchSchoolsUrl = () => {
 export const schoolControllerSearchSchools = async (
   searchSchoolsDto: SearchSchoolsDto,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getSchoolControllerSearchSchoolsUrl(), {
+): Promise<SchoolForSeo[]> => {
+  return customFetch<SchoolForSeo[]>(getSchoolControllerSearchSchoolsUrl(), {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
@@ -572,8 +580,8 @@ export const getSchoolGroupControllerFindSchoolGroupsUrl = (
 export const schoolGroupControllerFindSchoolGroups = async (
   schoolId: string,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(
+): Promise<FindSchoolGroupsRepDto> => {
+  return customFetch<FindSchoolGroupsRepDto>(
     getSchoolGroupControllerFindSchoolGroupsUrl(schoolId),
     {
       ...options,
@@ -857,8 +865,8 @@ export const schoolGroupControllerGetSchoolGroupsIcalUrl = async (
   schoolId: string,
   getSchoolGroupsIcalUrlDto: GetSchoolGroupsIcalUrlDto,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(
+): Promise<GetSchoolGroupsIcalUrlRepDto> => {
+  return customFetch<GetSchoolGroupsIcalUrlRepDto>(
     getSchoolGroupControllerGetSchoolGroupsIcalUrlUrl(schoolId),
     {
       ...options,

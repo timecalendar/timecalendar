@@ -32,7 +32,14 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindSchoolsRepDto"
+                }
+              }
+            }
           }
         },
         "summary": "Find list of schools",
@@ -57,7 +64,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolForList"
+                }
+              }
+            }
           }
         },
         "summary": "Find a school",
@@ -82,7 +96,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SchoolForSeo"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Find a school by SEO URL",
@@ -107,7 +131,17 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarLogGet"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Get calendar logs for given tokens",
@@ -132,7 +166,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCalendarRepDto"
+                }
+              }
+            }
           }
         },
         "summary": "Create a calendar",
@@ -157,7 +198,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarWithContent"
+                  }
+                }
+              }
+            }
           }
         },
         "summary": "Sync calendars",
@@ -182,7 +233,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarForPublic"
+                }
+              }
+            }
           }
         },
         "summary": "Find a calendar by its token",
@@ -207,7 +265,14 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FindSchoolGroupsRepDto"
+                }
+              }
+            }
           }
         },
         "summary": "Find school groups",
@@ -275,7 +340,14 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSchoolGroupsIcalUrlRepDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get school groups ICal URL",
@@ -337,10 +409,26 @@
     "/feature-flags/evaluate": {
       "get": {
         "operationId": "FeatureFlagController_evaluateFlags",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "keys",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureFlagEvaluationResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Evaluate multiple feature flags",
@@ -362,37 +450,807 @@
     "schemas": {
       "OrleansGetIcalUrlFromStudentNumberDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "studentNumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "studentNumber"
+        ]
+      },
+      "SchoolAssistant": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "requireIntranetAccess": {
+            "type": "boolean"
+          },
+          "requireCalendarName": {
+            "type": "boolean"
+          },
+          "isNative": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "slug",
+          "requireIntranetAccess",
+          "requireCalendarName",
+          "isNative"
+        ]
+      },
+      "SchoolForList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "seoUrl": {
+            "type": "string",
+            "description": "The URL of the school landing page for SEO purposes"
+          },
+          "siteUrl": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "intranetUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "assistant": {
+            "$ref": "#/components/schemas/SchoolAssistant"
+          },
+          "fallbackAssistant": {
+            "$ref": "#/components/schemas/SchoolAssistant"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "siteUrl",
+          "imageUrl",
+          "intranetUrl",
+          "visible",
+          "createdAt",
+          "updatedAt",
+          "assistant"
+        ]
+      },
+      "FindSchoolsRepDto": {
+        "type": "object",
+        "properties": {
+          "schools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolForList"
+            }
+          }
+        },
+        "required": [
+          "schools"
+        ]
       },
       "SearchSchoolsDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "seoUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "seoUrl"
+        ]
+      },
+      "Campus": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "location"
+        ]
+      },
+      "SchoolProfileGet": {
+        "type": "object",
+        "properties": {
+          "campuses": {
+            "description": "The exhaustive list of campuses of the school",
+            "example": "[{ name: \"Campus de Nanterre\", location: \"Nanterre (principal)\" }, { name: \"Campus Ville-d\"Avray\", location: \"Ville-d\"Avray\" }]",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Campus"
+            }
+          },
+          "formations": {
+            "description": "The formations the school is known for\nIf should contain maximum 6 formations",
+            "example": [
+              "Licence Droit",
+              "Licence Économie",
+              "Master Lettres Modernes",
+              "Master Sciences Politiques",
+              "Licence Psychologie",
+              "Master Droit Public"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the school",
+            "example": "\"L\"université My Gaming Academia est une université de gaming et de technologie.\""
+          },
+          "studentCount": {
+            "type": "number",
+            "description": "The number of students the school has",
+            "example": 10000
+          },
+          "domains": {
+            "description": "The domains of study the school is known for\nIf should contain maximum 5 domains",
+            "example": [
+              "Informatique",
+              "Electronique",
+              "Marketing Digital"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excellenceTitle": {
+            "type": "string",
+            "description": "The title of the excellence of the school",
+            "example": "Excellence en Informatique"
+          },
+          "excellenceDescription": {
+            "type": "string",
+            "description": "A paragraph explaining why the school is known for the domains",
+            "example": "\"L\"université My Gaming Academia est connue pour son excellence en informatique et en électronique.\""
+          },
+          "tags": {
+            "description": "The tags of the school",
+            "example": [
+              "Engagement citoyen",
+              "Ouverture internationale",
+              "Recherche avancée",
+              "Campus innovant"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "campusLocationContext": {
+            "type": "string",
+            "description": "The region where the school is located",
+            "example": "Île-de-France"
+          }
+        }
+      },
+      "SchoolForSeo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "seoUrl": {
+            "type": "string",
+            "description": "The URL of the school landing page for SEO purposes"
+          },
+          "siteUrl": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "intranetUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "assistant": {
+            "$ref": "#/components/schemas/SchoolAssistant"
+          },
+          "fallbackAssistant": {
+            "$ref": "#/components/schemas/SchoolAssistant"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/SchoolProfileGet"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "siteUrl",
+          "imageUrl",
+          "intranetUrl",
+          "visible",
+          "createdAt",
+          "updatedAt",
+          "assistant"
+        ]
       },
       "GetCalendarLogsDto": {
+        "type": "object",
+        "properties": {
+          "tokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "CalendarLogEventGet": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "uid",
+          "title",
+          "startsAt",
+          "endsAt",
+          "location"
+        ]
+      },
+      "CalendarChangedItem": {
+        "type": "object",
+        "properties": {
+          "previousItem": {
+            "$ref": "#/components/schemas/CalendarLogEventGet"
+          },
+          "newItem": {
+            "$ref": "#/components/schemas/CalendarLogEventGet"
+          }
+        },
+        "required": [
+          "previousItem",
+          "newItem"
+        ]
+      },
+      "CalendarChangeGet": {
+        "type": "object",
+        "properties": {
+          "oldItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarLogEventGet"
+            }
+          },
+          "newItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarLogEventGet"
+            }
+          },
+          "changedItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarChangedItem"
+            }
+          }
+        },
+        "required": [
+          "oldItems",
+          "newItems",
+          "changedItems"
+        ]
+      },
+      "CalendarLogGet": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "calendarId": {
+            "type": "string"
+          },
+          "calendarToken": {
+            "type": "string"
+          },
+          "calendarName": {
+            "type": "string"
+          },
+          "calendarChange": {
+            "$ref": "#/components/schemas/CalendarChangeGet"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "calendarId",
+          "calendarToken",
+          "calendarName",
+          "calendarChange",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CalendarCustomData": {
         "type": "object",
         "properties": {}
       },
       "CreateCalendarDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "customData": {
+            "nullable": true,
+            "default": null,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalendarCustomData"
+              }
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "customData"
+        ]
+      },
+      "CreateCalendarRepDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
       },
       "SyncCalendarsDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "tokens": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "CalendarForPublic": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string",
+            "nullable": true
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "lastUpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "token",
+          "name",
+          "schoolName",
+          "lastUpdatedAt",
+          "createdAt"
+        ]
+      },
+      "EventTypeEnum": {
+        "type": "string",
+        "enum": [
+          "cm",
+          "td",
+          "tp",
+          "tp2",
+          "project",
+          "exam",
+          "class"
+        ]
+      },
+      "EventTag": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "icon": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "color",
+          "icon"
+        ]
+      },
+      "CalendarEventCustomFields": {
+        "type": "object",
+        "properties": {
+          "canceled": {
+            "type": "boolean"
+          },
+          "shortDescription": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "groupColor": {
+            "type": "string"
+          }
+        }
+      },
+      "CalendarEventForPublic": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EventTypeEnum"
+              }
+            ]
+          },
+          "color": {
+            "type": "string"
+          },
+          "groupColor": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "teachers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventTag"
+            }
+          },
+          "fields": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalendarEventCustomFields"
+              }
+            ]
+          },
+          "exportedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "color",
+          "groupColor",
+          "uid",
+          "title",
+          "startsAt",
+          "endsAt",
+          "location",
+          "allDay",
+          "description",
+          "teachers",
+          "tags",
+          "fields",
+          "exportedAt"
+        ]
+      },
+      "CalendarWithContent": {
+        "type": "object",
+        "properties": {
+          "calendar": {
+            "$ref": "#/components/schemas/CalendarForPublic"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarEventForPublic"
+            }
+          }
+        },
+        "required": [
+          "calendar",
+          "events"
+        ]
+      },
+      "SchoolGroupItem": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolGroupItem"
+            }
+          }
+        },
+        "required": [
+          "text",
+          "value",
+          "children"
+        ]
+      },
+      "FindSchoolGroupsRepDto": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolGroupItem"
+            }
+          }
+        },
+        "required": [
+          "groups"
+        ]
       },
       "SetSchoolGroupDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolGroupItem"
+            }
+          },
+          "icalUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "groups",
+          "icalUrl"
+        ]
       },
       "GetSchoolGroupsIcalUrlDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "groups"
+        ]
+      },
+      "GetSchoolGroupsIcalUrlRepDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
       },
       "SendMessageDto": {
         "type": "object",
-        "properties": {}
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "calendarIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "schoolId": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "gradeName": {
+            "type": "string"
+          },
+          "deviceInfo": {
+            "type": "string"
+          },
+          "calendarUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "message"
+        ]
       },
       "NotificationSubscriptionCreate": {
+        "type": "object",
+        "properties": {
+          "frequency": {
+            "type": "string",
+            "enum": [
+              "immediately",
+              "hourly",
+              "daily"
+            ]
+          },
+          "nbDaysAhead": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "calendarIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "fcmToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "frequency",
+          "nbDaysAhead",
+          "isActive",
+          "calendarIds",
+          "fcmToken"
+        ]
+      },
+      "FeatureFlagEvaluationResponseDto": {
         "type": "object",
         "properties": {}
       }

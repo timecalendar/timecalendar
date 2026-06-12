@@ -22,7 +22,10 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CalendarForPublic,
+  CalendarWithContent,
   CreateCalendarDto,
+  CreateCalendarRepDto,
   SyncCalendarsDto,
 } from '../timeCalendar.schemas';
 
@@ -41,13 +44,16 @@ export const getCalendarSyncControllerCreateCalendarUrl = () => {
 export const calendarSyncControllerCreateCalendar = async (
   createCalendarDto: CreateCalendarDto,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getCalendarSyncControllerCreateCalendarUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(createCalendarDto),
-  });
+): Promise<CreateCalendarRepDto> => {
+  return customFetch<CreateCalendarRepDto>(
+    getCalendarSyncControllerCreateCalendarUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(createCalendarDto),
+    },
+  );
 };
 
 export const getCalendarSyncControllerCreateCalendarMutationOptions = <
@@ -134,13 +140,16 @@ export const getCalendarSyncControllerSyncCalendarsUrl = () => {
 export const calendarSyncControllerSyncCalendars = async (
   syncCalendarsDto: SyncCalendarsDto,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getCalendarSyncControllerSyncCalendarsUrl(), {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(syncCalendarsDto),
-  });
+): Promise<CalendarWithContent[]> => {
+  return customFetch<CalendarWithContent[]>(
+    getCalendarSyncControllerSyncCalendarsUrl(),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(syncCalendarsDto),
+    },
+  );
 };
 
 export const getCalendarSyncControllerSyncCalendarsMutationOptions = <
@@ -226,11 +235,14 @@ export const getCalendarControllerFindCalendarByTokenUrl = (token: string) => {
 export const calendarControllerFindCalendarByToken = async (
   token: string,
   options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getCalendarControllerFindCalendarByTokenUrl(token), {
-    ...options,
-    method: 'GET',
-  });
+): Promise<CalendarForPublic> => {
+  return customFetch<CalendarForPublic>(
+    getCalendarControllerFindCalendarByTokenUrl(token),
+    {
+      ...options,
+      method: 'GET',
+    },
+  );
 };
 
 export const getCalendarControllerFindCalendarByTokenQueryKey = (
