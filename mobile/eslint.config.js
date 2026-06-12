@@ -117,5 +117,14 @@ module.exports = defineConfig([
       "@typescript-eslint/no-redeclare": "off",
     },
   },
+  {
+    // Colocated tests assert against literal UI strings on purpose — they're
+    // test fixtures, not user-facing copy, and are never translated.
+    name: "timecalendar/tests",
+    files: ["**/*.test.{ts,tsx}"],
+    rules: {
+      "i18next/no-literal-string": "off",
+    },
+  },
   prettierRecommended,
 ])
