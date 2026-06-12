@@ -71,7 +71,7 @@
     "axios": "^1.4.0",
     "bullmq": "^5.77.1",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.0",
+    "class-validator": "^0.15.1",
     "commander": "^11.0.0",
     "compression": "^1.7.4",
     "crisp-api": "^8.0.1",
