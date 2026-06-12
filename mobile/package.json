@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.17",
+    "@tanstack/react-query": "^5.101.0",
     "expo": "~56.0.11",
     "expo-build-properties": "~56.0.18",
     "expo-constants": "~56.0.18",
@@ -31,6 +32,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "orval": "^8.17.0",
+    "prettier": "^3.8.4",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -39,6 +42,7 @@
     "android": "APP_VARIANT=development expo run:android",
     "ios": "APP_VARIANT=development expo run:ios",
     "web": "expo start --web",
+    "generate": "orval",
     "lint": "expo lint"
   },
   "private": true
