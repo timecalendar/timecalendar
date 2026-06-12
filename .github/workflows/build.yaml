@@ -374,7 +374,10 @@ jobs:
 
   e2e-mobile-ios:
     name: Run mobile E2E (iOS)
-    runs-on: macos-latest
+    # macos-26 ships Xcode 26 (Swift 6.2). Required: Expo SDK 56 / RN pods
+    # declare Swift tools 6.2, and macos-latest's default Xcode (16.x, Swift
+    # 6.1) fails SPM resolution ("installed version is 6.1.0").
+    runs-on: macos-26
     # A cold xcodebuild is ~20-40 min. The CocoaPods download cache (the spec
     # repo + downloaded pods, outside the repo tree) survives `prebuild --clean`
     # and shaves the pod-install step; DerivedData lives under the cleaned ios/

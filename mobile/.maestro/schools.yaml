@@ -12,8 +12,13 @@
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp
-# Sibling routes under the root Stack are reachable by deep link (tabs live in
-# the (tabs) group); the dev scheme is timecalendar-dev (app.config.ts).
+# Cold-start via the deep link. A warm openLink (app already foregrounded on
+# Home) does NOT navigate on Android release builds — Expo Router only reliably
+# resolves the link through getInitialURL on a cold launch. So stop the app
+# first, then openLink relaunches it with timecalendar-dev://schools as the
+# initial URL. Sibling routes live under the root Stack ((tabs) is a group);
+# the dev scheme is timecalendar-dev (app.config.ts).
+- stopApp
 - openLink: timecalendar-dev://schools
 - assertVisible: "Schools"
 # "My Gaming Academia" is a visible: true fixture seeded by db:init
