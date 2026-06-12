@@ -8,6 +8,24 @@ TimeCalendar mobile app
 
 To start working on the TimeCalendar app, you must first install [Flutter](https://docs.flutter.dev/get-started/install). Select your operating system, and follow the instructions to install the Flutter SDK, and the Android or/and iOS setup.
 
+This project needs a Flutter SDK providing Dart `>=3.9.0` (e.g. Flutter 3.44+).
+
+#### iOS build prerequisites (gotchas)
+
+The iOS build has two requirements that aren't obvious and will fail the build if missing:
+
+1. **Disable Swift Package Manager.** Recent Flutter enables SPM by default, which breaks the Firebase Crashlytics build phase (`upload-symbols: No such file or directory`). This project builds via CocoaPods:
+   ```bash
+   flutter config --no-enable-swift-package-manager
+   ```
+2. **Install the FlutterFire CLI.** A Runner build phase calls `flutterfire` on every build (even for the shared dev Firebase account). Install it and make sure `~/.pub-cache/bin` is on your `PATH`:
+   ```bash
+   dart pub global activate flutterfire_cli
+   export PATH="$PATH:$HOME/.pub-cache/bin"   # add to your shell profile
+   ```
+
+If a build fails after changing iOS config, run `flutter clean` and delete `ios/Pods`, `ios/Podfile.lock`, and `~/Library/Developer/Xcode/DerivedData/Runner-*` before retrying.
+
 ### Firebase
 
 You first need a Firebase account and project setup. You can either use the private development Firebase account or create your own. If you are using the private development account, skip this step.
@@ -38,59 +56,40 @@ FlutterFire CLI created a file `lib/firebase_options.dart` with your custom Fire
 
 Next, on the [Firebase Console](https://console.firebase.google.com/), go into your Project settings > General, go in Your apps, and select your Android application in the left bar. Click on the download button `google-services.json` to download the file. Copy it in `android/app/google-services.json`.
 
-### Environment variables
+### Local dev environment
 
-This project uses Flutter's `--dart-define` for environment configuration.
+The app talks to the local HTTPS dev env at `https://api.timecalendar.host:1443`
+(nginx + a self-signed dev cert). Three things must be in place: the
+`*.timecalendar.host` names mapped in `/etc/hosts`, `web/.env.local` created, and
+the dev cert trusted by the iOS Simulator. Each one missing shows up as the same
+opaque "Network Error" in the import webview, so set them all up at once from the
+repo root:
 
-**For local development with simulator/emulator:**
 ```bash
-flutter run --dart-define=MAIN_API_URL=http://localhost:3005 \
-            --dart-define=MAIN_WEB_URL=http://localhost:3000
+npm run setup
 ```
 
-**For local development on real device:**
-Get the local IP address of your computer running the API server, then run:
-```bash
-flutter run --dart-define=MAIN_API_URL=http://YOUR_LOCAL_IP:3005 \
-            --dart-define=MAIN_WEB_URL=http://YOUR_LOCAL_IP:3000
-```
-Replace `YOUR_LOCAL_IP` with your computer's network IP (e.g. `192.168.0.10`).
+This is idempotent and also verifies the API is reachable. Run it again any time
+the app can't reach the backend — it tells you exactly which piece is broken.
 
+> **Backend required first.** `npm run setup` checks the API but does not start
+> it. Bring up the Docker stack, API server, and web server per the
+> [root README](../README.md) (API on `:3005`, web on `:3006`).
+
+After setup, the app uses this env by default — no `--dart-define` needed.
 
 ### Run the app
 
-In a terminal, run the following command to build code parts when the code changes:
+In a terminal, build code parts on change:
 
 ```bash
 dart run build_runner watch
 ```
 
-Run the app from your IDE.
-
-### Add certificates
-
-For the app to communicate with the local development server, you need to add the development certificate to your system's trusted certificates.
-
-#### macOS
-
-1. **For iOS Simulator**: Drag and drop the file `ci/certificates/cert.pem` into the simulator.
-2. **For system-wide trust**: Double-click the `ci/certificates/cert.pem` file to add it to Keychain Access, then mark it as trusted for SSL.
-
-#### Windows
-
-1. Double-click the `ci/certificates/cert.pem` file.
-2. Click "Install Certificate".
-3. Choose "Local Machine" and click "Next".
-4. Select "Place all certificates in the following store" and browse to "Trusted Root Certification Authorities".
-5. Click "Next" and then "Finish".
-
-#### Linux
-
-Add the certificate to your system's certificate store:
+Then run the app from your IDE, or:
 
 ```bash
-sudo cp ci/certificates/cert.pem /usr/local/share/ca-certificates/timecalendar-dev.crt
-sudo update-ca-certificates
+flutter run
 ```
 
 ## Build on Android

@@ -19,7 +19,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./bin/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d timecalendar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
   redis:
     image: redis
     restart: always
@@ -28,7 +32,10 @@ services:
     volumes: 
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli","ping"]
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

@@ -96,6 +96,7 @@ unlinked_spec.ds
 **/ios/Flutter/app.zip
 **/ios/Flutter/flutter_assets/
 **/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/ephemeral/flutter_native_integration.env
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 **/ios/Runner.app.dSYM.zip
