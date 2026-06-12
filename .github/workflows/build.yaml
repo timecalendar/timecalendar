@@ -165,6 +165,13 @@ jobs:
           exit 1
         }
 
+    # Generates the gitignored expo-env.d.ts and .expo/types (typed routes,
+    # CSS module declarations) that `expo start` produces locally — the
+    # documented way to typecheck in CI without a dev server.
+    - name: Generate Expo type declarations
+      working-directory: ./mobile
+      run: npx expo customize tsconfig.json
+
     - name: Typecheck
       working-directory: ./mobile
       run: npx tsc --noEmit
