@@ -115,6 +115,60 @@ jobs:
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
+    # The Nest app cannot boot without a service-account-shaped key file; the
+    # spec emit only needs the JSON shape, never a real credential.
+    - name: Generate dummy Firebase service-account key
+      run: ./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
+
+    # The image's dist/ was built from this same commit (with the swagger CLI
+    # plugin applied), so emitting from it reproduces `npm run generate:openapi`.
+    - name: Check committed OpenAPI spec matches the server code
+      run: |
+        docker run --env-file="./ci/.env.test" --network host \
+          -e NODE_ENV=test \
+          -e OPENAPI_OUTPUT_PATH=/openapi-out/openapi.json \
+          -v /tmp/serviceAccountKey.json:/usr/src/app/config/serviceAccountKey.json:ro \
+          -v "$PWD/openapi":/openapi-out \
+          ghcr.io/timecalendar/timecalendar:${{ github.sha }} \
+          node dist/generate-openapi.js
+        git diff --exit-code openapi/openapi.json || {
+          echo "::error::openapi/openapi.json is out of date with the server code — run 'npm run generate:openapi' in server/ and commit the result"
+          exit 1
+        }
+
+
+  test-mobile:
+    name: Run mobile checks
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set up Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: mobile/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./mobile
+      run: npm ci
+
+    - name: Check generated API client matches the committed spec
+      working-directory: ./mobile
+      run: |
+        npm run generate
+        git diff --exit-code src/api/generated || {
+          echo "::error::mobile/src/api/generated is out of date with openapi/openapi.json — run 'npm run generate' in mobile/ and commit the result"
+          exit 1
+        }
+
+    - name: Typecheck
+      working-directory: ./mobile
+      run: npx tsc --noEmit
+
 
   test-app:
     name: Run app tests
