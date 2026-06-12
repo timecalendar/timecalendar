@@ -21,15 +21,13 @@ Copy the environment configuration file:
 cp .env.local.sample .env.local
 ```
 
-Then, run the development server:
+Then, run the development server (serves on port 3006):
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the landing page.
+Open [http://localhost:3006](http://localhost:3006) with your browser to see the landing page. The assistant WebViews are exercised through the mobile app — see the [app README](../app/README.md) and run `npm run setup` from the repo root to wire up the local dev env.
 
 ## Project Structure
 

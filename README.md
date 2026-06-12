@@ -6,10 +6,11 @@
 
 To start working on TimeCalendar, you must first [install Docker](https://docs.docker.com/get-docker/).
 
-Once Docker is installed, start the Postgres server in background:
+Once Docker is installed, start the dev-env services (Postgres, Redis, and an
+nginx TLS proxy) in the background. The compose file lives in `server/`:
 
 ```bash
-docker-compose up -d
+cd server && docker compose up -d
 ```
 
 ### Node.js
@@ -24,7 +25,10 @@ npm install
 
 ### Init your environment
 
-Copy the file `.env.sample` to a new file named `.env`.
+Copy the file `server/.env.sample` to a new file named `server/.env`. In
+development most values already have sensible defaults (see
+`server/src/config/environments/development.ts`), so this file only needs
+`NODE_ENV=development`.
 
 ### Firebase
 
@@ -44,6 +48,14 @@ To start the server, run the following command:
 cd server && npm run dev
 ```
 
+## Mobile app
+
+The Flutter mobile app lives in [`app/`](./app). To run it against this local
+dev env (e.g. on an iOS simulator), first run `npm run setup` to wire up the
+`/etc/hosts` entries, `web/.env.local`, and the simulator's trusted dev cert,
+then follow the [app README](./app/README.md). The app talks to the API server
+started above on `:3005`.
+
 ## Tests
 
 To run tests:
@@ -56,15 +68,29 @@ npm run test
 
 Run all commands in the `server` folder.
 
+Migrations do not run automatically in development (`RUN_MIGRATIONS=false`), so
+run them manually after starting the Docker stack and before starting the server.
+
 **Create a migration**
 
 ```
-npm run typeorm migration:generate -n MigrationName
+npm run db:generate
 ```
 
 **Run migrations**
 
+```
+npm run db:migrate
+```
+
+## Seed data
+
+The dev database starts empty (the schools list is empty until seeded). Load the
+fixture data (schools, school groups) from the `server` folder:
 
 ```
-npm run typeorm migration:run
+npm run db:seed
 ```
+
+Use `npm run db:init` to drop the database, re-run migrations, and reseed from
+scratch.

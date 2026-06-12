@@ -9,7 +9,8 @@
     "husky": "^7.0.0"
   },
   "scripts": {
-    "prepare": "husky install || true"
+    "prepare": "husky install || true",
+    "setup": "bash bin/setup-dev.sh"
   },
   "dependencies": {
     "lint-staged": "^13.0.3"
