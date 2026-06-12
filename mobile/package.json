@@ -31,7 +31,14 @@
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
+    "@eslint/compat": "^2.1.0",
     "@types/react": "~19.2.2",
+    "eslint": "^9.39.4",
+    "eslint-config-expo": "~56.0.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-i18next": "^6.1.4",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-react-native-a11y": "^3.5.1",
     "orval": "^8.17.0",
     "prettier": "^3.8.4",
     "typescript": "~6.0.3"
@@ -43,7 +50,17 @@
     "ios": "APP_VARIANT=development expo run:ios",
     "web": "expo start --web",
     "generate": "orval",
-    "lint": "expo lint"
+    "lint": "expo lint --max-warnings 0"
   },
-  "private": true
+  "private": true,
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --cache --fix"
+    ]
+  },
+  "overrides": {
+    "eslint-plugin-react-native-a11y": {
+      "eslint": "$eslint"
+    }
+  }
 }

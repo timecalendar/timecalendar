@@ -11,7 +11,7 @@
 1. **Scaffold `mobile`** as a **standalone npm project** (sibling of `server/` and `app/` — not a workspace member; see migration-approach §3 and the scaffold change's design D7). Latest **stable** Expo SDK ([K-1](../00-exploration/migration-approach.md#8-resolved-knobs-phase-0-kickoff-decisions)), New Arch + Hermes, TS strict, `expo-dev-client`. ✅ *Done (scaffold-mobile-expo, SDK 56).*
 2. **Min OS targets** set to iOS 15.1 / Android API 24 ([K-2](../00-exploration/migration-approach.md#8-resolved-knobs-phase-0-kickoff-decisions)). ✅ *Done — effective floors iOS 16.4 / API 24 (SDK 56's own iOS minimum prevails; K-2 revisit flagged in §8).*
 3. **API client:** Orval reading the server's OpenAPI spec → RN-owned TanStack Query hooks. (Web stays separate.)
-4. **Lint/format + first custom ESLint rules:** no hardcoded strings, a11y props on touchables, no direct `@react-navigation/*` imports, import-boundary rules. Pre-commit + CI.
+4. **Lint/format + first custom ESLint rules:** no hardcoded strings, a11y props on touchables, no direct `@react-navigation/*` imports, import-boundary rules. Pre-commit + CI. ✅ *Done (add-mobile-lint-format) — all rules landed via core rules + existing plugins (no hand-rolled rule needed); also gained no-raw-fetch/no-axios (the data-layer R-1 debt) and Prettier aligned to web/server. The strings + a11y rules from steps 6–7 are already live; step 6 still owes the i18n wiring and removal of the tagged template-file suppressions.*
 5. **Test harness:** Jest + RNTL green; **Maestro e2e green on iOS *and* Android** (even if it only asserts the splash renders).
 6. **i18n** wired (FR + EN), no-hardcoded-strings rule live.
 7. **a11y** lint rules live.

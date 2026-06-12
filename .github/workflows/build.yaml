@@ -176,6 +176,10 @@ jobs:
       working-directory: ./mobile
       run: npx tsc --noEmit
 
+    - name: Lint
+      working-directory: ./mobile
+      run: npm run lint
+
 
   test-app:
     name: Run app tests
