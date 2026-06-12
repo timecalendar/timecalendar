@@ -111,47 +111,12 @@ log "seeding the timecalendar_test database (db:init: drop + migrate + seed)…"
 # --- 4. Generate the dummy Firebase service-account key ----------------------
 # server/src/config/firebase.ts does readFileSync(serviceAccountKey.json) at
 # import time and FirebaseModule is in AppModule, so the Nest app cannot boot
-# without this file. firebase-admin's cert() only checks the JSON *shape* —
-# project_id, client_email and a parseable PEM private_key — and makes no
-# network call; nothing in the E2E path calls Firebase.
-#
-# The key is *generated*, never committed: GitHub Push Protection rejects any
-# service-account-shaped JSON (even a dummy, and even a PEM literal embedded in
-# a script) in any pushed file. So we mint a fresh throwaway RSA private key
-# with openssl on every run and assemble the dummy JSON around it — no
-# credential material lives in the repo. server/.gitignore keeps server/config/
-# ignored, so the generated file stays untracked. An existing file (e.g. a
-# developer's real key) is left untouched.
+# without this file; nothing in the E2E path calls Firebase. The shared script
+# mints a throwaway key (see its header for why it is generated, never
+# committed). An existing file (e.g. a developer's real key) is left untouched.
 if [ ! -f "$SERVICE_ACCOUNT_KEY" ]; then
   log "generating dummy Firebase service-account key (fresh throwaway RSA key)…"
-  mkdir -p "$(dirname "$SERVICE_ACCOUNT_KEY")"
-  # PKCS#8 PEM ('BEGIN PRIVATE KEY') — the same format real service-account
-  # keys use, so firebase-admin's cert() accepts it.
-  E2E_PRIVATE_KEY="$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null)" \
-    python3 - "$SERVICE_ACCOUNT_KEY" <<'PY'
-import json, os, sys
-
-project = "timecalendar-e2e-dummy"
-email = f"e2e-dummy@{project}.iam.gserviceaccount.com"
-key = {
-    "type": "service_account",
-    "project_id": project,
-    "private_key_id": "0" * 40,
-    "private_key": os.environ["E2E_PRIVATE_KEY"].strip() + "\n",
-    "client_email": email,
-    "client_id": "0" * 21,
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url":
-        "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url":
-        "https://www.googleapis.com/robot/v1/metadata/x509/"
-        + email.replace("@", "%40"),
-}
-with open(sys.argv[1], "w") as f:
-    json.dump(key, f, indent=2)
-    f.write("\n")
-PY
+  "$REPO_ROOT/ci/generate-dummy-firebase-key.sh" "$SERVICE_ACCOUNT_KEY"
 else
   log "Firebase service-account key already present — leaving it untouched."
 fi

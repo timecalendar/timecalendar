@@ -29,7 +29,7 @@ Five living artifacts. Each has an owner-of-record (us) and a clear trigger for 
 
 | Artifact | What it is | Updated when |
 | --- | --- | --- |
-| **Architecture Book** (`architecture.md`) | The living set of rules that drive development — only rules that *can't* be encoded in tooling. | A new load-bearing pattern is established or changed. |
+| **Architecture Book** (**`.claude/rules/mobile/`** — that directory IS the book) | The living set of rules that drive development — only rules that *can't* be encoded in tooling. | A new load-bearing pattern is established or changed. |
 | **ADR log** (`decisions/NNN-*.md`) | One short record per architectural decision: context, choice, alternatives, "revisit if…". | Any load-bearing decision is made (see triage, [R-4](#6-working-rules-seed-of-the-architecture-book)). |
 | **Definition of Done** (`definition-of-done.md`) | The per-feature checklist below. | We add/remove a quality axis. |
 | **Rule changelog** (`architecture-changelog.md`) | The meta-doc: a dated log of *every change to the rules*, with why. **The act of documenting is itself documented here.** | The Architecture Book or DoD changes. |
@@ -43,7 +43,7 @@ Five living artifacts. Each has an owner-of-record (us) and a clear trigger for 
 
 Wired and *green in CI* before we build real features:
 
-- Monorepo: `app-rn` joins the existing workspace; Orval generates an RN-owned client from the OpenAPI spec.
+- `mobile/` exists as a **standalone npm project** (own lockfile, sibling of `server/` and `app/` — *not* a root-workspace member; revised at scaffold time: Expo's exact `react` pin conflicts permanently with Next's floating range under npm hoisting, see the scaffold change's design D7); Orval generates an RN-owned client from the OpenAPI spec file.
 - EAS Build/Submit/Update + `expo-dev-client`; app installs on a real device.
 - TypeScript strict; ESLint 9 + Prettier + **the first custom lint rules**; pre-commit + CI enforcement.
 - Test harness: Jest + RNTL green; **Maestro e2e green on both iOS and Android**.
@@ -124,11 +124,33 @@ We *expect* to revise. Seeing a pattern fail and correcting it is success, not f
 
 ---
 
-## 8. Open knobs (decide at kickoff)
+## 8. Resolved knobs (Phase 0 kickoff decisions)
 
-- **SDK target:** start on latest stable Expo SDK now, or wait for SDK 56 stable to get Expo UI / Liquid Glass GA? (Affects native-fidelity timeline.)
-- **Minimum iOS / Android versions** — sets the Liquid Glass degradation baseline.
-- **Coverage threshold** — the concrete number behind "meaningful coverage."
-- **Phase 1 feature order** — which of the three varied features goes first.
-- **Calendar spike** — when to time-box the custom-vs-library decision.
+These are decided. Each is a proto-ADR (becomes a real ADR when `mobile` is scaffolded). Format: **decision · why · revisit if**.
+
+### K-1 — SDK target: latest **stable** Expo SDK at scaffold time
+- **Decision:** Scaffold on the latest *stable* SDK. If **SDK 56** is stable by then, use it; otherwise start on **SDK 55** and treat the SDK 56 upgrade as a tracked ADR that **must land before Phase 2** (calendar / Expo UI GA).
+- **Why:** A solid foundation must not sit on a beta SDK — that violates our own no-concessions principle. SDK 55 already gives New Arch + Hermes, native tabs (alpha, 54+), and `expo-glass-effect`, which is enough for Phases 0–1. SDK 56 GAs Expo UI (SwiftUI/Compose), which matters most for the *calendar* and rich native chrome in Phase 2.
+- **Revisit if:** SDK 56 ships stable before Phase 0 completes → start directly on 56 and skip the interim upgrade.
+
+### K-2 — Minimum OS: **iOS 15.1**, **Android API 24 (7.0)**
+- **Decision:** iOS 15.1 floor, Android `minSdk 24`. Liquid Glass degradation baseline: **iOS 15.1–25 → non-glass fallback** (blur/solid surfaces), **iOS 26+ → Liquid Glass**. Android uses Material 3 throughout.
+- **Why:** Matches Expo's own minimums and barely moves from Flutter (iOS 15.0→15.1 loses ~no devices; Android effective floor was ~API 23 via Firebase, so API 24 drops only Android 6.0, a sub-1% sliver in 2026). No meaningful user regression.
+- **Revisit if:** analytics show a non-trivial install base below these floors, or a chosen SDK raises its own minimum.
+- **⚠️ Revisit fired (2026-06-12, scaffold time):** Expo SDK 56's own minimum iOS deployment target is **16.4** (> 15.1), so the **effective floors are iOS 16.4 / Android API 24** (Android unchanged; SDK 56's Android minimum is 21). Practical impact: devices capped at iOS 15.x (iPhone 6s/7/SE 1st gen class) fall below the floor. The Liquid Glass degradation baseline becomes **iOS 16.4–25 → non-glass fallback**. Recorded in the Architecture Book; check install-base analytics before release if this sliver matters.
+
+### K-3 — Coverage: **90% on logic, 70% global floor**, CI-enforced
+- **Decision:** Per-path Jest `coverageThreshold`: **90% lines+branches** on domain/logic (hooks, stores, `db`/Drizzle, mappers, utils); **70% global** floor; presentational components covered by **RNTL behavior tests** but exempt from the 90% gate. CI fails below threshold.
+- **Why:** Put the high bar where bugs actually hide (logic), not in chasing a vanity percentage across UI glue. Finite and enforceable — fits R-1.
+- **Revisit if:** the 90% gate starts driving cargo-cult tests rather than catching real regressions.
+
+### K-4 — Phase 1 feature order: **Settings → Personal events → School selection**
+- **Decision:** (1) **Settings** — MMKV prefs, native controls, i18n surface. (2) **Personal events** — device-local CRUD: Drizzle/SQLite, forms, native date/time pickers. (3) **School selection / onboarding** — TanStack Query server read, offline cache, nested navigation.
+- **Why:** Ascending complexity; each feature adds exactly **one** new architectural axis, so a failing pattern is easy to attribute. Personal events is chosen over hidden events for the CRUD slot because it's **self-contained** (user creates from scratch; doesn't depend on synced events existing — its calendar overlay lands in Phase 2 via a clean seam).
+- **Revisit if:** a dependency forces a different order, or one feature proves too thin to exercise its axis.
+
+### K-5 — Calendar spike: **first task of Phase 2, time-boxed 3 working days**
+- **Decision:** Open Phase 2 with a **3-day** read-only spike rendering a real dense university week on `@howljs/calendar-kit` v2 (our brand styling, overlaps, 120fps target). Decision gate at the end: **adopt / fork / build custom**. Optional lightweight pre-read during Phase 1.5 if there's slack.
+- **Why:** Highest-uncertainty item in the whole migration; de-risk with a bounded experiment before committing to the (likely) custom build.
+- **Revisit if:** the spike clearly succeeds or fails early — end it early either way.
 </content>
