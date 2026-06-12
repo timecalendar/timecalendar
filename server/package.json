@@ -76,7 +76,7 @@
     "compression": "^1.7.4",
     "crisp-api": "^8.0.1",
     "date-fns": "^2.30.0",
-    "dotenv": "^16.3.1",
+    "dotenv": "^17.4.2",
     "ejs": "^5.0.2",
     "eslint": "^9",
     "eslint-config-prettier": "^10",
