@@ -8,7 +8,7 @@ import type {
   SchoolForList,
 } from "@/api/generated/timeCalendar.schemas"
 
-import SchoolsScreen from "./schools"
+import SchoolsScreen from "./schools-screen"
 
 // Mock the single designed fetch seam: the screen renders through the real
 // generated hook + a real QueryClient, with only the network boundary stubbed.
