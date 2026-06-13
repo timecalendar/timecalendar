@@ -68,10 +68,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     predictiveBackGestureEnabled: false,
   },
-  web: {
-    output: "static",
-    favicon: "./assets/images/favicon.png",
-  },
   plugins: [
     "expo-router",
     "expo-localization",
@@ -106,13 +102,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "expo-splash-screen",
       {
         // Native static launch screen, drawn before any JS runs. This single
-        // brand-blue literal is the one color the splash can't source from the
-        // @/theme tokens: a native launch screen runs pre-JS, so it can neither
-        // read JS theme tokens nor switch on the OS color scheme. It is chosen
-        // to read acceptably in both light and dark; the JS splash overlay
-        // (src/components/splash-screen.tsx) mounts immediately after JS loads
-        // and corrects to the scheme-appropriate @/theme token (design D5).
-        backgroundColor: "#208AEF",
+        // brand-pink literal (the Flutter `Colors.pink` identity tone #E91E63) is
+        // the one color the splash can't source from the @/theme tokens: a native
+        // launch screen runs pre-JS, so it can neither read JS theme tokens nor
+        // switch on the OS color scheme. It is the brand fill (not a body-text
+        // surface) and reads acceptably in both light and dark; the JS splash
+        // overlay (src/components/splash-screen.tsx) mounts immediately after JS
+        // loads and corrects to the scheme-appropriate @/theme token (design D5).
+        backgroundColor: "#E91E63",
         android: {
           image: "./assets/images/splash-icon.png",
           imageWidth: 76,
