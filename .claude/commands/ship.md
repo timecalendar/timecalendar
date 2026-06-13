@@ -53,12 +53,15 @@ It runs `code-review` (high) + verifies tasks/DoD/Book and returns a `VERDICT` b
 - **E2E:** do NOT add the `run-e2e` label — per the user, E2E runs on `main` only (and is slow).
   If you want extra confidence on a runtime-heavy change (storage, theming, splash, EAS), run
   Maestro **locally** (`mobile/e2e/run_e2e.sh`) — it's faster than CI.
-- **Wait for green:** `gh pr checks <pr> --watch` (the `ci-mobile` / `test-mobile` job is the gate:
-  gen-drift, tsc, lint, jest). Poll with `ScheduleWakeup` for long waits if needed.
+- **Wait for green — DO NOT use `--auto`.** `main` is **not a protected branch**, so
+  `gh pr merge --auto` merges the instant the PR is mergeable, *before* CI finishes — it does
+  **not** wait for green. Enforce green yourself: `gh pr checks <pr> --watch --interval 30`
+  (run in background; the gate is the `CI mobile checks` / `test-mobile` job: gen-drift, tsc,
+  lint, jest — `CI build & deploy` runs too but only server/web matters for non-server changes).
   - Checks fail → spawn `change-implementer` with the failure output, re-run simplify+review if the
     fix is non-trivial, push, wait again.
-- **Green → merge:** `gh pr merge <pr> --squash --delete-branch`. (Or `--auto` up front so it merges
-  itself when green.)
+- **Green → merge (only then):** `gh pr merge <pr> --squash --delete-branch`. Never before the
+  watch reports all required jobs `SUCCESS`.
 
 ### 8. Report
 Tell the user: change name, PR link, merge SHA, any inbox handoffs created, what's next.
