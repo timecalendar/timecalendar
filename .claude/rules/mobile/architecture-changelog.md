@@ -137,3 +137,26 @@ from this change forward is appended live.
   `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`. *Why:* foundation
   step 11 — configure so a human *can* dogfood on a real device. → Architecture Book
   "EAS / distribution".
+
+- **2026-06-13 · `add-mobile-splash`** — Splash: a JS animated splash overlay
+  (`src/components/splash-screen.tsx`) over the existing static native splash —
+  `expo-splash-screen`'s `preventAutoHideAsync()` (global) holds the native splash, the
+  overlay continues it (brand from `@/theme` tokens + `t("app.name")`, light/dark),
+  `hideAsync()` runs the native→JS handoff, and the overlay fades out (or cuts under
+  reduced motion) once a `useAppReady()` readiness gate resolves. New gate hook
+  (`src/hooks/use-app-ready.ts`) coordinating i18n/fonts/migrations that **always
+  resolves** (synchronous today + a load-bearing watchdog cap) — the reusable
+  render-when-ready pattern. **Reduced-motion contract encoded in the component** (the
+  app's first animation, R-1: lint can't know which view animates) — **discharging the
+  a11y section's recorded reduced-motion deferral** (that "What lint can't encode" note
+  now points at the new Splash section). One CI proof test (localized brand renders,
+  accessible status resolves, both reduced-motion branches, dismissal) + a suite-wide
+  `jest/setup-splash.ts` mock (mirrors setup-firebase/setup-db); `app.config.ts` native
+  splash background documented as the pre-JS scheme-asymmetry exemption; prebuild
+  validated. **No new rule encoded** — the splash consumes existing seams (theme/chrome
+  boundaries, i18n, a11y, firebase) and the only new prose rule (the reduced-motion
+  contract) is, by R-1, unencodable. This is the **first feature through the entire
+  DoD**; the irreducibly on-device axes are inboxed + HUMAN-tagged
+  (`inbox/2026-06-13-splash-dod-manual.md`), Phase-0 exit gated on that manual pass.
+  *Why:* foundation step 13 — the Phase-0 capstone, the DoD walked end-to-end.
+  → Architecture Book "Splash".
