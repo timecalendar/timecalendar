@@ -6,5 +6,8 @@
   "profile.title": "Profil",
   "schools.title": "Établissements",
   "schools.loading": "Chargement des établissements…",
-  "schools.error": "Impossible de charger les établissements."
+  "schools.error": "Impossible de charger les établissements.",
+  "debug.firebase.heading": "Débogage Firebase (dev uniquement)",
+  "debug.firebase.logEvent": "Envoyer un événement test",
+  "debug.firebase.crash": "Déclencher un crash test"
 }

@@ -11,7 +11,11 @@ module.exports = {
   },
   // Initialize i18next once for the whole suite, like the app does at startup,
   // so components under test resolve real translations instead of raw keys.
-  setupFilesAfterEnv: ["<rootDir>/jest/setup-i18n.ts"],
+  // setup-firebase mocks the native @react-native-firebase modules suite-wide.
+  setupFilesAfterEnv: [
+    "<rootDir>/jest/setup-i18n.ts",
+    "<rootDir>/jest/setup-firebase.ts",
+  ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [
     "src/**/*.{ts,tsx}",
