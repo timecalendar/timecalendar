@@ -11,10 +11,15 @@ module.exports = {
   },
   // Initialize i18next once for the whole suite, like the app does at startup,
   // so components under test resolve real translations instead of raw keys.
-  // setup-firebase mocks the native @react-native-firebase modules suite-wide.
+  // setup-firebase mocks the native @react-native-firebase modules suite-wide;
+  // setup-db mocks the expo-sqlite / drizzle SQLite seam (no off-device JS);
+  // setup-storage stubs react-native-nitro-modules so MMKV's built-in Jest
+  // mock loads (its factory imports Nitro at module top level).
   setupFilesAfterEnv: [
     "<rootDir>/jest/setup-i18n.ts",
     "<rootDir>/jest/setup-firebase.ts",
+    "<rootDir>/jest/setup-db.ts",
+    "<rootDir>/jest/setup-storage.ts",
   ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [

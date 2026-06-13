@@ -83,3 +83,17 @@ from this change forward is appended live.
   forward-references now resolve to these real files. *Why:* foundation step 12 — every
   later slice now has a real DoD to pass, ADR log to append to, and changelog to record
   in. No rule text changed (wiring only), but it is a book change, so it earns this entry.
+
+- **2026-06-13 · `add-mobile-storage`** — Storage: two swappable persistence seams —
+  `@/storage` over `react-native-mmkv` v4 (Nitro) for key-value, `@/db` over
+  `expo-sqlite` + `drizzle-orm` for the relational store — plus a non-hook startup
+  **migration runner** (`runMigrations()` over `drizzle-orm/expo-sqlite/migrator`,
+  failure → `@/firebase`) applying a **committed but empty** migration bundle (runner
+  proven, zero feature tables — R-2), the SQL-bundling toolchain (`drizzle.config.ts` +
+  `generate:migrations` + created `babel.config.js`/`metro.config.js` for `.sql`), and a
+  **new seam-import lint boundary** (`no-restricted-imports` bans the backends outside the
+  seam dirs — encoding what the firebase section left in prose). Two CI proof tests
+  (MMKV real round-trip via the built-in mock; runner wiring with SQLite mocked). Both
+  ride the existing iOS `useFrameworks: "static"` — no new build-properties. *Why:*
+  foundation step 9 — the persistence plumbing the first feature needs, wired before it.
+  → Architecture Book "Storage".

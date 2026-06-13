@@ -33,10 +33,38 @@ const restrictedImportPaths = [
   },
 ]
 
-const restrictedImports = (extraPatterns = []) => [
+// Storage backends are reachable only through their seams (src/storage/, src/db/).
+// Applied below to every file EXCEPT the seam dirs (they are the wrappers), so
+// feature code imports @/storage / @/db, never the backend directly (D6).
+const storageBackendImportPatterns = [
+  {
+    regex: "^react-native-mmkv($|/)",
+    message:
+      "Use the @/storage seam — react-native-mmkv is imported only inside src/storage/.",
+  },
+  {
+    regex: "^expo-sqlite($|/)",
+    message: "Use the @/db seam — expo-sqlite is imported only inside src/db/.",
+  },
+  {
+    regex: "^drizzle-orm($|/)",
+    message: "Use the @/db seam — drizzle-orm is imported only inside src/db/.",
+  },
+]
+
+// `banStorageBackends: false` is for the seam dirs (src/storage/, src/db/),
+// which legitimately import the backends the ban keeps out of feature code.
+const restrictedImports = (
+  extraPatterns = [],
+  { banStorageBackends = true } = {},
+) => [
   "error",
   {
-    patterns: [...restrictedImportPatterns, ...extraPatterns],
+    patterns: [
+      ...restrictedImportPatterns,
+      ...(banStorageBackends ? storageBackendImportPatterns : []),
+      ...extraPatterns,
+    ],
     paths: restrictedImportPaths,
   },
 ]
@@ -115,6 +143,18 @@ module.exports = defineConfig([
     files: [generatedCode],
     rules: {
       "@typescript-eslint/no-redeclare": "off",
+    },
+  },
+  {
+    // The storage seam dirs ARE the wrappers — they may import the backends
+    // (react-native-mmkv / expo-sqlite / drizzle-orm) the ban keeps out of
+    // feature code, so re-set no-restricted-imports without the storage ban.
+    name: "timecalendar/storage-seams",
+    files: ["src/storage/**", "src/db/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports([], {
+        banStorageBackends: false,
+      }),
     },
   },
   {
