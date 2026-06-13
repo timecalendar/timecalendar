@@ -97,3 +97,24 @@ from this change forward is appended live.
   ride the existing iOS `useFrameworks: "static"` — no new build-properties. *Why:*
   foundation step 9 — the persistence plumbing the first feature needs, wired before it.
   → Architecture Book "Storage".
+
+- **2026-06-13 · `add-mobile-theming`** — Theming & native-chrome: a first-class typed
+  token layer under `src/theme/` (`tokens.ts` — colors light/dark, spacing, the new
+  `Radii` scale, typography; `use-theme.ts` moved off `src/hooks/`; `index.ts` re-exports
+  the surface and keeps the `@/global.css` side-effect) **consolidating and deleting** the
+  loose `constants/theme.ts` + `hooks/use-theme.ts`; `Themed*` and every consumer repointed
+  at `@/theme` with the `ThemedText` heading-role contract preserved byte-for-byte (its a11y
+  proof passes unmodified). Our own swappable native-chrome wrappers under
+  `src/components/chrome/` — `NativeTabs` (the single import site for
+  `expo-router/unstable-native-tabs`, themed from `@/theme`; `app-tabs.tsx` repointed),
+  `GlassSurface` (the single import site for `expo-glass-effect`, centralizing the iOS-26+
+  Liquid-Glass / fallback decision in one place), and an **`@expo/ui` boundary-only seam**
+  (no rendered stub — no consumer yet, R-2/D6). A **new chrome-boundary lint rule**
+  (`no-restricted-imports` bans the three alpha APIs outside `src/components/chrome/`,
+  mirroring the mutator/storage seam pattern — static-import-only caveat recorded). WCAG-AA
+  contrast pairs documented in `tokens.ts` (discharging the contrast DoD ownership the a11y
+  section deferred to theming; runtime checker deferred with trigger). One CI proof test
+  (token resolves light/dark + GlassSurface fallback renders). No new deps, no `app.config.ts`
+  change. *Why:* foundation step 10 — the wrapper layer is the roadmap's insurance against
+  alpha-API churn, and the token home the splash (step 13) and features build on.
+  → Architecture Book "Theming & native-chrome".

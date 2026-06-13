@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { FirebaseDebugPanel } from "@/components/firebase-debug-panel"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { MaxContentWidth, Spacing } from "@/constants/theme"
+import { MaxContentWidth, Spacing } from "@/theme"
 
 export default function ProfileScreen() {
   const { t } = useTranslation()

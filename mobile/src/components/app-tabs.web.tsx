@@ -12,7 +12,7 @@ import { Pressable, View, StyleSheet } from "react-native"
 import { ThemedText } from "./themed-text"
 import { ThemedView } from "./themed-view"
 
-import { MaxContentWidth, Spacing } from "@/constants/theme"
+import { MaxContentWidth, Spacing } from "@/theme"
 
 export default function AppTabs() {
   const { t } = useTranslation()
