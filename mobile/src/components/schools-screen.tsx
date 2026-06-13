@@ -23,12 +23,20 @@ export default function SchoolsScreen() {
         <ThemedText type="title">{t("schools.title")}</ThemedText>
 
         {isLoading && (
-          <ThemedText themeColor="textSecondary">
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="text"
+          >
             {t("schools.loading")}
           </ThemedText>
         )}
         {isError && (
-          <ThemedText themeColor="textSecondary">
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
+          >
             {t("schools.error")}
           </ThemedText>
         )}
