@@ -60,6 +60,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "expo-router",
     "expo-localization",
+    // Local SQLite (Drizzle migration runner lives in src/db). expo-sqlite and
+    // react-native-mmkv v4/Nitro both link under the existing iOS
+    // useFrameworks "static" set below — no new expo-build-properties (D8).
+    // MMKV v4 autolinks with no plugin entry.
+    "expo-sqlite",
     "@react-native-firebase/app",
     "@react-native-firebase/crashlytics",
     "@react-native-firebase/analytics",
