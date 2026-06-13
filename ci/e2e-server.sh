@@ -135,21 +135,25 @@ up_native() {
     ( cd "$SERVER_DIR" && npm ci )
   fi
 
+  # Build dist/ so the server runs as a single `node dist/main` process (same
+  # entrypoint as the compose image). Native mode is macOS-only — macOS has no
+  # setsid, and a single process avoids any process-group/tree juggling.
+  log "building the server (nest build)…"
+  ( cd "$SERVER_DIR" && npm run build )
+
   # NODE_ENV=test → isolated timecalendar_test DB, reaching the Postgres/Redis
   # the caller provisioned on the standard host ports (test-env defaults).
   log "seeding the timecalendar_test database (db:init)…"
   ( cd "$SERVER_DIR" && NODE_ENV=test PORT="$BACKEND_PORT" npm run db:init )
 
   log "starting the NestJS backend on port ${BACKEND_PORT}…"
-  # setsid → own process group (PGID == PID), so `down` can signal the whole
-  # tree: `npm run start` → `nest` → `node`.
-  setsid bash -c '
-    cd "$1" || exit 1
-    exec env NODE_ENV=test PORT="$2" SMTP_URL="smtp://localhost:1025" \
-      npm run start
-  ' _ "$SERVER_DIR" "$BACKEND_PORT" > "$NATIVE_LOG_FILE" 2>&1 &
+  # The subshell execs into node, so the recorded pid IS the server process —
+  # `down` kills it directly (no setsid, no process tree).
+  ( cd "$SERVER_DIR" && exec env NODE_ENV=test PORT="$BACKEND_PORT" \
+      SMTP_URL="smtp://localhost:1025" node dist/main ) \
+      > "$NATIVE_LOG_FILE" 2>&1 &
   echo "$!" > "$NATIVE_PID_FILE"
-  log "backend pid/pgid $(cat "$NATIVE_PID_FILE") — log: $NATIVE_LOG_FILE"
+  log "backend pid $(cat "$NATIVE_PID_FILE") — log: $NATIVE_LOG_FILE"
 
   wait_for_health
   log "stack up — API serving on http://localhost:$BACKEND_PORT"
@@ -163,10 +167,10 @@ down_native() {
   local pid
   pid="$(cat "$NATIVE_PID_FILE")"
   if kill -0 "$pid" 2>/dev/null; then
-    log "stopping the native backend (pid/pgid $pid)…"
-    # Negative PID signals the whole process group.
-    kill -TERM -- "-$pid" 2>/dev/null \
-      || kill -TERM "$pid" 2>/dev/null || true
+    log "stopping the native backend (pid $pid)…"
+    kill -TERM "$pid" 2>/dev/null || true
+    # `wait` only works if pid is a child of this shell (it isn't across
+    # separate up/down invocations) — best-effort; the TERM above does the work.
     wait "$pid" 2>/dev/null || true
   fi
   rm -f "$NATIVE_PID_FILE"
