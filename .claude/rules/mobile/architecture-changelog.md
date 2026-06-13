@@ -118,3 +118,22 @@ from this change forward is appended live.
   change. *Why:* foundation step 10 — the wrapper layer is the roadmap's insurance against
   alpha-API churn, and the token home the splash (step 13) and features build on.
   → Architecture Book "Theming & native-chrome".
+
+- **2026-06-13 · `add-mobile-eas`** — EAS / distribution: the skeleton's first release
+  path. `mobile/eas.json` with three build profiles split along the `APP_VARIANT` line —
+  `development` (`.dev` id, simulator + APK, dev client), `preview` (production identity,
+  `internal` distribution, device `.ipa` + APK, `preview` channel — the dogfood track),
+  `production` (`store`, `.aab` + `.ipa`, `production` channel, `autoIncrement`); a
+  **secret-free** `submit` skeleton (iOS via `$EXPO_*` env, Android `serviceAccountKeyPath`
+  outside git); `expo-updates` wired in `app.config.ts` with **`runtimeVersion: { policy:
+  "fingerprint" }`** and the `updates.url` / `extra.eas.projectId` seam reading
+  `EAS_PROJECT_ID` (zero-UUID placeholder until the human `eas init`). **EAS stays
+  human-invoked — CI untouched**, no `.eas/workflows/` (the native E2E keeps building via
+  `prebuild`). New ADR [006](./decisions/006-eas-distribution.md) (fingerprint policy +
+  human-invoked-EAS, load-bearing — D3/D4). **No Jest proof test** (D8 justified N/A:
+  config not runtime; the EAS CLI + `expo config --json` are the enforcing gates, R-1).
+  This change is also the **first to use the handoff inbox** — it created the inbox
+  convention files. The credential/account/console/device half is in
+  `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`. *Why:* foundation
+  step 11 — configure so a human *can* dogfood on a real device. → Architecture Book
+  "EAS / distribution".

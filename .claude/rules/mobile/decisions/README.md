@@ -29,6 +29,7 @@ Status) — superseding an ADR means writing the new one and marking the old
 | [003](./003-coverage-threshold.md) | Coverage: 90% logic / 70% global, CI-enforced | Accepted · not yet enforced (owned by first logic feature) | The gate drives cargo-cult tests rather than catching regressions |
 | [004](./004-phase-1-feature-order.md) | Phase 1 feature order: Settings → Personal events → School selection | Accepted · not started | A dependency forces a different order, or a feature is too thin for its axis |
 | [005](./005-calendar-spike.md) | Calendar spike: 3-day read-only spike opens Phase 2 | Accepted · not started | The spike clearly succeeds or fails early |
+| [006](./006-eas-distribution.md) | EAS distribution: fingerprint runtime policy, human-invoked builds (CI untouched) | Accepted | Manual dogfood builds become a friction point (wire `.eas/workflows/`), or fingerprint forces rebuilds so often OTA stops paying off |
 
 ADRs 001–005 are the Phase 0 kickoff knobs K-1…K-5 from migration-approach §8,
 authored as real ADRs here (the Phase 0 exit criterion: "first ADRs written —

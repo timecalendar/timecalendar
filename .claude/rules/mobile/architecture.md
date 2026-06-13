@@ -294,3 +294,38 @@ The three alpha native-chrome surfaces are all **alpha and churn** (`expo-router
 - **No splash, no feature UI** — step 13 (splash) depends on this and is the first real consumer of the wrappers; this change builds the seam, not what flows through it.
 - **No `@expo/ui` wrapper body** — boundary only until its first consumer (D6).
 - **No runtime/CI contrast checker** (trigger above), **no in-app theme override / switcher** (Settings / MMKV seam), **no animation / reduced-motion handling** (no animation exists; the splash inherits the reduced-motion obligation per the a11y section).
+
+## EAS / distribution (established by the `add-mobile-eas` change, 2026-06)
+
+Foundation step 11 — the skeleton's first **release path** (`mobile/` had no `eas.json`, no `expo-updates`, no way onto a real device). This change lands every piece of distribution config that needs **no secrets**; everything credential-/account-/console-/device-bearing is irreducibly human and handed to the inbox. Rationale and alternatives live in that change's `design.md` (D1–D8), its `specs/mobile-distribution/spec.md`, and **ADR [006](./decisions/006-eas-distribution.md)** (the `fingerprint` policy + human-invoked-EAS calls). The operator guide is `mobile/EAS.md`; these entries are pointers plus the caveats tooling can't carry (R-1).
+
+### Three profiles, two identities (D1, D2)
+- `mobile/eas.json` has `development` / `preview` / `production`, split along the `APP_VARIANT` line — **not** a third identity. `development` sets `env.APP_VARIANT = "development"` (→ `.dev` id, `timecalendar-dev` Firebase, dev network exceptions, `developmentClient: true`, simulator + APK); `preview` and `production` **omit** `APP_VARIANT` so they take the production default in `app.config.ts` (real `fr.samuelprak.timecalendar`, `timecalendar-samuelprak` Firebase, no cleartext). The difference between `preview` and `production` is **distribution + artifact + channel**, not identity — dogfooders run the *real* store bundle so their crashes/analytics land in production.
+- Artifacts are **forced by distribution**: `preview` is `distribution: "internal"` → directly-installable iOS device `.ipa` + Android `.apk` (internal can't serve an `.aab`); `production` is `distribution: "store"` → `.aab` (Play) + store `.ipa`, `autoIncrement`. `cli.appVersionSource: "remote"` (EAS owns the build number, pairs with `autoIncrement`).
+- **Variant-drift is the headline risk** (a `preview`/`production` profile accidentally carrying `APP_VARIANT=development` would ship the `.dev` id + dev Firebase + cleartext to dogfooders/store). The guard is the same as the firebase change's: only `development` sets the env var, and the `expo config --json` **variant diff** verifies it (production → prod id/Firebase, dev → `.dev`). Can't be a lint rule (config-shape, not source), hence this prose (R-1).
+
+### `runtimeVersion: { policy: "fingerprint" }` (D3, ADR 006)
+- In `app.config.ts`. An `eas update` JS bundle is delivered **only** to a build whose native runtime fingerprint matches; any native-affecting change (new config plugin, a dep with native code, an SDK bump) changes the fingerprint and **forces a fresh native build** instead of a silently-incompatible OTA. This is the intended safety property — **an expected OTA that "doesn't apply" usually means the change touched native config**, not a bug. Chosen over `appVersion` (ties runtime to the human version string — a plugin change without a version bump could ship an incompatible OTA) and manual `nativeVersion` (more bookkeeping, no better). Load-bearing for a skeleton that churns native config feature-by-feature → ADR 006.
+
+### Channels mapped to profiles (D7)
+- Two channels: `preview` (internal dogfood) and `production` (store). `eas update --channel <name>` reaches only installed builds on the matching channel. Channel names mirror profile names (the EAS convention) so the command is unambiguous.
+
+### The `expo-updates` seam without a project (D6)
+- `expo-updates` is added to `plugins`; `updates.url` (`https://u.expo.dev/<id>`) and `extra.eas.projectId` are derived from `process.env.EAS_PROJECT_ID`, falling back to a **zero-UUID placeholder** so `tsc` / `expo config --json` parse cleanly **before** `eas init` exists. The real id is a human step (`eas init` — no EAS project yet); it fills the value. `tsc`/lint/Jest don't read a real `projectId`, so CI `test-mobile` is unaffected by its absence.
+
+### Submit skeleton, no secrets (D5)
+- `submit.production` is structure only: iOS `appleId`/`ascAppId`/`appleTeamId` read from `$EXPO_APPLE_ID`/`$EXPO_ASC_APP_ID`/`$EXPO_APPLE_TEAM_ID` (mirrors the Flutter Appfile); Android `serviceAccountKeyPath` points outside git (`../ci/keys/eas-android-sa-key.json`), `track: internal`. **No Apple/Google credential value is committed.**
+- **EAS owns signing** (managed credentials — it generates/stores the iOS dist cert + provisioning profile, links the Apple account on first `eas build`). We do **not** bridge the Flutter Fastlane `match` repo into EAS — `match` stays with the Flutter app (R-5 bounded maintenance). Same production bundle id → EAS targets the existing App Store record (RN ships as an update). Two signing mechanisms coexist during migration; no shared state to corrupt.
+
+### CI untouched — EAS is human-invoked (D4, ADR 006)
+- EAS Build/Submit/Update are **not** wired into CI; **no `.eas/workflows/`** added. The native E2E keeps building via `expo prebuild` + Gradle/`xcodebuild` (see "E2E — Maestro"). Reasons: a CI `eas build` would be a *second* build path to maintain and pay for (EAS Build minutes) for no new signal; dogfood cadence is human-driven; and `.eas/workflows/` needs the EAS project that doesn't exist yet. **Recorded debt:** a `.eas/workflows/` (or GH Action) that builds+submits the dogfood build on a tag/label — **trigger:** manual dogfood builds become a friction point. Consequence accepted: a broken `eas.json` is only caught when a human runs `eas build` (the first human verification step).
+
+### What CI proves vs. what's manual (D8 — justified N/A proof test)
+- **No Jest proof test** — unlike i18n/a11y/firebase/theming, this change ships **no runtime app behavior**; it is build/release *configuration*. The enforcing gates (R-1) are the **EAS CLI** (validates `eas.json` at build time — human) and `expo config --json` (the variant diff, covered by the existing `tsc`/lint gates). A fabricated "eas.json parses" Jest test would be cargo-cult. CI workflows are unchanged. The DoD's E2E axis is **N/A for this change** with that reason — recorded so the reviewer doesn't expect a proof test.
+- The EAS CLI requires **login even for offline config validation** under the current CLI (`eas config`/`build:inspect` fail logged-out) — so the `eas.json`-parses sanity check rides the human's first real `eas build` (inbox), and `expo config --json` is what the implementer can verify locally.
+
+### Human prerequisites (inbox — not blockers)
+- `eas login` + `eas init` (real `projectId`/`updates.url`), Apple/Google credentials + EAS-managed signing, the actual `eas build`/`submit`/`update` runs, real-device install, TestFlight-internal + Play-internal setup — all in `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`, tagged `(HUMAN: …)` in tasks.md. The config is green without them; these unlock builds/installs. **This change also created the inbox convention files** (`inbox/README.md`) — it is the first step to use the handoff inbox.
+
+### Deferred (recorded debt — not built)
+- **No `.eas/workflows/` / CI EAS path** (trigger above). **No real `projectId`/credentials/device install** (inbox). **No `match`→EAS bridge** (intentional — D5).
