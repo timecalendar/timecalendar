@@ -1,4 +1,4 @@
-/* eslint-disable i18next/no-literal-string -- TODO(i18n-step-6): template screen, strings localized or deleted when i18n lands */
+import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
@@ -14,19 +14,22 @@ import { MaxContentWidth, Spacing } from "@/constants/theme"
 // Router bundles every file under src/app/ as a route, and the lint boundary
 // forbids importing routes from elsewhere.
 export default function SchoolsScreen() {
+  const { t } = useTranslation()
   const { data, isLoading, isError } = useSchoolControllerFindSchools()
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Schools</ThemedText>
+        <ThemedText type="title">{t("schools.title")}</ThemedText>
 
         {isLoading && (
-          <ThemedText themeColor="textSecondary">Loading schools…</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {t("schools.loading")}
+          </ThemedText>
         )}
         {isError && (
           <ThemedText themeColor="textSecondary">
-            Could not load schools.
+            {t("schools.error")}
           </ThemedText>
         )}
 

@@ -85,7 +85,7 @@ Rationale and alternatives live in that change's `design.md` (D1–D7). Everythi
 
 ### Rule inventory
 The rules and their exact options live in `mobile/eslint.config.js` (named blocks: `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`, `generated-code`). What the config can't carry:
-- **No hardcoded user-facing strings** (`i18next/no-literal-string`, error). **Known debt:** scaffold template files carry file-level disables tagged `TODO(i18n-step-6)` — the i18n step's DoD includes removing them.
+- **No hardcoded user-facing strings** (`i18next/no-literal-string`, error). The i18n runtime now backs this rule (see the i18n section below); the scaffold-era `TODO(i18n-step-6)` per-file disables were removed by the `add-mobile-i18n` change. Only the `timecalendar/tests` block exempts literal strings (test fixtures assert them on purpose).
 - **A11y on touchables** (`react-native-a11y` touchable rules): touchables/pressables must declare a role or label+hint.
 - **Navigation** — `@react-navigation/*` imports banned; Expo Router is the only navigation API.
 - **Import boundaries (current layout only):** no parent-relative imports (`../`) — the `@/` alias is the only cross-directory path, which is precisely what makes the alias-pattern rules sound; files outside `src/app/` may not import `@/app/*` (routes are entrypoints, not modules); `axios` banned. Feature-module boundaries (e.g. only a module's `data/queries` touching generated hooks) are deliberately deferred until feature folders exist — expected tooling upgrade then is `eslint-plugin-boundaries`.
@@ -121,11 +121,40 @@ The monolith `.github/workflows/build.yaml` was split by concern; native E2E is 
 - **`ci-flutter.yml`** — legacy `test-app` + Flutter `test-e2e`, demoted to main/production pushes touching `app/**` (R-5 bounded maintenance).
 - **Branch-protection caveat:** path-filtered jobs that are skipped don't report a status — if any of these become *required* checks, a skip can block a PR. None are required today.
 
-### K-3 deferral (recorded debt)
-- **No `coverageThreshold` yet.** Coverage is reported from day one so the gate has a baseline to land on, but the threshold is deliberately unset per K-3's cargo-cult revisit clause. **Trigger:** the first logic-bearing feature (Settings) earns the threshold — that feature's DoD includes setting it.
-
 ### CI E2E caching speedups (recorded debt — not yet done)
 - Native E2E runs cold every time in CI (local builds are fast only because Gradle/DerivedData/Pods caches persist on disk). Deferred speedups: ① **AVD snapshot caching** for the Android emulator (skip cold boot); ② **iOS DerivedData cache** keyed on the lockfile (point `xcodebuild -derivedDataPath` outside the `prebuild --clean` tree so it survives); ③ confirm the **Gradle build cache** (not just deps) is active. Realistic gain ~Android 28→18 min, iOS 18→10 min on warm caches. Orthogonal to the on-demand split above. **Trigger:** when E2E run time becomes a friction point. Roadmap mirror: `docs/react-native-migration/01-roadmap/01-foundation.md` step 5.
 
 ### K-3 deferral (recorded debt)
 - **No `coverageThreshold` yet.** Coverage is reported from day one so the gate has a baseline to land on, but the threshold is deliberately unset per K-3's cargo-cult revisit clause. **Trigger:** the first logic-bearing feature (Settings) earns the threshold — that feature's DoD includes setting it.
+
+## i18n (established by the `add-mobile-i18n` change, 2026-06)
+
+Foundation step 6 (migration-approach §1's vertical-slice order: UI → data → storage → **i18n** → a11y). This step added the *runtime* half of i18n — the lint half (`i18next/no-literal-string`, see Lint & format) was already live with nothing to point at. Rationale and alternatives live in that change's `design.md` (D1–D8) and `specs/mobile-i18n/spec.md`; these entries are pointers plus the caveats tooling can't carry (R-1).
+
+### Runtime — i18next + react-i18next (+ expo-localization) (D1)
+- One module-scoped i18next instance lives in `src/i18n/index.ts`, created with `createInstance()` and `.use(initReactI18next)` so `useTranslation()`/`t()` resolve it **without an `<I18nextProvider>`** (initReactI18next registers it as react-i18next's default). Initialization is **synchronous** from bundled JSON catalogs — no network, no suspense/loading gate; the app renders already-localized. Wired by a side-effect `import "@/i18n"` at the top of `src/app/_layout.tsx`.
+- `i18next` chosen because the already-live lint rule assumes i18next/`t()` idioms (Lingui/FormatJS were rejected — they'd orphan that rule for no benefit at this scale).
+
+### Locale detection — device locale, EN fallback, no switcher (D2)
+- `src/i18n/detect-locale.ts` reads `expo-localization`'s device locales and returns the first that matches `fr` or `en`, else **`en`**. EN (not FR) fallback is deliberate for the non-FR/EN long tail despite the French-first store identity — a predictable English baseline beats forcing French on, e.g., a German device. The store app still ships FR for FR devices.
+- **No in-app language switcher and no persisted override** — that's a Settings (Phase 1.5) concern and would pull the unbuilt MMKV storage seam (step 9) forward. The skeleton follows the device only.
+- `expo-localization` is a native module: added to `app.config.ts` `plugins`; it autolinks and native projects are CNG-regenerated on the next `prebuild` (the e2e build already prebuilds). No hand-edited native config.
+
+### Flat, greppable keys — `keySeparator: false` + `nsSeparator: false` (D3)
+- A key is one literal dotted string (`profile.tab.label`) stored verbatim as a flat top-level JSON key, so the string in code is byte-for-byte the string in the catalog — `grep` finds both call site and definition. Both separators are disabled so object-nesting is *structurally* unresolvable and the convention can't silently drift back to nested lookups; the dotted segments are a **naming convention**, not i18next structure. Plurals still work (i18next suffixes the flat key: `…_one` / `…_other`). **Escape hatch** if a catalog grows: split source JSON into multiple files merged into the one `translation` namespace at init — reintroducing real `:` namespaces is the one thing that breaks the grep property, so we won't.
+
+### Typed keys + FR/EN parity, both compile-time (D4, D5)
+- `src/i18n/i18next.d.ts` augments `react-i18next`'s `CustomTypeOptions` with `resources: { translation: typeof en }` and `keySeparator: false`, so the `t()` key argument is the union of EN catalog keys — a missing/mistyped key is a **`tsc` error**, not a silent key-as-fallback. EN (`src/i18n/locales/en.json`) is the canonical key set; FR (`fr.json`) is the translation.
+- FR/EN parity is enforced **bidirectionally** in `index.ts` by typing each catalog against the other's key set (`Record<keyof typeof en, string>` and vice-versa): a *missing* FR key and an *extra* FR key both fail `tsc`. No separate parity script (recorded as optional deferred debt if catalogs grow). FR + EN are both required complete this step — a missing FR key *should* fail CI.
+
+### Proof in CI (D8)
+- `src/i18n/i18n.test.tsx` renders a localized component through the real instance under the default locale and asserts the **translated** value renders (not the raw key) — proving init + `t()` + catalog resolve end to end, not merely that the files exist. i18n is initialized for the whole Jest suite via `jest/setup-i18n.ts` (`setupFilesAfterEnv`), mirroring the app's startup wiring, so every component test resolves real strings. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
+
+### Scaffold reshaped to the real app (D7)
+- The two tab routes survive as navigation chrome, relabeled to the real app's vocabulary (Flutter bottom nav = Accueil / Calendrier / Profil) and gutted to minimal localized stubs: `(tabs)/index.tsx` → Home (**Accueil**); `(tabs)/explore.tsx` **renamed** `(tabs)/profile.tsx` → Profile (**Profil**), with the `app-tabs` trigger `name` and `href` changed to match. The **Calendar tab is deliberately deferred** (calendar is built last; a tab to a deferred screen is speculative — R-2). `app-tabs` / `app-tabs.web` labels are localized; the web tab bar's Expo-demo brand/Docs-link were dropped. `schools-screen.tsx` (the live API round-trip surface for the test/e2e harness) is localized.
+- The Expo-logo splash animation (`AnimatedSplashOverlay`) and the orphaned demo helpers (`animated-icon`, `web-badge`, `hint-row`) were **deleted**; the real splash is roadmap step 13. All six `eslint-disable i18next/no-literal-string` (`TODO(i18n-step-6)`) headers are gone — only the `timecalendar/tests` block exempts literal strings.
+
+### Deferred (recorded debt — not built)
+- **No locale-aware date/number formatting** — earns its place with the first feature that needs it (Hermes `Intl` is available; not wired now).
+- **No in-app language switcher / persisted override** — Settings (Phase 1.5), needs the MMKV seam (step 9).
+- **No ICU MessageFormat, no catalog-parity/sort CI lint** — `tsc` covers parity today; revisit if catalogs grow.
