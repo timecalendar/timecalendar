@@ -86,7 +86,7 @@ Rationale and alternatives live in that change's `design.md` (D1–D7). Everythi
 ### Rule inventory
 The rules and their exact options live in `mobile/eslint.config.js` (named blocks: `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`, `generated-code`). What the config can't carry:
 - **No hardcoded user-facing strings** (`i18next/no-literal-string`, error). The i18n runtime now backs this rule (see the i18n section below); the scaffold-era `TODO(i18n-step-6)` per-file disables were removed by the `add-mobile-i18n` change. Only the `timecalendar/tests` block exempts literal strings (test fixtures assert them on purpose).
-- **A11y on touchables** (`react-native-a11y` touchable rules): touchables/pressables must declare a role or label+hint.
+- **A11y on touchables** (`react-native-a11y` touchable rules): touchables/pressables must declare a role or label+hint. The runtime semantics these rules guard — and the heading-role contract lint *can't* see — now live in the a11y section below; the rules are live but unexercised until the first interactive control.
 - **Navigation** — `@react-navigation/*` imports banned; Expo Router is the only navigation API.
 - **Import boundaries (current layout only):** no parent-relative imports (`../`) — the `@/` alias is the only cross-directory path, which is precisely what makes the alias-pattern rules sound; files outside `src/app/` may not import `@/app/*` (routes are entrypoints, not modules); `axios` banned. Feature-module boundaries (e.g. only a module's `data/queries` touching generated hooks) are deliberately deferred until feature folders exist — expected tooling upgrade then is `eslint-plugin-boundaries`.
 - **No raw `fetch`** outside `src/api/mutator.ts`. Caveat: this catches the bare global, not `globalThis.fetch`-style evasion — it guards against accident, not adversaries; review covers the rest.
@@ -158,3 +158,31 @@ Foundation step 6 (migration-approach §1's vertical-slice order: UI → data �
 - **No locale-aware date/number formatting** — earns its place with the first feature that needs it (Hermes `Intl` is available; not wired now).
 - **No in-app language switcher / persisted override** — Settings (Phase 1.5), needs the MMKV seam (step 9).
 - **No ICU MessageFormat, no catalog-parity/sort CI lint** — `tsc` covers parity today; revisit if catalogs grow.
+
+## Accessibility (established by the `add-mobile-a11y` change, 2026-06)
+
+Foundation step 7 (migration-approach §1's vertical-slice order: UI → data → storage → i18n → **a11y**). Like i18n, the **lint half** landed early (with `add-mobile-lint-format`, step 4); this step adds the *runtime* half — heading semantics, accessible async status, a CI proof that the accessibility tree resolves — and records what lint can't enforce. Rationale and alternatives live in that change's `design.md` (D1–D6) and `specs/mobile-a11y/spec.md`; these entries are pointers plus the caveats tooling can't carry (R-1).
+
+### What the live lint rules enforce, and where they bite (D4)
+- Four `react-native-a11y` rules run as **error**: `has-accessibility-props`, `has-valid-accessibility-descriptors`, `has-valid-accessibility-role`, `no-nested-touchables` (see Lint & format above; `mobile-lint-format` owns them). `i18next/no-literal-string` covers `accessibilityLabel`/`accessibilityHint` so a11y copy is translated too.
+- The touchable rules currently **guard an empty surface** — `mobile/src/` has no `Pressable`/`TouchableOpacity`. That is honest and deliberate: wiring the cross-cutting rule before the feature is the foundation philosophy, and **the first real interactive control (onboarding/Settings) is their first live test**. No touchable is invented to "prove" them (R-2 — speculative scaffolding that would die at the next feature).
+
+### The heading-role contract — encoded in `ThemedText` (D1, R-1)
+- `ThemedText` maps `type="title"` and `type="subtitle"` to `accessibilityRole="header"`, so titles are exposed to VoiceOver/TalkBack as headings (rotor/heading navigation) without each call site declaring the role. A caller-supplied `accessibilityRole` **still wins** (the default is applied only when unset; `{...rest}` spreads last). Encoded in the **component**, not a lint rule, because lint cannot know which `<Text>` is semantically a heading — that's authorial intent tied to the visual `type`, and the component already owns `type→style`, so it owns `type→role` too. Body/default/small/link/code variants carry **no** role.
+- Async status: the schools screen's loading/error text carry `accessibilityLiveRegion="polite"` (Android announces the change) and a status role (`text` / `alert`) so assistive tech conveys the state rather than reading a silent node. Kept minimal — the schools screen dies when real onboarding lands (D2).
+
+### Proof in CI (D3)
+- `src/components/themed-text.test.tsx` renders title/subtitle through the real accessibility tree and asserts `getByRole("header")` finds the node — a *resolved semantic*, not merely that a prop was passed (the layer lint can't see). It also covers the negative path (default variant has no header role) and explicit-role-wins. Gated by the `test-mobile` job (tsc + lint + Jest), R-1. Mirrors the i18n proof test.
+
+### What lint can't encode → prose, each with reason + owner (D5, R-1)
+None of these is a sound lint rule today; each is recorded so the owning step/feature inherits it:
+- **Dynamic Type / font scaling** — RN `Text` scales with the OS font size by default; the posture is simply **never** pass `allowFontScaling={false}`. Not a lint rule this slice (no offender exists); a `no-restricted-syntax` guard is deferred debt, to add the day someone reaches for it.
+- **Touch-target minimums (44pt iOS / 48dp Android)** — a runtime layout property, not statically checkable; no touchable exists yet. Owned by the first interactive control and the DoD a11y checklist.
+- **Meaningful labels** — lint guarantees a label *exists* on a touchable, never that it's *meaningful* or correctly translated; human review + the translated-copy rule cover semantics.
+- **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the DoD (roadmap step 12); this change names a11y's slot in it.
+- **Reduced motion** — no animations exist now (the Expo splash animation was deleted in step 6); the real splash (step 13) and any future animation must honor `AccessibilityInfo.isReduceMotionEnabled`. Recorded so step 13 inherits the obligation.
+- **Color contrast** — a theme-token property, not lint-encodable; owned by theming (step 10) and the splash DoD.
+
+### Deferred (recorded debt — not built)
+- **No new lint rules, no a11y infrastructure** — no Dynamic-Type override-guard rule, no touch-target helper, no reduced-motion hook, no contrast check. Each is earned by the step/feature that first needs it.
+- **No manual screen-reader DoD checklist** — lands with the DoD artifact (roadmap step 12); this change only names a11y's place in it.

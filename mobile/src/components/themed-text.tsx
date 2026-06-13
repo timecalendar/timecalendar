@@ -23,9 +23,11 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const theme = useTheme()
+  const isHeading = type === "title" || type === "subtitle"
 
   return (
     <Text
+      accessibilityRole={isHeading ? "header" : undefined}
       style={[
         { color: theme[themeColor ?? "text"] },
         type === "default" && styles.default,
