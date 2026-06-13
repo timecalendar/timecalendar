@@ -20,6 +20,9 @@ module.exports = {
     "<rootDir>/jest/setup-firebase.ts",
     "<rootDir>/jest/setup-db.ts",
     "<rootDir>/jest/setup-storage.ts",
+    // setup-splash mocks expo-splash-screen (native preventAutoHide/hideAsync,
+    // hit at import + on mount) and AccessibilityInfo's reduced-motion read.
+    "<rootDir>/jest/setup-splash.ts",
   ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [
