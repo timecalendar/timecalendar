@@ -18,6 +18,13 @@ const googleServicesIOS = IS_DEV
   ? "./firebase/GoogleService-Info.dev.plist"
   : "./firebase/GoogleService-Info.plist"
 
+// EAS Update seam (add-mobile-eas). The real projectId is produced by `eas init`
+// (a human step — no EAS project exists yet) and written here / read from env;
+// the placeholder keeps `tsc` and `expo config --json` green until then. The
+// updates.url is derived from it (https://u.expo.dev/<projectId>). See EAS.md.
+const easProjectId =
+  process.env.EAS_PROJECT_ID ?? "00000000-0000-0000-0000-000000000000"
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: IS_DEV ? "TimeCalendar (Dev)" : "TimeCalendar",
@@ -27,6 +34,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/images/icon.png",
   scheme: IS_DEV ? "timecalendar-dev" : "timecalendar",
   userInterfaceStyle: "automatic",
+  // fingerprint policy: an OTA JS update is only delivered to a build whose
+  // native runtime is compatible; any native-affecting change (new plugin, a
+  // dep with native code, an SDK bump) forces a fresh native build instead of a
+  // silently-incompatible OTA. See the Architecture Book "EAS / distribution".
+  runtimeVersion: { policy: "fingerprint" },
+  updates: {
+    url: `https://u.expo.dev/${easProjectId}`,
+  },
   ios: {
     icon: "./assets/expo.icon",
     bundleIdentifier: appId,
@@ -60,6 +75,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "expo-router",
     "expo-localization",
+    "expo-updates",
     // Local SQLite (Drizzle migration runner lives in src/db). expo-sqlite and
     // react-native-mmkv v4/Nitro both link under the existing iOS
     // useFrameworks "static" set below — no new expo-build-properties (D8).
@@ -100,5 +116,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    eas: {
+      projectId: easProjectId,
+    },
   },
 })
