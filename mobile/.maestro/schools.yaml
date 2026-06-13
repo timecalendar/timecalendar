@@ -20,6 +20,14 @@ appId: fr.samuelprak.timecalendar.dev
 # the dev scheme is timecalendar-dev (app.config.ts).
 - stopApp
 - openLink: timecalendar-dev://schools
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
+# (Android does not). Tap it only on iOS so the app actually opens the link;
+# without this the app stays on Home and the assertion below fails.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Open"
 - assertVisible: "Schools"
 # "My Gaming Academia" is a visible: true fixture seeded by db:init
 # (server/src/modules/school/fixtures/school.fixtures.yml). ASCII-only on
