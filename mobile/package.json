@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.17",
+    "@react-native-firebase/analytics": "^24.1.1",
+    "@react-native-firebase/app": "^24.1.1",
+    "@react-native-firebase/crashlytics": "^24.1.1",
     "@tanstack/react-query": "^5.101.0",
     "expo": "~56.0.11",
     "expo-build-properties": "~56.0.18",

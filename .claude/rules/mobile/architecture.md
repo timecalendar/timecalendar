@@ -165,7 +165,7 @@ Foundation step 7 (migration-approach §1's vertical-slice order: UI → data �
 
 ### What the live lint rules enforce, and where they bite (D4)
 - Four `react-native-a11y` rules run as **error**: `has-accessibility-props`, `has-valid-accessibility-descriptors`, `has-valid-accessibility-role`, `no-nested-touchables` (see Lint & format above; `mobile-lint-format` owns them). `i18next/no-literal-string` covers `accessibilityLabel`/`accessibilityHint` so a11y copy is translated too.
-- The touchable rules currently **guard an empty surface** — `mobile/src/` has no `Pressable`/`TouchableOpacity`. That is honest and deliberate: wiring the cross-cutting rule before the feature is the foundation philosophy, and **the first real interactive control (onboarding/Settings) is their first live test**. No touchable is invented to "prove" them (R-2 — speculative scaffolding that would die at the next feature).
+- The touchable rules' **first live consumer is the `__DEV__`-only `FirebaseDebugPanel`** (added by `add-mobile-firebase`, step 8): its two `Pressable`s each declare `accessibilityRole="button"` + a translated `accessibilityLabel`, which is exactly what `has-accessibility-props` / `has-valid-accessibility-role` require. Before it, `mobile/src/` had no touchable and the rules guarded an empty surface — wiring the cross-cutting rule before the feature is the foundation philosophy, and no touchable was invented to "prove" them (R-2). The **first real product interactive control (onboarding/Settings)** remains where the runtime obligations below (touch targets, meaningful labels, screen-reader passes) first bite.
 
 ### The heading-role contract — encoded in `ThemedText` (D1, R-1)
 - `ThemedText` maps `type="title"` and `type="subtitle"` to `accessibilityRole="header"`, so titles are exposed to VoiceOver/TalkBack as headings (rotor/heading navigation) without each call site declaring the role. A caller-supplied `accessibilityRole` **still wins** (the default is applied only when unset; `{...rest}` spreads last). Encoded in the **component**, not a lint rule, because lint cannot know which `<Text>` is semantically a heading — that's authorial intent tied to the visual `type`, and the component already owns `type→style`, so it owns `type→role` too. Body/default/small/link/code variants carry **no** role.
@@ -186,3 +186,33 @@ None of these is a sound lint rule today; each is recorded so the owning step/fe
 ### Deferred (recorded debt — not built)
 - **No new lint rules, no a11y infrastructure** — no Dynamic-Type override-guard rule, no touch-target helper, no reduced-motion hook, no contrast check. Each is earned by the step/feature that first needs it.
 - **No manual screen-reader DoD checklist** — lands with the DoD artifact (roadmap step 12); this change only names a11y's place in it.
+
+## Firebase — Crashlytics + Analytics (established by the `add-mobile-firebase` change, 2026-06)
+
+Foundation step 8 — the first real instrumentation in the skeleton (`mobile/src/` had no crash reporting, analytics, or global error handling before this; only a typed `ApiError` and query-driven `isError` states). It also discharges the scaffold-era deferral *"the `.dev` identifier needs its own Firebase registration."* Rationale and alternatives live in that change's `design.md` (D1–D7) and `specs/mobile-firebase/spec.md`; these entries are pointers plus the caveats tooling can't carry (R-1).
+
+### SDK + API
+- **`@react-native-firebase/{app,crashlytics,analytics}` v24, modular API only** (`getAnalytics`/`logEvent`, `getCrashlytics`/`log`/`recordError`/`crash`). The namespaced `firebase.crashlytics()` style is deprecated in v22+. The Firebase **JS/Web SDK was rejected** — it can't capture native crashes (D1). **Auth + Messaging deferred** to the features that need them despite the Flutter app using both (R-2).
+
+### One Firebase project per environment (D2)
+- Google best practice — Analytics/Crashlytics/quotas/billing are project-scoped, so dev noise must not pollute production. `app.config.ts` switches `googleServicesFile` by `APP_VARIANT` (reusing the existing `IS_DEV` branch): dev `fr.samuelprak.timecalendar.dev` → **`timecalendar-dev`** project; production `fr.samuelprak.timecalendar` → **`timecalendar-samuelprak`** (shared with the Flutter app, reusing its committed config files).
+- The four config files live **committed** in `mobile/firebase/` (`google-services{,.dev}.json`, `GoogleService-Info{,.dev}.plist`). Client API keys are **not secret** (shipped in the binary); the Flutter app commits its pair too. **Manual prerequisite:** the `.dev` apps must be registered in the `timecalendar-dev` console and the files dropped in — see `mobile/firebase/README.md`. Native builds / e2e fail until then; `tsc`/lint/Jest don't read the files, so CI `test-mobile` is unaffected. Can't be a lint rule (console + binary config), hence this prose (R-1).
+
+### iOS static frameworks (D3) — mandatory, highest-risk
+- `expo-build-properties` carries `ios.useFrameworks: "static"` (merged into the existing block alongside the iOS/Android floors and the dev cleartext flag) — the Firebase iOS SDK ships static frameworks. This alters pod linking **app-wide**; if a pod breaks, the documented escape is `ios.forceStaticLinking` for the RNFB pods. Verified only by a real prebuild (config-shape, not source) — prose, not lint (R-1).
+
+### Wrapper seam, no startup side-effect (D4)
+- `src/firebase/index.ts` is the **single seam** the app touches — `logEvent` / `logMessage` / `recordError` / `crashTest` over the modular SDK; feature code imports `@/firebase`, never `@react-native-firebase/*` directly (swappable, per the step-10 "behind our own abstractions" posture). Each helper resolves the native instance **lazily** inside its body, so importing the module never touches native code (safe in Jest).
+- **Deliberately unlike i18n: there is no `import "@/firebase"` in `_layout.tsx`.** RNFirebase **auto-initializes** the native default app from the bundled config files and **auto-installs the global JS exception handler** — so unhandled JS errors reach Crashlytics for free and there is nothing to run at startup. A side-effect import to mirror i18n would be cargo-culting; revisit only if a real startup action appears (consent toggle, user-id attribute).
+
+### Debug-build reporting + verification surface (D5, D6)
+- `mobile/firebase.json` sets `crashlytics_debug_enabled: true` so a local `npm run ios/android` (debug + Metro, dev variant) reports a forced crash; release/e2e builds report regardless.
+- The `__DEV__`-gated `FirebaseDebugPanel` on the Profile tab (log a test event / force a test crash) is the on-demand verification surface — and the **first live exercise of the a11y touchable rules** (see the a11y section). Gated by `__DEV__` so it never renders in production.
+
+### What CI proves vs. what's manual (D7)
+- `src/firebase/firebase.test.ts` mocks the native modules (`jest/setup-firebase.ts`, suite-wide, mirroring `setup-i18n`) and asserts the wrapper drives the SDK with the expected args — wiring proven in CI (`test-mobile`: tsc + lint + Jest, R-1). CI **cannot** assert an event/crash *arrives* in the console — that half is the documented **manual on-device step**: DebugView for the event, the Crashlytics dashboard for the crash (`add-mobile-firebase` tasks §7). The Maestro e2e is unchanged (asserts a seeded school name); Firebase just must not break app launch.
+
+### Deferred (recorded debt — not built)
+- **Auth, Messaging** — their own features.
+- **Analytics consent / GDPR gate** — collection is on-by-default now to verify; a consent gate is owned by a later feature. The French user base makes it real; recorded so that feature inherits it.
+- **Custom event taxonomy; native dSYM symbolication** beyond what the Crashlytics config plugin wires automatically.

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { FirebaseDebugPanel } from "@/components/firebase-debug-panel"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { MaxContentWidth, Spacing } from "@/constants/theme"
@@ -13,6 +14,7 @@ export default function ProfileScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="title">{t("profile.title")}</ThemedText>
+        {__DEV__ && <FirebaseDebugPanel />}
       </SafeAreaView>
     </ThemedView>
   )

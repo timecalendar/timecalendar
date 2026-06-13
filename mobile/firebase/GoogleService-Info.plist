@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>425450003183-1elevc6cg39idiukk9lh5sjtufis8h0r.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.425450003183-1elevc6cg39idiukk9lh5sjtufis8h0r</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>425450003183-2bjqj66dbq23tngncts04i4l9mq7jrvp.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCruJHHXWmT_lPib__T8iHOK8z05JdsEMY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>425450003183</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>fr.samuelprak.timecalendar</string>
+	<key>PROJECT_ID</key>
+	<string>timecalendar-samuelprak</string>
+	<key>STORAGE_BUCKET</key>
+	<string>timecalendar-samuelprak.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:425450003183:ios:ce923d6bbb487bc0</string>
+	<key>DATABASE_URL</key>
+	<string>https://timecalendar-samuelprak.firebaseio.com</string>
+</dict>
+</plist>
