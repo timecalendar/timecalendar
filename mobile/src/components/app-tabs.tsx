@@ -21,10 +21,7 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>
           {t("profile.tab.label")}
         </NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require("@/assets/images/tabIcons/explore.png")}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon sf="person.crop.circle" md="person" />
       </NativeTabs.Trigger>
     </NativeTabs>
   )
