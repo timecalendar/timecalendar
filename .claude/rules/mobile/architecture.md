@@ -2,9 +2,19 @@
 
 > **This directory (`.claude/rules/mobile/`) IS the Architecture Book** — the living set of rules that drive development of `mobile/`. It is not a mirror of a book maintained elsewhere. It holds only rules that *can't* be encoded in tooling; every rule that can be a lint rule, a type, or a CI gate must be (R-1), and prose here links to the enforcing rule once it exists.
 >
-> **How it changes:** per `docs/react-native-migration/00-exploration/migration-approach.md` §7 — propose, ADR if load-bearing, update the book, append to the Rule changelog (the changelog is one of the five living artifacts; it will be created in the "five artifacts" foundation step). Revising this book is success, not failure: patterns are earned over Phases 0–1.5, not declared on day one.
+> **How it changes:** per `docs/react-native-migration/00-exploration/migration-approach.md` §7 — propose, ADR if load-bearing, update the book, append to the [Rule changelog](./architecture-changelog.md) (one of the five living artifacts below). Revising this book is success, not failure: patterns are earned over Phases 0–1.5, not declared on day one.
 >
 > Topical files (navigation.md, data.md, …) will split out of this one when the content earns it. Until then, everything lives here.
+
+## The five living artifacts
+
+Migration-approach §2 names five living artifacts that drive the migration. All five are siblings under this directory (`.claude/rules/mobile/`) — there is no second book elsewhere. R-1 pointer style: the book links to each, each artifact owns its concern; the book does not duplicate their content. (Created by the `add-mobile-living-artifacts` change, 2026-06 — foundation step 12.)
+
+- **Architecture Book** — *this file* (`architecture.md`): the rules tooling can't encode.
+- **ADR log** — [`decisions/`](./decisions/README.md): one record per load-bearing decision (context · choice · revisit-if), with a [README index](./decisions/README.md) and a [template](./decisions/TEMPLATE.md). Seeded with K-1…K-5 as real ADRs ([001](./decisions/001-sdk-target.md)–[005](./decisions/005-calendar-spike.md)).
+- **Definition of Done** — [`definition-of-done.md`](./definition-of-done.md): the per-feature finite-perfection checklist every feature passes (the obligations this book defers — manual screen-reader passes, touch targets, contrast, reduced motion, coverage — are captured there).
+- **Rule changelog** — [`architecture-changelog.md`](./architecture-changelog.md): the dated, append-only log of every rule change (the act of changing rules is itself recorded; §7).
+- **Golden-path exemplar** — [`golden-path.md`](./golden-path.md): a placeholder until Phase 1.5 extracts the real exemplar from features 1–3 (earned, not declared).
 
 ## Working rules (R-1…R-6)
 
@@ -53,7 +63,7 @@ Two rules discovered when the schools route was deep-link-tested on a simulator 
 
 ## Data layer (established by the `add-mobile-api-client` change, 2026-06)
 
-Rationale and alternatives live in that change's `design.md` (D1–D8) and its ADR (`adr-001-committed-spec-seam.md`, to be lifted into the `decisions/` log when the five-artifacts step creates it).
+Rationale and alternatives live in that change's `design.md` (D1–D8) and its ADR (`adr-001-committed-spec-seam.md`, indexed in the [`decisions/` log](./decisions/README.md#pending-lifts) as a pending lift — it stays authoritative here in the archive until next revised).
 
 ### Committed-spec seam
 - `openapi/openapi.json` is the **single server↔mobile contract artifact**, committed. Regenerate with `npm run generate:openapi` in `server/` (needs the local docker-compose services up — same prerequisite as `npm test`). The script runs from the built `dist/`: the `@nestjs/swagger` CLI plugin injects response/property schemas at compile time, so a ts-node run would emit a spec missing every response type.
@@ -179,13 +189,13 @@ None of these is a sound lint rule today; each is recorded so the owning step/fe
 - **Dynamic Type / font scaling** — RN `Text` scales with the OS font size by default; the posture is simply **never** pass `allowFontScaling={false}`. Not a lint rule this slice (no offender exists); a `no-restricted-syntax` guard is deferred debt, to add the day someone reaches for it.
 - **Touch-target minimums (44pt iOS / 48dp Android)** — a runtime layout property, not statically checkable; no touchable exists yet. Owned by the first interactive control and the DoD a11y checklist.
 - **Meaningful labels** — lint guarantees a label *exists* on a touchable, never that it's *meaningful* or correctly translated; human review + the translated-copy rule cover semantics.
-- **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the DoD (roadmap step 12); this change names a11y's slot in it.
+- **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the [Definition of Done](./definition-of-done.md) (Accessibility axis); this change names a11y's slot in it.
 - **Reduced motion** — no animations exist now (the Expo splash animation was deleted in step 6); the real splash (step 13) and any future animation must honor `AccessibilityInfo.isReduceMotionEnabled`. Recorded so step 13 inherits the obligation.
 - **Color contrast** — a theme-token property, not lint-encodable; owned by theming (step 10) and the splash DoD.
 
 ### Deferred (recorded debt — not built)
 - **No new lint rules, no a11y infrastructure** — no Dynamic-Type override-guard rule, no touch-target helper, no reduced-motion hook, no contrast check. Each is earned by the step/feature that first needs it.
-- **No manual screen-reader DoD checklist** — lands with the DoD artifact (roadmap step 12); this change only names a11y's place in it.
+- **No manual screen-reader DoD checklist** — now lives in the [Definition of Done](./definition-of-done.md) (Accessibility axis); this change only named a11y's place in it.
 
 ## Firebase — Crashlytics + Analytics (established by the `add-mobile-firebase` change, 2026-06)
 
