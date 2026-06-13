@@ -105,6 +105,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
+        // Native static launch screen, drawn before any JS runs. This single
+        // brand-blue literal is the one color the splash can't source from the
+        // @/theme tokens: a native launch screen runs pre-JS, so it can neither
+        // read JS theme tokens nor switch on the OS color scheme. It is chosen
+        // to read acceptably in both light and dark; the JS splash overlay
+        // (src/components/splash-screen.tsx) mounts immediately after JS loads
+        // and corrects to the scheme-appropriate @/theme token (design D5).
         backgroundColor: "#208AEF",
         android: {
           image: "./assets/images/splash-icon.png",
