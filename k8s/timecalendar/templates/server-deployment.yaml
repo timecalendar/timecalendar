@@ -48,6 +48,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "timecalendar.fullname" . }}-configmap
+            - secretRef:
+                name: timecalendar-env-secret
           volumeMounts:
             - mountPath: /usr/src/app/config
               name: config-volume
