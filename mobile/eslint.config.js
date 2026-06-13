@@ -52,24 +52,19 @@ const storageBackendImportPatterns = [
   },
 ]
 
-const restrictedImports = (extraPatterns = []) => [
+// `banStorageBackends: false` is for the seam dirs (src/storage/, src/db/),
+// which legitimately import the backends the ban keeps out of feature code.
+const restrictedImports = (
+  extraPatterns = [],
+  { banStorageBackends = true } = {},
+) => [
   "error",
   {
     patterns: [
       ...restrictedImportPatterns,
-      ...storageBackendImportPatterns,
+      ...(banStorageBackends ? storageBackendImportPatterns : []),
       ...extraPatterns,
     ],
-    paths: restrictedImportPaths,
-  },
-]
-
-// Same as restrictedImports but WITHOUT the storage-backend ban — applied to
-// the seam dirs (src/storage/, src/db/), which legitimately import the backends.
-const restrictedImportsForSeams = (extraPatterns = []) => [
-  "error",
-  {
-    patterns: [...restrictedImportPatterns, ...extraPatterns],
     paths: restrictedImportPaths,
   },
 ]
@@ -153,12 +148,13 @@ module.exports = defineConfig([
   {
     // The storage seam dirs ARE the wrappers — they may import the backends
     // (react-native-mmkv / expo-sqlite / drizzle-orm) the ban keeps out of
-    // feature code. Re-set no-restricted-imports without the storage patterns
-    // (flat config replaces, not merges, rule options).
+    // feature code, so re-set no-restricted-imports without the storage ban.
     name: "timecalendar/storage-seams",
     files: ["src/storage/**", "src/db/**"],
     rules: {
-      "no-restricted-imports": restrictedImportsForSeams(),
+      "no-restricted-imports": restrictedImports([], {
+        banStorageBackends: false,
+      }),
     },
   },
   {
