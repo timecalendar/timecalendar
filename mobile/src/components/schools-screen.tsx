@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useSchoolControllerFindSchools } from "@/api/generated/schools/schools"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { MaxContentWidth, Spacing } from "@/constants/theme"
+import { MaxContentWidth, Spacing } from "@/theme"
 
 // The first real consumer of the generated Orval client + mounted QueryClient.
 // Template-quality round-trip surface for the test harness (deep-linked at

@@ -2,9 +2,8 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
-import { Spacing } from "@/constants/theme"
 import { crashTest, logEvent } from "@/firebase"
-import { useTheme } from "@/hooks/use-theme"
+import { Spacing, useTheme } from "@/theme"
 
 // Dev-only surface for the step-8 end-to-end Firebase verification: one button
 // logs an Analytics event, the other forces a native crash. Rendered behind
