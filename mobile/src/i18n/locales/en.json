@@ -6,5 +6,8 @@
   "profile.title": "Profile",
   "schools.title": "Schools",
   "schools.loading": "Loading schools…",
-  "schools.error": "Could not load schools."
+  "schools.error": "Could not load schools.",
+  "debug.firebase.heading": "Firebase debug (dev only)",
+  "debug.firebase.logEvent": "Log test event",
+  "debug.firebase.crash": "Trigger test crash"
 }

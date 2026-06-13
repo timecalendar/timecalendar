@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "79945891752",
+    "project_id": "timecalendar-dev",
+    "storage_bucket": "timecalendar-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79945891752:android:21139d151875f24a3e679d",
+        "android_client_info": {
+          "package_name": "fr.samuelprak.timecalendar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARACv7Ou0YY0Xsy1pgI_UTUXDbTxhfOYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:79945891752:android:46dd38a26cb6f24f3e679d",
+        "android_client_info": {
+          "package_name": "fr.samuelprak.timecalendar.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARACv7Ou0YY0Xsy1pgI_UTUXDbTxhfOYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
