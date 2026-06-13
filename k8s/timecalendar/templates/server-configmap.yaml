@@ -15,14 +15,12 @@ data:
 
   # Redis
   REDIS_QUEUE: timecalendar
-  REDIS_URL: rediss://{{ .Values.timecalendar.redis.username }}:{{ .Values.timecalendar.redis.password }}@{{ .Values.timecalendar.redis.host }}:{{ .Values.timecalendar.redis.port }}
   REDIS_KEY_PREFIX: {{ .Values.environment }}
 
   # Postgres
   DATABASE_HOST: {{ .Values.timecalendar.database.host }}
   DATABASE_PORT: "{{ .Values.timecalendar.database.port }}"
   DATABASE_USERNAME: {{ .Values.timecalendar.database.username }}
-  DATABASE_PASSWORD: {{ .Values.timecalendar.database.password }}
   DATABASE_MAIN_NAME: {{ .Values.timecalendar.database.database }}
   PGSSLMODE: no-verify
 
@@ -30,18 +28,13 @@ data:
 
   # SMTP
   SMTP_FROM: {{ .Values.timecalendar.smtpFrom }}
-  SMTP_URL: {{ .Values.timecalendar.smtpUrl }}
 
   API_USERNAME: {{ .Values.timecalendar.apiUsername }}
-  API_TOKEN: {{ .Values.timecalendar.apiToken }}
 
   S3_PUBLIC_BUCKET_CLIENT_URL: {{ .Values.timecalendar.s3PublicBucketClientUrl }}
 
   CRISP_IDENTIFIER: {{ .Values.timecalendar.crisp.identifier }}
-  CRISP_KEY: {{ .Values.timecalendar.crisp.key }}
   CRISP_WEBSITE_ID: {{ .Values.timecalendar.crisp.websiteId }}
-
-  PROXY_URL: {{ .Values.timecalendar.proxyUrl }}
 
   # OTEL
   OTEL_ENABLED: {{ .Values.timecalendar.otel.enabled | quote }}

@@ -25,12 +25,12 @@ timecalendar:
     port: ""
     username: ""
     database: ""
-    password: ""
   apiUsername: ""
-  apiToken: ""
-  smtpUrl: ""
   smtpFrom: ""
   s3PublicBucketClientUrl: ""
+  crisp:
+    identifier: ""
+    websiteId: ""
   otel:
     enabled: ""
     exporterUrl: ""
