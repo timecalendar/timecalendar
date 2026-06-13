@@ -30,6 +30,21 @@ development most values already have sensible defaults (see
 `server/src/config/environments/development.ts`), so this file only needs
 `NODE_ENV=development`.
 
+### Working in a git worktree
+
+A `git worktree` only checks out tracked files, so the gitignored files a working
+checkout needs — `server/.env`, `web/.env.local`, the Firebase key, the generated
+husky hooks, and `node_modules` — are all absent in a fresh worktree (commits even
+silently abort because the pre-commit hook can't find its helper). Run this once
+per new worktree to symlink the shared secrets from your main checkout and install
+dependencies:
+
+```bash
+npm run setup:worktree
+```
+
+It is idempotent and a no-op in the main checkout.
+
 ### Firebase
 
 TimeCalendar uses Firebase to send push notifications and save application settings. You can either use the private development Firebase account or create your own.
