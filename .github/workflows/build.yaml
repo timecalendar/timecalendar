@@ -447,8 +447,11 @@ jobs:
         EXPO_PUBLIC_API_URL: http://localhost:3005
       run: |
         WORKSPACE="$(ls -d *.xcworkspace | head -n1)"
-        SCHEME="$(xcodebuild -workspace "$WORKSPACE" -list -json \
-          | python3 -c 'import json,sys; print(json.load(sys.stdin)["workspace"]["schemes"][0])')"
+        # The app scheme matches the workspace basename for Expo apps
+        # (TimeCalendarDev.xcworkspace -> scheme TimeCalendarDev). Do NOT use
+        # `-list` schemes[0] — that picks an alphabetically-first CocoaPods
+        # scheme (e.g. EXConstants), which builds a static lib and no .app.
+        SCHEME="${WORKSPACE%.xcworkspace}"
         echo "Building workspace=$WORKSPACE scheme=$SCHEME"
         xcodebuild \
           -workspace "$WORKSPACE" \
