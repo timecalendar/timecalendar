@@ -99,7 +99,7 @@ jobs:
       run: npm ci
 
     - name: Set up Gradle
-      uses: gradle/actions/setup-gradle@v4
+      uses: gradle/actions/setup-gradle@v6
 
     # Generate native android/ for the dev variant (.dev id, timecalendar-dev
     # scheme, cleartext exception). CNG: ios/android are never committed.
@@ -201,7 +201,7 @@ jobs:
 
     # Survives `prebuild --clean` (lives outside the repo); speeds pod install.
     - name: Cache CocoaPods downloads
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/Library/Caches/CocoaPods
