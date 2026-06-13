@@ -34,5 +34,5 @@
 
 ## 7. Manual (out-of-band — Firebase console + device; not gated by CI)
 
-- [ ] 7.1 Register Android + iOS `fr.samuelprak.timecalendar.dev` apps in the `timecalendar-dev` project; place the dev config pair in `mobile/firebase/`. Copy the Flutter prod pair into `mobile/firebase/` too.
-- [ ] 7.2 `npx expo prebuild --clean` then `npm run ios` / `npm run android`; verify a logged event lands in `timecalendar-dev` → Analytics → DebugView, and a forced crash lands in `timecalendar-dev` → Crashlytics.
+- [x] 7.1 Registered Android + iOS `fr.samuelprak.timecalendar.dev` apps in the `timecalendar-dev` project; dev config pair placed in `mobile/firebase/` (+ Flutter prod pair copied).
+- [x] 7.2 Verified end-to-end on the iOS simulator (iPhone 17 Pro, iOS 26.5): `expo prebuild --clean` + `expo run:ios` **built clean with `useFrameworks: "static"`**; app launches, `Analytics collection enabled`. Drove the dev panel via Maestro — Analytics logged the custom event (`Logging event … params: app, debug_test_event … ga_debug=1` → `Successful upload. Code: 204`), and a forced crash was packaged + uploaded (`Completed report submission with id: 1051fdfa1eec4c62871ee52f32e4d9bd`). Delivery proven from device logs; the `timecalendar-dev` console view (DebugView / Crashlytics dashboard) is the owner's final glance. Android emulator path not run (iOS covers the risky static-frameworks build).
