@@ -4,6 +4,7 @@
   "home.title": "Home",
   "profile.tab.label": "Profile",
   "profile.title": "Profile",
+  "splash.status.loading": "Loading…",
   "schools.title": "Schools",
   "schools.loading": "Loading schools…",
   "schools.error": "Could not load schools.",

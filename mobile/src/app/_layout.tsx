@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router"
 import { useColorScheme } from "react-native"
 
+import { SplashScreen } from "@/components/splash-screen"
 import { runMigrations } from "@/db/migrate"
 // Side-effect import: initializes the single module-scoped i18next instance
 // (synchronous, from bundled catalogs) before any screen renders text.
@@ -23,6 +24,9 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="schools" />
         </Stack>
+        {/* Above the Stack: covers the whole app during startup, fades out (or
+            cuts under reduced motion) once useAppReady() resolves. */}
+        <SplashScreen />
       </ThemeProvider>
     </QueryClientProvider>
   )
