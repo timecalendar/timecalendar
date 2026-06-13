@@ -1,0 +1,166 @@
+name: CI build & deploy
+
+# Server + web images, server tests, and deploy. Runs on every push (the deploy
+# job self-gates to main/production). Mobile checks, mobile E2E, and Flutter
+# tests live in their own workflows (ci-mobile, ci-mobile-e2e, ci-flutter).
+on:
+  push:
+
+jobs:
+  build-server:
+    name: Build server image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/timecalendar/timecalendar
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set target environment
+      run: ./ci/set-target-env.sh
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Build server image
+      uses: docker/build-push-action@v7
+      with:
+        context: ./server
+        tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        load: true
+
+    - name: Save server image to tarball
+      run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
+
+    - name: Upload server image artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: server-image
+        path: /tmp/server-image.tar
+        retention-days: 1
+
+    - name: Login to image repository
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push server image
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      uses: docker/build-push-action@v7
+      with:
+        context: ./server
+        tags: ${{ env.SERVER_IMAGES_WITH_TAG_TO_PUSH }}
+        cache-from: type=gha
+        push: true
+
+
+  build-web:
+    name: Build web image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ghcr.io/timecalendar/timecalendar-web
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set target environment
+      run: ./ci/set-target-env.sh
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Login to image repository
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build (and conditionally push) web image
+      uses: docker/build-push-action@v7
+      with:
+        context: .
+        file: ./Dockerfile.web
+        tags: ${{ env.WEB_IMAGES_WITH_TAG_TO_PUSH }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production' }}
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: build-server
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Download server image artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: server-image
+        path: /tmp
+
+    - name: Load server image
+      run: docker load -i /tmp/server-image.tar
+
+    - name: Start Postgres and Redis
+      run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d
+
+    - name: Run tests
+      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
+
+    # The Nest app cannot boot without a service-account-shaped key file; the
+    # spec emit only needs the JSON shape, never a real credential.
+    - name: Generate dummy Firebase service-account key
+      run: ./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
+
+    # The image's dist/ was built from this same commit (with the swagger CLI
+    # plugin applied), so emitting from it reproduces `npm run generate:openapi`.
+    - name: Check committed OpenAPI spec matches the server code
+      run: |
+        docker run --env-file="./ci/.env.test" --network host \
+          -e NODE_ENV=test \
+          -e OPENAPI_OUTPUT_PATH=/openapi-out/openapi.json \
+          -v /tmp/serviceAccountKey.json:/usr/src/app/config/serviceAccountKey.json:ro \
+          -v "$PWD/openapi":/openapi-out \
+          ghcr.io/timecalendar/timecalendar:${{ github.sha }} \
+          node dist/generate-openapi.js
+        git diff --exit-code openapi/openapi.json || {
+          echo "::error::openapi/openapi.json is out of date with the server code — run 'npm run generate:openapi' in server/ and commit the result"
+          exit 1
+        }
+
+
+  deploy:
+    name: Deploy
+    needs: [build-server, build-web]
+    if: github.ref == 'refs/heads/main' ||  github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set target environment
+      run: ./ci/set-target-env.sh
+
+    - name: Set target environment Helm values
+      run: echo "${{ secrets[env.K8S_HELM_VALUES_ENV] }}" > ./k8s/environments/$TARGET_ENVIRONMENT/secret-values.yaml
+
+    - name: Set Kubernetes context
+      uses: azure/k8s-set-context@v5
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets[env.K8S_KUBECONFIG_ENV] }}
+
+    - name: Deploy
+      run: ./k8s/deploy.sh

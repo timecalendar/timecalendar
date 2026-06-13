@@ -1,21 +1,36 @@
-name: CI build
+name: CI mobile E2E
 
+# Native mobile end-to-end (Maestro on a real emulator/simulator). These jobs
+# are slow (cold native build + device boot ~20-30 min each), so they are
+# on-demand:
+#   - Pull requests: run ONLY when the PR carries the `run-e2e` label. Add the
+#     label to opt in; every subsequent push to the PR re-runs while it's set.
+#   - main / production: always run, but only when mobile or the shared OpenAPI
+#     spec changed (path filter below).
+#
+# This workflow is self-contained: it builds its own server image (cache-from
+# type=gha — a fast cache hit when ci-build-deploy already built it for this
+# SHA) rather than sharing an artifact across workflow runs.
 on:
   push:
+    branches: [main, production]
+    paths:
+      - 'mobile/**'
+      - 'openapi/**'
+      - '.github/workflows/ci-mobile-e2e.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
 
 jobs:
   build-server:
     name: Build server image
+    # Push events (main/production) always run; PRs only with the run-e2e label.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
     runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: ghcr.io/timecalendar/timecalendar
     steps:
 
     - name: Checkout main
       uses: actions/checkout@v6
-
-    - name: Set target environment
-      run: ./ci/set-target-env.sh
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
@@ -39,235 +54,11 @@ jobs:
         path: /tmp/server-image.tar
         retention-days: 1
 
-    - name: Login to image repository
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Push server image
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      uses: docker/build-push-action@v7
-      with:
-        context: ./server
-        tags: ${{ env.SERVER_IMAGES_WITH_TAG_TO_PUSH }}
-        cache-from: type=gha
-        push: true
-
-
-  build-web:
-    name: Build web image
-    runs-on: ubuntu-latest
-    env:
-      IMAGE_NAME: ghcr.io/timecalendar/timecalendar-web
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set target environment
-      run: ./ci/set-target-env.sh
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
-
-    - name: Login to image repository
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
-      uses: docker/login-action@v4
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build (and conditionally push) web image
-      uses: docker/build-push-action@v7
-      with:
-        context: .
-        file: ./Dockerfile.web
-        tags: ${{ env.WEB_IMAGES_WITH_TAG_TO_PUSH }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production' }}
-
-  test:
-    name: Run tests
-    runs-on: ubuntu-latest
-    needs: build-server
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Download server image artifact
-      uses: actions/download-artifact@v8
-      with:
-        name: server-image
-        path: /tmp
-
-    - name: Load server image
-      run: docker load -i /tmp/server-image.tar
-
-    - name: Start Postgres and Redis
-      run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d
-
-    - name: Run tests
-      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
-
-    # The Nest app cannot boot without a service-account-shaped key file; the
-    # spec emit only needs the JSON shape, never a real credential.
-    - name: Generate dummy Firebase service-account key
-      run: ./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
-
-    # The image's dist/ was built from this same commit (with the swagger CLI
-    # plugin applied), so emitting from it reproduces `npm run generate:openapi`.
-    - name: Check committed OpenAPI spec matches the server code
-      run: |
-        docker run --env-file="./ci/.env.test" --network host \
-          -e NODE_ENV=test \
-          -e OPENAPI_OUTPUT_PATH=/openapi-out/openapi.json \
-          -v /tmp/serviceAccountKey.json:/usr/src/app/config/serviceAccountKey.json:ro \
-          -v "$PWD/openapi":/openapi-out \
-          ghcr.io/timecalendar/timecalendar:${{ github.sha }} \
-          node dist/generate-openapi.js
-        git diff --exit-code openapi/openapi.json || {
-          echo "::error::openapi/openapi.json is out of date with the server code — run 'npm run generate:openapi' in server/ and commit the result"
-          exit 1
-        }
-
-
-  test-mobile:
-    name: Run mobile checks
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set up Node
-      uses: actions/setup-node@v6
-      with:
-        node-version-file: .nvmrc
-        cache: npm
-        cache-dependency-path: mobile/package-lock.json
-
-    - name: Install dependencies
-      working-directory: ./mobile
-      run: npm ci
-
-    - name: Check generated API client matches the committed spec
-      working-directory: ./mobile
-      run: |
-        npm run generate
-        git diff --exit-code src/api/generated || {
-          echo "::error::mobile/src/api/generated is out of date with openapi/openapi.json — run 'npm run generate' in mobile/ and commit the result"
-          exit 1
-        }
-
-    # Generates the gitignored expo-env.d.ts and .expo/types (typed routes,
-    # CSS module declarations) that `expo start` produces locally — the
-    # documented way to typecheck in CI without a dev server.
-    - name: Generate Expo type declarations
-      working-directory: ./mobile
-      run: npx expo customize tsconfig.json
-
-    - name: Typecheck
-      working-directory: ./mobile
-      run: npx tsc --noEmit
-
-    - name: Lint
-      working-directory: ./mobile
-      run: npm run lint
-
-    # Coverage is reported, not gated: no coverageThreshold yet (K-3 deferred to
-    # the first logic-bearing feature). Same `npm test` entrypoint as local.
-    - name: Test
-      working-directory: ./mobile
-      run: npm test -- --coverage
-
-
-  test-app:
-    name: Run app tests
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-        flutter-version: 3.41.9
-        cache: true
-
-    - name: Install dependencies
-      working-directory: ./app
-      run: flutter pub get
-
-    - name: Analyze
-      working-directory: ./app
-      run: flutter analyze test
-
-    - name: Run tests
-      working-directory: ./app
-      run: flutter test
-
-
-  test-e2e:
-    name: Run E2E smoke flows
-    runs-on: ubuntu-latest
-    # Emulator cold boot is slow even with KVM acceleration, and run_e2e.sh now
-    # runs every *_flow_test.dart file as its own `flutter test` process.
-    timeout-minutes: 45
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set up Java
-      uses: actions/setup-java@v5
-      with:
-        distribution: temurin
-        java-version: 17
-
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-        flutter-version: 3.41.9
-        cache: true
-
-    - name: Set up Node
-      uses: actions/setup-node@v6
-      with:
-        node-version-file: .nvmrc
-
-    - name: Enable KVM
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
-
-    # run_e2e.sh boots the backend + Postgres, seeds, runs every E2E smoke
-    # flow against the emulator (one `flutter test` process per flow file),
-    # and tears down. Running it as the emulator action's `script` means an
-    # Android device exists when step 6 resolves one — and the boot/seed logic
-    # is not duplicated here.
-    - name: Run E2E smoke harness
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: 34
-        arch: x86_64
-        profile: pixel_6
-        script: ./app/integration_test/run_e2e.sh
-
 
   e2e-mobile-android:
     name: Run mobile E2E (Android)
-    runs-on: ubuntu-latest
     needs: build-server
+    runs-on: ubuntu-latest
     # Emulator cold boot + a release Gradle build are both slow; KVM keeps the
     # emulator usable but the whole job is the long pole alongside the iOS one.
     timeout-minutes: 60
@@ -374,6 +165,8 @@ jobs:
 
   e2e-mobile-ios:
     name: Run mobile E2E (iOS)
+    # Push events (main/production) always run; PRs only with the run-e2e label.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
     # macos-26 ships Xcode 26 (Swift 6.2). Required: Expo SDK 56 / RN pods
     # declare Swift tools 6.2, and macos-latest's default Xcode (16.x, Swift
     # 6.1) fails SPM resolution ("installed version is 6.1.0").
@@ -500,29 +293,3 @@ jobs:
         name: e2e-server-logs-ios
         path: /tmp/e2e-server-ios.log
         retention-days: 7
-
-
-  deploy:
-    name: Deploy
-    needs: [build-server, build-web]
-    if: github.ref == 'refs/heads/main' ||  github.ref == 'refs/heads/production'
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set target environment
-      run: ./ci/set-target-env.sh
-
-    - name: Set target environment Helm values
-      run: echo "${{ secrets[env.K8S_HELM_VALUES_ENV] }}" > ./k8s/environments/$TARGET_ENVIRONMENT/secret-values.yaml
-
-    - name: Set Kubernetes context
-      uses: azure/k8s-set-context@v5
-      with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets[env.K8S_KUBECONFIG_ENV] }}
-
-    - name: Deploy
-      run: ./k8s/deploy.sh

@@ -79,6 +79,10 @@ success and failure alike. On failure it dumps the backend log tail. With
 
 `e2e-mobile-android` (Linux + KVM emulator) and `e2e-mobile-ios` (macOS runner,
 native Postgres/Redis via `--native`) in
-[`../../.github/workflows/build.yaml`](../../.github/workflows/build.yaml) build
-the binary on the runner, install it, and run the flows on every push. Maestro
-debug output and server logs upload as artifacts on failure.
+[`../../.github/workflows/ci-mobile-e2e.yml`](../../.github/workflows/ci-mobile-e2e.yml)
+build the binary on the runner, install it, and run the flows. Maestro debug
+output and server logs upload as artifacts on failure.
+
+These jobs are **on-demand** (a cold native build + device boot is ~20–30 min
+each): add the **`run-e2e` label** to a PR to run them, and they always run on
+`main`/`production` when `mobile/**` or `openapi/**` changed.
