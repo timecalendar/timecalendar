@@ -32,13 +32,15 @@ appId: fr.samuelprak.timecalendar.dev
 # live GET /schools fetch can land just past Maestro's ~17s default (the
 # screen renders fully but a beat too late). Android is faster; the longer
 # timeout is harmless there.
-- assertVisible:
-    text: "Schools"
+# extendedWaitUntil is Maestro's assert-with-timeout (assertVisible has no
+# timeout property).
+- extendedWaitUntil:
+    visible: "Schools"
     timeout: 60000
 # "My Gaming Academia" is a visible: true fixture seeded by db:init
 # (server/src/modules/school/fixtures/school.fixtures.yml). ASCII-only on
 # purpose — avoids accent-matching fragility across platforms. This is the
 # real-round-trip assertion: the name only renders if the fetch succeeded.
-- assertVisible:
-    text: "My Gaming Academia"
+- extendedWaitUntil:
+    visible: "My Gaming Academia"
     timeout: 60000
