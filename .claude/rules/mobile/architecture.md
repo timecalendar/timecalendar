@@ -325,7 +325,7 @@ Foundation step 11 — the skeleton's first **release path** (`mobile/` had no `
 - The EAS CLI requires **login even for offline config validation** under the current CLI (`eas config`/`build:inspect` fail logged-out) — so the `eas.json`-parses sanity check rides the human's first real `eas build` (inbox), and `expo config --json` is what the implementer can verify locally.
 
 ### Human prerequisites (inbox — not blockers)
-- `eas login` + `eas init` (real `projectId`/`updates.url`), Apple/Google credentials + EAS-managed signing, the actual `eas build`/`submit`/`update` runs, real-device install, TestFlight-internal + Play-internal setup — all in `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`, tagged `(HUMAN: …)` in tasks.md. The config is green without them; these unlock builds/installs. **This change also created the inbox convention files** (`inbox/README.md`) — it is the first step to use the handoff inbox.
+- `eas login` + `eas init` (real `projectId`/`updates.url`), Apple/Google credentials + EAS-managed signing, the actual `eas build`/`submit`/`update` runs, real-device install, TestFlight-internal + Play-internal setup — all in `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`, tagged `(HUMAN: …)` in tasks.md. The config is green without them; these unlock builds/installs. This is the **first step to use the handoff inbox** (the `inbox/README.md` convention shipped earlier with the pipeline setup).
 
 ### Deferred (recorded debt — not built)
 - **No `.eas/workflows/` / CI EAS path** (trigger above). **No real `projectId`/credentials/device install** (inbox). **No `match`→EAS bridge** (intentional — D5).

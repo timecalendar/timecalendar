@@ -132,8 +132,8 @@ from this change forward is appended live.
   `prebuild`). New ADR [006](./decisions/006-eas-distribution.md) (fingerprint policy +
   human-invoked-EAS, load-bearing — D3/D4). **No Jest proof test** (D8 justified N/A:
   config not runtime; the EAS CLI + `expo config --json` are the enforcing gates, R-1).
-  This change is also the **first to use the handoff inbox** — it created the inbox
-  convention files. The credential/account/console/device half is in
+  This change is also the **first to use the handoff inbox**. The
+  credential/account/console/device half is in
   `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`. *Why:* foundation
   step 11 — configure so a human *can* dogfood on a real device. → Architecture Book
   "EAS / distribution".
