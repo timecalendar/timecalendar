@@ -9,6 +9,9 @@ module.exports = {
     // Jest can't transform CSS (Metro/web concern); stub every CSS import.
     "\\.css$": "<rootDir>/jest/css-stub.js",
   },
+  // Initialize i18next once for the whole suite, like the app does at startup,
+  // so components under test resolve real translations instead of raw keys.
+  setupFilesAfterEnv: ["<rootDir>/jest/setup-i18n.ts"],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [
     "src/**/*.{ts,tsx}",

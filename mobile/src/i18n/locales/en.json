@@ -1,0 +1,10 @@
+{
+  "app.name": "TimeCalendar",
+  "home.tab.label": "Home",
+  "home.title": "Home",
+  "profile.tab.label": "Profile",
+  "profile.title": "Profile",
+  "schools.title": "Schools",
+  "schools.loading": "Loading schools…",
+  "schools.error": "Could not load schools."
+}

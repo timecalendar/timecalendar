@@ -1,10 +1,11 @@
-/* eslint-disable i18next/no-literal-string -- TODO(i18n-step-6): scaffold template file, strings localized or deleted when i18n lands */
 import { NativeTabs } from "expo-router/unstable-native-tabs"
+import { useTranslation } from "react-i18next"
 import { useColorScheme } from "react-native"
 
 import { Colors } from "@/constants/theme"
 
 export default function AppTabs() {
+  const { t } = useTranslation()
   const scheme = useColorScheme()
   const colors = Colors[scheme === "unspecified" ? "light" : scheme]
 
@@ -15,15 +16,19 @@ export default function AppTabs() {
       labelStyle={{ selected: { color: colors.text } }}
     >
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>
+          {t("home.tab.label")}
+        </NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require("@/assets/images/tabIcons/home.png")}
           renderingMode="template"
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>
+          {t("profile.tab.label")}
+        </NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require("@/assets/images/tabIcons/explore.png")}
           renderingMode="template"
