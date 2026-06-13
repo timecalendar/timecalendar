@@ -66,7 +66,7 @@ ensure_dummy_key() {
 # `up --wait` block on the service healthcheck instead.
 wait_for_health() {
   local code pid
-  log "waiting for GET /health on port $BACKEND_PORT…"
+  log "waiting for GET /health on port ${BACKEND_PORT}…"
   for _ in $(seq 1 60); do
     if [ -f "$NATIVE_PID_FILE" ]; then
       pid="$(cat "$NATIVE_PID_FILE")"
@@ -140,7 +140,7 @@ up_native() {
   log "seeding the timecalendar_test database (db:init)…"
   ( cd "$SERVER_DIR" && NODE_ENV=test PORT="$BACKEND_PORT" npm run db:init )
 
-  log "starting the NestJS backend on port $BACKEND_PORT…"
+  log "starting the NestJS backend on port ${BACKEND_PORT}…"
   # setsid → own process group (PGID == PID), so `down` can signal the whole
   # tree: `npm run start` → `nest` → `node`.
   setsid bash -c '

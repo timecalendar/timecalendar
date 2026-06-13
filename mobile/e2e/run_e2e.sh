@@ -81,7 +81,7 @@ log "booting the e2e server stack (ci/e2e-server.sh up $NATIVE_FLAG)…"
 # --- 2. Run the Maestro flows against the connected device -------------------
 # Maestro auto-detects the single running simulator/emulator. The flows assert
 # stable seeded text, so the same YAML runs on both platforms.
-log "running Maestro flows in $MAESTRO_DIR…"
+log "running Maestro flows in ${MAESTRO_DIR}…"
 set +e
 maestro test "$MAESTRO_DIR"
 flow_exit=$?
