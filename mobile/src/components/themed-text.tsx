@@ -1,17 +1,9 @@
-import { Platform, StyleSheet, Text, type TextProps } from "react-native"
+import { StyleSheet, Text, type TextProps } from "react-native"
 
-import { Fonts, ThemeColor, useTheme } from "@/theme"
+import { ThemeColor, useTheme } from "@/theme"
 
 export type ThemedTextProps = TextProps & {
-  type?:
-    | "default"
-    | "title"
-    | "small"
-    | "smallBold"
-    | "subtitle"
-    | "link"
-    | "linkPrimary"
-    | "code"
+  type?: "default" | "title" | "small" | "smallBold" | "subtitle"
   themeColor?: ThemeColor
 }
 
@@ -34,9 +26,6 @@ export function ThemedText({
         type === "small" && styles.small,
         type === "smallBold" && styles.smallBold,
         type === "subtitle" && styles.subtitle,
-        type === "link" && styles.link,
-        type === "linkPrimary" && styles.linkPrimary,
-        type === "code" && styles.code,
         style,
       ]}
       {...rest}
@@ -69,19 +58,5 @@ const styles = StyleSheet.create({
     fontSize: 32,
     lineHeight: 44,
     fontWeight: 600,
-  },
-  link: {
-    lineHeight: 30,
-    fontSize: 14,
-  },
-  linkPrimary: {
-    lineHeight: 30,
-    fontSize: 14,
-    color: "#3c87f7",
-  },
-  code: {
-    fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: 700 }) ?? 500,
-    fontSize: 12,
   },
 })
