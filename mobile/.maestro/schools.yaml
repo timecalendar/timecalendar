@@ -1,0 +1,46 @@
+# Real-round-trip e2e flow: proves the app ↔ NestJS ↔ Postgres contract.
+#
+# Launches the development-variant app, deep-links to the schools screen, and
+# asserts a seeded school renders. This fails if the GET /schools endpoint, its
+# DTO, the generated Orval client, customFetch, or the QueryClient wiring is
+# broken — the screen fetches live data, nothing is mocked here.
+#
+# Requires the harness server up on host port 3005 (ci/e2e-server.sh up) and a
+# release-config dev-variant build installed on the connected device. Shared
+# across iOS and Android: the assertion is stable seeded text, no per-platform
+# selectors. Run via mobile/e2e/run_e2e.sh.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link. A warm openLink (app already foregrounded on
+# Home) does NOT navigate on Android release builds — Expo Router only reliably
+# resolves the link through getInitialURL on a cold launch. So stop the app
+# first, then openLink relaunches it with timecalendar-dev://schools as the
+# initial URL. Sibling routes live under the root Stack ((tabs) is a group);
+# the dev scheme is timecalendar-dev (app.config.ts).
+- stopApp
+- openLink: timecalendar-dev://schools
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
+# (Android does not). Tap it only on iOS so the app actually opens the link;
+# without this the app stays on Home and the assertion below fails.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Open"
+# Generous timeouts: a release-config iOS cold start + JS bundle load + the
+# live GET /schools fetch can land just past Maestro's ~17s default (the
+# screen renders fully but a beat too late). Android is faster; the longer
+# timeout is harmless there.
+# extendedWaitUntil is Maestro's assert-with-timeout (assertVisible has no
+# timeout property).
+- extendedWaitUntil:
+    visible: "Schools"
+    timeout: 60000
+# "My Gaming Academia" is a visible: true fixture seeded by db:init
+# (server/src/modules/school/fixtures/school.fixtures.yml). ASCII-only on
+# purpose — avoids accent-matching fragility across platforms. This is the
+# real-round-trip assertion: the name only renders if the fetch succeeded.
+- extendedWaitUntil:
+    visible: "My Gaming Academia"
+    timeout: 60000

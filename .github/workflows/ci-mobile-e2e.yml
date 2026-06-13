@@ -1,0 +1,295 @@
+name: CI mobile E2E
+
+# Native mobile end-to-end (Maestro on a real emulator/simulator). These jobs
+# are slow (cold native build + device boot ~20-30 min each), so they are
+# on-demand:
+#   - Pull requests: run ONLY when the PR carries the `run-e2e` label. Add the
+#     label to opt in; every subsequent push to the PR re-runs while it's set.
+#   - main / production: always run, but only when mobile or the shared OpenAPI
+#     spec changed (path filter below).
+#
+# This workflow is self-contained: it builds its own server image (cache-from
+# type=gha — a fast cache hit when ci-build-deploy already built it for this
+# SHA) rather than sharing an artifact across workflow runs.
+on:
+  push:
+    branches: [main, production]
+    paths:
+      - 'mobile/**'
+      - 'openapi/**'
+      - '.github/workflows/ci-mobile-e2e.yml'
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+jobs:
+  build-server:
+    name: Build server image
+    # Push events (main/production) always run; PRs only with the run-e2e label.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Build server image
+      uses: docker/build-push-action@v7
+      with:
+        context: ./server
+        tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        load: true
+
+    - name: Save server image to tarball
+      run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
+
+    - name: Upload server image artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: server-image
+        path: /tmp/server-image.tar
+        retention-days: 1
+
+
+  e2e-mobile-android:
+    name: Run mobile E2E (Android)
+    needs: build-server
+    runs-on: ubuntu-latest
+    # Emulator cold boot + a release Gradle build are both slow; KVM keeps the
+    # emulator usable but the whole job is the long pole alongside the iOS one.
+    timeout-minutes: 60
+    env:
+      # Reuse the build-server artifact image — the shared lifecycle skips its
+      # own build when E2E_SERVER_IMAGE is set (ci/e2e-server.sh).
+      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Download server image artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: server-image
+        path: /tmp
+
+    - name: Load server image
+      run: docker load -i /tmp/server-image.tar
+
+    # JDK 17 for both the Gradle build and Maestro (Maestro is JVM-based).
+    - name: Set up Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Set up Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: mobile/package-lock.json
+
+    - name: Install mobile dependencies
+      working-directory: ./mobile
+      run: npm ci
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    # Generate native android/ for the dev variant (.dev id, timecalendar-dev
+    # scheme, cleartext exception). CNG: ios/android are never committed.
+    - name: Prebuild Android (dev variant)
+      working-directory: ./mobile
+      env:
+        APP_VARIANT: development
+      run: npx expo prebuild --platform android --clean
+
+    # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL is
+    # baked here, at bundle time: 10.0.2.2 is the host loopback from the emulator.
+    - name: Build release APK
+      working-directory: ./mobile/android
+      env:
+        APP_VARIANT: development
+        EXPO_PUBLIC_API_URL: http://10.0.2.2:3005
+      run: ./gradlew :app:assembleRelease
+
+    - name: Install Maestro
+      run: |
+        curl -fsSL https://get.maestro.mobile.dev | bash
+        echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    # The emulator exists only inside this action's `script`, so the APK install
+    # and the e2e run both live here. run_e2e.sh boots the server stack (compose,
+    # reusing E2E_SERVER_IMAGE), runs the Maestro flows, and tears down.
+    - name: Run mobile E2E flows
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        arch: x86_64
+        profile: pixel_6
+        script: |
+          adb install -r mobile/android/app/build/outputs/apk/release/app-release.apk
+          ./mobile/e2e/run_e2e.sh
+
+    - name: Upload Maestro debug output
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: maestro-debug-android
+        path: ~/.maestro/tests
+        retention-days: 7
+
+    - name: Upload server logs
+      if: failure()
+      run: ./ci/e2e-server.sh logs > /tmp/e2e-server-android.log 2>&1 || true
+
+    - name: Upload server logs artifact
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: e2e-server-logs-android
+        path: /tmp/e2e-server-android.log
+        retention-days: 7
+
+
+  e2e-mobile-ios:
+    name: Run mobile E2E (iOS)
+    # Push events (main/production) always run; PRs only with the run-e2e label.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    # macos-26 ships Xcode 26 (Swift 6.2). Required: Expo SDK 56 / RN pods
+    # declare Swift tools 6.2, and macos-latest's default Xcode (16.x, Swift
+    # 6.1) fails SPM resolution ("installed version is 6.1.0").
+    runs-on: macos-26
+    # A cold xcodebuild is ~20-40 min. The CocoaPods download cache (the spec
+    # repo + downloaded pods, outside the repo tree) survives `prebuild --clean`
+    # and shaves the pod-install step; DerivedData lives under the cleaned ios/
+    # so it can't be cached across runs. npm is cached by setup-node.
+    timeout-minutes: 75
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    # JDK for Maestro (JVM-based).
+    - name: Set up Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Set up Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: mobile/package-lock.json
+
+    - name: Install mobile dependencies
+      working-directory: ./mobile
+      run: npm ci
+
+    # Survives `prebuild --clean` (lives outside the repo); speeds pod install.
+    - name: Cache CocoaPods downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Library/Caches/CocoaPods
+          ~/.cocoapods
+        key: cocoapods-${{ hashFiles('mobile/package-lock.json') }}
+        restore-keys: cocoapods-
+
+    # macOS runners have no Docker (no nested virt). Provision Postgres/Redis
+    # natively on the test-env ports so e2e-server.sh --native can seed + boot
+    # the server from source against them.
+    - name: Provision Postgres and Redis (native)
+      run: |
+        brew install postgresql@14 redis
+        PGBIN="$(brew --prefix postgresql@14)/bin"
+        PGDATA="$(brew --prefix)/var/postgresql@14"
+        "$PGBIN/pg_ctl" -D "$PGDATA" -o "-p 37291" -l /tmp/pg.log start
+        for _ in $(seq 1 30); do "$PGBIN/pg_isready" -p 37291 && break; sleep 1; done
+        # Test config connects as a `postgres` superuser with an empty password.
+        "$PGBIN/createuser" -p 37291 -s postgres || true
+        "$PGBIN/createdb" -p 37291 -U postgres timecalendar || true
+        "$PGBIN/createdb" -p 37291 -U postgres timecalendar_test || true
+        redis-server --port 37292 --daemonize yes
+
+    - name: Prebuild iOS (dev variant)
+      working-directory: ./mobile
+      env:
+        APP_VARIANT: development
+      run: npx expo prebuild --platform ios --clean
+
+    # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
+    # here: localhost reaches the host server from the iOS simulator.
+    - name: Build Release simulator app
+      working-directory: ./mobile/ios
+      env:
+        APP_VARIANT: development
+        EXPO_PUBLIC_API_URL: http://localhost:3005
+      run: |
+        WORKSPACE="$(ls -d *.xcworkspace | head -n1)"
+        # The app scheme matches the workspace basename for Expo apps
+        # (TimeCalendarDev.xcworkspace -> scheme TimeCalendarDev). Do NOT use
+        # `-list` schemes[0] — that picks an alphabetically-first CocoaPods
+        # scheme (e.g. EXConstants), which builds a static lib and no .app.
+        SCHEME="${WORKSPACE%.xcworkspace}"
+        echo "Building workspace=$WORKSPACE scheme=$SCHEME"
+        xcodebuild \
+          -workspace "$WORKSPACE" \
+          -scheme "$SCHEME" \
+          -configuration Release \
+          -sdk iphonesimulator \
+          -derivedDataPath build \
+          CODE_SIGNING_ALLOWED=NO \
+          build
+
+    - name: Boot a simulator and install the app
+      working-directory: ./mobile/ios
+      run: |
+        DEVICE="$(xcrun simctl list devices available --json \
+          | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for v in d.values() for x in v if "iPhone" in x["name"]))')"
+        echo "Using simulator $DEVICE"
+        xcrun simctl boot "$DEVICE" || true
+        APP="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -n1)"
+        xcrun simctl install "$DEVICE" "$APP"
+
+    - name: Install Maestro
+      run: |
+        curl -fsSL https://get.maestro.mobile.dev | bash
+        echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+    # --native: server from source against the natively-provisioned Postgres/Redis.
+    - name: Run mobile E2E flows
+      run: ./mobile/e2e/run_e2e.sh --native
+
+    - name: Upload Maestro debug output
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: maestro-debug-ios
+        path: ~/.maestro/tests
+        retention-days: 7
+
+    - name: Upload server logs
+      if: failure()
+      run: ./ci/e2e-server.sh logs --native > /tmp/e2e-server-ios.log 2>&1 || true
+
+    - name: Upload server logs artifact
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: e2e-server-logs-ios
+        path: /tmp/e2e-server-ios.log
+        retention-days: 7

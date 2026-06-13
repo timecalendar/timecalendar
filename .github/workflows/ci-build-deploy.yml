@@ -1,5 +1,8 @@
-name: CI build
+name: CI build & deploy
 
+# Server + web images, server tests, and deploy. Runs on every push (the deploy
+# job self-gates to main/production). Mobile checks, mobile E2E, and Flutter
+# tests live in their own workflows (ci-mobile, ci-mobile-e2e, ci-flutter).
 on:
   push:
 
@@ -135,133 +138,6 @@ jobs:
           echo "::error::openapi/openapi.json is out of date with the server code — run 'npm run generate:openapi' in server/ and commit the result"
           exit 1
         }
-
-
-  test-mobile:
-    name: Run mobile checks
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set up Node
-      uses: actions/setup-node@v6
-      with:
-        node-version-file: .nvmrc
-        cache: npm
-        cache-dependency-path: mobile/package-lock.json
-
-    - name: Install dependencies
-      working-directory: ./mobile
-      run: npm ci
-
-    - name: Check generated API client matches the committed spec
-      working-directory: ./mobile
-      run: |
-        npm run generate
-        git diff --exit-code src/api/generated || {
-          echo "::error::mobile/src/api/generated is out of date with openapi/openapi.json — run 'npm run generate' in mobile/ and commit the result"
-          exit 1
-        }
-
-    # Generates the gitignored expo-env.d.ts and .expo/types (typed routes,
-    # CSS module declarations) that `expo start` produces locally — the
-    # documented way to typecheck in CI without a dev server.
-    - name: Generate Expo type declarations
-      working-directory: ./mobile
-      run: npx expo customize tsconfig.json
-
-    - name: Typecheck
-      working-directory: ./mobile
-      run: npx tsc --noEmit
-
-    - name: Lint
-      working-directory: ./mobile
-      run: npm run lint
-
-    # Coverage is reported, not gated: no coverageThreshold yet (K-3 deferred to
-    # the first logic-bearing feature). Same `npm test` entrypoint as local.
-    - name: Test
-      working-directory: ./mobile
-      run: npm test -- --coverage
-
-
-  test-app:
-    name: Run app tests
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-        flutter-version: 3.41.9
-        cache: true
-
-    - name: Install dependencies
-      working-directory: ./app
-      run: flutter pub get
-
-    - name: Analyze
-      working-directory: ./app
-      run: flutter analyze test
-
-    - name: Run tests
-      working-directory: ./app
-      run: flutter test
-
-
-  test-e2e:
-    name: Run E2E smoke flows
-    runs-on: ubuntu-latest
-    # Emulator cold boot is slow even with KVM acceleration, and run_e2e.sh now
-    # runs every *_flow_test.dart file as its own `flutter test` process.
-    timeout-minutes: 45
-    steps:
-
-    - name: Checkout main
-      uses: actions/checkout@v6
-
-    - name: Set up Java
-      uses: actions/setup-java@v5
-      with:
-        distribution: temurin
-        java-version: 17
-
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-        flutter-version: 3.41.9
-        cache: true
-
-    - name: Set up Node
-      uses: actions/setup-node@v6
-      with:
-        node-version-file: .nvmrc
-
-    - name: Enable KVM
-      run: |
-        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-        sudo udevadm control --reload-rules
-        sudo udevadm trigger --name-match=kvm
-
-    # run_e2e.sh boots the backend + Postgres, seeds, runs every E2E smoke
-    # flow against the emulator (one `flutter test` process per flow file),
-    # and tears down. Running it as the emulator action's `script` means an
-    # Android device exists when step 6 resolves one — and the boot/seed logic
-    # is not duplicated here.
-    - name: Run E2E smoke harness
-      uses: reactivecircus/android-emulator-runner@v2
-      with:
-        api-level: 34
-        arch: x86_64
-        profile: pixel_6
-        script: ./app/integration_test/run_e2e.sh
 
 
   deploy:

@@ -18,6 +18,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     icon: "./assets/expo.icon",
     bundleIdentifier: appId,
+    // Dev variant only: let release-config e2e builds reach the harness server
+    // on http://localhost:3005. ATS already exempts loopback, so this is
+    // belt-and-braces; the production identity carries no exception (D6).
+    ...(IS_DEV
+      ? {
+          infoPlist: {
+            NSAppTransportSecurity: { NSAllowsLocalNetworking: true },
+          },
+        }
+      : {}),
   },
   android: {
     package: appId,
@@ -42,7 +52,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         // 16.4, so that is the effective floor (K-2 revisit recorded in
         // migration-approach.md §8 and the Architecture Book).
         ios: { deploymentTarget: "16.4" },
-        android: { minSdkVersion: 24 },
+        // Dev variant only: release builds block cleartext HTTP by default,
+        // which would silently break the http://10.0.2.2:3005 e2e call (D6).
+        android: {
+          minSdkVersion: 24,
+          ...(IS_DEV ? { usesCleartextTraffic: true } : {}),
+        },
       },
     ],
     [
