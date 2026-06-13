@@ -10,7 +10,8 @@
   },
   "scripts": {
     "prepare": "husky install || true",
-    "setup": "bash bin/setup-dev.sh"
+    "setup": "bash bin/setup-dev.sh",
+    "setup:worktree": "bash bin/setup-worktree.sh"
   },
   "dependencies": {
     "lint-staged": "^13.0.3"
