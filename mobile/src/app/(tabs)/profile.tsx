@@ -6,13 +6,13 @@ import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { MaxContentWidth, Spacing } from "@/constants/theme"
 
-export default function HomeScreen() {
+export default function ProfileScreen() {
   const { t } = useTranslation()
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">{t("home.title")}</ThemedText>
+        <ThemedText type="title">{t("profile.title")}</ThemedText>
       </SafeAreaView>
     </ThemedView>
   )
