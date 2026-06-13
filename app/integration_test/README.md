@@ -224,5 +224,7 @@ teardown) is still fully verifiable locally: the server stack (step 1) comes up
 seeded and teardown leaves nothing running.
 
 The **canonical green run is the `test-e2e` GitHub Actions job** in
-`.github/workflows/build.yaml`, which runs `run_e2e.sh` inside
+`.github/workflows/ci-flutter.yml`, which runs `run_e2e.sh` inside
 `reactivecircus/android-emulator-runner` on a hardware-accelerated emulator.
+That workflow runs on `main`/`production` pushes touching `app/**` only (R-5
+bounded maintenance), not on every push.

@@ -1,0 +1,61 @@
+name: CI mobile checks
+
+# Fast mobile feedback: generated-client drift, typecheck, lint, Jest. Runs on
+# every push that touches mobile sources or the shared OpenAPI spec. The slow
+# native E2E jobs live in ci-mobile-e2e (label-gated).
+on:
+  push:
+    paths:
+      - 'mobile/**'
+      - 'openapi/**'
+      - '.github/workflows/ci-mobile.yml'
+
+jobs:
+  test-mobile:
+    name: Run mobile checks
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set up Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+        cache-dependency-path: mobile/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./mobile
+      run: npm ci
+
+    - name: Check generated API client matches the committed spec
+      working-directory: ./mobile
+      run: |
+        npm run generate
+        git diff --exit-code src/api/generated || {
+          echo "::error::mobile/src/api/generated is out of date with openapi/openapi.json — run 'npm run generate' in mobile/ and commit the result"
+          exit 1
+        }
+
+    # Generates the gitignored expo-env.d.ts and .expo/types (typed routes,
+    # CSS module declarations) that `expo start` produces locally — the
+    # documented way to typecheck in CI without a dev server.
+    - name: Generate Expo type declarations
+      working-directory: ./mobile
+      run: npx expo customize tsconfig.json
+
+    - name: Typecheck
+      working-directory: ./mobile
+      run: npx tsc --noEmit
+
+    - name: Lint
+      working-directory: ./mobile
+      run: npm run lint
+
+    # Coverage is reported, not gated: no coverageThreshold yet (K-3 deferred to
+    # the first logic-bearing feature). Same `npm test` entrypoint as local.
+    - name: Test
+      working-directory: ./mobile
+      run: npm test -- --coverage

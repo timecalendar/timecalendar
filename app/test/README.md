@@ -96,5 +96,6 @@ Riverpod; legacy providers are mocked as-is rather than migrated here.
 
 ## CI
 
-`flutter test` runs in the `test-app` job of `.github/workflows/build.yaml`
+`flutter test` runs in the `test-app` job of `.github/workflows/ci-flutter.yml`
+on `main`/`production` pushes touching `app/**` (R-5 bounded maintenance), not
 on every push.
