@@ -51,6 +51,9 @@ describe("PersonalEventsList", () => {
     expect(getByText("Office")).toBeTruthy()
     const row = getByTestId("personal-event-row-u1")
     expect(row.props.accessibilityRole).toBe("button")
-    expect(row.props.accessibilityLabel).toBe("Edit event Lunch")
+    // The label is the bare title (matchable cross-platform); the edit affordance
+    // is the hint.
+    expect(row.props.accessibilityLabel).toBe("Lunch")
+    expect(row.props.accessibilityHint).toBe("Opens the event to edit")
   })
 })

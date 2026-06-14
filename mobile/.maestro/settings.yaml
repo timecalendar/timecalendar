@@ -28,12 +28,16 @@ appId: fr.samuelprak.timecalendar.dev
 - stopApp
 - openLink: timecalendar-dev://settings
 # iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
-# (Android does not); tap it only on iOS.
+# (Android does not). It appears only on the FIRST deep link per simulator —
+# later flows (and re-runs) get no dialog — so the tap is optional: tap it when
+# present, skip otherwise.
 - runFlow:
     when:
       platform: iOS
     commands:
-      - tapOn: "Open"
+      - tapOn:
+          text: "Open"
+          optional: true
 # Generous timeout: a release-config iOS cold start + JS bundle load can land
 # just past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
 - extendedWaitUntil:
