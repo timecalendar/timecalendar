@@ -30,6 +30,8 @@ that there is "no reference feature to copy yet."
   screen/test/e2e skeleton, and the i18n/a11y conventions
 - **AND** each is a pointer to the real files (R-1), not a duplicated inline copy of their content
 
+## ADDED Requirements
+
 ### Requirement: A new feature can be started by copying the documented scaffolding
 The repository SHALL provide a **lightest-sound** scaffolding mechanism that makes "a new feature can
 be started by copying it" literally true (the Phase-1.5 exit criterion): a documented "starting a new
@@ -49,8 +51,6 @@ deferred debt with its trigger instead).
 - **WHEN** the `test-mobile` CI job (tsc + lint + Jest + coverage) runs after this change
 - **THEN** it stays green with no new failures attributable to the template files
 - **AND** the template files are not compiled, bundled, linted-as-source, or counted toward coverage
-
-## ADDED Requirements
 
 ### Requirement: The Architecture Book is reconciled to what the three features actually taught
 The Architecture Book (`.claude/rules/mobile/architecture.md`) SHALL be reconciled (pointer style
