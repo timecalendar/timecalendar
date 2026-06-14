@@ -4,12 +4,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm"
 
 @Entity()
+@Index("IDX_calendar_log_calendar_createdAt", ["calendar", "createdAt"])
 export class CalendarLog {
   @PrimaryGeneratedColumn("uuid")
   id: string
