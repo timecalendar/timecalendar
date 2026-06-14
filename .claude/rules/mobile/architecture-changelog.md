@@ -268,3 +268,35 @@ from this change forward is appended live.
   fills the wrapper body it pointed at). *Why:* Phase-2 Feature A's screen — the UI over
   A1's data layer, and the first `@expo/ui` consumer. → Architecture Book "Theming &
   native-chrome", "Settings preferences".
+
+- **2026-06-14 · `add-mobile-personal-events-data`** (B1 / TIM-132) — Phase-2 Feature B,
+  **data layer only** (the screen / forms / native date-time pickers / list / route are a
+  later B-issue). **Discharges the storage step's deliberate deferrals:** the repo's first
+  real `src/db/schema.ts` (`personalEvents`, SQL `personal_events`) whose columns mirror the
+  Flutter `PersonalEvent.toMap()` wire format **verbatim** for Phase-09 importer fidelity
+  (`uid` TEXT pk, `title`/`color` TEXT, `startsAt`/`endsAt`/`exportedAt` TEXT UTC ISO-8601,
+  nullable `location`/`description`; `kind` not stored); the **first real migration**
+  (`npm run generate:migrations` → committed `0000_*.sql` + advanced `meta/_journal.json` +
+  one-entry `migrations.js`), **replacing the empty bundle** (runner + `migrate.test.ts`
+  unchanged — now one entry, not zero). The **`@/db` seam widened** to re-export the query
+  operators the feature needs (`eq`/`and`/`gte`/`lte`), `useLiveQuery`, and the
+  `personalEvents` table — the encoded form of "the feature never imports `drizzle-orm`"
+  (R-2: only what a consumer needs). The **second `src/features/` folder**,
+  `personal-events/data/` (mirroring Settings' `prefs/` shape): `types.ts` (domain type +
+  pure `rowToEvent`/`eventToRow` mappers normalizing every write to canonical UTC),
+  `repository.ts` (async CRUD over `@/db` — `findAll`/`getById`/`upsert`-by-uid/`remove`/
+  `findInRange`), `uid.ts` (`newEventId()` over `expo-crypto` `randomUUID`, swappable; the
+  importer supplies its own uid), `hooks.ts` (`usePersonalEvents()` reactive read over
+  `useLiveQuery`), barrel. **New dep `expo-crypto`** — **autolinks with no plugin entry**
+  (ships no config plugin; verified by `prebuild` — do not add to `app.config.ts`); mocked
+  under Jest so CI `test-mobile` is unaffected. New **ADR
+  [011](./decisions/011-personal-event-storage.md)** (dates TEXT ISO-8601 UTC over epoch-ms,
+  color `#RRGGBB` TEXT verbatim, uid from `expo-crypto` — load-bearing, importer fidelity +
+  range-query, R-4). The **K-3 coverage gate** (`src/db/**`, `src/features/**` at 90%) lands
+  **green** (mappers/uid/repository/hook 100%). **No new lint rule** (the `src/db/**` storage
+  seam already exempts the schema's backend import; the seam widening rides the existing
+  rule); **no `app.config.ts` plugin change** (`expo-crypto` autolinks); **no OpenAPI /
+  server / web / `app/` change, no inbox handoff** (no human prerequisite). *Why:* Phase-2
+  Feature B's data layer — the first structured device-local schema, the first real
+  migration, the data the future B-screen consumes. → Architecture Book "Storage → First
+  feature schema — personal events".

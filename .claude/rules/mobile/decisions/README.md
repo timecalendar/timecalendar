@@ -34,6 +34,7 @@ Status) — superseding an ADR means writing the new one and marking the old
 | [008](./008-brand-color.md) | Brand color: adopt the Flutter pink hue as the `primary` token | Accepted | A designer-driven palette change, or a real surface fails the brand-color contrast |
 | [009](./009-settings-feature-prefs.md) | First feature folder; Settings owns app preferences, consumed by infra seams | Accepted | `eslint-plugin-boundaries` lands (TIM-135) — resolve the infra→feature edge; or a 2nd feature needs cross-cutting prefs |
 | [010](./010-expo-ui-chrome-wrapper.md) | `@expo/ui` adopted behind the chrome wrapper seam; universal entry the default | Accepted | A control needs a platform-specific entry / diverges, or `@expo/ui` proves unstable enough to warrant a fallback behind the same wrapper |
+| [011](./011-personal-event-storage.md) | Personal-event storage: dates TEXT ISO-8601 UTC, color `#RRGGBB` TEXT, uid from `expo-crypto` | Accepted | A query/perf need genuinely requires numeric timestamps, or the Flutter wire format changes before the Phase-09 importer runs |
 
 ADRs 001–005 are the Phase 0 kickoff knobs K-1…K-5 from migration-approach §8,
 authored as real ADRs here (the Phase 0 exit criterion: "first ADRs written —
