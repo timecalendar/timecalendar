@@ -176,6 +176,16 @@ jobs:
     # and shaves the pod-install step; DerivedData lives under the cleaned ios/
     # so it can't be cached across runs. npm is cached by setup-node.
     timeout-minutes: 75
+    env:
+      # Maestro boots its XCTest driver with `xcodebuild test-without-building`,
+      # then polls the driver's local HTTP port until it's listening. On the
+      # macos-26 / Xcode 26 runner this cold start (compile + launch the runner
+      # app on a freshly-booted simulator) routinely takes ~3 min — longer than
+      # Maestro's default startup window, so it gives up and tears the stack
+      # down seconds before the port actually binds (the driver's
+      # "[FlyingFox] starting server 127.0.0.1:<port>" lands right after Maestro
+      # has already aborted). Give the driver 5 min to come up. Value is in ms.
+      MAESTRO_DRIVER_STARTUP_TIMEOUT: '300000'
     steps:
 
     - name: Checkout main
