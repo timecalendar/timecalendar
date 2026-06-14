@@ -113,9 +113,12 @@ function SchoolRow({ school }: { school: SchoolListItem }) {
     <Pressable
       testID={`onboarding-school-row-${school.id}`}
       accessibilityRole="button"
-      accessibilityLabel={t("onboarding.school.rowLabel", {
-        name: school.name,
-      })}
+      // The label is exactly the school name (not "Select {name}"): iOS merges an
+      // accessible Pressable's children into this label, so the name is only
+      // reachable here — keeping it verbatim lets the shared Maestro flow match
+      // the row by its name cross-platform. The select affordance is the hint.
+      accessibilityLabel={school.name}
+      accessibilityHint={t("onboarding.school.rowHint")}
       onPress={() => router.push(`/onboarding/groups?schoolId=${school.id}`)}
       style={[styles.row, { backgroundColor: theme.backgroundElement }]}
     >

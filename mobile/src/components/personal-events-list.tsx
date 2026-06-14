@@ -72,9 +72,13 @@ function EventRow({ event }: { event: PersonalEvent }) {
       <Pressable
         testID={`personal-event-row-${event.uid}`}
         accessibilityRole="button"
-        accessibilityLabel={t("personalEvents.list.rowLabel", {
-          title: event.title,
-        })}
+        // The label is exactly the title (not "Edit event {title}"): iOS merges
+        // an accessible Pressable's children into this single label, so the title
+        // is only reachable here — keeping it verbatim lets the shared Maestro
+        // flow match the row by its title cross-platform. The edit affordance
+        // moves to the hint.
+        accessibilityLabel={event.title}
+        accessibilityHint={t("personalEvents.list.rowHint")}
         style={[styles.row, { backgroundColor: theme.backgroundElement }]}
       >
         <View

@@ -12,6 +12,15 @@ import { persistOptions } from "@/features/school-selection"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
 
+// Anchor the back stack at the tab group so a cold deep link into a non-tab
+// route (e.g. timecalendar-dev://personal-event-form, or a notification target)
+// can navigate back to the app instead of dead-ending: without this, the
+// deep-linked screen is the only entry in the stack and router.back() is a
+// no-op (the personal-event form's save/delete would leave the user stranded).
+export const unstable_settings = {
+  initialRouteName: "(tabs)",
+}
+
 // Apply the committed migration bundle at startup, before features read tables
 // (fire-and-forget, mirroring the i18n side-effect wiring). Failures are
 // recorded through @/firebase inside the runner.

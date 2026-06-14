@@ -8,7 +8,15 @@ import { openDatabaseSync } from "expo-sqlite"
 // code imports @/db, never expo-sqlite / drizzle-orm directly (lint-enforced,
 // see eslint.config.js). One module-scoped handle + Drizzle instance.
 
-const expoDb = openDatabaseSync("timecalendar.db")
+// enableChangeListener is REQUIRED for drizzle's useLiveQuery to update
+// reactively: it subscribes via expo-sqlite's addDatabaseChangeListener, which
+// only emits when the database is opened with change listening on. Without it a
+// list built on useLiveQuery never re-renders after an insert/delete in the same
+// session (it only reflects the DB on remount) — the personal-events list would
+// silently miss a just-created event.
+const expoDb = openDatabaseSync("timecalendar.db", {
+  enableChangeListener: true,
+})
 
 export const db = drizzle(expoDb)
 
