@@ -8,7 +8,7 @@
 
 ## Rough steps
 
-1. **Feature A — Settings.** MMKV-backed prefs (replaces `pref` + `shared_preferences`), native controls (Expo UI switches/pickers), full i18n surface, theme/dark-mode. Axis: **local KV + native controls + i18n**.
+1. **Feature A — Settings.** MMKV-backed prefs (replaces `pref` + `shared_preferences`), native controls (Expo UI switches/pickers), full i18n surface, theme/dark-mode. Axis: **local KV + native controls + i18n**. — **A1 data layer landed** (`add-mobile-settings-prefs` / TIM-130, 2026-06-14): the first feature folder, the typed theme + language prefs behind `@/storage`, the reactive hooks, the C1 theme-override + i18n startup/runtime wiring, and the **K-3 coverage gate now enforced** (ADR 003). The **screen / native controls / route are A2 (TIM-131)** — Feature A is not fully done until A2 lands.
 2. **Feature B — Personal events (CRUD only, no calendar overlay yet).** Drizzle/SQLite table, create/edit/delete, forms, native date/time pickers, list rendering. Axis: **structured device-local data + forms + offline writes.** *(Design the schema so the [Phase 09](./09-data-migration.md) importer can target it.)*
 3. **Feature C — School selection (read path).** TanStack Query server read, offline cache via persister, nested navigation. Axis: **server state + offline read + navigation.**
 4. **Harden the template (Phase 1.5).** Extract the **golden-path exemplar** + reusable scaffolding (feature folder shape, query/store/db conventions, screen/test/e2e skeletons). Update the Architecture Book to match what these 3 actually taught us. Record pattern decisions as ADRs.

@@ -31,9 +31,16 @@ function prerequisitesReady(): boolean {
  * The reusable "render only when prerequisites are satisfied" pattern features
  * inherit. The gate always resolves — synchronously today, and never later than
  * the watchdog deadline even if a future async prerequisite stalls.
+ *
+ * `isReady` is injectable (default `prerequisitesReady`) so the load-bearing
+ * watchdog path — unreachable today because every prerequisite is synchronous —
+ * is exercisable by a test that starts the gate not-ready, the shape a future
+ * async prerequisite would produce.
  */
-export function useAppReady(): boolean {
-  const [ready, setReady] = useState(prerequisitesReady)
+export function useAppReady(
+  isReady: () => boolean = prerequisitesReady,
+): boolean {
+  const [ready, setReady] = useState(isReady)
 
   useEffect(() => {
     if (ready) return

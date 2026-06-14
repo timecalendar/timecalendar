@@ -54,8 +54,9 @@ jobs:
       working-directory: ./mobile
       run: npm run lint
 
-    # Coverage is reported, not gated: no coverageThreshold yet (K-3 deferred to
-    # the first logic-bearing feature). Same `npm test` entrypoint as local.
+    # Coverage gated (K-3, ADR 003 — revisit fired): the coverageThreshold lives
+    # in mobile/jest.config.js (90% logic / 70% global floor); CI just runs the
+    # same `npm test -- --coverage` entrypoint as local — the gate is in config.
     - name: Test
       working-directory: ./mobile
       run: npm test -- --coverage

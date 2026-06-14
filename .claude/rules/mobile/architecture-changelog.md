@@ -206,3 +206,35 @@ from this change forward is appended live.
   cargo-cult). Closes the last open lint gap from the Phase-0 scaffolding review
   (TIM-117 §E1). *Why:* lock in the import order that was previously hand-maintained,
   before features multiply the import surface. → Architecture Book "Lint & format".
+
+- **2026-06-14 · `add-mobile-settings-prefs`** — Phase-2 Feature A (Settings),
+  **data/logic layer only** (the screen is A2/TIM-131). The repo's **first feature
+  folder** (`src/features/settings/prefs/`) — two typed, defensively-validated
+  preferences (theme + language, both default `"system"`, validators make a read
+  total) persisted behind `@/storage`. A **minimal reactive `@/storage` seam
+  extension** (`useStoredString` over MMKV v4's `useMMKVString` bound to the
+  module-scoped instance, read-only) — it lives in the seam because
+  `react-native-mmkv` is lint-banned outside it. Wires the prefs into the two
+  foundation extension points: the **C1 theme seam** (`@/hooks/use-color-scheme`
+  resolves a stored light/dark override, **preserving the `ColorSchemeName` return
+  contract** — the promised single-file change), and **i18n** (startup `lng` via
+  `getInitialLocale()` read from the *store module* not the barrel, so no cycle;
+  runtime `changeLanguage` in the language hook's setter). The dependency graph stays
+  a clean DAG. **The K-3 coverage gate is now enforced** (`jest.config.js`
+  `coverageThreshold`: 90% logic globs / 70% global floor; `.d.ts` + the
+  E2E-covered `src/app/**` and `src/api/{mutator,config}` excluded with recorded
+  reasons), landed **green** via the supporting tests this change added
+  (`use-app-ready`, the `use-color-scheme` C1 seam, the `use-theme` unspecified
+  branch, the `migrate` non-Error branch); `setup-storage` reordered before
+  `setup-i18n` so the MMKV mock loads before i18n init reads the store; the
+  `ci-mobile.yml` "no coverageThreshold yet" comment updated. New ADR
+  [009](./decisions/009-settings-feature-prefs.md) (feature folder + the
+  infra-consumes-feature edge, revisit pinned to `eslint-plugin-boundaries` /
+  TIM-135); ADR [003](./decisions/003-coverage-threshold.md) flipped to **enforced**
+  in place (revisit fired). The Theming C1 note + the Testing/Storage K-3 notes now
+  point at the wired override / enforced gate. **Observability is ➖ N/A** (D6 —
+  MMKV reads/writes are synchronous, in-process, infallible; no error path to
+  record). *Why:* Phase-2 opens with Settings' data layer — the persisted prefs and
+  the reactive hooks features read — and discharges the C1 / device-only-locale /
+  K-3 loose ends the foundation pinned to "the first logic-bearing feature."
+  → Architecture Book "Settings preferences".

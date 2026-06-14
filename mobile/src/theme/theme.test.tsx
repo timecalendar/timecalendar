@@ -34,6 +34,17 @@ describe("theme", () => {
     expect(result.current.text).toBe(Colors.dark.text)
   })
 
+  it("resolves the light tokens when the scheme is unspecified", async () => {
+    // The C1 seam returns ColorSchemeName, which includes "unspecified"
+    // (no device preference); useTheme maps it to light (use-theme.ts line 11).
+    mockUseColorScheme.mockReturnValue("unspecified")
+
+    const { result } = await renderHook(() => useTheme())
+
+    expect(result.current.background).toBe(Colors.light.background)
+    expect(result.current.text).toBe(Colors.light.text)
+  })
+
   it("resolves the brand primary token per scheme", async () => {
     mockUseColorScheme.mockReturnValue("light")
     const light = await renderHook(() => useTheme())
