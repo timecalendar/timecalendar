@@ -6,6 +6,25 @@ const expoConfig = require("eslint-config-expo/flat")
 const i18next = require("eslint-plugin-i18next")
 const prettierRecommended = require("eslint-plugin-prettier/recommended")
 const reactNativeA11y = require("eslint-plugin-react-native-a11y")
+const simpleImportSort = require("eslint-plugin-simple-import-sort")
+
+// Canonical import/export order (autofixable). Groups here are disjoint, so the
+// longest-match-wins tie-break never bites, and no bare "^" catch-all is used —
+// every import here is a side-effect, a package,
+// "@/…", or "./…" ("../" is banned), so nothing orphans. Side-effects sit at the
+// top and keep their relative order (reordering side-effects could change
+// behavior — e.g. the `import "@/i18n"` init seam in src/app/_layout.tsx).
+const importSortGroups = [
+  // 1. Side-effect imports (import "@/i18n").
+  ["^\\u0000"],
+  // 2. Node builtins + third-party packages. `@/theme` is NOT matched here (the
+  //    `/` after `@` fails `\w`), so it falls to group 3; `@scope/pkg` matches.
+  ["^node:", "^@?\\w"],
+  // 3. The `@/` alias — our internal modules.
+  ["^@/"],
+  // 4. Relative imports (only `./…`; `../` is lint-banned).
+  ["^\\."],
+]
 
 // Codegen-owned (Orval): exempt from hand-written-code rules, formatting still applies.
 const generatedCode = "src/api/generated/**"
@@ -113,8 +132,11 @@ module.exports = defineConfig([
     plugins: {
       i18next,
       "react-native-a11y": fixupPluginRules(reactNativeA11y),
+      "simple-import-sort": simpleImportSort,
     },
     rules: {
+      "simple-import-sort/imports": ["error", { groups: importSortGroups }],
+      "simple-import-sort/exports": "error",
       "i18next/no-literal-string": [
         "error",
         {

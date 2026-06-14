@@ -1,7 +1,7 @@
 import {
   GlassView,
-  isLiquidGlassAvailable,
   type GlassViewProps,
+  isLiquidGlassAvailable,
 } from "expo-glass-effect"
 import { View } from "react-native"
 
