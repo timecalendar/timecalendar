@@ -16,27 +16,21 @@ export const SETTINGS_KEYS = {
   language: "settings.languagePreference",
 } as const
 
-const THEME_PREFERENCES: readonly ThemePreference[] = [
+// Build a total parser over a preference union: a raw string in the union is
+// returned as-is, anything else (unset / corrupt / legacy) falls back. Both
+// unions include "system", which is always the fallback.
+function makePreferenceParser<T extends string>(
+  allowed: readonly T[],
+): (raw: string | undefined) => T {
+  return (raw) => (allowed.includes(raw as T) ? (raw as T) : ("system" as T))
+}
+
+export const parseThemePreference = makePreferenceParser<ThemePreference>([
   "system",
   "light",
   "dark",
-]
-const LANGUAGE_PREFERENCES: readonly LanguagePreference[] = [
-  "system",
-  "fr",
-  "en",
-]
+])
 
-export function parseThemePreference(raw: string | undefined): ThemePreference {
-  return THEME_PREFERENCES.includes(raw as ThemePreference)
-    ? (raw as ThemePreference)
-    : "system"
-}
-
-export function parseLanguagePreference(
-  raw: string | undefined,
-): LanguagePreference {
-  return LANGUAGE_PREFERENCES.includes(raw as LanguagePreference)
-    ? (raw as LanguagePreference)
-    : "system"
-}
+export const parseLanguagePreference = makePreferenceParser<LanguagePreference>(
+  ["system", "fr", "en"],
+)
