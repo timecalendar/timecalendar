@@ -160,3 +160,30 @@ from this change forward is appended live.
   (`inbox/2026-06-13-splash-dod-manual.md`), Phase-0 exit gated on that manual pass.
   *Why:* foundation step 13 — the Phase-0 capstone, the DoD walked end-to-end.
   → Architecture Book "Splash".
+
+- **2026-06-13 · `drop-mobile-web-and-brand-theme`** — Theming-readiness +
+  platform-scope cleanup ahead of Phase-1 Settings. **Web target dropped** (iOS +
+  Android only): removed the `app.config.ts` `web` block, the `"web"` script +
+  `react-dom` / `react-native-web` deps (lockfile regenerated), the `Fonts.web`
+  `Platform.select` branch + its now-orphaned `@/theme/index.ts` `import "@/global.css"`
+  side-effect, and the four web-only files (`app-tabs.web.tsx`, `use-color-scheme.web.ts`,
+  `global.css`, `favicon.png`); `Fonts.mono` preserved (`ios`/`default` kept) for the
+  parallel-issue-owned `themed-text.tsx`. **Single color-scheme seam (C1):** `_layout.tsx`
+  now reads `useColorScheme` through `@/hooks/use-color-scheme` (the same seam `useTheme`
+  uses), so Settings' future override has one place to override. **Tokenized RN nav theme
+  (C2):** a pure `buildNavTheme(scheme)` helper (`src/theme/nav-theme.ts`, re-exported from
+  `@/theme`) spreads the stock `DefaultTheme`/`DarkTheme` (imported from `expo-router`, not
+  `@react-navigation` — lint-banned) and overrides `colors` from tokens, fed to
+  `ThemeProvider` so nav chrome can't drift from `@/theme`. **Pink brand `primary` token**
+  (`light = #E91E63` accent/tint, `dark = #FF4081`) with **re-verified WCAG-AA contrast**
+  documented in `tokens.ts` — the load-bearing rule: white text on brand rides `#C2185B`
+  (5.87:1), the identity pink is accent/tint (3:1 UI bar); native splash `backgroundColor`
+  re-tinted `#208AEF` → `#E91E63`. **`BottomTabInset` removed** (unused; `Radii` kept).
+  Two new ADRs ([007](./decisions/007-drop-web-target.md) web drop,
+  [008](./decisions/008-brand-color.md) brand hue, both load-bearing — R-4) + README rows.
+  Extended `theme.test.tsx` (brand `primary` per scheme + the `buildNavTheme` nav↔token
+  contract). **No new lint rule** (R-1/D7: the web drop removes deps, C1/C2/brand are
+  code+config — inventing a "no-react-native-web" rule would be cargo-cult); gates are
+  tsc/lint/test + `expo prebuild --clean`. *Why:* prepare clean theming ground (brand
+  token, one scheme seam, tokenized nav) for Phase-1 Settings and shed the unused web
+  surface. → Architecture Book "Theming & native-chrome", "Scaffold-time rules".

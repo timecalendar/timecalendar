@@ -30,6 +30,8 @@ Status) — superseding an ADR means writing the new one and marking the old
 | [004](./004-phase-1-feature-order.md) | Phase 1 feature order: Settings → Personal events → School selection | Accepted · not started | A dependency forces a different order, or a feature is too thin for its axis |
 | [005](./005-calendar-spike.md) | Calendar spike: 3-day read-only spike opens Phase 2 | Accepted · not started | The spike clearly succeeds or fails early |
 | [006](./006-eas-distribution.md) | EAS distribution: fingerprint runtime policy, human-invoked builds (CI untouched) | Accepted | Manual dogfood builds become a friction point (wire `.eas/workflows/`), or fingerprint forces rebuilds so often OTA stops paying off |
+| [007](./007-drop-web-target.md) | Drop the web target: iOS + Android only | Accepted | A real web roadmap appears (a genuine browser deliverable, not the template default) |
+| [008](./008-brand-color.md) | Brand color: adopt the Flutter pink hue as the `primary` token | Accepted | A designer-driven palette change, or a real surface fails the brand-color contrast |
 
 ADRs 001–005 are the Phase 0 kickoff knobs K-1…K-5 from migration-approach §8,
 authored as real ADRs here (the Phase 0 exit criterion: "first ADRs written —

@@ -2,7 +2,7 @@ import { render, renderHook } from "@testing-library/react-native"
 import { Text } from "react-native"
 
 import { GlassSurface } from "@/components/chrome"
-import { Colors, useTheme } from "@/theme"
+import { buildNavTheme, Colors, useTheme } from "@/theme"
 
 // Drive the device color scheme the token layer resolves through.
 const mockUseColorScheme = jest.fn()
@@ -32,6 +32,37 @@ describe("theme", () => {
 
     expect(result.current.background).toBe(Colors.dark.background)
     expect(result.current.text).toBe(Colors.dark.text)
+  })
+
+  it("resolves the brand primary token per scheme", async () => {
+    mockUseColorScheme.mockReturnValue("light")
+    const light = await renderHook(() => useTheme())
+    expect(light.result.current.primary).toBe(Colors.light.primary)
+
+    mockUseColorScheme.mockReturnValue("dark")
+    const dark = await renderHook(() => useTheme())
+    expect(dark.result.current.primary).toBe(Colors.dark.primary)
+  })
+})
+
+// The nav↔token contract (design D4): the React Navigation theme the layout
+// feeds ThemeProvider draws its surfaces and active tint from @/theme tokens, so
+// nav chrome can't drift from the palette. Asserts the mapping, not a tautology
+// over constants — buildNavTheme reads tokens and the test reads tokens, but the
+// assertion proves the builder wires background/primary to the scheme-correct token.
+describe("buildNavTheme", () => {
+  it("maps background and primary to the light tokens under light", () => {
+    const theme = buildNavTheme("light")
+
+    expect(theme.colors.background).toBe(Colors.light.background)
+    expect(theme.colors.primary).toBe(Colors.light.primary)
+  })
+
+  it("maps background and primary to the dark tokens under dark", () => {
+    const theme = buildNavTheme("dark")
+
+    expect(theme.colors.background).toBe(Colors.dark.background)
+    expect(theme.colors.primary).toBe(Colors.dark.primary)
   })
 })
 
