@@ -18,7 +18,7 @@
   "personalEvents.list.title": "Mes événements",
   "personalEvents.list.empty": "Aucun événement. Appuyez sur Ajouter pour en créer un.",
   "personalEvents.list.add": "Ajouter un événement",
-  "personalEvents.list.rowLabel": "Modifier l’événement {{title}}",
+  "personalEvents.list.rowHint": "Ouvre l’événement pour le modifier",
   "personalEvents.form.createTitle": "Nouvel événement",
   "personalEvents.form.editTitle": "Modifier l’événement",
   "personalEvents.form.titleLabel": "Titre",

@@ -18,7 +18,7 @@
   "personalEvents.list.title": "My events",
   "personalEvents.list.empty": "No events yet. Tap Add to create one.",
   "personalEvents.list.add": "Add event",
-  "personalEvents.list.rowLabel": "Edit event {{title}}",
+  "personalEvents.list.rowHint": "Opens the event to edit",
   "personalEvents.form.createTitle": "New event",
   "personalEvents.form.editTitle": "Edit event",
   "personalEvents.form.titleLabel": "Title",
