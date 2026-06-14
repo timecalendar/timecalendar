@@ -1,0 +1,53 @@
+// TEMPLATE — copy to src/components/<feature>-screen.tsx and drop the .txt suffix.
+//
+// The PRESENTATIONAL screen — it owns NO logic (all state comes from the feature's
+// reactive hooks), so it lives under src/components/ (70% coverage floor, exempt from
+// the 90% logic gate — ADR 003) with a thin src/app/<feature>.tsx re-export
+// (route-structure rule; the colocated test stays out of the Metro route tree).
+//
+// Conventions shown: useTranslation (no hardcoded strings — i18next/no-literal-string
+// lint), ThemedView/ThemedText from @/theme tokens, and an accessible touchable
+// (role + translated label; give it a >=44pt/48dp hit area). Native controls go
+// through @/components/chrome (the @expo/ui seam), never @expo/ui directly.
+//
+// References: src/components/settings-screen.tsx,
+//             src/components/onboarding/school-picker-screen.tsx.
+
+import { useTranslation } from "react-i18next"
+import { Pressable, StyleSheet } from "react-native"
+
+import { ThemedText } from "@/components/themed-text"
+import { ThemedView } from "@/components/themed-view"
+import { Spacing } from "@/theme"
+
+export default function FeatureScreen() {
+  const { t } = useTranslation()
+
+  return (
+    <ThemedView style={styles.container}>
+      {/* TODO: replace with the feature's real content + the feature.* i18n keys. */}
+      <ThemedText type="title">{t("feature.title")}</ThemedText>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("feature.action.label")}
+        style={styles.action}
+        onPress={() => {
+          // TODO: drive the feature's hook / navigate.
+        }}
+      >
+        <ThemedText>{t("feature.action.label")}</ThemedText>
+      </Pressable>
+    </ThemedView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: Spacing.four,
+  },
+  action: {
+    minHeight: 48,
+    justifyContent: "center",
+  },
+})

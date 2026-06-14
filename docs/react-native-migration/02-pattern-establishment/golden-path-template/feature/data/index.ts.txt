@@ -1,0 +1,12 @@
+// TEMPLATE — copy to src/features/<feature>/data/index.ts and drop the .txt suffix.
+//
+// The data/ SUB-BARREL: re-export only the data layer's public surface. The feature
+// barrel (../index.ts) re-exports this; a sibling sublayer (form/, store/) imports
+// THIS sub-barrel directly, never the feature barrel — that keeps the graph a DAG.
+//
+// References: src/features/school-selection/data/index.ts,
+//             src/features/personal-events/data/index.ts.
+
+export { type FeatureItem, parseFeatureItem } from "./types"
+// TODO: export the feature's query/CRUD functions + reactive hooks (queries.ts /
+// repository.ts), wrapping the generated hooks / @/db here and nowhere else.
