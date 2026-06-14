@@ -37,8 +37,8 @@ export async function remove(uid: string): Promise<void> {
   await db.delete(personalEvents).where(eq(personalEvents.uid, uid))
 }
 
-// Events overlapping [from, to): the start before `to` and the end at/after
-// `from`, ordered chronologically by start. The TEXT ISO-8601 columns sort
+// Events overlapping the closed window [from, to]: the start at/before `to` and
+// the end at/after `from`, ordered chronologically by start. The TEXT ISO-8601 columns sort
 // lexicographically as chronological for canonical UTC strings (D4 — the
 // property the mappers guarantee), so the bounds are the canonical ISO strings.
 export async function findInRange(

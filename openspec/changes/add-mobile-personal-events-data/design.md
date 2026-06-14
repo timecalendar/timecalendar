@@ -172,7 +172,7 @@ of functions):
   write path for both new (create) and edit (update).
 - `remove(uid): Promise<void>` — `db.delete(personalEvents).where(eq(uid))` — mirrors `delete`.
 - `findInRange(fromIso, toIso): Promise<PersonalEvent[]>` — the date-range query the future
-  calendar/list needs (events overlapping `[from, to)`); justifies the D4 TEXT-range property.
+  calendar/list needs (events overlapping the closed window `[from, to]`); justifies the D4 TEXT-range property.
   Earned now because it's the query the schema's date choice exists to serve, and proving it now
   validates D4; the UI that calls it is the later B-issue.
 
