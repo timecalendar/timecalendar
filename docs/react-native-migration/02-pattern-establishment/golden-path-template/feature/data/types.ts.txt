@@ -1,0 +1,33 @@
+// TEMPLATE — copy to src/features/<feature>/data/types.ts and drop the .txt suffix.
+//
+// The data/ sublayer is the ONLY place a feature touches the generated Orval hooks
+// (@/api/generated/*) or the @/db seam. It maps wire DTOs / storage rows to small
+// domain shapes so consumers never see the wire/row format.
+//
+// Canonical references for this axis:
+//   - server read:   src/features/school-selection/data/{types,queries}.ts
+//   - device CRUD:    src/features/personal-events/data/{types,repository}.ts
+//
+// This stub shows the domain type + a TOTAL parser (a bad/unset value parses to a
+// safe default, never throws) — the posture every store/parser in the repo follows.
+
+// TODO: replace with the feature's domain shape (small, screen-facing — not the DTO).
+export interface FeatureItem {
+  id: string
+  name: string
+}
+
+// TODO: replace with the real parse from a raw DTO / storage row. Keep it TOTAL —
+// return undefined (or a safe default) for anything malformed; never throw.
+export function parseFeatureItem(raw: unknown): FeatureItem | undefined {
+  if (
+    typeof raw !== "object" ||
+    raw === null ||
+    typeof (raw as { id?: unknown }).id !== "string" ||
+    typeof (raw as { name?: unknown }).name !== "string"
+  ) {
+    return undefined
+  }
+  const { id, name } = raw as { id: string; name: string }
+  return { id, name }
+}

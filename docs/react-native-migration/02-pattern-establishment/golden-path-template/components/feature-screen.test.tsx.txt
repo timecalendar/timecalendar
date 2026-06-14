@@ -1,0 +1,27 @@
+// TEMPLATE — copy to src/components/<feature>-screen.test.tsx and drop the .txt suffix.
+//
+// The colocated COMPONENT TEST — render through the REAL theme + i18n trees and
+// assert LOCALIZED text (not raw keys), proving the wiring resolves end to end. For a
+// server-read feature, mock at the @/api/mutator customFetch seam (never the network)
+// and drive the real generated hook + a real QueryClient. RNTL 14's render is async —
+// await it.
+//
+// References: src/components/settings-screen.test.tsx,
+//             src/components/onboarding/school-picker-screen.test.tsx.
+
+import { render } from "@testing-library/react-native"
+
+import i18n from "@/i18n"
+
+import FeatureScreen from "./feature-screen"
+
+describe("FeatureScreen", () => {
+  it("renders the localized title, not the raw key", async () => {
+    const { getByText } = await render(<FeatureScreen />)
+    // TODO: assert the TRANSLATED string resolves (proves i18n + t() wire), e.g.:
+    expect(getByText(i18n.t("feature.title"))).toBeTruthy()
+  })
+
+  // TODO: add a control → hook test (fireEvent the touchable, assert the hook /
+  // store / navigation it drives).
+})

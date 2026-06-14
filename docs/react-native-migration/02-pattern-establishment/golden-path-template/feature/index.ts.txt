@@ -1,0 +1,13 @@
+// TEMPLATE — copy to src/features/<feature>/index.ts and drop the .txt suffix.
+//
+// The FEATURE BARREL — the public surface screens consume (they import
+// @/features/<feature>, never @/api/generated, @/db, or react-native-mmkv directly).
+// Re-export each sublayer the feature has. NO CYCLE: sublayers never import this file
+// — a sublayer that needs a sibling imports the sibling's sub-barrel directly.
+//
+// References: src/features/personal-events/index.ts (re-exports data + form),
+//             src/features/school-selection/index.ts (re-exports data + store).
+
+export * from "./data"
+// TODO: add ./store (copy settings/prefs/store.ts) and/or ./form (copy
+// personal-events/form/) when the feature's axis needs them.

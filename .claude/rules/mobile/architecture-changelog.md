@@ -372,3 +372,36 @@ from this change forward is appended live.
   server / web / `app/` change**. *Why:* Phase-2 Feature C — the first server read + offline cache
   + nested onboarding, the last of the three pattern-establishment features.
   → Architecture Book "Data layer → Query runtime" + "School selection".
+
+- **2026-06-14 · `harden-mobile-golden-path`** (Phase 1.5) — **Golden-path exemplar extracted**
+  from the three landed pattern-establishment features (Settings / Personal events / School
+  selection) + Architecture Book reconciled to what they actually taught. The
+  [golden-path exemplar](./golden-path.md) is rewritten placeholder → **real reference**:
+  axis-organized (local-KV/native-controls/i18n → Settings; device-CRUD/forms/write-error →
+  Personal events; server-read/offline-persist/nested-nav → School selection), documenting the
+  **common spine** (the `src/features/<feature>/<layer>/` shape with `data/`/`store/`/`form/`
+  sublayers; per-sublayer + feature-level barrels, no cycle; the `data/`-only-touches-generated-
+  hooks/`@/db` boundary; total-validated stores with one write path; mappers at the row↔domain
+  edge; presentational-screen-in-`src/components/` + thin-route split; the 90/70 coverage split;
+  the screen/test/e2e skeleton; the i18n/a11y call-site conventions) — every claim a **pointer** to
+  a real file (R-1). A **reusable scaffolding** mechanism: an out-of-`src/` skeleton template tree
+  (`docs/react-native-migration/02-pattern-establishment/golden-path-template/`, files suffixed
+  `.ts.txt`/`.tsx.txt` so Metro/route/coverage harnesses never touch them — design D2) + a
+  "starting a new feature" copy-this checklist in the exemplar; **no code generator** (R-2, deferred
+  debt with trigger). **Architecture Book reconciled** (pointer style preserved, no rewrite): the
+  five-living-artifacts golden-path line (placeholder → real); the Data-layer feature-module
+  **boundary** note (deferred-until-folders-exist → real, review-enforced, lint-pending TIM-135);
+  the Settings "first feature folder" note (earn-point reached); a new short **"Feature-module
+  pattern"** pointer section → the exemplar + ADR 014. (The Data-layer "Query runtime" note and the
+  Theming `@expo/ui` chrome note were **already** reconciled by Feature C / A2 — verified, no change
+  needed.) New **ADR [014](./decisions/014-layered-feature-module-pattern.md)** blessing the layered
+  feature-module pattern (generalizing ADR 009's folder-shape half from sample-of-one; **does not
+  supersede** 009's infra→feature edge) + README index row. Roadmap step 4 marked landed. **No new
+  rule encoded** — this is reconciliation + pattern blessing; the feature-boundary lint
+  (`eslint-plugin-boundaries`, TIM-135) is recorded as the pending encodable follow-up. **No
+  `src/`/`app.config.ts`/babel/dependency/OpenAPI/server/web change** — docs + ADR + out-of-`src/`
+  template; the `test-mobile` / e2e CI jobs are unaffected (no Jest proof test — D6 justified N/A,
+  the change ships no runtime behavior). *Why:* Phase 1.5 — extract and bless the golden-path
+  template the rest of the app copies, reconcile the book to reality.
+  → Architecture Book "Feature-module pattern", "Data layer", "Settings preferences";
+  [golden-path exemplar](./golden-path.md); ADR 014.
