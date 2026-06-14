@@ -82,6 +82,6 @@ two-consumer reality) must be reconciled — not re-invented.
   Settings feature folder (ADR 009) all stand; this change blesses the *cross-feature layered-module
   pattern* they each instance, it does not duplicate their decisions.
 - **No `app.config.ts` / babel / dependency / OpenAPI / server / web / `app/` change.** Pure
-  docs + a skeleton template tree; the build is unaffected (no Jest proof test — the extraction ships
-  no runtime behavior; its gate is the existing tsc/lint over any template files that live under `src/`
-  if any, and review of the docs fidelity — see `design.md` D6).
+  docs + a skeleton template tree (outside `src/`, so nothing under `src/` changes); the build is
+  unaffected (no Jest proof test — the extraction ships no runtime behavior; its gate is review of the
+  docs fidelity — see `design.md` D6).
