@@ -7,7 +7,11 @@
 
 ## Status
 
-Accepted.
+Accepted. **⚠️ Revisit fired (2026-06-14, `add-mobile-feature-boundaries-lint` /
+TIM-135):** `eslint-plugin-boundaries` landed, firing this ADR's revisit. The parked
+infra→feature edge is resolved **(a) allow it as a documented seam** (not promote the
+store to infra) — see the updated Consequences below and design D7 of that change. The
+revisit-if is narrowed to "a *second* feature needs cross-cutting prefs."
 
 ## Context
 
@@ -54,12 +58,20 @@ and costly to reverse — and so earn an ADR (R-4):
 ## Consequences
 
 - The feature-module shape (`src/features/<feature>/<layer>/`) is set; the next Phase-2
-  feature copies it and TIM-135's boundary lint formalizes it.
-- Infra (`use-color-scheme`, `i18n`) depends on `features/settings/prefs`. TIM-135 must
-  decide, when `eslint-plugin-boundaries` lands, either to **explicitly allow**
-  infra→`features/settings/prefs` as a documented seam, or to **promote** the prefs store to
-  an infra-level module — informed by whether a second feature also needs cross-cutting
-  prefs. Recorded here so TIM-135 inherits the open question rather than discovering the edge.
+  feature copies it and TIM-135's boundary lint (`add-mobile-feature-boundaries-lint`,
+  landed 2026-06-14) now formalizes it.
+- Infra (`use-color-scheme`, `i18n`) depends on `features/settings/prefs`. **Resolved
+  (TIM-135): allowed as a documented seam.** When `eslint-plugin-boundaries` landed, the
+  infra→`features/settings/prefs`[`/store`] edge was chosen to be **allowed** rather than
+  promoting the prefs store to an infra-level module — encoded as the *absence* of a
+  disallow naming the infra elements as `from` (boundary B-4, `default: "allow"`). Reasons
+  (latent in this ADR): it is a **sample of one** cross-cutting-prefs consumer, so promoting
+  would be the speculative cross-feature abstraction R-2 forbids (this ADR already rejected a
+  `src/prefs/` service "speculative from a sample size of one"); the edge is already a clean
+  DAG (no cycle), so allowing it blesses what is already true; and promotion would move
+  feature-owned domain state (a user *preference*) out of the feature that owns it — the
+  opposite of the feature-module pattern. See the Architecture Book "Lint & format →
+  Feature-module boundaries" and that change's design D7.
 - The i18n init path gains a synchronous MMKV read (safe — MMKV is synchronous; falls back
   to device detection on any non-`fr`/`en` value).
 - Rollback is a plain revert (additive; no schema, no native, no data — the MMKV keys go
@@ -67,7 +79,7 @@ and costly to reverse — and so earn an ADR (R-4):
 
 ## Revisit if
 
-`eslint-plugin-boundaries` lands (TIM-135/D1) — resolve the infra→feature edge then (allow
-it as a documented seam, or promote the store to infra). Or a second feature needs
-cross-cutting preferences, which would argue for an infra-level prefs module over the
-per-feature store.
+(The `eslint-plugin-boundaries` trigger fired and is resolved — see Status.) A **second**
+feature needs cross-cutting preferences, which would argue for an infra-level prefs module
+over the per-feature store (and would re-open the promote-to-infra option this revisit chose
+*against* from a sample of one).

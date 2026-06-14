@@ -405,3 +405,40 @@ from this change forward is appended live.
   template the rest of the app copies, reconcile the book to reality.
   → Architecture Book "Feature-module pattern", "Data layer", "Settings preferences";
   [golden-path exemplar](./golden-path.md); ADR 014.
+
+- **2026-06-14 · `add-mobile-feature-boundaries-lint`** (TIM-135) — **Lint & format:**
+  the feature-module import boundaries — blessed by ADR 014 / the golden-path exemplar but
+  **review-enforced only** — are **now encoded** as a CI gate, paying the last open R-1 debt
+  in `mobile/`. A new `timecalendar/feature-boundaries` block in `mobile/eslint.config.js`
+  registers `eslint-plugin-boundaries` v6 and one **`boundaries/dependencies`** rule (the
+  non-deprecated v6 successor to `element-types`/`entry-point` — those warn under
+  `--max-warnings 0`; object selectors + `{{ }}` templates) with an element taxonomy
+  (`boundaries/elements`: feature-sublayer / feature-barrel / generated-api / db-seam /
+  route / component / infra-color-scheme / infra-i18n — sublayer before barrel) and a
+  `default: "allow"` + three-disallow posture (the same enumerate-the-forbidden philosophy
+  as the seam bans; `no-unknown`/`no-unknown-files` left **off** — governs the named
+  elements, not the whole tree). Boundaries encoded: **B-1** (only a feature's `data/`
+  sublayer reaches `@/api/generated`/`@/db`), **B-2** (a sublayer may not import its own
+  feature barrel — `{{ from.feature }}` binds the same feature, `internalPath: "index.*"`),
+  **B-3** (screens/routes consume features through their barrel, never the seams — with one
+  scoped last-write-wins `allow` for the root layout's `@/db/migrate` startup-runner wiring,
+  app infrastructure not feature-data access), **B-4** (the ADR-009 infra→feature edge stays
+  allowed — the *absence* of a disallow). It **layers on top of** the existing
+  `no-restricted-imports`/`no-restricted-globals` seam bans (those ban a *package* string;
+  this governs feature-internal *element* structure) — those are untouched. Two devDeps:
+  `eslint-plugin-boundaries` (`^6.0.2`) and **`eslint-import-resolver-typescript`**
+  (`^3.10.1`, made **explicit** — boundaries must resolve the `@/` alias to classify a target
+  or the rule *silently passes*, the dangerous false-negative; a transitive-only resolver is
+  fragile). **No `src/` change** (the tree was already compliant — one grep-missed legitimate
+  edge, `_layout.tsx` → `@/db/migrate`, surfaced during verification and earned the scoped
+  B-3 `allow` above). **No Jest proof test** (R-1: a lint rule's enforcement *is* its gate; a
+  "boundaries hold" test would be cargo-cult) — the proof is the recorded inject-and-revert
+  for B-1/B-2/B-3, which also guards the resolver wiring. **No ADR 015** (tooling, not a new
+  architectural call — the R-1 encoding of ADR 014's already-blessed pattern, mirroring
+  `add-mobile-import-order-lint`); instead it **fires ADR 009's parked revisit** (resolved:
+  allow the infra→feature edge as a documented seam, B-4 — not promote) and records the
+  landing in **ADR 014**'s consequences. **No `app.config.ts`/babel/metro/native/
+  `jest.config.js`/OpenAPI/`server`/`web`/`app` change.** *Why:* TIM-135 — encode before you
+  document (R-1) the last load-bearing boundaries in `mobile/` that lived in prose + reviewer
+  diligence. → Architecture Book "Lint & format → Feature-module boundaries"; ADRs 009/014;
+  [golden-path exemplar](./golden-path.md).
