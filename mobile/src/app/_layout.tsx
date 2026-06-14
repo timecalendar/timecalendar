@@ -27,6 +27,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="schools" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="personal-event-form" />
         </Stack>
         {/* Above the Stack: covers the whole app during startup, fades out (or
             cuts under reduced motion) once useAppReady() resolves. */}
