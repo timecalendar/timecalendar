@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router"
-import { useColorScheme } from "react-native"
+import { Stack, ThemeProvider } from "expo-router"
 
 import { SplashScreen } from "@/components/splash-screen"
 import { runMigrations } from "@/db/migrate"
+import { useColorScheme } from "@/hooks/use-color-scheme"
+import { buildNavTheme } from "@/theme"
 // Side-effect import: initializes the single module-scoped i18next instance
 // (synchronous, from bundled catalogs) before any screen renders text.
 import "@/i18n"
@@ -17,9 +18,10 @@ void runMigrations()
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
+  const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={navTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="schools" />

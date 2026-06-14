@@ -29,7 +29,6 @@
     "expo-web-browser": "~56.0.5",
     "i18next": "^26.3.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
     "react-i18next": "^17.0.8",
     "react-native": "0.85.3",
     "react-native-gesture-handler": "~2.31.1",
@@ -38,7 +37,6 @@
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "4.25.2",
-    "react-native-web": "~0.21.0",
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
@@ -64,7 +62,6 @@
     "start": "APP_VARIANT=development expo start",
     "android": "APP_VARIANT=development expo run:android",
     "ios": "APP_VARIANT=development expo run:ios",
-    "web": "expo start --web",
     "generate": "orval",
     "generate:migrations": "drizzle-kit generate",
     "lint": "expo lint --max-warnings 0",
