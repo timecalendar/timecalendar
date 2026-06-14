@@ -171,6 +171,7 @@ export default function PersonalEventFormScreen() {
             <DateTimePicker
               testID="personal-event-start-picker"
               mode="datetime"
+              presentation="inline"
               value={values.startsAt}
               onValueChange={(_event, date) => update("startsAt", date)}
             />
@@ -183,6 +184,7 @@ export default function PersonalEventFormScreen() {
             <DateTimePicker
               testID="personal-event-end-picker"
               mode="datetime"
+              presentation="inline"
               value={values.endsAt}
               onValueChange={(_event, date) => update("endsAt", date)}
             />

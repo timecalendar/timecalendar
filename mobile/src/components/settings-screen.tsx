@@ -35,39 +35,60 @@ export default function SettingsScreen() {
 
         <View style={styles.control}>
           <ThemedText type="smallBold">{t("settings.theme.label")}</ThemedText>
-          <Host matchContents>
-            <Picker
-              testID="settings-theme-picker"
-              appearance="menu"
-              selectedValue={theme.preference}
-              onValueChange={theme.setPreference}
-            >
-              <Picker.Item label={t("settings.theme.system")} value="system" />
-              <Picker.Item label={t("settings.theme.light")} value="light" />
-              <Picker.Item label={t("settings.theme.dark")} value="dark" />
-            </Picker>
-          </Host>
+          {/* The testID lives on this RN-core View, not on <Picker>, because
+              @expo/ui's Jetpack-Compose Picker (Picker.android.tsx) drops the
+              `testID` prop entirely — it only forwards selectedValue /
+              onValueChange / enabled / children to the native view, so on
+              Android the picker renders as an unidentified EditText and the
+              e2e `id: settings-theme-picker` assertion never matches (iOS's
+              SwiftUI Picker does forward it, which is why only Android failed).
+              RN-core View reliably maps testID → resource-id (Android) /
+              accessibilityIdentifier (iOS), giving Maestro a stable, shared,
+              cross-platform anchor. The inner <Picker testID> is kept because
+              the Jest mock derives each item's testID
+              (`settings-theme-picker-item-<value>`) from it. */}
+          <View testID="settings-theme-picker">
+            <Host matchContents>
+              <Picker
+                testID="settings-theme-picker"
+                appearance="menu"
+                selectedValue={theme.preference}
+                onValueChange={theme.setPreference}
+              >
+                <Picker.Item
+                  label={t("settings.theme.system")}
+                  value="system"
+                />
+                <Picker.Item label={t("settings.theme.light")} value="light" />
+                <Picker.Item label={t("settings.theme.dark")} value="dark" />
+              </Picker>
+            </Host>
+          </View>
         </View>
 
         <View style={styles.control}>
           <ThemedText type="smallBold">
             {t("settings.language.label")}
           </ThemedText>
-          <Host matchContents>
-            <Picker
-              testID="settings-language-picker"
-              appearance="menu"
-              selectedValue={language.preference}
-              onValueChange={language.setPreference}
-            >
-              <Picker.Item
-                label={t("settings.language.system")}
-                value="system"
-              />
-              <Picker.Item label={t("settings.language.fr")} value="fr" />
-              <Picker.Item label={t("settings.language.en")} value="en" />
-            </Picker>
-          </Host>
+          {/* See the theme picker above: the @expo/ui Android Picker drops
+              testID, so the cross-platform anchor lives on this RN-core View. */}
+          <View testID="settings-language-picker">
+            <Host matchContents>
+              <Picker
+                testID="settings-language-picker"
+                appearance="menu"
+                selectedValue={language.preference}
+                onValueChange={language.setPreference}
+              >
+                <Picker.Item
+                  label={t("settings.language.system")}
+                  value="system"
+                />
+                <Picker.Item label={t("settings.language.fr")} value="fr" />
+                <Picker.Item label={t("settings.language.en")} value="en" />
+              </Picker>
+            </Host>
+          </View>
         </View>
       </SafeAreaView>
     </ThemedView>
