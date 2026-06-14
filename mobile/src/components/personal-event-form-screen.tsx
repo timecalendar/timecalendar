@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  KeyboardAvoidingView,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,11 +11,11 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { DateTimePicker } from "@/components/chrome"
 import {
   ColorSwatchPicker,
   SWATCH_PRESETS,
 } from "@/components/color-swatch-picker"
+import { DateTimeField } from "@/components/date-time-field"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -133,157 +134,167 @@ export default function PersonalEventFormScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <ThemedText type="title">
-            {uid === undefined
-              ? t("personalEvents.form.createTitle")
-              : t("personalEvents.form.editTitle")}
-          </ThemedText>
-
-          <View style={styles.field}>
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.titleLabel")}
-            </ThemedText>
-            <TextInput
-              testID="personal-event-title-input"
-              accessibilityLabel={t("personalEvents.form.titleLabel")}
-              placeholder={t("personalEvents.form.titlePlaceholder")}
-              placeholderTextColor={theme.textSecondary}
-              value={values.title}
-              onChangeText={(text) => update("title", text)}
-              style={inputStyle}
-            />
-            {errors.title !== undefined && (
-              <ThemedText
-                themeColor="textSecondary"
-                type="small"
-                accessibilityRole="alert"
-              >
-                {t(errors.title)}
-              </ThemedText>
-            )}
-          </View>
-
-          <View style={styles.field}>
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.startLabel")}
-            </ThemedText>
-            <DateTimePicker
-              testID="personal-event-start-picker"
-              mode="datetime"
-              presentation="inline"
-              value={values.startsAt}
-              onValueChange={(_event, date) => update("startsAt", date)}
-            />
-          </View>
-
-          <View style={styles.field}>
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.endLabel")}
-            </ThemedText>
-            <DateTimePicker
-              testID="personal-event-end-picker"
-              mode="datetime"
-              presentation="inline"
-              value={values.endsAt}
-              onValueChange={(_event, date) => update("endsAt", date)}
-            />
-            {errors.range !== undefined && (
-              <ThemedText
-                themeColor="textSecondary"
-                type="small"
-                accessibilityRole="alert"
-              >
-                {t(errors.range)}
-              </ThemedText>
-            )}
-          </View>
-
-          <View style={styles.field}>
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.colorLabel")}
-            </ThemedText>
-            <ColorSwatchPicker
-              value={values.color}
-              onChange={(hex) => update("color", hex)}
-            />
-          </View>
-
-          <View style={styles.field}>
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.locationLabel")}
-            </ThemedText>
-            <TextInput
-              testID="personal-event-location-input"
-              accessibilityLabel={t("personalEvents.form.locationLabel")}
-              placeholder={t("personalEvents.form.locationPlaceholder")}
-              placeholderTextColor={theme.textSecondary}
-              value={values.location}
-              onChangeText={(text) => update("location", text)}
-              style={inputStyle}
-            />
-          </View>
-
-          <View style={styles.field}>
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.descriptionLabel")}
-            </ThemedText>
-            <TextInput
-              testID="personal-event-description-input"
-              accessibilityLabel={t("personalEvents.form.descriptionLabel")}
-              placeholder={t("personalEvents.form.descriptionPlaceholder")}
-              placeholderTextColor={theme.textSecondary}
-              value={values.description}
-              onChangeText={(text) => update("description", text)}
-              multiline
-              style={[inputStyle, styles.multiline]}
-            />
-          </View>
-
-          {(save.failed || del.failed) && (
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityRole="alert"
-              accessibilityLiveRegion="polite"
-            >
-              {save.failed
-                ? t("personalEvents.form.error.saveFailed")
-                : t("personalEvents.form.error.deleteFailed")}
-            </ThemedText>
-          )}
-
-          <Pressable
-            testID="personal-event-save"
-            accessibilityRole="button"
-            accessibilityLabel={t("personalEvents.form.save")}
-            onPress={onSave}
-            style={[
-              styles.action,
-              { backgroundColor: theme.backgroundSelected },
-            ]}
+        <KeyboardAvoidingView style={styles.flex} behavior="padding">
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
           >
-            <ThemedText type="smallBold">
-              {t("personalEvents.form.save")}
+            <ThemedText type="title">
+              {uid === undefined
+                ? t("personalEvents.form.createTitle")
+                : t("personalEvents.form.editTitle")}
             </ThemedText>
-          </Pressable>
 
-          {uid !== undefined && (
+            <View style={styles.field}>
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.titleLabel")}
+              </ThemedText>
+              <TextInput
+                testID="personal-event-title-input"
+                accessibilityLabel={t("personalEvents.form.titleLabel")}
+                placeholder={t("personalEvents.form.titlePlaceholder")}
+                placeholderTextColor={theme.textSecondary}
+                value={values.title}
+                onChangeText={(text) => update("title", text)}
+                style={inputStyle}
+              />
+              {errors.title !== undefined && (
+                <ThemedText
+                  themeColor="textSecondary"
+                  type="small"
+                  accessibilityRole="alert"
+                >
+                  {t(errors.title)}
+                </ThemedText>
+              )}
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.startLabel")}
+              </ThemedText>
+              <DateTimeField
+                testID="personal-event-start-picker"
+                accessibilityLabel={t("personalEvents.form.startLabel")}
+                value={values.startsAt}
+                onChange={(date) => update("startsAt", date)}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.endLabel")}
+              </ThemedText>
+              <DateTimeField
+                testID="personal-event-end-picker"
+                accessibilityLabel={t("personalEvents.form.endLabel")}
+                value={values.endsAt}
+                onChange={(date) => update("endsAt", date)}
+              />
+              {errors.range !== undefined && (
+                <ThemedText
+                  themeColor="textSecondary"
+                  type="small"
+                  accessibilityRole="alert"
+                >
+                  {t(errors.range)}
+                </ThemedText>
+              )}
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.colorLabel")}
+              </ThemedText>
+              <ColorSwatchPicker
+                value={values.color}
+                onChange={(hex) => update("color", hex)}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.locationLabel")}
+              </ThemedText>
+              <TextInput
+                testID="personal-event-location-input"
+                accessibilityLabel={t("personalEvents.form.locationLabel")}
+                placeholder={t("personalEvents.form.locationPlaceholder")}
+                placeholderTextColor={theme.textSecondary}
+                value={values.location}
+                onChangeText={(text) => update("location", text)}
+                style={inputStyle}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.descriptionLabel")}
+              </ThemedText>
+              <TextInput
+                testID="personal-event-description-input"
+                accessibilityLabel={t("personalEvents.form.descriptionLabel")}
+                placeholder={t("personalEvents.form.descriptionPlaceholder")}
+                placeholderTextColor={theme.textSecondary}
+                value={values.description}
+                onChangeText={(text) => update("description", text)}
+                multiline
+                style={[inputStyle, styles.multiline]}
+              />
+            </View>
+          </ScrollView>
+
+          {/* Save/Delete live in a sticky footer OUTSIDE the ScrollView so they
+              stay reachable above the keyboard: on Android the window
+              adjustResizes (the footer rises with the layout); on iOS the
+              KeyboardAvoidingView padding lifts it. Inside the ScrollView the
+              Save button sat below the fold behind the keyboard. */}
+          <View style={styles.footer}>
+            {(save.failed || del.failed) && (
+              <ThemedText
+                themeColor="textSecondary"
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+              >
+                {save.failed
+                  ? t("personalEvents.form.error.saveFailed")
+                  : t("personalEvents.form.error.deleteFailed")}
+              </ThemedText>
+            )}
+
             <Pressable
-              testID="personal-event-delete"
+              testID="personal-event-save"
               accessibilityRole="button"
-              accessibilityLabel={t("personalEvents.form.delete")}
-              onPress={onDelete}
+              accessibilityLabel={t("personalEvents.form.save")}
+              onPress={onSave}
               style={[
                 styles.action,
-                { backgroundColor: theme.backgroundElement },
+                { backgroundColor: theme.backgroundSelected },
               ]}
             >
-              <ThemedText type="smallBold" themeColor="primary">
-                {t("personalEvents.form.delete")}
+              <ThemedText type="smallBold">
+                {t("personalEvents.form.save")}
               </ThemedText>
             </Pressable>
-          )}
-        </ScrollView>
+
+            {uid !== undefined && (
+              <Pressable
+                testID="personal-event-delete"
+                accessibilityRole="button"
+                accessibilityLabel={t("personalEvents.form.delete")}
+                onPress={onDelete}
+                style={[
+                  styles.action,
+                  { backgroundColor: theme.backgroundElement },
+                ]}
+              >
+                <ThemedText type="smallBold" themeColor="primary">
+                  {t("personalEvents.form.delete")}
+                </ThemedText>
+              </Pressable>
+            )}
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   )
@@ -298,6 +309,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
+  },
+  flex: {
+    flex: 1,
+  },
+  footer: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.four,
+    gap: Spacing.three,
   },
   content: {
     paddingHorizontal: Spacing.four,
