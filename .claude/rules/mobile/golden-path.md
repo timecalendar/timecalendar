@@ -42,15 +42,21 @@ exemplar's job is to show them composed in one real feature.
 Until the exemplar exists, look at these (they are reference *surfaces*, not a
 blessed pattern):
 
-- **`mobile/src/components/schools-screen.tsx`** — the live API round-trip surface:
-  generated hook → `customFetch` → NestJS, with localized + accessible loading/error
-  states. The closest thing to the data/query + i18n + a11y path today. (It dies when
-  real onboarding lands.)
-- **`mobile/src/components/schools-screen.test.tsx`** — the reference component test
-  (mock at the mutator seam, drive the real hook + `QueryClient`).
-- **`mobile/.maestro/schools.yaml`** + **`mobile/e2e/`** — the real-round-trip e2e shape.
+- **`mobile/src/features/school-selection/data/`** — the live server-read data/query
+  layer: `queries.ts` wraps the generated hooks over `customFetch` (the only place they're
+  imported) mapped to domain shapes; `persist.ts` is the offline persister config (ADR 013).
+  The closest thing to the data/query seam today (the `schools-screen.tsx` harness it
+  replaced is gone — real onboarding landed).
+- **`mobile/src/features/school-selection/store/`** — the typed, validated, identity-only
+  selection store (mirrors Settings prefs; total reads, reactive hook).
+- **`mobile/src/components/onboarding/`** (+ their `*.test.tsx`) — the presentational
+  screens: list/tree over the feature hooks, accessible loading/error-with-retry/empty
+  states, localized; tested behind the mutator seam / mocked feature hooks. The nested
+  route group lives in `mobile/src/app/onboarding/` (thin entrypoints).
+- **`mobile/.maestro/onboarding.yaml`** + **`mobile/e2e/`** — the real-round-trip e2e shape
+  (deep-link → assert a seeded school from the live `GET /schools`).
 - The Architecture Book sections "Navigation & route structure", "Data layer",
-  "i18n", "Accessibility" — the rules the exemplar will embody.
+  "School selection", "i18n", "Accessibility" — the rules the exemplar will embody.
 
 **Do not copy this file's structure as if it were the pattern.** When the exemplar is
 extracted in Phase 1.5, this placeholder is replaced with it and the change appends a

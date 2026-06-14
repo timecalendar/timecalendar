@@ -33,6 +33,19 @@ export default function ProfileScreen() {
           </Pressable>
         </Link>
 
+        {/* Onboarding (school selection) entry — the read-path flow off Profile
+            (C1 / TIM-134), same accessible-link shape as the Settings link. */}
+        <Link href="/onboarding" asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("profile.onboarding.link")}
+            hitSlop={Spacing.two}
+            style={styles.settingsLink}
+          >
+            <ThemedText>{t("profile.onboarding.link")}</ThemedText>
+          </Pressable>
+        </Link>
+
         {__DEV__ && <FirebaseDebugPanel />}
       </SafeAreaView>
     </ThemedView>

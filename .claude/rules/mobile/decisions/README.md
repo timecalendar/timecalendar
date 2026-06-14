@@ -36,6 +36,7 @@ Status) — superseding an ADR means writing the new one and marking the old
 | [010](./010-expo-ui-chrome-wrapper.md) | `@expo/ui` adopted behind the chrome wrapper seam; universal entry the default | Accepted | A control needs a platform-specific entry / diverges, or `@expo/ui` proves unstable enough to warrant a fallback behind the same wrapper |
 | [011](./011-personal-event-storage.md) | Personal-event storage: dates TEXT ISO-8601 UTC, color `#RRGGBB` TEXT, uid from `expo-crypto` | Accepted | A query/perf need genuinely requires numeric timestamps, or the Flutter wire format changes before the Phase-09 importer runs |
 | [012](./012-personal-event-datetime-picker.md) | Date/time picker: `@expo/ui`'s own `DateTimePicker` behind the chrome wrapper (not `@react-native-community/datetimepicker`) | Accepted | `@expo/ui`'s control proves unstable enough to warrant the RNC fallback behind the same wrapper, or a control needs a platform-specific `@expo/ui` entry |
+| [013](./013-query-persister-and-policy.md) | Offline query cache: a sync TanStack Query persister over the MMKV `@/storage` seam + the now-earned query policy | Accepted | The persisted cache grows large enough that sync MMKV writes jank (→ async/SQLite persister behind the seam), a read needs offline mutation queuing, or the query policy proves wrong for a more dynamic read |
 
 ADRs 001–005 are the Phase 0 kickoff knobs K-1…K-5 from migration-approach §8,
 authored as real ADRs here (the Phase 0 exit criterion: "first ADRs written —

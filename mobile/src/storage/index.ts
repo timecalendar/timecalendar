@@ -50,3 +50,22 @@ export function remove(key: string): void {
 export function useStoredString(key: string): string | undefined {
   return useMMKVString(key, storage)[0]
 }
+
+// A synchronous Storage-shaped adapter over the seam's instance, for the
+// TanStack Query offline persister (createSyncStoragePersister, ADR 013 / D1).
+// It lives HERE — not in the query feature — because react-native-mmkv is
+// lint-banned outside src/storage/: the persister rides the seam, never the
+// backend. MMKV is synchronous (JSI/Nitro), so the sync Storage shape is the
+// natural fit (no async restore gate). getItem returns null (not undefined) on
+// a miss, which is what createSyncStoragePersister expects.
+export const mmkvQueryStorage = {
+  getItem(key: string): string | null {
+    return getString(key) ?? null
+  },
+  setItem(key: string, value: string): void {
+    setString(key, value)
+  },
+  removeItem(key: string): void {
+    remove(key)
+  },
+}

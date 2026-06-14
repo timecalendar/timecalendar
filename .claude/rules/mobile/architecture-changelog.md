@@ -336,3 +336,39 @@ from this change forward is appended live.
   pickers/delete over B1's data, the first multi-field form + real write error path.
   → Architecture Book "Storage → First feature schema — personal events → Personal events — CRUD UI"
   + "Theming & native-chrome".
+
+- **2026-06-14 · `add-mobile-school-selection`** (C1 / TIM-134) — Phase-2 Feature C, the
+  **first real server-data read flow** (server state + offline read + nested navigation).
+  **Discharges the Data-layer "Query runtime" deferral** (the query policy + offline persister
+  the scaffold left unset for "the first server-read feature"). The **earned query policy**
+  (`staleTime`/`gcTime >= maxAge`/`retry`) on `defaultOptions.queries`, with the `QueryClient`
+  extracted to `src/api/query-client.ts`; an **offline cache via a sync TanStack Query persister**
+  (`@tanstack/react-query-persist-client` + `query-sync-storage-persister`, both 5.101.0, pure JS,
+  no native link) backed by the `@/storage` MMKV seam through a new **`mmkvQueryStorage`
+  `Storage`-adapter export** (the encoded form of "the persister rides the seam, not the backend" —
+  `react-native-mmkv` stays banned outside the seam), mounted via `PersistQueryClientProvider`
+  (sync restore — no async gate, D8), dehydrating **only** the schools/groups queries with a
+  `maxAge` + `buster`. The **feature layer** `src/features/school-selection/` — `data/`
+  (`useSchools`/`useSchoolGroups` wrapping the generated Orval hooks, **the only place they're
+  imported**; `persist.ts` config) + `store/` (a typed, defensively-validated, identity-only
+  selection store mirroring Settings prefs — total reads, derived onboarding-complete, reactive
+  `useSelectedSchool`) + a cycle-free barrel. **Nested onboarding nav** — a `src/app/onboarding/`
+  route group (nested `Stack` + thin entrypoints) over `src/components/onboarding/` screens (school
+  picker with filter/retry/states + group-tree picker), a `Stack` sibling of `(tabs)`, a Profile
+  entry link. **Retires the `schools` harness surface** (screen/test/route/Stack registration/
+  `schools.*` i18n keys/`.maestro/schools.yaml`); **`.maestro/onboarding.yaml`** replaces it as the
+  live `GET /schools` round-trip proof; the golden-path doc's "closest references" repointed. FR/EN
+  `onboarding.*` + `profile.onboarding.link` keys (`tsc` parity). New **ADR
+  [013](./decisions/013-query-persister-and-policy.md)** (the sync-persister-over-the-seam choice +
+  the query policy, load-bearing — R-4) + README row. CI proofs at 90% (queries/persist/store/hooks
+  — landed green) + 70% (the screens); the K-3 gate is **unchanged** (`jest.config.js` untouched).
+  **Observability ➖ N/A** (a failed read is a recoverable `isError` UI state, no throw path) and
+  **analytics deferred-with-owner** (the selection setters are the firing point) — recorded, not
+  silent. The on-device axes (offline behavior, nested-nav feel, VoiceOver/TalkBack, contrast,
+  touch, jank, Maestro run) are inboxed + HUMAN-tagged
+  (`docs/react-native-migration/inbox/2026-06-14-school-selection-dod-manual.md`); Feature C's full
+  DoD pass is gated on that manual pass. **No new lint rule** (the generated-hooks-only-in-`data/`
+  boundary awaits TIM-135), **no `app.config.ts`/babel/native change**, **no OpenAPI regen /
+  server / web / `app/` change**. *Why:* Phase-2 Feature C — the first server read + offline cache
+  + nested onboarding, the last of the three pattern-establishment features.
+  → Architecture Book "Data layer → Query runtime" + "School selection".

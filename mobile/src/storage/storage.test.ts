@@ -6,6 +6,7 @@ import {
   getNumber,
   getString,
   has,
+  mmkvQueryStorage,
   remove,
   setBoolean,
   setNumber,
@@ -34,5 +35,22 @@ describe("storage seam", () => {
     expect(has("ephemeral")).toBe(true)
     remove("ephemeral")
     expect(has("ephemeral")).toBe(false)
+  })
+
+  describe("mmkvQueryStorage (the sync persister adapter)", () => {
+    it("round-trips a value through the seam", () => {
+      mmkvQueryStorage.setItem("rq.cache", "{}")
+      expect(mmkvQueryStorage.getItem("rq.cache")).toBe("{}")
+    })
+
+    it("returns null (not undefined) for an unset key", () => {
+      expect(mmkvQueryStorage.getItem("rq.missing")).toBeNull()
+    })
+
+    it("removes a value", () => {
+      mmkvQueryStorage.setItem("rq.gone", "{}")
+      mmkvQueryStorage.removeItem("rq.gone")
+      expect(mmkvQueryStorage.getItem("rq.gone")).toBeNull()
+    })
   })
 })
