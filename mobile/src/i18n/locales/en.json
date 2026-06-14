@@ -52,7 +52,6 @@
   "onboarding.group.retry": "Retry",
   "onboarding.group.nodeLabel": "Select {{name}}",
   "onboarding.group.expandLabel": "Expand {{name}}",
-  "onboarding.group.confirm": "Confirm",
   "debug.firebase.heading": "Firebase debug (dev only)",
   "debug.firebase.logEvent": "Log test event",
   "debug.firebase.crash": "Trigger test crash"
