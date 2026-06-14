@@ -37,9 +37,9 @@ any time; **D** lands after C with A and B deployed.
 
 ## 2. Server — push notification metric `[PR B]`
 
-- [ ] 2.1 Add a `push_notifications_sent_total` counter (description + `{result, type}` labels) following the existing thin `meter.createCounter(...)` pattern (a `firebase`-module or `notifier`-module metrics holder mirroring `calendar-sync-metrics.service.ts`).
-- [ ] 2.2 Increment it at the single FCM send site `FirebaseService.notify(...)` with bounded `result` — `success` (send resolves), `invalid_token` (the existing `isInvalidTokenError` branch, currently swallowed), `failure` (any other throw) — and `type` from the payload `data.action` (e.g. `calendar_changed`).
-- [ ] 2.3 Add/extend tests covering all three `result` outcomes (the `firebase.service.test.ts` already exercises success + invalid-token paths).
+- [x] 2.1 Add a `push_notifications_sent_total` counter (description + `{result, type}` labels) following the existing thin `meter.createCounter(...)` pattern (a `firebase`-module or `notifier`-module metrics holder mirroring `calendar-sync-metrics.service.ts`). _(New `FirebaseMetricsService` in `modules/firebase/services/firebase-metrics.service.ts`, registered in `firebase.module.ts`, mirroring `CalendarSyncMetricsService`; labels documented as bounded.)_
+- [x] 2.2 Increment it at the single FCM send site `FirebaseService.notify(...)` with bounded `result` — `success` (send resolves), `invalid_token` (the existing `isInvalidTokenError` branch, currently swallowed), `failure` (any other throw) — and `type` from the payload `data.action` (e.g. `calendar_changed`). _(`type = data?.action ?? "unknown"`.)_
+- [x] 2.3 Add/extend tests covering all three `result` outcomes (the `firebase.service.test.ts` already exercises success + invalid-token paths). _(All three `result` outcomes asserted on the injected counter; `type` derived from `data.action` covered by the success case; suite green.)_
 
 ## 3. Server — cleanup & verification `[PR A]`
 
