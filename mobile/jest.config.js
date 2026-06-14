@@ -27,6 +27,11 @@ module.exports = {
     // setup-splash mocks expo-splash-screen (native preventAutoHide/hideAsync,
     // hit at import + on mount) and AccessibilityInfo's reduced-motion read.
     "<rootDir>/jest/setup-splash.ts",
+    // setup-expo-ui mocks @expo/ui's native universal controls (no off-device
+    // JS) so the Settings screen renders and its picker onValueChange can be
+    // driven under Jest. After setup-storage/setup-i18n since the screen reaches
+    // A1's hooks → @/storage + @/i18n (TIM-131 / D6).
+    "<rootDir>/jest/setup-expo-ui.ts",
   ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [
