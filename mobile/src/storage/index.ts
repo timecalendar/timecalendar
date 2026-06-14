@@ -1,4 +1,4 @@
-import { createMMKV } from "react-native-mmkv"
+import { createMMKV, useMMKVString } from "react-native-mmkv"
 
 // Thin seam over react-native-mmkv (v4 / Nitro) — the single place the app
 // touches the KV backend, so it stays swappable and feature call sites import
@@ -38,4 +38,15 @@ export function has(key: string): boolean {
 
 export function remove(key: string): void {
   storage.remove(key)
+}
+
+// Reactive read bound to the seam's module-scoped instance (MMKV v4's
+// useMMKVString → useSyncExternalStore over addOnValueChangedListener), so a
+// preference change re-renders its consumers (design D3). Read-only: writes
+// stay on the imperative setString above, keeping one write path. It lives here
+// because react-native-mmkv is lint-banned outside the seam — feature code reads
+// preferences through this, never the backend. Only the string variant is added;
+// boolean/number reactive variants wait for a consumer (R-2).
+export function useStoredString(key: string): string | undefined {
+  return useMMKVString(key, storage)[0]
 }
