@@ -76,3 +76,46 @@ jest.mock("@expo/ui", () => {
 
   return { Host, Picker: Object.assign(Picker, { Item }) }
 })
+
+// The DateTimePicker is @expo/ui's OWN native date/time control (the
+// `@expo/ui/community/datetime-picker` subpath, ADR 012) — SwiftUI/Compose, no
+// off-device JS, so it must be mocked too. The existing jest.mock("@expo/ui")
+// above does NOT cover subpaths, so mock the subpath module explicitly (B2 /
+// TIM-133, design D6). The mock renders an assertable element carrying its
+// testID and a pressable that fires onValueChange(changeEvent, FIXED_DATE), so a
+// proof test can drive the picker → form state wiring deterministically. It
+// matches the real prop shape (value, mode, onValueChange, testID).
+//
+// The fixed test date the mock fires; the proof test asserts the form state
+// becomes this value after driving the picker.
+jest.mock("@expo/ui/community/datetime-picker", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Pressable, Text } = require("react-native")
+
+  const FIXED_DATE = new Date("2030-01-02T03:04:00.000Z")
+
+  function DateTimePicker(props: {
+    testID?: string
+    value: Date
+    onValueChange?: (event: unknown, date: Date) => void
+  }) {
+    const { testID, value, onValueChange } = props
+    return React.createElement(
+      Pressable,
+      {
+        testID,
+        accessibilityRole: "adjustable",
+        onPress: () =>
+          onValueChange?.(
+            { nativeEvent: { timestamp: 0, utcOffset: 0 } },
+            FIXED_DATE,
+          ),
+      },
+      React.createElement(Text, null, value.toISOString()),
+    )
+  }
+
+  return { __esModule: true, default: DateTimePicker, DateTimePicker }
+})
