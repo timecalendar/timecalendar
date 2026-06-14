@@ -12,6 +12,7 @@ import { CalendarRepository } from "modules/calendar/repositories/calendar.repos
 import { CalendarSource } from "modules/fetch/models/calendar-source"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
+import { toErrorType } from "modules/shared/utils/to-error-type"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 import { SubjectService } from "modules/subject/services/subject.service"
 import { nanoid } from "nanoid"
@@ -63,7 +64,7 @@ export class CalendarSyncService {
       school: code ?? undefined,
       domain: this.parseDomain(url),
       status: isError ? "error" : "success",
-      error: isError ? fetchedEvents.error?.message : undefined,
+      error_type: isError ? toErrorType(fetchedEvents.error) : undefined,
       action: isNewCalendar ? "create" : "update",
     })
 
