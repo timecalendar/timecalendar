@@ -179,14 +179,13 @@ jobs:
     env:
       # Maestro boots its XCTest driver with `xcodebuild test-without-building`,
       # then polls the driver's local HTTP port until it's listening. On the
-      # macos-26 / Xcode 26 runner this cold start is intermittently flaky: when
-      # it works the port binds in well under a minute, but on roughly half the
-      # runs the runner never comes up at all (it crashes/never binds, not just a
-      # slow start — observed: 946 failed status checks across the full window vs
-      # ~170 on a good run). A longer window therefore can't fix it; the e2e step
-      # below relaunches the driver by retrying instead. Give each attempt 4 min
-      # (generous vs the sub-minute happy path, fails fast on a crash). Value in ms.
-      MAESTRO_DRIVER_STARTUP_TIMEOUT: '240000'
+      # macos-26 / Xcode 26 runner the cold start (compile + launch the runner
+      # app on a freshly-booted simulator) takes ~5m25s, exceeding Maestro's
+      # default window by a wide margin — the driver's
+      # "[FlyingFox] starting server 127.0.0.1:<port>" lands seconds after
+      # Maestro has already aborted (confirmed across 2 separate CI runs).
+      # Give the driver 7 min to come up with headroom for variance. ms.
+      MAESTRO_DRIVER_STARTUP_TIMEOUT: '420000'
     steps:
 
     - name: Checkout main
