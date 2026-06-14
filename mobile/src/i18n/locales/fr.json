@@ -43,7 +43,7 @@
   "onboarding.school.error": "Impossible de charger les établissements.",
   "onboarding.school.empty": "Aucun établissement disponible.",
   "onboarding.school.retry": "Réessayer",
-  "onboarding.school.rowLabel": "Sélectionner {{name}}",
+  "onboarding.school.rowHint": "Ouvre les groupes de cet établissement",
   "onboarding.school.search": "Rechercher un établissement",
   "onboarding.group.title": "Choisir votre groupe",
   "onboarding.group.loading": "Chargement des groupes…",

@@ -37,9 +37,11 @@ describe("SchoolPickerScreen", () => {
 
     expect(getByText("Choose your school")).toBeTruthy()
     expect(getByText("Université Gustave Eiffel")).toBeTruthy()
-    expect(
-      getByTestId("onboarding-school-row-univeiffel").props.accessibilityLabel,
-    ).toBe("Select Université Gustave Eiffel")
+    const row = getByTestId("onboarding-school-row-univeiffel")
+    // The label is the bare school name (matchable cross-platform); the select
+    // affordance is the hint.
+    expect(row.props.accessibilityLabel).toBe("Université Gustave Eiffel")
+    expect(row.props.accessibilityHint).toBe("Opens this school's groups")
   })
 
   it("shows the loading state", async () => {

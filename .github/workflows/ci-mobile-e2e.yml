@@ -289,8 +289,8 @@ jobs:
     # recovers. db:init drops+reseeds on every `up`, so re-running is idempotent.
     - name: Run mobile E2E flows
       run: |
-        for attempt in 1 2 3; do
-          echo "::group::iOS E2E attempt $attempt/3"
+        for attempt in 1 2 3 4; do
+          echo "::group::iOS E2E attempt $attempt/4"
           if ./mobile/e2e/run_e2e.sh --native; then
             echo "::endgroup::"
             echo "iOS E2E passed on attempt $attempt"
@@ -299,7 +299,7 @@ jobs:
           echo "::endgroup::"
           echo "iOS E2E attempt $attempt failed"
         done
-        echo "iOS E2E failed after 3 attempts"
+        echo "iOS E2E failed after 4 attempts"
         exit 1
 
     - name: Upload Maestro debug output

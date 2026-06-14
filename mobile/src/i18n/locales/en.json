@@ -43,7 +43,7 @@
   "onboarding.school.error": "Could not load schools.",
   "onboarding.school.empty": "No schools available.",
   "onboarding.school.retry": "Retry",
-  "onboarding.school.rowLabel": "Select {{name}}",
+  "onboarding.school.rowHint": "Opens this school's groups",
   "onboarding.school.search": "Search schools",
   "onboarding.group.title": "Choose your group",
   "onboarding.group.loading": "Loading groups…",
