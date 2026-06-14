@@ -238,3 +238,33 @@ from this change forward is appended live.
   the reactive hooks features read — and discharges the C1 / device-only-locale /
   K-3 loose ends the foundation pinned to "the first logic-bearing feature."
   → Architecture Book "Settings preferences".
+
+- **2026-06-14 · `add-mobile-settings-screen`** — Settings **UI layer** (A2 / TIM-131,
+  Feature A's screen + native controls over A1's hooks — **no new prefs logic**). The
+  **first `@expo/ui` chrome wrapper** landed: `src/components/chrome/expo-ui.tsx` is the
+  single import site for `@expo/ui` (the universal `Host` + `Picker`), exported from the
+  chrome barrel — **discharging the theming-D6 deferral** (the barrel's `@expo/ui`
+  boundary-only note flipped to "wrapper landed"). The wrapper is **thin**: it does not
+  theme the OS-chromed picker (R-3) and bakes in no higher-level component (R-2). A
+  **presentational** Settings screen (`src/components/settings-screen.tsx`, under the 70%
+  floor — exempt from the 90% logic gate per ADR 003, **no `jest.config.js` change**) with
+  two native single-select pickers driving `useThemePreference` / `useLanguagePreference`;
+  a thin route `src/app/settings.tsx`; `<Stack.Screen name="settings" />` (Stack sibling of
+  `(tabs)`) + an accessible Profile→Settings `Link`/`Pressable` (role + translated label +
+  ≥44pt/48dp hit area) — **the first real product touchable**, where the `react-native-a11y`
+  touchable rules and the touch-target obligation first bite. New FR/EN keys (`settings.*`,
+  `profile.settings.link`, `tsc`-typed parity); a suite-wide `jest/setup-expo-ui.ts` mock
+  (mirrors `setup-firebase`/`setup-splash`); one proof test (render + control→hook wiring);
+  a Maestro flow (`.maestro/settings.yaml`) proving render + reachability only (no
+  native-picker toggle — not deterministically drivable across platforms, D5). New ADR
+  [010](./decisions/010-expo-ui-chrome-wrapper.md) (`@expo/ui` adopted behind the chrome
+  seam; universal entry the default — load-bearing, R-4). **No `app.config.ts` / babel
+  change** (`@expo/ui` autolinks, babel-plugin `Icon`-only — verified via a clean
+  `prebuild`). **A2 is the first interactive product control through the entire DoD**; the
+  irreducibly on-device axes (VoiceOver/TalkBack, native-picker feel, contrast, touch-by-
+  finger, jank, Maestro-through-the-picker) are inboxed + HUMAN-tagged
+  (`inbox/2026-06-14-settings-screen-dod-manual.md`), Feature A's DoD pass gated on that
+  manual pass. **No new lint rule** (the chrome boundary already banned `@expo/ui`; A2
+  fills the wrapper body it pointed at). *Why:* Phase-2 Feature A's screen — the UI over
+  A1's data layer, and the first `@expo/ui` consumer. → Architecture Book "Theming &
+  native-chrome", "Settings preferences".

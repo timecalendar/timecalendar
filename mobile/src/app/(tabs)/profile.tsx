@@ -1,5 +1,6 @@
+import { Link } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native"
+import { Pressable, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { FirebaseDebugPanel } from "@/components/firebase-debug-panel"
@@ -14,6 +15,24 @@ export default function ProfileScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="title">{t("profile.title")}</ThemedText>
+
+        {/* The first real product touchable (the only prior one was the
+            __DEV__ FirebaseDebugPanel): an accessible Profile→Settings entry.
+            Declares a role + translated label, and a min 44pt/48dp hit target
+            (paddingVertical:Spacing.three=16 + the text line ≈ ≥48; hitSlop
+            backstops it). asChild lets Link forward navigation to the Pressable
+            so a11y props ride the touchable, not a wrapping anchor. */}
+        <Link href="/settings" asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("profile.settings.link")}
+            hitSlop={Spacing.two}
+            style={styles.settingsLink}
+          >
+            <ThemedText>{t("profile.settings.link")}</ThemedText>
+          </Pressable>
+        </Link>
+
         {__DEV__ && <FirebaseDebugPanel />}
       </SafeAreaView>
     </ThemedView>
@@ -32,5 +51,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     gap: Spacing.three,
+  },
+  settingsLink: {
+    paddingVertical: Spacing.three,
+    justifyContent: "center",
   },
 })

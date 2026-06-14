@@ -1,0 +1,51 @@
+# Settings reachability + render e2e flow (A2 / TIM-131).
+#
+# Cold-launches the development-variant app, deep-links to the Settings screen,
+# and asserts the localized title + the two native picker controls render. This
+# proves: the route is reachable via deep link (Stack sibling of (tabs)), the
+# screen mounts past the splash, and @expo/ui's Host/Picker render NATIVELY on
+# both platforms (a native render failure would crash or blank the screen).
+#
+# What it deliberately does NOT do (design D5): drive a native-picker selection
+# and assert the theme/language changed. Native @expo/ui pickers open OS-level
+# SwiftUI/Compose popups whose internal items are not reliably addressable by
+# Maestro across BOTH iOS and Android — a toggle flow would be flaky, and a flaky
+# e2e is worse than none. The control→hook WIRING is proven deterministically by
+# the Jest proof test (settings-screen.test.tsx), which drives onValueChange. If
+# a stable native-picker selector ever proves reliable on both platforms, a
+# toggle round-trip may be added as a bonus — only if reliable.
+#
+# Requires a release-config dev-variant build installed on the connected device
+# (no server needed — this screen reads no live data). Shared across iOS and
+# Android: stable localized text / testID assertions, no per-platform selectors.
+# Run via mobile/e2e/run_e2e.sh. Mirrors schools.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link (see schools.yaml header): a warm openLink does
+# not navigate on Android release builds — Expo Router resolves the link through
+# getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://settings
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
+# (Android does not); tap it only on iOS.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Open"
+# Generous timeout: a release-config iOS cold start + JS bundle load can land
+# just past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+# The two native picker controls carry stable testIDs (settings-screen.tsx). A
+# native render failure would mean these never appear.
+- extendedWaitUntil:
+    visible:
+      id: "settings-theme-picker"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: "settings-language-picker"
+    timeout: 60000

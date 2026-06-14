@@ -8,11 +8,10 @@
 export { GlassSurface } from "@/components/chrome/glass-surface"
 export { NativeTabs } from "@/components/chrome/native-tabs"
 
-// @expo/ui — boundary, not a rendered stub (design D6, R-2). @expo/ui has no
-// consumer in the app today; rendering a throwaway control "to prove the
-// wrapper" would be exactly the speculative divergence R-2 forbids. Its half of
-// the seam is the lint boundary (the ban covers @expo/ui + subpaths) plus this
-// note: when the first consumer arrives (likely Settings, Phase 1.5), add an
-// `expo-ui.tsx` wrapper here as the single import site for `@expo/ui`
-// (`/swift-ui`, `/jetpack-compose`, `/universal`) and export its component(s)
-// from this barrel. The boundary is real and enforced now; the body is earned.
+// @expo/ui — wrapper landed (A2 / TIM-131). The Settings screen is the first
+// `@expo/ui` consumer (discharging the theming-D6 deferral), so the boundary-only
+// note became a real wrapper body: `expo-ui.tsx` is the single import site for
+// `@expo/ui` (the universal `Host` + `Picker`), enforced by the chrome lint
+// boundary. The wrapper stays thin — only the controls a consumer needs are
+// re-exported; the OS-chromed picker is not force-themed (ADR 010, design D4).
+export { Host, Picker } from "@/components/chrome/expo-ui"
