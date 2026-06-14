@@ -1,3 +1,7 @@
+// Side-effect import: initializes the single module-scoped i18next instance
+// (synchronous, from bundled catalogs) before any screen renders text.
+import "@/i18n"
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Stack, ThemeProvider } from "expo-router"
 
@@ -5,9 +9,6 @@ import { SplashScreen } from "@/components/splash-screen"
 import { runMigrations } from "@/db/migrate"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
-// Side-effect import: initializes the single module-scoped i18next instance
-// (synchronous, from bundled catalogs) before any screen renders text.
-import "@/i18n"
 
 const queryClient = new QueryClient()
 

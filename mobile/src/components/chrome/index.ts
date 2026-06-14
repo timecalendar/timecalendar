@@ -5,8 +5,8 @@
 // they churn (they're all alpha), the blast radius is this directory. This is
 // the roadmap step-10 insurance against alpha churn.
 
-export { NativeTabs } from "@/components/chrome/native-tabs"
 export { GlassSurface } from "@/components/chrome/glass-surface"
+export { NativeTabs } from "@/components/chrome/native-tabs"
 
 // @expo/ui — boundary, not a rendered stub (design D6, R-2). @expo/ui has no
 // consumer in the app today; rendering a throwaway control "to prove the

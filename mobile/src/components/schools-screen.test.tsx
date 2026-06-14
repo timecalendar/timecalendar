@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { render } from "@testing-library/react-native"
 import type { ReactNode } from "react"
 
-import { customFetch } from "@/api/mutator"
 import type {
   FindSchoolsRepDto,
   SchoolForList,
 } from "@/api/generated/timeCalendar.schemas"
+import { customFetch } from "@/api/mutator"
 
 import SchoolsScreen from "./schools-screen"
 

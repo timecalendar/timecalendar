@@ -187,3 +187,22 @@ from this change forward is appended live.
   tsc/lint/test + `expo prebuild --clean`. *Why:* prepare clean theming ground (brand
   token, one scheme seam, tokenized nav) for Phase-1 Settings and shed the unused web
   surface. → Architecture Book "Theming & native-chrome", "Scaffold-time rules".
+
+- **2026-06-14 · `add-mobile-import-order-lint`** — Lint & format: a new
+  **import/export-order rule** (`eslint-plugin-simple-import-sort`,
+  `simple-import-sort/imports` + `/exports`, error, autofixable) in the
+  `timecalendar/architecture` block. Canonical group order **side-effect → Node
+  builtins + third-party → `@/` alias → relative** (`importSortGroups`), complementing
+  the existing `../` ban (which makes the `@/`-as-its-own-group split unambiguous —
+  relative is only ever `./…`); side-effects sit at the top and keep their relative
+  order so the `import "@/i18n"` init seam is not reordered; no bare `^` catch-all
+  (groups stay disjoint, so the plugin's longest-match-wins tie-break never bites);
+  generated code stays exempt. Ran a
+  one-time `eslint --fix` sweep that normalized import/export order in 6 files (order
+  only — no behavior change; tsc/lint/test green). `simple-import-sort` chosen over
+  `import/order` as the lighter, resolver-free idiomatic default. **No ADR** (tooling,
+  not architectural — the issue, TIM-121 §E1, said so) and **no Jest proof test** (a
+  lint rule's enforcement *is* the gate, R-1; an "imports are sorted" test would be
+  cargo-cult). Closes the last open lint gap from the Phase-0 scaffolding review
+  (TIM-117 §E1). *Why:* lock in the import order that was previously hand-maintained,
+  before features multiply the import surface. → Architecture Book "Lint & format".
