@@ -2,15 +2,15 @@
 // (synchronous, from bundled catalogs) before any screen renders text.
 import "@/i18n"
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { Stack, ThemeProvider } from "expo-router"
 
+import { queryClient } from "@/api/query-client"
 import { SplashScreen } from "@/components/splash-screen"
 import { runMigrations } from "@/db/migrate"
+import { persistOptions } from "@/features/school-selection"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
-
-const queryClient = new QueryClient()
 
 // Apply the committed migration bundle at startup, before features read tables
 // (fire-and-forget, mirroring the i18n side-effect wiring). Failures are
@@ -21,11 +21,18 @@ export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
   return (
-    <QueryClientProvider client={queryClient}>
+    // The sync persister (ADR 013 / D8) restores the schools/groups query cache
+    // synchronously — no async restore gate / isRestoring handling; the existing
+    // splash already gates first paint and the cache is restored by the time
+    // queries run.
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={persistOptions}
+    >
       <ThemeProvider value={navTheme}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="schools" />
+          <Stack.Screen name="onboarding" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="personal-event-form" />
         </Stack>
@@ -33,6 +40,6 @@ export default function RootLayout() {
             cuts under reduced motion) once useAppReady() resolves. */}
         <SplashScreen />
       </ThemeProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   )
 }
