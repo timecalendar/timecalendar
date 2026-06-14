@@ -1,0 +1,51 @@
+# Onboarding (school selection) read round-trip e2e flow (C1 / TIM-134).
+#
+# Cold-launches the development-variant app, deep-links to the onboarding school
+# step, and asserts a seeded school renders from the LIVE GET /schools round-trip
+# (app → generated client → customFetch → NestJS → Postgres, nothing mocked) — the
+# first server-data read flow. Replaces the retired schools.yaml as the
+# server-round-trip proof.
+#
+# The asserted name "My Gaming Academia" is the visible:true ASCII seeded fixture
+# in server/src/modules/school/fixtures/school.fixtures.yml (the same fixture
+# schools.yaml asserted) — ASCII-only to avoid accent-matching fragility across
+# platforms.
+#
+# It deliberately does NOT drive the nested group step: opening a school issues a
+# second live GET .../school-group read, but the group tree's leaf selectors vary
+# by school/fixture and a tap-into-nested-step assertion would be brittle across
+# both platforms. The school→group navigation WIRING is proven deterministically
+# by the Jest proof tests (school-picker-screen.test.tsx asserts the push; the
+# group screen test asserts render + select). If a stable group selector ever
+# proves reliable on both platforms, a nested-step assertion MAY be added as a
+# bonus — only if reliable; do not ship a flaky step.
+#
+# Requires the harness server up (ci/e2e-server.sh up) + a release-config
+# dev-variant build installed (mobile/e2e/run_e2e.sh). Shared across iOS and
+# Android: stable seeded-text assertions, no per-platform selectors. Mirrors
+# settings.yaml / personal-events.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link: a warm openLink does not navigate on Android
+# release builds — Expo Router resolves the link through getInitialURL on a cold
+# launch, so stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://onboarding
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
+# (Android does not); tap it only on iOS.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Open"
+# Generous timeout: a release-config iOS cold start + JS bundle load can land just
+# past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
+- extendedWaitUntil:
+    visible: "Choose your school"
+    timeout: 60000
+# The live GET /schools round-trip assertion: the seeded school only renders if
+# the read committed end to end through the real server.
+- extendedWaitUntil:
+    visible: "My Gaming Academia"
+    timeout: 60000
