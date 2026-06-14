@@ -1,8 +1,8 @@
 import { recordError } from "@react-native-firebase/crashlytics"
 import { migrate } from "drizzle-orm/expo-sqlite/migrator"
 
-import migrations from "./migrations/migrations"
 import { runMigrations } from "./migrate"
+import migrations from "./migrations/migrations"
 
 // expo-sqlite / drizzle are mocked suite-wide (jest/setup-db.ts), firebase's
 // native modules by jest/setup-firebase.ts — so this proves the runner wiring
