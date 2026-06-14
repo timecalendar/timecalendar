@@ -300,3 +300,39 @@ from this change forward is appended live.
   Feature B's data layer — the first structured device-local schema, the first real
   migration, the data the future B-screen consumes. → Architecture Book "Storage → First
   feature schema — personal events".
+
+- **2026-06-14 · `add-mobile-personal-events-ui`** (B2 / TIM-133) — Phase-2 Feature B's
+  **UI layer** over B1's data layer (list + create/edit/delete form + native date/time
+  pickers + validation + write error path). The **second feature through the full DoD** and
+  the **first with a multi-field form** + a **genuine write error path**. A reactive Home-tab
+  list (`src/components/personal-events-list.tsx` over B1's `usePersonalEvents` `useLiveQuery`,
+  with an Add action + empty state) behind the thin `(tabs)/index.tsx`; one create/edit form
+  route (thin `src/app/personal-event-form.tsx` → `src/components/personal-event-form-screen.tsx`,
+  a `<Stack.Screen>` sibling of `(tabs)`, optional `uid` param → prefill + delete; dev deep
+  link). **Form/validation logic in the new `src/features/personal-events/form/`** (90%-gated:
+  pure `validateEventForm` returning error keys, pure `buildEventFromForm` mirroring the Flutter
+  `buildEvent`, and `useSaveEvent`/`useDeleteEvent`/`useEventToEdit` over B1's repository) vs.
+  the **presentational screens** under `src/components/` (70% floor) — the ADR-003 split. The
+  **second `@expo/ui` chrome consumer**: `chrome/expo-ui.tsx` now also re-exports `DateTimePicker`
+  (the `@expo/ui/community/datetime-picker` subpath — `@expo/ui`'s own SwiftUI/Compose control,
+  **not** `@react-native-community/datetimepicker`, **no new dependency**), under the same ADR-010
+  universal posture; `jest/setup-expo-ui.ts` extended to mock the subpath (drives `onValueChange`).
+  A custom preset **color-swatch picker** (`src/components/color-swatch-picker.tsx`, no new native
+  dep) storing `#RRGGBB` verbatim (ADR 011); RN-core text inputs (D3). **Observability ✅ wired**
+  (not N/A): a rejected `upsert`/`remove` is `recordError`'d through `@/firebase` + a failure flag
+  surfaced (a DB write can fail, unlike A1's infallible MMKV), proven by a forced-rejection test.
+  New FR/EN `personalEvents.*` keys (`tsc`-typed parity); a Maestro CRUD round-trip flow
+  (`.maestro/personal-events.yaml` — create-via-text → list → delete, no native-picker drive, D5);
+  CI proof tests for the logic (90% green), the list/form/picker→state wiring, and the error path.
+  New **ADR [012](./decisions/012-personal-event-datetime-picker.md)** (the date/time-control
+  choice — `@expo/ui`'s own `DateTimePicker` behind the existing wrapper, load-bearing — R-4) +
+  README row. **No new lint rule** (the chrome boundary already bans the `@expo/ui` subpath; B2
+  fills the wrapper); **no `jest.config.js`/`app.config.ts`/babel/dependency change**; **no
+  data-layer / OpenAPI / server / web / `app/` change**. **A2-style DoD split:** automatable axes
+  green in CI; the on-device axes (VoiceOver/TalkBack, native-picker feel/contrast, touch-by-finger,
+  jank, Crashlytics arrival, Maestro-through-the-picker) inboxed + HUMAN-tagged
+  (`docs/react-native-migration/inbox/2026-06-14-personal-events-ui-dod-manual.md`); Feature B's
+  full DoD pass is gated on that manual pass. *Why:* Phase-2 Feature B's UI — the list/form/native
+  pickers/delete over B1's data, the first multi-field form + real write error path.
+  → Architecture Book "Storage → First feature schema — personal events → Personal events — CRUD UI"
+  + "Theming & native-chrome".
