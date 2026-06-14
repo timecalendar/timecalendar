@@ -14,4 +14,10 @@ export { NativeTabs } from "@/components/chrome/native-tabs"
 // `@expo/ui` (the universal `Host` + `Picker`), enforced by the chrome lint
 // boundary. The wrapper stays thin — only the controls a consumer needs are
 // re-exported; the OS-chromed picker is not force-themed (ADR 010, design D4).
-export { Host, Picker } from "@/components/chrome/expo-ui"
+//
+// Second consumer (B2 / TIM-133): `DateTimePicker`, the native date/time control
+// from the `@expo/ui/community/datetime-picker` subpath — `@expo/ui`'s OWN
+// SwiftUI/Compose control, NOT `@react-native-community/datetimepicker` (it only
+// mirrors the RNC prop types), so no new dependency. Same wrapper, same ADR-010
+// universal posture; the control choice is recorded in ADR 012.
+export { DateTimePicker, Host, Picker } from "@/components/chrome/expo-ui"
