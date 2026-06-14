@@ -58,7 +58,9 @@ The blessing decision and the open sublayer set are
 Each sublayer has an `index.ts` re-exporting its public surface; a **feature-level**
 `index.ts` re-exports the sublayers. **Sublayers never import the feature barrel** —
 when a sublayer needs a sibling, it imports the sibling's *sub-barrel* directly. The
-graph stays a DAG.
+graph stays a DAG. This no-self-barrel-cycle rule is **CI-enforced** as boundary B-2
+(`eslint-plugin-boundaries`, TIM-135 — see the Architecture Book "Lint & format →
+Feature-module boundaries").
 
 - Feature barrels: `mobile/src/features/personal-events/index.ts` (its comment states
   "No cycle: form/* imports the data sub-barrel directly … never this file"),
@@ -77,8 +79,10 @@ graph stays a DAG.
   `useSchoolControllerFindSchools` / `useSchoolGroupControllerFindSchoolGroups` over
   the single `mobile/src/api/mutator.ts` `customFetch`, maps DTOs → small domain
   shapes), `personal-events/data/repository.ts` (the only importer of
-  `mobile/src/db/index.ts`). This boundary is **review-enforced today**; encoding it as
-  `eslint-plugin-boundaries` is the pending TIM-135 slice (ADR 014 records the debt).
+  `mobile/src/db/index.ts`). This boundary is **now CI-enforced** by
+  `eslint-plugin-boundaries` (TIM-135, `add-mobile-feature-boundaries-lint` — B-1/B-3 in
+  the `timecalendar/feature-boundaries` block of `mobile/eslint.config.js`); the ADR-014
+  debt is paid.
 - **The store is total + defensively-validated over `@/storage`, one write path.** A
   bad/unset/legacy value parses to a safe default, never throws; writes go through one
   imperative path, the reactive read through a `hooks.ts` over the seam's reactive read

@@ -2,6 +2,7 @@
 // Rule rationale: .claude/rules/mobile/architecture.md (lint/format section)
 const { fixupPluginRules } = require("@eslint/compat")
 const { defineConfig, globalIgnores } = require("eslint/config")
+const boundaries = require("eslint-plugin-boundaries")
 const expoConfig = require("eslint-config-expo/flat")
 const i18next = require("eslint-plugin-i18next")
 const prettierRecommended = require("eslint-plugin-prettier/recommended")
@@ -216,6 +217,139 @@ module.exports = defineConfig([
       "no-restricted-imports": restrictedImports([], {
         banChromeAlpha: false,
       }),
+    },
+  },
+  {
+    // The feature-module import boundaries (ADR 014 / golden-path.md "Seam
+    // conventions" + "Barrel discipline"), encoded with eslint-plugin-boundaries.
+    // Layers ON TOP of the no-restricted-imports seam bans above — those ban a
+    // backend/alpha package by specifier string; this governs the FEATURE-INTERNAL
+    // structure (which element may import which) that a string ban can't express.
+    //
+    // The config file IS the rule's documentation (R-1): the four boundaries are
+    //   B-1 — only a feature's data/ sublayer may import @/api/generated/** or @/db.
+    //   B-2 — a feature sublayer must not import its own feature-level barrel (cycle);
+    //         it imports a sibling's sub-barrel directly.
+    //   B-3 — screens (src/components/**) and routes (src/app/**) consume a feature
+    //         through its barrel, never @/api/generated/** or @/db directly.
+    //   B-4 — the ADR-009 infra→feature edge (@/hooks/use-color-scheme and @/i18n
+    //         importing @/features/settings/prefs[/store]) is ALLOWED — the absence
+    //         of a disallow naming infra-* as `from` is the deliberate resolution.
+    //
+    // Posture is `default: "allow"` + three targeted disallows (mirrors the
+    // enumerate-the-forbidden, leave-the-rest-alone philosophy of the seam bans):
+    // a disallow can only forbid the four bad edges, never accidentally forbid a
+    // legitimate one. no-unknown / no-unknown-files stay OFF — they would demand
+    // every file belong to a named element, a whole-tree taxonomy these four
+    // boundaries don't need (design D4).
+    //
+    // CRITICAL (design D5): boundaries must RESOLVE an import specifier to a file
+    // path to classify its target element. The `@/` alias is NOT resolved by the
+    // node resolver eslint-config-expo ships, so without the typescript resolver
+    // below `import { db } from "@/db"` resolves to nothing and the rule SILENTLY
+    // PASSES (a false negative — the dangerous failure mode). The explicit
+    // eslint-import-resolver-typescript devDependency + the inject-and-revert
+    // verification (the change's tasks §3) guard this.
+    name: "timecalendar/feature-boundaries",
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
+    // Generated code is not a feature; tests import freely.
+    ignores: [generatedCode, "**/*.test.{ts,tsx}"],
+    plugins: { boundaries },
+    settings: {
+      // Resolve the `@/` alias so target elements can be classified (D5).
+      "import/resolver": {
+        typescript: { project: "./tsconfig.json" },
+        node: { extensions: [".js", ".jsx", ".ts", ".tsx"] },
+      },
+      // The element taxonomy (D2): each pattern matches a folder right-to-left;
+      // a file is the FIRST element it matches, so feature-sublayer (deeper)
+      // MUST be listed before feature-barrel (shallower).
+      "boundaries/elements": [
+        {
+          type: "feature-sublayer",
+          pattern: "src/features/*/*",
+          mode: "folder",
+          capture: ["feature", "layer"],
+        },
+        {
+          type: "feature-barrel",
+          pattern: "src/features/*",
+          mode: "folder",
+          capture: ["feature"],
+        },
+        { type: "generated-api", pattern: "src/api/generated", mode: "folder" },
+        { type: "db-seam", pattern: "src/db", mode: "folder" },
+        { type: "route", pattern: "src/app", mode: "folder" },
+        { type: "component", pattern: "src/components", mode: "folder" },
+        {
+          type: "infra-color-scheme",
+          pattern: "src/hooks/use-color-scheme.*",
+          mode: "file",
+        },
+        { type: "infra-i18n", pattern: "src/i18n", mode: "folder" },
+      ],
+    },
+    rules: {
+      // The v6 unified rule — NOT the deprecated element-types/entry-point, which
+      // emit a deprecation warning that would fail `expo lint --max-warnings 0`.
+      // Object selectors ({ type, captured, internalPath }) + {{ }} templates.
+      "boundaries/dependencies": [
+        "error",
+        {
+          default: "allow",
+          rules: [
+            {
+              // B-1: any sublayer EXCEPT data/ may not reach the seams. The
+              // `!(data)` micromatch negation leaves data/ out of `from`, so the
+              // data/ sublayer (and only it) may import the generated API / @/db.
+              from: {
+                type: "feature-sublayer",
+                captured: { layer: "!(data)" },
+              },
+              disallow: { to: { type: ["generated-api", "db-seam"] } },
+              message:
+                "B-1: only a feature's data/ sublayer may import @/api/generated or @/db — wrap the seam in data/ and re-export (golden-path.md → Seam conventions).",
+            },
+            {
+              // B-3: screens/routes never touch the seam directly — they consume
+              // the feature through its barrel.
+              from: { type: ["component", "route"] },
+              disallow: { to: { type: ["generated-api", "db-seam"] } },
+              message:
+                "B-3: screens/routes must consume a feature through its barrel, not @/api/generated or @/db directly (golden-path.md → Seam conventions).",
+            },
+            {
+              // B-3 exception (last-write-wins overrides the disallow above): the
+              // root route layout legitimately invokes the STARTUP MIGRATION RUNNER
+              // — `void runMigrations()` from @/db/migrate is the documented
+              // fire-and-forget startup wiring (Architecture Book → Storage →
+              // "Startup migration runner"), mirroring the `import "@/i18n"` seam.
+              // This is app infrastructure, not feature-data access: it touches the
+              // migration runner (db/migrate.*), never the @/db data-access surface
+              // (db/index — operators / tables / useLiveQuery), which stays B-3-banned.
+              from: { type: "route" },
+              allow: { to: { type: "db-seam", internalPath: "migrate.*" } },
+            },
+            {
+              // B-2 (no cycle): a sublayer may not import ITS OWN feature barrel.
+              // The {{ from.feature }} template (v6 Handlebars syntax) binds the
+              // SAME feature captured on the `from` side; internalPath "index.*"
+              // targets the barrel file — so importing a SIBLING's sub-barrel
+              // (a different element) is untouched, only the self-barrel cycle bites.
+              from: { type: "feature-sublayer" },
+              disallow: {
+                to: {
+                  type: "feature-barrel",
+                  captured: { feature: "{{ from.feature }}" },
+                  internalPath: "index.*",
+                },
+              },
+              message:
+                "B-2: a feature sublayer must not import its own feature barrel (cycle) — import the sibling sub-barrel directly (golden-path.md → Barrel discipline).",
+            },
+          ],
+        },
+      ],
     },
   },
   {

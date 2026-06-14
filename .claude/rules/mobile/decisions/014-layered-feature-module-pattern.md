@@ -62,10 +62,12 @@ Bless the **layered feature-module pattern** as the golden-path structure:
 4. **Coverage split (ADR 003).** Logic sublayers (`data/`/`store/`/`form/` — under the
    `src/features/**` glob) are 90%-gated; presentational screens are under the 70% floor.
 
-The boundaries in (1)/(3) are **review-enforced today**; **encoding** them as
-`eslint-plugin-boundaries` is the separate pending TIM-135 slice (recorded as follow-up debt,
-not done here — mixing a docs/pattern extraction with a new lint config would double the blast
-radius).
+The boundaries in (1)/(3) were **review-enforced** when this ADR landed; **encoding** them as
+`eslint-plugin-boundaries` was the separate TIM-135 slice (held out of this docs/pattern
+extraction to avoid doubling the blast radius). That slice has **landed** —
+`add-mobile-feature-boundaries-lint` (TIM-135, 2026-06-14) encodes the boundaries as
+B-1…B-4 in the `timecalendar/feature-boundaries` block (Architecture Book "Lint & format →
+Feature-module boundaries"); they are now CI-enforced, no longer review-only.
 
 *Rejected:* a single rigid "reference feature" to copy (the three stress different axes — one
 would mislead a feature of a different axis; design D1); a code generator to stamp the shape
@@ -80,14 +82,16 @@ sublayer set (a feature adds the sublayers its axis needs — the set is open, n
 - The pattern is **blessed, not frozen** — the calendar spike (ADR 005) may generalize it; this
   ADR's revisit covers that.
 - ADR 009's infra→feature-edge decision (prefs consumed by `use-color-scheme`/`@/i18n`) is
-  untouched and still owns its own revisit.
-- The feature-boundary lint (TIM-135) is the encodable follow-up that will formalize the `data/`-
-  only-touches-generated-hooks boundary this ADR documents.
+  resolved by TIM-135 as **allowed** (boundary B-4) — its revisit fired and is recorded there.
+- The feature-boundary lint (TIM-135, `add-mobile-feature-boundaries-lint`) **landed**
+  (2026-06-14): the boundaries (B-1 `data/`-only-seam, B-2 no-self-barrel-cycle, B-3
+  barrel-entry-point, B-4 allowed infra edge) this ADR documents are now CI-enforced.
 
 ## Revisit if
 
-- `eslint-plugin-boundaries` (TIM-135) lands and its encoding wants to adjust the documented
-  shape (allow/deny edges, sublayer names) — reconcile this ADR + the exemplar then.
+- `eslint-plugin-boundaries` (TIM-135) **landed**; a *future* adjustment to its encoding (new
+  allow/deny edges, a new element type or sublayer name) wants to change the documented shape
+  — reconcile this ADR + the exemplar + the `timecalendar/feature-boundaries` block then.
 - A feature's axis needs a sublayer the pattern doesn't name (e.g. a `sync/` mutation-queue
   layer for offline writes) — extend the open sublayer set with the new feature's evidence.
 - The calendar spike (ADR 005) or a later feature shows the layered shape doesn't fit a genuinely
