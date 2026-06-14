@@ -4,11 +4,17 @@
 
 ## Status
 
-Accepted, **not yet enforced.** Coverage is reported from day one (the
-`test-mobile` job runs `npm test -- --coverage`) but **no `coverageThreshold` is
-set** — the gate is deliberately unwired until there is logic worth gating. Owned
-by the first logic-bearing feature (Settings, [004](./004-phase-1-feature-order.md));
-that feature's DoD sets the threshold. See the Architecture Book "K-3 deferral".
+Accepted. **⚠️ Revisit clause fulfilled, not fired against (2026-06-14):** the gate
+is now **enforced**. The `add-mobile-settings-prefs` change (TIM-130) — Settings'
+data layer, the first logic-bearing feature, which ADR 004 named as this gate's
+owner — wired the `coverageThreshold` in `mobile/jest.config.js` exactly as designed
+below, on a **green** baseline (the change added the supporting tests so the gate
+lands passing, not failing). See the Architecture Book "Settings preferences" (the
+now-enforced gate) and "K-3 deferral" (the prior reported-not-gated era).
+
+*(Prior status, for the record: "Accepted, not yet enforced — coverage reported from
+day one so the gate has a baseline to land on, but no `coverageThreshold` set, owned
+by the first logic-bearing feature.")*
 
 ## Context
 
@@ -28,10 +34,25 @@ is reported so the gate has a baseline to land on, but unset.
 
 ## Consequences
 
-- The `definition-of-done.md` "Unit/component tests" axis records this as
-  "reported, not yet gated" and names Settings as the feature that wires it.
-- When set, lives in `mobile/jest.config`/`package.json` jest config (R-1: a CI
-  gate, not prose).
+- The `definition-of-done.md` "Unit/component tests" axis records this gate; it is
+  now **enforced** (no longer "reported, not yet gated").
+- Encoded in `mobile/jest.config.js`'s `coverageThreshold` (R-1: a CI gate, not
+  prose): a 70% `global` floor (lines+branches) + per-glob 90% (lines+branches) on
+  the logic paths `src/{features,hooks,storage,db,i18n,firebase,theme}/**`.
+- **Jest glob semantics, recorded so a future editor isn't surprised:** a
+  `coverageThreshold` glob key *removes* its matched files from the `global` pool, so
+  `global` measures the **remainder** (the presentational `src/components/**` and the
+  chrome wrappers), not the whole tree. The remainder clears 70% comfortably.
+- **Exclusions from coverage collection, each with a recorded reason in
+  `jest.config.js`** (never a silent skip — the DoD no-third-state rule): type-only
+  `*.d.ts`; and the **E2E-covered-not-unit-covered** paths the Architecture Book
+  "Testing" section already designates — `src/app/**` (route entrypoints, proven by
+  the Maestro launch) and `src/api/{mutator,config}` (the `customFetch` seam component
+  tests *mock*, exercised end-to-end by the Maestro round-trip, never run under Jest).
+- TIM-130 added the supporting tests (`use-app-ready`, the `use-color-scheme` C1 seam,
+  the `use-theme` unspecified branch, the `migrate` non-Error branch) so the gate
+  lands **green**, not red — the whole point of "report first so the gate has a
+  baseline."
 
 ## Revisit if
 

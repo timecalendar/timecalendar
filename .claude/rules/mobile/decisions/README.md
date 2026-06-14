@@ -26,12 +26,13 @@ Status) — superseding an ADR means writing the new one and marking the old
 | --- | --- | --- | --- |
 | [001](./001-sdk-target.md) | SDK target: latest stable Expo SDK at scaffold | Accepted · revisit fired 2026-06-12 (scaffolded directly on SDK 56) | A future SDK forces a deferred breaking change, or a beta capability becomes load-bearing pre-GA |
 | [002](./002-minimum-os.md) | Minimum OS: iOS 15.1 / Android API 24 | Accepted · revisit fired 2026-06-12 (effective floors iOS 16.4 / API 24) | Install base below the floors, or an SDK raises its own minimum again |
-| [003](./003-coverage-threshold.md) | Coverage: 90% logic / 70% global, CI-enforced | Accepted · not yet enforced (owned by first logic feature) | The gate drives cargo-cult tests rather than catching regressions |
+| [003](./003-coverage-threshold.md) | Coverage: 90% logic / 70% global, CI-enforced | Accepted · **enforced 2026-06-14** (wired by Settings prefs, TIM-130) | The gate drives cargo-cult tests rather than catching regressions |
 | [004](./004-phase-1-feature-order.md) | Phase 1 feature order: Settings → Personal events → School selection | Accepted · not started | A dependency forces a different order, or a feature is too thin for its axis |
 | [005](./005-calendar-spike.md) | Calendar spike: 3-day read-only spike opens Phase 2 | Accepted · not started | The spike clearly succeeds or fails early |
 | [006](./006-eas-distribution.md) | EAS distribution: fingerprint runtime policy, human-invoked builds (CI untouched) | Accepted | Manual dogfood builds become a friction point (wire `.eas/workflows/`), or fingerprint forces rebuilds so often OTA stops paying off |
 | [007](./007-drop-web-target.md) | Drop the web target: iOS + Android only | Accepted | A real web roadmap appears (a genuine browser deliverable, not the template default) |
 | [008](./008-brand-color.md) | Brand color: adopt the Flutter pink hue as the `primary` token | Accepted | A designer-driven palette change, or a real surface fails the brand-color contrast |
+| [009](./009-settings-feature-prefs.md) | First feature folder; Settings owns app preferences, consumed by infra seams | Accepted | `eslint-plugin-boundaries` lands (TIM-135) — resolve the infra→feature edge; or a 2nd feature needs cross-cutting prefs |
 
 ADRs 001–005 are the Phase 0 kickoff knobs K-1…K-5 from migration-approach §8,
 authored as real ADRs here (the Phase 0 exit criterion: "first ADRs written —
