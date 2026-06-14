@@ -19,6 +19,7 @@ import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
   buildEventFromForm,
+  type EventFormErrors,
   type EventFormValues,
   useDeleteEvent,
   useEventToEdit,
@@ -61,7 +62,7 @@ export default function PersonalEventFormScreen() {
   const existing = useEventToEdit(uid)
 
   const [values, setValues] = useState<EventFormValues>(defaultValues)
-  const [errors, setErrors] = useState<{ title?: string; range?: string }>({})
+  const [errors, setErrors] = useState<EventFormErrors>({})
   const save = useSaveEvent()
   const del = useDeleteEvent()
 
