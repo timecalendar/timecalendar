@@ -153,19 +153,22 @@ forbidden, leave the rest alone.
 ### D5 — The `@/` alias needs a real import resolver (load-bearing operational fact)
 
 boundaries must **resolve** an import specifier to a file path to classify its target
-element. The project's `@/` alias (`tsconfig.json` `paths`) is *not* resolved by the
-`node` resolver `eslint-config-expo` ships — so `import { db } from "@/db"` would
-resolve to *nothing* and the boundary would silently never fire. Verified during
-planning: with only the node resolver the injected violations did **not** error;
-adding `eslint-import-resolver-typescript` made all three fire.
+element. If the `@/` alias (`tsconfig.json` `paths`) resolves to *nothing*,
+`import { db } from "@/db"` is unclassifiable and the boundary silently never fires
+(the dangerous false-negative). In the final config the gate *does* bite, because
+`eslint-config-expo/flat` already ships `import/resolver: { typescript: true }`,
+which cascades and resolves the alias (confirmed: the injected violations error even
+with the boundaries block's own `import/resolver` removed).
 
-Therefore the `timecalendar/feature-boundaries` block sets
+The block nonetheless sets
 `settings['import/resolver'] = { typescript: { project: "./tsconfig.json" }, node: {...} }`,
 and **`eslint-import-resolver-typescript` is added as an explicit `mobile/`
-devDependency**. It already exists *transitively* (via `eslint-config-expo@56` →
-`3.10.1`), but a boundary gate silently depending on a transitive is fragile — an
-expo-config minor bump could drop or move it and the gate would go quiet without
-failing. An explicit dependency is the honest contract. (This resolver setting is
+devDependency** — belt-and-braces over the inherited expo resolver, not strictly
+necessary today. The resolver currently exists only *transitively* (via
+`eslint-config-expo@56` → `3.10.1`); a boundary gate silently depending on a
+transitive is fragile — an expo-config bump could drop or move it and the gate would
+go quiet without failing. An explicit dependency is the honest contract. (This
+resolver setting is
 scoped to the boundaries block; it does not change how the existing
 `no-restricted-imports` string-pattern bans work — those never needed resolution.)
 
