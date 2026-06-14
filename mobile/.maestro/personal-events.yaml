@@ -1,0 +1,73 @@
+# Personal-events CRUD round-trip e2e flow (B2 / TIM-133).
+#
+# Cold-launches the development-variant app, deep-links to the create form, types
+# a title via the RN-core TextInput, accepts the DEFAULT start/end dates, saves,
+# asserts the new title appears in the Home-tab list, opens it, deletes it, and
+# asserts it is gone. This proves the full create→list→delete round-trip through
+# the REAL stack: runMigrations() → the CREATE TABLE personal_events migration →
+# SQLite → the repository upsert/remove → the reactive useLiveQuery list (a
+# create writes a row, the live query re-renders, a delete removes it) — end to
+# end, nothing mocked, on a real device.
+#
+# What it deliberately does NOT do (design D5): open and drive the native SwiftUI
+# / Jetpack Compose date/time picker. Native date/time popups are OS-level and
+# NOT reliably addressable by Maestro across BOTH iOS and Android — a picker-drive
+# flow would be flaky, and a flaky e2e erodes the gate. The picker→state WIRING is
+# proven deterministically by the Jest proof test
+# (personal-event-form-screen.test.tsx, which drives the picker's onValueChange).
+# Default dates (start = now, end = now + 1h) make the create deterministic
+# without opening a picker. If a stable native-picker selector ever proves
+# reliable on both platforms, a date-change step MAY be added as a bonus — only
+# if reliable; do not ship a flaky flow.
+#
+# Requires a release-config dev-variant build installed on the connected device
+# (no server needed — personal events are device-local). Shared across iOS and
+# Android: stable testID / localized-text assertions, no per-platform selectors.
+# Run via mobile/e2e/run_e2e.sh. Mirrors settings.yaml / schools.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link (see schools.yaml header): a warm openLink does
+# not navigate on Android release builds — Expo Router resolves the link through
+# getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://personal-event-form
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
+# (Android does not); tap it only on iOS.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Open"
+# The create form's title TextInput carries a stable testID
+# (personal-event-form-screen.tsx). Generous timeout: a release-config iOS cold
+# start + JS bundle load can land just past Maestro's ~17s default.
+- extendedWaitUntil:
+    visible:
+      id: "personal-event-title-input"
+    timeout: 60000
+- tapOn:
+    id: "personal-event-title-input"
+# A stable ASCII-only title (avoids accent-matching fragility across platforms).
+- inputText: "Maestro CRUD event"
+# Save (accepting the default start/end dates — no picker opened). The Save
+# control carries a stable testID.
+- tapOn:
+    id: "personal-event-save"
+# Back on the Home-tab list: the reactive useLiveQuery re-rendered with the new
+# row. The title only appears if the write committed through the real DB.
+- extendedWaitUntil:
+    visible: "Maestro CRUD event"
+    timeout: 60000
+# Open the row to edit (the row is the edit entrypoint), then delete it.
+- tapOn: "Maestro CRUD event"
+- extendedWaitUntil:
+    visible:
+      id: "personal-event-delete"
+    timeout: 60000
+- tapOn:
+    id: "personal-event-delete"
+# Back on the list: the delete removed the row and the live query re-rendered.
+- extendedWaitUntil:
+    notVisible: "Maestro CRUD event"
+    timeout: 60000
