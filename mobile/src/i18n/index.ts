@@ -1,7 +1,12 @@
 import { createInstance } from "i18next"
 import { initReactI18next } from "react-i18next"
 
-import { detectLocale } from "./detect-locale"
+// Import the pure store module directly (not the feature barrel) — the barrel
+// re-exports hooks.ts, which imports this i18n instance; going through it would
+// close a cycle (@/i18n → prefs barrel → hooks → @/i18n). The store imports
+// @/storage + the detect-locale leaf only, so @/i18n → store is cycle-free (D5).
+import { getInitialLocale } from "@/features/settings/prefs/store"
+
 import en from "./locales/en.json"
 import fr from "./locales/fr.json"
 
@@ -26,7 +31,10 @@ const i18n = createInstance()
 
 void i18n.use(initReactI18next).init({
   resources,
-  lng: detectLocale(),
+  // Stored language preference if explicit ("fr"/"en"), else device detection
+  // (getInitialLocale, a synchronous store read — MMKV is synchronous, matching
+  // i18n's synchronous-init contract; D5).
+  lng: getInitialLocale(),
   fallbackLng: "en",
   keySeparator: false,
   nsSeparator: false,

@@ -29,4 +29,13 @@ describe("runMigrations", () => {
     await runMigrations()
     expect(mockRecordError).toHaveBeenCalledWith(expect.anything(), failure)
   })
+
+  it("wraps a non-Error rejection before recording it", async () => {
+    mockMigrate.mockRejectedValueOnce("string failure")
+    await runMigrations()
+    expect(mockRecordError).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ message: "string failure" }),
+    )
+  })
 })
