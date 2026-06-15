@@ -27,6 +27,8 @@ export const db = drizzle(expoDb)
 // all of drizzle-orm.
 export { and, eq, gte, lte, useLiveQuery }
 
-// Feature code imports the table from @/db too, so the schema's
-// drizzle-orm/sqlite-core import stays inside the seam dir.
-export { personalEvents } from "./schema"
+// Feature code imports the tables from @/db too, so the schema's
+// drizzle-orm/sqlite-core import stays inside the seam dir. `eq` (already
+// re-exported above) is the only operator the user-calendars repository needs —
+// no new operator is added (R-2: re-export only what's needed).
+export { personalEvents, userCalendars } from "./schema"

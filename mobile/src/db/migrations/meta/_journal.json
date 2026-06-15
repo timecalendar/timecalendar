@@ -8,6 +8,13 @@
       "when": 1781440589215,
       "tag": "0000_handy_nuke",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781562418468,
+      "tag": "0001_loving_bug",
+      "breakpoints": true
     }
   ]
 }
