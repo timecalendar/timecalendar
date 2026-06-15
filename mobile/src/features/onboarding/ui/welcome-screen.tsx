@@ -70,6 +70,28 @@ export default function WelcomeScreen() {
             {t("onboarding.welcome.cta")}
           </ThemedText>
         </Pressable>
+
+        {/* The alternative "scan a QR code" path into the calendar-sources QR
+            scanner (Phase-3 ship 3). Reuses the accent-border CTA pattern (same
+            contrast posture as the primary CTA above). */}
+        <Pressable
+          testID="onboarding-welcome-scan-cta"
+          accessibilityRole="button"
+          accessibilityLabel={t("onboarding.welcome.scanCtaLabel")}
+          hitSlop={Spacing.two}
+          onPress={() => router.push("/onboarding/qr-scan")}
+          style={[
+            styles.cta,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.primary,
+            },
+          ]}
+        >
+          <ThemedText type="smallBold">
+            {t("onboarding.welcome.scanCta")}
+          </ThemedText>
+        </Pressable>
       </SafeAreaView>
     </ThemedView>
   )
