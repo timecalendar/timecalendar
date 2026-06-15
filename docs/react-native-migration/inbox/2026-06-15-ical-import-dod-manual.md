@@ -9,7 +9,8 @@ cannot assert:
 1. **The real import round-trip.** From the onboarding welcome screen, tap "add by URL",
    paste a **real, reachable `.ics` URL** (e.g. a school iCal or a known public calendar
    feed), submit, and confirm the server `POST /calendars` succeeds and a token comes back
-   (the screen confirms the imported URL and dismisses).
+   (on success the screen stashes `{ url }` into the ephemeral holder and dismisses; the token
+   is a ship-5 forward seam, neither displayed nor persisted now).
 2. **The server-failure + retry path.** Submit a syntactically-valid-but-unimportable URL
    (e.g. a `https://` URL that 404s or isn't a calendar) and confirm an accessible error
    state with a working **Retry** appears, and that the failure lands in **Crashlytics**

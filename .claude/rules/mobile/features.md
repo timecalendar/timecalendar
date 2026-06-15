@@ -189,7 +189,8 @@ dep, no `app.config.ts`/babel change, no ADR** (growth within ADR 017 + the exis
   **Retry** states over the create mutation (mirrors school-selection's read flow per
   [data.md](./data.md)). On success it stashes the same `ScannedCalendarSource { url }` into the
   **ship-3 ephemeral holder** (`setScannedSource` — ship 5 swaps it for the durable token store)
-  and `router.back()`s; the token is surfaced, not persisted this ship. A thin route
+  and `router.back()`s; the create seam resolves the token (a ship-5 forward seam), but this ship
+  neither displays nor persists it. A thin route
   `src/app/onboarding/ical-url.tsx` re-exports it; an "Add by URL" CTA on the welcome screen
   pushes `/onboarding/ical-url` (same accent-border CTA pattern beside "Scan a QR code").
 - **Observability ✅ wired (D5):** an **invalid URL** (client pre-filter) is recoverable — shown

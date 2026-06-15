@@ -152,7 +152,8 @@ concern into two ephemeral seams ship 5 would then have to merge; the holder is 
 generically and the source shape is identical (R-2). *Considered:* extending the holder to
 carry `{ url, token }` now — deferred to ship 5 with the durable schema (D from Non-Goals), so
 this ship doesn't guess the token's persisted shape. The holder keeps its ship-3 `{ url }`
-contract; the token is surfaced in the screen's success state only.
+contract; the create seam resolves the token (a ship-5 forward seam), but this ship neither
+displays nor persists it — on success it stashes `{ url }` into the ephemeral holder and dismisses.
 
 ### D5 — Create-failure path → `@/firebase` `recordError`; observability ✅
 
@@ -215,7 +216,8 @@ white-on-brand rule; no `primaryStrong` token added, R-2).
   is added with the durable store, not retro-fitted into this screen.
 - **Ephemeral handoff is throwaway** → the success stashes `{ url }` into ship 3's in-memory
   holder, replaced by ship 5's durable token store; intended (the ship boundary), labeled in
-  code, a plain revert if ship 5 reshapes it. The token is shown but not persisted this ship.
+  code, a plain revert if ship 5 reshapes it. The create seam resolves the token (a ship-5 forward
+  seam), but this ship neither displays nor persists it.
 
 ## Migration Plan
 

@@ -24,10 +24,11 @@ import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 // recoverable — shown inline, NOT recordError'd (noise avoidance, like the QR
 // "not a calendar" path); a SERVER create failure is recorded through @/firebase
 // recordError AND surfaced as an accessible error + Retry (the URL is
-// syntactically fine, so it's both recorded and retryable). On success it stashes
-// the same { url } into ship 3's ephemeral holder (setScannedSource — ship 5 swaps
-// it for the durable token store) and dismisses; the token is shown but not
-// persisted this ship.
+// syntactically fine, so it's both recorded and retryable). The create seam
+// resolves { token } as a forward seam for ship 5's durable token store, but this
+// ship neither displays nor persists it — on success it stashes { url } into ship
+// 3's ephemeral holder (setScannedSource — ship 5 swaps it for the durable token
+// store) and dismisses.
 //
 // It consumes its sibling data sub-barrel (@/features/calendar-sources/data),
 // never its own feature barrel (B-2) and never the generated hook / firebase
