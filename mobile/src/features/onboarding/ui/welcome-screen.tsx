@@ -92,6 +92,28 @@ export default function WelcomeScreen() {
             {t("onboarding.welcome.scanCta")}
           </ThemedText>
         </Pressable>
+
+        {/* The "add by URL" path into the calendar-sources iCal-URL entry screen
+            (Phase-3 ship 4). Same accent-border CTA pattern / contrast posture as
+            the CTAs above (no primaryStrong token, R-2). */}
+        <Pressable
+          testID="onboarding-welcome-url-cta"
+          accessibilityRole="button"
+          accessibilityLabel={t("onboarding.welcome.urlCtaLabel")}
+          hitSlop={Spacing.two}
+          onPress={() => router.push("/onboarding/ical-url")}
+          style={[
+            styles.cta,
+            {
+              backgroundColor: theme.backgroundElement,
+              borderColor: theme.primary,
+            },
+          ]}
+        >
+          <ThemedText type="smallBold">
+            {t("onboarding.welcome.urlCta")}
+          </ThemedText>
+        </Pressable>
       </SafeAreaView>
     </ThemedView>
   )

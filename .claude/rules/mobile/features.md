@@ -121,7 +121,7 @@ the second `ui/`-only feature folder. Load-bearing decisions:
   meaningful but owned by the cross-feature analytics taxonomy step; the CTA `onPress` is the recorded
   firing point.
 
-## Calendar sources — QR scan (camera input) + the cluster home (Phase-3 ship 3)
+## Calendar sources — QR scan (camera) + iCal URL (server POST) + the cluster home (Phase-3 ships 3/4)
 
 The first **camera input method** and the home of the "add a calendar source" cluster
 (QR · iCal import · durable token persistence — Phase-03 ships 3/4/5). **One feature folder
@@ -161,6 +161,50 @@ The first **camera input method** and the home of the "add a calendar source" cl
   mock firing a synthetic `onBarcodeScanned`). The real camera + permission dialogs + the
   `expo prebuild` native-config proof are the inbox/DoD on-device pass
   (`inbox/2026-06-15-qr-scan-dod-manual.md`).
+
+### iCal URL import (server POST — Phase-3 ship 4)
+
+The **second** input method, grown in place (sublayers, not a new folder — ADR 017 D3). The
+import is a **server `POST /calendars { url } → { token }`**, not a client-side `.ics`
+fetch/parse — Flutter parity (`import_ical`'s `loadIcalUrl`); the server owns parsing. **No new
+dep, no `app.config.ts`/babel change, no ADR** (growth within ADR 017 + the existing `data/`
++ form-validator patterns).
+
+- **Create seam (`data/create.ts`, 90%-gated):** the feature's **first generated-hook import
+  site** (B-1) — wraps the committed `useCalendarSyncControllerCreateCalendar` over the single
+  `customFetch` mutator, builds the `CreateCalendarDto` here (`{ url: url.trim(), customData:
+  null }`; `schoolId`/`schoolName`/`name` omitted — enrichment deferred to the durable state),
+  and exposes a thin `useCreateCalendar()` returning `{ createCalendar(url) → { token },
+  isPending, isError, reset }`. Mirrors `school-selection/data/queries.ts`. A **write
+  mutation** — NOT added to the offline-persist `shouldDehydrateQuery` set (ADR 013, only
+  schools/groups reads persist).
+- **URL validator (`data/validate-url.ts`, 90%-gated):** pure `validateIcalUrl(raw): string |
+  null` — `null` when acceptable, else a **localizable key** (`calendarSources.icalUrl.error.{empty,invalid}`),
+  never a sentence (mirrors `personal-events/form/validate.ts`). **Deliberately lenient** — a UX
+  pre-filter for immediate feedback; the **server `POST /calendars` is the authoritative
+  validator** (Flutter has no client validation at all).
+- **Screen (`ui/ical-url-screen.tsx`, presentational 70% floor):** a labeled RN-core `TextInput`
+  (`keyboardType="url"`, `autoCapitalize="none"`, `autoCorrect={false}`, never
+  `allowFontScaling={false}`), a submit `Pressable`, and accessible importing / server-error +
+  **Retry** states over the create mutation (mirrors school-selection's read flow per
+  [data.md](./data.md)). On success it stashes the same `ScannedCalendarSource { url }` into the
+  **ship-3 ephemeral holder** (`setScannedSource` — ship 5 swaps it for the durable token store)
+  and `router.back()`s; the create seam resolves the token (a ship-5 forward seam), but this ship
+  neither displays nor persists it. A thin route
+  `src/app/onboarding/ical-url.tsx` re-exports it; an "Add by URL" CTA on the welcome screen
+  pushes `/onboarding/ical-url` (same accent-border CTA pattern beside "Scan a QR code").
+- **Observability ✅ wired (D5):** an **invalid URL** (client pre-filter) is recoverable — shown
+  inline, NOT `recordError`'d (noise avoidance). A **server create failure** (`useMutation`
+  rejects) records through `@/firebase` `recordError(error, "calendar-sources/ical-import")` **and**
+  surfaces an accessible error + Retry (the URL is syntactically fine — both recorded and
+  retryable).
+- **CI vs. manual:** the validate→create→handoff wiring + the server-failure → `recordError` +
+  retry path are Jest-proven by mocking the `customFetch` mutator (`ical-url-screen.test.tsx`,
+  real `QueryClient` + real generated mutation). The real import round-trip can't be
+  Maestro-driven (the dev harness seeds no parseable `.ics`; same posture as the camera) — a
+  light Maestro step (`.maestro/ical-import.yaml`) asserts render + reachability + empty-submit
+  inline validation only; the real import + a11y + Crashlytics arrival is the inbox/DoD on-device
+  pass (`inbox/2026-06-15-ical-import-dod-manual.md`).
 
 ## Splash
 
