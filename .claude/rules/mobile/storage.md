@@ -142,3 +142,60 @@ first wiring of `useLiveQuery`. Load-bearing storage-representation decisions:
   that doesn't crash is the proof. The repository tests `jest.mock("@/db")` locally (the
   suite-wide `setup-db.ts` mocks `drizzle → {}`, no query chain to spy). The K-3 coverage
   gate (`src/db/**`, `src/features/**` at 90%) lands green.
+
+## User-calendar identity store — `user_calendars`
+
+The **second real table** (the first added since `personal_events`) and the first
+**durable token store** — the load-bearing identity ship (the calendar-subscription
+**token IS the user's identity**, no server backup). It replays the personal-events
+precedent: a Drizzle table mirroring a Flutter sembast `toMap()` verbatim for **importer
+fidelity** (Phase-09 target). Load-bearing decisions: **ADR
+[018](./decisions/018-user-calendar-storage.md)** (Drizzle-over-MMKV + verbatim-schema);
+rationale in `add-mobile-calendar-identity-persistence`'s `design.md` (D1–D9) and
+`specs/mobile-calendar-identity-persistence/spec.md`.
+
+- **The schema — `src/db/schema.ts` `userCalendars` (SQL `user_calendars`).** Columns
+  mirror the Flutter `UserCalendar.toDbMap()` wire format **verbatim** (traced to
+  `app/lib/modules/calendar/models/user_calendar.dart` + the §3.2 device JSONL dump):
+  `id` TEXT primary key (the **sembast record key** `_store.record(calendar.id).put` =
+  the upsert identity — **not** the token, not a surrogate), `token` TEXT not-null (the
+  **irreplaceable** subscription identity — the single most critical sembast field — the
+  `getByToken` lookup key), `name` TEXT not-null, nullable `schoolName` / `schoolId` TEXT,
+  `lastUpdatedAt` / `createdAt` TEXT not-null holding **UTC ISO-8601 strings** (ADR 011/D4
+  posture — TEXT over epoch-ms for importer round-trip fidelity *and* lexicographic =
+  chronological order), `visible` `integer({ mode: "boolean" }).notNull().default(true)`
+  (SQLite has no boolean; default mirrors Flutter `visible = true`). The importer-fidelity
+  property: a `toDbMap()`-shaped record imports with **zero value transformation**.
+- **The second real migration — `src/db/migrations/0001_*.sql`** (`drizzle-kit generate`,
+  driver `expo`): `CREATE TABLE user_calendars …`, a second `meta/_journal.json` entry, an
+  `0001_snapshot.json`, and an updated `migrations.js` (now importing `m0000` + `m0001`).
+  All committed (fresh-clone-no-codegen). `migrations.d.ts` is stable across regenerations.
+  The runner applies both unchanged; the `migrate.test.ts` proof still passes.
+- **The `@/db` seam re-exports `userCalendars`** (the table) alongside `personalEvents`;
+  no new operator (`eq` already re-exported is the only one the repository needs — R-2).
+- **The feature `data/` layer — `src/features/calendar-sources/data/user-calendars/`** (a
+  grouped sub-module under the existing calendar-sources `data/` seam, D3): `types.ts` (the
+  `UserCalendar` domain type exposing `Date` + `boolean`; the pure `rowToCalendar` /
+  `calendarToRow` mappers normalizing every write to canonical UTC; and
+  `fromCalendarForPublic` — the server `CalendarForPublic` DTO → domain mapper, the **only**
+  generated-type import in the layer, in `data/` per B-1), `repository.ts` (async CRUD over
+  `@/db` — `findAll`, `getById`, `getByToken`, `upsert` by `id` via `onConflictDoUpdate`
+  mirroring the Flutter `record(id).put` and accepting a caller-supplied id for the importer,
+  `remove`, `setVisible`), `id.ts` (`newId()` over `expo-crypto` — the swappable uid site;
+  the importer bypasses it), `hooks.ts` (`useUserCalendars()` — the reactive `useLiveQuery`
+  read replacing the removed ephemeral holder), `add-calendar.ts` (the shared persist seam —
+  `useAddCalendar`'s `addCalendarFromUrl`: POST `/calendars` → resolve `GET /calendars/by-token/{token}`
+  → `fromCalendarForPublic` → `upsert`; both the QR and iCal screens use it), and `index.ts`.
+- **Ships 3/4 persist through it.** The QR-scan + iCal-import success paths now `upsert` a
+  durable row (replacing the ephemeral `scanned-source.ts`, removed). **A persist can fail**
+  (the first calendar-sources write that can) — recorded through `@/firebase` `recordError`
+  + an accessible failure surface.
+- **What CI proves vs. on-device.** CI proves the **mappers** (round-trip, importer-fidelity
+  verbatim, canonical-UTC, null/boolean), the **uid wrapper**, the **repository wiring** (the
+  `jest.mock("@/db")` query-builder spy), the **reactive hook**, the **persist wiring**
+  (success + the failure→`recordError` path at the `customFetch` seam), and a
+  **restart-simulation** (a fresh repository module reads back a prior write through a
+  stateful Map-backed `@/db` fake — the write-then-read-back contract). CI **cannot** prove
+  on-disk SQLite survival — that is the **on-device manual restart/kill/cache-clear pass**
+  (inbox `2026-06-16-calendar-restart-durability.md`; no list UI ships this change, so there
+  is no Maestro post-relaunch assertion target — design D9). The K-3 coverage gate lands green.
