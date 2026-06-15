@@ -121,16 +121,18 @@ the second `ui/`-only feature folder. Load-bearing decisions:
   meaningful but owned by the cross-feature analytics taxonomy step; the CTA `onPress` is the recorded
   firing point.
 
-## Calendar sources — QR scan (camera) + iCal URL (server POST) + the cluster home (Phase-3 ships 3/4)
+## Calendar sources — QR scan (camera) + iCal URL (server POST) + durable token persistence (Phase-3 ships 3/4/5)
 
 The first **camera input method** and the home of the "add a calendar source" cluster
-(QR · iCal import · durable token persistence — Phase-03 ships 3/4/5). **One feature folder
-`src/features/calendar-sources/`**, named for the *concern* so ships 4/5 grow it in place (adding
-`data/create` + `store/` sublayers, not new folders). Load-bearing decisions:
-**ADR [017](./decisions/017-qr-scan-camera.md)**. The camera dep + plugin are in
-[runtime.md](./runtime.md).
+(QR · iCal import · durable token persistence — Phase-03 ships 3/4/5, **all landed**). **One
+feature folder `src/features/calendar-sources/`**, named for the *concern* so the ships grow it in
+place (adding `data/` sublayers, not new folders). Load-bearing decisions:
+**ADR [017](./decisions/017-qr-scan-camera.md)** (QR/camera) + **ADR
+[018](./decisions/018-user-calendar-storage.md)** (durable storage). The camera dep + plugin are in
+[runtime.md](./runtime.md); the `user_calendars` schema is in [storage.md](./storage.md).
 
-- **Sublayers (this ship):** `data/` + `ui/` under `src/features/calendar-sources/`.
+- **Sublayers:** `data/` (incl. the `user-calendars/` durable sub-module) + `ui/` under
+  `src/features/calendar-sources/`.
 - **Parser (`data/parse-source.ts`, 90%-gated):** the pure
   `parseScannedSource(raw): ScannedCalendarSource | null` — trims, accepts `http`/`https`
   **verbatim** (Flutter's verbatim-passthrough: the QR encodes a raw string treated as a calendar
@@ -140,21 +142,23 @@ The first **camera input method** and the home of the "add a calendar source" cl
   **reversible** branch (the server accepts the http(s) form; delete the branch if it ever needs raw
   `webcal://`). Pure (no camera/`t()`/backend) per ADR 014. The seam ships 4/5 + the Phase 09
   importer consume; `ScannedCalendarSource = { url }`.
-- **Ephemeral handoff (`data/scanned-source.ts`):** a module-scoped reactive holder
-  (`useSyncExternalStore`) for the parsed source — **NOT MMKV, NOT Drizzle** (durable
-  `user_calendars` token persistence is ship 5; this is the seam ship 5 swaps). Labeled ephemeral in
-  code.
+- **Durable persistence (ship 5):** the ephemeral `data/scanned-source.ts` holder was **removed**
+  and replaced by the durable `user_calendars` token store (`data/user-calendars/`, ADR 018) — see
+  "Durable token persistence" below. `ScannedCalendarSource = { url }` stays as the pure parser's
+  output type.
 - **Screen (`ui/qr-scan-screen.tsx`, presentational 70% floor):** drives the full
   `useCameraPermissions` lifecycle (undetermined → request; granted → `CameraView` QR-only +
   `onBarcodeScanned`; denied-can't-ask-again → `Linking.openSettings()`). Single-scan debounce (a
   `scanned` ref). Imports `CameraView` / `useCameraPermissions` **directly** from `expo-camera`
   (**no chrome wrapper** — D5: expo-camera is a stable GA module, not an alpha API). A thin route
   `src/app/onboarding/qr-scan.tsx` re-exports it (route-structure rule); a "Scan a QR code" CTA on
-  the welcome screen pushes `/onboarding/qr-scan`.
-- **Observability ✅ wired (D8):** a **thrown** scan/parse failure records through `@/firebase`
-  `recordError(error, "calendar-sources/qr-scan")` + an accessible failure state — the **second**
-  surface that can fail (after personal-events writes). A recoverable **non-calendar QR** (`null`) is
-  NOT recorded (re-arm + "not a calendar QR") — noise avoidance (mirrors school-selection's `isError`
+  the welcome screen pushes `/onboarding/qr-scan`. **Ship 5 rewired the success path:** a parsed
+  source now `addCalendarFromUrl(source.url)` (the shared durable persist seam) and dismisses on
+  success — no ephemeral handoff.
+- **Observability ✅ wired:** a failed **persist** (create / token-resolve / `upsert` rejects)
+  records through `@/firebase` `recordError(error, "calendar-sources/qr-scan")` + an accessible
+  failure state — a real write that can fail. A recoverable **non-calendar QR** (`null`) is NOT
+  recorded (re-arm + "not a calendar QR") — noise avoidance (mirrors school-selection's `isError`
   N/A vs. personal-events' write throw ✅).
 - **CI vs. manual:** the camera can't be CI/Maestro-driven — the scan→parse→state wiring is proven
   by a Jest test mocking `expo-camera` (`jest/setup-expo-camera.ts` suite-wide + a controllable local
@@ -186,17 +190,17 @@ dep, no `app.config.ts`/babel change, no ADR** (growth within ADR 017 + the exis
 - **Screen (`ui/ical-url-screen.tsx`, presentational 70% floor):** a labeled RN-core `TextInput`
   (`keyboardType="url"`, `autoCapitalize="none"`, `autoCorrect={false}`, never
   `allowFontScaling={false}`), a submit `Pressable`, and accessible importing / server-error +
-  **Retry** states over the create mutation (mirrors school-selection's read flow per
-  [data.md](./data.md)). On success it stashes the same `ScannedCalendarSource { url }` into the
-  **ship-3 ephemeral holder** (`setScannedSource` — ship 5 swaps it for the durable token store)
-  and `router.back()`s; the create seam resolves the token (a ship-5 forward seam), but this ship
-  neither displays nor persists it. A thin route
-  `src/app/onboarding/ical-url.tsx` re-exports it; an "Add by URL" CTA on the welcome screen
-  pushes `/onboarding/ical-url` (same accent-border CTA pattern beside "Scan a QR code").
-- **Observability ✅ wired (D5):** an **invalid URL** (client pre-filter) is recoverable — shown
-  inline, NOT `recordError`'d (noise avoidance). A **server create failure** (`useMutation`
-  rejects) records through `@/firebase` `recordError(error, "calendar-sources/ical-import")` **and**
-  surfaces an accessible error + Retry (the URL is syntactically fine — both recorded and
+  **Retry** states over the add operation (mirrors school-selection's read flow per
+  [data.md](./data.md)). **Ship 5 rewired the success path:** on submit it now
+  `addCalendarFromUrl(url)` (the shared durable persist seam — create → resolve-by-token →
+  `upsert`) and `router.back()`s on success; the durable `user_calendars` row is the source of
+  truth (no ephemeral handoff). A thin route `src/app/onboarding/ical-url.tsx` re-exports it; an
+  "Add by URL" CTA on the welcome screen pushes `/onboarding/ical-url` (same accent-border CTA
+  pattern beside "Scan a QR code").
+- **Observability ✅ wired:** an **invalid URL** (client pre-filter) is recoverable — shown
+  inline, NOT `recordError`'d (noise avoidance). A **persist failure** (create / token-resolve /
+  `upsert` rejects) records through `@/firebase` `recordError(error, "calendar-sources/ical-import")`
+  **and** surfaces an accessible error + Retry (the URL is syntactically fine — both recorded and
   retryable).
 - **CI vs. manual:** the validate→create→handoff wiring + the server-failure → `recordError` +
   retry path are Jest-proven by mocking the `customFetch` mutator (`ical-url-screen.test.tsx`,
@@ -205,6 +209,31 @@ dep, no `app.config.ts`/babel change, no ADR** (growth within ADR 017 + the exis
   light Maestro step (`.maestro/ical-import.yaml`) asserts render + reachability + empty-submit
   inline validation only; the real import + a11y + Crashlytics arrival is the inbox/DoD on-device
   pass (`inbox/2026-06-15-ical-import-dod-manual.md`).
+
+### Durable token persistence (Phase-3 ship 5 — the load-bearing identity ship)
+
+The **token IS the user's identity, no server backup** — so the ephemeral handoff became a durable
+`user_calendars` SQLite store mirroring the Flutter `toDbMap()` verbatim (Phase-09 importer target).
+Schema, migration, and the full `data/` layer are in [storage.md](./storage.md) ("User-calendar
+identity store"); the storage-backend + verbatim-schema decision is
+**ADR [018](./decisions/018-user-calendar-storage.md)**.
+
+- **Durable layer (`data/user-calendars/`, 90%-gated):** the `UserCalendar` domain type + pure
+  mappers (`rowToCalendar`/`calendarToRow` + `fromCalendarForPublic`, the only generated-DTO import
+  — B-1), the repository over `@/db` (`findAll`/`getById`/`getByToken`/`upsert`-by-id/`remove`/
+  `setVisible`), the `newId()` uid wrapper, the reactive `useUserCalendars()` (replacing the removed
+  ephemeral holder), and `add-calendar.ts` (the shared `useAddCalendar`/`addCalendarFromUrl` persist
+  seam both screens use: POST `/calendars` → resolve `GET /calendars/by-token/{token}` →
+  `fromCalendarForPublic` → `upsert`).
+- **Observability ✅:** the **first calendar-sources write that can fail** — a failed
+  create/resolve/`upsert` is recorded through `@/firebase` `recordError` + an accessible failure
+  surface on each screen.
+- **CI vs. manual:** CI proves the mappers (round-trip, **importer-fidelity verbatim**, canonical
+  UTC, null/boolean), the repository query shape, the persist wiring (success + failure at the
+  `customFetch` seam), and a **restart-simulation** (a fresh repository module reads back a prior
+  write through a stateful Map-backed `@/db` fake). On-disk SQLite survival across restart/kill/
+  cache-clear is the on-device manual pass (`inbox/2026-06-16-calendar-restart-durability.md` — no
+  list UI ships, so no Maestro post-relaunch assertion target).
 
 ## Splash
 
