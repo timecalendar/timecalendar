@@ -1,7 +1,7 @@
 import { act, render } from "@testing-library/react-native"
 import { AccessibilityInfo, Animated } from "react-native"
 
-import { SplashScreen } from "@/components/splash-screen"
+import { SplashScreen } from "./splash-screen"
 
 // Proof that the splash overlay wiring resolves through the real theme + i18n +
 // accessibility tree (mirrors the i18n/a11y/firebase/theming proofs). The

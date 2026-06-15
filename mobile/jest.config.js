@@ -56,15 +56,25 @@ module.exports = {
   // K-3 coverage gate, enforced (ADR 003 — revisit fired 2026-06-14, wired by
   // the Settings prefs feature that owns it, per ADR 004). High bar where bugs
   // hide; presentational covered by behavior tests but exempt from the 90%:
-  //  - logic globs at 90% lines+branches (features, hooks, storage, db, theme,
-  //    i18n, firebase — the domain/logic seams);
-  //  - 70% global floor for the remainder (presentational src/components,
-  //    incl. the chrome wrappers — exempt from the 90% per ADR 003).
+  //  - logic globs at 90% lines+branches (features [minus ui/ screens], hooks,
+  //    storage, db, theme, i18n, firebase — the domain/logic seams);
+  //  - 70% global floor for the remainder (presentational feature ui/ screens +
+  //    the shared src/components primitives/shell incl. the chrome wrappers —
+  //    exempt from the 90% per ADR 003).
   // Re-export barrels are imported by the suites, so they self-cover at 100%
   // and need no special handling.
   coverageThreshold: {
     global: { lines: 70, branches: 70 },
-    "src/features/**": { lines: 90, branches: 90 },
+    // Logic sublayers (data/store/form/prefs + the feature barrels) are 90%-gated;
+    // the presentational ui/ screens that moved in from src/components fall to the
+    // global 70% floor instead (ADR 003 — screens are exempt from the 90% logic
+    // gate). We EXCLUDE ui from the broad glob (the `!(ui)` extglob) rather than
+    // overlay a separate 70 key, because Jest coverage thresholds are ADDITIVE, not
+    // most-specific-wins: an overlay key wouldn't exempt ui from this 90 group (it
+    // gets checked against BOTH) and would also evict ui from the global pool. With
+    // ui excluded, the screens land in `global` — the same posture they had in
+    // src/components, which also keeps the global pool (they're well-tested) ≥70.
+    "src/features/*/!(ui)/**": { lines: 90, branches: 90 },
     "src/hooks/**": { lines: 90, branches: 90 },
     "src/storage/**": { lines: 90, branches: 90 },
     "src/db/**": { lines: 90, branches: 90 },

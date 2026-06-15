@@ -1,4 +1,4 @@
-import { PersonalEventsList } from "@/components/personal-events-list"
+import { PersonalEventsList } from "@/features/personal-events/ui"
 
 // The Home/"Accueil" tab — a thin entrypoint over the @/components list module
 // (route-structure rule; the list's own test lives beside the component). The

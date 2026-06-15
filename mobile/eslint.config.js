@@ -227,11 +227,16 @@ module.exports = defineConfig([
     // structure (which element may import which) that a string ban can't express.
     //
     // The config file IS the rule's documentation (R-1): the four boundaries are
-    //   B-1 — only a feature's data/ sublayer may import @/api/generated/** or @/db.
+    //   B-1 — only a feature's data/ sublayer may import @/api/generated/** or @/db;
+    //         every OTHER sublayer — including the ui/ screens that moved in from
+    //         src/components/ — must go through a barrel (src/features/*/ui/ matches
+    //         the feature-sublayer element, so this already governs it, no new rule).
     //   B-2 — a feature sublayer must not import its own feature-level barrel (cycle);
     //         it imports a sibling's sub-barrel directly.
-    //   B-3 — screens (src/components/**) and routes (src/app/**) consume a feature
-    //         through its barrel, never @/api/generated/** or @/db directly.
+    //   B-3 — routes (src/app/**) and shared components (src/components/**, now only
+    //         shared primitives/shell — feature screens moved to src/features/*/ui/,
+    //         governed by B-1/B-2) consume a feature through its barrel, never
+    //         @/api/generated/** or @/db directly.
     //   B-4 — the ADR-009 infra→feature edge (@/hooks/use-color-scheme and @/i18n
     //         importing @/features/settings/prefs[/store]) is ALLOWED — the absence
     //         of a disallow naming infra-* as `from` is the deliberate resolution.
@@ -311,8 +316,11 @@ module.exports = defineConfig([
                 "B-1: only a feature's data/ sublayer may import @/api/generated or @/db — wrap the seam in data/ and re-export (golden-path.md → Seam conventions).",
             },
             {
-              // B-3: screens/routes never touch the seam directly — they consume
-              // the feature through its barrel.
+              // B-3: routes and shared components never touch the seam directly —
+              // they consume the feature through its barrel. Feature screens have
+              // moved to src/features/*/ui/ (now governed as feature-sublayers by
+              // B-1/B-2); src/components/ holds only shared primitives/shell, which
+              // this still guards should any reach for a seam.
               from: { type: ["component", "route"] },
               disallow: { to: { type: ["generated-api", "db-seam"] } },
               message:
