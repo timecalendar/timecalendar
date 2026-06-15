@@ -1,13 +1,14 @@
-// TEMPLATE — copy to src/components/<feature>-screen.test.tsx and drop the .txt suffix.
+// TEMPLATE — copy to src/features/<feature>/ui/<feature>-screen.test.tsx and drop the .txt suffix.
 //
 // The colocated COMPONENT TEST — render through the REAL theme + i18n trees and
 // assert LOCALIZED text (not raw keys), proving the wiring resolves end to end. For a
 // server-read feature, mock at the @/api/mutator customFetch seam (never the network)
 // and drive the real generated hook + a real QueryClient. RNTL 14's render is async —
-// await it.
+// await it. (It colocates in ui/ rather than src/app/, so Metro's route harness never
+// bundles it.)
 //
-// References: src/components/settings-screen.test.tsx,
-//             src/components/onboarding/school-picker-screen.test.tsx.
+// References: src/features/settings/ui/settings-screen.test.tsx,
+//             src/features/school-selection/ui/school-picker-screen.test.tsx.
 
 import { render } from "@testing-library/react-native"
 

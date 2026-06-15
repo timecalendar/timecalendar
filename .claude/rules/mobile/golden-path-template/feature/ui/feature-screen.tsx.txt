@@ -1,17 +1,20 @@
-// TEMPLATE — copy to src/components/<feature>-screen.tsx and drop the .txt suffix.
+// TEMPLATE — copy to src/features/<feature>/ui/<feature>-screen.tsx and drop the .txt suffix.
 //
 // The PRESENTATIONAL screen — it owns NO logic (all state comes from the feature's
-// reactive hooks), so it lives under src/components/ (70% coverage floor, exempt from
-// the 90% logic gate — ADR 003) with a thin src/app/<feature>.tsx re-export
-// (route-structure rule; the colocated test stays out of the Metro route tree).
+// reactive hooks), so it lives in the feature's ui/ sublayer (it falls to the 70%
+// coverage floor, exempt from the 90% logic gate — ADR 003) with a thin src/app/<feature>.tsx
+// re-export through the ui/ sub-barrel (route-structure rule; the colocated test stays out
+// of the Metro route tree because ui/ is not under src/app/).
 //
 // Conventions shown: useTranslation (no hardcoded strings — i18next/no-literal-string
 // lint), ThemedView/ThemedText from @/theme tokens, and an accessible touchable
-// (role + translated label; give it a >=44pt/48dp hit area). Native controls go
-// through @/components/chrome (the @expo/ui seam), never @expo/ui directly.
+// (role + translated label; give it a >=44pt/48dp hit area). Drive the feature's logic by
+// importing its SIBLING sub-barrel directly (@/features/<feature>/data | /store | /form),
+// never the feature barrel (B-2). Shared primitives come via @/components/*; native controls
+// via @/components/chrome (the @expo/ui seam), never @expo/ui directly.
 //
-// References: src/components/settings-screen.tsx,
-//             src/components/onboarding/school-picker-screen.tsx.
+// References: src/features/settings/ui/settings-screen.tsx,
+//             src/features/school-selection/ui/school-picker-screen.tsx.
 
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet } from "react-native"

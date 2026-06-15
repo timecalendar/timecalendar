@@ -1,0 +1,104 @@
+# Features — per-feature index
+
+Pointer index for the landed features. The durable, cross-cutting rules each feature
+established live in the [topical rule files](./architecture.md#topical-rule-files)
+(linked); this file records only what is **feature-specific**. The how-to for building a
+new one is the [golden-path exemplar](./golden-path.md); the decisions are in
+[`decisions/`](./decisions/README.md). Order and axes are fixed by
+[ADR 004](./decisions/004-phase-1-feature-order.md). For the canonical file paths per
+feature, see the axis table in [golden-path.md](./golden-path.md).
+
+## Settings — local KV + native controls + i18n
+
+- **Feature folder:** `src/features/settings/prefs/` — the first `src/features/` folder
+  (ADR [009](./decisions/009-settings-feature-prefs.md)). Two typed preferences,
+  `ThemePreference` and `LanguagePreference`, both default **`"system"`**; reads go through
+  **total validators** (any unset/corrupt/legacy value → `"system"`, never throws),
+  persisted under flat keys `settings.themePreference` / `settings.languagePreference`.
+- **Consumed by infra — the recorded infra→feature edge** (ADR 009; lint boundary B-4):
+  `@/hooks/use-color-scheme` resolves the theme override (see [theming.md](./theming.md), C1)
+  and `@/i18n` reads the startup locale (see [i18n.md](./i18n.md)). The edge is **allowed,
+  not promoted** (a sample of one). The graph stays a DAG: `@/i18n` reads the *store* module
+  directly (not the feature barrel) to avoid a cycle.
+- **Reactive read:** `useStoredString` in the `@/storage` seam (see [storage.md](./storage.md));
+  writes stay on the one imperative path.
+- **Screen (`ui/` sublayer):** presentational `src/features/settings/ui/settings-screen.tsx` +
+  thin `src/app/settings.tsx` route (re-exports via `@/features/settings/ui`); two native
+  `@expo/ui` pickers via the chrome wrapper
+  (ADR [010](./decisions/010-expo-ui-chrome-wrapper.md), see [theming.md](./theming.md)),
+  reachable as a `Stack` sibling of `(tabs)` from a Profile entry link — **the first real
+  product touchable**. Observability ➖ N/A (MMKV reads/writes are synchronous + infallible —
+  no error path to record).
+
+## Personal events — device-local CRUD + forms + write error path
+
+- **Sublayers:** `data/` + `form/` + `ui/` under `src/features/personal-events/`.
+- **Schema + data layer:** `src/db/schema.ts` `personalEvents` + `src/features/personal-events/data/`
+  — see [storage.md](./storage.md) and ADR [011](./decisions/011-personal-event-storage.md).
+- **Screens (`ui/` sublayer):** `src/features/personal-events/ui/personal-event-form-screen.tsx`
+  (the create/edit/delete form route) + `src/features/personal-events/ui/personal-events-list.tsx`
+  (the reactive Home-tab list, imported by `(tabs)/index.tsx` via `@/features/personal-events/ui`).
+- **Form layer:** `src/features/personal-events/form/` (90%-gated) — pure `validateEventForm`
+  (title required after trim; end strictly after start; returns **localizable error keys, not
+  sentences**), pure `buildEventFromForm` (trims strings, drops empty optionals to `undefined`,
+  `uid = existing?.uid ?? newEventId()`, `exportedAt = new Date()`; hands `Date`s + the
+  `#RRGGBB` string to the domain type and lets `eventToRow` own the ISO/hex encoding — no
+  re-encode). Screens hold form state and only **call** the pure logic + the hooks.
+- **Native date/time:** `DateTimePicker` via the chrome wrapper
+  (ADR [012](./decisions/012-personal-event-datetime-picker.md) — `@expo/ui`'s own control,
+  **not** `@react-native-community/datetimepicker`; see [theming.md](./theming.md)).
+- **Color:** a preset-palette swatch picker storing the `#RRGGBB` **verbatim** — the one
+  allowed cluster of color literals (they are *data* per ADR 011, not chrome styling). **Text:**
+  RN-core `TextInput` (never `allowFontScaling={false}`).
+- **Observability ✅ wired:** a rejected `upsert`/`remove` is recorded through `@/firebase`
+  `recordError` and surfaced as a failure flag — **the first feature where a write can fail**
+  (unlike Settings' infallible MMKV).
+
+## School selection (read path) — server read + offline cache + nested nav
+
+- **Sublayers:** `data/` + `store/` + `ui/` under `src/features/school-selection/`.
+- **Query + store layers:** `src/features/school-selection/data/` (the **only** generated-hook
+  import site; wraps `findSchools` / `findSchoolGroups` over `customFetch`, maps DTOs → small
+  domain shapes) + `store/` (a typed, defensively-validated, **identity-only** selection store —
+  persists only `schoolId` + group `value`(s), never the DTOs; total parsers; derived
+  `isOnboardingComplete`, **no separate completion flag**). The query policy + offline persister
+  are in [data.md](./data.md) (ADR [013](./decisions/013-query-persister-and-policy.md)).
+- **Screens (`ui/` sublayer):** `src/features/school-selection/ui/{school-picker-screen,school-group-picker-screen}.tsx`.
+- **Nested onboarding nav:** `src/app/onboarding/` route group (nested `Stack` + thin entrypoints
+  over `@/features/school-selection/ui`), a `Stack` sibling of `(tabs)`, reachable from a Profile
+  link. **Not a startup gate** (gating first paint on "no school selected" pulls in the
+  calendar/home dependency — deferred to that step).
+- **Observability ➖ N/A:** a failed read is a recoverable TanStack `isError` UI state
+  (accessible error + retry), not a crash-worthy throw.
+
+## Splash
+
+The app's startup overlay + the reusable render-when-ready pattern. **A presentation-only
+feature folder** `src/features/splash/` — just a `ui/` sublayer (no `data/`/`store/`/`form/`);
+`useAppReady` stays in `src/hooks/use-app-ready.ts` (shared infra, not feature-owned).
+
+- **Overlay over the static native splash.** `SplashScreen.preventAutoHideAsync()` is called in
+  **global scope** (module load, not awaited) so the native splash holds until JS is ready; the
+  JS overlay (`src/features/splash/ui/splash-screen.tsx`, imported by `_layout.tsx` via
+  `@/features/splash/ui`, mounted **above** the root `Stack`, **not** a route) continues it
+  (brand from `@/theme` + `t("app.name")`), calls `hideAsync()` on mount, then fades out (or
+  cuts under reduced motion) once ready.
+- **`useAppReady()` gate** (`src/hooks/use-app-ready.ts`) — the render-when-ready pattern features
+  inherit. Resolves once i18n (synchronous), fonts (a no-op seam today), and migrations
+  (fire-and-forget) are satisfied. **It MUST always resolve** — an unreached `hideAsync()` hangs
+  the splash forever, so every branch terminates and a watchdog timeout caps any future stalled
+  gate.
+- **Reduced-motion contract** — the app's first animation (see [accessibility.md](./accessibility.md)):
+  reads `AccessibilityInfo.isReduceMotionEnabled()` + subscribes to changes; reduced motion → no
+  animation, dismiss when ready; otherwise a ~300ms fade. **The final visual frame is identical in
+  both branches** — a reduced-motion user loses only motion, never content.
+- **Native-splash scheme asymmetry (not debt):** the native static splash keeps one
+  `backgroundColor` literal in `app.config.ts` — it runs **pre-JS**, so it can't read theme tokens
+  or the OS scheme; the JS overlay corrects to the scheme token within the first frame.
+
+## Feature-module pattern
+
+The layered `src/features/<feature>/<layer>/` shape (sublayers `data/` / `store/` / `form/` /
+`ui/`, per-sublayer + feature barrels with **no cycle**, the seam boundaries) is the golden path — see
+the [golden-path exemplar](./golden-path.md) and ADR [014](./decisions/014-layered-feature-module-pattern.md).
+The boundaries are CI-enforced — [lint-format.md](./lint-format.md), B-1…B-4.

@@ -1,11 +1,8 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
 
-import {
-  selectGroup,
-  selectSchool,
-  useSchoolGroups,
-} from "@/features/school-selection"
+import { useSchoolGroups } from "@/features/school-selection/data"
+import { selectGroup, selectSchool } from "@/features/school-selection/store"
 
 import SchoolGroupPickerScreen from "./school-group-picker-screen"
 
@@ -13,8 +10,11 @@ import SchoolGroupPickerScreen from "./school-group-picker-screen"
 // useSchoolGroups; expanding a branch reveals its leaf; selecting a leaf persists
 // the selection (selectSchool + selectGroup, mocked) and completes the flow
 // (router.back). The schoolId comes from a mocked route param.
-jest.mock("@/features/school-selection", () => ({
+jest.mock("@/features/school-selection/data", () => ({
   useSchoolGroups: jest.fn(),
+}))
+
+jest.mock("@/features/school-selection/store", () => ({
   selectSchool: jest.fn(),
   selectGroup: jest.fn(),
 }))

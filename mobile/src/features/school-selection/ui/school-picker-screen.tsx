@@ -6,7 +6,10 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { type SchoolListItem, useSchools } from "@/features/school-selection"
+import {
+  type SchoolListItem,
+  useSchools,
+} from "@/features/school-selection/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The onboarding school step (C1 / TIM-134) — PRESENTATIONAL (70% floor): the
