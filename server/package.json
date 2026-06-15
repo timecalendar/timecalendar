@@ -61,7 +61,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.14.178",
-    "@types/node": "^22",
+    "@types/node": "^25",
     "@types/nodemailer": "^8.0.0",
     "@types/pretty-hrtime": "^1.0.3",
     "@types/slug": "^5.0.2",
