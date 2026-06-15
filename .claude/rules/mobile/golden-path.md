@@ -22,9 +22,9 @@ So the exemplar names the **canonical landed feature per axis**, then documents 
 
 | Axis | Canonical feature | Where it lives |
 | --- | --- | --- |
-| Local key-value + native controls + i18n | **Settings** | `mobile/src/features/settings/prefs/` + `mobile/src/components/settings-screen.tsx` |
-| Structured device-local CRUD + multi-field form + write error path | **Personal events** | `mobile/src/features/personal-events/{data,form}/` + `mobile/src/components/{personal-events-list,personal-event-form-screen}.tsx` |
-| Server read + offline cache + nested navigation | **School selection** | `mobile/src/features/school-selection/{data,store}/` + `mobile/src/components/onboarding/` |
+| Local key-value + native controls + i18n | **Settings** | `mobile/src/features/settings/{prefs,ui}/` |
+| Structured device-local CRUD + multi-field form + write error path | **Personal events** | `mobile/src/features/personal-events/{data,form,ui}/` |
+| Server read + offline cache + nested navigation | **School selection** | `mobile/src/features/school-selection/{data,store,ui}/` |
 
 When you start a feature, find the row whose axis is closest to yours and copy *that*
 feature's layer for the parts unique to it; copy the common spine below for the rest.
@@ -45,10 +45,15 @@ its axis needs** — a feature adds only the ones it uses (the set is open, not 
   `hooks.ts`. See `settings/prefs/store.ts` and `school-selection/store/store.ts`.
 - **`form/`** — pure form logic (validation, build, save/delete/load hooks over the
   feature's `data/`). See `personal-events/form/`.
+- **`ui/`** — the presentational screen(s). Consumes the feature's sibling sub-barrels
+  directly (`settings/ui/settings-screen.tsx` → `@/features/settings/prefs`) — never its
+  own feature barrel (B-2) nor the seams (B-1); the colocated `*.test.tsx` is fine here
+  because it is not under `src/app/`, so Metro's route harness never bundles it. See
+  `settings/ui/`, `personal-events/ui/`, `school-selection/ui/`.
 
-Settings has only the prefs store; School selection has `data/` + `store/`; Personal
-events has `data/` + `form/` (its `data/` *is* the store analog — persistence is the
-SQLite table, not MMKV).
+Settings has `prefs/` + `ui/`; School selection has `data/` + `store/` + `ui/`; Personal
+events has `data/` + `form/` + `ui/` (its `data/` *is* the store analog — persistence is
+the SQLite table, not MMKV); Splash is presentation-only — just `ui/`.
 
 The blessing decision and the open sublayer set are
 [ADR 014](./decisions/014-layered-feature-module-pattern.md).
@@ -73,9 +78,10 @@ Feature-module boundaries").
 
 ### Seam conventions
 
-- **`data/` is the only generated-hook / `@/db` import site.** Screens consume the
-  **feature barrel only**, never `@/api/generated/*`, `@/db`, or `react-native-mmkv`
-  directly. References: `school-selection/data/queries.ts` (wraps the generated
+- **`data/` is the only generated-hook / `@/db` import site.** A feature's `ui/` screens
+  consume the feature's **sibling sub-barrels** (`@/features/<feature>/data` / `/store` /
+  `/form`) — never their own feature barrel (B-2), and never `@/api/generated/*`, `@/db`,
+  or `react-native-mmkv` directly (B-1). References: `school-selection/data/queries.ts` (wraps the generated
   `useSchoolControllerFindSchools` / `useSchoolGroupControllerFindSchoolGroups` over
   the single `mobile/src/api/mutator.ts` `customFetch`, maps DTOs → small domain
   shapes), `personal-events/data/repository.ts` (the only importer of
@@ -96,24 +102,29 @@ Feature-module boundaries").
   UTC), `school-selection/data/types.ts` (the DTO → `SchoolListItem`/`SchoolGroupNode`
   projections).
 
-### Presentational screen in `src/components/` + thin route in `src/app/`
+### Presentational screen in the feature's `ui/` + thin route in `src/app/`
 
-The route-structure rule (Architecture Book "Navigation & route structure"): a screen
-that needs a test is a presentational module under `src/components/`, and the route
-under `src/app/` is a one-line re-export. References:
+The route-structure rule (Architecture Book "Navigation & route structure"): the tested
+screen lives in the feature's `ui/` sublayer (`src/features/<feature>/ui/<screen>.tsx`),
+and the route under `src/app/` is a one-line re-export through that `ui/` sub-barrel.
+`src/components/` now holds only genuinely shared primitives/shell (`themed-text`,
+`themed-view`, `color-swatch-picker`, `date-time-field`, the `chrome/*` wrappers, …) — a
+`ui/` screen imports those via `@/components/*` (an allowed feature-sublayer → component
+edge). References:
 
-- `mobile/src/app/settings.tsx` (thin route) → `mobile/src/components/settings-screen.tsx`.
-- `mobile/src/app/personal-event-form.tsx` → `mobile/src/components/personal-event-form-screen.tsx`.
+- `mobile/src/app/settings.tsx` (thin route) → `mobile/src/features/settings/ui/settings-screen.tsx`.
+- `mobile/src/app/personal-event-form.tsx` → `mobile/src/features/personal-events/ui/personal-event-form-screen.tsx`.
 - `mobile/src/app/onboarding/{index,groups}.tsx` (thin entrypoints under a nested
-  `mobile/src/app/onboarding/_layout.tsx` `Stack`) → `mobile/src/components/onboarding/`.
+  `mobile/src/app/onboarding/_layout.tsx` `Stack`) → `mobile/src/features/school-selection/ui/`.
 
 Non-tab routes register as a `<Stack.Screen>` **sibling of `(tabs)`** in
 `mobile/src/app/_layout.tsx` (a bare sibling under the native tabs is unreachable).
 
 ### Coverage split (90% logic / 70% presentation)
 
-Logic sublayers (`data/`/`store/`/`form/`, under the `src/features/**` glob) are
-90%-gated; presentational screens (`src/components/**`) are under the 70% floor. See
+Logic sublayers (`data/`/`store/`/`form/`, under the `src/features/*/!(ui)/**` glob) are
+90%-gated; `ui/` screens fall to the `global` 70% floor (the `!(ui)` extglob *excludes*
+them, since Jest coverage thresholds are additive, not most-specific-wins). See
 [ADR 003](./decisions/003-coverage-threshold.md) and `mobile/jest.config.js`.
 
 ### Screen / test / e2e skeleton shape
@@ -121,9 +132,9 @@ Logic sublayers (`data/`/`store/`/`form/`, under the `src/features/**` glob) are
 - **Component test** — colocated `*.test.tsx`, renders through the **real** theme +
   i18n trees and asserts **localized text, not keys** (and drives the control → hook
   wiring). Mock at the `customFetch` mutator seam, never the network. References:
-  `mobile/src/components/settings-screen.test.tsx`,
-  `mobile/src/components/onboarding/school-picker-screen.test.tsx`,
-  `mobile/src/components/personal-event-form-screen.test.tsx`.
+  `mobile/src/features/settings/ui/settings-screen.test.tsx`,
+  `mobile/src/features/school-selection/ui/school-picker-screen.test.tsx`,
+  `mobile/src/features/personal-events/ui/personal-event-form-screen.test.tsx`.
 - **Maestro flow** — a real round-trip, deep-linked, asserting seeded data. References:
   `mobile/.maestro/settings.yaml` (render + reachability),
   `mobile/.maestro/personal-events.yaml` (create→list→delete CRUD round-trip),
@@ -138,14 +149,14 @@ Logic sublayers (`data/`/`store/`/`form/`, under the `src/features/**` glob) are
 - **Accessible loading/error live regions + touchable roles+labels.** Async status
   carries a polite live region + status role; every touchable declares a role +
   translated label + a ≥44pt/48dp hit area. References:
-  `mobile/src/components/onboarding/school-picker-screen.tsx` (accessible
-  loading/error-with-retry/empty states), `mobile/src/components/settings-screen.tsx`
+  `mobile/src/features/school-selection/ui/school-picker-screen.tsx` (accessible
+  loading/error-with-retry/empty states), `mobile/src/features/settings/ui/settings-screen.tsx`
   and its Profile entry link. (Architecture Book "Accessibility".)
 
 ## Starting a new feature (the copy-this checklist)
 
 A new feature can be started by copying the **skeleton template tree** at
-[`docs/react-native-migration/02-pattern-establishment/golden-path-template/`](../../../docs/react-native-migration/02-pattern-establishment/golden-path-template/).
+[`golden-path-template/`](./golden-path-template/) (a sibling of this file).
 It lives **outside `mobile/src/`** on purpose (so Metro doesn't bundle it, the route
 harness doesn't walk it, and the coverage harness doesn't count it — design D2); its
 files carry a `.ts.txt` / `.tsx.txt` suffix so they are never compiled, bundled, or
@@ -155,13 +166,14 @@ coverage gates — **not** a code generator (R-2; see deferred debt below).
 Ordered steps:
 
 1. **Copy** the template tree's files into your feature's home:
-   `golden-path-template/feature/` → `mobile/src/features/<feature>/`,
-   `golden-path-template/components/` → `mobile/src/components/`,
+   `golden-path-template/feature/` → `mobile/src/features/<feature>/` (this carries the
+   `ui/` sublayer with the screen + its test),
    `golden-path-template/app/` → `mobile/src/app/`.
 2. **Drop the `.txt` suffix** (`types.ts.txt` → `types.ts`, `feature-screen.tsx.txt` →
    `<feature>-screen.tsx`, etc.) and rename `feature`/`<feature>` to your feature name.
-3. **Keep only the sublayers your axis needs** (`data/` / `store/` / `form/`) — copy
-   the canonical feature's layer (table above) for the axis-specific parts.
+3. **Keep only the sublayers your axis needs** (`data/` / `store/` / `form/`, plus `ui/`
+   for the screen) — copy the canonical feature's layer (table above) for the axis-specific
+   parts.
 4. **Wire FR + EN keys** for every user-facing string (flat keys, both catalogs —
    `tsc` parity fails otherwise).
 5. **Register the route** in `mobile/src/app/_layout.tsx` as a `<Stack.Screen>` sibling
@@ -190,9 +202,9 @@ These *are* the blessed set now (no longer "no reference yet"):
   — the total, validated, one-write-path store posture.
 - **`mobile/src/features/personal-events/form/validate.ts`** — pure logic returning
   localizable keys.
-- **`mobile/src/components/onboarding/school-picker-screen.test.tsx`** — the reference
-  component test (mock at the mutator seam, real hook + `QueryClient`, assert localized
-  text).
+- **`mobile/src/features/school-selection/ui/school-picker-screen.test.tsx`** — the
+  reference component test (mock at the mutator seam, real hook + `QueryClient`, assert
+  localized text).
 - **`mobile/.maestro/onboarding.yaml`** + **`mobile/e2e/`** — the real-round-trip e2e shape.
 - The Architecture Book sections "School selection", "Settings preferences", "Storage →
   First feature schema — personal events", "Data layer", "Navigation & route structure",

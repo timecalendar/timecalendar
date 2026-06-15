@@ -8,10 +8,9 @@ import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
   type SchoolGroupNode,
-  selectGroup,
-  selectSchool,
   useSchoolGroups,
-} from "@/features/school-selection"
+} from "@/features/school-selection/data"
+import { selectGroup, selectSchool } from "@/features/school-selection/store"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The onboarding group step (C1 / TIM-134) — PRESENTATIONAL (70% floor): reads

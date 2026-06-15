@@ -1,0 +1,10 @@
+// TEMPLATE — copy to src/features/<feature>/ui/index.ts and drop the .txt suffix.
+//
+// The ui/ SUB-BARREL — the surface the thin src/app/<feature>.tsx route re-exports
+// through (and any in-app consumer of the screen). Re-export the feature's screen(s)
+// here; the route never reaches into the screen file directly.
+//
+// References: src/features/settings/ui/index.ts,
+//             src/features/personal-events/ui/index.ts.
+
+export { default as FeatureScreen } from "./feature-screen"

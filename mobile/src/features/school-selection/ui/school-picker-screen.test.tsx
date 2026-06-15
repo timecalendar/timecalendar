@@ -1,16 +1,16 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router } from "expo-router"
 
-import { useSchools } from "@/features/school-selection"
+import { useSchools } from "@/features/school-selection/data"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
 // Presentational (70% floor): renders rows from a mocked useSchools through the
 // real theme + i18n trees; loading/error/empty states render; the retry triggers
 // refetch; selecting a school navigates to the group step with the id (mocked
-// router.push). The feature barrel is mocked at its hook (the screen consumes the
-// barrel, not the generated hooks — the queries.test mocks the mutator seam).
-jest.mock("@/features/school-selection", () => ({ useSchools: jest.fn() }))
+// router.push). The data sub-barrel is mocked at its hook (the screen consumes the
+// sub-barrel, not the generated hooks — the queries.test mocks the mutator seam).
+jest.mock("@/features/school-selection/data", () => ({ useSchools: jest.fn() }))
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 

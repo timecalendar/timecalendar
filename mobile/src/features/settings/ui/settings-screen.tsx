@@ -14,8 +14,8 @@ import { MaxContentWidth, Spacing } from "@/theme"
 // The Settings feature's presentational screen (A2 / TIM-131). It owns NO
 // preference logic — all state comes from A1's reactive hooks
 // (useThemePreference / useLanguagePreference), so it lives under
-// src/components/ (behavior-tested under the 70% floor, exempt from the 90%
-// logic gate per ADR 003) with a thin src/app/settings.tsx re-export
+// src/features/settings/ui/ (behavior-tested under the 70% floor, exempt from
+// the 90% logic gate per ADR 003) with a thin src/app/settings.tsx re-export
 // (route-structure rule; the colocated test stays out of the Metro route tree).
 //
 // Native controls are reached through the @/components/chrome seam (the first

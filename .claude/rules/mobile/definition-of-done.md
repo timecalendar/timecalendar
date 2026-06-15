@@ -30,10 +30,11 @@ owning section or live gate (R-1) rather than re-deriving it.
   `npm run lint` (`--max-warnings 0`), `test-mobile` job. (Rule inventory: Architecture
   Book "Lint & format".)
 - [ ] **Unit/component tests** — meaningful coverage of logic and component behavior;
-  green. **Coverage is reported, not yet gated** — the K-3 `coverageThreshold`
-  (90% logic / 70% global) is owned by the **first logic-bearing feature (Settings)**;
-  that feature's DoD wires it. See [ADR 003](./decisions/003-coverage-threshold.md) and
-  the Architecture Book "K-3 deferral".
+  green. **The K-3 `coverageThreshold` is enforced in CI** (90% on logic globs / 70%
+  global floor; landed 2026-06-14, TIM-130) — logic sublayers must clear 90%,
+  presentational screens the 70% floor. *Gate:* `npm test -- --coverage`, `test-mobile`
+  job. See [ADR 003](./decisions/003-coverage-threshold.md) and the Architecture Book
+  "Testing".
 - [ ] **E2E** — at least one Maestro happy-path flow (+ key edge cases) **on iOS and
   Android**. *Gate:* `ci-mobile-e2e.yml` (on-demand; Architecture Book "E2E — Maestro").
 - [ ] **i18n** — **zero hardcoded strings** (lint-enforced: `i18next/no-literal-string`),

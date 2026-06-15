@@ -1,0 +1,49 @@
+# Theming & native-chrome
+
+The design-token home and the **insurance layer** against alpha-API churn. Entries below are pointers plus the caveats tooling can't carry (R-1) — every rule that can be a type or a lint gate is one, and the prose states what can't be encoded.
+
+## Token layer — typed TS constants under `src/theme/`
+
+- `src/theme/tokens.ts` holds the design tokens as plain `as const` TypeScript: `Colors` (light/dark records, including the brand **`primary`**), `Spacing`, the `Radii` scale (radius is a token, not a magic number), `Fonts`, and `MaxContentWidth`; `ThemeColor` is derived from `Colors`. **No styling runtime** (NativeWind / Tamagui / unistyles rejected, R-2 — `StyleSheet` + typed token constants is the pattern, and `tsc` is the only type gate). A missing/mistyped token key is a `tsc` error, not a silent fallback.
+- **Brand `primary` token (the pink hue, ADR [008](./decisions/008-brand-color.md)):** `light.primary = #E91E63` (the Flutter `Colors.pink` identity tone — used as an **accent/tint**, e.g. the nav active tint, *not* a fill carrying white body text), `dark.primary = #FF4081` (reads on the dark background). **The load-bearing usage rule:** white text on a brand fill MUST ride the darker **`#C2185B`** (white-on-`#C2185B` = 5.87:1, AA body) — the bright `#E91E63` is white-on-fill 4.35:1, below the body floor; `#E91E63` is the accent/large/UI tone (meets the 3:1 bar). **No `primaryStrong`/button token** until the first white-text-on-brand consumer exists (R-2) — `tokens.ts`'s contrast block records which tone that consumer must use.
+- `src/theme/use-theme.ts` owns light/dark resolution: `useTheme()` reads the `@/hooks/use-color-scheme` seam and returns `Colors[scheme]`.
+- **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` *and* the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched.
+- `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `ThemeColor` / `useTheme` / `buildNavTheme`) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
+- `Themed*` consumers import from `@/theme`. `ThemedText`'s heading-role contract (`type="title"|"subtitle"` → `accessibilityRole="header"`, caller override wins) lives in the component (a11y rule).
+
+## Tokenized React Navigation theme — `buildNavTheme` (C2)
+
+- `src/theme/nav-theme.ts` exports a **pure** `buildNavTheme(scheme: "light" | "dark")` (re-exported from `@/theme`) that spreads the stock RN nav `DefaultTheme` (light) / `DarkTheme` (dark) and overrides `colors` from `@/theme` tokens, so nav chrome (header, card, hairline border, active tint) can't drift from the palette. The **nav↔token contract**: `background`→`Colors[scheme].background`, `card`→`backgroundElement`, `text`→`text`, `border`→`backgroundSelected`, `primary`→`primary` (brand). Spread-then-override supplies the full `colors` set + `fonts` the nav `Theme` type requires, so `tsc` enforces completeness.
+- **Lint caveat (R-1):** `@react-navigation/*` imports are lint-banned (Expo Router is the only nav API), so `buildNavTheme` and `_layout.tsx` import `DefaultTheme` / `DarkTheme` / `ThemeProvider` from **`expo-router`** (which re-exports the RN nav constants). `expo-router` doesn't export the `Theme` type by name, so the helper derives it (`type NavTheme = typeof DefaultTheme`).
+- Pure (no hooks) so the proof test calls it without rendering the route tree (the routes-not-importable boundary). `_layout.tsx` feeds `ThemeProvider` `buildNavTheme(scheme)` keyed on the C1-resolved scheme — one read, no second source.
+
+## Native-chrome wrapper seam — `src/components/chrome/`
+
+The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tabs` is "API subject to change"; `@expo/ui` ships unstable entry points; `expo-glass-effect` is iOS-26-only). The wrapper seam localizes that churn to one directory. Each module is the **single import site** for its alpha API:
+
+- **`chrome/native-tabs.tsx`** — the only import site for `expo-router/unstable-native-tabs`. Wraps `NativeTabs` so tab-bar colors come from `@/theme`; the `.Trigger` compound parts are re-attached (`Object.assign`) so callers use `NativeTabs.Trigger` / `.Trigger.Label` / `.Trigger.Icon` unchanged.
+- **`chrome/glass-surface.tsx`** — the only import site for `expo-glass-effect`. Centralizes the **Liquid-Glass degradation decision** in one place: `isLiquidGlassAvailable()` → `GlassView` (iOS 26+); else (iOS 16.4–25, Android, Jest) a plain `View` rendering the same children, dropping the glass-only props. `isLiquidGlassAvailable()` is itself alpha, so it lives here too.
+- **`chrome/expo-ui.tsx`** — the only import site for `@expo/ui` (SDK-56 native controls — SwiftUI / Jetpack Compose). Re-exports the **universal** entry's `Host` + `Picker` (the universal `Picker` carries `Picker.Item` as a static compound member) and `DateTimePicker` (from the `@expo/ui/community/datetime-picker` subpath — `@expo/ui`'s own SwiftUI/Compose control, **NOT** `@react-native-community/datetimepicker`; it only mirrors the RNC prop types `value` / `mode` / `onValueChange` / `minimumDate` / `maximumDate`, pulling in **no new dependency**). The wrapper is **thin**: it does **not** theme the pickers — the native control is OS-chromed and adopts the platform's own light/dark appearance; forcing `@/theme` colors onto it would be the LCD laziness R-2 rejects and breaks R-3 (the platform is the design reference). No higher-level composed control from one consumer (R-2). Operational facts: `@expo/ui` **autolinks** (ships `expo-module.config.json`, no `app.plugin.js`) → **no `app.config.ts` plugin entry**; its babel-plugin is **`Icon`-only** (not added until an `Icon` consumer); its native module has no off-device JS, so Jest needs the suite-wide `jest/setup-expo-ui.ts` mock (it mocks the subpath explicitly — the base `@expo/ui` mock doesn't cover subpaths). See ADR [010](./decisions/010-expo-ui-chrome-wrapper.md) (the wrapper + universal-entry posture) and ADR [012](./decisions/012-personal-event-datetime-picker.md) (the date/time control choice).
+- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host` + `Picker`, and `DateTimePicker`.
+
+## Lint boundary — the R-1 enforcement
+
+- The seam is **structural, not a convention**: `mobile/eslint.config.js` bans `expo-router/unstable-native-tabs`, `expo-glass-effect`, and `@expo/ui` (+ subpaths, regex `^@expo/ui($|/)`) via `no-restricted-imports` everywhere **except** `src/components/chrome/**`, which re-sets the rule without the ban (`banChromeAlpha: false`, mirroring `mutator-owns-fetch` and the storage seams). The message names the `@/components/chrome` seam.
+- **Caveat the lint can't carry:** it catches the static import specifier, not a dynamic `require()` / `import()` evasion — it guards accident, review covers adversaries. The exemption is path-scoped: renaming `chrome/` or adding a new alpha surface without a wrapper requires updating the rule.
+
+## Contrast — a documented AA token-pair posture, not a runtime check
+
+- `src/theme/tokens.ts` documents the foreground/background **pairs** for both schemes (`text` / `textSecondary` on `background` / `backgroundElement` / `backgroundSelected`), each verified to meet **WCAG AA** (4.5:1 body / 3:1 large) with its computed ratio. The DoD's manual contrast review checks rendered screens against these named pairs.
+- **Brand pairs** are documented + computed in the same `tokens.ts` block: white-on-`#E91E63` is **4.35:1** (large/UI only, below the 4.5:1 body floor), so **white text on brand rides `#C2185B`** (5.87:1, AA body); the identity pink `#E91E63` is the **accent/tint** (4.35:1 on white meets the 3:1 large/UI-component bar); the dark-scheme brand is `#FF4081` (6.30:1 on `#000`, AA body).
+- **No runtime/CI contrast checker** — a static tool can't know which token lands on which background at a given site, and there's no offender to guard. **Deferred debt; trigger:** the first screen with a non-token-pair color combination, or a designer-driven palette change — that's when re-verifying the affected pair (or wiring a checker) is earned.
+
+## What CI proves vs. what's manual
+
+- `src/theme/theme.test.tsx` (gated by `test-mobile`: tsc + lint + Jest, R-1) asserts: (a) `useTheme` resolves a token to its expected **light** and **dark** values (mocking `@/hooks/use-color-scheme`), plus the brand **`primary`** per scheme; (b) `GlassSurface` renders its children in Jest, where `isLiquidGlassAvailable()` is `false`, exercising the **fallback** path (a real `View`, not a throw); (c) **`buildNavTheme`** maps `colors.background` / `colors.primary` to the scheme-appropriate `@/theme` tokens for both schemes — the nav↔token contract.
+- CI **cannot** prove and is therefore **manual** (DoD / splash visual pass): that Liquid Glass renders on iOS 26+, that the fallback looks right on iOS 16.4–25 / Android, and that the contrast pairs read correctly on-device.
+
+## Deferred (live debt — not built)
+
+- **No runtime/CI contrast checker** (trigger above).
+- **No in-app theme override / switcher** beyond the C1-resolved stored preference (a deeper switcher is a Settings concern).
+- **No animation / reduced-motion handling in chrome** (the splash owns the reduced-motion obligation; any future chrome animation inherits it per the a11y rules).

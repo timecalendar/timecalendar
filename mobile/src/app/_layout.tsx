@@ -6,9 +6,9 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Stack, ThemeProvider } from "expo-router"
 
 import { queryClient } from "@/api/query-client"
-import { SplashScreen } from "@/components/splash-screen"
 import { runMigrations } from "@/db/migrate"
 import { persistOptions } from "@/features/school-selection"
+import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
 
