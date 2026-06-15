@@ -77,6 +77,27 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // useFrameworks "static" set below — no new expo-build-properties (D8).
     // MMKV v4 autolinks with no plugin entry.
     "expo-sqlite",
+    // Camera + barcode scanning (the QR scanner, src/features/calendar-sources).
+    // The native module autolinks under CNG; this plugin entry exists only to
+    // inject the iOS NSCameraUsageDescription (a missing camera usage string is
+    // an App Store rejection / iOS runtime crash) and to gate the barcode
+    // scanner into the build. `recordAudioAndroid: false` keeps RECORD_AUDIO off
+    // the Android manifest — QR scanning never records audio; no
+    // microphonePermission for the same reason. Links under the existing iOS
+    // useFrameworks "static" set below (no new expo-build-properties); the escape
+    // if a pod breaks is ios.forceStaticLinking. The permission strings are
+    // config-shape, prebuild-verified (R-1) — tsc/lint/Jest don't read them; a
+    // real `expo prebuild` / e2e is the proof (see runtime.md + ADR 017). The
+    // usage description is build-time config, OS-localized — NOT an i18n catalog
+    // string.
+    [
+      "expo-camera",
+      {
+        cameraPermission:
+          "TimeCalendar needs camera access to scan a QR code that adds your calendar.",
+        recordAudioAndroid: false,
+      },
+    ],
     "@react-native-firebase/app",
     "@react-native-firebase/crashlytics",
     "@react-native-firebase/analytics",
