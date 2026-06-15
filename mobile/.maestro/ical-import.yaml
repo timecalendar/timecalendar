@@ -1,0 +1,49 @@
+# iCal-URL entry render + reachability + inline-validation e2e step (Phase-3 ship
+# 4 / add-mobile-ical-import).
+#
+# Cold-launches the development-variant app, deep-links to the onboarding welcome
+# surface, taps the "Add by URL" CTA, asserts the URL-entry screen renders (a
+# stable title assertion), and submits with an EMPTY field to assert the inline
+# validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
+#
+# The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
+# seeds no parseable .ics import endpoint and a live external .ics would be flaky
+# cross-platform (same posture as ship 3's camera, and the onboarding.yaml note
+# about the Jest-proven group step). The validate→create→handoff wiring + the
+# server-failure → recordError + retry path are proven deterministically by the
+# Jest proof (ical-url-screen.test.tsx, mocking the customFetch mutator). The real
+# import + a11y + Crashlytics arrival is an inbox/DoD on-device pass
+# (inbox/2026-06-15-ical-import-dod-manual.md).
+#
+# Requires the harness server up (ci/e2e-server.sh up) + a release-config
+# dev-variant build installed (mobile/e2e/run_e2e.sh). Shared across iOS and
+# Android: stable seeded-text assertions, no per-platform selectors. Mirrors
+# onboarding.yaml / settings.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+- stopApp
+- openLink: timecalendar-dev://onboarding
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "TimeCalendar"
+    timeout: 60000
+# Tap the "Add by URL" CTA → pushes /onboarding/ical-url.
+- tapOn:
+    id: "onboarding-welcome-url-cta"
+# The URL-entry screen renders.
+- extendedWaitUntil:
+    visible: "Add a calendar by URL"
+    timeout: 60000
+# Submit with an empty field → the inline validation error shows (no network).
+- tapOn:
+    id: "ical-url-submit"
+- extendedWaitUntil:
+    visible: "Enter a calendar URL."
+    timeout: 10000
