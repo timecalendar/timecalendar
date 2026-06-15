@@ -8,6 +8,7 @@ import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
   type SchoolListItem,
+  schoolMatches,
   useSchools,
 } from "@/features/school-selection/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
@@ -26,11 +27,11 @@ export default function SchoolPickerScreen() {
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")
 
-  const visible = useMemo(() => {
-    const needle = filter.trim().toLowerCase()
-    if (needle.length === 0) return schools
-    return schools.filter((s) => s.name.toLowerCase().includes(needle))
-  }, [schools, filter])
+  const visible = useMemo(
+    // Accent-insensitive name-or-code match through the pure data/ helper (D2).
+    () => schools.filter((s) => schoolMatches(filter, s)),
+    [schools, filter],
+  )
 
   return (
     <ThemedView style={styles.container}>

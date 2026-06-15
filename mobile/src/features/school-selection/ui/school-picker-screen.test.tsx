@@ -8,9 +8,13 @@ import SchoolPickerScreen from "./school-picker-screen"
 // Presentational (70% floor): renders rows from a mocked useSchools through the
 // real theme + i18n trees; loading/error/empty states render; the retry triggers
 // refetch; selecting a school navigates to the group step with the id (mocked
-// router.push). The data sub-barrel is mocked at its hook (the screen consumes the
-// sub-barrel, not the generated hooks — the queries.test mocks the mutator seam).
-jest.mock("@/features/school-selection/data", () => ({ useSchools: jest.fn() }))
+// router.push). The data sub-barrel mocks only its hook — the REAL schoolMatches
+// helper is kept (requireActual) so the screen filters through it, proving the
+// accent/code search wiring (the helper's own edge cases live in search.test.ts).
+jest.mock("@/features/school-selection/data", () => ({
+  ...jest.requireActual("@/features/school-selection/data"),
+  useSchools: jest.fn(),
+}))
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 
@@ -18,9 +22,14 @@ const mockUseSchools = useSchools as jest.Mock
 const mockPush = router.push as jest.Mock
 
 const ready = (
-  schools: { id: string; name: string; imageUrl: string }[],
+  schools: { id: string; name: string; code?: string; imageUrl: string }[],
   refetch = jest.fn(),
-) => ({ schools, isLoading: false, isError: false, refetch })
+) => ({
+  schools: schools.map((s) => ({ code: "", ...s })),
+  isLoading: false,
+  isError: false,
+  refetch,
+})
 
 beforeEach(() => {
   mockPush.mockClear()
@@ -102,5 +111,54 @@ describe("SchoolPickerScreen", () => {
     })
     expect(queryByText("Alpha University")).toBeNull()
     expect(queryByText("Beta College")).toBeTruthy()
+  })
+
+  it("filters accent-insensitively through the search helper", async () => {
+    mockUseSchools.mockReturnValue(
+      ready([
+        { id: "e", name: "Université Gustave Eiffel", imageUrl: "" },
+        { id: "b", name: "Beta College", imageUrl: "" },
+      ]),
+    )
+    const { getByTestId, queryByText } = await render(<SchoolPickerScreen />)
+
+    await act(async () => {
+      fireEvent.changeText(getByTestId("onboarding-school-filter"), "eiffel")
+    })
+    expect(queryByText("Université Gustave Eiffel")).toBeTruthy()
+    expect(queryByText("Beta College")).toBeNull()
+  })
+
+  it("filters by a code-only needle through the search helper", async () => {
+    mockUseSchools.mockReturnValue(
+      ready([
+        {
+          id: "e",
+          name: "Université Gustave Eiffel",
+          code: "UPEM",
+          imageUrl: "",
+        },
+        { id: "b", name: "Beta College", code: "BC", imageUrl: "" },
+      ]),
+    )
+    const { getByTestId, queryByText } = await render(<SchoolPickerScreen />)
+
+    await act(async () => {
+      fireEvent.changeText(getByTestId("onboarding-school-filter"), "upem")
+    })
+    expect(queryByText("Université Gustave Eiffel")).toBeTruthy()
+    expect(queryByText("Beta College")).toBeNull()
+  })
+
+  it("empties the list for a non-matching needle", async () => {
+    mockUseSchools.mockReturnValue(
+      ready([{ id: "a", name: "Alpha University", imageUrl: "" }]),
+    )
+    const { getByTestId, queryByText } = await render(<SchoolPickerScreen />)
+
+    await act(async () => {
+      fireEvent.changeText(getByTestId("onboarding-school-filter"), "zzz")
+    })
+    expect(queryByText("Alpha University")).toBeNull()
   })
 })

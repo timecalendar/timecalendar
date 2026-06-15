@@ -106,3 +106,57 @@ DoD axis** — the data/query layer + persister + selection store (already green
 on-device nav / offline / a11y / native / perf / e2e halves. With A, B, and C's full DoD complete, the
 **Phase 1.5 golden-path exemplar** extraction is unblocked. Record the result wherever the Phase-2
 Feature-C sign-off lives (roadmap `02-pattern-establishment.md` step 3).
+
+---
+
+# Ship 2 — completed picker (multi-select + confirm) — appended 2026-06-15
+
+**Change:** `add-mobile-school-picker` (Phase-3 ship 2, ADR 016)
+**For:** whoever runs the device passes
+
+Ship 2 completed the picker: the group step is now **multi-select with an explicit confirm-commit**,
+search is **accent-insensitive name-or-code**, and completion **dismisses the whole onboarding Stack**
+(`router.dismissTo("/onboarding")`). The automatable axes are green in CI (types, lint incl. the a11y
+touchable rules on the new leaf toggle + confirm control, the Jest tests — the search helper at the 90%
+gate + the multi-select/confirm/dismiss/empty-guard screen tests at the 70% floor, i18n FR/EN parity).
+The axes below are the **new on-device surface** ship 2 adds — extending the sections above, not
+duplicating them.
+
+## S2.1 VoiceOver (iOS) — the new group surface — DoD: Accessibility
+- **What:** With VoiceOver on, on `…/onboarding/school` → tap a school → on the group step: confirm each
+  leaf announces its **selected/unselected state** on toggle (tap a leaf, hear it become "selected"; tap
+  again, hear it become "not selected"); the **confirm** control announces its role + label ("Confirm
+  your group selection", button); confirming with **nothing selected** announces the guard ("Select at
+  least one group."); focus order through a multi-pick tree (branches expand/collapse, leaves toggle).
+- **Why:** lint guarantees the props exist; only a real screen-reader pass proves the *announcements*
+  are correct and the multi-pick is usable non-visually.
+- **How to verify:** iOS device/simulator + VoiceOver; walk the group step end to end.
+
+## S2.2 TalkBack (Android) — same as S2.1 — DoD: Accessibility
+- **What / Why / How:** as S2.1, on Android with TalkBack.
+
+## S2.3 Native-correctness feel — toggle / confirm / full-stack dismissal — DoD: Native correctness
+- **What:** Toggle multiple leaves, confirm, and confirm the **whole onboarding Stack dismisses** back
+  to the onboarding entry (the welcome surface) — not a single screen pop, not stranded on the school
+  list. Both platforms, **light + dark**.
+- **Why:** `dismissTo` stack behavior + the selected-leaf accent are on-device visual/nav properties CI
+  can't assert.
+- **How to verify:** run the flow on iOS + Android, both schemes.
+
+## S2.4 Touch-target by finger — leaf toggle + confirm — DoD: Accessibility
+- **What:** Each leaf toggle and the confirm control are comfortably tappable (≥44pt iOS / 48dp Android
+  — `minHeight: 48` + `hitSlop` on the confirm).
+- **How to verify:** tap each by finger on a device.
+
+## S2.5 Color-contrast — selected-leaf accent + confirm — DoD: Accessibility / Theming
+- **What:** The selected-leaf fill (`backgroundSelected` token) + the confirm control read correctly on
+  `background`, both schemes, against the documented AA pairs in `src/theme/tokens.ts` (text on
+  `backgroundSelected` is AAA in both schemes per the tokens block).
+- **How to verify:** eyeball on a device, both schemes.
+
+## S2.6 E2E — the extended onboarding flow — DoD: E2E
+- **What:** Run the extended `mobile/.maestro/onboarding.yaml` (welcome → CTA → live `GET /schools` →
+  the new **stable school-search** step) on **iOS and Android**, and confirm `settings.yaml` /
+  `personal-events.yaml` still pass. The multi-select group toggle/confirm is **not** e2e-driven (D5 —
+  fixture-dependent leaf selectors; Jest-proven).
+- **How to verify:** `ci-mobile-e2e.yml` (on-demand). All flows pass on both platforms.

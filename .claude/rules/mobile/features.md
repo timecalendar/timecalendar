@@ -59,10 +59,26 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
 - **Sublayers:** `data/` + `store/` + `ui/` under `src/features/school-selection/`.
 - **Query + store layers:** `src/features/school-selection/data/` (the **only** generated-hook
   import site; wraps `findSchools` / `findSchoolGroups` over `customFetch`, maps DTOs → small
-  domain shapes) + `store/` (a typed, defensively-validated, **identity-only** selection store —
-  persists only `schoolId` + group `value`(s), never the DTOs; total parsers; derived
-  `isOnboardingComplete`, **no separate completion flag**). The query policy + offline persister
-  are in [data.md](./data.md) (ADR [013](./decisions/013-query-persister-and-policy.md)).
+  domain shapes — `SchoolListItem` carries `id`/`name`/`code`/`imageUrl`; plus the pure `search.ts`
+  matcher, below) + `store/` (a typed, defensively-validated, **identity-only** selection store —
+  persists only `schoolId` + group `value`(s) (a `string[]` set), never the DTOs; total parsers;
+  derived `isOnboardingComplete`, **no separate completion flag**). The query policy + offline
+  persister are in [data.md](./data.md) (ADR [013](./decisions/013-query-persister-and-policy.md)).
+- **Group step is multi-select with an explicit confirm-commit** (Phase-3 ship 2,
+  ADR [016](./decisions/016-school-group-multi-select-commit.md)): each leaf is a **toggle** into a
+  pending selection set (accessible `accessibilityState={{ selected }}`), branches expand/collapse
+  (not selectable), and one primary **confirm** control persists the **whole set** through the
+  unchanged identity-only store (`selectSchool(schoolId)` + `selectGroup([...set])`) in a single
+  commit; an **empty confirm is guarded** (accessible message, no commit). The pending set is
+  **trivial screen state** in the `ui/` screen — not a `form/` sublayer (R-2). Completion then
+  **dismisses the whole onboarding Stack** via `router.dismissTo("/onboarding")` (not
+  `router.back()`, which strands the user on the intermediate school list).
+- **Accent-insensitive name-or-code search** behind a pure `data/search.ts` helper (90%-gated): a
+  `normalize` (lowercase + `normalize("NFD")` + a combining-marks range strip `U+0300–U+036F` +
+  space/hyphen strip — **not** `\p{Diacritic}`, which Hermes mishandles; **no new dependency**) and
+  `schoolMatches(needle, school)` (empty needle → all; else normalized substring on `name` OR
+  `code`), mirroring Flutter `stringIncludes`. The school screen's `useMemo` filters through it,
+  staying presentational. See [data.md](./data.md) (pure `data/` logic example).
 - **Screens (`ui/` sublayer):** `src/features/school-selection/ui/{school-picker-screen,school-group-picker-screen}.tsx`.
 - **Nested onboarding nav:** `src/app/onboarding/` route group (nested `Stack` + thin entrypoints),
   a `Stack` sibling of `(tabs)`, reachable from a Profile link. Since Phase 3 ship 1 the group is
