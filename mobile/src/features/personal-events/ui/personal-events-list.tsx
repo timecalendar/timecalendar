@@ -33,10 +33,12 @@ export function PersonalEventsList() {
               accessibilityRole="button"
               accessibilityLabel={t("personalEvents.list.add")}
               hitSlop={Spacing.two}
-              style={[
+              // Flatten: Link asChild forwards through expo-router's radix
+              // <Slot>, whose dev-only shim throws on an array `style` child.
+              style={StyleSheet.flatten([
                 styles.addButton,
                 { backgroundColor: theme.backgroundElement },
-              ]}
+              ])}
             >
               <ThemedText type="smallBold">
                 {t("personalEvents.list.add")}
@@ -79,7 +81,11 @@ function EventRow({ event }: { event: PersonalEvent }) {
         // moves to the hint.
         accessibilityLabel={event.title}
         accessibilityHint={t("personalEvents.list.rowHint")}
-        style={[styles.row, { backgroundColor: theme.backgroundElement }]}
+        // Flatten for Link asChild's <Slot> child (see the Add button above).
+        style={StyleSheet.flatten([
+          styles.row,
+          { backgroundColor: theme.backgroundElement },
+        ])}
       >
         <View
           style={[styles.rowSwatch, { backgroundColor: event.color }]}
