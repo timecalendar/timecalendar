@@ -55,7 +55,7 @@
     "@openfeature/nestjs-sdk": "^0.2.5",
     "@openfeature/server-sdk": "^1.19.0",
     "@opentelemetry/auto-instrumentations-node": "^0.77.0",
-    "@opentelemetry/sdk-node": "^0.218.0",
+    "@opentelemetry/sdk-node": "^0.219.0",
     "@types/compression": "^1.7.2",
     "@types/ejs": "^3.1.0",
     "@types/express": "^5.0.6",
