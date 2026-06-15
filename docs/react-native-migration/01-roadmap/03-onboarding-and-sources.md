@@ -6,7 +6,7 @@
 
 ## Rough steps
 
-1. **Onboarding flow** — first-run experience (designed brand surface), Expo Router stack.
+1. ✅ **Onboarding flow** — landed (`add-mobile-onboarding-flow`, ADR [015](../../../.claude/rules/mobile/decisions/015-onboarding-flow-shape.md)): a **native-default** brand/welcome surface as the onboarding entry over the existing school step (Expo Router stack, welcome-first). The **designer-polish artifacts** (real illustrations / final brand copy / optional motion / the white-on-brand-CTA `primaryStrong` decision) are inboxed (HUMAN: `inbox/2026-06-15-onboarding-design-polish.md`); the on-device DoD axes are inboxed (`inbox/2026-06-15-onboarding-flow-dod-manual.md`).
 2. **School / school-group selection** — grow Phase 02's read path into the full picker.
 3. **QR scan** — `expo-camera` barcode scanning (replaces `mobile_scanner`) to add a calendar by token.
 4. **iCal import** — add a calendar by URL/file.
