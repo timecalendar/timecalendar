@@ -57,8 +57,11 @@
   "onboarding.group.error": "Impossible de charger les groupes.",
   "onboarding.group.empty": "Aucun groupe disponible.",
   "onboarding.group.retry": "Réessayer",
-  "onboarding.group.nodeLabel": "Sélectionner {{name}}",
+  "onboarding.group.nodeLabel": "Basculer {{name}}",
   "onboarding.group.expandLabel": "Développer {{name}}",
+  "onboarding.group.confirm": "Confirmer",
+  "onboarding.group.confirmLabel": "Confirmer votre sélection de groupe",
+  "onboarding.group.empty.selectionGuard": "Sélectionnez au moins un groupe.",
   "debug.firebase.heading": "Débogage Firebase (dev uniquement)",
   "debug.firebase.logEvent": "Envoyer un événement test",
   "debug.firebase.crash": "Déclencher un crash test"

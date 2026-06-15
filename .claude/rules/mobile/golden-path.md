@@ -202,10 +202,16 @@ These *are* the blessed set now (no longer "no reference yet"):
 - **`mobile/src/features/school-selection/data/queries.ts`** — the data/query seam:
   generated hook → `customFetch` → NestJS, mapped to domain shapes, the only
   generated-hook import site.
+- **`mobile/src/features/school-selection/data/search.ts`** — the clean pure-`data/`-helper
+  example: a `normalize` + `schoolMatches` matcher (no backend, no hooks), unit-tested in
+  `search.test.ts` under the 90% gate, the screen filtering through it (ADR 016).
 - **`mobile/src/features/settings/prefs/store.ts`** + **`school-selection/store/store.ts`**
   — the total, validated, one-write-path store posture.
 - **`mobile/src/features/personal-events/form/validate.ts`** — pure logic returning
   localizable keys.
+- **`mobile/src/features/school-selection/ui/school-group-picker-screen.tsx`** — the
+  multi-select-with-confirm reference: a pending-set toggle in screen state, one atomic
+  confirm-commit, full-Stack `dismissTo` completion, an empty-selection guard (ADR 016).
 - **`mobile/src/features/school-selection/ui/school-picker-screen.test.tsx`** — the
   reference component test (mock at the mutator seam, real hook + `QueryClient`, assert
   localized text).

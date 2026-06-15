@@ -17,7 +17,12 @@ import type { SchoolGroupNode, SchoolListItem } from "./types"
 // touches generated hooks"; until then, review + this layout.
 
 function toSchoolListItem(school: SchoolForList): SchoolListItem {
-  return { id: school.id, name: school.name, imageUrl: school.imageUrl }
+  return {
+    id: school.id,
+    name: school.name,
+    code: school.code,
+    imageUrl: school.imageUrl,
+  }
 }
 
 function toSchoolGroupNode(group: SchoolGroupItem): SchoolGroupNode {

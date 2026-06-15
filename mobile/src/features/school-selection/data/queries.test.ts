@@ -21,8 +21,18 @@ const mockedFetch = customFetch as jest.MockedFunction<typeof customFetch>
 
 const schoolsResponse: FindSchoolsRepDto = {
   schools: [
-    { id: "mygamingacademia", name: "My Gaming Academia", imageUrl: "a.png" },
-    { id: "univeiffel", name: "Université Gustave Eiffel", imageUrl: "b.png" },
+    {
+      id: "mygamingacademia",
+      name: "My Gaming Academia",
+      code: "MGA",
+      imageUrl: "a.png",
+    },
+    {
+      id: "univeiffel",
+      name: "Université Gustave Eiffel",
+      code: "UPEM",
+      imageUrl: "b.png",
+    },
   ] as SchoolForList[],
 }
 
@@ -62,6 +72,7 @@ describe("useSchools", () => {
     expect(result.current.schools[0]).toEqual({
       id: "mygamingacademia",
       name: "My Gaming Academia",
+      code: "MGA",
       imageUrl: "a.png",
     })
     expect(result.current.isError).toBe(false)
