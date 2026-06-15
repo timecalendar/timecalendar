@@ -57,8 +57,11 @@
   "onboarding.group.error": "Could not load groups.",
   "onboarding.group.empty": "No groups available.",
   "onboarding.group.retry": "Retry",
-  "onboarding.group.nodeLabel": "Select {{name}}",
+  "onboarding.group.nodeLabel": "Toggle {{name}}",
   "onboarding.group.expandLabel": "Expand {{name}}",
+  "onboarding.group.confirm": "Confirm",
+  "onboarding.group.confirmLabel": "Confirm your group selection",
+  "onboarding.group.empty.selectionGuard": "Select at least one group.",
   "debug.firebase.heading": "Firebase debug (dev only)",
   "debug.firebase.logEvent": "Log test event",
   "debug.firebase.crash": "Trigger test crash"

@@ -13,24 +13,45 @@ import {
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
-// The onboarding group step (C1 / TIM-134) — PRESENTATIONAL (70% floor): reads
-// the schoolId route param, renders the SchoolGroupItem tree over the feature's
-// useSchoolGroups(schoolId). A leaf (no children) is selectable — selecting it
-// persists the school + group selection through the store and completes the flow
-// (navigate back); a branch is expandable (proportionate, design D7 — not a
-// bespoke deep-tree widget). Loading/error/empty are accessible with a retry.
+// The onboarding group step (C1 / TIM-134; multi-select GROW — Phase-3 ship 2,
+// ADR 016) — PRESENTATIONAL (70% floor): reads the schoolId route param, renders
+// the SchoolGroupItem tree over the feature's useSchoolGroups(schoolId). Leaves
+// are TOGGLES that add/remove their value from a pending selection set (with an
+// accessible selected state); branches expand/collapse (not selectable). A
+// primary confirm control commits the whole set in one write (selectSchool +
+// selectGroup) then dismisses the entire onboarding Stack (router.dismissTo) —
+// not router.back(), which would strand the user on the school list (D3).
+// Confirming an empty set is guarded (no commit). Loading/error/empty stay
+// accessible with a retry.
 export default function SchoolGroupPickerScreen() {
   const { t } = useTranslation()
+  const theme = useTheme()
   const params = useLocalSearchParams<{ schoolId?: string }>()
   const schoolId = params.schoolId ?? ""
   const { groups, isLoading, isError, refetch } = useSchoolGroups(schoolId)
+  const [selected, setSelected] = useState<string[]>([])
+  const [showGuard, setShowGuard] = useState(false)
 
-  function onSelectLeaf(value: string) {
-    // Persist the selection identity (D4): the school, then the chosen group.
+  function onToggleLeaf(value: string) {
+    setShowGuard(false)
+    setSelected((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    )
+  }
+
+  function onConfirm() {
+    if (selected.length === 0) {
+      // Guard: an empty confirm would persist "school, no group" — we want an
+      // explicit pick (D1), matching the Flutter assistant which never commits
+      // an empty grade.
+      setShowGuard(true)
+      return
+    }
+    // Persist the selection identity in one commit (D1): the school, then the set.
     selectSchool(schoolId)
-    selectGroup([value])
-    // Complete the flow — return to the entry point.
-    router.back()
+    selectGroup(selected)
+    // Complete the flow — dismiss the whole onboarding Stack back to its entry (D3).
+    router.dismissTo("/onboarding")
   }
 
   return (
@@ -65,10 +86,37 @@ export default function SchoolGroupPickerScreen() {
             <GroupNode
               key={node.value}
               node={node}
-              onSelectLeaf={onSelectLeaf}
+              selected={selected}
+              onToggleLeaf={onToggleLeaf}
             />
           ))}
         </ScrollView>
+
+        {showGuard && (
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
+          >
+            {t("onboarding.group.empty.selectionGuard")}
+          </ThemedText>
+        )}
+
+        <Pressable
+          testID="onboarding-group-confirm"
+          accessibilityRole="button"
+          accessibilityLabel={t("onboarding.group.confirmLabel")}
+          hitSlop={Spacing.two}
+          onPress={onConfirm}
+          style={[
+            styles.confirm,
+            { backgroundColor: theme.backgroundSelected },
+          ]}
+        >
+          <ThemedText type="smallBold">
+            {t("onboarding.group.confirm")}
+          </ThemedText>
+        </Pressable>
       </SafeAreaView>
     </ThemedView>
   )
@@ -102,10 +150,12 @@ function ErrorRetry({ onRetry }: { onRetry: () => void }) {
 
 function GroupNode({
   node,
-  onSelectLeaf,
+  selected,
+  onToggleLeaf,
 }: {
   node: SchoolGroupNode
-  onSelectLeaf: (value: string) => void
+  selected: string[]
+  onToggleLeaf: (value: string) => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -113,6 +163,7 @@ function GroupNode({
   const isLeaf = node.children.length === 0
 
   if (isLeaf) {
+    const isSelected = selected.includes(node.value)
     return (
       <Pressable
         testID={`onboarding-group-leaf-${node.value}`}
@@ -120,8 +171,16 @@ function GroupNode({
         accessibilityLabel={t("onboarding.group.nodeLabel", {
           name: node.text,
         })}
-        onPress={() => onSelectLeaf(node.value)}
-        style={[styles.node, { backgroundColor: theme.backgroundElement }]}
+        accessibilityState={{ selected: isSelected }}
+        onPress={() => onToggleLeaf(node.value)}
+        style={[
+          styles.node,
+          {
+            backgroundColor: isSelected
+              ? theme.backgroundSelected
+              : theme.backgroundElement,
+          },
+        ]}
       >
         <ThemedText type="smallBold">{node.text}</ThemedText>
       </Pressable>
@@ -148,7 +207,8 @@ function GroupNode({
             <GroupNode
               key={child.value}
               node={child}
-              onSelectLeaf={onSelectLeaf}
+              selected={selected}
+              onToggleLeaf={onToggleLeaf}
             />
           ))}
         </View>
@@ -194,6 +254,13 @@ const styles = StyleSheet.create({
     minHeight: 48,
     padding: Spacing.three,
     justifyContent: "center",
+    borderRadius: Radii.medium,
+  },
+  confirm: {
+    minHeight: 48,
+    paddingHorizontal: Spacing.three,
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: Radii.medium,
   },
 })

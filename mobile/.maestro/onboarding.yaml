@@ -13,15 +13,18 @@
 # in server/src/modules/school/fixtures/school.fixtures.yml — ASCII-only to avoid
 # accent-matching fragility across platforms.
 #
-# It deliberately does NOT drive the nested group step: opening a school issues a
-# second live GET .../school-group read, but the group tree's leaf selectors vary
-# by school/fixture and a tap-into-nested-step assertion would be brittle across
-# both platforms. The school→group navigation WIRING is proven deterministically
-# by the Jest proof tests (school-picker-screen.test.tsx asserts the push; the
-# group screen test asserts render + select); the welcome→school push is proven by
-# welcome-screen.test.tsx. If a stable group selector ever proves reliable on both
-# platforms, a nested-step assertion MAY be added as a bonus — only if reliable;
-# do not ship a flaky step.
+# Phase-3 ship 2 (completed picker) adds a STABLE school-search step (type a
+# matching / non-matching needle into the fixed onboarding-school-filter testID,
+# assert the seeded ASCII school shows / hides). The completed group step
+# (multi-select toggle + confirm + dismissTo) is Jest-proven, NOT e2e-driven: the
+# group tree's leaf selectors vary by school/fixture and a tap-into-nested-step
+# assertion would be brittle across both platforms (D5). The school→group
+# navigation WIRING is proven deterministically by the Jest proof tests
+# (school-picker-screen.test.tsx asserts the push + the accent/code search; the
+# group screen test asserts toggle + confirm-commit + dismissTo + the empty
+# guard); the welcome→school push is proven by welcome-screen.test.tsx. If a
+# stable group selector ever proves reliable on both platforms, a nested-step
+# assertion MAY be added as a bonus — only if reliable; do not ship a flaky step.
 #
 # Requires the harness server up (ci/e2e-server.sh up) + a release-config
 # dev-variant build installed (mobile/e2e/run_e2e.sh). Shared across iOS and
@@ -64,3 +67,20 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "My Gaming Academia"
     timeout: 60000
+# Stable accent-free school-search step (Phase-3 ship 2): typing a matching needle
+# keeps the seeded ASCII school visible; a non-matching needle hides it; clearing
+# brings it back. Cross-platform stable — the seeded name + the filter testID are
+# fixed, no fixture-dependent selectors (unlike the group leaves — those stay
+# Jest-proven, D5). Proves the search filter end to end against the live list.
+- tapOn:
+    id: "onboarding-school-filter"
+- inputText: "Gaming"
+- extendedWaitUntil:
+    visible: "My Gaming Academia"
+    timeout: 10000
+- eraseText
+- inputText: "zzzznomatch"
+- extendedWaitUntil:
+    notVisible: "My Gaming Academia"
+    timeout: 10000
+- eraseText
