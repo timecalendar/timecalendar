@@ -14,7 +14,7 @@
     "setup:worktree": "bash bin/setup-worktree.sh"
   },
   "dependencies": {
-    "lint-staged": "^13.0.3"
+    "lint-staged": "^17.0.7"
   },
   "overrides": {
     "next": {
