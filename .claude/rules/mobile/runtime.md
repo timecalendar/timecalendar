@@ -22,6 +22,12 @@
 
 - `mobile/ios/` and `mobile/android/` are **generated, gitignored, never hand-edited**. All native config flows through `app.config.ts` + config plugins; `npx expo prebuild --clean` is the only way native projects change.
 
+## Native deps & permission config
+
+Most native deps **autolink with no `plugins` entry** (`react-native-mmkv` v4/Nitro, `expo-crypto`, `expo-sqlite`'s module). A dep needs a `plugins` entry only to inject **native config a plugin owns** — most often **permission strings** a missing of which is an App Store rejection / runtime crash. These strings are **config-shape, prebuild-verified (R-1)** — `tsc`/lint/Jest don't read them; a real `expo prebuild` / e2e build is the proof. They are **build-time config, OS-localized** from the Info.plist/manifest — **not** i18n catalog strings (so the no-hardcoded-strings rule doesn't apply to them).
+
+- **`expo-camera`** (the QR scanner, `src/features/calendar-sources`; ADR [017](./decisions/017-qr-scan-camera.md)). Native module **autolinks**; the `plugins` entry `["expo-camera", { cameraPermission, recordAudioAndroid: false }]` injects only the iOS `NSCameraUsageDescription` and gates the barcode scanner. **`recordAudioAndroid: false` is mandatory** — the plugin **defaults it to `true`**, which would add `RECORD_AUDIO` to the Android manifest; QR scanning never records audio, so we disable it (no `microphonePermission` either). Links under the existing iOS `useFrameworks: "static"` set (no new `expo-build-properties`); the escape if a pod breaks is `ios.forceStaticLinking`. Verified by `expo prebuild` / e2e (config-shape) — see the inbox DoD note; mocked under Jest (`jest/setup-expo-camera.ts`).
+
 ## App identity: `APP_VARIANT`
 
 - Dynamic `app.config.ts`, switched on `APP_VARIANT`:
