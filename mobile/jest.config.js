@@ -32,6 +32,11 @@ module.exports = {
     // driven under Jest. After setup-storage/setup-i18n since the screen reaches
     // A1's hooks → @/storage + @/i18n (TIM-131 / D6).
     "<rootDir>/jest/setup-expo-ui.ts",
+    // setup-expo-camera mocks expo-camera's native CameraView +
+    // useCameraPermissions (no off-device JS) so the QR scanner renders and a
+    // synthetic onBarcodeScanned can be driven through the real parser under Jest
+    // (Phase-3 ship 3 — the camera can't be CI/Maestro-driven).
+    "<rootDir>/jest/setup-expo-camera.ts",
   ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [

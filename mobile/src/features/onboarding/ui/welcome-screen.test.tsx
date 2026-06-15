@@ -39,6 +39,13 @@ describe("WelcomeScreen", () => {
     expect(mockPush).toHaveBeenCalledWith("/onboarding/school")
   })
 
+  it("navigates to the QR scan step when the scan CTA is activated", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
+
+    fireEvent.press(getByTestId("onboarding-welcome-scan-cta"))
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/qr-scan")
+  })
+
   it("declares an accessible CTA (role + translated label)", async () => {
     const { getByTestId } = await render(<WelcomeScreen />)
 

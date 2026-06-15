@@ -121,6 +121,47 @@ the second `ui/`-only feature folder. Load-bearing decisions:
   meaningful but owned by the cross-feature analytics taxonomy step; the CTA `onPress` is the recorded
   firing point.
 
+## Calendar sources — QR scan (camera input) + the cluster home (Phase-3 ship 3)
+
+The first **camera input method** and the home of the "add a calendar source" cluster
+(QR · iCal import · durable token persistence — Phase-03 ships 3/4/5). **One feature folder
+`src/features/calendar-sources/`**, named for the *concern* so ships 4/5 grow it in place (adding
+`data/create` + `store/` sublayers, not new folders). Load-bearing decisions:
+**ADR [017](./decisions/017-qr-scan-camera.md)**. The camera dep + plugin are in
+[runtime.md](./runtime.md).
+
+- **Sublayers (this ship):** `data/` + `ui/` under `src/features/calendar-sources/`.
+- **Parser (`data/parse-source.ts`, 90%-gated):** the pure
+  `parseScannedSource(raw): ScannedCalendarSource | null` — trims, accepts `http`/`https`
+  **verbatim** (Flutter's verbatim-passthrough: the QR encodes a raw string treated as a calendar
+  URL — `QrCodeResult.url = barcode.rawValue`; **not** an iCal-specific shape, ship 4's
+  `POST /calendars` is the real validator), rejects empty/whitespace/non-URL → `null`. **The one
+  deliberate divergence:** `webcal://` → `https://` is normalized in a single, commented,
+  **reversible** branch (the server accepts the http(s) form; delete the branch if it ever needs raw
+  `webcal://`). Pure (no camera/`t()`/backend) per ADR 014. The seam ships 4/5 + the Phase 09
+  importer consume; `ScannedCalendarSource = { url }`.
+- **Ephemeral handoff (`data/scanned-source.ts`):** a module-scoped reactive holder
+  (`useSyncExternalStore`) for the parsed source — **NOT MMKV, NOT Drizzle** (durable
+  `user_calendars` token persistence is ship 5; this is the seam ship 5 swaps). Labeled ephemeral in
+  code.
+- **Screen (`ui/qr-scan-screen.tsx`, presentational 70% floor):** drives the full
+  `useCameraPermissions` lifecycle (undetermined → request; granted → `CameraView` QR-only +
+  `onBarcodeScanned`; denied-can't-ask-again → `Linking.openSettings()`). Single-scan debounce (a
+  `scanned` ref). Imports `CameraView` / `useCameraPermissions` **directly** from `expo-camera`
+  (**no chrome wrapper** — D5: expo-camera is a stable GA module, not an alpha API). A thin route
+  `src/app/onboarding/qr-scan.tsx` re-exports it (route-structure rule); a "Scan a QR code" CTA on
+  the welcome screen pushes `/onboarding/qr-scan`.
+- **Observability ✅ wired (D8):** a **thrown** scan/parse failure records through `@/firebase`
+  `recordError(error, "calendar-sources/qr-scan")` + an accessible failure state — the **second**
+  surface that can fail (after personal-events writes). A recoverable **non-calendar QR** (`null`) is
+  NOT recorded (re-arm + "not a calendar QR") — noise avoidance (mirrors school-selection's `isError`
+  N/A vs. personal-events' write throw ✅).
+- **CI vs. manual:** the camera can't be CI/Maestro-driven — the scan→parse→state wiring is proven
+  by a Jest test mocking `expo-camera` (`jest/setup-expo-camera.ts` suite-wide + a controllable local
+  mock firing a synthetic `onBarcodeScanned`). The real camera + permission dialogs + the
+  `expo prebuild` native-config proof are the inbox/DoD on-device pass
+  (`inbox/2026-06-15-qr-scan-dod-manual.md`).
+
 ## Splash
 
 The app's startup overlay + the reusable render-when-ready pattern. **A presentation-only
