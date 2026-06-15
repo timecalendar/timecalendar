@@ -46,6 +46,13 @@ describe("WelcomeScreen", () => {
     expect(mockPush).toHaveBeenCalledWith("/onboarding/qr-scan")
   })
 
+  it("navigates to the iCal URL step when the add-by-URL CTA is activated", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
+
+    fireEvent.press(getByTestId("onboarding-welcome-url-cta"))
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
+  })
+
   it("declares an accessible CTA (role + translated label)", async () => {
     const { getByTestId } = await render(<WelcomeScreen />)
 
