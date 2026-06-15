@@ -1,24 +1,21 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
 import { Linking } from "react-native"
 
-import {
-  getScannedSource,
-  setScannedSource,
-} from "@/features/calendar-sources/data"
+import { useAddCalendar } from "@/features/calendar-sources/data"
 import { recordError } from "@/firebase"
 
 import QrScanScreen from "./qr-scan-screen"
 
-// Presentational (70% floor): the scan→parse→state wiring is the load-bearing
-// proof (the real camera can't be CI/Maestro-driven). This file mocks
-// expo-camera locally (overriding the suite-wide jest/setup-expo-camera) so a
-// test fully controls the permission state and the synthetic scan value:
-// CameraView exposes a pressable that fires onBarcodeScanned, useCameraPermissions
-// returns a controllable permission. We mock the router + the @/firebase seam to
-// assert dismissal and the recordError observability path; the REAL parser runs.
-// The data sub-barrel keeps its real parser + holder and spies on setScannedSource
-// only so the failure test can force a throw inside the scan handler.
+// Presentational (70% floor): the scan→parse→persist wiring is the load-bearing
+// proof (the real camera can't be CI/Maestro-driven). This file mocks expo-camera
+// locally (overriding the suite-wide jest/setup-expo-camera) so a test fully
+// controls the permission state and the synthetic scan value: CameraView exposes a
+// pressable that fires onBarcodeScanned, useCameraPermissions returns a
+// controllable permission. We mock the router, the @/firebase seam, and the
+// shared durable persist seam (useAddCalendar — its own success/failure is proven
+// in data/user-calendars/add-calendar.test.ts) to assert dismissal and the
+// recordError observability path; the REAL parser runs.
 const cameraState: {
   permission: {
     granted: boolean
@@ -74,26 +71,25 @@ jest.mock("expo-camera", () => {
 
 jest.mock("expo-router", () => ({ router: { back: jest.fn() } }))
 jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
-jest.mock("@/features/calendar-sources/data", () => {
-  const actual = jest.requireActual<
-    typeof import("@/features/calendar-sources/data")
-  >("@/features/calendar-sources/data")
-  return { ...actual, setScannedSource: jest.fn(actual.setScannedSource) }
-})
+jest.mock("@/features/calendar-sources/data", () => ({
+  ...jest.requireActual("@/features/calendar-sources/data"),
+  useAddCalendar: jest.fn(),
+}))
 
 const mockBack = router.back as jest.Mock
 const mockRecordError = recordError as jest.Mock
-const mockSetScannedSource = setScannedSource as jest.Mock
-const realSetScannedSource = jest.requireActual<
-  typeof import("@/features/calendar-sources/data")
->("@/features/calendar-sources/data").setScannedSource
+const mockUseAddCalendar = useAddCalendar as jest.Mock
+const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string]>()
 
 beforeEach(() => {
-  mockBack.mockClear()
-  mockRecordError.mockClear()
-  mockRequestPermission.mockClear()
-  mockSetScannedSource.mockClear()
-  mockSetScannedSource.mockImplementation(realSetScannedSource)
+  jest.clearAllMocks()
+  mockAddCalendarFromUrl.mockResolvedValue(undefined)
+  mockUseAddCalendar.mockReturnValue({
+    addCalendarFromUrl: mockAddCalendarFromUrl,
+    reset: jest.fn(),
+    isPending: false,
+    isError: false,
+  })
   cameraState.permission = {
     granted: true,
     canAskAgain: true,
@@ -146,7 +142,7 @@ describe("QrScanScreen", () => {
     expect(getByTestId("qr-scan-camera")).toBeTruthy()
   })
 
-  it("parses a scanned URL into the ephemeral holder and dismisses", async () => {
+  it("persists a scanned URL through the durable seam and dismisses", async () => {
     cameraState.nextScan = { data: "webcal://example.com/cal.ics", type: "qr" }
     const { getByTestId } = await render(<QrScanScreen />)
 
@@ -154,8 +150,11 @@ describe("QrScanScreen", () => {
       fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
     })
 
-    expect(getScannedSource()).toEqual({ url: "https://example.com/cal.ics" })
-    expect(mockBack).toHaveBeenCalledTimes(1)
+    // The pure parser normalizes webcal:// → https:// before the persist seam.
+    expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
+      "https://example.com/cal.ics",
+    )
+    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
     expect(mockRecordError).not.toHaveBeenCalled()
   })
 
@@ -170,23 +169,24 @@ describe("QrScanScreen", () => {
     expect(
       getByText("That isn't a calendar QR code. Try another one."),
     ).toBeTruthy()
+    expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
     expect(mockBack).not.toHaveBeenCalled()
     expect(mockRecordError).not.toHaveBeenCalled()
   })
 
-  it("records a thrown failure through the firebase seam and shows a failure state", async () => {
-    mockSetScannedSource.mockImplementation(() => {
-      throw new Error("boom")
-    })
+  it("records a failed persist through the firebase seam and shows a failure state", async () => {
+    mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
     const { getByTestId, getByText } = await render(<QrScanScreen />)
 
     await act(async () => {
       fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
     })
 
-    expect(mockRecordError).toHaveBeenCalledWith(
-      expect.any(Error),
-      "calendar-sources/qr-scan",
+    await waitFor(() =>
+      expect(mockRecordError).toHaveBeenCalledWith(
+        expect.any(Error),
+        "calendar-sources/qr-scan",
+      ),
     )
     expect(
       getByText("Something went wrong while scanning. Please try again."),

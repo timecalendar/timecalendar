@@ -13,21 +13,23 @@ import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
   parseScannedSource,
-  setScannedSource,
+  useAddCalendar,
 } from "@/features/calendar-sources/data"
 import { recordError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
-// The QR scanner screen (Phase-3 ship 3) — PRESENTATIONAL (70% floor): drives
-// the full camera-permission lifecycle (undetermined → request → granted/denied)
-// and renders a QR-only CameraView when granted. It imports CameraView /
-// useCameraPermissions DIRECTLY from expo-camera (no chrome wrapper — D5:
-// expo-camera is a stable GA module, not an alpha API the chrome seam exists to
-// localize). On a single scan it runs the pure parser (data/) and hands the
-// result into the EPHEMERAL in-memory holder (data/scanned-source — ship 5 swaps
-// it for the durable token store), then dismisses back to onboarding. A non-
-// calendar QR is a recoverable state (re-arm, no recordError — D8); a thrown
-// failure is recorded through the @/firebase seam (observability ✅).
+// The QR scanner screen (Phase-3 ship 3, rewired by ship 5 / ADR 018) —
+// PRESENTATIONAL (70% floor): drives the full camera-permission lifecycle
+// (undetermined → request → granted/denied) and renders a QR-only CameraView when
+// granted. It imports CameraView / useCameraPermissions DIRECTLY from expo-camera
+// (no chrome wrapper — expo-camera is a stable GA module, not an alpha API the
+// chrome seam exists to localize). On a single scan it runs the pure parser
+// (data/) and persists a DURABLE user_calendars row through the shared
+// addCalendarFromUrl seam (POST /calendars → resolve by token → upsert),
+// replacing the removed ephemeral scanned-source holder, then dismisses. A non-
+// calendar QR is a recoverable state (re-arm, no recordError — noise avoidance);
+// a failed parse OR persist is recorded through the @/firebase seam and surfaced
+// as an accessible failure (observability ✅ — the persist can now genuinely fail).
 //
 // It consumes its sibling data sub-barrel (@/features/calendar-sources/data),
 // never its own feature barrel (B-2) and never the camera/firebase seams beyond
@@ -37,6 +39,7 @@ export default function QrScanScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const [permission, requestPermission] = useCameraPermissions()
+  const { addCalendarFromUrl } = useAddCalendar()
   // Single-scan debounce: once a result is handled, the ref stops further
   // onBarcodeScanned firings until the screen re-arms (a recoverable miss).
   const scannedRef = useRef(false)
@@ -48,24 +51,26 @@ export default function QrScanScreen() {
       return
     }
     scannedRef.current = true
-    try {
-      const source = parseScannedSource(result.data)
-      if (source === null) {
-        // Recoverable: not a calendar QR — re-arm, do NOT recordError (D8).
-        setNotACalendar(true)
-        scannedRef.current = false
-        return
-      }
-      setScannedSource(source)
-      router.back()
-    } catch (error) {
-      // Crash-worthy throw — record through the seam, surface an a11y failure.
-      recordError(
-        error instanceof Error ? error : new Error(String(error)),
-        "calendar-sources/qr-scan",
-      )
-      setFailed(true)
+    const source = parseScannedSource(result.data)
+    if (source === null) {
+      // Recoverable: not a calendar QR — re-arm, do NOT recordError.
+      setNotACalendar(true)
+      scannedRef.current = false
+      return
     }
+    void addCalendarFromUrl(source.url)
+      .then(() => {
+        router.back()
+      })
+      .catch((error: unknown) => {
+        // Create / resolve / upsert failure — record through the seam, surface an
+        // a11y failure.
+        recordError(
+          error instanceof Error ? error : new Error(String(error)),
+          "calendar-sources/qr-scan",
+        )
+        setFailed(true)
+      })
   }
 
   // Permission not yet resolved by the hook on first render.
