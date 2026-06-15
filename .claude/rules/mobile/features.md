@@ -64,12 +64,46 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   `isOnboardingComplete`, **no separate completion flag**). The query policy + offline persister
   are in [data.md](./data.md) (ADR [013](./decisions/013-query-persister-and-policy.md)).
 - **Screens (`ui/` sublayer):** `src/features/school-selection/ui/{school-picker-screen,school-group-picker-screen}.tsx`.
-- **Nested onboarding nav:** `src/app/onboarding/` route group (nested `Stack` + thin entrypoints
-  over `@/features/school-selection/ui`), a `Stack` sibling of `(tabs)`, reachable from a Profile
-  link. **Not a startup gate** (gating first paint on "no school selected" pulls in the
-  calendar/home dependency — deferred to that step).
+- **Nested onboarding nav:** `src/app/onboarding/` route group (nested `Stack` + thin entrypoints),
+  a `Stack` sibling of `(tabs)`, reachable from a Profile link. Since Phase 3 ship 1 the group is
+  **welcome-first** (see "Onboarding" below): the school picker route is `onboarding/school`
+  (`timecalendar-dev://onboarding/school`), not `index` — the screen in `school-selection/ui/` is
+  unchanged, only its route file moved. **Not a startup gate** (gating first paint on "no school
+  selected" pulls in the calendar/home dependency — deferred to that step).
 - **Observability ➖ N/A:** a failed read is a recoverable TanStack `isError` UI state
   (accessible error + retry), not a crash-worthy throw.
+
+## Onboarding — welcome/brand surface (Phase-3 ship 1)
+
+The first-run framing for the onboarding flow. **A presentation-only feature folder**
+`src/features/onboarding/` — just a `ui/` sublayer (no `data/`/`store/`/`form/`), mirroring splash;
+the second `ui/`-only feature folder. Load-bearing decisions:
+**ADR [015](./decisions/015-onboarding-flow-shape.md)**.
+
+- **The welcome surface — `src/features/onboarding/ui/welcome-screen.tsx`** (presentational, 70%
+  floor): a native-default, **static** single-screen brand surface (R-3 — no Flutter carousel /
+  illustrations; those are the inboxed designer polish) on the `@/theme` `background` token — the app
+  name as a `ThemedText type="title"` (heading role), a tagline, three value-prop lines, and a primary
+  "Get started" CTA. It owns no data: render + one navigation only. It imports no seams (B-1) and not
+  its own feature barrel (B-2); the CTA does `router.push("/onboarding/school")` (route-path
+  coupling). The CTA uses the brand `primary` as an **accent** (a brand-tinted border + the token
+  `text` label on `backgroundElement`), **not** white-on-bright-`#E91E63` — deferring the
+  `primaryStrong` `#C2185B` token to the first white-on-brand consumer (R-2; inboxed). Static surface
+  → reduced-motion trivially met.
+- **Welcome-first Stack + deep-link shift:** the `onboarding` group's `index` = welcome
+  (`timecalendar-dev://onboarding`), the school picker moved to `onboarding/school`
+  (`…/onboarding/school`), `groups` unchanged. The Profile `<Link href="/onboarding">` now lands on
+  the welcome surface (its label is "Get started" / "Commencer"). See [navigation.md](./navigation.md)
+  and ADR 015.
+- **Reachable, not a startup gate** (ADR 015): the first-launch auto-redirect is deferred to the
+  calendar/home step that consumes the selection; `school-selection`'s `isOnboardingComplete()` is
+  unchanged and ready.
+- **Maestro:** `mobile/.maestro/onboarding.yaml` is **extended** — welcome → "Get started" CTA → the
+  live `GET /schools` round-trip (the Phase-2 read proof preserved, reached via the CTA).
+- **Observability ➖ N/A:** the welcome surface performs no read/write and has no throw path — nothing
+  crash-worthy to `recordError`. **Analytics deferred-with-owner:** an "onboarding started" event is
+  meaningful but owned by the cross-feature analytics taxonomy step; the CTA `onPress` is the recorded
+  firing point.
 
 ## Splash
 

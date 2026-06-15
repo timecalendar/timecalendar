@@ -1,24 +1,27 @@
-# Onboarding (school selection) read round-trip e2e flow (C1 / TIM-134).
+# Onboarding welcome → school read round-trip e2e flow (Phase-3 ship 1 / ADR 015,
+# extending C1 / TIM-134).
 #
-# Cold-launches the development-variant app, deep-links to the onboarding school
-# step, and asserts a seeded school renders from the LIVE GET /schools round-trip
-# (app → generated client → customFetch → NestJS → Postgres, nothing mocked) — the
-# first server-data read flow. Replaces the retired schools.yaml as the
-# server-round-trip proof.
+# Cold-launches the development-variant app, deep-links to the onboarding WELCOME
+# surface (now the onboarding entry — the school step moved to /onboarding/school),
+# asserts the brand welcome title renders, taps the "Get started" CTA, then asserts
+# a seeded school renders from the LIVE GET /schools round-trip (app → generated
+# client → customFetch → NestJS → Postgres, nothing mocked) — proving welcome →
+# CTA → live server-data read. The Phase-2 live-read proof is preserved, just
+# reached via the CTA tap.
 #
 # The asserted name "My Gaming Academia" is the visible:true ASCII seeded fixture
-# in server/src/modules/school/fixtures/school.fixtures.yml (the same fixture
-# schools.yaml asserted) — ASCII-only to avoid accent-matching fragility across
-# platforms.
+# in server/src/modules/school/fixtures/school.fixtures.yml — ASCII-only to avoid
+# accent-matching fragility across platforms.
 #
 # It deliberately does NOT drive the nested group step: opening a school issues a
 # second live GET .../school-group read, but the group tree's leaf selectors vary
 # by school/fixture and a tap-into-nested-step assertion would be brittle across
 # both platforms. The school→group navigation WIRING is proven deterministically
 # by the Jest proof tests (school-picker-screen.test.tsx asserts the push; the
-# group screen test asserts render + select). If a stable group selector ever
-# proves reliable on both platforms, a nested-step assertion MAY be added as a
-# bonus — only if reliable; do not ship a flaky step.
+# group screen test asserts render + select); the welcome→school push is proven by
+# welcome-screen.test.tsx. If a stable group selector ever proves reliable on both
+# platforms, a nested-step assertion MAY be added as a bonus — only if reliable;
+# do not ship a flaky step.
 #
 # Requires the harness server up (ci/e2e-server.sh up) + a release-config
 # dev-variant build installed (mobile/e2e/run_e2e.sh). Shared across iOS and
@@ -43,8 +46,16 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
-# Generous timeout: a release-config iOS cold start + JS bundle load can land just
-# past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
+# The welcome surface renders. Generous timeout: a release-config iOS cold start +
+# JS bundle load can land just past Maestro's ~17s default. extendedWaitUntil is
+# the assert-with-timeout.
+- extendedWaitUntil:
+    visible: "TimeCalendar"
+    timeout: 60000
+# Tap the "Get started" CTA → pushes /onboarding/school (the existing picker).
+- tapOn:
+    id: "onboarding-welcome-cta"
+# The school step renders.
 - extendedWaitUntil:
     visible: "Choose your school"
     timeout: 60000

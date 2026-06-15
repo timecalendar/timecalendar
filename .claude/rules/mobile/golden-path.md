@@ -53,7 +53,9 @@ its axis needs** — a feature adds only the ones it uses (the set is open, not 
 
 Settings has `prefs/` + `ui/`; School selection has `data/` + `store/` + `ui/`; Personal
 events has `data/` + `form/` + `ui/` (its `data/` *is* the store analog — persistence is
-the SQLite table, not MMKV); Splash is presentation-only — just `ui/`.
+the SQLite table, not MMKV); Splash and Onboarding are presentation-only — just `ui/`
+(Onboarding's `src/features/onboarding/ui/welcome-screen.tsx` is the second `ui/`-only
+feature folder beside splash; ADR [015](./decisions/015-onboarding-flow-shape.md)).
 
 The blessing decision and the open sublayer set are
 [ADR 014](./decisions/014-layered-feature-module-pattern.md).
@@ -114,8 +116,10 @@ edge). References:
 
 - `mobile/src/app/settings.tsx` (thin route) → `mobile/src/features/settings/ui/settings-screen.tsx`.
 - `mobile/src/app/personal-event-form.tsx` → `mobile/src/features/personal-events/ui/personal-event-form-screen.tsx`.
-- `mobile/src/app/onboarding/{index,groups}.tsx` (thin entrypoints under a nested
-  `mobile/src/app/onboarding/_layout.tsx` `Stack`) → `mobile/src/features/school-selection/ui/`.
+- `mobile/src/app/onboarding/{index,school,groups}.tsx` (thin entrypoints under a nested
+  `mobile/src/app/onboarding/_layout.tsx` `Stack`, **welcome-first** — ADR 015): `index` →
+  `mobile/src/features/onboarding/ui/` (the welcome surface), `school` + `groups` →
+  `mobile/src/features/school-selection/ui/`.
 
 Non-tab routes register as a `<Stack.Screen>` **sibling of `(tabs)`** in
 `mobile/src/app/_layout.tsx` (a bare sibling under the native tabs is unreachable).
