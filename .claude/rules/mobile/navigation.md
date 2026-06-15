@@ -18,3 +18,5 @@ The layout is therefore:
 - `src/app/_layout.tsx` = root `Stack` (+ the QueryClient/Theme providers).
 - `src/app/(tabs)/_layout.tsx` = the native tabs; tab screens under `(tabs)/`.
 - Non-tab routes (deep-link / modal / onboarding targets) as `Stack` siblings of `(tabs)`.
+
+The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`), `onboarding/groups` = the group picker (`…/onboarding/groups?schoolId=<id>`). The group's `index` is the entry route the deep link / the Profile `<Link href="/onboarding">` resolve to, so it is the first-run surface, not the bare list.
