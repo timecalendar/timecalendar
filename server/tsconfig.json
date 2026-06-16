@@ -11,6 +11,14 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./src",
+    // @lyrolab/nest-shared ships a subpath `exports` map, which this project's
+    // classic `node` moduleResolution can't read (switching to node16/bundler
+    // would force extensionless-import and module-format changes across the
+    // codebase). Node and Jest honor the exports map natively at runtime; this
+    // mapping only points tsc's type resolver at the published declarations.
+    "paths": {
+      "@lyrolab/nest-shared/*": ["../node_modules/@lyrolab/nest-shared/dist/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,

@@ -15,6 +15,20 @@ const env: any = {
   ...process.env,
 }
 
+// nest-shared reads connection strings straight from `process.env` —
+// `SharedDatabaseModule.forRoot` via `ConfigService.get("DATABASE_URL")`, and
+// `setupTestDatabase()` via `process.env.DATABASE_URL` directly. TimeCalendar's
+// per-environment defaults (development.ts / test.ts) only live in this merged
+// `env` object, so mirror them back into `process.env` for any key the real
+// environment hasn't already set (real env always wins — `...process.env` above
+// is last in the spread). This is the single bridge that lets the local/CI Jest
+// run and `npm run dev` resolve `DATABASE_URL` without exporting it by hand.
+for (const [key, value] of Object.entries(env)) {
+  if (process.env[key] === undefined && value !== undefined) {
+    process.env[key] = String(value)
+  }
+}
+
 export const APP_STAGE = env.APP_STAGE ?? "development"
 export const PORT = +(env.PORT ?? 80)
 export const CLIENT_URL = env.CLIENT_URL ?? ""
