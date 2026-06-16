@@ -19,6 +19,14 @@ import { SchoolProfileGenerationService } from "modules/school/services/school-p
     SchoolMapper,
   ],
   controllers: [SchoolController],
-  exports: [SchoolService, SchoolRepository, SchoolProfileGenerationService],
+  exports: [
+    SchoolService,
+    // Exported for cross-module data access (calendar-sync, profile script).
+    // Routing through a service method is a broader repository-pattern
+    // refactor, deferred from this infra-adoption PR.
+    // eslint-disable-next-line @lyrolab/nestjs-architecture/no-export-repository-in-module
+    SchoolRepository,
+    SchoolProfileGenerationService,
+  ],
 })
 export class SchoolModule {}

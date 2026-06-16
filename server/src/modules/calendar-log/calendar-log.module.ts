@@ -16,6 +16,6 @@ import { CalendarLogController } from "./controllers/calendar-log.controller"
     CalendarLogMapper,
   ],
   controllers: [CalendarLogController],
-  exports: [CalendarLogRepository, DetectCalendarChangeService],
+  exports: [DetectCalendarChangeService],
 })
 export class CalendarLogModule {}
