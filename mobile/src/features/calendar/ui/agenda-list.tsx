@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  Pressable,
   type RefreshControlProps,
   SectionList,
   StyleSheet,
@@ -21,11 +22,13 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // SectionList (zero new dep — D4) of day-grouped events as a designed brand surface
 // (R-3). The screen owns the read + the resolved locale; this maps events → day
 // sections via the pure groupEventsByDay seam, formats headers/times via the pure
-// date-fns formatter, and renders day headers + themed event tiles. Read-only: the
-// tile is NOT a touchable (no event-details screen yet — accessibilityRole="text",
-// no onPress; the tap target is added when item 3 lands). A now/upcoming indicator
-// marks the first event ending after now. The screen passes a `refreshControl`
-// (a RefreshControl wired to the sync orchestrator) so the agenda is pull-to-refresh.
+// date-fns formatter, and renders day headers + themed event tiles. Each tile is a
+// touchable (accessibilityRole="button" + a translated label incl. a view-details
+// hint + onPress) → the screen-provided onPressEvent, which routes synced events to
+// the read-only details screen and personal events to their edit form (D2/D4). A
+// now/upcoming indicator marks the first event ending after now. The screen passes a
+// `refreshControl` (a RefreshControl wired to the sync orchestrator) so the agenda is
+// pull-to-refresh.
 
 interface AgendaSection {
   day: Date
@@ -36,10 +39,12 @@ export function AgendaList({
   events,
   locale,
   refreshControl,
+  onPressEvent,
 }: {
   events: CalendarEvent[]
   locale: AppLocale
   refreshControl?: ReactElement<RefreshControlProps>
+  onPressEvent: (event: CalendarEvent) => void
 }) {
   // The clock is read once at mount (like the screen's visibleDate) so the render
   // stays pure — the "up next" marker is relative to when the agenda opened.
@@ -82,6 +87,7 @@ export function AgendaList({
           event={item}
           locale={locale}
           upcoming={item.id === upcomingId}
+          onPress={() => onPressEvent(item)}
         />
       )}
     />
@@ -108,17 +114,19 @@ function EventTile({
   event,
   locale,
   upcoming,
+  onPress,
 }: {
   event: CalendarEvent
   locale: AppLocale
   upcoming: boolean
+  onPress: () => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
   const time = formatTimeRange(event.startsAt, event.endsAt, locale)
   const location = event.location ?? ""
 
-  const label = t("calendar.agenda.event.label", {
+  const label = t("calendar.agenda.event.openLabel", {
     title: event.title,
     time,
     location,
@@ -136,9 +144,10 @@ function EventTile({
           upcoming && { backgroundColor: theme.primary },
         ]}
       />
-      <View
-        accessibilityRole="text"
+      <Pressable
+        accessibilityRole="button"
         accessibilityLabel={label}
+        onPress={onPress}
         style={[
           styles.tile,
           {
@@ -159,7 +168,7 @@ function EventTile({
             {location}
           </ThemedText>
         )}
-      </View>
+      </Pressable>
     </View>
   )
 }
@@ -186,6 +195,7 @@ const styles = StyleSheet.create({
   },
   tile: {
     flex: 1,
+    minHeight: 44,
     padding: Spacing.three,
     borderRadius: Radii.large,
     borderLeftWidth: Spacing.half,
