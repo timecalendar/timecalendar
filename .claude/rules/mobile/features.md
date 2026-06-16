@@ -37,7 +37,12 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   — see [storage.md](./storage.md) and ADR [011](./decisions/011-personal-event-storage.md).
 - **Screens (`ui/` sublayer):** `src/features/personal-events/ui/personal-event-form-screen.tsx`
   (the create/edit/delete form route) + `src/features/personal-events/ui/personal-events-list.tsx`
-  (the reactive Home-tab list, imported by `(tabs)/index.tsx` via `@/features/personal-events/ui`).
+  (the reactive list — **relocated off the Home tab** by ADR [022](./decisions/022-home-ia-today-view.md):
+  it is now the `/personal-events` Stack route, a thin `src/app/personal-events.tsx` re-export reached
+  from a Profile entry link, **not** the Home tab (which is now the today view). The component, its Add
+  action, the `/personal-event-form` route, and `usePersonalEvents` are **unchanged** — only the entry
+  point moved). Personal events also keep rendering *inside* the Home today view (already merged into
+  `useCalendarEvents`).
 - **Form layer:** `src/features/personal-events/form/` (90%-gated) — pure `validateEventForm`
   (title required after trim; end strictly after start; returns **localizable error keys, not
   sentences**), pure `buildEventFromForm` (trims strings, drops empty optionals to `undefined`,
@@ -334,6 +339,60 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
   the origin-correct tap routing — the calendar-kit mock now invokes the container's `onPressEvent`)
   is CI-proven. Maestro (`.maestro/calendar.yaml`) asserts render + reachability — incl. the
   event-details route via a not-found deep link (no seeded synced backend — recorded).
+
+## Home / today view — the landing surface (Phase-04 item 4)
+
+The Home tab's today / next-up view — the surface a TimeCalendar user opens to. **A new
+`src/features/home/` feature folder** (`data/` selectors + `ui/` screen), the landing surface
+**composing** the landed calendar + personal-events seams — it is NOT a calendar view mode
+(day/week/agenda are in-place modes of the `/calendar` screen). Load-bearing decision: the IA
+call (the Home tab becomes the today view; the standalone personal-events list relocates) is
+**ADR [022](./decisions/022-home-ia-today-view.md)**; the rendering is composition of landed
+primitives (ADRs 019/021/014), not a new pattern.
+
+- **IA (ADR 022):** `src/app/(tabs)/index.tsx` re-exports `HomeScreen` from `@/features/home/ui`
+  (was `PersonalEventsList`). The standalone personal-events list **relocated** to the
+  `/personal-events` Stack route reached from Profile (see the Personal-events section above) —
+  create/edit/delete preserved, not dropped. Personal events also render *within* the today view
+  (already merged into `useCalendarEvents`).
+- **Data layer — `src/features/home/data/selectors.ts` (90%-gated):** the only new logic, three
+  pure selectors (no React/`@/db`/`t()`): `displayedDay(events, now)` — Flutter
+  `dayDisplayedOnHomePageProvider` parity: **today** if any event `endsAt > now` on today's local
+  day (the **deliberate `endsAt > now` refinement** over Flutter's `startsAt.isAfter(today)` — an
+  in-progress class counts; recorded so it isn't "fixed" back), else the local day of the first
+  event starting after `now`, else today; `eventsForDay(events, day)` — the day's events (local-day
+  bucketing, sorted by start, stable id tie-break, mirroring `groupEventsByDay`); `dynamicHourRange(events)`
+  — min start hour .. max end hour + 1, clamped `[0,24]`, fallback `{8,18}` (Flutter `today_events`
+  parity). It imports `CalendarEvent` from `@/features/calendar/data` (a cross-feature `data → data`
+  read by full `@/` path — the legitimate consumer pattern the sync orchestrator already uses, D3).
+- **UI layer (`ui/`, 70% floor):** `home-screen.tsx` (`HomeScreen` — reads `useCalendarEvents` over a
+  displayed-day window, computes the selectors, renders the header [`app.name` heading + `formatFullDay`
+  date + the pluralized `home.header.count` line / `home.header.empty`], the `UpcomingScroller`, the
+  `home.today.title` section header, and the `TodayTimeline`; wires `useSyncCalendars` → pull-to-refresh
+  + the accessible error/retry banner reused from the calendar screen; routes taps by origin —
+  synced→`/event-details/<uid>`, personal→`/personal-event-form?uid=<uid>` — and an "Add personal event"
+  Link); `upcoming-scroller.tsx` (a horizontal RN-core `ScrollView` of the day's event cards, renders
+  nothing when empty — D6); `today-timeline.tsx` (**the salvaged overlap engine's FIRST rendering
+  consumer** — an absolute-positioned grid, NOT calendar-kit (D5): event tiles placed by `layoutOverlaps`
+  + `minuteToPixel`/`eventHeight` at the Flutter-parity 70px/hour, the hours column from `hourLabels`,
+  a brand-`primary` now-indicator via `nowIndicatorPosition` only when the displayed day is today,
+  `MIN_TILE_WIDTH` text-hiding reused for narrow columns). All themed from `@/theme` (R-3).
+- **`formatFullDay` (closes roadmap item 5):** the today header's full localized date was added to
+  `calendar/data/format.ts` (date-fns `PPPP` over the existing `LOCALES` map, display-only) — the
+  date-fns seam now covers calendar/agenda/details/home; **roadmap item 5 (date/time) is closed**
+  (relative-time + ICU remain the existing earned-when-needed i18n debt).
+- **Observability ➖ N/A:** the home surface performs no write of its own; the only write it triggers
+  is `useSyncCalendars().sync()` (pull-to-refresh), whose observability split is owned by ADR 021 (a
+  fetch failure is a recoverable `isError`, not recorded). The selectors are pure and total (empty →
+  fallbacks, never throw). No new `@/firebase` call.
+- **CI vs. manual:** the selectors are 90%-tested per branch (empty / in-progress / all-past → next
+  day / future-only / cross-hour / the 8–18 fallback / the `[0,24]` clamp / the local-day boundary);
+  the screen test (mock the events-source + sync seams, real theme + i18n) proves the header + empty
+  state, the scroller + timeline render with events, origin-correct tap routing, and pull-to-refresh
+  → `sync()` (no calendar-kit on home, so no calendar-kit mock). The populated dense-overlap render +
+  frame rate stay the on-device visual pass (folded into the existing calendar visual review note — no
+  new inbox note). `.maestro/home.yaml` asserts the Home tab renders (heading + empty-day state) +
+  pull-to-refresh reachability (seeded-data limitation noted in the file, same posture as calendar).
 
 ## Splash
 

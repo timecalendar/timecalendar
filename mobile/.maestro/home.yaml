@@ -1,0 +1,42 @@
+# Home today-view reachability e2e flow (Phase-04 item 4 / ADR 022).
+#
+# Cold-launches the development-variant app and asserts the Home tab renders the
+# today view: the app-name heading + the empty-day state, then that pull-to-refresh
+# is reachable (the RefreshControl triggers the sync orchestrator without crashing).
+# This proves: the Home tab mounts past the splash, the today view composes the
+# landed seams (useCalendarEvents + the home selectors + the salvaged overlap grid)
+# without crashing launch, and the merged events read runs — on both platforms.
+#
+# SEEDED-DATA LIMITATION (same posture as calendar/agenda/details, ADR 021): the
+# e2e server seed does NOT seed a user_calendars token reachable with synced
+# calendar_events, and the dense-week fixture is no longer in the default runtime
+# merge — so there is no real synced event to render here. With no personal events
+# created either, the displayed day is today and the empty-day state renders. So
+# this flow asserts render + reachability only; the REAL populated today render
+# (the upcoming scroller + the dense overlap mini-timeline + the now-indicator +
+# frame rate) is the on-device visual pass (folded into the existing calendar
+# on-device visual review note — no new inbox note this ship).
+#
+# Requires a release-config dev-variant build installed on the connected device.
+# Shared across iOS and Android: stable localized text assertions, no per-platform
+# selectors. Run via mobile/e2e/run_e2e.sh. Mirrors calendar.yaml / settings.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# The Home tab is the initial route (the (tabs) group's index). Generous timeout:
+# a release-config cold start + JS bundle load can land just past Maestro's ~17s
+# default. The app-name heading renders past the splash + the startup sync (a no-op
+# with no held tokens, so launch is not blocked/crashed).
+- extendedWaitUntil:
+    visible: "TimeCalendar"
+    timeout: 60000
+# The empty-day state renders (no seeded synced events, no personal events) —
+# proving the today view composed the seams + selectors without crashing.
+- assertVisible: "Nothing planned."
+# Pull-to-refresh reachability: the today view scrolls and exposes the
+# RefreshControl wired to the sync orchestrator. Swipe down to trigger a refresh;
+# it is a no-op with no held tokens, so it must not crash. The heading stays
+# visible after the refresh settles.
+- swipe:
+    direction: DOWN
+- assertVisible: "TimeCalendar"

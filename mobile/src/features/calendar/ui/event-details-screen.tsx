@@ -12,6 +12,7 @@ import {
   type EventDetailsTag,
   formatEventDateRange,
   formatFullDateTime,
+  resolveLocale,
   useEventDetails,
 } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
@@ -24,10 +25,6 @@ import { Radii, Spacing } from "@/theme"
 // edit / delete / hide / checklist, no header overflow menu, no write path —
 // back navigation only (D1). The route (src/app/event-details/[uid].tsx) is a
 // thin re-export (route-structure rule).
-
-function resolveLocale(language: string): AppLocale {
-  return language.startsWith("fr") ? "fr" : "en"
-}
 
 export function EventDetailsScreen() {
   const { t, i18n } = useTranslation()

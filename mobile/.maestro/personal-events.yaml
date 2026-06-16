@@ -1,9 +1,11 @@
 # Personal-events CRUD round-trip e2e flow (B2 / TIM-133).
 #
-# Cold-launches the development-variant app, deep-links to the create form, types
-# a title via the RN-core TextInput, accepts the DEFAULT start/end dates, saves,
-# asserts the new title appears in the Home-tab list, opens it, deletes it, and
-# asserts it is gone. This proves the full create→list→delete round-trip through
+# Cold-launches the development-variant app, deep-links to the relocated
+# /personal-events list (ADR 022 — moved off the Home tab, now the today view),
+# opens the create form from its Add control, types a title via the RN-core
+# TextInput, accepts the DEFAULT start/end dates, saves, asserts the new title
+# appears back in the list, opens it, deletes it, and asserts it is gone. This
+# proves the full create→list→delete round-trip through
 # the REAL stack: runMigrations() → the CREATE TABLE personal_events migration →
 # SQLite → the repository upsert/remove → the reactive useLiveQuery list (a
 # create writes a row, the live query re-renders, a delete removes it) — end to
@@ -30,8 +32,14 @@ appId: fr.samuelprak.timecalendar.dev
 # Cold-start via the deep link (see schools.yaml header): a warm openLink does
 # not navigate on Android release builds — Expo Router resolves the link through
 # getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+#
+# The standalone list relocated off the Home tab (ADR 022 — the Home tab is now
+# the today view). It is now a Stack sibling of (tabs) reached from a Profile
+# entry; we deep-link its stable /personal-events route so the create form opens
+# ON TOP OF the list (router.back() after save/delete lands back on the list, the
+# reactive useLiveQuery assertion target), not the today-view Home tab.
 - stopApp
-- openLink: timecalendar-dev://personal-event-form
+- openLink: timecalendar-dev://personal-events
 # iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
 # (Android does not). It appears only on the FIRST deep link per simulator —
 # later flows (and re-runs) get no dialog — so the tap is optional: tap it when
@@ -43,9 +51,19 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
+# The relocated list renders with its Add control (stable testID). Generous
+# timeout: a release-config iOS cold start + JS bundle load can land just past
+# Maestro's ~17s default.
+- extendedWaitUntil:
+    visible:
+      id: "personal-events-add"
+    timeout: 60000
+# Open the blank create form from the list's Add control (pushed on top of the
+# list, so the post-save back returns here).
+- tapOn:
+    id: "personal-events-add"
 # The create form's title TextInput carries a stable testID
-# (personal-event-form-screen.tsx). Generous timeout: a release-config iOS cold
-# start + JS bundle load can land just past Maestro's ~17s default.
+# (personal-event-form-screen.tsx).
 - extendedWaitUntil:
     visible:
       id: "personal-event-title-input"
@@ -58,8 +76,9 @@ appId: fr.samuelprak.timecalendar.dev
 # control carries a stable testID.
 - tapOn:
     id: "personal-event-save"
-# Back on the Home-tab list: the reactive useLiveQuery re-rendered with the new
-# row. The title only appears if the write committed through the real DB.
+# Back on the relocated /personal-events list: the reactive useLiveQuery
+# re-rendered with the new row. The title only appears if the write committed
+# through the real DB.
 - extendedWaitUntil:
     visible: "Maestro CRUD event"
     timeout: 60000

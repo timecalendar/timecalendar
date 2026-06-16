@@ -56,10 +56,18 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   `HOURS_COLUMN_WIDTH = 50`, `MIN_TILE_WIDTH = 20`) + the pure math (`minuteToPixel`,
   `eventHeight`, `hourLabels`, `nowIndicatorPosition`).
 - These are the **de-risking insurance**: the day/week screen renders through calendar-kit
-  (its own internal layout), so the primitives' first **rendering** consumer is the agenda
-  follow-up + the home today-grid; their first **tested** consumer is this ship's suite. If
-  calendar-kit is ever dropped (ADR 019 revisit), these + a Reanimated grid become the
-  renderer behind the unchanged wrapper. Under the `src/features/*/!(ui)/**` 90% glob.
+  (its own internal layout). The agenda used `groupEventsByDay` (not the overlap engine); the
+  **home today mini-timeline** (`src/features/home/ui/today-timeline.tsx`, Phase-04 item 4 /
+  ADR [022](./decisions/022-home-ia-today-view.md)) is now the **FIRST RENDERING CONSUMER of
+  `layoutOverlaps` + `time-grid`** — the salvage payoff ADR 019 named. It is an absolute-positioned
+  grid (NOT calendar-kit) placing the displayed day's events via `layoutOverlaps` +
+  `minuteToPixel`/`eventHeight` at a **70px/hour** zoom (passed as the existing `pixelsPerHour`
+  parameter — the Flutter home zoom is a home concern, NOT a new grid constant; `DEFAULT_PIXELS_PER_HOUR
+  = 60` stays the day/week default), with a dynamic hour window from the home `dynamicHourRange`
+  selector and a brand-`primary` now-indicator via `nowIndicatorPosition`. Their first **tested**
+  consumer remains the spike suite. If calendar-kit is ever dropped (ADR 019 revisit), these + a
+  Reanimated grid become the renderer behind the unchanged wrapper. Under the
+  `src/features/*/!(ui)/**` 90% glob.
 
 ## The domain `CalendarEvent` + the events-source seam
 
@@ -214,6 +222,10 @@ route-structure rule, not new reversible patterns.
   24-hour per R-3; same-day = one date + both times, cross-day = both full date-times) and
   `formatFullDateTime(date, locale)` (the footer's `exportedAt` full date+time — Flutter
   `fullDateTimeText`). Display-only over the existing `date-fns` + `LOCALES` map — **no new dep**.
+  The home ship (Phase-04 item 4) added one more — `formatFullDay(day, locale)` (the today header's
+  full localized date — Flutter `fullDayText`, date-fns `PPPP`). With it the date-fns seam covers
+  calendar/agenda/details/home, **closing roadmap item 5 (date/time)** — relative-time + ICU remain
+  the existing earned-when-needed i18n debt.
 - **The details screen — `ui/event-details-screen.tsx`** (presentational, 70% floor): a designed
   brand surface themed from `@/theme` (R-3) — a `ScrollView` with the **title block** (a labeled
   color **swatch** with a translated `accessibilityLabel`, the title as `ThemedText type="title"` =
@@ -318,7 +330,10 @@ seam. The orchestrator distinguishes the two by where the chain throws (a mutati
   to its own ship: the **checklist** (interactive add/toggle, a fourth Drizzle table + an
   importer-fidelity question) and the **hide-event / hidden-events** feature (writes hidden state +
   filters the events-source seam). Recorded in `inbox/2026-06-16-event-details-deferrals.md`.
-- **The home today mini-grid**, weekends-toggle / persisted view preference,
-  incremental/delta sync, per-calendar visibility filtering, an offline write queue,
-  edit/delete of synced events — later Phase-04+ items; the home grid reuses the salvaged
-  overlap engine.
+- **The home today mini-grid** — **LANDED** (`add-mobile-home`, Phase-04 item 4 / ADR
+  [022](./decisions/022-home-ia-today-view.md); see features.md "Home / today view"). It is the
+  salvaged overlap engine's **first rendering consumer** (`src/features/home/ui/today-timeline.tsx`),
+  and the Home tab is now the today view (the standalone personal-events list relocated to
+  `/personal-events`). **Roadmap item 5 (date/time) closed** with the `formatFullDay` helper.
+- **Weekends-toggle / persisted view preference**, incremental/delta sync, per-calendar visibility
+  filtering, an offline write queue, edit/delete of synced events — later Phase-04+ items.

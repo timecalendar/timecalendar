@@ -2,7 +2,9 @@ import {
   formatDayHeaderParts,
   formatEventDateRange,
   formatFullDateTime,
+  formatFullDay,
   formatTimeRange,
+  resolveLocale,
 } from "./format"
 
 // A known Monday (2026-06-15) and a Tuesday — local-time so the formatting is
@@ -71,5 +73,30 @@ describe("formatFullDateTime", () => {
   it("shows the locale-appropriate full date (FR)", () => {
     const date = new Date(2026, 5, 15, 0, 0, 0, 0)
     expect(formatFullDateTime(date, "fr")).toBe("lundi 15 juin 2026 · 00:00")
+  })
+})
+
+describe("formatFullDay", () => {
+  const day = new Date(2026, 5, 15, 0, 0, 0, 0)
+
+  it("shows the full localized date (EN)", () => {
+    expect(formatFullDay(day, "en")).toBe("Monday, June 15th, 2026")
+  })
+
+  it("shows the locale-appropriate full date (FR)", () => {
+    expect(formatFullDay(day, "fr")).toBe("lundi 15 juin 2026")
+  })
+})
+
+describe("resolveLocale", () => {
+  it("maps any fr* language tag to FR", () => {
+    expect(resolveLocale("fr")).toBe("fr")
+    expect(resolveLocale("fr-FR")).toBe("fr")
+  })
+
+  it("maps everything else to EN", () => {
+    expect(resolveLocale("en")).toBe("en")
+    expect(resolveLocale("en-US")).toBe("en")
+    expect(resolveLocale("de")).toBe("en")
   })
 })

@@ -64,6 +64,11 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="settings" />
             <Stack.Screen name="personal-event-form" />
+            {/* The standalone personal-events list, relocated off the Home tab
+                (ADR 022 — the Home tab is now the today view). A Stack sibling of
+                (tabs), reached from a Profile entry link, mirroring calendar /
+                settings. Deep-linkable: timecalendar-dev://personal-events. */}
+            <Stack.Screen name="personal-events" />
             <Stack.Screen name="calendar" />
             {/* Header shown so the read-only details screen has the default
                 accessible back affordance (the screen sets its localized title
