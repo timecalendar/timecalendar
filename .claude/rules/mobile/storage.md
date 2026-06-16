@@ -199,3 +199,68 @@ rationale in `add-mobile-calendar-identity-persistence`'s `design.md` (D1–D9) 
   on-disk SQLite survival — that is the **on-device manual restart/kill/cache-clear pass**
   (inbox `2026-06-16-calendar-restart-durability.md`; no list UI ships this change, so there
   is no Maestro post-relaunch assertion target — design D9). The K-3 coverage gate lands green.
+
+## Calendar events store — `calendar_events`
+
+The **third real table** (the second since `personal_events`) and the **second
+device-local sync surface** — the events the calendar actually renders, synced from
+`POST /calendars/sync { tokens }` over the durable `user_calendars` tokens and
+dropped+replaced into this table each sync. It replays the importer-fidelity precedent
+a third time: a Drizzle table mirroring the Flutter `CalendarEvent.toDbMap()` / the
+server `CalendarEventForPublic` DTO **verbatim** (Phase-09 importer target). Load-bearing
+decisions: **ADR [021](./decisions/021-calendar-event-storage-and-sync.md)** (building on
+ADR 011/018); rationale in `add-mobile-calendar-sync`'s `design.md` (D1–D8) and
+`specs/mobile-calendar-sync/spec.md`.
+
+- **The schema — `src/db/schema.ts` `calendarEvents` (SQL `calendar_events`).** `uid`
+  TEXT primaryKey (the record key + replace identity — the uid IS the identity, like
+  `personal_events`); `title` / `color` / `groupColor` TEXT notNull (`#RRGGBB` verbatim —
+  ADR 011/D3); `startsAt` / `endsAt` / `exportedAt` TEXT notNull (UTC ISO-8601 — ADR
+  011/D4: TEXT over epoch-ms for fidelity AND lexicographic = chronological for
+  `findInRange`); nullable `location` / `description` TEXT; `allDay`
+  `integer({ mode: "boolean" }).notNull()`; `teachers` / `tags` notNull + `fields`
+  nullable as **JSON-in-TEXT** (below); `type` TEXT notNull (the `EventTypeEnum` value
+  **verbatim**, NOT a checked enum — an unknown future server value must round-trip, not
+  throw; the Flutter `toDbMap()` doesn't persist `type`, so the importer supplies a safe
+  default `class` — recorded so it's not flagged as a fidelity gap); `userCalendarId`
+  TEXT notNull — the parent `user_calendars.id`, a **soft reference, NO FK** (drop+replace
+  clears events independently; the next sync reconciles).
+- **The JSON columns — `teachers` / `tags` / `fields` as plain TEXT, decoded by pure
+  DEFENSIVE mappers (ADR 021 / D2 — the new wrinkle vs. ADR 011/018).** NOT Drizzle
+  `text({ mode: "json" })`: the mappers own the JSON encode (`JSON.stringify`) / decode so
+  the shape is one tested seam, the importer writes the exact string we control, and a
+  **corrupt/legacy/unparseable value degrades to a safe default** (`[]` / `null`) rather
+  than throwing the whole list read — a `mode: "json"` column throws, which is exactly why
+  these are plain TEXT. `tags` decodes the full `EventTag[]` then projects to the domain
+  `tags: string[]` (names; the rich objects stay in the row for importer fidelity);
+  `canceled` derives from `fields?.canceled ?? false`. **No `CalendarEvent` shape change.**
+- **The third real migration — `src/db/migrations/0002_first_mauler.sql`** (`drizzle-kit
+  generate`, driver `expo`): `CREATE TABLE calendar_events …`, a third `meta/_journal.json`
+  entry, an `0002_snapshot.json`, and an updated `migrations.js` (now importing
+  `m0000`/`m0001`/`m0002`). All committed (fresh-clone-no-codegen). `migrations.d.ts` is
+  stable across regenerations. The runner applies all three unchanged; `migrate.test.ts`
+  still passes.
+- **The `@/db` seam re-exports `calendarEvents`** (the table) alongside `personalEvents` /
+  `userCalendars`; no new operator (`and` / `gte` / `lte` already re-exported for the
+  personal-events range query are exactly what `findInRange` needs — R-2).
+- **The feature `data/` layer — `src/features/calendar/data/sync/`** (a sub-module under
+  the existing calendar `data/` seam): `types.ts` (the pure `rowToCalendarEvent` /
+  `calendarEventToRow` mappers + `fromCalendarEventDto` — the only generated-DTO import,
+  B-1 — all mapping to the EXISTING `CalendarEvent` domain type), `repository.ts`
+  (`findInRange` + the **transactional `replaceAll`** — `db.transaction(tx ⇒ delete-all
+  then chunked bulk insert)`, atomic so a crash mid-replace never leaves a half-empty
+  table — D3), `hooks.ts` (`useSyncedEvents(range)` — the reactive `useLiveQuery` read),
+  `sync.ts` (`useSyncCalendars()` — the orchestrator: read tokens → batch `POST
+  /calendars/sync` → flatten+map → `replaceAll`), `startup.ts` (`useStartupSync()` — the
+  fire-and-forget once-effect mounted in `_layout.tsx`), and `index.ts`.
+- **What CI proves vs. on-device.** CI proves the **mappers** (round-trip,
+  importer-fidelity verbatim, canonical-UTC, JSON encode/decode + **corrupt-JSON → safe
+  default**, null/boolean), the **repository query shape + the transactional drop+replace**
+  (delete-then-insert inside one `transaction`, chunked), the **DTO mapper**, the **sync
+  wiring** at the `customFetch` seam (success, no-tokens no-op, fetch-failure → `isError`
+  no-record, replace-failure → `recordError`), the **reactive hook + the startup trigger**,
+  and a **restart-simulation** (a fresh repository module reads back a prior `replaceAll`
+  through a stateful Map-backed `@/db` fake). CI **cannot** prove on-disk SQLite survival,
+  drop+replace **atomicity** after a mid-sync kill, or real-data perf — those are the
+  **on-device manual pass** (inbox `2026-06-16-calendar-sync-on-device.md`). The K-3
+  coverage gate lands green.
