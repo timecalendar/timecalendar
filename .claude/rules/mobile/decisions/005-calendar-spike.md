@@ -4,7 +4,12 @@
 
 ## Status
 
-Accepted. Not yet started (Phase 2 opens after Phase 1 + 1.5).
+Accepted. **⚠️ Spike run + gate resolved (2026-06-16):** the Phase-04 spike was executed on
+the real stack and the adopt/fork/custom gate was decided — **ADOPT `@howljs/calendar-kit`
+v2 behind a seam + salvage the overlap/time-grid primitives** — recorded as **ADR
+[019](./019-calendar-rendering-adopt-calendar-kit.md)**, which supersedes the open question
+this ADR parked. The "end early when the answer is obvious" clause fired (the library booted
+and rendered a dense week on Reanimated 4.3.1 / RN 0.85.3 / New Arch with no crash).
 
 ## Context
 
