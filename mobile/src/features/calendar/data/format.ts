@@ -14,6 +14,13 @@ const LOCALES = {
   en: enUS,
 } as const
 
+// Map the i18next language tag (e.g. "fr", "fr-FR", "en-US") to the app locale —
+// FR for any `fr*`, EN otherwise (mirroring the EN-fallback detect-locale rule).
+// The single source for every screen that needs a date-fns-friendly locale.
+export function resolveLocale(language: string): AppLocale {
+  return language.startsWith("fr") ? "fr" : "en"
+}
+
 // The day header's two parts (Flutter `fullDayToShortDay` + `day.day`): the short
 // weekday abbreviation UPPERCASED ("LUN" / "MON") + the day-of-month number.
 export function formatDayHeaderParts(

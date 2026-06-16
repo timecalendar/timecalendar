@@ -4,6 +4,7 @@ import {
   formatFullDateTime,
   formatFullDay,
   formatTimeRange,
+  resolveLocale,
 } from "./format"
 
 // A known Monday (2026-06-15) and a Tuesday — local-time so the formatting is
@@ -84,5 +85,18 @@ describe("formatFullDay", () => {
 
   it("shows the locale-appropriate full date (FR)", () => {
     expect(formatFullDay(day, "fr")).toBe("lundi 15 juin 2026")
+  })
+})
+
+describe("resolveLocale", () => {
+  it("maps any fr* language tag to FR", () => {
+    expect(resolveLocale("fr")).toBe("fr")
+    expect(resolveLocale("fr-FR")).toBe("fr")
+  })
+
+  it("maps everything else to EN", () => {
+    expect(resolveLocale("en")).toBe("en")
+    expect(resolveLocale("en-US")).toBe("en")
+    expect(resolveLocale("de")).toBe("en")
   })
 })

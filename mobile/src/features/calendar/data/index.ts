@@ -23,8 +23,10 @@ export {
   formatFullDateTime,
   formatFullDay,
   formatTimeRange,
+  resolveLocale,
 } from "./format"
 export { type Interval, layoutOverlaps, type Placed } from "./overlap-layout"
+export { eventRoute } from "./routes"
 export { useStartupSync, type UseSyncCalendars, useSyncCalendars } from "./sync"
 export {
   DEFAULT_PIXELS_PER_HOUR,

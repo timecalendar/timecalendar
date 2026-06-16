@@ -1,5 +1,12 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import {
+  type LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -15,7 +22,7 @@ import {
   nowIndicatorPosition,
 } from "@/features/calendar/data"
 import { type HourRange } from "@/features/home/data"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The home today mini-timeline (D5) — PRESENTATIONAL (70% floor) and the FIRST
 // RENDERING consumer of the salvaged overlap engine (ADR 019's salvage payoff). A
@@ -30,9 +37,9 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // Flutter home zoom (`hourHeight = 70`) — a home concern passed as `pixelsPerHour`,
 // not a grid constant (the day/week DEFAULT_PIXELS_PER_HOUR = 60 stays).
 const HOME_PIXELS_PER_HOUR = 70
-// The tile column area's fixed width (the layout is bounded to one day, no
-// horizontal scroll), so fractional overlap columns resolve to absolute pixels.
-const TILE_AREA_WIDTH = 280
+// The home content padding (Spacing.four each side, src/features/home home-screen
+// styles.content) the screen-derived fallback subtracts before the first layout pass.
+const CONTENT_HORIZONTAL_PADDING = Spacing.four * 2
 
 export function TodayTimeline({
   events,
@@ -51,6 +58,23 @@ export function TodayTimeline({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const { width: windowWidth } = useWindowDimensions()
+
+  // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
+  // multiplier is dynamic. The tile area is flex:1, so its real width is measured
+  // via onLayout. Before the first layout pass, fall back to a screen-derived width
+  // (the bounded content width minus the hours column) so nothing renders 0-width.
+  const fallbackWidth =
+    Math.min(windowWidth, MaxContentWidth) -
+    CONTENT_HORIZONTAL_PADDING -
+    HOURS_COLUMN_WIDTH
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
+  const tileAreaWidth = measuredWidth ?? Math.max(fallbackWidth, MIN_TILE_WIDTH)
+
+  const onTileAreaLayout = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width
+    if (width > 0 && width !== measuredWidth) setMeasuredWidth(width)
+  }
 
   const startMinute = range.startHour * 60
   const endMinute = range.endHour * 60
@@ -96,7 +120,11 @@ export function TodayTimeline({
         ))}
       </View>
 
-      <View style={[styles.tileArea, { height: gridHeight }]}>
+      <View
+        testID="today-tile-area"
+        style={[styles.tileArea, { height: gridHeight }]}
+        onLayout={onTileAreaLayout}
+      >
         {labels.map((hour) => (
           <View
             key={hour}
@@ -122,8 +150,8 @@ export function TodayTimeline({
           const durationMinutes =
             (event.endsAt.getTime() - event.startsAt.getTime()) / 60000
           const height = eventHeight(durationMinutes, HOME_PIXELS_PER_HOUR)
-          const left = entry.startX * TILE_AREA_WIDTH
-          const width = (entry.endX - entry.startX) * TILE_AREA_WIDTH
+          const left = entry.startX * tileAreaWidth
+          const width = (entry.endX - entry.startX) * tileAreaWidth
           const showText = width >= MIN_TILE_WIDTH
           const time = formatTimeRange(event.startsAt, event.endsAt, locale)
           const location = event.location ?? ""

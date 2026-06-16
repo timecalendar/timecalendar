@@ -13,8 +13,9 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
-  type AppLocale,
+  eventRoute,
   formatFullDay,
+  resolveLocale,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
@@ -38,10 +39,6 @@ import { UpcomingScroller } from "./upcoming-scroller"
 // Pull-to-refresh + the error/retry banner reuse the sync orchestrator verbatim;
 // tap routing reuses the calendar screen's origin-keyed handler. A designed brand
 // surface from @/theme (R-3). The route ((tabs)/index.tsx) is a thin re-export.
-
-function resolveLocale(language: string): AppLocale {
-  return language.startsWith("fr") ? "fr" : "en"
-}
 
 function isSameLocalDay(a: Date, b: Date): boolean {
   return (
@@ -88,11 +85,7 @@ export function HomeScreen() {
     uid: string,
     userCalendarId: string | undefined,
   ) => {
-    router.push(
-      userCalendarId !== undefined
-        ? `/event-details/${uid}`
-        : `/personal-event-form?uid=${uid}`,
-    )
+    router.push(eventRoute(uid, userCalendarId))
   }
 
   return (
