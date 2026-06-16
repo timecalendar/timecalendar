@@ -116,59 +116,50 @@ export function EventDetailsScreen() {
 
   const header = <Stack.Screen options={{ title: t("eventDetails.title") }} />
 
-  // Origin-keyed header action. A SYNCED event offers hide / un-hide (a currently-
-  // hidden event offers un-hide — no router.back, stays so the event re-appears
-  // behind; a visible event opens the hide chooser). A PERSONAL event offers Edit
-  // (its form). The two are mutually exclusive by kind.
+  // Origin-keyed header action, mutually exclusive by kind. A SYNCED event offers
+  // hide / un-hide (a currently-hidden event offers un-hide — no router.back, stays
+  // so the event re-appears behind; a visible event opens the hide chooser). A
+  // PERSONAL event offers Edit (its form). No action for the third (null) case.
+  const action = isSynced
+    ? {
+        label: isHidden
+          ? "eventDetails.unhide.actionLabel"
+          : "eventDetails.hide.actionLabel",
+        text: isHidden
+          ? "eventDetails.unhide.action"
+          : "eventDetails.hide.action",
+        onPress: isHidden ? unhide : openHideChooser,
+      }
+    : isPersonal
+      ? {
+          label: "eventDetails.edit.actionLabel",
+          text: "eventDetails.edit.action",
+          onPress: editEvent,
+        }
+      : undefined
+
   const headerAction =
-    isSynced && event !== null ? (
-      <Stack.Screen
-        options={{
-          title: t("eventDetails.title"),
-          headerRight: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t(
-                isHidden
-                  ? "eventDetails.unhide.actionLabel"
-                  : "eventDetails.hide.actionLabel",
-              )}
-              hitSlop={Spacing.two}
-              onPress={isHidden ? unhide : openHideChooser}
-              style={styles.headerAction}
-            >
-              <ThemedText type="smallBold" themeColor="primary">
-                {t(
-                  isHidden
-                    ? "eventDetails.unhide.action"
-                    : "eventDetails.hide.action",
-                )}
-              </ThemedText>
-            </Pressable>
-          ),
-        }}
-      />
-    ) : isPersonal ? (
-      <Stack.Screen
-        options={{
-          title: t("eventDetails.title"),
-          headerRight: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("eventDetails.edit.actionLabel")}
-              hitSlop={Spacing.two}
-              onPress={editEvent}
-              style={styles.headerAction}
-            >
-              <ThemedText type="smallBold" themeColor="primary">
-                {t("eventDetails.edit.action")}
-              </ThemedText>
-            </Pressable>
-          ),
-        }}
-      />
-    ) : (
+    action === undefined ? (
       header
+    ) : (
+      <Stack.Screen
+        options={{
+          title: t("eventDetails.title"),
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t(action.label)}
+              hitSlop={Spacing.two}
+              onPress={action.onPress}
+              style={styles.headerAction}
+            >
+              <ThemedText type="smallBold" themeColor="primary">
+                {t(action.text)}
+              </ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
     )
 
   if (loading) {
