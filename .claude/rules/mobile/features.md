@@ -235,11 +235,11 @@ identity store"); the storage-backend + verbatim-schema decision is
   cache-clear is the on-device manual pass (`inbox/2026-06-16-calendar-restart-durability.md` — no
   list UI ships, so no Maestro post-relaunch assertion target).
 
-## Calendar — day/week timeline (Phase-04 item 1)
+## Calendar — day/week timeline + agenda (Phase-04 item 1)
 
-The heart of the app — the read-only day/week timeline, the first half of Phase-04 item 1
-(the agenda list + calendar sync are scoped follow-ups). **One feature folder
-`src/features/calendar/`** (`data/` + `ui/`). Load-bearing decisions:
+The heart of the app — the read-only **day / week / agenda** rendering surface (calendar sync is
+the remaining scoped follow-up). The day/week timeline + the agenda/planning view have both
+landed. **One feature folder `src/features/calendar/`** (`data/` + `ui/`). Load-bearing decisions:
 **ADR [019](./decisions/019-calendar-rendering-adopt-calendar-kit.md)** (adopt
 `@howljs/calendar-kit` v2 behind a seam + salvage the primitives) and **ADR
 [020](./decisions/020-calendar-kit-seam.md)** (the chrome-wrapper seam form). The full rules
@@ -253,17 +253,32 @@ are in [calendar.md](./calendar.md); the seam + ban are in [theming.md](./themin
 - **Salvaged primitives (`data/`, 90%-gated, owned regardless of the renderer):**
   `overlap-layout.ts` (`layoutOverlaps` — the unbounded-column packing) + `time-grid.ts` (the
   7:00–21:00 Flutter-parity constants + minute→pixel/height/labels/now-indicator math). The
-  de-risking insurance behind the seam; the agenda follow-up + home today-grid render through
-  them.
+  de-risking insurance behind the seam; the home today-grid renders through them (the agenda
+  list uses its own `groupEventsByDay`, not column packing — a list has no intra-day geometry).
 - **Domain + events-source seam:** `data/types.ts` `CalendarEvent` (designed against the sync
   `calendar_event.toDbMap()` model, **not persisted** here) + `data/events.ts`
   `useCalendarEvents(range)` — the **single source seam** fed this ship from a committed
   dense-week fixture (`data/fixtures.ts`) + the personal-events read; the **sync ship swaps the
   source behind the unchanged hook**.
 - **Screen (`ui/calendar-screen.tsx`, presentational 70% floor):** a brand surface (R-3) — the
-  `theme` from `@/theme` tokens (now-indicator → brand `primary`), day/week view switch (1 / 5
-  days, weekends-off default), accessible tiles + controls + empty state, read-only. A thin route
-  `src/app/calendar.tsx` (Stack sibling of `(tabs)`).
+  `theme` from `@/theme` tokens (now-indicator → brand `primary`), a **3-way day/week/agenda view
+  switch** (day/week = 1 / 5 days through calendar-kit, weekends-off default; agenda = the bounded
+  visible week through `AgendaList`), accessible tiles + controls + empty state, read-only. A thin
+  route `src/app/calendar.tsx` (Stack sibling of `(tabs)`).
+- **Agenda / planning view (`add-mobile-calendar-agenda`, Phase-04 item 1b):** the **third
+  in-place view mode** — a day-grouped React Native core **`SectionList`** (`ui/agenda-list.tsx`,
+  **zero new dep** — NOT calendar-kit, the custom "easy half" ADR 019 anticipated). Two new pure
+  90%-gated `data/` helpers: `groupEventsByDay` (the agenda analog of `layoutOverlaps`, local-day
+  bucketing, the deliberate divergence from the Flutter `endsAt`-carry quirk) + the locale-aware
+  **display-only** `date-fns` formatter (`format.ts` — day headers + time ranges; **roadmap item 6
+  pulled early**; `date-fns`/`date-fns-tz` are pure-JS, **no fingerprint bump**). Themed event
+  tiles (radius/shadow/`#RRGGBB` color tint) + a brand-`primary` now/upcoming indicator. Reuses the
+  **unchanged** `useCalendarEvents` seam + the salvaged primitives. **No new ADR** (D5 — the
+  load-bearing call is ADR 019; the `SectionList`-over-FlashList + `date-fns`-display-only choices
+  are `design.md` decisions, the FlashList swap a recorded sync-ship trigger). **Observability ➖
+  N/A** (read-only). The agenda branch needs **no calendar-kit mock** (a plain `SectionList`); CI
+  proves the two helpers (90%) + the screen's events→sections→tiles wiring; visual/perf folds into
+  the existing calendar on-device pass. See [calendar.md](./calendar.md) "Agenda / planning view".
 - **Observability ➖ N/A:** a read-only render has no crash-worthy write/throw path (mirrors the
   school-selection read path).
 - **CI vs. manual:** the calendar-kit Reanimated grid is mocked suite-wide

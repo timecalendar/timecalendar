@@ -13,6 +13,7 @@ import {
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
+  type AppLocale,
   type CalendarEvent,
   GRID_END_MINUTE,
   GRID_START_MINUTE,
@@ -20,6 +21,8 @@ import {
   useCalendarEvents,
 } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
+
+import { AgendaList } from "./agenda-list"
 
 // The read-only day/week timeline (D6) — PRESENTATIONAL (70% floor). It holds
 // the view (day | week) + the visible date, computes the range, reads events
@@ -29,10 +32,17 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // @/theme tokens, the now-indicator rides the brand `primary`. No write path.
 // The route (src/app/calendar.tsx) is a thin re-export (route-structure rule).
 
-type CalendarView = "day" | "week"
+type CalendarView = "day" | "week" | "agenda"
 
 // Weekends-off default (Flutter parity): a week is the 5 weekdays. Day is 1.
 const WEEK_DAYS = 5
+// The agenda is a planning list, so it spans a bounded multi-day window (the
+// visible week) rather than a single day/week grid (D1).
+const AGENDA_DAYS = 7
+
+function resolveLocale(language: string): AppLocale {
+  return language.startsWith("fr") ? "fr" : "en"
+}
 
 function ymd(date: Date): string {
   const year = date.getFullYear()
@@ -63,12 +73,14 @@ function formatTime(date: Date): string {
 }
 
 export function CalendarScreen() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const theme = useTheme()
   const [view, setView] = useState<CalendarView>("week")
   const [visibleDate] = useState(() => new Date())
 
-  const numberOfDays = view === "day" ? 1 : WEEK_DAYS
+  const locale = resolveLocale(i18n.language)
+  const numberOfDays =
+    view === "day" ? 1 : view === "agenda" ? AGENDA_DAYS : WEEK_DAYS
 
   const range = useMemo(() => {
     const from = new Date(visibleDate)
@@ -102,6 +114,13 @@ export function CalendarScreen() {
             onPress={() => setView("week")}
             testID="calendar-view-week"
           />
+          <ViewButton
+            label={t("calendar.view.agenda")}
+            accessibilityLabel={t("calendar.view.agendaLabel")}
+            selected={view === "agenda"}
+            onPress={() => setView("agenda")}
+            testID="calendar-view-agenda"
+          />
         </View>
 
         {events.length === 0 && (
@@ -115,22 +134,26 @@ export function CalendarScreen() {
         )}
 
         <View style={styles.calendar}>
-          <CalendarContainer
-            numberOfDays={numberOfDays}
-            initialDate={ymd(visibleDate)}
-            start={GRID_START_MINUTE}
-            end={GRID_END_MINUTE}
-            events={calendarEvents}
-            theme={calendarTheme}
-          >
-            <CalendarHeader />
-            <CalendarBody
-              showNowIndicator
-              renderEvent={(event, size) => (
-                <EventTile event={event} width={size.width} />
-              )}
-            />
-          </CalendarContainer>
+          {view === "agenda" ? (
+            <AgendaList events={events} locale={locale} />
+          ) : (
+            <CalendarContainer
+              numberOfDays={numberOfDays}
+              initialDate={ymd(visibleDate)}
+              start={GRID_START_MINUTE}
+              end={GRID_END_MINUTE}
+              events={calendarEvents}
+              theme={calendarTheme}
+            >
+              <CalendarHeader />
+              <CalendarBody
+                showNowIndicator
+                renderEvent={(event, size) => (
+                  <EventTile event={event} width={size.width} />
+                )}
+              />
+            </CalendarContainer>
+          )}
         </View>
       </SafeAreaView>
     </ThemedView>

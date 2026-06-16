@@ -4,9 +4,10 @@ The Phase-04 calendar surface. Entries below are R-1 pointers plus the caveats
 tooling can't carry; the load-bearing decisions are **ADR
 [019](./decisions/019-calendar-rendering-adopt-calendar-kit.md)** (adopt
 `@howljs/calendar-kit` v2 behind a seam, salvage the overlap/time-grid primitives)
-and **ADR [020](./decisions/020-calendar-kit-seam.md)** (the seam form). This ship is
-**day/week timeline rendering** (Phase-04 item 1, first half); the agenda/planning
-list and calendar sync are scoped follow-ups that build on what lands here.
+and **ADR [020](./decisions/020-calendar-kit-seam.md)** (the seam form). The **day/week
+timeline** (item 1, first half) and the **agenda/planning view** (the "Agenda / planning
+view" section — `add-mobile-calendar-agenda`) have both landed; calendar sync is the
+remaining scoped follow-up that builds on the unchanged events-source seam.
 
 ## The renderer dependency — `@howljs/calendar-kit` v2, pure-JS
 
@@ -96,6 +97,65 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   (route-structure rule), registered as a `<Stack.Screen name="calendar" />` sibling of
   `(tabs)` — reachable for deep-link/Maestro. Tab placement is the later home item's call.
 
+## Agenda / planning view
+
+The **third in-place view mode** (day → week → **agenda**), grown in
+`src/features/calendar/` on the salvaged primitives + the **unchanged** events-source seam
+(the timeline ship deliberately split this out — calendar-kit has no agenda view, so this is
+the custom "easy half" ADR 019 anticipated). A **day-grouped list, not a timeline grid** — it
+does **not** use calendar-kit (**no new ADR** — D5; the load-bearing call is ADR 019's). The
+two real choices (`SectionList`-over-FlashList, `date-fns` display-only) are `design.md`
+decisions, not ADR-worthy.
+
+- **`data/agenda.ts` `groupEventsByDay(events): AgendaDay[]`** — the agenda analog of
+  `layoutOverlaps`, pure (no React/calendar-kit/`@/db`/`t()`/`date-fns`), **90%-gated**. Sorts
+  by `startsAt` (stable `localeCompare` tie-break), buckets by **local** calendar day (local
+  Y-M-D, mirroring Flutter `isSameDate` — **not** UTC, so a 23:30-local event lands on its own
+  day), ascending. **Deliberate divergence from the Flutter `events_for_planning_view_helper`
+  `endsAt`-carry quirk** — we group by each event's own `startsAt` local day (the correct
+  grouping); recorded so it is not "fixed" back.
+- **`data/format.ts`** — the locale-aware **display-only** date/time formatter over `date-fns`
+  (+ `date-fns-tz`), **roadmap item 6 pulled early** (the first real date-formatting need),
+  pure + **90%-gated**: `formatDayHeaderParts(day, locale)` (uppercased short weekday + day
+  number — Flutter `fullDayToShortDay`) and `formatTimeRange(start, end, locale)`
+  (`"HH:mm – HH:mm"`, 24-hour, French-first). Locale comes from the app i18n locale
+  (`i18next.language` → `AppLocale`); **a new app locale needs a `date-fns/locale` entry in the
+  helper's `LOCALES` map.** Display only — no parsing, no rrule/Temporal/recurrence.
+- **`date-fns` + `date-fns-tz` are pure-JS** (`npx expo install`-pinned: `date-fns` v4,
+  `date-fns-tz` v3) — autolink nothing, add no `app.config.ts` plugin, **do not bump the EAS
+  fingerprint** (ride the OTA lane), work under Jest unchanged. **Not** a chrome-seam / banned
+  import — a plain utility, unlike calendar-kit (no swappable rendering surface to localize).
+- **`ui/agenda-list.tsx`** (presentational, 70% floor) — a React Native core **`SectionList`**
+  (**zero new dep** — D4) of day sections (`renderSectionHeader` = the day header with a
+  heading role; `renderItem` = an event tile). Themed from `@/theme` tokens (R-3): a `Radii.large`
+  (~15px) radius, a subtle shadow (offset (0,3), 6% black, blur 15 — Flutter planning-tile
+  parity), the `#RRGGBB` event color as the tile's **left accent border**, the **now/upcoming
+  indicator** a brand-`primary` accent column on the next-upcoming event (the first ending after
+  the mount-time clock, read once via `useState(() => Date.now())` so render stays pure).
+  **Read-only** — the tile is **not** a touchable (`accessibilityRole="text"`, no `onPress`; the
+  tap target lands with event details, a later item — so it is not a dead touchable).
+- **`SectionList` over FlashList — recorded revisit trigger:** the data is bounded this ship
+  (fixture + personal events over the visible week — a few dozen tiles), so virtualization buys
+  nothing and FlashList v2 would be a **fingerprint-bumping native dep** for no gain (R-2). **When
+  calendar sync widens the range** to hundreds–thousands of events over a long horizon and
+  `SectionList` janks on a low-end device, swap FlashList v2 behind the **unchanged `AgendaList`**
+  (the list engine is an internal detail of one file) — owned by the sync ship's perf pass.
+- The screen (`ui/calendar-screen.tsx`) widens `view` to `"day" | "week" | "agenda"`, adds a
+  third accessible `tab` to the existing `tablist`, and in the agenda branch computes a **bounded
+  multi-day window** (the visible week, `AGENDA_DAYS = 7`), reads the **unchanged**
+  `useCalendarEvents(range)`, resolves the locale from `i18next.language`, and renders
+  `<AgendaList>` instead of the calendar-kit grid. The day/week branches + range logic are
+  unchanged. The empty-range polite-live-region state covers the agenda too.
+- **i18n/a11y:** new flat keys (`calendar.view.agenda`/`…agendaLabel`,
+  `calendar.agenda.event.label`, `calendar.agenda.nowLabel`); the day-header + time strings come
+  from the **formatter (locale data), not catalog keys** (D3). Day headers carry a heading role,
+  tiles a translated label (title + time + location), the now-indicator a translated status label.
+- **Observability ➖ N/A** (read-only — D6; same as the day/week timeline). **CI proves** the
+  `groupEventsByDay` + the formatter at 90% and the screen's events→sections→tiles wiring
+  (a plain `SectionList`, **no calendar-kit mock needed**); the dense visual correctness + frame
+  rate stay the calendar surface's existing on-device pass
+  (`inbox/2026-06-16-calendar-visual-brand-review.md`, extended to name the agenda — no new note).
+
 ## Observability ➖ N/A
 
 A read-only render has **no crash-worthy write/throw path** to record (mirroring the
@@ -123,9 +183,9 @@ app imports no `@react-native-firebase/*` directly anywhere it adds.
 
 ## Deferred (recorded debt — not built this ship)
 
-- **The agenda/planning list view** — the scoped follow-up `add-mobile-calendar-agenda`, a
-  `FlashList`/`SectionList` of day-grouped events over the **same salvaged primitives** this
-  ship lands (ADR 019's "easy half").
+- **The agenda/planning list view** — **LANDED** (`add-mobile-calendar-agenda`; see the
+  "Agenda / planning view" section above). The `SectionList`→FlashList swap when sync widens the
+  range is the live trigger recorded there.
 - **Calendar sync** — `POST /calendars/sync` → a Drizzle `calendar_events` table; swaps the
   `useCalendarEvents` source behind the unchanged seam.
 - **The home today mini-grid**, event details, weekends-toggle / persisted view preference —
