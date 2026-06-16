@@ -409,5 +409,14 @@ seam. The orchestrator distinguishes the two by where the chain throws (a mutati
   salvaged overlap engine's **first rendering consumer** (`src/features/home/ui/today-timeline.tsx`),
   and the Home tab is now the today view (the standalone personal-events list relocated to
   `/personal-events`). **Roadmap item 5 (date/time) closed** with the `formatFullDay` helper.
+- **Cancelled-event visual treatment** — the `canceled` flag is decoded into the domain
+  (`CalendarEvent.canceled` + the rich `EventDetails.canceled`, both derived defensively from
+  `fields.canceled`) and is part of the verbatim sync model, but **no surface renders it yet** (no
+  strikethrough / badge / dimming on the grid/agenda tiles, the home today view, or the details
+  screen). Flutter visually marks cancelled classes. A **future-feature gap, not drift** — the
+  data-model field is deliberately complete; the actual treatment is an R-3 platform visual decision
+  (badge vs. strikethrough vs. dimming) best made as a small dedicated UI ship across the surfaces.
+  **Trigger:** the first ship that designs the cancelled treatment (likely alongside per-calendar
+  visibility, since both touch how cancelled/hidden events appear).
 - **Weekends-toggle / persisted view preference**, incremental/delta sync, per-calendar visibility
   filtering, an offline write queue, edit/delete of synced events — later Phase-04+ items.

@@ -20,7 +20,7 @@
 
 ## Base URL
 
-- `mobile/src/api/config.ts`: `EXPO_PUBLIC_API_URL` ?? production default (`https://api.timecalendar.host:1443`), inlined at build time. The Android-emulator `10.0.2.2` gotcha is documented at the constant.
+- `mobile/src/api/config.ts`: `EXPO_PUBLIC_API_URL` ?? production default (`https://api-v2.timecalendar.app` — the Flutter production `MAIN_API_URL`, `app/Fastfile`), inlined at build time. The Android-emulator `10.0.2.2` gotcha is documented at the constant.
 
 ## Query runtime
 

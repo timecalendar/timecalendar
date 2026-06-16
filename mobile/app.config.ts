@@ -18,12 +18,12 @@ const googleServicesIOS = IS_DEV
   ? "./firebase/GoogleService-Info.dev.plist"
   : "./firebase/GoogleService-Info.plist"
 
-// EAS Update seam (add-mobile-eas). The real projectId is produced by `eas init`
-// (a human step — no EAS project exists yet) and written here / read from env;
-// the placeholder keeps `tsc` and `expo config --json` green until then. The
-// updates.url is derived from it (https://u.expo.dev/<projectId>). See EAS.md.
+// EAS Update seam (add-mobile-eas). The real projectId was produced by `eas init`
+// and is committed here as the fallback — it is NOT a secret (it ships in the
+// binary and the EAS project is public-by-id). EAS_PROJECT_ID can override it.
+// updates.url is derived from it (https://u.expo.dev/<projectId>). See eas.md.
 const easProjectId =
-  process.env.EAS_PROJECT_ID ?? "00000000-0000-0000-0000-000000000000"
+  process.env.EAS_PROJECT_ID ?? "3b427ef6-1aae-4175-8217-ea447ee6df6b"
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -46,6 +46,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     icon: "./assets/expo.icon",
     bundleIdentifier: appId,
     googleServicesFile: googleServicesIOS,
+    // Export-compliance: the app uses only standard/exempt encryption (HTTPS/TLS
+    // to the API, unencrypted MMKV, platform-standard Firebase crypto — no
+    // proprietary algorithm). Sets ITSAppUsesNonExemptEncryption=false so EAS
+    // stops prompting per build and a future store submission is pre-cleared.
+    config: { usesNonExemptEncryption: false },
     // Dev variant only: let release-config e2e builds reach the harness server
     // on http://localhost:3005. ATS already exempts loopback, so this is
     // belt-and-braces; the production identity carries no exception (D6).

@@ -7,7 +7,12 @@
 
 ## Status
 
-Accepted.
+Accepted. **⚠️ Revisit fired (2026-06-16):** the "earn the `primaryStrong` token" clause
+fired — the onboarding welcome screen's filled "Get started" CTA is the first
+white-text-on-brand consumer, so `primaryStrong` (#C2185B) + `onPrimary` (#ffffff) were
+added to `tokens.ts` (the deferral this ADR recorded). The contrast pair
+(onPrimary-on-primaryStrong = 5.87:1, AA body) was re-verified; theming.md + the
+`tokens.ts` contrast block updated.
 
 ## Context
 
