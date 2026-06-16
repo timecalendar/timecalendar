@@ -54,7 +54,7 @@ export function formatEventDateRange(
     start.getMonth() === end.getMonth() &&
     start.getDate() === end.getDate()
   if (sameDay) {
-    return `${format(start, "PPPP", opts)} · ${format(start, "HH:mm", opts)} – ${format(end, "HH:mm", opts)}`
+    return `${format(start, "PPPP", opts)} · ${formatTimeRange(start, end, locale)}`
   }
   return `${format(start, "PPPP", opts)} ${format(start, "HH:mm", opts)} – ${format(end, "PPPP", opts)} ${format(end, "HH:mm", opts)}`
 }
