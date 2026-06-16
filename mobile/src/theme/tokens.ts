@@ -8,6 +8,8 @@ export const Colors = {
     backgroundSelected: "#E0E1E6",
     textSecondary: "#60646C",
     primary: "#E91E63",
+    primaryStrong: "#C2185B",
+    onPrimary: "#ffffff",
   },
   dark: {
     text: "#ffffff",
@@ -16,6 +18,8 @@ export const Colors = {
     backgroundSelected: "#2E3135",
     textSecondary: "#B0B4BA",
     primary: "#FF4081",
+    primaryStrong: "#C2185B",
+    onPrimary: "#ffffff",
   },
 } as const
 
@@ -51,16 +55,23 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *       #E91E63 on background  #E91E63 on #fff → 4.35:1  (large/UI ✅ 3:1 bar; body ❌)
  *       white   on #E91E63                     → 4.35:1  (large/UI ✅; body ❌ < 4.5)
  *   - White text on a brand fill (a button label, a primary surface carrying text)
- *     MUST ride the darker shade700 #C2185B — the bright identity pink fails body AA:
- *       white   on #C2185B                     → 5.87:1  (body ✅)
+ *     MUST ride the darker shade700 `primaryStrong` #C2185B — the bright identity
+ *     pink fails body AA. The fill carries `onPrimary` (#ffffff) as its label:
+ *       onPrimary on primaryStrong  #fff on #C2185B → 5.87:1  (body ✅, both schemes)
+ *       primaryStrong on background  #C2185B on #fff → 5.87:1  (light, UI ✅)
+ *       primaryStrong on background  #C2185B on #000 → 3.58:1  (dark, large/UI ✅ 3:1)
  *   - `primary` dark = #FF4081 (the lighter pink accent) so the brand reads on the
  *     dark background (#C2185B on #000 is only 3.58:1 — large-only):
  *       #FF4081 on background  #FF4081 on #000 → 6.30:1  (body ✅)
  *
- * THE RULE (Settings inherits it): white text on brand rides `#C2185B`; the identity
- * pink `#E91E63` is accent/tint (light) and `#FF4081` is the dark-scheme brand. No
- * `primaryStrong`/button token is added until the first white-text-on-brand consumer
- * exists (R-2) — this block records which tone that consumer must use.
+ * THE RULE (Settings inherits it): white text on brand rides `primaryStrong`
+ * #C2185B (the filled-button pair `onPrimary` on `primaryStrong` = 5.87:1, AA body,
+ * scheme-independent — the fill carries its own white label, so one value serves both
+ * schemes); the identity pink `#E91E63` is accent/tint (light) and `#FF4081` is the
+ * dark-scheme brand accent. The `primaryStrong`/`onPrimary` token pair was added for
+ * the onboarding welcome CTA — the first white-text-on-brand consumer (R-2: earned,
+ * not speculative). The fill-vs-background bar a filled brand button must clear is the
+ * 3:1 UI-component ratio (WCAG 1.4.11), met in both schemes above.
  *
  * Selected-tab states reuse `text` on `backgroundSelected` (both schemes AAA above).
  * Adding a token, changing a value, or drawing a foreground on a background not

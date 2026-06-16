@@ -23,7 +23,7 @@ describe("WelcomeScreen", () => {
     // EN catalog values (jest-expo device locale resolves to en).
     expect(getByText("TimeCalendar")).toBeTruthy()
     expect(getByText("Your schedule, all in one place.")).toBeTruthy()
-    expect(getByText("See all your classes in one calendar.")).toBeTruthy()
+    expect(getByText("All your classes in one calendar.")).toBeTruthy()
   })
 
   it("exposes the title as a heading (the encoded ThemedText contract)", async () => {

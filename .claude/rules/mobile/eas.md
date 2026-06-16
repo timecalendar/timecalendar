@@ -24,7 +24,7 @@ Two channels: `preview` (internal dogfood) and `production` (store). `eas update
 
 ## The `expo-updates` seam without a project
 
-`expo-updates` is in `plugins`; `updates.url` (`https://u.expo.dev/<id>`) and `extra.eas.projectId` are derived from `process.env.EAS_PROJECT_ID`, falling back to a **zero-UUID placeholder** so `tsc` / `expo config --json` parse cleanly **before** `eas init` exists. The real id is a human step (`eas init`); it fills the value. `tsc`/lint/Jest don't read a real `projectId`, so CI `test-mobile` is unaffected by its absence.
+`expo-updates` is in `plugins`; `updates.url` (`https://u.expo.dev/<id>`) and `extra.eas.projectId` are derived from `easProjectId` = `process.env.EAS_PROJECT_ID` ?? the **committed real id** (`eas init` produced `@samuelprak/timecalendar`, projectId `3b427ef6-1aae-4175-8217-ea447ee6df6b`). The id is **not a secret** — it ships in the binary and the EAS project is public-by-id — so committing it as the fallback means a fresh clone / a CI build works with no env. (An earlier **zero-UUID placeholder** was wrong: a fake-but-present id makes EAS believe the project is already linked and **refuse `eas init`** — "Project already linked … Experience with id … does not exist". `eas init` was run with the id left `undefined`, which let it create and link the fresh project; the returned id is now the committed fallback.) `tsc`/lint/Jest don't read `projectId`, so CI `test-mobile` is unaffected.
 
 ## Submit skeleton, no secrets
 
