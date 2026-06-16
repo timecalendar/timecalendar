@@ -68,22 +68,22 @@ export function EventDetailsScreen() {
 
   // Open the hide chooser: hide-this-instance (uid) vs hide-all-of-this-name
   // (title), Flutter event_details_hidden_dialog parity. A native-default Alert
-  // (R-3 — no Material dialog port). On a successful hide the screen pops back.
+  // (R-3 — no Material dialog port). The screen pops back ONLY when the write
+  // persisted — a failed write keeps the screen mounted so its accessible
+  // `hideFailed` banner is visible (ADR 023 / D5; the mutators return success).
   const openHideChooser = useCallback(() => {
     if (event === null) return
     Alert.alert(t("eventDetails.hide.title"), undefined, [
       {
         text: t("eventDetails.hide.thisEvent"),
         onPress: () => {
-          hideByUid(event.id)
-          router.back()
+          if (hideByUid(event.id)) router.back()
         },
       },
       {
         text: t("eventDetails.hide.byName"),
         onPress: () => {
-          hideByName(event.title)
-          router.back()
+          if (hideByName(event.title)) router.back()
         },
       },
       { text: t("eventDetails.hide.cancel"), style: "cancel" },

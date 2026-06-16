@@ -66,6 +66,24 @@ describe("useHideActions", () => {
     expect(mockRecordError).not.toHaveBeenCalled()
   })
 
+  it("returns true on a persisted write and false on a failed one (so the caller can gate navigation)", async () => {
+    const { result } = await renderHook(() => useHideActions())
+    let ok: boolean | undefined
+    await act(async () => {
+      ok = result.current.hideByUid("uid-1")
+    })
+    expect(ok).toBe(true)
+
+    mockHideByName.mockImplementationOnce(() => {
+      throw new Error("KV write failed")
+    })
+    let failedReturn: boolean | undefined
+    await act(async () => {
+      failedReturn = result.current.hideByName("Algorithms")
+    })
+    expect(failedReturn).toBe(false)
+  })
+
   it("records a write failure and flips the failure flag", async () => {
     mockHideByUid.mockImplementation(() => {
       throw new Error("KV write failed")
