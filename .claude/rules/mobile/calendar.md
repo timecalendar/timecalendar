@@ -185,6 +185,78 @@ storage.md "Calendar events store"; the storage/sync decisions are **ADR
 - **Offline-safe by construction:** the drop+replace runs only after a successful fetch, so a
   failed fetch leaves the last-good rows; the durable `calendar_events` reads offline.
 
+## Event details (read-only)
+
+The view reached by **tapping a synced event** (`add-mobile-event-details`, Phase-04 item 3). It
+is the **first consumer of ADR 021's verbatim row** — the rich data the lossy rendering
+`CalendarEvent` deliberately drops lives in the row, and this read consumes it. **Read-only
+VIEW HALF ONLY** — no edit / delete / hide / checklist, no header overflow menu, no write path
+(design D1). **No new ADR** (D8): the read-only-vs-edit scope, the synced-vs-personal routing,
+and the rich-read-over-the-verbatim-row are *executions of* ADRs 019/020/021/014 + the
+route-structure rule, not new reversible patterns.
+
+- **The rich read — `data/event-details.ts`** (90%-gated): a pure **`rowToEventDetails(row):
+  EventDetails`** mapper — the rich counterpart to the lossy `rowToCalendarEvent` — that keeps the
+  fields the rendering projection drops (`groupColor`, the real `type` enum, `exportedAt`, the
+  **full** `tags: {name,color,icon}[]` — not name-only), decoding the JSON columns **defensively**
+  by **reusing the sync mapper's `decodeJsonArray`/`decodeFields`** (now exported from
+  `data/sync/types.ts` — corrupt/legacy → `[]`/`null`/`false`, never throws; ADR 021/D2). `type`
+  narrows to `EventTypeEnum` with a safe `class` fallback for an unknown verbatim value (importer
+  fidelity). A **`getByUid(uid): Promise<EventDetails | null>`** repository read on `calendar_events`
+  (the only `@/db` import site for this read, B-1; reuses the already-re-exported `eq`, no new
+  operator — R-2). A reactive **`useEventDetails(uid)`** hook over the seam's `useLiveQuery` that
+  distinguishes **loading** (`updatedAt === undefined`) from **not-found** (`event === null` after
+  load), so the screen re-renders if a sync replaces the row while open. The rich `EventDetails`
+  type is **separate** — the rendering `CalendarEvent` is NOT widened (D3 — the grid/agenda don't
+  need the rich fields; widening bloats every tile for one consumer, against ADR 021/D1).
+- **The full date/time formatters — `data/format.ts`** (90%-gated): `formatEventDateRange(start,
+  end, locale)` (the title block's full date + `HH:mm – HH:mm` range — Flutter `eventDateTimeText`,
+  24-hour per R-3; same-day = one date + both times, cross-day = both full date-times) and
+  `formatFullDateTime(date, locale)` (the footer's `exportedAt` full date+time — Flutter
+  `fullDateTimeText`). Display-only over the existing `date-fns` + `LOCALES` map — **no new dep**.
+- **The details screen — `ui/event-details-screen.tsx`** (presentational, 70% floor): a designed
+  brand surface themed from `@/theme` (R-3) — a `ScrollView` with the **title block** (a labeled
+  color **swatch** with a translated `accessibilityLabel`, the title as `ThemedText type="title"` =
+  heading role, the formatted full date/time), **tag bubbles** (each the tag `color` background +
+  the tag `name`; **no icon** — no icon-font dep is wired in the app and R-3 forbids porting
+  Flutter's FontAwesome; the glyph is a **recorded parity gap**, the bubble name+color is the
+  parity-meaningful surface), **content lines** (a label + value for `location`, the **calendar
+  name** when the user has 2+ calendars — resolved via `useUserCalendars()`, `teachers`
+  newline-joined, `description` — each only when present), and the **"Updated …" footer**. An
+  accessible **not-found state** (`{ event: null, loading: false }` — a stale deep link / a row
+  dropped by a sync) renders a translated message in a polite live region — not a crash, not a
+  blank (the read-only analog of the school read's `isError`). No icons → the line **label is its
+  accessible affordance**.
+- **The tap-through** (D2/D4): the **agenda tile** became a `Pressable`
+  (`accessibilityRole="button"` + a translated `…openLabel` incl. a view-details hint + a ≥44pt
+  `minHeight` target) calling a screen-provided `onPressEvent(event)`; the **calendar-kit grid**
+  wires `onPressEvent` on **`CalendarContainer`** (where calendar-kit actually exposes it — *not*
+  `CalendarBody` as first assumed) through the chrome seam (the screen never imports the library —
+  the ADR-020 ban holds; the seam re-exports `CalendarContainer` so the prop passes through with no
+  seam change). **Routing is keyed on origin** at the one screen handler: a synced event (it carries
+  a `userCalendarId`) → `router.push("/event-details/<uid>")`; a personal event (`userCalendarId ===
+  undefined`, from `personalToCalendarEvent`) → its existing `personal-event-form?uid=<uid>` edit
+  route. The merged `EventItem` carries `userCalendarId` so the grid press routes without a re-query.
+- **The route — `src/app/event-details/[uid].tsx`**: a thin re-export of the feature `ui/` screen
+  (route-structure rule), registered as a `<Stack.Screen name="event-details/[uid]">` sibling of
+  `(tabs)` with `headerShown: true` (the default accessible back affordance; the screen sets its
+  localized title via its own `<Stack.Screen options>`), deep-linkable
+  (`timecalendar-dev://event-details/<uid>`).
+- **Observability ➖ N/A** (read-only — D7): a `getByUid` miss is a recoverable accessible
+  not-found state and a corrupt column degrades safely, so there is no crash-worthy write/throw
+  path; the change imports `@react-native-firebase/*` nowhere.
+- **CI vs. on-device:** CI proves the mapper (rich-field survival, corrupt-JSON safe default,
+  null↔undefined, unknown-type fallback) + the two formatters at 90%, the `getByUid` query shape +
+  `useEventDetails` loading/not-found against the mocked `@/db` seam, the screen's row→sections
+  render (heading / formatted date / tags / lines / footer / not-found) + the tap-through routing
+  (a press fires the origin-correct `router.push`) at the 70% floor — the calendar-kit Jest mock
+  now invokes the container's `onPressEvent` so the grid-press route is provable. The **real
+  populated render** needs a seeded synced event the dev harness lacks, so Maestro asserts
+  **reachability** (a deep link to the details route shows the not-found state) and the populated
+  render is the on-device manual pass (`inbox/2026-06-16-event-details-on-device.md`).
+- **Revisit trigger (recorded, no ADR yet):** if a **second** rich-row consumer wants a *different*
+  rich-projection shape, that is when an "event-details rich domain" ADR earns its place (D8).
+
 ## Observability — split: read/sync-fetch ➖ N/A, local replace-transaction ✅ (ADR 021 / D6)
 
 A **read-only render** and a **sync fetch failure** are **recoverable** — the last-good rows
@@ -238,7 +310,15 @@ seam. The orchestrator distinguishes the two by where the chain throws (a mutati
 - **Calendar sync** — **LANDED** (`add-mobile-calendar-sync`, ADR 021; see "Calendar sync"
   above + storage.md "Calendar events store"). `POST /calendars/sync` → the durable
   `calendar_events` table; the `useCalendarEvents` source swapped behind the unchanged seam.
-- **The home today mini-grid**, event details, weekends-toggle / persisted view preference,
-  incremental/delta sync, per-calendar visibility filtering, an offline write queue — later
-  Phase-04+ items; the home grid reuses the salvaged overlap engine, the details tap target
-  lands the agenda/timeline `onPress`.
+- **Event details** — **LANDED** (`add-mobile-event-details`, Phase-04 item 3; see the
+  "Event details (read-only)" section above). The agenda/timeline tap target the agenda ship
+  forward-referenced is now wired.
+- **The checklist + hide-event sibling features** — deliberately **out of this read-only view
+  half** (design D1). Each is a **state-writing** feature with its own persistence/store, deferred
+  to its own ship: the **checklist** (interactive add/toggle, a fourth Drizzle table + an
+  importer-fidelity question) and the **hide-event / hidden-events** feature (writes hidden state +
+  filters the events-source seam). Recorded in `inbox/2026-06-16-event-details-deferrals.md`.
+- **The home today mini-grid**, weekends-toggle / persisted view preference,
+  incremental/delta sync, per-calendar visibility filtering, an offline write queue,
+  edit/delete of synced events — later Phase-04+ items; the home grid reuses the salvaged
+  overlap engine.

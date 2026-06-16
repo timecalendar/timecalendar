@@ -4,6 +4,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
+import { router } from "expo-router"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 
@@ -25,9 +26,14 @@ jest.mock("@/features/calendar/data", () => {
   }
 })
 
+jest.mock("expo-router", () => ({
+  router: { push: jest.fn() },
+}))
+
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockSync = jest.fn()
+const mockPush = router.push as jest.Mock
 
 function syncState(overrides = {}) {
   return {
@@ -63,6 +69,7 @@ function calendarEvent(overrides = {}) {
 beforeEach(() => {
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
   mockSync.mockReset()
+  mockPush.mockReset()
   mockUseSyncCalendars.mockReturnValue(syncState())
 })
 
@@ -175,5 +182,44 @@ describe("CalendarScreen", () => {
     const list = screen.getByTestId("agenda-section-list")
     list.props.refreshControl.props.onRefresh()
     expect(mockSync).toHaveBeenCalledTimes(1)
+  })
+
+  it("routes a synced grid-event press to the read-only details screen", async () => {
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({ id: "synced-1", userCalendarId: "cal-1" }),
+    ])
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("grid-event-synced-1"))
+    expect(mockPush).toHaveBeenCalledWith("/event-details/synced-1")
+  })
+
+  it("routes a personal grid-event press to the existing edit form", async () => {
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({ id: "personal-1", userCalendarId: undefined }),
+    ])
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("grid-event-personal-1"))
+    expect(mockPush).toHaveBeenCalledWith("/personal-event-form?uid=personal-1")
+  })
+
+  it("makes the agenda tile a touchable button that routes by origin", async () => {
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({ id: "synced-1", userCalendarId: "cal-1" }),
+    ])
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("calendar-view-agenda").props.accessibilityState
+          .selected,
+      ).toBe(true)
+    })
+
+    const tile = screen.getByLabelText(
+      "Algorithms, 09:00 – 10:30 Room A1. View details",
+    )
+    expect(tile.props.accessibilityRole).toBe("button")
+    fireEvent.press(tile)
+    expect(mockPush).toHaveBeenCalledWith("/event-details/synced-1")
   })
 })

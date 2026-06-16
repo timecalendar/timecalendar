@@ -37,3 +37,31 @@ export function formatTimeRange(
   const opts = { locale: LOCALES[locale] }
   return `${format(start, "HH:mm", opts)} – ${format(end, "HH:mm", opts)}`
 }
+
+// The event-details title block's full date + time range (Flutter
+// `eventDateTimeText` = `yMMMMd · jm – jm`, but 24-hour per R-3). Same-day:
+// "<full date> · HH:mm – HH:mm". A cross-day event (rare for a timetable event)
+// shows both full date-times "<full date> HH:mm – <full date> HH:mm". Display
+// only, locale-aware over `date-fns`.
+export function formatEventDateRange(
+  start: Date,
+  end: Date,
+  locale: AppLocale,
+): string {
+  const opts = { locale: LOCALES[locale] }
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate()
+  if (sameDay) {
+    return `${format(start, "PPPP", opts)} · ${formatTimeRange(start, end, locale)}`
+  }
+  return `${format(start, "PPPP", opts)} ${format(start, "HH:mm", opts)} – ${format(end, "PPPP", opts)} ${format(end, "HH:mm", opts)}`
+}
+
+// The "updated" footer's full date + time for `exportedAt` (Flutter
+// `fullDateTimeText`): "<full date> · HH:mm". Display only, locale-aware.
+export function formatFullDateTime(date: Date, locale: AppLocale): string {
+  const opts = { locale: LOCALES[locale] }
+  return `${format(date, "PPPP", opts)} · ${format(date, "HH:mm", opts)}`
+}
