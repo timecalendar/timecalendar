@@ -92,4 +92,32 @@ describe("CalendarScreen", () => {
     await render(<CalendarScreen />)
     expect(screen.getByText("No events this period.")).toBeTruthy()
   })
+
+  it("switches to the agenda view and renders a day header + tile", async () => {
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("calendar-view-agenda").props.accessibilityState
+          .selected,
+      ).toBe(true)
+    })
+
+    // 2026-06-16 is a Tuesday — the formatted day header (weekday + day number).
+    expect(screen.getByText("TUE")).toBeTruthy()
+    expect(screen.getByText("16")).toBeTruthy()
+    // The fixture event's tile renders with its title + formatted time range.
+    expect(screen.getByText("Algorithms")).toBeTruthy()
+    expect(screen.getByText("09:00 – 10:30")).toBeTruthy()
+  })
+
+  it("shows the agenda empty state when no events intersect", async () => {
+    mockUseCalendarEvents.mockReturnValue([])
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    await waitFor(() => {
+      expect(screen.getByText("No events this period.")).toBeTruthy()
+    })
+  })
 })
