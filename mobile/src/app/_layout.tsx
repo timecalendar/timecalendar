@@ -65,6 +65,14 @@ export default function RootLayout() {
             <Stack.Screen name="settings" />
             <Stack.Screen name="personal-event-form" />
             <Stack.Screen name="calendar" />
+            {/* Header shown so the read-only details screen has the default
+                accessible back affordance (the screen sets its localized title
+                via its own <Stack.Screen options>). Deep-linkable:
+                timecalendar-dev://event-details/<uid>. */}
+            <Stack.Screen
+              name="event-details/[uid]"
+              options={{ headerShown: true }}
+            />
           </Stack>
           {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}

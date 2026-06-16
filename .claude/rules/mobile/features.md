@@ -238,8 +238,9 @@ identity store"); the storage-backend + verbatim-schema decision is
 ## Calendar — day/week timeline + agenda + sync (Phase-04 items 1–3)
 
 The heart of the app — the **day / week / agenda** rendering surface, now fed by **real synced
-data**. The day/week timeline, the agenda/planning view, and **calendar sync** have all landed.
-**One feature folder `src/features/calendar/`** (`data/` + `data/sync/` + `ui/`). Load-bearing
+data**, plus the **read-only event details** view reached by tapping an event. The day/week
+timeline, the agenda/planning view, **calendar sync**, and **read-only event details** have all
+landed. **One feature folder `src/features/calendar/`** (`data/` + `data/sync/` + `ui/`). Load-bearing
 decisions: **ADR [019](./decisions/019-calendar-rendering-adopt-calendar-kit.md)** (adopt
 `@howljs/calendar-kit` v2 behind a seam + salvage the primitives), **ADR
 [020](./decisions/020-calendar-kit-seam.md)** (the chrome-wrapper seam form), and **ADR
@@ -296,6 +297,27 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
   N/A** (read-only). The agenda branch needs **no calendar-kit mock** (a plain `SectionList`); CI
   proves the two helpers (90%) + the screen's events→sections→tiles wiring; visual/perf folds into
   the existing calendar on-device pass. See [calendar.md](./calendar.md) "Agenda / planning view".
+- **Read-only event details (`add-mobile-event-details`, Phase-04 item 3):** the view reached by
+  **tapping a synced event** — the **first consumer of ADR 021's verbatim row**. A new rich read in
+  `data/` (`event-details.ts`, 90%-gated): a pure `rowToEventDetails` (the rich counterpart to the
+  lossy `rowToCalendarEvent` — keeps `groupColor`/`type`/`exportedAt`/the full `tags{name,color,icon}`
+  the rendering projection drops, decoding the JSON columns defensively by **reusing** the sync
+  mapper's `decodeJsonArray`/`decodeFields`), a `getByUid` read (the only `@/db` import site for it,
+  reusing `eq`), and a reactive `useEventDetails(uid)` (loading vs. not-found). The rich `EventDetails`
+  is **separate** — the rendering `CalendarEvent` is **not** widened (D3). Two new display-only
+  `format.ts` formatters (full date+time range + the footer date — **no new dep**). A presentational
+  read-only `ui/event-details-screen.tsx` (70% floor): title block (labeled swatch + heading + full
+  date/time), tag bubbles (name+color; **no icon-font dep** — R-3 parity gap recorded), content lines
+  (location / calendar name when 2+ calendars via `useUserCalendars` / teachers / description), the
+  "Updated …" footer, and an accessible **not-found** state. **Read-only — no edit/delete/hide/
+  checklist, no header menu** (D1; the hide-event + checklist siblings are deferred —
+  `inbox/2026-06-16-event-details-deferrals.md`). The **tap-through**: the agenda tile became a
+  `button` Pressable; the grid wires `onPressEvent` on `CalendarContainer` through the chrome seam
+  (the calendar-kit ban holds); routing is keyed on **origin** — a synced event (`userCalendarId` set)
+  → `/event-details/<uid>`, a personal event (no `userCalendarId`) → its existing edit form. New thin
+  route `src/app/event-details/[uid].tsx` (a `Stack` sibling, deep-linkable). **No new ADR / dep /
+  schema** (D8). **Observability ➖ N/A** (read-only — a `getByUid` miss is a recoverable not-found
+  state). See [calendar.md](./calendar.md) "Event details (read-only)".
 - **CI vs. manual:** the calendar-kit Reanimated grid is mocked suite-wide
   (`jest/setup-calendar-kit.ts` — the mocked body invokes `renderEvent` per event), so CI proves
   the primitives (90%), the events-source seam, the screen's event→tile/mapping/theme/label +
@@ -306,8 +328,12 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
   `inbox/2026-06-16-calendar-low-end-android-perf.md`), the **brand visual review**
   (`inbox/2026-06-16-calendar-visual-brand-review.md`), and the **sync on-device proofs** (real
   synced render / offline-after-sync / drop+replace atomicity after a mid-sync kill / Crashlytics
-  arrival — `inbox/2026-06-16-calendar-sync-on-device.md`) are the on-device manual pass. Maestro
-  (`.maestro/calendar.yaml`) asserts render + reachability (no seeded synced backend — recorded).
+  arrival — `inbox/2026-06-16-calendar-sync-on-device.md`; the populated event-details render +
+  manual VoiceOver/TalkBack — `inbox/2026-06-16-event-details-on-device.md`) are the on-device
+  manual pass. The event-details wiring (mapper/formatters at 90%, the screen render + not-found,
+  the origin-correct tap routing — the calendar-kit mock now invokes the container's `onPressEvent`)
+  is CI-proven. Maestro (`.maestro/calendar.yaml`) asserts render + reachability — incl. the
+  event-details route via a not-found deep link (no seeded synced backend — recorded).
 
 ## Splash
 

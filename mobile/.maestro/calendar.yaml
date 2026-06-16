@@ -2,7 +2,8 @@
 #
 # Cold-launches the development-variant app, deep-links to the calendar screen,
 # and asserts the localized title + that the day/week→agenda view switch is
-# reachable. This proves: the route is reachable via deep link (Stack sibling of
+# reachable, then that the event-details route is reachable (the not-found state
+# via a deep link). This proves: the route is reachable via deep link (Stack sibling of
 # (tabs)), the screen mounts past the splash, the GestureHandlerRootView root +
 # the calendar-kit grid render natively, the startup sync runs without crashing
 # launch, and the view switch toggles the rendered surface — on both platforms.
@@ -57,3 +58,24 @@ appId: fr.samuelprak.timecalendar.dev
     id: "calendar-view-agenda"
 - assertVisible:
     id: "calendar-view-agenda"
+# Event details (Phase-04 item 3) — reachability only. The SEEDED-DATA LIMITATION
+# above means no synced event tile exists to tap, so we deep-link the details
+# route with a uid NOT in calendar_events and assert the NOT-FOUND message renders:
+# this proves the event-details/[uid] route is reachable (a Stack sibling of
+# (tabs)), the screen mounts, and resolves the not-found state without crashing.
+# The REAL populated details render (tags / lines / footer on a real synced event)
+# + the tap-from-tile path are the on-device manual pass
+# (inbox/2026-06-16-event-details-on-device.md) — CI proves the wiring in Jest
+# (event-details-screen.test.tsx + calendar-screen.test.tsx tap routing).
+- stopApp
+- openLink: timecalendar-dev://event-details/no-such-event
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "This event is no longer available."
+    timeout: 60000
