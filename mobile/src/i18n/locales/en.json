@@ -139,7 +139,6 @@
   "eventChecklist.add": "Add note",
   "eventChecklist.addLabel": "Add a checklist item",
   "eventChecklist.empty": "No items yet.",
-  "eventChecklist.item.label": "Checklist item",
   "eventChecklist.item.checkLabel": "Toggle done",
   "eventChecklist.item.contentLabel": "Item text",
   "eventChecklist.item.removeLabel": "Remove item",

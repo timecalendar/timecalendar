@@ -139,7 +139,6 @@
   "eventChecklist.add": "Ajouter une note",
   "eventChecklist.addLabel": "Ajouter un élément à la liste",
   "eventChecklist.empty": "Aucun élément pour le moment.",
-  "eventChecklist.item.label": "Élément de la liste",
   "eventChecklist.item.checkLabel": "Marquer comme fait",
   "eventChecklist.item.contentLabel": "Texte de l'élément",
   "eventChecklist.item.removeLabel": "Supprimer l'élément",
