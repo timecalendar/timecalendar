@@ -85,13 +85,15 @@ dependency, and be unit-tested to the 90% logic threshold.
 
 ### Requirement: Read-only event-details screen for synced calendar events
 
-The calendar feature `ui/` sublayer SHALL provide a presentational, **read-only** event-details screen
-for synced calendar events, themed from `@/theme` tokens (R-3), rendering a calendar event's full info:
-a title block (a labeled color swatch + the title + the formatted full date/time), tag bubbles (each
-the tag's name and color, only when tags exist), content lines (an icon-or-label + text for location,
-the calendar name when the user has 2+ calendars, teachers, and description — each only when present),
-and an "updated" footer. The screen SHALL have **no edit, delete, hide, or checklist** affordance and
-no write path of any kind.
+The calendar feature `ui/` sublayer SHALL provide a presentational event-details screen for synced
+calendar events, themed from `@/theme` tokens (R-3), rendering a calendar event's full info: a title
+block (a labeled color swatch + the title + the formatted full date/time), tag bubbles (each the tag's
+name and color, only when tags exist), content lines (an icon-or-label + text for location, the
+calendar name when the user has 2+ calendars, teachers, and description — each only when present), and
+an "updated" footer. The screen SHALL remain read-only with respect to the event's CONTENT (no edit,
+delete, or checklist affordance and no content write path). The screen MAY offer a **hide / un-hide
+action** for a synced event (a header overflow menu — the hidden-events capability), which is a
+visibility write, not a content edit; see `mobile-hidden-events`.
 
 #### Scenario: Title block
 
@@ -117,11 +119,12 @@ no write path of any kind.
 - **WHEN** the details screen renders
 - **THEN** a footer shows the "updated" label plus the formatted `exportedAt` full date/time
 
-#### Scenario: Read-only, no write affordance
+#### Scenario: No content-edit affordance
 
 - **WHEN** the details screen is used
-- **THEN** it offers no edit, delete, hide, or checklist control and triggers no write — back
-  navigation is the only action
+- **THEN** it offers no edit, delete, or checklist control and triggers no content write — the only
+  write it may trigger is a hide / un-hide visibility action (the hidden-events capability), and back
+  navigation is otherwise the only action
 
 #### Scenario: Theme from tokens
 
@@ -241,25 +244,35 @@ manual pass (the dev harness seeds no synced event reachable by deep link).
 
 ### Requirement: Event-details observability is N/A for this read-only surface
 
-The change SHALL mark the Observability DoD axis N/A with a recorded reason and SHALL NOT import
-`@react-native-firebase/*` directly anywhere it adds, because this read-only details surface has no
-crash-worthy write/throw path (a `getByUid` miss is a recoverable not-found state, a corrupt column
-degrades safely).
+The event-details READ surface SHALL NOT record to Crashlytics, because it has no crash-worthy
+write/throw path (a `getByUid` miss is a recoverable not-found state and a corrupt column degrades
+safely). Any WRITE the screen triggers — the hide / un-hide visibility action — SHALL carry its own
+observability posture owned by the `mobile-hidden-events` capability (a failed write is recorded through
+`@/firebase` `recordError`).
 
-#### Scenario: No write path to record
+#### Scenario: The read surface has no write path to record
 
-- **WHEN** the change is reviewed for the Observability DoD axis
-- **THEN** it is marked N/A because the surface only reads and renders (a not-found uid is a recoverable
-  accessible state, not an exception — mirroring the day/week timeline and the agenda read path)
+- **WHEN** the event-details read surface (rich read, formatters, render, not-found) is reviewed for
+  observability
+- **THEN** it has no crash-worthy throw of its own (a not-found uid is a recoverable accessible state,
+  mirroring the day/week timeline and the agenda read path)
+
+#### Scenario: The hide action's observability is owned by hidden-events
+
+- **WHEN** the hide / un-hide action on the screen writes the hidden set
+- **THEN** its failure is recorded through `@/firebase` `recordError` per the `mobile-hidden-events`
+  capability (the screen does not silently swallow a hide-write failure)
 
 ### Requirement: Edit, delete, hide, and checklist are deferred
 
-The change SHALL NOT add edit, delete, hide-event, or checklist capabilities to the details screen.
-These are state-writing features deferred to their own ships, recorded so the roadmap tracks them.
+The change SHALL NOT add edit, delete, or checklist capabilities to the details screen. **Hide-event is
+no longer deferred — it lands via the `mobile-hidden-events` capability** (a header overflow menu
+offered only for synced events). Edit, delete, and checklist remain state-writing features deferred to
+their own ships, recorded so the roadmap tracks them.
 
-#### Scenario: No interactive write surface this ship
+#### Scenario: No edit/delete/checklist write surface
 
 - **WHEN** the details screen is reviewed
-- **THEN** it has no header overflow menu and no edit/delete/hide/checklist control; the hide-event and
-  checklist features are recorded as deferred (their own future ships)
+- **THEN** it has no edit, delete, or checklist control; the only write surface is the hide / un-hide
+  action (the hidden-events capability), and edit/delete/checklist remain recorded as deferred
 

@@ -88,6 +88,15 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   **dense-week fixture is no longer in the default runtime merge** — `denseWeekFixture` stays
   exported from `data/index.ts` **dev/test-only** (the primitive/screen tests + optional
   `__DEV__` seeding; it is the overlap-engine's worst-case test anchor).
+- **Hidden-events filter (Phase 05 Ship A — `add-mobile-hidden-events`, ADR 023):** the seam
+  was designed to absorb exactly this. `useCalendarEvents` now also reads the hidden set
+  (`useHiddenEvents()` from `@/features/hidden-events/data` — a `data → data` cross-feature read,
+  the legitimate edge the sync orchestrator + home selectors already use) and **excludes** any
+  merged event whose `id` (uid) is in `uidHiddenEvents` OR whose `title` is in `namedHiddenEvents`,
+  applied to the **merged** synced+personal list (Flutter `EventsForViewNotifier` parity — a hidden
+  *name* also matches a same-titled personal event) **before** the range filter. **No consumer
+  change** — same signature, same `CalendarEvent` shape; day/week, agenda, AND home all honor
+  hiding. See "Hidden events" below + storage.md "Hidden events store".
 
 ## The timeline screen — a brand surface (R-3)
 
@@ -269,6 +278,44 @@ route-structure rule, not new reversible patterns.
 - **Revisit trigger (recorded, no ADR yet):** if a **second** rich-row consumer wants a *different*
   rich-projection shape, that is when an "event-details rich domain" ADR earns its place (D8).
 
+## Hidden events — hide / un-hide synced events, filtered at the seam (ADR 023)
+
+Hide a synced event by **this instance** (uid) or **by name** (all of the same title), persist the
+hidden set durably, filter hidden events out of every view, un-hide from a reachable surface — full
+Flutter `hidden_event` parity (Phase 05 Ship A, `add-mobile-hidden-events`). The hide/un-hide store
+itself is a **new `src/features/hidden-events/` feature** backed by **MMKV** (not Drizzle — the data
+is a single flat two-list blob; **ADR [023](./decisions/023-hidden-events-storage.md)**); the store
++ verified properties live in storage.md "Hidden events store" and features.md "Hidden events". The
+calendar feature is the **first consumer**:
+
+- **The filter** is at the single events-source seam (`useCalendarEvents`, above) — applied to the
+  **merged** synced+personal list, so day/week + agenda + home all honor hiding with **no consumer
+  change**. The seam reads `useHiddenEvents()` by full `@/features/hidden-events/data` path (the
+  `data → data` cross-feature edge).
+- **The hide ACTION grows the read-only event-details screen** (`ui/event-details-screen.tsx`) — a
+  **header action offered ONLY for a synced event** (a non-empty `userCalendarId`; Flutter offers
+  "Masquer" only for `EventKind.Calendar`). A not-currently-hidden event opens a **native-default
+  `Alert`** (R-3 — no Material dialog port) with the two choices — **hide this event**
+  (`hideByUid(event.id)`) and **hide all events of the same name** (`hideByName(event.title)`) — and
+  pops back on success; a **currently-hidden** event (its uid or title is in the set — a deep link
+  still resolves the row) offers **un-hide** instead (the details screen is never a one-way trap).
+  The write goes through `useHideActions()` (the observability-wrapped seam); a failed write surfaces
+  an accessible `alert` live region. **This LANDS the event-details "hide-event" deferral** the
+  read-only ship recorded.
+- **Un-hide is also reachable from a management screen** — `src/features/hidden-events/ui/hidden-events-screen.tsx`
+  (a `/hidden-events` Stack sibling of `(tabs)` reached from a Profile link) — required because
+  **hide-by-name has no per-event details surface**. It lists the name-hidden titles + the
+  uid-hidden events that **still resolve** to a synced event (resolved via `useSyncedEvents()` —
+  Flutter parity, a stale uid is not orphaned in the list), each with an un-hide control + an empty
+  state. See features.md "Hidden events".
+- **Observability (ADR 023 / D5):** a failed hidden-set **write** is a crash-worthy
+  local-persistence failure (no server backup) → `@/firebase` `recordError(error,
+  "hidden-events/<action>")` + an accessible failure surface; the filter **read** is
+  total/infallible (corrupt/absent → empty set, the views render everything). **No new ADR beyond
+  023, no dependency, no native/babel/schema change** — the filter, the synced-only gating, and the
+  management screen are executions of existing patterns (ADRs 021/014 + the events-source seam
+  design + the route-structure rule).
+
 ## Observability — split: read/sync-fetch ➖ N/A, local replace-transaction ✅ (ADR 021 / D6)
 
 A **read-only render** and a **sync fetch failure** are **recoverable** — the last-good rows
@@ -325,11 +372,14 @@ seam. The orchestrator distinguishes the two by where the chain throws (a mutati
 - **Event details** — **LANDED** (`add-mobile-event-details`, Phase-04 item 3; see the
   "Event details (read-only)" section above). The agenda/timeline tap target the agenda ship
   forward-referenced is now wired.
-- **The checklist + hide-event sibling features** — deliberately **out of this read-only view
-  half** (design D1). Each is a **state-writing** feature with its own persistence/store, deferred
-  to its own ship: the **checklist** (interactive add/toggle, a fourth Drizzle table + an
-  importer-fidelity question) and the **hide-event / hidden-events** feature (writes hidden state +
-  filters the events-source seam). Recorded in `inbox/2026-06-16-event-details-deferrals.md`.
+- **The hide-event / hidden-events feature** — **LANDED** (`add-mobile-hidden-events`, Phase 05
+  Ship A / ADR [023](./decisions/023-hidden-events-storage.md); see "Hidden events" above +
+  storage.md / features.md). It writes the hidden state (the MMKV hidden-set store) and filters the
+  events-source seam, with the hide action on the event-details screen + a management screen.
+- **The checklist sibling feature** — still deliberately **out of scope** (design D1): a
+  **state-writing** feature with its own persistence/store (interactive add/toggle, a fourth Drizzle
+  table + an importer-fidelity question), deferred to its own ship. Recorded in
+  `inbox/2026-06-16-event-details-deferrals.md`.
 - **The home today mini-grid** — **LANDED** (`add-mobile-home`, Phase-04 item 4 / ADR
   [022](./decisions/022-home-ia-today-view.md); see features.md "Home / today view"). It is the
   salvaged overlap engine's **first rendering consumer** (`src/features/home/ui/today-timeline.tsx`),

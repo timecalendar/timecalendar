@@ -1,7 +1,14 @@
-import { Stack, useLocalSearchParams } from "expo-router"
-import { useMemo } from "react"
+import { Stack, useLocalSearchParams, useRouter } from "expo-router"
+import { useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native"
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
@@ -16,22 +23,78 @@ import {
   useEventDetails,
 } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
+import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { Radii, Spacing } from "@/theme"
 
 // The read-only event-details screen (D6) — PRESENTATIONAL (70% floor). It reads
 // the uid route param, reads the rich event through the sibling data/ sub-barrel
 // (B-2 — never @/db, B-1), and renders the title block / tags / content lines /
-// footer as a designed brand surface themed from @/theme (R-3). READ-ONLY: no
-// edit / delete / hide / checklist, no header overflow menu, no write path —
-// back navigation only (D1). The route (src/app/event-details/[uid].tsx) is a
-// thin re-export (route-structure rule).
+// footer as a designed brand surface themed from @/theme (R-3). Read-only with
+// respect to the event's CONTENT (no edit / delete / checklist, no content write).
+// The ONE write it offers is the hide / un-hide VISIBILITY action — a header
+// action shown ONLY for a synced event (one carrying a userCalendarId), the
+// hidden-events capability (Phase 05 Ship A / ADR 023), Flutter parity (Masquer is
+// offered only for EventKind.Calendar). The route (src/app/event-details/[uid].tsx)
+// is a thin re-export (route-structure rule).
 
 export function EventDetailsScreen() {
   const { t, i18n } = useTranslation()
+  const router = useRouter()
   const { uid } = useLocalSearchParams<{ uid?: string }>()
   const { event, loading } = useEventDetails(uid)
   const locale = resolveLocale(i18n.language)
   const calendars = useUserCalendars()
+  const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
+  const {
+    hideByUid,
+    hideByName,
+    unhideUid,
+    unhideName,
+    failed: hideFailed,
+  } = useHideActions()
+
+  // A synced event carries a non-empty userCalendarId; personal events route to
+  // their edit form, never here (EventDetails is only built from a synced
+  // calendar_events row), but the guard is explicit (Flutter offers Masquer only
+  // for EventKind.Calendar — hiding applies to synced events only).
+  const isSynced = event !== null && event.userCalendarId.length > 0
+  const isHidden =
+    event !== null &&
+    (uidHiddenEvents.includes(event.id) ||
+      namedHiddenEvents.includes(event.title))
+
+  // Open the hide chooser: hide-this-instance (uid) vs hide-all-of-this-name
+  // (title), Flutter event_details_hidden_dialog parity. A native-default Alert
+  // (R-3 — no Material dialog port). On a successful hide the screen pops back.
+  const openHideChooser = useCallback(() => {
+    if (event === null) return
+    Alert.alert(t("eventDetails.hide.title"), undefined, [
+      {
+        text: t("eventDetails.hide.thisEvent"),
+        onPress: () => {
+          hideByUid(event.id)
+          router.back()
+        },
+      },
+      {
+        text: t("eventDetails.hide.byName"),
+        onPress: () => {
+          hideByName(event.title)
+          router.back()
+        },
+      },
+      { text: t("eventDetails.hide.cancel"), style: "cancel" },
+    ])
+  }, [event, t, hideByUid, hideByName, router])
+
+  // Un-hide whichever set(s) contain this event (Flutter parity — a deep link to a
+  // hidden event still resolves the row, so the details screen is never a one-way
+  // trap). Stays on the screen so the event re-appears in the views behind it.
+  const unhide = useCallback(() => {
+    if (event === null) return
+    if (uidHiddenEvents.includes(event.id)) unhideUid(event.id)
+    if (namedHiddenEvents.includes(event.title)) unhideName(event.title)
+  }, [event, uidHiddenEvents, namedHiddenEvents, unhideUid, unhideName])
 
   // The calendar name is shown ONLY when the user has 2+ calendars (Flutter
   // parity) — with one calendar the name is redundant.
@@ -41,6 +104,41 @@ export function EventDetailsScreen() {
   }, [event, calendars])
 
   const header = <Stack.Screen options={{ title: t("eventDetails.title") }} />
+
+  // The hide / un-hide header action — only for a synced event. A currently-
+  // hidden event offers un-hide (no router.back, stays so the event re-appears
+  // behind); a visible event opens the hide chooser.
+  const headerAction =
+    isSynced && event !== null ? (
+      <Stack.Screen
+        options={{
+          title: t("eventDetails.title"),
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t(
+                isHidden
+                  ? "eventDetails.unhide.actionLabel"
+                  : "eventDetails.hide.actionLabel",
+              )}
+              hitSlop={Spacing.two}
+              onPress={isHidden ? unhide : openHideChooser}
+              style={styles.headerAction}
+            >
+              <ThemedText type="smallBold" themeColor="primary">
+                {t(
+                  isHidden
+                    ? "eventDetails.unhide.action"
+                    : "eventDetails.hide.action",
+                )}
+              </ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
+    ) : (
+      header
+    )
 
   if (loading) {
     return (
@@ -79,8 +177,18 @@ export function EventDetailsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      {header}
+      {headerAction}
       <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+        {hideFailed && (
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
+            style={styles.hideError}
+          >
+            {t("eventDetails.hide.error")}
+          </ThemedText>
+        )}
         <ScrollView contentContainerStyle={styles.content}>
           <TitleBlock event={event} locale={locale} />
 
@@ -196,6 +304,17 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  headerAction: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Spacing.two,
+  },
+  hideError: {
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
   },
   content: {
     padding: Spacing.three,

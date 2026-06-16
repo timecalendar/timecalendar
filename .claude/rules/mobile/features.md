@@ -314,9 +314,11 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
   read-only `ui/event-details-screen.tsx` (70% floor): title block (labeled swatch + heading + full
   date/time), tag bubbles (name+color; **no icon-font dep** — R-3 parity gap recorded), content lines
   (location / calendar name when 2+ calendars via `useUserCalendars` / teachers / description), the
-  "Updated …" footer, and an accessible **not-found** state. **Read-only — no edit/delete/hide/
-  checklist, no header menu** (D1; the hide-event + checklist siblings are deferred —
-  `inbox/2026-06-16-event-details-deferrals.md`). The **tap-through**: the agenda tile became a
+  "Updated …" footer, and an accessible **not-found** state. **Read-only with respect to the
+  event's CONTENT — no edit/delete/checklist** (D1; the checklist sibling is deferred —
+  `inbox/2026-06-16-event-details-deferrals.md`); the screen now carries the **hide / un-hide
+  visibility action** (a header action for synced events — the hidden-events capability, Phase 05
+  Ship A; see "Hidden events" below). The **tap-through**: the agenda tile became a
   `button` Pressable; the grid wires `onPressEvent` on `CalendarContainer` through the chrome seam
   (the calendar-kit ban holds); routing is keyed on **origin** — a synced event (`userCalendarId` set)
   → `/event-details/<uid>`, a personal event (no `userCalendarId`) → its existing edit form. New thin
@@ -339,6 +341,53 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
   the origin-correct tap routing — the calendar-kit mock now invokes the container's `onPressEvent`)
   is CI-proven. Maestro (`.maestro/calendar.yaml`) asserts render + reachability — incl. the
   event-details route via a not-found deep link (no seeded synced backend — recorded).
+
+## Hidden events — hide / un-hide synced events, persisted in MMKV (Phase 05 Ship A)
+
+Full Flutter `hidden_event` parity: hide a **synced** event by **this instance** (uid) or **by
+name** (all of the same title), persist the hidden set durably, filter hidden events out of every
+view, un-hide from a reachable surface. **A new `src/features/hidden-events/` feature folder**
+(`data/` + `ui/`), the home of the hide/un-hide concern. Load-bearing decision: the **storage
+backend** (MMKV-over-Drizzle, a single verbatim blob for importer fidelity) — **ADR
+[023](./decisions/023-hidden-events-storage.md)**. The store is in [storage.md](./storage.md)
+"Hidden events store"; the filter + hide-action wiring in [calendar.md](./calendar.md) "Hidden
+events".
+
+- **Data layer — `src/features/hidden-events/data/` (90%-gated):** the single MMKV blob
+  `{ uidHiddenEvents, namedHiddenEvents }` under one flat key `hiddenEvents.set` (the Flutter
+  `toMap()` shape verbatim — importer fidelity, no server backup), a **total defensive parser**
+  (`parseHiddenEvents` — corrupt/absent → empty, never throws), the four-mutator write path
+  (`hideByUid`/`hideByName`/`unhideUid`/`unhideName`, deduped, the **only** `@/storage` import site
+  — B-1), `useHiddenEvents()` (the reactive read over `useStoredString`), and `useHideActions()`
+  (the four mutators wrapped with `recordError` + an accessible `failed` flag — the one UI write
+  path).
+- **The filter** rides the **unchanged** events-source seam (`useCalendarEvents` reads
+  `useHiddenEvents()` and excludes hidden uids/titles on the merged list) — no calendar-view consumer
+  change; the merged-list filter means a hidden *name* also hides a same-titled personal event
+  (Flutter parity), while the hide **action** is **synced-only** (so a personal event is never
+  *deliberately* hidden). See [calendar.md](./calendar.md).
+- **The hide action** grows the read-only event-details screen — a header action offered only for a
+  synced event, a native-default `Alert` chooser (hide-this-instance vs hide-by-name), or **un-hide**
+  when the viewed event is currently hidden (never a one-way trap). See [calendar.md](./calendar.md).
+- **The management screen (`ui/hidden-events-screen.tsx`, 70% floor)** — a `/hidden-events` Stack
+  sibling of `(tabs)` reached from a Profile entry link (required because hide-by-name has no
+  per-event details surface). Lists the name-hidden titles + the uid-hidden events that **still
+  resolve** to a synced event (resolved via `useSyncedEvents()` — Flutter parity, a stale uid is not
+  orphaned), each with an un-hide control + an accessible empty state. Themed from `@/theme` (R-3 —
+  heading-role section titles, ≥44pt un-hide touchables, polite live-region error/empty states).
+- **Observability ✅:** a failed hidden-set **write** is crash-worthy (no server backup) → `@/firebase`
+  `recordError(error, "hidden-events/<action>")` + an accessible failure surface; the filter **read**
+  is total/infallible (corrupt/absent → empty set, no record).
+- **CI vs. manual:** CI proves the parser totality, the four mutators (append/dedup/remove/no-op),
+  the **verbatim importer-fidelity blob**, the **write/read-back + restart-simulation** (a fresh
+  store module reads back a prior write through a stateful Map-backed `@/storage` fake — the
+  irreplaceable-data rigor of user_calendars / calendar_events), the seam filter, the synced-only
+  hide/un-hide wiring, the management-screen lists + un-hide + empty state, and the observability
+  path. On-disk **MMKV survival** across restart/kill/cache-clear + manual VoiceOver/TalkBack are the
+  on-device pass (`inbox/2026-06-16-hidden-events-on-device.md`). Maestro
+  (`.maestro/hidden-events.yaml`) asserts the management route renders its empty state + reachability
+  (no seeded hidden set — recorded). **No new dependency, no `app.config.ts`/babel/native change, no
+  Drizzle schema/migration** (a new MMKV key under the existing seam).
 
 ## Home / today view — the landing surface (Phase-04 item 4)
 

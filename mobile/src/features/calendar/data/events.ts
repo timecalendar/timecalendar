@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 
+import { useHiddenEvents } from "@/features/hidden-events/data"
 import {
   type PersonalEvent,
   usePersonalEvents,
@@ -52,14 +53,31 @@ export function intersectsRange(
 // seeding). Personal events (device-local, not synced) render alongside the synced
 // timetable — the user's own events and their classes in one view (Flutter parity:
 // both EventKinds render together).
+//
+// Hidden-events filter (ADR 023 / Phase 05 Ship A): the seam was designed to
+// absorb exactly this. It reads the hidden set (useHiddenEvents — a data → data
+// cross-feature read, the legitimate edge the sync orchestrator + home selectors
+// already use) and excludes any event whose uid (event.id) is in uidHiddenEvents
+// OR whose title is in namedHiddenEvents, applied to the MERGED list (Flutter
+// EventsForViewNotifier parity — a hidden *name* can match a same-titled personal
+// event too) BEFORE the range filter. No consumer change: day/week, agenda, and
+// home all honor hiding through the unchanged signature + CalendarEvent shape.
 export function useCalendarEvents(range: DateRange): CalendarEvent[] {
   const syncedEvents = useSyncedEvents()
   const personalEvents = usePersonalEvents()
+  const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   return useMemo(() => {
+    const uidSet = new Set(uidHiddenEvents)
+    const nameSet = new Set(namedHiddenEvents)
     const merged = [
       ...syncedEvents,
       ...personalEvents.map(personalToCalendarEvent),
     ]
-    return merged.filter((event) => intersectsRange(event, range))
-  }, [syncedEvents, personalEvents, range])
+    return merged.filter(
+      (event) =>
+        !uidSet.has(event.id) &&
+        !nameSet.has(event.title) &&
+        intersectsRange(event, range),
+    )
+  }, [syncedEvents, personalEvents, uidHiddenEvents, namedHiddenEvents, range])
 }
