@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: The event-details screen renders both synced and personal events behind one read seam
 
@@ -10,7 +10,10 @@ with safe defaults (group color = color, empty tags/teachers, empty `userCalenda
 SHALL render the shared title block, formatted date/time, content lines, and footer for both kinds.
 This widens the previously synced-only details surface (which built `EventDetails` only from a
 `calendar_events` row) so that personal events also have a details surface (Flutter parity — both
-`EventInterface` open the same screen).
+`EventInterface` open the same screen). The title block (labeled color swatch + heading + formatted
+full date/time), the tag bubbles, the content lines (location / calendar name with 2+ calendars /
+teachers / description — each only when present), the "updated" footer, and the `@/theme`-derived
+theming (R-3) of the prior synced-only requirement are preserved here for both kinds.
 
 #### Scenario: A synced event renders its rich details
 
@@ -70,3 +73,59 @@ dropped). The two header actions SHALL be mutually exclusive by kind.
 - **WHEN** the user taps Edit on a personal event's details
 - **THEN** the personal-event edit form opens for that uid (create/edit/delete of the event itself
   stays reachable)
+
+## MODIFIED Requirements
+
+### Requirement: Tap-through from the timeline and agenda views
+
+The day/week timeline grid and the agenda list SHALL make their event tiles tappable, opening the
+unified event-details screen for BOTH a synced calendar event AND a personal event. The agenda tile
+SHALL be an accessible touchable (role + translated label + ≥44pt/48dp target), and the grid SHALL wire
+the calendar-kit `onPressEvent` through the chrome seam. Routing SHALL no longer be origin-keyed at the
+tap: both a synced event (it carries a `userCalendarId`) and a personal event (no `userCalendarId`) open
+`event-details/<uid>` — the single tap-routing discriminator now returns the details route for both
+kinds. The personal-event edit/delete flow stays reachable one tap deeper, via the **Edit** header
+action on the unified details screen (not directly from the tile).
+
+#### Scenario: Agenda tile is a touchable
+
+- **WHEN** the agenda list renders an event tile
+- **THEN** the tile is an accessible touchable (role + translated label including a view-details hint +
+  ≥44pt/48dp target) — no longer a non-touchable `text` node
+
+#### Scenario: Tapping a synced event opens details
+
+- **WHEN** a synced calendar event tile (in the grid or the agenda) is tapped
+- **THEN** the app navigates to the unified details route for that event's uid
+
+#### Scenario: Tapping a personal event opens details
+
+- **WHEN** a personal event tile (in the grid or the agenda) is tapped
+- **THEN** the app navigates to the unified details route for that event's uid (NOT directly to the
+  personal-event form — the form is reached from the details screen's Edit action)
+
+#### Scenario: Grid uses the chrome seam
+
+- **WHEN** the calendar-kit grid wires event presses
+- **THEN** it passes `onPressEvent` through the `@/components/chrome` seam (the screen never imports
+  `@howljs/calendar-kit` directly — the calendar-kit ban still holds)
+
+## REMOVED Requirements
+
+### Requirement: Read-only event-details screen for synced calendar events
+
+**Reason**: Superseded by the ADDED requirement "The event-details screen renders both synced and
+personal events behind one read seam" (plus the interactive-checklist and origin-keyed-header-actions
+requirements). The details surface is no longer **read-only** (the checklist is the first interactive,
+write-capable section) and no longer **synced-only** (it renders personal events too). The rendering
+this requirement described — the title block, tag bubbles, content lines, "updated" footer, and
+`@/theme` theming — is carried forward verbatim by the new both-kinds requirement for both event kinds,
+so nothing is lost; only the false "read-only / synced-only" framing is dropped.
+
+### Requirement: Edit, delete, hide, and checklist are deferred
+
+**Reason**: No longer true. Hide-event landed in Phase 05 Ship A (the `mobile-hidden-events`
+capability), and the **checklist** and personal-event **Edit** (the previously-deferred "edit half")
+land in this change (Ship B) — the interactive checklist section and the origin-keyed Edit header action
+on the unified details screen. With all of edit/hide/checklist now shipped (personal delete stays
+reachable through the relocated Edit form), the "deferred" requirement is false and is removed.

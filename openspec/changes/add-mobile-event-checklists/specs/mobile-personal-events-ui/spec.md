@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: A personal-event tap opens the unified event-details screen; create/edit/delete stays reachable
 
