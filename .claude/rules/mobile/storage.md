@@ -276,3 +276,56 @@ ADR 011/018); rationale in `add-mobile-calendar-sync`'s `design.md` (D1–D8) an
   drop+replace **atomicity** after a mid-sync kill, or real-data perf — those are the
   **on-device manual pass** (inbox `2026-06-16-calendar-sync-on-device.md`). The K-3
   coverage gate lands green.
+
+## Hidden events store — a single MMKV blob (not Drizzle)
+
+The **first durable importer-target deliberately backed by MMKV, not Drizzle** — the
+hidden-events set (Phase 05 Ship A). Where `personal_events` / `user_calendars` /
+`calendar_events` are relational, multi-row, keyed Drizzle tables, the hidden set is the
+**opposite shape**: a single flat record of two string lists, read whole / written whole /
+filtered in memory — exactly the flat, non-relational shape MMKV owns (the school-selection
+`groupValues` JSON-array-over-one-key precedent). The MMKV-over-Drizzle call is **ADR
+[023](./decisions/023-hidden-events-storage.md)** (which makes the *opposite* call to ADR 018
+for the *opposite* shape); rationale in `add-mobile-hidden-events`'s `design.md` (D1) and
+`specs/mobile-hidden-events/spec.md`.
+
+- **The blob — `src/features/hidden-events/data/types.ts`.** One flat key
+  `HIDDEN_EVENTS_KEYS.set = "hiddenEvents.set"` holds a JSON-encoded
+  `{ uidHiddenEvents: string[], namedHiddenEvents: string[] }` record, mirroring the Flutter
+  `HiddenEvent.toMap()` wire format **verbatim** for **importer fidelity** (the Phase-09
+  one-shot importer writes the recovered blob as the key's value with **zero value
+  transformation** — the `newId()`-bypass analog; it sets the whole blob, never going through
+  the mutators). A **total defensive parser** `parseHiddenEvents(raw)` decodes an unset /
+  non-JSON / wrong-shape / non-string-array value to the empty default
+  `{ uidHiddenEvents: [], namedHiddenEvents: [] }` and **never throws** (each list parses
+  independently, so a partially-corrupt blob keeps the valid half) — the views then render
+  everything, the safe default. `encodeHiddenEvents(set)` preserves the verbatim two-key shape.
+- **The store — `data/store.ts`** (the **only** place touching `@/storage` for this feature,
+  B-1): pure imperative get/set over the seam (`getString`/`setString`), `getHiddenEvents()`
+  (read + parse), and the four mutators `hideByUid` / `hideByName` / `unhideUid` / `unhideName`
+  — each reads the current set, produces the next set (append-if-absent **deduped** / filter-out;
+  a Set is the RN model, the filter is membership, so dupes are invisible — deduped on write to
+  keep the blob clean), and writes the whole encoded blob (drop+replace of the single record,
+  Flutter parity). **The write is the failure surface** — a `setString` failure throws; the UI
+  hook catches + records (below).
+- **The hooks — `data/hooks.ts`.** `useHiddenEvents()` — the reactive read over the seam's
+  `useStoredString(HIDDEN_EVENTS_KEYS.set)` + `parseHiddenEvents` (mirroring `useSelectedSchool`),
+  so the calendar views and the management screen re-render when the set changes.
+  `useHideActions()` — the four mutators wrapped with the observability + failure-state handling
+  (the one place the UI calls writes): a thrown write records through `@/firebase`
+  `recordError(error, "hidden-events/<action>")` **and** flips an accessible `failed` flag. The
+  filter read is **total/infallible** (corrupt/absent → empty set, no record — the school-read
+  posture, not the personal-events-write posture).
+- **No Drizzle table, no migration, no `@/db` change** (the `migrate.test.ts` proof is untouched);
+  **no new dependency, no `app.config.ts`/babel/native change** (a new MMKV key under the existing
+  seam). The feature is filtered at the events-source seam — see calendar.md "Hidden events".
+- **What CI proves vs. on-device.** CI proves the **total parser** (empty / corrupt / verbatim-shape
+  round-trip), the **four mutators** (append / dedup no-op / remove / remove-absent no-op), the
+  **verbatim importer-fidelity blob shape**, the **write-then-read-back** contract (through the real
+  in-memory MMKV mock), the **restart-simulation** (`data/restart.test.ts` — a fresh store module
+  reads back a prior write through a stateful Map-backed `@/storage` fake surviving
+  `resetModules()`, mirroring the user_calendars proof), the reactive hook, and the
+  **observability path** (a thrown write → `recordError` + the failure flag). CI **cannot** prove
+  on-disk MMKV survival across a real restart/kill/cache-clear — the **on-device manual pass**
+  (inbox `2026-06-16-hidden-events-on-device.md`). The K-3 coverage gate lands green (the `data/`
+  layer at 100%).

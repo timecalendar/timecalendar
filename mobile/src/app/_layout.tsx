@@ -78,6 +78,15 @@ export default function RootLayout() {
               name="event-details/[uid]"
               options={{ headerShown: true }}
             />
+            {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
+                sibling of (tabs), reached from a Profile entry link, where
+                hide-by-name (no per-event details surface) is un-hideable.
+                Header shown for the accessible back affordance + the screen's
+                own title. Deep-linkable: timecalendar-dev://hidden-events. */}
+            <Stack.Screen
+              name="hidden-events"
+              options={{ headerShown: true }}
+            />
           </Stack>
           {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}

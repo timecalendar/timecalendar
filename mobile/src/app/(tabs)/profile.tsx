@@ -60,6 +60,19 @@ export default function ProfileScreen() {
           </Pressable>
         </Link>
 
+        {/* The hidden-events management screen (Phase 05 Ship A) — un-hide must
+            be reachable for hide-by-name. Same accessible-link shape. */}
+        <Link href="/hidden-events" asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("profile.hiddenEvents.link")}
+            hitSlop={Spacing.two}
+            style={styles.settingsLink}
+          >
+            <ThemedText>{t("profile.hiddenEvents.link")}</ThemedText>
+          </Pressable>
+        </Link>
+
         {__DEV__ && <FirebaseDebugPanel />}
       </SafeAreaView>
     </ThemedView>
