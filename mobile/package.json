@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.17",
+    "@howljs/calendar-kit": "^2.5.6",
     "@react-native-firebase/analytics": "^24.1.1",
     "@react-native-firebase/app": "^24.1.1",
     "@react-native-firebase/crashlytics": "^24.1.1",
