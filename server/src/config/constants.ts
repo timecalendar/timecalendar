@@ -45,7 +45,6 @@ export const SERVICE_ACCOUNT_KEY_PATH =
 
 export const REDIS_QUEUE_NAME = env.REDIS_QUEUE ?? "timecalendar-notifier"
 export const REDIS_URL = env.REDIS_URL ?? ""
-export const REDIS_KEY_PREFIX = env.REDIS_KEY_PREFIX ?? ""
 
 export const API_USERNAME = env.API_USERNAME ?? ""
 export const API_TOKEN = env.API_TOKEN ?? ""
