@@ -1,6 +1,6 @@
 # Architecture Book — TimeCalendar mobile (React Native)
 
-> **This directory (`.claude/rules/mobile/`) IS the Architecture Book** — the living set of rules that drive development of `mobile/`. It holds only rules that *can't* be encoded in tooling; every rule that can be a lint rule, a type, or a CI gate must be (R-1), and prose links to the enforcing gate.
+> **This directory (`docs/mobile/architecture-book/`) IS the Architecture Book** — the living set of rules that drive development of `mobile/`. It holds only rules that *can't* be encoded in tooling; every rule that can be a lint rule, a type, or a CI gate must be (R-1), and prose links to the enforcing gate.
 >
 > **How it changes:** per `docs/react-native-migration/00-exploration/migration-approach.md` §7 — propose, ADR if load-bearing, update the relevant rule file, append to the [Rule changelog](./architecture-changelog.md). Revising the book is success, not failure: patterns are earned over the phases, not declared on day one.
 >

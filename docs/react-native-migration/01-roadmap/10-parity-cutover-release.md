@@ -14,6 +14,30 @@
 6. **Release** — submit via EAS; staged store rollout; watch Crashlytics + migration success metrics closely.
 7. **Retire Flutter** — once stable in production, stop Flutter maintenance ([R-5](../00-exploration/migration-approach.md#6-working-rules-seed-of-the-architecture-book)); archive `app/`.
 
+## Human prerequisites — credentials, signing & store accounts
+
+The EAS **config half is landed** (`mobile/eas.json`, `expo-updates` wiring, channel/profile
+mapping; `eas init` done — the real `projectId` `3b427ef6-1aae-4175-8217-ea447ee6df6b` is
+committed in `app.config.ts`, not a secret). What remains is irreducibly human — account access
++ credentials + real-device/console steps — and was carried here from the EAS setup inbox note.
+None of it blocks `tsc`/lint/test; it unlocks actual builds, installs, and store submission.
+
+1. **Apple Developer credentials + signing (iOS).** On the first
+   `eas build --profile preview --platform ios` (or `eas credentials`), link the Apple Developer
+   account and let **EAS manage signing** (dist cert + provisioning profile for
+   `fr.samuelprak.timecalendar`). Provide `$EXPO_APPLE_ID` / `$EXPO_ASC_APP_ID` /
+   `$EXPO_APPLE_TEAM_ID` for `submit.production.ios` — never commit them. We do **not** bridge the
+   Flutter Fastlane `match` repo into EAS (it stays with `app/` — R-5); same bundle id → it targets
+   the existing App Store record (RN ships as an update).
+2. **Google Play service account (Android submit).** Supply a Play service-account JSON key and
+   point `submit.production.android.serviceAccountKeyPath` at it (outside git, e.g. `ci/keys/…`).
+3. **Real-device install + internal-distribution channels.** `eas build --profile preview` for both
+   platforms; install on a real device from the EAS internal URL (iOS: register UDID / TestFlight
+   internal; Android: `.apk` / Play internal testing). Stand up the **TestFlight internal** group +
+   the **Play Console internal testing** track so dogfooders get builds (feeds step 3 above).
+4. **`.dev` Firebase apps** — owned by `mobile/firebase/README.md`; the `development` EAS profile
+   builds the `.dev` identity and needs those config files present (already tracked).
+
 ## Exit criteria
 
 - Full feature parity, all DoD-complete.

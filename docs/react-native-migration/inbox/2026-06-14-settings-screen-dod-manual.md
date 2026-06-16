@@ -5,7 +5,7 @@
 **For:** whoever runs the device passes (the planner/CI cannot do these)
 
 A2 is the **first feature taken through the full Definition of Done with a real interactive
-product control** (`.claude/rules/mobile/definition-of-done.md`). The automatable axes are done
+product control** (`docs/mobile/architecture-book/definition-of-done.md`). The automatable axes are done
 and green in CI (types, lint incl. the a11y touchable rules on the Profile entry control, the Jest
 proof test, i18n FR/EN parity, theming light/dark, observability non-regression). The axes below
 are **irreducibly human / on-device** — a static tool, Jest, or the planner cannot assert them.

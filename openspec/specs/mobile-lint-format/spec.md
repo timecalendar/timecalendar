@@ -34,7 +34,7 @@ reordered.
 
 ### Requirement: Feature-module import boundaries are lint-enforced
 Lint SHALL enforce the layered feature-module import boundaries
-([ADR 014](../../../../.claude/rules/mobile/decisions/014-layered-feature-module-pattern.md))
+([ADR 014](../../../../docs/mobile/architecture-book/decisions/014-layered-feature-module-pattern.md))
 via `eslint-plugin-boundaries`, reported as errors and gated by the `test-mobile`
 CI job. The boundaries lint SHALL be layered **on top of** the existing seam bans
 (`no-restricted-imports` for the storage/chrome/axios seams, `no-restricted-globals`
@@ -53,7 +53,7 @@ four boundaries SHALL be enforced:
   feature through its barrel.
 - **B-4** — the documented infra→feature seam — `@/hooks/use-color-scheme` and
   `@/i18n` importing `@/features/settings/prefs` and `@/features/settings/prefs/store`
-  ([ADR 009](../../../../.claude/rules/mobile/decisions/009-settings-feature-prefs.md))
+  ([ADR 009](../../../../docs/mobile/architecture-book/decisions/009-settings-feature-prefs.md))
   — SHALL be allowed.
 
 The current mobile source tree SHALL already satisfy these boundaries (the rule
@@ -183,7 +183,7 @@ The `test-mobile` CI job SHALL run mobile lint with `--max-warnings 0` and fail 
 The Architecture Book SHALL gain a lint/format section recording the rule inventory (what each rule encodes and where it lives), and the data-layer section's prose caveat about un-gated `fetch` SHALL be replaced with a pointer to the enforcing lint rule (per R-1).
 
 #### Scenario: Fetch caveat is resolved
-- **WHEN** `.claude/rules/mobile/architecture.md` is read after this change
+- **WHEN** `docs/mobile/architecture-book/architecture.md` is read after this change
 - **THEN** the data-layer section no longer describes the no-raw-fetch rule as un-encoded prose and instead points to the lint rule
 
 #### Scenario: Rule inventory exists

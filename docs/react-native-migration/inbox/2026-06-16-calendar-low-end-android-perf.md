@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-16
 **Roadmap:** Phase 04 step 1/2 (`docs/react-native-migration/01-roadmap/04-calendar-core.md`)
-**Spike/ADR:** [019](../../../.claude/rules/mobile/decisions/019-calendar-rendering-adopt-calendar-kit.md) (calendar rendering — adopt `@howljs/calendar-kit`)
+**Spike/ADR:** [019](../../../docs/mobile/architecture-book/decisions/019-calendar-rendering-adopt-calendar-kit.md) (calendar rendering — adopt `@howljs/calendar-kit`)
 **For:** Samuel (needs a real **low-end Android** device — the autonomous loop, CI emulators, and the iOS simulator cannot do this)
 
 This is the **performance axis** the Phase-04 exit criteria hang on: *"Day/week/agenda render

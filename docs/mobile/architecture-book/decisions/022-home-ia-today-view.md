@@ -21,6 +21,12 @@ ADR established is preserved (the form, its route, and `usePersonalEvents` are u
 the entry point moved one more tap); only the tap *destination* changed. The Home-IA decision
 itself (Home tab = today view, the standalone list relocated to `/personal-events`) stands.
 
+**⚠️ Also superseded-in-part by ADR [025](./025-calendar-tab-three-tab-ia.md) (2026-06-16):**
+this ADR shipped a **two-tab IA** (Home · Profile) and rejected a third tab (alternative (d)
+— a speculative *personal-events* tab). ADR 025 adds a **Calendar** tab (Home · Calendar ·
+Profile, Flutter parity), giving the stranded day/week/agenda surface a front door. Only the
+two-tab framing / the "no third tab" rejection is superseded; the Home-IA decision above stands.
+
 ## Context
 
 Phase-04 item 4 is the **HOME / today landing view** — the surface a TimeCalendar

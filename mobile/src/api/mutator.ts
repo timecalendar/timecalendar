@@ -27,7 +27,14 @@ export const customFetch = async <T>(
   url: string,
   options: RequestInit,
 ): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
+  const fullUrl = `${API_BASE_URL}${url}`
+  const method = options.method ?? "GET"
+
+  if (__DEV__) {
+    console.log(`[api] → ${method} ${fullUrl}`, options.body ?? "")
+  }
+
+  const response = await fetch(fullUrl, {
     ...options,
     headers: {
       Accept: "application/json",
@@ -37,6 +44,11 @@ export const customFetch = async <T>(
   })
 
   const body = await parseBody(response)
+
+  if (__DEV__) {
+    console.log(`[api] ← ${response.status} ${method} ${fullUrl}`, body ?? "")
+  }
+
   if (!response.ok) {
     throw new ApiError(response.status, body)
   }

@@ -3,7 +3,7 @@
 **Date:** 2026-06-16
 **Roadmap:** Phase 05 Ship A (Hidden events)
 **Change:** `add-mobile-hidden-events`
-**ADR:** [023](../../../.claude/rules/mobile/decisions/023-hidden-events-storage.md)
+**ADR:** [023](../../../docs/mobile/architecture-book/decisions/023-hidden-events-storage.md)
 **For:** Samuel (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
 
 This is the **on-device manual axis** for the hidden-events ship. The hidden set is

@@ -5,7 +5,7 @@
 **For:** whoever runs the device passes (the planner/CI cannot do these)
 
 The splash is the first feature taken through the **entire** Definition of Done
-(`.claude/rules/mobile/definition-of-done.md`). The automatable axes are done and green in CI
+(`docs/mobile/architecture-book/definition-of-done.md`). The automatable axes are done and green in CI
 (types, lint, Jest proof, i18n, a11y lint + reduced-motion branch, theming light/dark,
 observability non-regression). The axes below are **irreducibly human / on-device** — a static
 tool, Jest, or the planner cannot assert them. Each task in `add-mobile-splash/tasks.md` that

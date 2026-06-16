@@ -6,7 +6,7 @@
 
 C1 is the **third feature taken through the full Definition of Done** (after Settings/A2 and Personal
 events/B2) and the **first real server-data read flow** — server state + offline read + nested
-navigation (`.claude/rules/mobile/definition-of-done.md`). The automatable axes are done and green in
+navigation (`docs/mobile/architecture-book/definition-of-done.md`). The automatable axes are done and green in
 CI (types, lint incl. the a11y touchable rules on every control, the Jest proof tests, the 90% logic
 gate on `src/features/school-selection/**` + the 70% floor on the onboarding screens, i18n FR/EN
 parity, theming light/dark; observability is ➖ N/A — a failed read is a recoverable `isError` UI

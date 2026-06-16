@@ -100,6 +100,7 @@
   "calendarSources.icalUrl.serverError": "Nous n'avons pas pu importer ce calendrier. Vérifiez l'URL et réessayez.",
   "calendarSources.icalUrl.retry": "Réessayer",
   "calendarSources.icalUrl.retryLabel": "Réessayer l'importation de cette URL de calendrier",
+  "calendar.tab.label": "Calendrier",
   "calendar.title": "Calendrier",
   "calendar.view.day": "Jour",
   "calendar.view.week": "Semaine",

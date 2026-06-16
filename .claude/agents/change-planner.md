@@ -13,7 +13,7 @@ ask the human questions. The human is not present. Momentum is the job.
 ## Operating context (read these first, every time)
 
 1. The roadmap step / feature description you were handed by the conductor.
-2. `.claude/rules/mobile/architecture.md` — the living Architecture Book. Its rules (R-1…R-6,
+2. `docs/mobile/architecture-book/architecture.md` — the living Architecture Book. Its rules (R-1…R-6,
    the scaffold-time rules, data layer, lint, testing, i18n, a11y, Firebase) are binding.
 3. `docs/react-native-migration/00-exploration/migration-approach.md` — the governing
    philosophy (vertical slices, finite-perfection DoD, §6 working rules, §7 how the book
@@ -46,7 +46,7 @@ Drive the OpenSpec CLI directly (do NOT rely on interactive skills):
 - **R-2 / R-3:** platform-appropriate by intent, the native platform is the design reference
   (not the Flutter app). No speculative divergence.
 - The **tasks.md you write is the implementer's contract.** It MUST include, in addition to
-  the feature work: (a) the **Architecture Book section update** (`.claude/rules/mobile/architecture.md`),
+  the feature work: (a) the **Architecture Book section update** (`docs/mobile/architecture-book/architecture.md`),
   (b) **local verification** (`npm test`, `npm run lint`, `npx tsc --noEmit` in `mobile/`),
   and (c) a **CI proof test** when the step adds runtime behavior (mirror the i18n/a11y/firebase
   proof tests). Foundation work is not done until it's green in CI.

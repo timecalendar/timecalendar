@@ -2,7 +2,7 @@
 
 The React Native rewrite of the TimeCalendar app (the Flutter app lives at `../app/`). Expo SDK 56, New Architecture + Hermes, dev-client builds.
 
-This is a **standalone npm project** — it is deliberately _not_ part of the root npm workspace (own `package.json` and `package-lock.json`, like `../server/`). Rationale: Expo pins `react` to an exact version per SDK while the web app floats it; a shared hoisted tree couples the two permanently. See the scaffold change's design D7 and the Architecture Book at `../.claude/rules/mobile/`.
+This is a **standalone npm project** — it is deliberately _not_ part of the root npm workspace (own `package.json` and `package-lock.json`, like `../server/`). Rationale: Expo pins `react` to an exact version per SDK while the web app floats it; a shared hoisted tree couples the two permanently. See the scaffold change's design D7 and the Architecture Book at `../docs/mobile/architecture-book/`.
 
 ## Prerequisites
 

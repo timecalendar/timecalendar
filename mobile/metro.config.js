@@ -1,4 +1,4 @@
-// Rule rationale: .claude/rules/mobile/architecture.md (Storage section)
+// Rule rationale: docs/mobile/architecture-book/architecture.md (Storage section)
 // Created for Drizzle's Expo migration bundling: Metro must resolve .sql as a
 // source extension so the generated migration files bundle. Otherwise this is
 // the Expo default (getDefaultConfig) — no other customization.

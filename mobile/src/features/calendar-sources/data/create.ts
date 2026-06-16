@@ -29,8 +29,17 @@ export function useCreateCalendar(): UseCreateCalendar {
 
   const createCalendar = useCallback(
     async (url: string): Promise<CreateCalendarResult> => {
+      // TEMP: the server requires one of schoolId / schoolName, and the
+      // calendar.name column is NOT-NULL. The real school-name-first flow
+      // (Flutter school_selection → importIcal) isn't wired yet, so dummy
+      // schoolName + name unblock import until that screen lands.
       const { token } = await mutation.mutateAsync({
-        data: { url: url.trim(), customData: null },
+        data: {
+          url: url.trim(),
+          schoolName: "Dev import",
+          name: "Dev import",
+          customData: null,
+        },
       })
       return { token }
     },

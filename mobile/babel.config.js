@@ -1,4 +1,4 @@
-// Rule rationale: .claude/rules/mobile/architecture.md (Storage section)
+// Rule rationale: docs/mobile/architecture-book/architecture.md (Storage section)
 // Created for Drizzle's Expo migration bundling: the migrations.js bundle
 // inline-imports the generated .sql files at build time, so Babel must process
 // .sql via babel-plugin-inline-import. Otherwise this is the Expo default

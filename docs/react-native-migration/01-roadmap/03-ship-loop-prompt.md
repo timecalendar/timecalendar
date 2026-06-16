@@ -12,7 +12,7 @@ next feature, merges, and re-fires until the phase's exit criteria are met.
 ---
 
 ```
-Autonomously complete Phase 3 of the RN migration (docs/react-native-migration/01-roadmap/03-onboarding-and-sources.md): everything that gets a calendar onto the device. You are FULLY AUTONOMOUS — no human approval for any command (run simulators, tests, merge PRs, push, all of it). You CONDUCT; you do not write code yourself — every unit of work is delegated to sub-agents per the /ship pipeline. Adhere to the Architecture Book (.claude/rules/mobile/architecture.md + topical files) and pass the full Definition of Done for every feature.
+Autonomously complete Phase 3 of the RN migration (docs/react-native-migration/01-roadmap/03-onboarding-and-sources.md): everything that gets a calendar onto the device. You are FULLY AUTONOMOUS — no human approval for any command (run simulators, tests, merge PRs, push, all of it). You CONDUCT; you do not write code yourself — every unit of work is delegated to sub-agents per the /ship pipeline. Adhere to the Architecture Book (docs/mobile/architecture-book/architecture.md + topical files) and pass the full Definition of Done for every feature.
 
 ## The worklist (ship SERIALLY, in this order — one PR merged to main before the next starts)
 

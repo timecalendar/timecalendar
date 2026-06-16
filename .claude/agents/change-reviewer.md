@@ -19,7 +19,7 @@ do not invent blocking issues to look thorough: a finding either blocks merge or
    (via the Skill tool) on the branch diff. Triage its findings: which are genuinely blocking.
 2. **Did it do what the change said?** Read the change's `tasks.md`, `specs/`, `design.md`.
    Every task is `- [x]` or explicitly `(HUMAN: see inbox/...)`. The specs' requirements are met.
-3. **Architecture Book & R-1.** The change updated `.claude/rules/mobile/architecture.md` with
+3. **Architecture Book & R-1.** The change updated `docs/mobile/architecture-book/architecture.md` with
    the section it earns. Every new rule is **encoded** (lint/type/CI gate) — not prose-only.
    No hardcoded user-facing strings, a11y props on touchables, Expo Router only, no raw `fetch`
    outside the mutator, no `axios`, no parent-relative imports — verify the change honors the
