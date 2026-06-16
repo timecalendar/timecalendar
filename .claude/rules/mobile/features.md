@@ -43,6 +43,13 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   action, the `/personal-event-form` route, and `usePersonalEvents` are **unchanged** — only the entry
   point moved). Personal events also keep rendering *inside* the Home today view (already merged into
   `useCalendarEvents`).
+- **A personal-event CALENDAR/HOME tap now opens the unified event-details screen** (Phase 05 Ship B /
+  ADR [024](./decisions/024-event-checklist-storage-and-surfacing.md), **superseding ADR 022's**
+  personal→form tap): `eventRoute` returns `/event-details/<uid>` for both kinds, so a tap in any
+  calendar view or the home today view opens the details screen (with its checklist + an **Edit** header
+  action → `/personal-event-form?uid=<uid>`). Edit/delete stays fully reachable (relocated one tap, not
+  dropped). The `/personal-events` **list** row still links straight to the edit form (unchanged — that
+  is the list surface, not a calendar tap); create still lives on the list's Add action.
 - **Form layer:** `src/features/personal-events/form/` (90%-gated) — pure `validateEventForm`
   (title required after trim; end strictly after start; returns **localizable error keys, not
   sentences**), pure `buildEventFromForm` (trims strings, drops empty optionals to `undefined`,
@@ -314,17 +321,17 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
   read-only `ui/event-details-screen.tsx` (70% floor): title block (labeled swatch + heading + full
   date/time), tag bubbles (name+color; **no icon-font dep** — R-3 parity gap recorded), content lines
   (location / calendar name when 2+ calendars via `useUserCalendars` / teachers / description), the
-  "Updated …" footer, and an accessible **not-found** state. **Read-only with respect to the
-  event's CONTENT — no edit/delete/checklist** (D1; the checklist sibling is deferred —
-  `inbox/2026-06-16-event-details-deferrals.md`); the screen now carries the **hide / un-hide
+  "Updated …" footer, and an accessible **not-found** state. The screen carries the **hide / un-hide
   visibility action** (a header action for synced events — the hidden-events capability, Phase 05
-  Ship A; see "Hidden events" below). The **tap-through**: the agenda tile became a
-  `button` Pressable; the grid wires `onPressEvent` on `CalendarContainer` through the chrome seam
-  (the calendar-kit ban holds); routing is keyed on **origin** — a synced event (`userCalendarId` set)
-  → `/event-details/<uid>`, a personal event (no `userCalendarId`) → its existing edit form. New thin
-  route `src/app/event-details/[uid].tsx` (a `Stack` sibling, deep-linkable). **No new ADR / dep /
-  schema** (D8). **Observability ➖ N/A** (read-only — a `getByUid` miss is a recoverable not-found
-  state). See [calendar.md](./calendar.md) "Event details (read-only)".
+  Ship A; see "Hidden events" below). **Phase-05 Ship B (`add-mobile-event-checklists`, ADR 024)
+  widened this surface** — it is now **UNIFIED for both event kinds** (the read resolves a synced OR
+  a personal row, the `EventDetails` gains a `kind` tag, `getByUid`/`useEventDetails` query both
+  tables), it now mounts the **interactive checklist** section (the edit half — see "Event
+  checklists" below), and the **tap-through routes a personal event here too** (`eventRoute` flipped
+  to `/event-details/<uid>` for both kinds; a personal event gets an **Edit** header action →
+  `/personal-event-form?uid=<uid>`, the hide action stays synced-only). New thin route
+  `src/app/event-details/[uid].tsx` (a `Stack` sibling, deep-linkable). See [calendar.md](./calendar.md)
+  "Event details (unified…)".
 - **CI vs. manual:** the calendar-kit Reanimated grid is mocked suite-wide
   (`jest/setup-calendar-kit.ts` — the mocked body invokes `renderEvent` per event), so CI proves
   the primitives (90%), the events-source seam, the screen's event→tile/mapping/theme/label +
@@ -388,6 +395,58 @@ events".
   (`.maestro/hidden-events.yaml`) asserts the management route renders its empty state + reachability
   (no seeded hidden set — recorded). **No new dependency, no `app.config.ts`/babel/native change, no
   Drizzle schema/migration** (a new MMKV key under the existing seam).
+
+## Event checklists — interactive per-event checklist, persisted in the 4th Drizzle table (Phase 05 Ship B)
+
+The **edit half** of event details Phase 04 deferred — a small interactive checklist a student
+attaches to any event ("bring the lab coat"). The **4th real Drizzle table** (`checklist_items`,
+importer-fidelity verbatim, NO server backup) and the **first per-event child** surfaced on the
+unified event-details screen for **both** event kinds. Load-bearing decisions: **ADR
+[024](./decisions/024-event-checklist-storage-and-surfacing.md)** (verbatim schema + soft-ref +
+the **hard-delete-not-soft finding** + the unified-details surfacing). Schema, migration, and the
+full `data/` layer are in [storage.md](./storage.md) "Checklist items store"; the surfacing wiring
+in [calendar.md](./calendar.md) "Event details (unified…)".
+
+- **A new SHARED feature folder `src/features/event-checklists/`** (`data/` + `ui/`), named for the
+  concern (ADR-014 layered pattern) — owned once, consumed by the calendar details screen by full
+  `@/` path (a legitimate cross-feature edge). The checklist joins on a `eventUid` that is **either**
+  a `personal_events.uid` or a `calendar_events.uid`.
+- **Data layer (`data/`, 90%-gated):** pure `rowToChecklistItem`/`checklistItemToRow` mappers
+  (canonical-UTC, null↔undefined for the three nullable dates, bool↔0/1, importer-fidelity verbatim
+  incl. a non-null `deletedAt`); a `repository.ts` (`findByEvent` ordered by `order` with **no
+  `deletedAt` filter** — D2, the read filters by `eventUid` only; `add` insert; `setContent`/
+  `setChecked` one-column UPDATE + `updatedAt`; the **transactional `reorder`** re-numbering 1-based
+  inside ONE `db.transaction`; `remove` **HARD delete** — Flutter parity, NOT soft-delete); a
+  `newId()` uid wrapper over `expo-crypto` (the importer bypasses it); the reactive
+  `useChecklist(eventUid)` (`useLiveQuery`, ordered) + the write controller
+  `useChecklistActions(eventUid, items)` (1-based order on add, move-up/down swap-then-reorder,
+  remove-then-renumber, each write wrapped in `recordError` + a `failed` flag).
+- **UI (`ui/event-checklist.tsx`, 70% floor):** the ordered items — each a **checkbox**
+  (`accessibilityRole="checkbox"` + `accessibilityState={{ checked }}`; a filled `primary` box, no
+  glyph — R-3, no icon-font dep), an inline RN-core `TextInput` (content → `setContent`, never
+  `allowFontScaling={false}`), accessible **move-up / move-down** controls (disabled at the ends —
+  **reorder is zero-dep move-up/down, NOT a drag library**, D5), and a remove (×) control — plus an
+  **"Add note"** button that **auto-focuses** the new item (D6), an accessible empty state, and the
+  `failed`-flag accessible error surface. Mounted on the unified event-details screen for both kinds.
+- **Observability ✅ wired** — a failed checklist write (insert/update/reorder/delete) records
+  through `@/firebase` `recordError(error, "event-checklists/<action>")` + an accessible failure
+  surface (irreplaceable data, no server backup — ADR 024 / decision 6, the ADR-021 write-recorded /
+  read-not split applied to per-item writes). The reactive read is total/infallible.
+- **The personal-event tap routing changed** (ADR 024 / decision 4, superseding ADR 022): a personal
+  event now opens the unified `/event-details/<uid>` (with its checklist + an Edit action), not the
+  edit form directly — see the Personal-events + Calendar entries above.
+- **CI vs. on-device:** CI proves the mappers, the repository query shapes (the ordered read, the
+  insert, the column update, the transactional re-number, the hard delete), the actions hook (1-based
+  order, the recordError-on-throw, remove-then-renumber, move-up/down), the reactive read, the
+  component (add/toggle/edit/move/remove/empty/failure), the **write/read-back + a restart-simulation**
+  including **survival across a simulated `calendar_events` `replaceAll`** (the soft-ref-no-FK
+  guarantee), and `migrate.test.ts` applying all four migrations. On-disk SQLite survival, reorder
+  atomicity after a mid-write kill, the auto-focus keyboard-raise feel, and the manual screen-reader
+  pass are the on-device manual pass (`inbox/2026-06-16-event-checklists-on-device.md`). Maestro
+  (`.maestro/event-checklists.yaml`) asserts the unified event-details route is reachable (the
+  not-found state — no seeded synced event, the same seeded-data limitation recorded). **No new
+  dependency, no `app.config.ts`/babel/native change, no EAS-fingerprint bump, no new lint rule** (the
+  `@/db` seam adds only `checklistItems` + `asc`; `expo-crypto` was already a dependency).
 
 ## Home / today view — the landing surface (Phase-04 item 4)
 
