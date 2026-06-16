@@ -21,9 +21,6 @@ import { NotificationSubscriptionService } from "./services/notification-subscri
     NotificationSubscriptionService,
     NotificationSubscriptionRepository,
   ],
-  exports: [
-    NotificationSubscriptionService,
-    NotificationSubscriptionRepository,
-  ],
+  exports: [NotificationSubscriptionService],
 })
 export class NotificationSubscriptionModule {}

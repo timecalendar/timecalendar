@@ -7,6 +7,13 @@ import { SubjectService } from "modules/subject/services/subject.service"
 @Module({
   imports: [TypeOrmModule.forFeature([CalendarSubject])],
   providers: [CalendarSubjectRepository, SubjectService],
-  exports: [CalendarSubjectRepository, SubjectService],
+  exports: [
+    // Exported for cross-module data access (calendar.service). Routing
+    // through a service method is a broader repository-pattern refactor,
+    // deferred from this infra-adoption PR.
+    // eslint-disable-next-line @lyrolab/nestjs-architecture/no-export-repository-in-module
+    CalendarSubjectRepository,
+    SubjectService,
+  ],
 })
 export class SubjectModule {}

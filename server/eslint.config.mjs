@@ -1,3 +1,4 @@
+import { nestArchitecturePlugin } from "@lyrolab/nest-shared/eslint"
 import eslint from "@eslint/js"
 import importPlugin from "eslint-plugin-import"
 import prettierRecommended from "eslint-plugin-prettier/recommended"
@@ -21,6 +22,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   importPlugin.flatConfigs.recommended,
   prettierRecommended,
+  // nest-shared repository-pattern rules: keep TypeORM Repository usage inside
+  // repositories/, off controllers, and unexported from modules.
+  nestArchitecturePlugin.configs.recommended,
   {
     languageOptions: {
       globals: {

@@ -25,7 +25,12 @@ import { SubjectModule } from "modules/subject/subject.module"
   controllers: [CalendarController],
   exports: [
     CalendarService,
+    // Exported for cross-module data access (calendar-sync, notification-
+    // subscription). Routing these through a service method is a broader
+    // repository-pattern refactor, deferred from this infra-adoption PR.
+    // eslint-disable-next-line @lyrolab/nestjs-architecture/no-export-repository-in-module
     CalendarRepository,
+    // eslint-disable-next-line @lyrolab/nestjs-architecture/no-export-repository-in-module
     CalendarContentRepository,
     CalendarHelper,
     CalendarEventHelper,
