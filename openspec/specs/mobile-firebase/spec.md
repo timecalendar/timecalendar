@@ -8,9 +8,7 @@ the iOS static-frameworks build requirement, the single `src/firebase/` wrapper
 seam, the `__DEV__`-only verification surface, the debug-build crash-reporting
 flag, and the boundary between the CI proof (wrapper drives the SDK) and the
 manual on-device proof (an event and a crash actually arrive in the console).
-
 ## Requirements
-
 ### Requirement: Crashlytics and Analytics initialized on both platforms
 The mobile app SHALL integrate `@react-native-firebase` Crashlytics and Analytics on iOS
 and Android via Expo config plugins, so that the native Firebase default app initializes
@@ -46,15 +44,23 @@ use the `timecalendar-dev` project, and the production variant (app id
   project, shared with the Flutter app) are used
 
 ### Requirement: Firebase accessed through a single wrapper seam
-All application code SHALL access Crashlytics and Analytics through a single
+All application code SHALL access Crashlytics, Analytics, and Cloud Messaging through a single
 `src/firebase/` module exposing the app's own helpers, rather than calling
 `@react-native-firebase` directly at feature call sites, so the SDK is swappable behind one
-seam.
+seam. Each helper SHALL resolve the native instance lazily inside its body so importing
+`@/firebase` never touches native code, with the single documented exception of the messaging
+background-message handler, which MUST be registered at module init (RN harness constraint) and
+is the only top-level native access permitted in the seam.
 
 #### Scenario: Feature code does not import the SDK directly
-- **WHEN** a screen or feature needs to log an event or record an error
+- **WHEN** a screen or feature needs to log an event, record an error, request notification permission, or get the FCM token
 - **THEN** it imports a helper from `@/firebase`
 - **AND** it does not import `@react-native-firebase/*` directly
+
+#### Scenario: Importing the seam does not touch native (background handler excepted)
+- **WHEN** `@/firebase` is imported under Jest
+- **THEN** the import succeeds without resolving native Crashlytics/Analytics/Messaging instances
+- **AND** the only top-level native call is the messaging `setBackgroundMessageHandler` registration
 
 ### Requirement: Dev-only verification surface
 The app SHALL provide a `__DEV__`-gated control surface that can log an Analytics event and
@@ -93,3 +99,4 @@ a release build.
 #### Scenario: Debug build reports a crash
 - **WHEN** a forced crash is triggered on a local debug development build
 - **THEN** Crashlytics captures and (on next launch) uploads the crash report
+
