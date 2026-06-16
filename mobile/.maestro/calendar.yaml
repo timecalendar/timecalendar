@@ -47,3 +47,16 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "Lecture"
     timeout: 60000
+# Switch to the agenda view (a third in-place view mode — D1). The agenda is a
+# bounded SectionList of day-grouped events (NOT calendar-kit); dense visual
+# correctness + frame rate remain the on-device manual pass
+# (inbox 2026-06-16-calendar-visual-brand-review.md), not Maestro. "Agenda" is the
+# same label in FR + EN so the tap is locale-stable.
+- tapOn:
+    id: "calendar-view-agenda"
+# A committed fixture event title rendered in the agenda list — proving the
+# day/week→agenda switch toggles the rendered surface and the day-grouped list
+# renders a reachable fixture event with no seeded backend.
+- extendedWaitUntil:
+    visible: "Lecture"
+    timeout: 60000
