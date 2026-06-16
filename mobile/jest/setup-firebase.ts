@@ -14,3 +14,18 @@ jest.mock("@react-native-firebase/crashlytics", () => ({
   recordError: jest.fn(),
   crash: jest.fn(),
 }))
+
+// Messaging: the module-init setBackgroundMessageHandler call (the one
+// documented top-level native access) hits a jest.fn() here, so importing
+// @/firebase stays safe off-device. getToken defaults to resolving a token;
+// onMessage/onTokenRefresh return an unsubscribe spy so the seam can hand it
+// back. Tests override per-case (Platform.OS, null APNS, getToken rejection).
+jest.mock("@react-native-firebase/messaging", () => ({
+  getMessaging: jest.fn(() => ({})),
+  requestPermission: jest.fn(() => Promise.resolve(1)),
+  getAPNSToken: jest.fn(() => Promise.resolve("apns-token")),
+  getToken: jest.fn(() => Promise.resolve("fcm-token")),
+  onMessage: jest.fn(() => jest.fn()),
+  onTokenRefresh: jest.fn(() => jest.fn()),
+  setBackgroundMessageHandler: jest.fn(),
+}))
