@@ -14,11 +14,12 @@ import {
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
-  type AppLocale,
   type CalendarEvent,
+  eventRoute,
   GRID_END_MINUTE,
   GRID_START_MINUTE,
   MIN_TILE_WIDTH,
+  resolveLocale,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
@@ -41,10 +42,6 @@ const WEEK_DAYS = 5
 // The agenda is a planning list, so it spans a bounded multi-day window (the
 // visible week) rather than a single day/week grid (D1).
 const AGENDA_DAYS = 7
-
-function resolveLocale(language: string): AppLocale {
-  return language.startsWith("fr") ? "fr" : "en"
-}
 
 function ymd(date: Date): string {
   const year = date.getFullYear()
@@ -114,11 +111,7 @@ export function CalendarScreen() {
     uid: string,
     userCalendarId: string | undefined,
   ) => {
-    router.push(
-      userCalendarId !== undefined
-        ? `/event-details/${uid}`
-        : `/personal-event-form?uid=${uid}`,
-    )
+    router.push(eventRoute(uid, userCalendarId))
   }
 
   // The agenda's RefreshControl, brand-tinted (R-3). Wired into the SectionList so

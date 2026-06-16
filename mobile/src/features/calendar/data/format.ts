@@ -14,6 +14,13 @@ const LOCALES = {
   en: enUS,
 } as const
 
+// Map the i18next language tag (e.g. "fr", "fr-FR", "en-US") to the app locale —
+// FR for any `fr*`, EN otherwise (mirroring the EN-fallback detect-locale rule).
+// The single source for every screen that needs a date-fns-friendly locale.
+export function resolveLocale(language: string): AppLocale {
+  return language.startsWith("fr") ? "fr" : "en"
+}
+
 // The day header's two parts (Flutter `fullDayToShortDay` + `day.day`): the short
 // weekday abbreviation UPPERCASED ("LUN" / "MON") + the day-of-month number.
 export function formatDayHeaderParts(
@@ -64,4 +71,12 @@ export function formatEventDateRange(
 export function formatFullDateTime(date: Date, locale: AppLocale): string {
   const opts = { locale: LOCALES[locale] }
   return `${format(date, "PPPP", opts)} · ${format(date, "HH:mm", opts)}`
+}
+
+// The home today header's full localized date (Flutter `fullDayText`): the full
+// weekday + day + month + year ("Monday, June 15th, 2026" / "lundi 15 juin 2026").
+// Display only, locale-aware. Closes roadmap item 5 (date/time) — the date-fns
+// seam now covers every formatting need across calendar/agenda/details/home.
+export function formatFullDay(day: Date, locale: AppLocale): string {
+  return format(day, "PPPP", { locale: LOCALES[locale] })
 }
