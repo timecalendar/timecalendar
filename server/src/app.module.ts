@@ -1,4 +1,5 @@
 import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
+import { SharedHealthModule } from "@lyrolab/nest-shared/health"
 import { Module } from "@nestjs/common"
 import { COMMON_IMPORTS } from "common-imports"
 import { dataSourceOptions } from "data-source"
@@ -15,7 +16,6 @@ import { RedisModule } from "modules/redis/redis.module"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
-import { HealthModule } from "modules/health/health.module"
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
 import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 
@@ -43,7 +43,7 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
     JobRunModule,
     SchoolGroupModule,
     ContactModule,
-    HealthModule,
+    SharedHealthModule,
     NotificationSubscriptionModule,
     FeatureFlagModule,
   ],
