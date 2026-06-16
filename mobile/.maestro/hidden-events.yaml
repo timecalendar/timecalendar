@@ -1,0 +1,54 @@
+# Hidden-events management screen reachability + render e2e flow (Phase 05 Ship A
+# / ADR 023).
+#
+# Cold-launches the development-variant app, deep-links to the hidden-events
+# management screen, and asserts the localized title + the empty state render.
+# This proves: the route is reachable via deep link (a Stack sibling of (tabs)),
+# the screen mounts past the splash, and the management surface renders without
+# crashing on both platforms.
+#
+# SEEDED-DATA LIMITATION (same posture as calendar.yaml / home.yaml): nothing is
+# hidden on a fresh dev-variant launch (the hidden set is an unwritten MMKV key →
+# the total parser reads the empty default), so the screen shows its empty state.
+# The populated hide round-trip (hide a synced event from event-details → it
+# disappears from the views → un-hide it here) needs a seeded user_calendars token
+# + synced calendar_events, which the e2e server seed does NOT provide (the same
+# limitation calendar.yaml records). So this flow asserts render + reachability +
+# the empty state only; the REAL hide/un-hide round-trip + the on-disk MMKV
+# restart/kill/cache-clear survival + manual VoiceOver/TalkBack are the on-device
+# manual pass (inbox/2026-06-16-hidden-events-on-device.md). The hide/un-hide
+# WIRING (chooser → hideByUid/hideByName, un-hide, the synced-only gating, the
+# filter at the events-source seam, write/read-back + restart-sim) is proven
+# deterministically by the Jest suite (hidden-events/data/* + the screen tests +
+# calendar/data/events.test.ts).
+#
+# Requires a release-config dev-variant build installed on the connected device
+# (no server needed — this screen reads device-local state). Shared across iOS and
+# Android: stable localized text assertions, no per-platform selectors. Run via
+# mobile/e2e/run_e2e.sh. Mirrors settings.yaml / personal-events.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link (see settings.yaml header): a warm openLink does
+# not navigate on Android release builds — Expo Router resolves the link through
+# getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://hidden-events
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links on
+# the FIRST deep link per simulator — tap it when present, skip otherwise.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+# Generous timeout: a release-config iOS cold start + JS bundle load can land just
+# past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
+- extendedWaitUntil:
+    visible: "Hidden events"
+    timeout: 60000
+# Nothing is hidden on a fresh launch → the accessible empty state renders.
+- extendedWaitUntil:
+    visible: "No hidden events."
+    timeout: 60000
