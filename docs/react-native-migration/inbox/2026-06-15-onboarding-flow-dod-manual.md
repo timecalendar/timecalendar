@@ -5,7 +5,7 @@
 **For:** whoever runs the device passes (the planner/CI cannot do these)
 
 This ship is Phase 3 ship 1 taken through the full Definition of Done
-(`.claude/rules/mobile/definition-of-done.md`). The automatable axes are done and green in CI
+(`docs/mobile/architecture-book/definition-of-done.md`). The automatable axes are done and green in CI
 (types, lint incl. the a11y touchable rule on the CTA, the Jest proof test — render + heading role +
 CTA navigation + accessible CTA, the 70% floor for the presentational welcome screen, i18n FR/EN
 parity, theming light/dark; observability is ➖ N/A — the welcome surface performs no read/write and

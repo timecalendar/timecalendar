@@ -29,7 +29,7 @@ Five living artifacts. Each has an owner-of-record (us) and a clear trigger for 
 
 | Artifact | What it is | Updated when |
 | --- | --- | --- |
-| **Architecture Book** (**`.claude/rules/mobile/`** — that directory IS the book) | The living set of rules that drive development — only rules that *can't* be encoded in tooling. | A new load-bearing pattern is established or changed. |
+| **Architecture Book** (**`docs/mobile/architecture-book/`** — that directory IS the book) | The living set of rules that drive development — only rules that *can't* be encoded in tooling. | A new load-bearing pattern is established or changed. |
 | **ADR log** (`decisions/NNN-*.md`) | One short record per architectural decision: context, choice, alternatives, "revisit if…". | Any load-bearing decision is made (see triage, [R-4](#6-working-rules-seed-of-the-architecture-book)). |
 | **Definition of Done** (`definition-of-done.md`) | The per-feature checklist below. | We add/remove a quality axis. |
 | **Rule changelog** (`architecture-changelog.md`) | The meta-doc: a dated log of *every change to the rules*, with why. **The act of documenting is itself documented here.** | The Architecture Book or DoD changes. |

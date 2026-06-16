@@ -107,7 +107,7 @@ manual on-device steps, not CI gates.
 
 ### Requirement: Splash passes the full Definition of Done on both platforms
 As the Phase-0 capstone, the splash SHALL be walked through every axis of the Definition of
-Done (`.claude/rules/mobile/definition-of-done.md`) on iOS and Android. Each axis SHALL be
+Done (`docs/mobile/architecture-book/definition-of-done.md`) on iOS and Android. Each axis SHALL be
 either satisfied in this change (types, lint, tests, i18n, a11y lint + reduced motion, theming/
 light-dark, CI proof, observability non-regression), explicitly marked N/A with a one-line
 reason (e.g. product analytics — a splash is not a user action), or deferred to a documented

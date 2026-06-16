@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-16
 **Roadmap:** Phase 04 (`docs/react-native-migration/01-roadmap/04-calendar-core.md`)
-**Spike/ADR:** [019](../../../.claude/rules/mobile/decisions/019-calendar-rendering-adopt-calendar-kit.md)
+**Spike/ADR:** [019](../../../docs/mobile/architecture-book/decisions/019-calendar-rendering-adopt-calendar-kit.md)
 **For:** Samuel (needs human eyes on both platforms — the loop/CI cannot judge a designed surface)
 
 The calendar is a **designed brand surface**, not native-default chrome (R-3, and the Phase-04

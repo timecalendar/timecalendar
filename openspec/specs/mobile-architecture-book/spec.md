@@ -7,12 +7,12 @@ single source of rules so no second book ever appears. Companion to
 [`mobile-app-scaffold`](../mobile-app-scaffold/spec.md); the book's change
 process is defined in `docs/react-native-migration/00-exploration/migration-approach.md` §7.
 ## Requirements
-### Requirement: The Architecture Book lives at .claude/rules/mobile/
-The living Architecture Book for the React Native app SHALL exist as Markdown files under `.claude/rules/mobile/` — this directory IS the book, not a mirror of one maintained elsewhere.
+### Requirement: The Architecture Book lives at docs/mobile/architecture-book/
+The living Architecture Book for the React Native app SHALL exist as Markdown files under `docs/mobile/architecture-book/` — this directory IS the book, not a mirror of one maintained elsewhere.
 
 #### Scenario: Book exists at the canonical location
 - **WHEN** the repository is inspected after the scaffold lands
-- **THEN** `.claude/rules/mobile/` contains at least one Markdown file constituting the Architecture Book
+- **THEN** `docs/mobile/architecture-book/` contains at least one Markdown file constituting the Architecture Book
 
 ### Requirement: The book is seeded with the rules that are already real
 The initial Architecture Book SHALL contain: the book's charter (what it is and how it changes, referencing migration-approach §7), the R-1…R-6 working rules from `migration-approach.md` §6, and the decisions made concrete by this change (SDK 56 baseline, TypeScript strict flags, CNG, `APP_VARIANT` identity, standalone-project placement, effective minimum OS floors).
@@ -22,24 +22,24 @@ The initial Architecture Book SHALL contain: the book's charter (what it is and 
 - **THEN** it states the charter, the R-1…R-6 rules, and the scaffold-time decisions, each with its rationale or a pointer to the deciding document
 
 ### Requirement: Migration docs name the Architecture Book's location
-The migration documents SHALL identify `.claude/rules/mobile/` as the canonical Architecture Book location, so later roadmap steps (notably the "five living artifacts" step) do not create a second book.
+The migration documents SHALL identify `docs/mobile/architecture-book/` as the canonical Architecture Book location, so later roadmap steps (notably the "five living artifacts" step) do not create a second book.
 
 #### Scenario: Docs point at the book
 - **WHEN** `docs/react-native-migration/00-exploration/migration-approach.md` and `docs/react-native-migration/01-roadmap/01-foundation.md` are read
-- **THEN** both reference `.claude/rules/mobile/` as where the Architecture Book lives
+- **THEN** both reference `docs/mobile/architecture-book/` as where the Architecture Book lives
 
-### Requirement: All five living artifacts exist as siblings under .claude/rules/mobile/
+### Requirement: All five living artifacts exist as siblings under docs/mobile/architecture-book/
 The five living artifacts named in `migration-approach.md` §2 SHALL all exist under
-`.claude/rules/mobile/` — the Architecture Book (`architecture.md`), the ADR log
+`docs/mobile/architecture-book/` — the Architecture Book (`architecture.md`), the ADR log
 (`decisions/`), the Definition of Done (`definition-of-done.md`), the Rule changelog
 (`architecture-changelog.md`), and the golden-path exemplar placeholder (`golden-path.md`).
 No artifact SHALL be created in a second location outside this directory.
 
 #### Scenario: The four remaining artifacts join the book
-- **WHEN** `.claude/rules/mobile/` is inspected after this change
+- **WHEN** `docs/mobile/architecture-book/` is inspected after this change
 - **THEN** it contains `architecture.md`, a `decisions/` directory, `definition-of-done.md`,
   `architecture-changelog.md`, and `golden-path.md`
-- **AND** none of these artifacts exists anywhere outside `.claude/rules/mobile/`
+- **AND** none of these artifacts exists anywhere outside `docs/mobile/architecture-book/`
 
 ### Requirement: The Architecture Book points at the other four artifacts
 The Architecture Book (`architecture.md`) SHALL link to each of the other four living
@@ -61,7 +61,7 @@ any revisit that has already fired), and its "revisit if" trigger. The ADR log S
 a template and an index so future decisions follow one shape.
 
 #### Scenario: K-1…K-5 ADRs present
-- **WHEN** `.claude/rules/mobile/decisions/` is inspected
+- **WHEN** `docs/mobile/architecture-book/decisions/` is inspected
 - **THEN** it contains a numbered ADR for each of K-1 (SDK target), K-2 (minimum OS),
   K-3 (coverage), K-4 (Phase 1 feature order), and K-5 (calendar spike)
 - **AND** the K-1 and K-2 ADRs record the revisits that already fired at scaffold time
@@ -97,7 +97,7 @@ misrepresent history), plus an entry for this change.
 - **AND** it contains an entry for the creation of the four living artifacts
 
 ### Requirement: The golden-path placeholder sets the right expectation
-The golden-path exemplar (`.claude/rules/mobile/golden-path.md`) SHALL be the **real** reference
+The golden-path exemplar (`docs/mobile/architecture-book/golden-path.md`) SHALL be the **real** reference
 extracted from the three landed Phase-2 pattern-establishment features (Settings, Personal events,
 School selection) — NOT a placeholder. It SHALL name, **for each architectural axis**, the canonical
 landed feature that exemplifies it (local key-value + native controls + i18n → Settings; structured
@@ -111,7 +111,7 @@ a real file** (R-1 pointer style) rather than re-deriving the content inline. Th
 that there is "no reference feature to copy yet."
 
 #### Scenario: The exemplar names a canonical feature per axis
-- **WHEN** `.claude/rules/mobile/golden-path.md` is read after this change
+- **WHEN** `docs/mobile/architecture-book/golden-path.md` is read after this change
 - **THEN** it names Settings, Personal events, and School selection as the canonical exemplars for
   their respective axes
 - **AND** it points at the real `src/features/<feature>/<layer>/` files, the presentational screens,
@@ -145,7 +145,7 @@ deferred debt with its trigger instead).
 - **AND** the template files are not compiled, bundled, linted-as-source, or counted toward coverage
 
 ### Requirement: The Architecture Book is reconciled to what the three features actually taught
-The Architecture Book (`.claude/rules/mobile/architecture.md`) SHALL be reconciled (pointer style
+The Architecture Book (`docs/mobile/architecture-book/architecture.md`) SHALL be reconciled (pointer style
 preserved) so that the prose the three Phase-2 features proved or refined reflects reality rather than
 Phase-0 guesses: the **feature-module folder shape** (now real and varied — `data/` / `store/` /
 `form/` sublayers + barrels), the **data-layer query seam** (only a feature's `data/` touches the
@@ -175,13 +175,13 @@ blessed pattern earned from three. The ADR SHALL carry a "revisit if" trigger (n
 SHALL NOT supersede ADR 009's infra→feature-edge decision.
 
 #### Scenario: The pattern ADR is present and indexed
-- **WHEN** `.claude/rules/mobile/decisions/` is inspected after this change
+- **WHEN** `docs/mobile/architecture-book/decisions/` is inspected after this change
 - **THEN** it contains a numbered ADR blessing the layered feature-module pattern
 - **AND** the ADR README index has a row for it with its revisit trigger
 - **AND** the ADR records the feature-boundary lint (TIM-135) as the pending encodable follow-up
 
 ### Requirement: The extraction is recorded in the Rule changelog
-The Rule changelog (`.claude/rules/mobile/architecture-changelog.md`) SHALL gain a dated entry recording
+The Rule changelog (`docs/mobile/architecture-book/architecture-changelog.md`) SHALL gain a dated entry recording
 the golden-path extraction, the Architecture Book reconciliation, and the new pattern ADR — because the
 act of blessing the pattern and reconciling the book is itself a rule change (migration-approach §7).
 

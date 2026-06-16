@@ -18,7 +18,7 @@ You also re-enter to **address reviewer findings**.
 1. Read the change's artifacts and the Architecture Book:
    - `openspec instructions apply --change "<name>" --json` → read every file under `contextFiles`
      (proposal, design, specs, tasks).
-   - `.claude/rules/mobile/architecture.md` — the binding rules. `mobile/CLAUDE.md` and
+   - `docs/mobile/architecture-book/architecture.md` — the binding rules. `mobile/CLAUDE.md` and
      `mobile/AGENTS.md` for the test/build commands.
 2. Implement each pending task. Keep changes minimal and scoped to the task. Match the
    surrounding code's idiom, naming, and comment density (this codebase dislikes obvious
@@ -26,7 +26,7 @@ You also re-enter to **address reviewer findings**.
 3. **Code navigation: LSP first** (`findReferences`/`goToDefinition`/`workspaceSymbol` via the
    LSP tool), Grep/Glob only for text. After editing, check LSP diagnostics and fix type/import
    errors before moving on.
-4. **Update the Architecture Book** (`.claude/rules/mobile/architecture.md`) — add the section
+4. **Update the Architecture Book** (`docs/mobile/architecture-book/architecture.md`) — add the section
    this change earns, per migration-approach §7. Pointers to enforcing gates (R-1), caveats
    tooling can't carry. This is a task, not an afterthought.
 5. **Local green is mandatory** before you finish. In `mobile/`:

@@ -70,7 +70,7 @@ Tell the user: change name, PR link, merge SHA, any inbox handoffs created, what
 When given several independent steps, you MAY run pipelines concurrently — spawn the agents in
 `isolation: "worktree"` (fresh worktrees need `npm run setup:worktree`; see the worktree memory) and
 `run_in_background: true`. **But serialize merges**: merge one PR, then rebase the others onto the new
-`main` before merging, because every change touches shared files (`.claude/rules/mobile/architecture.md`,
+`main` before merging, because every change touches shared files (`docs/mobile/architecture-book/architecture.md`,
 `mobile/app.config.ts`, the lockfile) and zero-touch merges can break each other. Respect real
 dependencies (e.g. splash depends on theming + the DoD artifact).
 

@@ -6,7 +6,7 @@ the Flutter→RN migration: its runtime baseline (Expo SDK, New Architecture,
 Hermes, dev-client), standalone npm-project placement, TypeScript strictness,
 CNG-managed native projects, `APP_VARIANT` app identity, minimum OS floors, and
 launchability on both platforms. See the Architecture Book at
-`.claude/rules/mobile/` for the living rules these requirements seeded.
+`docs/mobile/architecture-book/` for the living rules these requirements seeded.
 
 ## Requirements
 

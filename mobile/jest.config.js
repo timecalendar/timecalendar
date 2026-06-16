@@ -1,4 +1,4 @@
-// Rule rationale: .claude/rules/mobile/architecture.md (Testing section)
+// Rule rationale: docs/mobile/architecture-book/architecture.md (Testing section)
 // The jest-expo preset owns the transform + transformIgnorePatterns that RN/Expo
 // modules need; hand-rolling them is the failure mode the preset exists to prevent.
 
@@ -6,6 +6,13 @@
 module.exports = {
   preset: "jest-expo",
   moduleNameMapper: {
+    // The `@/assets/*` path alias maps to ./assets (tsconfig), but the jest-expo
+    // preset only derives `@/*` → ./src from baseUrl — so an asset require like
+    // `@/assets/images/tabIcons/home.png` would resolve to the nonexistent
+    // ./src/assets/… and fail. Map it explicitly (more specific, so it must
+    // precede the preset's generic `@/*`). The png itself is stubbed by the
+    // preset's asset transformer once the path resolves.
+    "^@/assets/(.*)$": "<rootDir>/assets/$1",
     // Jest can't transform CSS (Metro/web concern); stub every CSS import.
     "\\.css$": "<rootDir>/jest/css-stub.js",
   },

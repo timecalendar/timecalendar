@@ -114,9 +114,13 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   ≥44pt targets; each event tile is an accessible element with a translated label (title +
   time + location); the empty-range state uses a polite live region. Below `MIN_TILE_WIDTH`
   the tile text is hidden (the column is too narrow).
-- A thin route `src/app/calendar.tsx` re-exports the screen through the `ui/` sub-barrel
-  (route-structure rule), registered as a `<Stack.Screen name="calendar" />` sibling of
-  `(tabs)` — reachable for deep-link/Maestro. Tab placement is the later home item's call.
+- A thin route `src/app/(tabs)/calendar.tsx` re-exports the screen through the `ui/`
+  sub-barrel (route-structure rule). It is the **Calendar tab** — the middle of the
+  three-tab bar (Home · Calendar · Profile, Flutter parity — ADR [025](./decisions/025-calendar-tab-three-tab-ia.md)),
+  declared as a `NativeTabs.Trigger name="calendar"` in `app-tabs.tsx`. The route lives
+  in the `(tabs)` group, but the URL path is still `/calendar` (groups don't affect the
+  path), so `timecalendar-dev://calendar` + the Maestro flow keep working and now also
+  select the tab.
 
 ## Agenda / planning view
 

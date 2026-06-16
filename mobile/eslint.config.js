@@ -1,5 +1,5 @@
 // https://docs.expo.dev/guides/using-eslint/
-// Rule rationale: .claude/rules/mobile/architecture.md (lint/format section)
+// Rule rationale: docs/mobile/architecture-book/architecture.md (lint/format section)
 const { fixupPluginRules } = require("@eslint/compat")
 const { defineConfig, globalIgnores } = require("eslint/config")
 const boundaries = require("eslint-plugin-boundaries")

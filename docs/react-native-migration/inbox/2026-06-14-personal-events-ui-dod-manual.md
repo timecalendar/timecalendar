@@ -5,7 +5,7 @@
 **For:** whoever runs the device passes (the planner/CI cannot do these)
 
 B2 is the **second feature taken through the full Definition of Done** (after Settings/A2) and the
-**first with a multi-field form + a real write error path** (`.claude/rules/mobile/definition-of-done.md`).
+**first with a multi-field form + a real write error path** (`docs/mobile/architecture-book/definition-of-done.md`).
 The automatable axes are done and green in CI (types, lint incl. the a11y touchable rules on every
 control, the Jest proof tests, the 90% logic gate + 70% floor, i18n FR/EN parity, theming light/dark,
 **observability wired** — a failed write is recorded through `@/firebase`). The axes below are

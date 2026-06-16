@@ -38,7 +38,7 @@ handbook.
 
 ### Governing documents (read these to understand *why*, not just *how*)
 
-- **`.claude/rules/mobile/`** — **the Architecture Book**: the living set of rules
+- **`docs/mobile/architecture-book/`** — **the Architecture Book**: the living set of rules
   driving `mobile/` development. `architecture.md` is the spine; `decisions/` holds
   ADRs; `definition-of-done.md` is the per-feature quality gate; `architecture-changelog.md`
   is the append-only rule-change log; `golden-path.md` is the (deliberately empty)
@@ -381,7 +381,7 @@ state after dependabot/batch merges.)
 
 Independent steps may run as concurrent background pipelines in isolated worktrees,
 **but merges are serialized**: merge one PR, rebase the others onto the new `main`,
-then merge — because changes share files (`.claude/rules/mobile/architecture.md`,
+then merge — because changes share files (`docs/mobile/architecture-book/architecture.md`,
 `mobile/app.config.ts`, lockfiles) and parallel zero-touch merges can break each
 other. Respect real dependencies (e.g. splash depends on theming).
 
@@ -492,7 +492,7 @@ gh pr checks <pr> --watch --interval 30   # wait for green
 gh pr merge <pr> --squash --delete-branch # only after SUCCESS
 ```
 
-**The non-negotiables:** keep the Architecture Book (`.claude/rules/mobile/`) and its
+**The non-negotiables:** keep the Architecture Book (`docs/mobile/architecture-book/`) and its
 Definition of Done binding; encode rules before documenting them (R-1); the reviewer
 is the sole merge gate; never merge on red; never block on human-only work (inbox it);
 leave the codebase more idiomatic than you found it.
