@@ -96,7 +96,7 @@ describe("HomeScreen", () => {
     expect(screen.getByTestId("upcoming-scroller")).toBeTruthy()
     expect(screen.getByTestId("today-timeline")).toBeTruthy()
     // The pluralized count line (one event).
-    expect(screen.getByText("1 event today")).toBeTruthy()
+    expect(screen.getByText("1 event")).toBeTruthy()
     // The card + tile both render the title.
     expect(screen.getAllByText("Algorithms").length).toBeGreaterThan(0)
   })

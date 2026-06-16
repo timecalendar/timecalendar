@@ -78,7 +78,10 @@ export function rowToEventDetails(row: CalendarEventRow): EventDetails {
     description: row.description ?? undefined,
     teachers: decodeJsonArray<string>(row.teachers),
     tags: decodeJsonArray<EventDetailsTag>(row.tags),
-    canceled: fields?.canceled ?? false,
+    // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
+    // degrades to false (the D2 defensive posture applied at the field level),
+    // mirroring rowToCalendarEvent.
+    canceled: fields?.canceled === true,
     userCalendarId: row.userCalendarId,
   }
 }

@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams } from "expo-router"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { ScrollView, StyleSheet, View } from "react-native"
+import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
@@ -43,7 +43,21 @@ export function EventDetailsScreen() {
   const header = <Stack.Screen options={{ title: t("eventDetails.title") }} />
 
   if (loading) {
-    return <ThemedView style={styles.container}>{header}</ThemedView>
+    return (
+      <ThemedView style={styles.container}>
+        {header}
+        <SafeAreaView style={styles.safeArea}>
+          <View
+            style={styles.loading}
+            accessibilityLiveRegion="polite"
+            accessibilityRole="text"
+            accessibilityLabel={t("eventDetails.loading")}
+          >
+            <ActivityIndicator />
+          </View>
+        </SafeAreaView>
+      </ThemedView>
+    )
   }
 
   if (event === null) {
@@ -177,6 +191,11 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     padding: Spacing.three,

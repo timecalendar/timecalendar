@@ -127,4 +127,12 @@ describe("EventDetailsScreen", () => {
     await render(<EventDetailsScreen />)
     expect(screen.getByText("This event is no longer available.")).toBeTruthy()
   })
+
+  it("renders an accessible loading indicator while the read resolves", async () => {
+    mockUseEventDetails.mockReturnValue({ event: null, loading: true })
+    await render(<EventDetailsScreen />)
+    expect(screen.getByLabelText("Loading event…")).toBeTruthy()
+    // Loading is distinct from not-found — the not-found message must NOT show yet.
+    expect(screen.queryByText("This event is no longer available.")).toBeNull()
+  })
 })

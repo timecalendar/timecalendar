@@ -55,14 +55,17 @@ export function useSyncCalendars(): UseSyncCalendars {
       }
 
       const result = await mutation.mutateAsync({ data: { tokens } })
-      const rows = result.flatMap((calendar) =>
-        calendar.events.map((event) => dtoToRow(event, calendar.calendar.id)),
-      )
 
-      // The local replace is a separate failure domain (D6): a throw here is a
-      // crash-worthy local-persistence failure, recorded through @/firebase —
-      // unlike a fetch rejection, which is recoverable and only flips isError.
+      // Mapping + the local replace share a failure domain (D6): a throw here is
+      // a crash-worthy LOCAL failure (a malformed DTO the verbatim mapper can't
+      // shape, or a SQLite write failure), recorded through @/firebase — unlike a
+      // fetch rejection, which is recoverable and only flips isError. dtoToRow
+      // runs inside this branch (not before it) so a mapping throw is recorded,
+      // not silently mis-bucketed as a transient fetch failure.
       try {
+        const rows = result.flatMap((calendar) =>
+          calendar.events.map((event) => dtoToRow(event, calendar.calendar.id)),
+        )
         await replaceAll(rows)
       } catch (error) {
         recordError(
