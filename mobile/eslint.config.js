@@ -72,12 +72,17 @@ const storageBackendImportPatterns = [
   },
 ]
 
-// Alpha native-chrome APIs are reachable only through their wrappers
-// (src/components/chrome/). Applied below to every file EXCEPT the chrome dir
-// (the wrappers ARE the single import site), so feature/route code imports
-// @/components/chrome, never the churning alpha API directly (D4). Caveat: this
-// catches the static import specifier, not a dynamic require()/import() evasion
-// — it guards accident, review covers adversaries (same posture as raw-fetch).
+// Imports reachable only through a chrome wrapper (src/components/chrome/) — the
+// single-import-site mechanism. Applied below to every file EXCEPT the chrome
+// dir (the wrappers ARE the single import site), so feature/route code imports
+// @/components/chrome, never the wrapped library directly. Most entries are
+// alpha native-chrome APIs banned for ALPHA CHURN (D4); @howljs/calendar-kit is
+// a STABLE dep banned for SWAP-REVERSIBILITY (ADR 020 — the #1-risk calendar
+// surface on a single maintainer), so "alpha-ness" is incidental to the list —
+// the constant name (chromeAlphaImportPatterns) is kept to avoid out-of-scope
+// line churn; a rename is ADR 020's revisit trigger. Caveat: this catches the
+// static import specifier, not a dynamic require()/import() evasion — it guards
+// accident, review covers adversaries (same posture as raw-fetch).
 const chromeAlphaImportPatterns = [
   {
     regex: "^expo-router/unstable-native-tabs($|/)",
@@ -93,6 +98,12 @@ const chromeAlphaImportPatterns = [
     regex: "^@expo/ui($|/)",
     message:
       "Use the @/components/chrome seam — @expo/ui is imported only inside src/components/chrome/.",
+  },
+  {
+    // Stable dep, banned for swap-reversibility (not alpha churn) — ADR 020.
+    regex: "^@howljs/calendar-kit($|/)",
+    message:
+      "Use the @/components/chrome seam — @howljs/calendar-kit is imported only inside src/components/chrome/ (ADR 020).",
   },
 ]
 

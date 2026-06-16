@@ -1,0 +1,95 @@
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react-native"
+
+import { useCalendarEvents } from "@/features/calendar/data"
+
+import { CalendarScreen } from "./calendar-screen"
+
+// Presentational screen (70% floor): renders through the real theme + i18n
+// trees. The calendar-kit grid is mocked suite-wide (jest/setup-calendar-kit) so
+// its mocked CalendarBody invokes renderEvent per event — proving the screen's
+// event→tile wiring + the CalendarEvent→EventItem mapping + theme/label plumbing
+// without the Reanimated grid (D7). The events-source seam is mocked here to
+// drive deterministic events independent of the fixture's current-week anchoring.
+
+jest.mock("@/features/calendar/data", () => {
+  const actual = jest.requireActual("@/features/calendar/data")
+  return { ...actual, useCalendarEvents: jest.fn() }
+})
+
+const mockUseCalendarEvents = useCalendarEvents as jest.Mock
+
+function calendarEvent(overrides = {}) {
+  // Local-time dates so the formatted "09:00–10:30" label is TZ-independent.
+  const startsAt = new Date(2026, 5, 16, 9, 0, 0, 0)
+  const endsAt = new Date(2026, 5, 16, 10, 30, 0, 0)
+  return {
+    id: "ev-1",
+    title: "Algorithms",
+    color: "#1E88E5",
+    startsAt,
+    endsAt,
+    location: "Room A1",
+    allDay: false,
+    description: undefined,
+    teachers: [],
+    tags: [],
+    canceled: false,
+    userCalendarId: undefined,
+    ...overrides,
+  }
+}
+
+beforeEach(() => {
+  mockUseCalendarEvents.mockReturnValue([calendarEvent()])
+})
+
+describe("CalendarScreen", () => {
+  it("renders the localized title (not the key)", async () => {
+    await render(<CalendarScreen />)
+    expect(screen.getByText("Calendar")).toBeTruthy()
+  })
+
+  it("renders a fixture event's tile with its title and location", async () => {
+    await render(<CalendarScreen />)
+    expect(screen.getByText("Algorithms")).toBeTruthy()
+    expect(screen.getByText("Room A1")).toBeTruthy()
+  })
+
+  it("exposes an accessible label combining title, time and location", async () => {
+    await render(<CalendarScreen />)
+    expect(
+      screen.getByLabelText("Algorithms, 09:00–10:30 Room A1"),
+    ).toBeTruthy()
+  })
+
+  it("defaults to the week view selected and toggles to day", async () => {
+    await render(<CalendarScreen />)
+    const day = screen.getByTestId("calendar-view-day")
+    const week = screen.getByTestId("calendar-view-week")
+    expect(week.props.accessibilityState.selected).toBe(true)
+    expect(day.props.accessibilityState.selected).toBe(false)
+
+    fireEvent.press(day)
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("calendar-view-day").props.accessibilityState
+          .selected,
+      ).toBe(true)
+    })
+    expect(
+      screen.getByTestId("calendar-view-week").props.accessibilityState
+        .selected,
+    ).toBe(false)
+  })
+
+  it("shows the empty-range state when no events intersect", async () => {
+    mockUseCalendarEvents.mockReturnValue([])
+    await render(<CalendarScreen />)
+    expect(screen.getByText("No events this period.")).toBeTruthy()
+  })
+})

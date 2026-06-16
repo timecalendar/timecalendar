@@ -1,0 +1,49 @@
+# Calendar timeline reachability + fixture-render e2e flow (Phase-04 item 1 /
+# ADR 019 / ADR 020).
+#
+# Cold-launches the development-variant app, deep-links to the calendar screen,
+# and asserts the localized title + a COMMITTED fixture event's title render. The
+# fixture (src/features/calendar/data/fixtures.ts) is committed data anchored to
+# the current week, so it is reachable with NO seeded backend — the right target
+# since calendar sync isn't built (no seeded calendar_events exist). This proves:
+# the route is reachable via deep link (Stack sibling of (tabs)), the screen
+# mounts past the splash, the GestureHandlerRootView root + the calendar-kit grid
+# render natively, and an event flows source → CalendarEvent → EventItem →
+# renderEvent tile on both platforms.
+#
+# What it deliberately does NOT do (D7): assert dense-overlap COLUMN PACKING or
+# frame rate. The Reanimated grid's internal layout is the library's, and frame
+# rate needs real hardware — those are the on-device manual pass (inbox
+# 2026-06-16-calendar-low-end-android-perf.md + -calendar-visual-brand-review.md),
+# not Maestro. The screen wiring (event→tile, mapping, theme/label) is proven
+# deterministically by the Jest proof test (calendar-screen.test.tsx).
+#
+# Requires a release-config dev-variant build installed on the connected device
+# (no server needed — this screen reads a fixture + the local personal-events
+# table). Shared across iOS and Android: stable localized text assertions, no
+# per-platform selectors. Run via mobile/e2e/run_e2e.sh. Mirrors settings.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link (see settings.yaml header): a warm openLink does
+# not navigate on Android release builds — stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://calendar
+# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
+# simulator — tap when present, skip otherwise.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+# Generous timeout: a release-config cold start + JS bundle load can land just
+# past Maestro's ~17s default.
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+# A committed fixture event title — present with no seeded backend.
+- extendedWaitUntil:
+    visible: "Lecture"
+    timeout: 60000

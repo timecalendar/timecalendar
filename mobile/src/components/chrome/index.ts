@@ -5,6 +5,13 @@
 // they churn (they're all alpha), the blast radius is this directory. This is
 // the roadmap step-10 insurance against alpha churn.
 
+export {
+  buildCalendarTheme,
+  CalendarBody,
+  CalendarContainer,
+  CalendarHeader,
+  type EventItem,
+} from "@/components/chrome/calendar-kit"
 export { GlassSurface } from "@/components/chrome/glass-surface"
 export { NativeTabs } from "@/components/chrome/native-tabs"
 

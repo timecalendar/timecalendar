@@ -37,6 +37,11 @@ module.exports = {
     // synthetic onBarcodeScanned can be driven through the real parser under Jest
     // (Phase-3 ship 3 — the camera can't be CI/Maestro-driven).
     "<rootDir>/jest/setup-expo-camera.ts",
+    // setup-calendar-kit mocks @howljs/calendar-kit (a Reanimated/worklet grid
+    // with no off-device runtime) so the calendar screen renders through the
+    // chrome seam and its renderEvent→tile wiring is provable under Jest
+    // (Phase-04 — the Reanimated grid can't be CI/Maestro-driven).
+    "<rootDir>/jest/setup-calendar-kit.ts",
   ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [

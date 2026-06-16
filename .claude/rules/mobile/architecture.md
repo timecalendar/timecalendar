@@ -44,6 +44,7 @@ The per-domain rules. Each file is present-tense and pointer-style (R-1); histor
 | [theming.md](./theming.md) | The `src/theme/` token layer, `buildNavTheme`, the `src/components/chrome/` alpha-API wrapper seam |
 | [firebase.md](./firebase.md) | Crashlytics + Analytics behind the `@/firebase` seam, one project per environment |
 | [eas.md](./eas.md) | Build profiles, the `fingerprint` runtime policy, channels, human-invoked builds |
+| [calendar.md](./calendar.md) | The `@howljs/calendar-kit` day/week timeline behind a chrome seam, the salvaged overlap/time-grid primitives, the `CalendarEvent` + events-source seam, the `GestureHandlerRootView` root |
 | [features.md](./features.md) | Per-feature index (Settings, Personal events, School selection, Splash) — feature-specific rules + pointers |
 
 ## Starting a new feature

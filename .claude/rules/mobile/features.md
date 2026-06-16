@@ -235,6 +235,45 @@ identity store"); the storage-backend + verbatim-schema decision is
   cache-clear is the on-device manual pass (`inbox/2026-06-16-calendar-restart-durability.md` — no
   list UI ships, so no Maestro post-relaunch assertion target).
 
+## Calendar — day/week timeline (Phase-04 item 1)
+
+The heart of the app — the read-only day/week timeline, the first half of Phase-04 item 1
+(the agenda list + calendar sync are scoped follow-ups). **One feature folder
+`src/features/calendar/`** (`data/` + `ui/`). Load-bearing decisions:
+**ADR [019](./decisions/019-calendar-rendering-adopt-calendar-kit.md)** (adopt
+`@howljs/calendar-kit` v2 behind a seam + salvage the primitives) and **ADR
+[020](./decisions/020-calendar-kit-seam.md)** (the chrome-wrapper seam form). The full rules
+are in [calendar.md](./calendar.md); the seam + ban are in [theming.md](./theming.md) /
+[lint-format.md](./lint-format.md).
+
+- **Renderer + seam:** `@howljs/calendar-kit` (pure-JS, no fingerprint bump) reached **only**
+  through `src/components/chrome/calendar-kit.tsx` (lint-banned elsewhere — ADR 020, banned for
+  swap-reversibility not alpha churn). A `GestureHandlerRootView` is mounted at the app root
+  (`src/app/_layout.tsx`) — app infra calendar-kit requires, not behind the seam.
+- **Salvaged primitives (`data/`, 90%-gated, owned regardless of the renderer):**
+  `overlap-layout.ts` (`layoutOverlaps` — the unbounded-column packing) + `time-grid.ts` (the
+  7:00–21:00 Flutter-parity constants + minute→pixel/height/labels/now-indicator math). The
+  de-risking insurance behind the seam; the agenda follow-up + home today-grid render through
+  them.
+- **Domain + events-source seam:** `data/types.ts` `CalendarEvent` (designed against the sync
+  `calendar_event.toDbMap()` model, **not persisted** here) + `data/events.ts`
+  `useCalendarEvents(range)` — the **single source seam** fed this ship from a committed
+  dense-week fixture (`data/fixtures.ts`) + the personal-events read; the **sync ship swaps the
+  source behind the unchanged hook**.
+- **Screen (`ui/calendar-screen.tsx`, presentational 70% floor):** a brand surface (R-3) — the
+  `theme` from `@/theme` tokens (now-indicator → brand `primary`), day/week view switch (1 / 5
+  days, weekends-off default), accessible tiles + controls + empty state, read-only. A thin route
+  `src/app/calendar.tsx` (Stack sibling of `(tabs)`).
+- **Observability ➖ N/A:** a read-only render has no crash-worthy write/throw path (mirrors the
+  school-selection read path).
+- **CI vs. manual:** the calendar-kit Reanimated grid is mocked suite-wide
+  (`jest/setup-calendar-kit.ts` — the mocked body invokes `renderEvent` per event), so CI proves
+  the primitives (90%), the events-source seam, and the screen's event→tile/mapping/theme/label
+  wiring; the dense-overlap visual correctness + **low-end-Android frame rate + Reassure baselines**
+  (ADR 019's gate — `inbox/2026-06-16-calendar-low-end-android-perf.md`) and the **brand visual
+  review** (`inbox/2026-06-16-calendar-visual-brand-review.md`) are the on-device manual pass.
+  Maestro (`.maestro/calendar.yaml`) asserts render + a fixture event title.
+
 ## Splash
 
 The app's startup overlay + the reusable render-when-ready pattern. **A presentation-only
