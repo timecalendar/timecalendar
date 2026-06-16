@@ -12,9 +12,10 @@ import { useSyncCalendars } from "./sync"
 // The sync-wiring proof: mocks at the customFetch mutator seam (the designed seam,
 // never the network) and drives the REAL generated sync mutation through a real
 // QueryClient. Asserts the success chain (read tokens → POST /calendars/sync →
-// flatten+map → replaceAll), the no-tokens no-op, and the OBSERVABILITY SPLIT
-// (D6): a fetch failure → isError, NO recordError; a replaceAll throw →
-// recordError + isError.
+// flatten DTOs to VERBATIM rows → replaceAll(rows)), the no-tokens no-op, and the
+// OBSERVABILITY SPLIT (D6): a fetch failure → isError, NO recordError; a replaceAll
+// throw → recordError + isError. The flattened payload handed to replaceAll is
+// verbatim insert ROWS now (dtoToRow's output), not domain events.
 jest.mock("@/api/mutator")
 jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data/user-calendars", () => ({
@@ -89,13 +90,18 @@ describe("useSyncCalendars", () => {
     expect(mockFetch.mock.calls[0]?.[1].body).toBe(
       JSON.stringify({ tokens: ["tok_123"] }),
     )
-    // The flattened+mapped events are replaced, carrying the parent calendar id.
+    // The flattened VERBATIM rows are replaced, carrying the parent calendar id +
+    // the full DTO fidelity (groupColor, type enum, rich tag JSON) — no data loss.
     expect(mockReplaceAll).toHaveBeenCalledTimes(1)
     const replaced = mockReplaceAll.mock.calls[0]?.[0]
     expect(replaced).toHaveLength(1)
-    expect(replaced[0].id).toBe("ev-1")
+    expect(replaced[0].uid).toBe("ev-1")
     expect(replaced[0].userCalendarId).toBe("cal-1")
-    expect(replaced[0].tags).toEqual(["CM"])
+    expect(replaced[0].groupColor).toBe("#0D47A1")
+    expect(replaced[0].type).toBe("cm")
+    expect(JSON.parse(replaced[0].tags)).toEqual([
+      { name: "CM", color: "#FF0000", icon: "book" },
+    ])
     expect(mockRecordError).not.toHaveBeenCalled()
   })
 

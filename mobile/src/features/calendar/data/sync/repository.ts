@@ -1,7 +1,9 @@
 import { and, calendarEvents, db, gte, lte } from "@/db"
 import type { CalendarEvent } from "@/features/calendar/data/types"
 
-import { calendarEventToRow, rowToCalendarEvent } from "./types"
+import { rowToCalendarEvent } from "./types"
+
+type CalendarEventInsert = typeof calendarEvents.$inferInsert
 
 // Async CRUD over the @/db seam — a module of functions, no class (R-2,
 // mirroring user-calendars/repository.ts). Imports {db}, the table, and the
@@ -38,8 +40,11 @@ export async function findInRange(
 }
 
 // Replace the ENTIRE calendar_events table with the synced set — the Flutter
-// drop+replace strategy (`_store.drop()` then `addAll`). It MUST be atomic: a
-// crash mid-replace must never leave a half-empty table (a partial
+// drop+replace strategy (`_store.drop()` then `addAll`). It takes ROWS (the
+// verbatim insert shape from dtoToRow), NOT domain events: the live write must be
+// byte-identical in fidelity to the Phase-09 importer's direct-row path, so the
+// lossy domain projection never touches a write (ADR 021 / D1). It MUST be atomic:
+// a crash mid-replace must never leave a half-empty table (a partial
 // calendar_events would silently lose the user's timetable until the next
 // successful sync). So the delete-all + the chunked bulk insert run inside ONE
 // db.transaction — either the whole replace commits or none of it does. The
@@ -47,8 +52,7 @@ export async function findInRange(
 // transaction. A thrown transaction is a crash-worthy LOCAL write failure (the
 // orchestrator records it through @/firebase — distinct from a recoverable fetch
 // failure, ADR 021 / D6).
-export async function replaceAll(events: CalendarEvent[]): Promise<void> {
-  const rows = events.map(calendarEventToRow)
+export async function replaceAll(rows: CalendarEventInsert[]): Promise<void> {
   await db.transaction(async (tx) => {
     await tx.delete(calendarEvents)
     for (let i = 0; i < rows.length; i += INSERT_CHUNK_SIZE) {

@@ -1,6 +1,7 @@
 // Mock the @/db seam: useLiveQuery returns a fixed data array; db.select().from()
-// is a no-op the hook passes to it. Proves the hook maps live rows → domain and
-// range-filters, without a real SQLite reactive query.
+// is a no-op the hook passes to it. Proves the hook maps live rows → domain
+// (range filtering lives in useCalendarEvents, not here), without a real SQLite
+// reactive query.
 import { renderHook } from "@testing-library/react-native"
 
 import { useSyncedEvents } from "./hooks"
@@ -34,33 +35,22 @@ function row(overrides: Record<string, unknown> = {}) {
   }
 }
 
-const range = {
-  from: new Date("2026-06-16T00:00:00.000Z"),
-  to: new Date("2026-06-17T00:00:00.000Z"),
-}
-
 describe("useSyncedEvents", () => {
-  it("maps the live-query rows to domain events within the range", async () => {
-    mockUseLiveQuery.mockReturnValue({ data: [row()] })
-    const { result } = await renderHook(() => useSyncedEvents(range))
-    expect(result.current).toHaveLength(1)
-    expect(result.current[0]?.id).toBe("ev-1")
-    expect(result.current[0]?.startsAt).toBeInstanceOf(Date)
-  })
-
-  it("filters out events outside the range", async () => {
+  it("maps every live-query row to a domain event (filtering happens in useCalendarEvents)", async () => {
     mockUseLiveQuery.mockReturnValue({
       data: [
         row(),
         row({
-          uid: "ev-far",
+          uid: "ev-2",
           startsAt: "2030-01-01T09:00:00.000Z",
           endsAt: "2030-01-01T10:00:00.000Z",
         }),
       ],
     })
-    const { result } = await renderHook(() => useSyncedEvents(range))
-    expect(result.current.some((e) => e.id === "ev-1")).toBe(true)
-    expect(result.current.some((e) => e.id === "ev-far")).toBe(false)
+    const { result } = await renderHook(() => useSyncedEvents())
+    // No range filter here — both rows map through; useCalendarEvents filters once.
+    expect(result.current).toHaveLength(2)
+    expect(result.current[0]?.id).toBe("ev-1")
+    expect(result.current[0]?.startsAt).toBeInstanceOf(Date)
   })
 })

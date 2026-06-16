@@ -6,9 +6,10 @@
 // are `mock`-prefixed so the hoisted jest.mock factory may reference them.
 
 import { and, calendarEvents, gte, lte } from "@/db"
-import type { CalendarEvent } from "@/features/calendar/data/types"
 
 import { findInRange, replaceAll } from "./repository"
+
+type CalendarEventInsert = typeof calendarEvents.$inferInsert
 
 let mockRows: unknown[] = []
 const mockWhere = jest.fn()
@@ -62,19 +63,25 @@ jest.mock("@/db", () => {
   }
 })
 
-function event(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
+// replaceAll takes verbatim INSERT rows now (dtoToRow's output), not domain events.
+function row(
+  overrides: Partial<CalendarEventInsert> = {},
+): CalendarEventInsert {
   return {
-    id: "ev-1",
+    uid: "ev-1",
     title: "Algorithms",
     color: "#1E88E5",
-    startsAt: new Date("2026-06-16T09:00:00.000Z"),
-    endsAt: new Date("2026-06-16T10:30:00.000Z"),
+    groupColor: "#0D47A1",
+    startsAt: "2026-06-16T09:00:00.000Z",
+    endsAt: "2026-06-16T10:30:00.000Z",
+    exportedAt: "2026-06-15T08:00:00.000Z",
     location: "Room A1",
+    description: null,
     allDay: false,
-    description: undefined,
-    teachers: [],
-    tags: [],
-    canceled: false,
+    teachers: "[]",
+    tags: "[]",
+    fields: null,
+    type: "cm",
     userCalendarId: "cal-1",
     ...overrides,
   }
@@ -132,7 +139,7 @@ describe("calendar-sync repository", () => {
   })
 
   it("replaceAll deletes-then-inserts inside a single transaction", async () => {
-    await replaceAll([event(), event({ id: "ev-2" })])
+    await replaceAll([row(), row({ uid: "ev-2" })])
 
     expect(mockTransaction).toHaveBeenCalledTimes(1)
     expect(mockTxDelete).toHaveBeenCalledWith(calendarEvents)
@@ -153,7 +160,7 @@ describe("calendar-sync repository", () => {
   })
 
   it("replaceAll chunks a large set across multiple inserts in one transaction", async () => {
-    const many = Array.from({ length: 120 }, (_, i) => event({ id: `ev-${i}` }))
+    const many = Array.from({ length: 120 }, (_, i) => row({ uid: `ev-${i}` }))
     await replaceAll(many)
     expect(mockTransaction).toHaveBeenCalledTimes(1)
     // 120 rows / 50-row chunks = 3 inserts.

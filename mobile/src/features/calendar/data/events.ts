@@ -53,7 +53,7 @@ export function intersectsRange(
 // timetable — the user's own events and their classes in one view (Flutter parity:
 // both EventKinds render together).
 export function useCalendarEvents(range: DateRange): CalendarEvent[] {
-  const syncedEvents = useSyncedEvents(range)
+  const syncedEvents = useSyncedEvents()
   const personalEvents = usePersonalEvents()
   return useMemo(() => {
     const merged = [

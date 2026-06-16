@@ -6,8 +6,4 @@ export { useSyncedEvents } from "./hooks"
 export { findInRange, replaceAll } from "./repository"
 export { useStartupSync } from "./startup"
 export { type UseSyncCalendars, useSyncCalendars } from "./sync"
-export {
-  calendarEventToRow,
-  fromCalendarEventDto,
-  rowToCalendarEvent,
-} from "./types"
+export { dtoToRow, rowToCalendarEvent } from "./types"

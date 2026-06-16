@@ -8,7 +8,7 @@ import { findAll as findAllUserCalendars } from "@/features/calendar-sources/dat
 import { recordError } from "@/firebase"
 
 import { replaceAll } from "./repository"
-import { fromCalendarEventDto } from "./types"
+import { dtoToRow } from "./types"
 
 // The sync orchestrator (design D4 / D6) — the ONLY generated-hook import site in
 // the calendar feature (B-1, the data/-only-seam rule). It wraps the committed
@@ -17,10 +17,12 @@ import { fromCalendarEventDto } from "./types"
 // full read-tokens → fetch → map → replaceAll chain (mirroring useAddCalendar).
 //
 // Flow (Flutter parity): read durable user_calendars tokens → if empty, no-op (no
-// request) → BATCH POST /calendars/sync { tokens } once → flatten
-// calendars.flatMap(c => c.events.map(e => fromCalendarEventDto(e, c.calendar.id)))
-// → replaceAll (the transactional drop+replace). The drop+replace runs ONLY after
-// a successful fetch, so a failed fetch leaves the last-good rows intact
+// request) → BATCH POST /calendars/sync { tokens } once → flatten the DTOs to
+// VERBATIM rows: calendars.flatMap(c => c.events.map(e => dtoToRow(e, c.calendar.id)))
+// → replaceAll (the transactional drop+replace, taking rows). Writing rows (not
+// domain events) keeps the live path byte-identical in fidelity to the Phase-09
+// importer's direct-row write — no data loss (ADR 021 / D1). The drop+replace runs
+// ONLY after a successful fetch, so a failed fetch leaves the last-good rows intact
 // (offline-safe by construction).
 //
 // Observability split (ADR 021 / D6): a FETCH rejection is a recoverable transient
@@ -53,17 +55,15 @@ export function useSyncCalendars(): UseSyncCalendars {
       }
 
       const result = await mutation.mutateAsync({ data: { tokens } })
-      const events = result.flatMap((calendar) =>
-        calendar.events.map((event) =>
-          fromCalendarEventDto(event, calendar.calendar.id),
-        ),
+      const rows = result.flatMap((calendar) =>
+        calendar.events.map((event) => dtoToRow(event, calendar.calendar.id)),
       )
 
       // The local replace is a separate failure domain (D6): a throw here is a
       // crash-worthy local-persistence failure, recorded through @/firebase —
       // unlike a fetch rejection, which is recoverable and only flips isError.
       try {
-        await replaceAll(events)
+        await replaceAll(rows)
       } catch (error) {
         recordError(
           error instanceof Error ? error : new Error(String(error)),

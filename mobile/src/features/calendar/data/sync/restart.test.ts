@@ -8,8 +8,9 @@
 // pass (inbox); here we prove the repository contract. Spy state is `mock`-prefixed
 // so the hoisted jest.mock factory may reference it.
 
-import type { CalendarEvent } from "@/features/calendar/data/types"
+import type { calendarEvents } from "@/db"
 
+type CalendarEventInsert = typeof calendarEvents.$inferInsert
 type Repository = typeof import("./repository")
 const loadRepository = (): Repository =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -77,19 +78,25 @@ jest.mock("@/db", () => {
   }
 })
 
-function event(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
+// replaceAll takes verbatim INSERT rows now (dtoToRow's output), not domain events.
+function row(
+  overrides: Partial<CalendarEventInsert> = {},
+): CalendarEventInsert {
   return {
-    id: "ev-restart",
+    uid: "ev-restart",
     title: "Algorithms",
     color: "#1E88E5",
-    startsAt: new Date("2026-06-16T09:00:00.000Z"),
-    endsAt: new Date("2026-06-16T10:30:00.000Z"),
+    groupColor: "#0D47A1",
+    startsAt: "2026-06-16T09:00:00.000Z",
+    endsAt: "2026-06-16T10:30:00.000Z",
+    exportedAt: "2026-06-15T08:00:00.000Z",
     location: "Room A1",
-    allDay: false,
     description: "Lecture",
-    teachers: ["Dr. Ada"],
-    tags: ["CM"],
-    canceled: false,
+    allDay: false,
+    teachers: JSON.stringify(["Dr. Ada"]),
+    tags: JSON.stringify([{ name: "CM", color: "#FF0000", icon: "book" }]),
+    fields: null,
+    type: "cm",
     userCalendarId: "cal-1",
     ...overrides,
   }
@@ -107,7 +114,7 @@ beforeEach(() => {
 describe("calendar-sync restart durability", () => {
   it("reads back a prior replaceAll through a freshly-imported repository module", async () => {
     const first = loadRepository()
-    await first.replaceAll([event()])
+    await first.replaceAll([row()])
 
     // Simulate a process restart: drop the module registry, but the "disk" (the
     // module-scoped Map) survives — exactly what on-disk SQLite gives.
@@ -120,13 +127,15 @@ describe("calendar-sync restart durability", () => {
     expect(restored[0]?.title).toBe("Algorithms")
     expect(restored[0]?.teachers).toEqual(["Dr. Ada"])
     expect(restored[0]?.userCalendarId).toBe("cal-1")
-    expect(restored[0]?.startsAt.getTime()).toBe(event().startsAt.getTime())
+    expect(restored[0]?.startsAt.getTime()).toBe(
+      new Date(row().startsAt).getTime(),
+    )
   })
 
   it("a second replaceAll fully replaces the prior set (drop+replace)", async () => {
     const repo = loadRepository()
-    await repo.replaceAll([event(), event({ id: "ev-old" })])
-    await repo.replaceAll([event({ id: "ev-new" })])
+    await repo.replaceAll([row(), row({ uid: "ev-old" })])
+    await repo.replaceAll([row({ uid: "ev-new" })])
 
     const all = await repo.findInRange(wideRange.from, wideRange.to)
     expect(all.map((e) => e.id).sort()).toEqual(["ev-new"])
@@ -134,7 +143,7 @@ describe("calendar-sync restart durability", () => {
 
   it("an empty replaceAll clears the table", async () => {
     const repo = loadRepository()
-    await repo.replaceAll([event()])
+    await repo.replaceAll([row()])
     await repo.replaceAll([])
 
     jest.resetModules()
