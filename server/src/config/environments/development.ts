@@ -1,11 +1,7 @@
 export const developmentEnvVariables = {
   PORT: "3005",
   CLIENT_URL: "https://timecalendar.host",
-  DATABASE_HOST: "localhost",
-  DATABASE_PORT: "37291",
-  DATABASE_USERNAME: "postgres",
-  DATABASE_PASSWORD: "",
-  DATABASE_MAIN_NAME: "timecalendar",
+  DATABASE_URL: "postgres://postgres@localhost:37291/timecalendar",
   RUN_MIGRATIONS: "false",
   SERVICE_ACCOUNT_KEY_PATH: "./config/serviceAccountKey.json",
   SMTP_URL: "smtp://localhost:1025/",

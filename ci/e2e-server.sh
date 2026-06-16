@@ -108,7 +108,8 @@ up_compose() {
   compose up --wait $build_flag server
 
   # One-shot seed: drop + migrate + seed timecalendar_test. Runs inside the
-  # compose network, so it inherits DATABASE_HOST=postgres from the service env.
+  # compose network, so it inherits DATABASE_URL (…@postgres:5432/…) from the
+  # service env.
   log "seeding the timecalendar_test database (db:init)…"
   compose run --rm server npm run db:init
 

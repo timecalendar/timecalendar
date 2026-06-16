@@ -36,11 +36,7 @@ export const REDIS_KEY_PREFIX = env.REDIS_KEY_PREFIX ?? ""
 export const API_USERNAME = env.API_USERNAME ?? ""
 export const API_TOKEN = env.API_TOKEN ?? ""
 
-export const DATABASE_HOST = env.DATABASE_HOST ?? ""
-export const DATABASE_PORT = +(env.DATABASE_PORT ?? "")
-export const DATABASE_USERNAME = env.DATABASE_USERNAME ?? ""
-export const DATABASE_PASSWORD = env.DATABASE_PASSWORD ?? ""
-export const DATABASE_MAIN_NAME = env.DATABASE_MAIN_NAME ?? ""
+export const DATABASE_URL = env.DATABASE_URL ?? ""
 export const DATABASE_LOGGING = isEnvTrue(env.DATABASE_LOGGING)
 
 export const RUN_MIGRATIONS = isEnvTrue(env.RUN_MIGRATIONS)
