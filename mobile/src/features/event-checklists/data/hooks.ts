@@ -58,16 +58,18 @@ export function useChecklistActions(
   const [failed, setFailed] = useState(false)
 
   const run = useCallback(
-    async (action: string, write: () => Promise<void>): Promise<void> => {
+    async (action: string, write: () => Promise<void>): Promise<boolean> => {
       try {
         await write()
         setFailed(false)
+        return true
       } catch (error) {
         recordError(
           error instanceof Error ? error : new Error(String(error)),
           `event-checklists/${action}`,
         )
         setFailed(true)
+        return false
       }
     },
     [],
@@ -87,8 +89,10 @@ export function useChecklistActions(
       updatedAt: now,
       deletedAt: undefined,
     }
-    await run("add", () => addItem(item))
-    return uuid
+    // Return the uuid only when the insert persisted, so the caller never asks to
+    // auto-focus a row that was never created (the write failure surfaces via the
+    // `failed` flag instead).
+    return (await run("add", () => addItem(item))) ? uuid : undefined
   }, [eventUid, items.length, run])
 
   const setContent = useCallback(

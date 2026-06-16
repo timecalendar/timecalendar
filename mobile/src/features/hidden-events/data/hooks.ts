@@ -19,10 +19,13 @@ export function useHiddenEvents(): HiddenEventsSet {
 }
 
 export interface HideActions {
-  hideByUid: (uid: string) => void
-  hideByName: (name: string) => void
-  unhideUid: (uid: string) => void
-  unhideName: (name: string) => void
+  // Each returns `true` when the write persisted, `false` when it threw (and was
+  // recorded). The caller gates navigation on success so a failed write keeps the
+  // screen mounted and its accessible failure banner visible (ADR 023 / D5).
+  hideByUid: (uid: string) => boolean
+  hideByName: (name: string) => boolean
+  unhideUid: (uid: string) => boolean
+  unhideName: (name: string) => boolean
   // True after a write threw — the screen surfaces an accessible failure state.
   failed: boolean
 }
@@ -36,16 +39,18 @@ export interface HideActions {
 export function useHideActions(): HideActions {
   const [failed, setFailed] = useState(false)
 
-  const run = useCallback((action: string, write: () => void): void => {
+  const run = useCallback((action: string, write: () => void): boolean => {
     try {
       write()
       setFailed(false)
+      return true
     } catch (error) {
       recordError(
         error instanceof Error ? error : new Error(String(error)),
         `hidden-events/${action}`,
       )
       setFailed(true)
+      return false
     }
   }, [])
 

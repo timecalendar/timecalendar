@@ -2,9 +2,11 @@ import { useCallback, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   Pressable,
+  type StyleProp,
   StyleSheet,
   type TextInput as RNTextInput,
   TextInput,
+  type TextStyle,
   View,
 } from "react-native"
 
@@ -41,7 +43,7 @@ export function EventChecklist({ eventUid }: { eventUid: string }) {
     if (uuid !== undefined) setFocusUuid(uuid)
   }, [add])
 
-  const inputStyle = [
+  const inputStyle: StyleProp<TextStyle> = [
     styles.input,
     { color: theme.text, borderColor: theme.backgroundSelected },
   ]
@@ -121,7 +123,7 @@ function ChecklistRow({
   isFirst: boolean
   isLast: boolean
   autoFocus: boolean
-  inputStyle: object[]
+  inputStyle: StyleProp<TextStyle>
   onContentChange: (text: string) => void
   onToggle: () => void
   onMoveUp: () => void
