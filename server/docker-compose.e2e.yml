@@ -19,8 +19,7 @@ services:
       # Reach the sibling compose services by name — overrides the test-env
       # defaults (localhost:37291 / 127.0.0.1:37292), which target the *host*
       # ports and only fit native mode.
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
+      DATABASE_URL: postgres://postgres@postgres:5432/timecalendar_test
       REDIS_URL: redis://redis:6379
       # MailerService builds a transport at construction time; the test env
       # leaves SMTP_URL unset, so give it a non-empty URL (nothing is sent).
