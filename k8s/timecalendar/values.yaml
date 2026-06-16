@@ -20,11 +20,8 @@ clientUrl: ""
 webUrl: ""
 
 timecalendar:
-  database:
-    host: ""
-    port: ""
-    username: ""
-    database: ""
+  # DATABASE_URL / REDIS_URL are supplied via the timecalendar-env-secret, not
+  # here — the split database.{host,port,username,database} values are gone.
   apiUsername: ""
   smtpFrom: ""
   s3PublicBucketClientUrl: ""

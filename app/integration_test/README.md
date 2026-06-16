@@ -104,7 +104,7 @@ not hand-rolled bash. `run_e2e.sh` calls it and owns only the Flutter half.
   overlay sets a dummy `SMTP_URL=smtp://localhost:1025`; nothing in the E2E
   path sends mail.
 - **Reaching Postgres/Redis.** The `test` env defaults
-  (`DATABASE_HOST=localhost:37291`, `REDIS_URL=…127.0.0.1:37292`) target the
+  (`DATABASE_URL=…@localhost:37291/…`, `REDIS_URL=…127.0.0.1:37292`) target the
   *host* ports. Inside the compose network the overlay overrides them to the
   service names (`postgres:5432`, `redis:6379`).
 - **Dummy Firebase key (generated, never committed).**

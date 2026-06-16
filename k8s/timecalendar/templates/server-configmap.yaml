@@ -18,10 +18,10 @@ data:
   REDIS_KEY_PREFIX: {{ .Values.environment }}
 
   # Postgres
-  DATABASE_HOST: {{ .Values.timecalendar.database.host }}
-  DATABASE_PORT: "{{ .Values.timecalendar.database.port }}"
-  DATABASE_USERNAME: {{ .Values.timecalendar.database.username }}
-  DATABASE_MAIN_NAME: {{ .Values.timecalendar.database.database }}
+  # DATABASE_URL (full connection string, incl. the password) is provided by the
+  # timecalendar-env-secret, assembled from the existing secret parts — it must be
+  # added to that sealed secret atomically with the PR1 server image that reads it
+  # (the split DATABASE_HOST/PORT/USERNAME/MAIN_NAME vars are no longer read).
   PGSSLMODE: no-verify
 
   RUN_MIGRATIONS: "true"
