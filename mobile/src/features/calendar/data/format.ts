@@ -65,3 +65,11 @@ export function formatFullDateTime(date: Date, locale: AppLocale): string {
   const opts = { locale: LOCALES[locale] }
   return `${format(date, "PPPP", opts)} · ${format(date, "HH:mm", opts)}`
 }
+
+// The home today header's full localized date (Flutter `fullDayText`): the full
+// weekday + day + month + year ("Monday, June 15th, 2026" / "lundi 15 juin 2026").
+// Display only, locale-aware. Closes roadmap item 5 (date/time) — the date-fns
+// seam now covers every formatting need across calendar/agenda/details/home.
+export function formatFullDay(day: Date, locale: AppLocale): string {
+  return format(day, "PPPP", { locale: LOCALES[locale] })
+}

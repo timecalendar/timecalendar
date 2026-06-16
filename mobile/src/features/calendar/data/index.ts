@@ -21,6 +21,7 @@ export {
   formatDayHeaderParts,
   formatEventDateRange,
   formatFullDateTime,
+  formatFullDay,
   formatTimeRange,
 } from "./format"
 export { type Interval, layoutOverlaps, type Placed } from "./overlap-layout"

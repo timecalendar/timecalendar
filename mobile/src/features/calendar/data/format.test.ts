@@ -2,6 +2,7 @@ import {
   formatDayHeaderParts,
   formatEventDateRange,
   formatFullDateTime,
+  formatFullDay,
   formatTimeRange,
 } from "./format"
 
@@ -71,5 +72,17 @@ describe("formatFullDateTime", () => {
   it("shows the locale-appropriate full date (FR)", () => {
     const date = new Date(2026, 5, 15, 0, 0, 0, 0)
     expect(formatFullDateTime(date, "fr")).toBe("lundi 15 juin 2026 · 00:00")
+  })
+})
+
+describe("formatFullDay", () => {
+  const day = new Date(2026, 5, 15, 0, 0, 0, 0)
+
+  it("shows the full localized date (EN)", () => {
+    expect(formatFullDay(day, "en")).toBe("Monday, June 15th, 2026")
+  })
+
+  it("shows the locale-appropriate full date (FR)", () => {
+    expect(formatFullDay(day, "fr")).toBe("lundi 15 juin 2026")
   })
 })
