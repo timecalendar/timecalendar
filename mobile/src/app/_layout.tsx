@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { queryClient } from "@/api/query-client"
 import { runMigrations } from "@/db/migrate"
+import { useStartupSync } from "@/features/calendar"
 import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
@@ -28,6 +29,17 @@ export const unstable_settings = {
 // recorded through @/firebase inside the runner.
 void runMigrations()
 
+// Fire the startup calendar sync once (fire-and-forget, mirroring the i18n /
+// runMigrations startup posture — D5). It is a component (not a top-level side
+// effect) because the sync wires the generated mutation, which needs the
+// QueryClient in context; it renders nothing. Mounted inside the query provider.
+// It goes through the feature data/ hook (@/features/calendar), never @/db data
+// directly (boundary B-3/B-4).
+function StartupSync() {
+  useStartupSync()
+  return null
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
@@ -45,6 +57,7 @@ export default function RootLayout() {
         client={queryClient}
         persistOptions={persistOptions}
       >
+        <StartupSync />
         <ThemeProvider value={navTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />

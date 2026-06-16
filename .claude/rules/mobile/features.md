@@ -235,16 +235,18 @@ identity store"); the storage-backend + verbatim-schema decision is
   cache-clear is the on-device manual pass (`inbox/2026-06-16-calendar-restart-durability.md` — no
   list UI ships, so no Maestro post-relaunch assertion target).
 
-## Calendar — day/week timeline + agenda (Phase-04 item 1)
+## Calendar — day/week timeline + agenda + sync (Phase-04 items 1–3)
 
-The heart of the app — the read-only **day / week / agenda** rendering surface (calendar sync is
-the remaining scoped follow-up). The day/week timeline + the agenda/planning view have both
-landed. **One feature folder `src/features/calendar/`** (`data/` + `ui/`). Load-bearing decisions:
-**ADR [019](./decisions/019-calendar-rendering-adopt-calendar-kit.md)** (adopt
-`@howljs/calendar-kit` v2 behind a seam + salvage the primitives) and **ADR
-[020](./decisions/020-calendar-kit-seam.md)** (the chrome-wrapper seam form). The full rules
-are in [calendar.md](./calendar.md); the seam + ban are in [theming.md](./theming.md) /
-[lint-format.md](./lint-format.md).
+The heart of the app — the **day / week / agenda** rendering surface, now fed by **real synced
+data**. The day/week timeline, the agenda/planning view, and **calendar sync** have all landed.
+**One feature folder `src/features/calendar/`** (`data/` + `data/sync/` + `ui/`). Load-bearing
+decisions: **ADR [019](./decisions/019-calendar-rendering-adopt-calendar-kit.md)** (adopt
+`@howljs/calendar-kit` v2 behind a seam + salvage the primitives), **ADR
+[020](./decisions/020-calendar-kit-seam.md)** (the chrome-wrapper seam form), and **ADR
+[021](./decisions/021-calendar-event-storage-and-sync.md)** (the `calendar_events` schema, JSON
+columns, transactional drop+replace, observability split). The full rules are in
+[calendar.md](./calendar.md); the schema + `data/sync/` layer in [storage.md](./storage.md); the
+seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
 
 - **Renderer + seam:** `@howljs/calendar-kit` (pure-JS, no fingerprint bump) reached **only**
   through `src/components/chrome/calendar-kit.tsx` (lint-banned elsewhere — ADR 020, banned for
@@ -256,15 +258,30 @@ are in [calendar.md](./calendar.md); the seam + ban are in [theming.md](./themin
   de-risking insurance behind the seam; the home today-grid renders through them (the agenda
   list uses its own `groupEventsByDay`, not column packing — a list has no intra-day geometry).
 - **Domain + events-source seam:** `data/types.ts` `CalendarEvent` (designed against the sync
-  `calendar_event.toDbMap()` model, **not persisted** here) + `data/events.ts`
-  `useCalendarEvents(range)` — the **single source seam** fed this ship from a committed
-  dense-week fixture (`data/fixtures.ts`) + the personal-events read; the **sync ship swaps the
-  source behind the unchanged hook**.
+  `calendar_event.toDbMap()` model, **now persisted** in `calendar_events`) + `data/events.ts`
+  `useCalendarEvents(range)` — the **single source seam**. The **sync ship swapped the source
+  behind the unchanged hook**: it now reads `useSyncedEvents()` (reactive `useLiveQuery` over
+  `calendar_events`, row→domain mapped) merged with the personal-events read, range-filtered once
+  here; the dense-week fixture (`data/fixtures.ts`) is dev/test-only now.
+- **Sync sublayer (`data/sync/`, 90%-gated — ADR 021):** the third Drizzle table
+  `calendar_events` + the full layer (the **verbatim** `dtoToRow` write mapper + the lossy
+  `rowToCalendarEvent` rendering read with defensive JSON decode, the **transactional
+  drop+replace** repository taking verbatim rows, the reactive `useSyncedEvents`, the
+  `useSyncCalendars` orchestrator over `customFetch`, the `useStartupSync` once-effect). Schema/migration/layer detail is in
+  [storage.md](./storage.md) "Calendar events store"; the sync flow + triggers in
+  [calendar.md](./calendar.md) "Calendar sync". **Triggers:** fire-and-forget startup sync
+  (`_layout.tsx`) + pull-to-refresh on the screen (accessible refreshing / error + retry).
+- **Observability split (ADR 021 / D6):** a recoverable **fetch** failure → `isError` UI state,
+  **NOT** recorded (mirrors the read path); a crash-worthy local **`replaceAll` transaction**
+  failure → `@/firebase` `recordError(error, "calendar/sync")` + `isError`. The first place the
+  calendar feature touches the firebase seam.
 - **Screen (`ui/calendar-screen.tsx`, presentational 70% floor):** a brand surface (R-3) — the
   `theme` from `@/theme` tokens (now-indicator → brand `primary`), a **3-way day/week/agenda view
   switch** (day/week = 1 / 5 days through calendar-kit, weekends-off default; agenda = the bounded
-  visible week through `AgendaList`), accessible tiles + controls + empty state, read-only. A thin
-  route `src/app/calendar.tsx` (Stack sibling of `(tabs)`).
+  visible week through `AgendaList`), accessible tiles + controls + empty state. **Pull-to-refresh**
+  (a brand-tinted `RefreshControl` on the agenda `SectionList`) + an accessible sync-error + retry
+  banner across all views drive `useSyncCalendars().sync()`; otherwise read-only (no event-write).
+  A thin route `src/app/calendar.tsx` (Stack sibling of `(tabs)`).
 - **Agenda / planning view (`add-mobile-calendar-agenda`, Phase-04 item 1b):** the **third
   in-place view mode** — a day-grouped React Native core **`SectionList`** (`ui/agenda-list.tsx`,
   **zero new dep** — NOT calendar-kit, the custom "easy half" ADR 019 anticipated). Two new pure
@@ -279,15 +296,18 @@ are in [calendar.md](./calendar.md); the seam + ban are in [theming.md](./themin
   N/A** (read-only). The agenda branch needs **no calendar-kit mock** (a plain `SectionList`); CI
   proves the two helpers (90%) + the screen's events→sections→tiles wiring; visual/perf folds into
   the existing calendar on-device pass. See [calendar.md](./calendar.md) "Agenda / planning view".
-- **Observability ➖ N/A:** a read-only render has no crash-worthy write/throw path (mirrors the
-  school-selection read path).
 - **CI vs. manual:** the calendar-kit Reanimated grid is mocked suite-wide
   (`jest/setup-calendar-kit.ts` — the mocked body invokes `renderEvent` per event), so CI proves
-  the primitives (90%), the events-source seam, and the screen's event→tile/mapping/theme/label
-  wiring; the dense-overlap visual correctness + **low-end-Android frame rate + Reassure baselines**
-  (ADR 019's gate — `inbox/2026-06-16-calendar-low-end-android-perf.md`) and the **brand visual
-  review** (`inbox/2026-06-16-calendar-visual-brand-review.md`) are the on-device manual pass.
-  Maestro (`.maestro/calendar.yaml`) asserts render + a fixture event title.
+  the primitives (90%), the events-source seam, the screen's event→tile/mapping/theme/label +
+  refresh/error/retry wiring, and the **full sync layer** (mappers + defensive JSON decode, the
+  transactional drop+replace, the `customFetch`-seam sync wiring with the observability split, a
+  restart-simulation — see [storage.md](./storage.md)). The dense-overlap visual correctness +
+  **low-end-Android frame rate + Reassure baselines on real synced data** (ADR 019's gate —
+  `inbox/2026-06-16-calendar-low-end-android-perf.md`), the **brand visual review**
+  (`inbox/2026-06-16-calendar-visual-brand-review.md`), and the **sync on-device proofs** (real
+  synced render / offline-after-sync / drop+replace atomicity after a mid-sync kill / Crashlytics
+  arrival — `inbox/2026-06-16-calendar-sync-on-device.md`) are the on-device manual pass. Maestro
+  (`.maestro/calendar.yaml`) asserts render + reachability (no seeded synced backend — recorded).
 
 ## Splash
 

@@ -5,7 +5,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 
-import { useCalendarEvents } from "@/features/calendar/data"
+import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 
 import { CalendarScreen } from "./calendar-screen"
 
@@ -13,15 +13,31 @@ import { CalendarScreen } from "./calendar-screen"
 // trees. The calendar-kit grid is mocked suite-wide (jest/setup-calendar-kit) so
 // its mocked CalendarBody invokes renderEvent per event — proving the screen's
 // event→tile wiring + the CalendarEvent→EventItem mapping + theme/label plumbing
-// without the Reanimated grid (D7). The events-source seam is mocked here to
-// drive deterministic events independent of the fixture's current-week anchoring.
+// without the Reanimated grid (D7). The events-source seam + the sync orchestrator
+// are mocked here to drive deterministic state without a SQLite/network dependency.
 
 jest.mock("@/features/calendar/data", () => {
   const actual = jest.requireActual("@/features/calendar/data")
-  return { ...actual, useCalendarEvents: jest.fn() }
+  return {
+    ...actual,
+    useCalendarEvents: jest.fn(),
+    useSyncCalendars: jest.fn(),
+  }
 })
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
+const mockUseSyncCalendars = useSyncCalendars as jest.Mock
+const mockSync = jest.fn()
+
+function syncState(overrides = {}) {
+  return {
+    sync: mockSync,
+    isSyncing: false,
+    isError: false,
+    reset: jest.fn(),
+    ...overrides,
+  }
+}
 
 function calendarEvent(overrides = {}) {
   // Local-time dates so the formatted "09:00–10:30" label is TZ-independent.
@@ -46,6 +62,8 @@ function calendarEvent(overrides = {}) {
 
 beforeEach(() => {
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
+  mockSync.mockReset()
+  mockUseSyncCalendars.mockReturnValue(syncState())
 })
 
 describe("CalendarScreen", () => {
@@ -119,5 +137,43 @@ describe("CalendarScreen", () => {
     await waitFor(() => {
       expect(screen.getByText("No events this period.")).toBeTruthy()
     })
+  })
+
+  it("renders an accessible sync-error with a retry that re-syncs", async () => {
+    mockUseSyncCalendars.mockReturnValue(syncState({ isError: true }))
+    await render(<CalendarScreen />)
+
+    expect(
+      screen.getByText(
+        "We couldn't refresh your calendar. Showing your last update.",
+      ),
+    ).toBeTruthy()
+    const retry = screen.getByTestId("calendar-sync-retry")
+    expect(retry.props.accessibilityLabel).toBe(
+      "Retry refreshing your calendar",
+    )
+    fireEvent.press(retry)
+    expect(mockSync).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not render the sync-error banner when there is no error", async () => {
+    await render(<CalendarScreen />)
+    expect(screen.queryByTestId("calendar-sync-error")).toBeNull()
+  })
+
+  it("pull-to-refresh on the agenda triggers a sync", async () => {
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("calendar-view-agenda").props.accessibilityState
+          .selected,
+      ).toBe(true)
+    })
+
+    // The agenda SectionList's RefreshControl — fire its onRefresh prop.
+    const list = screen.getByTestId("agenda-section-list")
+    list.props.refreshControl.props.onRefresh()
+    expect(mockSync).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { Pressable, RefreshControl, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import {
@@ -19,6 +19,7 @@ import {
   GRID_START_MINUTE,
   MIN_TILE_WIDTH,
   useCalendarEvents,
+  useSyncCalendars,
 } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -94,6 +95,28 @@ export function CalendarScreen() {
   const calendarEvents = useMemo(() => events.map(mapToEventItem), [events])
   const calendarTheme = useMemo(() => buildCalendarTheme(theme), [theme])
 
+  // The sync orchestrator (D5) — the screen stays presentational, calling the
+  // data/ hook with no fetch logic of its own. The reactive useCalendarEvents read
+  // reflects a successful sync's replaceAll automatically. Pull-to-refresh runs
+  // sync(); a recoverable failure surfaces an accessible error + retry (the
+  // last-good rows still render — D6: a fetch failure is NOT a crash).
+  const { sync, isSyncing, isError } = useSyncCalendars()
+
+  // The agenda's RefreshControl, brand-tinted (R-3). Wired into the SectionList so
+  // the agenda is pull-to-refresh; the error/retry banner below covers every view.
+  const refreshControl = (
+    <RefreshControl
+      testID="calendar-refresh"
+      refreshing={isSyncing}
+      onRefresh={() => {
+        void sync()
+      }}
+      tintColor={theme.primary}
+      colors={[theme.primary]}
+      accessibilityLabel={t("calendar.sync.refreshingLabel")}
+    />
+  )
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -133,9 +156,47 @@ export function CalendarScreen() {
           </ThemedText>
         )}
 
+        {isError && (
+          <View
+            style={styles.syncError}
+            accessibilityLiveRegion="polite"
+            testID="calendar-sync-error"
+          >
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              accessibilityRole="alert"
+              style={styles.syncErrorText}
+            >
+              {t("calendar.sync.error")}
+            </ThemedText>
+            <Pressable
+              testID="calendar-sync-retry"
+              accessibilityRole="button"
+              accessibilityLabel={t("calendar.sync.retryLabel")}
+              hitSlop={Spacing.two}
+              onPress={() => {
+                void sync()
+              }}
+              style={[
+                styles.retryButton,
+                { backgroundColor: theme.backgroundElement },
+              ]}
+            >
+              <ThemedText type="smallBold">
+                {t("calendar.sync.retry")}
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+
         <View style={styles.calendar}>
           {view === "agenda" ? (
-            <AgendaList events={events} locale={locale} />
+            <AgendaList
+              events={events}
+              locale={locale}
+              refreshControl={refreshControl}
+            />
           ) : (
             <CalendarContainer
               numberOfDays={numberOfDays}
@@ -260,6 +321,20 @@ const styles = StyleSheet.create({
   },
   calendar: {
     flex: 1,
+  },
+  syncError: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  syncErrorText: {
+    flex: 1,
+  },
+  retryButton: {
+    minHeight: 44,
+    paddingHorizontal: Spacing.three,
+    justifyContent: "center",
+    borderRadius: Radii.medium,
   },
   tile: {
     flex: 1,

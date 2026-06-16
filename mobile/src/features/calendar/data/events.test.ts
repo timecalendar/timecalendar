@@ -6,14 +6,24 @@ import {
 } from "@/features/personal-events"
 
 import { useCalendarEvents } from "./events"
+import { denseWeekFixture } from "./fixtures"
+import { useSyncedEvents } from "./sync"
+import type { CalendarEvent } from "./types"
 
+// The events-source seam now merges the synced calendar_events read with the
+// personal-events read (the sync ship's swap) — the fixture is no longer in the
+// default runtime merge. Both sources are mocked so the merge + range-filter are
+// asserted deterministically without a SQLite/network dependency.
 jest.mock("@/features/personal-events", () => ({
   usePersonalEvents: jest.fn(),
 }))
+jest.mock("./sync", () => ({
+  useSyncedEvents: jest.fn(),
+}))
 
 const mockUsePersonalEvents = usePersonalEvents as jest.Mock
+const mockUseSyncedEvents = useSyncedEvents as jest.Mock
 
-// A range covering the current week (the fixture anchors to this week's Monday).
 function thisWeekRange() {
   const from = new Date()
   from.setHours(0, 0, 0, 0)
@@ -41,17 +51,48 @@ function personalEvent(overrides: Partial<PersonalEvent> = {}): PersonalEvent {
   }
 }
 
+function syncedEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
+  const startsAt = new Date()
+  startsAt.setHours(9, 0, 0, 0)
+  const endsAt = new Date(startsAt)
+  endsAt.setHours(10, 30, 0, 0)
+  return {
+    id: "sync-1",
+    title: "Lecture",
+    color: "#1E88E5",
+    startsAt,
+    endsAt,
+    location: "Room A1",
+    allDay: false,
+    description: undefined,
+    teachers: ["Dr. Ada"],
+    tags: ["CM"],
+    canceled: false,
+    userCalendarId: "cal-1",
+    ...overrides,
+  }
+}
+
 beforeEach(() => {
   mockUsePersonalEvents.mockReturnValue([])
+  mockUseSyncedEvents.mockReturnValue([])
 })
 
 describe("useCalendarEvents", () => {
-  it("returns the fixture events within the range", async () => {
+  it("returns the synced events within the range", async () => {
+    mockUseSyncedEvents.mockReturnValue([syncedEvent()])
     const { result } = await renderHook(() =>
       useCalendarEvents(thisWeekRange()),
     )
-    expect(result.current.length).toBeGreaterThan(0)
-    expect(result.current.some((e) => e.title === "Lecture")).toBe(true)
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
+  })
+
+  it("does NOT include the dense-week fixture in the default merge", async () => {
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    const fixtureIds = new Set(denseWeekFixture().map((e) => e.id))
+    expect(result.current.some((e) => fixtureIds.has(e.id))).toBe(false)
   })
 
   it("maps personal events into CalendarEvent shape and merges them", async () => {
@@ -71,6 +112,16 @@ describe("useCalendarEvents", () => {
       canceled: false,
       userCalendarId: undefined,
     })
+  })
+
+  it("merges synced + personal events", async () => {
+    mockUseSyncedEvents.mockReturnValue([syncedEvent()])
+    mockUsePersonalEvents.mockReturnValue([personalEvent()])
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
+    expect(result.current.some((e) => e.id === "pe-1")).toBe(true)
   })
 
   it("includes events intersecting the range and excludes those outside", async () => {
