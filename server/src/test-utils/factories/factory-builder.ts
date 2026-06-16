@@ -1,6 +1,6 @@
+import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import _ from "lodash"
 import { getObjectPaths } from "modules/shared/utils/object-paths"
-import { getNestTestApps } from "test-utils/create-nest-app"
 import { AppFactory } from "test-utils/factories/app-factory"
 import { DataSource } from "typeorm"
 
@@ -25,11 +25,12 @@ export const factoryBuilder = <T, U = null>(
   ) => {
     const buildContext: AppFactoryContext = context || {}
 
+    // Persist through the worker's shared test DataSource (built by
+    // setupTestDatabase). It targets the same per-worker database the Nest test
+    // app connects to via forTest, so factory writes are visible to the app
+    // under test. A caller may still pass an explicit dataSource to override.
     if (!buildContext.dataSource) {
-      const dataSources = getNestTestApps()
-        .map((app) => app.get(DataSource))
-        .filter((dataSource) => dataSource)
-      buildContext.dataSource = dataSources[0] || undefined
+      buildContext.dataSource = SharedDatabaseModule.getTestDataSource()
     }
 
     const [model, factory] = generator(

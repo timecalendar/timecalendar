@@ -39,9 +39,11 @@
     "@bull-board/express": "^5.6.1",
     "@eslint/js": "^9",
     "@golevelup/ts-jest": "^0.7.0",
+    "@lyrolab/nest-shared": "^1.11.0",
     "@nestjs/bullmq": "^11",
     "@nestjs/cli": "^11",
     "@nestjs/common": "^11",
+    "@nestjs/config": "^4",
     "@nestjs/core": "^11",
     "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/microservices": "^11",
@@ -110,7 +112,7 @@
     "ts-loader": "^9.4.4",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
-    "typeorm": "^0.3.17",
+    "typeorm": "^0.3.22",
     "typeorm-fixtures-cli": "^3.1.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8",
@@ -165,7 +167,6 @@
       "node_modules",
       "src"
     ],
-    "runner": "./test-utils/test-runner.ts",
     "clearMocks": true
   },
   "devDependencies": {
