@@ -51,20 +51,30 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // proprietary algorithm). Sets ITSAppUsesNonExemptEncryption=false so EAS
     // stops prompting per build and a future store submission is pre-cleared.
     config: { usesNonExemptEncryption: false },
-    // Dev variant only: let release-config e2e builds reach the harness server
-    // on http://localhost:3005. ATS already exempts loopback, so this is
-    // belt-and-braces; the production identity carries no exception (D6).
-    ...(IS_DEV
-      ? {
-          infoPlist: {
-            NSAppTransportSecurity: { NSAllowsLocalNetworking: true },
-          },
-        }
-      : {}),
+    // APNs push entitlement (ADR 026). The RNFB messaging plugin does NOT inject
+    // aps-environment (it only wires the Android notification icon), and EAS
+    // managed credentials set it per provisioning profile — declaring it here
+    // makes the capability explicit + prebuild-verifiable. "development"; EAS
+    // promotes it to "production" for a release/store build.
+    entitlements: { "aps-environment": "development" },
+    infoPlist: {
+      // FCM background receive (ADR 026): remote-notification wakes the app for
+      // background data messages so the top-level background handler can run.
+      UIBackgroundModes: ["remote-notification"],
+      // Dev variant only: let release-config e2e builds reach the harness server
+      // on http://localhost:3005. ATS already exempts loopback, so this is
+      // belt-and-braces; the production identity carries no exception (D6).
+      ...(IS_DEV
+        ? { NSAppTransportSecurity: { NSAllowsLocalNetworking: true } }
+        : {}),
+    },
   },
   android: {
     package: appId,
     googleServicesFile: googleServicesAndroid,
+    // Android 13+ runtime notification permission (ADR 026), paired with the
+    // runtime request in @/firebase requestNotificationPermission.
+    permissions: ["POST_NOTIFICATIONS"],
     adaptiveIcon: {
       backgroundColor: "#E6F4FE",
       foregroundImage: "./assets/images/android-icon-foreground.png",
@@ -106,6 +116,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "@react-native-firebase/app",
     "@react-native-firebase/crashlytics",
     "@react-native-firebase/analytics",
+    // FCM push receive (Phase 06 Ship A, ADR 026). The native module autolinks
+    // under the existing iOS useFrameworks "static" set below (no new
+    // expo-build-properties); the escape if a pod breaks is ios.forceStaticLinking.
+    // The plugin adds the iOS aps-environment entitlement at prebuild; the
+    // UIBackgroundModes remote-notification (so background data messages wake the
+    // app) and the Android POST_NOTIFICATIONS permission are declared below. These
+    // are config-shape, prebuild-verified (R-1) — tsc/lint/Jest don't read them; a
+    // real `expo prebuild` / device build is the proof. The entitlement/background
+    // mode are OS-localized build-time config, NOT i18n catalog strings.
+    "@react-native-firebase/messaging",
     [
       "expo-build-properties",
       {

@@ -1,6 +1,12 @@
 // Side-effect import: initializes the single module-scoped i18next instance
 // (synchronous, from bundled catalogs) before any screen renders text.
 import "@/i18n"
+// Side-effect import: registers the FCM background-message handler at module
+// init so it runs before the JS app finishes booting (RNFB drops quit-state
+// messages otherwise — ADR 026). The inverse of Crashlytics, which needs no
+// startup import because it auto-installs natively; the background handler is a
+// JS registration that must run early. Import only — no init logic here.
+import "@/firebase"
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { Stack, ThemeProvider } from "expo-router"

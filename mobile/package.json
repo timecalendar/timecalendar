@@ -8,6 +8,7 @@
     "@react-native-firebase/analytics": "^24.1.1",
     "@react-native-firebase/app": "^24.1.1",
     "@react-native-firebase/crashlytics": "^24.1.1",
+    "@react-native-firebase/messaging": "^24.1.1",
     "@tanstack/query-sync-storage-persister": "^5.101.0",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-query-persist-client": "^5.101.0",
