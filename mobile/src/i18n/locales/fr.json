@@ -90,6 +90,13 @@
   "calendarSources.icalUrl.serverError": "Nous n'avons pas pu importer ce calendrier. Vérifiez l'URL et réessayez.",
   "calendarSources.icalUrl.retry": "Réessayer",
   "calendarSources.icalUrl.retryLabel": "Réessayer l'importation de cette URL de calendrier",
+  "calendar.title": "Calendrier",
+  "calendar.view.day": "Jour",
+  "calendar.view.week": "Semaine",
+  "calendar.view.dayLabel": "Afficher la vue jour",
+  "calendar.view.weekLabel": "Afficher la vue semaine",
+  "calendar.empty": "Aucun événement sur cette période.",
+  "calendar.event.label": "{{title}}, {{time}} {{location}}",
   "debug.firebase.heading": "Débogage Firebase (dev uniquement)",
   "debug.firebase.logEvent": "Envoyer un événement test",
   "debug.firebase.crash": "Déclencher un crash test"

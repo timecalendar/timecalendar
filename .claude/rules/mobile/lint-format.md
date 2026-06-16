@@ -85,12 +85,17 @@ truth; this file carries the caveats the config can't (R-1).
 - **No raw `fetch`** outside `src/api/mutator.ts`. Caveat: catches the bare global,
   not `globalThis.fetch`-style evasion — guards accident, not adversaries; review
   covers the rest.
-- **Native-chrome alpha APIs only through `src/components/chrome/`**
+- **Wrapped libraries only through `src/components/chrome/`**
   (`chromeAlphaImportPatterns`, applied via the shared `restrictedImports` and re-set
   without the ban for the `timecalendar/chrome-seams` block): `expo-router/unstable-native-tabs`,
-  `expo-glass-effect`, and `@expo/ui` (+ subpaths) are banned everywhere except the
-  chrome wrapper dir. Same static-import-only caveat as raw-fetch. The seam it guards
-  lives in the theming rules.
+  `expo-glass-effect`, `@expo/ui`, and `@howljs/calendar-kit` (+ subpaths) are banned
+  everywhere except the chrome wrapper dir. The first three are **alpha** APIs banned for
+  churn; **`@howljs/calendar-kit` is a STABLE dep banned for swap-reversibility** — the
+  #1-risk calendar surface on a single maintainer (ADR 020), so the constant name "alpha"
+  is incidental (its doc comment says "imports reachable only through a chrome wrapper"; a
+  rename is ADR 020's revisit trigger). Same static-import-only caveat as raw-fetch. The
+  seams these guard live in [theming.md](./theming.md) (alpha chrome) and
+  [calendar.md](./calendar.md) (calendar-kit).
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.
