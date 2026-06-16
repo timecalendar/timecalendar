@@ -1,27 +1,32 @@
-# Calendar timeline reachability + fixture-render e2e flow (Phase-04 item 1 /
-# ADR 019 / ADR 020).
+# Calendar reachability e2e flow (Phase-04 items 1–3 / ADR 019 / 020 / 021).
 #
 # Cold-launches the development-variant app, deep-links to the calendar screen,
-# and asserts the localized title + a COMMITTED fixture event's title render. The
-# fixture (src/features/calendar/data/fixtures.ts) is committed data anchored to
-# the current week, so it is reachable with NO seeded backend — the right target
-# since calendar sync isn't built (no seeded calendar_events exist). This proves:
-# the route is reachable via deep link (Stack sibling of (tabs)), the screen
-# mounts past the splash, the GestureHandlerRootView root + the calendar-kit grid
-# render natively, and an event flows source → CalendarEvent → EventItem →
-# renderEvent tile on both platforms.
+# and asserts the localized title + that the day/week→agenda view switch is
+# reachable. This proves: the route is reachable via deep link (Stack sibling of
+# (tabs)), the screen mounts past the splash, the GestureHandlerRootView root +
+# the calendar-kit grid render natively, the startup sync runs without crashing
+# launch, and the view switch toggles the rendered surface — on both platforms.
 #
-# What it deliberately does NOT do (D7): assert dense-overlap COLUMN PACKING or
-# frame rate. The Reanimated grid's internal layout is the library's, and frame
-# rate needs real hardware — those are the on-device manual pass (inbox
-# 2026-06-16-calendar-low-end-android-perf.md + -calendar-visual-brand-review.md),
-# not Maestro. The screen wiring (event→tile, mapping, theme/label) is proven
-# deterministically by the Jest proof test (calendar-screen.test.tsx).
+# SEEDED-DATA LIMITATION (calendar-sync ship, ADR 021): the events now come from a
+# real POST /calendars/sync over a durable user_calendars token, and the e2e
+# server seed (ci/e2e-server.sh → db:init) does NOT seed a user_calendars token
+# reachable by deep link with synced calendar_events — so there is no real synced
+# event to assert here. The dense-week fixture is also no longer in the default
+# runtime merge (dev/test-only since the sync ship). So this flow asserts render +
+# reachability only; the REAL synced render (+ offline-after-sync, drop+replace
+# atomicity, perf, Crashlytics arrival) is the on-device manual pass
+# (inbox/2026-06-16-calendar-sync-on-device.md). Seeding a token+events is its own
+# infra change, out of scope this ship.
 #
-# Requires a release-config dev-variant build installed on the connected device
-# (no server needed — this screen reads a fixture + the local personal-events
-# table). Shared across iOS and Android: stable localized text assertions, no
-# per-platform selectors. Run via mobile/e2e/run_e2e.sh. Mirrors settings.yaml.
+# What it deliberately does NOT do: assert dense-overlap COLUMN PACKING or frame
+# rate (the Reanimated grid's internal layout is the library's; frame rate needs
+# real hardware — the on-device manual pass). The screen wiring (event→tile,
+# mapping, theme/label, sync error/retry) is proven deterministically by the Jest
+# proof test (calendar-screen.test.tsx + data/sync/*.test).
+#
+# Requires a release-config dev-variant build installed on the connected device.
+# Shared across iOS and Android: stable localized text assertions, no per-platform
+# selectors. Run via mobile/e2e/run_e2e.sh. Mirrors settings.yaml.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp
@@ -39,24 +44,16 @@ appId: fr.samuelprak.timecalendar.dev
           text: "Open"
           optional: true
 # Generous timeout: a release-config cold start + JS bundle load can land just
-# past Maestro's ~17s default.
+# past Maestro's ~17s default. The title renders past the splash + the startup
+# sync (which is a no-op with no held tokens, so launch is not blocked/crashed).
 - extendedWaitUntil:
     visible: "Calendar"
     timeout: 60000
-# A committed fixture event title — present with no seeded backend.
-- extendedWaitUntil:
-    visible: "Lecture"
-    timeout: 60000
-# Switch to the agenda view (a third in-place view mode — D1). The agenda is a
-# bounded SectionList of day-grouped events (NOT calendar-kit); dense visual
-# correctness + frame rate remain the on-device manual pass
-# (inbox 2026-06-16-calendar-visual-brand-review.md), not Maestro. "Agenda" is the
-# same label in FR + EN so the tap is locale-stable.
+# Switch to the agenda view (a third in-place view mode). Proves the day/week→
+# agenda switch toggles the rendered surface. "Agenda" is the same label in FR +
+# EN so the tap is locale-stable. (No real synced event to assert — see the
+# SEEDED-DATA LIMITATION header; the real synced render is the on-device pass.)
 - tapOn:
     id: "calendar-view-agenda"
-# A committed fixture event title rendered in the agenda list — proving the
-# day/week→agenda switch toggles the rendered surface and the day-grouped list
-# renders a reachable fixture event with no seeded backend.
-- extendedWaitUntil:
-    visible: "Lecture"
-    timeout: 60000
+- assertVisible:
+    id: "calendar-view-agenda"

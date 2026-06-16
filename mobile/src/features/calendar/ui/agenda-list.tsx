@@ -1,6 +1,11 @@
-import { useMemo, useState } from "react"
+import { type ReactElement, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { SectionList, StyleSheet, View } from "react-native"
+import {
+  type RefreshControlProps,
+  SectionList,
+  StyleSheet,
+  View,
+} from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -19,7 +24,8 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // date-fns formatter, and renders day headers + themed event tiles. Read-only: the
 // tile is NOT a touchable (no event-details screen yet — accessibilityRole="text",
 // no onPress; the tap target is added when item 3 lands). A now/upcoming indicator
-// marks the first event ending after now.
+// marks the first event ending after now. The screen passes a `refreshControl`
+// (a RefreshControl wired to the sync orchestrator) so the agenda is pull-to-refresh.
 
 interface AgendaSection {
   day: Date
@@ -29,9 +35,11 @@ interface AgendaSection {
 export function AgendaList({
   events,
   locale,
+  refreshControl,
 }: {
   events: CalendarEvent[]
   locale: AppLocale
+  refreshControl?: ReactElement<RefreshControlProps>
 }) {
   // The clock is read once at mount (like the screen's visibleDate) so the render
   // stays pure — the "up next" marker is relative to when the agenda opened.
@@ -60,10 +68,12 @@ export function AgendaList({
 
   return (
     <SectionList
+      testID="agenda-section-list"
       sections={sections}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.content}
       stickySectionHeadersEnabled
+      refreshControl={refreshControl}
       renderSectionHeader={({ section }) => (
         <DayHeader day={section.day} locale={locale} />
       )}
