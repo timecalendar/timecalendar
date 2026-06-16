@@ -54,9 +54,16 @@ describe("useAddCalendar", () => {
       await result.current.addCalendarFromUrl("  https://example.com/cal.ics  ")
     })
 
-    // POST with the trimmed body the create seam assembles.
+    // POST with the trimmed body the create seam assembles, including the TEMP
+    // "Dev import" schoolName/name the seam injects until the school-name-first
+    // flow lands (see create.ts).
     expect(mockFetch.mock.calls[0]?.[1].body).toBe(
-      JSON.stringify({ url: "https://example.com/cal.ics", customData: null }),
+      JSON.stringify({
+        url: "https://example.com/cal.ics",
+        schoolName: "Dev import",
+        name: "Dev import",
+        customData: null,
+      }),
     )
     // GET resolves the token.
     expect(mockFetch.mock.calls[1]?.[0]).toBe("/calendars/by-token/tok_123")
