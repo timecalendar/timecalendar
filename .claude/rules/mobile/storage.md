@@ -231,9 +231,14 @@ ADR 011/018); rationale in `add-mobile-calendar-sync`'s `design.md` (D1–D8) an
   the shape is one tested seam, the importer writes the exact string we control, and a
   **corrupt/legacy/unparseable value degrades to a safe default** (`[]` / `null`) rather
   than throwing the whole list read — a `mode: "json"` column throws, which is exactly why
-  these are plain TEXT. `tags` decodes the full `EventTag[]` then projects to the domain
-  `tags: string[]` (names; the rich objects stay in the row for importer fidelity);
-  `canceled` derives from `fields?.canceled ?? false`. **No `CalendarEvent` shape change.**
+  these are plain TEXT. The **write** (`dtoToRow`) JSON-encodes the **full** DTO value
+  (the full `EventTag[]` `{name,color,icon}` each, the full `fields` object) verbatim; the
+  **read** (`rowToCalendarEvent`) is a lossy RENDERING projection — it decodes the full
+  `EventTag[]` then projects to the domain `tags: string[]` (names) and derives `canceled`
+  from `fields?.canceled ?? false`, with the rich objects / `groupColor` / `type` / the
+  rest of `fields` staying in the ROW (written verbatim, never lost on a write). **No
+  `CalendarEvent` shape change** — the lossy domain is the rendering projection of the
+  verbatim row.
 - **The third real migration — `src/db/migrations/0002_first_mauler.sql`** (`drizzle-kit
   generate`, driver `expo`): `CREATE TABLE calendar_events …`, a third `meta/_journal.json`
   entry, an `0002_snapshot.json`, and an updated `migrations.js` (now importing
@@ -244,21 +249,28 @@ ADR 011/018); rationale in `add-mobile-calendar-sync`'s `design.md` (D1–D8) an
   `userCalendars`; no new operator (`and` / `gte` / `lte` already re-exported for the
   personal-events range query are exactly what `findInRange` needs — R-2).
 - **The feature `data/` layer — `src/features/calendar/data/sync/`** (a sub-module under
-  the existing calendar `data/` seam): `types.ts` (the pure `rowToCalendarEvent` /
-  `calendarEventToRow` mappers + `fromCalendarEventDto` — the only generated-DTO import,
-  B-1 — all mapping to the EXISTING `CalendarEvent` domain type), `repository.ts`
-  (`findInRange` + the **transactional `replaceAll`** — `db.transaction(tx ⇒ delete-all
-  then chunked bulk insert)`, atomic so a crash mid-replace never leaves a half-empty
-  table — D3), `hooks.ts` (`useSyncedEvents(range)` — the reactive `useLiveQuery` read),
-  `sync.ts` (`useSyncCalendars()` — the orchestrator: read tokens → batch `POST
-  /calendars/sync` → flatten+map → `replaceAll`), `startup.ts` (`useStartupSync()` — the
-  fire-and-forget once-effect mounted in `_layout.tsx`), and `index.ts`.
-- **What CI proves vs. on-device.** CI proves the **mappers** (round-trip,
-  importer-fidelity verbatim, canonical-UTC, JSON encode/decode + **corrupt-JSON → safe
-  default**, null/boolean), the **repository query shape + the transactional drop+replace**
-  (delete-then-insert inside one `transaction`, chunked), the **DTO mapper**, the **sync
-  wiring** at the `customFetch` seam (success, no-tokens no-op, fetch-failure → `isError`
-  no-record, replace-failure → `recordError`), the **reactive hook + the startup trigger**,
+  the existing calendar `data/` seam): `types.ts` (the pure `dtoToRow` — the **verbatim**
+  DTO→row WRITE mapper, the only generated-DTO import, B-1 — and `rowToCalendarEvent` — the
+  lossy row→domain RENDERING read, mapping to the EXISTING `CalendarEvent` domain type),
+  `repository.ts` (`findInRange` + the **transactional `replaceAll(rows)`** — takes
+  verbatim insert rows, `db.transaction(tx ⇒ delete-all then chunked bulk insert)`, atomic
+  so a crash mid-replace never leaves a half-empty table — D3), `hooks.ts`
+  (`useSyncedEvents()` — the reactive `useLiveQuery` read, row→domain mapped, no range
+  filter — `useCalendarEvents` filters the merged set once), `sync.ts`
+  (`useSyncCalendars()` — the orchestrator: read tokens → batch `POST /calendars/sync` →
+  flatten DTOs to **verbatim rows** via `dtoToRow` → `replaceAll(rows)`), `startup.ts`
+  (`useStartupSync()` — the fire-and-forget once-effect mounted in `_layout.tsx`), and
+  `index.ts`. The single verbatim write shape (`dtoToRow`'s output) is what both the live
+  sync AND the Phase-09 importer write — fidelity holds end-to-end, not just on the
+  importer path.
+- **What CI proves vs. on-device.** CI proves the **mappers** (`dtoToRow` **verbatim
+  survival** of groupColor/type/rich-tags/rich-fields + canonical-UTC + null handling;
+  `rowToCalendarEvent` round-trip + **corrupt-JSON → safe default** + the lossy rendering
+  projection), the **repository query shape + the transactional drop+replace** (delete-
+  then-insert inside one `transaction`, chunked, taking rows), the **sync wiring** at the
+  `customFetch` seam (success writing **verbatim rows**, no-tokens no-op, fetch-failure →
+  `isError` no-record, replace-failure → `recordError`), the **reactive hook + the startup
+  trigger**,
   and a **restart-simulation** (a fresh repository module reads back a prior `replaceAll`
   through a stateful Map-backed `@/db` fake). CI **cannot** prove on-disk SQLite survival,
   drop+replace **atomicity** after a mid-sync kill, or real-data perf — those are the

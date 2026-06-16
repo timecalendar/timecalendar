@@ -72,10 +72,11 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
 - **`data/events.ts` `useCalendarEvents(range): CalendarEvent[]`** is the **single
   events-source seam** — the screen must not know where events come from. **Calendar sync
   LANDED the source swap** (`add-mobile-calendar-sync`, ADR 021): it now reads the synced
-  `calendar_events` rows reactively (`useSyncedEvents(range)` over `useLiveQuery`) merged with
-  the existing **personal-events read** (`usePersonalEvents()` mapped `PersonalEvent →
-  CalendarEvent`), range-filtered — same signature, same `CalendarEvent` shape, **no consumer
-  change** (the seam absorbed the swap, exactly as designed — the swap was this one file). The
+  `calendar_events` rows reactively (`useSyncedEvents()` over `useLiveQuery`, row→domain
+  mapped) merged with the existing **personal-events read** (`usePersonalEvents()` mapped
+  `PersonalEvent → CalendarEvent`), then range-filters the combined set **once** here — same
+  signature, same `CalendarEvent` shape, **no consumer change** (the seam absorbed the swap,
+  exactly as designed — the swap was this one file). The
   **dense-week fixture is no longer in the default runtime merge** — `denseWeekFixture` stays
   exported from `data/index.ts` **dev/test-only** (the primitive/screen tests + optional
   `__DEV__` seeding; it is the overlap-engine's worst-case test anchor).
@@ -169,9 +170,10 @@ storage.md "Calendar events store"; the storage/sync decisions are **ADR
 [021](./decisions/021-calendar-event-storage-and-sync.md)**).
 
 - **The source swap** is invisible to consumers — `useCalendarEvents(range)` now sources
-  `useSyncedEvents(range)` (reactive `useLiveQuery` over `calendar_events`) merged with the
-  personal-events read; the timeline + agenda screens are **unchanged** for the swap (only the
-  pull-to-refresh wiring is new). The fixture is dev/test-only now.
+  `useSyncedEvents()` (reactive `useLiveQuery` over `calendar_events`, row→domain mapped)
+  merged with the personal-events read and range-filtered once here; the timeline + agenda
+  screens are **unchanged** for the swap (only the pull-to-refresh wiring is new). The fixture
+  is dev/test-only now.
 - **Sync triggers (design D5):** a fire-and-forget **startup sync** (`useStartupSync()`, a
   once-effect mounted in `_layout.tsx` inside the query provider — it goes through the feature
   `data/` hook, never `@/db` directly, B-3/B-4; silent on failure — an offline launch shows the
@@ -203,13 +205,15 @@ seam. The orchestrator distinguishes the two by where the chain throws (a mutati
   so the event→tile wiring + the `CalendarEvent`→`EventItem` mapping + theme/label plumbing
   are provable without the Reanimated grid. Same posture as the `@expo/ui` picker (CI proves
   wiring, not the native control).
-- **The sync layer** (`data/sync/**`) is unit-tested at 90% — mappers (round-trip,
-  importer-fidelity verbatim, canonical-UTC, JSON encode/decode + **corrupt-JSON → safe
-  default**, null/boolean), the repository query shape + the **transactional drop+replace**
-  (delete-then-insert inside one `transaction`, chunked), the DTO mapper, the **sync wiring at
-  the `customFetch` seam** (success, no-tokens no-op, fetch-failure → `isError` no-record,
-  replace-failure → `recordError`), the reactive hook + the startup trigger, and a
-  **restart-simulation** (a fresh repository module reads back a prior `replaceAll` through a
+- **The sync layer** (`data/sync/**`) is unit-tested at 90% — mappers (`dtoToRow`
+  **verbatim survival** of groupColor/type/rich-tags/rich-fields + canonical-UTC + null
+  handling; `rowToCalendarEvent` round-trip + **corrupt-JSON → safe default** + the lossy
+  rendering projection), the repository query shape + the **transactional drop+replace**
+  (delete-then-insert inside one `transaction`, chunked, taking rows), the **sync wiring at
+  the `customFetch` seam** (success writing **verbatim rows**, no-tokens no-op, fetch-failure
+  → `isError` no-record, replace-failure → `recordError`), the reactive hook + the startup
+  trigger, and a **restart-simulation** (a fresh repository module reads back a prior
+  `replaceAll` through a
   stateful Map-backed `@/db` fake). See storage.md.
 - **On-device (manual, inboxed) — CI cannot drive the Reanimated grid, measure on hardware,
   prove on-disk SQLite survival, or drive a real sync:** the dense-overlap visual correctness +

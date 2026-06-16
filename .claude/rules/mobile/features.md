@@ -260,13 +260,14 @@ seam + ban in [theming.md](./theming.md) / [lint-format.md](./lint-format.md).
 - **Domain + events-source seam:** `data/types.ts` `CalendarEvent` (designed against the sync
   `calendar_event.toDbMap()` model, **now persisted** in `calendar_events`) + `data/events.ts`
   `useCalendarEvents(range)` — the **single source seam**. The **sync ship swapped the source
-  behind the unchanged hook**: it now reads `useSyncedEvents(range)` (reactive `useLiveQuery` over
-  `calendar_events`) merged with the personal-events read; the dense-week fixture
-  (`data/fixtures.ts`) is dev/test-only now.
+  behind the unchanged hook**: it now reads `useSyncedEvents()` (reactive `useLiveQuery` over
+  `calendar_events`, row→domain mapped) merged with the personal-events read, range-filtered once
+  here; the dense-week fixture (`data/fixtures.ts`) is dev/test-only now.
 - **Sync sublayer (`data/sync/`, 90%-gated — ADR 021):** the third Drizzle table
-  `calendar_events` + the full layer (mappers with defensive JSON decode, the **transactional
-  drop+replace** repository, the reactive `useSyncedEvents`, the `useSyncCalendars` orchestrator
-  over `customFetch`, the `useStartupSync` once-effect). Schema/migration/layer detail is in
+  `calendar_events` + the full layer (the **verbatim** `dtoToRow` write mapper + the lossy
+  `rowToCalendarEvent` rendering read with defensive JSON decode, the **transactional
+  drop+replace** repository taking verbatim rows, the reactive `useSyncedEvents`, the
+  `useSyncCalendars` orchestrator over `customFetch`, the `useStartupSync` once-effect). Schema/migration/layer detail is in
   [storage.md](./storage.md) "Calendar events store"; the sync flow + triggers in
   [calendar.md](./calendar.md) "Calendar sync". **Triggers:** fire-and-forget startup sync
   (`_layout.tsx`) + pull-to-refresh on the screen (accessible refreshing / error + retry).

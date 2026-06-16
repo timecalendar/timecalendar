@@ -14,7 +14,13 @@
 
 ## Status
 
-Accepted.
+Accepted. **⚠️ Amended (2026-06-16, review round 1):** the live sync writer now
+writes the `calendar_events` rows **VERBATIM from the DTO** (`dtoToRow`), identical
+in fidelity to the Phase-09 importer's direct-row path — closing a gap where the
+original design routed the live write through the lossy domain (`DTO → CalendarEvent
+→ row`), dropping `groupColor`/`type`/rich-tag/rich-`fields` data on 100% of live
+writes. The verbatim-fidelity claim now holds **end-to-end** (live AND importer), not
+just on the importer path. See the amended D1/D2/D3 + Consequences below.
 
 ## Context
 
@@ -78,20 +84,29 @@ the exact JSON string we control, no dependence on Drizzle's serializer; (3) a
 corrupt/legacy/unparseable JSON value must **not throw the whole list read** — the
 decode degrades to a safe default (`[]` / `null`), the total-read posture the stores'
 defensive parsers established, which a `mode: "json"` column **cannot** do (it throws).
-The encode normalizes to a canonical `JSON.stringify`. The domain `tags` stays
-`string[]` (the display surface renders tag names): the mapper decodes the full
-`EventTag[]` from the row and projects to `tags.map(t => t.name)`; the rich tag objects
-stay in the row for importer fidelity. `canceled` derives from `fields?.canceled ?? false`.
-**No `CalendarEvent` shape change** — the new data fills already-present fields.
+The encode (`dtoToRow`) normalizes to a canonical `JSON.stringify` of the **full** DTO
+value — the full `EventTag[]` (`{name,color,icon}` each) and the full
+`CalendarEventCustomFields` object, written verbatim. The **read** mapper
+(`rowToCalendarEvent`) is a deliberately-lossy RENDERING projection: it decodes the full
+`EventTag[]` and projects to `tags.map(t => t.name)` (the display surface renders tag
+names) and derives `canceled` from `fields?.canceled ?? false` — the rich tag objects,
+`groupColor`, `type`, and the rest of `fields` stay in the ROW (written verbatim,
+read by the importer / any richer future view), never lost on a write. **No
+`CalendarEvent` shape change** — the lossy domain is the rendering projection of the
+verbatim row.
 
-**(D3) The drop+replace sync strategy is TRANSACTIONAL (atomic).** `replaceAll(events)`
-runs `db.transaction(async (tx) => { await tx.delete(calendarEvents); /* chunked bulk
-insert */ })` — the delete-all + the chunked bulk insert (chunked under SQLite's bound-
-variable limit, ~50 rows/chunk) commit or roll back as ONE unit. A crash mid-replace
-must never leave a half-empty `calendar_events` (a partial table would silently lose
-the user's timetable until the next successful sync). The drop is reached **only after a
-successful fetch**, so a failed fetch leaves the last-good rows intact (offline-safe by
-construction).
+**(D3) The drop+replace sync strategy is TRANSACTIONAL (atomic), and writes VERBATIM
+ROWS.** `replaceAll(rows)` takes the verbatim insert rows (`dtoToRow`'s output), NOT
+domain events — the live write path flattens `calendars.flatMap(c => c.events.map(e =>
+dtoToRow(e, c.calendar.id)))` and hands rows straight to `replaceAll`, so the lossy
+domain projection never touches a write and the live write is byte-identical in fidelity
+to the Phase-09 importer's direct-row path. It runs `db.transaction(async (tx) => {
+await tx.delete(calendarEvents); /* chunked bulk insert */ })` — the delete-all + the
+chunked bulk insert (chunked under SQLite's bound-variable limit, ~50 rows/chunk) commit
+or roll back as ONE unit. A crash mid-replace must never leave a half-empty
+`calendar_events` (a partial table would silently lose the user's timetable until the
+next successful sync). The drop is reached **only after a successful fetch**, so a failed
+fetch leaves the last-good rows intact (offline-safe by construction).
 
 **(D4) Observability splits recoverable fetch failure from crash-worthy local write
 failure (D6).** A sync **fetch** failure (network/server) is **recoverable** — the
@@ -116,29 +131,35 @@ same call ADR 018 made for `user_calendars`).
 
 ## Consequences
 
-- The Phase-09 importer can write recovered `calendar_events` rows with **no data loss
-  and minimal transformation** — scalars verbatim, dates already canonical UTC, `allDay`
-  bool→0/1, `teachers`/`tags`/`fields` already JSON-shaped. The importer writes rich rows
-  **directly** (bypassing the domain, supplying `type` + `groupColor` + full tag objects),
-  the same `newId()`-bypass posture as ADR 011/018.
+- Both write paths are **verbatim, no data loss**: the **live sync** writes rows via
+  `dtoToRow(dto, calendarId)` (full `groupColor`/`type`/rich-tags/rich-`fields`, dates
+  normalized to canonical UTC), and the **Phase-09 importer** writes rows of the same
+  shape **directly** (scalars verbatim, dates already canonical UTC, `allDay` bool→0/1,
+  `teachers`/`tags`/`fields` already JSON-shaped) — the same `newId()`-bypass posture as
+  ADR 011/018. The single verbatim write shape is `dtoToRow`'s output; the lossy domain
+  `CalendarEvent` is derived FROM the stored row (`rowToCalendarEvent`) for rendering
+  only and never feeds a write.
 - The third real migration lands (`0002_first_mauler.sql` `CREATE TABLE calendar_events`,
   a third `_journal.json` entry, an `0002_snapshot.json`, an updated `migrations.js`
   importing `m0000`/`m0001`/`m0002`), committed (fresh-clone-no-codegen). The runner
   applies all three unchanged; the `migrate.test.ts` proof still passes.
-- `useCalendarEvents(range)` swaps its source to `useSyncedEvents(range)` (reactive
-  `useLiveQuery`) merged with the personal-events read — same signature, same
-  `CalendarEvent` shape, no consumer change. The dense-week fixture is removed from the
-  default runtime merge (dev/test-only).
+- `useCalendarEvents(range)` swaps its source to `useSyncedEvents()` (reactive
+  `useLiveQuery`, row→domain mapped) merged with the personal-events read, range-filtering
+  the combined set ONCE — same signature, same `CalendarEvent` shape, no consumer change.
+  (`useSyncedEvents` returns all mapped rows; the single range filter lives in
+  `useCalendarEvents`, which already filters the merged set.) The dense-week fixture is
+  removed from the default runtime merge (dev/test-only).
 - Sync triggers at startup (fire-and-forget, silent on failure) + pull-to-refresh on the
   calendar screen (an accessible refreshing / sync-error + retry surface).
 - A second network call shape (`POST /calendars/sync`) is added on the durable tokens;
   the failure is recoverable + retryable, not recorded.
-- CI proves the mappers (round-trip, importer-fidelity verbatim, canonical-UTC, JSON
-  encode/decode + **defensive decode**, null/boolean), the repository query shape + the
-  **transactional drop+replace** (delete-then-insert inside one `transaction`), the DTO
-  mapper, the sync wiring at the `customFetch` seam (success, no-tokens no-op,
-  fetch-failure → `isError` no-record, replace-failure → `recordError`), and a
-  **restart-simulation**. On-disk SQLite survival + drop+replace atomicity after a
+- CI proves the mappers (`dtoToRow` **verbatim survival** of groupColor/type/rich-tags/
+  rich-fields, canonical-UTC normalization, null handling; `rowToCalendarEvent` round-trip
+  + **defensive decode** of corrupt JSON to safe defaults + the lossy rendering
+  projection), the repository query shape + the **transactional drop+replace** (delete-
+  then-insert inside one `transaction`, taking rows), the sync wiring at the `customFetch`
+  seam (success writing **verbatim rows**, no-tokens no-op, fetch-failure → `isError`
+  no-record, replace-failure → `recordError`), and a **restart-simulation**. On-disk SQLite survival + drop+replace atomicity after a
   mid-sync kill + real-data perf are the on-device manual pass
   (`inbox/2026-06-16-calendar-sync-on-device.md`).
 - Rollback is a plain revert (additive table; a fresh DB lacks it until the migration
