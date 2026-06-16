@@ -4,7 +4,6 @@ import { ENABLE_QUEUE } from "config/constants"
 import { JobRunModule } from "modules/job-run/job-run.module"
 import { DefaultQueueProcessorService } from "modules/queue/services/queue-processors.service"
 import { QueueService } from "modules/queue/services/queue.service"
-import { RedisModule } from "modules/redis/redis.module"
 import { isTestEnv } from "modules/shared/helpers/check-environment"
 import { DEFAULT_QUEUE_NAME } from "./queue.constants"
 
@@ -19,7 +18,6 @@ import { DEFAULT_QUEUE_NAME } from "./queue.constants"
             removeOnFail: { age: 24 * 3600 },
           },
     }),
-    RedisModule,
     JobRunModule,
   ],
   providers: [

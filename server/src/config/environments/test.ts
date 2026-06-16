@@ -3,7 +3,6 @@ export const testEnvVariables = {
   DATABASE_URL: "postgres://postgres@localhost:37291/timecalendar_test",
   REDIS_QUEUE: "timecalendar-queue-test",
   REDIS_URL: "redis://127.0.0.1:37292",
-  REDIS_KEY_PREFIX: "",
   ENABLE_QUEUE: "false",
   // School logo URLs are built as S3_PUBLIC_BUCKET_CLIENT_URL + imageUrl. A
   // loopback host keeps the E2E onboarding flow deterministic: a seeded logo
