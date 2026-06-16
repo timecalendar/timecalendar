@@ -82,7 +82,10 @@ export function rowToCalendarEvent(row: CalendarEventRow): CalendarEvent {
     description: row.description ?? undefined,
     teachers: decodeJsonArray<string>(row.teachers),
     tags: tags.map((tag) => tag.name),
-    canceled: fields?.canceled ?? false,
+    // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
+    // (e.g. "yes") degrades to false rather than reaching the domain as a truthy
+    // non-boolean — the D2 defensive-decode posture applied at the field level.
+    canceled: fields?.canceled === true,
     // userCalendarId is notNull (the DTO always carries the parent id) — a plain
     // string, no null branch.
     userCalendarId: row.userCalendarId,

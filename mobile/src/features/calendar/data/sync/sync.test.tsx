@@ -146,6 +146,29 @@ describe("useSyncCalendars", () => {
     expect(mockRecordError.mock.calls[0]?.[1]).toBe("calendar/sync")
   })
 
+  it("records a dtoToRow mapping failure (a malformed DTO is crash-worthy, not a silent fetch error)", async () => {
+    // A malformed date the verbatim mapper can't shape: new Date("nope")
+    // .toISOString() throws RangeError. The mapping runs in the local-write
+    // failure domain (not before it), so the throw is recordError'd — NOT
+    // mis-bucketed as a recoverable fetch failure (the observability split, D6).
+    mockFetch.mockResolvedValueOnce([
+      {
+        calendar: { id: "cal-1", token: "tok_123", name: "ENSEEIHT" },
+        events: [{ ...dtoEvent, startsAt: "not-a-real-date" }],
+      },
+    ])
+
+    const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(mockReplaceAll).not.toHaveBeenCalled()
+    expect(mockRecordError).toHaveBeenCalledTimes(1)
+    expect(mockRecordError.mock.calls[0]?.[1]).toBe("calendar/sync")
+  })
+
   it("wraps a non-Error replaceAll rejection before recording", async () => {
     mockFetch.mockResolvedValueOnce(syncResponse)
     mockReplaceAll.mockRejectedValueOnce("plain string boom")

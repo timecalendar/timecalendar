@@ -180,4 +180,16 @@ describe("dynamicHourRange", () => {
     )
     expect(dynamicHourRange([a])).toEqual({ startHour: 22, endHour: 24 })
   })
+
+  it("never returns an inverted range for a cross-midnight event", () => {
+    // Starts 23:30, ends 00:30 the next day — eventsForDay buckets it on its
+    // start day, so dynamicHourRange must still yield a valid, non-empty window
+    // (start 23 → a raw end hour of 1 would invert the range and break the grid).
+    const a = event(
+      "a",
+      new Date(2026, 5, 16, 23, 30),
+      new Date(2026, 5, 17, 0, 30),
+    )
+    expect(dynamicHourRange([a])).toEqual({ startHour: 23, endHour: 24 })
+  })
 })

@@ -53,7 +53,9 @@ describe("layoutOverlaps", () => {
     ])
     expect(placed.every((p) => p.columns === 5)).toBe(true)
     expect(placed.map((p) => p.column)).toEqual([0, 1, 2, 3, 4])
-    expect(placed.every((p) => Number((p.endX - p.startX).toFixed(5)) === 0.2))
+    expect(
+      placed.every((p) => Number((p.endX - p.startX).toFixed(5)) === 0.2),
+    ).toBe(true)
   })
 
   it("reuses a freed column within a cluster", () => {

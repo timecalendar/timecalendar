@@ -46,7 +46,7 @@ function syncState(overrides = {}) {
 }
 
 function calendarEvent(overrides = {}) {
-  // Local-time dates so the formatted "09:00–10:30" label is TZ-independent.
+  // Local-time dates so the formatted "09:00 – 10:30" label is TZ-independent.
   const startsAt = new Date(2026, 5, 16, 9, 0, 0, 0)
   const endsAt = new Date(2026, 5, 16, 10, 30, 0, 0)
   return {
@@ -88,7 +88,7 @@ describe("CalendarScreen", () => {
   it("exposes an accessible label combining title, time and location", async () => {
     await render(<CalendarScreen />)
     expect(
-      screen.getByLabelText("Algorithms, 09:00–10:30 Room A1"),
+      screen.getByLabelText("Algorithms, 09:00 – 10:30 Room A1"),
     ).toBeTruthy()
   })
 

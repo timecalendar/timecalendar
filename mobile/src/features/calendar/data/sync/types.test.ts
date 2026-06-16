@@ -196,4 +196,16 @@ describe("rowToCalendarEvent", () => {
       rowToCalendarEvent(toRow(dtoEvent(), "cal-1", { fields: "42" })).canceled,
     ).toBe(false)
   })
+
+  it("degrades a non-boolean canceled to false (field-level defensive decode)", () => {
+    // A corrupt/legacy { canceled: "yes" } must NOT reach the domain as a truthy
+    // non-boolean — `=== true` coerces it to false.
+    expect(
+      rowToCalendarEvent(
+        toRow(dtoEvent(), "cal-1", {
+          fields: JSON.stringify({ canceled: "yes" }),
+        }),
+      ).canceled,
+    ).toBe(false)
+  })
 })

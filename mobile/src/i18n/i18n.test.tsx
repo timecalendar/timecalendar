@@ -8,7 +8,7 @@ import { Text } from "react-native"
 // default instance, no provider) — the wiring is real, not just present (D8).
 function Probe() {
   const { t } = useTranslation()
-  return <Text>{t("home.title")}</Text>
+  return <Text>{t("home.tab.label")}</Text>
 }
 
 describe("i18n wiring", () => {
@@ -16,6 +16,6 @@ describe("i18n wiring", () => {
     const { findByText, queryByText } = await render(<Probe />)
 
     expect(await findByText("Home")).toBeTruthy()
-    expect(queryByText("home.title")).toBeNull()
+    expect(queryByText("home.tab.label")).toBeNull()
   })
 })
