@@ -4,11 +4,25 @@
 // single events-source seam (useCalendarEvents), and the calendar-sync surface
 // (the orchestrator + startup trigger).
 export { type AgendaDay, groupEventsByDay } from "./agenda"
+export {
+  type EventDetails,
+  type EventDetailsTag,
+  getByUid,
+  rowToEventDetails,
+  type UseEventDetails,
+  useEventDetails,
+} from "./event-details"
 export { type DateRange, useCalendarEvents } from "./events"
 // Dev/test-only since the sync ship — no longer in the default useCalendarEvents
 // merge; kept for the primitive/screen tests + optional __DEV__ seeding.
 export { denseWeekFixture } from "./fixtures"
-export { type AppLocale, formatDayHeaderParts, formatTimeRange } from "./format"
+export {
+  type AppLocale,
+  formatDayHeaderParts,
+  formatEventDateRange,
+  formatFullDateTime,
+  formatTimeRange,
+} from "./format"
 export { type Interval, layoutOverlaps, type Placed } from "./overlap-layout"
 export { useStartupSync, type UseSyncCalendars, useSyncCalendars } from "./sync"
 export {

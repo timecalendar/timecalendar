@@ -38,7 +38,7 @@ type CalendarEventInsert = typeof calendarEvents.$inferInsert
 // non-array value) degrades to []. This is the total-read posture the stores'
 // defensive parsers established. A Drizzle `mode: "json"` column would throw
 // here, which is exactly why the JSON columns are plain TEXT decoded by hand.
-function decodeJsonArray<T>(raw: string): T[] {
+export function decodeJsonArray<T>(raw: string): T[] {
   try {
     const parsed: unknown = JSON.parse(raw)
     return Array.isArray(parsed) ? (parsed as T[]) : []
@@ -47,7 +47,9 @@ function decodeJsonArray<T>(raw: string): T[] {
   }
 }
 
-function decodeFields(raw: string | null): CalendarEventCustomFields | null {
+export function decodeFields(
+  raw: string | null,
+): CalendarEventCustomFields | null {
   if (raw === null) return null
   try {
     const parsed: unknown = JSON.parse(raw)
