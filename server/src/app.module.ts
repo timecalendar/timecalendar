@@ -11,7 +11,6 @@ import { JobRunModule } from "modules/job-run/job-run.module"
 import { MailerModule } from "modules/mailer/mailer.module"
 import { NotifierModule } from "modules/notifier/notifier.module"
 import { QueueModule } from "modules/queue/queue.module"
-import { RedisModule } from "modules/redis/redis.module"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
@@ -39,7 +38,6 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
     SchoolModule,
     CalendarLogModule,
     CalendarSyncModule,
-    RedisModule,
     JobRunModule,
     SchoolGroupModule,
     ContactModule,

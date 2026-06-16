@@ -15,7 +15,13 @@ data:
 
   # Redis
   REDIS_QUEUE: timecalendar
-  REDIS_KEY_PREFIX: {{ .Values.environment }}
+  # NOTE: REDIS_KEY_PREFIX is retired as of the nest-shared migration (TIM-143).
+  # nest-shared's SharedRedisModule/SharedBullModule connect by REDIS_URL only
+  # and do not apply a per-environment Bull key prefix. Environments MUST be
+  # isolated by a distinct REDIS_URL (separate Redis instance or logical DB) in
+  # the timecalendar-env-secret — NOT by this prefix. Confirm that isolation
+  # holds before deploying this image (a shared, un-prefixed Redis would let
+  # environments collide on the "default" queue).
 
   # Postgres
   # DATABASE_URL (full connection string, incl. the password) is provided by the
