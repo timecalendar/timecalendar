@@ -23,19 +23,22 @@ import {
   useEventDetails,
 } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
+import { EventChecklist } from "@/features/event-checklists"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { Radii, Spacing } from "@/theme"
 
-// The read-only event-details screen (D6) — PRESENTATIONAL (70% floor). It reads
-// the uid route param, reads the rich event through the sibling data/ sub-barrel
-// (B-2 — never @/db, B-1), and renders the title block / tags / content lines /
-// footer as a designed brand surface themed from @/theme (R-3). Read-only with
-// respect to the event's CONTENT (no edit / delete / checklist, no content write).
-// The ONE write it offers is the hide / un-hide VISIBILITY action — a header
-// action shown ONLY for a synced event (one carrying a userCalendarId), the
-// hidden-events capability (Phase 05 Ship A / ADR 023), Flutter parity (Masquer is
-// offered only for EventKind.Calendar). The route (src/app/event-details/[uid].tsx)
-// is a thin re-export (route-structure rule).
+// The UNIFIED event-details screen (ADR 024 / decision 4) — PRESENTATIONAL (70%
+// floor). It reads the uid route param, reads the rich event through the sibling
+// data/ sub-barrel (B-2 — never @/db, B-1) for BOTH event kinds (synced
+// calendar_events OR personal personal_events), and renders the shared title block
+// / tags / content lines / footer as a designed brand surface themed from @/theme
+// (R-3). It now mounts the INTERACTIVE checklist section for both kinds (the edit
+// half Phase 04 deferred). Origin-keyed header actions (Flutter parity, like the
+// body): a SYNCED event keeps the hide / un-hide VISIBILITY action (Phase 05 Ship A
+// / ADR 023 — Masquer is EventKind.Calendar-only); a PERSONAL event gets an "Edit"
+// action that opens its create/edit/delete form (relocate-don't-drop, ADR 024 /
+// decision 4 superseding ADR 022's personal→form tap). The route
+// (src/app/event-details/[uid].tsx) is a thin re-export (route-structure rule).
 
 export function EventDetailsScreen() {
   const { t, i18n } = useTranslation()
@@ -53,11 +56,11 @@ export function EventDetailsScreen() {
     failed: hideFailed,
   } = useHideActions()
 
-  // A synced event carries a non-empty userCalendarId; personal events route to
-  // their edit form, never here (EventDetails is only built from a synced
-  // calendar_events row), but the guard is explicit (Flutter offers Masquer only
-  // for EventKind.Calendar — hiding applies to synced events only).
-  const isSynced = event !== null && event.userCalendarId.length > 0
+  // Origin-keyed header actions (Flutter parity): a synced event offers
+  // hide/un-hide (Masquer is EventKind.Calendar-only); a personal event offers
+  // Edit (its create/edit/delete form, ADR 024 / decision 4).
+  const isSynced = event !== null && event.kind === "synced"
+  const isPersonal = event !== null && event.kind === "personal"
   const isHidden =
     event !== null &&
     (uidHiddenEvents.includes(event.id) ||
@@ -96,6 +99,14 @@ export function EventDetailsScreen() {
     if (namedHiddenEvents.includes(event.title)) unhideName(event.title)
   }, [event, uidHiddenEvents, namedHiddenEvents, unhideUid, unhideName])
 
+  // The personal-event Edit action — opens the existing create/edit/delete form
+  // (create/edit/delete of the event itself stays fully reachable, one tap into the
+  // unified details surface — ADR 024 / decision 4, the relocate-don't-drop posture).
+  const editEvent = useCallback(() => {
+    if (event === null) return
+    router.push(`/personal-event-form?uid=${event.id}`)
+  }, [event, router])
+
   // The calendar name is shown ONLY when the user has 2+ calendars (Flutter
   // parity) — with one calendar the name is redundant.
   const calendarName = useMemo(() => {
@@ -105,9 +116,10 @@ export function EventDetailsScreen() {
 
   const header = <Stack.Screen options={{ title: t("eventDetails.title") }} />
 
-  // The hide / un-hide header action — only for a synced event. A currently-
-  // hidden event offers un-hide (no router.back, stays so the event re-appears
-  // behind); a visible event opens the hide chooser.
+  // Origin-keyed header action. A SYNCED event offers hide / un-hide (a currently-
+  // hidden event offers un-hide — no router.back, stays so the event re-appears
+  // behind; a visible event opens the hide chooser). A PERSONAL event offers Edit
+  // (its form). The two are mutually exclusive by kind.
   const headerAction =
     isSynced && event !== null ? (
       <Stack.Screen
@@ -131,6 +143,25 @@ export function EventDetailsScreen() {
                     ? "eventDetails.unhide.action"
                     : "eventDetails.hide.action",
                 )}
+              </ThemedText>
+            </Pressable>
+          ),
+        }}
+      />
+    ) : isPersonal ? (
+      <Stack.Screen
+        options={{
+          title: t("eventDetails.title"),
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("eventDetails.edit.actionLabel")}
+              hitSlop={Spacing.two}
+              onPress={editEvent}
+              style={styles.headerAction}
+            >
+              <ThemedText type="smallBold" themeColor="primary">
+                {t("eventDetails.edit.action")}
               </ThemedText>
             </Pressable>
           ),
@@ -237,6 +268,10 @@ export function EventDetailsScreen() {
               date: formatFullDateTime(event.exportedAt, locale),
             })}
           </ThemedText>
+
+          {/* The interactive checklist section, for BOTH event kinds, keyed on
+              the event uid (ADR 024 — the edit half Phase 04 deferred). */}
+          <EventChecklist eventUid={event.id} />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
