@@ -35,7 +35,10 @@ function personalToCalendarEvent(event: PersonalEvent): CalendarEvent {
 
 // An event intersects the range when it starts before the range ends and ends
 // after the range starts (half-open, consistent with the overlap engine).
-function intersectsRange(event: CalendarEvent, range: DateRange): boolean {
+export function intersectsRange(
+  event: CalendarEvent,
+  range: DateRange,
+): boolean {
   return event.startsAt < range.to && event.endsAt > range.from
 }
 

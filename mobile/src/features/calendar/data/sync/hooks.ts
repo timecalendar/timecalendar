@@ -1,7 +1,10 @@
 import { useMemo } from "react"
 
 import { calendarEvents, db, useLiveQuery } from "@/db"
-import type { DateRange } from "@/features/calendar/data/events"
+import {
+  type DateRange,
+  intersectsRange,
+} from "@/features/calendar/data/events"
 import type { CalendarEvent } from "@/features/calendar/data/types"
 
 import { rowToCalendarEvent } from "./types"
@@ -13,10 +16,6 @@ import { rowToCalendarEvent } from "./types"
 // reactive subscription simple and matches the views' bounded windows. The
 // repository's findInRange is the non-reactive read for tests / imperative
 // callers.
-function intersectsRange(event: CalendarEvent, range: DateRange): boolean {
-  return event.startsAt < range.to && event.endsAt > range.from
-}
-
 export function useSyncedEvents(range: DateRange): CalendarEvent[] {
   const { data } = useLiveQuery(db.select().from(calendarEvents))
   return useMemo(
