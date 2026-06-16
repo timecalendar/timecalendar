@@ -1,0 +1,53 @@
+# Event-checklists reachability e2e flow (Phase-05 Ship B / ADR 024).
+#
+# Cold-launches the development-variant app and deep-links to the UNIFIED
+# event-details route. After this ship the details screen serves BOTH event kinds
+# and mounts the interactive checklist section. This flow proves the route is
+# reachable via deep link (a Stack sibling of (tabs)), the screen mounts past the
+# splash, and the migration runner has created the 4th table (checklist_items)
+# without crashing launch — end to end on a real device.
+#
+# SEEDED-DATA LIMITATION (the same one calendar.yaml / event-details record): the
+# e2e server seed does NOT seed a user_calendars token reachable by deep link with
+# synced calendar_events, so there is no real synced event whose details (and
+# checklist) are reachable by a stable deep link. A personal event's details ARE
+# reachable, but only via a tap in a calendar/home view (range-dependent, fragile)
+# — the /personal-events list row still opens the EDIT FORM directly (unchanged).
+# So this flow asserts route reachability via the not-found state (a deep link to a
+# uid in neither table renders the accessible not-found message without crashing,
+# proving the unified read resolves both tables and degrades safely).
+#
+# The REAL populated checklist render + the add/toggle/edit/reorder/delete
+# round-trip through the real DB (the irreplaceable-data write path), the
+# auto-focus keyboard-raise feel, and the manual VoiceOver/TalkBack pass are the
+# on-device manual pass (inbox/2026-06-16-event-checklists-on-device.md). The
+# checklist data layer (mappers + repository + actions + write/read-back +
+# restart-sim) is proven deterministically in CI (event-checklists/data/*.test +
+# event-checklist.test.tsx).
+#
+# Requires a release-config dev-variant build installed on the connected device.
+# Shared across iOS and Android: stable localized-text assertions, no per-platform
+# selectors. Run via mobile/e2e/run_e2e.sh. Mirrors calendar.yaml.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp
+# Cold-start via the deep link (see calendar.yaml header): a warm openLink does
+# not navigate on Android release builds — stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://event-details/no-such-event
+# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
+# simulator — tap when present, skip otherwise.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+# Generous timeout: a release-config cold start + JS bundle load can land just
+# past Maestro's ~17s default. The not-found message renders past the splash + the
+# startup migration (which now creates checklist_items), proving the unified read
+# resolved both calendar_events and personal_events and degraded safely.
+- extendedWaitUntil:
+    visible: "This event is no longer available."
+    timeout: 60000

@@ -11,7 +11,15 @@
 
 ## Status
 
-Accepted.
+Accepted. **⚠️ Superseded-in-part by ADR [024](./024-event-checklist-storage-and-surfacing.md)
+(2026-06-16):** this ADR's tap-routing (a personal event opens its `/personal-event-form`
+edit form directly) is superseded — Phase-05 Ship B unifies the event-details screen for
+BOTH event kinds, so a personal-event tap now opens `/event-details/<uid>` (the same
+destination as a synced event), and the personal-event **edit/delete** flow is reached via
+an "Edit" header action on that unified details screen. The relocate-don't-drop posture this
+ADR established is preserved (the form, its route, and `usePersonalEvents` are unchanged — only
+the entry point moved one more tap); only the tap *destination* changed. The Home-IA decision
+itself (Home tab = today view, the standalone list relocated to `/personal-events`) stands.
 
 ## Context
 

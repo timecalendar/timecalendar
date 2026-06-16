@@ -83,55 +83,6 @@ dependency, and be unit-tested to the 90% logic threshold.
 - **THEN** they format `Date` inputs without parsing strings or recurrence, clear the 90% gate, and add
   no new dependency to `mobile/package.json`
 
-### Requirement: Read-only event-details screen for synced calendar events
-
-The calendar feature `ui/` sublayer SHALL provide a presentational event-details screen for synced
-calendar events, themed from `@/theme` tokens (R-3), rendering a calendar event's full info: a title
-block (a labeled color swatch + the title + the formatted full date/time), tag bubbles (each the tag's
-name and color, only when tags exist), content lines (an icon-or-label + text for location, the
-calendar name when the user has 2+ calendars, teachers, and description — each only when present), and
-an "updated" footer. The screen SHALL remain read-only with respect to the event's CONTENT (no edit,
-delete, or checklist affordance and no content write path). The screen MAY offer a **hide / un-hide
-action** for a synced event (a header overflow menu — the hidden-events capability), which is a
-visibility write, not a content edit; see `mobile-hidden-events`.
-
-#### Scenario: Title block
-
-- **WHEN** the details screen renders an event
-- **THEN** it shows a labeled color swatch (the event color, accessibly named — not a silent node), the
-  title as a heading, and the formatted full date/time range
-
-#### Scenario: Tags render when present
-
-- **WHEN** the event has tags
-- **THEN** each tag renders as a bubble showing its name on its color; when the event has no tags, no
-  tag section renders
-
-#### Scenario: Content lines render only present fields
-
-- **WHEN** the event has a location, a description, teachers, and (with 2+ user calendars) a calendar
-  name
-- **THEN** each renders as a content line (an icon-or-label + text); a field that is absent or empty
-  renders no line; teachers render newline-joined
-
-#### Scenario: Updated footer
-
-- **WHEN** the details screen renders
-- **THEN** a footer shows the "updated" label plus the formatted `exportedAt` full date/time
-
-#### Scenario: No content-edit affordance
-
-- **WHEN** the details screen is used
-- **THEN** it offers no edit, delete, or checklist control and triggers no content write — the only
-  write it may trigger is a hide / un-hide visibility action (the hidden-events capability), and back
-  navigation is otherwise the only action
-
-#### Scenario: Theme from tokens
-
-- **WHEN** the details surface renders
-- **THEN** its colors (surfaces, text) derive from `@/theme` tokens (R-3); the tag bubble background is
-  the tag's own color and the swatch is the event color
-
 ### Requirement: Not-found state for a missing event
 
 The details screen SHALL render an accessible not-found message when its uid resolves to no
@@ -146,11 +97,13 @@ The details screen SHALL render an accessible not-found message when its uid res
 ### Requirement: Tap-through from the timeline and agenda views
 
 The day/week timeline grid and the agenda list SHALL make their event tiles tappable, opening the
-details screen for a synced calendar event and the existing personal-event form for a personal event.
-The agenda tile SHALL become an accessible touchable (role + translated label + ≥44pt/48dp target), and
-the grid SHALL wire the calendar-kit `onPressEvent` through the chrome seam. Routing SHALL be keyed on
-the event origin: a synced event (it carries a `userCalendarId`) opens `event-details/<uid>`; a personal
-event (no `userCalendarId`) opens `personal-event-form?uid=<uid>` (the existing edit route).
+unified event-details screen for BOTH a synced calendar event AND a personal event. The agenda tile
+SHALL be an accessible touchable (role + translated label + ≥44pt/48dp target), and the grid SHALL wire
+the calendar-kit `onPressEvent` through the chrome seam. Routing SHALL no longer be origin-keyed at the
+tap: both a synced event (it carries a `userCalendarId`) and a personal event (no `userCalendarId`) open
+`event-details/<uid>` — the single tap-routing discriminator now returns the details route for both
+kinds. The personal-event edit/delete flow stays reachable one tap deeper, via the **Edit** header
+action on the unified details screen (not directly from the tile).
 
 #### Scenario: Agenda tile is a touchable
 
@@ -161,13 +114,13 @@ event (no `userCalendarId`) opens `personal-event-form?uid=<uid>` (the existing 
 #### Scenario: Tapping a synced event opens details
 
 - **WHEN** a synced calendar event tile (in the grid or the agenda) is tapped
-- **THEN** the app navigates to the read-only details route for that event's uid
+- **THEN** the app navigates to the unified details route for that event's uid
 
-#### Scenario: Tapping a personal event opens its form
+#### Scenario: Tapping a personal event opens details
 
-- **WHEN** a personal event tile is tapped
-- **THEN** the app navigates to the existing personal-event form route for that uid (NOT the read-only
-  details screen)
+- **WHEN** a personal event tile (in the grid or the agenda) is tapped
+- **THEN** the app navigates to the unified details route for that event's uid (NOT directly to the
+  personal-event form — the form is reached from the details screen's Edit action)
 
 #### Scenario: Grid uses the chrome seam
 
@@ -263,16 +216,77 @@ observability posture owned by the `mobile-hidden-events` capability (a failed w
 - **THEN** its failure is recorded through `@/firebase` `recordError` per the `mobile-hidden-events`
   capability (the screen does not silently swallow a hide-write failure)
 
-### Requirement: Edit, delete, hide, and checklist are deferred
+### Requirement: The event-details screen renders both synced and personal events behind one read seam
 
-The change SHALL NOT add edit, delete, or checklist capabilities to the details screen. **Hide-event is
-no longer deferred — it lands via the `mobile-hidden-events` capability** (a header overflow menu
-offered only for synced events). Edit, delete, and checklist remain state-writing features deferred to
-their own ships, recorded so the roadmap tracks them.
+The event-details screen SHALL render BOTH a synced event (a `calendar_events` row) AND a personal
+event (a `personal_events` row) behind one widened read (`useEventDetails(uid)` / `getByUid(uid)`
+resolving either kind for the uid). The read SHALL return a discriminated result tagging the event
+kind (`"synced"` / `"personal"`); the personal branch SHALL fill the fields a personal event lacks
+with safe defaults (group color = color, empty tags/teachers, empty `userCalendarId`). The screen
+SHALL render the shared title block, formatted date/time, content lines, and footer for both kinds.
+This widens the previously synced-only details surface (which built `EventDetails` only from a
+`calendar_events` row) so that personal events also have a details surface (Flutter parity — both
+`EventInterface` open the same screen). The title block (labeled color swatch + heading + formatted
+full date/time), the tag bubbles, the content lines (location / calendar name with 2+ calendars /
+teachers / description — each only when present), the "updated" footer, and the `@/theme`-derived
+theming (R-3) of the prior synced-only requirement are preserved here for both kinds.
 
-#### Scenario: No edit/delete/checklist write surface
+#### Scenario: A synced event renders its rich details
 
-- **WHEN** the details screen is reviewed
-- **THEN** it has no edit, delete, or checklist control; the only write surface is the hide / un-hide
-  action (the hidden-events capability), and edit/delete/checklist remain recorded as deferred
+- **WHEN** the details screen is opened for a synced event's uid
+- **THEN** the rich `calendar_events` row is read and the title / date / tags / lines / footer render
+  (the existing read-only behavior is preserved)
+
+#### Scenario: A personal event renders its details
+
+- **WHEN** the details screen is opened for a personal event's uid
+- **THEN** the `personal_events` row is read and the title / date / location / description render,
+  with the personal-event safe defaults for the sync-only fields
+
+#### Scenario: A not-found uid still renders the accessible not-found state
+
+- **WHEN** the uid resolves to neither a synced nor a personal event
+- **THEN** the accessible not-found state renders (not a crash or a blank)
+
+### Requirement: The event-details screen surfaces an interactive checklist for both event kinds
+
+The event-details screen SHALL render the interactive checklist section (the `event-checklists`
+feature's component) for BOTH event kinds, keyed on the event uid. This lands the "edit half" of event
+details that Phase 04 deferred: the checklist is the first interactive (write-capable) section on the
+previously read-only details screen.
+
+#### Scenario: The checklist renders for a synced event
+
+- **WHEN** the details screen renders a synced event
+- **THEN** the checklist section appears below the event details, joined on the event uid
+
+#### Scenario: The checklist renders for a personal event
+
+- **WHEN** the details screen renders a personal event
+- **THEN** the checklist section appears, joined on the personal event's uid
+
+### Requirement: The event-details header actions are origin-keyed — hide/un-hide for synced, Edit for personal
+
+The event-details screen SHALL show origin-keyed header actions. For a SYNCED event it SHALL keep the
+hide / un-hide action (Phase 05 Ship A). For a PERSONAL event it SHALL show an **Edit** action that
+navigates to the personal-event edit form (`/personal-event-form?uid=<uid>`), so the personal-event
+edit/delete flow stays fully reachable from the unified details surface (relocated one tap, not
+dropped). The two header actions SHALL be mutually exclusive by kind.
+
+#### Scenario: A synced event offers hide/un-hide
+
+- **WHEN** the details screen renders a synced event
+- **THEN** the header offers the hide / un-hide action (and no Edit action)
+
+#### Scenario: A personal event offers Edit
+
+- **WHEN** the details screen renders a personal event
+- **THEN** the header offers an Edit action that opens the personal-event edit form (and no
+  hide/un-hide action)
+
+#### Scenario: Edit reaches the form
+
+- **WHEN** the user taps Edit on a personal event's details
+- **THEN** the personal-event edit form opens for that uid (create/edit/delete of the event itself
+  stays reachable)
 

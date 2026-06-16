@@ -30,6 +30,16 @@ jest.mock("@/features/hidden-events/data", () => ({
   useHideActions: jest.fn(),
 }))
 
+// The checklist section reads @/db + @/firebase; mock the cross-feature component
+// to a marker so the screen's mount + the origin-keyed header actions are provable
+// without a SQLite dependency (the checklist itself is proven in its own test).
+jest.mock("@/features/event-checklists", () => ({
+  EventChecklist: ({ eventUid }: { eventUid: string }) => {
+    const { Text } = jest.requireActual("react-native")
+    return <Text>{`checklist:${eventUid}`}</Text>
+  },
+}))
+
 jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),
@@ -52,6 +62,7 @@ const mockUseHideActions = useHideActions as jest.Mock
 
 function eventDetails(overrides: Partial<EventDetails> = {}): EventDetails {
   return {
+    kind: "synced",
     id: "ev-1",
     title: "Algorithms",
     color: "#1E88E5",
@@ -83,7 +94,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockUseLocalSearchParams.mockReturnValue({ uid: "ev-1" })
   mockUseUserCalendars.mockReturnValue([])
-  mockUseRouter.mockReturnValue({ back: jest.fn() })
+  mockUseRouter.mockReturnValue({ back: jest.fn(), push: jest.fn() })
   mockUseHiddenEvents.mockReturnValue({
     uidHiddenEvents: [],
     namedHiddenEvents: [],
@@ -178,12 +189,9 @@ describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
     expect(screen.getByLabelText("Hide this event")).toBeTruthy()
   })
 
-  it("offers NO hide action for a non-synced event (empty userCalendarId)", async () => {
-    // A personal event never reaches this screen (it routes to its edit form and
-    // EventDetails is built only from a synced row); the empty-id guard stands in
-    // for that — hiding is synced-only (Flutter parity).
+  it("offers NO hide action for a personal event (synced-only, Flutter parity)", async () => {
     mockUseEventDetails.mockReturnValue({
-      event: eventDetails({ userCalendarId: "" }),
+      event: eventDetails({ kind: "personal", userCalendarId: "" }),
       loading: false,
     })
     await render(<EventDetailsScreen />)
@@ -256,5 +264,65 @@ describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
     expect(
       screen.getByText("We couldn't hide this event. Please try again."),
     ).toBeTruthy()
+  })
+})
+
+describe("EventDetailsScreen unified surface (both kinds) — checklist + Edit action", () => {
+  it("mounts the checklist section for a synced event, keyed on the uid", async () => {
+    await render(<EventDetailsScreen />)
+    expect(screen.getByText("checklist:ev-1")).toBeTruthy()
+  })
+
+  it("mounts the checklist section for a personal event, keyed on the uid", async () => {
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({
+        kind: "personal",
+        id: "pers-1",
+        userCalendarId: "",
+      }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+    expect(screen.getByText("checklist:pers-1")).toBeTruthy()
+  })
+
+  it("renders a personal event's details (title + date)", async () => {
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({
+        kind: "personal",
+        title: "Dentist",
+        userCalendarId: "",
+        tags: [],
+        teachers: [],
+      }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+    expect(screen.getByRole("header", { name: "Dentist" })).toBeTruthy()
+  })
+
+  it("offers the Edit action ONLY for a personal event, and it opens the form", async () => {
+    const push = jest.fn()
+    mockUseRouter.mockReturnValue({ back: jest.fn(), push })
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({
+        kind: "personal",
+        id: "pers-1",
+        userCalendarId: "",
+      }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+
+    expect(screen.queryByLabelText("Hide this event")).toBeNull()
+    const edit = screen.getByLabelText("Edit this event")
+    const user = userEvent.setup()
+    await user.press(edit)
+    expect(push).toHaveBeenCalledWith("/personal-event-form?uid=pers-1")
+  })
+
+  it("offers NO Edit action for a synced event (Edit is personal-only)", async () => {
+    await render(<EventDetailsScreen />)
+    expect(screen.queryByLabelText("Edit this event")).toBeNull()
   })
 })

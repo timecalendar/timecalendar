@@ -184,7 +184,7 @@ describe("CalendarScreen", () => {
     expect(mockSync).toHaveBeenCalledTimes(1)
   })
 
-  it("routes a synced grid-event press to the read-only details screen", async () => {
+  it("routes a synced grid-event press to the event-details screen", async () => {
     mockUseCalendarEvents.mockReturnValue([
       calendarEvent({ id: "synced-1", userCalendarId: "cal-1" }),
     ])
@@ -193,13 +193,13 @@ describe("CalendarScreen", () => {
     expect(mockPush).toHaveBeenCalledWith("/event-details/synced-1")
   })
 
-  it("routes a personal grid-event press to the existing edit form", async () => {
+  it("routes a personal grid-event press to the unified event-details screen (ADR 024)", async () => {
     mockUseCalendarEvents.mockReturnValue([
       calendarEvent({ id: "personal-1", userCalendarId: undefined }),
     ])
     await render(<CalendarScreen />)
     fireEvent.press(screen.getByTestId("grid-event-personal-1"))
-    expect(mockPush).toHaveBeenCalledWith("/personal-event-form?uid=personal-1")
+    expect(mockPush).toHaveBeenCalledWith("/event-details/personal-1")
   })
 
   it("makes the agenda tile a touchable button that routes by origin", async () => {

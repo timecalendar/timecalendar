@@ -8,6 +8,7 @@ export {
   type EventDetails,
   type EventDetailsTag,
   getByUid,
+  personalRowToEventDetails,
   rowToEventDetails,
   type UseEventDetails,
   useEventDetails,
