@@ -28,7 +28,8 @@ export const db = drizzle(expoDb)
 export { and, eq, gte, lte, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
-// drizzle-orm/sqlite-core import stays inside the seam dir. `eq` (already
-// re-exported above) is the only operator the user-calendars repository needs —
-// no new operator is added (R-2: re-export only what's needed).
-export { personalEvents, userCalendars } from "./schema"
+// drizzle-orm/sqlite-core import stays inside the seam dir. The calendar-sync
+// repository's findInRange reuses `and`/`gte`/`lte` (already re-exported above
+// for personal-events) — no new operator is added (R-2: re-export only what's
+// needed).
+export { calendarEvents, personalEvents, userCalendars } from "./schema"

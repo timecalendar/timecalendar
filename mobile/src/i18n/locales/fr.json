@@ -101,6 +101,11 @@
   "calendar.event.label": "{{title}}, {{time}} {{location}}",
   "calendar.agenda.event.label": "{{title}}, {{time}} {{location}}",
   "calendar.agenda.nowLabel": "À venir",
+  "calendar.sync.refreshing": "Actualisation de votre calendrier…",
+  "calendar.sync.refreshingLabel": "Actualisation de votre calendrier",
+  "calendar.sync.error": "Impossible d'actualiser votre calendrier. Affichage de votre dernière mise à jour.",
+  "calendar.sync.retry": "Réessayer",
+  "calendar.sync.retryLabel": "Réessayer d'actualiser votre calendrier",
   "debug.firebase.heading": "Débogage Firebase (dev uniquement)",
   "debug.firebase.logEvent": "Envoyer un événement test",
   "debug.firebase.crash": "Déclencher un crash test"
