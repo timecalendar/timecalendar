@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react-native"
 
+import { useHiddenEvents } from "@/features/hidden-events/data"
 import {
   type PersonalEvent,
   usePersonalEvents,
@@ -11,17 +12,22 @@ import { useSyncedEvents } from "./sync"
 import type { CalendarEvent } from "./types"
 
 // The events-source seam now merges the synced calendar_events read with the
-// personal-events read (the sync ship's swap) — the fixture is no longer in the
-// default runtime merge. Both sources are mocked so the merge + range-filter are
-// asserted deterministically without a SQLite/network dependency.
+// personal-events read (the sync ship's swap) and filters out hidden events (ADR
+// 023) — the fixture is no longer in the default runtime merge. All three sources
+// are mocked so the merge + hidden-filter + range-filter are asserted
+// deterministically without a SQLite/network/MMKV dependency.
 jest.mock("@/features/personal-events", () => ({
   usePersonalEvents: jest.fn(),
+}))
+jest.mock("@/features/hidden-events/data", () => ({
+  useHiddenEvents: jest.fn(),
 }))
 jest.mock("./sync", () => ({
   useSyncedEvents: jest.fn(),
 }))
 
 const mockUsePersonalEvents = usePersonalEvents as jest.Mock
+const mockUseHiddenEvents = useHiddenEvents as jest.Mock
 const mockUseSyncedEvents = useSyncedEvents as jest.Mock
 
 function thisWeekRange() {
@@ -76,6 +82,10 @@ function syncedEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
 beforeEach(() => {
   mockUsePersonalEvents.mockReturnValue([])
   mockUseSyncedEvents.mockReturnValue([])
+  mockUseHiddenEvents.mockReturnValue({
+    uidHiddenEvents: [],
+    namedHiddenEvents: [],
+  })
 })
 
 describe("useCalendarEvents", () => {
@@ -151,5 +161,62 @@ describe("useCalendarEvents", () => {
     to.setDate(to.getDate() + 1)
     const { result } = await renderHook(() => useCalendarEvents({ from, to }))
     expect(result.current).toEqual([])
+  })
+
+  it("excludes a uid-hidden event from the merged result", async () => {
+    mockUseSyncedEvents.mockReturnValue([
+      syncedEvent({ id: "sync-1" }),
+      syncedEvent({ id: "sync-2", title: "Other" }),
+    ])
+    mockUseHiddenEvents.mockReturnValue({
+      uidHiddenEvents: ["sync-1"],
+      namedHiddenEvents: [],
+    })
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
+    expect(result.current.some((e) => e.id === "sync-2")).toBe(true)
+  })
+
+  it("excludes every same-titled event for a name-hidden title", async () => {
+    mockUseSyncedEvents.mockReturnValue([
+      syncedEvent({ id: "sync-1", title: "Lecture" }),
+      syncedEvent({ id: "sync-2", title: "Lecture" }),
+      syncedEvent({ id: "sync-3", title: "Lab" }),
+    ])
+    mockUseHiddenEvents.mockReturnValue({
+      uidHiddenEvents: [],
+      namedHiddenEvents: ["Lecture"],
+    })
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.map((e) => e.id)).toEqual(["sync-3"])
+  })
+
+  it("filters the merged list — a name-hidden title also hides a same-titled personal event (Flutter parity)", async () => {
+    mockUseSyncedEvents.mockReturnValue([
+      syncedEvent({ id: "sync-1", title: "Yoga" }),
+    ])
+    mockUsePersonalEvents.mockReturnValue([
+      personalEvent({ uid: "pe-1", title: "Yoga" }),
+    ])
+    mockUseHiddenEvents.mockReturnValue({
+      uidHiddenEvents: [],
+      namedHiddenEvents: ["Yoga"],
+    })
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current).toEqual([])
+  })
+
+  it("excludes nothing when the hidden set is empty", async () => {
+    mockUseSyncedEvents.mockReturnValue([syncedEvent({ id: "sync-1" })])
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
   })
 })
