@@ -1,5 +1,7 @@
+import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import { Module } from "@nestjs/common"
 import { COMMON_IMPORTS } from "common-imports"
+import { dataSourceOptions } from "data-source"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { ContactModule } from "modules/contact/contact.module"
@@ -20,6 +22,14 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 @Module({
   imports: [
     ...COMMON_IMPORTS,
+    // Runtime database connection over DATABASE_URL. Entities/migrations globs
+    // mirror data-source.ts (the TypeORM CLI's source), so the runtime app and
+    // the migration CLI stay aligned. synchronize:false — schema changes flow
+    // through migrations (RUN_MIGRATIONS on boot in main.ts), never auto-sync.
+    SharedDatabaseModule.forRoot({
+      entities: dataSourceOptions.entities as string[],
+      migrations: dataSourceOptions.migrations as string[],
+    }),
     QueueModule,
     FirebaseModule,
     NotifierModule,

@@ -12,7 +12,5 @@ export const createNestTestApp = async (module: TestingModule) => {
   return app
 }
 
-export const getNestTestApps = () => appInstances
-
 export const clearNestTestApps = () =>
   Promise.all(appInstances.map((app) => app.close()))
