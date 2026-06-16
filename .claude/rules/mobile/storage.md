@@ -329,3 +329,77 @@ for the *opposite* shape); rationale in `add-mobile-hidden-events`'s `design.md`
   on-disk MMKV survival across a real restart/kill/cache-clear — the **on-device manual pass**
   (inbox `2026-06-16-hidden-events-on-device.md`). The K-3 coverage gate lands green (the `data/`
   layer at 100%).
+
+## Checklist items store — `checklist_items`
+
+The **fourth real Drizzle table** (the second since `calendar_events`) and a **per-event
+child** of *both* event kinds — a small to-do list a student attaches to a class or a
+personal event ("bring the lab coat"). It is a **Phase-09 importer target with NO server
+backup** (a lost item is permanent), so the schema mirrors the Flutter
+`ChecklistItem.toMap()` **verbatim** and every write is tested (the ADR-011/018/021 posture,
+a fourth time). Load-bearing decisions: **ADR
+[024](./decisions/024-event-checklist-storage-and-surfacing.md)** (verbatim schema +
+soft-ref + the **hard-delete-not-soft finding** + the unified-details surfacing); rationale
+in `add-mobile-event-checklists`'s `design.md` (D1–D8) and
+`specs/mobile-event-checklists/spec.md`.
+
+- **The schema — `src/db/schema.ts` `checklistItems` (SQL `checklist_items`).** Columns
+  mirror the Flutter `toMap()` wire format **verbatim** (traced to
+  `app/lib/modules/event_details/models/checklist_item.dart` + its repository): `uuid` TEXT
+  primaryKey (the sembast record key `_store.record(item.uuid).put` = the identity — not a
+  surrogate), `eventUid` TEXT not-null (the **join key to either event kind** — a
+  `personal_events.uid` OR a `calendar_events.uid` — a **SOFT reference, NO FK**, exactly
+  like `calendar_events.userCalendarId`: the sync `replaceAll` drops+re-inserts the synced
+  event's `calendar_events` row each sync with the same uid, so a hard FK would cascade-delete
+  the checklist every sync (data loss!) or block the drop), `content` TEXT not-null,
+  `isChecked` `integer({ mode: "boolean" }).notNull()` (SQLite has no boolean → 0/1), `order`
+  INTEGER not-null (**1-based**, Flutter sets `length + 1` on add and re-numbers `i + 1` on
+  reorder), `createdAt` / `updatedAt` / `deletedAt` TEXT **nullable** (the model's three dates
+  are `DateTime?`) holding **UTC ISO-8601 strings** (ADR 011/D4 — TEXT over epoch-ms for
+  importer round-trip fidelity). A `toMap()`-shaped record imports with **zero value
+  transformation**.
+- **DELETE IS HARD, NOT SOFT (ADR 024 / decision 3 — the brief's premise corrected against
+  the Flutter code).** The Flutter `delete` is `_store.delete(finder: Filter.byKey(uuid))` —
+  a hard removal — and `deletedAt` is **never set and never filtered on** anywhere; it is a
+  vestigial wire-format field. So `remove(uuid)` is a hard `DELETE`, and the read
+  (`findByEvent`/`useChecklist`) filters by `eventUid` ordered by `order` **with NO
+  `deletedAt IS NULL` filter** (Flutter `findAllByEventUid` has none). The `deletedAt` **column
+  is kept** for verbatim importer fidelity only (an imported record may carry a non-null value
+  the importer must round-trip). **Do NOT add a soft-delete filter "for correctness" — it would
+  diverge from Flutter and silently change which items render.** A future real soft-delete
+  (undo/trash) is a deliberate divergence with its own ADR.
+- **The fourth real migration — `src/db/migrations/0003_soft_iron_fist.sql`** (`drizzle-kit
+  generate`, driver `expo`): `CREATE TABLE checklist_items …`, a fourth `meta/_journal.json`
+  entry, an `0003_snapshot.json`, and an updated `migrations.js` (now importing
+  `m0000`..`m0003`). All committed (fresh-clone-no-codegen). `migrations.d.ts` is stable across
+  regenerations. The runner applies all four; `migrate.test.ts` still passes (it asserts the
+  committed bundle, not a fixed count).
+- **The `@/db` seam re-exports `checklistItems`** (the table) + the **`asc`** operator (the
+  ordered `order BY order` read — the only new operator, R-2; `eq` was already re-exported).
+- **The feature `data/` layer — `src/features/event-checklists/data/`** (a new SHARED feature
+  folder named for the concern, ADR 024 / decision 4 — consumed by both the calendar
+  details screen and, transitively, personal events; a module of functions, no class, R-2):
+  `types.ts` (the `ChecklistItem` domain type + pure `rowToChecklistItem`/`checklistItemToRow`
+  mappers normalizing every write to canonical UTC via `toISOString()`, null↔undefined for the
+  three dates, bool↔0/1), `repository.ts` (async CRUD over `@/db` — `findByEvent` ordered by
+  `order`, `add` insert, `setContent`/`setChecked` one-column UPDATE + `updatedAt`, the
+  **transactional `reorder`** re-numbering each `order = i + 1` inside ONE `db.transaction` so a
+  crash mid-reorder never leaves duplicate/gap orders, `remove` HARD delete), `id.ts`
+  (`newId()` over `expo-crypto`'s `randomUUID` — the swappable uid site; the importer bypasses
+  it), `hooks.ts` (`useChecklist(eventUid)` — the reactive `useLiveQuery` read; and
+  `useChecklistActions(eventUid, items)` — the write controller computing `order = items.length
+  + 1` on add, the move-up/down swap-then-reorder, the remove-then-renumber, each write wrapped
+  in `recordError` + a `failed` flag), and an `index.ts` barrel.
+- **What CI proves vs. on-device.** CI proves the **mappers** (round-trip, canonical-UTC,
+  null/bool, importer-fidelity verbatim incl. a non-null `deletedAt`), the **repository query
+  shapes** (the ordered read with no `deletedAt` filter, the insert, the column update, the
+  transactional re-number, the hard delete), the **actions hook** (1-based order, the
+  `recordError`-on-throw path, the remove-then-renumber, move-up/down), the **reactive read**,
+  the **write/read-back + a restart-simulation** (a fresh repository module reads items back in
+  `order` through a stateful Map-backed `@/db` fake surviving `resetModules()`), **including the
+  survives-a-sync-`replaceAll` property** (a checklist keyed on a synced event's uid survives a
+  simulated `calendar_events` drop+replace — the soft-ref-no-FK guarantee). CI **cannot** prove
+  on-disk SQLite survival across a real restart/kill/cache-clear, the reorder atomicity after a
+  mid-write kill, the auto-focus keyboard-raise feel, or the manual screen-reader pass — the
+  **on-device manual pass** (`inbox/2026-06-16-event-checklists-on-device.md`). The K-3 coverage
+  gate lands green (the `data/` layer ≥90%).

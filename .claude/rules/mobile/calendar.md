@@ -202,30 +202,35 @@ storage.md "Calendar events store"; the storage/sync decisions are **ADR
 - **Offline-safe by construction:** the drop+replace runs only after a successful fetch, so a
   failed fetch leaves the last-good rows; the durable `calendar_events` reads offline.
 
-## Event details (read-only)
+## Event details (unified, both kinds; now interactive — the edit half landed)
 
-The view reached by **tapping a synced event** (`add-mobile-event-details`, Phase-04 item 3). It
-is the **first consumer of ADR 021's verbatim row** — the rich data the lossy rendering
-`CalendarEvent` deliberately drops lives in the row, and this read consumes it. **Read-only
-VIEW HALF ONLY** — no edit / delete / hide / checklist, no header overflow menu, no write path
-(design D1). **No new ADR** (D8): the read-only-vs-edit scope, the synced-vs-personal routing,
-and the rich-read-over-the-verbatim-row are *executions of* ADRs 019/020/021/014 + the
-route-structure rule, not new reversible patterns.
+The view reached by **tapping an event** (`add-mobile-event-details`, Phase-04 item 3; widened by
+`add-mobile-event-checklists`, Phase-05 Ship B). It is the **first consumer of ADR 021's verbatim
+row** — the rich data the lossy rendering `CalendarEvent` deliberately drops lives in the row, and
+this read consumes it. **Phase-04 shipped the read-only VIEW half (synced-only); Phase-05 Ship B
+landed the EDIT half** — the interactive checklist (ADR 024) — and **unified the screen for BOTH
+event kinds** (synced *and* personal), the surfacing decision **ADR
+[024](./decisions/024-event-checklist-storage-and-surfacing.md) / decision 4** (Flutter parity —
+both `EventInterface` open the same screen with a checklist). The hide/delete sibling
+(`add-mobile-hidden-events`, Ship A) added the synced-only hide/un-hide header action.
 
-- **The rich read — `data/event-details.ts`** (90%-gated): a pure **`rowToEventDetails(row):
-  EventDetails`** mapper — the rich counterpart to the lossy `rowToCalendarEvent` — that keeps the
-  fields the rendering projection drops (`groupColor`, the real `type` enum, `exportedAt`, the
-  **full** `tags: {name,color,icon}[]` — not name-only), decoding the JSON columns **defensively**
-  by **reusing the sync mapper's `decodeJsonArray`/`decodeFields`** (now exported from
-  `data/sync/types.ts` — corrupt/legacy → `[]`/`null`/`false`, never throws; ADR 021/D2). `type`
-  narrows to `EventTypeEnum` with a safe `class` fallback for an unknown verbatim value (importer
-  fidelity). A **`getByUid(uid): Promise<EventDetails | null>`** repository read on `calendar_events`
-  (the only `@/db` import site for this read, B-1; reuses the already-re-exported `eq`, no new
-  operator — R-2). A reactive **`useEventDetails(uid)`** hook over the seam's `useLiveQuery` that
-  distinguishes **loading** (`updatedAt === undefined`) from **not-found** (`event === null` after
-  load), so the screen re-renders if a sync replaces the row while open. The rich `EventDetails`
-  type is **separate** — the rendering `CalendarEvent` is NOT widened (D3 — the grid/agenda don't
-  need the rich fields; widening bloats every tile for one consumer, against ADR 021/D1).
+- **The unified rich read — `data/event-details.ts`** (90%-gated): a pure **`rowToEventDetails(row):
+  EventDetails`** mapper (synced — `kind: "synced"`) — the rich counterpart to the lossy
+  `rowToCalendarEvent` — that keeps the fields the rendering projection drops (`groupColor`, the real
+  `type` enum, `exportedAt`, the **full** `tags: {name,color,icon}[]` — not name-only), decoding the
+  JSON columns **defensively** by **reusing the sync mapper's `decodeJsonArray`/`decodeFields`** (now
+  exported from `data/sync/types.ts` — corrupt/legacy → `[]`/`null`/`false`, never throws; ADR
+  021/D2). `type` narrows to `EventTypeEnum` with a safe `class` fallback for an unknown verbatim
+  value (importer fidelity). **Plus `personalRowToEventDetails(row)` (`kind: "personal"`)** — a
+  personal_events row → the same `EventDetails` shape with the sync-only fields at safe defaults
+  (`groupColor = color`, `class` type, empty tags/teachers, empty `userCalendarId`). The
+  `EventDetails` type gained a **`kind` discriminator** (`"synced" | "personal"`) the screen keys the
+  origin-specific header action on. **`getByUid(uid)`** resolves **either** table (calendar_events
+  first, else personal_events) — the only `@/db` import site for this read (B-1; reuses `eq`, no new
+  operator — R-2). The reactive **`useEventDetails(uid)`** runs **two `useLiveQuery`** reads (synced +
+  personal), the synced row winning when present, `loading` clearing only once BOTH resolve (so a
+  personal event isn't briefly shown not-found). The rich `EventDetails` is still **separate** from
+  the rendering `CalendarEvent` (D3 — the grid/agenda don't need the rich fields).
 - **The full date/time formatters — `data/format.ts`** (90%-gated): `formatEventDateRange(start,
   end, locale)` (the title block's full date + `HH:mm – HH:mm` range — Flutter `eventDateTimeText`,
   24-hour per R-3; same-day = one date + both times, cross-day = both full date-times) and
@@ -248,33 +253,49 @@ route-structure rule, not new reversible patterns.
   dropped by a sync) renders a translated message in a polite live region — not a crash, not a
   blank (the read-only analog of the school read's `isError`). No icons → the line **label is its
   accessible affordance**.
-- **The tap-through** (D2/D4): the **agenda tile** became a `Pressable`
-  (`accessibilityRole="button"` + a translated `…openLabel` incl. a view-details hint + a ≥44pt
-  `minHeight` target) calling a screen-provided `onPressEvent(event)`; the **calendar-kit grid**
-  wires `onPressEvent` on **`CalendarContainer`** (where calendar-kit actually exposes it — *not*
-  `CalendarBody` as first assumed) through the chrome seam (the screen never imports the library —
-  the ADR-020 ban holds; the seam re-exports `CalendarContainer` so the prop passes through with no
-  seam change). **Routing is keyed on origin** at the one screen handler: a synced event (it carries
-  a `userCalendarId`) → `router.push("/event-details/<uid>")`; a personal event (`userCalendarId ===
-  undefined`, from `personalToCalendarEvent`) → its existing `personal-event-form?uid=<uid>` edit
-  route. The merged `EventItem` carries `userCalendarId` so the grid press routes without a re-query.
+- **The interactive checklist section (Ship B, the edit half — ADR 024)** is mounted on the screen
+  for **BOTH kinds**, keyed on `event.id`: `<EventChecklist eventUid={event.id} />` from the new
+  shared `@/features/event-checklists` feature (imported by full `@/` path — a legitimate
+  cross-feature `ui→ui` edge; the screen never touches the checklist `@/db` seam, B-1). It is the
+  first **write-capable** section on the previously read-only screen — see "Event checklists" in
+  [features.md](./features.md) + the `checklist_items` store in [storage.md](./storage.md).
+- **Origin-keyed header actions** (Flutter parity, like the body, keyed on `event.kind`): a **synced**
+  event keeps the **hide / un-hide** action (Ship A — Masquer is EventKind.Calendar-only); a
+  **personal** event gets an **Edit** action that pushes `/personal-event-form?uid=<uid>` (so the
+  personal-event create/edit/delete flow stays fully reachable one tap into the unified surface — the
+  relocate-don't-drop posture of ADR 022, **superseding ADR 022's** personal→form *tap*). The two are
+  mutually exclusive by kind.
+- **The tap-through** (ADR 024 / decision 4 — superseding Phase-04's split): the **agenda tile** is a
+  `Pressable` (`accessibilityRole="button"` + a translated `…openLabel` + a ≥44pt target) calling a
+  screen-provided `onPressEvent(event)`; the **calendar-kit grid** wires `onPressEvent` on
+  **`CalendarContainer`** through the chrome seam (the ADR-020 ban holds). **`eventRoute(uid,
+  userCalendarId)`** (`data/routes.ts`, the single tap discriminator the grid, agenda, and home all
+  call) now returns **`/event-details/<uid>` for BOTH kinds** — a **one-helper flip** (the param is
+  retained but no longer discriminates; the details screen resolves the kind from the uid). So a
+  **personal event's tap now opens the unified details screen** (with its checklist + the Edit action),
+  not the edit form directly. The `/personal-events` **list** row still links to the edit form directly
+  (unchanged — that is the list surface, not the calendar tap).
 - **The route — `src/app/event-details/[uid].tsx`**: a thin re-export of the feature `ui/` screen
   (route-structure rule), registered as a `<Stack.Screen name="event-details/[uid]">` sibling of
   `(tabs)` with `headerShown: true` (the default accessible back affordance; the screen sets its
   localized title via its own `<Stack.Screen options>`), deep-linkable
   (`timecalendar-dev://event-details/<uid>`).
-- **Observability ➖ N/A** (read-only — D7): a `getByUid` miss is a recoverable accessible
-  not-found state and a corrupt column degrades safely, so there is no crash-worthy write/throw
-  path; the change imports `@react-native-firebase/*` nowhere.
-- **CI vs. on-device:** CI proves the mapper (rich-field survival, corrupt-JSON safe default,
-  null↔undefined, unknown-type fallback) + the two formatters at 90%, the `getByUid` query shape +
-  `useEventDetails` loading/not-found against the mocked `@/db` seam, the screen's row→sections
-  render (heading / formatted date / tags / lines / footer / not-found) + the tap-through routing
-  (a press fires the origin-correct `router.push`) at the 70% floor — the calendar-kit Jest mock
-  now invokes the container's `onPressEvent` so the grid-press route is provable. The **real
-  populated render** needs a seeded synced event the dev harness lacks, so Maestro asserts
-  **reachability** (a deep link to the details route shows the not-found state) and the populated
-  render is the on-device manual pass (`inbox/2026-06-16-event-details-on-device.md`).
+- **Observability:** the details **read + the not-found** state are still ➖ N/A (a `getByUid` miss is
+  a recoverable accessible not-found, a corrupt column degrades safely). The **checklist writes** the
+  screen now hosts ARE ✅ wired — a failed checklist write records through `@/firebase`
+  `recordError(error, "event-checklists/<action>")` + an accessible failure surface (irreplaceable
+  data; the write lives in the `event-checklists` feature, not the screen).
+- **CI vs. on-device:** CI proves the synced + personal mappers (rich-field survival, corrupt-JSON
+  safe default, null↔undefined, unknown-type fallback, the personal safe-defaults) + the two
+  formatters at 90%, the `getByUid` two-table query shape + the `useEventDetails` synced/personal/
+  loading/not-found resolution against the mocked `@/db` seam, the screen's row→sections render
+  (heading / formatted date / tags / lines / footer / not-found) for **both kinds** + the checklist
+  mount + the origin-keyed header actions (hide for synced, Edit→form for personal) + the tap-through
+  routing (a press fires `/event-details/<uid>` for both kinds) at the 70% floor. The **real populated
+  render** needs a seeded synced event the dev harness lacks, so Maestro asserts **reachability** (a
+  deep link to the details route shows the not-found state) and the populated render + the checklist
+  add/toggle/reorder/delete round-trip are the on-device manual pass
+  (`inbox/2026-06-16-event-details-on-device.md` + `inbox/2026-06-16-event-checklists-on-device.md`).
 - **Revisit trigger (recorded, no ADR yet):** if a **second** rich-row consumer wants a *different*
   rich-projection shape, that is when an "event-details rich domain" ADR earns its place (D8).
 
@@ -369,17 +390,20 @@ seam. The orchestrator distinguishes the two by where the chain throws (a mutati
 - **Calendar sync** — **LANDED** (`add-mobile-calendar-sync`, ADR 021; see "Calendar sync"
   above + storage.md "Calendar events store"). `POST /calendars/sync` → the durable
   `calendar_events` table; the `useCalendarEvents` source swapped behind the unchanged seam.
-- **Event details** — **LANDED** (`add-mobile-event-details`, Phase-04 item 3; see the
-  "Event details (read-only)" section above). The agenda/timeline tap target the agenda ship
-  forward-referenced is now wired.
+- **Event details** — **LANDED + widened.** The read-only VIEW half landed in
+  `add-mobile-event-details` (Phase-04 item 3); the **EDIT half + the unified-both-kinds surface
+  LANDED** in `add-mobile-event-checklists` (Phase-05 Ship B / ADR 024 — see "Event details
+  (unified…)" above). The agenda/timeline tap target the agenda ship forward-referenced is wired,
+  and a personal event's tap now opens the unified details screen too.
 - **The hide-event / hidden-events feature** — **LANDED** (`add-mobile-hidden-events`, Phase 05
   Ship A / ADR [023](./decisions/023-hidden-events-storage.md); see "Hidden events" above +
   storage.md / features.md). It writes the hidden state (the MMKV hidden-set store) and filters the
   events-source seam, with the hide action on the event-details screen + a management screen.
-- **The checklist sibling feature** — still deliberately **out of scope** (design D1): a
-  **state-writing** feature with its own persistence/store (interactive add/toggle, a fourth Drizzle
-  table + an importer-fidelity question), deferred to its own ship. Recorded in
-  `inbox/2026-06-16-event-details-deferrals.md`.
+- **The checklist sibling feature** — **LANDED** (`add-mobile-event-checklists`, Phase 05 Ship B /
+  ADR [024](./decisions/024-event-checklist-storage-and-surfacing.md); see "Event details (unified…)"
+  above + the `checklist_items` store in storage.md + "Event checklists" in features.md). The 4th
+  Drizzle table (`checklist_items`, importer-fidelity verbatim, hard-delete-not-soft) + the
+  interactive checklist on the unified details screen for both event kinds.
 - **The home today mini-grid** — **LANDED** (`add-mobile-home`, Phase-04 item 4 / ADR
   [022](./decisions/022-home-ia-today-view.md); see features.md "Home / today view"). It is the
   salvaged overlap engine's **first rendering consumer** (`src/features/home/ui/today-timeline.tsx`),

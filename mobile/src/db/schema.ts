@@ -118,3 +118,49 @@ export const calendarEvents = sqliteTable("calendar_events", {
   type: text("type").notNull(),
   userCalendarId: text("user_calendar_id").notNull(),
 })
+
+// The fourth real feature schema — Event checklists (ADR 024, Phase 05 Ship B).
+// A small per-event to-do list a student attaches to a class or a personal event
+// ("bring the lab coat"). An importer target with NO server backup — losing an
+// item is permanent.
+//
+// Columns mirror the Flutter ChecklistItem.toMap() wire format verbatim so the
+// Phase-09 one-shot importer can write recovered `checklist_items` rows with no
+// data loss — the same importer-fidelity posture ADR 011/018/021 set:
+//  - `uuid` is the sembast record key (`_store.record(item.uuid).put`) and the
+//    identity — the explicit primary key, not a surrogate (the uuid IS the
+//    identity, like personal_events.uid / calendar_events.uid).
+//  - `eventUid` is the join key to EITHER event kind — it equals a
+//    personal_events.uid OR a calendar_events.uid. It is a SOFT reference, NO FK
+//    constraint — exactly like calendar_events.userCalendarId. The sync
+//    replaceAll drops+re-inserts a synced event's calendar_events row each sync
+//    (same uid); a hard FK would cascade-delete the checklist on every sync (data
+//    loss!) or block the drop, so the soft ref is mandatory for survival across
+//    sync. A dangling eventUid after a real deletion is harmless (its items are
+//    simply unreachable). (ADR 024 / decision 2.)
+//  - `content` / `isChecked` / `order` verbatim. `isChecked` is a boolean (SQLite
+//    has no boolean — Drizzle `mode: "boolean"` stores 0/1). `order` is a 1-based
+//    INTEGER (Flutter sets `length + 1` on add and re-numbers `i + 1` on reorder);
+//    the read sorts on it ascending.
+//  - `createdAt` / `updatedAt` / `deletedAt` hold UTC ISO-8601 strings (ADR 011/D4
+//    posture: TEXT over epoch-ms for importer round-trip fidelity). All three are
+//    NULLABLE — the Flutter model's three dates are DateTime?. Canonicality is
+//    guaranteed by the row↔domain mappers' toISOString().
+//  - DELETE IS HARD, NOT SOFT (ADR 024 / decision 3 — verified against the Flutter
+//    code): the repository's delete hard-removes the row, and `deletedAt` is NEVER
+//    set or filtered on anywhere in Flutter. The `deletedAt` column is kept ONLY
+//    for verbatim importer fidelity (an imported sembast record may carry a
+//    non-null value the importer must round-trip); the app neither sets nor reads
+//    it, and the read filters by `eventUid` ordered by `order` with NO
+//    `deletedAt IS NULL`. Do NOT add a soft-delete filter "for correctness" — it
+//    would diverge from Flutter and silently change which items render.
+export const checklistItems = sqliteTable("checklist_items", {
+  uuid: text("uuid").primaryKey(),
+  eventUid: text("event_uid").notNull(),
+  content: text("content").notNull(),
+  isChecked: integer("is_checked", { mode: "boolean" }).notNull(),
+  order: integer("order").notNull(),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+  deletedAt: text("deleted_at"),
+})

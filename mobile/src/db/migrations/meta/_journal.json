@@ -22,6 +22,13 @@
       "when": 1781597863090,
       "tag": "0002_first_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781624154777,
+      "tag": "0003_soft_iron_fist",
+      "breakpoints": true
     }
   ]
 }

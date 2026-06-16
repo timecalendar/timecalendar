@@ -101,14 +101,14 @@ describe("HomeScreen", () => {
     expect(screen.getAllByText("Algorithms").length).toBeGreaterThan(0)
   })
 
-  it("routes a personal-event card to its edit form", async () => {
+  it("routes a personal-event card to the unified event-details screen (ADR 024)", async () => {
     mockUseCalendarEvents.mockReturnValue([todayEvent()])
     await render(<HomeScreen />)
     fireEvent.press(screen.getByTestId("upcoming-card-ev-1"))
-    expect(mockPush).toHaveBeenCalledWith("/personal-event-form?uid=ev-1")
+    expect(mockPush).toHaveBeenCalledWith("/event-details/ev-1")
   })
 
-  it("routes a synced-event tile to the read-only details screen", async () => {
+  it("routes a synced-event tile to the event-details screen", async () => {
     mockUseCalendarEvents.mockReturnValue([
       todayEvent({ id: "sync-1", userCalendarId: "cal-1" }),
     ])

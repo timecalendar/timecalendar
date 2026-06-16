@@ -11,18 +11,37 @@ import { eq } from "@/db"
 
 import { getByUid, rowToEventDetails, useEventDetails } from "./event-details"
 
-let mockRows: unknown[] = []
+// The widened read (ADR 024) queries TWO tables — calendar_events (synced) then
+// personal_events (personal). The fake routes a select's rows by the table its
+// from() was called with, and useLiveQuery returns per-table results.
+let mockSyncedRows: unknown[] = []
+let mockPersonalRows: unknown[] = []
 const mockWhere = jest.fn()
 const mockFrom = jest.fn()
 const mockSelect = jest.fn()
-const mockUseLiveQuery = jest.fn()
+// useLiveQuery is keyed on the table token its query referenced.
+let mockSyncedLive: { data: unknown[]; updatedAt: Date | undefined } = {
+  data: [],
+  updatedAt: undefined,
+}
+let mockPersonalLive: { data: unknown[]; updatedAt: Date | undefined } = {
+  data: [],
+  updatedAt: undefined,
+}
 
 jest.mock("@/db", () => {
   const makeBuilder = (): Record<string, unknown> => {
+    let token = "calendarEvents"
     const builder: Record<string, unknown> = {
-      from: (...a: unknown[]) => (mockFrom(...a), builder),
+      from: (t: { __token?: string }) => {
+        token = t?.__token ?? "calendarEvents"
+        builder.__token = token
+        mockFrom(t)
+        return builder
+      },
       where: (...a: unknown[]) => (mockWhere(...a), builder),
-      then: (resolve: (value: unknown[]) => unknown) => resolve(mockRows),
+      then: (resolve: (value: unknown[]) => unknown) =>
+        resolve(token === "personalEvents" ? mockPersonalRows : mockSyncedRows),
     }
     return builder
   }
@@ -30,9 +49,11 @@ jest.mock("@/db", () => {
     db: {
       select: (...a: unknown[]) => (mockSelect(...a), makeBuilder()),
     },
-    calendarEvents: { uid: "calendarEvents.uid" },
+    calendarEvents: { uid: "calendarEvents.uid", __token: "calendarEvents" },
+    personalEvents: { uid: "personalEvents.uid", __token: "personalEvents" },
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),
-    useLiveQuery: (...a: unknown[]) => mockUseLiveQuery(...a),
+    useLiveQuery: (query: { __token?: string }) =>
+      query?.__token === "personalEvents" ? mockPersonalLive : mockSyncedLive,
   }
 })
 
@@ -106,9 +127,25 @@ describe("rowToEventDetails", () => {
   })
 })
 
+// A personal_events row (no sync-only columns — the personal branch fills defaults).
+function personalRow(overrides: Record<string, unknown> = {}) {
+  return {
+    uid: "pers-1",
+    title: "Dentist",
+    color: "#E91E63",
+    startsAt: "2026-06-16T07:00:00.000Z",
+    endsAt: "2026-06-16T08:30:00.000Z",
+    exportedAt: "2026-06-15T22:00:00.000Z",
+    location: null,
+    description: null,
+    ...overrides,
+  }
+}
+
 describe("getByUid", () => {
   beforeEach(() => {
-    mockRows = []
+    mockSyncedRows = []
+    mockPersonalRows = []
     mockSelect.mockClear()
     mockFrom.mockClear()
     mockWhere.mockClear()
@@ -116,7 +153,7 @@ describe("getByUid", () => {
   })
 
   it("queries calendar_events by uid through the @/db seam", async () => {
-    mockRows = [row()]
+    mockSyncedRows = [row()]
     await getByUid("ev-1")
     expect(mockSelect).toHaveBeenCalledTimes(1)
     expect(eq).toHaveBeenCalledWith("calendarEvents.uid", "ev-1")
@@ -127,48 +164,77 @@ describe("getByUid", () => {
     })
   })
 
-  it("returns the mapped rich event for a matching row", async () => {
-    mockRows = [row()]
+  it("returns the mapped synced rich event for a matching calendar_events row", async () => {
+    mockSyncedRows = [row()]
     const event = await getByUid("ev-1")
-    expect(event).not.toBeNull()
+    expect(event?.kind).toBe("synced")
     expect(event?.id).toBe("ev-1")
     expect(event?.groupColor).toBe("#0D47A1")
   })
 
-  it("returns null when no row matches", async () => {
-    mockRows = []
+  it("falls back to personal_events when no synced row matches", async () => {
+    mockSyncedRows = []
+    mockPersonalRows = [personalRow()]
+    const event = await getByUid("pers-1")
+    // Two selects: calendar_events (miss) then personal_events (hit).
+    expect(mockSelect).toHaveBeenCalledTimes(2)
+    expect(eq).toHaveBeenCalledWith("personalEvents.uid", "pers-1")
+    expect(event?.kind).toBe("personal")
+    expect(event?.title).toBe("Dentist")
+    // The personal branch fills the sync-only defaults.
+    expect(event?.groupColor).toBe("#E91E63")
+    expect(event?.tags).toEqual([])
+    expect(event?.userCalendarId).toBe("")
+  })
+
+  it("returns null when no row matches either table", async () => {
+    mockSyncedRows = []
+    mockPersonalRows = []
     expect(await getByUid("missing")).toBeNull()
   })
 })
 
 describe("useEventDetails", () => {
-  it("resolves the rich event for a present uid", async () => {
-    mockUseLiveQuery.mockReturnValue({
-      data: [row()],
-      updatedAt: new Date(),
-    })
+  beforeEach(() => {
+    mockSyncedLive = { data: [], updatedAt: undefined }
+    mockPersonalLive = { data: [], updatedAt: undefined }
+  })
+
+  it("resolves the synced rich event for a present uid", async () => {
+    mockSyncedLive = { data: [row()], updatedAt: new Date() }
+    mockPersonalLive = { data: [], updatedAt: new Date() }
     const { result } = await renderHook(() => useEventDetails("ev-1"))
     expect(result.current.loading).toBe(false)
-    expect(result.current.event?.id).toBe("ev-1")
+    expect(result.current.event?.kind).toBe("synced")
     expect(result.current.event?.groupColor).toBe("#0D47A1")
   })
 
-  it("reports loading until the live query first resolves", async () => {
-    mockUseLiveQuery.mockReturnValue({ data: [], updatedAt: undefined })
+  it("resolves a personal event when only the personal_events row is present", async () => {
+    mockSyncedLive = { data: [], updatedAt: new Date() }
+    mockPersonalLive = { data: [personalRow()], updatedAt: new Date() }
+    const { result } = await renderHook(() => useEventDetails("pers-1"))
+    expect(result.current.loading).toBe(false)
+    expect(result.current.event?.kind).toBe("personal")
+    expect(result.current.event?.title).toBe("Dentist")
+  })
+
+  it("reports loading until BOTH live queries first resolve", async () => {
+    mockSyncedLive = { data: [], updatedAt: new Date() }
+    mockPersonalLive = { data: [], updatedAt: undefined }
     const { result } = await renderHook(() => useEventDetails("ev-1"))
     expect(result.current.loading).toBe(true)
     expect(result.current.event).toBeNull()
   })
 
-  it("surfaces not-found (resolved, no row) distinctly from loading", async () => {
-    mockUseLiveQuery.mockReturnValue({ data: [], updatedAt: new Date() })
+  it("surfaces not-found (both resolved, no row) distinctly from loading", async () => {
+    mockSyncedLive = { data: [], updatedAt: new Date() }
+    mockPersonalLive = { data: [], updatedAt: new Date() }
     const { result } = await renderHook(() => useEventDetails("missing"))
     expect(result.current.loading).toBe(false)
     expect(result.current.event).toBeNull()
   })
 
   it("resolves not-found (never loading) for a missing uid", async () => {
-    mockUseLiveQuery.mockReturnValue({ data: [], updatedAt: undefined })
     const { result } = await renderHook(() => useEventDetails(undefined))
     expect(result.current.loading).toBe(false)
     expect(result.current.event).toBeNull()

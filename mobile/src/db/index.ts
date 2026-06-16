@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm"
+import { and, asc, eq, gte, lte } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { useLiveQuery } from "drizzle-orm/expo-sqlite/query"
 import { openDatabaseSync } from "expo-sqlite"
@@ -25,11 +25,17 @@ export const db = drizzle(expoDb)
 // builds queries with, and the reactive read hook the storage section names as
 // the pattern features inherit. Re-export ONLY what a consumer needs (R-2), not
 // all of drizzle-orm.
-export { and, eq, gte, lte, useLiveQuery }
+export { and, asc, eq, gte, lte, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
 // drizzle-orm/sqlite-core import stays inside the seam dir. The calendar-sync
 // repository's findInRange reuses `and`/`gte`/`lte` (already re-exported above
-// for personal-events) — no new operator is added (R-2: re-export only what's
-// needed).
-export { calendarEvents, personalEvents, userCalendars } from "./schema"
+// for personal-events). The event-checklists repository's ordered read adds the
+// single new operator `asc` (ADR 024 — `order BY order` asc; R-2: re-export only
+// what a consumer needs).
+export {
+  calendarEvents,
+  checklistItems,
+  personalEvents,
+  userCalendars,
+} from "./schema"
