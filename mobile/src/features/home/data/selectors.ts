@@ -87,8 +87,13 @@ export function dynamicHourRange(events: CalendarEvent[]): HourRange {
     endHour = Math.max(endHour, event.endsAt.getHours() + 1)
   }
 
-  return {
-    startHour: Math.max(0, Math.min(24, startHour)),
-    endHour: Math.max(0, Math.min(24, endHour)),
-  }
+  const clampedStart = Math.max(0, Math.min(24, startHour))
+  // endHour derives from the local end-of-day hour, so a cross-midnight event
+  // (starts 23:30, ends 00:30 next day, bucketed on its start day by eventsForDay)
+  // would otherwise yield an inverted range (start 23 > end 1) — feeding the
+  // timeline a negative grid height + empty hour labels. Guarantee a valid,
+  // non-empty window of at least one hour past the start.
+  const clampedEnd = Math.min(24, Math.max(clampedStart + 1, endHour))
+
+  return { startHour: clampedStart, endHour: clampedEnd }
 }

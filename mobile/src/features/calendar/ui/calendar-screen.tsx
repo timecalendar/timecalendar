@@ -14,8 +14,10 @@ import {
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
+  type AppLocale,
   type CalendarEvent,
   eventRoute,
+  formatTimeRange,
   GRID_END_MINUTE,
   GRID_START_MINUTE,
   MIN_TILE_WIDTH,
@@ -65,12 +67,6 @@ function mapToEventItem(event: CalendarEvent): EventItem {
     endsAt: event.endsAt,
     userCalendarId: event.userCalendarId,
   }
-}
-
-function formatTime(date: Date): string {
-  const hours = String(date.getHours()).padStart(2, "0")
-  const minutes = String(date.getMinutes()).padStart(2, "0")
-  return `${hours}:${minutes}`
 }
 
 export function CalendarScreen() {
@@ -231,7 +227,7 @@ export function CalendarScreen() {
               <CalendarBody
                 showNowIndicator
                 renderEvent={(event, size) => (
-                  <EventTile event={event} width={size.width} />
+                  <EventTile event={event} width={size.width} locale={locale} />
                 )}
               />
             </CalendarContainer>
@@ -285,9 +281,11 @@ function ViewButton({
 function EventTile({
   event,
   width,
+  locale,
 }: {
   event: EventItem
   width: { value: number } | number
+  locale: AppLocale
 }) {
   const { t } = useTranslation()
   const resolvedWidth = typeof width === "number" ? width : width.value
@@ -296,8 +294,10 @@ function EventTile({
   const startsAt = event.startsAt as Date | undefined
   const endsAt = event.endsAt as Date | undefined
   const location = (event.location as string | undefined) ?? ""
+  // Through the data/ format seam (not a hand-rolled formatter) so the grid tile's
+  // accessible time label matches the agenda's exactly ("09:00 – 10:30").
   const time =
-    startsAt && endsAt ? `${formatTime(startsAt)}–${formatTime(endsAt)}` : ""
+    startsAt && endsAt ? formatTimeRange(startsAt, endsAt, locale) : ""
   return (
     <View
       accessibilityRole="text"
