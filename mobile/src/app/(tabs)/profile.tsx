@@ -46,6 +46,20 @@ export default function ProfileScreen() {
           </Pressable>
         </Link>
 
+        {/* The standalone personal-events list, relocated off the Home tab (ADR
+            022 — the Home tab is now the today view). Same accessible-link shape
+            as the Settings / onboarding entries. */}
+        <Link href="/personal-events" asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("profile.personalEvents.link")}
+            hitSlop={Spacing.two}
+            style={styles.settingsLink}
+          >
+            <ThemedText>{t("profile.personalEvents.link")}</ThemedText>
+          </Pressable>
+        </Link>
+
         {__DEV__ && <FirebaseDebugPanel />}
       </SafeAreaView>
     </ThemedView>
