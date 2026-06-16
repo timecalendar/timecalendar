@@ -150,12 +150,14 @@ describe("useChecklistActions", () => {
     expect(mockSetChecked).toHaveBeenCalledWith("u-1", true)
   })
 
-  it("records a write failure and flips the failure flag", async () => {
+  it("records a write failure, flips the failure flag, and returns undefined (so the caller never focuses an uninserted row)", async () => {
     mockAdd.mockRejectedValueOnce(new Error("DB write failed"))
     const { result } = await renderHook(() => useChecklistActions("ev-1", []))
+    let returned: string | undefined = "sentinel"
     await act(async () => {
-      await result.current.add()
+      returned = await result.current.add()
     })
+    expect(returned).toBeUndefined()
     expect(mockRecordError).toHaveBeenCalledWith(
       expect.any(Error),
       "event-checklists/add",

@@ -82,11 +82,13 @@ function eventDetails(overrides: Partial<EventDetails> = {}): EventDetails {
   }
 }
 
+// The mutators return `true` on a persisted write (the screen gates router.back()
+// on success — ADR 023 / D5); a failure-path test overrides one to return false.
 const hideActions = {
-  hideByUid: jest.fn(),
-  hideByName: jest.fn(),
-  unhideUid: jest.fn(),
-  unhideName: jest.fn(),
+  hideByUid: jest.fn(() => true),
+  hideByName: jest.fn(() => true),
+  unhideUid: jest.fn(() => true),
+  unhideName: jest.fn(() => true),
   failed: false,
 }
 
@@ -230,6 +232,33 @@ describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
     await user.press(screen.getByLabelText("Hide this event"))
 
     expect(hideActions.hideByName).toHaveBeenCalledWith("Algorithms")
+    alertSpy.mockRestore()
+  })
+
+  it("does NOT pop back when the hide write fails (the failure banner stays visible)", async () => {
+    const alertSpy = jest
+      .spyOn(Alert, "alert")
+      .mockImplementation((_title, _msg, buttons) => {
+        buttons?.[0]?.onPress?.()
+      })
+    const back = jest.fn()
+    mockUseRouter.mockReturnValue({ back })
+    // A failed write returns false from the mutator and flips `failed`.
+    mockUseHideActions.mockReturnValue({
+      ...hideActions,
+      hideByUid: jest.fn(() => false),
+      failed: true,
+    })
+
+    await render(<EventDetailsScreen />)
+    const user = userEvent.setup()
+    await user.press(screen.getByLabelText("Hide this event"))
+
+    // The screen stayed mounted so its accessible failure banner is visible.
+    expect(back).not.toHaveBeenCalled()
+    expect(
+      screen.getByText("We couldn't hide this event. Please try again."),
+    ).toBeTruthy()
     alertSpy.mockRestore()
   })
 
