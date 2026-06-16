@@ -10,8 +10,8 @@
 2. **Timeline rendering** (per spike outcome): day / week / agenda. Custom path = FlashList v2 (vertical time + horizontal day/week paging) + gesture-handler (swipe between days) + Reanimated 4 worklets.
 3. **Sync** — TanStack Query → `syncCalendars(tokens)` → local cache (the drop+replace flow, RN-side). Offline reads from persister/SQLite.
 4. **Event details (view)** — read-only event screen.
-5. **Home** — landing/today view.
-6. **Date/time** — `date-fns` + `date-fns-tz`, display only (recurrence is server-side; no rrule/Temporal).
+5. ~~**Home** — landing/today view.~~ ✅ **Done (2026-06-16).** The Home tab is the today / next-up view (`add-mobile-home`, **ADR [022](../../../.claude/rules/mobile/decisions/022-home-ia-today-view.md)**): a header + a horizontal upcoming scroller + a today mini-timeline — the salvaged overlap engine's **first rendering consumer** (ADR 019's salvage payoff). Composition of the landed `useCalendarEvents` / `useSyncCalendars` / origin-keyed-routing seams + three pure 90%-gated selectors (`displayedDay`/`eventsForDay`/`dynamicHourRange`). The standalone personal-events list relocated to a Profile-reached `/personal-events` route (create/edit/delete preserved). Populated dense render + frame rate fold into the calendar on-device visual pass.
+6. ~~**Date/time** — `date-fns` + `date-fns-tz`, display only (recurrence is server-side; no rrule/Temporal).~~ ✅ **Done (2026-06-16).** The `date-fns` display-only formatter seam (`calendar/data/format.ts`, locale-aware over a `LOCALES` map; `date-fns` + `date-fns-tz` pure-JS) covers calendar/agenda/details/home — `formatFullDay` (the home today header, item 5) was the last addition. **Item closed.** Relative-time ("in 30 min") + ICU MessageFormat remain the i18n rules' earned-when-needed debt.
 
 ## Exit criteria
 
