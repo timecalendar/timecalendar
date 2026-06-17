@@ -10,8 +10,10 @@ import {
 } from "@react-native-firebase/crashlytics"
 import {
   getAPNSToken,
+  getInitialNotification,
   getToken,
   onMessage,
+  onNotificationOpenedApp,
   onTokenRefresh,
   requestPermission,
   setBackgroundMessageHandler,
@@ -21,10 +23,12 @@ import { Platform } from "react-native"
 import {
   crashTest,
   getFcmToken,
+  getInitialTap,
   logEvent,
   logMessage,
   onFcmTokenRefresh,
   onForegroundMessage,
+  onNotificationTap,
   recordError,
   requestNotificationPermission,
 } from "@/firebase"
@@ -166,6 +170,30 @@ describe("firebase messaging wrapper", () => {
 
     expect(onMessage).toHaveBeenCalledWith(expect.anything(), handler)
     expect(result).toBe(unsubscribe)
+  })
+
+  it("subscribes to the background notification tap and returns the unsubscribe", () => {
+    const unsubscribe = jest.fn()
+    ;(onNotificationOpenedApp as jest.Mock).mockReturnValue(unsubscribe)
+    const handler = jest.fn()
+
+    const result = onNotificationTap(handler)
+
+    expect(onNotificationOpenedApp).toHaveBeenCalledWith(
+      expect.anything(),
+      handler,
+    )
+    expect(result).toBe(unsubscribe)
+  })
+
+  it("reads the cold-start initial notification through messaging", async () => {
+    const message = { data: { action: "calendar_changed" } }
+    ;(getInitialNotification as jest.Mock).mockResolvedValue(message)
+
+    const result = await getInitialTap()
+
+    expect(getInitialNotification).toHaveBeenCalledWith(expect.anything())
+    expect(result).toBe(message)
   })
 
   it("subscribes to token refresh and returns the unsubscribe", () => {

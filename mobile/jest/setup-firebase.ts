@@ -26,6 +26,8 @@ jest.mock("@react-native-firebase/messaging", () => ({
   getAPNSToken: jest.fn(() => Promise.resolve("apns-token")),
   getToken: jest.fn(() => Promise.resolve("fcm-token")),
   onMessage: jest.fn(() => jest.fn()),
+  onNotificationOpenedApp: jest.fn(() => jest.fn()),
+  getInitialNotification: jest.fn(() => Promise.resolve(null)),
   onTokenRefresh: jest.fn(() => jest.fn()),
   setBackgroundMessageHandler: jest.fn(),
 }))

@@ -16,7 +16,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { queryClient } from "@/api/query-client"
 import { runMigrations } from "@/db/migrate"
 import { useStartupSync } from "@/features/calendar"
-import { useNotificationRegistration } from "@/features/notifications"
+import {
+  useNotificationRegistration,
+  useNotificationTapRouting,
+} from "@/features/notifications"
 import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
@@ -59,6 +62,19 @@ function NotificationRegistration() {
   return null
 }
 
+// Wire notification tap-through routing once (Phase 06 Ship C / ADR 028), beside
+// NotificationRegistration and inside the rendered RootLayout tree so its effects
+// fire after the <Stack> mounts — the cold-start tap navigates via the router,
+// which needs the navigator mounted (design Decision 3). A foreground
+// calendar_changed refetches (no nav); a background/cold-start tap refetches then
+// routes to the affected event (NEW/EDIT) or the calendar (CANCEL). It reaches
+// the calendar sync via @/features/calendar/data and @/firebase via the seam,
+// never the generated client / @/db (B-1..B-4); it renders nothing.
+function NotificationTapRouting() {
+  useNotificationTapRouting()
+  return null
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
@@ -78,6 +94,7 @@ export default function RootLayout() {
       >
         <StartupSync />
         <NotificationRegistration />
+        <NotificationTapRouting />
         <ThemeProvider value={navTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
