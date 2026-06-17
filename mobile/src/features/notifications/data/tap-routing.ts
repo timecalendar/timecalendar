@@ -87,7 +87,10 @@ export function useNotificationTapRouting(): void {
   const coldStartHandled = useRef(false)
 
   useEffect(() => {
-    function navigate(route: TapRoute | null): void {
+    // A tap (background or cold-start): refetch, then navigate per the route.
+    function routeTap(message: TapMessage): void {
+      void sync()
+      const route = parseNotificationRoute(message)
       if (route == null) return
       if (route.kind === "event") {
         router.push(`/event-details/${route.uid}`)
@@ -102,17 +105,12 @@ export function useNotificationTapRouting(): void {
       }
     })
 
-    const unsubscribeTap = onNotificationTap((message) => {
-      void sync()
-      navigate(parseNotificationRoute(message))
-    })
+    const unsubscribeTap = onNotificationTap(routeTap)
 
     if (!coldStartHandled.current) {
       coldStartHandled.current = true
       void getInitialTap().then((message) => {
-        if (message == null) return
-        void sync()
-        navigate(parseNotificationRoute(message))
+        if (message != null) routeTap(message)
       })
     }
 
