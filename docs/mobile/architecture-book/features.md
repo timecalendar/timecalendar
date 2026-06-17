@@ -30,6 +30,47 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   product touchable**. Observability ➖ N/A (MMKV reads/writes are synchronous + infallible —
   no error path to record).
 
+## Notifications — FCM-token registration + subscription preferences (Phase 06 Ship B)
+
+- **Feature folder:** `src/features/notifications/` (`data/` + `ui/`), the home of the
+  FCM-token-to-backend registration + subscription-preferences concern (ADR
+  [027](./decisions/027-fcm-subscription-registration.md)). Distinct from the receive-only
+  `@/firebase` seam (ADR 026) and from Settings (infallible local device prefs, no network):
+  this is a feature — a network write that can fail, bound to a server DTO.
+- **Local prefs store (`data/prefs.ts`) — the source of truth.** The `PUT /notification-subscription`
+  API is **PUT-only (no GET)**, so `frequency` / `nbDaysAhead` / `isActive` persist locally in
+  MMKV `@/storage` under flat `notifications.*` keys, mirroring `settings/prefs`: **total
+  parsers** (unset/corrupt/out-of-range → the default, never throws; `nbDaysAhead` clamped to
+  [1,30] on read) + reactive reads (`useStoredString`/`useStoredBoolean`/`useStoredNumber`).
+  Defaults `immediately` / `7` / `true`. **The ONLY place the feature touches `@/storage` (B-1).**
+- **Registration seam (`data/subscription.ts`) — the idempotent PUT.** Wraps the
+  already-generated `useNotificationSubscriptionControllerCreateOrUpdateSubscription` over the
+  single `customFetch` mutator — **the only generated-client import site for the feature (B-1)**.
+  Assembles the DTO from the local prefs + `getFcmToken()` (`@/firebase`) + `calendarIds` =
+  the `user_calendars` rows' **server `id`s** (`useUserCalendars` from
+  `@/features/calendar-sources/data`, a cross-feature `data → data` read — the row `id` IS the
+  server calendar id per `fromCalendarForPublic`, NOT the token). PUTs the full DTO fresh each
+  call; a **null** token (iOS APNS not ready) does NOT PUT; **zero** calendars STILL PUTs
+  `calendarIds: []` (so the server can prune). Re-PUTs on every prefs change + every
+  `onFcmTokenRefresh`. The first PUT fires from a `<NotificationRegistration />` once-effect in
+  `_layout.tsx` (next to `<StartupSync />`, post-permission-grant) — through the feature `data/`,
+  never the generated client / `@/db` (B-3/B-4).
+- **Screen (`ui/` sublayer):** presentational `ui/notification-settings-screen.tsx` + thin
+  `src/app/notification-settings.tsx` route, reachable as a `Stack` sibling of `(tabs)` from a
+  Profile entry link. A frequency `@expo/ui` Picker (chrome seam), a bounded 1..30 `nbDaysAhead`
+  stepper, an `isActive` `Switch`, each driving the re-PUT. Title is a `ThemedText type="title"`
+  (heading role).
+- **Failure surface (Observability):** a failed PUT → `@/firebase`
+  `recordError(error, "notifications/subscription")` **and** an accessible alert
+  (`accessibilityRole="alert"`, `accessibilityLiveRegion="polite"`) + a **Retry** control
+  (the calendar-sources add-calendar write posture). The background re-PUT records but has no
+  on-screen surface; it self-heals on the next change/refresh.
+- **CI vs. device.** CI proves the **write wiring** (mock-at-mutator: PUT-on-change,
+  re-PUT-on-token-refresh, null-token → no-PUT, zero-calendars → `[]`, persist/read-back incl. a
+  restart-simulation, failure → record + `isError`). CI **cannot** prove a real server-delivered
+  push or a live PUT round-trip — that device verification is inboxed
+  (`docs/react-native-migration/inbox/2026-06-17-notification-subscription-review.md`).
+
 ## Personal events — device-local CRUD + forms + write error path
 
 - **Sublayers:** `data/` + `form/` + `ui/` under `src/features/personal-events/`.

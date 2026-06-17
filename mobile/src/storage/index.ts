@@ -1,4 +1,9 @@
-import { createMMKV, useMMKVString } from "react-native-mmkv"
+import {
+  createMMKV,
+  useMMKVBoolean,
+  useMMKVNumber,
+  useMMKVString,
+} from "react-native-mmkv"
 
 // Thin seam over react-native-mmkv (v4 / Nitro) — the single place the app
 // touches the KV backend, so it stays swappable and feature call sites import
@@ -45,10 +50,21 @@ export function remove(key: string): void {
 // preference change re-renders its consumers (design D3). Read-only: writes
 // stay on the imperative setString above, keeping one write path. It lives here
 // because react-native-mmkv is lint-banned outside the seam — feature code reads
-// preferences through this, never the backend. Only the string variant is added;
-// boolean/number reactive variants wait for a consumer (R-2).
+// preferences through this, never the backend.
 export function useStoredString(key: string): string | undefined {
   return useMMKVString(key, storage)[0]
+}
+
+// The boolean/number reactive variants, added alongside useStoredString when the
+// notifications prefs feature (the source-of-truth subscription store, ADR 027)
+// needed reactive boolean (isActive) and number (nbDaysAhead) reads. Same
+// read-only posture — writes stay on the imperative setBoolean/setNumber.
+export function useStoredBoolean(key: string): boolean | undefined {
+  return useMMKVBoolean(key, storage)[0]
+}
+
+export function useStoredNumber(key: string): number | undefined {
+  return useMMKVNumber(key, storage)[0]
 }
 
 // A synchronous Storage-shaped adapter over the seam's instance, for the

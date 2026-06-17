@@ -73,6 +73,19 @@ export default function ProfileScreen() {
           </Pressable>
         </Link>
 
+        {/* The notification subscription preferences screen (Phase 06 Ship B).
+            Same accessible-link shape as the Settings / hidden-events entries. */}
+        <Link href="/notification-settings" asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("profile.notifications.link")}
+            hitSlop={Spacing.two}
+            style={styles.settingsLink}
+          >
+            <ThemedText>{t("profile.notifications.link")}</ThemedText>
+          </Pressable>
+        </Link>
+
         {__DEV__ && <FirebaseDebugPanel />}
       </SafeAreaView>
     </ThemedView>

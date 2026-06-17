@@ -13,7 +13,11 @@ plus the caveats tooling can't carry; rationale and alternatives live in the
   `setString`, `getBoolean`/`setBoolean`, `getNumber`/`setNumber`, `has` (over
   `contains`), `remove`. No JSON-object helper, no encryption/multi-instance until a
   consumer needs them (R-2). v4 idioms: `createMMKV()` not `new MMKV()`, `remove` not
-  `delete`.
+  `delete`. **Reactive reads** over the seam's instance (read-only — writes stay on the
+  imperative setters, one write path): `useStoredString` (since the Settings prefs),
+  plus `useStoredBoolean` / `useStoredNumber` added alongside it when the notifications
+  prefs feature (ADR [027](./decisions/027-fcm-subscription-registration.md)) needed
+  reactive `isActive` (boolean) + `nbDaysAhead` (number) reads — a consumer arrived (R-2).
 - **`src/db/` over `expo-sqlite` + `drizzle-orm`** (`drizzle-orm/expo-sqlite`). One
   module-scoped `openDatabaseSync("timecalendar.db")` handle and `drizzle(expo)`
   instance. `expo-sqlite` (Expo-managed SQLite) keeps the seam in the Expo upgrade lane;
