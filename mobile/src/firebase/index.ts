@@ -10,15 +10,21 @@ import {
 } from "@react-native-firebase/crashlytics"
 import {
   getAPNSToken,
+  getInitialNotification,
   getMessaging,
   getToken,
   onMessage,
+  onNotificationOpenedApp,
   onTokenRefresh,
   type RemoteMessage,
   requestPermission,
   setBackgroundMessageHandler,
 } from "@react-native-firebase/messaging"
 import { Platform } from "react-native"
+
+// Re-export the wire message type so call sites (the tap-routing dispatcher)
+// type their handlers without reaching the native module directly.
+export type { RemoteMessage }
 
 // Thin seam over @react-native-firebase's modular API — the single place the
 // app touches Firebase, so the SDK is swappable and call sites stay decoupled.
@@ -100,6 +106,26 @@ export function onForegroundMessage(
   handler: (message: RemoteMessage) => void,
 ): () => void {
   return onMessage(getMessaging(), handler)
+}
+
+/**
+ * Subscribe to a notification TAP that opens the app from the background (not a
+ * cold start); returns the unsubscribe function. The killed/cold-start tap is
+ * `getInitialNotification` instead (a one-shot at launch). Tap-routing, Ship C.
+ */
+export function onNotificationTap(
+  handler: (message: RemoteMessage) => void,
+): () => void {
+  return onNotificationOpenedApp(getMessaging(), handler)
+}
+
+/**
+ * The notification that cold-started the app from a killed state, or null if the
+ * app was opened any other way. A one-shot read at launch (the background-tap
+ * path is `onNotificationTap`). Tap-routing, Ship C.
+ */
+export function getInitialTap(): Promise<RemoteMessage | null> {
+  return getInitialNotification(getMessaging())
 }
 
 /** Subscribe to FCM token refreshes; returns the unsubscribe function. */
