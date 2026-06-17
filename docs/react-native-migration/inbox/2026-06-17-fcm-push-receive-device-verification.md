@@ -80,3 +80,85 @@ delivery as expected.
   (`PUT /notification-subscription`, Ship B), the subscription-preferences UI (Ship B),
   tap-through routing (Ship C), local reminders (Ship D). **Do not tick a delivery exit
   criterion off CI green** — green wiring + this honest device pass is the bar.
+
+---
+
+# Tap-through routing — device-only verification (Phase 06 Ship C)
+
+**Change:** `add-mobile-fcm-tap-routing` · **ADR:** [028](../../../docs/mobile/architecture-book/decisions/028-fcm-tap-routing.md)
+
+Ship C wires a notification **tap** to a calendar refetch + a deep-link into the app. CI proves
+the **mapping + wiring** (`src/features/notifications/data/tap-routing.test.tsx`): the pure
+`parseNotificationRoute` branches (NEW/EDIT → event, CANCEL → calendar, missing data / wrong
+action / malformed JSON → `recordError` / missing uid → null) and the dispatcher against a
+mocked router + sync (foreground → sync only, no nav; background NEW tap → sync +
+`/event-details/<uid>`; CANCEL → `/calendar`; cold-start `getInitialTap` non-null → sync + nav;
+null → no-op; listener cleanup). CI **cannot** deliver a real push, observe a real tap, or
+simulate a real cold-start tap from a killed process — that is this manual pass.
+
+## Prerequisites
+
+Same as the receive pass above: a **physical iPhone and Android phone**, the `timecalendar-dev`
+APNs key (for an iOS dev build), and a **RELEASE / standalone build** (not the dev client — its
+process lifecycle differs and cold-start behaviour is what we're checking).
+
+## How to send a tap-testable push
+
+Send a **`data` message that mirrors the server contract** so the parser has something to route
+on — `data: { action: "calendar_changed", payload: "{\"type\":\"NEW\",\"event\":{\"uid\":\"<a-real-synced-uid>\"}}" }`,
+**plus** a `notification: { title, body }` block so the OS shows a tappable tray entry (a
+data-only message shows no tray UI to tap). Use a real `event.uid` from a calendar the device
+has synced (read one from the DB / a calendar event) so the NEW/EDIT deep link lands on a real
+event-details screen.
+
+- **Firebase console** → *Messaging → New campaign* with *Additional options → Custom data*
+  (`action` + `payload`) and a notification title/body, **or**
+- **A direct FCM send** (`firebase-admin` scratch script) with both `data` and `notification`.
+
+Send `type: "NEW"`/`"EDIT"` (with a uid present in the synced calendar) and `type: "CANCEL"`
+(uid can be any — CANCEL routes to `/calendar`, not the event) to exercise both routes.
+
+## The matrix to verify
+
+For **each platform** (iOS physical, Android physical), in a **release** build, for a
+`calendar_changed` message:
+
+| State | How to get there | Expected |
+| --- | --- | --- |
+| **Foreground** | App open and visible | The calendar **refreshes** (the changed event appears/updates/disappears) and the app **does NOT navigate** — the user stays where they are (Flutter parity) |
+| **Background tap** | App backgrounded (not killed), tap the tray notification | The app foregrounds, the calendar **refetches**, then it **opens** `/event-details/<uid>` for a `NEW`/`EDIT` (the affected event) or `/calendar` for a `CANCEL` |
+| **Killed / cold-start tap** | App swiped away (fully terminated), tap the tray notification | The app cold-starts, the calendar **refetches**, then it opens the same screen as the background case — verify the navigation lands on the **right** screen and not the default tab |
+
+Also confirm: a **`CANCEL`** tap routes to `/calendar` (not a dead/empty event-details page);
+a malformed / unknown-action message does **nothing** (no crash, no nav) — the parser's `null`
+path; tapping a notification while already on the target screen is harmless.
+
+## Cold-start navigation-readiness fallback
+
+If a **cold-start tap lands on the wrong screen** (e.g. it flashes the default tab instead of
+the event-details / calendar), the cold-start `router.push` raced the root navigator mounting.
+ADR 028 Decision 3 expects the mount-effect ordering to make this safe (the `<Stack>` is mounted
+by the time the effect fires), and CI cannot reproduce a real cold start — so this is the axis
+to watch. The documented fix (built only if observed, not speculatively): gate the cold-start
+`navigate(...)` on `expo-router`'s `rootNavigationState?.key` being defined (poll/await
+readiness before pushing) in `useNotificationTapRouting`. Note the platform it happens on and
+whether it's intermittent.
+
+## Caveats — do not mistake these for regressions
+
+- All the receive-pass caveats apply (native crash not reported under the dev client; OEM
+  Android background-delivery throttling; iOS simulator / Android emulator can't receive FCM).
+- **The deep-link uid-match assumption (ADR 028 Decision 4).** If a `NEW`/`EDIT` tap opens an
+  event-details screen that shows **not-found** (empty), the change-detection `event.uid` may
+  differ from the synced row's `uid` for that provider — a **graceful degradation, not a crash**,
+  but note it (it would mean the server's change-detection uid and the sync DTO uid diverge for
+  that calendar source). The happy path is: the tapped event opens populated.
+
+## What this verifies vs. what it doesn't
+
+- **Verifies:** a real tap **refetches** the calendar and **routes** to the correct screen
+  across foreground / background / killed, on both platforms, in a release build (the Phase-06
+  Ship-C exit criterion), and the foreground-no-navigation rule holds.
+- **Does NOT verify (later ships):** local reminders (`expo-notifications`, Ship D). Do not tick
+  the tap-routing exit criterion off CI green — green mapping/wiring + this honest device pass is
+  the bar.

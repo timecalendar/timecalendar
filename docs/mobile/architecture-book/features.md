@@ -30,7 +30,7 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   product touchable**. Observability ➖ N/A (MMKV reads/writes are synchronous + infallible —
   no error path to record).
 
-## Notifications — FCM-token registration + subscription preferences (Phase 06 Ship B)
+## Notifications — FCM-token registration + subscription preferences + tap-through routing (Phase 06 Ships B–C)
 
 - **Feature folder:** `src/features/notifications/` (`data/` + `ui/`), the home of the
   FCM-token-to-backend registration + subscription-preferences concern (ADR
@@ -65,11 +65,31 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   (`accessibilityRole="alert"`, `accessibilityLiveRegion="polite"`) + a **Retry** control
   (the calendar-sources add-calendar write posture). The background re-PUT records but has no
   on-screen surface; it self-heals on the next change/refresh.
+- **Tap-through routing (`data/tap-routing.ts`, Phase 06 Ship C — ADR
+  [028](./decisions/028-fcm-tap-routing.md)).** A **pure** `parseNotificationRoute` decodes the
+  server's `calendar_changed` data message (`data.payload` = `JSON.stringify({ type, event })`)
+  to `{ kind: "event", uid }` for `NEW`/`EDIT`, `{ kind: "calendar" }` for `CANCEL`, or `null`
+  for anything unhandled (missing data / non-`calendar_changed` action / malformed JSON →
+  `recordError(error, "notifications/tap-routing")` / missing-blank uid) — **no React/Expo/native
+  imports**, so every branch is unit-tested to the 90% gate. The `useNotificationTapRouting`
+  dispatcher (mounted in `_layout.tsx` beside `<NotificationRegistration />`) wires the three app
+  states through the `@/firebase` tap entrypoints: **foreground** (`onForegroundMessage`) → `void
+  sync()` only, **no navigation** (Flutter parity); **background tap** (`onNotificationTap`) and
+  **killed/cold-start** (`getInitialTap`, in a ref-guarded mount effect so the `<Stack>` is
+  mounted) → `void sync()` then `router.push('/event-details/<uid>')` or `router.push('/calendar')`.
+  The refetch reuses `useSyncCalendars` from `@/features/calendar/data` (a cross-feature
+  `data → data` read — **no new sync path, no generated client / `@/db` / `@/storage` here**,
+  B-1..B-4). The deep-link uid-match degrades to `useEventDetails` not-found, never a crash.
 - **CI vs. device.** CI proves the **write wiring** (mock-at-mutator: PUT-on-change,
   re-PUT-on-token-refresh, null-token → no-PUT, zero-calendars → `[]`, persist/read-back incl. a
-  restart-simulation, failure → record + `isError`). CI **cannot** prove a real server-delivered
-  push or a live PUT round-trip — that device verification is inboxed
-  (`docs/react-native-migration/inbox/2026-06-17-notification-subscription-review.md`).
+  restart-simulation, failure → record + `isError`) **and the tap mapping/wiring** (mocked
+  router + sync: `NEW`/`EDIT` → push event-details + sync, `CANCEL` → push `/calendar` + sync,
+  foreground → sync + no nav, malformed → no nav + record, null cold-start → no-op, listener
+  cleanup). CI **cannot** prove a real server-delivered push, a live PUT round-trip, or a real
+  tap routing from foreground/background/**killed** in a release build — those device
+  verifications are inboxed
+  (`docs/react-native-migration/inbox/2026-06-17-notification-subscription-review.md` for the PUT;
+  `2026-06-17-fcm-push-receive-device-verification.md` for receipt + the Ship-C tap script).
 
 ## Personal events — device-local CRUD + forms + write error path
 
