@@ -90,6 +90,11 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   verifications are inboxed
   (`docs/react-native-migration/inbox/2026-06-17-notification-subscription-review.md` for the PUT;
   `2026-06-17-fcm-push-receive-device-verification.md` for receipt + the Ship-C tap script).
+- **No local reminders (Phase 06 Ship D — ADR [029](./decisions/029-local-reminders-deferred.md)).**
+  `expo-notifications` is **not** adopted: server push covers all synced calendars (double-stacking
+  there is forbidden), and personal-event reminders — the one local-only gap — never existed in the
+  Flutter app, so building them now is net-new scope, not parity (R-2). Recorded as future debt
+  (`inbox/2026-06-17-local-reminders-deferred.md`); revisit if a validated demand appears.
 
 ## Personal events — device-local CRUD + forms + write error path
 
