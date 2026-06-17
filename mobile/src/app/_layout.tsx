@@ -16,6 +16,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { queryClient } from "@/api/query-client"
 import { runMigrations } from "@/db/migrate"
 import { useStartupSync } from "@/features/calendar"
+import { useNotificationRegistration } from "@/features/notifications"
 import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
@@ -46,6 +47,18 @@ function StartupSync() {
   return null
 }
 
+// Fire the FCM-token-to-backend registration once at startup (Phase 06 Ship B /
+// ADR 027), next to StartupSync and for the same reason: it wires the generated
+// PUT mutation, which needs the QueryClient in context, so it is a mounted
+// component rendering nothing rather than a top-level side effect. It requests
+// notification permission, PUTs the assembled subscription DTO once a non-null
+// token exists, and re-PUTs on token-refresh. Goes through the feature data/
+// hook (@/features/notifications), never the generated client / @/db (B-3/B-4).
+function NotificationRegistration() {
+  useNotificationRegistration()
+  return null
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
@@ -64,6 +77,7 @@ export default function RootLayout() {
         persistOptions={persistOptions}
       >
         <StartupSync />
+        <NotificationRegistration />
         <ThemeProvider value={navTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
@@ -90,6 +104,15 @@ export default function RootLayout() {
                 own title. Deep-linkable: timecalendar-dev://hidden-events. */}
             <Stack.Screen
               name="hidden-events"
+              options={{ headerShown: true }}
+            />
+            {/* The notification subscription preferences screen (Phase 06 Ship
+                B) — a Stack sibling of (tabs), reached from a Profile entry
+                link, mirroring settings / hidden-events. Header shown for the
+                accessible back affordance + the screen's own title.
+                Deep-linkable: timecalendar-dev://notification-settings. */}
+            <Stack.Screen
+              name="notification-settings"
               options={{ headerShown: true }}
             />
           </Stack>
