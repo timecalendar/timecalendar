@@ -154,6 +154,28 @@ describe("useSubscriptionRegistration", () => {
     )
   })
 
+  it("wraps a non-Error rejection in an Error before recording it", async () => {
+    mockGetFcmToken.mockResolvedValue("fcm-token")
+    mockFetch.mockRejectedValue("plain string boom")
+
+    const { result } = await renderHook(() => useSubscriptionRegistration(), {
+      wrapper,
+    })
+
+    await act(async () => {
+      await result.current.register().catch(() => {})
+    })
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(mockRecordError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "notifications/subscription",
+    )
+    expect(mockRecordError.mock.calls[0]?.[0]).toMatchObject({
+      message: "plain string boom",
+    })
+  })
+
   it("reset clears the error state", async () => {
     mockGetFcmToken.mockResolvedValue("fcm-token")
     mockFetch.mockRejectedValue(new Error("boom"))

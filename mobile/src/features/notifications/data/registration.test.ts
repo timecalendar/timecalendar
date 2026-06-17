@@ -58,6 +58,27 @@ describe("useNotificationRegistration", () => {
     expect(mockRegister).toHaveBeenCalledTimes(1)
   })
 
+  it("the once-guard blocks a re-run even when register's identity changes", async () => {
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    // A new register identity re-runs the startup effect; the fired ref must
+    // short-circuit it (the `if (fired.current) return` guard) so no second PUT.
+    const nextRegister = jest.fn().mockResolvedValue(undefined)
+    mockUseSubscriptionRegistration.mockReturnValue({
+      register: nextRegister,
+      isPending: false,
+      isError: false,
+      reset: jest.fn(),
+    })
+    await act(async () => {
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(1)
+    expect(nextRegister).not.toHaveBeenCalled()
+  })
+
   it("subscribes to token-refresh on mount (cleanup is the returned unsubscribe)", async () => {
     await renderHook(() => useNotificationRegistration())
     await waitFor(() => expect(mockOnFcmTokenRefresh).toHaveBeenCalledTimes(1))
