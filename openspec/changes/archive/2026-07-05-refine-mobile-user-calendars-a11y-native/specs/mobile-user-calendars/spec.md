@@ -46,7 +46,7 @@ two-target design).
 - **THEN** a "Calendriers" / "Calendars" entry navigates to the management screen (also
   deep-linkable as a `Stack` sibling of the tabs)
 
-### Requirement: Each row carries a visibility toggle that toggles the calendar's `visible` flag
+### Requirement: Each row carries a visibility checkbox that toggles the calendar's `visible` flag
 
 Each calendar row SHALL carry its visibility control as a single **row-level toggle**
 `Pressable` (merging the checked indicator and the name/school text into one accessibility
