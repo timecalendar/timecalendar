@@ -21,6 +21,42 @@ npm start         # Metro dev server only (when a dev client is already installe
 
 These are **development builds** (`expo-dev-client`), not Expo Go.
 
+## Run on a physical iOS device
+
+Same dev build, over USB. Plug in the iPhone, unlock it, tap **Trust This Computer**, then:
+
+```bash
+npm run ios -- --device   # build + install the dev client on the connected iPhone
+```
+
+First launch only: trust the developer certificate on the phone (**Settings → General → VPN & Device Management**). After that, `npm start` + reloading the app covers JS changes; rebuild natively only when native deps/config change.
+
+**Point it at your dev backend.** The default `EXPO_PUBLIC_API_URL` (`https://api.timecalendar.host:1443`) resolves through your Mac's `/etc/hosts` and only works on the simulator — on a real device that hostname is a dead end. Set `mobile/.env.local` to your Mac's LAN IP and the plain-HTTP backend (the dev variant allows cleartext to local networks via `NSAllowsLocalNetworking`):
+
+```bash
+# mobile/.env.local — find the IP with: ipconfig getifaddr en0
+EXPO_PUBLIC_API_URL=http://192.168.1.42:3005
+```
+
+`EXPO_PUBLIC_*` is inlined by Metro at bundle time, so restart Metro after editing (`npm start -- -c`). Phone and Mac must be on the same Wi-Fi (no guest network / AP isolation), with the dev backend running on your Mac. Revert to the `api.timecalendar.host` URL when switching back to the simulator.
+
+## Run on a physical Android device
+
+Same dev build, over USB. On the phone enable **Developer options → USB debugging**, plug it in, and accept the **Allow USB debugging** prompt (`adb devices` should list it), then:
+
+```bash
+npm run android -- --device   # build + install the dev client on the connected phone
+```
+
+**Point it at your dev backend.** Same as the iOS device above — set `mobile/.env.local` to your Mac's LAN IP (`10.0.2.2` is the *emulator's* alias for your Mac and does **not** work on a real device):
+
+```bash
+# mobile/.env.local — find the IP with: ipconfig getifaddr en0
+EXPO_PUBLIC_API_URL=http://192.168.1.42:3005
+```
+
+This is the single value that works for the iOS device and this Android device at once — one Metro inlines the same `.env.local` into both bundles, so a LAN IP serves both (an `adb reverse` → `localhost` URL would only satisfy Android and break iOS). The dev variant permits cleartext HTTP to it (`usesCleartextTraffic`). Same requirements as iOS: phone and Mac on the same Wi-Fi, backend running on your Mac, restart Metro after editing (`npm start -- -c`).
+
 ## App variants (`APP_VARIANT`)
 
 App identity is resolved dynamically in `app.config.ts`:
