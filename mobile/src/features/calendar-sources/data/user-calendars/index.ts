@@ -1,3 +1,4 @@
+export { type UserCalendarActions, useUserCalendarActions } from "./actions"
 export { type UseAddCalendar, useAddCalendar } from "./add-calendar"
 export { addCalendarFromToken } from "./add-from-token"
 export { useUserCalendars } from "./hooks"

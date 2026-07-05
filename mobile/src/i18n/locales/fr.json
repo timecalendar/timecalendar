@@ -176,5 +176,18 @@
   "debug.firebase.crash": "Déclencher un crash test",
   "devImport.importing": "Importation du calendrier…",
   "devImport.error": "Impossible d'importer le calendrier. Veuillez réessayer.",
-  "devImport.unavailable": "Cet écran n'est pas disponible."
+  "devImport.unavailable": "Cet écran n'est pas disponible.",
+  "common.cancel": "Annuler",
+  "profile.userCalendars.link": "Calendriers",
+  "userCalendars.title": "Mes calendriers",
+  "userCalendars.empty": "Aucun calendrier importé.",
+  "userCalendars.namePlaceholder": "Calendrier",
+  "userCalendars.personalSubtitle": "Calendrier personnel",
+  "userCalendars.add": "Ajouter un calendrier",
+  "userCalendars.error": "Impossible de mettre à jour vos calendriers. Veuillez réessayer.",
+  "userCalendars.deleted": "{{name}} supprimé",
+  "userCalendars.delete.label": "Supprimer le calendrier {{name}}",
+  "userCalendars.delete.title": "Confirmer la suppression",
+  "userCalendars.delete.message": "Êtes-vous sûr de vouloir supprimer le calendrier {{name}} ?",
+  "userCalendars.delete.confirm": "Supprimer"
 }

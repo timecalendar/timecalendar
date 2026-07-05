@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react-native"
 
+import { useUserCalendars } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import {
   type PersonalEvent,
@@ -22,12 +23,16 @@ jest.mock("@/features/personal-events", () => ({
 jest.mock("@/features/hidden-events/data", () => ({
   useHiddenEvents: jest.fn(),
 }))
+jest.mock("@/features/calendar-sources/data", () => ({
+  useUserCalendars: jest.fn(),
+}))
 jest.mock("./sync", () => ({
   useSyncedEvents: jest.fn(),
 }))
 
 const mockUsePersonalEvents = usePersonalEvents as jest.Mock
 const mockUseHiddenEvents = useHiddenEvents as jest.Mock
+const mockUseUserCalendars = useUserCalendars as jest.Mock
 const mockUseSyncedEvents = useSyncedEvents as jest.Mock
 
 function thisWeekRange() {
@@ -79,6 +84,10 @@ function syncedEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   }
 }
 
+function calendar(id: string, visible: boolean) {
+  return { id, visible }
+}
+
 beforeEach(() => {
   mockUsePersonalEvents.mockReturnValue([])
   mockUseSyncedEvents.mockReturnValue([])
@@ -86,6 +95,9 @@ beforeEach(() => {
     uidHiddenEvents: [],
     namedHiddenEvents: [],
   })
+  // Every synced fixture belongs to cal-1; keep it visible by default so the
+  // existing merge/hide/range assertions are unaffected by the visibility filter.
+  mockUseUserCalendars.mockReturnValue([calendar("cal-1", true)])
 })
 
 describe("useCalendarEvents", () => {
@@ -218,5 +230,56 @@ describe("useCalendarEvents", () => {
       useCalendarEvents(thisWeekRange()),
     )
     expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
+  })
+
+  it("excludes the synced events of a hidden (visible:false) calendar", async () => {
+    mockUseSyncedEvents.mockReturnValue([
+      syncedEvent({ id: "sync-1", userCalendarId: "cal-1" }),
+      syncedEvent({ id: "sync-2", userCalendarId: "cal-2" }),
+    ])
+    mockUseUserCalendars.mockReturnValue([
+      calendar("cal-1", false),
+      calendar("cal-2", true),
+    ])
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
+    expect(result.current.some((e) => e.id === "sync-2")).toBe(true)
+  })
+
+  it("always keeps a personal event regardless of any calendar's visibility", async () => {
+    mockUsePersonalEvents.mockReturnValue([personalEvent({ uid: "pe-1" })])
+    mockUseUserCalendars.mockReturnValue([calendar("cal-1", false)])
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "pe-1")).toBe(true)
+  })
+
+  it("re-includes a calendar's events when it is toggled back to visible", async () => {
+    mockUseSyncedEvents.mockReturnValue([
+      syncedEvent({ id: "sync-1", userCalendarId: "cal-1" }),
+    ])
+    mockUseUserCalendars.mockReturnValue([calendar("cal-1", false)])
+    const { result, rerender } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
+
+    mockUseUserCalendars.mockReturnValue([calendar("cal-1", true)])
+    await rerender({})
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
+  })
+
+  it("excludes an event whose calendar no longer exists (a deleted calendar left the set)", async () => {
+    mockUseSyncedEvents.mockReturnValue([
+      syncedEvent({ id: "sync-1", userCalendarId: "cal-gone" }),
+    ])
+    mockUseUserCalendars.mockReturnValue([calendar("cal-1", true)])
+    const { result } = await renderHook(() =>
+      useCalendarEvents(thisWeekRange()),
+    )
+    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
   })
 })

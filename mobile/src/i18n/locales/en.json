@@ -176,5 +176,18 @@
   "debug.firebase.crash": "Trigger test crash",
   "devImport.importing": "Importing calendar…",
   "devImport.error": "Could not import the calendar. Please try again.",
-  "devImport.unavailable": "This screen is not available."
+  "devImport.unavailable": "This screen is not available.",
+  "common.cancel": "Cancel",
+  "profile.userCalendars.link": "Calendars",
+  "userCalendars.title": "My calendars",
+  "userCalendars.empty": "No calendars imported.",
+  "userCalendars.namePlaceholder": "Calendar",
+  "userCalendars.personalSubtitle": "Personal calendar",
+  "userCalendars.add": "Add a calendar",
+  "userCalendars.error": "We couldn't update your calendars. Please try again.",
+  "userCalendars.deleted": "{{name}} deleted",
+  "userCalendars.delete.label": "Delete calendar {{name}}",
+  "userCalendars.delete.title": "Confirm deletion",
+  "userCalendars.delete.message": "Are you sure you want to delete the calendar {{name}}?",
+  "userCalendars.delete.confirm": "Delete"
 }

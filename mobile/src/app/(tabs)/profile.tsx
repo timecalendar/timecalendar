@@ -73,6 +73,20 @@ export default function ProfileScreen() {
           </Pressable>
         </Link>
 
+        {/* The user-calendars management screen ("Mes calendriers") — toggle a
+            held calendar's visibility, delete it, or add another. Same accessible-
+            link shape as the Settings / hidden-events entries. */}
+        <Link href="/user-calendars" asChild>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t("profile.userCalendars.link")}
+            hitSlop={Spacing.two}
+            style={styles.settingsLink}
+          >
+            <ThemedText>{t("profile.userCalendars.link")}</ThemedText>
+          </Pressable>
+        </Link>
+
         {/* The notification subscription preferences screen (Phase 06 Ship B).
             Same accessible-link shape as the Settings / hidden-events entries. */}
         <Link href="/notification-settings" asChild>
