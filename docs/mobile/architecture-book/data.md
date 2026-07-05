@@ -16,6 +16,7 @@
 ## Single fetch mutator
 
 - Every generated operation calls `customFetch` in `mobile/src/api/mutator.ts`: base-URL prefixing, JSON headers, non-2xx → typed `ApiError<TBody>` carrying status + parsed body. **No axios in mobile.**
+- **Every request is time-bounded** (`DEFAULT_TIMEOUT_MS`, an internal `AbortController`): RN's `fetch` has no timeout, so a black-hole network would hang a query forever — the timeout aborts it and the failure surfaces as an ordinary recoverable `isError`. The mutator also **forwards the caller's `options.signal`** (TanStack Query's per-query cancellation) by composing it with the timeout controller, so either source aborts the in-flight `fetch`. The seam's contract is proven directly in `mutator.test.ts` (the one suite that does NOT mock `@/api/mutator`).
 - Enforced by codegen config (`orval.config.ts` mutator) and by lint: `no-restricted-globals` bans `fetch` everywhere except `src/api/mutator.ts`, and `no-restricted-imports` bans `axios` — both in `mobile/eslint.config.js`.
 
 ## Base URL
