@@ -171,5 +171,8 @@
   "profile.hiddenEvents.link": "Hidden events",
   "debug.firebase.heading": "Firebase debug (dev only)",
   "debug.firebase.logEvent": "Log test event",
-  "debug.firebase.crash": "Trigger test crash"
+  "debug.firebase.crash": "Trigger test crash",
+  "devImport.importing": "Importing calendar…",
+  "devImport.error": "Could not import the calendar. Please try again.",
+  "devImport.unavailable": "This screen is not available."
 }

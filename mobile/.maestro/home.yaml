@@ -1,42 +1,50 @@
-# Home today-view reachability e2e flow (Phase-04 item 4 / ADR 022).
+# Home today-view real-round-trip e2e flow (ADR 022 / 030).
 #
-# Cold-launches the development-variant app and asserts the Home tab renders the
-# today view: the app-name heading + the empty-day state, then that pull-to-refresh
-# is reachable (the RefreshControl triggers the sync orchestrator without crashing).
-# This proves: the Home tab mounts past the splash, the today view composes the
-# landed seams (useCalendarEvents + the home selectors + the salvaged overlap grid)
-# without crashing launch, and the merged events read runs — on both platforms.
+# Imports the seeded `e2e-smoke-calendar` token (the shared import-seed.yaml
+# preamble), then cold-restarts into the Home tab so the startup sync re-fetches
+# the now-held token and the today view renders REAL synced data — proving app →
+# generated client → customFetch → NestJS → Postgres end to end on the home surface.
 #
-# SEEDED-DATA LIMITATION (same posture as calendar/agenda/details, ADR 021): the
-# e2e server seed does NOT seed a user_calendars token reachable with synced
-# calendar_events, and the dense-week fixture is no longer in the default runtime
-# merge — so there is no real synced event to render here. With no personal events
-# created either, the displayed day is today and the empty-day state renders. So
-# this flow asserts render + reachability only; the REAL populated today render
-# (the upcoming scroller + the dense overlap mini-timeline + the now-indicator +
-# frame rate) is the on-device visual pass (folded into the existing calendar
-# on-device visual review note — no new inbox note this ship).
+# This replaces the former reachability-only flow. Previously a fresh e2e launch
+# had an empty user_calendars table, so the startup sync no-op'd and the today view
+# showed the empty-day state ("Nothing planned.") — the "SEEDED-DATA LIMITATION".
+# The dev-import deep link now makes the app durably hold the token; the seeded
+# `E2E Today Lecture` is a today-anchored event that lands on the today timeline.
 #
-# Requires a release-config dev-variant build installed on the connected device.
-# Shared across iOS and Android: stable localized text assertions, no per-platform
-# selectors. Run via mobile/e2e/run_e2e.sh. Mirrors calendar.yaml / settings.yaml.
+# Why cold-restart into Home instead of tapping the tab: the preamble lands on
+# /calendar (its router.replace target), and the native tab label ("Home"/"Accueil")
+# is locale-dependent. A stopApp→launchApp cold start returns to the (tabs) index
+# (Home) WITHOUT clearing state (clearState was the preamble's FIRST step, before
+# the import), so the held token survives and useStartupSync repopulates the today
+# view — locale-independent and robust.
+#
+# What it deliberately does NOT do (design non-goals): assert the dense-overlap
+# mini-timeline column packing or frame rate (real hardware — the on-device visual
+# pass). The today-view seam composition is proven deterministically by the Jest
+# proof tests (home-screen.test.tsx + today-timeline.test.tsx).
+#
+# Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
+# seeding the token. Shared across iOS and Android: stable localized text / testID
+# assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
 appId: fr.samuelprak.timecalendar.dev
 ---
+# Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
+- runFlow: import-seed.yaml
+# Cold-restart into the Home tab (the (tabs) index). The held token survives the
+# restart (clearState ran only at the preamble's start), so useStartupSync
+# repopulates the today view.
+- stopApp
 - launchApp
-# The Home tab is the initial route (the (tabs) group's index). Generous timeout:
-# a release-config cold start + JS bundle load can land just past Maestro's ~17s
-# default. The app-name heading renders past the splash + the startup sync (a no-op
-# with no held tokens, so launch is not blocked/crashed).
+# The app-name heading renders past the splash + the startup sync. Generous timeout:
+# a release-config cold start + JS bundle load + the sync round-trip can land past
+# Maestro's ~17s default.
 - extendedWaitUntil:
     visible: "TimeCalendar"
     timeout: 60000
-# The empty-day state renders (no seeded synced events, no personal events) —
-# proving the today view composed the seams + selectors without crashing.
-- assertVisible: "Nothing planned."
-# Pull-to-refresh reachability: the today view scrolls and exposes the
-# RefreshControl wired to the sync orchestrator. Swipe down to trigger a refresh;
-# it is a no-op with no held tokens, so it must not crash. The heading stays
-# visible after the refresh settles.
-- swipe:
-    direction: DOWN
-- assertVisible: "TimeCalendar"
+# The real synced today event renders on the today timeline — `E2E Today Lecture`
+# is a today-anchored seeded event. Its presence (NOT "Nothing planned.") is the
+# round-trip proof (do NOT weaken this to the empty-day state — that reintroduces
+# the gap this flow closes).
+- extendedWaitUntil:
+    visible: "E2E Today Lecture"
+    timeout: 60000

@@ -171,5 +171,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     eas: {
       projectId: easProjectId,
     },
+    // The runtime variant, read at runtime via
+    // `Constants.expoConfig?.extra?.appVariant` (src/config/variant.ts). It gates
+    // the dev-only import deep link (src/app/dev-import.tsx / ADR 030): the route
+    // file ships in the prod bundle (Expo Router bundles every src/app/*.tsx), so
+    // an explicit named field — not __DEV__ (false in the release-config dev-
+    // variant e2e build) nor scheme-sniffing — is the security boundary that keeps
+    // the import inert in production. Pure JS config; no fingerprint bump.
+    appVariant: IS_DEV ? "development" : "production",
   },
 })

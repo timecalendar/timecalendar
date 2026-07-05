@@ -1,81 +1,57 @@
-# Calendar reachability e2e flow (Phase-04 items 1–3 / ADR 019 / 020 / 021).
+# Calendar real-round-trip e2e flow (ADR 019 / 020 / 021 / 030).
 #
-# Cold-launches the development-variant app, deep-links to the calendar screen,
-# and asserts the localized title + that the day/week→agenda view switch is
-# reachable, then that the event-details route is reachable (the not-found state
-# via a deep link). This proves: the route is reachable via deep link (Stack sibling of
-# (tabs)), the screen mounts past the splash, the GestureHandlerRootView root +
-# the calendar-kit grid render natively, the startup sync runs without crashing
-# launch, and the view switch toggles the rendered surface — on both platforms.
+# The anchor proof that the whole seeded-token mechanism works end to end: it
+# imports the seeded `e2e-smoke-calendar` token (the shared import-seed.yaml
+# preamble), then asserts that REAL SYNCED DATA renders on the calendar surface and
+# that tapping a synced tile opens its REAL event-details — proving app → generated
+# client → customFetch → NestJS → Postgres end to end, nothing mocked.
 #
-# SEEDED-DATA LIMITATION (calendar-sync ship, ADR 021): the events now come from a
-# real POST /calendars/sync over a durable user_calendars token, and the e2e
-# server seed (ci/e2e-server.sh → db:init) does NOT seed a user_calendars token
-# reachable by deep link with synced calendar_events — so there is no real synced
-# event to assert here. The dense-week fixture is also no longer in the default
-# runtime merge (dev/test-only since the sync ship). So this flow asserts render +
-# reachability only; the REAL synced render (+ offline-after-sync, drop+replace
-# atomicity, perf, Crashlytics arrival) is the on-device manual pass
-# (inbox/2026-06-16-calendar-sync-on-device.md). Seeding a token+events is its own
-# infra change, out of scope this ship.
+# This replaces the former reachability-only flow. Previously a fresh e2e launch
+# had an empty user_calendars table, so the startup sync no-op'd and every view was
+# empty — the flow could only assert the empty/not-found states (the "SEEDED-DATA
+# LIMITATION"). The dev-import deep link now makes the app durably hold the token
+# and sync it (see import-seed.yaml + server/src/scripts/seed-e2e-calendar.ts): the
+# seeded `E2E Today Lecture` (a today-anchored event) is a real synced tile.
 #
-# What it deliberately does NOT do: assert dense-overlap COLUMN PACKING or frame
-# rate (the Reanimated grid's internal layout is the library's; frame rate needs
-# real hardware — the on-device manual pass). The screen wiring (event→tile,
-# mapping, theme/label, sync error/retry) is proven deterministically by the Jest
-# proof test (calendar-screen.test.tsx + data/sync/*.test).
+# The assertion path is the AGENDA view: calendar-kit grid tiles live inside a
+# Reanimated worklet grid whose positioned wrappers are the library's, so the
+# agenda list (a flat FlatList of title text) is the robust cross-platform surface
+# to assert + tap a synced title (design D5). "Agenda" is the same label in FR + EN.
 #
-# Requires a release-config dev-variant build installed on the connected device.
-# Shared across iOS and Android: stable localized text assertions, no per-platform
-# selectors. Run via mobile/e2e/run_e2e.sh. Mirrors settings.yaml.
+# What it deliberately does NOT do (design non-goals): assert dense-overlap COLUMN
+# PACKING or frame rate (the Reanimated grid's internal layout is the library's;
+# frame rate needs real hardware — the on-device manual pass). The screen wiring is
+# also proven deterministically by the Jest proof tests (calendar-screen.test.tsx +
+# event-details-screen.test.tsx + data/sync/*.test).
+#
+# Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
+# seeding the token. Shared across iOS and Android: stable localized text / testID
+# assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
 appId: fr.samuelprak.timecalendar.dev
 ---
-- launchApp
-# Cold-start via the deep link (see settings.yaml header): a warm openLink does
-# not navigate on Android release builds — stopApp first, then openLink relaunches.
-- stopApp
-- openLink: timecalendar-dev://calendar
-# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
-# simulator — tap when present, skip otherwise.
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - tapOn:
-          text: "Open"
-          optional: true
-# Generous timeout: a release-config cold start + JS bundle load can land just
-# past Maestro's ~17s default. The title renders past the splash + the startup
-# sync (which is a no-op with no held tokens, so launch is not blocked/crashed).
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-# Switch to the agenda view (a third in-place view mode). Proves the day/week→
-# agenda switch toggles the rendered surface. "Agenda" is the same label in FR +
-# EN so the tap is locale-stable. (No real synced event to assert — see the
-# SEEDED-DATA LIMITATION header; the real synced render is the on-device pass.)
+# Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
+- runFlow: import-seed.yaml
+# Switch to the agenda view — the robust surface to assert + tap a synced title.
 - tapOn:
     id: "calendar-view-agenda"
 - assertVisible:
     id: "calendar-view-agenda"
-# Event details (Phase-04 item 3) — reachability only. The SEEDED-DATA LIMITATION
-# above means no synced event tile exists to tap, so we deep-link the details
-# route with a uid NOT in calendar_events and assert the NOT-FOUND message renders:
-# this proves the event-details/[uid] route is reachable (a Stack sibling of
-# (tabs)), the screen mounts, and resolves the not-found state without crashing.
-# The REAL populated details render (tags / lines / footer on a real synced event)
-# + the tap-from-tile path are the on-device manual pass
-# (inbox/2026-06-16-event-details-on-device.md) — CI proves the wiring in Jest
-# (event-details-screen.test.tsx + calendar-screen.test.tsx tap routing).
-- stopApp
-- openLink: timecalendar-dev://event-details/no-such-event
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - tapOn:
-          text: "Open"
-          optional: true
+# The real synced tile renders: `E2E Today Lecture` is a today-anchored seeded
+# event returned by POST /calendars/sync. Generous timeout so the just-triggered
+# sync settles before the first synced-title assertion (do NOT weaken this to an
+# empty/reachability assertion — that reintroduces the gap this flow closes).
 - extendedWaitUntil:
-    visible: "This event is no longer available."
+    visible: "E2E Today Lecture"
     timeout: 60000
+# Tap the synced tile → its REAL event-details (a Stack sibling of (tabs)).
+- tapOn:
+    text: "E2E Today Lecture"
+# Event-details shows REAL content — the seeded title + location render. This is
+# the round-trip proof: the not-found screen has no title/location, so a visible
+# seeded title + location IS the resolved-details state (the old reachability flow
+# asserted the not-found message instead — locale-specific text we avoid here so
+# the assertion stays cross-platform + locale-stable).
+- extendedWaitUntil:
+    visible: "E2E Today Lecture"
+    timeout: 60000
+- assertVisible: "Room E2E Lecture"

@@ -74,6 +74,19 @@ success and failure alike. On failure it dumps the backend log tail. With
 2. `run_e2e.sh` runs the whole `.maestro/` directory — no wiring needed.
 3. Keep assertions on stable seeded text (ASCII-safe avoids accent-matching
    fragility across platforms).
+4. To assert **real synced calendar data**, start the flow with the shared import
+   preamble so the app durably holds the seeded token and syncs it (ADR 030):
+   ```yaml
+   - runFlow: import-seed.yaml
+   ```
+   `import-seed.yaml` opens `timecalendar-dev://dev-import?token=e2e-smoke-calendar`,
+   which resolves + upserts the token into `user_calendars`, triggers a sync, and
+   lands on the calendar. The seeded today-anchored events (`E2E Today Lecture`,
+   `E2E Today Seminar`, the `E2E Overlap A/B` pair) then render as real synced
+   tiles. Caveat: "today" is computed in **UTC** on the server; on a local run
+   whose machine day differs from UTC near midnight the device's local-time
+   `isToday` can disagree — a known local edge, not a CI flake (CI is UTC
+   end to end).
 
 ## CI
 

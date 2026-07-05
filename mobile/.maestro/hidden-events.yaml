@@ -1,41 +1,42 @@
-# Hidden-events management screen reachability + render e2e flow (Phase 05 Ship A
-# / ADR 023).
+# Hidden-events real-round-trip e2e flow (ADR 023 / 030).
 #
-# Cold-launches the development-variant app, deep-links to the hidden-events
-# management screen, and asserts the localized title + the empty state render.
-# This proves: the route is reachable via deep link (a Stack sibling of (tabs)),
-# the screen mounts past the splash, and the management surface renders without
-# crashing on both platforms.
+# Imports the seeded `e2e-smoke-calendar` token (the shared import-seed.yaml
+# preamble), opens a REAL synced event's details by its stable seeded uid, hides it,
+# proves it disappears from the calendar view, un-hides it from the management
+# screen, and proves it reappears — round-tripping the hidden set through the real
+# device-local store and the events-source filter, end to end on a real device.
 #
-# SEEDED-DATA LIMITATION (same posture as calendar.yaml / home.yaml): nothing is
-# hidden on a fresh dev-variant launch (the hidden set is an unwritten MMKV key →
-# the total parser reads the empty default), so the screen shows its empty state.
-# The populated hide round-trip (hide a synced event from event-details → it
-# disappears from the views → un-hide it here) needs a seeded user_calendars token
-# + synced calendar_events, which the e2e server seed does NOT provide (the same
-# limitation calendar.yaml records). So this flow asserts render + reachability +
-# the empty state only; the REAL hide/un-hide round-trip + the on-disk MMKV
-# restart/kill/cache-clear survival + manual VoiceOver/TalkBack are the on-device
-# manual pass (inbox/2026-06-16-hidden-events-on-device.md). The hide/un-hide
-# WIRING (chooser → hideByUid/hideByName, un-hide, the synced-only gating, the
-# filter at the events-source seam, write/read-back + restart-sim) is proven
-# deterministically by the Jest suite (hidden-events/data/* + the screen tests +
-# calendar/data/events.test.ts).
+# This replaces the former reachability-only flow, which could only assert the
+# empty hidden-set state (the "SEEDED-DATA LIMITATION") because no real synced event
+# was reachable to hide. The dev-import deep link now makes the app hold the token;
+# `E2E Today Seminar` (seeded uid `e2e-today-seminar`, DISTINCT from the checklist
+# flow's `E2E Today Lecture` so the two flows don't collide) is the event hidden and
+# un-hidden here.
 #
-# Requires a release-config dev-variant build installed on the connected device
-# (no server needed — this screen reads device-local state). Shared across iOS and
-# Android: stable localized text assertions, no per-platform selectors. Run via
-# mobile/e2e/run_e2e.sh. Mirrors settings.yaml / personal-events.yaml.
+# Selector notes: the hide action is the details header button (localized "Hide")
+# opening a native Alert chooser whose "Hide this event" option hides by uid. The
+# management-screen un-hide row renders the event title + a "Un-hide" control (a11y
+# label "Un-hide <title>"). The e2e device runs in EN (the established convention —
+# settings.yaml asserts "Settings", the old hidden-events flow asserted "Hidden
+# events" / "No hidden events."), so the localized taps use the EN strings.
+#
+# The flow leaves the hidden set RESTORED (the event is un-hidden at the end), so a
+# later flow / re-run starts clean — belt-and-braces on top of the preamble's
+# clearState (each calendar-family flow wipes the slate first).
+#
+# Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
+# seeding the token. Shared across iOS and Android: stable localized text
+# assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
 appId: fr.samuelprak.timecalendar.dev
 ---
-- launchApp
-# Cold-start via the deep link (see settings.yaml header): a warm openLink does
-# not navigate on Android release builds — Expo Router resolves the link through
-# getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+# Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
+- runFlow: import-seed.yaml
+# Cold-restart into the seeded event's details by its stable uid. The held token
+# survives the restart (clearState ran only at the preamble's start).
 - stopApp
-- openLink: timecalendar-dev://hidden-events
-# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links on
-# the FIRST deep link per simulator — tap it when present, skip otherwise.
+- openLink: timecalendar-dev://event-details/e2e-today-seminar
+# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
+# simulator — tap when present, skip otherwise.
 - runFlow:
     when:
       platform: iOS
@@ -43,12 +44,70 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
-# Generous timeout: a release-config iOS cold start + JS bundle load can land just
-# past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
+# Real details render, proving the synced event resolved (NOT the not-found state).
 - extendedWaitUntil:
-    visible: "Hidden events"
+    visible: "E2E Today Seminar"
     timeout: 60000
-# Nothing is hidden on a fresh launch → the accessible empty state renders.
+# Hide it: the header "Hide" action opens the native Alert chooser; "Hide this
+# event" hides by uid and pops back.
+- tapOn:
+    text: "Hide"
+- tapOn:
+    text: "Hide this event"
+# Prove it is GONE from the calendar view. Cold-restart into the agenda: the token
+# is still held (un-hide restores state; the hidden set is device-local), so the
+# synced events render — but `E2E Today Seminar` is filtered out while
+# `E2E Today Lecture` (NOT hidden) still renders (proving the filter hides ONLY the
+# target, not an empty-view false positive).
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
 - extendedWaitUntil:
-    visible: "No hidden events."
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view-agenda"
+- extendedWaitUntil:
+    visible: "E2E Today Lecture"
+    timeout: 60000
+- assertNotVisible: "E2E Today Seminar"
+# Open the hidden-events management screen and assert the hidden event is listed.
+- stopApp
+- openLink: timecalendar-dev://hidden-events
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "E2E Today Seminar"
+    timeout: 60000
+# Un-hide it (a11y label "Un-hide <title>" — unambiguous with a single hidden event).
+- tapOn:
+    text: "Un-hide E2E Today Seminar"
+# Prove it REAPPEARS: back on the calendar agenda, the un-hidden event renders again.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view-agenda"
+- extendedWaitUntil:
+    visible: "E2E Today Seminar"
     timeout: 60000
