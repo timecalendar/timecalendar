@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  TimeCalendar monochrome brand mark — a single-colour calendar glyph.
+
+  Source of truth for the derived raster marks that a single flat colour can
+  carry (where the full-colour app icon cannot be reduced without becoming an
+  unreadable blob):
+    - assets/images/android-icon-monochrome.png  (Android 13+ themed icon; the
+      system re-tints it, so it ships in a neutral dark)
+    - assets/images/splash-icon.png              (white, over the brand-pink splash)
+
+  The full-colour iOS icon and the Android adaptive foreground are NOT derived
+  from this file — they are ported verbatim from the shipped Flutter brand assets
+  under app/. See the TIM-165 commit message for the exact provenance.
+
+  Painted additively in `currentColor` (no alpha holes) so it silhouettes cleanly
+  at any tint. viewBox is 200x200; the mark sits inside the ~66% adaptive safe zone.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <g fill="currentColor">
+    <!-- binding rings -->
+    <rect x="72" y="40" width="13" height="24" rx="6.5"/>
+    <rect x="115" y="40" width="13" height="24" rx="6.5"/>
+    <!-- calendar body outline -->
+    <path d="M64 56h72a16 16 0 0 1 16 16v72a16 16 0 0 1-16 16H64a16 16 0 0 1-16-16V72a16 16 0 0 1 16-16Zm0 12a4 4 0 0 0-4 4v72a4 4 0 0 0 4 4h72a4 4 0 0 0 4-4V72a4 4 0 0 0-4-4H64Z"/>
+    <!-- header band -->
+    <path d="M60 78a4 4 0 0 1 4-4h72a4 4 0 0 1 4 4v10H60V78Z"/>
+    <!-- event blocks -->
+    <rect x="66" y="102" width="22" height="15" rx="4"/>
+    <rect x="94" y="102" width="22" height="15" rx="4"/>
+    <rect x="122" y="102" width="12" height="15" rx="4"/>
+    <rect x="66" y="125" width="14" height="15" rx="4"/>
+    <rect x="86" y="125" width="26" height="15" rx="4"/>
+  </g>
+</svg>
