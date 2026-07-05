@@ -3,7 +3,7 @@ import type {
   CalendarEventForPublic,
   EventTag,
 } from "@/api/generated/timeCalendar.schemas"
-import { calendarEvents } from "@/db"
+import { calendarEvents, isoToDate, nullToUndef } from "@/db"
 import type { CalendarEvent } from "@/features/calendar/data/types"
 import { parseJsonArray } from "@/storage"
 
@@ -66,11 +66,11 @@ export function rowToCalendarEvent(row: CalendarEventRow): CalendarEvent {
     id: row.uid,
     title: row.title,
     color: row.color,
-    startsAt: new Date(row.startsAt),
-    endsAt: new Date(row.endsAt),
-    location: row.location ?? undefined,
+    startsAt: isoToDate(row.startsAt),
+    endsAt: isoToDate(row.endsAt),
+    location: nullToUndef(row.location),
     allDay: row.allDay,
-    description: row.description ?? undefined,
+    description: nullToUndef(row.description),
     teachers: parseJsonArray<string>(row.teachers),
     tags: tags.map((tag) => tag.name),
     // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`

@@ -28,7 +28,13 @@ const mockFake = createFakeDb({
   tables: { userCalendars: { columns: ["id", "token"], pk: "id" } },
 })
 
-jest.mock("@/db", () => mockFake.module)
+// The row↔domain mappers now live on the @/db seam — the fake stubs the query
+// surface, so spread the real mapper impls back in (they are pure; stubbing them
+// would destroy the no-behavior-change oracle).
+jest.mock("@/db", () => ({
+  ...mockFake.module,
+  ...jest.requireActual<object>("@/db/mappers"),
+}))
 
 const calendar: UserCalendar = {
   id: "cal-restart",

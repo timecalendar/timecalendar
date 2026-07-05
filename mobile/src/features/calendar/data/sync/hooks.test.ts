@@ -12,6 +12,8 @@ jest.mock("@/db", () => ({
   db: { select: () => ({ from: () => ({}) }) },
   calendarEvents: {},
   useLiveQuery: (...args: unknown[]) => mockUseLiveQuery(...args),
+  // The row→domain mappers now live on the @/db seam — supply the real impls.
+  ...jest.requireActual<object>("@/db/mappers"),
 }))
 
 function row(overrides: Record<string, unknown> = {}) {

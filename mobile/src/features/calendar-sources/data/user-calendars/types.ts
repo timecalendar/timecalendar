@@ -1,5 +1,11 @@
 import type { CalendarForPublic } from "@/api/generated/timeCalendar.schemas"
-import { userCalendars } from "@/db"
+import {
+  dateToIso,
+  isoToDate,
+  nullToUndef,
+  undefToNull,
+  userCalendars,
+} from "@/db"
 
 // The domain UserCalendar type, the pure row↔domain mappers, and the server-DTO
 // mapper. They isolate the TEXT-ISO + integer-boolean storage format (ADR 018 /
@@ -33,10 +39,10 @@ export function rowToCalendar(row: UserCalendarRow): UserCalendar {
     id: row.id,
     token: row.token,
     name: row.name,
-    schoolName: row.schoolName ?? undefined,
-    schoolId: row.schoolId ?? undefined,
-    lastUpdatedAt: new Date(row.lastUpdatedAt),
-    createdAt: new Date(row.createdAt),
+    schoolName: nullToUndef(row.schoolName),
+    schoolId: nullToUndef(row.schoolId),
+    lastUpdatedAt: isoToDate(row.lastUpdatedAt),
+    createdAt: isoToDate(row.createdAt),
     visible: row.visible,
   }
 }
@@ -50,10 +56,10 @@ export function calendarToRow(calendar: UserCalendar): UserCalendarInsert {
     id: calendar.id,
     token: calendar.token,
     name: calendar.name,
-    schoolName: calendar.schoolName ?? null,
-    schoolId: calendar.schoolId ?? null,
-    lastUpdatedAt: calendar.lastUpdatedAt.toISOString(),
-    createdAt: calendar.createdAt.toISOString(),
+    schoolName: undefToNull(calendar.schoolName),
+    schoolId: undefToNull(calendar.schoolId),
+    lastUpdatedAt: dateToIso(calendar.lastUpdatedAt),
+    createdAt: dateToIso(calendar.createdAt),
     visible: calendar.visible,
   }
 }
@@ -68,10 +74,10 @@ export function fromCalendarForPublic(dto: CalendarForPublic): UserCalendar {
     id: dto.id,
     token: dto.token,
     name: dto.name,
-    schoolName: dto.schoolName ?? undefined,
-    schoolId: dto.schoolId ?? undefined,
-    lastUpdatedAt: new Date(dto.lastUpdatedAt),
-    createdAt: new Date(dto.createdAt),
+    schoolName: nullToUndef(dto.schoolName),
+    schoolId: nullToUndef(dto.schoolId),
+    lastUpdatedAt: isoToDate(dto.lastUpdatedAt),
+    createdAt: isoToDate(dto.createdAt),
     visible: true,
   }
 }

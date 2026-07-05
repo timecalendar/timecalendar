@@ -9,7 +9,7 @@
 
 import { createFakeDb } from "@/test-support/fake-db"
 
-import { type ChecklistItem, checklistItemToRow } from "./types"
+import type { ChecklistItem } from "./types"
 
 const mockFake = createFakeDb({
   tables: {
@@ -17,7 +17,13 @@ const mockFake = createFakeDb({
   },
 })
 
-jest.mock("@/db", () => mockFake.module)
+// The row↔domain mappers now live on the @/db seam — the fake stubs the query
+// surface, so spread the real mapper impls back in (they are pure; stubbing them
+// would destroy the no-behavior-change oracle).
+jest.mock("@/db", () => ({
+  ...mockFake.module,
+  ...jest.requireActual<object>("@/db/mappers"),
+}))
 
 // require() the SUT lazily (not a top-level import) so the eager `@/db` value
 // import inside repository.ts can't fire the hoisted jest.mock factory before
@@ -28,6 +34,12 @@ const { checklistItems } = mockFake.module as {
 const { add, findByEvent, remove, reorder, setChecked, setContent } =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("./repository") as typeof import("./repository")
+// Required lazily (not a top-level value import) for the same reason as the SUT:
+// `./types`' `@/db` mapper imports would otherwise fire the mock factory before
+// `mockFake` is assigned.
+const { checklistItemToRow } =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("./types") as typeof import("./types")
 
 function makeItem(overrides: Partial<ChecklistItem> = {}): ChecklistItem {
   return {

@@ -1,4 +1,10 @@
-import { personalEvents } from "@/db"
+import {
+  dateToIso,
+  isoToDate,
+  nullToUndef,
+  personalEvents,
+  undefToNull,
+} from "@/db"
 
 // The domain type the feature exposes, and the pure row↔domain mappers that
 // isolate the TEXT-ISO storage format (D4) from ergonomic domain types (D7).
@@ -31,11 +37,11 @@ export function rowToEvent(row: PersonalEventRow): PersonalEvent {
     uid: row.uid,
     title: row.title,
     color: row.color,
-    startsAt: new Date(row.startsAt),
-    endsAt: new Date(row.endsAt),
-    exportedAt: new Date(row.exportedAt),
-    location: row.location ?? undefined,
-    description: row.description ?? undefined,
+    startsAt: isoToDate(row.startsAt),
+    endsAt: isoToDate(row.endsAt),
+    exportedAt: isoToDate(row.exportedAt),
+    location: nullToUndef(row.location),
+    description: nullToUndef(row.description),
   }
 }
 
@@ -47,10 +53,10 @@ export function eventToRow(event: PersonalEvent): PersonalEventInsert {
     uid: event.uid,
     title: event.title,
     color: event.color,
-    startsAt: event.startsAt.toISOString(),
-    endsAt: event.endsAt.toISOString(),
-    exportedAt: event.exportedAt.toISOString(),
-    location: event.location ?? null,
-    description: event.description ?? null,
+    startsAt: dateToIso(event.startsAt),
+    endsAt: dateToIso(event.endsAt),
+    exportedAt: dateToIso(event.exportedAt),
+    location: undefToNull(event.location),
+    description: undefToNull(event.description),
   }
 }
