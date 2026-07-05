@@ -24,5 +24,6 @@ export {
   type UserCalendarActions,
   useUserCalendarActions,
   useUserCalendars,
+  useUserCalendarsLoaded,
 } from "./user-calendars"
 export { validateIcalUrl } from "./validate-url"
