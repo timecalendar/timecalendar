@@ -39,6 +39,8 @@ jest.mock("@/db", () => {
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),
     useLiveQuery: (query: { __token?: string }) =>
       query?.__token === "personalEvents" ? mockPersonalLive : mockSyncedLive,
+    // The row→domain mappers now live on the @/db seam — supply the real impls.
+    ...jest.requireActual<object>("@/db/mappers"),
   }
 })
 

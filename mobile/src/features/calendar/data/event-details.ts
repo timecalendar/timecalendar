@@ -6,7 +6,15 @@ import type {
   EventTypeEnum,
 } from "@/api/generated/timeCalendar.schemas"
 import { EventTypeEnum as EventTypeEnumValues } from "@/api/generated/timeCalendar.schemas"
-import { calendarEvents, db, eq, personalEvents, useLiveQuery } from "@/db"
+import {
+  calendarEvents,
+  db,
+  eq,
+  isoToDate,
+  nullToUndef,
+  personalEvents,
+  useLiveQuery,
+} from "@/db"
 import { parseJsonArray } from "@/storage"
 
 import { decodeFields } from "./sync/types"
@@ -86,11 +94,11 @@ export function rowToEventDetails(row: CalendarEventRow): EventDetails {
     color: row.color,
     groupColor: row.groupColor,
     type: narrowType(row.type),
-    startsAt: new Date(row.startsAt),
-    endsAt: new Date(row.endsAt),
-    exportedAt: new Date(row.exportedAt),
-    location: row.location ?? undefined,
-    description: row.description ?? undefined,
+    startsAt: isoToDate(row.startsAt),
+    endsAt: isoToDate(row.endsAt),
+    exportedAt: isoToDate(row.exportedAt),
+    location: nullToUndef(row.location),
+    description: nullToUndef(row.description),
     teachers: parseJsonArray<string>(row.teachers),
     tags: parseJsonArray<EventDetailsTag>(row.tags),
     // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
@@ -115,11 +123,11 @@ export function personalRowToEventDetails(row: PersonalEventRow): EventDetails {
     color: row.color,
     groupColor: row.color,
     type: EventTypeEnumValues.class,
-    startsAt: new Date(row.startsAt),
-    endsAt: new Date(row.endsAt),
-    exportedAt: new Date(row.exportedAt),
-    location: row.location ?? undefined,
-    description: row.description ?? undefined,
+    startsAt: isoToDate(row.startsAt),
+    endsAt: isoToDate(row.endsAt),
+    exportedAt: isoToDate(row.exportedAt),
+    location: nullToUndef(row.location),
+    description: nullToUndef(row.description),
     teachers: [],
     tags: [],
     canceled: false,
