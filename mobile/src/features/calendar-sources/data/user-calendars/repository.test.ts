@@ -89,6 +89,15 @@ describe("user-calendars repository", () => {
     await upsert(calendar)
     expect(mockFake.spies.insert).toHaveBeenCalledWith(userCalendars)
     expect(mockFake.spies.values).toHaveBeenCalledWith(calendarToRow(calendar))
+    // Pin concrete literal fields so the assertion cannot pass on a wrong/stubbed
+    // mapper (the `calendarToRow(calendar)` match alone is tautological); prove the
+    // row carries the id verbatim and the Date→ISO conversion actually happened.
+    expect(mockFake.spies.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "cal-1",
+        lastUpdatedAt: "2026-06-14T09:00:00.000Z",
+      }),
+    )
     expect(mockFake.spies.onConflictDoUpdate).toHaveBeenCalledWith({
       target: userCalendars.id,
       set: calendarToRow(calendar),

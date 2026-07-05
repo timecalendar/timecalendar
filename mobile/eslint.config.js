@@ -79,11 +79,11 @@ const storageBackendImportPatterns = [
 // alpha native-chrome APIs banned for ALPHA CHURN (D4); @howljs/calendar-kit is
 // a STABLE dep banned for SWAP-REVERSIBILITY (ADR 020 — the #1-risk calendar
 // surface on a single maintainer), so "alpha-ness" is incidental to the list —
-// the constant name (chromeAlphaImportPatterns) is kept to avoid out-of-scope
-// line churn; a rename is ADR 020's revisit trigger. Caveat: this catches the
-// static import specifier, not a dynamic require()/import() evasion — it guards
+// the constant is named for the SEAM it protects, not the alpha-ness of its
+// members (ADR 020's revisit trigger, done). Caveat: this catches the static
+// import specifier, not a dynamic require()/import() evasion — it guards
 // accident, review covers adversaries (same posture as raw-fetch).
-const chromeAlphaImportPatterns = [
+const chromeSeamImportPatterns = [
   {
     regex: "^expo-router/unstable-native-tabs($|/)",
     message:
@@ -107,19 +107,19 @@ const chromeAlphaImportPatterns = [
   },
 ]
 
-// `banStorageBackends: false` / `banChromeAlpha: false` are for the seam dirs
+// `banStorageBackends: false` / `banChromeSeam: false` are for the seam dirs
 // (src/storage/, src/db/, src/components/chrome/), which legitimately import the
-// backends/alpha APIs the bans keep out of feature code.
+// backends/wrapped APIs the bans keep out of feature code.
 const restrictedImports = (
   extraPatterns = [],
-  { banStorageBackends = true, banChromeAlpha = true } = {},
+  { banStorageBackends = true, banChromeSeam = true } = {},
 ) => [
   "error",
   {
     patterns: [
       ...restrictedImportPatterns,
       ...(banStorageBackends ? storageBackendImportPatterns : []),
-      ...(banChromeAlpha ? chromeAlphaImportPatterns : []),
+      ...(banChromeSeam ? chromeSeamImportPatterns : []),
       ...extraPatterns,
     ],
     paths: restrictedImportPaths,
@@ -219,14 +219,14 @@ module.exports = defineConfig([
   },
   {
     // The chrome wrappers ARE the seam — each is the single import site for one
-    // alpha native-chrome API (expo-router/unstable-native-tabs, expo-glass-effect,
-    // @expo/ui) the ban keeps out of feature/route code, so re-set
-    // no-restricted-imports without the chrome-alpha ban (mirrors storage-seams).
+    // wrapped native-chrome API (expo-router/unstable-native-tabs, expo-glass-effect,
+    // @expo/ui, @howljs/calendar-kit) the ban keeps out of feature/route code, so
+    // re-set no-restricted-imports without the chrome-seam ban (mirrors storage-seams).
     name: "timecalendar/chrome-seams",
     files: ["src/components/chrome/**"],
     rules: {
       "no-restricted-imports": restrictedImports([], {
-        banChromeAlpha: false,
+        banChromeSeam: false,
       }),
     },
   },
