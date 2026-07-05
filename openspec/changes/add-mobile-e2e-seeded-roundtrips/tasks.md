@@ -110,12 +110,12 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 7. Local verification (both PRs, before pushing)
 
-- [ ] 7.1 `cd mobile && npx tsc --noEmit` — zero type errors.
-- [ ] 7.2 `cd mobile && npm run lint` — passes incl. custom rules (no hardcoded strings,
+- [x] 7.1 `cd mobile && npx tsc --noEmit` — zero type errors.
+- [x] 7.2 `cd mobile && npm run lint` — passes incl. custom rules (no hardcoded strings,
   seam-import boundaries, feature boundaries), Prettier clean.
-- [ ] 7.3 `cd mobile && npm test -- --coverage` — green; the new `data/` seam + variant helper
+- [x] 7.3 `cd mobile && npm test -- --coverage` — green; the new `data/` seam + variant helper
   clear the 90% logic gate, the new screen the 70% floor.
-- [ ] 7.4 Confirm gen-drift clean (mobile `npm run generate` + server OpenAPI regen produce no
+- [x] 7.4 Confirm gen-drift clean (mobile `npm run generate` + server OpenAPI regen produce no
   diff — no client/spec change expected).
 
 ## 8. CI proof — the on-device E2E gate (the real proof)
