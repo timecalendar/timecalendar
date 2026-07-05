@@ -1,61 +1,45 @@
-// The durability proof CI *can* run: the write-then-read-back contract against a
-// stateful in-memory mock @/db (a Map-backed fake honoring the transactional
-// replaceAll + a whole-table select). The Map lives at MODULE scope OUTSIDE the
-// jest.mock factory and is NOT reset between the write and the read, standing in
-// for on-disk SQLite that survives a process restart — so after jest.resetModules()
-// the persisted rows still read back exactly what the prior module wrote (the
-// drop+replace persisted), through the production whole-table read (useSyncedEvents'
-// shape; the dead findInRange range read is gone). On-disk atomicity is the
-// on-device manual pass (inbox); here we prove the repository contract. Spy state is
-// `mock`-prefixed so the hoisted jest.mock factory may reference it.
+// The durability proof CI *can* run: the write-then-read-back contract against the
+// shared stateful in-memory @/db fake (createFakeDb — a Map-backed "disk" honoring
+// the transactional replaceAll + a whole-table select). The store lives inside the
+// fake's closure OUTSIDE the jest.mock factory and is NOT reset between the write
+// and the read, standing in for on-disk SQLite that survives a process restart — so
+// after jest.resetModules() the persisted rows still read back exactly what the
+// prior module wrote (the drop+replace persisted), through the production
+// whole-table read (useSyncedEvents' shape; the dead findInRange range read is
+// gone). On-disk atomicity is the on-device manual pass (inbox); here we prove the
+// repository contract. The fake instance is `mock`-prefixed so the hoisted
+// jest.mock factory may reference it.
 
-import { calendarEvents, db } from "@/db"
 import type { CalendarEvent } from "@/features/calendar/data/types"
+import { createFakeDb } from "@/test-support/fake-db"
 
 import { rowToCalendarEvent } from "./types"
 
-type CalendarEventInsert = typeof calendarEvents.$inferInsert
+// Type-only reference to the seam — a `typeof import(...)` never emits a runtime
+// require, so it can't trigger the hoisted jest.mock factory before `mockFake` is
+// assigned (a top-level value `import … from "@/db"` would). The runtime `db` +
+// table token come from `mockFake.module` instead.
+type CalendarEventInsert =
+  (typeof import("@/db"))["calendarEvents"]["$inferInsert"]
+type CalendarEventRow = Parameters<typeof rowToCalendarEvent>[0]
+type Db = {
+  select: () => { from: (t: unknown) => Promise<CalendarEventRow[]> }
+}
 type Repository = typeof import("./repository")
 const loadRepository = (): Repository =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("./repository") as Repository
 
-// The "disk": a Map<uid, row> that persists across module resets.
-const mockStore = new Map<string, Record<string, unknown>>()
-
-jest.mock("@/db", () => {
-  // A whole-table select over the "disk" Map — the production read shape
-  // (useSyncedEvents reads the whole table, no range filter).
-  const makeSelect = () => {
-    const builder: Record<string, unknown> = {
-      from: () => builder,
-      then: (resolve: (rows: unknown[]) => unknown) =>
-        resolve([...mockStore.values()]),
-    }
-    return builder
-  }
-
-  const tx = {
-    delete: () => {
-      mockStore.clear()
-      return { then: (r: (v: unknown) => unknown) => r(undefined) }
-    },
-    insert: () => ({
-      values: (rows: Record<string, unknown>[]) => {
-        for (const row of rows) mockStore.set(String(row.uid), row)
-        return { then: (r: (v: unknown) => unknown) => r(undefined) }
-      },
-    }),
-  }
-
-  return {
-    db: {
-      select: () => makeSelect(),
-      transaction: (cb: (t: typeof tx) => Promise<unknown>) => cb(tx),
-    },
-    calendarEvents: {},
-  }
+const mockFake = createFakeDb({
+  tables: { calendarEvents: { columns: ["uid"], pk: "uid" } },
 })
+
+jest.mock("@/db", () => mockFake.module)
+
+const { db, calendarEvents } = mockFake.module as {
+  db: Db
+  calendarEvents: unknown
+}
 
 // replaceAll takes verbatim INSERT rows now (dtoToRow's output), not domain events.
 function row(
@@ -89,7 +73,7 @@ async function readAll(): Promise<CalendarEvent[]> {
 }
 
 beforeEach(() => {
-  mockStore.clear()
+  mockFake.reset()
 })
 
 describe("calendar-sync restart durability", () => {
@@ -98,7 +82,7 @@ describe("calendar-sync restart durability", () => {
     await first.replaceAll([row()])
 
     // Simulate a process restart: drop the module registry, but the "disk" (the
-    // module-scoped Map) survives — exactly what on-disk SQLite gives.
+    // fake's store) survives — exactly what on-disk SQLite gives.
     jest.resetModules()
 
     const restored = await readAll()

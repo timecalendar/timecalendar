@@ -1,59 +1,31 @@
 // Prove each repository function against the @/db seam, mocked (D9): real
 // expo-sqlite has no off-device JS, so we assert the Drizzle query SHAPE and the
 // row→domain mapping rather than a real round-trip (the on-disk proof is on-device
-// — the Maestro launch / the inboxed manual restart pass). A local jest.mock("@/db")
-// overrides the seam with a chainable query-builder spy. Spy names are
-// `mock`-prefixed so the hoisted jest.mock factory may reference them.
+// — the Maestro launch / the inboxed manual restart pass). The shared createFakeDb
+// fake overrides the seam with a stateful, spy-instrumented query builder; the
+// tests read its `spies` for the shape assertions and `seed()` for the read rows.
+// The fake instance is `mock`-prefixed so the hoisted jest.mock factory may
+// reference it.
 
-import { eq, userCalendars } from "@/db"
+import { createFakeDb } from "@/test-support/fake-db"
 
-import {
-  findAll,
-  getById,
-  getByToken,
-  remove,
-  setVisible,
-  upsert,
-} from "./repository"
 import { calendarToRow, type UserCalendar } from "./types"
 
-let mockRows: unknown[] = []
-const mockWhere = jest.fn()
-const mockFrom = jest.fn()
-const mockValues = jest.fn()
-const mockOnConflict = jest.fn()
-const mockSet = jest.fn()
-const mockSelect = jest.fn()
-const mockInsert = jest.fn()
-const mockDelete = jest.fn()
-const mockUpdate = jest.fn()
-
-jest.mock("@/db", () => {
-  const makeBuilder = (): Record<string, unknown> => {
-    const builder: Record<string, unknown> = {
-      from: (...a: unknown[]) => (mockFrom(...a), builder),
-      where: (...a: unknown[]) => (mockWhere(...a), builder),
-      values: (...a: unknown[]) => (mockValues(...a), builder),
-      onConflictDoUpdate: (...a: unknown[]) => (mockOnConflict(...a), builder),
-      set: (...a: unknown[]) => (mockSet(...a), builder),
-      then: (resolve: (value: unknown[]) => unknown) => resolve(mockRows),
-    }
-    return builder
-  }
-  return {
-    db: {
-      select: (...a: unknown[]) => (mockSelect(...a), makeBuilder()),
-      insert: (...a: unknown[]) => (mockInsert(...a), makeBuilder()),
-      delete: (...a: unknown[]) => (mockDelete(...a), makeBuilder()),
-      update: (...a: unknown[]) => (mockUpdate(...a), makeBuilder()),
-    },
-    userCalendars: {
-      id: "userCalendars.id",
-      token: "userCalendars.token",
-    },
-    eq: jest.fn((col, val) => ({ op: "eq", col, val })),
-  }
+const mockFake = createFakeDb({
+  tables: { userCalendars: { columns: ["id", "token"], pk: "id" } },
 })
+
+jest.mock("@/db", () => mockFake.module)
+
+// require() the SUT lazily (not a top-level import) so the eager `@/db` value
+// import inside repository.ts can't fire the hoisted jest.mock factory before
+// `mockFake` is assigned. The table token comes from the mocked module.
+const { userCalendars } = mockFake.module as {
+  userCalendars: { id: string; token: string }
+}
+const { findAll, getById, getByToken, remove, setVisible, upsert } =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("./repository") as typeof import("./repository")
 
 const calendar: UserCalendar = {
   id: "cal-1",
@@ -66,70 +38,46 @@ const calendar: UserCalendar = {
   visible: true,
 }
 
-const rowOf = (c: UserCalendar) => ({
-  id: c.id,
-  token: c.token,
-  name: c.name,
-  schoolName: c.schoolName ?? null,
-  schoolId: c.schoolId ?? null,
-  lastUpdatedAt: c.lastUpdatedAt.toISOString(),
-  createdAt: c.createdAt.toISOString(),
-  visible: c.visible,
-})
-
 beforeEach(() => {
-  mockRows = []
-  ;[
-    mockWhere,
-    mockFrom,
-    mockValues,
-    mockOnConflict,
-    mockSet,
-    mockSelect,
-    mockInsert,
-    mockDelete,
-    mockUpdate,
-  ].forEach((m) => m.mockClear())
+  mockFake.reset()
 })
 
 describe("user-calendars repository", () => {
   it("findAll selects all rows and maps them to domain", async () => {
-    mockRows = [rowOf(calendar)]
+    mockFake.seed("userCalendars", [calendarToRow(calendar)])
     const result = await findAll()
-    expect(mockSelect).toHaveBeenCalled()
-    expect(mockFrom).toHaveBeenCalledWith(userCalendars)
+    expect(mockFake.spies.select).toHaveBeenCalled()
+    expect(mockFake.spies.from).toHaveBeenCalledWith(userCalendars)
     expect(result).toHaveLength(1)
     expect(result[0]?.id).toBe("cal-1")
     expect(result[0]?.lastUpdatedAt).toBeInstanceOf(Date)
   })
 
   it("getById selects by id and maps the row, or returns undefined", async () => {
-    mockRows = [rowOf(calendar)]
+    mockFake.seed("userCalendars", [calendarToRow(calendar)])
     const found = await getById("cal-1")
-    expect(eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
-    expect(mockWhere).toHaveBeenCalled()
+    expect(mockFake.spies.eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
+    expect(mockFake.spies.where).toHaveBeenCalled()
     expect(found?.id).toBe("cal-1")
 
-    mockRows = []
     expect(await getById("missing")).toBeUndefined()
   })
 
   it("getByToken selects by token and maps the row, or returns undefined", async () => {
-    mockRows = [rowOf(calendar)]
+    mockFake.seed("userCalendars", [calendarToRow(calendar)])
     const found = await getByToken("tok-1")
-    expect(eq).toHaveBeenCalledWith(userCalendars.token, "tok-1")
-    expect(mockWhere).toHaveBeenCalled()
+    expect(mockFake.spies.eq).toHaveBeenCalledWith(userCalendars.token, "tok-1")
+    expect(mockFake.spies.where).toHaveBeenCalled()
     expect(found?.token).toBe("tok-1")
 
-    mockRows = []
     expect(await getByToken("missing")).toBeUndefined()
   })
 
   it("upsert inserts with onConflictDoUpdate by id using the mapped row", async () => {
     await upsert(calendar)
-    expect(mockInsert).toHaveBeenCalledWith(userCalendars)
-    expect(mockValues).toHaveBeenCalledWith(calendarToRow(calendar))
-    expect(mockOnConflict).toHaveBeenCalledWith({
+    expect(mockFake.spies.insert).toHaveBeenCalledWith(userCalendars)
+    expect(mockFake.spies.values).toHaveBeenCalledWith(calendarToRow(calendar))
+    expect(mockFake.spies.onConflictDoUpdate).toHaveBeenCalledWith({
       target: userCalendars.id,
       set: calendarToRow(calendar),
     })
@@ -137,16 +85,16 @@ describe("user-calendars repository", () => {
 
   it("remove deletes by id", async () => {
     await remove("cal-1")
-    expect(mockDelete).toHaveBeenCalledWith(userCalendars)
-    expect(eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
-    expect(mockWhere).toHaveBeenCalled()
+    expect(mockFake.spies.delete).toHaveBeenCalledWith(userCalendars)
+    expect(mockFake.spies.eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
+    expect(mockFake.spies.where).toHaveBeenCalled()
   })
 
   it("setVisible updates the visible column by id", async () => {
     await setVisible("cal-1", false)
-    expect(mockUpdate).toHaveBeenCalledWith(userCalendars)
-    expect(mockSet).toHaveBeenCalledWith({ visible: false })
-    expect(eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
-    expect(mockWhere).toHaveBeenCalled()
+    expect(mockFake.spies.update).toHaveBeenCalledWith(userCalendars)
+    expect(mockFake.spies.set).toHaveBeenCalledWith({ visible: false })
+    expect(mockFake.spies.eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
+    expect(mockFake.spies.where).toHaveBeenCalled()
   })
 })

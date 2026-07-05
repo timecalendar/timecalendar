@@ -72,6 +72,14 @@ module.exports = {
     // Test-support only — jest fixtures imported by tests, never production code
     // (e.g. the calendar dense-week fixture, relocated out of the feature tree).
     "!src/test-support/**",
+    // Native-seam one-liners — pure `expo-crypto.randomUUID` forwarders
+    // (`newId` / `newEventId`, a single centralized mint point per feature).
+    // randomUUID has no off-device JS, so the ONLY possible unit is a delegation
+    // test that mocks the native module and asserts the forward — which proves
+    // nothing but the language (R-2 "cargo-cult wrapper tests", folded away).
+    // Real id minting is proven on-device by the Maestro round-trip. Excluded
+    // with reason, like the api/mutator seam, not silently.
+    "!src/features/**/{id,uid}.ts",
   ],
   // K-3 coverage gate, enforced (ADR 003 — revisit fired 2026-06-14, wired by
   // the Settings prefs feature that owns it, per ADR 004). High bar where bugs
