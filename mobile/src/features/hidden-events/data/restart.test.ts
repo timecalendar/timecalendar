@@ -22,6 +22,10 @@ jest.mock("@/storage", () => ({
   setString: (key: string, value: string): void => {
     mockDisk.set(key, value)
   },
+  // parseHiddenEvents now reaches the seam's shared isStringArray guard; the fake
+  // provides the real implementation so the total-parse posture stays verbatim.
+  isStringArray: (value: unknown): value is string[] =>
+    Array.isArray(value) && value.every((v) => typeof v === "string"),
 }))
 
 beforeEach(() => {

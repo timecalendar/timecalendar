@@ -1,7 +1,7 @@
 import { useCallback } from "react"
 
 import i18n from "@/i18n"
-import { useStoredString } from "@/storage"
+import { useParsedStoredString } from "@/storage"
 
 import {
   resolveLanguage,
@@ -31,7 +31,10 @@ export function useThemePreference(): {
   preference: ThemePreference
   setPreference: (preference: ThemePreference) => void
 } {
-  const preference = parseThemePreference(useStoredString(SETTINGS_KEYS.theme))
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.theme,
+    parseThemePreference,
+  )
   // setThemePreference is a stable module-level function (no closure over render
   // state), so it is referentially stable across renders without useCallback.
   return { preference, setPreference: setThemePreference }
@@ -41,8 +44,9 @@ export function useLanguagePreference(): {
   preference: LanguagePreference
   setPreference: (preference: LanguagePreference) => void
 } {
-  const preference = parseLanguagePreference(
-    useStoredString(SETTINGS_KEYS.language),
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.language,
+    parseLanguagePreference,
   )
   const setPreference = useCallback((next: LanguagePreference) => {
     setLanguagePreference(next)

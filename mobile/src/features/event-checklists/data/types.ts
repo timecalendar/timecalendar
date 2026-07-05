@@ -1,4 +1,4 @@
-import { checklistItems } from "@/db"
+import { checklistItems, dateToIso, isoToDate } from "@/db"
 
 // The domain ChecklistItem type and the pure row↔domain mappers that isolate the
 // TEXT-ISO + integer-boolean storage format (ADR 024) from ergonomic domain
@@ -38,9 +38,9 @@ export function rowToChecklistItem(row: ChecklistItemRow): ChecklistItem {
     content: row.content,
     isChecked: row.isChecked,
     order: row.order,
-    createdAt: row.createdAt === null ? undefined : new Date(row.createdAt),
-    updatedAt: row.updatedAt === null ? undefined : new Date(row.updatedAt),
-    deletedAt: row.deletedAt === null ? undefined : new Date(row.deletedAt),
+    createdAt: row.createdAt === null ? undefined : isoToDate(row.createdAt),
+    updatedAt: row.updatedAt === null ? undefined : isoToDate(row.updatedAt),
+    deletedAt: row.deletedAt === null ? undefined : isoToDate(row.deletedAt),
   }
 }
 
@@ -54,11 +54,8 @@ export function checklistItemToRow(item: ChecklistItem): ChecklistItemInsert {
     content: item.content,
     isChecked: item.isChecked,
     order: item.order,
-    createdAt:
-      item.createdAt === undefined ? null : item.createdAt.toISOString(),
-    updatedAt:
-      item.updatedAt === undefined ? null : item.updatedAt.toISOString(),
-    deletedAt:
-      item.deletedAt === undefined ? null : item.deletedAt.toISOString(),
+    createdAt: item.createdAt === undefined ? null : dateToIso(item.createdAt),
+    updatedAt: item.updatedAt === undefined ? null : dateToIso(item.updatedAt),
+    deletedAt: item.deletedAt === undefined ? null : dateToIso(item.deletedAt),
   }
 }

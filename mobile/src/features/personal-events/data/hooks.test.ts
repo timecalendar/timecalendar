@@ -11,6 +11,8 @@ jest.mock("@/db", () => ({
   db: { select: () => ({ from: () => ({}) }) },
   personalEvents: {},
   useLiveQuery: (...args: unknown[]) => mockUseLiveQuery(...args),
+  // The row→domain mappers now live on the @/db seam — supply the real impls.
+  ...jest.requireActual<object>("@/db/mappers"),
 }))
 
 describe("usePersonalEvents", () => {

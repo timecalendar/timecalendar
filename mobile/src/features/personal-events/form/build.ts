@@ -1,10 +1,10 @@
-import { newEventId, type PersonalEvent } from "@/features/personal-events/data"
+import { newId, type PersonalEvent } from "@/features/personal-events/data"
 
 import type { EventFormValues } from "./types"
 
 // Pure event assembly (design D2/D8) — mirrors the Flutter `buildEvent`:
-//  - create (no existing): a fresh uid via B1's newEventId() wrapper,
-//    exportedAt = now;
+//  - create (no existing): a fresh uid via the @/db seam's newId() (re-exported
+//    through the data/ barrel), exportedAt = now;
 //  - edit (existing): preserve existing.uid, refresh exportedAt = now.
 // `exportedAt` is "the moment this event was last written from this app" (its
 // name comes from the Flutter export/backup lineage — not a created-at, D8).
@@ -21,7 +21,7 @@ export function buildEventFromForm(
   const description = values.description.trim()
 
   return {
-    uid: existing?.uid ?? newEventId(),
+    uid: existing?.uid ?? newId(),
     title: values.title.trim(),
     color: values.color,
     startsAt: values.startsAt,
