@@ -1,3 +1,5 @@
+import { isStringArray, parseJsonArray } from "@/storage"
+
 // The persisted school selection (design D4) — stored through @/storage,
 // mirroring src/features/settings/prefs. Only the selection IDENTITY is
 // persisted: the selected schoolId and the selected group value(s). The full
@@ -30,19 +32,10 @@ export function parseSchoolId(raw: string | undefined): string | undefined {
 }
 
 // Total parser for the persisted group values: a JSON-encoded array of strings.
-// An unset, non-JSON, or non-string-array value → [] (no group). The store owns
-// the JSON encode/parse + validation — the one place it lives (D4).
+// An unset, non-JSON, or non-string-array value → [] (no group). Delegates to the
+// shared @/storage total parser with the string-array guard — same verbatim posture.
 export function parseGroupValues(raw: string | undefined): string[] {
-  if (raw === undefined) return []
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (Array.isArray(parsed) && parsed.every((v) => typeof v === "string")) {
-      return parsed
-    }
-    return []
-  } catch {
-    return []
-  }
+  return parseJsonArray(raw, isStringArray)
 }
 
 export function encodeGroupValues(values: string[]): string {

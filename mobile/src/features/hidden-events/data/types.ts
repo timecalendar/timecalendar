@@ -1,3 +1,5 @@
+import { isStringArray } from "@/storage"
+
 // The persisted hidden-events set (design D1/D2, ADR 023) — stored through
 // @/storage as a SINGLE JSON-encoded record under one flat key, mirroring the
 // Flutter HiddenEvent.toMap() wire format VERBATIM for Phase-09 importer fidelity:
@@ -22,10 +24,6 @@ export const HIDDEN_EVENTS_KEYS = {
 // install reads this (no key written yet); a view filters out nothing.
 export function emptyHiddenEvents(): HiddenEventsSet {
   return { uidHiddenEvents: [], namedHiddenEvents: [] }
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((v) => typeof v === "string")
 }
 
 // Total parser for the persisted blob: a JSON-encoded

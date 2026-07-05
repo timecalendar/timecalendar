@@ -7,8 +7,9 @@ import type {
 } from "@/api/generated/timeCalendar.schemas"
 import { EventTypeEnum as EventTypeEnumValues } from "@/api/generated/timeCalendar.schemas"
 import { calendarEvents, db, eq, personalEvents, useLiveQuery } from "@/db"
+import { parseJsonArray } from "@/storage"
 
-import { decodeFields, decodeJsonArray } from "./sync/types"
+import { decodeFields } from "./sync/types"
 
 // The RICH event-details read — the FIRST consumer of the verbatim calendar_events
 // row (ADR 021 / D1: the verbatim fidelity lives in the ROW, never the lossy
@@ -90,8 +91,8 @@ export function rowToEventDetails(row: CalendarEventRow): EventDetails {
     exportedAt: new Date(row.exportedAt),
     location: row.location ?? undefined,
     description: row.description ?? undefined,
-    teachers: decodeJsonArray<string>(row.teachers),
-    tags: decodeJsonArray<EventDetailsTag>(row.tags),
+    teachers: parseJsonArray<string>(row.teachers),
+    tags: parseJsonArray<EventDetailsTag>(row.tags),
     // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
     // degrades to false (the D2 defensive posture applied at the field level),
     // mirroring rowToCalendarEvent.

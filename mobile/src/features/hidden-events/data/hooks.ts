@@ -1,7 +1,7 @@
 import { useCallback } from "react"
 
 import { useRecordedAction } from "@/hooks/use-recorded-action"
-import { useStoredString } from "@/storage"
+import { useParsedStoredString } from "@/storage"
 
 import { hideByName, hideByUid, unhideName, unhideUid } from "./store"
 import {
@@ -10,12 +10,12 @@ import {
   parseHiddenEvents,
 } from "./types"
 
-// Reactive hidden-set read over the seam's useStoredString (so the calendar views
-// and the management screen re-render when the set changes), mirroring
+// Reactive hidden-set read over the seam's reactive parsed read (so the calendar
+// views and the management screen re-render when the set changes), mirroring
 // useSelectedSchool. Reads through the reactive seam read + the total parser;
 // writes stay on the imperative store (one write path — see store.ts).
 export function useHiddenEvents(): HiddenEventsSet {
-  return parseHiddenEvents(useStoredString(HIDDEN_EVENTS_KEYS.set))
+  return useParsedStoredString(HIDDEN_EVENTS_KEYS.set, parseHiddenEvents)
 }
 
 export interface HideActions {

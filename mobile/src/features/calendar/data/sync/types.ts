@@ -5,6 +5,7 @@ import type {
 } from "@/api/generated/timeCalendar.schemas"
 import { calendarEvents } from "@/db"
 import type { CalendarEvent } from "@/features/calendar/data/types"
+import { parseJsonArray } from "@/storage"
 
 // The DTO→row writer + the row→domain reader for synced calendar events (ADR 021,
 // building on ADR 011/018). They isolate the TEXT-ISO + JSON-as-TEXT storage
@@ -33,20 +34,6 @@ import type { CalendarEvent } from "@/features/calendar/data/types"
 type CalendarEventRow = typeof calendarEvents.$inferSelect
 type CalendarEventInsert = typeof calendarEvents.$inferInsert
 
-// Decode a JSON TEXT column DEFENSIVELY (ADR 021 / D2): a corrupt/legacy/
-// unparseable value must NOT throw the whole list read, so a parse failure (or a
-// non-array value) degrades to []. This is the total-read posture the stores'
-// defensive parsers established. A Drizzle `mode: "json"` column would throw
-// here, which is exactly why the JSON columns are plain TEXT decoded by hand.
-export function decodeJsonArray<T>(raw: string): T[] {
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as T[]) : []
-  } catch {
-    return []
-  }
-}
-
 export function decodeFields(
   raw: string | null,
 ): CalendarEventCustomFields | null {
@@ -69,7 +56,11 @@ export function decodeFields(
 // tag objects (and `groupColor`/`type`/the rich `fields`) stay in the row, written
 // verbatim by dtoToRow. `canceled` derives from the decoded `fields?.canceled`.
 export function rowToCalendarEvent(row: CalendarEventRow): CalendarEvent {
-  const tags = decodeJsonArray<EventTag>(row.tags)
+  // The shared @/storage total parser with NO guard — a corrupt/legacy/non-array
+  // value degrades to [] and never throws (the total-read posture; A Drizzle
+  // `mode: "json"` column would throw, which is why these are plain TEXT decoded
+  // by hand), casting `as T[]` without per-element validation (ADR 021 / D2).
+  const tags = parseJsonArray<EventTag>(row.tags)
   const fields = decodeFields(row.fields)
   return {
     id: row.uid,
@@ -80,7 +71,7 @@ export function rowToCalendarEvent(row: CalendarEventRow): CalendarEvent {
     location: row.location ?? undefined,
     allDay: row.allDay,
     description: row.description ?? undefined,
-    teachers: decodeJsonArray<string>(row.teachers),
+    teachers: parseJsonArray<string>(row.teachers),
     tags: tags.map((tag) => tag.name),
     // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
     // (e.g. "yes") degrades to false rather than reaching the domain as a truthy
