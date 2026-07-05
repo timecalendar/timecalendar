@@ -1,47 +1,33 @@
 // Prove the repository against the @/db seam, mocked: real expo-sqlite has no
 // off-device JS, so we assert the TRANSACTIONAL drop+replace (replaceAll
 // deletes-then-inserts INSIDE one db.transaction callback) rather than a real
-// round-trip. A local jest.mock("@/db") overrides the seam with a transaction spy.
-// Spy names are `mock`-prefixed so the hoisted jest.mock factory may reference them.
+// round-trip. The shared createFakeDb fake overrides the seam with a stateful,
+// spy-instrumented builder whose `tx` IS the same instrumented db, so the tx-scoped
+// delete/insert/values record to the shared spies. The fake instance is
+// `mock`-prefixed so the hoisted jest.mock factory may reference it.
 
-import { calendarEvents } from "@/db"
+import { createFakeDb } from "@/test-support/fake-db"
 
-import { replaceAll } from "./repository"
+// Type-only reference to the seam — a `typeof import(...)` never emits a runtime
+// require, so it can't trigger the hoisted jest.mock factory before `mockFake` is
+// assigned (a top-level value `import … from "@/db"` would). The runtime table
+// token + SUT come from below, after `mockFake` is assigned.
+type CalendarEventInsert =
+  (typeof import("@/db"))["calendarEvents"]["$inferInsert"]
 
-type CalendarEventInsert = typeof calendarEvents.$inferInsert
-
-// Transaction-scoped spies (the `tx` builder inside db.transaction).
-const mockTxDelete = jest.fn()
-const mockTxInsert = jest.fn()
-const mockTxValues = jest.fn()
-const mockTransaction = jest.fn()
-
-jest.mock("@/db", () => {
-  const tx = {
-    delete: (...a: unknown[]) => {
-      mockTxDelete(...a)
-      return { then: (r: (v: unknown) => unknown) => r(undefined) }
-    },
-    insert: (...a: unknown[]) => {
-      mockTxInsert(...a)
-      return {
-        values: (...v: unknown[]) => {
-          mockTxValues(...v)
-          return { then: (r: (val: unknown) => unknown) => r(undefined) }
-        },
-      }
-    },
-  }
-  return {
-    db: {
-      transaction: (cb: (t: typeof tx) => Promise<unknown>) => {
-        mockTransaction()
-        return cb(tx)
-      },
-    },
-    calendarEvents: {},
-  }
+const mockFake = createFakeDb({
+  tables: { calendarEvents: { columns: ["uid"], pk: "uid" } },
 })
+
+jest.mock("@/db", () => mockFake.module)
+
+// require() the SUT lazily (not a top-level import) so the eager `@/db` value
+// import inside repository.ts can't fire the hoisted factory before `mockFake` is
+// assigned. The table token comes from the mocked module.
+const { calendarEvents } = mockFake.module as { calendarEvents: unknown }
+const { replaceAll } =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("./repository") as typeof import("./repository")
 
 // replaceAll takes verbatim INSERT rows now (dtoToRow's output), not domain events.
 function row(
@@ -68,38 +54,36 @@ function row(
 }
 
 beforeEach(() => {
-  ;[mockTxDelete, mockTxInsert, mockTxValues, mockTransaction].forEach((m) =>
-    m.mockClear(),
-  )
+  mockFake.reset()
 })
 
 describe("calendar-sync repository", () => {
   it("replaceAll deletes-then-inserts inside a single transaction", async () => {
     await replaceAll([row(), row({ uid: "ev-2" })])
 
-    expect(mockTransaction).toHaveBeenCalledTimes(1)
-    expect(mockTxDelete).toHaveBeenCalledWith(calendarEvents)
-    expect(mockTxInsert).toHaveBeenCalledWith(calendarEvents)
+    expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
+    expect(mockFake.spies.delete).toHaveBeenCalledWith(calendarEvents)
+    expect(mockFake.spies.insert).toHaveBeenCalledWith(calendarEvents)
     // delete is issued before any insert (the drop precedes the bulk insert).
-    expect(mockTxDelete.mock.invocationCallOrder[0]).toBeLessThan(
-      mockTxInsert.mock.invocationCallOrder[0] ?? Infinity,
+    expect(mockFake.spies.delete.mock.invocationCallOrder[0]).toBeLessThan(
+      mockFake.spies.insert.mock.invocationCallOrder[0] ?? Infinity,
     )
-    const inserted = mockTxValues.mock.calls[0]?.[0] as unknown[]
+    const inserted = mockFake.spies.values.mock.calls[0]?.[0] as unknown[]
     expect(inserted).toHaveLength(2)
   })
 
   it("replaceAll with no events still clears the table in a transaction", async () => {
     await replaceAll([])
-    expect(mockTransaction).toHaveBeenCalledTimes(1)
-    expect(mockTxDelete).toHaveBeenCalledWith(calendarEvents)
-    expect(mockTxInsert).not.toHaveBeenCalled()
+    expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
+    expect(mockFake.spies.delete).toHaveBeenCalledWith(calendarEvents)
+    expect(mockFake.spies.insert).not.toHaveBeenCalled()
   })
 
   it("replaceAll chunks a large set across multiple inserts in one transaction", async () => {
     const many = Array.from({ length: 120 }, (_, i) => row({ uid: `ev-${i}` }))
     await replaceAll(many)
-    expect(mockTransaction).toHaveBeenCalledTimes(1)
+    expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
     // 120 rows / 50-row chunks = 3 inserts.
-    expect(mockTxInsert).toHaveBeenCalledTimes(3)
+    expect(mockFake.spies.insert).toHaveBeenCalledTimes(3)
   })
 })
