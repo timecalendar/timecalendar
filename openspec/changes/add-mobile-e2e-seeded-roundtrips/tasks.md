@@ -86,25 +86,25 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 6. E2E — the remaining three flows + documentation (PR 2)
 
-- [ ] 6.1 Rewrite `mobile/.maestro/home.yaml`: import preamble → assert a today-anchored
+- [x] 6.1 Rewrite `mobile/.maestro/home.yaml`: import preamble → assert a today-anchored
   seeded event's title on the today timeline (not the empty-day state). Rewrite the header.
-- [ ] 6.2 Rewrite `mobile/.maestro/event-checklists.yaml`: import preamble → open a seeded
+- [x] 6.2 Rewrite `mobile/.maestro/event-checklists.yaml`: import preamble → open a seeded
   synced event's details → `tapOn: id: checklist-add` → type content into the checklist
   input → assert the content is visible → toggle → delete → assert it is gone. Round-trips
   the real `checklist_items` store. Rewrite the header.
-- [ ] 6.3 Rewrite `mobile/.maestro/hidden-events.yaml`: import preamble → open a seeded synced
+- [x] 6.3 Rewrite `mobile/.maestro/hidden-events.yaml`: import preamble → open a seeded synced
   event's details → hide it (the localized Alert chooser "hide this event") → assert it is
   absent from the views → open `timecalendar-dev://hidden-events` → assert it is listed →
   un-hide → assert it reappears; leave the hidden set restored. Rewrite the header.
-- [ ] 6.4 Update `mobile/e2e/README.md` "add a flow" section: the seeded-token import
+- [x] 6.4 Update `mobile/e2e/README.md` "add a flow" section: the seeded-token import
   preamble is the new pattern; note the UTC-"today" local-run caveat.
-- [ ] 6.5 Write **ADR 030** (`docs/mobile/architecture-book/decisions/030-*.md`): the
+- [x] 6.5 Write **ADR 030** (`docs/mobile/architecture-book/decisions/030-*.md`): the
   dev-only import deep link + the `Constants.expoConfig.extra.appVariant` runtime gate
   (context · choice · alternatives `__DEV__`/scheme-sniff/`expo-application`/build-time-strip ·
   revisit-if). Index it in `decisions/README.md`.
-- [ ] 6.6 Update `docs/mobile/architecture-book/testing.md` "E2E — Maestro" to describe the
+- [x] 6.6 Update `docs/mobile/architecture-book/testing.md` "E2E — Maestro" to describe the
   seeded-token round-trip pattern (import preamble → real synced render), linking the new ADR.
-- [ ] 6.7 Append a dated entry to
+- [x] 6.7 Append a dated entry to
   `docs/mobile/architecture-book/architecture-changelog.md` (migration-approach §7 — a rule/
   pattern change is recorded).
 
@@ -137,5 +137,5 @@ documentation finalization). A single PR is acceptable but two is recommended.
   event-details / event-checklists / hidden-events): the **E2E axis** flips from
   reachability-only to real-round-trip green on both platforms; every other axis stays green or
   N/A-with-reason. Record the E2E-axis upgrade against those features.
-- [ ] 9.2 Confirm production safety: a unit test proves the production branch of the import
+- [x] 9.2 Confirm production safety: a unit test proves the production branch of the import
   route performs no import (the security boundary is the runtime gate, not the scheme).
