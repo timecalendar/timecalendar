@@ -1,8 +1,5 @@
-# mobile-user-calendars Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change add-mobile-user-calendars. Update Purpose after archive.
-## Requirements
 ### Requirement: A reachable "Mes calendriers" management screen lists every held calendar
 
 The app SHALL provide a presentational user-calendars management screen (and a
@@ -170,28 +167,6 @@ second add path.
 - **THEN** it is a header-right button whose visible label is the short "Add"/"Ajouter" and
   whose `accessibilityLabel` is the full "Ajouter un calendrier" string
 
-### Requirement: A failed visibility or delete write is recorded and surfaced; the read is infallible
-
-The visibility toggle and delete writes SHALL go through an observability-wrapped actions
-hook (mirroring `useHideActions`) built on the shared write controller: a thrown
-`setVisible`/`remove` (a local-persistence write with no server backup) SHALL be reported
-through the `@/firebase` `recordError(error, "user-calendars/<action>")` seam AND surfaced as
-an accessible failure state via `WriteErrorNotice`. The visibility read/filter SHALL be
-total/infallible (a calendar simply absent from the list is not in the visible set) and SHALL
-NOT be recorded. The actions hook SHALL be the single UI write path; the reactive read SHALL
-NOT write.
-
-#### Scenario: A write failure is recorded and surfaced
-
-- **WHEN** a `setVisible` or `remove` write throws
-- **THEN** the error is reported through `@/firebase` `recordError` under a
-  `"user-calendars/<action>"` context AND an accessible failure notice is shown
-
-#### Scenario: A successful write clears the failure surface
-
-- **WHEN** a write succeeds after a prior failure
-- **THEN** the `failed` flag clears and the failure notice is not shown
-
 ### Requirement: The user-calendars UI is verified by automated tests under the coverage gate, and the existing data layer is reused unchanged
 
 The observability-wrapped actions hook SHALL be covered under the K-3 90% logic gate (both
@@ -235,6 +210,8 @@ no new Drizzle table, and no new migration.
 - **THEN** `data/user-calendars/` gains only the `useMemo` on the existing read (+ no new
   exports), and no new npm dependency, Drizzle table, or migration is added
 
+## ADDED Requirements
+
 ### Requirement: The reactive user-calendars read returns a stable identity
 
 The `useUserCalendars()` reactive read SHALL memoize its mapped result
@@ -250,4 +227,3 @@ downstream memo it exists to feed.
   unchanged
 - **THEN** it returns the same array identity, so the events-seam `useCalendarEvents` `useMemo`
   that depends on `calendars` does not recompute needlessly
-
