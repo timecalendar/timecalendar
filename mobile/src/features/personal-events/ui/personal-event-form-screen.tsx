@@ -18,6 +18,7 @@ import {
 import { DateTimeField } from "@/components/date-time-field"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   buildEventFromForm,
   type EventFormErrors,
@@ -251,15 +252,13 @@ export default function PersonalEventFormScreen() {
               Save button sat below the fold behind the keyboard. */}
           <View style={styles.footer}>
             {(save.failed || del.failed) && (
-              <ThemedText
-                themeColor="textSecondary"
-                accessibilityRole="alert"
-                accessibilityLiveRegion="polite"
-              >
-                {save.failed
-                  ? t("personalEvents.form.error.saveFailed")
-                  : t("personalEvents.form.error.deleteFailed")}
-              </ThemedText>
+              <WriteErrorNotice
+                message={
+                  save.failed
+                    ? t("personalEvents.form.error.saveFailed")
+                    : t("personalEvents.form.error.deleteFailed")
+                }
+              />
             )}
 
             <Pressable

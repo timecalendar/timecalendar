@@ -3,21 +3,13 @@
 // Pure: no React, no calendar-kit, no @/db, no t(), no date-fns (grouping is plain
 // calendar-day arithmetic; formatting is format.ts's job).
 
+import { localDayKey } from "./day-key"
 import { type CalendarEvent } from "./types"
 
 export interface AgendaDay {
   /** Local midnight of the bucket's calendar day. */
   day: Date
   events: CalendarEvent[]
-}
-
-// Local Y-M-D key (NOT UTC) so a 23:30-local event buckets on its own local day,
-// mirroring Flutter `isSameDate`.
-function localDayKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
 }
 
 function localMidnight(date: Date): Date {

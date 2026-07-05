@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   formatTimeRange,
   resolveLocale,
@@ -62,14 +63,10 @@ export function HiddenEventsScreen() {
       <Stack.Screen options={{ title: t("hiddenEvents.title") }} />
       <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
         {failed && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
+          <WriteErrorNotice
+            message={t("hiddenEvents.error")}
             style={styles.error}
-          >
-            {t("hiddenEvents.error")}
-          </ThemedText>
+          />
         )}
 
         {isEmpty ? (
