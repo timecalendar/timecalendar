@@ -323,41 +323,65 @@ one, and adds another. The one behavioral change is that `visible` now filters t
 
 - **Screen (`ui/user-calendars-screen.tsx`, 70% floor):** a `ThemedView` + `SafeAreaView` with the
   in-screen `<Stack.Screen>` title, `WriteErrorNotice` (driven by `useUserCalendarActions().failed`),
-  an accessible empty state (polite live region + `text` role), an add affordance
-  (`router.push("/onboarding/school")`), and a scrolling list of rows. Each row is a **plain `View`**
-  (never a `Pressable` — `no-nested-touchables` is an error rule) carrying a leading visibility
-  **checkbox** `Pressable` (`accessibilityRole="checkbox"` + `accessibilityState={{ checked }}`, the
-  name/school in the LABEL, state never baked in — the a11y house contract), the name (fallback
-  "Calendrier") + school subtitle (fallback "Calendrier personnel"), and a trailing **delete**
-  `Pressable` (≥44 + `hitSlop`, the cross-platform trash affordance — iOS `SymbolView name="trash"`,
-  Android a themed destructive text label, no new dep — Decision 6). Re-exported through `ui/index.ts`
-  + the feature barrel; the route `src/app/user-calendars.tsx` is a thin re-export, a `Stack` sibling
-  of `(tabs)` (deep-linkable `timecalendar-dev://user-calendars`), reached from a Profile entry link.
+  a **load-gated** empty state, and a scrolling list of rows. The add is a **native header action**
+  (`<Stack.Screen options.headerRight>`, mirroring `calendar/ui/event-details-screen.tsx`): a
+  `primary`-tinted `smallBold` `Pressable` with a short visible label (`userCalendars.add.short`) and
+  the long "Ajouter un calendrier" as `accessibilityLabel`, routing `router.push("/onboarding/school")`.
+  Each row is a **plain `View`** (never a `Pressable` — `no-nested-touchables` is an error rule) holding
+  **two sibling targets**: a **row-level toggle `Pressable`** spanning the flexible width and a trailing
+  **delete** `Pressable`. The toggle IS the row's accessibility element (a plain `View` is not one on
+  iOS — `RCTViewComponentView` only becomes accessible when `accessible` is set — so custom actions on
+  it are dead): `accessibilityRole="checkbox"` + `accessibilityState={{ checked }}`, a merged
+  `accessibilityLabel` from `userCalendars.rowLabel` ("{{name}}, {{school}}") + an
+  `accessibilityHint` (`userCalendars.visibilityHint`), state never baked in — the a11y house contract.
+  Its text container is hidden from AT (`importantForAccessibility="no-hide-descendants"` +
+  `accessibilityElementsHidden`) so the name is spoken once, not thrice; the name uses the `school-row`
+  body override, not the emphasis-weight `ThemedText` default. The checked indicator is a checkmark
+  (iOS `SymbolView name="checkmark"`, Android a `✓` glyph) tinted `onPrimary` on a `primaryStrong`
+  fill — the documented 5.87:1 pair, legible in both schemes; the unchecked box keeps the `primary`
+  border on a transparent fill. The delete is ≥44 + `hitSlop`, the cross-platform trash affordance
+  (iOS `SymbolView name="trash"`, Android a themed destructive text label `userCalendars.delete.action`,
+  no new dep — Decision 6). Every `Pressable` (toggle, delete, header add) carries pressed feedback
+  (Android `android_ripple` foreground + iOS `pressed` `backgroundSelected`, the `school-row` pattern).
+  Re-exported through `ui/index.ts` + the feature barrel; the route `src/app/user-calendars.tsx` is a
+  thin re-export, a `Stack` sibling of `(tabs)` (deep-linkable `timecalendar-dev://user-calendars`),
+  reached from a Profile entry link.
+- **Empty state (load-gated):** `useUserCalendarsLoaded()` exposes the read's `updatedAt` (undefined
+  until `useLiveQuery` first resolves). The screen renders nothing until `loaded`, then a **centered**
+  title + a secondary line (polite live region + `text` role) — so the empty state never flashes or
+  false-announces "no calendars" on entry while the async read settles.
 - **Delete pattern (panel-decided, Decision 3):** one shared `confirmDelete(id, name)` → a native
   `Alert` confirm (R-3, **no undo** — `remove()` is irreversible; a snackbar would lie), on success
   `AccessibilityInfo.announceForAccessibility`. **Three call paths** reach it: the visible button
   (both platforms), an iOS-only `ReanimatedSwipeable` (`Platform.OS === "ios"`, `renderRightActions`
-  red trash, full-swipe/open → **open the confirm**, not an instant commit), and the row's
-  `accessibilityActions=[{ name: "delete" }]` + `onAccessibilityAction` (WCAG 2.5.1 — the swipe stays
-  non-exclusionary). No synchronous `calendar_events` purge (ADR 031 — the deleted calendar leaves the
-  visible set).
+  red trash, full-swipe/open → **open the confirm**, not an instant commit), and the row toggle's
+  `accessibilityActions=[{ name: "delete" }]` + `onAccessibilityAction` — carried by the toggle
+  Pressable (the reachable accessibility element), not the plain parent `View` (WCAG 2.5.1 — the swipe
+  stays non-exclusionary). No synchronous `calendar_events` purge (ADR 031 — the deleted calendar
+  leaves the visible set).
 - **Actions hook (`data/user-calendars/actions.ts`, 90%-gated):** `useUserCalendarActions()` returning
   `{ setVisible, remove, failed }`, each mutator wrapped with `useRecordedAction("user-calendars")`
   over the repository (the async `run` overload — the repo writes are `Promise<void>`). Mirrors
   `useHideActions`; re-exported through the `data/user-calendars/` + `data/` + feature barrels.
 - **The seam filter (`calendar/data/events.ts`, 90%-gated):** `useCalendarEvents` reads
   `useUserCalendars()` and keeps a merged event iff personal OR its calendar is visible — see
-  [calendar.md](./calendar.md) + ADR 031.
+  [calendar.md](./calendar.md) + ADR 031. `useUserCalendars()` memoizes `data.map(rowToCalendar)`
+  over `[data]` so its array identity is stable — the events-seam `useMemo` lists `calendars` as a
+  dependency, so an unstable read would defeat it.
 - **Observability ✅:** a failed `setVisible`/`remove` records through `@/firebase`
   `recordError(error, "user-calendars/<action>")` + the `failed` flag rendered via `WriteErrorNotice`.
   The visibility read/filter is total/infallible (a missing row = not in the visible set) — not recorded.
 - **CI vs. device:** CI proves the actions hook (success + failure-record branches), the visibility
-  filter (hidden/visible/personal/toggle-back/deleted-drops-out — the runtime-behavior proof), and the
-  screen's toggle + delete-confirm/cancel + accessibility-action + failure-notice + empty-state
-  branches — **no gesture simulation** (jest-expo can't drive the pan). The on-device visual + a11y
-  pass (both platforms, both schemes) and the iOS swipe-gesture feel are inboxed
-  (`inbox/2026-07-05-user-calendars-device-pass.md`); `.maestro/user-calendars.yaml` asserts render +
-  Profile reachability (empty state — no seeded calendar).
+  filter (hidden/visible/personal/toggle-back/deleted-drops-out — the runtime-behavior proof), the read
+  memo's identity stability + the `loaded` flag, and the screen's toggle + delete-confirm/cancel (cancel
+  button inert) + accessibility-action-on-the-reachable-toggle + failure-notice + load-gated-empty-state
+  + Android-shape (bare row + text delete affordance) branches — **no gesture simulation** (jest-expo
+  can't drive the pan; it runs iOS-only unless a test sets `Platform.OS`). The on-device visual + a11y
+  pass (both platforms, both schemes), the iOS swipe-gesture grammar/physics + the iOS-gated toggle
+  announce (`inbox/2026-07-05-user-calendars-device-pass-refine.md`), and a designed `danger`/`error`
+  token pair + the pink-text AA contrast fix (`inbox/2026-07-05-destructive-token-contrast.md`) are
+  inboxed; `.maestro/user-calendars.yaml` asserts render + Profile reachability (empty state — no
+  seeded calendar).
 
 ## Calendar — day/week timeline + agenda + sync (Phase-04 items 1–3)
 
