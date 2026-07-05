@@ -1,0 +1,37 @@
+# Shared import preamble (ADR 030) — makes the app durably HOLD the seeded E2E
+# calendar token so the startup sync's no-op-on-empty-table path is bypassed and
+# real synced data renders. Every calendar-family round-trip flow runs this as a
+# `runFlow: import-seed.yaml` first step.
+#
+# Mechanism: the dev-only `timecalendar-dev://dev-import?token=…` deep link resolves
+# the token (GET /calendars/by-token/{token}), upserts it into user_calendars, and
+# triggers a sync — then the screen router.replace's to /calendar. This subflow
+# waits until that navigation has landed (the "Calendar" title), so the caller can
+# assume a synced calendar from step one.
+#
+# Requires the release-config dev-variant build + the e2e server (ci/e2e-server.sh)
+# seeding `e2e-smoke-calendar` (server/src/scripts/seed-e2e-calendar.ts). Shared
+# across iOS and Android — stable localized text, no per-platform selectors.
+#
+# Cold-start idiom (see settings.yaml header): a warm openLink does not navigate on
+# Android release builds — Expo Router resolves the link through getInitialURL on a
+# cold launch, so stopApp first, then openLink relaunches into the deep link.
+appId: fr.samuelprak.timecalendar.dev
+---
+- stopApp
+- openLink: timecalendar-dev://dev-import?token=e2e-smoke-calendar
+# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
+# simulator — tap when present, skip otherwise.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+# The dev-import screen imports the token, syncs, then router.replace("/calendar").
+# Generous timeout: a release-config cold start + JS bundle load + the resolve +
+# upsert + sync round-trip can land well past Maestro's ~17s default.
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000

@@ -71,16 +71,16 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 5. E2E — the shared import preamble + the calendar anchor flow (PR 1 proof)
 
-- [ ] 5.1 Add `mobile/.maestro/import-seed.yaml` — a shared `runFlow` subflow that
+- [x] 5.1 Add `mobile/.maestro/import-seed.yaml` — a shared `runFlow` subflow that
   cold-starts (`stopApp`), opens
   `timecalendar-dev://dev-import?token=e2e-smoke-calendar`, handles the iOS first-deep-link
   "Open" optional tap, and waits until the import+sync has landed on the calendar.
-- [ ] 5.2 Rewrite `mobile/.maestro/calendar.yaml`: run the import preamble, assert a seeded
+- [x] 5.2 Rewrite `mobile/.maestro/calendar.yaml`: run the import preamble, assert a seeded
   event title renders on the calendar surface (a real tile), then `tapOn` that title →
   assert the event-details screen shows real content (NOT the not-found message). Remove the
   reachability-only steps and the "SEEDED-DATA LIMITATION" header; rewrite the header to the
   real round-trip. Keep the generous `extendedWaitUntil` timeouts + cross-platform text.
-- [ ] 5.3 Add any stable additive testIDs the calendar flow needs (e.g. a `calendar-empty`
+- [x] 5.3 Add any stable additive testIDs the calendar flow needs (e.g. a `calendar-empty`
   marker so the empty→populated transition is assertable) — additive only, no behaviour
   change; add matching screen-test coverage for the new testID if it gates logic.
 
