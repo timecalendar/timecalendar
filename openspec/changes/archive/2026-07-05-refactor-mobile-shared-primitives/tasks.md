@@ -171,7 +171,7 @@ verification land with the commit that introduces the surface they cover (or the
 - [x] `npm test` green in `mobile/` (517 passed / 81 suites); `npm test -- --coverage` still clears
   the K-3 gate (`src/db/id.ts`, `src/db/mappers.ts`, and `src/storage/index.ts` all 100%; the
   deleted per-feature wrapper tests are replaced by the folded `db/id.test.ts`).
-- [ ] **CI proof (R-1): the existing `test-mobile` job is the runtime proof.** No NEW CI proof
+- [x] **CI proof (R-1): the existing `test-mobile` job is the runtime proof.** No NEW CI proof
   test is needed beyond the unit tests above — this change adds no runtime behavior; its
   correctness IS "the pre-existing mapper/parser/reactive-read test suites stay green unchanged"
   plus the new seam-primitive unit tests. Confirm the full `test-mobile` job (tsc, lint,
