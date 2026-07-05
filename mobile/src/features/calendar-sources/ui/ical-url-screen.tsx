@@ -10,7 +10,7 @@ import {
   useAddCalendar,
   validateIcalUrl,
 } from "@/features/calendar-sources/data"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The iCal-URL entry screen (Phase-3 ship 4, rewired by ship 5 / ADR 018) —
@@ -57,10 +57,7 @@ export default function IcalUrlScreen() {
       .catch((error: unknown) => {
         // Genuine create / resolve / persist failure — record through the seam,
         // surface the a11y error + Retry.
-        recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          "calendar-sources/ical-import",
-        )
+        recordUnknownError(error, "calendar-sources/ical-import")
       })
   }
 

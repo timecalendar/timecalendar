@@ -9,7 +9,7 @@ import { ThemedView } from "@/components/themed-view"
 import { isDevVariant } from "@/config/variant"
 import { useSyncCalendars } from "@/features/calendar/data"
 import { addCalendarFromToken } from "@/features/calendar-sources/data"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 import { Spacing } from "@/theme"
 
 // The dev-only import deep-link screen (ADR 030) — PRESENTATIONAL (70% floor).
@@ -53,10 +53,7 @@ export function DevImportScreen() {
         await sync()
         if (!cancelled) router.replace("/calendar")
       } catch (caught) {
-        recordError(
-          caught instanceof Error ? caught : new Error(String(caught)),
-          "dev-import",
-        )
+        recordUnknownError(caught, "dev-import")
         if (!cancelled) setError(true)
       }
     }

@@ -1,6 +1,6 @@
-import { useCallback, useState } from "react"
+import { useCallback } from "react"
 
-import { recordError } from "@/firebase"
+import { useRecordedAction } from "@/hooks/use-recorded-action"
 import { useStoredString } from "@/storage"
 
 import { hideByName, hideByUid, unhideName, unhideUid } from "./store"
@@ -30,29 +30,14 @@ export interface HideActions {
   failed: boolean
 }
 
-// The four mutators wrapped with the observability + failure-state handling (D5)
-// — the ONE place the UI calls writes. A hidden-set write is a crash-worthy
+// The four mutators wrapped with the shared write controller (useRecordedAction,
+// D5) — the ONE place the UI calls writes. A hidden-set write is a crash-worthy
 // local-persistence failure (the user's hide/un-hide intent did not persist and
-// there is no server backup), so a thrown write records through @/firebase
-// recordError(error, "hidden-events/<action>") AND flips an accessible failure
-// flag, mirroring the personal-events write / calendar-sync replaceAll posture.
+// there is no server backup), so a thrown write records through @/firebase under
+// "hidden-events/<action>" AND flips an accessible failure flag, mirroring the
+// personal-events write / calendar-sync replaceAll posture.
 export function useHideActions(): HideActions {
-  const [failed, setFailed] = useState(false)
-
-  const run = useCallback((action: string, write: () => void): boolean => {
-    try {
-      write()
-      setFailed(false)
-      return true
-    } catch (error) {
-      recordError(
-        error instanceof Error ? error : new Error(String(error)),
-        `hidden-events/${action}`,
-      )
-      setFailed(true)
-      return false
-    }
-  }, [])
+  const { run, failed } = useRecordedAction("hidden-events")
 
   return {
     hideByUid: useCallback(

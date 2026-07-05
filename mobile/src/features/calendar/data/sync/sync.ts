@@ -5,7 +5,7 @@ import { useCalendarSyncControllerSyncCalendars } from "@/api/generated/calendar
 // of the user_calendars identity store — the calendar feature is the legitimate
 // consumer of the held subscription tokens). Not a relative import (the ../ ban).
 import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import { replaceAll } from "./repository"
 import { dtoToRow } from "./types"
@@ -68,10 +68,7 @@ export function useSyncCalendars(): UseSyncCalendars {
         )
         await replaceAll(rows)
       } catch (error) {
-        recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          "calendar/sync",
-        )
+        recordUnknownError(error, "calendar/sync")
         setIsError(true)
         return
       }

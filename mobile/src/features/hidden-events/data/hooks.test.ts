@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react-native"
 
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 import { remove } from "@/storage"
 
 import { useHiddenEvents, useHideActions } from "./hooks"
@@ -14,7 +14,7 @@ import { HIDDEN_EVENTS_KEYS } from "./types"
 // spyOn-replaceable) to prove a thrown write records through @/firebase and flips
 // the accessible failure flag.
 
-jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("./store", () => ({
   hideByUid: jest.fn(),
   hideByName: jest.fn(),
@@ -22,7 +22,7 @@ jest.mock("./store", () => ({
   unhideName: jest.fn(),
 }))
 
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockHideByUid = hideByUid as jest.Mock
 const mockHideByName = hideByName as jest.Mock
 const mockUnhideUid = unhideUid as jest.Mock
@@ -35,7 +35,7 @@ beforeEach(() => {
   mockHideByName.mockReset()
   mockUnhideUid.mockReset()
   mockUnhideName.mockReset()
-  mockRecordError.mockReset()
+  mockRecordUnknownError.mockReset()
 })
 
 describe("useHiddenEvents", () => {
@@ -63,7 +63,7 @@ describe("useHideActions", () => {
     expect(mockUnhideUid).toHaveBeenCalledWith("uid-1")
     expect(mockUnhideName).toHaveBeenCalledWith("Algorithms")
     expect(result.current.failed).toBe(false)
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("returns true on a persisted write and false on a failed one (so the caller can gate navigation)", async () => {
@@ -92,14 +92,14 @@ describe("useHideActions", () => {
     const { result } = await renderHook(() => useHideActions())
     await act(async () => result.current.hideByUid("uid-1"))
 
-    expect(mockRecordError).toHaveBeenCalledWith(
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
       expect.any(Error),
       "hidden-events/hideByUid",
     )
     expect(result.current.failed).toBe(true)
   })
 
-  it("wraps a non-Error throw before recording it", async () => {
+  it("forwards a non-Error throw to the seam under its tag", async () => {
     mockHideByName.mockImplementation(() => {
       throw "string failure"
     })
@@ -107,8 +107,10 @@ describe("useHideActions", () => {
     const { result } = await renderHook(() => useHideActions())
     await act(async () => result.current.hideByName("Algorithms"))
 
-    expect(mockRecordError).toHaveBeenCalledWith(
-      expect.any(Error),
+    // The seam (recordUnknownError) owns the non-Error normalization; the hook
+    // just forwards the raw thrown value under the right tag.
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
+      "string failure",
       "hidden-events/hideByName",
     )
     expect(result.current.failed).toBe(true)

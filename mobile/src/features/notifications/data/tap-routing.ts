@@ -6,7 +6,7 @@ import {
   getInitialTap,
   onForegroundMessage,
   onNotificationTap,
-  recordError,
+  recordUnknownError,
 } from "@/firebase"
 
 // The server (frozen) emits exactly one action — one FCM message per changed
@@ -52,10 +52,7 @@ export function parseNotificationRoute(message: TapMessage): TapRoute | null {
   try {
     decoded = JSON.parse(String(data.payload)) as DecodedPayload
   } catch (error) {
-    recordError(
-      error instanceof Error ? error : new Error(String(error)),
-      "notifications/tap-routing",
-    )
+    recordUnknownError(error, "notifications/tap-routing")
     return null
   }
 
