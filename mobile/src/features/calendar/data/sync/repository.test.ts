@@ -39,10 +39,7 @@ jest.mock("@/db", () => {
         return cb(tx)
       },
     },
-    calendarEvents: {
-      startsAt: "calendarEvents.startsAt",
-      endsAt: "calendarEvents.endsAt",
-    },
+    calendarEvents: {},
   }
 })
 

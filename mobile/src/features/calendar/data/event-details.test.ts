@@ -10,14 +10,8 @@ import { renderHook } from "@testing-library/react-native"
 import { rowToEventDetails, useEventDetails } from "./event-details"
 
 // The widened read (ADR 024) queries TWO tables — calendar_events (synced) then
-// personal_events (personal). The fake routes a select's rows by the table its
-// from() was called with, and useLiveQuery returns per-table results.
-let mockSyncedRows: unknown[] = []
-let mockPersonalRows: unknown[] = []
-const mockWhere = jest.fn()
-const mockFrom = jest.fn()
-const mockSelect = jest.fn()
-// useLiveQuery is keyed on the table token its query referenced.
+// personal_events (personal). The builder carries the from() table token so
+// useLiveQuery returns per-table results.
 let mockSyncedLive: { data: unknown[]; updatedAt: Date | undefined } = {
   data: [],
   updatedAt: undefined,
@@ -29,24 +23,17 @@ let mockPersonalLive: { data: unknown[]; updatedAt: Date | undefined } = {
 
 jest.mock("@/db", () => {
   const makeBuilder = (): Record<string, unknown> => {
-    let token = "calendarEvents"
     const builder: Record<string, unknown> = {
       from: (t: { __token?: string }) => {
-        token = t?.__token ?? "calendarEvents"
-        builder.__token = token
-        mockFrom(t)
+        builder.__token = t?.__token ?? "calendarEvents"
         return builder
       },
-      where: (...a: unknown[]) => (mockWhere(...a), builder),
-      then: (resolve: (value: unknown[]) => unknown) =>
-        resolve(token === "personalEvents" ? mockPersonalRows : mockSyncedRows),
+      where: () => builder,
     }
     return builder
   }
   return {
-    db: {
-      select: (...a: unknown[]) => (mockSelect(...a), makeBuilder()),
-    },
+    db: { select: () => makeBuilder() },
     calendarEvents: { uid: "calendarEvents.uid", __token: "calendarEvents" },
     personalEvents: { uid: "personalEvents.uid", __token: "personalEvents" },
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),

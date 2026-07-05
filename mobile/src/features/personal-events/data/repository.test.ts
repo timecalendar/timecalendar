@@ -41,8 +41,6 @@ jest.mock("@/db", () => {
     },
     personalEvents: {
       uid: "personalEvents.uid",
-      startsAt: "personalEvents.startsAt",
-      endsAt: "personalEvents.endsAt",
     },
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),
   }
