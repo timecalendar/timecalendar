@@ -41,10 +41,17 @@ import { AgendaList } from "./agenda-list"
 type CalendarView = "day" | "week" | "agenda"
 
 // Weekends-off default (Flutter parity): a week is the 5 weekdays. Day is 1.
-const WEEK_DAYS = 5
+const WEEK_DAYS = 7
 // The agenda is a planning list, so it spans a bounded multi-day window (the
 // visible week) rather than a single day/week grid (D1).
 const AGENDA_DAYS = 7
+
+// Local midnight of a Date — always a fresh Date so callers never mutate the input.
+function startOfLocalDay(date: Date): Date {
+  const start = new Date(date)
+  start.setHours(0, 0, 0, 0)
+  return start
+}
 
 function mapToEventItem(event: CalendarEvent): EventItem {
   return {
@@ -65,19 +72,33 @@ export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const [view, setView] = useState<CalendarView>("week")
-  const [visibleDate] = useState(() => new Date())
+  // The first day the grid is showing (local midnight). It starts at today but
+  // FOLLOWS the grid as the user scrolls (onDateChanged) so the events-source
+  // range tracks the visible window. Without it the range is frozen at mount:
+  // calendar-kit paints the scrolled-to week but no events are ever loaded for it.
+  const [windowStart, setWindowStart] = useState(() =>
+    startOfLocalDay(new Date()),
+  )
 
   const locale = resolveLocale(i18n.language)
   const numberOfDays =
     view === "day" ? 1 : view === "agenda" ? AGENDA_DAYS : WEEK_DAYS
 
+  // The agenda is an exact multi-day list; the grid buffers one page on each side
+  // of the visible window so scrolling to an adjacent week shows its events
+  // instantly (calendar-kit only paints the visible page — the off-screen rows
+  // sit ready), and the pinned-at-mount range bug can't reappear per-page.
   const range = useMemo(() => {
-    const from = new Date(visibleDate)
-    from.setHours(0, 0, 0, 0)
-    const to = new Date(from)
-    to.setDate(to.getDate() + numberOfDays)
+    const from = startOfLocalDay(windowStart)
+    const to = startOfLocalDay(windowStart)
+    if (view === "agenda") {
+      to.setDate(to.getDate() + numberOfDays)
+    } else {
+      from.setDate(from.getDate() - numberOfDays)
+      to.setDate(to.getDate() + numberOfDays * 2)
+    }
     return { from, to }
-  }, [visibleDate, numberOfDays])
+  }, [windowStart, view, numberOfDays])
 
   const events = useCalendarEvents(range)
   const eventItems = useMemo(() => events.map(mapToEventItem), [events])
@@ -197,11 +218,14 @@ export function CalendarScreen() {
           ) : (
             <CalendarContainer
               numberOfDays={numberOfDays}
-              initialDate={localDayKey(visibleDate)}
+              initialDate={localDayKey(windowStart)}
               start={GRID_START_MINUTE}
               end={GRID_END_MINUTE}
               events={eventItems}
               theme={calendarTheme}
+              onDateChanged={(iso) =>
+                setWindowStart(startOfLocalDay(new Date(iso)))
+              }
               onPressEvent={(event) => handlePressEvent(event.id)}
             >
               <CalendarHeader />

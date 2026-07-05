@@ -1,10 +1,14 @@
 // Prove the repository against the @/db seam, mocked: real expo-sqlite has no
-// off-device JS, so we assert the TRANSACTIONAL drop+replace (replaceAll
-// deletes-then-inserts INSIDE one db.transaction callback) rather than a real
-// round-trip. The shared createFakeDb fake overrides the seam with a stateful,
-// spy-instrumented builder whose `tx` IS the same instrumented db, so the tx-scoped
-// delete/insert/values record to the shared spies. The fake instance is
-// `mock`-prefixed so the hoisted jest.mock factory may reference it.
+// off-device JS, so we assert the SYNCHRONOUS-TRANSACTIONAL drop+replace
+// (replaceAll deletes-then-inserts with `.run()` executors INSIDE one non-async
+// db.transaction callback) rather than a real round-trip. The non-async callback
+// is load-bearing: the expo driver runs `begin → callback → commit` without
+// awaiting, so an async callback would let only the first statement commit (D3) —
+// the test asserts the callback is a plain (non-async) function. The shared
+// createFakeDb fake overrides the seam with a stateful, spy-instrumented builder
+// whose `tx` IS the same instrumented db, so the tx-scoped delete/insert/values
+// record to the shared spies. The fake instance is `mock`-prefixed so the hoisted
+// jest.mock factory may reference it.
 
 import { createFakeDb } from "@/test-support/fake-db"
 
@@ -58,13 +62,22 @@ beforeEach(() => {
 })
 
 describe("calendar-sync repository", () => {
-  it("replaceAll deletes-then-inserts inside a single transaction", async () => {
+  it("replaceAll deletes-then-inserts inside a single synchronous transaction", async () => {
     await replaceAll([row(), row({ uid: "ev-2" })])
 
     expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
+    // The callback MUST be synchronous (non-async): the expo driver never awaits,
+    // so an async callback would break atomicity (D3).
+    const txCallback = mockFake.spies.transaction.mock
+      .calls[0]?.[0] as () => void
+    expect(txCallback.constructor.name).toBe("Function")
     expect(mockFake.spies.delete).toHaveBeenCalledWith(calendarEvents)
     expect(mockFake.spies.insert).toHaveBeenCalledWith(calendarEvents)
-    // delete is issued before any insert (the drop precedes the bulk insert).
+    // Every statement runs INSIDE the transaction: the transaction is entered
+    // before the drop, and the drop precedes the bulk insert.
+    expect(mockFake.spies.transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockFake.spies.delete.mock.invocationCallOrder[0] ?? Infinity,
+    )
     expect(mockFake.spies.delete.mock.invocationCallOrder[0]).toBeLessThan(
       mockFake.spies.insert.mock.invocationCallOrder[0] ?? Infinity,
     )

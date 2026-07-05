@@ -166,6 +166,14 @@ export function createFakeDb(config: {
     const pk = pkOf(token)
     let staged: Row[] = []
     let consumed = false
+    // Insert the staged rows (unless an onConflict path already consumed them).
+    // Shared by the awaited (`then`) and synchronous (`run`) executors — the
+    // repositories that write inside a synchronous transaction call `.run()`.
+    const flush = () => {
+      if (!consumed) {
+        for (const row of staged) store.set(String(row[pk]), { ...row })
+      }
+    }
     const builder: Record<string, unknown> = {
       values: (rowOrRows: Row | Row[]) => {
         spies.values(rowOrRows)
@@ -182,11 +190,10 @@ export function createFakeDb(config: {
         return builder
       },
       then: (resolve: (v: unknown) => unknown) => {
-        if (!consumed) {
-          for (const row of staged) store.set(String(row[pk]), { ...row })
-        }
+        flush()
         return resolve(undefined)
       },
+      run: flush,
     }
     return builder
   }
@@ -200,12 +207,17 @@ export function createFakeDb(config: {
         patch = p
         return builder
       },
+      // The mutation is applied here; `then`/`run` are terminal no-ops (the
+      // synchronous-transaction `reorder` uses `.run()`, the awaited writers `.then`).
       where: (c: Condition) => {
         spies.where(c)
         for (const [key, row] of store) {
           if (matches(row, c)) store.set(key, { ...row, ...patch })
         }
-        return { then: (r: (v: unknown) => unknown) => r(undefined) }
+        return {
+          then: (r: (v: unknown) => unknown) => r(undefined),
+          run: () => undefined,
+        }
       },
     }
     return builder
@@ -219,13 +231,20 @@ export function createFakeDb(config: {
         for (const [key, row] of store) {
           if (matches(row, c)) store.delete(key)
         }
-        return { then: (r: (v: unknown) => unknown) => r(undefined) }
+        return {
+          then: (r: (v: unknown) => unknown) => r(undefined),
+          run: () => undefined,
+        }
       },
-      // delete(table) awaited with NO where: clear the whole table (the sync drop
-      // / replaceAll's drop step).
+      // delete(table) with NO where: clear the whole table (the sync drop /
+      // replaceAll's drop step). `run` is the synchronous-transaction executor,
+      // `then` the awaited one.
       then: (resolve: (v: unknown) => unknown) => {
         store.clear()
         return resolve(undefined)
+      },
+      run: () => {
+        store.clear()
       },
     }
     return builder
@@ -249,9 +268,12 @@ export function createFakeDb(config: {
       return makeDelete(token)
     },
     // tx IS the same instrumented db: transaction-scoped calls record to the
-    // shared spies (design decision 3 — collapses the old mockTx* spy set).
-    transaction: (cb: (tx: unknown) => Promise<unknown>) => {
-      spies.transaction()
+    // shared spies (design decision 3 — collapses the old mockTx* spy set). The
+    // callback is passed to the spy so a test can assert the synchronous form (a
+    // non-async callback — the expo driver never awaits, so an async one would
+    // break atomicity). Called synchronously (no await), mirroring the sync driver.
+    transaction: (cb: (tx: unknown) => unknown) => {
+      spies.transaction(cb)
       return cb(db)
     },
   }

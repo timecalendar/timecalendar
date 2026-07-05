@@ -112,7 +112,7 @@ describe("event-checklists repository", () => {
     expect(mockFake.spies.eq).toHaveBeenCalledWith(checklistItems.uuid, "u-1")
   })
 
-  it("reorder re-numbers order 1-based inside one transaction", async () => {
+  it("reorder re-numbers order 1-based inside one synchronous transaction", async () => {
     const items = [
       makeItem({ uuid: "u-a", order: 5 }),
       makeItem({ uuid: "u-b", order: 9 }),
@@ -121,7 +121,16 @@ describe("event-checklists repository", () => {
     await reorder(items)
 
     expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
+    // Synchronous (non-async) callback — the expo driver never awaits, so an async
+    // callback would let only the first update commit (D3).
+    const txCallback = mockFake.spies.transaction.mock
+      .calls[0]?.[0] as () => void
+    expect(txCallback.constructor.name).toBe("Function")
     expect(mockFake.spies.update).toHaveBeenCalledTimes(3)
+    // Every update runs inside the transaction (entered before the first update).
+    expect(mockFake.spies.transaction.mock.invocationCallOrder[0]).toBeLessThan(
+      mockFake.spies.update.mock.invocationCallOrder[0] ?? Infinity,
+    )
     // Each row gets its 1-based order in list position.
     expect(mockFake.spies.set.mock.calls[0]?.[0]).toMatchObject({ order: 1 })
     expect(mockFake.spies.set.mock.calls[1]?.[0]).toMatchObject({ order: 2 })

@@ -22,6 +22,34 @@ original design routed the live write through the lossy domain (`DTO → Calenda
 writes. The verbatim-fidelity claim now holds **end-to-end** (live AND importer), not
 just on the importer path. See the amended D1/D2/D3 + Consequences below.
 
+**⚠️ Amended (2026-07-05, change `harden-mobile-db-seam`):** three corrections after a
+real ~588-event synced calendar froze the whole app for minutes at every startup.
+
+- **The recorded perf trigger (below, "Revisit if") fired — and it was mis-modeled as
+  render jank.** FlashList would not have helped: the freeze is an **O(N²) reactive-read
+  storm in the `@/db` seam**. `expo-sqlite`'s change event fires **per row**
+  (`sqlite3_update_hook`); the seam's re-exported `useLiveQuery` re-ran its FULL query on
+  **every** event; and the Drizzle expo driver runs queries **synchronously** on the JS
+  thread — so a drop+replace of N rows emitted ~2N per-row events → ~2N synchronous
+  whole-table re-reads + re-maps **per mounted subscriber**, pegging the JS thread. Fixed
+  at the seam with a **coalescing reactive read** (a burst of change events collapses to
+  ONE trailing re-read) — see `storage.md` → the `@/db` reactive-read contract. The
+  storage decision here is **preserved**: `calendar_events` stays in SQLite and the
+  drop+replace strategy is unchanged.
+- **D3's "transactional" atomicity was FALSE at runtime.** The old `db.transaction(async
+  (tx) => …)` passed an **async** callback, which the synchronous expo driver never
+  awaits — the real sequence was `BEGIN → (first statement) → COMMIT`, with the remaining
+  statements in autocommit. D3 now uses Drizzle's **synchronous** transaction form (a
+  non-async callback + `.run()` executors), so the drop+replace genuinely commits or rolls
+  back as one unit. D3's wording below is corrected in place.
+- **`calendar_events` is NOT a Phase-09 importer target.** The authoritative migration
+  roadmap recovers only the irreplaceable set (`user_calendars.token`, `personal_events`,
+  `checklist_items`, `hidden_events`) and **re-syncs** cached events from the token — it
+  does NOT migrate `calendar_events`. The "Phase-09 importer target" / importer-fidelity
+  framing below is therefore **void for this table**: the verbatim `dtoToRow` schema still
+  stands (it is the live sync's write shape and defends rendering fidelity), but **no
+  importer writes these rows** — a first launch re-syncs them from the recovered token.
+
 ## Context
 
 Phase 04 item 3 makes the calendar render **real synced data**. The day/week
@@ -32,10 +60,12 @@ change is that swap: the events come from `POST /calendars/sync { tokens }` over
 durable `user_calendars` subscription tokens Phase 03 made durable (ADR 018), dropped
 into a new `calendar_events` table.
 
-It is the **third real Drizzle table** (after `personal_events`, `user_calendars`)
-and a **Phase-09 importer target**: the schema mirrors the Flutter
-`CalendarEvent.toDbMap()` / the server `CalendarEventForPublic` DTO verbatim so the
-one-shot importer can write recovered rows with no data loss. The Flutter sync flow
+It is the **third real Drizzle table** (after `personal_events`, `user_calendars`).
+The schema mirrors the Flutter `CalendarEvent.toDbMap()` / the server
+`CalendarEventForPublic` DTO verbatim — **not** for a Phase-09 importer (the roadmap
+re-syncs cached events from the recovered token, it does NOT migrate `calendar_events`
+— see the 2026-07-05 amendment), but because that verbatim shape is the live sync's
+own write shape (`dtoToRow`) and defends rendering fidelity. The Flutter sync flow
 (`calendar_sync_service.dart` + `calendar_event_repository.dart`, read for parity):
 load `user_calendars` → if empty return → batch `syncCalendars(tokens)` → flatten
 `calendars.flatMap(c => c.events.map(e => fromApi(e, userCalendarId: c.calendar.id)))`
@@ -100,10 +130,14 @@ ROWS.** `replaceAll(rows)` takes the verbatim insert rows (`dtoToRow`'s output),
 domain events — the live write path flattens `calendars.flatMap(c => c.events.map(e =>
 dtoToRow(e, c.calendar.id)))` and hands rows straight to `replaceAll`, so the lossy
 domain projection never touches a write and the live write is byte-identical in fidelity
-to the Phase-09 importer's direct-row path. It runs `db.transaction(async (tx) => {
-await tx.delete(calendarEvents); /* chunked bulk insert */ })` — the delete-all + the
-chunked bulk insert (chunked under SQLite's bound-variable limit, ~50 rows/chunk) commit
-or roll back as ONE unit. A crash mid-replace must never leave a half-empty
+to the Phase-09 importer's direct-row path. It runs a **synchronous**
+`db.transaction((tx) => { tx.delete(calendarEvents).run(); /* chunked bulk insert via
+.run() */ })` — a non-async callback so the expo driver's `BEGIN → callback → COMMIT`
+brackets EVERY statement (an async callback would suspend at its first `await` and let
+only the drop commit — the atomicity claim would be a lie; corrected 2026-07-05). The
+delete-all + the chunked bulk insert (chunked under SQLite's bound-variable limit, ~50
+rows/chunk) commit or roll back as ONE unit. A crash mid-replace must never leave a
+half-empty
 `calendar_events` (a partial table would silently lose the user's timetable until the
 next successful sync). The drop is reached **only after a successful fetch**, so a failed
 fetch leaves the last-good rows intact (offline-safe by construction).
@@ -172,8 +206,13 @@ same call ADR 018 made for `user_calendars`).
 - The Flutter wire format changes before the Phase-09 importer runs (re-align the columns).
 - A future server tag/fields shape change breaks the defensive decode beyond a safe
   default (extend the decode, still total).
-- Synced timetables grow large enough that the reactive `useLiveQuery` whole-table read
+- ~~Synced timetables grow large enough that the reactive `useLiveQuery` whole-table read
   janks or the `SectionList` needs FlashList (the recorded perf trigger — both ride the
-  existing seams) — the on-device perf pass owns the call.
+  existing seams) — the on-device perf pass owns the call.~~ **FIRED + RESOLVED
+  (2026-07-05, `harden-mobile-db-seam`):** a real ~588-event calendar tripped it, but the
+  mechanism was NOT render jank — it was an O(N²) per-row-change × synchronous
+  whole-table re-query storm in the `@/db` seam (see the 2026-07-05 amendment). Fixed at
+  the seam with a coalescing reactive read; no FlashList needed. Range-scoping the events
+  read in SQL is recorded as a **future** escalation (unnecessary at current scale).
 - Incremental/delta sync, per-calendar partial sync, or an offline write queue is
   genuinely needed (this ship is read-into-cache only via a full drop+replace).

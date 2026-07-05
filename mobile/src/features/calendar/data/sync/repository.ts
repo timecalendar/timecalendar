@@ -24,18 +24,23 @@ const INSERT_CHUNK_SIZE = 50
 // a crash mid-replace must never leave a half-empty table (a partial
 // calendar_events would silently lose the user's timetable until the next
 // successful sync). So the delete-all + the chunked bulk insert run inside ONE
-// db.transaction — either the whole replace commits or none of it does. The
-// chunking stays under SQLite's bound-variable limit; all chunks share the one
-// transaction. A thrown transaction is a crash-worthy LOCAL write failure (the
-// orchestrator records it through @/firebase — distinct from a recoverable fetch
-// failure, ADR 021 / D6).
+// SYNCHRONOUS db.transaction — a non-async callback with `.run()` executors. The
+// expo driver runs `begin → callback → commit` without ever awaiting, so a
+// synchronous callback keeps every statement between begin and commit and the
+// whole replace commits or none of it does. (An async callback would suspend at
+// its first await, letting begin/commit bracket only the first statement while
+// the rest ran in autocommit — the atomicity would be a lie, D3.) The chunking
+// stays under SQLite's bound-variable limit; all chunks share the one transaction.
+// A thrown transaction is a crash-worthy LOCAL write failure (the orchestrator
+// records it through @/firebase — distinct from a recoverable fetch failure, ADR
+// 021 / D6).
 export async function replaceAll(rows: CalendarEventInsert[]): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx.delete(calendarEvents)
+  db.transaction((tx) => {
+    tx.delete(calendarEvents).run()
     for (let i = 0; i < rows.length; i += INSERT_CHUNK_SIZE) {
-      await tx
-        .insert(calendarEvents)
+      tx.insert(calendarEvents)
         .values(rows.slice(i, i + INSERT_CHUNK_SIZE))
+        .run()
     }
   })
 }
