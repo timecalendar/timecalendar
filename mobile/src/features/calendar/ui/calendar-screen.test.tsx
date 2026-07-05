@@ -116,6 +116,9 @@ describe("CalendarScreen", () => {
     mockUseCalendarEvents.mockReturnValue([])
     await render(<CalendarScreen />)
     expect(screen.getByText("No events this period.")).toBeTruthy()
+    // The E2E-stable empty marker (the calendar.yaml round-trip asserts the
+    // empty→populated transition against its absence once the seed syncs).
+    expect(screen.getByTestId("calendar-empty")).toBeTruthy()
   })
 
   it("switches to the agenda view and renders a day header + tile", async () => {

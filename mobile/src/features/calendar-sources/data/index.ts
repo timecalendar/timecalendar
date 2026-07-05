@@ -8,6 +8,7 @@ export type { ScannedCalendarSource } from "./types"
 // The durable token store (ship 5 / ADR 018) — replaces the removed ephemeral
 // scanned-source holder. The sub-module re-exports through this data/ sub-barrel.
 export {
+  addCalendarFromToken,
   calendarToRow,
   findAll,
   fromCalendarForPublic,

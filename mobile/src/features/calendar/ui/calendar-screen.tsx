@@ -152,6 +152,7 @@ export function CalendarScreen() {
             themeColor="textSecondary"
             accessibilityLiveRegion="polite"
             accessibilityRole="text"
+            testID="calendar-empty"
           >
             {t("calendar.empty")}
           </ThemedText>
