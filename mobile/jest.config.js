@@ -60,13 +60,14 @@ module.exports = {
     // noise. Excluded with reason, not silently.
     "!src/**/*.d.ts",
     // E2E-covered, not unit-covered — by design (Architecture Book "Testing"):
-    //  - src/api/{mutator,config}: the customFetch seam component tests mock and
-    //    the base-URL constant; the seam is proven end to end by the Maestro
-    //    round-trip, never executed under Jest (tests stub at the mutator).
+    //  - src/api/config.ts: a build-time base-URL constant (no logic to unit);
+    //    its resolution is proven end to end by the Maestro round-trip.
     //  - src/app/**: route entrypoints / layout wiring — thin `export default`
     //    re-exports over @/components (route-screen rule) and the root layout;
     //    exercised by the Maestro app launch, not unit tests.
-    "!src/api/mutator.ts",
+    // NOTE: src/api/mutator.ts is NO LONGER excluded — it now has a direct unit
+    // test (mutator.test.ts, the one suite that does not mock the mutator) proving
+    // the non-2xx → ApiError contract + the timeout/cancellation forwarding.
     "!src/api/config.ts",
     "!src/app/**",
     // Test-support only — jest fixtures imported by tests, never production code
