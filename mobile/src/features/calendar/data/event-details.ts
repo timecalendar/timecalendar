@@ -126,27 +126,6 @@ export function personalRowToEventDetails(row: PersonalEventRow): EventDetails {
   }
 }
 
-// The non-reactive read for the single event behind a uid — the only @/db import
-// site for this read (B-1), reusing the already-re-exported `eq` (no new operator,
-// R-2). Resolves EITHER kind: a synced calendar_events row, else a personal
-// personal_events row. Returns the mapped rich event, or null when no row matches
-// either table.
-export async function getByUid(uid: string): Promise<EventDetails | null> {
-  const syncedRows = await db
-    .select()
-    .from(calendarEvents)
-    .where(eq(calendarEvents.uid, uid))
-  const synced = syncedRows[0]
-  if (synced !== undefined) return rowToEventDetails(synced)
-
-  const personalRows = await db
-    .select()
-    .from(personalEvents)
-    .where(eq(personalEvents.uid, uid))
-  const personal = personalRows[0]
-  return personal === undefined ? null : personalRowToEventDetails(personal)
-}
-
 export interface UseEventDetails {
   event: EventDetails | null
   loading: boolean

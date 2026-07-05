@@ -1,14 +1,15 @@
-import { type CalendarEvent } from "./types"
+import { type CalendarEvent } from "@/features/calendar/data"
 
-// A committed dense-week fixture mirroring the Phase-04 spike's worst case (a
-// Tuesday 5-way overlap cluster + back-to-back blocks across the week), so the
-// brand surface + overlap rendering are reviewable on-device and the Maestro flow
-// has a stable, reachable target with NO seeded backend (sync isn't built — D3).
+// A dense-week fixture mirroring the Phase-04 spike's worst case (a Tuesday 5-way
+// overlap cluster + back-to-back blocks across the week). It is TEST-SUPPORT ONLY —
+// no longer part of the runtime events-source merge (the sync ship removed it; D3).
+// It survives as the overlap engine's worst-case input and the events.test.ts
+// regression guard (asserting the fixture is NOT in the default merge). It lives
+// under src/test-support/ (out of the production calendar/data/ tree) and is
+// coverage-excluded (jest.config.js).
 //
 // Anchored to the CURRENT week (Monday 00:00 local) so the events always fall in
-// the visible range when the screen opens on today. The events-source seam
-// (events.ts) merges + range-filters these; the sync ship removes / dev-gates the
-// fixture (D3).
+// the visible range when a consumer opens on today.
 
 // Local Monday 00:00 of the week containing `ref` (Mon=0 … Sun=6).
 function mondayOf(ref: Date): Date {

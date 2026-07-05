@@ -76,9 +76,9 @@ export const userCalendars = sqliteTable("user_calendars", {
 //    transformation — ADR 011/D3).
 //  - `startsAt` / `endsAt` / `exportedAt` hold UTC ISO-8601 strings (ADR 011/D4
 //    posture: TEXT over epoch-ms for importer fidelity AND because lexicographic
-//    order of canonical UTC ISO-8601 equals chronological order, so findInRange
-//    range-filters on plain text columns). Canonicality is guaranteed by the
-//    row↔domain mappers' toISOString().
+//    order of canonical UTC ISO-8601 equals chronological order, so range filters
+//    and ordered reads work on plain text columns). Canonicality is guaranteed by
+//    the row↔domain mappers' toISOString().
 //  - `location` / `description` are nullable (null↔undefined at the mapper edge).
 //  - `allDay` is a boolean (SQLite has no boolean — Drizzle `mode: "boolean"`
 //    stores 0/1, mirroring user_calendars.visible).

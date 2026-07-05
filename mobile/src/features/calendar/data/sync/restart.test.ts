@@ -1,14 +1,18 @@
 // The durability proof CI *can* run: the write-then-read-back contract against a
 // stateful in-memory mock @/db (a Map-backed fake honoring the transactional
-// replaceAll + a range select). The Map lives at MODULE scope OUTSIDE the
+// replaceAll + a whole-table select). The Map lives at MODULE scope OUTSIDE the
 // jest.mock factory and is NOT reset between the write and the read, standing in
 // for on-disk SQLite that survives a process restart — so after jest.resetModules()
-// a FRESHLY-imported repository module reads back exactly what the prior module
-// wrote (the drop+replace persisted). On-disk atomicity is the on-device manual
-// pass (inbox); here we prove the repository contract. Spy state is `mock`-prefixed
-// so the hoisted jest.mock factory may reference it.
+// the persisted rows still read back exactly what the prior module wrote (the
+// drop+replace persisted), through the production whole-table read (useSyncedEvents'
+// shape; the dead findInRange range read is gone). On-disk atomicity is the
+// on-device manual pass (inbox); here we prove the repository contract. Spy state is
+// `mock`-prefixed so the hoisted jest.mock factory may reference it.
 
-import type { calendarEvents } from "@/db"
+import { calendarEvents, db } from "@/db"
+import type { CalendarEvent } from "@/features/calendar/data/types"
+
+import { rowToCalendarEvent } from "./types"
 
 type CalendarEventInsert = typeof calendarEvents.$inferInsert
 type Repository = typeof import("./repository")
@@ -19,30 +23,14 @@ const loadRepository = (): Repository =>
 // The "disk": a Map<uid, row> that persists across module resets.
 const mockStore = new Map<string, Record<string, unknown>>()
 
-// A resolved overlap condition produced by and(lte(...), gte(...)): the
-// repository builds it from ISO bounds; the fake reproduces the same filter. The
-// type lives at module scope (not inside the jest.mock factory, whose hoisting
-// disallows referencing a factory-local type).
-type Cond = { startsAtMax: string; endsAtMin: string } | null
-
 jest.mock("@/db", () => {
+  // A whole-table select over the "disk" Map — the production read shape
+  // (useSyncedEvents reads the whole table, no range filter).
   const makeSelect = () => {
-    let cond: Cond = null
     const builder: Record<string, unknown> = {
       from: () => builder,
-      where: (c: Cond) => {
-        cond = c
-        return builder
-      },
       then: (resolve: (rows: unknown[]) => unknown) =>
-        resolve(
-          [...mockStore.values()].filter((row) => {
-            if (cond === null) return true
-            const startsAt = String(row.startsAt)
-            const endsAt = String(row.endsAt)
-            return startsAt <= cond.startsAtMax && endsAt >= cond.endsAtMin
-          }),
-        ),
+        resolve([...mockStore.values()]),
     }
     return builder
   }
@@ -65,16 +53,7 @@ jest.mock("@/db", () => {
       select: () => makeSelect(),
       transaction: (cb: (t: typeof tx) => Promise<unknown>) => cb(tx),
     },
-    calendarEvents: {
-      startsAt: "calendarEvents.startsAt",
-      endsAt: "calendarEvents.endsAt",
-    },
-    and: (lte: { val: string }, gte: { val: string }) => ({
-      startsAtMax: lte.val,
-      endsAtMin: gte.val,
-    }),
-    lte: (_col: string, val: string) => ({ val }),
-    gte: (_col: string, val: string) => ({ val }),
+    calendarEvents: {},
   }
 })
 
@@ -102,9 +81,11 @@ function row(
   }
 }
 
-const wideRange = {
-  from: new Date("2026-06-01T00:00:00.000Z"),
-  to: new Date("2026-06-30T00:00:00.000Z"),
+// The production read (useSyncedEvents) is a whole-table select mapped row→domain;
+// read the persisted "disk" back through that same shape (findInRange is gone).
+async function readAll(): Promise<CalendarEvent[]> {
+  const rows = await db.select().from(calendarEvents)
+  return rows.map(rowToCalendarEvent)
 }
 
 beforeEach(() => {
@@ -112,16 +93,15 @@ beforeEach(() => {
 })
 
 describe("calendar-sync restart durability", () => {
-  it("reads back a prior replaceAll through a freshly-imported repository module", async () => {
+  it("reads back a prior replaceAll after a simulated restart (persisted disk)", async () => {
     const first = loadRepository()
     await first.replaceAll([row()])
 
     // Simulate a process restart: drop the module registry, but the "disk" (the
     // module-scoped Map) survives — exactly what on-disk SQLite gives.
     jest.resetModules()
-    const second = loadRepository()
 
-    const restored = await second.findInRange(wideRange.from, wideRange.to)
+    const restored = await readAll()
     expect(restored).toHaveLength(1)
     expect(restored[0]?.id).toBe("ev-restart")
     expect(restored[0]?.title).toBe("Algorithms")
@@ -137,7 +117,7 @@ describe("calendar-sync restart durability", () => {
     await repo.replaceAll([row(), row({ uid: "ev-old" })])
     await repo.replaceAll([row({ uid: "ev-new" })])
 
-    const all = await repo.findInRange(wideRange.from, wideRange.to)
+    const all = await readAll()
     expect(all.map((e) => e.id).sort()).toEqual(["ev-new"])
   })
 
@@ -147,7 +127,6 @@ describe("calendar-sync restart durability", () => {
     await repo.replaceAll([])
 
     jest.resetModules()
-    const second = loadRepository()
-    expect(await second.findInRange(wideRange.from, wideRange.to)).toEqual([])
+    expect(await readAll()).toEqual([])
   })
 })

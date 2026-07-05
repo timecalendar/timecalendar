@@ -5,9 +5,9 @@ import {
   type PersonalEvent,
   usePersonalEvents,
 } from "@/features/personal-events"
+import { denseWeekFixture } from "@/test-support/calendar-dense-week"
 
 import { useCalendarEvents } from "./events"
-import { denseWeekFixture } from "./fixtures"
 import { useSyncedEvents } from "./sync"
 import type { CalendarEvent } from "./types"
 

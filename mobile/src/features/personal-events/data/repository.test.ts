@@ -6,14 +6,13 @@
 // the hoisted jest.mock factory may reference them.
 
 // Rows the awaited query chain resolves to (settable per test).
-import { and, eq, gte, lte, personalEvents } from "@/db"
+import { eq, personalEvents } from "@/db"
 
-import { findAll, findInRange, getById, remove, upsert } from "./repository"
+import { findAll, getById, remove, upsert } from "./repository"
 import { eventToRow, type PersonalEvent } from "./types"
 
 let mockRows: unknown[] = []
 const mockWhere = jest.fn()
-const mockOrderBy = jest.fn()
 const mockFrom = jest.fn()
 const mockValues = jest.fn()
 const mockOnConflict = jest.fn()
@@ -28,7 +27,6 @@ jest.mock("@/db", () => {
     const builder: Record<string, unknown> = {
       from: (...a: unknown[]) => (mockFrom(...a), builder),
       where: (...a: unknown[]) => (mockWhere(...a), builder),
-      orderBy: (...a: unknown[]) => (mockOrderBy(...a), builder),
       values: (...a: unknown[]) => (mockValues(...a), builder),
       onConflictDoUpdate: (...a: unknown[]) => (mockOnConflict(...a), builder),
       then: (resolve: (value: unknown[]) => unknown) => resolve(mockRows),
@@ -41,15 +39,8 @@ jest.mock("@/db", () => {
       insert: (...a: unknown[]) => (mockInsert(...a), makeBuilder()),
       delete: (...a: unknown[]) => (mockDelete(...a), makeBuilder()),
     },
-    personalEvents: {
-      uid: "personalEvents.uid",
-      startsAt: "personalEvents.startsAt",
-      endsAt: "personalEvents.endsAt",
-    },
+    personalEvents: { uid: "personalEvents.uid" },
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),
-    and: jest.fn((...conds) => ({ op: "and", conds })),
-    gte: jest.fn((col, val) => ({ op: "gte", col, val })),
-    lte: jest.fn((col, val) => ({ op: "lte", col, val })),
   }
 })
 
@@ -79,7 +70,6 @@ beforeEach(() => {
   mockRows = []
   ;[
     mockWhere,
-    mockOrderBy,
     mockFrom,
     mockValues,
     mockOnConflict,
@@ -126,26 +116,5 @@ describe("personal-events repository", () => {
     expect(mockDelete).toHaveBeenCalledWith(personalEvents)
     expect(eq).toHaveBeenCalledWith(personalEvents.uid, "uid-1")
     expect(mockWhere).toHaveBeenCalled()
-  })
-
-  it("findInRange issues the gte/lte range, orders by start, maps to domain", async () => {
-    const earlier: PersonalEvent = {
-      ...event,
-      uid: "uid-early",
-      startsAt: new Date("2026-06-14T08:00:00.000Z"),
-      endsAt: new Date("2026-06-14T08:30:00.000Z"),
-    }
-    // The builder returns rows already DB-ordered; assert mapping preserves
-    // order and the bounds are the canonical ISO strings.
-    mockRows = [rowOf(earlier), rowOf(event)]
-    const from = new Date("2026-06-14T00:00:00.000Z")
-    const to = new Date("2026-06-15T00:00:00.000Z")
-    const result = await findInRange(from, to)
-
-    expect(lte).toHaveBeenCalledWith(personalEvents.startsAt, to.toISOString())
-    expect(gte).toHaveBeenCalledWith(personalEvents.endsAt, from.toISOString())
-    expect(and).toHaveBeenCalled()
-    expect(mockOrderBy).toHaveBeenCalledWith(personalEvents.startsAt)
-    expect(result.map((e) => e.uid)).toEqual(["uid-early", "uid-1"])
   })
 })

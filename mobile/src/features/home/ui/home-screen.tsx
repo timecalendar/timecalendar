@@ -78,14 +78,11 @@ export function HomeScreen() {
 
   const { sync, isSyncing, isError } = useSyncCalendars()
 
-  // Route a tapped event by ORIGIN (item 3 parity): a synced calendar event carries
-  // a userCalendarId → the read-only details screen; a personal event (no
-  // userCalendarId) → its editable form.
-  const handlePressEvent = (
-    uid: string,
-    userCalendarId: string | undefined,
-  ) => {
-    router.push(eventRoute(uid, userCalendarId))
+  // Both kinds open the unified event-details screen keyed on the uid (ADR 024):
+  // the details screen resolves synced vs. personal itself, so the tap no longer
+  // routes by origin.
+  const handlePressEvent = (uid: string) => {
+    router.push(eventRoute(uid))
   }
 
   return (
@@ -160,9 +157,7 @@ export function HomeScreen() {
           <UpcomingScroller
             events={dayEvents}
             locale={locale}
-            onPressEvent={(event) =>
-              handlePressEvent(event.id, event.userCalendarId)
-            }
+            onPressEvent={(event) => handlePressEvent(event.id)}
           />
 
           <ThemedText type="subtitle" accessibilityRole="header">
@@ -184,9 +179,7 @@ export function HomeScreen() {
               locale={locale}
               isToday={isToday}
               now={now}
-              onPressEvent={(event) =>
-                handlePressEvent(event.id, event.userCalendarId)
-              }
+              onPressEvent={(event) => handlePressEvent(event.id)}
             />
           )}
 

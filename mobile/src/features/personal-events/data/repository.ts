@@ -1,4 +1,4 @@
-import { and, db, eq, gte, lte, personalEvents } from "@/db"
+import { db, eq, personalEvents } from "@/db"
 
 import { eventToRow, type PersonalEvent, rowToEvent } from "./types"
 
@@ -35,25 +35,4 @@ export async function upsert(event: PersonalEvent): Promise<void> {
 
 export async function remove(uid: string): Promise<void> {
   await db.delete(personalEvents).where(eq(personalEvents.uid, uid))
-}
-
-// Events overlapping the closed window [from, to]: the start at/before `to` and
-// the end at/after `from`, ordered chronologically by start. The TEXT ISO-8601 columns sort
-// lexicographically as chronological for canonical UTC strings (D4 — the
-// property the mappers guarantee), so the bounds are the canonical ISO strings.
-export async function findInRange(
-  from: Date,
-  to: Date,
-): Promise<PersonalEvent[]> {
-  const rows = await db
-    .select()
-    .from(personalEvents)
-    .where(
-      and(
-        lte(personalEvents.startsAt, to.toISOString()),
-        gte(personalEvents.endsAt, from.toISOString()),
-      ),
-    )
-    .orderBy(personalEvents.startsAt)
-  return rows.map(rowToEvent)
 }

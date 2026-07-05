@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lte } from "drizzle-orm"
+import { asc, eq } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { useLiveQuery } from "drizzle-orm/expo-sqlite/query"
 import { openDatabaseSync } from "expo-sqlite"
@@ -21,18 +21,16 @@ const expoDb = openDatabaseSync("timecalendar.db", {
 export const db = drizzle(expoDb)
 
 // Re-export only the Drizzle query surface a feature consumer needs (the encoded
-// form of "the feature never imports drizzle-orm"): the operators the repository
-// builds queries with, and the reactive read hook the storage section names as
-// the pattern features inherit. Re-export ONLY what a consumer needs (R-2), not
-// all of drizzle-orm.
-export { and, asc, eq, gte, lte, useLiveQuery }
+// form of "the feature never imports drizzle-orm"): the operators the repositories
+// build queries with, and the reactive read hook the storage section names as the
+// pattern features inherit. Re-export ONLY what a consumer needs (R-2), not all of
+// drizzle-orm.
+export { asc, eq, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
-// drizzle-orm/sqlite-core import stays inside the seam dir. The calendar-sync
-// repository's findInRange reuses `and`/`gte`/`lte` (already re-exported above
-// for personal-events). The event-checklists repository's ordered read adds the
-// single new operator `asc` (ADR 024 — `order BY order` asc; R-2: re-export only
-// what a consumer needs).
+// drizzle-orm/sqlite-core import stays inside the seam dir. `eq` serves the by-uid
+// reads/writes (personal events, calendar events, checklists); the event-checklists
+// repository's ordered read adds `asc` (ADR 024 — `order BY order` asc).
 export {
   calendarEvents,
   checklistItems,
