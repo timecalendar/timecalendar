@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 
+import { useUserCalendars } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import {
   type PersonalEvent,
@@ -62,13 +63,25 @@ export function intersectsRange(
 // EventsForViewNotifier parity — a hidden *name* can match a same-titled personal
 // event too) BEFORE the range filter. No consumer change: day/week, agenda, and
 // home all honor hiding through the unchanged signature + CalendarEvent shape.
+//
+// Calendar-visibility filter (ADR 031 / user-calendars ship): the same data →
+// data cross-feature edge reads useUserCalendars() and keeps a merged event iff
+// it is personal (no userCalendarId, always shown) OR its calendar is currently
+// visible. It is the single seam that makes `visible` a render-only flag across
+// day/week/agenda + home; a deleted calendar drops out of the visible set, so its
+// events vanish with no calendar_events purge (ADR 031). Applied on the merged
+// list, before the range filter, behind the unchanged signature.
 export function useCalendarEvents(range: DateRange): CalendarEvent[] {
   const syncedEvents = useSyncedEvents()
   const personalEvents = usePersonalEvents()
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
+  const calendars = useUserCalendars()
   return useMemo(() => {
     const uidSet = new Set(uidHiddenEvents)
     const nameSet = new Set(namedHiddenEvents)
+    const visibleIds = new Set(
+      calendars.filter((c) => c.visible).map((c) => c.id),
+    )
     const merged = [
       ...syncedEvents,
       ...personalEvents.map(personalToCalendarEvent),
@@ -77,7 +90,16 @@ export function useCalendarEvents(range: DateRange): CalendarEvent[] {
       (event) =>
         !uidSet.has(event.id) &&
         !nameSet.has(event.title) &&
+        (event.userCalendarId === undefined ||
+          visibleIds.has(event.userCalendarId)) &&
         intersectsRange(event, range),
     )
-  }, [syncedEvents, personalEvents, uidHiddenEvents, namedHiddenEvents, range])
+  }, [
+    syncedEvents,
+    personalEvents,
+    uidHiddenEvents,
+    namedHiddenEvents,
+    calendars,
+    range,
+  ])
 }

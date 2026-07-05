@@ -97,6 +97,16 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   *name* also matches a same-titled personal event) **before** the range filter. **No consumer
   change** — same signature, same `CalendarEvent` shape; day/week, agenda, AND home all honor
   hiding. See "Hidden events" below + storage.md "Hidden events store".
+- **Calendar-visibility filter (Phase 07 — `add-mobile-user-calendars`, ADR
+  [031](./decisions/031-user-calendar-visibility-filter-at-seam.md)):** the same seam ALSO reads
+  `useUserCalendars()` (the same legitimate `data → data` edge) and keeps a merged event iff it is
+  **personal** (`userCalendarId === undefined`, always shown) OR its `userCalendarId` is in the set of
+  currently **visible** calendars — one more `useMemo` clause of the identical shape, on the merged
+  list, before the range filter. `visible` is thus a **render-only** flag (not a sync gate, not a
+  notification gate). Its load-bearing consequence: a **deleted** calendar drops out of
+  `useUserCalendars()`, so its events vanish immediately with **no `calendar_events` purge** — the
+  `user_calendars` table is the single source of truth for "what shows" (ADR 031). See "User calendars"
+  in features.md.
 
 ## The timeline screen — a brand surface (R-3)
 

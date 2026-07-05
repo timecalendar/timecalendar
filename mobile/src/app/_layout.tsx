@@ -132,6 +132,15 @@ export default function RootLayout() {
               name="notification-settings"
               options={{ headerShown: true }}
             />
+            {/* The user-calendars management screen ("Mes calendriers") — a
+                Stack sibling of (tabs), reached from a Profile entry link, where
+                a held calendar's visibility is toggled and a calendar deleted.
+                Header shown for the accessible back affordance + the screen's own
+                title. Deep-linkable: timecalendar-dev://user-calendars. */}
+            <Stack.Screen
+              name="user-calendars"
+              options={{ headerShown: true }}
+            />
             {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
                 of (tabs), the E2E seam that makes the app durably hold a seeded
                 calendar token so real synced data renders. Headerless (it self-
