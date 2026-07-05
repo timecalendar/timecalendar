@@ -42,3 +42,41 @@ double-announce on Android or an unnecessary announce on iOS.
 **How to verify:** with VoiceOver on, toggle a row and listen for the state change. If iOS is
 silent, add the iOS-gated announce on the resolved write and re-verify both platforms
 (Android must not double-announce).
+
+## 3. Fold into the device-pass ship — panel re-review nits (all MINOR/NIT)
+
+The Phase-5 disposition re-review passed every fix and accepted both defers above. It raised
+these lower-severity items; apply them in the SAME ship as §1/§2 (a device-pass ship already
+edits the screen, so batching avoids a disproportionate standalone cycle). None block anything.
+
+Device-visual (verify on screen, both schemes / font scales):
+- **Checked-box two-tone ring (native N1, MINOR).** The checked box keeps `borderColor:
+  theme.primary` around a `primaryStrong` fill → a visible ring (esp. dark: #FF4081 on
+  #C2185B). M3 selected checkboxes are a solid container, no separate outline. Fix: set the
+  border to `theme.primaryStrong` when checked (keep `primary` for the unchecked outline).
+- **Delete button doesn't fill row height (native N2, NIT).** `styles.delete` is a 44pt band
+  centered in a ~70pt row → the ripple/pressed patch floats mid-row and leaves dead strips.
+  Fix: `alignSelf: "stretch"` on `styles.delete` (drop `minHeight`, keep `minWidth: 44`).
+- **Empty-state title uses the 32pt `subtitle` token (native N3, NIT).** Reads page-hero; the
+  type scale has no step between 16 and 32. Least-bad today (no-new-token ship) — revisit if
+  the scale grows a mid step.
+- **Android checkmark can clip at large font scales (a11y N1, NIT).** The Android "✓" is
+  `smallBold` text that scales with OS font size inside a fixed 28×28 box. Check at ~2×
+  Dynamic Type; if it clips, a `maxFontSizeMultiplier` on that one decorative glyph is
+  legitimate (it's a mark, not copy — same reasoning as the CHECKMARK comment).
+
+Machine-verifiable code cleanup (no device needed; fold in for free):
+- **`jest.replaceProperty(Platform, "OS", "android")` leaks past its test (rn N1, MINOR).**
+  `jest.config.js` sets neither `restoreMocks` nor `resetMocks`, and `clearAllMocks()` does
+  not restore replaced properties, so every test after the Android render test runs with
+  `Platform.OS === "android"`. Harmless today (only the write-failure test follows, passes on
+  either platform) but a real theater trap for any test appended below it. Fix: capture the
+  handle — `const os = jest.replaceProperty(...)` + `os.restore()` — or add
+  `afterEach(() => jest.restoreAllMocks())` in that file.
+- **Loaded-gate hook-ordering assumption (rn, comment-level).** `loaded` comes from a second
+  `useLiveQuery` instance while `calendars` comes from the first; correctness relies on
+  `useUserCalendars()` being called before `useUserCalendarsLoaded()` (drizzle dispatches
+  first reads in hook-order on one serialized connection). Add a one-line comment in
+  `hooks.ts` stating the ordering assumption, or (cleaner, purely additive) expose a combined
+  `useUserCalendarsState(): { calendars, loaded }` derived from one query instance and have
+  the screen use it — eliminates the race class. Not worth a standalone re-spin.
