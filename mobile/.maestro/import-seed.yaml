@@ -9,6 +9,20 @@
 # waits until that navigation has landed (the "Calendar" title), so the caller can
 # assume a synced calendar from step one.
 #
+# WHY clearState FIRST (durable-token cross-flow isolation): `maestro test
+# .maestro/` runs the WHOLE folder in ONE device session, and `stopApp` does NOT
+# clear app data — the dev-import writes a DURABLE token to SQLite (plus a flow may
+# leave a hidden-set/checklist row). Without a wipe, one flow's imported token would
+# pollute every later flow: home would show synced events where it expects the
+# empty-day state, and hidden/checklist empty-state assertions would break. So the
+# preamble opens with `launchApp: clearState: true` to wipe the slate (Android `pm
+# clear` / iOS data reset), then cold-starts into the deep link — every
+# calendar-family flow begins from a known-empty store. (The per-simulator iOS
+# "Open in <app>?" springboard dialog is a device setting, unaffected by
+# clearState.) The trailing NON-calendar flows (ical-import / onboarding /
+# personal-events / settings) deep-link their own routes and never assert calendar
+# emptiness, so a residual held token is harmless to them.
+#
 # Requires the release-config dev-variant build + the e2e server (ci/e2e-server.sh)
 # seeding `e2e-smoke-calendar` (server/src/scripts/seed-e2e-calendar.ts). Shared
 # across iOS and Android — stable localized text, no per-platform selectors.
@@ -18,6 +32,10 @@
 # cold launch, so stopApp first, then openLink relaunches into the deep link.
 appId: fr.samuelprak.timecalendar.dev
 ---
+# Wipe durable app state so this flow (and the imported token) can't leak into a
+# later flow in the same device session (see the clearState rationale above).
+- launchApp:
+    clearState: true
 - stopApp
 - openLink: timecalendar-dev://dev-import?token=e2e-smoke-calendar
 # iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per

@@ -1,40 +1,41 @@
-# Event-checklists reachability e2e flow (Phase-05 Ship B / ADR 024).
+# Event-checklists real-round-trip e2e flow (ADR 024 / 030).
 #
-# Cold-launches the development-variant app and deep-links to the UNIFIED
-# event-details route. After this ship the details screen serves BOTH event kinds
-# and mounts the interactive checklist section. This flow proves the route is
-# reachable via deep link (a Stack sibling of (tabs)), the screen mounts past the
-# splash, and the migration runner has created the 4th table (checklist_items)
-# without crashing launch — end to end on a real device.
+# Imports the seeded `e2e-smoke-calendar` token (the shared import-seed.yaml
+# preamble), opens a REAL synced event's details by its stable seeded uid, and
+# round-trips a checklist item through the real device-local `checklist_items`
+# store: add → type → assert → toggle → delete → assert gone. This proves the
+# irreplaceable-data write path end to end on a real device.
 #
-# SEEDED-DATA LIMITATION (the same one calendar.yaml / event-details record): the
-# e2e server seed does NOT seed a user_calendars token reachable by deep link with
-# synced calendar_events, so there is no real synced event whose details (and
-# checklist) are reachable by a stable deep link. A personal event's details ARE
-# reachable, but only via a tap in a calendar/home view (range-dependent, fragile)
-# — the /personal-events list row still opens the EDIT FORM directly (unchanged).
-# So this flow asserts route reachability via the not-found state (a deep link to a
-# uid in neither table renders the accessible not-found message without crashing,
-# proving the unified read resolves both tables and degrades safely).
+# This replaces the former reachability-only flow, which could only deep-link a
+# not-in-any-table uid and assert the not-found state (the "SEEDED-DATA
+# LIMITATION") because no real synced event was reachable by a stable deep link.
+# The dev-import deep link now makes the app hold the token; `E2E Today Lecture`
+# (seeded uid `e2e-today-lecture`) is a real synced event whose details + checklist
+# are reachable.
 #
-# The REAL populated checklist render + the add/toggle/edit/reorder/delete
-# round-trip through the real DB (the irreplaceable-data write path), the
-# auto-focus keyboard-raise feel, and the manual VoiceOver/TalkBack pass are the
-# on-device manual pass (inbox/2026-06-16-event-checklists-on-device.md). The
-# checklist data layer (mappers + repository + actions + write/read-back +
-# restart-sim) is proven deterministically in CI (event-checklists/data/*.test +
-# event-checklist.test.tsx).
+# Selector notes (design D5): `checklist-add` is a STABLE testID. The per-row
+# testIDs (`checklist-check-*` / `checklist-input-*` / `checklist-remove-*`) are
+# uuid-suffixed — Maestro can't template a runtime id, so with a SINGLE row we match
+# by the `.*` regex id, and assert the round-trip by the TYPED CONTENT TEXT (stable,
+# ASCII-safe) rather than the dynamic id. The add button auto-focuses the new row's
+# input, so `inputText` types straight into it.
 #
-# Requires a release-config dev-variant build installed on the connected device.
-# Shared across iOS and Android: stable localized-text assertions, no per-platform
-# selectors. Run via mobile/e2e/run_e2e.sh. Mirrors calendar.yaml.
+# The checklist writes go to device-local SQLite (`checklist_items`), NOT the server,
+# so they don't disturb the seeded server rows; the flow deletes the item it added,
+# leaving device state as it found it.
+#
+# Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
+# seeding the token. Shared across iOS and Android: stable localized text / testID
+# assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
 appId: fr.samuelprak.timecalendar.dev
 ---
-- launchApp
-# Cold-start via the deep link (see calendar.yaml header): a warm openLink does
-# not navigate on Android release builds — stopApp first, then openLink relaunches.
+# Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
+- runFlow: import-seed.yaml
+# Cold-restart into the seeded event's details by its stable uid. The held token
+# survives the restart (clearState ran only at the preamble's start), so the synced
+# `calendar_events` row resolves and the details + checklist render.
 - stopApp
-- openLink: timecalendar-dev://event-details/no-such-event
+- openLink: timecalendar-dev://event-details/e2e-today-lecture
 # iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
 # simulator — tap when present, skip otherwise.
 - runFlow:
@@ -44,10 +45,31 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
-# Generous timeout: a release-config cold start + JS bundle load can land just
-# past Maestro's ~17s default. The not-found message renders past the splash + the
-# startup migration (which now creates checklist_items), proving the unified read
-# resolved both calendar_events and personal_events and degraded safely.
+# Real details render (the seeded title), proving the synced event resolved (NOT
+# the not-found state). Generous timeout for the cold start + JS bundle load.
 - extendedWaitUntil:
-    visible: "This event is no longer available."
+    visible: "E2E Today Lecture"
+    timeout: 60000
+# Add a checklist item — the add button auto-focuses the new row's input.
+- tapOn:
+    id: "checklist-add"
+# Type a stable ASCII item into the focused input, then dismiss the keyboard so the
+# content-text assertion is unobstructed.
+- inputText: "Buy notebook"
+- hideKeyboard
+# The typed content round-trips into the live `checklist_items` read and renders.
+- assertVisible: "Buy notebook"
+# Toggle the item checked (single row → the uuid-suffixed check id via `.*` regex).
+- tapOn:
+    id: "checklist-check-.*"
+# The item is still present after toggling (the check state is visual; the content
+# stays).
+- assertVisible: "Buy notebook"
+# Delete the item (single row → the uuid-suffixed remove id via `.*` regex).
+- tapOn:
+    id: "checklist-remove-.*"
+# The deleted item is gone from the live read — the delete round-tripped through the
+# real store, restoring device state.
+- extendedWaitUntil:
+    notVisible: "Buy notebook"
     timeout: 60000
