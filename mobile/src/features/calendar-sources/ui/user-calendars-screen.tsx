@@ -109,7 +109,6 @@ export function UserCalendarsScreen() {
                 calendar={calendar}
                 onToggle={() => setVisible(calendar.id, !calendar.visible)}
                 onDelete={confirmDelete}
-                background={theme.backgroundElement}
               />
             ))}
           </ScrollView>
@@ -123,12 +122,10 @@ function CalendarRow({
   calendar,
   onToggle,
   onDelete,
-  background,
 }: {
   calendar: UserCalendar
   onToggle: () => void
   onDelete: (id: string, name: string) => void
-  background: string
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -146,7 +143,7 @@ function CalendarRow({
   const row = (
     <View
       testID={`user-calendar-row-${calendar.id}`}
-      style={[styles.row, { backgroundColor: background }]}
+      style={[styles.row, { backgroundColor: theme.backgroundElement }]}
       accessibilityActions={[{ name: "delete", label: deleteLabel }]}
       onAccessibilityAction={(event) => {
         if (event.nativeEvent.actionName === "delete") requestDelete()
