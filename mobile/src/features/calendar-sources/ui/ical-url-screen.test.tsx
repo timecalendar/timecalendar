@@ -2,7 +2,7 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import IcalUrlScreen from "./ical-url-screen"
 
@@ -14,14 +14,14 @@ import IcalUrlScreen from "./ical-url-screen"
 // no recordError), and the persist-failure path (recordError with the ical-import
 // context + an accessible error + Retry).
 jest.mock("expo-router", () => ({ router: { back: jest.fn() } }))
-jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({
   ...jest.requireActual("@/features/calendar-sources/data"),
   useAddCalendar: jest.fn(),
 }))
 
 const mockBack = router.back as jest.Mock
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
 const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string]>()
 const mockReset = jest.fn()
@@ -66,7 +66,7 @@ describe("IcalUrlScreen", () => {
       "  https://example.com/cal.ics  ",
     )
     expect(mockReset).toHaveBeenCalledTimes(1)
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("shows the inline validation error and does not persist on empty", async () => {
@@ -78,7 +78,7 @@ describe("IcalUrlScreen", () => {
 
     expect(getByText("Enter a calendar URL.")).toBeTruthy()
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("shows the inline invalid error for a non-URL value", async () => {
@@ -111,7 +111,7 @@ describe("IcalUrlScreen", () => {
     })
 
     await waitFor(() =>
-      expect(mockRecordError).toHaveBeenCalledWith(
+      expect(mockRecordUnknownError).toHaveBeenCalledWith(
         expect.any(Error),
         "calendar-sources/ical-import",
       ),

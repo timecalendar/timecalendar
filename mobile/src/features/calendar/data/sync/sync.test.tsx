@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import * as repository from "./repository"
 import { useSyncCalendars } from "./sync"
@@ -17,7 +17,7 @@ import { useSyncCalendars } from "./sync"
 // throw → recordError + isError. The flattened payload handed to replaceAll is
 // verbatim insert ROWS now (dtoToRow's output), not domain events.
 jest.mock("@/api/mutator")
-jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data/user-calendars", () => ({
   findAll: jest.fn(),
 }))
@@ -25,7 +25,7 @@ jest.spyOn(repository, "replaceAll").mockResolvedValue(undefined)
 
 const mockFetch = customFetch as jest.Mock
 const mockFindAll = findAllUserCalendars as jest.Mock
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockReplaceAll = repository.replaceAll as jest.Mock
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -102,7 +102,7 @@ describe("useSyncCalendars", () => {
     expect(JSON.parse(replaced[0].tags)).toEqual([
       { name: "CM", color: "#FF0000", icon: "book" },
     ])
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("is a no-op (no request) when there are no tokens", async () => {
@@ -129,7 +129,7 @@ describe("useSyncCalendars", () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(mockReplaceAll).not.toHaveBeenCalled()
     // A fetch failure is recoverable — the last-good rows render; NOT recorded.
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("records a replaceAll transaction failure (crash-worthy local write)", async () => {
@@ -142,8 +142,8 @@ describe("useSyncCalendars", () => {
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
-    expect(mockRecordError).toHaveBeenCalledTimes(1)
-    expect(mockRecordError.mock.calls[0]?.[1]).toBe("calendar/sync")
+    expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
+    expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
   })
 
   it("records a dtoToRow mapping failure (a malformed DTO is crash-worthy, not a silent fetch error)", async () => {
@@ -165,11 +165,11 @@ describe("useSyncCalendars", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(mockReplaceAll).not.toHaveBeenCalled()
-    expect(mockRecordError).toHaveBeenCalledTimes(1)
-    expect(mockRecordError.mock.calls[0]?.[1]).toBe("calendar/sync")
+    expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
+    expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
   })
 
-  it("wraps a non-Error replaceAll rejection before recording", async () => {
+  it("forwards a non-Error replaceAll rejection to the seam under its tag", async () => {
     mockFetch.mockResolvedValueOnce(syncResponse)
     mockReplaceAll.mockRejectedValueOnce("plain string boom")
 
@@ -179,9 +179,11 @@ describe("useSyncCalendars", () => {
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
-    expect(mockRecordError).toHaveBeenCalledTimes(1)
-    expect(mockRecordError.mock.calls[0]?.[0]).toBeInstanceOf(Error)
-    expect(mockRecordError.mock.calls[0]?.[0].message).toBe("plain string boom")
+    // The seam (recordUnknownError) owns the non-Error normalization; sync just
+    // forwards the raw rejection value under the "calendar/sync" tag.
+    expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
+    expect(mockRecordUnknownError.mock.calls[0]?.[0]).toBe("plain string boom")
+    expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
   })
 
   it("reset clears the error state", async () => {

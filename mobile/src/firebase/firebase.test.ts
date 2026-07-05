@@ -30,6 +30,7 @@ import {
   onForegroundMessage,
   onNotificationTap,
   recordError,
+  recordUnknownError,
   requestNotificationPermission,
 } from "@/firebase"
 
@@ -82,6 +83,27 @@ describe("firebase wrapper", () => {
     expect(crashlyticsRecordError).toHaveBeenCalledWith(
       expect.anything(),
       error,
+    )
+  })
+
+  it("records an Error value as-is under its context breadcrumb", () => {
+    const error = new Error("boom")
+    recordUnknownError(error, "while doing X")
+
+    expect(log).toHaveBeenCalledWith(expect.anything(), "while doing X")
+    expect(crashlyticsRecordError).toHaveBeenCalledWith(
+      expect.anything(),
+      error,
+    )
+  })
+
+  it("wraps a non-Error value into Error(String(value)) before recording", () => {
+    recordUnknownError("string failure", "while doing Y")
+
+    expect(log).toHaveBeenCalledWith(expect.anything(), "while doing Y")
+    expect(crashlyticsRecordError).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ message: "string failure" }),
     )
   })
 

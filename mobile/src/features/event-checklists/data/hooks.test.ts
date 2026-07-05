@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react-native"
 
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import { useChecklist, useChecklistActions } from "./hooks"
 import { newId } from "./id"
@@ -36,7 +36,7 @@ jest.mock("@/db", () => {
   }
 })
 
-jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("./id", () => ({ newId: jest.fn() }))
 jest.mock("./repository", () => ({
   add: jest.fn(() => Promise.resolve()),
@@ -46,7 +46,7 @@ jest.mock("./repository", () => ({
   remove: jest.fn(() => Promise.resolve()),
 }))
 
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockNewId = newId as jest.Mock
 const mockAdd = add as jest.Mock
 const mockSetContent = setContent as jest.Mock
@@ -70,7 +70,7 @@ function makeItem(overrides: Partial<ChecklistItem> = {}): ChecklistItem {
 
 beforeEach(() => {
   ;[
-    mockRecordError,
+    mockRecordUnknownError,
     mockNewId,
     mockAdd,
     mockSetContent,
@@ -129,7 +129,7 @@ describe("useChecklistActions", () => {
     expect(inserted.createdAt).toBeInstanceOf(Date)
     expect(inserted.updatedAt).toBeInstanceOf(Date)
     expect(result.current.failed).toBe(false)
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("add on an empty list uses order 1", async () => {
@@ -158,14 +158,14 @@ describe("useChecklistActions", () => {
       returned = await result.current.add()
     })
     expect(returned).toBeUndefined()
-    expect(mockRecordError).toHaveBeenCalledWith(
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
       expect.any(Error),
       "event-checklists/add",
     )
     expect(result.current.failed).toBe(true)
   })
 
-  it("wraps a non-Error throw before recording it", async () => {
+  it("forwards a non-Error throw to the seam under its tag", async () => {
     mockSetChecked.mockImplementationOnce(() => {
       throw "string failure"
     })
@@ -173,8 +173,10 @@ describe("useChecklistActions", () => {
       useChecklistActions("ev-1", [makeItem()]),
     )
     await act(async () => result.current.setChecked("u-1", true))
-    expect(mockRecordError).toHaveBeenCalledWith(
-      expect.any(Error),
+    // The seam (recordUnknownError) owns the non-Error normalization; the hook
+    // just forwards the raw thrown value under the right tag.
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
+      "string failure",
       "event-checklists/setChecked",
     )
     expect(result.current.failed).toBe(true)
