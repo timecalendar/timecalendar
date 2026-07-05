@@ -81,6 +81,8 @@
   "onboarding.school.retry": "Retry",
   "onboarding.school.rowHint": "Opens this school's groups",
   "onboarding.school.search": "Search schools",
+  "onboarding.school.subtitle": "Your timetable comes from your school.",
+  "onboarding.school.noResults": "No results for “{{query}}”",
   "onboarding.group.title": "Choose your group",
   "onboarding.group.loading": "Loading groups…",
   "onboarding.group.error": "Could not load groups.",

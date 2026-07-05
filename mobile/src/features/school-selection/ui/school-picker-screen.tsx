@@ -1,171 +1,172 @@
-import { router } from "expo-router"
+import { Stack } from "expo-router"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { FlatList, Pressable, StyleSheet, TextInput } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import {
-  type SchoolListItem,
-  schoolMatches,
-  useSchools,
-} from "@/features/school-selection/data"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { schoolMatches, useSchools } from "@/features/school-selection/data"
+import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
-// The onboarding school step (C1 / TIM-134) — PRESENTATIONAL (70% floor): the
-// list over the feature's useSchools() (which wraps the generated findSchools
-// hook over customFetch). It owns no data logic — render + navigation only.
-// Selecting a school pushes the nested group step with its id. Loading/error/
-// empty states are accessible (polite live region + status role); the error
-// state offers an accessible retry → refetch. A client-side text filter narrows
-// the list. Tested beside this file; the route (src/app/onboarding/index.tsx) is
-// a thin re-export (route-structure rule).
+import { ListStatus } from "./list-status"
+import { RowSeparator } from "./row-separator"
+import { SchoolRow } from "./school-row"
+import { StatusSymbol } from "./status-symbol"
+
+// Onboarding school step (TIM-134): presentational list over useSchools() —
+// native-header chrome, client-side search filter, and centered a11y states.
 export default function SchoolPickerScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const insets = useSafeAreaInsets()
+  const { height: windowHeight } = useWindowDimensions()
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")
 
   const visible = useMemo(
-    // Accent-insensitive name-or-code match through the pure data/ helper (D2).
+    // Accent-insensitive name/code match.
     () => schools.filter((s) => schoolMatches(filter, s)),
     [schools, filter],
   )
 
+  const searching = filter.trim().length > 0
+  const browsing = !isLoading && !isError && schools.length > 0 && !searching
+
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">{t("onboarding.school.title")}</ThemedText>
-
-        <TextInput
-          testID="onboarding-school-filter"
-          value={filter}
-          onChangeText={setFilter}
-          placeholder={t("onboarding.school.search")}
-          accessibilityLabel={t("onboarding.school.search")}
-          style={[
-            styles.filter,
-            { color: theme.text, backgroundColor: theme.backgroundElement },
-          ]}
-          placeholderTextColor={theme.textSecondary}
-        />
-
-        {isLoading && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("onboarding.school.loading")}
-          </ThemedText>
-        )}
-
-        {isError && (
-          <ThemedView style={styles.errorBlock}>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: t("onboarding.school.title"),
+          headerLargeTitle: true,
+          headerBackButtonDisplayMode: "minimal",
+          // Android rests the header on the body bg (M3 surface); iOS keeps
+          // the native large-title default.
+          ...(Platform.OS === "android" && {
+            headerStyle: { backgroundColor: theme.background },
+          }),
+          headerSearchBarOptions: {
+            placeholder: t("onboarding.school.search"),
+            onChangeText: (e) => setFilter(e.nativeEvent.text),
+            onCancelButtonPress: () => setFilter(""),
+            onClose: () => setFilter(""),
+            autoCapitalize: "none",
+            // Default placement; "stacked" overlaps the large title on iOS 26.
+            hideWhenScrolling: false,
+            tintColor: theme.primary,
+            textColor: theme.text,
+            hintTextColor: theme.textSecondary,
+            headerIconColor: theme.text,
+          },
+        }}
+      />
+      <FlatList
+        data={visible}
+        keyExtractor={(school) => school.id}
+        renderItem={({ item }) => <SchoolRow school={item} />}
+        ItemSeparatorComponent={Platform.OS === "ios" ? RowSeparator : null}
+        contentInsetAdjustmentBehavior="automatic"
+        // No automaticallyAdjustKeyboardInsets: it sticks content under the
+        // header after the keyboard hides (RN #47731).
+        alwaysBounceVertical
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[
+          styles.list,
+          {
+            paddingBottom:
+              Spacing.three + (Platform.OS === "android" ? insets.bottom : 0),
+          },
+          // Upper-third so the open search keyboard never covers the status.
+          visible.length === 0 && { paddingTop: windowHeight * 0.15 },
+        ]}
+        ListHeaderComponent={
+          browsing ? (
             <ThemedText
+              type="small"
               themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
+              style={styles.subtitle}
             >
-              {t("onboarding.school.error")}
+              {t("onboarding.school.subtitle")}
             </ThemedText>
-            <Pressable
-              testID="onboarding-school-retry"
-              accessibilityRole="button"
-              accessibilityLabel={t("onboarding.school.retry")}
-              hitSlop={Spacing.two}
-              onPress={refetch}
-              style={[
-                styles.retry,
-                { backgroundColor: theme.backgroundElement },
-              ]}
+          ) : null
+        }
+        ListEmptyComponent={
+          isLoading ? (
+            <ListStatus
+              media={<ActivityIndicator />}
+              message={t("onboarding.school.loading")}
+              announceKey="loading"
+            />
+          ) : isError ? (
+            <ListStatus
+              media={<StatusSymbol name="wifi.exclamationmark" />}
+              message={t("onboarding.school.error")}
+              announceKey="error"
+              alert
             >
-              <ThemedText type="smallBold">
-                {t("onboarding.school.retry")}
-              </ThemedText>
-            </Pressable>
-          </ThemedView>
-        )}
-
-        {!isLoading && !isError && visible.length === 0 && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("onboarding.school.empty")}
-          </ThemedText>
-        )}
-
-        <FlatList
-          data={visible}
-          keyExtractor={(school) => school.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => <SchoolRow school={item} />}
-        />
-      </SafeAreaView>
+              <Pressable
+                testID="onboarding-school-retry"
+                accessibilityRole="button"
+                accessibilityLabel={t("onboarding.school.retry")}
+                hitSlop={Spacing.two}
+                onPress={refetch}
+                style={styles.retry}
+              >
+                <ThemedText type="smallBold" themeColor="primary">
+                  {t("onboarding.school.retry")}
+                </ThemedText>
+              </Pressable>
+            </ListStatus>
+          ) : searching ? (
+            <ListStatus
+              media={<StatusSymbol name="magnifyingglass" />}
+              message={t("onboarding.school.noResults", {
+                query: filter.trim(),
+              })}
+              announceKey="noResults"
+            />
+          ) : (
+            <ListStatus
+              media={<StatusSymbol name="graduationcap" />}
+              message={t("onboarding.school.empty")}
+              announceKey="empty"
+            />
+          )
+        }
+      />
     </ThemedView>
-  )
-}
-
-function SchoolRow({ school }: { school: SchoolListItem }) {
-  const { t } = useTranslation()
-  const theme = useTheme()
-
-  return (
-    <Pressable
-      testID={`onboarding-school-row-${school.id}`}
-      accessibilityRole="button"
-      // The label is exactly the school name (not "Select {name}"): iOS merges an
-      // accessible Pressable's children into this label, so the name is only
-      // reachable here — keeping it verbatim lets the shared Maestro flow match
-      // the row by its name cross-platform. The select affordance is the hint.
-      accessibilityLabel={school.name}
-      accessibilityHint={t("onboarding.school.rowHint")}
-      onPress={() => router.push(`/onboarding/groups?schoolId=${school.id}`)}
-      style={[styles.row, { backgroundColor: theme.backgroundElement }]}
-    >
-      <ThemedText type="smallBold">{school.name}</ThemedText>
-    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    gap: Spacing.three,
-  },
-  filter: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Radii.medium,
-  },
-  errorBlock: {
-    gap: Spacing.two,
-  },
-  retry: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    justifyContent: "center",
-    alignSelf: "flex-start",
-    borderRadius: Radii.medium,
   },
   list: {
-    gap: Spacing.two,
+    paddingTop: Spacing.two,
   },
-  row: {
-    minHeight: 48,
-    padding: Spacing.three,
+  subtitle: {
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.two,
+    fontWeight: "400",
+  },
+  retry: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: "center",
     justifyContent: "center",
-    borderRadius: Radii.medium,
+    paddingHorizontal: Spacing.three,
   },
 })

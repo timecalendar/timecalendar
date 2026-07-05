@@ -81,6 +81,8 @@
   "onboarding.school.retry": "Réessayer",
   "onboarding.school.rowHint": "Ouvre les groupes de cet établissement",
   "onboarding.school.search": "Rechercher un établissement",
+  "onboarding.school.subtitle": "Votre emploi du temps provient de votre établissement.",
+  "onboarding.school.noResults": "Aucun résultat pour « {{query}} »",
   "onboarding.group.title": "Choisir votre groupe",
   "onboarding.group.loading": "Chargement des groupes…",
   "onboarding.group.error": "Impossible de charger les groupes.",
