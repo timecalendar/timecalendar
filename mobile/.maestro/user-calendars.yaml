@@ -1,0 +1,63 @@
+# User-calendars ("Mes calendriers") reachability + render e2e flow
+# (add-mobile-user-calendars / ADR 031).
+#
+# Cold-launches the development-variant app, deep-links to the user-calendars
+# management route, and asserts the localized title + the empty state render. This
+# proves: the route is reachable via deep link (Stack sibling of (tabs)), the
+# screen mounts past the splash, and the reactive read renders without a held
+# calendar. Then it asserts in-app reachability from the Profile tab entry link.
+#
+# SEEDED-DATA LIMITATION (same posture as home.yaml / hidden-events' former
+# reachability-only flow): this flow does NOT run import-seed, so no real calendar
+# is held — it asserts the EMPTY state, not a populated toggle/delete round-trip.
+# The visibility filter's runtime behavior is the CI proof (events.test.ts), and
+# the toggle + confirm-gated delete branches are unit-proven (user-calendars-
+# screen.test.tsx). The on-device visual + a11y pass and the iOS swipe gesture are
+# inboxed for the human device pass (docs/react-native-migration/inbox/).
+#
+# Requires a release-config dev-variant build installed on the connected device
+# (no server needed — this screen reads only device-local data). Shared across iOS
+# and Android: stable localized text assertions, no per-platform selectors. Run via
+# mobile/e2e/run_e2e.sh. Mirrors settings.yaml. NOT labelled run-e2e (E2E runs on
+# main only).
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+# Cold-start via the deep link (see settings.yaml header): a warm openLink does
+# not navigate on Android release builds — Expo Router resolves the link through
+# getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+- stopApp
+- openLink: timecalendar-dev://user-calendars
+# iOS shows a system "Open in <app>?" confirmation for custom-scheme deep links
+# (Android does not). It appears only on the FIRST deep link per simulator — later
+# flows (and re-runs) get no dialog — so the tap is optional.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+# Generous timeout: a release-config iOS cold start + JS bundle load can land just
+# past Maestro's ~17s default. extendedWaitUntil is the assert-with-timeout.
+- extendedWaitUntil:
+    visible: "My calendars"
+    timeout: 60000
+# With no held calendar, the accessible empty state renders (the e2e device runs
+# in EN — the established convention, see settings.yaml / hidden-events.yaml).
+- extendedWaitUntil:
+    visible: "No calendars imported."
+    timeout: 60000
+# In-app reachability: from the Profile tab, the "Calendars" entry link opens the
+# same management screen.
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Profile"
+    timeout: 60000
+- tapOn: "Profile"
+- tapOn: "Calendars"
+- extendedWaitUntil:
+    visible: "My calendars"
+    timeout: 60000

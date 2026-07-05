@@ -313,6 +313,52 @@ identity store"); the storage-backend + verbatim-schema decision is
   cache-clear is the on-device manual pass (`inbox/2026-06-16-calendar-restart-durability.md` — no
   list UI ships, so no Maestro post-relaunch assertion target).
 
+### User calendars — management screen + visibility filter ("Mes calendriers", Phase 07)
+
+The management surface Phase-03 deferred: a screen **over the existing durable data layer** (no new
+schema/migration/dependency) that lists every held calendar, toggles each one's visibility, deletes
+one, and adds another. The one behavioral change is that `visible` now filters the timeline —
+**ADR [031](./decisions/031-user-calendar-visibility-filter-at-seam.md)** (linked from
+[calendar.md](./calendar.md) "Events-source seam"). Mirrors the `hidden-events` sibling's altitude.
+
+- **Screen (`ui/user-calendars-screen.tsx`, 70% floor):** a `ThemedView` + `SafeAreaView` with the
+  in-screen `<Stack.Screen>` title, `WriteErrorNotice` (driven by `useUserCalendarActions().failed`),
+  an accessible empty state (polite live region + `text` role), an add affordance
+  (`router.push("/onboarding/school")`), and a scrolling list of rows. Each row is a **plain `View`**
+  (never a `Pressable` — `no-nested-touchables` is an error rule) carrying a leading visibility
+  **checkbox** `Pressable` (`accessibilityRole="checkbox"` + `accessibilityState={{ checked }}`, the
+  name/school in the LABEL, state never baked in — the a11y house contract), the name (fallback
+  "Calendrier") + school subtitle (fallback "Calendrier personnel"), and a trailing **delete**
+  `Pressable` (≥44 + `hitSlop`, the cross-platform trash affordance — iOS `SymbolView name="trash"`,
+  Android a themed destructive text label, no new dep — Decision 6). Re-exported through `ui/index.ts`
+  + the feature barrel; the route `src/app/user-calendars.tsx` is a thin re-export, a `Stack` sibling
+  of `(tabs)` (deep-linkable `timecalendar-dev://user-calendars`), reached from a Profile entry link.
+- **Delete pattern (panel-decided, Decision 3):** one shared `confirmDelete(id, name)` → a native
+  `Alert` confirm (R-3, **no undo** — `remove()` is irreversible; a snackbar would lie), on success
+  `AccessibilityInfo.announceForAccessibility`. **Three call paths** reach it: the visible button
+  (both platforms), an iOS-only `ReanimatedSwipeable` (`Platform.OS === "ios"`, `renderRightActions`
+  red trash, full-swipe/open → **open the confirm**, not an instant commit), and the row's
+  `accessibilityActions=[{ name: "delete" }]` + `onAccessibilityAction` (WCAG 2.5.1 — the swipe stays
+  non-exclusionary). No synchronous `calendar_events` purge (ADR 031 — the deleted calendar leaves the
+  visible set).
+- **Actions hook (`data/user-calendars/actions.ts`, 90%-gated):** `useUserCalendarActions()` returning
+  `{ setVisible, remove, failed }`, each mutator wrapped with `useRecordedAction("user-calendars")`
+  over the repository (the async `run` overload — the repo writes are `Promise<void>`). Mirrors
+  `useHideActions`; re-exported through the `data/user-calendars/` + `data/` + feature barrels.
+- **The seam filter (`calendar/data/events.ts`, 90%-gated):** `useCalendarEvents` reads
+  `useUserCalendars()` and keeps a merged event iff personal OR its calendar is visible — see
+  [calendar.md](./calendar.md) + ADR 031.
+- **Observability ✅:** a failed `setVisible`/`remove` records through `@/firebase`
+  `recordError(error, "user-calendars/<action>")` + the `failed` flag rendered via `WriteErrorNotice`.
+  The visibility read/filter is total/infallible (a missing row = not in the visible set) — not recorded.
+- **CI vs. device:** CI proves the actions hook (success + failure-record branches), the visibility
+  filter (hidden/visible/personal/toggle-back/deleted-drops-out — the runtime-behavior proof), and the
+  screen's toggle + delete-confirm/cancel + accessibility-action + failure-notice + empty-state
+  branches — **no gesture simulation** (jest-expo can't drive the pan). The on-device visual + a11y
+  pass (both platforms, both schemes) and the iOS swipe-gesture feel are inboxed
+  (`inbox/2026-07-05-user-calendars-device-pass.md`); `.maestro/user-calendars.yaml` asserts render +
+  Profile reachability (empty state — no seeded calendar).
+
 ## Calendar — day/week timeline + agenda + sync (Phase-04 items 1–3)
 
 The heart of the app — the **day / week / agenda** rendering surface, now fed by **real synced
