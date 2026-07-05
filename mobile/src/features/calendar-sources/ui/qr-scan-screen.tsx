@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   parseScannedSource,
   useAddCalendar,
@@ -187,13 +188,7 @@ export default function QrScanScreen() {
             </ThemedText>
           )}
           {failed && (
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-            >
-              {t("calendarSources.qrScan.failure")}
-            </ThemedText>
+            <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
           )}
         </SafeAreaView>
       </CameraView>

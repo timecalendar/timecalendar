@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type AppLocale,
   type EventDetails,
@@ -202,14 +203,10 @@ export function EventDetailsScreen() {
       {headerAction}
       <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
         {hideFailed && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
+          <WriteErrorNotice
+            message={t("eventDetails.hide.error")}
             style={styles.hideError}
-          >
-            {t("eventDetails.hide.error")}
-          </ThemedText>
+          />
         )}
         <ScrollView contentContainerStyle={styles.content}>
           <TitleBlock event={event} locale={locale} />

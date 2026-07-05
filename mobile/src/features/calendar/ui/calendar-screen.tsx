@@ -20,6 +20,7 @@ import {
   formatTimeRange,
   GRID_END_MINUTE,
   GRID_START_MINUTE,
+  localDayKey,
   MIN_TILE_WIDTH,
   resolveLocale,
   useCalendarEvents,
@@ -44,13 +45,6 @@ const WEEK_DAYS = 5
 // The agenda is a planning list, so it spans a bounded multi-day window (the
 // visible week) rather than a single day/week grid (D1).
 const AGENDA_DAYS = 7
-
-function ymd(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
 
 function mapToEventItem(event: CalendarEvent): EventItem {
   return {
@@ -86,7 +80,7 @@ export function CalendarScreen() {
   }, [visibleDate, numberOfDays])
 
   const events = useCalendarEvents(range)
-  const calendarEvents = useMemo(() => events.map(mapToEventItem), [events])
+  const eventItems = useMemo(() => events.map(mapToEventItem), [events])
   const calendarTheme = useMemo(() => buildCalendarTheme(theme), [theme])
 
   // The sync orchestrator (D5) — the screen stays presentational, calling the
@@ -203,10 +197,10 @@ export function CalendarScreen() {
           ) : (
             <CalendarContainer
               numberOfDays={numberOfDays}
-              initialDate={ymd(visibleDate)}
+              initialDate={localDayKey(visibleDate)}
               start={GRID_START_MINUTE}
               end={GRID_END_MINUTE}
-              events={calendarEvents}
+              events={eventItems}
               theme={calendarTheme}
               onPressEvent={(event) => handlePressEvent(event.id)}
             >

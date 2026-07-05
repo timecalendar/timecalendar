@@ -78,6 +78,15 @@ describe("personal-events repository", () => {
     await upsert(event)
     expect(mockFake.spies.insert).toHaveBeenCalledWith(personalEvents)
     expect(mockFake.spies.values).toHaveBeenCalledWith(eventToRow(event))
+    // Pin concrete literal fields so the assertion cannot pass on a wrong/stubbed
+    // mapper (the `eventToRow(event)` match alone is tautological); prove the row
+    // carries the uid verbatim and the Date→ISO conversion actually happened.
+    expect(mockFake.spies.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        uid: "uid-1",
+        startsAt: "2026-06-14T09:00:00.000Z",
+      }),
+    )
     expect(mockFake.spies.onConflictDoUpdate).toHaveBeenCalledWith({
       target: personalEvents.uid,
       set: eventToRow(event),

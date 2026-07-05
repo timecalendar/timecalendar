@@ -11,6 +11,7 @@ import {
 } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
+import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   type ChecklistItem,
   useChecklist,
@@ -53,14 +54,10 @@ export function EventChecklist({ eventUid }: { eventUid: string }) {
       <ThemedText type="subtitle">{t("eventChecklist.title")}</ThemedText>
 
       {failed && (
-        <ThemedText
-          themeColor="textSecondary"
+        <WriteErrorNotice
           type="small"
-          accessibilityLiveRegion="polite"
-          accessibilityRole="alert"
-        >
-          {t("eventChecklist.error.writeFailed")}
-        </ThemedText>
+          message={t("eventChecklist.error.writeFailed")}
+        />
       )}
 
       {items.length === 0 ? (
