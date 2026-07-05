@@ -60,12 +60,10 @@ function mapToEventItem(event: CalendarEvent): EventItem {
     start: { dateTime: event.startsAt.toISOString() },
     end: { dateTime: event.endsAt.toISOString() },
     // Carried on the EventItem (Record<string, any>) so renderEvent can build a
-    // rich accessible label (title + time + location) without re-querying, and so
-    // the grid's onPressEvent can route by origin (D2/D4) without a re-query.
+    // rich accessible label (title + time + location) without re-querying.
     location: event.location,
     startsAt: event.startsAt,
     endsAt: event.endsAt,
-    userCalendarId: event.userCalendarId,
   }
 }
 
@@ -98,16 +96,11 @@ export function CalendarScreen() {
   // last-good rows still render — D6: a fetch failure is NOT a crash).
   const { sync, isSyncing, isError } = useSyncCalendars()
 
-  // Route a tapped event by ORIGIN (D2): a synced calendar event carries a
-  // userCalendarId → the read-only details screen; a personal event (no
-  // userCalendarId) → its existing editable form. The merged CalendarEvent's
-  // userCalendarId is the discriminator (personalToCalendarEvent sets it
-  // undefined). The grid and the agenda both route through this one handler.
-  const handlePressEvent = (
-    uid: string,
-    userCalendarId: string | undefined,
-  ) => {
-    router.push(eventRoute(uid, userCalendarId))
+  // Both kinds open the unified event-details screen keyed on the uid (ADR 024):
+  // the details screen resolves synced vs. personal itself, so the tap no longer
+  // routes by origin. The grid and the agenda both route through this one handler.
+  const handlePressEvent = (uid: string) => {
+    router.push(eventRoute(uid))
   }
 
   // The agenda's RefreshControl, brand-tinted (R-3). Wired into the SectionList so
@@ -204,9 +197,7 @@ export function CalendarScreen() {
               events={events}
               locale={locale}
               refreshControl={refreshControl}
-              onPressEvent={(event) =>
-                handlePressEvent(event.id, event.userCalendarId)
-              }
+              onPressEvent={(event) => handlePressEvent(event.id)}
             />
           ) : (
             <CalendarContainer
@@ -216,12 +207,7 @@ export function CalendarScreen() {
               end={GRID_END_MINUTE}
               events={calendarEvents}
               theme={calendarTheme}
-              onPressEvent={(event) =>
-                handlePressEvent(
-                  event.id,
-                  event.userCalendarId as string | undefined,
-                )
-              }
+              onPressEvent={(event) => handlePressEvent(event.id)}
             >
               <CalendarHeader />
               <CalendarBody

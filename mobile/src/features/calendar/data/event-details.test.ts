@@ -1,25 +1,17 @@
-// Prove the rich mapper + the getByUid query shape (D3 / D9). The mapper is pure
-// (no db) so it is tested directly; getByUid runs against a mocked @/db seam (the
-// query-builder spy posture from user-calendars/repository.test.ts) — real
-// expo-sqlite has no off-device JS, so we assert the Drizzle query SHAPE + the
-// row→domain mapping, not a real round-trip. Spy names are `mock`-prefixed so the
-// hoisted jest.mock factory may reference them.
+// Prove the rich mappers + the reactive useEventDetails read (D3 / D9). The mappers
+// are pure (no db) so they are tested directly; useEventDetails runs against a
+// mocked @/db seam (the query-builder posture from user-calendars/repository.test.ts)
+// — real expo-sqlite has no off-device JS, so we assert the row→domain mapping and
+// the loading/not-found resolution, not a real round-trip. Spy names are
+// `mock`-prefixed so the hoisted jest.mock factory may reference them.
 
 import { renderHook } from "@testing-library/react-native"
 
-import { eq } from "@/db"
+import { rowToEventDetails, useEventDetails } from "./event-details"
 
-import { getByUid, rowToEventDetails, useEventDetails } from "./event-details"
-
-// The widened read (ADR 024) queries TWO tables — calendar_events (synced) then
-// personal_events (personal). The fake routes a select's rows by the table its
-// from() was called with, and useLiveQuery returns per-table results.
-let mockSyncedRows: unknown[] = []
-let mockPersonalRows: unknown[] = []
-const mockWhere = jest.fn()
-const mockFrom = jest.fn()
-const mockSelect = jest.fn()
-// useLiveQuery is keyed on the table token its query referenced.
+// useEventDetails runs TWO live queries (ADR 024) — calendar_events (synced) then
+// personal_events (personal). db.select().from(table) tags the built query with the
+// table's __token; useLiveQuery returns the per-table stubbed result.
 let mockSyncedLive: { data: unknown[]; updatedAt: Date | undefined } = {
   data: [],
   updatedAt: undefined,
@@ -31,24 +23,17 @@ let mockPersonalLive: { data: unknown[]; updatedAt: Date | undefined } = {
 
 jest.mock("@/db", () => {
   const makeBuilder = (): Record<string, unknown> => {
-    let token = "calendarEvents"
     const builder: Record<string, unknown> = {
       from: (t: { __token?: string }) => {
-        token = t?.__token ?? "calendarEvents"
-        builder.__token = token
-        mockFrom(t)
+        builder.__token = t?.__token ?? "calendarEvents"
         return builder
       },
-      where: (...a: unknown[]) => (mockWhere(...a), builder),
-      then: (resolve: (value: unknown[]) => unknown) =>
-        resolve(token === "personalEvents" ? mockPersonalRows : mockSyncedRows),
+      where: () => builder,
     }
     return builder
   }
   return {
-    db: {
-      select: (...a: unknown[]) => (mockSelect(...a), makeBuilder()),
-    },
+    db: { select: () => makeBuilder() },
     calendarEvents: { uid: "calendarEvents.uid", __token: "calendarEvents" },
     personalEvents: { uid: "personalEvents.uid", __token: "personalEvents" },
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),
@@ -141,58 +126,6 @@ function personalRow(overrides: Record<string, unknown> = {}) {
     ...overrides,
   }
 }
-
-describe("getByUid", () => {
-  beforeEach(() => {
-    mockSyncedRows = []
-    mockPersonalRows = []
-    mockSelect.mockClear()
-    mockFrom.mockClear()
-    mockWhere.mockClear()
-    ;(eq as jest.Mock).mockClear()
-  })
-
-  it("queries calendar_events by uid through the @/db seam", async () => {
-    mockSyncedRows = [row()]
-    await getByUid("ev-1")
-    expect(mockSelect).toHaveBeenCalledTimes(1)
-    expect(eq).toHaveBeenCalledWith("calendarEvents.uid", "ev-1")
-    expect(mockWhere).toHaveBeenCalledWith({
-      op: "eq",
-      col: "calendarEvents.uid",
-      val: "ev-1",
-    })
-  })
-
-  it("returns the mapped synced rich event for a matching calendar_events row", async () => {
-    mockSyncedRows = [row()]
-    const event = await getByUid("ev-1")
-    expect(event?.kind).toBe("synced")
-    expect(event?.id).toBe("ev-1")
-    expect(event?.groupColor).toBe("#0D47A1")
-  })
-
-  it("falls back to personal_events when no synced row matches", async () => {
-    mockSyncedRows = []
-    mockPersonalRows = [personalRow()]
-    const event = await getByUid("pers-1")
-    // Two selects: calendar_events (miss) then personal_events (hit).
-    expect(mockSelect).toHaveBeenCalledTimes(2)
-    expect(eq).toHaveBeenCalledWith("personalEvents.uid", "pers-1")
-    expect(event?.kind).toBe("personal")
-    expect(event?.title).toBe("Dentist")
-    // The personal branch fills the sync-only defaults.
-    expect(event?.groupColor).toBe("#E91E63")
-    expect(event?.tags).toEqual([])
-    expect(event?.userCalendarId).toBe("")
-  })
-
-  it("returns null when no row matches either table", async () => {
-    mockSyncedRows = []
-    mockPersonalRows = []
-    expect(await getByUid("missing")).toBeNull()
-  })
-})
 
 describe("useEventDetails", () => {
   beforeEach(() => {
