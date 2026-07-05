@@ -30,42 +30,42 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 2. Mobile — runtime variant seam
 
-- [ ] 2.1 In `mobile/app.config.ts`, add `extra.appVariant: IS_DEV ? "development" :
+- [x] 2.1 In `mobile/app.config.ts`, add `extra.appVariant: IS_DEV ? "development" :
   "production"` alongside the existing `extra.eas` (do NOT bump the fingerprint — pure JS
   config).
-- [ ] 2.2 Add a single variant-read helper (e.g. `mobile/src/config/variant.ts`
+- [x] 2.2 Add a single variant-read helper (e.g. `mobile/src/config/variant.ts`
   `isDevVariant()`) reading `Constants.expoConfig?.extra?.appVariant === "development"`
   (`expo-constants` is already a dep). Unit-test both branches.
 
 ## 3. Mobile — addCalendarFromToken data seam (B-1, data/-only)
 
-- [ ] 3.1 Add `addCalendarFromToken(token)` in
+- [x] 3.1 Add `addCalendarFromToken(token)` in
   `mobile/src/features/calendar-sources/data/user-calendars/` (in `add-calendar.ts` or a
   sibling `add-from-token.ts`): `calendarControllerFindCalendarByToken(token)` →
   `fromCalendarForPublic(dto)` → `upsert(...)` — the resolve+upsert half of
   `addCalendarFromUrl`, no create-`POST`. Keep the generated-client call inside `data/`.
-- [ ] 3.2 Export `addCalendarFromToken` from the `user-calendars` data sub-barrel and the
+- [x] 3.2 Export `addCalendarFromToken` from the `user-calendars` data sub-barrel and the
   `calendar-sources` feature barrel (via `./data`).
-- [ ] 3.3 Unit-test it at the `customFetch` + `@/db` seams: success writes a row (the `@/db`
+- [x] 3.3 Unit-test it at the `customFetch` + `@/db` seams: success writes a row (the `@/db`
   query-builder spy), and a resolve/upsert failure rejects. Clear the 90% `data/` gate.
 
 ## 4. Mobile — the dev-import deep-link route
 
-- [ ] 4.1 Create the screen in a feature `ui/` sublayer (e.g. a `dev-import` feature folder or
+- [x] 4.1 Create the screen in a feature `ui/` sublayer (e.g. a `dev-import` feature folder or
   under `calendar-sources/ui/`) — presentational, reading the `token` param via
   `useLocalSearchParams`, gated on `isDevVariant()`.
-- [ ] 4.2 Dev branch: call `addCalendarFromToken(token)` → trigger `useSyncCalendars().sync()`
+- [x] 4.2 Dev branch: call `addCalendarFromToken(token)` → trigger `useSyncCalendars().sync()`
   → `router.replace("/calendar")`; own local `{ pending, error }` and surface an accessible
   failure on reject (record through `@/firebase`).
-- [ ] 4.3 Production branch: render an inert, accessible "not available" state; make NO
+- [x] 4.3 Production branch: render an inert, accessible "not available" state; make NO
   import/network call.
-- [ ] 4.4 Add the thin route re-export `mobile/src/app/dev-import.tsx` (a `Stack` sibling of
+- [x] 4.4 Add the thin route re-export `mobile/src/app/dev-import.tsx` (a `Stack` sibling of
   `(tabs)`) exporting the screen from the feature `ui/` sub-barrel (route-structure rule).
-- [ ] 4.5 Add all new user-facing strings to the i18n catalogs (FR + EN, typed-key parity) —
+- [x] 4.5 Add all new user-facing strings to the i18n catalogs (FR + EN, typed-key parity) —
   the "not available" state, any loading/error text. No hardcoded strings (lint-enforced).
-- [ ] 4.6 a11y props on the screen (roles/labels, live-region on the error), ≥44pt/48dp
+- [x] 4.6 a11y props on the screen (roles/labels, live-region on the error), ≥44pt/48dp
   targets where interactive.
-- [ ] 4.7 Screen test (colocated in `ui/`, NOT under `src/app/`): asserts the dev branch
+- [x] 4.7 Screen test (colocated in `ui/`, NOT under `src/app/`): asserts the dev branch
   imports+syncs+routes (mocking the data seam + variant helper) and the **production branch
   performs no import** and shows the inert state. Meet the 70% floor.
 

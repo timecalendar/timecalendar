@@ -3,6 +3,7 @@
 // cycle: the data/ and ui/ sub-barrels import their seams directly, never each
 // other or this barrel (the no-self-barrel-cycle rule, B-2).
 export {
+  addCalendarFromToken,
   type CreateCalendarResult,
   parseScannedSource,
   type ScannedCalendarSource,
@@ -14,4 +15,4 @@ export {
   useUserCalendars,
   validateIcalUrl,
 } from "./data"
-export { IcalUrlScreen, QrScanScreen } from "./ui"
+export { DevImportScreen, IcalUrlScreen, QrScanScreen } from "./ui"

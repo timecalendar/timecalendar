@@ -132,6 +132,14 @@ export default function RootLayout() {
               name="notification-settings"
               options={{ headerShown: true }}
             />
+            {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
+                of (tabs), the E2E seam that makes the app durably hold a seeded
+                calendar token so real synced data renders. Headerless (it self-
+                routes to /calendar on success). The import ACTION is runtime-gated
+                on the app variant (inert in production); the route file still
+                ships in the prod bundle. Deep-linkable:
+                timecalendar-dev://dev-import?token=<token>. */}
+            <Stack.Screen name="dev-import" options={{ headerShown: false }} />
           </Stack>
           {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}
