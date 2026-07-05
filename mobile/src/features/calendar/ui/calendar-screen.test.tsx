@@ -202,7 +202,7 @@ describe("CalendarScreen", () => {
     expect(mockPush).toHaveBeenCalledWith("/event-details/personal-1")
   })
 
-  it("makes the agenda tile a touchable button that routes by origin", async () => {
+  it("makes the agenda tile a touchable button that routes to event-details", async () => {
     mockUseCalendarEvents.mockReturnValue([
       calendarEvent({ id: "synced-1", userCalendarId: "cal-1" }),
     ])

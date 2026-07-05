@@ -7,13 +7,13 @@
 // The single source for "where does tapping an event go", so the home + calendar
 // screens stay presentational and the routing contract is unit-tested.
 //
-// The userCalendarId parameter is retained (the call sites pass it) but no longer
-// discriminates the destination — the details screen resolves the kind itself from
-// the uid (calendar_events vs. personal_events). Kept so a future routing split
-// (the ADR 024 revisit) is a one-helper change again.
+// The destination no longer discriminates on the event's origin — the details
+// screen resolves the kind itself from the uid (calendar_events vs.
+// personal_events). If a future routing split re-appears (the ADR 024 revisit),
+// this one helper is the place it goes.
 
 import { type Href } from "expo-router"
 
-export function eventRoute(uid: string, _userCalendarId?: string | null): Href {
+export function eventRoute(uid: string): Href {
   return `/event-details/${uid}`
 }
