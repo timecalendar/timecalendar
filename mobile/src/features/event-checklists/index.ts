@@ -9,7 +9,6 @@ export {
   type ChecklistItem,
   checklistItemToRow,
   findByEvent,
-  newId,
   remove,
   reorder,
   rowToChecklistItem,

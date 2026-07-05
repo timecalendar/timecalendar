@@ -1,16 +1,21 @@
 // Round-trips each typed helper through MMKV v4's built-in Jest auto-mock (an
 // in-memory instance — no hand-written mock), proving the @/storage seam's API
 // works end to end. Mirrors the i18n/a11y/firebase CI proof tests.
+import { act, renderHook } from "@testing-library/react-native"
+
 import {
   getBoolean,
   getNumber,
   getString,
   has,
+  isStringArray,
   mmkvQueryStorage,
+  parseJsonArray,
   remove,
   setBoolean,
   setNumber,
   setString,
+  useParsedStoredString,
 } from "./index"
 
 describe("storage seam", () => {
@@ -35,6 +40,64 @@ describe("storage seam", () => {
     expect(has("ephemeral")).toBe(true)
     remove("ephemeral")
     expect(has("ephemeral")).toBe(false)
+  })
+
+  describe("isStringArray", () => {
+    it("is true for an array of strings (incl. empty)", () => {
+      expect(isStringArray([])).toBe(true)
+      expect(isStringArray(["a", "b"])).toBe(true)
+    })
+
+    it("is false for a non-array or a mixed/non-string array", () => {
+      expect(isStringArray("a")).toBe(false)
+      expect(isStringArray(["a", 1])).toBe(false)
+      expect(isStringArray([null])).toBe(false)
+      expect(isStringArray(null)).toBe(false)
+    })
+  })
+
+  describe("parseJsonArray (total)", () => {
+    it("undefined → []", () => {
+      expect(parseJsonArray(undefined)).toEqual([])
+    })
+
+    it("non-JSON → [] (never throws)", () => {
+      expect(parseJsonArray("{not json")).toEqual([])
+    })
+
+    it("valid JSON that is not an array → []", () => {
+      expect(parseJsonArray('{"a":1}')).toEqual([])
+      expect(parseJsonArray("null")).toEqual([])
+    })
+
+    it("guard-fail → []", () => {
+      expect(parseJsonArray('["a",1]', isStringArray)).toEqual([])
+    })
+
+    it("guarded happy path returns the array", () => {
+      expect(parseJsonArray('["a","b"]', isStringArray)).toEqual(["a", "b"])
+    })
+
+    it("guardless happy path casts without per-element validation", () => {
+      // The decodeJsonArray behavior: any array passes through, cast to T[].
+      expect(parseJsonArray<number>("[1,2,3]")).toEqual([1, 2, 3])
+      expect(parseJsonArray('[1,"a",true]')).toEqual([1, "a", true])
+    })
+  })
+
+  describe("useParsedStoredString (reactive parsed read)", () => {
+    it("applies the parser to the reactive raw read and re-decodes on change", async () => {
+      const parse = (raw: string | undefined): string[] =>
+        parseJsonArray(raw, isStringArray)
+      remove("parsed.key")
+      const { result } = await renderHook(() =>
+        useParsedStoredString("parsed.key", parse),
+      )
+      // Unset → parser's empty default.
+      expect(result.current).toEqual([])
+      await act(async () => setString("parsed.key", '["x","y"]'))
+      expect(result.current).toEqual(["x", "y"])
+    })
   })
 
   describe("mmkvQueryStorage (the sync persister adapter)", () => {

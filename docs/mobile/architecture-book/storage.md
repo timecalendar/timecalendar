@@ -18,10 +18,34 @@ plus the caveats tooling can't carry; rationale and alternatives live in the
   plus `useStoredBoolean` / `useStoredNumber` added alongside it when the notifications
   prefs feature (ADR [027](./decisions/027-fcm-subscription-registration.md)) needed
   reactive `isActive` (boolean) + `nbDaysAhead` (number) reads — a consumer arrived (R-2).
+  A **reactive parsed read** `useParsedStoredString(key, parser)` folds the
+  `parser(useStoredString(key))` pairing that Settings prefs, School selection, and Hidden
+  events each wrote by hand (TIM-155 — the shared KV-blob read; R-2).
+- **Shared KV-blob parsing (`src/storage/index.ts`, TIM-155).** `parseJsonArray<T>(raw,
+  guard?)` is the **single total** JSON-array parser — the defensive/total posture the
+  irreplaceable, no-server-backup local data relies on: an undefined / non-JSON / non-array
+  / guard-failing value decodes to `[]` and **never throws**; with no guard it casts
+  `as T[]` without element validation (the ex-`decodeJsonArray` behavior). `isStringArray`
+  is the shared whole-array guard. Consolidates School selection's `parseGroupValues`,
+  Hidden events' record-field parse, and calendar-sync's `decodeJsonArray` (+ event-details).
+  The object/record parsers (`parseHiddenEvents`'s record shape, `decodeFields`) stay
+  bespoke — no duplication to collapse (R-2).
 - **`src/db/` over `expo-sqlite` + `drizzle-orm`** (`drizzle-orm/expo-sqlite`). One
   module-scoped `openDatabaseSync("timecalendar.db")` handle and `drizzle(expo)`
   instance. `expo-sqlite` (Expo-managed SQLite) keeps the seam in the Expo upgrade lane;
-  `op-sqlite` rejected for leaving that lane with no current need (R-2).
+  `op-sqlite` rejected for leaving that lane with no current need (R-2). The seam also owns
+  two shared relational primitives (TIM-155; re-exported from `src/db/index.ts`):
+  - **`newId()`** (`src/db/id.ts`) — the **single, swappable uid generator** over
+    `expo-crypto`'s `randomUUID` for every device-local record identity
+    (`personal_events.uid`, `user_calendars.id`, `checklist_items.uuid`), folding the three
+    ex-per-feature wrappers into one. The Phase-09 importer bypasses it (supplies its own
+    recovered id). Consumed via `@/db` (or a feature's `data/` barrel re-export — `form/`/
+    `ui/` may not import `@/db`, B-1).
+  - **Four pure row↔domain mapper primitives** (`src/db/mappers.ts`) — `isoToDate` /
+    `dateToIso` (the TEXT-ISO date columns) + `nullToUndef` / `undefToNull` (null↔undefined
+    passthroughs), the shared glue the four feature mappers hand-rolled. Applied **only** to
+    real Date fields / genuine null-undef passthroughs — NOT to `dtoToRow`'s DTO string
+    re-canonicalization (out of scope, kept explicit). No generic mapper factory (R-2).
 - Feature code imports `@/storage` / `@/db`, never the backends directly —
   **lint-enforced** (see "Seam-import lint boundary").
 
@@ -129,10 +153,12 @@ first wiring of `useLiveQuery`. Load-bearing storage-representation decisions:
   TEXT-ISO storage format and **normalize every write to canonical UTC** via
   `toISOString()` — the property the range query relies on), `repository.ts` (async CRUD
   over `@/db` — `findAll`, `getById`, `upsert` by uid via `onConflictDoUpdate` mirroring
-  the Flutter `put`, `remove`, and a `findInRange` date-range query), `uid.ts`
-  (`newEventId()` over `expo-crypto`'s `randomUUID` — the single, swappable import site;
-  the importer bypasses it by supplying its own uid), `hooks.ts` (`usePersonalEvents()` —
-  the reactive read over the seam's `useLiveQuery`), and an `index.ts` barrel.
+  the Flutter `put`, `remove`, and a `findInRange` date-range query), the shared `@/db`
+  `newId()` uid generator (re-exported from this feature's `data/` barrel so `form/`/`ui/`
+  reach it without importing `@/db`, B-1 — TIM-155 folded the ex-`newEventId` wrapper into
+  the seam), `hooks.ts` (`usePersonalEvents()` — the reactive read over the seam's
+  `useLiveQuery`), and an `index.ts` barrel. The mappers use the shared `@/db` primitives
+  (`isoToDate`/`dateToIso`/`nullToUndef`/`undefToNull`).
 - **`expo-crypto` is the uid native dep** — in `mobile/package.json`. It **autolinks with
   no `app.config.ts` plugin entry** (it ships no config plugin — verified by `expo
   prebuild`; do NOT add it to `plugins`, that errors). Mocked under Jest, so `tsc`/lint/Jest
@@ -185,8 +211,9 @@ rationale in `add-mobile-calendar-identity-persistence`'s `design.md` (D1–D9) 
   generated-type import in the layer, in `data/` per B-1), `repository.ts` (async CRUD over
   `@/db` — `findAll`, `getById`, `getByToken`, `upsert` by `id` via `onConflictDoUpdate`
   mirroring the Flutter `record(id).put` and accepting a caller-supplied id for the importer,
-  `remove`, `setVisible`), `id.ts` (`newId()` over `expo-crypto` — the swappable uid site;
-  the importer bypasses it), `hooks.ts` (`useUserCalendars()` — the reactive `useLiveQuery`
+  `remove`, `setVisible`), the shared `@/db` `newId()` uid generator (TIM-155 folded the
+  ex-per-feature `id.ts` wrapper into the seam; the importer bypasses it — this generator has
+  no invoker today, reserved for a future local source), `hooks.ts` (`useUserCalendars()` — the reactive `useLiveQuery`
   read replacing the removed ephemeral holder), `add-calendar.ts` (the shared persist seam —
   `useAddCalendar`'s `addCalendarFromUrl`: POST `/calendars` → resolve `GET /calendars/by-token/{token}`
   → `fromCalendarForPublic` → `upsert`; both the QR and iCal screens use it), and `index.ts`.
@@ -313,8 +340,9 @@ for the *opposite* shape); rationale in `add-mobile-hidden-events`'s `design.md`
   Flutter parity). **The write is the failure surface** — a `setString` failure throws; the UI
   hook catches + records (below).
 - **The hooks — `data/hooks.ts`.** `useHiddenEvents()` — the reactive read over the seam's
-  `useStoredString(HIDDEN_EVENTS_KEYS.set)` + `parseHiddenEvents` (mirroring `useSelectedSchool`),
-  so the calendar views and the management screen re-render when the set changes.
+  shared `useParsedStoredString(HIDDEN_EVENTS_KEYS.set, parseHiddenEvents)` (mirroring
+  `useSelectedSchool`; TIM-155 folded the ex-hand-written `parseHiddenEvents(useStoredString(…))`
+  pair), so the calendar views and the management screen re-render when the set changes.
   `useHideActions()` — the four mutators wrapped with the observability + failure-state handling
   (the one place the UI calls writes): a thrown write records through `@/firebase`
   `recordError(error, "hidden-events/<action>")` **and** flips an accessible `failed` flag. The
@@ -388,9 +416,9 @@ in `add-mobile-event-checklists`'s `design.md` (D1–D8) and
   three dates, bool↔0/1), `repository.ts` (async CRUD over `@/db` — `findByEvent` ordered by
   `order`, `add` insert, `setContent`/`setChecked` one-column UPDATE + `updatedAt`, the
   **transactional `reorder`** re-numbering each `order = i + 1` inside ONE `db.transaction` so a
-  crash mid-reorder never leaves duplicate/gap orders, `remove` HARD delete), `id.ts`
-  (`newId()` over `expo-crypto`'s `randomUUID` — the swappable uid site; the importer bypasses
-  it), `hooks.ts` (`useChecklist(eventUid)` — the reactive `useLiveQuery` read; and
+  crash mid-reorder never leaves duplicate/gap orders, `remove` HARD delete), the shared `@/db`
+  `newId()` uid generator (TIM-155 folded the ex-per-feature `id.ts` wrapper into the seam; the
+  importer bypasses it), `hooks.ts` (`useChecklist(eventUid)` — the reactive `useLiveQuery` read; and
   `useChecklistActions(eventUid, items)` — the write controller computing `order = items.length
   + 1` on add, the move-up/down swap-then-reorder, the remove-then-renumber, each write wrapped
   in `recordError` + a `failed` flag), and an `index.ts` barrel.

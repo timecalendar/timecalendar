@@ -1,16 +1,17 @@
-import { newEventId, type PersonalEvent } from "@/features/personal-events/data"
+import { newId } from "@/db"
+import type { PersonalEvent } from "@/features/personal-events/data"
 
 import { buildEventFromForm } from "./build"
 import type { EventFormValues } from "./types"
 
-// Mock the data barrel's newEventId so create assigns a deterministic uid; the
-// repository/mappers are NOT exercised here (build is pure). @/db is mocked
-// suite-wide (setup-db.ts), so importing the barrel is safe.
-jest.mock("@/features/personal-events/data", () => ({
-  newEventId: jest.fn(() => "generated-uid"),
+// Mock the @/db seam's newId so create assigns a deterministic uid; build is
+// pure, so it reaches @/db for nothing else (the repository/mappers are not
+// exercised here). A minimal mock keeps expo-crypto (no off-device JS) out.
+jest.mock("@/db", () => ({
+  newId: jest.fn(() => "generated-uid"),
 }))
 
-const mockNewEventId = newEventId as jest.MockedFunction<typeof newEventId>
+const mockNewId = newId as jest.MockedFunction<typeof newId>
 
 function values(overrides: Partial<EventFormValues> = {}): EventFormValues {
   return {
@@ -26,7 +27,7 @@ function values(overrides: Partial<EventFormValues> = {}): EventFormValues {
 
 describe("buildEventFromForm", () => {
   beforeEach(() => {
-    mockNewEventId.mockClear()
+    mockNewId.mockClear()
   })
 
   it("assigns a fresh uid and exportedAt ~now on create", () => {
@@ -34,7 +35,7 @@ describe("buildEventFromForm", () => {
     const event = buildEventFromForm(values())
     const after = Date.now()
 
-    expect(mockNewEventId).toHaveBeenCalledTimes(1)
+    expect(mockNewId).toHaveBeenCalledTimes(1)
     expect(event.uid).toBe("generated-uid")
     expect(event.exportedAt.getTime()).toBeGreaterThanOrEqual(before)
     expect(event.exportedAt.getTime()).toBeLessThanOrEqual(after)
@@ -72,7 +73,7 @@ describe("buildEventFromForm", () => {
     const before = Date.now()
     const event = buildEventFromForm(values(), existing)
 
-    expect(mockNewEventId).not.toHaveBeenCalled()
+    expect(mockNewId).not.toHaveBeenCalled()
     expect(event.uid).toBe("existing-uid")
     expect(event.exportedAt.getTime()).toBeGreaterThanOrEqual(before)
   })

@@ -1,7 +1,6 @@
 export { type UseAddCalendar, useAddCalendar } from "./add-calendar"
 export { addCalendarFromToken } from "./add-from-token"
 export { useUserCalendars } from "./hooks"
-export { newId } from "./id"
 export {
   findAll,
   getById,

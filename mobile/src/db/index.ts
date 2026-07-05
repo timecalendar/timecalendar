@@ -37,3 +37,11 @@ export {
   personalEvents,
   userCalendars,
 } from "./schema"
+
+// The seam's single uid generator for device-local record identities (D2/D7/ADR
+// 024 folded into one) — feature code makes ids through @/db, never expo-crypto.
+export { newId } from "./id"
+
+// The four pure row↔domain mapper primitives (TEXT-ISO dates + null↔undefined
+// passthroughs) the feature data mappers share — see mappers.ts.
+export { dateToIso, isoToDate, nullToUndef, undefToNull } from "./mappers"

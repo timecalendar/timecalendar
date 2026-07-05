@@ -1,9 +1,9 @@
 import { act, renderHook } from "@testing-library/react-native"
 
+import { newId } from "@/db"
 import { recordUnknownError } from "@/firebase"
 
 import { useChecklist, useChecklistActions } from "./hooks"
-import { newId } from "./id"
 import { add, remove, reorder, setChecked, setContent } from "./repository"
 import { type ChecklistItem, checklistItemToRow } from "./types"
 
@@ -33,11 +33,12 @@ jest.mock("@/db", () => {
     eq: jest.fn((col, val) => ({ op: "eq", col, val })),
     asc: jest.fn((col) => ({ op: "asc", col })),
     useLiveQuery: () => ({ data: mockLiveData }),
+    // The uid generator now lives on the @/db seam; add() reads it here.
+    newId: jest.fn(),
   }
 })
 
 jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
-jest.mock("./id", () => ({ newId: jest.fn() }))
 jest.mock("./repository", () => ({
   add: jest.fn(() => Promise.resolve()),
   setContent: jest.fn(() => Promise.resolve()),

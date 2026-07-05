@@ -1,9 +1,8 @@
 import { useCallback, useMemo } from "react"
 
-import { asc, checklistItems, db, eq, useLiveQuery } from "@/db"
+import { asc, checklistItems, db, eq, newId, useLiveQuery } from "@/db"
 import { useRecordedAction } from "@/hooks/use-recorded-action"
 
-import { newId } from "./id"
 import {
   add as addItem,
   remove as removeItem,

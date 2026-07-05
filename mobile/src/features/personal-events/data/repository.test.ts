@@ -8,13 +8,19 @@
 
 import { createFakeDb } from "@/test-support/fake-db"
 
-import { eventToRow, type PersonalEvent } from "./types"
+import type { PersonalEvent } from "./types"
 
 const mockFake = createFakeDb({
   tables: { personalEvents: { columns: ["uid"], pk: "uid" } },
 })
 
-jest.mock("@/db", () => mockFake.module)
+// The row↔domain mappers now live on the @/db seam — the fake stubs the query
+// surface, so spread the real mapper impls back in (they are pure; stubbing them
+// would destroy the no-behavior-change oracle).
+jest.mock("@/db", () => ({
+  ...mockFake.module,
+  ...jest.requireActual<object>("@/db/mappers"),
+}))
 
 // require() the SUT lazily (not a top-level import) so the eager `@/db` value
 // import inside repository.ts can't fire the hoisted jest.mock factory before
@@ -25,6 +31,12 @@ const { personalEvents } = mockFake.module as {
 const { findAll, getById, remove, upsert } =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("./repository") as typeof import("./repository")
+// Required lazily (not a top-level value import) for the same reason as the SUT:
+// `./types`' `@/db` mapper imports would otherwise fire the mock factory before
+// `mockFake` is assigned.
+const { eventToRow } =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("./types") as typeof import("./types")
 
 const event: PersonalEvent = {
   uid: "uid-1",

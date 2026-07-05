@@ -39,10 +39,13 @@ jest.mock("expo-router", () => ({
   router: { back: jest.fn() },
 }))
 
-// buildEventFromForm (real, via requireActual above) calls the data barrel's
-// newEventId → expo-crypto, which has no off-device JS. Mock it deterministically.
-jest.mock("@/features/personal-events/data", () => ({
-  newEventId: jest.fn(() => "generated-uid"),
+// buildEventFromForm (real, via requireActual above) calls the @/db seam's
+// newId → expo-crypto, which has no off-device JS. Mock newId deterministically
+// while keeping the rest of the @/db surface (the form hooks' repository imports
+// resolve their tables/operators through the suite-wide setup-db mock).
+jest.mock("@/db", () => ({
+  ...jest.requireActual("@/db"),
+  newId: jest.fn(() => "generated-uid"),
 }))
 
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock

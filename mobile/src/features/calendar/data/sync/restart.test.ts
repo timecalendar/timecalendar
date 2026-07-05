@@ -13,15 +13,17 @@
 import type { CalendarEvent } from "@/features/calendar/data/types"
 import { createFakeDb } from "@/test-support/fake-db"
 
-import { rowToCalendarEvent } from "./types"
-
 // Type-only reference to the seam — a `typeof import(...)` never emits a runtime
 // require, so it can't trigger the hoisted jest.mock factory before `mockFake` is
 // assigned (a top-level value `import … from "@/db"` would). The runtime `db` +
-// table token come from `mockFake.module` instead.
+// table token come from `mockFake.module` instead. `./types` is required LAZILY
+// (below, beside the SUT) for the same reason: its `@/db` mapper imports would
+// otherwise pull the mocked seam before `mockFake` exists.
 type CalendarEventInsert =
   (typeof import("@/db"))["calendarEvents"]["$inferInsert"]
-type CalendarEventRow = Parameters<typeof rowToCalendarEvent>[0]
+type CalendarEventRow = Parameters<
+  (typeof import("./types"))["rowToCalendarEvent"]
+>[0]
 type Db = {
   select: () => { from: (t: unknown) => Promise<CalendarEventRow[]> }
 }
@@ -34,7 +36,13 @@ const mockFake = createFakeDb({
   tables: { calendarEvents: { columns: ["uid"], pk: "uid" } },
 })
 
-jest.mock("@/db", () => mockFake.module)
+// The row→domain mappers now live on the @/db seam — the fake stubs the query
+// surface, so spread the real mapper impls back in (they are pure; stubbing them
+// would destroy the no-behavior-change oracle).
+jest.mock("@/db", () => ({
+  ...mockFake.module,
+  ...jest.requireActual<object>("@/db/mappers"),
+}))
 
 const { db, calendarEvents } = mockFake.module as {
   db: Db
@@ -69,6 +77,8 @@ function row(
 // read the persisted "disk" back through that same shape (findInRange is gone).
 async function readAll(): Promise<CalendarEvent[]> {
   const rows = await db.select().from(calendarEvents)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { rowToCalendarEvent } = require("./types") as typeof import("./types")
   return rows.map(rowToCalendarEvent)
 }
 

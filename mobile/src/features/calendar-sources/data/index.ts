@@ -14,7 +14,6 @@ export {
   fromCalendarForPublic,
   getById,
   getByToken,
-  newId,
   remove,
   rowToCalendar,
   setVisible,
