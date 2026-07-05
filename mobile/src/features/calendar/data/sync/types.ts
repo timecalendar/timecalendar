@@ -100,7 +100,7 @@ export function rowToCalendarEvent(row: CalendarEventRow): CalendarEvent {
 // FULL `CalendarEventCustomFields` object (`{canceled,shortDescription,subject,
 // groupColor}`, JSON-encoded — not `{canceled}` only). Dates are normalized to
 // canonical UTC ISO-8601 (toISOString() always emits the `…Z` form, so the text
-// columns sort chronologically — the findInRange property; a DTO date is already
+// columns sort chronologically — the range-read property; a DTO date is already
 // canonical UTC, so this is a no-op preserving fidelity), `location`/`description`
 // null → null, `exportedAt` carried from the DTO (its server-stamped value, not a
 // re-stamp). The parent `userCalendarId` is attached (mirroring Flutter

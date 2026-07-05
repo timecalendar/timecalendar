@@ -59,6 +59,9 @@ module.exports = {
     // augmentation, the migrations bundle types) — they would report 0% as pure
     // noise. Excluded with reason, not silently.
     "!src/**/*.d.ts",
+    // Jest-only test-support fixtures (deterministic data the suites import) —
+    // not production code, so excluded from coverage like the tests themselves.
+    "!src/**/__fixtures__/**",
     // E2E-covered, not unit-covered — by design (Architecture Book "Testing"):
     //  - src/api/{mutator,config}: the customFetch seam component tests mock and
     //    the base-URL constant; the seam is proven end to end by the Maestro

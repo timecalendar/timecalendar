@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react-native"
 
+import { denseWeekFixture } from "@/features/calendar/__fixtures__/dense-week"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import {
   type PersonalEvent,
@@ -7,7 +8,6 @@ import {
 } from "@/features/personal-events"
 
 import { useCalendarEvents } from "./events"
-import { denseWeekFixture } from "./fixtures"
 import { useSyncedEvents } from "./sync"
 import type { CalendarEvent } from "./types"
 

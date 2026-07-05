@@ -10,8 +10,7 @@ import { rowToCalendarEvent } from "./types"
 // replaceAll mutates the calendar_events table. It reads the whole (small) table
 // live and maps row→domain — range filtering happens ONCE in useCalendarEvents (it
 // merges these with personal events and filters the combined set, so filtering here
-// too would be redundant). The repository's findInRange is the non-reactive read
-// for tests / imperative callers.
+// too would be redundant).
 export function useSyncedEvents(): CalendarEvent[] {
   const { data } = useLiveQuery(db.select().from(calendarEvents))
   return useMemo(() => data.map(rowToCalendarEvent), [data])
