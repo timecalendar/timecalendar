@@ -43,7 +43,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     url: `https://u.expo.dev/${easProjectId}`,
   },
   ios: {
-    icon: "./assets/expo.icon",
+    // iOS uses the top-level `icon` (the brand 1024² master, opaque, no alpha).
+    // No per-platform `icon` override and no Icon Composer `.icon` bundle: the
+    // app ships the flat TimeCalendar brand mark, not a liquid-glass treatment.
     bundleIdentifier: appId,
     googleServicesFile: googleServicesIOS,
     // Export-compliance: the app uses only standard/exempt encryption (HTTPS/TLS
@@ -76,9 +78,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // runtime request in @/firebase requestNotificationPermission.
     permissions: ["POST_NOTIFICATIONS"],
     adaptiveIcon: {
-      backgroundColor: "#E6F4FE",
+      // Brand-pale-pink field (the icon card's own background tone) behind the
+      // transparent calendar foreground. A flat colour, not a background image:
+      // the shipped Flutter long-shadow layer is dropped for a cleaner adaptive
+      // mask that themes correctly under M3.
+      backgroundColor: "#FDE4E9",
       foregroundImage: "./assets/images/android-icon-foreground.png",
-      backgroundImage: "./assets/images/android-icon-background.png",
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     predictiveBackGestureEnabled: false,
