@@ -58,6 +58,20 @@ export function recordError(error: Error, context?: string): void {
   crashlyticsRecordError(crashlytics, error)
 }
 
+/**
+ * Record a caught value of unknown type under a context breadcrumb. Normalizes a
+ * non-Error throw to `new Error(String(value))` before delegating to recordError
+ * — the single home for the `error instanceof Error ? … : …` narrowing every
+ * write catch-block used to hand-inline (see docs review R-1). `catch (error)`
+ * gives `unknown`, so this is what call sites reach for.
+ */
+export function recordUnknownError(error: unknown, context: string): void {
+  recordError(
+    error instanceof Error ? error : new Error(String(error)),
+    context,
+  )
+}
+
 /** Force a native crash — the step-8 end-to-end Crashlytics verification. */
 export function crashTest(): void {
   crash(getCrashlytics())

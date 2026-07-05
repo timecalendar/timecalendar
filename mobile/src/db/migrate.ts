@@ -1,6 +1,6 @@
 import { migrate } from "drizzle-orm/expo-sqlite/migrator"
 
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import { db } from "./index"
 import migrations from "./migrations/migrations"
@@ -20,9 +20,6 @@ export async function runMigrations(): Promise<void> {
   try {
     await migrate(db, migrations)
   } catch (error) {
-    recordError(
-      error instanceof Error ? error : new Error(String(error)),
-      "Database migration failed at startup",
-    )
+    recordUnknownError(error, "Database migration failed at startup")
   }
 }

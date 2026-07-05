@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 import { isDevVariant } from "@/config/variant"
 import { useSyncCalendars } from "@/features/calendar/data"
 import { addCalendarFromToken } from "@/features/calendar-sources/data"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import { DevImportScreen } from "./dev-import-screen"
 
@@ -14,7 +14,7 @@ import { DevImportScreen } from "./dev-import-screen"
 // are provable without a real DB/network:
 //  - DEV branch: addCalendarFromToken(token) → sync() → router.replace("/calendar")
 //  - PRODUCTION branch: NO import call, inert "not available" state (the boundary)
-//  - failure: reject → recordError + accessible error state
+//  - failure: reject → recordUnknownError + accessible error state
 
 jest.mock("@/config/variant", () => ({ isDevVariant: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({
@@ -23,7 +23,7 @@ jest.mock("@/features/calendar-sources/data", () => ({
 jest.mock("@/features/calendar/data", () => ({
   useSyncCalendars: jest.fn(),
 }))
-jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("expo-router", () => ({
   Stack: { Screen: () => null },
   useLocalSearchParams: jest.fn(),
@@ -35,7 +35,7 @@ const mockAddCalendarFromToken = addCalendarFromToken as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockUseRouter = useRouter as jest.Mock
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 
 const mockSync = jest.fn<Promise<void>, []>(() => Promise.resolve())
 const mockReplace = jest.fn()
@@ -58,7 +58,7 @@ describe("DevImportScreen", () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
     expect(mockAddCalendarFromToken).toHaveBeenCalledWith("e2e-smoke-calendar")
     expect(mockSync).toHaveBeenCalledTimes(1)
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("production variant: performs NO import and shows the inert state (security boundary)", async () => {
@@ -82,7 +82,7 @@ describe("DevImportScreen", () => {
     await waitFor(() =>
       expect(screen.getByTestId("dev-import-error")).toBeTruthy(),
     )
-    expect(mockRecordError).toHaveBeenCalledTimes(1)
+    expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
     expect(mockReplace).not.toHaveBeenCalled()
   })
 })

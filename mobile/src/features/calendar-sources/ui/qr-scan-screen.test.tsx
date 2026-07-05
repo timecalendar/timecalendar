@@ -3,7 +3,7 @@ import { router } from "expo-router"
 import { Linking } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 
 import QrScanScreen from "./qr-scan-screen"
 
@@ -70,14 +70,14 @@ jest.mock("expo-camera", () => {
 })
 
 jest.mock("expo-router", () => ({ router: { back: jest.fn() } }))
-jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({
   ...jest.requireActual("@/features/calendar-sources/data"),
   useAddCalendar: jest.fn(),
 }))
 
 const mockBack = router.back as jest.Mock
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
 const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string]>()
 
@@ -155,7 +155,7 @@ describe("QrScanScreen", () => {
       "https://example.com/cal.ics",
     )
     await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("shows a recoverable message for a non-calendar QR without recording", async () => {
@@ -171,7 +171,7 @@ describe("QrScanScreen", () => {
     ).toBeTruthy()
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
     expect(mockBack).not.toHaveBeenCalled()
-    expect(mockRecordError).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("records a failed persist through the firebase seam and shows a failure state", async () => {
@@ -183,7 +183,7 @@ describe("QrScanScreen", () => {
     })
 
     await waitFor(() =>
-      expect(mockRecordError).toHaveBeenCalledWith(
+      expect(mockRecordUnknownError).toHaveBeenCalledWith(
         expect.any(Error),
         "calendar-sources/qr-scan",
       ),

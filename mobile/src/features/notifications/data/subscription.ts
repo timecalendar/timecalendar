@@ -2,7 +2,7 @@ import { useCallback } from "react"
 
 import { useNotificationSubscriptionControllerCreateOrUpdateSubscription } from "@/api/generated/notification-subscription/notification-subscription"
 import { useUserCalendars } from "@/features/calendar-sources/data"
-import { getFcmToken, recordError } from "@/firebase"
+import { getFcmToken, recordUnknownError } from "@/firebase"
 
 import { getFrequency, getIsActive, getNbDaysAhead } from "./prefs"
 
@@ -56,10 +56,7 @@ export function useSubscriptionRegistration(): UseSubscriptionRegistration {
       } catch (error) {
         // Decision 6: a failed PUT is recorded; the isError flag drives the
         // screen's accessible failure surface (the background trigger has none).
-        recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          "notifications/subscription",
-        )
+        recordUnknownError(error, "notifications/subscription")
         throw error
       }
     },

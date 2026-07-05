@@ -6,7 +6,7 @@ import {
   getInitialTap,
   onForegroundMessage,
   onNotificationTap,
-  recordError,
+  recordUnknownError,
   type RemoteMessage,
 } from "@/firebase"
 
@@ -18,12 +18,12 @@ import {
 // The pure parser is unit-tested for every branch; the dispatcher is proven by
 // mocking the three @/firebase tap entrypoints, the calendar sync seam, and the
 // expo-router router (testing.md mock-at-mutator). @/firebase is mocked so
-// recordError is a spy and the entrypoints hand back driveable handlers.
+// recordUnknownError is a spy and the entrypoints hand back driveable handlers.
 jest.mock("@/firebase")
 jest.mock("@/features/calendar/data")
 jest.mock("expo-router", () => ({ useRouter: jest.fn() }))
 
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseRouter = useRouter as jest.Mock
 const mockOnForegroundMessage = onForegroundMessage as jest.Mock
@@ -83,7 +83,7 @@ describe("parseNotificationRoute", () => {
       data: { action: "calendar_changed", payload: "{not json" },
     } as unknown as RemoteMessage
     expect(parseNotificationRoute(malformed)).toBeNull()
-    expect(mockRecordError).toHaveBeenCalledWith(
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
       expect.any(Error),
       "notifications/tap-routing",
     )

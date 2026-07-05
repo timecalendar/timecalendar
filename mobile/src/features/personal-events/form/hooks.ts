@@ -6,7 +6,7 @@ import {
   remove as removeEvent,
   upsert,
 } from "@/features/personal-events/data"
-import { recordError } from "@/firebase"
+import { useRecordedAction } from "@/hooks/use-recorded-action"
 
 // The save/delete mutation hooks and the prefill loader (design D2/D6). Thin
 // async wrappers over B1's repository: the screen only triggers them; all
@@ -24,22 +24,13 @@ interface SaveEvent {
 // create + edit, keyed by uid). Returns true on success; on rejection records
 // the error and returns false (the screen shows error.saveFailed).
 export function useSaveEvent(): SaveEvent {
-  const [failed, setFailed] = useState(false)
+  const { run, failed } = useRecordedAction()
 
-  const save = useCallback(async (event: PersonalEvent): Promise<boolean> => {
-    try {
-      await upsert(event)
-      setFailed(false)
-      return true
-    } catch (error) {
-      recordError(
-        error instanceof Error ? error : new Error(String(error)),
-        "Failed to save personal event",
-      )
-      setFailed(true)
-      return false
-    }
-  }, [])
+  const save = useCallback(
+    (event: PersonalEvent): Promise<boolean> =>
+      run("Failed to save personal event", () => upsert(event)),
+    [run],
+  )
 
   return { save, failed }
 }
@@ -51,22 +42,13 @@ interface DeleteEvent {
 
 // Remove an event via the repository remove. Same error-path contract as save.
 export function useDeleteEvent(): DeleteEvent {
-  const [failed, setFailed] = useState(false)
+  const { run, failed } = useRecordedAction()
 
-  const remove = useCallback(async (uid: string): Promise<boolean> => {
-    try {
-      await removeEvent(uid)
-      setFailed(false)
-      return true
-    } catch (error) {
-      recordError(
-        error instanceof Error ? error : new Error(String(error)),
-        "Failed to delete personal event",
-      )
-      setFailed(true)
-      return false
-    }
-  }, [])
+  const remove = useCallback(
+    (uid: string): Promise<boolean> =>
+      run("Failed to delete personal event", () => removeEvent(uid)),
+    [run],
+  )
 
   return { remove, failed }
 }

@@ -15,7 +15,7 @@ import {
   parseScannedSource,
   useAddCalendar,
 } from "@/features/calendar-sources/data"
-import { recordError } from "@/firebase"
+import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The QR scanner screen (Phase-3 ship 3, rewired by ship 5 / ADR 018) —
@@ -65,10 +65,7 @@ export default function QrScanScreen() {
       .catch((error: unknown) => {
         // Create / resolve / upsert failure — record through the seam, surface an
         // a11y failure.
-        recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          "calendar-sources/qr-scan",
-        )
+        recordUnknownError(error, "calendar-sources/qr-scan")
         setFailed(true)
       })
   }

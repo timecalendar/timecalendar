@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources/data"
-import { getFcmToken, recordError } from "@/firebase"
+import { getFcmToken, recordUnknownError } from "@/firebase"
 
 import { setFrequency, setIsActive, setNbDaysAhead } from "./prefs"
 import { useSubscriptionRegistration } from "./subscription"
@@ -15,7 +15,7 @@ import { NOTIFICATION_KEYS } from "./types"
 // Ship-A token and PUTs it through the REAL generated mutation, mocked at the
 // customFetch mutator seam (never the network). Asserts PUT-on-change (the new
 // value), re-PUT-on-token-refresh (the new token), null token → no PUT, zero
-// calendars → calendarIds: [], and the failure path (PUT rejects → recordError +
+// calendars → calendarIds: [], and the failure path (PUT rejects → recordUnknownError +
 // the isError flag). Mocks @/firebase + useUserCalendars per case.
 jest.mock("@/api/mutator")
 jest.mock("@/firebase")
@@ -23,7 +23,7 @@ jest.mock("@/features/calendar-sources/data")
 
 const mockFetch = customFetch as jest.Mock
 const mockGetFcmToken = getFcmToken as jest.Mock
-const mockRecordError = recordError as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseUserCalendars = useUserCalendars as jest.Mock
 
 const { remove } = jest.requireActual<typeof import("@/storage")>("@/storage")
@@ -148,13 +148,13 @@ describe("useSubscriptionRegistration", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(mockFetch).toHaveBeenCalledTimes(1)
-    expect(mockRecordError).toHaveBeenCalledWith(
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
       expect.any(Error),
       "notifications/subscription",
     )
   })
 
-  it("wraps a non-Error rejection in an Error before recording it", async () => {
+  it("forwards a non-Error rejection to the seam under its tag", async () => {
     mockGetFcmToken.mockResolvedValue("fcm-token")
     mockFetch.mockRejectedValue("plain string boom")
 
@@ -167,13 +167,12 @@ describe("useSubscriptionRegistration", () => {
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
-    expect(mockRecordError).toHaveBeenCalledWith(
-      expect.any(Error),
+    // The seam (recordUnknownError) owns the non-Error normalization; the hook
+    // just forwards the raw rejection value under the right tag.
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
+      "plain string boom",
       "notifications/subscription",
     )
-    expect(mockRecordError.mock.calls[0]?.[0]).toMatchObject({
-      message: "plain string boom",
-    })
   })
 
   it("reset clears the error state", async () => {

@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react"
 
 import { asc, checklistItems, db, eq, useLiveQuery } from "@/db"
-import { recordError } from "@/firebase"
+import { useRecordedAction } from "@/hooks/use-recorded-action"
 
 import { newId } from "./id"
 import {
@@ -46,34 +46,16 @@ export interface ChecklistActions {
 
 // The write controller — the ONE place the UI calls checklist writes. A checklist
 // write is a crash-worthy local-persistence failure (the data is irreplaceable,
-// no server backup), so a thrown write records through @/firebase
-// recordError(error, "event-checklists/<action>") AND flips an accessible failure
-// flag (ADR 024 / decision 6, the calendar-sync replaceAll / hidden-events write
-// posture). The reactive read feeds the order computation, so each action reads
-// the live `items` it was given (the caller passes the current ordered list).
+// no server backup), so a thrown write records through @/firebase (via the shared
+// useRecordedAction) under "event-checklists/<action>" AND flips an accessible
+// failure flag (ADR 024 / decision 6, the calendar-sync replaceAll / hidden-events
+// write posture). The reactive read feeds the order computation, so each action
+// reads the live `items` it was given (the caller passes the current ordered list).
 export function useChecklistActions(
   eventUid: string,
   items: ChecklistItem[],
 ): ChecklistActions {
-  const [failed, setFailed] = useState(false)
-
-  const run = useCallback(
-    async (action: string, write: () => Promise<void>): Promise<boolean> => {
-      try {
-        await write()
-        setFailed(false)
-        return true
-      } catch (error) {
-        recordError(
-          error instanceof Error ? error : new Error(String(error)),
-          `event-checklists/${action}`,
-        )
-        setFailed(true)
-        return false
-      }
-    },
-    [],
-  )
+  const { run, failed } = useRecordedAction("event-checklists")
 
   const add = useCallback(async (): Promise<string | undefined> => {
     const uuid = newId()
