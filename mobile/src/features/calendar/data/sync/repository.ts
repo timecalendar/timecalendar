@@ -1,7 +1,4 @@
-import { and, calendarEvents, db, gte, lte } from "@/db"
-import type { CalendarEvent } from "@/features/calendar/data/types"
-
-import { rowToCalendarEvent } from "./types"
+import { calendarEvents, db } from "@/db"
 
 type CalendarEventInsert = typeof calendarEvents.$inferInsert
 
@@ -18,26 +15,6 @@ type CalendarEventInsert = typeof calendarEvents.$inferInsert
 // insert well under that. 15 columns × ~60 rows ≈ 900 binds, so 50 rows/chunk is
 // a safe, simple bound that never trips the limit.
 const INSERT_CHUNK_SIZE = 50
-
-// Events overlapping the closed window [from, to]: the start at/before `to` and
-// the end at/after `from`. The TEXT ISO-8601 columns sort lexicographically as
-// chronological for canonical UTC strings (the property the mappers guarantee),
-// so the bounds are the canonical ISO strings.
-export async function findInRange(
-  from: Date,
-  to: Date,
-): Promise<CalendarEvent[]> {
-  const rows = await db
-    .select()
-    .from(calendarEvents)
-    .where(
-      and(
-        lte(calendarEvents.startsAt, to.toISOString()),
-        gte(calendarEvents.endsAt, from.toISOString()),
-      ),
-    )
-  return rows.map(rowToCalendarEvent)
-}
 
 // Replace the ENTIRE calendar_events table with the synced set — the Flutter
 // drop+replace strategy (`_store.drop()` then `addAll`). It takes ROWS (the

@@ -69,6 +69,9 @@ module.exports = {
     "!src/api/mutator.ts",
     "!src/api/config.ts",
     "!src/app/**",
+    // Test-support only — jest fixtures imported by tests, never production code
+    // (e.g. the calendar dense-week fixture, relocated out of the feature tree).
+    "!src/test-support/**",
   ],
   // K-3 coverage gate, enforced (ADR 003 — revisit fired 2026-06-14, wired by
   // the Settings prefs feature that owns it, per ADR 004). High bar where bugs

@@ -1,20 +1,15 @@
 // Prove the repository against the @/db seam, mocked: real expo-sqlite has no
-// off-device JS, so we assert the Drizzle query SHAPE (findInRange) and the
-// TRANSACTIONAL drop+replace (replaceAll deletes-then-inserts INSIDE one
-// db.transaction callback) rather than a real round-trip. A local jest.mock("@/db")
-// overrides the seam with a chainable query-builder + a transaction spy. Spy names
-// are `mock`-prefixed so the hoisted jest.mock factory may reference them.
+// off-device JS, so we assert the TRANSACTIONAL drop+replace (replaceAll
+// deletes-then-inserts INSIDE one db.transaction callback) rather than a real
+// round-trip. A local jest.mock("@/db") overrides the seam with a transaction spy.
+// Spy names are `mock`-prefixed so the hoisted jest.mock factory may reference them.
 
-import { and, calendarEvents, gte, lte } from "@/db"
+import { calendarEvents } from "@/db"
 
-import { findInRange, replaceAll } from "./repository"
+import { replaceAll } from "./repository"
 
 type CalendarEventInsert = typeof calendarEvents.$inferInsert
 
-let mockRows: unknown[] = []
-const mockWhere = jest.fn()
-const mockFrom = jest.fn()
-const mockSelect = jest.fn()
 // Transaction-scoped spies (the `tx` builder inside db.transaction).
 const mockTxDelete = jest.fn()
 const mockTxInsert = jest.fn()
@@ -22,14 +17,6 @@ const mockTxValues = jest.fn()
 const mockTransaction = jest.fn()
 
 jest.mock("@/db", () => {
-  const makeSelectBuilder = (): Record<string, unknown> => {
-    const builder: Record<string, unknown> = {
-      from: (...a: unknown[]) => (mockFrom(...a), builder),
-      where: (...a: unknown[]) => (mockWhere(...a), builder),
-      then: (resolve: (value: unknown[]) => unknown) => resolve(mockRows),
-    }
-    return builder
-  }
   const tx = {
     delete: (...a: unknown[]) => {
       mockTxDelete(...a)
@@ -47,19 +34,12 @@ jest.mock("@/db", () => {
   }
   return {
     db: {
-      select: (...a: unknown[]) => (mockSelect(...a), makeSelectBuilder()),
       transaction: (cb: (t: typeof tx) => Promise<unknown>) => {
         mockTransaction()
         return cb(tx)
       },
     },
-    calendarEvents: {
-      startsAt: "calendarEvents.startsAt",
-      endsAt: "calendarEvents.endsAt",
-    },
-    and: jest.fn((...conds: unknown[]) => ({ op: "and", conds })),
-    gte: jest.fn((col, val) => ({ op: "gte", col, val })),
-    lte: jest.fn((col, val) => ({ op: "lte", col, val })),
+    calendarEvents: {},
   }
 })
 
@@ -88,56 +68,12 @@ function row(
 }
 
 beforeEach(() => {
-  mockRows = []
-  ;[
-    mockWhere,
-    mockFrom,
-    mockSelect,
-    mockTxDelete,
-    mockTxInsert,
-    mockTxValues,
-    mockTransaction,
-  ].forEach((m) => m.mockClear())
+  ;[mockTxDelete, mockTxInsert, mockTxValues, mockTransaction].forEach((m) =>
+    m.mockClear(),
+  )
 })
 
 describe("calendar-sync repository", () => {
-  it("findInRange selects with the overlap query and maps rows to domain", async () => {
-    const from = new Date("2026-06-16T00:00:00.000Z")
-    const to = new Date("2026-06-17T00:00:00.000Z")
-    mockRows = [
-      {
-        uid: "ev-1",
-        title: "Algorithms",
-        color: "#1E88E5",
-        groupColor: "#1E88E5",
-        startsAt: "2026-06-16T09:00:00.000Z",
-        endsAt: "2026-06-16T10:30:00.000Z",
-        exportedAt: "2026-06-15T08:00:00.000Z",
-        location: "Room A1",
-        description: null,
-        allDay: false,
-        teachers: "[]",
-        tags: "[]",
-        fields: null,
-        type: "cm",
-        userCalendarId: "cal-1",
-      },
-    ]
-
-    const result = await findInRange(from, to)
-
-    expect(mockSelect).toHaveBeenCalled()
-    expect(mockFrom).toHaveBeenCalledWith(calendarEvents)
-    expect(mockWhere).toHaveBeenCalled()
-    // The overlap query: start <= to AND end >= from, on the ISO bounds.
-    expect(lte).toHaveBeenCalledWith(calendarEvents.startsAt, to.toISOString())
-    expect(gte).toHaveBeenCalledWith(calendarEvents.endsAt, from.toISOString())
-    expect(and).toHaveBeenCalled()
-    expect(result).toHaveLength(1)
-    expect(result[0]?.id).toBe("ev-1")
-    expect(result[0]?.startsAt).toBeInstanceOf(Date)
-  })
-
   it("replaceAll deletes-then-inserts inside a single transaction", async () => {
     await replaceAll([row(), row({ uid: "ev-2" })])
 

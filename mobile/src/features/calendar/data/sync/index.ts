@@ -3,7 +3,7 @@
 // alias path (the ../ ban) — the specific files (types/events), never this barrel
 // nor the feature barrel.
 export { useSyncedEvents } from "./hooks"
-export { findInRange, replaceAll } from "./repository"
+export { replaceAll } from "./repository"
 export { useStartupSync } from "./startup"
 export { type UseSyncCalendars, useSyncCalendars } from "./sync"
 export { dtoToRow, rowToCalendarEvent } from "./types"
