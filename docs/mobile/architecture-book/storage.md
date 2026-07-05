@@ -34,7 +34,7 @@ plus the caveats tooling can't carry; rationale and alternatives live in the
   module-scoped `openDatabaseSync("timecalendar.db")` handle and `drizzle(expo)`
   instance. `expo-sqlite` (Expo-managed SQLite) keeps the seam in the Expo upgrade lane;
   `op-sqlite` rejected for leaving that lane with no current need (R-2). The seam also owns
-  two shared relational primitives (TIM-155; re-exported from `src/db/index.ts`):
+  these shared relational primitives + contracts (re-exported from `src/db/index.ts`):
   - **`newId()`** (`src/db/id.ts`) — the **single, swappable uid generator** over
     `expo-crypto`'s `randomUUID` for every device-local record identity
     (`personal_events.uid`, `user_calendars.id`, `checklist_items.uuid`), folding the three
@@ -46,6 +46,29 @@ plus the caveats tooling can't carry; rationale and alternatives live in the
     passthroughs), the shared glue the four feature mappers hand-rolled. Applied **only** to
     real Date fields / genuine null-undef passthroughs — NOT to `dtoToRow`'s DTO string
     re-canonicalization (out of scope, kept explicit). No generic mapper factory (R-2).
+  - **The coalescing reactive read `useLiveQuery` (`src/db/live-query.ts`)** — a **seam-
+    owned** drop-in for Drizzle's `useLiveQuery` (same `(query, deps?)` signature, same
+    `{ data, error, updatedAt }` shape), NOT the raw re-export (`harden-mobile-db-seam`).
+    The **contract every reactive read inherits**: (1) a burst of `expo-sqlite` change
+    events for the observed table collapses to a **single trailing re-read** (a re-read is
+    guaranteed after the burst's last event), so a bulk write of N rows costs **O(1)
+    re-reads per mounted subscriber, not O(N)** — `expo-sqlite` fires its change event per
+    row (`sqlite3_update_hook`) and the Drizzle expo driver queries synchronously on the JS
+    thread, so the raw hook's re-query-per-event was an O(N²) startup-freeze storm (ADR 021
+    2026-07-05 amendment); (2) `data` is the empty default and `updatedAt` stays `undefined`
+    until the first read resolves (the readiness gate three consumers depend on); (3) an
+    in-flight re-read is **cancelled** on unmount / deps change (never a state update against
+    a stale subscription — a gap the stock hook has). It observes the table via
+    `query.config.table` + the public `getTableConfig` (re-verify on any drizzle-orm
+    upgrade). Only `db.select().from(table)` selects are supported (all call sites; never
+    relational `.query`).
+  - **Transaction atomicity** — a write through `db.transaction((tx) => …)` commits or rolls
+    back as **one unit**. Use Drizzle's **synchronous** transaction form: a **non-async**
+    callback with `.run()` executors (`tx.delete(t).run()`, `tx.insert(t).values(chunk).run()`,
+    `tx.update(t).set(…).where(…).run()`). This is load-bearing — the expo driver runs
+    `BEGIN → callback → COMMIT` and **never awaits**, so an `async` callback would suspend at
+    its first `await` and commit only the first statement, running the rest in autocommit
+    (the silent atomicity bug `harden-mobile-db-seam` fixed in `replaceAll` + `reorder`).
 - Feature code imports `@/storage` / `@/db`, never the backends directly —
   **lint-enforced** (see "Seam-import lint boundary").
 
@@ -141,19 +164,20 @@ first wiring of `useLiveQuery`. Load-bearing storage-representation decisions:
   imports `drizzle-orm/sqlite-core` (lint-banned outside the seam; `timecalendar/storage-seams`
   exempts the dir).
 - **The `@/db` seam re-exports only what consumers need (R-2).** `src/db/index.ts`
-  re-exports the query operators the repository needs — `eq`, `and`, `gte`, `lte` (from
-  `drizzle-orm`) — plus `useLiveQuery` (from `drizzle-orm/expo-sqlite/query`) and the
-  `personalEvents` table. This is the **encoded form of "the feature never imports
-  `drizzle-orm`"**: feature code imports `{ db, personalEvents, eq, and, gte, lte,
-  useLiveQuery }` from `@/db` only — not all of `drizzle-orm`. `src/db/**` stays the only
-  place importing the backends (lint).
+  re-exports the query operators the repository needs (from `drizzle-orm`) — plus
+  `useLiveQuery` (the **seam-owned coalescing reactive read**, `src/db/live-query.ts` — a
+  drop-in for Drizzle's, see "the coalescing reactive read" above) and the `personalEvents`
+  table. This is the **encoded form of "the feature never imports `drizzle-orm`"**: feature
+  code imports its query surface from `@/db` only — not all of `drizzle-orm`. `src/db/**`
+  stays the only place importing the backends (lint).
 - **The feature `data/` layer — `src/features/personal-events/data/`** (a module of
   functions, no class/base-repository, R-2): `types.ts` (the `PersonalEvent` domain type
   exposing `Date` timestamps + the pure `rowToEvent`/`eventToRow` mappers that isolate the
   TEXT-ISO storage format and **normalize every write to canonical UTC** via
-  `toISOString()` — the property the range query relies on), `repository.ts` (async CRUD
-  over `@/db` — `findAll`, `getById`, `upsert` by uid via `onConflictDoUpdate` mirroring
-  the Flutter `put`, `remove`, and a `findInRange` date-range query), the shared `@/db`
+  `toISOString()` — the property date range-filtering relies on), `repository.ts` (async
+  CRUD over `@/db` — `findAll`, `getById`, `upsert` by uid via `onConflictDoUpdate`
+  mirroring the Flutter `put`, and `remove`; the calendar's date-range filtering lives at
+  the events seam over the merged set, not in this repository), the shared `@/db`
   `newId()` uid generator (re-exported from this feature's `data/` barrel so `form/`/`ui/`
   reach it without importing `@/db`, B-1 — TIM-155 folded the ex-`newEventId` wrapper into
   the seam), `hooks.ts` (`usePersonalEvents()` — the reactive read over the seam's
@@ -247,8 +271,9 @@ ADR 011/018); rationale in `add-mobile-calendar-sync`'s `design.md` (D1–D8) an
   TEXT primaryKey (the record key + replace identity — the uid IS the identity, like
   `personal_events`); `title` / `color` / `groupColor` TEXT notNull (`#RRGGBB` verbatim —
   ADR 011/D3); `startsAt` / `endsAt` / `exportedAt` TEXT notNull (UTC ISO-8601 — ADR
-  011/D4: TEXT over epoch-ms for fidelity AND lexicographic = chronological for
-  `findInRange`); nullable `location` / `description` TEXT; `allDay`
+  011/D4: TEXT over epoch-ms for fidelity AND lexicographic = chronological, so date
+  range-filtering sorts on a plain TEXT column); nullable `location` / `description` TEXT;
+  `allDay`
   `integer({ mode: "boolean" }).notNull()`; `teachers` / `tags` notNull + `fields`
   nullable as **JSON-in-TEXT** (below); `type` TEXT notNull (the `EventTypeEnum` value
   **verbatim**, NOT a checked enum — an unknown future server value must round-trip, not
@@ -277,15 +302,16 @@ ADR 011/018); rationale in `add-mobile-calendar-sync`'s `design.md` (D1–D8) an
   stable across regenerations. The runner applies all three unchanged; `migrate.test.ts`
   still passes.
 - **The `@/db` seam re-exports `calendarEvents`** (the table) alongside `personalEvents` /
-  `userCalendars`; no new operator (`and` / `gte` / `lte` already re-exported for the
-  personal-events range query are exactly what `findInRange` needs — R-2).
+  `userCalendars`; no new operator (the sync repository only whole-table drops + inserts —
+  R-2).
 - **The feature `data/` layer — `src/features/calendar/data/sync/`** (a sub-module under
   the existing calendar `data/` seam): `types.ts` (the pure `dtoToRow` — the **verbatim**
   DTO→row WRITE mapper, the only generated-DTO import, B-1 — and `rowToCalendarEvent` — the
   lossy row→domain RENDERING read, mapping to the EXISTING `CalendarEvent` domain type),
-  `repository.ts` (`findInRange` + the **transactional `replaceAll(rows)`** — takes
-  verbatim insert rows, `db.transaction(tx ⇒ delete-all then chunked bulk insert)`, atomic
-  so a crash mid-replace never leaves a half-empty table — D3), `hooks.ts`
+  `repository.ts` (the **synchronous-transactional `replaceAll(rows)`** — takes verbatim
+  insert rows, a non-async `db.transaction((tx) ⇒ tx.delete(…).run() then chunked bulk
+  insert via .run())`, atomic so a crash mid-replace never leaves a half-empty table — D3;
+  see the seam's transaction-atomicity contract), `hooks.ts`
   (`useSyncedEvents()` — the reactive `useLiveQuery` read, row→domain mapped, no range
   filter — `useCalendarEvents` filters the merged set once), `sync.ts`
   (`useSyncCalendars()` — the orchestrator: read tokens → batch `POST /calendars/sync` →
@@ -415,7 +441,8 @@ in `add-mobile-event-checklists`'s `design.md` (D1–D8) and
   mappers normalizing every write to canonical UTC via `toISOString()`, null↔undefined for the
   three dates, bool↔0/1), `repository.ts` (async CRUD over `@/db` — `findByEvent` ordered by
   `order`, `add` insert, `setContent`/`setChecked` one-column UPDATE + `updatedAt`, the
-  **transactional `reorder`** re-numbering each `order = i + 1` inside ONE `db.transaction` so a
+  **synchronous-transactional `reorder`** re-numbering each `order = i + 1` inside ONE non-async
+  `db.transaction` (`.run()` executors — see the seam's transaction-atomicity contract) so a
   crash mid-reorder never leaves duplicate/gap orders, `remove` HARD delete), the shared `@/db`
   `newId()` uid generator (TIM-155 folded the ex-per-feature `id.ts` wrapper into the seam; the
   importer bypasses it), `hooks.ts` (`useChecklist(eventUid)` — the reactive `useLiveQuery` read; and
