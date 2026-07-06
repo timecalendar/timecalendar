@@ -10,6 +10,7 @@ export {
   CalendarBody,
   CalendarContainer,
   CalendarHeader,
+  type CalendarRef,
   type EventItem,
 } from "@/components/chrome/calendar-kit"
 export { GlassSurface } from "@/components/chrome/glass-surface"

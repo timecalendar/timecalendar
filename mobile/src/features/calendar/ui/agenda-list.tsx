@@ -123,7 +123,11 @@ function EventTile({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const time = formatTimeRange(event.startsAt, event.endsAt, locale)
+  // An all-day event shows an "all day" label, not a "02:00 – 02:00" time range
+  // (an all-day event is stored as UTC midnight — its local time is meaningless).
+  const time = event.allDay
+    ? t("calendar.allDay")
+    : formatTimeRange(event.startsAt, event.endsAt, locale)
   const location = event.location ?? ""
 
   const label = t("calendar.agenda.event.openLabel", {
@@ -175,6 +179,7 @@ function EventTile({
 
 const styles = StyleSheet.create({
   content: {
+    paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.two,
   },

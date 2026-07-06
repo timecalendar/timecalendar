@@ -59,6 +59,8 @@ export interface EventDetails {
   type: EventTypeEnum
   startsAt: Date
   endsAt: Date
+  /** All-day event — the title block formats the date(s) with no time. */
+  allDay: boolean
   /** Server-stamped last-update time (the footer; lossy domain drops it). */
   exportedAt: Date
   location: string | undefined
@@ -96,6 +98,7 @@ export function rowToEventDetails(row: CalendarEventRow): EventDetails {
     type: narrowType(row.type),
     startsAt: isoToDate(row.startsAt),
     endsAt: isoToDate(row.endsAt),
+    allDay: row.allDay,
     exportedAt: isoToDate(row.exportedAt),
     location: nullToUndef(row.location),
     description: nullToUndef(row.description),
@@ -125,6 +128,7 @@ export function personalRowToEventDetails(row: PersonalEventRow): EventDetails {
     type: EventTypeEnumValues.class,
     startsAt: isoToDate(row.startsAt),
     endsAt: isoToDate(row.endsAt),
+    allDay: false,
     exportedAt: isoToDate(row.exportedAt),
     location: nullToUndef(row.location),
     description: nullToUndef(row.description),
