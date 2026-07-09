@@ -112,6 +112,11 @@ describe("rowToEventDetails", () => {
   it("falls back to a safe type for an unknown verbatim value", () => {
     expect(rowToEventDetails(row({ type: "future-kind" })).type).toBe("class")
   })
+
+  it("threads the allDay flag through (the details screen drops the time for it)", () => {
+    expect(rowToEventDetails(row()).allDay).toBe(false)
+    expect(rowToEventDetails(row({ allDay: true })).allDay).toBe(true)
+  })
 })
 
 // A personal_events row (no sync-only columns — the personal branch fills defaults).

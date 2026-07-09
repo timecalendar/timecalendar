@@ -3,6 +3,7 @@ import {
   formatEventDateRange,
   formatFullDateTime,
   formatFullDay,
+  formatMonthYear,
   formatTimeRange,
   resolveLocale,
 } from "./format"
@@ -43,22 +44,56 @@ describe("formatEventDateRange", () => {
   const end = new Date(2026, 5, 16, 10, 30, 0, 0)
 
   it("shows the full date + the HH:mm – HH:mm range for a same-day event (EN)", () => {
-    expect(formatEventDateRange(start, end, "en")).toBe(
+    expect(formatEventDateRange(start, end, "en", false)).toBe(
       "Tuesday, June 16th, 2026 · 09:00 – 10:30",
     )
   })
 
   it("shows the locale-appropriate full date (FR)", () => {
-    expect(formatEventDateRange(start, end, "fr")).toBe(
+    expect(formatEventDateRange(start, end, "fr", false)).toBe(
       "mardi 16 juin 2026 · 09:00 – 10:30",
     )
   })
 
   it("shows both full date-times for a cross-day event", () => {
     const nextDay = new Date(2026, 5, 17, 1, 0, 0, 0)
-    expect(formatEventDateRange(start, nextDay, "en")).toBe(
+    expect(formatEventDateRange(start, nextDay, "en", false)).toBe(
       "Tuesday, June 16th, 2026 09:00 – Wednesday, June 17th, 2026 01:00",
     )
+  })
+
+  describe("all-day events (no time, keyed off the UTC floating day)", () => {
+    // A single-day all-day event: UTC midnight start, EXCLUSIVE UTC-midnight end.
+    const allDayStart = new Date("2026-05-25T00:00:00.000Z")
+    const allDayEnd = new Date("2026-05-26T00:00:00.000Z")
+
+    it("shows one full date with no time (EN)", () => {
+      expect(formatEventDateRange(allDayStart, allDayEnd, "en", true)).toBe(
+        "Monday, May 25th, 2026",
+      )
+    })
+
+    it("shows the locale-appropriate full date (FR)", () => {
+      expect(formatEventDateRange(allDayStart, allDayEnd, "fr", true)).toBe(
+        "lundi 25 mai 2026",
+      )
+    })
+
+    it("shows a date range for a multi-day all-day event (exclusive end)", () => {
+      // May 25 – 27 inclusive = DTEND 05-28 (exclusive); the last covered day is 27.
+      const multiEnd = new Date("2026-05-28T00:00:00.000Z")
+      expect(formatEventDateRange(allDayStart, multiEnd, "en", true)).toBe(
+        "Monday, May 25th, 2026 – Wednesday, May 27th, 2026",
+      )
+    })
+
+    it("shows the single date for a degenerate zero-duration all-day event", () => {
+      // end === start: the max() guard collapses the last day to start, not a
+      // backwards "day-before – day" range (parity with the grid mapper's guard).
+      expect(formatEventDateRange(allDayStart, allDayStart, "en", true)).toBe(
+        "Monday, May 25th, 2026",
+      )
+    })
   })
 })
 
@@ -85,6 +120,18 @@ describe("formatFullDay", () => {
 
   it("shows the locale-appropriate full date (FR)", () => {
     expect(formatFullDay(day, "fr")).toBe("lundi 15 juin 2026")
+  })
+})
+
+describe("formatMonthYear", () => {
+  const day = new Date(2026, 6, 5, 0, 0, 0, 0) // 2026-07-05, local
+
+  it("shows the standalone month + year (EN)", () => {
+    expect(formatMonthYear(day, "en")).toBe("July 2026")
+  })
+
+  it("shows the locale-appropriate month + year (FR)", () => {
+    expect(formatMonthYear(day, "fr")).toBe("juillet 2026")
   })
 })
 

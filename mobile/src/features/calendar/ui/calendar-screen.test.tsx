@@ -5,8 +5,13 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
+import { Platform } from "react-native"
 
-import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
+import {
+  formatMonthYear,
+  useCalendarEvents,
+  useSyncCalendars,
+} from "@/features/calendar/data"
 
 import { CalendarScreen } from "./calendar-screen"
 
@@ -14,8 +19,11 @@ import { CalendarScreen } from "./calendar-screen"
 // trees. The calendar-kit grid is mocked suite-wide (jest/setup-calendar-kit) so
 // its mocked CalendarBody invokes renderEvent per event — proving the screen's
 // event→tile wiring + the CalendarEvent→EventItem mapping + theme/label plumbing
-// without the Reanimated grid (D7). The events-source seam + the sync orchestrator
-// are mocked here to drive deterministic state without a SQLite/network dependency.
+// without the Reanimated grid (D7). The @expo/ui view-menu Picker is mocked
+// suite-wide (jest/setup-expo-ui) — it renders each option as a pressable
+// (`calendar-view-item-<value>`) so the menu's select wiring is provable without
+// the native menu. The events-source seam + the sync orchestrator are mocked here
+// to drive deterministic state without a SQLite/network dependency.
 
 jest.mock("@/features/calendar/data", () => {
   const actual = jest.requireActual("@/features/calendar/data")
@@ -26,9 +34,49 @@ jest.mock("@/features/calendar/data", () => {
   }
 })
 
-jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
-}))
+// The month title + the view-menu / Today / Add actions live in the native nav
+// bar (a nested Stack under the Calendar tab). Render the header slots so they are
+// in the test tree — the default stub drops the header entirely (mirrors the
+// event-details screen test).
+jest.mock("expo-router", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Text } = require("react-native")
+  return {
+    router: { push: jest.fn() },
+    Stack: {
+      Screen: ({
+        options,
+      }: {
+        options?: {
+          headerTitle?: string | (() => unknown)
+          headerLeft?: () => unknown
+          headerRight?: () => unknown
+        }
+      }) => {
+        if (!options) return null
+        const title =
+          typeof options.headerTitle === "function"
+            ? options.headerTitle()
+            : options.headerTitle
+        return React.createElement(
+          React.Fragment,
+          null,
+          title != null
+            ? React.createElement(
+                Text,
+                { testID: "calendar-header-title" },
+                title,
+              )
+            : null,
+          options.headerLeft ? options.headerLeft() : null,
+          options.headerRight ? options.headerRight() : null,
+        )
+      },
+    },
+  }
+})
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
@@ -74,11 +122,6 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen", () => {
-  it("renders the localized title (not the key)", async () => {
-    await render(<CalendarScreen />)
-    expect(screen.getByText("Calendar")).toBeTruthy()
-  })
-
   it("renders a fixture event's tile with its title and location", async () => {
     await render(<CalendarScreen />)
     expect(screen.getByText("Algorithms")).toBeTruthy()
@@ -92,24 +135,40 @@ describe("CalendarScreen", () => {
     ).toBeTruthy()
   })
 
-  it("defaults to the week view selected and toggles to day", async () => {
+  it("defaults to the week view selected and toggles to day via the menu", async () => {
     await render(<CalendarScreen />)
-    const day = screen.getByTestId("calendar-view-day")
-    const week = screen.getByTestId("calendar-view-week")
+    const day = screen.getByTestId("calendar-view-item-day")
+    const week = screen.getByTestId("calendar-view-item-week")
     expect(week.props.accessibilityState.selected).toBe(true)
     expect(day.props.accessibilityState.selected).toBe(false)
 
     fireEvent.press(day)
     await waitFor(() => {
       expect(
-        screen.getByTestId("calendar-view-day").props.accessibilityState
+        screen.getByTestId("calendar-view-item-day").props.accessibilityState
           .selected,
       ).toBe(true)
     })
     expect(
-      screen.getByTestId("calendar-view-week").props.accessibilityState
+      screen.getByTestId("calendar-view-item-week").props.accessibilityState
         .selected,
     ).toBe(false)
+  })
+
+  it("shifts the loaded events range when the grid is scrolled (onDateChanged)", async () => {
+    await render(<CalendarScreen />)
+    // The grid mock fires onDateChanged with 2026-08-01 — the loaded range must
+    // then cover that day (otherwise a scrolled-to week renders no events).
+    fireEvent.press(screen.getByTestId("grid-date-change"))
+    await waitFor(() => {
+      const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
+        from: Date
+        to: Date
+      }
+      const target = new Date(2026, 7, 1).getTime() // Aug 1 2026, local
+      expect(range.from.getTime()).toBeLessThanOrEqual(target)
+      expect(range.to.getTime()).toBeGreaterThan(target)
+    })
   })
 
   it("shows the empty-range state when no events intersect", async () => {
@@ -123,11 +182,11 @@ describe("CalendarScreen", () => {
 
   it("switches to the agenda view and renders a day header + tile", async () => {
     await render(<CalendarScreen />)
-    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
 
     await waitFor(() => {
       expect(
-        screen.getByTestId("calendar-view-agenda").props.accessibilityState
+        screen.getByTestId("calendar-view-item-agenda").props.accessibilityState
           .selected,
       ).toBe(true)
     })
@@ -143,7 +202,7 @@ describe("CalendarScreen", () => {
   it("shows the agenda empty state when no events intersect", async () => {
     mockUseCalendarEvents.mockReturnValue([])
     await render(<CalendarScreen />)
-    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
     await waitFor(() => {
       expect(screen.getByText("No events this period.")).toBeTruthy()
     })
@@ -173,10 +232,10 @@ describe("CalendarScreen", () => {
 
   it("pull-to-refresh on the agenda triggers a sync", async () => {
     await render(<CalendarScreen />)
-    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
     await waitFor(() => {
       expect(
-        screen.getByTestId("calendar-view-agenda").props.accessibilityState
+        screen.getByTestId("calendar-view-item-agenda").props.accessibilityState
           .selected,
       ).toBe(true)
     })
@@ -205,15 +264,81 @@ describe("CalendarScreen", () => {
     expect(mockPush).toHaveBeenCalledWith("/event-details/personal-1")
   })
 
+  it("lanes an all-day event in the all-day row with an 'All day' label, routing on press", async () => {
+    // An all-day event maps to calendar-kit's date-only shape, so the mocked
+    // CalendarHeader (the all-day lane) renders it — NOT the timed CalendarBody.
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({
+        id: "allday-1",
+        title: "Holiday",
+        location: "Gym",
+        allDay: true,
+        startsAt: new Date("2026-05-25T00:00:00.000Z"),
+        endsAt: new Date("2026-05-26T00:00:00.000Z"),
+        userCalendarId: "cal-1",
+      }),
+    ])
+    await render(<CalendarScreen />)
+    expect(screen.getByText("Holiday")).toBeTruthy()
+    // The all-day tile is title-only; the label still carries the "all day" time +
+    // location (one screen-reader stop), never a "02:00 – 02:00" range.
+    expect(screen.getByLabelText("Holiday, All day Gym")).toBeTruthy()
+    fireEvent.press(screen.getByTestId("grid-event-allday-1"))
+    expect(mockPush).toHaveBeenCalledWith("/event-details/allday-1")
+  })
+
+  it("keeps the real time range (not 'All day') for a timed ≥24h event the lib lanes in the all-day row", async () => {
+    // calendar-kit also lanes any TIMED event ≥24h into the all-day row
+    // (eventUtils.js:63), so it reaches AllDayTile — which must announce its real
+    // time range, NOT a false "all day". Local-time dates so "09:00 – 18:00" is
+    // TZ-independent; ~33h span trips the lib's duration rule (mirrored in the mock).
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({
+        id: "long-timed-1",
+        title: "Seminar",
+        location: "Hall",
+        allDay: false,
+        startsAt: new Date(2026, 4, 25, 9, 0, 0, 0),
+        endsAt: new Date(2026, 4, 26, 18, 0, 0, 0),
+      }),
+    ])
+    await render(<CalendarScreen />)
+    expect(screen.getByLabelText("Seminar, 09:00 – 18:00 Hall")).toBeTruthy()
+    expect(screen.queryByLabelText("Seminar, All day Hall")).toBeNull()
+  })
+
+  it("shows an all-day agenda tile without a time range", async () => {
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({
+        id: "allday-2",
+        title: "Holiday",
+        location: "",
+        allDay: true,
+        startsAt: new Date("2026-05-25T00:00:00.000Z"),
+        endsAt: new Date("2026-05-26T00:00:00.000Z"),
+      }),
+    ])
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("calendar-view-item-agenda").props.accessibilityState
+          .selected,
+      ).toBe(true)
+    })
+    expect(screen.getByText("All day")).toBeTruthy()
+    expect(screen.queryByText("02:00 – 02:00")).toBeNull()
+  })
+
   it("makes the agenda tile a touchable button that routes to event-details", async () => {
     mockUseCalendarEvents.mockReturnValue([
       calendarEvent({ id: "synced-1", userCalendarId: "cal-1" }),
     ])
     await render(<CalendarScreen />)
-    fireEvent.press(screen.getByTestId("calendar-view-agenda"))
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
     await waitFor(() => {
       expect(
-        screen.getByTestId("calendar-view-agenda").props.accessibilityState
+        screen.getByTestId("calendar-view-item-agenda").props.accessibilityState
           .selected,
       ).toBe(true)
     })
@@ -224,5 +349,74 @@ describe("CalendarScreen", () => {
     expect(tile.props.accessibilityRole).toBe("button")
     fireEvent.press(tile)
     expect(mockPush).toHaveBeenCalledWith("/event-details/synced-1")
+  })
+
+  it("opens the personal-event form from the header Add action (iOS)", async () => {
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-add"))
+    expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+  })
+
+  it("renders an Add FAB (not a header Add) on Android", async () => {
+    const original = Platform.OS
+    Platform.OS = "android"
+    try {
+      await render(<CalendarScreen />)
+      expect(screen.queryByTestId("calendar-add")).toBeNull()
+      fireEvent.press(screen.getByTestId("calendar-fab"))
+      expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+    } finally {
+      Platform.OS = original
+    }
+  })
+})
+
+// The month title + the always-present "Today" action derive from the visible
+// window. Real timers + the current clock: the title assertions are computed with
+// the SAME formatter/TZ handling as the screen (so they hold in any CI timezone),
+// and the Today recentre is asserted via the reloaded range (not a visibility flip).
+describe("CalendarScreen — month title + Today action", () => {
+  // The grid mock scrolls to this instant; the resulting title is its LOCAL month,
+  // computed here the same way the screen does so the assertion is TZ-independent.
+  const scrolledTitle = formatMonthYear(
+    new Date("2026-08-01T00:00:00.000Z"),
+    "en",
+  )
+
+  it("renders the visible month + year as the header title", async () => {
+    await render(<CalendarScreen />)
+    expect(screen.getByText(formatMonthYear(new Date(), "en"))).toBeTruthy()
+  })
+
+  it("updates the title when the grid scrolls to another month", async () => {
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("grid-date-change"))
+    await waitFor(() => {
+      expect(screen.getByText(scrolledTitle)).toBeTruthy()
+    })
+  })
+
+  it("always offers Today and recentres the loaded range on press", async () => {
+    await render(<CalendarScreen />)
+    // Today is offered from the start (a one-tap jump home from anywhere).
+    expect(screen.getByTestId("calendar-today")).toBeTruthy()
+
+    // Scroll away, then Today snaps the loaded window back over the current day.
+    fireEvent.press(screen.getByTestId("grid-date-change"))
+    await waitFor(() => {
+      expect(screen.getByText(scrolledTitle)).toBeTruthy()
+    })
+
+    fireEvent.press(screen.getByTestId("calendar-today"))
+    await waitFor(() => {
+      const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
+        from: Date
+        to: Date
+      }
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      expect(range.from.getTime()).toBeLessThanOrEqual(today.getTime())
+      expect(range.to.getTime()).toBeGreaterThan(today.getTime())
+    })
   })
 })

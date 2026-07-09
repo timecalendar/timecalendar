@@ -59,7 +59,7 @@ pass the diff, the gates are green, and the user's device pass is clean.
 
 ## Phase 3 — The review panel (three exigent reviewers, in parallel)
 
-Spawn three named agents (Agent tool, `general-purpose`, `model: fable`) that persist
+Spawn three named agents (Agent tool, `general-purpose`, `model: opus`) that persist
 for the whole session:
 
 1. **native-reviewer** — senior UIKit engineer + Material reviewer in one; reviews as if

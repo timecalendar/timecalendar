@@ -2,6 +2,7 @@ import {
   CalendarBody,
   CalendarContainer,
   CalendarHeader,
+  type CalendarKitHandle,
   type DeepPartial,
   type EventItem,
   type ThemeConfigs,
@@ -29,6 +30,12 @@ import { type ThemeColor } from "@/theme"
 
 export { CalendarBody, CalendarContainer, CalendarHeader }
 export type { EventItem }
+
+// The imperative grid handle (calendar-kit's `CalendarKitHandle`), re-exported
+// under a stable local name so the screen can hold a ref and drive the grid to a
+// date (the "Today" nav-bar action → `goToDate`). Renamed here so a future
+// fork/swap keeps the seam's local API (ADR 020 swap-reversibility).
+export type CalendarRef = CalendarKitHandle
 
 // The `theme` object calendar-kit consumes, built from @/theme tokens so the
 // grid/header/now-indicator can't drift from the brand palette (R-3 — the

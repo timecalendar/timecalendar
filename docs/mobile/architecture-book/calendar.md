@@ -123,7 +123,45 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   `accessibilityRole="tab"` controls with translated labels + `accessibilityState.selected` +
   ≥44pt targets; each event tile is an accessible element with a translated label (title +
   time + location); the empty-range state uses a polite live region. Below `MIN_TILE_WIDTH`
-  the tile text is hidden (the column is too narrow).
+  the tile text is hidden (the column is too narrow). The grid tile draws the title as
+  `ThemedText type="caption"` (12px/600) over the location as `type="captionSmall"` (11px/400)
+  so the two read as a hierarchy. The title carries a **5-line `numberOfLines` cap** — NOT a
+  truncation taste but a required iOS fix: an *uncapped* `Text` sets the Fabric line-break
+  **container** to `NSLineBreakByClipping` (`RCTTextLayoutManager.mm`) while the paragraph stays
+  word-wrapping, so a long *trailing* word is clipped mid-glyph at the right edge and a phantom
+  empty line is reserved above the location. Any `numberOfLines > 0` flips iOS onto the
+  tail-truncation path (wrap + char-break every line, ellipsise only the last); `ellipsizeMode="clip"`
+  must NOT be used — it re-selects the clipping mode. The tile's `overflow:"hidden"` is the
+  short-tile backstop so the trailing "…" stays hidden there (Apple/Google week-tile model).
+- **All-day events (backlog Issue 2 — a rendering projection keyed on `allDay`, NOT a stored
+  timestamp change — ADR 021/D1):** `mapToEventItem` branches on `CalendarEvent.allDay` and maps an
+  all-day event to calendar-kit's **date-only** `start:{date}/end:{date}` shape so the library lanes
+  it in the **all-day row** above the timed grid (a timed `dateTime` block spanning 24h straddles
+  local midnight and paints two day columns — the bug). Two contracts the **installed** calendar-kit
+  source pins (`utils/eventUtils.js` `getEventTimes`/`filterEvents`), both load-bearing and prose-only
+  (lint/types can't carry them): **(1)** the all-day `end.date` is **inclusive** (`.endOf('day')`) but
+  our `endsAt` is the **exclusive** end (ICS), so the last covered day is **`endsAt − 1ms`** (off-by-one,
+  else it still spans two days); **(2)** the day is read off **UTC** (`data/day-key.ts` `utcDayKey`, not
+  `localDayKey`) — an all-day date is **floating** (May 25 everywhere), so local keying would shift it a
+  day for a UTC-negative viewer. The all-day lane renders a **custom brand `AllDayTile`** through
+  `<CalendarHeader renderEvent>` (the `PackedAllDayEvent` renderer, distinct from `CalendarBody`'s timed
+  `renderEvent`): a **single title line** (the Apple/Google all-day-chip idiom — the lane is ~1 event-row
+  tall; location lives in the a11y label + the details screen). **The tile must NOT use `flex`** —
+  calendar-kit's event content is an `absoluteFillObject` sized by a **Reanimated animated height**, so a
+  `flex:1` child resolves against a height Yoga reads as auto → collapses to a ~1-2px bar with no text
+  (device-caught); flowing text with no flex renders like the library's own default all-day tile. The
+  a11y label reuses `calendar.event.label` with `calendar.allDay` ("All day"/"Toute la journée") in the
+  `{{time}}` slot. The **agenda tile** and the **details `formatEventDateRange`** likewise drop the time
+  for an all-day event (`data/format.ts` gained an `allDay` branch — one full date, or a `date – date`
+  range for a multi-day all-day event, formatted off a **UTC-day proxy** so `date-fns` prints the floating
+  day). `EventDetails` + both `event-details.ts` mappers thread `allDay`. **`AllDayTile` announces on the
+  real `allDay` flag, not the lane:** calendar-kit also lanes any *timed* event with `duration ≥ 24h` into
+  this row (`eventUtils.js:63`), so a genuine multi-day timed event reaches the tile too — it shows its real
+  `formatTimeRange`, never a false "all day" (the timed block still can't paint in this row — inherent
+  library laning — but the label stays honest). The mapping also clamps the inclusive end to
+  `max(startsAt, endsAt − 1ms)` so a degenerate zero-duration all-day event doesn't invert its span and
+  get dropped by the lib's `isValidEventRange`. The suite mock replicates the `duration ≥ 24h` laning rule
+  so both branches are provable off-device.
 - A thin route `src/app/(tabs)/calendar.tsx` re-exports the screen through the `ui/`
   sub-barrel (route-structure rule). It is the **Calendar tab** — the middle of the
   three-tab bar (Home · Calendar · Profile, Flutter parity — ADR [025](./decisions/025-calendar-tab-three-tab-ia.md)),

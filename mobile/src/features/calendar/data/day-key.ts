@@ -9,3 +9,15 @@ export function localDayKey(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0")
   return `${year}-${month}-${day}`
 }
+
+// The UTC calendar day of a `Date` as `YYYY-MM-DD` — the all-day key. An all-day
+// event is a FLOATING date (May 25 is May 25 in every timezone), stored as UTC
+// midnight; keying it off the LOCAL day would shift it a day for a UTC-negative
+// viewer. So the grid all-day lane reads the day off UTC, not local (the timed
+// grid stays local — `localDayKey`). Mirrors the all-day formatting in `format.ts`.
+export function utcDayKey(date: Date): string {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(date.getUTCDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
+}

@@ -35,24 +35,101 @@ jest.mock("@howljs/calendar-kit", () => {
     onPressEvent: undefined,
   })
 
-  function CalendarContainer(props: {
-    events?: unknown[]
-    onPressEvent?: (event: unknown) => void
-    children?: unknown
-  }) {
+  // forwardRef so the screen's gridRef resolves to a handle (no "function
+  // components cannot be given refs" warning) and its "Today" action can call
+  // goToDate — the mocked grid can't scroll, so goToDate is a no-op; the screen's
+  // observable effect (the windowStart reset that recentres the loaded range) is
+  // what the test asserts.
+  const CalendarContainer = React.forwardRef(function CalendarContainer(
+    props: {
+      events?: unknown[]
+      onPressEvent?: (event: unknown) => void
+      onDateChanged?: (date: string) => void
+      children?: unknown
+    },
+    ref: unknown,
+  ) {
+    React.useImperativeHandle(ref, () => ({ goToDate: () => {} }), [])
+    // A stand-in for the real grid's scroll: pressing it fires onDateChanged with
+    // a fixed date so the screen's "range follows the visible week" wiring is
+    // provable without the Reanimated scroller (the real grid fires it on settle).
+    const dateChangeTrigger = props.onDateChanged
+      ? React.createElement(Pressable, {
+          testID: "grid-date-change",
+          onPress: () => props.onDateChanged!("2026-08-01T00:00:00.000Z"),
+        })
+      : null
     return React.createElement(
       GridContext.Provider,
       {
         value: { events: props.events ?? [], onPressEvent: props.onPressEvent },
       },
-      React.createElement(View, null, props.children),
+      React.createElement(View, null, props.children, dateChangeTrigger),
+    )
+  })
+
+  // A pressable event tile row: render each matching event through renderEvent and
+  // wire the press → the container's onPressEvent (the real grid wires the press
+  // itself; the Pressable stands in for it). Shared by the all-day lane
+  // (CalendarHeader) and the timed grid (CalendarBody).
+  function renderEventRow(
+    events: { id?: string }[],
+    onPressEvent: ((event: unknown) => void) | undefined,
+    renderEvent: (event: unknown, size: { width: number }) => unknown,
+  ) {
+    return events.map((event: { id?: string }, index: number) =>
+      React.createElement(
+        Pressable,
+        {
+          key: event.id ?? String(index),
+          testID: `grid-event-${event.id ?? String(index)}`,
+          onPress: onPressEvent ? () => onPressEvent(event) : undefined,
+        },
+        renderEvent(event, { width: 100 }),
+      ),
     )
   }
 
-  function CalendarHeader(props: { children?: unknown }) {
-    return React.createElement(View, null, props.children)
+  // Whether calendar-kit lanes an event into the all-day ROW. The real rule
+  // (eventUtils.js filterEvents:63) is `isAllDay || duration >= MINUTES_IN_DAY` —
+  // i.e. a date-only event OR any TIMED event spanning ≥ 24h. Mirror BOTH so a long
+  // timed event lands where it does on device (the header), exercising AllDayTile's
+  // real-flag label branch rather than a date-only-only partition.
+  const DAY_MS = 24 * 60 * 60 * 1000
+  function isAllDayLaned(event: {
+    start?: { date?: string }
+    startsAt?: Date
+    endsAt?: Date
+  }): boolean {
+    if (event.start?.date !== undefined) return true
+    const { startsAt, endsAt } = event
+    return (
+      startsAt instanceof Date &&
+      endsAt instanceof Date &&
+      endsAt.getTime() - startsAt.getTime() >= DAY_MS
+    )
   }
 
+  // The all-day LANE: calendar-kit invokes CalendarHeader's renderEvent for each
+  // laned event (PackedAllDayEvent). The mock mirrors the laning rule so the
+  // screen's all-day mapping + tile are provable.
+  function CalendarHeader(props: {
+    children?: unknown
+    renderEvent?: (event: unknown, size: { width: number }) => unknown
+  }) {
+    const { events, onPressEvent } = React.useContext(GridContext)
+    const allDay = events.filter(isAllDayLaned)
+    return React.createElement(
+      View,
+      null,
+      props.children,
+      props.renderEvent
+        ? renderEventRow(allDay, onPressEvent, props.renderEvent)
+        : null,
+    )
+  }
+
+  // The timed GRID: the events NOT laned into the all-day row above.
   function CalendarBody(props: {
     renderEvent?: (event: unknown, size: { width: number }) => unknown
   }) {
@@ -60,20 +137,13 @@ jest.mock("@howljs/calendar-kit", () => {
     if (!props.renderEvent) {
       return React.createElement(View, null)
     }
+    const timed = events.filter(
+      (event: { start?: { date?: string } }) => !isAllDayLaned(event),
+    )
     return React.createElement(
       View,
       null,
-      events.map((event: { id?: string }, index: number) =>
-        React.createElement(
-          Pressable,
-          {
-            key: event.id ?? String(index),
-            testID: `grid-event-${event.id ?? String(index)}`,
-            onPress: onPressEvent ? () => onPressEvent(event) : undefined,
-          },
-          props.renderEvent!(event, { width: 100 }),
-        ),
-      ),
+      renderEventRow(timed, onPressEvent, props.renderEvent),
     )
   }
 
