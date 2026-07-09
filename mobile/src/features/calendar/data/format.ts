@@ -45,17 +45,41 @@ export function formatTimeRange(
   return `${format(start, "HH:mm", opts)} – ${format(end, "HH:mm", opts)}`
 }
 
+// A local-midnight proxy on a Date's UTC calendar day, so date-fns `format` (which
+// reads local fields) prints the RIGHT floating day for an all-day event. An all-day
+// event is stored as UTC midnight (a floating date — May 25 everywhere); formatting
+// its local fields would shift the day for a UTC-negative viewer. Mirrors the grid's
+// `utcDayKey`.
+function utcDayProxy(date: Date): Date {
+  return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
 // The event-details title block's full date + time range (Flutter
-// `eventDateTimeText` = `yMMMMd · jm – jm`, but 24-hour per R-3). Same-day:
-// "<full date> · HH:mm – HH:mm". A cross-day event (rare for a timetable event)
-// shows both full date-times "<full date> HH:mm – <full date> HH:mm". Display
-// only, locale-aware over `date-fns`.
+// `eventDateTimeText` = `yMMMMd · jm – jm`, but 24-hour per R-3). A TIMED event
+// (`allDay === false`) shows same-day "<full date> · HH:mm – HH:mm" or, cross-day,
+// both full date-times "<full date> HH:mm – <full date> HH:mm". An ALL-DAY event
+// shows the date(s) with NO time — one full date, or a "<date> – <date>" range for a
+// multi-day all-day event — keyed off the UTC day (`endsAt` is the EXCLUSIVE end, so
+// the last covered day is `endsAt − 1ms`). Display only, locale-aware over `date-fns`.
 export function formatEventDateRange(
   start: Date,
   end: Date,
   locale: AppLocale,
+  allDay: boolean,
 ): string {
   const opts = { locale: LOCALES[locale] }
+  if (allDay) {
+    const firstDay = utcDayProxy(start)
+    // `max(start, end − 1ms)` mirrors the grid mapper's guard so a degenerate
+    // zero-duration all-day event (end === start) formats as the single date, not a
+    // backwards "day-before – day" range.
+    const lastDay = utcDayProxy(
+      new Date(Math.max(start.getTime(), end.getTime() - 1)),
+    )
+    return firstDay.getTime() === lastDay.getTime()
+      ? format(firstDay, "PPPP", opts)
+      : `${format(firstDay, "PPPP", opts)} – ${format(lastDay, "PPPP", opts)}`
+  }
   const sameDay =
     start.getFullYear() === end.getFullYear() &&
     start.getMonth() === end.getMonth() &&
@@ -79,4 +103,11 @@ export function formatFullDateTime(date: Date, locale: AppLocale): string {
 // seam now covers every formatting need across calendar/agenda/details/home.
 export function formatFullDay(day: Date, locale: AppLocale): string {
   return format(day, "PPPP", { locale: LOCALES[locale] })
+}
+
+// The calendar nav-bar title's month + year — the orientation the day/week/agenda
+// views all share ("July 2026" / "juillet 2026"). Standalone month name (`LLLL`)
+// so it reads naturally as a heading. Display only, locale-aware.
+export function formatMonthYear(day: Date, locale: AppLocale): string {
+  return format(day, "LLLL yyyy", { locale: LOCALES[locale] })
 }

@@ -286,7 +286,12 @@ function TitleBlock({
         </ThemedText>
       </View>
       <ThemedText themeColor="textSecondary">
-        {formatEventDateRange(event.startsAt, event.endsAt, locale)}
+        {formatEventDateRange(
+          event.startsAt,
+          event.endsAt,
+          locale,
+          event.allDay,
+        )}
       </ThemedText>
     </View>
   )
