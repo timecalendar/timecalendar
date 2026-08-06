@@ -1,0 +1,84 @@
+diff --git a/node_modules/@howljs/calendar-kit/src/context/VisibleDateProvider.tsx b/node_modules/@howljs/calendar-kit/src/context/VisibleDateProvider.tsx
+index 98c10fb..3e01583 100644
+--- a/node_modules/@howljs/calendar-kit/src/context/VisibleDateProvider.tsx
++++ b/node_modules/@howljs/calendar-kit/src/context/VisibleDateProvider.tsx
+@@ -5,6 +5,7 @@ import React, {
+   useContext,
+   useEffect,
+   useImperativeHandle,
++  useRef,
+   useState,
+ } from 'react';
+ 
+@@ -33,10 +34,21 @@ const VisibleDateProvider: ForwardRefRenderFunction<
+     initialStart.current
+   );
+ 
++  // PATCH(timecalendar): throttle (leading + trailing) instead of a trailing
++  // debounce. A continuous scroll updates visibleDateUnix on every column
++  // change; a trailing-only debounce keeps resetting and never commits, so
++  // subscribers (the events-store re-pack) starve until the scroll fully
++  // stops. The throttle commits at most every 150ms DURING the scroll.
++  const lastCommitTimeRef = useRef(0);
+   useEffect(() => {
+-    const timeoutId = setTimeout(() => {
+-      setDebouncedDateUnix(visibleDateUnix);
+-    }, 150);
++    const elapsed = Date.now() - lastCommitTimeRef.current;
++    const timeoutId = setTimeout(
++      () => {
++        lastCommitTimeRef.current = Date.now();
++        setDebouncedDateUnix(visibleDateUnix);
++      },
++      Math.max(0, 150 - elapsed)
++    );
+     return () => clearTimeout(timeoutId);
+   }, [visibleDateUnix]);
+ 
+diff --git a/node_modules/@howljs/calendar-kit/src/hooks/useSyncedList.tsx b/node_modules/@howljs/calendar-kit/src/hooks/useSyncedList.tsx
+index 91dee36..daca84f 100644
+--- a/node_modules/@howljs/calendar-kit/src/hooks/useSyncedList.tsx
++++ b/node_modules/@howljs/calendar-kit/src/hooks/useSyncedList.tsx
+@@ -22,6 +22,11 @@ const useSyncedList = ({ id }: { id: ScrollType }) => {
+   const { onChange, onDateChanged } = useActions();
+   const isDragging = useRef(false);
+   const isPendingDateChanged = useRef<boolean>(false);
++  // PATCH(timecalendar): last date committed via onDateChanged. The settle path
++  // compared against the store anchor (currentUnix), but the anchor now follows
++  // the scroll live (see notifyDateChanged below), so at settle it already
++  // equals the settled date and would swallow onDateChanged.
++  const lastDateChangedUnix = useRef<number>(currentUnix);
+ 
+   const onScrollBeginDrag = useCallback(() => {
+     isDragging.current = true;
+@@ -84,13 +89,21 @@ const useSyncedList = ({ id }: { id: ScrollType }) => {
+           const dateIsoStr = dateTimeToISOString(parseDateTime(currentDate));
+           onChange?.(dateIsoStr);
+           visibleDateUnix.current = currentDate;
++          // PATCH(timecalendar): advance the events-store anchor on every
++          // visible-column change so EventsProvider re-packs WHILE the user is
++          // still scrolling — the settle-only anchor left fast flings on
++          // mounted-but-unpacked (blank) pages until the scroll fully stopped.
++          // VisibleDateProvider throttles the commit, bounding the re-pack rate.
++          notifyDateChanged(currentDate);
+           runOnUI(() => {
+             visibleDateUnixAnim.value = currentDate;
+           })();
+         }
+ 
+         debounceTimer.current = setTimeout(() => {
+-          const isSamePrevUnix = currentUnix === currentDate;
++          // PATCH(timecalendar): compare against the last onDateChanged commit,
++          // not the (now live) store anchor.
++          const isSamePrevUnix = lastDateChangedUnix.current === currentDate;
+           if (isSamePrevUnix) {
+             return;
+           }
+@@ -102,6 +115,7 @@ const useSyncedList = ({ id }: { id: ScrollType }) => {
+           ) {
+             const dateIsoStr = dateTimeToISOString(parseDateTime(currentDate));
+             triggerDateChanged.current = undefined;
++            lastDateChangedUnix.current = currentDate;
+             onDateChanged?.(dateIsoStr);
+             notifyDateChanged(currentDate);
+           }

@@ -1,4 +1,5 @@
 import { router, Stack } from "expo-router"
+import { type SFSymbol, SymbolView } from "expo-symbols"
 import { useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -8,7 +9,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import {
   buildCalendarTheme,
@@ -32,6 +33,8 @@ import {
   GRID_START_MINUTE,
   localDayKey,
   MIN_TILE_WIDTH,
+  quarterStartMs,
+  quarterWindow,
   resolveLocale,
   useCalendarEvents,
   useSyncCalendars,
@@ -62,6 +65,23 @@ const WEEK_DAYS = 7
 // The agenda is a planning list, so it spans a bounded multi-day window (the
 // visible week) rather than a single day/week grid (D1).
 const AGENDA_DAYS = 7
+
+// The nav-bar action glyph size (a compact SF Symbol, not a chunky button).
+const HEADER_ICON_SIZE = 24
+
+// How many pages of grid + events calendar-kit packs on EACH side of its store
+// anchor, and the render-ahead (`drawDistance = width · pagesPerSide`). The
+// anchor follows the visible date DURING a scroll — per-column advance + a 150ms
+// leading+trailing throttle, via patches/@howljs+calendar-kit+2.5.6.patch
+// (backlog Issue 5: the unpatched lib re-packs only ~300ms after the scroll
+// fully STOPS — every scroll frame resets its settle debounce — so a fast fling
+// landed on mounted-but-eventless pages until it rested). 4 packs ±4-5wk
+// (`±(defaultOffset=7 · pagesPerSide)` days): runway so a fling stays inside the
+// packed store across the ≤150ms re-pack cadence. The prop buffer (BUFFER_MONTHS
+// in event-window.ts) MUST exceed this reach or the pack starves at the quarter
+// edge. Tune only with a dense-calendar device pass (higher = more mounted
+// pages + heavier re-packs; lower = less runway).
+const GRID_PAGES_PER_SIDE = 4
 
 // Local midnight of a Date — always a fresh Date so callers never mutate the input.
 function startOfLocalDay(date: Date): Date {
@@ -115,12 +135,33 @@ function mapToEventItem(event: CalendarEvent): EventItem {
 export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
+  // The tab-bar clearance for the GRID only. Unlike the agenda's SectionList, the
+  // calendar-kit grid scroller is NOT on the tab screen's index-0 descendant chain
+  // (CalendarHeader is the earlier sibling; the RNGH scroller sits under a
+  // GestureDetector), so iOS's automatic content-inset — which walks strictly
+  // index-0 (react-native-screens RNSScrollViewFinder) — never reaches it. The grid
+  // must therefore reserve its own bottom scroll pad. `insets.bottom` under native
+  // tabs is bar-inclusive (the per-tab SafeAreaProvider measures the content view
+  // under the translucent bar), so it is the correct clearance. Android keeps the
+  // library default (bottomInset = 0): its opaque Material bar is not scrolled under.
+  const insets = useSafeAreaInsets()
+  const bottomInset = Platform.OS === "ios" ? insets.bottom : 0
   const [view, setView] = useState<CalendarView>("week")
-  // The first day the grid is showing (local midnight). It starts at today but
-  // FOLLOWS the grid as the user scrolls (onDateChanged) so the events-source
-  // range tracks the visible window. Without it the range is frozen at mount:
-  // calendar-kit paints the scrolled-to week but no events are ever loaded for it.
+  // The feed-anchor day (local midnight) — it follows the grid on scroll SETTLE
+  // (onDateChanged) and, mid-scroll, on a QUARTER crossing only (onChange with a
+  // functional bail — see the handler). It seeds the grid feed's quarter bucket,
+  // the agenda's exact window, and the mount position. Distinct from
+  // `visibleDate` below: within a quarter this never moves mid-scroll, so the
+  // wide grid feed stays referentially stable while flinging.
   const [windowStart, setWindowStart] = useState(() =>
+    startOfLocalDay(new Date()),
+  )
+  // The month title's day — it tracks the visible page IMMEDIATELY on scroll
+  // (onChange, per visible-column change) rather than at settle (backlog Issue 6:
+  // the month-year title lagged seconds behind the scroll because it rode
+  // onDateChanged, which calendar-kit debounces to rest). Separate state so the
+  // prompt title update never widens the events feed or re-reads a range.
+  const [visibleDate, setVisibleDate] = useState(() =>
     startOfLocalDay(new Date()),
   )
   // The imperative grid handle — the "Today" action drives the (uncontrolled after
@@ -132,29 +173,32 @@ export function CalendarScreen() {
   const numberOfDays =
     view === "day" ? 1 : view === "agenda" ? AGENDA_DAYS : WEEK_DAYS
 
-  // The agenda is an exact multi-day list; the grid buffers one page on each side
-  // of the visible window so scrolling to an adjacent week shows its events
-  // instantly (calendar-kit only paints the visible page — the off-screen rows
-  // sit ready), and the pinned-at-mount range bug can't reappear per-page.
-  const range = useMemo(() => {
+  // The grid feeds calendar-kit a QUARTER-quantized window (backlog Issue 5), keyed
+  // on the quarter's start ms so it is referentially STABLE while scrolling inside a
+  // quarter — the lib windows it to the visible page internally (pagesPerSide), so a
+  // fast fling never outruns a narrow per-page feed nor triggers a per-settle
+  // refilter/remap. Only crossing a quarter recomputes; the ±1-month buffer keeps
+  // the boundary page fed. See data/event-window.ts for the full rationale.
+  const bucketMs = quarterStartMs(windowStart)
+  const gridRange = useMemo(() => quarterWindow(bucketMs), [bucketMs])
+  // The agenda is an exact multi-day list (no calendar-kit windowing), so it reads
+  // its own tight visible-week range off the settled anchor.
+  const agendaRange = useMemo(() => {
     const from = startOfLocalDay(windowStart)
     const to = startOfLocalDay(windowStart)
-    if (view === "agenda") {
-      to.setDate(to.getDate() + numberOfDays)
-    } else {
-      from.setDate(from.getDate() - numberOfDays)
-      to.setDate(to.getDate() + numberOfDays * 2)
-    }
+    to.setDate(to.getDate() + numberOfDays)
     return { from, to }
-  }, [windowStart, view, numberOfDays])
+  }, [windowStart, numberOfDays])
+  const range = view === "agenda" ? agendaRange : gridRange
 
   const events = useCalendarEvents(range)
   const eventItems = useMemo(() => events.map(mapToEventItem), [events])
   const calendarTheme = useMemo(() => buildCalendarTheme(theme), [theme])
 
-  // The nav-bar title: the visible window's month + year (orientation for every
-  // view — Flutter's month header parity, native-chrome placement).
-  const monthTitle = formatMonthYear(windowStart, locale)
+  // The nav-bar title: the visible page's month + year (orientation for every view —
+  // Flutter's month header parity, native-chrome placement). Off `visibleDate` so it
+  // tracks the scroll promptly (Issue 6), not the settled anchor.
+  const monthTitle = formatMonthYear(visibleDate, locale)
 
   // The sync orchestrator (D5) — the screen stays presentational, calling the
   // data/ hook with no fetch logic of its own. The reactive useCalendarEvents read
@@ -181,6 +225,7 @@ export function CalendarScreen() {
       hourScroll: true,
     })
     setWindowStart(today)
+    setVisibleDate(today)
   }
 
   // "Add": the calendar's only create affordance opens the personal-event form in
@@ -226,7 +271,22 @@ export function CalendarScreen() {
           ),
         }}
       />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        style={styles.safeArea}
+        // iOS drops the "bottom" edge so the calendar surface fills the full height
+        // UNDER the translucent Liquid Glass tab bar. The two scrollers get their
+        // bottom clearance differently: the agenda SectionList IS the index-0 nested
+        // scroll view, so iOS auto-insets it for free (expo-router types.d.ts); the
+        // grid is NOT index-0 (see bottomInset), so it reserves its own pad via
+        // `spaceFromBottom`. Reserving the frame here too would double-inset the
+        // agenda. Android keeps "bottom": its opaque Material bar is not scrolled
+        // under, so the space stays reserved as before.
+        edges={
+          Platform.OS === "ios"
+            ? ["left", "right"]
+            : ["bottom", "left", "right"]
+        }
+      >
         {(events.length === 0 || isError) && (
           <View style={styles.banners}>
             {events.length === 0 && (
@@ -288,11 +348,45 @@ export function CalendarScreen() {
             <CalendarContainer
               ref={gridRef}
               numberOfDays={numberOfDays}
+              pagesPerSide={GRID_PAGES_PER_SIDE}
               initialDate={localDayKey(windowStart)}
               start={GRID_START_MINUTE}
               end={GRID_END_MINUTE}
               events={eventItems}
               theme={calendarTheme}
+              // Grid-only bottom scroll pad = tab-bar clearance (the grid can't get
+              // the OS auto-inset — see bottomInset above). Spacing.three (16) is the
+              // library default breathing room; iOS adds the bar-inclusive inset so
+              // the last hour scrolls clear of the translucent bar it renders under.
+              spaceFromBottom={Spacing.three + bottomInset}
+              // onChange fires per visible-column during a fling (~1/day). The
+              // title only shows month+year, so quantize to the MONTH: a functional
+              // update that returns the SAME reference within a month makes React
+              // bail the re-render (else a fresh Date each column re-renders the
+              // screen ~1/day → recreates the Stack.Screen options → re-commits the
+              // native header Picker + SF-Symbols per column, the very JS thrash
+              // Issue 5 kills). The title still flips the instant a new month scrolls
+              // in — there is nothing to update within a month.
+              onChange={(iso) => {
+                const next = startOfLocalDay(new Date(iso))
+                setVisibleDate((prev) =>
+                  prev.getFullYear() === next.getFullYear() &&
+                  prev.getMonth() === next.getMonth()
+                    ? prev
+                    : next,
+                )
+                // The feed anchor advances mid-scroll too, quantized to the
+                // QUARTER (same functional-bail idiom as the month title, so
+                // scrolling within a quarter never refilters/remaps the feed).
+                // The patched calendar-kit packs its store live around the
+                // visible date (ADR 032), so a no-pause fling can carry the
+                // pack past windowStart's quarter+buffer before any settle —
+                // crossing a quarter must shift the fed window right then, not
+                // at rest, or the pack lands on days the prop never fed.
+                setWindowStart((prev) =>
+                  quarterStartMs(prev) === quarterStartMs(next) ? prev : next,
+                )
+              }}
               onDateChanged={(iso) =>
                 setWindowStart(startOfLocalDay(new Date(iso)))
               }
@@ -349,9 +443,14 @@ function ViewMenu({
   )
 }
 
-// The grouped header actions (headerRight): Today + Add. Today is always offered
-// (a one-tap jump home from anywhere). On Android the create action is a FAB, not
-// a header button, so Add renders here on iOS only.
+// The grouped header actions (headerRight): Today + Add, each a distinct native
+// nav-bar icon button — an expo-symbols SF Symbol on iOS, a themed text fallback on
+// Android (the app's established icon idiom: a bare SF name resolves to null inside
+// SymbolView on Android, so the platform gets an explicit fallback, mirroring
+// school-selection/status-symbol + user-calendars/TrashAffordance). Two separate
+// 44/48pt targets with real spacing so the pair never reads as one glued glyph (the
+// device complaint). Today is always offered (a one-tap jump home). On Android the
+// create action is a FAB, so Add renders here on iOS only.
 function HeaderActions({
   onToday,
   onAdd,
@@ -362,45 +461,66 @@ function HeaderActions({
   const { t } = useTranslation()
   return (
     <View style={styles.headerActions}>
-      <TodayButton onPress={onToday} />
+      <HeaderIconAction
+        testID="calendar-today"
+        symbol="calendar"
+        label={t("calendar.todayLabel")}
+        androidText={t("calendar.today")}
+        onPress={onToday}
+      />
       {Platform.OS !== "android" && (
-        <Pressable
+        <HeaderIconAction
           testID="calendar-add"
-          accessibilityRole="button"
-          accessibilityLabel={t("calendar.addLabel")}
-          hitSlop={Spacing.two}
+          symbol="plus"
+          label={t("calendar.addLabel")}
           onPress={onAdd}
-        >
-          <ThemedText themeColor="primary" style={styles.addGlyph}>
-            {t("calendar.add")}
-          </ThemedText>
-        </Pressable>
+        />
       )}
     </View>
   )
 }
 
-// The "Today" action, drawn as a calendar-day glyph (a bordered page with today's
-// date number inside — the Fantastical/Apple "today" idiom) rather than bare text,
-// since no icon font is wired in the app (R-3). The number is today's day-of-month
-// so the control reads as "jump to today" at a glance.
-function TodayButton({ onPress }: { onPress: () => void }) {
-  const { t } = useTranslation()
+// One nav-bar action. iOS renders a real SF Symbol (brand-tinted); Android renders
+// a themed text label (a bare SF name renders blank inside SymbolView on Android).
+// The 44pt (iOS) / 48dp (Android) target meets the platform minimum and gives the
+// icons room so they don't touch; the accessible name is the translated action,
+// never the glyph.
+function HeaderIconAction({
+  testID,
+  symbol,
+  label,
+  androidText,
+  onPress,
+}: {
+  testID: string
+  symbol: SFSymbol
+  label: string
+  androidText?: string
+  onPress: () => void
+}) {
   const theme = useTheme()
-  const dayOfMonth = String(new Date().getDate())
   return (
     <Pressable
-      testID="calendar-today"
+      testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={t("calendar.todayLabel")}
-      hitSlop={Spacing.two}
+      accessibilityLabel={label}
       onPress={onPress}
-      style={[styles.todayButton, { borderColor: theme.primary }]}
+      style={styles.headerAction}
     >
-      <View style={[styles.todayTab, { backgroundColor: theme.primary }]} />
-      <ThemedText themeColor="primary" style={styles.todayNumber}>
-        {dayOfMonth}
-      </ThemedText>
+      {Platform.OS === "ios" ? (
+        <SymbolView
+          name={symbol}
+          size={HEADER_ICON_SIZE}
+          tintColor={theme.primary}
+        />
+      ) : (
+        // A Material text action, on-surface `text` (21:1) — NOT the brand
+        // `primary`, which is a tint-only tone (#E91E63 on white = 4.35:1, below
+        // the WCAG 1.4.3 4.5:1 body-text floor; theming.md's contrast block).
+        <ThemedText type="smallBold" themeColor="text">
+          {androidText}
+        </ThemedText>
+      )}
     </Pressable>
   )
 }
@@ -561,42 +681,19 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.three,
-    // Breathing room so Today and the "+" aren't jammed against each other or the
-    // screen edge (the cramped default the device showed).
-    paddingHorizontal: Spacing.one,
+    // Two 44pt targets with a gap — the icons sit ~28px apart so the pair never
+    // reads as one glued glyph (the cramped default the device showed).
+    gap: Spacing.two,
   },
-  // The "today" calendar-day glyph: a slim bordered page (~22×24) with a thin
-  // coloured header tab and the day number below — sized to read as a compact
-  // nav-bar icon, not a chunky button.
-  todayButton: {
-    width: 22,
-    height: 24,
-    borderWidth: 1,
-    borderRadius: 4,
+  // A nav-bar action target centring the glyph: 48dp on Android (Material 3
+  // top-app-bar minimum), 44pt on iOS (Apple HIG minimum). The 44/48 frame IS the
+  // touch target — no hitSlop (that would overlap the adjacent action across the
+  // 8px gap and steal mis-aimed taps).
+  headerAction: {
+    minWidth: Platform.OS === "android" ? 48 : 44,
+    minHeight: Platform.OS === "android" ? 48 : 44,
     alignItems: "center",
-    justifyContent: "flex-end",
-    paddingBottom: 2,
-    overflow: "hidden",
-  },
-  todayTab: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-  },
-  todayNumber: {
-    fontSize: 11,
-    lineHeight: 13,
-    fontWeight: "700",
-  },
-  // A larger "+" glyph for the iOS header add action — no icon font is wired in
-  // the app (R-3), so the glyph is text (matches the details screen's text-label
-  // header actions).
-  addGlyph: {
-    fontSize: 26,
-    lineHeight: 28,
+    justifyContent: "center",
   },
   fab: {
     position: "absolute",
