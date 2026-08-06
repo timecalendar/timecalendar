@@ -45,6 +45,10 @@ export function formatTimeRange(
   return `${format(start, "HH:mm", opts)} – ${format(end, "HH:mm", opts)}`
 }
 
+export function formatTime(date: Date, locale: AppLocale): string {
+  return format(date, "HH:mm", { locale: LOCALES[locale] })
+}
+
 // A local-midnight proxy on a Date's UTC calendar day, so date-fns `format` (which
 // reads local fields) prints the RIGHT floating day for an all-day event. An all-day
 // event is stored as UTC midnight (a floating date — May 25 everywhere); formatting
@@ -103,6 +107,10 @@ export function formatFullDateTime(date: Date, locale: AppLocale): string {
 // seam now covers every formatting need across calendar/agenda/details/home.
 export function formatFullDay(day: Date, locale: AppLocale): string {
   return format(day, "PPPP", { locale: LOCALES[locale] })
+}
+
+export function formatDayMonth(day: Date, locale: AppLocale): string {
+  return format(day, "EEEE d MMMM", { locale: LOCALES[locale] })
 }
 
 // The calendar nav-bar title's month + year — the orientation the day/week/agenda

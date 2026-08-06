@@ -18,10 +18,12 @@ export { type DateRange, useCalendarEvents } from "./events"
 export {
   type AppLocale,
   formatDayHeaderParts,
+  formatDayMonth,
   formatEventDateRange,
   formatFullDateTime,
   formatFullDay,
   formatMonthYear,
+  formatTime,
   formatTimeRange,
   resolveLocale,
 } from "./format"

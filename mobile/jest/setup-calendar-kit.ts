@@ -37,7 +37,7 @@ jest.mock("@howljs/calendar-kit", () => {
 
   // forwardRef so the screen's gridRef resolves to a handle (no "function
   // components cannot be given refs" warning) and its "Today" action can call
-  // goToDate — the mocked grid can't scroll, so goToDate is a no-op; the screen's
+  // goToDate. The mocked grid can't scroll, so goToDate is a no-op; the screen's
   // observable effect (the windowStart reset that recentres the loaded range) is
   // what the test asserts.
   const CalendarContainer = React.forwardRef(function CalendarContainer(
@@ -50,7 +50,15 @@ jest.mock("@howljs/calendar-kit", () => {
     },
     ref: unknown,
   ) {
-    React.useImperativeHandle(ref, () => ({ goToDate: () => {} }), [])
+    const [goToDateValue, setGoToDateValue] = React.useState("")
+    React.useImperativeHandle(
+      ref,
+      () => ({
+        goToDate: (options: unknown) =>
+          setGoToDateValue(JSON.stringify(options)),
+      }),
+      [],
+    )
     // Two stand-ins for the real grid's Reanimated scroll, mirroring calendar-kit's
     // two callbacks (useSyncedList): `onChange` fires IMMEDIATELY on every visible-
     // column change during a scroll; `onDateChanged` fires once the scroll SETTLES
@@ -108,6 +116,10 @@ jest.mock("@howljs/calendar-kit", () => {
       React.createElement(
         View,
         null,
+        React.createElement(View, {
+          testID: "grid-go-to-date",
+          accessibilityLabel: goToDateValue,
+        }),
         props.children,
         settledScrollTrigger,
         visibleChangeTrigger,

@@ -18,7 +18,7 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
 - **Consumed by infra — the recorded infra→feature edge** (ADR 009; lint boundary B-4):
   `@/hooks/use-color-scheme` resolves the theme override (see [theming.md](./theming.md), C1)
   and `@/i18n` reads the startup locale (see [i18n.md](./i18n.md)). The edge is **allowed,
-  not promoted** (a sample of one). The graph stays a DAG: `@/i18n` reads the *store* module
+  not promoted** (a sample of one). The graph stays a DAG: `@/i18n` reads the _store_ module
   directly (not the feature barrel) to avoid a cycle.
 - **Reactive read:** `useStoredString` in the `@/storage` seam (see [storage.md](./storage.md));
   writes stay on the one imperative path.
@@ -74,7 +74,7 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   imports**, so every branch is unit-tested to the 90% gate. The `useNotificationTapRouting`
   dispatcher (mounted in `_layout.tsx` beside `<NotificationRegistration />`) wires the three app
   states through the `@/firebase` tap entrypoints: **foreground** (`onForegroundMessage`) → `void
-  sync()` only, **no navigation** (Flutter parity); **background tap** (`onNotificationTap`) and
+sync()` only, **no navigation** (Flutter parity); **background tap** (`onNotificationTap`) and
   **killed/cold-start** (`getInitialTap`, in a ref-guarded mount effect so the `<Stack>` is
   mounted) → `void sync()` then `router.push('/event-details/<uid>')` or `router.push('/calendar')`.
   The refetch reuses `useSyncCalendars` from `@/features/calendar/data` (a cross-feature
@@ -107,7 +107,7 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   it is now the `/personal-events` Stack route, a thin `src/app/personal-events.tsx` re-export reached
   from a Profile entry link, **not** the Home tab (which is now the today view). The component, its Add
   action, the `/personal-event-form` route, and `usePersonalEvents` are **unchanged** — only the entry
-  point moved). Personal events also keep rendering *inside* the Home today view (already merged into
+  point moved). Personal events also keep rendering _inside_ the Home today view (already merged into
   `useCalendarEvents`).
 - **A personal-event CALENDAR/HOME tap now opens the unified event-details screen** (Phase 05 Ship B /
   ADR [024](./decisions/024-event-checklist-storage-and-surfacing.md), **superseding ADR 022's**
@@ -126,7 +126,7 @@ feature, see the axis table in [golden-path.md](./golden-path.md).
   (ADR [012](./decisions/012-personal-event-datetime-picker.md) — `@expo/ui`'s own control,
   **not** `@react-native-community/datetimepicker`; see [theming.md](./theming.md)).
 - **Color:** a preset-palette swatch picker storing the `#RRGGBB` **verbatim** — the one
-  allowed cluster of color literals (they are *data* per ADR 011, not chrome styling). **Text:**
+  allowed cluster of color literals (they are _data_ per ADR 011, not chrome styling). **Text:**
   RN-core `TextInput` (never `allowFontScaling={false}`).
 - **Observability ✅ wired:** a rejected `upsert`/`remove` is recorded through `@/firebase`
   `recordError` and surfaced as a failure flag — **the first feature where a write can fail**
@@ -203,7 +203,7 @@ the second `ui/`-only feature folder. Load-bearing decisions:
 
 The first **camera input method** and the home of the "add a calendar source" cluster
 (QR · iCal import · durable token persistence — Phase-03 ships 3/4/5, **all landed**). **One
-feature folder `src/features/calendar-sources/`**, named for the *concern* so the ships grow it in
+feature folder `src/features/calendar-sources/`**, named for the _concern_ so the ships grow it in
 place (adding `data/` sublayers, not new folders). Load-bearing decisions:
 **ADR [017](./decisions/017-qr-scan-camera.md)** (QR/camera) + **ADR
 [018](./decisions/018-user-calendar-storage.md)** (durable storage). The camera dep + plugin are in
@@ -250,22 +250,23 @@ The **second** input method, grown in place (sublayers, not a new folder — ADR
 import is a **server `POST /calendars { url } → { token }`**, not a client-side `.ics`
 fetch/parse — Flutter parity (`import_ical`'s `loadIcalUrl`); the server owns parsing. **No new
 dep, no `app.config.ts`/babel change, no ADR** (growth within ADR 017 + the existing `data/`
-+ form-validator patterns).
 
-- **Create seam (`data/create.ts`, 90%-gated):** the feature's **first generated-hook import
+- form-validator patterns).
+
+* **Create seam (`data/create.ts`, 90%-gated):** the feature's **first generated-hook import
   site** (B-1) — wraps the committed `useCalendarSyncControllerCreateCalendar` over the single
   `customFetch` mutator, builds the `CreateCalendarDto` here (`{ url: url.trim(), customData:
-  null }`; `schoolId`/`schoolName`/`name` omitted — enrichment deferred to the durable state),
+null }`; `schoolId`/`schoolName`/`name` omitted — enrichment deferred to the durable state),
   and exposes a thin `useCreateCalendar()` returning `{ createCalendar(url) → { token },
-  isPending, isError, reset }`. Mirrors `school-selection/data/queries.ts`. A **write
+isPending, isError, reset }`. Mirrors `school-selection/data/queries.ts`. A **write
   mutation** — NOT added to the offline-persist `shouldDehydrateQuery` set (ADR 013, only
   schools/groups reads persist).
-- **URL validator (`data/validate-url.ts`, 90%-gated):** pure `validateIcalUrl(raw): string |
-  null` — `null` when acceptable, else a **localizable key** (`calendarSources.icalUrl.error.{empty,invalid}`),
+* **URL validator (`data/validate-url.ts`, 90%-gated):** pure `validateIcalUrl(raw): string |
+null` — `null` when acceptable, else a **localizable key** (`calendarSources.icalUrl.error.{empty,invalid}`),
   never a sentence (mirrors `personal-events/form/validate.ts`). **Deliberately lenient** — a UX
   pre-filter for immediate feedback; the **server `POST /calendars` is the authoritative
   validator** (Flutter has no client validation at all).
-- **Screen (`ui/ical-url-screen.tsx`, presentational 70% floor):** a labeled RN-core `TextInput`
+* **Screen (`ui/ical-url-screen.tsx`, presentational 70% floor):** a labeled RN-core `TextInput`
   (`keyboardType="url"`, `autoCapitalize="none"`, `autoCorrect={false}`, never
   `allowFontScaling={false}`), a submit `Pressable`, and accessible importing / server-error +
   **Retry** states over the add operation (mirrors school-selection's read flow per
@@ -275,12 +276,12 @@ dep, no `app.config.ts`/babel change, no ADR** (growth within ADR 017 + the exis
   truth (no ephemeral handoff). A thin route `src/app/onboarding/ical-url.tsx` re-exports it; an
   "Add by URL" CTA on the welcome screen pushes `/onboarding/ical-url` (same accent-border CTA
   pattern beside "Scan a QR code").
-- **Observability ✅ wired:** an **invalid URL** (client pre-filter) is recoverable — shown
+* **Observability ✅ wired:** an **invalid URL** (client pre-filter) is recoverable — shown
   inline, NOT `recordError`'d (noise avoidance). A **persist failure** (create / token-resolve /
   `upsert` rejects) records through `@/firebase` `recordError(error, "calendar-sources/ical-import")`
   **and** surfaces an accessible error + Retry (the URL is syntactically fine — both recorded and
   retryable).
-- **CI vs. manual:** the validate→create→handoff wiring + the server-failure → `recordError` +
+* **CI vs. manual:** the validate→create→handoff wiring + the server-failure → `recordError` +
   retry path are Jest-proven by mocking the `customFetch` mutator (`ical-url-screen.test.tsx`,
   real `QueryClient` + real generated mutation). The real import round-trip can't be
   Maestro-driven (the dev harness seeds no parseable `.ics`; same posture as the camera) — a
@@ -375,13 +376,13 @@ one, and adds another. The one behavioral change is that `visible` now filters t
   filter (hidden/visible/personal/toggle-back/deleted-drops-out — the runtime-behavior proof), the read
   memo's identity stability + the `loaded` flag, and the screen's toggle + delete-confirm/cancel (cancel
   button inert) + accessibility-action-on-the-reachable-toggle + failure-notice + load-gated-empty-state
-  + Android-shape (bare row + text delete affordance) branches — **no gesture simulation** (jest-expo
-  can't drive the pan; it runs iOS-only unless a test sets `Platform.OS`). The on-device visual + a11y
-  pass (both platforms, both schemes), the iOS swipe-gesture grammar/physics + the iOS-gated toggle
-  announce (`inbox/2026-07-05-user-calendars-device-pass-refine.md`), and a designed `danger`/`error`
-  token pair + the pink-text AA contrast fix (`inbox/2026-07-05-destructive-token-contrast.md`) are
-  inboxed; `.maestro/user-calendars.yaml` asserts render + Profile reachability (empty state — no
-  seeded calendar).
+  - Android-shape (bare row + text delete affordance) branches — **no gesture simulation** (jest-expo
+    can't drive the pan; it runs iOS-only unless a test sets `Platform.OS`). The on-device visual + a11y
+    pass (both platforms, both schemes), the iOS swipe-gesture grammar/physics + the iOS-gated toggle
+    announce (`inbox/2026-07-05-user-calendars-device-pass-refine.md`), and a designed `danger`/`error`
+    token pair + the pink-text AA contrast fix (`inbox/2026-07-05-destructive-token-contrast.md`) are
+    inboxed; `.maestro/user-calendars.yaml` asserts render + Profile reachability (empty state — no
+    seeded calendar).
 
 ## Calendar — day/week timeline + agenda + sync (Phase-04 items 1–3)
 
@@ -506,9 +507,9 @@ events".
   path).
 - **The filter** rides the **unchanged** events-source seam (`useCalendarEvents` reads
   `useHiddenEvents()` and excludes hidden uids/titles on the merged list) — no calendar-view consumer
-  change; the merged-list filter means a hidden *name* also hides a same-titled personal event
+  change; the merged-list filter means a hidden _name_ also hides a same-titled personal event
   (Flutter parity), while the hide **action** is **synced-only** (so a personal event is never
-  *deliberately* hidden). See [calendar.md](./calendar.md).
+  _deliberately_ hidden). See [calendar.md](./calendar.md).
 - **The hide action** grows the read-only event-details screen — a header action offered only for a
   synced event, a native-default `Alert` chooser (hide-this-instance vs hide-by-name), or **un-hide**
   when the viewed event is currently hidden (never a one-way trap). See [calendar.md](./calendar.md).
@@ -597,32 +598,28 @@ primitives (ADRs 019/021/014), not a new pattern.
 - **IA (ADR 022):** `src/app/(tabs)/index.tsx` re-exports `HomeScreen` from `@/features/home/ui`
   (was `PersonalEventsList`). The standalone personal-events list **relocated** to the
   `/personal-events` Stack route reached from Profile (see the Personal-events section above) —
-  create/edit/delete preserved, not dropped. Personal events also render *within* the today view
+  create/edit/delete preserved, not dropped. Personal events also render _within_ the today view
   (already merged into `useCalendarEvents`).
-- **Data layer — `src/features/home/data/selectors.ts` (90%-gated):** the only new logic, three
-  pure selectors (no React/`@/db`/`t()`): `displayedDay(events, now)` — Flutter
-  `dayDisplayedOnHomePageProvider` parity: **today** if any event `endsAt > now` on today's local
-  day (the **deliberate `endsAt > now` refinement** over Flutter's `startsAt.isAfter(today)` — an
-  in-progress class counts; recorded so it isn't "fixed" back), else the local day of the first
-  event starting after `now`, else today; `eventsForDay(events, day)` — the day's events (local-day
-  bucketing, sorted by start, stable id tie-break, mirroring `groupEventsByDay`); `dynamicHourRange(events)`
-  — min start hour .. max end hour + 1, clamped `[0,24]`, fallback `{8,18}` (Flutter `today_events`
-  parity). It imports `CalendarEvent` from `@/features/calendar/data` (a cross-feature `data → data`
-  read by full `@/` path — the legitimate consumer pattern the sync orchestrator already uses, D3).
-- **UI layer (`ui/`, 70% floor):** `home-screen.tsx` (`HomeScreen` — reads `useCalendarEvents` over a
-  displayed-day window, computes the selectors, renders the header [`app.name` heading + `formatFullDay`
-  date + the pluralized `home.header.count` line / `home.header.empty`], the `UpcomingScroller`, the
-  `home.today.title` section header, and the `TodayTimeline`; wires `useSyncCalendars` → pull-to-refresh
-  + the accessible error/retry banner reused from the calendar screen; routes taps by origin —
-  synced→`/event-details/<uid>`, personal→`/personal-event-form?uid=<uid>` — and an "Add personal event"
-  Link); `upcoming-scroller.tsx` (a horizontal RN-core `ScrollView` of the day's event cards, renders
-  nothing when empty — D6); `today-timeline.tsx` (**the salvaged overlap engine's FIRST rendering
-  consumer** — an absolute-positioned grid, NOT calendar-kit (D5): event tiles placed by `layoutOverlaps`
-  + `minuteToPixel`/`eventHeight` at the Flutter-parity 70px/hour, the hours column from `hourLabels`,
-  a brand-`primary` now-indicator via `nowIndicatorPosition` only when the displayed day is today,
-  `MIN_TILE_WIDTH` text-hiding reused for narrow columns). All themed from `@/theme` (R-3).
-- **`formatFullDay` (closes roadmap item 5):** the today header's full localized date was added to
-  `calendar/data/format.ts` (date-fns `PPPP` over the existing `LOCALES` map, display-only) — the
+- **Data layer — `src/features/home/data/selectors.ts` (90%-gated):** pure local-day selectors keep
+  Home strictly on **today**, split timed/all-day and remaining events, derive the next active day
+  as a clearly labeled summary, and produce deterministic greeting/caption descriptors without
+  importing React, storage, or i18n. The timeline range derives from timed events only. The former
+  Flutter behavior that silently replaced today with a future date is intentionally absent.
+- **UI layer (`ui/`, 70% floor):** `home-screen.tsx` renders a persistent logo lockup, an iOS header
+  add action / Android FAB, a padded pink welcome card,
+  remaining timed-event cards or a next-active-day summary, a separate all-day row, and the dynamically
+  bounded `TodayTimeline`; it retains pull-to-refresh,
+  accessible sync recovery, and unified event-details routing. `today-timeline.tsx` uses the salvaged
+  overlap engine at 70px/hour, clamps visible geometry to today's boundaries, and reflows into full-size
+  list controls when text is accessibility-scaled or precise tiles would be too short/narrow to activate.
+  Event cards use a clearly visible translucent tint of their event color across the full surface and a
+  consistent large radius, including all-day and timed timeline blocks. Themed text stays readable without
+  the former colored edge. “Tout voir” and the future summary send a one-shot `focusDate=YYYY-MM-DD`
+  request to Calendar, which preserves its current view while focusing that date. All themed from
+  `@/theme` (R-3).
+- **Localized Home date (closes roadmap item 5):** the today header uses `formatDayMonth` so the daily
+  dashboard omits the redundant year; `formatFullDay` remains available where a full date is needed.
+  Both live in `calendar/data/format.ts` over the existing `LOCALES` map, display-only — the
   date-fns seam now covers calendar/agenda/details/home; **roadmap item 5 (date/time) is closed**
   (relative-time + ICU remain the existing earned-when-needed i18n debt).
 - **Observability ➖ N/A:** the home surface performs no write of its own; the only write it triggers

@@ -28,4 +28,10 @@ export { NativeTabs } from "@/components/chrome/native-tabs"
 // SwiftUI/Compose control, NOT `@react-native-community/datetimepicker` (it only
 // mirrors the RNC prop types), so no new dependency. Same wrapper, same ADR-010
 // universal posture; the control choice is recorded in ADR 012.
-export { DateTimePicker, Host, Picker } from "@/components/chrome/expo-ui"
+export {
+  DateTimePicker,
+  Host,
+  type MenuComponentRef,
+  MenuView,
+  Picker,
+} from "@/components/chrome/expo-ui"

@@ -1,10 +1,12 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
   waitFor,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
+import { Platform } from "react-native"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 
@@ -28,14 +30,26 @@ jest.mock("@/features/calendar/data", () => {
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
-  // The "Add personal event" Link renders its asChild Pressable child.
-  Link: ({ children }: { children: React.ReactNode }) => children,
+  useFocusEffect: (callback: () => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const React = require("react")
+    React.useEffect(callback, [callback])
+  },
 }))
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockSync = jest.fn()
 const mockPush = router.push as jest.Mock
+
+beforeAll(() => {
+  jest.useFakeTimers()
+  jest.setSystemTime(new Date(2026, 5, 16, 12, 0))
+})
+
+afterAll(() => {
+  jest.useRealTimers()
+})
 
 function syncState(overrides = {}) {
   return {
@@ -49,10 +63,8 @@ function syncState(overrides = {}) {
 
 // An event TODAY (so displayedDay picks today and the timeline/now-indicator show).
 function todayEvent(overrides = {}) {
-  const base = new Date()
-  base.setHours(9, 0, 0, 0)
-  const start = new Date(base)
-  start.setHours(start.getHours() + 1) // keep it after `now` so it counts as today
+  const start = new Date()
+  start.setHours(start.getHours() + 1)
   const end = new Date(start)
   end.setHours(end.getHours() + 1)
   return {
@@ -83,8 +95,8 @@ describe("HomeScreen", () => {
   it("renders the app-name heading and the empty-day state when there are no events", async () => {
     await render(<HomeScreen />)
     expect(screen.getByText("TimeCalendar")).toBeTruthy()
-    expect(screen.getByText("Nothing planned.")).toBeTruthy()
-    expect(screen.getByText("No events for this day.")).toBeTruthy()
+    expect(screen.getByText("No events today")).toBeTruthy()
+    expect(screen.getByText("Enjoy the open day.")).toBeTruthy()
     // No scroller / timeline when the day is empty.
     expect(screen.queryByTestId("upcoming-scroller")).toBeNull()
     expect(screen.queryByTestId("today-timeline")).toBeNull()
@@ -94,9 +106,12 @@ describe("HomeScreen", () => {
     mockUseCalendarEvents.mockReturnValue([todayEvent()])
     await render(<HomeScreen />)
     expect(screen.getByTestId("upcoming-scroller")).toBeTruthy()
-    expect(screen.getByTestId("today-timeline")).toBeTruthy()
+    expect(
+      screen.queryByTestId("today-timeline") ??
+        screen.getByTestId("today-timeline-list"),
+    ).toBeTruthy()
     // The pluralized count line (one event).
-    expect(screen.getByText("1 event")).toBeTruthy()
+    expect(screen.getByText("1 event today")).toBeTruthy()
     // The card + tile both render the title.
     expect(screen.getAllByText("Algorithms").length).toBeGreaterThan(0)
   })
@@ -137,5 +152,83 @@ describe("HomeScreen", () => {
     await waitFor(() => {
       expect(screen.getByTestId("home-add-personal-event")).toBeTruthy()
     })
+    fireEvent.press(screen.getByTestId("home-add-personal-event"))
+    expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+  })
+
+  it("opens Calendar on today from See all", async () => {
+    await render(<HomeScreen />)
+    fireEvent.press(screen.getByLabelText("See all"))
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/calendar",
+      params: { focusDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) },
+    })
+  })
+
+  it("summarizes the next active day instead of showing its partial schedule", async () => {
+    const tomorrow = todayEvent()
+    tomorrow.startsAt.setDate(tomorrow.startsAt.getDate() + 1)
+    tomorrow.endsAt.setDate(tomorrow.endsAt.getDate() + 1)
+    mockUseCalendarEvents.mockReturnValue([tomorrow])
+    await render(<HomeScreen />)
+    expect(screen.getByTestId("home-next-day")).toBeTruthy()
+    expect(screen.queryByTestId("upcoming-scroller")).toBeNull()
+    fireEvent.press(screen.getByTestId("home-next-day"))
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/calendar",
+      params: { focusDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) },
+    })
+  })
+
+  it("renders all-day events separately from the timed grid", async () => {
+    const today = new Date()
+    const allDay = todayEvent({
+      allDay: true,
+      startsAt: new Date(
+        Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()),
+      ),
+      endsAt: new Date(
+        Date.UTC(today.getFullYear(), today.getMonth(), today.getDate() + 1),
+      ),
+    })
+    mockUseCalendarEvents.mockReturnValue([allDay])
+    await render(<HomeScreen />)
+    expect(screen.getByTestId("home-all-day")).toBeTruthy()
+    expect(screen.queryByTestId("today-timeline")).toBeNull()
+    expect(screen.queryByText("Enjoy the open day.")).toBeNull()
+    expect(screen.getAllByText("All day").length).toBeGreaterThan(0)
+    expect(
+      screen.getAllByLabelText("Algorithms, All day Room A1"),
+    ).toHaveLength(1)
+    expect(screen.queryByTestId("upcoming-scroller")).toBeNull()
+  })
+
+  it("uses the FAB as Android's add affordance", async () => {
+    const original = Platform.OS
+    Platform.OS = "android"
+    try {
+      await render(<HomeScreen />)
+      fireEvent.press(screen.getByTestId("home-add-personal-event"))
+      expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+    } finally {
+      Platform.OS = original
+    }
+  })
+
+  it("refreshes ongoing state at the next minute while Home stays focused", async () => {
+    const ongoing = todayEvent({
+      startsAt: new Date(2026, 5, 16, 11, 0),
+      endsAt: new Date(2026, 5, 16, 12, 1),
+    })
+    mockUseCalendarEvents.mockReturnValue([ongoing])
+    await render(<HomeScreen />)
+    expect(screen.getByText("In progress until 12:01.")).toBeTruthy()
+    await act(async () => {
+      jest.advanceTimersByTime(60_100)
+      await Promise.resolve()
+    })
+    expect(
+      screen.getByText("Your schedule is finished for today."),
+    ).toBeTruthy()
   })
 })

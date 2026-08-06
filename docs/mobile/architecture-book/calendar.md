@@ -140,21 +140,16 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   dependency, no ADR** — `expo-symbols` is a plain import already used in three features
   (`school-selection/status-symbol`, `school-selection/school-row`, `calendar-sources/user-calendars`);
   the backlog's "no icon font is wired" diagnosis is **stale** (it predates the expo-symbols adoption).
-  **Android falls back to themed text** (`SymbolView` renders **blank** for a bare *string* SF name on
-  Android — `SymbolView.js` resolves only object `{android}` names to a Material glyph — so the
-  platform gets an explicit `ThemedText` fallback, the app's established idiom mirroring
-  `user-calendars/TrashAffordance`). Load-bearing rules prose must carry (lint/types can't):
+  **Android uses expo-symbols' Material `today` glyph** through the object-form name mapping because
+  `SymbolView` renders blank for a bare string SF name there. Load-bearing rules prose must carry (lint/types can't):
   **(1)** each action is a **44pt (iOS) / 48dp (Android)** target (HIG / Material 3 minimums) with
   **no `hitSlop`** — the frame *is* the target; hitSlop on adjacent bar items overlaps across the
-  `gap: Spacing.two` (8px) and steals mis-aimed taps toward the frontmost sibling; the 8px gap between
-  two 24pt glyphs (~28px apart) is what kills the "glued glyph". **(2)** the Android text label is
-  `themeColor="text"` (on-surface ~21:1), **not** brand `primary` (#E91E63 on white = 4.35:1, below the
-  WCAG 1.4.3 4.5:1 body-text floor — `primary` is a **tint-only** tone per theming.md's contrast block;
-  there is no scheme-adaptive brand-text token). The accessible name is the translated action
-  (`calendar.todayLabel` / `calendar.addLabel`), **never** the glyph; the FR visible label is the full
-  `Aujourd'hui` (a substring of the accessible name — SC 2.5.3 Label-in-Name), not an abbreviation. On
-  Android the **create** action stays a **FAB** (Material primary-action idiom); only **Today** renders
-  as header text there. **`calendar`-as-"today" legibility is device-verify** (no SF Symbol encodes
+  `gap: Spacing.two` (8px) and steals mis-aimed taps toward the frontmost sibling. The accessible
+  name is the translated action (`calendar.todayLabel` / `calendar.addLabel`), never the glyph. On
+  Android the create action stays a FAB and Today is the compact header glyph. The Android view
+  selector is a 48dp pill backed by `MenuView`, not the universal `Picker`: the latter renders a
+  full-width Material text field and crowds out the centered month title. **`calendar`-as-"today"
+  legibility is device-verify** (no SF Symbol encodes
   "today" — the full `calendar.*` union is static/day-numberless; `calendar` is the most defensible
   generic, the accessible name carries the true meaning for VoiceOver).
 - **All-day events (backlog Issue 2 — a rendering projection keyed on `allDay`, NOT a stored

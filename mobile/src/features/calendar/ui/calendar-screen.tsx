@@ -1,6 +1,6 @@
-import { router, Stack } from "expo-router"
+import { router, Stack, useLocalSearchParams } from "expo-router"
 import { type SFSymbol, SymbolView } from "expo-symbols"
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   Platform,
@@ -19,6 +19,8 @@ import {
   type CalendarRef,
   type EventItem,
   Host,
+  type MenuComponentRef,
+  MenuView,
   Picker,
 } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
@@ -135,6 +137,7 @@ function mapToEventItem(event: CalendarEvent): EventItem {
 export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
+  const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
   // The tab-bar clearance for the GRID only. Unlike the agenda's SectionList, the
   // calendar-kit grid scroller is NOT on the tab screen's index-0 descendant chain
   // (CalendarHeader is the earlier sibling; the RNGH scroller sits under a
@@ -228,6 +231,39 @@ export function CalendarScreen() {
     setVisibleDate(today)
   }
 
+  useEffect(() => {
+    if (focusDate === undefined) return
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(focusDate)
+    if (match === null) {
+      router.setParams({ focusDate: undefined })
+      return
+    }
+    const target = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+    )
+    if (
+      target.getFullYear() !== Number(match[1]) ||
+      target.getMonth() !== Number(match[2]) - 1 ||
+      target.getDate() !== Number(match[3])
+    ) {
+      router.setParams({ focusDate: undefined })
+      return
+    }
+    gridRef.current?.goToDate({
+      date: target.toISOString(),
+      animatedDate: true,
+      hourScroll: true,
+    })
+    // Navigation supplied a new external anchor; mirror it into the uncontrolled
+    // calendar state before consuming the one-shot route parameter.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setWindowStart(target)
+    setVisibleDate(target)
+    router.setParams({ focusDate: undefined })
+  }, [focusDate])
+
   // "Add": the calendar's only create affordance opens the personal-event form in
   // create mode (a Stack sibling of the tabs) — the screen itself stays read-only.
   const addEvent = () => {
@@ -260,12 +296,18 @@ export function CalendarScreen() {
           // the status bar (device-proven). The inline bar reserves its space and
           // insets the calendar below it, on both platforms.
           headerTitle: monthTitle,
+          headerTitleAlign: "center",
           // Match the app background (the nav theme's `card` is a distinct grey
           // that reads as a mismatched band over the black/plain calendar surface)
           // and drop the hairline so the header merges into the content.
           headerStyle: { backgroundColor: theme.background },
           headerShadowVisible: false,
-          headerLeft: () => <ViewMenu view={view} onChange={setView} />,
+          headerLeft: () =>
+            Platform.OS === "android" ? (
+              <AndroidViewMenu view={view} onChange={setView} />
+            ) : (
+              <ViewMenu view={view} onChange={setView} />
+            ),
           headerRight: () => (
             <HeaderActions onToday={goToToday} onAdd={addEvent} />
           ),
@@ -279,13 +321,9 @@ export function CalendarScreen() {
         // scroll view, so iOS auto-insets it for free (expo-router types.d.ts); the
         // grid is NOT index-0 (see bottomInset), so it reserves its own pad via
         // `spaceFromBottom`. Reserving the frame here too would double-inset the
-        // agenda. Android keeps "bottom": its opaque Material bar is not scrolled
-        // under, so the space stays reserved as before.
-        edges={
-          Platform.OS === "ios"
-            ? ["left", "right"]
-            : ["bottom", "left", "right"]
-        }
+        // agenda. Expo Native Tabs already owns Android's opaque bar and bottom
+        // system inset, so reserving it again here creates an empty band.
+        edges={["left", "right"]}
       >
         {(events.length === 0 || isError) && (
           <View style={styles.banners}>
@@ -443,11 +481,63 @@ function ViewMenu({
   )
 }
 
+function AndroidViewMenu({
+  view,
+  onChange,
+}: {
+  view: CalendarView
+  onChange: (view: CalendarView) => void
+}) {
+  const { t } = useTranslation()
+  const theme = useTheme()
+  const menuRef = useRef<MenuComponentRef>(null)
+  const labels: Record<CalendarView, string> = {
+    day: t("calendar.view.day"),
+    week: t("calendar.view.week"),
+    agenda: t("calendar.view.agenda"),
+  }
+  const actions = (Object.keys(labels) as CalendarView[]).map((value) => ({
+    id: value,
+    title: labels[value],
+    state: value === view ? ("on" as const) : ("off" as const),
+  }))
+
+  return (
+    <MenuView
+      ref={menuRef}
+      actions={actions}
+      onPressAction={({ nativeEvent }) =>
+        onChange(nativeEvent.event as CalendarView)
+      }
+    >
+      <Pressable
+        testID="calendar-view"
+        accessibilityRole="button"
+        accessibilityLabel={labels[view]}
+        accessibilityActions={[{ name: "activate" }]}
+        onPress={() => menuRef.current?.show()}
+        onAccessibilityAction={({ nativeEvent }) => {
+          if (nativeEvent.actionName === "activate") menuRef.current?.show()
+        }}
+        style={styles.androidViewMenuTarget}
+      >
+        <View
+          style={[
+            styles.androidViewMenuPill,
+            { backgroundColor: theme.backgroundElement },
+          ]}
+        >
+          <ThemedText type="smallBold">{labels[view]}</ThemedText>
+          <View style={[styles.menuChevron, { borderColor: theme.primary }]} />
+        </View>
+      </Pressable>
+    </MenuView>
+  )
+}
+
 // The grouped header actions (headerRight): Today + Add, each a distinct native
-// nav-bar icon button — an expo-symbols SF Symbol on iOS, a themed text fallback on
-// Android (the app's established icon idiom: a bare SF name resolves to null inside
-// SymbolView on Android, so the platform gets an explicit fallback, mirroring
-// school-selection/status-symbol + user-calendars/TrashAffordance). Two separate
+// nav-bar icon button — expo-symbols renders an SF Symbol on iOS and its mapped
+// Material Symbol on Android. Two separate
 // 44/48pt targets with real spacing so the pair never reads as one glued glyph (the
 // device complaint). Today is always offered (a one-tap jump home). On Android the
 // create action is a FAB, so Add renders here on iOS only.
@@ -465,7 +555,6 @@ function HeaderActions({
         testID="calendar-today"
         symbol="calendar"
         label={t("calendar.todayLabel")}
-        androidText={t("calendar.today")}
         onPress={onToday}
       />
       {Platform.OS !== "android" && (
@@ -480,8 +569,8 @@ function HeaderActions({
   )
 }
 
-// One nav-bar action. iOS renders a real SF Symbol (brand-tinted); Android renders
-// a themed text label (a bare SF name renders blank inside SymbolView on Android).
+// One nav-bar action. iOS renders the SF Symbol; Android uses the object-form name
+// mapping because a bare SF name is blank there.
 // The 44pt (iOS) / 48dp (Android) target meets the platform minimum and gives the
 // icons room so they don't touch; the accessible name is the translated action,
 // never the glyph.
@@ -489,13 +578,11 @@ function HeaderIconAction({
   testID,
   symbol,
   label,
-  androidText,
   onPress,
 }: {
   testID: string
   symbol: SFSymbol
   label: string
-  androidText?: string
   onPress: () => void
 }) {
   const theme = useTheme()
@@ -505,6 +592,11 @@ function HeaderIconAction({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
+      android_ripple={
+        Platform.OS === "android"
+          ? { color: theme.ripple, borderless: true, radius: 20 }
+          : undefined
+      }
       style={styles.headerAction}
     >
       {Platform.OS === "ios" ? (
@@ -514,12 +606,11 @@ function HeaderIconAction({
           tintColor={theme.primary}
         />
       ) : (
-        // A Material text action, on-surface `text` (21:1) — NOT the brand
-        // `primary`, which is a tint-only tone (#E91E63 on white = 4.35:1, below
-        // the WCAG 1.4.3 4.5:1 body-text floor; theming.md's contrast block).
-        <ThemedText type="smallBold" themeColor="text">
-          {androidText}
-        </ThemedText>
+        <SymbolView
+          name={{ android: "today" }}
+          size={HEADER_ICON_SIZE}
+          tintColor={theme.primary}
+        />
       )}
     </Pressable>
   )
@@ -677,6 +768,27 @@ const styles = StyleSheet.create({
   viewMenu: {
     minHeight: 44,
     justifyContent: "center",
+  },
+  androidViewMenuTarget: {
+    minHeight: 48,
+    justifyContent: "center",
+  },
+  androidViewMenuPill: {
+    minHeight: 36,
+    minWidth: 88,
+    paddingHorizontal: 12,
+    borderRadius: Radii.pill,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.one,
+  },
+  menuChevron: {
+    width: 8,
+    height: 8,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    transform: [{ rotate: "45deg" }, { translateY: -2 }],
   },
   headerActions: {
     flexDirection: "row",

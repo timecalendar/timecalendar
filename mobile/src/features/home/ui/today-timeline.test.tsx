@@ -1,9 +1,15 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import { StyleSheet } from "react-native"
 
 import { type CalendarEvent } from "@/features/calendar/data"
 import { type HourRange } from "@/features/home/data"
 
 import { TodayTimeline } from "./today-timeline"
+
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
+  __esModule: true,
+  default: () => ({ width: 400, height: 800, scale: 2, fontScale: 1 }),
+}))
 
 // Presentational (70% floor): the today mini-timeline. The salvaged overlap/grid
 // math has its own data-layer tests; here we assert tile placement reacts to the
@@ -86,5 +92,48 @@ describe("TodayTimeline", () => {
     expect(onPress).toHaveBeenCalledWith(
       expect.objectContaining({ id: "ev-1" }),
     )
+  })
+
+  it("reflows short events into full-size list controls", async () => {
+    const short = event({
+      endsAt: new Date(2026, 5, 15, 9, 15),
+    })
+    await render(
+      <TodayTimeline
+        events={[short]}
+        range={{ startHour: 9, endHour: 10 }}
+        locale="en"
+        isToday={false}
+        now={new Date(2026, 5, 15, 8)}
+        onPressEvent={jest.fn()}
+      />,
+    )
+    expect(screen.getByTestId("today-timeline-list")).toBeTruthy()
+    const style = StyleSheet.flatten(
+      screen.getByTestId("today-tile-ev-1").props.style,
+    )
+    expect(style.minHeight).toBeGreaterThanOrEqual(44)
+  })
+
+  it("clips a cross-midnight event to the represented day", async () => {
+    await render(
+      <TodayTimeline
+        events={[
+          event({
+            startsAt: new Date(2026, 5, 15, 23),
+            endsAt: new Date(2026, 5, 16, 1),
+          }),
+        ]}
+        range={{ startHour: 23, endHour: 24 }}
+        locale="en"
+        isToday={false}
+        now={new Date(2026, 5, 15, 20)}
+        onPressEvent={jest.fn()}
+      />,
+    )
+    const style = StyleSheet.flatten(
+      screen.getByTestId("today-tile-ev-1").props.style,
+    )
+    expect(style.top + style.height).toBeLessThanOrEqual(70)
   })
 })
