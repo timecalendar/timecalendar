@@ -18,8 +18,9 @@ Read the relevant files completely before changing code, including:
 - `docs/react-native-migration/`, especially the calendar roadmap and performance backlog.
 - `docs/mobile/architecture-book/calendar.md`, `accessibility.md`, `testing.md`, `theming.md`, and the Definition of Done.
 - Calendar ADRs 019, 020, 021, and 032.
-- `mobile/src/features/calendar/ui/calendar-screen.tsx` and its tests.
-- The agenda components, renderer seam, event window, time-grid, overlap-layout, and calendar event source.
+- `mobile/src/features/calendar/ui/calendar-screen.tsx`, its controller/header/status components, and its tests.
+- `mobile/src/features/calendar/renderer/index.ts`, the renderer contract, and every file under the current `renderer/calendar-kit/` adapter.
+- The agenda components, time-grid, overlap-layout, and calendar event source.
 - The Flutter week/day renderer, synchronized scroll controller, snapping physics, zoom settings, and zoom persistence. Start with `app/lib/modules/calendar/widgets/week_view/week_view_layout.dart`.
 - Current dependencies, runtime configuration, Git status, and uncommitted changes.
 
@@ -44,7 +45,7 @@ The renderer supports:
 
 ### Module boundary
 
-Build an internal renderer module, for example under `mobile/src/features/calendar/renderer/`. Do not publish a general-purpose package yet. Keep a small renderer-neutral API so extraction remains possible after a second consumer exists.
+Replace the implementation behind the existing internal module at `mobile/src/features/calendar/renderer/`. Do not publish a general-purpose package yet. Preserve or deliberately refine its small renderer-neutral API so extraction remains possible after a second consumer exists.
 
 The calendar screen owns product orchestration, navigation, menus, and event loading. The renderer owns page virtualization, gestures, synchronized scrolling, zoom, event geometry, visible-item rendering, and timeline accessibility.
 
@@ -79,6 +80,14 @@ type CalendarTimelineHandle = {
 ```
 
 Refine this contract after the audit. Use existing theme, localization, navigation, and settings providers.
+
+### Current adapter inventory
+
+Treat `renderer/calendar-kit/` as temporary compatibility code. Its vendor imports, `EventItem` projection, inclusive all-day end conversion, calendar-kit theme shape, event tiles, four-page packing radius, quarter-quantized event window, and immediate-versus-settled callback translation are library-specific. Preserve their product outcomes, but do not copy those mechanisms into the owned renderer.
+
+The `renderer/index.ts` facade and `renderer/types.ts` contract are the integration point. The calendar screen must continue to work only with `CalendarEvent`, dates, renderer modes, and the neutral imperative handle. Keep agenda rendering, synchronization, route handling, focus-date consumption, native header controls, empty/error UI, and event loading outside the timeline implementation.
+
+The current screen displays a seven-day week. Treat that running behavior as the present oracle; add the requested persisted five/seven-day choice as owned-renderer product work rather than silently changing the default during extraction.
 
 ### Horizontal virtualization
 
@@ -211,7 +220,7 @@ Do not reintroduce:
 7. Add focal-point-preserving pinch zoom and accessible controls.
 8. Complete all-day, multi-day, localization, theming, and accessibility behavior.
 9. Profile and harden against dense real-device datasets.
-10. Integrate behind the renderer seam, optionally using a development flag. Never mount both engines simultaneously.
+10. Replace the calendar-kit adapter behind the existing renderer facade, optionally using a development flag. Never mount both engines simultaneously.
 11. After parity and device acceptance, remove calendar-kit, its patch-package patch, obsolete workarounds, and library-specific instrumentation.
 
 Do not remove the old renderer until the replacement passes the agreed device matrix.

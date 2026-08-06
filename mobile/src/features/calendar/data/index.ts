@@ -13,7 +13,6 @@ export {
   type UseEventDetails,
   useEventDetails,
 } from "./event-details"
-export { quarterStartMs, quarterWindow } from "./event-window"
 export { type DateRange, useCalendarEvents } from "./events"
 export {
   type AppLocale,

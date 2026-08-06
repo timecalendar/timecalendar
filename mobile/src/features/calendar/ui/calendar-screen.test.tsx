@@ -9,16 +9,15 @@ import { Platform } from "react-native"
 
 import {
   formatMonthYear,
-  quarterStartMs,
-  quarterWindow,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
+import { calendarTimelineEventWindow } from "@/features/calendar/renderer"
 
 import { CalendarScreen } from "./calendar-screen"
 
 // Presentational screen (70% floor): renders through the real theme + i18n
-// trees. The calendar-kit grid is mocked suite-wide (jest/setup-calendar-kit) so
+// trees. The calendar-kit grid is mocked suite-wide (jest/calendar-kit/setup) so
 // its mocked CalendarBody invokes renderEvent per event — proving the screen's
 // event→tile wiring + the CalendarEvent→EventItem mapping + theme/label plumbing
 // without the Reanimated grid (D7). The @expo/ui view-menu Picker is mocked
@@ -229,7 +228,7 @@ describe("CalendarScreen", () => {
         to: Date
       }
       const settled = new Date("2026-11-15T12:00:00.000Z")
-      const expected = quarterWindow(quarterStartMs(settled))
+      const expected = calendarTimelineEventWindow(settled)
       expect(range.from.getTime()).toBe(expected.from.getTime())
       expect(range.to.getTime()).toBe(expected.to.getTime())
     })
@@ -247,9 +246,7 @@ describe("CalendarScreen", () => {
     // quarter-cross wiring deleted, the feed would still be Q4's window.
     await render(<CalendarScreen />)
     fireEvent.press(screen.getByTestId("grid-cross-quarter"))
-    const q4 = quarterWindow(
-      quarterStartMs(new Date("2026-11-15T12:00:00.000Z")),
-    )
+    const q4 = calendarTimelineEventWindow(new Date("2026-11-15T12:00:00.000Z"))
     await waitFor(() => {
       const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
         from: Date
@@ -258,8 +255,8 @@ describe("CalendarScreen", () => {
     })
 
     fireEvent.press(screen.getByTestId("grid-visible-cross-quarter"))
-    const expected = quarterWindow(
-      quarterStartMs(new Date("2027-02-10T12:00:00.000Z")),
+    const expected = calendarTimelineEventWindow(
+      new Date("2027-02-10T12:00:00.000Z"),
     )
     await waitFor(() => {
       const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {

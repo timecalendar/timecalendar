@@ -111,7 +111,7 @@ Once the change is code-complete and green, run the /iterate-screen loop on user
 - Profile shows a "Calendriers"/"Calendars" entry → the user-calendars screen.
 - The screen lists every held calendar with a visibility checkbox, name + school subtitle, a trailing delete button, an add ("+") path to school selection, and an empty state — all typed, lint-clean, unit/component-tested (70% presentational floor; the events.ts filter branch at the 90% gate), i18n FR/EN parity, a11y (roles/labels/state/announcements/targets).
 - Toggling a calendar's checkbox off hides ITS events from BOTH Home and Calendar (and back on re-shows them); personal events always render; deleting a calendar removes it and its events immediately and persists across a relaunch.
-- Full DoD on every machine-verifiable axis; the human device/visual/a11y axes inboxed. The Architecture Book updated (features.md entry for the user-calendars management surface; an ADR only if something load-bearing was decided, e.g. the visibility-filter-at-the-seam contract) + architecture-changelog.md appended.
+- Full DoD on every machine-verifiable axis; the human device/visual/a11y axes inboxed. Update current Architecture Book guidance and add an ADR only for a costly-to-reverse decision.
 
 ## Guardrails
 - DO NOT rebuild the data layer — remove/setVisible/useUserCalendars exist and are tested. This ship adds a SCREEN + a filter + a profile link, nothing in data/user-calendars/ except the observability-wrapped actions hook.

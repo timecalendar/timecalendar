@@ -1,221 +1,68 @@
-# Golden-path exemplar — TimeCalendar mobile
+# New feature guide
 
-One of the [five living artifacts](./architecture.md#the-five-living-artifacts).
-**This is the blessed reference, extracted in Phase 1.5 from the three landed
-pattern-establishment features** — Settings, Personal events, School selection
-([ADR 004](./decisions/004-phase-1-feature-order.md) order). It is *earned, not
-declared* (migration-approach §4, philosophy principle 5): the shape below is what
-the three deliberately-varied features actually converged on, not a Phase-0 guess.
+Use this guide when adding a feature. Existing code is the executable example; the
+template under [golden-path-template](./golden-path-template/) is only a starting shape.
 
-> **R-1 pointer style.** This file does not re-derive the features' code — it points
-> at the real files. Every pointer must resolve; a move/rename is a one-line fix here.
-> The decision record is [ADR 014](./decisions/014-layered-feature-module-pattern.md);
-> this file is the *how-to*.
+## Choose ownership
 
-## Why the exemplar is organized by axis (not one "reference feature")
+Create `src/features/<feature>/` when the behavior has a product-domain owner. Add only
+the sublayers it needs:
 
-The three features stress **different architectural axes** — no single one exercises
-local-KV *and* device-CRUD *and* server-read. Blessing one as "the" reference would
-force the other two axes into footnotes and mislead a new feature whose axis differs.
-So the exemplar names the **canonical landed feature per axis**, then documents the
-**common spine** all three share once.
+```text
+src/features/<feature>/
+  data/    API, database, mapping, queries
+  store/   persisted client state
+  form/    validation and form orchestration
+  ui/      screens and feature-specific presentation
+  index.ts public feature exports
+```
 
-| Axis | Canonical feature | Where it lives |
-| --- | --- | --- |
-| Local key-value + native controls + i18n | **Settings** | `mobile/src/features/settings/{prefs,ui}/` |
-| Structured device-local CRUD + multi-field form + write error path | **Personal events** | `mobile/src/features/personal-events/{data,form,ui}/` |
-| Server read + offline cache + nested navigation | **School selection** | `mobile/src/features/school-selection/{data,store,ui}/` |
+Each sublayer has a small public `index.ts`. A sublayer imports a sibling's barrel, never
+the feature barrel that re-exports it. Put reusable primitives in `src/components/`, not
+feature-specific screens.
 
-When you start a feature, find the row whose axis is closest to yours and copy *that*
-feature's layer for the parts unique to it; copy the common spine below for the rest.
+## Keep infrastructure behind seams
 
-## The common spine (shared by all three)
+- Generated API hooks and `@/db` are accessed only from the feature's `data/` layer.
+- MMKV is accessed through `@/storage` and a typed feature store.
+- Firebase native packages are accessed through `@/firebase`.
+- Native chrome and calendar-kit are accessed through owned component seams.
+- Routes in `src/app/` contain routing configuration or re-export feature UI; they do not
+  contain feature logic.
 
-### Feature-module folder shape — `src/features/<feature>/<layer>/`
+ESLint encodes the exact import boundaries. Do not document an exception before checking
+whether the dependency direction can be simplified.
 
-A feature's logic lives under `src/features/<feature>/`, split into the **sublayers
-its axis needs** — a feature adds only the ones it uses (the set is open, not fixed):
+## Design logic for testing
 
-- **`data/`** — the data/query/repository seam. The **only** place a feature touches
-  the generated Orval hooks or the `@/db` seam. See `school-selection/data/queries.ts`
-  (the only generated-hook import site) and `personal-events/data/repository.ts` (the
-  only `@/db` import site).
-- **`store/`** — a persisted-state seam over `@/storage`: total, defensively-validated
-  reads; flat namespaced keys; one imperative write path; the reactive read in a
-  `hooks.ts`. See `settings/prefs/store.ts` and `school-selection/store/store.ts`.
-- **`form/`** — pure form logic (validation, build, save/delete/load hooks over the
-  feature's `data/`). See `personal-events/form/`.
-- **`ui/`** — the presentational screen(s). Consumes the feature's sibling sub-barrels
-  directly (`settings/ui/settings-screen.tsx` → `@/features/settings/prefs`) — never its
-  own feature barrel (B-2) nor the seams (B-1); the colocated `*.test.tsx` is fine here
-  because it is not under `src/app/`, so Metro's route harness never bundles it. See
-  `settings/ui/`, `personal-events/ui/`, `school-selection/ui/`.
+Keep parsing, validation, mapping, selection, and formatting pure. Return domain values or
+localization keys rather than rendered strings. Keep native and network wiring at narrow
+edges so component tests can replace those edges.
 
-Settings has `prefs/` + `ui/`; School selection has `data/` + `store/` + `ui/`; Personal
-events has `data/` + `form/` + `ui/` (its `data/` *is* the store analog — persistence is
-the SQLite table, not MMKV); Splash and Onboarding are presentation-only — just `ui/`
-(Onboarding's `src/features/onboarding/ui/welcome-screen.tsx` is the second `ui/`-only
-feature folder beside splash; ADR [015](./decisions/015-onboarding-flow-shape.md)).
+Logic sublayers must meet the 90% lines/branches threshold; presentation contributes to
+the 70% global floor. Test user-visible behavior rather than implementation details. Add a
+Maestro happy path when the feature has a meaningful end-to-end interaction.
 
-The blessing decision and the open sublayer set are
-[ADR 014](./decisions/014-layered-feature-module-pattern.md).
+## UI contract
 
-### Barrel discipline (no cycle)
+- Put all user-facing strings in typed French and English resources.
+- Use semantic text variants and accessible roles, labels, state, and live regions.
+- Preserve font scaling, reduced motion, platform touch-target minimums, and native idioms.
+- Use theme tokens for chrome; event colors and other user data are not theme tokens.
+- Surface recoverable failures with an action when retry is possible. Record unexpected
+  failures through `@/firebase` without personal data.
 
-Each sublayer has an `index.ts` re-exporting its public surface; a **feature-level**
-`index.ts` re-exports the sublayers. **Sublayers never import the feature barrel** —
-when a sublayer needs a sibling, it imports the sibling's *sub-barrel* directly. The
-graph stays a DAG. This no-self-barrel-cycle rule is **CI-enforced** as boundary B-2
-(`eslint-plugin-boundaries`, TIM-135 — see the Architecture Book "Lint & format →
-Feature-module boundaries").
+## Completion checklist
 
-- Feature barrels: `mobile/src/features/personal-events/index.ts` (its comment states
-  "No cycle: form/* imports the data sub-barrel directly … never this file"),
-  `mobile/src/features/school-selection/index.ts` (same note).
-- Sub-barrels: `mobile/src/features/school-selection/data/index.ts`,
-  `mobile/src/features/school-selection/store/index.ts`,
-  `mobile/src/features/personal-events/data/index.ts`,
-  `mobile/src/features/personal-events/form/index.ts`,
-  `mobile/src/features/settings/prefs/index.ts`.
+1. Define the feature owner, sublayers, and dependency directions.
+2. Implement pure logic and infrastructure adapters before screen composition.
+3. Add sublayer barrels and the smallest useful feature-level public API.
+4. Add feature UI and a thin route entrypoint.
+5. Add translations, accessibility behavior, and error states.
+6. Run TypeScript, lint, formatting, tests with coverage, and applicable Maestro flows.
+7. Complete the device checks in [definition-of-done.md](./definition-of-done.md).
+8. Update a topical architecture page only when a reusable current contract changed.
+9. Add an ADR only when the decision meets [the ADR policy](./decisions/README.md).
 
-### Seam conventions
-
-- **`data/` is the only generated-hook / `@/db` import site.** A feature's `ui/` screens
-  consume the feature's **sibling sub-barrels** (`@/features/<feature>/data` / `/store` /
-  `/form`) — never their own feature barrel (B-2), and never `@/api/generated/*`, `@/db`,
-  or `react-native-mmkv` directly (B-1). References: `school-selection/data/queries.ts` (wraps the generated
-  `useSchoolControllerFindSchools` / `useSchoolGroupControllerFindSchoolGroups` over
-  the single `mobile/src/api/mutator.ts` `customFetch`, maps DTOs → small domain
-  shapes), `personal-events/data/repository.ts` (the only importer of
-  `mobile/src/db/index.ts`). This boundary is **now CI-enforced** by
-  `eslint-plugin-boundaries` (TIM-135, `add-mobile-feature-boundaries-lint` — B-1/B-3 in
-  the `timecalendar/feature-boundaries` block of `mobile/eslint.config.js`); the ADR-014
-  debt is paid.
-- **The store is total + defensively-validated over `@/storage`, one write path.** A
-  bad/unset/legacy value parses to a safe default, never throws; writes go through one
-  imperative path, the reactive read through a `hooks.ts` over the seam's reactive read
-  (`useStoredString` in `mobile/src/storage/index.ts`). References:
-  `settings/prefs/store.ts` (total `parseThemePreference`/`parseLanguagePreference`),
-  `school-selection/store/store.ts` + `school-selection/store/types.ts` (total
-  `parseSchoolId`/`parseGroupValues`).
-- **Mappers at the row↔domain edge.** The data layer maps storage/DTO rows to small
-  domain shapes so consumers never touch the wire/row format. References:
-  `personal-events/data/types.ts` (`rowToEvent`/`eventToRow`, normalizing to canonical
-  UTC), `school-selection/data/types.ts` (the DTO → `SchoolListItem`/`SchoolGroupNode`
-  projections).
-
-### Presentational screen in the feature's `ui/` + thin route in `src/app/`
-
-The route-structure rule (Architecture Book "Navigation & route structure"): the tested
-screen lives in the feature's `ui/` sublayer (`src/features/<feature>/ui/<screen>.tsx`),
-and the route under `src/app/` is a one-line re-export through that `ui/` sub-barrel.
-`src/components/` now holds only genuinely shared primitives/shell (`themed-text`,
-`themed-view`, `color-swatch-picker`, `date-time-field`, the `chrome/*` wrappers, …) — a
-`ui/` screen imports those via `@/components/*` (an allowed feature-sublayer → component
-edge). References:
-
-- `mobile/src/app/settings.tsx` (thin route) → `mobile/src/features/settings/ui/settings-screen.tsx`.
-- `mobile/src/app/personal-event-form.tsx` → `mobile/src/features/personal-events/ui/personal-event-form-screen.tsx`.
-- `mobile/src/app/onboarding/{index,school,groups}.tsx` (thin entrypoints under a nested
-  `mobile/src/app/onboarding/_layout.tsx` `Stack`, **welcome-first** — ADR 015): `index` →
-  `mobile/src/features/onboarding/ui/` (the welcome surface), `school` + `groups` →
-  `mobile/src/features/school-selection/ui/`.
-
-Non-tab routes register as a `<Stack.Screen>` **sibling of `(tabs)`** in
-`mobile/src/app/_layout.tsx` (a bare sibling under the native tabs is unreachable).
-
-### Coverage split (90% logic / 70% presentation)
-
-Logic sublayers (`data/`/`store/`/`form/`, under the `src/features/*/!(ui)/**` glob) are
-90%-gated; `ui/` screens fall to the `global` 70% floor (the `!(ui)` extglob *excludes*
-them, since Jest coverage thresholds are additive, not most-specific-wins). See
-[ADR 003](./decisions/003-coverage-threshold.md) and `mobile/jest.config.js`.
-
-### Screen / test / e2e skeleton shape
-
-- **Component test** — colocated `*.test.tsx`, renders through the **real** theme +
-  i18n trees and asserts **localized text, not keys** (and drives the control → hook
-  wiring). Mock at the `customFetch` mutator seam, never the network. References:
-  `mobile/src/features/settings/ui/settings-screen.test.tsx`,
-  `mobile/src/features/school-selection/ui/school-picker-screen.test.tsx`,
-  `mobile/src/features/personal-events/ui/personal-event-form-screen.test.tsx`.
-- **Maestro flow** — a real round-trip, deep-linked, asserting seeded data. References:
-  `mobile/.maestro/settings.yaml` (render + reachability),
-  `mobile/.maestro/personal-events.yaml` (create→list→delete CRUD round-trip),
-  `mobile/.maestro/onboarding.yaml` (the live `GET /schools` round-trip).
-
-### i18n / a11y call-site conventions
-
-- **Flat typed i18n keys, FR + EN parity** (`tsc`-typed both directions). Validation
-  and pure logic return **localizable keys, not sentences** — the screen maps them to
-  `t()`. Reference: `personal-events/form/validate.ts` (returns
-  `"personalEvents.form.error.titleRequired"` etc.). (Architecture Book "i18n".)
-- **Accessible loading/error live regions + touchable roles+labels.** Async status
-  carries a polite live region + status role; every touchable declares a role +
-  translated label + a ≥44pt/48dp hit area. References:
-  `mobile/src/features/school-selection/ui/school-picker-screen.tsx` (accessible
-  loading/error-with-retry/empty states), `mobile/src/features/settings/ui/settings-screen.tsx`
-  and its Profile entry link. (Architecture Book "Accessibility".)
-
-## Starting a new feature (the copy-this checklist)
-
-A new feature can be started by copying the **skeleton template tree** at
-[`golden-path-template/`](./golden-path-template/) (a sibling of this file).
-It lives **outside `mobile/src/`** on purpose (so Metro doesn't bundle it, the route
-harness doesn't walk it, and the coverage harness doesn't count it — design D2); its
-files carry a `.ts.txt` / `.tsx.txt` suffix so they are never compiled, bundled, or
-linted-as-source. The mechanism is a documented convention + the existing tsc/lint/
-coverage gates — **not** a code generator (R-2; see deferred debt below).
-
-Ordered steps:
-
-1. **Copy** the template tree's files into your feature's home:
-   `golden-path-template/feature/` → `mobile/src/features/<feature>/` (this carries the
-   `ui/` sublayer with the screen + its test),
-   `golden-path-template/app/` → `mobile/src/app/`.
-2. **Drop the `.txt` suffix** (`types.ts.txt` → `types.ts`, `feature-screen.tsx.txt` →
-   `<feature>-screen.tsx`, etc.) and rename `feature`/`<feature>` to your feature name.
-3. **Keep only the sublayers your axis needs** (`data/` / `store/` / `form/`, plus `ui/`
-   for the screen) — copy the canonical feature's layer (table above) for the axis-specific
-   parts.
-4. **Wire FR + EN keys** for every user-facing string (flat keys, both catalogs —
-   `tsc` parity fails otherwise).
-5. **Register the route** in `mobile/src/app/_layout.tsx` as a `<Stack.Screen>` sibling
-   of `(tabs)` (the route-structure rule).
-6. **Add a Maestro flow** under `mobile/.maestro/` for the happy path.
-7. **Run the gates** in `mobile/`: `npx tsc --noEmit`, `npm run lint`, `npm test`. The
-   existing gates catch copy mistakes (a missing key, a 0%-covered stub, a wrong import
-   boundary) immediately — they are the safety net the lightest mechanism relies on.
-
-### Deferred debt — a scaffolding generator
-
-A code generator / scaffolding CLI (plop, hygen, a custom script) was **deliberately
-not built** (R-2 / design D2): heavy tooling the repo's posture rejects, and from a
-sample of three features the "right" generated shape isn't stable enough to freeze into
-codegen. **Trigger to revisit:** hand-copy friction becomes real (the feature count
-grows) **and** the shape has stopped evolving.
-
-## The closest real references
-
-These *are* the blessed set now (no longer "no reference yet"):
-
-- **`mobile/src/features/school-selection/data/queries.ts`** — the data/query seam:
-  generated hook → `customFetch` → NestJS, mapped to domain shapes, the only
-  generated-hook import site.
-- **`mobile/src/features/school-selection/data/search.ts`** — the clean pure-`data/`-helper
-  example: a `normalize` + `schoolMatches` matcher (no backend, no hooks), unit-tested in
-  `search.test.ts` under the 90% gate, the screen filtering through it (ADR 016).
-- **`mobile/src/features/settings/prefs/store.ts`** + **`school-selection/store/store.ts`**
-  — the total, validated, one-write-path store posture.
-- **`mobile/src/features/personal-events/form/validate.ts`** — pure logic returning
-  localizable keys.
-- **`mobile/src/features/school-selection/ui/school-group-picker-screen.tsx`** — the
-  multi-select-with-confirm reference: a pending-set toggle in screen state, one atomic
-  confirm-commit, full-Stack `dismissTo` completion, an empty-selection guard (ADR 016).
-- **`mobile/src/features/school-selection/ui/school-picker-screen.test.tsx`** — the
-  reference component test (mock at the mutator seam, real hook + `QueryClient`, assert
-  localized text).
-- **`mobile/.maestro/onboarding.yaml`** + **`mobile/e2e/`** — the real-round-trip e2e shape.
-- The Architecture Book sections "School selection", "Settings preferences", "Storage →
-  First feature schema — personal events", "Data layer", "Navigation & route structure",
-  "i18n", "Accessibility" — the rules these features embody.
+Good real examples are `settings` for typed preferences, `personal-events` for local CRUD
+and forms, and `school-selection` for server state plus persisted identity.

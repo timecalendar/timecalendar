@@ -3,7 +3,8 @@
 The exact rules and their options live in `mobile/eslint.config.js` (named blocks:
 `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`,
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
-`timecalendar/storage-seams`, `timecalendar/tests`). The config is the source of
+`timecalendar/calendar-kit-vendor-seam`, `timecalendar/storage-seams`,
+`timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
 ## Toolchain
@@ -85,17 +86,15 @@ truth; this file carries the caveats the config can't (R-1).
 - **No raw `fetch`** outside `src/api/mutator.ts`. Caveat: catches the bare global,
   not `globalThis.fetch`-style evasion — guards accident, not adversaries; review
   covers the rest.
-- **Wrapped libraries only through `src/components/chrome/`**
+- **Wrapped native chrome only through `src/components/chrome/`**
   (`chromeAlphaImportPatterns`, applied via the shared `restrictedImports` and re-set
   without the ban for the `timecalendar/chrome-seams` block): `expo-router/unstable-native-tabs`,
-  `expo-glass-effect`, `@expo/ui`, and `@howljs/calendar-kit` (+ subpaths) are banned
-  everywhere except the chrome wrapper dir. The first three are **alpha** APIs banned for
-  churn; **`@howljs/calendar-kit` is a STABLE dep banned for swap-reversibility** — the
-  #1-risk calendar surface on a single maintainer (ADR 020), so the constant name "alpha"
-  is incidental (its doc comment says "imports reachable only through a chrome wrapper"; a
-  rename is ADR 020's revisit trigger). Same static-import-only caveat as raw-fetch. The
-  seams these guard live in [theming.md](./theming.md) (alpha chrome) and
-  [calendar.md](./calendar.md) (calendar-kit).
+  `expo-glass-effect`, and `@expo/ui` (+ subpaths) are banned everywhere except the
+  chrome wrapper dir. `@howljs/calendar-kit` is also globally banned, but its exact
+  `features/calendar/renderer/calendar-kit/vendor.ts` seam receives a scoped exception.
+  Calendar UI and the neutral renderer facade cannot import the package. Same
+  static-import-only caveat as raw-fetch. See [theming.md](./theming.md) for native
+  chrome and [calendar.md](./calendar.md) for the renderer boundary.
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.
