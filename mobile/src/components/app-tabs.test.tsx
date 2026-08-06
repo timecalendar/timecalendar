@@ -11,7 +11,7 @@ import AppTabs from "@/components/app-tabs"
 // unions, so they need no runtime assertion here.
 jest.mock("@/components/chrome", () => {
   // Lazy require inside the factory (jest-hoist) + named components for
-  // display-name — the suite's established mock-factory shape (setup-calendar-kit).
+  // display-name — the suite's established calendar-kit mock-factory shape.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react")
   // eslint-disable-next-line @typescript-eslint/no-require-imports

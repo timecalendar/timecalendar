@@ -44,7 +44,7 @@ A clean refactor that prevents debt is SUCCESS, not a detour (migration-approach
 
 ## Guardrails
 - SERIAL only — never run two ships concurrently; each touches shared files (architecture.md, app.config.ts, lockfile, db schema) and would collide.
-- Every feature updates the Architecture Book + appends to architecture-changelog.md + adds an ADR if load-bearing (the implementer/reviewer enforce this — it's part of DoD).
+- Every feature updates current Architecture Book guidance when needed and adds an ADR only if the decision is costly to reverse.
 - Report faithfully at each merge: change name, PR link, merge SHA, inbox handoffs, what's next. If CI is red or a step was skipped, say so.
 - Delegate, don't code. Sub-agents do the work.
 ```

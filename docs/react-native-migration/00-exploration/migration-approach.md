@@ -32,7 +32,6 @@ Five living artifacts. Each has an owner-of-record (us) and a clear trigger for 
 | **Architecture Book** (**`docs/mobile/architecture-book/`** — that directory IS the book) | The living set of rules that drive development — only rules that *can't* be encoded in tooling. | A new load-bearing pattern is established or changed. |
 | **ADR log** (`decisions/NNN-*.md`) | One short record per architectural decision: context, choice, alternatives, "revisit if…". | Any load-bearing decision is made (see triage, [R-4](#6-working-rules-seed-of-the-architecture-book)). |
 | **Definition of Done** (`definition-of-done.md`) | The per-feature checklist below. | We add/remove a quality axis. |
-| **Rule changelog** (`architecture-changelog.md`) | The meta-doc: a dated log of *every change to the rules*, with why. **The act of documenting is itself documented here.** | The Architecture Book or DoD changes. |
 | **Golden-path exemplar** | The reference feature others copy, + scaffolding. | Hardened after Phase 1 ([§4](#4-phases)). |
 
 **Executable rules live in code, not here:** ESLint config (incl. **mandatory custom rules** — no hardcoded strings, a11y props on touchables, no direct `@react-navigation/*` imports, enforced import boundaries, etc.), `tsconfig` strict flags, CI gates, codegen. The Architecture Book documents only what tooling can't express, and links to the lint rule that enforces each rule that *can* be.
@@ -94,7 +93,7 @@ A feature is **done** when every item is **✅ Done** or **➖ N/A + one-line re
 - [ ] **Performance** — within budget; no jank on a low-end Android device; Reassure baseline for interaction-heavy screens.
 - [ ] **Observability** — errors reach Crashlytics; key actions logged; no PII leakage.
 - [ ] **Product analytics** — meaningful events defined, fired, and verified.
-- [ ] **Documentation** — reusable patterns documented; ADR added if architectural; **Rule changelog updated if any rule changed**.
+- [ ] **Documentation** — current reusable patterns documented; ADR added only for costly-to-reverse architectural decisions.
 
 ---
 
@@ -118,7 +117,7 @@ The book is **living, not graved.** Changing it is a first-class, documented act
 1. Propose the change (what rule, why, what it replaces).
 2. If load-bearing, write/_update_ an ADR.
 3. Update the Architecture Book (and the enforcing lint rule, per R-1).
-4. **Append a dated entry to the Rule changelog** explaining the change and its reason — *the act of changing the rules is itself recorded.*
+4. Let Git retain history; do not add implementation chronology to current-state pages.
 
 We *expect* to revise. Seeing a pattern fail and correcting it is success, not failure — the whole point of earning patterns over Phases 0–1.5 rather than freezing them on day one.
 

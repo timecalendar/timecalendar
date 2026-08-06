@@ -55,7 +55,7 @@ Each item is one full /ship (plan → apply → simplify → review-loop → arc
 ### Ship A — FCM push receive + the messaging seam (the load-bearing one)
 - Extend @/firebase (mobile/src/firebase/index.ts) with messaging, mirroring the Flutter notification.dart: requestPermission (iOS UNUserNotification + Android 13+ POST_NOTIFICATIONS), getToken with the iOS APNS-token-FIRST guard (getAPNSToken before getToken, exactly like the Flutter getFcmToken), foreground onMessage, the TOP-LEVEL setBackgroundMessageHandler (must register at module init, not inside a component — RN harness constraint), and a token-refresh listener. Keep the lazy-resolve-native-inside-each-helper posture (importing @/firebase must never touch native — safe in Jest).
 - NEW native dep @react-native-firebase/messaging v24 (match the installed RNFB v24) → config plugin in app.config.ts, iOS push entitlement (aps-environment) + UIBackgroundModes remote-notification, Android POST_NOTIFICATIONS permission, autolink check via prebuild. iOS static frameworks are ALREADY set (firebase.md) — messaging rides that; if a pod breaks, ios.forceStaticLinking is the escape.
-- ADR (load-bearing — mirror ADR 020/021 rigor): the messaging seam shape, re-affirm the Expo-Push rejection (FCM + firebase-admin, server unchanged), and the iOS-APNS-first token rule. FLIP firebase.md's "Messaging deferred" line to built + append to architecture-changelog.md.
+- ADR: record the messaging seam only if its rationale remains costly to reconstruct. Update firebase.md to describe the resulting current state.
 - CI proves: extend jest/setup-firebase.ts to mock native messaging; assert the seam drives permission/token/onMessage with expected args (the firebase.test.ts pattern). CI CANNOT prove a push ARRIVES — inbox the device step.
 
 ### Ship B — Token registration + subscription preferences
@@ -99,7 +99,7 @@ A clean refactor that prevents debt is SUCCESS, not a detour (migration-approach
 - SERIAL only — never run two ships concurrently; they grow shared files (architecture.md, firebase.md, app.config.ts, the @/firebase seam, Settings, the calendar/event routing, lockfile) and would collide.
 - SERVER IS UNCHANGED — no server ship, no server edits. The notification-subscription module + firebase-admin sender are frozen; treat them as read-only reference for parity only.
 - Don't mistake green CI for working push. The load-bearing exit criteria are device/release-only; CI proves wiring, the inbox note carries the rest. Report the gap honestly.
-- Every real ship updates the Architecture Book + appends to architecture-changelog.md + adds an ADR if load-bearing (the implementer/reviewer enforce this — it's part of DoD). Ship A flips firebase.md's Messaging-deferred line to built.
+- Every real ship updates current Architecture Book guidance when needed and adds an ADR only if the decision is costly to reverse.
 - Report faithfully at each merge: change name, PR link, merge SHA, inbox handoffs, what's next. If CI is red, a write path is untested, or a device criterion is only inboxed-not-proven, say so plainly.
 - Delegate, don't code. Sub-agents do the shippable work.
 ```

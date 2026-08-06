@@ -38,12 +38,10 @@ handbook.
 
 ### Governing documents (read these to understand *why*, not just *how*)
 
-- **`docs/mobile/architecture-book/`** — **the Architecture Book**: the living set of rules
-  driving `mobile/` development. `architecture.md` is the spine; `decisions/` holds
-  ADRs; `definition-of-done.md` is the per-feature quality gate; `architecture-changelog.md`
-  is the append-only rule-change log; `golden-path.md` is the (deliberately empty)
-  exemplar placeholder. **These are loaded into the agent's context every session**
-  and are binding.
+- **`docs/mobile/architecture-book/`** — the current mobile architecture reference.
+  `architecture.md` is the index, `decisions/` retains costly-to-reverse decisions,
+  `definition-of-done.md` is the quality gate, and `golden-path.md` guides new features.
+  Git holds history; the pages do not maintain a separate changelog.
 - **`docs/react-native-migration/`** — the migration program: `00-exploration/migration-approach.md`
   (the governing philosophy: vertical slices, finite-perfection DoD, working rules
   R-1…R-6), `01-roadmap/` (phased step list), `02-foundation-review/`, and `inbox/`

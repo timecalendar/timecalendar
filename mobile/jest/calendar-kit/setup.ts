@@ -1,4 +1,4 @@
-// Mock @howljs/calendar-kit for the whole suite: it is the calendar-kit chrome
+// Mock @howljs/calendar-kit for the whole suite: it is the current timeline renderer
 // seam's dependency, a Reanimated/worklet-saturated grid with no meaningful
 // off-device runtime (it needs the worklet runtime + a gesture-handler root), so
 // importing the calendar screen (which reaches calendar-kit through the chrome
