@@ -9,6 +9,8 @@ import { Platform } from "react-native"
 
 import {
   formatMonthYear,
+  quarterStartMs,
+  quarterWindow,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
@@ -77,6 +79,17 @@ jest.mock("expo-router", () => {
     },
   }
 })
+
+// The screen reads the bottom inset (bar-inclusive under native tabs) for the
+// grid-only under-the-bar scroll clearance; the library's official Jest mock
+// supplies zero-inset metrics without a provider tree.
+jest.mock(
+  "react-native-safe-area-context",
+  () =>
+    jest.requireActual<{ default: unknown }>(
+      "react-native-safe-area-context/jest/mock",
+    ).default,
+)
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
@@ -155,10 +168,12 @@ describe("CalendarScreen", () => {
     ).toBe(false)
   })
 
-  it("shifts the loaded events range when the grid is scrolled (onDateChanged)", async () => {
+  it("keeps the scrolled-to week within the loaded (quarter-quantized) range", async () => {
     await render(<CalendarScreen />)
-    // The grid mock fires onDateChanged with 2026-08-01 — the loaded range must
-    // then cover that day (otherwise a scrolled-to week renders no events).
+    // A settled scroll to 2026-08-01: the grid feeds calendar-kit a quarter-wide
+    // window (Issue 5), so the loaded range must cover the scrolled-to day —
+    // otherwise a scrolled-to week renders no events. (Within a quarter the range
+    // does not shift; it already covers — that is the anti-lag property.)
     fireEvent.press(screen.getByTestId("grid-date-change"))
     await waitFor(() => {
       const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
@@ -168,6 +183,61 @@ describe("CalendarScreen", () => {
       const target = new Date(2026, 7, 1).getTime() // Aug 1 2026, local
       expect(range.from.getTime()).toBeLessThanOrEqual(target)
       expect(range.to.getTime()).toBeGreaterThan(target)
+    })
+  })
+
+  it("shifts the feed window to the settled date's quarter on a cross-quarter settle", async () => {
+    // grid-date-change lands in the same quarter as the (~real-clock) mount, so it
+    // can't prove the feed MOVES. A settle to 2026-11-15 (Q4) must re-derive the
+    // range as exactly that date's quarter window — proving onDateChanged →
+    // windowStart → bucketMs → gridRange end to end, not a static mount range.
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("grid-cross-quarter"))
+    await waitFor(() => {
+      const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
+        from: Date
+        to: Date
+      }
+      const settled = new Date("2026-11-15T12:00:00.000Z")
+      const expected = quarterWindow(quarterStartMs(settled))
+      expect(range.from.getTime()).toBe(expected.from.getTime())
+      expect(range.to.getTime()).toBe(expected.to.getTime())
+    })
+  })
+
+  it("shifts the feed window mid-scroll on a cross-quarter onChange, before any settle (ADR 032)", async () => {
+    // The patched calendar-kit packs its event store live around the visible
+    // date while flinging (ADR 032), so a no-pause fling across a quarter
+    // boundary must move the fed window at the crossing — waiting for
+    // onDateChanged (settle) would let the pack run past the fed
+    // quarter+buffer onto days the prop never carried. Clock-robust in two
+    // steps: a SETTLE to Q4 2026 pins windowStart unconditionally (mount
+    // quarter irrelevant), then a mid-scroll tick (onChange ONLY) into
+    // Q1 2027 must shift the feed with no settle — were the onChange
+    // quarter-cross wiring deleted, the feed would still be Q4's window.
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("grid-cross-quarter"))
+    const q4 = quarterWindow(
+      quarterStartMs(new Date("2026-11-15T12:00:00.000Z")),
+    )
+    await waitFor(() => {
+      const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
+        from: Date
+      }
+      expect(range.from.getTime()).toBe(q4.from.getTime())
+    })
+
+    fireEvent.press(screen.getByTestId("grid-visible-cross-quarter"))
+    const expected = quarterWindow(
+      quarterStartMs(new Date("2027-02-10T12:00:00.000Z")),
+    )
+    await waitFor(() => {
+      const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
+        from: Date
+        to: Date
+      }
+      expect(range.from.getTime()).toBe(expected.from.getTime())
+      expect(range.to.getTime()).toBe(expected.to.getTime())
     })
   })
 
@@ -363,6 +433,8 @@ describe("CalendarScreen", () => {
     try {
       await render(<CalendarScreen />)
       expect(screen.queryByTestId("calendar-add")).toBeNull()
+      // Today falls back to a visible text label on Android (SF Symbol is iOS-only).
+      expect(screen.getByText("Today")).toBeTruthy()
       fireEvent.press(screen.getByTestId("calendar-fab"))
       expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
     } finally {
@@ -393,6 +465,21 @@ describe("CalendarScreen — month title + Today action", () => {
     fireEvent.press(screen.getByTestId("grid-date-change"))
     await waitFor(() => {
       expect(screen.getByText(scrolledTitle)).toBeTruthy()
+    })
+  })
+
+  it("tracks the title mid-scroll via onChange, before the scroll settles (Issue 6)", async () => {
+    // onChange fires per visible-column while scrolling; onDateChanged only at
+    // settle. The title must follow onChange — here a mid-scroll tick to
+    // 2026-09-01 (onChange ONLY, no onDateChanged) updates the title immediately.
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("grid-visible-change"))
+    const visibleTitle = formatMonthYear(
+      new Date("2026-09-01T00:00:00.000Z"),
+      "en",
+    )
+    await waitFor(() => {
+      expect(screen.getByText(visibleTitle)).toBeTruthy()
     })
   })
 

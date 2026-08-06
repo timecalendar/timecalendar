@@ -44,19 +44,60 @@ jest.mock("@howljs/calendar-kit", () => {
     props: {
       events?: unknown[]
       onPressEvent?: (event: unknown) => void
+      onChange?: (date: string) => void
       onDateChanged?: (date: string) => void
       children?: unknown
     },
     ref: unknown,
   ) {
     React.useImperativeHandle(ref, () => ({ goToDate: () => {} }), [])
-    // A stand-in for the real grid's scroll: pressing it fires onDateChanged with
-    // a fixed date so the screen's "range follows the visible week" wiring is
-    // provable without the Reanimated scroller (the real grid fires it on settle).
-    const dateChangeTrigger = props.onDateChanged
+    // Two stand-ins for the real grid's Reanimated scroll, mirroring calendar-kit's
+    // two callbacks (useSyncedList): `onChange` fires IMMEDIATELY on every visible-
+    // column change during a scroll; `onDateChanged` fires once the scroll SETTLES
+    // (debounced). "grid-date-change" models a settled scroll — it fires BOTH (the
+    // month title tracks via onChange, the settled anchor/range via onDateChanged).
+    // "grid-visible-change" models a mid-scroll tick — onChange ONLY — proving the
+    // title updates before settle (Issue 6) without moving the events range.
+    const settledScrollTrigger =
+      props.onChange || props.onDateChanged
+        ? React.createElement(Pressable, {
+            testID: "grid-date-change",
+            onPress: () => {
+              props.onChange?.("2026-08-01T00:00:00.000Z")
+              props.onDateChanged?.("2026-08-01T00:00:00.000Z")
+            },
+          })
+        : null
+    const visibleChangeTrigger = props.onChange
       ? React.createElement(Pressable, {
-          testID: "grid-date-change",
-          onPress: () => props.onDateChanged!("2026-08-01T00:00:00.000Z"),
+          testID: "grid-visible-change",
+          onPress: () => props.onChange!("2026-09-01T00:00:00.000Z"),
+        })
+      : null
+    // A settled scroll to a date in a DIFFERENT calendar quarter (Q4) than the
+    // suite's ~mount date — so the grid feed's quarter bucket actually SHIFTS,
+    // proving the onDateChanged → windowStart → bucketMs → gridRange wiring end to
+    // end (grid-date-change lands in the same quarter as mount, so it can't).
+    const crossQuarterTrigger = props.onDateChanged
+      ? React.createElement(Pressable, {
+          testID: "grid-cross-quarter",
+          onPress: () => {
+            props.onChange?.("2026-11-15T12:00:00.000Z")
+            props.onDateChanged!("2026-11-15T12:00:00.000Z")
+          },
+        })
+      : null
+    // A mid-scroll tick (onChange ONLY, no settle) into a DIFFERENT quarter —
+    // proving the feed window shifts DURING a no-pause fling across a quarter
+    // boundary (the patched calendar-kit packs live around the visible date, so
+    // waiting for settle would starve the pack past the fed quarter+buffer).
+    // Q1 2027 — a different quarter than grid-cross-quarter's Q4 2026, so a
+    // test can settle to Q4 first and make the mid-scroll shift clock-robust
+    // (the real-clock mount quarter never matters).
+    const visibleCrossQuarterTrigger = props.onChange
+      ? React.createElement(Pressable, {
+          testID: "grid-visible-cross-quarter",
+          onPress: () => props.onChange!("2027-02-10T12:00:00.000Z"),
         })
       : null
     return React.createElement(
@@ -64,7 +105,15 @@ jest.mock("@howljs/calendar-kit", () => {
       {
         value: { events: props.events ?? [], onPressEvent: props.onPressEvent },
       },
-      React.createElement(View, null, props.children, dateChangeTrigger),
+      React.createElement(
+        View,
+        null,
+        props.children,
+        settledScrollTrigger,
+        visibleChangeTrigger,
+        crossQuarterTrigger,
+        visibleCrossQuarterTrigger,
+      ),
     )
   })
 

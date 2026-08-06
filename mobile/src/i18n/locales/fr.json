@@ -122,6 +122,7 @@
   "calendar.view.week": "Semaine",
   "calendar.view.agenda": "Agenda",
   "calendar.todayLabel": "Aller à aujourd'hui",
+  "calendar.today": "Aujourd'hui",
   "calendar.add": "+",
   "calendar.addLabel": "Ajouter un événement",
   "calendar.empty": "Aucun événement sur cette période.",

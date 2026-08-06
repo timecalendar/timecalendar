@@ -133,6 +133,30 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   tail-truncation path (wrap + char-break every line, ellipsise only the last); `ellipsizeMode="clip"`
   must NOT be used — it re-selects the clipping mode. The tile's `overflow:"hidden"` is the
   short-tile backstop so the trailing "…" stays hidden there (Apple/Google week-tile model).
+- **Nav-bar actions (backlog Issue 3 — device complaint: the hand-drawn Today/Add glyphs read as
+  one glued icon and weren't platform-standard):** Today + Add render as real **SF Symbols on iOS**
+  through the app's `expo-symbols` seam (`SymbolView`) — Today = `calendar`, Add = `plus` (Apple's
+  bare nav-bar add glyph; `plus.circle` is the inline/list-row idiom, not this one). **No new
+  dependency, no ADR** — `expo-symbols` is a plain import already used in three features
+  (`school-selection/status-symbol`, `school-selection/school-row`, `calendar-sources/user-calendars`);
+  the backlog's "no icon font is wired" diagnosis is **stale** (it predates the expo-symbols adoption).
+  **Android falls back to themed text** (`SymbolView` renders **blank** for a bare *string* SF name on
+  Android — `SymbolView.js` resolves only object `{android}` names to a Material glyph — so the
+  platform gets an explicit `ThemedText` fallback, the app's established idiom mirroring
+  `user-calendars/TrashAffordance`). Load-bearing rules prose must carry (lint/types can't):
+  **(1)** each action is a **44pt (iOS) / 48dp (Android)** target (HIG / Material 3 minimums) with
+  **no `hitSlop`** — the frame *is* the target; hitSlop on adjacent bar items overlaps across the
+  `gap: Spacing.two` (8px) and steals mis-aimed taps toward the frontmost sibling; the 8px gap between
+  two 24pt glyphs (~28px apart) is what kills the "glued glyph". **(2)** the Android text label is
+  `themeColor="text"` (on-surface ~21:1), **not** brand `primary` (#E91E63 on white = 4.35:1, below the
+  WCAG 1.4.3 4.5:1 body-text floor — `primary` is a **tint-only** tone per theming.md's contrast block;
+  there is no scheme-adaptive brand-text token). The accessible name is the translated action
+  (`calendar.todayLabel` / `calendar.addLabel`), **never** the glyph; the FR visible label is the full
+  `Aujourd'hui` (a substring of the accessible name — SC 2.5.3 Label-in-Name), not an abbreviation. On
+  Android the **create** action stays a **FAB** (Material primary-action idiom); only **Today** renders
+  as header text there. **`calendar`-as-"today" legibility is device-verify** (no SF Symbol encodes
+  "today" — the full `calendar.*` union is static/day-numberless; `calendar` is the most defensible
+  generic, the accessible name carries the true meaning for VoiceOver).
 - **All-day events (backlog Issue 2 — a rendering projection keyed on `allDay`, NOT a stored
   timestamp change — ADR 021/D1):** `mapToEventItem` branches on `CalendarEvent.allDay` and maps an
   all-day event to calendar-kit's **date-only** `start:{date}/end:{date}` shape so the library lanes
@@ -162,6 +186,57 @@ Owned **regardless of the renderer** (ADR 019's salvage mandate), under
   `max(startsAt, endsAt − 1ms)` so a degenerate zero-duration all-day event doesn't invert its span and
   get dropped by the lib's `isValidEventRange`. The suite mock replicates the `duration ≥ 24h` laning rule
   so both branches are provable off-device.
+- **Scroll-perf: two visible-window signals, not one (backlog Issues 5 + 6).** calendar-kit fires two
+  date callbacks (`src/hooks/useSyncedList.tsx`): **`onChange`** on every visible-column change *during*
+  a scroll (immediate), and **`onDateChanged`** only once the scroll **settles** (150ms-debounced). The
+  screen keeps two states off them: **`windowStart`** ← `onDateChanged` (the settled anchor — seeds the
+  grid feed + the agenda's exact window + the mount position) and **`visibleDate`** ← `onChange` (the
+  month-year **title** only). **Issue 6** (title lagged seconds behind the scroll) was the title riding
+  `onDateChanged`; it now rides `visibleDate`, so it tracks the visible page promptly. Frequent
+  `visibleDate` updates are cheap: the inline `onChange`/`onDateChanged` arrows are wrapped in the lib's
+  `useLatestCallback` (`context/ActionsProvider.tsx:20`), so new arrow identities never re-pack the grid,
+  and the grid feed (below) is memoized independently of `visibleDate`. **Issue 5** (events lagged on a
+  fast multi-week fling) was a **starved buffer**: the old feed range-filtered to `windowStart −7d…+14d`
+  (~3wk) — **narrower** than calendar-kit's own internal pack window (`pagesPerSide=2` default
+  `CalendarContainer.tsx:116` × `defaultOffset=7` `EventsProvider.tsx` ≈ −2wk/+3wk) — **and** shifted only
+  at settle, so the lib's buffer pages had no events fed to them until the fling stopped. The grid now
+  feeds a **quarter-quantized window** (`data/event-window.ts` — `quarterStartMs` + `quarterWindow`):
+  `useMemo(() => quarterWindow(bucketMs), [bucketMs])` keyed on the quarter's start-ms, so the feed is
+  **referentially stable while scrolling within a quarter** (no per-settle refilter/remap, no lib
+  `useEffect([events])` re-pack — `EventsProvider.tsx`), the lib windows it to the visible page
+  internally, and a **±2-month buffer** (7-month span, `BUFFER_MONTHS` — coupled to `pagesPerSide`, see the
+  fast-fling bullet below) keeps the boundary page fed across a quarter cross. This **bounds the prop to ~a quarter of events (it scales)** instead of the whole synced table,
+  and stays a JS **projection width** (the read is the coalesced whole-table reactive read — ADR 021
+  `harden-mobile-db-seam`), **not** a SQL scope, so the documented O(N²) re-read storm cannot recur. The
+  **agenda** keeps its own tight exact-week range (no calendar-kit windowing). The suite mock models three
+  triggers (`grid-date-change` = a settled scroll firing onChange then onDateChanged; `grid-visible-change`
+  = a mid-scroll onChange only; `grid-cross-quarter` = a settled scroll to a different quarter, proving the
+  `onDateChanged → windowStart → bucketMs → gridRange` wiring shifts the feed) so the behavior is provable
+  off-device.
+- **Fast-fling paint: the events-store anchor is patched to track the scroll live (backlog Issue 5;
+  ADR [032](./decisions/032-calendar-kit-vendor-patch-live-anchor.md)).** calendar-kit paints events ONLY
+  from an internal store (`context/EventsProvider.tsx`) packed over `anchor ± (defaultOffset=7 ·
+  pagesPerSide)` days; mid-fling the list *mounts* upcoming pages (grid lines slide in) but each page reads
+  `regularEvents[day]` from that store — beyond the packed radius a page is **mounted-but-eventless**.
+  Unpatched, the anchor advances only ~300ms after the scroll FULLY stops: a Reanimated offset reaction
+  (`service/CalendarList/index.tsx`) fires `onVisibleColumnChanged` on **every scroll frame**, and each call
+  resets the 150ms settle debounce in `hooks/useSyncedList.tsx` (a second trailing 150ms debounce sits in
+  `context/VisibleDateProvider.tsx`) — so a sustained fast scroll freezes the anchor at its starting week
+  and blanks every page past the radius, however large the radius (`pagesPerSide` only moves the cliff; no
+  prop or handle reaches the mechanism — `CalendarKitHandle.setVisibleDate` writes refs, not the store).
+  **`patches/@howljs+calendar-kit+2.5.6.patch`** (patch-package, applied on `postinstall`; patches the lib's
+  `src/`, which is what Metro runs — the package's `react-native: src/index` field) fixes the mechanism:
+  (1) `useSyncedList` advances the store anchor (`notifyDateChanged`) on every visible-COLUMN change, with a
+  separate `lastDateChangedUnix` ref preserving the settled `onDateChanged` semantics exactly (the app-visible
+  callback contract is unchanged); (2) `VisibleDateProvider`'s trailing debounce becomes a **leading+trailing
+  150ms throttle**, so the store re-packs at most every 150ms DURING a fling instead of never.
+  `pagesPerSide={GRID_PAGES_PER_SIDE}` (4) stays as runway — ±4-5wk of packed radius covers scroll travel
+  within a re-pack tick — and `BUFFER_MONTHS` (event-window.ts, 2) is coupled: the fed prop must exceed
+  anchor travel + pack reach past the quarter edge. Cost bound: ≤1 full re-pack per 150ms during a fling,
+  each re-rendering every mounted page (the lib's store selectors pass no `isEqual`) — the dense-calendar
+  device pass owns that bar (`inbox/2026-06-16-calendar-low-end-android-perf.md`). The quarter feed (above)
+  stays load-bearing for prop identity; the Jest suite mocks the lib, so the patch is device/panel-proven,
+  not unit-proven.
 - A thin route `src/app/(tabs)/calendar.tsx` re-exports the screen through the `ui/`
   sub-barrel (route-structure rule). It is the **Calendar tab** — the middle of the
   three-tab bar (Home · Calendar · Profile, Flutter parity — ADR [025](./decisions/025-calendar-tab-three-tab-ia.md)),
