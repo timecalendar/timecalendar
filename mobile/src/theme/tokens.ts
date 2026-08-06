@@ -12,6 +12,8 @@ export const Colors = {
     primaryStrong: "#C2185B",
     onPrimary: "#ffffff",
     primarySoft: "#E91E631F",
+    homeHero: "#FCE4EC",
+    homeHeroDate: "#AD1457",
     logoSurface: "#ffffff",
     separator: "#C6C6C8",
     ripple: "#0000001F",
@@ -27,6 +29,8 @@ export const Colors = {
     primaryStrong: "#C2185B",
     onPrimary: "#ffffff",
     primarySoft: "#FF40811F",
+    homeHero: "#321824",
+    homeHeroDate: "#FF80AB",
     logoSurface: "#ffffff",
     separator: "#38383A",
     ripple: "#FFFFFF1F",
@@ -56,6 +60,12 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - text            on backgroundSelected  #fff on #2E3135 → 13.6:1 (AAA)
  *   - textSecondary   on background          #B0B4BA on #000 → 10.3:1 (AAA)
  *   - textSecondary   on backgroundElement   #B0B4BA on #212225 → 7.9:1 (AAA)
+ *
+ *   HOME HERO
+ *   - text on homeHero             #000 on #FCE4EC → 17.45:1 (light, AAA)
+ *   - homeHeroDate on homeHero #AD1457 on #FCE4EC → 5.79:1 (light, AA)
+ *   - text on homeHero             #fff on #321824 → 16.26:1 (dark, AAA)
+ *   - homeHeroDate on homeHero #FF80AB on #321824 → 6.91:1 (dark, AA)
  *
  *   BRAND (pink) — `primary` is the Flutter brand hue, re-verified for this change.
  *   The brand has TWO usable tones; which one a site uses is the load-bearing rule:

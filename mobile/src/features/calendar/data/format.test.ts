@@ -1,5 +1,6 @@
 import {
   formatDayHeaderParts,
+  formatDayMonth,
   formatEventDateRange,
   formatFullDateTime,
   formatFullDay,
@@ -11,6 +12,13 @@ import {
 // A known Monday (2026-06-15) and a Tuesday — local-time so the formatting is
 // TZ-independent.
 const monday = new Date(2026, 5, 15, 9, 0, 0, 0)
+
+describe("formatDayMonth", () => {
+  it("formats the Home date without the redundant year", () => {
+    expect(formatDayMonth(monday, "en")).toBe("Monday 15 June")
+    expect(formatDayMonth(monday, "fr")).toBe("lundi 15 juin")
+  })
+})
 
 describe("formatDayHeaderParts", () => {
   it("uppercases the short weekday per locale", () => {

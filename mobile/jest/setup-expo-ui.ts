@@ -119,3 +119,52 @@ jest.mock("@expo/ui/community/datetime-picker", () => {
 
   return { __esModule: true, default: DateTimePicker, DateTimePicker }
 })
+
+jest.mock("@expo/ui/community/menu", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Pressable, Text, View } = require("react-native")
+
+  const MenuView = React.forwardRef(function MenuView(
+    props: {
+      actions: { id?: string; title: string; state?: string }[]
+      children?: unknown
+      onPressAction?: (event: { nativeEvent: { event: string } }) => void
+    },
+    ref: unknown,
+  ) {
+    const [expanded, setExpanded] = React.useState(false)
+    React.useImperativeHandle(ref, () => ({ show: () => setExpanded(true) }))
+    return React.createElement(
+      View,
+      null,
+      React.createElement(
+        Pressable,
+        { onPress: () => setExpanded(true) },
+        props.children,
+      ),
+      expanded &&
+        props.actions.map((action) =>
+          React.createElement(
+            Pressable,
+            {
+              key: action.id ?? action.title,
+              testID: `menu-action-${action.id ?? action.title}`,
+              accessibilityRole: "button",
+              accessibilityLabel: action.title,
+              onPress: () => {
+                props.onPressAction?.({
+                  nativeEvent: { event: action.id ?? action.title },
+                })
+                setExpanded(false)
+              },
+            },
+            React.createElement(Text, null, action.title),
+          ),
+        ),
+    )
+  })
+
+  return { __esModule: true, default: MenuView, MenuView }
+})

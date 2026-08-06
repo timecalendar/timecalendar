@@ -4,7 +4,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import { router } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
 import { Platform } from "react-native"
 
 import {
@@ -46,7 +46,8 @@ jest.mock("expo-router", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text } = require("react-native")
   return {
-    router: { push: jest.fn() },
+    router: { push: jest.fn(), setParams: jest.fn() },
+    useLocalSearchParams: jest.fn(() => ({})),
     Stack: {
       Screen: ({
         options,
@@ -95,6 +96,8 @@ const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockSync = jest.fn()
 const mockPush = router.push as jest.Mock
+const mockSetParams = router.setParams as jest.Mock
+const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 
 function syncState(overrides = {}) {
   return {
@@ -131,10 +134,37 @@ beforeEach(() => {
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
   mockSync.mockReset()
   mockPush.mockReset()
+  mockSetParams.mockReset()
+  mockUseLocalSearchParams.mockReturnValue({})
   mockUseSyncCalendars.mockReturnValue(syncState())
 })
 
 describe("CalendarScreen", () => {
+  it("consumes a one-shot Home focus date without changing the selected view", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-06" })
+    await render(<CalendarScreen />)
+    await waitFor(() => {
+      const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
+        from: Date
+        to: Date
+      }
+      const target = new Date(2026, 7, 6).getTime()
+      expect(range.from.getTime()).toBeLessThanOrEqual(target)
+      expect(range.to.getTime()).toBeGreaterThan(target)
+      expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
+    })
+    expect(screen.getByTestId("grid-go-to-date").props.accessibilityLabel).toBe(
+      JSON.stringify({
+        date: new Date(2026, 7, 6).toISOString(),
+        animatedDate: true,
+        hourScroll: true,
+      }),
+    )
+    expect(
+      screen.getByTestId("calendar-view-item-week").props.accessibilityState
+        .selected,
+    ).toBe(true)
+  })
   it("renders a fixture event's tile with its title and location", async () => {
     await render(<CalendarScreen />)
     expect(screen.getByText("Algorithms")).toBeTruthy()
@@ -433,10 +463,42 @@ describe("CalendarScreen", () => {
     try {
       await render(<CalendarScreen />)
       expect(screen.queryByTestId("calendar-add")).toBeNull()
-      // Today falls back to a visible text label on Android (SF Symbol is iOS-only).
-      expect(screen.getByText("Today")).toBeTruthy()
+      expect(screen.queryByText("Today")).toBeNull()
+      expect(screen.getByLabelText("Go to today")).toBeTruthy()
       fireEvent.press(screen.getByTestId("calendar-fab"))
       expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
+    } finally {
+      Platform.OS = original
+    }
+  })
+
+  it("uses a compact menu trigger to change views on Android", async () => {
+    const original = Platform.OS
+    Platform.OS = "android"
+    try {
+      await render(<CalendarScreen />)
+      expect(screen.getByTestId("calendar-view")).toBeTruthy()
+      expect(screen.queryByTestId("menu-action-day")).toBeNull()
+      fireEvent.press(screen.getByTestId("calendar-view"))
+      await waitFor(() => {
+        expect(screen.getByTestId("menu-action-week")).toBeTruthy()
+      })
+      fireEvent.press(screen.getByTestId("menu-action-week"))
+      await waitFor(() => {
+        expect(screen.queryByTestId("menu-action-week")).toBeNull()
+      })
+      fireEvent(screen.getByTestId("calendar-view"), "accessibilityAction", {
+        nativeEvent: { actionName: "activate" },
+      })
+      await waitFor(() => {
+        expect(screen.getByTestId("menu-action-day")).toBeTruthy()
+      })
+      fireEvent.press(screen.getByTestId("menu-action-day"))
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("calendar-view").props.accessibilityLabel,
+        ).toBe("Day")
+      })
     } finally {
       Platform.OS = original
     }

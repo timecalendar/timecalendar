@@ -1,20 +1,5 @@
-// The home view's pure "what day to show + the digest" selectors (D4) — 90%-gated.
-// Pure: no React, no @/db, no t(), no date-fns. They consume the merged events from
-// the unchanged calendar events-source seam and decide the displayed day, the day's
-// events, and the timeline's dynamic hour window. They are the ONLY genuinely new
-// logic in this ship; everything else (layout, pixel math, formatting, the read,
-// sync, routing) is landed seams reused as-is.
-
 import { type CalendarEvent } from "@/features/calendar/data"
 
-function localMidnight(date: Date): Date {
-  const midnight = new Date(date)
-  midnight.setHours(0, 0, 0, 0)
-  return midnight
-}
-
-// Local Y-M-D key (NOT UTC) so a 23:30-local event buckets on its own local day,
-// mirroring the agenda's localDayKey / Flutter `isSameDate`.
 function localDayKey(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, "0")
@@ -22,51 +7,147 @@ function localDayKey(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-// The day the home page shows (Flutter `dayDisplayedOnHomePageProvider` parity):
-// TODAY (local midnight) if any event ENDS after `now` on today's local calendar
-// day; else local midnight of the FIRST event starting after `now`; else today.
-//
-// We key "today has something left" on `endsAt > now` (an in-progress class still
-// counts) — a deliberate refinement over Flutter's `startsAt.isAfter(today)`, which
-// keyed on the day boundary. Recorded here so it isn't "fixed" back to the Flutter
-// form.
-export function displayedDay(events: CalendarEvent[], now: Date): Date {
-  const today = localMidnight(now)
-  const todayKey = localDayKey(now)
-
-  const hasRemainingToday = events.some(
-    (event) => localDayKey(event.startsAt) === todayKey && event.endsAt > now,
-  )
-  if (hasRemainingToday) return today
-
-  let nextFuture: CalendarEvent | undefined
-  for (const event of events) {
-    if (event.startsAt > now) {
-      if (nextFuture === undefined || event.startsAt < nextFuture.startsAt) {
-        nextFuture = event
-      }
-    }
-  }
-  if (nextFuture !== undefined) return localMidnight(nextFuture.startsAt)
-
-  return today
+function utcDayKey(date: Date): string {
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
+  const day = String(date.getUTCDate()).padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
-// The events whose `startsAt` falls on `day`'s local calendar day, sorted by start
-// with a stable `id` tie-break (mirroring groupEventsByDay / layoutOverlaps for
-// deterministic ordering).
+function representedDayKey(event: CalendarEvent): string {
+  return event.allDay ? utcDayKey(event.startsAt) : localDayKey(event.startsAt)
+}
+
+function localDateFromKey(key: string): Date {
+  const [year, month, day] = key.split("-").map(Number)
+  return new Date(year!, month! - 1, day!)
+}
+
 export function eventsForDay(
   events: CalendarEvent[],
   day: Date,
 ): CalendarEvent[] {
-  const dayKey = localDayKey(day)
+  const dayStart = new Date(day)
+  dayStart.setHours(0, 0, 0, 0)
+  const dayEnd = new Date(dayStart)
+  dayEnd.setDate(dayEnd.getDate() + 1)
+  const floatingKey = localDayKey(dayStart)
   return events
-    .filter((event) => localDayKey(event.startsAt) === dayKey)
+    .filter((event) =>
+      event.allDay
+        ? utcDayKey(event.startsAt) <= floatingKey &&
+          utcDayKey(event.endsAt) > floatingKey
+        : event.startsAt < dayEnd && event.endsAt > dayStart,
+    )
     .sort((a, b) => {
       const byStart = a.startsAt.getTime() - b.startsAt.getTime()
-      if (byStart !== 0) return byStart
-      return a.id.localeCompare(b.id)
+      return byStart === 0 ? a.id.localeCompare(b.id) : byStart
     })
+}
+
+export function remainingEvents(
+  events: CalendarEvent[],
+  now: Date,
+): CalendarEvent[] {
+  return events.filter((event) => event.allDay || event.endsAt > now)
+}
+
+export function splitDayEvents(events: CalendarEvent[]): {
+  allDay: CalendarEvent[]
+  timed: CalendarEvent[]
+} {
+  return {
+    allDay: events.filter((event) => event.allDay),
+    timed: events.filter((event) => !event.allDay),
+  }
+}
+
+export interface NextActiveDay {
+  day: Date
+  events: CalendarEvent[]
+  firstTimedStart: Date | undefined
+}
+
+export function nextActiveDay(
+  events: CalendarEvent[],
+  now: Date,
+): NextActiveDay | undefined {
+  const todayKey = localDayKey(now)
+  const firstKey = events
+    .map(representedDayKey)
+    .filter((key) => key > todayKey)
+    .sort()[0]
+  if (firstKey === undefined) return undefined
+  const day = localDateFromKey(firstKey)
+  const dayEvents = eventsForDay(events, day)
+  return {
+    day,
+    events: dayEvents,
+    firstTimedStart: dayEvents.find((event) => !event.allDay)?.startsAt,
+  }
+}
+
+export type GreetingPeriod =
+  | "early"
+  | "morning"
+  | "midday"
+  | "afternoon"
+  | "evening"
+  | "night"
+
+export interface GreetingSelection {
+  period: GreetingPeriod
+  weekend: boolean
+  variant: 0 | 1
+}
+
+export function greetingSelection(now: Date): GreetingSelection {
+  const hour = now.getHours()
+  const period: GreetingPeriod =
+    hour >= 5 && hour < 9
+      ? "early"
+      : hour >= 9 && hour < 12
+        ? "morning"
+        : hour >= 12 && hour < 14
+          ? "midday"
+          : hour >= 14 && hour < 18
+            ? "afternoon"
+            : hour >= 18 && hour < 22
+              ? "evening"
+              : "night"
+  const hash = Number(localDayKey(now).replaceAll("-", ""))
+  return {
+    period,
+    weekend: now.getDay() === 0 || now.getDay() === 6,
+    variant: (hash % 2) as 0 | 1,
+  }
+}
+
+export type DayCaption =
+  | { kind: "empty" | "finished" | "allDayOnly" }
+  | { kind: "ongoing"; end: Date }
+  | { kind: "singleFuture"; start: Date; end: Date }
+  | { kind: "futureSpan"; start: Date; end: Date }
+
+export function dayCaption(events: CalendarEvent[], now: Date): DayCaption {
+  if (events.length === 0) return { kind: "empty" }
+  const timed = events.filter((event) => !event.allDay)
+  if (timed.length === 0) return { kind: "allDayOnly" }
+  const ongoing = timed.find(
+    (event) => event.startsAt <= now && event.endsAt > now,
+  )
+  if (ongoing !== undefined) return { kind: "ongoing", end: ongoing.endsAt }
+  const future = timed.filter((event) => event.startsAt > now)
+  if (future.length === 0) return { kind: "finished" }
+  const first = future[0]!
+  if (future.length === 1) {
+    return { kind: "singleFuture", start: first.startsAt, end: first.endsAt }
+  }
+  const lastEnd = future.reduce(
+    (latest, event) => (event.endsAt > latest ? event.endsAt : latest),
+    first.endsAt,
+  )
+  return { kind: "futureSpan", start: first.startsAt, end: lastEnd }
 }
 
 export interface HourRange {
@@ -74,26 +155,37 @@ export interface HourRange {
   endHour: number
 }
 
-// The today timeline's dynamic hour window (Flutter `today_events` parity):
-// startHour = min(event start hour), endHour = max(event end hour) + 1; empty →
-// the 8–18 fallback. Clamped to [0, 24].
-export function dynamicHourRange(events: CalendarEvent[]): HourRange {
-  if (events.length === 0) return { startHour: 8, endHour: 18 }
-
-  let startHour = 24
-  let endHour = 0
-  for (const event of events) {
-    startHour = Math.min(startHour, event.startsAt.getHours())
-    endHour = Math.max(endHour, event.endsAt.getHours() + 1)
+export function dynamicHourRange(
+  events: CalendarEvent[],
+  day: Date,
+): HourRange {
+  const timed = events.filter((event) => !event.allDay)
+  if (timed.length === 0) return { startHour: 8, endHour: 18 }
+  const dayStart = new Date(day)
+  dayStart.setHours(0, 0, 0, 0)
+  const dayEnd = new Date(dayStart)
+  dayEnd.setDate(dayEnd.getDate() + 1)
+  let startMinute = 24 * 60
+  let endMinute = 0
+  for (const event of timed) {
+    const visibleStart = event.startsAt < dayStart ? dayStart : event.startsAt
+    const visibleEnd = event.endsAt > dayEnd ? dayEnd : event.endsAt
+    const startsAtMinute =
+      visibleStart.getTime() === dayStart.getTime()
+        ? 0
+        : visibleStart.getHours() * 60 + visibleStart.getMinutes()
+    const endsAtMinute =
+      visibleEnd.getTime() === dayEnd.getTime()
+        ? 24 * 60
+        : visibleEnd.getHours() * 60 + visibleEnd.getMinutes()
+    startMinute = Math.min(startMinute, startsAtMinute)
+    endMinute = Math.max(endMinute, endsAtMinute)
   }
-
-  const clampedStart = Math.max(0, Math.min(24, startHour))
-  // endHour derives from the local end-of-day hour, so a cross-midnight event
-  // (starts 23:30, ends 00:30 next day, bucketed on its start day by eventsForDay)
-  // would otherwise yield an inverted range (start 23 > end 1) — feeding the
-  // timeline a negative grid height + empty hour labels. Guarantee a valid,
-  // non-empty window of at least one hour past the start.
-  const clampedEnd = Math.min(24, Math.max(clampedStart + 1, endHour))
-
-  return { startHour: clampedStart, endHour: clampedEnd }
+  return {
+    startHour: Math.floor(startMinute / 60),
+    endHour: Math.max(
+      Math.floor(startMinute / 60) + 1,
+      Math.ceil(endMinute / 60),
+    ),
+  }
 }
