@@ -24,11 +24,11 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="profile">
+      <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>
-          {t("profile.tab.label")}
+          {t("settingsHub.tab.label")}
         </NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.crop.circle" md="person" />
+        <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
       </NativeTabs.Trigger>
     </NativeTabs>
   )

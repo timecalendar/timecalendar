@@ -3,6 +3,7 @@ import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
+import { GlassSurface } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -22,15 +23,21 @@ export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {
         </ThemedText>
       </View>
       {Platform.OS === "ios" && (
-        <Pressable
-          testID="home-add-personal-event"
-          accessibilityRole="button"
-          accessibilityLabel={t("home.addPersonalEvent")}
-          onPress={onAdd}
-          style={styles.headerAction}
+        <GlassSurface
+          glassEffectStyle="regular"
+          isInteractive
+          style={styles.headerActionGlass}
         >
-          <SymbolView name="plus" size={24} tintColor={theme.primary} />
-        </Pressable>
+          <Pressable
+            testID="home-add-personal-event"
+            accessibilityRole="button"
+            accessibilityLabel={t("home.addPersonalEvent")}
+            onPress={onAdd}
+            style={styles.headerAction}
+          >
+            <SymbolView name="plus" size={24} tintColor={theme.text} />
+          </Pressable>
+        </GlassSurface>
       )}
     </View>
   )
@@ -73,9 +80,14 @@ const styles = StyleSheet.create({
   },
   logo: { width: 30, height: 30 },
   appName: { fontSize: 21, lineHeight: 28, fontWeight: "700" },
-  headerAction: {
+  headerActionGlass: {
     width: 44,
     height: 44,
+    borderRadius: Radii.pill,
+    overflow: "hidden",
+  },
+  headerAction: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },

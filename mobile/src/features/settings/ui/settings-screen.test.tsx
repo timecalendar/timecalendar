@@ -1,73 +1,130 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render, screen } from "@testing-library/react-native"
+import { router } from "expo-router"
 
-import { SETTINGS_KEYS } from "@/features/settings/prefs"
-import i18n from "@/i18n"
-import { getString, remove } from "@/storage"
+import {
+  useUserCalendars,
+  useUserCalendarsLoaded,
+} from "@/features/calendar-sources"
 
-import SettingsScreen from "./settings-screen"
+import { SettingsScreen } from "./settings-screen"
 
-// Proof that the Settings screen wiring resolves through the real theme + i18n +
-// A1 prefs (MMKV) trees (mirrors the splash / themed-text proofs). @expo/ui's
-// native universal controls are mocked suite-wide in jest/setup-expo-ui.ts: Host
-// passes children through, each Picker.Item renders as a pressable that drives
-// the picker's onValueChange — so the screen → chrome wrapper → A1 hook → @/storage
-// path is genuinely exercised (mock at the native seam, not the screen). What CI
-// proves: render + control→hook wiring. The native picker feel / OS popup /
-// VoiceOver / contrast are the on-device half (inbox, design D7).
+jest.mock("@/features/calendar-sources", () => ({
+  useUserCalendars: jest.fn(),
+  useUserCalendarsLoaded: jest.fn(),
+}))
 
-beforeEach(async () => {
-  // Reset both preferences to the "system" default (no stored value) so each
-  // case starts from the documented default.
-  remove(SETTINGS_KEYS.theme)
-  remove(SETTINGS_KEYS.language)
-  // The language case calls i18n.changeLanguage("fr") on the shared module-scoped
-  // instance; reset to en so the suite stays hermetic regardless of order.
-  await i18n.changeLanguage("en")
+jest.mock("expo-router", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react")
+  const router = { push: jest.fn() }
+  return {
+    router,
+    Link: ({
+      href,
+      children,
+    }: {
+      href: string
+      children: React.ReactElement
+    }) => React.cloneElement(children, { onPress: () => router.push(href) }),
+  }
+})
+
+jest.mock("expo-symbols", () => ({
+  SymbolView: () => null,
+}))
+
+const mockCalendars = useUserCalendars as jest.Mock
+const mockLoaded = useUserCalendarsLoaded as jest.Mock
+const mockPush = router.push as jest.Mock
+
+beforeEach(() => {
+  mockCalendars.mockReturnValue([])
+  mockLoaded.mockReturnValue(true)
+  mockPush.mockReset()
 })
 
 describe("SettingsScreen", () => {
-  it("renders the localized title and both control labels (not raw keys)", async () => {
-    const { getByText } = await render(<SettingsScreen />)
-
-    // EN catalog values (jest-expo device locale resolves to en), not the keys.
-    expect(getByText("Settings")).toBeTruthy()
-    expect(getByText("Theme")).toBeTruthy()
-    expect(getByText("Language")).toBeTruthy()
-  })
-
-  it("reflects the current preference (default 'system') in each control", async () => {
-    const { getByTestId } = await render(<SettingsScreen />)
-
-    // The mock marks the selected item accessibilityState.selected. Both
-    // default to "system" until the user overrides.
+  it("renders localized groups in order with only live destinations", async () => {
+    await render(<SettingsScreen />)
+    const events = screen.getByTestId("settings-section-events")
+    const preferences = screen.getByTestId("settings-section-preferences")
+    expect(events).toBeOnTheScreen()
+    expect(preferences).toBeOnTheScreen()
+    expect(screen.getByText("Personal events")).toBeTruthy()
+    expect(screen.getByText("Hidden events")).toBeTruthy()
+    expect(screen.getByText("Appearance & language")).toBeTruthy()
+    expect(screen.getByText("Notifications")).toBeTruthy()
+    expect(screen.queryByText("Activity")).toBeNull()
+    expect(screen.queryByText("About")).toBeNull()
+    expect(screen.queryByText("Feedback")).toBeNull()
+    expect(screen.queryByText("Add calendar")).toBeNull()
+    expect(screen.queryByText("TIMECALENDAR")).toBeNull()
+    expect(screen.queryByText("More")).toBeNull()
     expect(
-      getByTestId("settings-theme-picker-item-system").props.accessibilityState
-        .selected,
-    ).toBe(true)
+      screen.queryByText("Calendars, events, and preferences in one place."),
+    ).toBeNull()
+  })
+
+  it("does not announce an empty summary while loading", async () => {
+    mockLoaded.mockReturnValue(false)
+    await render(<SettingsScreen />)
     expect(
-      getByTestId("settings-language-picker-item-system").props
-        .accessibilityState.selected,
-    ).toBe(true)
+      screen.getByTestId("settings-calendar-summary-loading", {
+        includeHiddenElements: true,
+      }),
+    ).toBeTruthy()
+    expect(screen.queryByText("Add your first calendar")).toBeNull()
   })
 
-  it("drives the theme preference setter when a theme option is selected", async () => {
-    const { getByTestId } = await render(<SettingsScreen />)
+  it("presents calendar counts without exposing source names as headings", async () => {
+    const { rerender } = await render(<SettingsScreen />)
+    expect(screen.getByText("Your calendars")).toBeTruthy()
+    expect(screen.getByText("Manage calendars")).toBeTruthy()
+    expect(screen.getByText("Add your first calendar")).toBeTruthy()
 
-    fireEvent.press(getByTestId("settings-theme-picker-item-dark"))
+    mockCalendars.mockReturnValue([
+      {
+        schoolId: "one",
+        schoolName: "A very long university name",
+        visible: true,
+      },
+    ])
+    await rerender(<SettingsScreen />)
+    expect(screen.queryByText("A very long university name")).toBeNull()
+    expect(screen.getByText("1 calendar")).toBeTruthy()
 
-    // The setter persisted "dark" through the @/storage seam (the screen → hook
-    // → store write path; the C1 seam re-resolves the theme off this value).
-    expect(getString(SETTINGS_KEYS.theme)).toBe("dark")
+    mockCalendars.mockReturnValue([
+      { schoolId: "one", schoolName: "One", visible: true },
+      { schoolId: "two", schoolName: "Two", visible: false },
+    ])
+    await rerender(<SettingsScreen />)
+    expect(screen.getByText("2 calendars")).toBeTruthy()
+
+    mockCalendars.mockReturnValue([{ visible: true }])
+    await rerender(<SettingsScreen />)
+    expect(screen.getByText("Your calendars")).toBeTruthy()
+    expect(screen.getByText("1 calendar")).toBeTruthy()
   })
 
-  it("drives the language preference setter and switches the active language", async () => {
-    const { getByTestId } = await render(<SettingsScreen />)
-
-    fireEvent.press(getByTestId("settings-language-picker-item-fr"))
-
-    // The language setter persisted "fr" AND called i18n.changeLanguage (i18n is
-    // real in the suite) — the live language switch A2 wires over A1's hook.
-    expect(getString(SETTINGS_KEYS.language)).toBe("fr")
-    expect(i18n.language).toBe("fr")
+  it("wires every full-width accessible link to its route", async () => {
+    await render(<SettingsScreen />)
+    const routes = [
+      ["settings-calendar-summary", "/user-calendars"],
+      ["settings-personal-events", "/personal-events"],
+      ["settings-hidden-events", "/hidden-events"],
+      ["settings-appearance", "/appearance-settings"],
+      ["settings-notifications", "/notification-settings"],
+    ] as const
+    for (const [testID, route] of routes) {
+      const row = screen.getByTestId(testID)
+      expect(row.props.accessibilityRole).toBe("link")
+      expect(row.props.accessibilityHint).toBeTruthy()
+      expect(row).toHaveStyle({
+        flexDirection: "row",
+        alignItems: "center",
+      })
+      fireEvent.press(row)
+      expect(mockPush).toHaveBeenLastCalledWith(route)
+    }
   })
 })

@@ -34,7 +34,7 @@ appId: fr.samuelprak.timecalendar.dev
 # getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
 #
 # The standalone list relocated off the Home tab (ADR 022 — the Home tab is now
-# the today view). It is now a Stack sibling of (tabs) reached from a Profile
+# the today view). It is now a Stack sibling of (tabs) reached from a Settings
 # entry; we deep-link its stable /personal-events route so the create form opens
 # ON TOP OF the list (router.back() after save/delete lands back on the list, the
 # reactive useLiveQuery assertion target), not the today-view Home tab.

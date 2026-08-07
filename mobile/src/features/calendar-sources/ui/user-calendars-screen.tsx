@@ -1,6 +1,6 @@
 import { Stack, useRouter } from "expo-router"
 import { SymbolView } from "expo-symbols"
-import { useCallback, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -9,13 +9,13 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
+  useWindowDimensions,
   View,
 } from "react-native"
-import ReanimatedSwipeable, {
-  type SwipeableMethods,
-} from "react-native-gesture-handler/ReanimatedSwipeable"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { MenuView } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -29,27 +29,23 @@ import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The user-calendars management screen ("Mes calendriers") — PRESENTATIONAL (70%
 // floor) over the existing durable token store (ADR 018). It lists every held
-// calendar with a row-level visibility toggle (a render-only flag filtered at the
-// events-source seam — ADR 031), a confirm-gated delete (a visible button on both
-// platforms + an iOS swipe, no undo), and a native header add action routing to
-// school selection. Writes go through useUserCalendarActions() (the observability-
+// calendar with an explicit visibility switch (a render-only flag filtered at the
+// events-source seam — ADR 031), a confirm-gated delete, and a platform-native
+// add action routing to school selection. Writes go through
+// useUserCalendarActions() (the observability-
 // wrapped seam); failures surface via WriteErrorNotice. Themed from @/theme (R-3).
 // The route (src/app/user-calendars.tsx) is a thin re-export.
-
-// Android checked-state glyph (iOS uses an SF Symbol) — a decorative mark, not
-// copy, so it stays out of the i18n catalog.
-const CHECKMARK = "✓"
 
 export function UserCalendarsScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const { setVisible, remove, failed } = useUserCalendarActions()
 
-  // The one shared delete path (button, iOS swipe, and accessibility action all
-  // reach it). A native Alert confirm (R-3, no undo); the success announce is
+  // A native Alert confirms the non-undoable delete. The success announce is
   // gated on the resolved write so a failed delete keeps the screen and its
   // accessible failure banner mounted.
   const confirmDelete = useCallback(
@@ -81,27 +77,37 @@ export function UserCalendarsScreen() {
       <Stack.Screen
         options={{
           title: t("userCalendars.title"),
-          headerRight: () => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("userCalendars.add")}
-              hitSlop={Spacing.two}
-              onPress={() => router.push("/onboarding/school")}
-              android_ripple={{ color: theme.ripple, foreground: true }}
-              style={({ pressed }) => [
-                styles.headerAdd,
-                Platform.OS === "ios" &&
-                  pressed && { backgroundColor: theme.backgroundSelected },
-              ]}
-            >
-              <ThemedText type="smallBold" themeColor="primary">
-                {t("userCalendars.add.short")}
-              </ThemedText>
-            </Pressable>
-          ),
+          headerBackButtonDisplayMode: "generic",
+          ...(Platform.OS === "ios" && {
+            unstable_headerRightItems: () => [
+              {
+                type: "button" as const,
+                label: t("userCalendars.add"),
+                accessibilityLabel: t("userCalendars.add"),
+                icon: { type: "sfSymbol" as const, name: "plus" as const },
+                tintColor: theme.text,
+                identifier: "user-calendars-add",
+                onPress: () =>
+                  router.push({
+                    pathname: "/onboarding/school",
+                    params: { source: "calendar-management" },
+                  }),
+              },
+            ],
+          }),
         }}
       />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        testID="user-calendars-safe-area"
+        style={[
+          styles.safeArea,
+          {
+            paddingLeft: Math.max(insets.left, Spacing.three),
+            paddingRight: Math.max(insets.right, Spacing.three),
+          },
+        ]}
+        edges={["bottom"]}
+      >
         {failed && (
           <WriteErrorNotice
             message={t("userCalendars.error")}
@@ -126,16 +132,49 @@ export function UserCalendarsScreen() {
             </ThemedText>
           </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.content,
+              Platform.OS === "android" && styles.contentWithFab,
+            ]}
+          >
+            <ThemedText themeColor="textSecondary" style={styles.intro}>
+              {t("userCalendars.visibilityDescription")}
+            </ThemedText>
             {calendars.map((calendar) => (
               <CalendarRow
                 key={calendar.id}
                 calendar={calendar}
-                onToggle={() => setVisible(calendar.id, !calendar.visible)}
+                onToggle={(visible) => setVisible(calendar.id, visible)}
                 onDelete={confirmDelete}
               />
             ))}
           </ScrollView>
+        )}
+        {Platform.OS === "android" && (
+          <Pressable
+            testID="user-calendars-add"
+            accessibilityRole="button"
+            accessibilityLabel={t("userCalendars.add")}
+            onPress={() =>
+              router.push({
+                pathname: "/onboarding/school",
+                params: { source: "calendar-management" },
+              })
+            }
+            android_ripple={{
+              color: theme.ripple,
+              borderless: true,
+              radius: 28,
+            }}
+            style={[styles.fab, { backgroundColor: theme.primaryStrong }]}
+          >
+            <SymbolView
+              name={{ android: "add" }}
+              size={26}
+              tintColor={theme.onPrimary}
+            />
+          </Pressable>
         )}
       </SafeAreaView>
     </ThemedView>
@@ -148,140 +187,186 @@ function CalendarRow({
   onDelete,
 }: {
   calendar: UserCalendar
-  onToggle: () => void
+  onToggle: (visible: boolean) => Promise<boolean>
   onDelete: (id: string, name: string) => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const swipeableRef = useRef<SwipeableMethods>(null)
 
   const name = calendar.name || t("userCalendars.namePlaceholder")
   const school = calendar.schoolName ?? t("userCalendars.personalSubtitle")
   const deleteLabel = t("userCalendars.delete.label", { name })
 
   const requestDelete = useCallback(() => {
-    swipeableRef.current?.close()
     onDelete(calendar.id, name)
   }, [onDelete, calendar.id, name])
 
-  const row = (
-    <View style={[styles.row, { backgroundColor: theme.backgroundElement }]}>
-      {/* The row-level toggle IS the accessibility element (a real one, unlike a
-          plain View): it carries the checkbox role/state, the merged name+school
-          label, and the delete custom action, so both stay reachable to AT. The
-          delete is a sibling Pressable (never nested — no-nested-touchables). */}
-      <Pressable
-        testID={`user-calendar-row-${calendar.id}`}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: calendar.visible }}
-        accessibilityLabel={t("userCalendars.rowLabel", { name, school })}
-        accessibilityHint={t("userCalendars.visibilityHint")}
-        accessibilityActions={[
-          { name: "delete", label: t("userCalendars.delete.action") },
-        ]}
-        onAccessibilityAction={(event) => {
-          if (event.nativeEvent.actionName === "delete") requestDelete()
-        }}
-        onPress={onToggle}
-        android_ripple={{ color: theme.ripple, foreground: true }}
-        style={({ pressed }) => [
-          styles.toggle,
-          Platform.OS === "ios" &&
-            pressed && { backgroundColor: theme.backgroundSelected },
-        ]}
-      >
-        <View
-          style={[
-            styles.checkbox,
-            {
-              borderColor: theme.primary,
-              backgroundColor: calendar.visible
-                ? theme.primaryStrong
-                : "transparent",
-            },
-          ]}
-        >
-          {calendar.visible &&
-            (Platform.OS === "ios" ? (
-              <SymbolView
-                name="checkmark"
-                size={16}
-                tintColor={theme.onPrimary}
-              />
-            ) : (
-              <ThemedText type="smallBold" themeColor="onPrimary">
-                {CHECKMARK}
-              </ThemedText>
-            ))}
-        </View>
-
-        {/* The label already carries name+school; hide the text from AT so the
-            name is not spoken three times per row. */}
-        <View
-          style={styles.rowText}
-          importantForAccessibility="no-hide-descendants"
-          accessibilityElementsHidden
-        >
+  return (
+    <View
+      testID={`user-calendar-row-${calendar.id}`}
+      style={[styles.row, { backgroundColor: theme.backgroundElement }]}
+    >
+      <View style={styles.rowHeader}>
+        <View style={styles.rowText}>
           <ThemedText style={styles.rowName}>{name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {school}
           </ThemedText>
         </View>
-      </Pressable>
+        {Platform.OS === "ios" ? (
+          <MenuView
+            testID={`user-calendar-actions-${calendar.id}`}
+            actions={[
+              {
+                id: "delete",
+                title: t("userCalendars.delete.action"),
+                image: "trash",
+                attributes: { destructive: true },
+              },
+            ]}
+            onPressAction={({ nativeEvent }) => {
+              if (nativeEvent.event === "delete") requestDelete()
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("userCalendars.actions", { name })}
+              style={styles.menuButton}
+            >
+              <SymbolView
+                name="ellipsis"
+                size={22}
+                tintColor={theme.textSecondary}
+              />
+            </Pressable>
+          </MenuView>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={deleteLabel}
+            hitSlop={Spacing.two}
+            onPress={requestDelete}
+            android_ripple={{
+              color: theme.ripple,
+              borderless: true,
+              radius: 24,
+            }}
+            style={styles.delete}
+          >
+            <TrashAffordance tint={theme.destructive} />
+          </Pressable>
+        )}
+      </View>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={deleteLabel}
-        hitSlop={Spacing.two}
-        onPress={requestDelete}
-        android_ripple={{ color: theme.ripple, foreground: true }}
-        style={({ pressed }) => [
-          styles.delete,
-          Platform.OS === "ios" &&
-            pressed && { backgroundColor: theme.backgroundSelected },
-        ]}
-      >
-        <TrashAffordance tint={theme.primary} />
-      </Pressable>
+      <View style={[styles.separator, { backgroundColor: theme.separator }]} />
+      <VisibilityControl
+        calendarId={calendar.id}
+        name={name}
+        canonicalVisible={calendar.visible}
+        onToggle={onToggle}
+      />
     </View>
-  )
-
-  // iOS-only swipe-to-delete on top of the visible button: a full swipe opens the
-  // same confirm (never an instant commit — delete is non-undoable). Android
-  // renders the bare row (Material's destructive swipe wants a real undo, which
-  // remove() can't give). The pan is device-verified only — jest-expo cannot
-  // simulate it, so it must not gate coverage.
-  if (Platform.OS !== "ios") return row
-  return (
-    <ReanimatedSwipeable
-      ref={swipeableRef}
-      friction={2}
-      rightThreshold={40}
-      onSwipeableWillOpen={requestDelete}
-      renderRightActions={() => (
-        <View style={[styles.swipeAction, { backgroundColor: theme.primary }]}>
-          <SymbolView name="trash" size={22} tintColor={theme.onPrimary} />
-        </View>
-      )}
-    >
-      {row}
-    </ReanimatedSwipeable>
   )
 }
 
-// The trailing trash affordance — cross-platform: expo-symbols SymbolView renders
-// only on iOS (mirroring school-selection/status-symbol), so Android falls back
-// to a themed destructive text label (no new dep, no blank button). The accessible
-// name lives on the parent Pressable.
-function TrashAffordance({ tint }: { tint: string }) {
+function VisibilityControl({
+  calendarId,
+  name,
+  canonicalVisible,
+  onToggle,
+}: {
+  calendarId: string
+  name: string
+  canonicalVisible: boolean
+  onToggle: (visible: boolean) => Promise<boolean>
+}) {
   const { t } = useTranslation()
-  if (Platform.OS === "ios") {
-    return <SymbolView name="trash" size={22} tintColor={tint} />
-  }
+  const theme = useTheme()
+  const { fontScale } = useWindowDimensions()
+  const [optimisticVisible, setOptimisticVisible] = useState<boolean | null>(
+    null,
+  )
+  const visibilityPendingRef = useRef(false)
+  const visible = optimisticVisible ?? canonicalVisible
+
+  useEffect(() => {
+    if (optimisticVisible !== null && optimisticVisible === canonicalVisible) {
+      // The live query has acknowledged the optimistic write; keeping it would
+      // mask a later external change back to the previous value.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOptimisticVisible(null)
+    }
+  }, [canonicalVisible, optimisticVisible])
+
+  const toggleVisibility = useCallback(
+    async (nextVisible: boolean) => {
+      if (visibilityPendingRef.current) return
+      visibilityPendingRef.current = true
+      setOptimisticVisible(nextVisible)
+      try {
+        if (!(await onToggle(nextVisible))) setOptimisticVisible(null)
+      } finally {
+        visibilityPendingRef.current = false
+      }
+    },
+    [onToggle],
+  )
+
   return (
-    <ThemedText type="smallBold" themeColor="primary">
-      {t("userCalendars.delete.action")}
-    </ThemedText>
+    <View
+      style={[
+        styles.visibilityRow,
+        fontScale >= 1.3 && styles.visibilityRowLargeText,
+      ]}
+    >
+      <View
+        style={styles.visibilityLabel}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <ThemedText type="small">
+          {t("userCalendars.visibilityShort")}
+        </ThemedText>
+      </View>
+      <View
+        style={[
+          styles.switchTarget,
+          fontScale >= 1.3 && styles.switchTargetLargeText,
+        ]}
+      >
+        <Switch
+          testID={`user-calendar-visibility-${calendarId}`}
+          accessibilityLabel={t("userCalendars.visibilityLabel", { name })}
+          accessibilityHint={t("userCalendars.visibilityHint")}
+          value={visible}
+          onValueChange={(nextVisible) => {
+            void toggleVisibility(nextVisible)
+          }}
+          trackColor={
+            Platform.OS === "android"
+              ? { false: theme.backgroundSelected, true: theme.primarySoft }
+              : { true: theme.primary }
+          }
+          thumbColor={
+            Platform.OS === "android"
+              ? visible
+                ? theme.primary
+                : theme.textSecondary
+              : undefined
+          }
+        />
+      </View>
+    </View>
+  )
+}
+
+function TrashAffordance({ tint }: { tint: string }) {
+  return (
+    <SymbolView
+      name={{ ios: "trash", android: "delete" }}
+      size={22}
+      tintColor={tint}
+    />
   )
 }
 
@@ -294,13 +379,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
+    paddingTop: Platform.OS === "ios" ? Spacing.five : Spacing.four,
     gap: Spacing.three,
   },
   content: {
     gap: Spacing.two,
     paddingBottom: Spacing.four,
+  },
+  contentWithFab: {
+    paddingBottom: Spacing.six + Spacing.five,
   },
   error: {
     marginBottom: Spacing.one,
@@ -311,32 +398,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: Spacing.one,
   },
-  headerAdd: {
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: Spacing.two,
-    borderRadius: Radii.medium,
-  },
+  intro: { marginBottom: Spacing.two },
   row: {
-    flexDirection: "row",
-    alignItems: "center",
     borderRadius: Radii.medium,
-    overflow: "hidden",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
-  toggle: {
-    flex: 1,
+  rowHeader: {
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.three,
-    padding: Spacing.three,
-  },
-  checkbox: {
-    width: 28,
-    height: 28,
-    borderWidth: 2,
-    borderRadius: Radii.small,
-    alignItems: "center",
-    justifyContent: "center",
+    gap: Spacing.two,
   },
   rowText: {
     flex: 1,
@@ -350,16 +422,56 @@ const styles = StyleSheet.create({
     }),
   },
   delete: {
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: Spacing.three,
+    height: 48,
+    minWidth: 48,
+    borderRadius: Radii.pill,
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
   },
-  swipeAction: {
+  menuButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: Spacing.two + Spacing.one,
+  },
+  visibilityRow: {
+    minHeight: 44,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: Spacing.three,
+  },
+  visibilityRowLargeText: {
+    flexDirection: "column",
+    alignItems: "stretch",
+  },
+  visibilityLabel: { flex: 1, flexShrink: 1 },
+  switchTarget: {
+    minWidth: 51,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  switchTargetLargeText: { alignSelf: "flex-end" },
+  fab: {
+    position: "absolute",
+    right: Spacing.three,
+    bottom: Spacing.four,
+    width: 56,
+    height: 56,
+    borderRadius: Radii.pill,
     justifyContent: "center",
     alignItems: "center",
-    width: 72,
-    borderRadius: Radii.medium,
+    elevation: 6,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    overflow: "hidden",
   },
 })

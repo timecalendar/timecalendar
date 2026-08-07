@@ -1,4 +1,5 @@
-import { Stack } from "expo-router"
+import { router, Stack, useLocalSearchParams } from "expo-router"
+import { SymbolView } from "expo-symbols"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -21,12 +22,39 @@ import { RowSeparator } from "./row-separator"
 import { SchoolRow } from "./school-row"
 import { StatusSymbol } from "./status-symbol"
 
+function MissingSchoolAction() {
+  const { t } = useTranslation()
+  const theme = useTheme()
+
+  return (
+    <Pressable
+      testID="onboarding-school-missing"
+      accessibilityRole="button"
+      accessibilityLabel={t("onboarding.school.missing")}
+      accessibilityHint={t("onboarding.school.missingHint")}
+      onPress={() => router.push("/onboarding/ical-url")}
+      android_ripple={{ color: theme.ripple }}
+      style={({ pressed }) => [
+        styles.missingSchool,
+        Platform.OS === "ios" &&
+          pressed && { backgroundColor: theme.backgroundSelected },
+      ]}
+    >
+      <ThemedText type="small" themeColor="actionText">
+        {t("onboarding.school.missing")}
+      </ThemedText>
+    </Pressable>
+  )
+}
+
 // Onboarding school step (TIM-134): presentational list over useSchools() —
 // native-header chrome, client-side search filter, and centered a11y states.
 export default function SchoolPickerScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const insets = useSafeAreaInsets()
+  const { source } = useLocalSearchParams<{ source?: string }>()
+  const fromCalendarManagement = source === "calendar-management"
   const { height: windowHeight } = useWindowDimensions()
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")
@@ -46,13 +74,47 @@ export default function SchoolPickerScreen() {
         options={{
           headerShown: true,
           title: t("onboarding.school.title"),
-          headerLargeTitle: true,
+          headerTitle: "",
           headerBackButtonDisplayMode: "minimal",
-          // Android rests the header on the body bg (M3 surface); iOS keeps
-          // the native large-title default.
-          ...(Platform.OS === "android" && {
-            headerStyle: { backgroundColor: theme.background },
-          }),
+          ...(fromCalendarManagement &&
+            Platform.OS === "ios" && {
+              unstable_headerLeftItems: () => [
+                {
+                  type: "button" as const,
+                  label: t("common.back"),
+                  accessibilityLabel: t("common.back"),
+                  icon: {
+                    type: "sfSymbol" as const,
+                    name: "chevron.backward" as const,
+                  },
+                  tintColor: theme.text,
+                  identifier: "onboarding-school-back",
+                  onPress: () => router.dismiss(),
+                },
+              ],
+            }),
+          ...(fromCalendarManagement &&
+            Platform.OS === "android" && {
+              headerLeft: () => (
+                <Pressable
+                  testID="onboarding-school-back"
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.back")}
+                  hitSlop={Spacing.two}
+                  onPress={() => router.dismiss()}
+                  style={styles.headerBack}
+                >
+                  <SymbolView
+                    name="chevron.backward"
+                    size={22}
+                    weight="semibold"
+                    tintColor={theme.text}
+                  />
+                </Pressable>
+              ),
+            }),
+          headerStyle: { backgroundColor: theme.background },
+          headerShadowVisible: false,
           headerSearchBarOptions: {
             placeholder: t("onboarding.school.search"),
             onChangeText: (e) => setFilter(e.nativeEvent.text),
@@ -90,13 +152,25 @@ export default function SchoolPickerScreen() {
         ]}
         ListHeaderComponent={
           browsing ? (
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              style={styles.subtitle}
-            >
-              {t("onboarding.school.subtitle")}
-            </ThemedText>
+            <ThemedView style={styles.listHeader}>
+              <ThemedText type="subtitle">
+                {t("onboarding.school.title")}
+              </ThemedText>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.subtitle}
+              >
+                {t("onboarding.school.subtitle")}
+              </ThemedText>
+            </ThemedView>
+          ) : null
+        }
+        ListFooterComponent={
+          browsing ? (
+            <ThemedView style={styles.listFooter}>
+              <MissingSchoolAction />
+            </ThemedView>
           ) : null
         }
         ListEmptyComponent={
@@ -133,13 +207,17 @@ export default function SchoolPickerScreen() {
                 query: filter.trim(),
               })}
               announceKey="noResults"
-            />
+            >
+              <MissingSchoolAction />
+            </ListStatus>
           ) : (
             <ListStatus
               media={<StatusSymbol name="graduationcap" />}
               message={t("onboarding.school.empty")}
               announceKey="empty"
-            />
+            >
+              <MissingSchoolAction />
+            </ListStatus>
           )
         }
       />
@@ -154,17 +232,42 @@ const styles = StyleSheet.create({
   list: {
     paddingTop: Spacing.two,
   },
+  headerBack: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "flex-start",
+    justifyContent: "center",
+  },
   subtitle: {
+    fontWeight: "400",
+  },
+  listHeader: {
     width: "100%",
     maxWidth: MaxContentWidth,
     alignSelf: "center",
     paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.two,
-    fontWeight: "400",
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.three,
+    gap: Spacing.two,
+  },
+  listFooter: {
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.three,
+  },
+  missingSchool: {
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   retry: {
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: 48,
+    minWidth: 48,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.three,

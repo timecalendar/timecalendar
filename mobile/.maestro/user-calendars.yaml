@@ -5,7 +5,7 @@
 # management route, and asserts the localized title + the empty state render. This
 # proves: the route is reachable via deep link (Stack sibling of (tabs)), the
 # screen mounts past the splash, and the reactive read renders without a held
-# calendar. Then it asserts in-app reachability from the Profile tab entry link.
+# calendar. Then it asserts in-app reachability from the Settings summary.
 #
 # SEEDED-DATA LIMITATION (same posture as home.yaml / hidden-events' former
 # reachability-only flow): this flow does NOT run import-seed, so no real calendar
@@ -49,15 +49,15 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "No calendars imported."
     timeout: 60000
-# In-app reachability: from the Profile tab, the "Calendars" entry link opens the
-# same management screen.
+# In-app reachability: the Settings calendar summary opens the same management screen.
 - stopApp
 - launchApp
 - extendedWaitUntil:
-    visible: "Profile"
+    visible: "Settings"
     timeout: 60000
-- tapOn: "Profile"
-- tapOn: "Calendars"
+- tapOn: "Settings"
+- tapOn:
+    id: "settings-calendar-summary"
 - extendedWaitUntil:
     visible: "My calendars"
     timeout: 60000

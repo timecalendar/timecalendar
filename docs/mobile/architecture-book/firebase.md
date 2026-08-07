@@ -43,7 +43,7 @@ FCM push **receive** behind the same seam (Phase 06 Ship A, ADR [026](./decision
 ## Debug-build reporting + verification surface
 
 - `mobile/firebase.json` sets `crashlytics_debug_enabled: true` so a local `npm run ios/android` (debug + Metro, dev variant) reports a forced crash; release/e2e builds report regardless.
-- The `__DEV__`-gated `FirebaseDebugPanel` on the Profile tab (log a test event / force a test crash) is the on-demand verification surface. Gated by `__DEV__` so it never renders in production.
+- `FirebaseDebugPanel` remains a development-only diagnostic component. It is not rendered in the Settings destination hub; Firebase verification uses the dedicated development workflow and DebugView.
 
 ## What CI proves vs. what's manual
 

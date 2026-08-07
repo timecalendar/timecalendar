@@ -2,9 +2,9 @@ import {
   fireEvent,
   render,
   screen,
-  userEvent,
+  waitFor,
 } from "@testing-library/react-native"
-import { AccessibilityInfo, Alert, Platform } from "react-native"
+import { AccessibilityInfo, Alert, Platform, StyleSheet } from "react-native"
 
 import {
   useUserCalendarActions,
@@ -16,13 +16,10 @@ import { UserCalendarsScreen } from "./user-calendars-screen"
 
 // Presentational management screen (70% floor): renders through the real theme +
 // i18n trees. The reactive read, its loaded flag, and the actions hook are mocked
-// so the list, the row-level visibility toggle, the confirm-gated delete (button +
-// accessibility action), the load-gated empty state, and the failure surface are
-// provable without a SQLite dependency. The iOS swipe pan is device-only —
-// ReanimatedSwipeable is stubbed to a passthrough so the covered paths don't drag
-// in the Reanimated worklet runtime; the swipe gesture itself is NOT simulated.
-// Stack.Screen renders only its headerRight (the add action) — the navigator chrome
-// is outside the test tree.
+// so the list, visibility switch, confirm-gated delete, platform-specific add
+// affordance, load-gated empty state, and failure surface are provable without a
+// SQLite dependency. Native header items are asserted through Stack.Screen
+// options because the navigator chrome is outside the test tree.
 
 jest.mock("@/features/calendar-sources/data", () => ({
   useUserCalendars: jest.fn(),
@@ -30,24 +27,44 @@ jest.mock("@/features/calendar-sources/data", () => ({
   useUserCalendarActions: jest.fn(),
 }))
 
+jest.mock("@/components/chrome", () => {
+  const { View } = jest.requireActual("react-native")
+  return {
+    MenuView: ({ children, ...props }: React.ComponentProps<typeof View>) => (
+      <View {...props}>{children}</View>
+    ),
+  }
+})
+
+let mockInsets = { top: 0, right: 0, bottom: 0, left: 0 }
+jest.mock("react-native-safe-area-context", () => {
+  const { View } = jest.requireActual("react-native")
+  return {
+    SafeAreaView: ({
+      children,
+      ...props
+    }: React.ComponentProps<typeof View>) => <View {...props}>{children}</View>,
+    useSafeAreaInsets: () => mockInsets,
+  }
+})
+
 const mockPush = jest.fn()
+const mockScreenOptions = jest.fn()
 jest.mock("expo-router", () => ({
   Stack: {
     Screen: ({
       options,
     }: {
-      options?: { headerRight?: () => React.ReactNode }
-    }) => options?.headerRight?.() ?? null,
+      options?: {
+        unstable_headerRightItems?: () => { onPress: () => void }[]
+      }
+    }) => {
+      mockScreenOptions(options)
+      return null
+    },
   },
   useRouter: () => ({ push: mockPush }),
 }))
-
-jest.mock(
-  "react-native-gesture-handler/ReanimatedSwipeable",
-  () =>
-    ({ children }: { children: React.ReactNode }) =>
-      children,
-)
 
 const mockUseUserCalendars = useUserCalendars as jest.Mock
 const mockUseUserCalendarsLoaded = useUserCalendarsLoaded as jest.Mock
@@ -80,6 +97,7 @@ beforeEach(() => {
   actions.setVisible.mockResolvedValue(true)
   actions.remove.mockResolvedValue(true)
   mockUseUserCalendarActions.mockReturnValue({ ...actions, failed: false })
+  mockInsets = { top: 0, right: 0, bottom: 0, left: 0 }
 })
 
 describe("UserCalendarsScreen", () => {
@@ -99,14 +117,34 @@ describe("UserCalendarsScreen", () => {
   it("lists a calendar with its name + school", async () => {
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    // The row text is hidden from AT (the toggle label carries name+school), so
-    // it stays visually rendered but out of the accessibility tree.
+    expect(screen.getByText("ENSEEIHT")).toBeTruthy()
+    expect(screen.getByText("Toulouse INP")).toBeTruthy()
     expect(
-      screen.getByText("ENSEEIHT", { includeHiddenElements: true }),
+      screen.getByText("Choose which calendars appear in Home and Calendar."),
     ).toBeTruthy()
     expect(
-      screen.getByText("Toulouse INP", { includeHiddenElements: true }),
+      screen.getByRole("button", { name: "Actions for ENSEEIHT" }),
     ).toBeTruthy()
+    expect(
+      screen.getByTestId("user-calendar-actions-cal-1").props.actions,
+    ).toEqual([
+      {
+        id: "delete",
+        title: "Delete",
+        image: "trash",
+        attributes: { destructive: true },
+      },
+    ])
+  })
+
+  it("applies safe-area or design insets once, whichever is larger", async () => {
+    mockInsets = { top: 0, right: 20, bottom: 0, left: 44 }
+    await render(<UserCalendarsScreen />)
+    const style = StyleSheet.flatten(
+      screen.getByTestId("user-calendars-safe-area").props.style,
+    )
+    expect(style.paddingLeft).toBe(44)
+    expect(style.paddingRight).toBe(20)
   })
 
   it("falls back to placeholders for an empty name and a personal (no-school) calendar", async () => {
@@ -114,27 +152,109 @@ describe("UserCalendarsScreen", () => {
       calendar({ id: "cal-2", name: "", schoolName: undefined }),
     ])
     await render(<UserCalendarsScreen />)
+    expect(screen.getByText("Calendar")).toBeTruthy()
+    expect(screen.getByText("Personal calendar")).toBeTruthy()
+  })
+
+  it("forwards the native switch value to setVisible", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    await render(<UserCalendarsScreen />)
+    const visibilitySwitch = screen.getByRole("switch", {
+      name: "Show ENSEEIHT in the app",
+      checked: true,
+    })
+    fireEvent(visibilitySwitch, "valueChange", true)
+    expect(actions.setVisible).toHaveBeenCalledWith("cal-1", true)
+    expect(visibilitySwitch.props.accessibilityHint).toBe(
+      "Controls whether events from this calendar appear in Home and Calendar",
+    )
+  })
+
+  it("updates visibility immediately and keeps it optimistic until the live query catches up", async () => {
+    let resolveWrite: ((value: boolean) => void) | undefined
+    actions.setVisible.mockReturnValueOnce(
+      new Promise<boolean>((resolve) => {
+        resolveWrite = resolve
+      }),
+    )
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    await render(<UserCalendarsScreen />)
+
+    const switchName = "Show ENSEEIHT in the app"
+    const originalSwitch = screen.getByRole("switch", { name: switchName })
+    fireEvent(originalSwitch, "valueChange", false)
+    expect(actions.setVisible).toHaveBeenCalledTimes(1)
+    await screen.findByRole("switch", {
+      name: switchName,
+      checked: false,
+    })
+    resolveWrite?.(true)
     expect(
-      screen.getByText("Calendar", { includeHiddenElements: true }),
-    ).toBeTruthy()
-    expect(
-      screen.getByText("Personal calendar", { includeHiddenElements: true }),
+      screen.getByRole("switch", { name: switchName, checked: false }),
     ).toBeTruthy()
   })
 
-  it("toggles visibility through setVisible(id, !visible) on the row toggle", async () => {
+  it("discards an old optimistic value after canonical visibility changes", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    const view = await render(<UserCalendarsScreen />)
+    const switchName = "Show ENSEEIHT in the app"
+    const originalDeleteAction = screen.getByTestId(
+      "user-calendar-actions-cal-1",
+    )
+
+    fireEvent(
+      screen.getByRole("switch", { name: switchName }),
+      "valueChange",
+      false,
+    )
+    await screen.findByRole("switch", { name: switchName, checked: false })
+
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: false })])
+    await view.rerender(<UserCalendarsScreen />)
+    await screen.findByRole("switch", { name: switchName, checked: false })
+
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    await view.rerender(<UserCalendarsScreen />)
+    await screen.findByRole("switch", { name: switchName, checked: true })
+    expect(screen.getByTestId("user-calendar-actions-cal-1")).toBe(
+      originalDeleteAction,
+    )
+  })
+
+  it("rolls optimistic visibility back when persistence fails", async () => {
+    actions.setVisible.mockResolvedValueOnce(false)
     mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
     await render(<UserCalendarsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("ENSEEIHT, Toulouse INP"))
-    expect(actions.setVisible).toHaveBeenCalledWith("cal-1", false)
+
+    const switchName = "Show ENSEEIHT in the app"
+    fireEvent(
+      screen.getByRole("switch", { name: switchName }),
+      "valueChange",
+      false,
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByRole("switch", {
+          name: switchName,
+          checked: true,
+        }),
+      ).toBeTruthy(),
+    )
   })
 
   it("routes the header add action to school selection", async () => {
     await render(<UserCalendarsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Add a calendar"))
-    expect(mockPush).toHaveBeenCalledWith("/onboarding/school")
+    const options = mockScreenOptions.mock.lastCall?.[0] as {
+      unstable_headerRightItems: () => { onPress: () => void }[]
+    }
+    options.unstable_headerRightItems()[0]!.onPress()
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/onboarding/school",
+      params: { source: "calendar-management" },
+    })
+    expect(mockScreenOptions).toHaveBeenCalledWith(
+      expect.objectContaining({ headerBackButtonDisplayMode: "generic" }),
+    )
   })
 
   it("opens the delete confirm and removes + announces on confirm", async () => {
@@ -145,8 +265,13 @@ describe("UserCalendarsScreen", () => {
     )
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Delete calendar ENSEEIHT"))
+    fireEvent(
+      screen.getByTestId("user-calendar-actions-cal-1"),
+      "pressAction",
+      {
+        nativeEvent: { event: "delete" },
+      },
+    )
 
     expect(alertSpy).toHaveBeenCalled()
     const buttons = alertSpy.mock.calls[0]?.[2]
@@ -161,8 +286,13 @@ describe("UserCalendarsScreen", () => {
     const alertSpy = jest.spyOn(Alert, "alert")
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Delete calendar ENSEEIHT"))
+    fireEvent(
+      screen.getByTestId("user-calendar-actions-cal-1"),
+      "pressAction",
+      {
+        nativeEvent: { event: "delete" },
+      },
+    )
 
     expect(alertSpy).toHaveBeenCalled()
     const buttons = alertSpy.mock.calls[0]?.[2]
@@ -181,8 +311,13 @@ describe("UserCalendarsScreen", () => {
     actions.remove.mockResolvedValue(false)
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    const user = userEvent.setup()
-    await user.press(screen.getByLabelText("Delete calendar ENSEEIHT"))
+    fireEvent(
+      screen.getByTestId("user-calendar-actions-cal-1"),
+      "pressAction",
+      {
+        nativeEvent: { event: "delete" },
+      },
+    )
 
     const buttons = alertSpy.mock.calls[0]?.[2]
     await buttons?.[1]?.onPress?.()
@@ -191,31 +326,16 @@ describe("UserCalendarsScreen", () => {
     expect(announceSpy).not.toHaveBeenCalled()
   })
 
-  it("reaches delete through the row toggle's accessibility action", async () => {
-    const alertSpy = jest.spyOn(Alert, "alert")
-    mockUseUserCalendars.mockReturnValue([calendar()])
-    await render(<UserCalendarsScreen />)
-
-    // The action is fired on the toggle element (a real accessibility element AT
-    // can reach), not the plain parent row View.
-    fireEvent(
-      screen.getByTestId("user-calendar-row-cal-1"),
-      "accessibilityAction",
-      {
-        nativeEvent: { actionName: "delete" },
-      },
-    )
-    expect(alertSpy).toHaveBeenCalled()
-  })
-
-  it("renders the Android row shape: bare row + a text delete affordance, both controls reachable", async () => {
+  it("renders Android visibility, delete, and FAB controls", async () => {
     jest.replaceProperty(Platform, "OS", "android")
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
 
-    expect(screen.getByLabelText("ENSEEIHT, Toulouse INP")).toBeTruthy()
-    expect(screen.getByLabelText("Delete calendar ENSEEIHT")).toBeTruthy()
-    expect(screen.getByText("Delete")).toBeTruthy()
+    expect(screen.getByLabelText("Show ENSEEIHT in the app")).toBeTruthy()
+    expect(
+      screen.getByRole("button", { name: "Delete calendar ENSEEIHT" }),
+    ).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Add a calendar" })).toBeTruthy()
   })
 
   it("surfaces an accessible failure state when a write failed", async () => {

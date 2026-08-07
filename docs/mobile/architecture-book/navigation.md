@@ -19,4 +19,12 @@ The layout is therefore:
 - `src/app/(tabs)/_layout.tsx` = the native tabs; tab screens under `(tabs)/`.
 - Non-tab routes (deep-link / modal / onboarding targets) as `Stack` siblings of `(tabs)`.
 
-The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`), `onboarding/groups` = the group picker (`…/onboarding/groups?schoolId=<id>`). The group's `index` is the entry route the deep link / the Profile `<Link href="/onboarding">` resolve to, so it is the first-run surface, not the bare list.
+The stable tab hierarchy is Home · Calendar · Settings (ADR
+[034](./decisions/034-settings-third-tab-identity.md)). Calendar and Settings each own a
+nested native Stack while retaining `/calendar` and `/settings` as their canonical
+tab routes. `src/app/(tabs)/settings/index.tsx` is a thin export from
+`@/features/settings/ui`; derivation and tested presentation stay in the feature.
+The root `/profile` route is a compatibility redirect to `/settings` for one released
+React Native version, and is not an internal navigation target.
+
+The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`), `onboarding/groups` = the group picker (`…/onboarding/groups?schoolId=<id>`). Its index is the first-run deep-link surface, not the bare list; adding calendars from Settings continues through calendar management's native header action.
