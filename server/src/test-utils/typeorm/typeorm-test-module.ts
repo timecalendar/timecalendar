@@ -4,9 +4,12 @@ import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarSubject } from "modules/subject/models/calendar-subject.entity"
+import { CalendarNotificationSubscription } from "modules/notification-subscription/models/entities/calendar-notification-subscription.entity"
 import { FcmNotificationChannel } from "modules/notification-subscription/models/entities/fcm-notification-channel.entity"
 import { FeatureFlag } from "modules/feature-flag/models/entities/feature-flag.entity"
 import { NotificationSubscription } from "modules/notification-subscription/models/entities/notification-subscription.entity"
+import { NotifyFanoutCursor } from "modules/notification-pipeline/models/entities/notify-fanout-cursor.entity"
+import { SubscriberCalendarLog } from "modules/notification-pipeline/models/entities/subscriber-calendar-log.entity"
 import { School } from "modules/school/models/school.entity"
 import { SchoolGroup } from "modules/school-group/models/school-group.entity"
 import { SchoolProfile } from "modules/school/models/entities/school-profile.entity"
@@ -22,10 +25,13 @@ export const testEntities = [
   CalendarContent,
   CalendarFailure,
   CalendarLog,
+  CalendarNotificationSubscription,
   CalendarSubject,
   FcmNotificationChannel,
   FeatureFlag,
   NotificationSubscription,
+  NotifyFanoutCursor,
+  SubscriberCalendarLog,
   School,
   SchoolGroup,
   SchoolProfile,

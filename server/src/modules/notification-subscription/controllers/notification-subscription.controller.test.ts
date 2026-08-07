@@ -2,9 +2,11 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
+import { NotificationSubscription } from "modules/notification-subscription/models/entities/notification-subscription.entity"
 import { NotificationFrequency } from "modules/notification-subscription/models/notification-frequency.enum"
 import { nanoid } from "nanoid"
 import createTestApp from "test-utils/create-test-app"
+import { DataSource } from "typeorm"
 
 describe("NotificationSubscriptionController", () => {
   let app: NestExpressApplication
@@ -76,6 +78,85 @@ describe("NotificationSubscriptionController", () => {
 
     it("validates required fields", async () => {
       await request(app).put("/notification-subscription").send({}).expect(400)
+    })
+
+    it("accepts an explicit locale and timezone", async () => {
+      const calendar = await calendarFactory().create()
+      const fcmToken = `fcm_${nanoid()}`
+
+      await request(app)
+        .put("/notification-subscription")
+        .send({
+          frequency: NotificationFrequency.DAILY,
+          nbDaysAhead: 7,
+          isActive: true,
+          calendarIds: [calendar.id],
+          fcmToken,
+          locale: "en",
+          timezone: "America/Martinique",
+        })
+        .expect(204)
+
+      const subscription = await app
+        .get(DataSource)
+        .getRepository(NotificationSubscription)
+        .findOneOrFail({
+          where: { fcmNotificationChannel: { token: fcmToken } },
+        })
+      expect(subscription.locale).toBe("en")
+      expect(subscription.timezone).toBe("America/Martinique")
+    })
+
+    it("defaults locale and timezone when omitted", async () => {
+      const fcmToken = `fcm_${nanoid()}`
+
+      await request(app)
+        .put("/notification-subscription")
+        .send({
+          frequency: NotificationFrequency.DAILY,
+          nbDaysAhead: 7,
+          isActive: true,
+          calendarIds: [],
+          fcmToken,
+        })
+        .expect(204)
+
+      const subscription = await app
+        .get(DataSource)
+        .getRepository(NotificationSubscription)
+        .findOneOrFail({
+          where: { fcmNotificationChannel: { token: fcmToken } },
+        })
+      expect(subscription.locale).toBe("fr")
+      expect(subscription.timezone).toBe("Europe/Paris")
+    })
+
+    it("rejects an unsupported locale", async () => {
+      await request(app)
+        .put("/notification-subscription")
+        .send({
+          frequency: NotificationFrequency.DAILY,
+          nbDaysAhead: 7,
+          isActive: true,
+          calendarIds: [],
+          fcmToken: `fcm_${nanoid()}`,
+          locale: "de",
+        })
+        .expect(400)
+    })
+
+    it("rejects an invalid IANA timezone", async () => {
+      await request(app)
+        .put("/notification-subscription")
+        .send({
+          frequency: NotificationFrequency.DAILY,
+          nbDaysAhead: 7,
+          isActive: true,
+          calendarIds: [],
+          fcmToken: `fcm_${nanoid()}`,
+          timezone: "Paris/Nowhere",
+        })
+        .expect(400)
     })
   })
 })

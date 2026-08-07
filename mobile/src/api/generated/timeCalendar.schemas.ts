@@ -5,6 +5,53 @@
  * TimeCalendar API
  * OpenAPI spec version: 1.0.0
  */
+export type NotificationSubscriptionCreateFrequency =
+  (typeof NotificationSubscriptionCreateFrequency)[keyof typeof NotificationSubscriptionCreateFrequency]
+
+export const NotificationSubscriptionCreateFrequency = {
+  immediately: "immediately",
+  hourly: "hourly",
+  daily: "daily",
+} as const
+
+/**
+ * Language used for notification texts. Defaults to `fr`.
+ */
+export type NotificationSubscriptionCreateLocale =
+  (typeof NotificationSubscriptionCreateLocale)[keyof typeof NotificationSubscriptionCreateLocale]
+
+export const NotificationSubscriptionCreateLocale = {
+  fr: "fr",
+  en: "en",
+} as const
+
+export interface NotificationSubscriptionCreate {
+  frequency: NotificationSubscriptionCreateFrequency
+  /**
+   * @minimum 1
+   * @maximum 30
+   */
+  nbDaysAhead: number
+  isActive: boolean
+  calendarIds: string[]
+  fcmToken: string
+  /** Language used for notification texts. Defaults to `fr`. */
+  locale?: NotificationSubscriptionCreateLocale
+  /** IANA timezone used to render event times. Defaults to `Europe/Paris`. */
+  timezone?: string
+}
+
+export interface CalendarForPublic {
+  id: string
+  token: string
+  name: string
+  /** @nullable */
+  schoolName: string | null
+  schoolId?: string
+  lastUpdatedAt: string
+  createdAt: string
+}
+
 export interface OrleansGetIcalUrlFromStudentNumberDto {
   studentNumber: string
 }
@@ -148,17 +195,6 @@ export interface SyncCalendarsDto {
   tokens: string[]
 }
 
-export interface CalendarForPublic {
-  id: string
-  token: string
-  name: string
-  /** @nullable */
-  schoolName: string | null
-  schoolId?: string
-  lastUpdatedAt: string
-  createdAt: string
-}
-
 export type EventTypeEnum = (typeof EventTypeEnum)[keyof typeof EventTypeEnum]
 
 export const EventTypeEnum = {
@@ -241,27 +277,6 @@ export interface SendMessageDto {
   gradeName?: string
   deviceInfo?: string
   calendarUrl?: string
-}
-
-export type NotificationSubscriptionCreateFrequency =
-  (typeof NotificationSubscriptionCreateFrequency)[keyof typeof NotificationSubscriptionCreateFrequency]
-
-export const NotificationSubscriptionCreateFrequency = {
-  immediately: "immediately",
-  hourly: "hourly",
-  daily: "daily",
-} as const
-
-export interface NotificationSubscriptionCreate {
-  frequency: NotificationSubscriptionCreateFrequency
-  /**
-   * @minimum 1
-   * @maximum 30
-   */
-  nbDaysAhead: number
-  isActive: boolean
-  calendarIds: string[]
-  fcmToken: string
 }
 
 export interface FeatureFlagEvaluationResponseDto {

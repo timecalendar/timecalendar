@@ -12,6 +12,7 @@ import {
 
 @Entity()
 @Index("IDX_calendar_log_calendar_createdAt", ["calendar", "createdAt"])
+@Index("IDX_calendar_log_createdAt", ["createdAt"])
 export class CalendarLog {
   @PrimaryGeneratedColumn("uuid")
   id: string

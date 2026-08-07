@@ -1,6 +1,7 @@
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { FcmNotificationChannel } from "modules/notification-subscription/models/entities/fcm-notification-channel.entity"
 import { NotificationFrequency } from "modules/notification-subscription/models/notification-frequency.enum"
+import { NotificationLocale } from "modules/notification-subscription/models/notification-locale"
 import {
   Column,
   CreateDateColumn,
@@ -29,6 +30,12 @@ export class NotificationSubscription {
 
   @Column({ type: "boolean", default: true })
   isActive: boolean
+
+  @Column({ type: "varchar", default: "fr" })
+  locale: NotificationLocale
+
+  @Column({ type: "varchar", default: "Europe/Paris" })
+  timezone: string
 
   @CreateDateColumn()
   createdAt: Date

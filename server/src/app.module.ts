@@ -18,6 +18,7 @@ import { NotifierModule } from "modules/notifier/notifier.module"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
+import { NotificationPipelineModule } from "modules/notification-pipeline/notification-pipeline.module"
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
 import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 
@@ -52,6 +53,7 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
     SchoolGroupModule,
     ContactModule,
     SharedHealthModule,
+    NotificationPipelineModule,
     NotificationSubscriptionModule,
     FeatureFlagModule,
   ],

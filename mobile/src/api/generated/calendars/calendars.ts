@@ -34,6 +34,185 @@ import type { ErrorType } from "../../mutator"
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
 
+export const getCalendarControllerFindCalendarByTokenUrl = (token: string) => {
+  return `/calendars/by-token/${token}`
+}
+
+/**
+ * @summary Find a calendar by its token
+ */
+export const calendarControllerFindCalendarByToken = async (
+  token: string,
+  options?: RequestInit,
+): Promise<CalendarForPublic> => {
+  return customFetch<CalendarForPublic>(
+    getCalendarControllerFindCalendarByTokenUrl(token),
+    {
+      ...options,
+      method: "GET",
+    },
+  )
+}
+
+export const getCalendarControllerFindCalendarByTokenQueryKey = (
+  token: string,
+) => {
+  return [`/calendars/by-token/${token}`] as const
+}
+
+export const getCalendarControllerFindCalendarByTokenQueryOptions = <
+  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+        TError,
+        TData
+      >
+    >
+    request?: SecondParameter<typeof customFetch>
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {}
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getCalendarControllerFindCalendarByTokenQueryKey(token)
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
+  > = ({ signal }) =>
+    calendarControllerFindCalendarByToken(token, { signal, ...requestOptions })
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: token !== null && token !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CalendarControllerFindCalendarByTokenQueryResult = NonNullable<
+  Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
+>
+export type CalendarControllerFindCalendarByTokenQueryError = ErrorType<unknown>
+
+export function useCalendarControllerFindCalendarByToken<
+  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+          TError,
+          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
+        >,
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>
+}
+export function useCalendarControllerFindCalendarByToken<
+  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+          TError,
+          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
+        >,
+        "initialData"
+      >
+    request?: SecondParameter<typeof customFetch>
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>
+}
+export function useCalendarControllerFindCalendarByToken<
+  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+        TError,
+        TData
+      >
+    >
+    request?: SecondParameter<typeof customFetch>
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>
+}
+/**
+ * @summary Find a calendar by its token
+ */
+
+export function useCalendarControllerFindCalendarByToken<
+  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+  TError = ErrorType<unknown>,
+>(
+  token: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
+        TError,
+        TData
+      >
+    >
+    request?: SecondParameter<typeof customFetch>
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>
+} {
+  const queryOptions = getCalendarControllerFindCalendarByTokenQueryOptions(
+    token,
+    options,
+  )
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> }
+
+  return { ...query, queryKey: queryOptions.queryKey }
+}
+
 export const getCalendarSyncControllerCreateCalendarUrl = () => {
   return `/calendars`
 }
@@ -223,182 +402,4 @@ export const useCalendarSyncControllerSyncCalendars = <
     getCalendarSyncControllerSyncCalendarsMutationOptions(options),
     queryClient,
   )
-}
-export const getCalendarControllerFindCalendarByTokenUrl = (token: string) => {
-  return `/calendars/by-token/${token}`
-}
-
-/**
- * @summary Find a calendar by its token
- */
-export const calendarControllerFindCalendarByToken = async (
-  token: string,
-  options?: RequestInit,
-): Promise<CalendarForPublic> => {
-  return customFetch<CalendarForPublic>(
-    getCalendarControllerFindCalendarByTokenUrl(token),
-    {
-      ...options,
-      method: "GET",
-    },
-  )
-}
-
-export const getCalendarControllerFindCalendarByTokenQueryKey = (
-  token: string,
-) => {
-  return [`/calendars/by-token/${token}`] as const
-}
-
-export const getCalendarControllerFindCalendarByTokenQueryOptions = <
-  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-  TError = ErrorType<unknown>,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-        TError,
-        TData
-      >
-    >
-    request?: SecondParameter<typeof customFetch>
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {}
-
-  const queryKey =
-    queryOptions?.queryKey ??
-    getCalendarControllerFindCalendarByTokenQueryKey(token)
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
-  > = ({ signal }) =>
-    calendarControllerFindCalendarByToken(token, { signal, ...requestOptions })
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: token !== null && token !== undefined,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type CalendarControllerFindCalendarByTokenQueryResult = NonNullable<
-  Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
->
-export type CalendarControllerFindCalendarByTokenQueryError = ErrorType<unknown>
-
-export function useCalendarControllerFindCalendarByToken<
-  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-  TError = ErrorType<unknown>,
->(
-  token: string,
-  options: {
-    query: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-          TError,
-          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customFetch>
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>
-}
-export function useCalendarControllerFindCalendarByToken<
-  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-  TError = ErrorType<unknown>,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-        TError,
-        TData
-      >
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-          TError,
-          Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>
-        >,
-        "initialData"
-      >
-    request?: SecondParameter<typeof customFetch>
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>
-}
-export function useCalendarControllerFindCalendarByToken<
-  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-  TError = ErrorType<unknown>,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-        TError,
-        TData
-      >
-    >
-    request?: SecondParameter<typeof customFetch>
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>
-}
-/**
- * @summary Find a calendar by its token
- */
-
-export function useCalendarControllerFindCalendarByToken<
-  TData = Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-  TError = ErrorType<unknown>,
->(
-  token: string,
-  options?: {
-    query?: Partial<
-      UseQueryOptions<
-        Awaited<ReturnType<typeof calendarControllerFindCalendarByToken>>,
-        TError,
-        TData
-      >
-    >
-    request?: SecondParameter<typeof customFetch>
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>
-} {
-  const queryOptions = getCalendarControllerFindCalendarByTokenQueryOptions(
-    token,
-    options,
-  )
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> }
-
-  return { ...query, queryKey: queryOptions.queryKey }
 }
