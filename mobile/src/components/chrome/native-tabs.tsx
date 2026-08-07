@@ -33,7 +33,13 @@ function ThemedNativeTabs(props: NativeTabsProps) {
       // OS keeps the Liquid Glass material; set the themed color on Android only.
       {...(Platform.OS === "ios" ? {} : { backgroundColor: colors.background })}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}
+      rippleColor={colors.primarySoft}
+      tintColor={colors.primary}
+      iconColor={{ default: colors.textSecondary, selected: colors.primary }}
+      labelStyle={{
+        default: { color: colors.textSecondary },
+        selected: { color: colors.text },
+      }}
       {...props}
     />
   )

@@ -1,5 +1,5 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
-import { router, Stack } from "expo-router"
+import { router, Stack, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo } from "react-native"
 
 import { useSchools } from "@/features/school-selection/data"
@@ -22,8 +22,9 @@ jest.mock("@/features/school-selection/data", () => ({
 }))
 
 jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
+  router: { dismiss: jest.fn(), push: jest.fn() },
   Stack: { Screen: jest.fn(() => null) },
+  useLocalSearchParams: jest.fn(() => ({})),
 }))
 
 // The screen reads the bottom inset for the Android list padding; the library's
@@ -38,11 +39,16 @@ jest.mock(
 
 const mockUseSchools = useSchools as jest.Mock
 const mockPush = router.push as jest.Mock
+const mockDismiss = router.dismiss as jest.Mock
+const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockStackScreen = Stack.Screen as unknown as jest.Mock
 
 const screenOptions = () =>
   mockStackScreen.mock.lastCall?.[0].options as {
     title: string
+    headerTitle: string
+    headerLeft?: () => React.ReactElement
+    unstable_headerLeftItems?: () => { onPress: () => void }[]
     headerSearchBarOptions: {
       placeholder: string
       onChangeText: (e: { nativeEvent: { text: string } }) => void
@@ -71,18 +77,33 @@ const ready = (
 
 beforeEach(() => {
   mockPush.mockClear()
+  mockDismiss.mockClear()
+  mockUseLocalSearchParams.mockReturnValue({})
   mockStackScreen.mockClear()
 })
 
 describe("SchoolPickerScreen", () => {
   it("puts the localized title and search field in the native header", async () => {
     mockUseSchools.mockReturnValue(ready([]))
-    await render(<SchoolPickerScreen />)
+    const { queryByRole } = await render(<SchoolPickerScreen />)
 
-    expect(screenOptions().title).toBe("Choose your school")
+    expect(screenOptions().title).toBe("Select your school")
+    expect(screenOptions().headerTitle).toBe("")
+    expect(queryByRole("header")).toBeNull()
     expect(screenOptions().headerSearchBarOptions.placeholder).toBe(
       "Search schools",
     )
+  })
+
+  it("returns to calendar management from its scoped add-school flow", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ source: "calendar-management" })
+    mockUseSchools.mockReturnValue(ready([]))
+    await render(<SchoolPickerScreen />)
+
+    const headerItems = screenOptions().unstable_headerLeftItems
+    expect(headerItems).toBeDefined()
+    headerItems!()[0]!.onPress()
+    expect(mockDismiss).toHaveBeenCalledTimes(1)
   })
 
   it("renders a row per school with the subtitle context line", async () => {
@@ -93,6 +114,9 @@ describe("SchoolPickerScreen", () => {
     )
     const { getByText, getByTestId } = await render(<SchoolPickerScreen />)
 
+    expect(getByText("Select your school").props.accessibilityRole).toBe(
+      "header",
+    )
     expect(getByText("Université Gustave Eiffel")).toBeTruthy()
     expect(getByText("Your timetable comes from your school.")).toBeTruthy()
     const row = getByTestId("onboarding-school-row-univeiffel")
@@ -100,6 +124,26 @@ describe("SchoolPickerScreen", () => {
     // affordance is the hint.
     expect(row.props.accessibilityLabel).toBe("Université Gustave Eiffel")
     expect(row.props.accessibilityHint).toBe("Opens this school's groups")
+  })
+
+  it("offers the manual calendar path before searching", async () => {
+    mockUseSchools.mockReturnValue(
+      ready([{ id: "a", name: "Alpha University", imageUrl: "" }]),
+    )
+    const { getAllByRole, getByTestId, getByText } = await render(
+      <SchoolPickerScreen />,
+    )
+
+    expect(getByText("I can't find my school")).toBeTruthy()
+    expect(
+      getAllByRole("button").map((button) => button.props.accessibilityLabel),
+    ).toEqual(["Alpha University", "I can't find my school"])
+    const action = getByTestId("onboarding-school-missing")
+    expect(action.props.accessibilityHint).toBe(
+      "Add your timetable using a calendar URL",
+    )
+    fireEvent.press(action)
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
   })
 
   it("shows the loading state", async () => {
@@ -117,6 +161,7 @@ describe("SchoolPickerScreen", () => {
     mockUseSchools.mockReturnValue(ready([]))
     const { getByText } = await render(<SchoolPickerScreen />)
     expect(getByText("No schools available.")).toBeTruthy()
+    expect(getByText("I can't find my school")).toBeTruthy()
   })
 
   it("shows the error state with an accessible retry that refetches", async () => {
@@ -202,7 +247,10 @@ describe("SchoolPickerScreen", () => {
     await typeSearch("zzz")
     expect(queryByText("Alpha University")).toBeNull()
     expect(getByText("No results for “zzz”")).toBeTruthy()
+    expect(getByText("I can't find my school")).toBeTruthy()
     expect(queryByText("Your timetable comes from your school.")).toBeNull()
+    fireEvent.press(getByText("I can't find my school"))
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
   })
 
   it("restores the full list when the iOS search is cancelled", async () => {

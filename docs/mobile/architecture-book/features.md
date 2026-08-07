@@ -15,6 +15,7 @@ code and product specifications.
 | `hidden-events` | Hide and restore synced events | One validated `@/storage` value; filtering occurs at the calendar event-source seam |
 | `event-checklist` | Checklist CRUD and ordering for either event kind | `checklist_items` table |
 | `home` | Today-only dashboard and next-active-day summary | Reads the unified calendar event source |
+| `settings` | Third-tab grouped navigation and held-calendar summary | Reads the public calendar-sources hooks; persists no state |
 | `splash` | Startup presentation | Presentation-only |
 
 ## Cross-feature contracts
@@ -33,9 +34,10 @@ code and product specifications.
 
 ## Navigation
 
-The root contains Home, Calendar, and Profile tabs. Settings, notification settings,
+The root contains Home, Calendar, and Settings tabs. Settings, notification settings,
 personal events, event details, calendar-source management, and onboarding are stack
-routes outside the tab group. Route files remain thin entrypoints over feature UI.
+routes outside the tab group. Settings owns a nested native Stack and a thin feature UI
+entrypoint. `/settings` is canonical; root `/profile` temporarily redirects to it.
 
 See [calendar.md](./calendar.md), [storage.md](./storage.md), and
 [golden-path.md](./golden-path.md) for shared implementation contracts.

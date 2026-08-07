@@ -60,7 +60,7 @@ appId: fr.samuelprak.timecalendar.dev
     id: "onboarding-welcome-cta"
 # The school step renders.
 - extendedWaitUntil:
-    visible: "Choose your school"
+    visible: "Select your school"
     timeout: 60000
 # The live GET /schools round-trip assertion: the seeded school only renders if
 # the read committed end to end through the real server.

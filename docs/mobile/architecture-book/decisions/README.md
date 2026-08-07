@@ -27,6 +27,7 @@ decision changes; use Git for its history.
 | [028](./028-fcm-tap-routing.md) | Refetch on messages and navigate only on taps |
 | [032](./032-calendar-kit-vendor-patch-live-anchor.md) | Patch calendar-kit's live scroll anchor |
 | [033](./033-calendar-renderer-module-boundary.md) | Own the calendar renderer boundary inside the calendar feature |
+| [034](./034-settings-third-tab-identity.md) | Use Settings as the canonical third tab and secondary-destination hub |
 
 ## Superseded or completed records
 

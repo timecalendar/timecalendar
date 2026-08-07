@@ -2,6 +2,85 @@
 
 The design-token home and the **insurance layer** against alpha-API churn. Entries below are pointers plus the caveats tooling can't carry (R-1) — every rule that can be a type or a lint gate is one, and the prose states what can't be encoded.
 
+## Visual language — native calm with calendar color
+
+TimeCalendar is a native-first iOS and Android app with a quiet neutral foundation, a pink
+brand accent, and a pastel calendar spectrum. The target is colorful and joyful without
+making every control colorful. The platform owns the chrome; TimeCalendar's identity appears
+through its brand color, calendar data, and logo-derived graphic language.
+
+### Color roles
+
+- **Pink is the brand and action color.** It identifies TimeCalendar and tints primary actions,
+  active navigation, links, selection, and the current-time indicator. It does not need to fill
+  every header or large surface to make the app recognizable.
+- **Pastel colors belong to calendars and events.** The logo and real schedules establish the
+  character: pale lilac, pink, blue, green, yellow, coral, and neighboring generated hues. A
+  busy calendar is intentionally a soft mosaic. Event colors are user/data values, not semantic
+  theme tokens and not additional brand colors.
+- **Status colors keep their meaning.** Success, warning, error, and destructive states use
+  dedicated semantic colors. An arbitrary event green is not a success state, and an arbitrary
+  event coral is not an error state.
+- **Neutral system surfaces remain dominant.** Backgrounds, lists, fields, sheets, and most
+  controls use scheme-appropriate neutral tokens. As a working visual balance, a screen is
+  mostly neutral, with contextual event color used sparingly and pink reserved for brand and
+  action.
+
+### How event color appears outside the calendar
+
+Use a small vocabulary consistently:
+
+1. **Dot:** identifies a calendar, subject, or event in a list or summary.
+2. **Wash:** gives a card, selected item, or contextual header a very pale version of one event
+   color. Text remains on a verified neutral foreground rather than inheriting the event color.
+3. **Block:** uses the stronger pastel fill for actual event geometry in a timeline or calendar
+   grid. This is where the spectrum can be most visible.
+4. **Mosaic:** uses a small, structured group of rounded rectangles derived from the blocks in
+   the TimeCalendar logo. It is suitable for a welcome surface or empty state when no real event
+   colors are available.
+
+Prefer color that comes from the content. A Home summary can show dots for that day's events,
+and upcoming cards can use their event's pale surface. Event details should feature one
+contextual event color, not a rainbow of unrelated accents.
+
+Do **not** add a colored leading rail or rounded left border to generic cards. It reads as a
+decorative template rather than TimeCalendar. Also avoid loose confetti or cake-sprinkle
+shapes. When a decorative composition is useful, use the logo's aligned calendar-block
+geometry instead.
+
+### Light and dark are equal designs
+
+Every designed surface ships in light and dark mode. Dark mode is not an automatic inversion
+or a late recoloring pass:
+
+- choose neutral surfaces, separators, pastel washes, and strong event fills for each scheme;
+- preserve the soft pastel identity without making dark surfaces muddy or neon;
+- verify text and interactive-component contrast in both schemes;
+- never assume imported/generated event colors can carry readable text; resolve an explicit
+  foreground or keep the color decorative; and
+- review dense calendar screens and sparse non-calendar screens on-device in both schemes.
+
+Palette work must therefore define light and dark variants together. A new light-only visual
+token or color treatment is incomplete.
+
+### Native platform expression
+
+iOS and Android share product meaning and color roles, not necessarily component layout.
+Prefer native components and platform conventions whenever the operating system provides the
+pattern:
+
+- **iOS:** native navigation bars and large titles where appropriate, trailing navigation-bar
+  actions such as `+`, native tab bars, grouped lists, context menus/action sheets, SF Symbols,
+  and native pickers and switches.
+- **Android:** Material 3 top app bars, a FAB for the primary create action where appropriate,
+  Material navigation bars, menus/bottom sheets, Material Symbols, and native Material pickers
+  and switches.
+
+Do not introduce an iOS FAB merely to share the Android layout, and do not move an Android
+primary create action into an iOS-shaped header solely for visual parity. Platform-specific
+composition is expected when the idioms differ. Custom visual design is concentrated in brand
+surfaces and calendar content; native controls are tinted and composed rather than re-skinned.
+
 ## Token layer — typed TS constants under `src/theme/`
 
 - `src/theme/tokens.ts` holds the design tokens as plain `as const` TypeScript: `Colors` (light/dark records, including the brand **`primary`**), `Spacing`, the `Radii` scale (radius is a token, not a magic number), `Fonts`, and `MaxContentWidth`; `ThemeColor` is derived from `Colors`. **No styling runtime** (NativeWind / Tamagui / unistyles rejected, R-2 — `StyleSheet` + typed token constants is the pattern, and `tsc` is the only type gate). A missing/mistyped token key is a `tsc` error, not a silent fallback.

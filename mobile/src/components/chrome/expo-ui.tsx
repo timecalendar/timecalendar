@@ -28,8 +28,8 @@ import { type MenuComponentRef, MenuView } from "@expo/ui/community/menu"
 //    the same ADR-010 universal posture as `Picker` (one library, one seam, one
 //    blast radius). See ADR 012. Kept thin: no higher-level composed date-field,
 //    no forced theming of the OS-chromed control (R-3).
-//  - `MenuView` + `MenuComponentRef` — the anchored native menu used by the
-//    compact Android calendar view trigger.
+//  - `MenuView` + `MenuComponentRef` — anchored native action menus, including
+//    the calendar view trigger and per-calendar actions.
 //
 // These controls are not theme-tinted here: native controls adopt
 // the platform's own light/dark appearance — forcing `@/theme` colors onto it

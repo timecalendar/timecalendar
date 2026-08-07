@@ -15,6 +15,7 @@ export {
   type UserCalendarActions,
   useUserCalendarActions,
   useUserCalendars,
+  useUserCalendarsLoaded,
   validateIcalUrl,
 } from "./data"
 export {

@@ -10,8 +10,10 @@ export const Colors = {
     textTertiary: "#3C3C434D",
     primary: "#E91E63",
     primaryStrong: "#C2185B",
+    actionText: "#C2185B",
     onPrimary: "#ffffff",
     primarySoft: "#E91E631F",
+    destructive: "#B3261E",
     homeHero: "#FCE4EC",
     homeHeroDate: "#AD1457",
     logoSurface: "#ffffff",
@@ -27,8 +29,10 @@ export const Colors = {
     textTertiary: "#EBEBF54D",
     primary: "#FF4081",
     primaryStrong: "#C2185B",
+    actionText: "#FF4081",
     onPrimary: "#ffffff",
     primarySoft: "#FF40811F",
+    destructive: "#FFB4AB",
     homeHero: "#321824",
     homeHeroDate: "#FF80AB",
     logoSurface: "#ffffff",
@@ -83,6 +87,13 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   - `primary` dark = #FF4081 (the lighter pink accent) so the brand reads on the
  *     dark background (#C2185B on #000 is only 3.58:1 — large-only):
  *       #FF4081 on background  #FF4081 on #000 → 6.30:1  (body ✅)
+ *   - `actionText` selects the AA body-text brand tone for each scheme:
+ *       actionText on background #C2185B on #fff → 5.87:1  (light, body ✅)
+ *       actionText on background #FF4081 on #000 → 6.30:1  (dark, body ✅)
+ *
+ *   DESTRUCTIVE
+ *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.3:1 (UI ✅)
+ *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.1:1 (UI ✅)
  *
  * THE RULE (Settings inherits it): white text on brand rides `primaryStrong`
  * #C2185B (the filled-button pair `onPrimary` on `primaryStrong` = 5.87:1, AA body,

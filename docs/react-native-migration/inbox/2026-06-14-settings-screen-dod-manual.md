@@ -15,7 +15,7 @@ with `(HUMAN: see inbox/2026-06-14-settings-screen-dod-manual.md)` so the implem
 
 Run the **dev variant** on both an iOS simulator/device and an Android emulator/device. Reach
 Settings either from the **Profile tab → Settings** entry control, or by deep link
-`timecalendar-dev://settings` (cold-launch). The two pickers (theme, language) are native
+`timecalendar-dev://appearance-settings` (cold-launch). The two pickers (theme, language) are native
 `@expo/ui` controls — SwiftUI menu on iOS, Compose dropdown on Android.
 
 ## 1. Manual VoiceOver pass (iOS) — DoD: Accessibility
@@ -76,7 +76,7 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
 - **How to verify:** Toggle theme and language a few times; transitions feel instant.
 
 ## 8. E2E — the Settings flow (+ schools non-regression) — DoD: E2E
-- **What:** Run the new `mobile/.maestro/settings.yaml` (deep-link → assert the localized title +
+- **What:** Run `mobile/.maestro/appearance-settings.yaml` (deep-link → assert the localized title +
   the two picker `testID`s render) on **iOS and Android**, and confirm `mobile/.maestro/schools.yaml`
   still passes. Optionally evaluate whether a native-picker toggle round-trip is reliable enough on
   **both** platforms to add as a bonus (design D5) — only add it if reliable; a flaky e2e is worse
