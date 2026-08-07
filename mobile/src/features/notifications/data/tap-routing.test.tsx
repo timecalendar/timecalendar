@@ -37,43 +37,61 @@ function message(action: string | undefined, payload?: unknown): RemoteMessage {
   return { data } as unknown as RemoteMessage
 }
 
+// The literal v2 payload shapes below are the mobile-side record of the frozen
+// epic 03 wire contract (design D5): lowercase `type` canon on the detail push,
+// a display-only `count` on the digest push.
 describe("parseNotificationRoute", () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
-  it("maps NEW to the event route", () => {
+  it("maps new to the event route", () => {
     expect(
       parseNotificationRoute(
-        message("calendar_changed", { type: "NEW", event: { uid: "u-1" } }),
+        message("calendar_changed", { type: "new", event: { uid: "u-1" } }),
       ),
     ).toEqual({ kind: "event", uid: "u-1" })
   })
 
-  it("maps EDIT to the event route", () => {
+  it("maps edit to the event route", () => {
     expect(
       parseNotificationRoute(
-        message("calendar_changed", { type: "EDIT", event: { uid: "u-2" } }),
+        message("calendar_changed", { type: "edit", event: { uid: "u-2" } }),
       ),
     ).toEqual({ kind: "event", uid: "u-2" })
   })
 
-  it("maps CANCEL to the calendar route", () => {
+  it("maps cancel to the calendar route", () => {
     expect(
       parseNotificationRoute(
-        message("calendar_changed", { type: "CANCEL", event: { uid: "u-3" } }),
+        message("calendar_changed", { type: "cancel", event: { uid: "u-3" } }),
       ),
     ).toEqual({ kind: "calendar" })
+  })
+
+  it("maps an unknown type carrying a uid to the event route (defensive)", () => {
+    expect(
+      parseNotificationRoute(
+        message("calendar_changed", { type: "moved", event: { uid: "u-4" } }),
+      ),
+    ).toEqual({ kind: "event", uid: "u-4" })
+  })
+
+  it("maps a digest to the calendar route without reading the payload", () => {
+    const digest = {
+      data: { action: "calendar_digest", count: "3" },
+    } as unknown as RemoteMessage
+    expect(parseNotificationRoute(digest)).toEqual({ kind: "calendar" })
   })
 
   it("returns null when there is no data", () => {
     expect(parseNotificationRoute({})).toBeNull()
   })
 
-  it("returns null for a non-calendar_changed action", () => {
+  it("returns null for an unrecognized action", () => {
     expect(
       parseNotificationRoute(
-        message("something_else", { type: "NEW", event: { uid: "u-1" } }),
+        message("something_else", { type: "new", event: { uid: "u-1" } }),
       ),
     ).toBeNull()
   })
@@ -92,7 +110,7 @@ describe("parseNotificationRoute", () => {
   it("returns null when the event uid is missing", () => {
     expect(
       parseNotificationRoute(
-        message("calendar_changed", { type: "NEW", event: {} }),
+        message("calendar_changed", { type: "new", event: {} }),
       ),
     ).toBeNull()
   })
@@ -100,7 +118,7 @@ describe("parseNotificationRoute", () => {
   it("returns null when the event uid is blank", () => {
     expect(
       parseNotificationRoute(
-        message("calendar_changed", { type: "NEW", event: { uid: "" } }),
+        message("calendar_changed", { type: "new", event: { uid: "" } }),
       ),
     ).toBeNull()
   })
@@ -150,8 +168,17 @@ describe("useNotificationTapRouting", () => {
     await mount()
     await act(async () => {
       foregroundHandler()(
-        message("calendar_changed", { type: "NEW", event: { uid: "u-1" } }),
+        message("calendar_changed", { type: "new", event: { uid: "u-1" } }),
       )
+    })
+    expect(sync).toHaveBeenCalledTimes(1)
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it("refetches but does not navigate on a foreground calendar_digest message", async () => {
+    await mount()
+    await act(async () => {
+      foregroundHandler()(message("calendar_digest"))
     })
     expect(sync).toHaveBeenCalledTimes(1)
     expect(push).not.toHaveBeenCalled()
@@ -165,23 +192,32 @@ describe("useNotificationTapRouting", () => {
     expect(sync).not.toHaveBeenCalled()
   })
 
-  it("refetches then opens the event on a background NEW tap", async () => {
+  it("refetches then opens the event on a background new tap", async () => {
     await mount()
     await act(async () => {
       tapHandler()(
-        message("calendar_changed", { type: "NEW", event: { uid: "u-9" } }),
+        message("calendar_changed", { type: "new", event: { uid: "u-9" } }),
       )
     })
     expect(sync).toHaveBeenCalledTimes(1)
     expect(push).toHaveBeenCalledWith("/event-details/u-9")
   })
 
-  it("refetches then opens the calendar on a background CANCEL tap", async () => {
+  it("refetches then opens the calendar on a background cancel tap", async () => {
     await mount()
     await act(async () => {
       tapHandler()(
-        message("calendar_changed", { type: "CANCEL", event: { uid: "u-9" } }),
+        message("calendar_changed", { type: "cancel", event: { uid: "u-9" } }),
       )
+    })
+    expect(sync).toHaveBeenCalledTimes(1)
+    expect(push).toHaveBeenCalledWith("/calendar")
+  })
+
+  it("refetches then opens the calendar on a background digest tap", async () => {
+    await mount()
+    await act(async () => {
+      tapHandler()(message("calendar_digest"))
     })
     expect(sync).toHaveBeenCalledTimes(1)
     expect(push).toHaveBeenCalledWith("/calendar")
@@ -198,7 +234,7 @@ describe("useNotificationTapRouting", () => {
 
   it("refetches then navigates on a cold-start initial notification", async () => {
     mockGetInitialTap.mockResolvedValue(
-      message("calendar_changed", { type: "EDIT", event: { uid: "u-cold" } }),
+      message("calendar_changed", { type: "edit", event: { uid: "u-cold" } }),
     )
     await mount()
     expect(sync).toHaveBeenCalledTimes(1)

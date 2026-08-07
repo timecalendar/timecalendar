@@ -9,15 +9,17 @@ import {
   recordUnknownError,
 } from "@/firebase"
 
-// The server (frozen) emits exactly one action — one FCM message per changed
-// event. `data.payload` is a JSON string of { type, event }; `type` is the
-// server DifferenceType enum (NEW / CANCEL / EDIT) and `event` carries the iCal
-// `uid`. ADR 028.
+// The server's v2 wire contract (frozen). A detail push — one FCM message per
+// changed event — carries `data.action = "calendar_changed"` with `data.payload`
+// a JSON string of { type, event }; `type ∈ new | edit | cancel` (lowercase
+// canonical) and `event` carries the iCal `uid`. A digest push carries
+// `data.action = "calendar_digest"` with a display-only `data.count`. ADR 028.
 const CALENDAR_CHANGED_ACTION = "calendar_changed"
-const CANCEL = "CANCEL"
+const CALENDAR_DIGEST_ACTION = "calendar_digest"
+const CANCEL = "cancel"
 
-// A tap routes to the affected event (NEW/EDIT), or to the calendar (CANCEL — the
-// event is gone server-side, so a detail page would be empty).
+// A tap routes to the affected event (new/edit), or to the calendar (cancel — the
+// event is gone server-side, so a detail page would be empty — and digests).
 export type TapRoute = { kind: "event"; uid: string } | { kind: "calendar" }
 
 // The decoded `payload` shape we depend on — a minimal local type, NOT the server
@@ -35,15 +37,19 @@ interface TapMessage {
 }
 
 /**
- * Decode the server's `calendar_changed` data message into a tap route, or null
- * for anything we do not handle. Pure (no React / Expo / native) so every branch
- * is unit-testable to the branch gate. A malformed `payload` is recorded via
+ * Decode the server's v2 data message into a tap route, or null for anything we
+ * do not handle. Pure (no React / Expo / native) so every branch is
+ * unit-testable to the branch gate. A malformed `payload` is recorded via
  * `recordError` (the only non-pure dependency, in the catch) and yields null —
- * never a crash. R-2: a non-`calendar_changed` action is ignored (forward-
- * compatible; the server grows new actions on its own ship).
+ * never a crash. R-2: an unrecognized action is ignored (forward-compatible;
+ * the server grows new actions on its own ship).
  */
 export function parseNotificationRoute(message: TapMessage): TapRoute | null {
   const data = message.data
+  // A digest tap opens the calendar; `payload`/`count` are not read.
+  if (data?.action === CALENDAR_DIGEST_ACTION) {
+    return { kind: "calendar" }
+  }
   if (data?.action !== CALENDAR_CHANGED_ACTION) {
     return null
   }
@@ -61,8 +67,8 @@ export function parseNotificationRoute(message: TapMessage): TapRoute | null {
     return null
   }
 
-  // CANCEL → the event no longer exists; route to the calendar. Any other type
-  // carrying a uid (NEW / EDIT, defensively also unknown ones) → the event.
+  // cancel → the event no longer exists; route to the calendar. Any other type
+  // carrying a uid (new / edit, defensively also unknown ones) → the event.
   return decoded.type === CANCEL ? { kind: "calendar" } : { kind: "event", uid }
 }
 
@@ -70,8 +76,9 @@ export function parseNotificationRoute(message: TapMessage): TapRoute | null {
  * The tap-routing dispatcher (ADR 028 / design Decision 2), mounted once in the
  * root layout beside `useNotificationRegistration`. Wires the three messaging
  * entrypoints to the calendar sync + the router:
- *   - Foreground (`onForegroundMessage`): a `calendar_changed` message refetches
- *     the calendar and does NOT navigate (Flutter parity — never yank the user).
+ *   - Foreground (`onForegroundMessage`): a `calendar_changed` or
+ *     `calendar_digest` message refetches the calendar and does NOT navigate
+ *     (Flutter parity — never yank the user).
  *   - Background tap (`onNotificationTap`): refetch, then navigate per the route.
  *   - Killed/cold-start (`getInitialTap`): resolved in a ref-guarded mount effect
  *     so the <Stack> is mounted before navigation (Decision 3); refetch then
@@ -97,7 +104,11 @@ export function useNotificationTapRouting(): void {
     }
 
     const unsubscribeForeground = onForegroundMessage((message) => {
-      if (message.data?.action === CALENDAR_CHANGED_ACTION) {
+      const action = message.data?.action
+      if (
+        action === CALENDAR_CHANGED_ACTION ||
+        action === CALENDAR_DIGEST_ACTION
+      ) {
         void sync()
       }
     })

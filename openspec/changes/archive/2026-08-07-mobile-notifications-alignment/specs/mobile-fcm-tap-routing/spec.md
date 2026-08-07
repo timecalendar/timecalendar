@@ -1,8 +1,7 @@
-# mobile-fcm-tap-routing Specification
+# mobile-fcm-tap-routing — delta
 
-## Purpose
-TBD - created by archiving change add-mobile-fcm-tap-routing. Update Purpose after archive.
-## Requirements
+## MODIFIED Requirements
+
 ### Requirement: Notification payload decoded to a route by a pure parser
 The app SHALL decode an incoming FCM message into a navigation intent with a pure function `parseNotificationRoute(message)` that handles the server's v2 wire contract:
 
@@ -56,4 +55,3 @@ The app SHALL wire a tap-routing dispatcher, mounted once in the root layout, th
 #### Scenario: No launch notification is a no-op
 - **WHEN** the app cold-starts without having been launched from a notification
 - **THEN** the dispatcher performs no sync and no navigation
-

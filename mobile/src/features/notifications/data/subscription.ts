@@ -4,14 +4,16 @@ import { useNotificationSubscriptionControllerCreateOrUpdateSubscription } from 
 import { useUserCalendars } from "@/features/calendar-sources/data"
 import { getFcmToken, recordUnknownError } from "@/firebase"
 
+import { getEffectiveLocale, getEffectiveTimezone } from "./localization"
 import { getFrequency, getIsActive, getNbDaysAhead } from "./prefs"
 
 // The subscription registration seam (design Decisions 3/4/5/6 / ADR 027) — the
 // ONLY generated-client import site for the feature (B-1). It wraps the
 // already-generated PUT mutation over the single customFetch mutator and exposes
 // a `register()` that assembles the full NotificationSubscriptionCreate DTO fresh
-// each call (the local prefs + the user_calendars server ids + the Ship-A token)
-// and PUTs it IDEMPOTENTLY (create-or-update keyed server-side by the token/user).
+// each call (the local prefs + the user_calendars server ids + the Ship-A token
+// + the effective locale/timezone via the ./localization accessors) and PUTs it
+// IDEMPOTENTLY (create-or-update keyed server-side by the token/user).
 //
 // calendarIds are the user_calendars rows' SERVER ids (the row `id` IS the server
 // calendar id per fromCalendarForPublic — distinct from the irreplaceable token),
@@ -51,6 +53,8 @@ export function useSubscriptionRegistration(): UseSubscriptionRegistration {
             isActive: getIsActive(),
             calendarIds: calendars.map((calendar) => calendar.id),
             fcmToken,
+            locale: getEffectiveLocale(),
+            timezone: getEffectiveTimezone(),
           },
         })
       } catch (error) {
