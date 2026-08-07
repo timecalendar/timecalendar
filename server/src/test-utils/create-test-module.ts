@@ -1,6 +1,9 @@
+import { QueueService } from "@lyrolab/nest-shared/queue"
 import {
   ClassProvider,
   FactoryProvider,
+  Global,
+  Module,
   ModuleMetadata,
   ValueProvider,
 } from "@nestjs/common"
@@ -24,6 +27,25 @@ export type CreateTestModuleOptions = {
   overrides?: Provider<unknown>[]
 }
 
+// Runtime mounts SharedQueueModule.forRoot (a global module) in app.module.ts
+// only — mounting it here would open Redis connections and upsert cron
+// schedulers from jest. This global stub keeps QueueService injectable from any
+// module under test; enqueues are no-ops (override the provider to assert them).
+@Global()
+@Module({
+  providers: [
+    {
+      provide: QueueService,
+      useValue: {
+        add: async () => undefined,
+        addBulk: async () => [],
+      },
+    },
+  ],
+  exports: [QueueService],
+})
+class QueueServiceStubModule {}
+
 const defaultOptions: CreateTestModuleOptions = {
   overrides: [],
 }
@@ -39,6 +61,7 @@ const createTestModule = async (
     imports: [
       ...COMMON_IMPORTS,
       sharedDatabaseTestModule,
+      QueueServiceStubModule,
       ...(metadata.imports ?? []),
     ],
   })

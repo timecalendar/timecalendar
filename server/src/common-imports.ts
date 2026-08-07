@@ -2,7 +2,6 @@ import { SharedBullModule } from "@lyrolab/nest-shared/bull"
 import { SharedRedisModule } from "@lyrolab/nest-shared/redis"
 import { ModuleMetadata } from "@nestjs/common"
 import { ConfigModule } from "@nestjs/config"
-import { EventEmitterModule } from "@nestjs/event-emitter"
 
 // Shared infrastructure imports mounted by both the runtime AppModule and the
 // test module. The database module is intentionally NOT here: runtime wires
@@ -14,8 +13,9 @@ import { EventEmitterModule } from "@nestjs/event-emitter"
 // Redis + Bull, by contrast, DO live here: `SharedRedisModule.forRoot()`
 // provides the injectable `RedisConfig` from `REDIS_URL` (global), and
 // `SharedBullModule.forRoot()` builds the BullMQ root connection from that same
-// `RedisConfig` — both runtime and tests share one connection convention, and
-// tests don't exercise the queue (`ENABLE_QUEUE=false`, no `*.test.ts` enqueues).
+// `RedisConfig` — both runtime and tests share one connection convention. The
+// worker-spawning `SharedQueueModule.forRoot` is runtime-only (app.module.ts);
+// tests get a no-op `QueueService` stub from create-test-module.ts.
 //
 // Note: nest-shared's `forRoot()` connection is `REDIS_URL`-only — it does NOT
 // carry a Bull key prefix (the company convention isolates environments by
@@ -30,5 +30,4 @@ export const COMMON_IMPORTS: NonNullable<ModuleMetadata["imports"]> = [
   ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
   SharedRedisModule.forRoot(),
   SharedBullModule.forRoot(),
-  EventEmitterModule.forRoot(),
 ]

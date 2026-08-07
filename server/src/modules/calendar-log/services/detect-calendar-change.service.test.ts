@@ -3,7 +3,6 @@ import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
 import { DetectCalendarChangeService } from "modules/calendar-log/services/detect-calendar-change.service"
-import { CalendarContentUpdatedEvent } from "modules/calendar-sync/events/calendar-content-updated.event"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { EventType } from "modules/fetch/models/event.model"
@@ -41,7 +40,7 @@ describe("DetectCalendarChangeService", () => {
     await app.close()
   })
 
-  describe("handleCalendarContentUpdated", () => {
+  describe("detectAndLogChanges", () => {
     it("should create calendar log when events are added", async () => {
       const calendar = await calendarFactory().create()
 
@@ -63,13 +62,12 @@ describe("DetectCalendarChangeService", () => {
         },
       ]
 
-      const event = new CalendarContentUpdatedEvent(
+      await service.detectAndLogChanges(
+        dataSource.manager,
         calendar.id,
         oldEvents,
         newEvents,
       )
-
-      await service.handleCalendarContentUpdated(event)
 
       const logs = await repository.findByCalendarId(calendar.id)
       expect(logs).toHaveLength(1)
@@ -104,13 +102,12 @@ describe("DetectCalendarChangeService", () => {
         },
       ]
 
-      const event = new CalendarContentUpdatedEvent(
+      await service.detectAndLogChanges(
+        dataSource.manager,
         calendar.id,
         events, // same events for old and new
         events,
       )
-
-      await service.handleCalendarContentUpdated(event)
 
       const logs = await repository.findByCalendarId(calendar.id)
       expect(logs).toHaveLength(0)
@@ -153,14 +150,13 @@ describe("DetectCalendarChangeService", () => {
         },
       ]
 
-      const event = new CalendarContentUpdatedEvent(
-        calendar.id,
-        oldEvents,
-        newEvents,
-      )
-
       await assertChanges(dataSource, [[CalendarLog, 1]], () =>
-        service.handleCalendarContentUpdated(event),
+        service.detectAndLogChanges(
+          dataSource.manager,
+          calendar.id,
+          oldEvents,
+          newEvents,
+        ),
       )
 
       const logs = await repository.findByCalendarId(calendar.id)
@@ -170,6 +166,37 @@ describe("DetectCalendarChangeService", () => {
       expect(changes.changedItems).toHaveLength(1)
       expect(changes.newItems).toHaveLength(0)
       expect(changes.oldItems).toHaveLength(0)
+    })
+
+    it("rolls back the log when the surrounding transaction aborts", async () => {
+      const calendar = await calendarFactory().create()
+
+      const newEvents: CalendarEvent[] = [
+        {
+          uid: "test-event-1",
+          title: "New Event",
+          startsAt: new Date("2024-01-16T10:00:00Z"),
+          endsAt: new Date("2024-01-16T11:00:00Z"),
+          location: "Test Location",
+          allDay: false,
+          description: null,
+          teachers: [],
+          tags: [],
+          type: EventType.CM,
+          fields: null,
+          exportedAt: new Date("2024-01-15T12:00:00Z"),
+        },
+      ]
+
+      await expect(
+        dataSource.transaction(async (manager) => {
+          await service.detectAndLogChanges(manager, calendar.id, [], newEvents)
+          throw new Error("abort")
+        }),
+      ).rejects.toThrow("abort")
+
+      const logs = await repository.findByCalendarId(calendar.id)
+      expect(logs).toHaveLength(0)
     })
   })
 })

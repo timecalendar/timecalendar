@@ -1,16 +1,25 @@
 import { createBullBoard } from "@bull-board/api"
-import { BullAdapter } from "@bull-board/api/bullAdapter"
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter"
 import { ExpressAdapter } from "@bull-board/express"
+import { getQueueToken } from "@nestjs/bullmq"
 import { NestExpressApplication } from "@nestjs/platform-express"
+import { Queue } from "bullmq"
 import { API_TOKEN, API_USERNAME } from "config/constants"
+import { ALL_QUEUE_NAMES } from "config/queues"
 import basicAuth from "express-basic-auth"
-import { DEFAULT_QUEUE_NAME } from "modules/queue/queue.constants"
 
 const bullBoardAdapter = (app: NestExpressApplication) => {
   const serverAdapter = new ExpressAdapter()
 
+  // Reuses the Queue instances SharedQueueModule registered on the shared Bull
+  // root connection — no extra Redis clients.
   createBullBoard({
-    queues: [new BullAdapter(DEFAULT_QUEUE_NAME)],
+    queues: ALL_QUEUE_NAMES.map(
+      (name) =>
+        new BullMQAdapter(
+          app.get<Queue>(getQueueToken(name), { strict: false }),
+        ),
+    ),
     serverAdapter,
   })
 

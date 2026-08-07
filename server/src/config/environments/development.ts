@@ -10,7 +10,6 @@ export const developmentEnvVariables = {
   REDIS_URL: "redis://127.0.0.1:37292",
   API_USERNAME: "timecalendar",
   API_TOKEN: "timecalendar42",
-  ENABLE_QUEUE: "true",
   S3_PUBLIC_BUCKET_CLIENT_URL:
     "https://timecalendar-dev-public.fra1.digitaloceanspaces.com",
   OPENAI_API_KEY: "",

@@ -1,8 +1,7 @@
 import { Module } from "@nestjs/common"
-import { JobRunService } from "modules/job-run/services/job-run.service"
+import { JobEventsListenerService } from "modules/job-run/services/job-events-listener.service"
 
 @Module({
-  providers: [JobRunService],
-  exports: [JobRunService],
+  providers: [JobEventsListenerService],
 })
 export class JobRunModule {}
