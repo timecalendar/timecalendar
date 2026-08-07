@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common"
 import { FirebaseModule } from "modules/firebase/firebase.module"
-import { MailerModule } from "modules/mailer/mailer.module"
+import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
+import { SendPushJob } from "modules/notifier/jobs/send-push.job"
 import { NotifierService } from "modules/notifier/services/notifier.service"
 
 @Module({
-  imports: [MailerModule, FirebaseModule],
-  providers: [NotifierService],
+  imports: [FirebaseModule, NotificationSubscriptionModule],
+  providers: [NotifierService, SendPushJob],
   controllers: [],
   exports: [NotifierService],
 })

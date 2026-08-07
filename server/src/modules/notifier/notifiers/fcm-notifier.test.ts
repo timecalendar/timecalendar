@@ -1,132 +1,76 @@
-import { CalendarChange } from "modules/calendar-log/models/calendar-change"
+import { QueueService } from "@lyrolab/nest-shared/queue"
 import { EventForChangeDetection } from "modules/calendar-log/models/change-detection/find-event-changes"
-import { FirebaseService } from "modules/firebase/services/firebase.service"
+import {
+  SEND_PUSH_JOB,
+  sendPushJobOptions,
+} from "modules/notifier/jobs/send-push.constants"
+import { CalendarChangeItem } from "modules/notifier/models/notifier"
 import { FcmNotifier } from "modules/notifier/notifiers/fcm-notifier"
-import { DifferenceType } from "modules/notifier/notifiers/fcm-notifier-calendar-changed"
 
 describe("FcmNotifier", () => {
-  const notify = jest.fn()
+  const add = jest.fn()
+  const queueService = { add } as unknown as QueueService
 
-  const firebaseService = {
-    notify,
-  } as unknown as FirebaseService
-
-  const fcmNotifier = new FcmNotifier(firebaseService, {
+  const fcmNotifier = new FcmNotifier(queueService, {
     type: "fcm",
-    token: "123",
+    token: "token-123",
   })
+
+  const event: EventForChangeDetection = {
+    uid: "event-1",
+    title: "Cours",
+    location: null,
+    startsAt: new Date("2025-01-01T10:00:00.000Z"),
+    endsAt: new Date("2025-01-01T11:00:00.000Z"),
+  }
+
+  const basePayload = {
+    subscriptionId: "sub-1",
+    locale: "fr" as const,
+    timezone: "Europe/Paris",
+  }
 
   beforeEach(() => {
-    notify.mockReset()
+    add.mockReset()
   })
 
-  describe("onCalendarChanged", () => {
-    it("should handle a new event", async () => {
-      const difference: CalendarChange<EventForChangeDetection> = {
-        changedItems: [],
-        newItems: [
-          {
-            uid: "event1",
-            title: "Cours",
-            startsAt: new Date("2021-08-30T07:00:00.000Z"),
-            endsAt: new Date("2021-08-30T08:00:00.000Z"),
-            location: null,
-          },
-        ],
-        oldItems: [],
-      }
+  it("enqueues one send_push job for a single change", async () => {
+    const changes: CalendarChangeItem[] = [{ type: "new", event }]
 
-      await fcmNotifier.onCalendarChanged({ difference })
+    await fcmNotifier.onCalendarChanged({ ...basePayload, changes })
 
-      expect(notify).toBeCalledTimes(1)
-      expect(notify).toBeCalledWith("123", {
-        notification: {
-          title: "Nouveau cours",
-          body: "Cours, 30/08/2021 de 07:00 à 08:00",
-        },
-        data: {
-          action: "calendar_changed",
-          payload: JSON.stringify({
-            type: DifferenceType.NEW,
-            event: difference.newItems[0],
-          }),
-        },
-      })
-    })
+    expect(add).toHaveBeenCalledTimes(1)
+    expect(add).toHaveBeenCalledWith(
+      SEND_PUSH_JOB,
+      {
+        subscriptionId: "sub-1",
+        token: "token-123",
+        push: expect.objectContaining({
+          notification: expect.objectContaining({ title: "Nouveau cours" }),
+          data: expect.objectContaining({ action: "calendar_changed" }),
+          collapseId: "event-1",
+        }),
+      },
+      sendPushJobOptions,
+    )
+  })
 
-    it("should handle a modified event", async () => {
-      const difference: CalendarChange<EventForChangeDetection> = {
-        changedItems: [
-          [
-            {
-              uid: "event1",
-              title: "Cours",
-              startsAt: new Date("2021-08-30T07:00:00.000Z"),
-              endsAt: new Date("2021-08-30T08:00:00.000Z"),
-              location: null,
-            },
-            {
-              uid: "event1",
-              title: "Cours",
-              startsAt: new Date("2021-08-30T08:00:00.000Z"),
-              endsAt: new Date("2021-08-30T09:00:00.000Z"),
-              location: null,
-            },
-          ],
-        ],
-        newItems: [],
-        oldItems: [],
-      }
+  it("enqueues one digest job for multiple changes", async () => {
+    const changes: CalendarChangeItem[] = [
+      { type: "new", event },
+      { type: "cancel", event: { ...event, uid: "event-2" } },
+    ]
 
-      await fcmNotifier.onCalendarChanged({ difference })
+    await fcmNotifier.onCalendarChanged({ ...basePayload, changes })
 
-      expect(notify).toBeCalledTimes(1)
-      expect(notify).toBeCalledWith("123", {
-        notification: {
-          title: "Cours modifié",
-          body: "Cours, 30/08/2021 de 08:00 à 09:00",
-        },
-        data: {
-          action: "calendar_changed",
-          payload: JSON.stringify({
-            type: DifferenceType.EDIT,
-            event: difference.changedItems[0][1],
-          }),
-        },
-      })
-    })
+    expect(add).toHaveBeenCalledTimes(1)
+    expect(add.mock.calls[0][1].push.data.action).toBe("calendar_digest")
+    expect(add.mock.calls[0][1].push.data.count).toBe("2")
+  })
 
-    it("should handle a canceled event", async () => {
-      const difference: CalendarChange<EventForChangeDetection> = {
-        changedItems: [],
-        newItems: [],
-        oldItems: [
-          {
-            uid: "event1",
-            title: "Cours",
-            startsAt: new Date("2021-08-30T07:00:00.000Z"),
-            endsAt: new Date("2021-08-30T08:00:00.000Z"),
-            location: null,
-          },
-        ],
-      }
+  it("enqueues nothing when the filtered change set is empty", async () => {
+    await fcmNotifier.onCalendarChanged({ ...basePayload, changes: [] })
 
-      await fcmNotifier.onCalendarChanged({ difference })
-
-      expect(notify).toBeCalledTimes(1)
-      expect(notify).toBeCalledWith("123", {
-        notification: {
-          title: "Cours annulé",
-          body: "Cours, 30/08/2021 de 07:00 à 08:00",
-        },
-        data: {
-          action: "calendar_changed",
-          payload: JSON.stringify({
-            type: DifferenceType.CANCEL,
-            event: difference.oldItems[0],
-          }),
-        },
-      })
-    })
+    expect(add).not.toHaveBeenCalled()
   })
 })
