@@ -12,7 +12,7 @@
 | --- | --- | --- | --- |
 | 01 | [Named queues in nest-shared](01-nest-shared-multi-queue.md) | `nest-shared` | to do |
 | 02 | [Server queue refactor](02-server-queue-refactor.md) | `server` | to do |
-| 03 | [Notifications pipeline](03-notifications-pipeline.md) | `server` | to do |
+| 03 | [Notifications pipeline](03-notifications-pipeline.md) | `server` | done |
 | 04 | [Mobile alignment](04-mobile-alignment.md) | `mobile` | to do |
 | 05 | [Mobile display-timezone preference](05-mobile-timezone-pref.md) | `mobile` | to do |
 

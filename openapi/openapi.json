@@ -1240,6 +1240,18 @@
           },
           "fcmToken": {
             "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "description": "Language used for notification texts. Defaults to `fr`.",
+            "enum": [
+              "fr",
+              "en"
+            ]
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone used to render event times. Defaults to `Europe/Paris`."
           }
         },
         "required": [
