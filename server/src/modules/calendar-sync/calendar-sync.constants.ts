@@ -1,3 +1,5 @@
+import { subDays, subMinutes } from "date-fns"
+
 /**
  * Number of days of inactivity before a calendar is considered inactive
  * and won't be synced automatically anymore.
@@ -11,7 +13,8 @@ export const INACTIVITY_DAYS = 14
  */
 export const UPDATE_AFTER_MIN = 30
 
-/**
- * Maximum number of concurrent updates
- */
-export const UPDATE_CONCURRENCY = 10
+/** Cut-off before which a calendar counts as outdated (due for sync). */
+export const calendarsDueBefore = () => subMinutes(new Date(), UPDATE_AFTER_MIN)
+
+/** Cut-off after which a calendar counts as still active. */
+export const calendarsActiveSince = () => subDays(new Date(), INACTIVITY_DAYS)

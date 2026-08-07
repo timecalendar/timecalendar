@@ -177,7 +177,8 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
       endsAt: today(16),
       location: "Room E2E Lecture",
       allDay: false,
-      description: "Stable today event the E2E details and checklist flows open.",
+      description:
+        "Stable today event the E2E details and checklist flows open.",
       teachers: ["E2E Lecturer"],
       tags: [],
       type: EventType.CM,

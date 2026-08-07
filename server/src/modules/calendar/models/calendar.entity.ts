@@ -44,6 +44,7 @@ export class Calendar {
   schoolId?: string
 
   @Column()
+  @Index("IDX_calendar_lastUpdatedAt")
   lastUpdatedAt: Date
 
   @Column({ type: "timestamp", nullable: true })

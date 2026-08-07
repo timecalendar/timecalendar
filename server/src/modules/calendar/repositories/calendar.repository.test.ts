@@ -87,51 +87,6 @@ describe("CalendarRepository", () => {
       expect(calendars.length).toBe(0)
     })
 
-    describe("lastAccessedAtAfter", () => {
-      it("finds calendars updated after the last accessed date", async () => {
-        const expected = await calendarFactory().create({
-          lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
-          lastAccessedAt: new Date("2022-01-05T11:00:00Z"),
-        })
-
-        const calendars = await repository.findLastUpdatedBeforeWithContent({
-          lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
-          lastAccessedAtAfter: new Date("2022-01-01T00:00:00Z"),
-        })
-
-        expect(calendars.length).toBe(1)
-        expect(calendars[0].id).toBe(expected.id)
-      })
-
-      it("does not find calendars before the last accessed date", async () => {
-        await calendarFactory().create({
-          lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
-          lastAccessedAt: new Date("2022-01-01T00:00:00Z"),
-        })
-
-        const calendars = await repository.findLastUpdatedBeforeWithContent({
-          lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
-          lastAccessedAtAfter: new Date("2022-01-05T11:00:00Z"),
-        })
-
-        expect(calendars.length).toBe(0)
-      })
-
-      it("does not find calendars without last accessed date", async () => {
-        await calendarFactory().create({
-          lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
-          lastAccessedAt: null,
-        })
-
-        const calendars = await repository.findLastUpdatedBeforeWithContent({
-          lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
-          lastAccessedAtAfter: new Date("2022-01-05T11:00:00Z"),
-        })
-
-        expect(calendars.length).toBe(0)
-      })
-    })
-
     it("finds calendars by token", async () => {
       await calendarFactory().create()
       await calendarFactory().create({
@@ -148,6 +103,64 @@ describe("CalendarRepository", () => {
 
       expect(calendars.length).toBe(1)
       expect(calendars[0].id).toBe(expected.id)
+    })
+  })
+
+  describe("findDueCalendarIds", () => {
+    it("returns ids of calendars updated before the due date and accessed recently", async () => {
+      const expected = await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        lastAccessedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      const calendarIds = await repository.findDueCalendarIds({
+        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+        lastAccessedAtAfter: new Date("2022-01-01T00:00:00Z"),
+      })
+
+      expect(calendarIds).toEqual([expected.id])
+    })
+
+    it("skips calendars updated after the due date", async () => {
+      await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:30:00Z"),
+        lastAccessedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      const calendarIds = await repository.findDueCalendarIds({
+        lastUpdatedBefore: new Date("2022-01-05T11:00:00Z"),
+        lastAccessedAtAfter: new Date("2022-01-01T00:00:00Z"),
+      })
+
+      expect(calendarIds).toEqual([])
+    })
+
+    it("skips calendars last accessed before the inactivity threshold", async () => {
+      await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        lastAccessedAt: new Date("2022-01-01T00:00:00Z"),
+      })
+
+      const calendarIds = await repository.findDueCalendarIds({
+        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+        lastAccessedAtAfter: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      expect(calendarIds).toEqual([])
+    })
+
+    it("skips calendars without a last accessed date", async () => {
+      await calendarFactory().create({
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        lastAccessedAt: null,
+      })
+
+      const calendarIds = await repository.findDueCalendarIds({
+        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+        lastAccessedAtAfter: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      expect(calendarIds).toEqual([])
     })
   })
 

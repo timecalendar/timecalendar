@@ -1,12 +1,23 @@
 import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
-import { DeepPartial, In, LessThan, MoreThan, Repository } from "typeorm"
+import {
+  DeepPartial,
+  EntityNotFoundError,
+  In,
+  LessThan,
+  MoreThan,
+  Repository,
+} from "typeorm"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 
 type FindLastUpdatedBeforeWithContentParams = {
   lastUpdatedBefore: Date
-  lastAccessedAtAfter?: Date
   filterByTokens?: string[]
+}
+
+type FindDueCalendarIdsParams = {
+  lastUpdatedBefore: Date
+  lastAccessedAtAfter: Date
 }
 
 @Injectable()
@@ -16,11 +27,34 @@ export class CalendarRepository {
     private readonly repository: Repository<Calendar>,
   ) {}
 
-  findOne(calendarId: string) {
-    return this.repository.findOneOrFail({
+  async findOne(calendarId: string) {
+    const calendar = await this.findOneOrNull(calendarId)
+    if (!calendar) throw new EntityNotFoundError(Calendar, { id: calendarId })
+    return calendar
+  }
+
+  findOneOrNull(calendarId: string) {
+    return this.repository.findOne({
       relations: { school: true, content: true },
       where: { id: calendarId },
     })
+  }
+
+  // IDs-only projection: the fan-out cron runs against the full calendar table
+  // every 5 minutes and must not hydrate content relations (design D2).
+  async findDueCalendarIds({
+    lastUpdatedBefore,
+    lastAccessedAtAfter,
+  }: FindDueCalendarIdsParams): Promise<string[]> {
+    const calendars = await this.repository.find({
+      select: { id: true },
+      where: {
+        lastUpdatedAt: LessThan(lastUpdatedBefore),
+        lastAccessedAt: MoreThan(lastAccessedAtAfter),
+      },
+      order: { lastUpdatedAt: "ASC" },
+    })
+    return calendars.map(({ id }) => id)
   }
 
   findOneByToken(token: string) {
@@ -50,16 +84,12 @@ export class CalendarRepository {
 
   findLastUpdatedBeforeWithContent({
     lastUpdatedBefore,
-    lastAccessedAtAfter,
     filterByTokens,
   }: FindLastUpdatedBeforeWithContentParams) {
     return this.repository.find({
       relations: { school: true, content: true },
       where: {
         lastUpdatedAt: LessThan(lastUpdatedBefore),
-        ...(lastAccessedAtAfter && {
-          lastAccessedAt: MoreThan(lastAccessedAtAfter),
-        }),
         ...(filterByTokens && { token: In(filterByTokens) }),
       },
       order: { lastUpdatedAt: "ASC" },
