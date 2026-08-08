@@ -5,7 +5,7 @@ code and product specifications.
 
 | Feature | Responsibility | Persistence and external seams |
 | --- | --- | --- |
-| `settings` | Theme and language preferences | `@/storage`; consumed by theme and i18n startup |
+| `settings` | Theme, language, and display-timezone preferences | `@/storage`; consumed by theme, i18n startup, every zone-threaded rendering surface, and notification registration |
 | `notifications` | Subscription preferences, FCM registration, and notification routing | `@/storage`, `@/firebase`, generated notification API |
 | `personal-events` | Local event CRUD, validation, and forms | `@/db`; dates stored as ISO-8601 UTC text |
 | `school-selection` | School/group queries, search, and selected identities | TanStack Query plus `@/storage` |

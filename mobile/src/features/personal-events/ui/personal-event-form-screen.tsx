@@ -19,6 +19,7 @@ import { DateTimeField } from "@/components/date-time-field"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
+import { resolveLocale } from "@/features/calendar/data"
 import {
   buildEventFromForm,
   type EventFormErrors,
@@ -28,6 +29,7 @@ import {
   useSaveEvent,
   validateEventForm,
 } from "@/features/personal-events/form"
+import { useDisplayZone } from "@/features/settings/prefs"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The create/edit personal-event form (B2 / TIM-133) — PRESENTATIONAL (70%
@@ -57,7 +59,9 @@ function defaultValues(): EventFormValues {
 }
 
 export default function PersonalEventFormScreen() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = resolveLocale(i18n.language)
+  const displayZone = useDisplayZone()
   const theme = useTheme()
   const params = useLocalSearchParams<{ uid?: string }>()
   const uid = params.uid
@@ -178,6 +182,8 @@ export default function PersonalEventFormScreen() {
                 testID="personal-event-start-picker"
                 accessibilityLabel={t("personalEvents.form.startLabel")}
                 value={values.startsAt}
+                locale={locale}
+                zone={displayZone}
                 onChange={(date) => update("startsAt", date)}
               />
             </View>
@@ -190,6 +196,8 @@ export default function PersonalEventFormScreen() {
                 testID="personal-event-end-picker"
                 accessibilityLabel={t("personalEvents.form.endLabel")}
                 value={values.endsAt}
+                locale={locale}
+                zone={displayZone}
                 onChange={(date) => update("endsAt", date)}
               />
               {errors.range !== undefined && (

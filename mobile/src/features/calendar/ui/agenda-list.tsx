@@ -38,11 +38,13 @@ interface AgendaSection {
 export function AgendaList({
   events,
   locale,
+  displayZone,
   refreshControl,
   onPressEvent,
 }: {
   events: CalendarEvent[]
   locale: AppLocale
+  displayZone: string
   refreshControl?: ReactElement<RefreshControlProps>
   onPressEvent: (event: CalendarEvent) => void
 }) {
@@ -52,11 +54,11 @@ export function AgendaList({
 
   const sections = useMemo<AgendaSection[]>(
     () =>
-      groupEventsByDay(events).map((bucket) => ({
+      groupEventsByDay(events, displayZone).map((bucket) => ({
         day: bucket.day,
         data: bucket.events,
       })),
-    [events],
+    [events, displayZone],
   )
 
   // The "next upcoming" event — the first (chronologically) ending after now. Its
@@ -80,12 +82,13 @@ export function AgendaList({
       stickySectionHeadersEnabled
       refreshControl={refreshControl}
       renderSectionHeader={({ section }) => (
-        <DayHeader day={section.day} locale={locale} />
+        <DayHeader day={section.day} locale={locale} zone={displayZone} />
       )}
       renderItem={({ item }) => (
         <EventTile
           event={item}
           locale={locale}
+          zone={displayZone}
           upcoming={item.id === upcomingId}
           onPress={() => onPressEvent(item)}
         />
@@ -94,9 +97,17 @@ export function AgendaList({
   )
 }
 
-function DayHeader({ day, locale }: { day: Date; locale: AppLocale }) {
+function DayHeader({
+  day,
+  locale,
+  zone,
+}: {
+  day: Date
+  locale: AppLocale
+  zone: string
+}) {
   const theme = useTheme()
-  const { weekday, dayOfMonth } = formatDayHeaderParts(day, locale)
+  const { weekday, dayOfMonth } = formatDayHeaderParts(day, locale, zone)
   return (
     <View
       accessibilityRole="header"
@@ -113,11 +124,13 @@ function DayHeader({ day, locale }: { day: Date; locale: AppLocale }) {
 function EventTile({
   event,
   locale,
+  zone,
   upcoming,
   onPress,
 }: {
   event: CalendarEvent
   locale: AppLocale
+  zone: string
   upcoming: boolean
   onPress: () => void
 }) {
@@ -127,7 +140,7 @@ function EventTile({
   // (an all-day event is stored as UTC midnight — its local time is meaningless).
   const time = event.allDay
     ? t("calendar.allDay")
-    : formatTimeRange(event.startsAt, event.endsAt, locale)
+    : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
 
   const label = t("calendar.agenda.event.openLabel", {

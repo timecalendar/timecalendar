@@ -5,7 +5,11 @@ import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources/data"
-import { setLanguagePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
+import {
+  setLanguagePreference,
+  setTimezonePreference,
+  SETTINGS_KEYS,
+} from "@/features/settings/prefs"
 import { getFcmToken, recordUnknownError } from "@/firebase"
 
 import { setFrequency, setIsActive, setNbDaysAhead } from "./prefs"
@@ -53,6 +57,7 @@ beforeEach(() => {
   remove(NOTIFICATION_KEYS.nbDaysAhead)
   remove(NOTIFICATION_KEYS.isActive)
   remove(SETTINGS_KEYS.language)
+  remove(SETTINGS_KEYS.timezone)
   mockGetFcmToken.mockResolvedValue("fcm-token")
   mockUseUserCalendars.mockReturnValue([
     { id: "srv-cal-1" },
@@ -102,6 +107,20 @@ describe("useSubscriptionRegistration", () => {
     })
 
     expect(lastBody()).toMatchObject({ locale: "fr" })
+  })
+
+  it("the PUT carries the settings-override display timezone", async () => {
+    setTimezonePreference("Indian/Reunion")
+
+    const { result } = await renderHook(() => useSubscriptionRegistration(), {
+      wrapper,
+    })
+    await act(async () => {
+      await result.current.register()
+    })
+
+    // The explicit preference wins over the (spied) device zone.
+    expect(lastBody()).toMatchObject({ timezone: "Indian/Reunion" })
   })
 
   it("a PUT-on-change carries the new local value", async () => {

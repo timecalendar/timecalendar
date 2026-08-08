@@ -1,65 +1,56 @@
 import { router, useLocalSearchParams } from "expo-router"
 import { useEffect, useMemo, useRef, useState } from "react"
 
-import { type DateRange } from "@/features/calendar/data"
+import {
+  addDaysInZone,
+  type DateRange,
+  dayKey,
+  dayKeyToDate,
+  startOfDayInZone,
+} from "@/features/calendar/data"
 import {
   calendarTimelineEventWindow,
   calendarTimelineEventWindowKey,
   type CalendarTimelineHandle,
 } from "@/features/calendar/renderer"
+import { useDisplayZone } from "@/features/settings/prefs"
 
 export type CalendarView = "day" | "week" | "agenda"
 
 const AGENDA_DAYS = 7
 
-function startOfLocalDay(date: Date): Date {
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-  return start
-}
-
-function parseFocusDate(value: string): Date | undefined {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  if (match === null) return undefined
-  const target = new Date(
-    Number(match[1]),
-    Number(match[2]) - 1,
-    Number(match[3]),
-  )
-  if (
-    target.getFullYear() !== Number(match[1]) ||
-    target.getMonth() !== Number(match[2]) - 1 ||
-    target.getDate() !== Number(match[3])
-  ) {
-    return undefined
-  }
-  return target
+// A `focusDate` param is a zone calendar day (`YYYY-MM-DD`); resolve it to the
+// display zone's midnight instant, rejecting malformed or non-existent dates
+// (2026-02-31 yields an Invalid Date from the day-key seam).
+function parseFocusDate(value: string, zone: string): Date | undefined {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined
+  const target = dayKeyToDate(value, zone)
+  return Number.isNaN(target.getTime()) ? undefined : target
 }
 
 export function useCalendarScreenController() {
   const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
+  const displayZone = useDisplayZone()
   const [view, setView] = useState<CalendarView>("week")
   const [anchorDate, setAnchorDate] = useState(() =>
-    startOfLocalDay(new Date()),
+    startOfDayInZone(new Date(), displayZone),
   )
   const [visibleDate, setVisibleDate] = useState(() =>
-    startOfLocalDay(new Date()),
+    startOfDayInZone(new Date(), displayZone),
   )
   const timelineRef = useRef<CalendarTimelineHandle>(null)
 
   const timelineRange = useMemo(
-    () => calendarTimelineEventWindow(anchorDate),
-    [anchorDate],
+    () => calendarTimelineEventWindow(anchorDate, displayZone),
+    [anchorDate, displayZone],
   )
   const agendaRange = useMemo<DateRange>(() => {
-    const from = startOfLocalDay(anchorDate)
-    const to = startOfLocalDay(anchorDate)
-    to.setDate(to.getDate() + AGENDA_DAYS)
-    return { from, to }
-  }, [anchorDate])
+    const from = startOfDayInZone(anchorDate, displayZone)
+    return { from, to: addDaysInZone(from, AGENDA_DAYS, displayZone) }
+  }, [anchorDate, displayZone])
 
   const goToToday = () => {
-    const today = startOfLocalDay(new Date())
+    const today = startOfDayInZone(new Date(), displayZone)
     timelineRef.current?.goToDate(today, {
       animated: true,
       scrollToCurrentTime: true,
@@ -69,28 +60,28 @@ export function useCalendarScreenController() {
   }
 
   const onVisibleDateChange = (date: Date) => {
-    const next = startOfLocalDay(date)
+    const next = startOfDayInZone(date, displayZone)
     setVisibleDate((previous) =>
-      previous.getFullYear() === next.getFullYear() &&
-      previous.getMonth() === next.getMonth()
+      dayKey(previous, displayZone).slice(0, 7) ===
+      dayKey(next, displayZone).slice(0, 7)
         ? previous
         : next,
     )
     setAnchorDate((previous) =>
-      calendarTimelineEventWindowKey(previous) ===
-      calendarTimelineEventWindowKey(next)
+      calendarTimelineEventWindowKey(previous, displayZone) ===
+      calendarTimelineEventWindowKey(next, displayZone)
         ? previous
         : next,
     )
   }
 
   const onSettledDateChange = (date: Date) => {
-    setAnchorDate(startOfLocalDay(date))
+    setAnchorDate(startOfDayInZone(date, displayZone))
   }
 
   useEffect(() => {
     if (focusDate === undefined) return
-    const target = parseFocusDate(focusDate)
+    const target = parseFocusDate(focusDate, displayZone)
     if (target !== undefined) {
       timelineRef.current?.goToDate(target, {
         animated: true,
@@ -101,13 +92,14 @@ export function useCalendarScreenController() {
       setVisibleDate(target)
     }
     router.setParams({ focusDate: undefined })
-  }, [focusDate])
+  }, [focusDate, displayZone])
 
   return {
     view,
     setView,
     anchorDate,
     visibleDate,
+    displayZone,
     range: view === "agenda" ? agendaRange : timelineRange,
     timelineRef,
     goToToday,

@@ -28,6 +28,7 @@ decision changes; use Git for its history.
 | [032](./032-calendar-kit-vendor-patch-live-anchor.md) | Patch calendar-kit's live scroll anchor |
 | [033](./033-calendar-renderer-module-boundary.md) | Own the calendar renderer boundary inside the calendar feature |
 | [034](./034-settings-third-tab-identity.md) | Use Settings as the canonical third tab and secondary-destination hub |
+| [035](./035-display-timezone-preference.md) | Resolve the curated display-timezone preference at one seam |
 
 ## Superseded or completed records
 

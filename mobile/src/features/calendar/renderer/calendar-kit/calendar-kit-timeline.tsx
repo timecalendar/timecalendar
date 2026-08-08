@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 
-import { localDayKey, resolveLocale } from "@/features/calendar/data"
+import { dayKey, resolveLocale } from "@/features/calendar/data"
 import {
   type CalendarTimelineHandle,
   type CalendarTimelineProps,
@@ -27,6 +27,7 @@ export const CalendarKitTimeline = forwardRef<
   {
     mode,
     anchorDate,
+    displayZone,
     events,
     startMinute,
     endMinute,
@@ -60,7 +61,8 @@ export const CalendarKitTimeline = forwardRef<
       ref={calendarKitRef}
       numberOfDays={mode === "day" ? 1 : showWeekends ? 7 : 5}
       pagesPerSide={GRID_PAGES_PER_SIDE}
-      initialDate={localDayKey(anchorDate)}
+      timeZone={displayZone}
+      initialDate={dayKey(anchorDate, displayZone)}
       start={startMinute}
       end={endMinute}
       events={eventItems}
@@ -74,7 +76,11 @@ export const CalendarKitTimeline = forwardRef<
     >
       <CalendarHeader
         renderEvent={(event) => (
-          <CalendarKitAllDayTile event={event} locale={locale} />
+          <CalendarKitAllDayTile
+            event={event}
+            locale={locale}
+            zone={displayZone}
+          />
         )}
       />
       <CalendarBody
@@ -84,6 +90,7 @@ export const CalendarKitTimeline = forwardRef<
             event={event}
             width={size.width}
             locale={locale}
+            zone={displayZone}
           />
         )}
       />

@@ -15,6 +15,7 @@ const MAX_EVENT_DOTS = 5
 interface WelcomeCardProps {
   now: Date
   locale: "fr" | "en"
+  displayZone: string
   caption: DayCaption
   greeting: GreetingSelection
   events: CalendarEvent[]
@@ -28,6 +29,7 @@ function greetingKey(selection: GreetingSelection): string {
 export function WelcomeCard({
   now,
   locale,
+  displayZone,
   caption,
   greeting,
   events,
@@ -38,17 +40,17 @@ export function WelcomeCard({
     switch (caption.kind) {
       case "ongoing":
         return t("home.caption.ongoing", {
-          end: formatTime(caption.end, locale),
+          end: formatTime(caption.end, locale, displayZone),
         })
       case "singleFuture":
         return t("home.caption.singleFuture", {
-          start: formatTime(caption.start, locale),
-          end: formatTime(caption.end, locale),
+          start: formatTime(caption.start, locale, displayZone),
+          end: formatTime(caption.end, locale, displayZone),
         })
       case "futureSpan":
         return t("home.caption.futureSpan", {
-          start: formatTime(caption.start, locale),
-          end: formatTime(caption.end, locale),
+          start: formatTime(caption.start, locale, displayZone),
+          end: formatTime(caption.end, locale, displayZone),
         })
       default:
         return t(`home.caption.${caption.kind}`)
@@ -61,7 +63,7 @@ export function WelcomeCard({
         type="smallBold"
         style={[styles.date, { color: theme.homeHeroDate }]}
       >
-        {formatDayMonth(now, locale).toLocaleUpperCase()}
+        {formatDayMonth(now, locale, displayZone).toLocaleUpperCase()}
       </ThemedText>
       <ThemedText style={styles.greeting} accessibilityRole="header">
         {t(greetingKey(greeting))}

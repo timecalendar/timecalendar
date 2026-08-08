@@ -31,6 +31,9 @@ module.exports = {
     "<rootDir>/jest/setup-db.ts",
     "<rootDir>/jest/setup-storage.ts",
     "<rootDir>/jest/setup-i18n.ts",
+    // setup-localization aligns the jest-expo device timezone with the machine
+    // zone so "system"-preference zone resolution matches device-local fixtures.
+    "<rootDir>/jest/setup-localization.ts",
     // setup-splash mocks expo-splash-screen (native preventAutoHide/hideAsync,
     // hit at import + on mount) and AccessibilityInfo's reduced-motion read.
     "<rootDir>/jest/setup-splash.ts",

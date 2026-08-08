@@ -51,6 +51,18 @@ const destinations = [
   },
   {
     section: "preferences" as const,
+    href: "/timezone-settings" as const,
+    icon: {
+      ios: "globe",
+      android: "public",
+      web: "public",
+    } as const,
+    label: "settingsHub.timezone.label" as const,
+    hint: "settingsHub.timezone.hint" as const,
+    testID: "settings-timezone",
+  },
+  {
+    section: "preferences" as const,
     href: "/notification-settings" as const,
     icon: {
       ios: "bell",

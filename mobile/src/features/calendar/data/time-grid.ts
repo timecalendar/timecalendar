@@ -3,6 +3,8 @@
 // hour-label / now-indicator math the agenda follow-up, the home today-grid, and
 // the fallback renderer consume. Pure: no React, no calendar-kit.
 
+import { minuteOfDayInZone } from "./day-key"
+
 // Flutter-parity grid constants (read from the Flutter calendar module), as
 // named exports — not magic numbers.
 /** Grid window start, minutes from midnight (7:00). */
@@ -66,16 +68,20 @@ export interface NowIndicator {
   fraction: number
 }
 
-/** The now-indicator's position for a given clock time within the grid window. */
+/**
+ * The now-indicator's position within the grid window, on the DISPLAY zone's
+ * wall clock — so the red line agrees with the zone-projected event tiles.
+ */
 export function nowIndicatorPosition(
   now: Date,
+  zone: string,
   {
     pixelsPerHour = DEFAULT_PIXELS_PER_HOUR,
     startMinute = GRID_START_MINUTE,
     endMinute = GRID_END_MINUTE,
   }: GridOptions & { endMinute?: number } = {},
 ): NowIndicator {
-  const minute = now.getHours() * 60 + now.getMinutes()
+  const minute = minuteOfDayInZone(now, zone)
   const visible = minute >= startMinute && minute <= endMinute
   return {
     visible,

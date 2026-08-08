@@ -104,6 +104,14 @@ export default function RootLayout() {
               name="appearance-settings"
               options={{ headerShown: true }}
             />
+            {/* The display-timezone picker screen — a Stack sibling of (tabs),
+                reached from Settings, mirroring appearance settings. Header
+                shown for the accessible back affordance + the screen's own
+                title. Deep-linkable: timecalendar-dev://timezone-settings. */}
+            <Stack.Screen
+              name="timezone-settings"
+              options={{ headerShown: true }}
+            />
             <Stack.Screen name="personal-event-form" />
             {/* The standalone personal-events list, relocated off the Home tab
                 (ADR 022 — the Home tab is now the today view). A Stack sibling of

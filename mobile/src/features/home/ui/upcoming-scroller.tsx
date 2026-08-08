@@ -23,10 +23,12 @@ const CARD_WIDTH = 200
 export function UpcomingScroller({
   events,
   locale,
+  displayZone,
   onPressEvent,
 }: {
   events: CalendarEvent[]
   locale: AppLocale
+  displayZone: string
   onPressEvent: (event: CalendarEvent) => void
 }) {
   if (events.length === 0) return null
@@ -43,6 +45,7 @@ export function UpcomingScroller({
           key={event.id}
           event={event}
           locale={locale}
+          zone={displayZone}
           onPress={() => onPressEvent(event)}
         />
       ))}
@@ -53,17 +56,19 @@ export function UpcomingScroller({
 function UpcomingCard({
   event,
   locale,
+  zone,
   onPress,
 }: {
   event: CalendarEvent
   locale: AppLocale
+  zone: string
   onPress: () => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
   const time = event.allDay
     ? t("home.today.allDay")
-    : formatTimeRange(event.startsAt, event.endsAt, locale)
+    : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
 
   return (

@@ -1,11 +1,16 @@
+import * as Localization from "expo-localization"
+
 import { remove, setString } from "@/storage"
 
 import {
   getInitialLocale,
   getLanguagePreference,
   getThemePreference,
+  getTimezonePreference,
+  resolveTimezone,
   setLanguagePreference,
   setThemePreference,
+  setTimezonePreference,
 } from "./store"
 import { SETTINGS_KEYS } from "./types"
 
@@ -18,6 +23,7 @@ describe("settings prefs store", () => {
   beforeEach(() => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
+    remove(SETTINGS_KEYS.timezone)
   })
 
   describe("theme preference", () => {
@@ -54,6 +60,52 @@ describe("settings prefs store", () => {
       expect(getLanguagePreference()).toBe("system")
       setString(SETTINGS_KEYS.language, "de")
       expect(getLanguagePreference()).toBe("system")
+    })
+  })
+
+  describe("timezone preference", () => {
+    it("round-trips a curated zone", () => {
+      setTimezonePreference("Indian/Reunion")
+      expect(getTimezonePreference()).toBe("Indian/Reunion")
+      setTimezonePreference("system")
+      expect(getTimezonePreference()).toBe("system")
+    })
+
+    it("reads an unset / out-of-union value as the system default", () => {
+      expect(getTimezonePreference()).toBe("system")
+      // An arbitrary IANA zone outside the curated union must not leak through.
+      setString(SETTINGS_KEYS.timezone, "America/New_York")
+      expect(getTimezonePreference()).toBe("system")
+      setString(SETTINGS_KEYS.timezone, "garbage")
+      expect(getTimezonePreference()).toBe("system")
+    })
+  })
+
+  describe("resolveTimezone", () => {
+    const calendarsSpy = jest.spyOn(Localization, "getCalendars")
+
+    afterEach(() => calendarsSpy.mockReset())
+
+    const deviceCalendars = (timeZone: string | null) =>
+      [{ timeZone }] as unknown as ReturnType<typeof Localization.getCalendars>
+
+    it("lets an explicit curated preference win over the device zone", () => {
+      calendarsSpy.mockReturnValue(deviceCalendars("America/Montreal"))
+      expect(resolveTimezone("Indian/Reunion")).toBe("Indian/Reunion")
+    })
+
+    it("resolves 'system' to the device zone", () => {
+      calendarsSpy.mockReturnValue(deviceCalendars("America/Montreal"))
+      expect(resolveTimezone("system")).toBe("America/Montreal")
+    })
+
+    it("falls back to Europe/Paris when the device yields no zone", () => {
+      calendarsSpy.mockReturnValue(deviceCalendars(null))
+      expect(resolveTimezone("system")).toBe("Europe/Paris")
+      calendarsSpy.mockReturnValue(
+        [] as unknown as ReturnType<typeof Localization.getCalendars>,
+      )
+      expect(resolveTimezone("system")).toBe("Europe/Paris")
     })
   })
 

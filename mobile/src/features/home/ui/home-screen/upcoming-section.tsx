@@ -14,6 +14,7 @@ import { Radii, Spacing, useTheme } from "@/theme"
 interface UpcomingSectionProps {
   now: Date
   locale: "fr" | "en"
+  displayZone: string
   events: CalendarEvent[]
   todayEventCount: number
   nextDay: NextActiveDay | undefined
@@ -24,6 +25,7 @@ interface UpcomingSectionProps {
 export function UpcomingSection({
   now,
   locale,
+  displayZone,
   events,
   todayEventCount,
   nextDay,
@@ -52,6 +54,7 @@ export function UpcomingSection({
         <UpcomingScroller
           events={events}
           locale={locale}
+          displayZone={displayZone}
           onPressEvent={onPressEvent}
         />
       ) : todayEventCount > 0 ? (
@@ -64,6 +67,7 @@ export function UpcomingSection({
           count={nextDay.events.length}
           firstStart={nextDay.firstTimedStart}
           locale={locale}
+          displayZone={displayZone}
           onPress={() => onOpenCalendar(nextDay.day)}
         />
       ) : (
@@ -80,17 +84,19 @@ function NextDayCard({
   count,
   firstStart,
   locale,
+  displayZone,
   onPress,
 }: {
   day: Date
   count: number
   firstStart: Date | undefined
   locale: "fr" | "en"
+  displayZone: string
   onPress: () => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const date = formatFullDay(day, locale)
+  const date = formatFullDay(day, locale, displayZone)
   return (
     <Pressable
       testID="home-next-day"
@@ -110,7 +116,9 @@ function NextDayCard({
       <ThemedText type="small" themeColor="textSecondary">
         {firstStart === undefined
           ? t("home.nextDay.allDay")
-          : t("home.nextDay.first", { time: formatTime(firstStart, locale) })}
+          : t("home.nextDay.first", {
+              time: formatTime(firstStart, locale, displayZone),
+            })}
       </ThemedText>
     </Pressable>
   )

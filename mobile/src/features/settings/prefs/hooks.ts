@@ -1,3 +1,4 @@
+import { useCalendars } from "expo-localization"
 import { useCallback } from "react"
 
 import i18n from "@/i18n"
@@ -5,15 +6,19 @@ import { useParsedStoredString } from "@/storage"
 
 import {
   resolveLanguage,
+  resolveTimezone,
   setLanguagePreference,
   setThemePreference,
+  setTimezonePreference,
 } from "./store"
 import {
   type LanguagePreference,
   parseLanguagePreference,
   parseThemePreference,
+  parseTimezonePreference,
   SETTINGS_KEYS,
   type ThemePreference,
+  type TimezonePreference,
 } from "./types"
 
 // Reactive preference hooks. Each reads through the seam's reactive
@@ -55,4 +60,28 @@ export function useLanguagePreference(): {
     void i18n.changeLanguage(resolveLanguage(next))
   }, [])
   return { preference, setPreference }
+}
+
+export function useTimezonePreference(): {
+  preference: TimezonePreference
+  setPreference: (preference: TimezonePreference) => void
+} {
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.timezone,
+    parseTimezonePreference,
+  )
+  // setTimezonePreference is a stable module-level function (see the theme hook).
+  return { preference, setPreference: setTimezonePreference }
+}
+
+// The reactive effective display zone: re-renders on a preference change (the
+// reactive parsed read) and, under "system", on a device-zone change
+// (useCalendars re-renders and feeds the fresh device zone into the resolver).
+export function useDisplayZone(): string {
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.timezone,
+    parseTimezonePreference,
+  )
+  const deviceZone = useCalendars()[0]?.timeZone ?? null
+  return resolveTimezone(preference, deviceZone)
 }

@@ -15,10 +15,12 @@ export function CalendarKitEventTile({
   event,
   width,
   locale,
+  zone,
 }: {
   event: EventItem
   width: { value: number } | number
   locale: AppLocale
+  zone: string
 }) {
   const { t } = useTranslation()
   const resolvedWidth = typeof width === "number" ? width : width.value
@@ -27,7 +29,7 @@ export function CalendarKitEventTile({
   const endsAt = event.endsAt as Date | undefined
   const location = (event.location as string | undefined) ?? ""
   const time =
-    startsAt && endsAt ? formatTimeRange(startsAt, endsAt, locale) : ""
+    startsAt && endsAt ? formatTimeRange(startsAt, endsAt, locale, zone) : ""
   return (
     <View
       accessibilityRole="text"
@@ -57,9 +59,11 @@ export function CalendarKitEventTile({
 export function CalendarKitAllDayTile({
   event,
   locale,
+  zone,
 }: {
   event: EventItem
   locale: AppLocale
+  zone: string
 }) {
   const { t } = useTranslation()
   const title = event.title ?? ""
@@ -69,7 +73,7 @@ export function CalendarKitAllDayTile({
   const time =
     event.allDay || !startsAt || !endsAt
       ? t("calendar.allDay")
-      : formatTimeRange(startsAt, endsAt, locale)
+      : formatTimeRange(startsAt, endsAt, locale, zone)
   return (
     <View
       accessibilityRole="text"

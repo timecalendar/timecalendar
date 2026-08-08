@@ -1,9 +1,15 @@
 import { act, renderHook } from "@testing-library/react-native"
+import * as Localization from "expo-localization"
 
 import i18n from "@/i18n"
 import { remove } from "@/storage"
 
-import { useLanguagePreference, useThemePreference } from "./hooks"
+import {
+  useDisplayZone,
+  useLanguagePreference,
+  useThemePreference,
+  useTimezonePreference,
+} from "./hooks"
 import { SETTINGS_KEYS } from "./types"
 
 // Renders the reactive hooks through RNTL renderHook over the real @/storage
@@ -15,6 +21,7 @@ describe("settings prefs hooks", () => {
   beforeEach(() => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
+    remove(SETTINGS_KEYS.timezone)
   })
 
   describe("useThemePreference", () => {
@@ -57,5 +64,58 @@ describe("settings prefs hooks", () => {
 
       changeLanguage.mockRestore()
     })
+  })
+})
+
+describe("useTimezonePreference / useDisplayZone", () => {
+  const useCalendarsSpy = jest.spyOn(Localization, "useCalendars")
+
+  const deviceCalendars = (timeZone: string | null) =>
+    [{ timeZone }] as unknown as ReturnType<typeof Localization.useCalendars>
+
+  beforeEach(() => {
+    remove(SETTINGS_KEYS.timezone)
+    useCalendarsSpy.mockReturnValue(deviceCalendars("America/Montreal"))
+  })
+
+  afterEach(() => useCalendarsSpy.mockReset())
+
+  it("defaults to system and reactively reflects a set", async () => {
+    const { result } = await renderHook(() => useTimezonePreference())
+    expect(result.current.preference).toBe("system")
+
+    await act(async () => result.current.setPreference("Pacific/Noumea"))
+    expect(result.current.preference).toBe("Pacific/Noumea")
+  })
+
+  it("resolves the display zone from the preference, reactively", async () => {
+    const { result } = await renderHook(() => ({
+      zone: useDisplayZone(),
+      timezone: useTimezonePreference(),
+    }))
+    expect(result.current.zone).toBe("America/Montreal")
+
+    await act(async () =>
+      result.current.timezone.setPreference("Indian/Reunion"),
+    )
+    expect(result.current.zone).toBe("Indian/Reunion")
+
+    await act(async () => result.current.timezone.setPreference("system"))
+    expect(result.current.zone).toBe("America/Montreal")
+  })
+
+  it("under system, follows a device-zone change", async () => {
+    const { result, rerender } = await renderHook(() => useDisplayZone())
+    expect(result.current).toBe("America/Montreal")
+
+    useCalendarsSpy.mockReturnValue(deviceCalendars("Pacific/Tahiti"))
+    await act(async () => rerender(undefined))
+    expect(result.current).toBe("Pacific/Tahiti")
+  })
+
+  it("falls back to Europe/Paris when the device yields no zone", async () => {
+    useCalendarsSpy.mockReturnValue(deviceCalendars(null))
+    const { result } = await renderHook(() => useDisplayZone())
+    expect(result.current).toBe("Europe/Paris")
   })
 })

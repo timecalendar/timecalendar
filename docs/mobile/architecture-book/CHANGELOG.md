@@ -2,6 +2,14 @@
 
 ## 2026-08-08
 
+- Added the curated display-timezone preference (`settings.timezonePreference`,
+  `"system"` + 10 French zones) resolved at one settings-prefs seam
+  (`resolveTimezone`/`useDisplayZone`); every rendered event time and day
+  boundary is zone-threaded explicitly (formatters, day keys, bucketing,
+  now-indicator, calendar-kit `timeZone`), all-day events stay floating, the
+  greeting stays device-local, and the notification subscription follows the
+  same zone with a resolved-zone re-registration trigger (ADR 035, calendar.md,
+  features.md).
 - Aligned the notifications feature to the server's v2 wire contract: lowercase
   `new | edit | cancel` payload canon plus the `calendar_digest` action (routes to
   Calendar, re-syncs on foreground), and the subscription DTO now carries `locale`/

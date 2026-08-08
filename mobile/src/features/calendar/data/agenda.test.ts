@@ -1,4 +1,5 @@
 import { groupEventsByDay } from "./agenda"
+import { dayKey, minuteOfDayInZone } from "./day-key"
 import { type CalendarEvent } from "./types"
 
 function event(id: string, startsAt: Date, endsAt: Date): CalendarEvent {
@@ -18,24 +19,46 @@ function event(id: string, startsAt: Date, endsAt: Date): CalendarEvent {
   }
 }
 
-// Local-time dates so the local-day bucketing is TZ-independent.
-const local = (y: number, m: number, d: number, h = 0, min = 0) =>
-  new Date(y, m, d, h, min, 0, 0)
+// UTC-instant fixtures + a pinned non-device zone (Pacific/Noumea, UTC+11), so
+// the bucketing proof is machine-TZ-independent (spec: zone-aware CI proof).
+const ZONE = "Pacific/Noumea"
+
+// 09:00 wall clock in Nouméa on the given UTC day+1 is 22:00Z the day before;
+// build fixtures directly from Nouméa wall-clock times expressed as instants.
+const noumea = (iso: string) => new Date(iso)
 
 describe("groupEventsByDay", () => {
   it("returns [] for empty input", () => {
-    expect(groupEventsByDay([])).toEqual([])
+    expect(groupEventsByDay([], ZONE)).toEqual([])
   })
 
-  it("buckets events per local calendar day, ascending by day", () => {
+  it("buckets events per zone calendar day, ascending by day", () => {
     const events = [
-      event("c", local(2026, 5, 17, 9), local(2026, 5, 17, 10)),
-      event("a", local(2026, 5, 15, 9), local(2026, 5, 15, 10)),
-      event("b", local(2026, 5, 16, 9), local(2026, 5, 16, 10)),
+      // 09:00–10:00 Nouméa on June 17/15/16 (22:00Z the previous UTC day).
+      event(
+        "c",
+        noumea("2026-06-16T22:00:00Z"),
+        noumea("2026-06-16T23:00:00Z"),
+      ),
+      event(
+        "a",
+        noumea("2026-06-14T22:00:00Z"),
+        noumea("2026-06-14T23:00:00Z"),
+      ),
+      event(
+        "b",
+        noumea("2026-06-15T22:00:00Z"),
+        noumea("2026-06-15T23:00:00Z"),
+      ),
     ]
-    const result = groupEventsByDay(events)
-    expect(result.map((d) => d.day.getDate())).toEqual([15, 16, 17])
-    expect(result.every((d) => d.day.getHours() === 0)).toBe(true)
+    const result = groupEventsByDay(events, ZONE)
+    expect(result.map((d) => dayKey(d.day, ZONE))).toEqual([
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+    ])
+    // Each bucket day is the zone's midnight instant.
+    expect(result.every((d) => minuteOfDayInZone(d.day, ZONE) === 0)).toBe(true)
     expect(result.map((d) => d.events.map((e) => e.id))).toEqual([
       ["a"],
       ["b"],
@@ -45,13 +68,29 @@ describe("groupEventsByDay", () => {
 
   it("sorts events within a day by start time (stable on ties)", () => {
     const events = [
-      event("late", local(2026, 5, 15, 14), local(2026, 5, 15, 15)),
-      event("early", local(2026, 5, 15, 8), local(2026, 5, 15, 9)),
+      event(
+        "late",
+        noumea("2026-06-15T03:00:00Z"),
+        noumea("2026-06-15T04:00:00Z"),
+      ),
+      event(
+        "early",
+        noumea("2026-06-14T21:00:00Z"),
+        noumea("2026-06-14T22:00:00Z"),
+      ),
       // Same start time — stable tie-break by id.
-      event("tieB", local(2026, 5, 15, 10), local(2026, 5, 15, 11)),
-      event("tieA", local(2026, 5, 15, 10), local(2026, 5, 15, 11)),
+      event(
+        "tieB",
+        noumea("2026-06-14T23:00:00Z"),
+        noumea("2026-06-15T00:00:00Z"),
+      ),
+      event(
+        "tieA",
+        noumea("2026-06-14T23:00:00Z"),
+        noumea("2026-06-15T00:00:00Z"),
+      ),
     ]
-    const result = groupEventsByDay(events)
+    const result = groupEventsByDay(events, ZONE)
     expect(result).toHaveLength(1)
     expect(result[0]?.events.map((e) => e.id)).toEqual([
       "early",
@@ -61,23 +100,45 @@ describe("groupEventsByDay", () => {
     ])
   })
 
-  it("buckets a late-evening (23:30 local) event on its own local day", () => {
+  it("buckets a 23:30Z instant on the zone's NEXT day (midnight-boundary proof)", () => {
     const events = [
-      event("eve", local(2026, 5, 15, 23, 30), local(2026, 5, 16, 0, 30)),
-      event("next", local(2026, 5, 16, 9), local(2026, 5, 16, 10)),
+      // 23:30Z June 15 = 10:30 June 16 in Nouméa — the zone's day 16, though a
+      // UTC device would call it day 15.
+      event(
+        "eve",
+        noumea("2026-06-15T23:30:00Z"),
+        noumea("2026-06-16T00:30:00Z"),
+      ),
+      // 09:00 Nouméa June 17.
+      event(
+        "next",
+        noumea("2026-06-16T22:00:00Z"),
+        noumea("2026-06-16T23:00:00Z"),
+      ),
     ]
-    const result = groupEventsByDay(events)
-    expect(result.map((d) => d.day.getDate())).toEqual([15, 16])
+    const result = groupEventsByDay(events, ZONE)
+    expect(result.map((d) => dayKey(d.day, ZONE))).toEqual([
+      "2026-06-16",
+      "2026-06-17",
+    ])
     expect(result[0]?.events.map((e) => e.id)).toEqual(["eve"])
     expect(result[1]?.events.map((e) => e.id)).toEqual(["next"])
   })
 
-  it("groups several events on the same day into one bucket", () => {
+  it("groups several events on the same zone day into one bucket", () => {
     const events = [
-      event("a", local(2026, 5, 15, 8), local(2026, 5, 15, 9)),
-      event("b", local(2026, 5, 15, 10), local(2026, 5, 15, 11)),
+      event(
+        "a",
+        noumea("2026-06-14T21:00:00Z"),
+        noumea("2026-06-14T22:00:00Z"),
+      ),
+      event(
+        "b",
+        noumea("2026-06-14T23:00:00Z"),
+        noumea("2026-06-15T00:00:00Z"),
+      ),
     ]
-    const result = groupEventsByDay(events)
+    const result = groupEventsByDay(events, ZONE)
     expect(result).toHaveLength(1)
     expect(result[0]?.events).toHaveLength(2)
   })

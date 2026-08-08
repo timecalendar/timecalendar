@@ -4,7 +4,15 @@
 // (useCalendarEvents), and the calendar-sync surface (the orchestrator + startup
 // trigger).
 export { type AgendaDay, groupEventsByDay } from "./agenda"
-export { localDayKey, utcDayKey } from "./day-key"
+export {
+  addDaysInZone,
+  atHourInZone,
+  dayKey,
+  dayKeyToDate,
+  minuteOfDayInZone,
+  startOfDayInZone,
+  utcDayKey,
+} from "./day-key"
 export {
   type EventDetails,
   type EventDetailsTag,
@@ -22,6 +30,7 @@ export {
   formatFullDateTime,
   formatFullDay,
   formatMonthYear,
+  formatShortDateTime,
   formatTime,
   formatTimeRange,
   resolveLocale,

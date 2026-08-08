@@ -1,8 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
 
+import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { onFcmTokenRefresh, requestNotificationPermission } from "@/firebase"
 import i18n from "@/i18n"
+import { remove } from "@/storage"
 
 import { useNotificationRegistration } from "./registration"
 import { useSubscriptionRegistration } from "./subscription"
@@ -45,8 +47,10 @@ beforeEach(() => {
 
 afterEach(async () => {
   // The language test switches the shared per-file i18n instance; restore the
-  // jest-expo default so later cases assert against EN.
+  // jest-expo default so later cases assert against EN. The timezone cases
+  // write the real preference store; reset to the "system" default.
   await i18n.changeLanguage("en")
+  remove(SETTINGS_KEYS.timezone)
 })
 
 describe("useNotificationRegistration", () => {
@@ -133,12 +137,42 @@ describe("useNotificationRegistration", () => {
     const { rerender } = await renderHook(() => useNotificationRegistration())
     await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
 
-    useCalendarsSpy.mockReturnValue(deviceCalendars("Europe/Paris"))
+    // No device zone resolves to the "Europe/Paris" fallback, so a fallback-
+    // equal zone appearing is inert (the resolved zone did not change); a
+    // DIFFERENT zone appearing re-PUTs.
+    useCalendarsSpy.mockReturnValue(deviceCalendars("America/New_York"))
     await act(async () => {
       rerender(undefined)
     })
 
     expect(mockRegister).toHaveBeenCalledTimes(2)
+  })
+
+  it("re-PUTs when the display-timezone preference changes", async () => {
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    await act(async () => {
+      setTimezonePreference("Indian/Reunion")
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps a device timezone change inert under an explicit preference", async () => {
+    setTimezonePreference("Indian/Reunion")
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    // The device zone changes but the resolved effective zone is still the
+    // explicit preference — no timezone-triggered PUT.
+    useCalendarsSpy.mockReturnValue(deviceCalendars("America/New_York"))
+    await act(async () => {
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(1)
   })
 
   it("swallows a rejected startup PUT (no on-screen surface)", async () => {

@@ -1,8 +1,8 @@
-import { getCalendars } from "expo-localization"
-
 import {
   getLanguagePreference,
+  getTimezonePreference,
   resolveLanguage,
+  resolveTimezone,
 } from "@/features/settings/prefs"
 import type { SupportedLocale } from "@/i18n/detect-locale"
 
@@ -11,15 +11,16 @@ import type { SupportedLocale } from "@/i18n/detect-locale"
 // preference wins, "system" falls through to device detection — because a user
 // who forces English in settings must not receive French pushes (a data → data
 // cross-feature read of the settings store, same pattern as the user_calendars
-// read; B-1). Timezone is the device IANA zone with the server's default as
-// fallback (expo-localization can yield none on some simulators); a future
-// display-timezone preference overrides ONLY this accessor's body — the DTO
-// assembly and the re-registration triggers never change.
+// read; B-1). Timezone is the app's EFFECTIVE display timezone — the explicit
+// settings display-timezone preference wins, "system" falls through to the
+// device IANA zone with the server's default ("Europe/Paris") as fallback — so
+// the server renders push bodies in the same zone the app displays (timezone
+// design D2).
 
 export function getEffectiveLocale(): SupportedLocale {
   return resolveLanguage(getLanguagePreference())
 }
 
 export function getEffectiveTimezone(): string {
-  return getCalendars()[0]?.timeZone ?? "Europe/Paris"
+  return resolveTimezone(getTimezonePreference())
 }
