@@ -15,7 +15,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
@@ -68,7 +68,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
@@ -101,7 +101,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Download server image artifact
       uses: actions/download-artifact@v8
