@@ -16,6 +16,16 @@ day keys, and formatting. Home and agenda use these primitives without depending
 the timeline renderer. Calendar-kit's quarter event-window selection is an adapter
 workaround, not a domain primitive.
 
+Every rendered event time and day boundary is computed in the effective display
+zone ([ADR 035](./decisions/035-display-timezone-preference.md)): the zone from
+`useDisplayZone()` is threaded explicitly into the formatters, the day-key and
+bucketing helpers, the now-indicator math, the quarter event window, and the
+renderer's `timeZone` prop — never read internally by a helper. Deriving a
+rendered time or day from device-local `Date` fields or `toLocaleString` is a
+defect; the zone-parameterized seams are the only path. All-day events are the
+exception: they stay on the floating UTC-day-key path and never shift with the
+preference.
+
 The grid uses a quarter-quantized event feed with a two-month buffer and four pages per
 side. Calendar-kit tracks the visible anchor during scrolling so fast flings do not show
 an empty grid. Re-check this coupling and dense-calendar performance when changing the

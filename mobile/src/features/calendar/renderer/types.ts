@@ -14,6 +14,8 @@ export type CalendarTimelineHandle = {
 export type CalendarTimelineProps = {
   mode: CalendarTimelineMode
   anchorDate: Date
+  /** The effective display zone (IANA) every rendered time projects into. */
+  displayZone: string
   events: CalendarEvent[]
   startMinute: number
   endMinute: number

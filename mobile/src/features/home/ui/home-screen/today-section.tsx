@@ -11,6 +11,7 @@ import { Radii, Spacing, useTheme } from "@/theme"
 interface TodaySectionProps {
   now: Date
   locale: "fr" | "en"
+  displayZone: string
   allDayEvents: CalendarEvent[]
   timedEvents: CalendarEvent[]
   hourRange: HourRange
@@ -20,6 +21,7 @@ interface TodaySectionProps {
 export function TodaySection({
   now,
   locale,
+  displayZone,
   allDayEvents,
   timedEvents,
   hourRange,
@@ -39,6 +41,7 @@ export function TodaySection({
           events={timedEvents}
           range={hourRange}
           locale={locale}
+          displayZone={displayZone}
           isToday
           now={now}
           onPressEvent={onPressEvent}

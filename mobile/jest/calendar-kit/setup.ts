@@ -46,6 +46,8 @@ jest.mock("@howljs/calendar-kit", () => {
       onPressEvent?: (event: unknown) => void
       onChange?: (date: string) => void
       onDateChanged?: (date: string) => void
+      timeZone?: string
+      initialDate?: string
       children?: unknown
     },
     ref: unknown,
@@ -119,6 +121,17 @@ jest.mock("@howljs/calendar-kit", () => {
         React.createElement(View, {
           testID: "grid-go-to-date",
           accessibilityLabel: goToDateValue,
+        }),
+        // The zone + initial day the screen fed the grid, assertable so the
+        // display-zone threading (timeZone prop + zone day-key initialDate) is
+        // provable without the Reanimated grid.
+        React.createElement(View, {
+          testID: "grid-time-zone",
+          accessibilityLabel: props.timeZone,
+        }),
+        React.createElement(View, {
+          testID: "grid-initial-date",
+          accessibilityLabel: props.initialDate,
         }),
         props.children,
         settledScrollTrigger,

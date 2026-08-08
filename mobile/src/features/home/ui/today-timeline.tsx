@@ -11,7 +11,9 @@ import {
 
 import { ThemedText } from "@/components/themed-text"
 import {
+  addDaysInZone,
   type AppLocale,
+  atHourInZone,
   type CalendarEvent,
   eventHeight,
   formatTimeRange,
@@ -19,8 +21,10 @@ import {
   HOURS_COLUMN_WIDTH,
   layoutOverlaps,
   MIN_TILE_WIDTH,
+  minuteOfDayInZone,
   minuteToPixel,
   nowIndicatorPosition,
+  startOfDayInZone,
 } from "@/features/calendar/data"
 import { type HourRange } from "@/features/home/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
@@ -45,15 +49,20 @@ const HOME_PIXELS_PER_HOUR = 70
 const CONTENT_HORIZONTAL_PADDING = Spacing.four * 2
 const MIN_TARGET_SIZE = Platform.OS === "android" ? 48 : 44
 
-function visibleGeometry(event: CalendarEvent, day: Date, range: HourRange) {
-  const dayStart = new Date(day)
-  dayStart.setHours(0, 0, 0, 0)
-  const dayEnd = new Date(dayStart)
-  dayEnd.setDate(dayEnd.getDate() + 1)
-  const rangeStart = new Date(dayStart)
-  rangeStart.setHours(range.startHour)
-  const rangeEnd = range.endHour === 24 ? dayEnd : new Date(dayStart)
-  if (range.endHour !== 24) rangeEnd.setHours(range.endHour)
+// Day bounds + minute positioning on the DISPLAY zone's wall clock (timezone
+// design D4) — instant arithmetic stays on real timestamps, only the
+// minute-of-day read is zone-projected.
+function visibleGeometry(
+  event: CalendarEvent,
+  day: Date,
+  range: HourRange,
+  zone: string,
+) {
+  const dayStart = startOfDayInZone(day, zone)
+  const dayEnd = addDaysInZone(dayStart, 1, zone)
+  const rangeStart = atHourInZone(dayStart, range.startHour, zone)
+  const rangeEnd =
+    range.endHour === 24 ? dayEnd : atHourInZone(dayStart, range.endHour, zone)
   const start = new Date(
     Math.max(
       event.startsAt.getTime(),
@@ -65,9 +74,7 @@ function visibleGeometry(event: CalendarEvent, day: Date, range: HourRange) {
     Math.min(event.endsAt.getTime(), dayEnd.getTime(), rangeEnd.getTime()),
   )
   const startMinute =
-    start.getTime() === dayStart.getTime()
-      ? 0
-      : start.getHours() * 60 + start.getMinutes()
+    start.getTime() === dayStart.getTime() ? 0 : minuteOfDayInZone(start, zone)
   return {
     startMinute,
     durationMinutes: Math.max(0, (end.getTime() - start.getTime()) / 60000),
@@ -78,6 +85,7 @@ export function TodayTimeline({
   events,
   range,
   locale,
+  displayZone,
   isToday,
   now,
   onPressEvent,
@@ -85,6 +93,7 @@ export function TodayTimeline({
   events: CalendarEvent[]
   range: HourRange
   locale: AppLocale
+  displayZone: string
   isToday: boolean
   now: Date
   onPressEvent: (event: CalendarEvent) => void
@@ -122,7 +131,7 @@ export function TodayTimeline({
     fontScale >= 1.3 ||
     placed.some((entry) => {
       const width = (entry.endX - entry.startX) * tileAreaWidth
-      const geometry = visibleGeometry(entry.item, now, range)
+      const geometry = visibleGeometry(entry.item, now, range, displayZone)
       const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
       return (
         (measuredWidth !== null && width < MIN_TARGET_SIZE) ||
@@ -130,7 +139,7 @@ export function TodayTimeline({
       )
     })
   const nowIndicator = isToday
-    ? nowIndicatorPosition(now, {
+    ? nowIndicatorPosition(now, displayZone, {
         pixelsPerHour: HOME_PIXELS_PER_HOUR,
         startMinute,
         endMinute,
@@ -141,7 +150,12 @@ export function TodayTimeline({
     return (
       <View style={styles.reflowedList} testID="today-timeline-list">
         {events.map((event) => {
-          const time = formatTimeRange(event.startsAt, event.endsAt, locale)
+          const time = formatTimeRange(
+            event.startsAt,
+            event.endsAt,
+            locale,
+            displayZone,
+          )
           const location = event.location ?? ""
           return (
             <Pressable
@@ -234,7 +248,7 @@ export function TodayTimeline({
 
         {placed.map((entry) => {
           const event = entry.item
-          const geometry = visibleGeometry(event, now, range)
+          const geometry = visibleGeometry(event, now, range, displayZone)
           const top = minuteToPixel(geometry.startMinute, {
             pixelsPerHour: HOME_PIXELS_PER_HOUR,
             startMinute,
@@ -246,7 +260,12 @@ export function TodayTimeline({
           const left = entry.startX * tileAreaWidth
           const width = (entry.endX - entry.startX) * tileAreaWidth
           const showText = width >= MIN_TILE_WIDTH
-          const time = formatTimeRange(event.startsAt, event.endsAt, locale)
+          const time = formatTimeRange(
+            event.startsAt,
+            event.endsAt,
+            locale,
+            displayZone,
+          )
           const location = event.location ?? ""
 
           return (

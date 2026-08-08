@@ -43,6 +43,7 @@ export function HomeScreen() {
           <WelcomeCard
             now={home.now}
             locale={home.locale}
+            displayZone={home.displayZone}
             caption={home.caption}
             greeting={home.greeting}
             events={home.todayEvents}
@@ -51,6 +52,7 @@ export function HomeScreen() {
           <UpcomingSection
             now={home.now}
             locale={home.locale}
+            displayZone={home.displayZone}
             events={home.upcoming}
             todayEventCount={home.todayEvents.length}
             nextDay={home.nextDay}
@@ -60,6 +62,7 @@ export function HomeScreen() {
           <TodaySection
             now={home.now}
             locale={home.locale}
+            displayZone={home.displayZone}
             allDayEvents={home.allDay}
             timedEvents={home.timed}
             hourRange={home.hourRange}

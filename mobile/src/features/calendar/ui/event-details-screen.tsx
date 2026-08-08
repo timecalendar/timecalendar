@@ -26,6 +26,7 @@ import {
 import { useUserCalendars } from "@/features/calendar-sources"
 import { EventChecklist } from "@/features/event-checklists"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
+import { useDisplayZone } from "@/features/settings/prefs"
 import { Radii, Spacing } from "@/theme"
 
 // The UNIFIED event-details screen (ADR 024 / decision 4) — PRESENTATIONAL (70%
@@ -47,6 +48,7 @@ export function EventDetailsScreen() {
   const { uid } = useLocalSearchParams<{ uid?: string }>()
   const { event, loading } = useEventDetails(uid)
   const locale = resolveLocale(i18n.language)
+  const displayZone = useDisplayZone()
   const calendars = useUserCalendars()
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   const {
@@ -209,7 +211,7 @@ export function EventDetailsScreen() {
           />
         )}
         <ScrollView contentContainerStyle={styles.content}>
-          <TitleBlock event={event} locale={locale} />
+          <TitleBlock event={event} locale={locale} zone={displayZone} />
 
           {event.tags.length > 0 && (
             <View style={styles.tagRow}>
@@ -253,7 +255,7 @@ export function EventDetailsScreen() {
             style={styles.footer}
           >
             {t("eventDetails.updated", {
-              date: formatFullDateTime(event.exportedAt, locale),
+              date: formatFullDateTime(event.exportedAt, locale, displayZone),
             })}
           </ThemedText>
 
@@ -269,9 +271,11 @@ export function EventDetailsScreen() {
 function TitleBlock({
   event,
   locale,
+  zone,
 }: {
   event: EventDetails
   locale: AppLocale
+  zone: string
 }) {
   const { t } = useTranslation()
   return (
@@ -291,6 +295,7 @@ function TitleBlock({
           event.endsAt,
           locale,
           event.allDay,
+          zone,
         )}
       </ThemedText>
     </View>

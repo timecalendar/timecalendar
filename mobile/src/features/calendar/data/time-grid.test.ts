@@ -53,24 +53,33 @@ describe("hourLabels", () => {
 })
 
 describe("nowIndicatorPosition", () => {
-  it("is visible and positioned when now is within the window", () => {
-    const now = new Date()
-    now.setHours(9, 0, 0, 0)
-    const result = nowIndicatorPosition(now)
+  // UTC instants + a pinned non-device zone (Nouméa, UTC+11): the minute-of-day
+  // is the DISPLAY zone's wall clock, machine-TZ-independent (spec proof).
+  it("is visible and positioned when the zone wall clock is within the window", () => {
+    // 22:00Z = 09:00 in Nouméa.
+    const now = new Date("2026-06-14T22:00:00.000Z")
+    const result = nowIndicatorPosition(now, "Pacific/Noumea")
     expect(result.visible).toBe(true)
     expect(result.pixel).toBe(120)
     expect(Number(result.fraction.toFixed(5))).toBe(Number((2 / 14).toFixed(5)))
   })
 
   it("is not visible before the window", () => {
-    const now = new Date()
-    now.setHours(6, 0, 0, 0)
-    expect(nowIndicatorPosition(now).visible).toBe(false)
+    // 19:00Z = 06:00 in Nouméa.
+    const now = new Date("2026-06-14T19:00:00.000Z")
+    expect(nowIndicatorPosition(now, "Pacific/Noumea").visible).toBe(false)
   })
 
   it("is not visible after the window", () => {
-    const now = new Date()
-    now.setHours(22, 0, 0, 0)
-    expect(nowIndicatorPosition(now).visible).toBe(false)
+    // 11:00Z = 22:00 in Nouméa.
+    const now = new Date("2026-06-14T11:00:00.000Z")
+    expect(nowIndicatorPosition(now, "Pacific/Noumea").visible).toBe(false)
+  })
+
+  it("positions the SAME instant differently per display zone", () => {
+    // 08:00Z: 09:00 in London (UTC+1 in June) vs 19:00 in Nouméa.
+    const now = new Date("2026-06-15T08:00:00.000Z")
+    expect(nowIndicatorPosition(now, "Europe/London").pixel).toBe(120)
+    expect(nowIndicatorPosition(now, "Pacific/Noumea").pixel).toBe(720)
   })
 })

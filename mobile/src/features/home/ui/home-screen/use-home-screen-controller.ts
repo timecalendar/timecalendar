@@ -3,9 +3,12 @@ import { useCallback, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
+  addDaysInZone,
   type CalendarEvent,
+  dayKey,
   eventRoute,
   resolveLocale,
+  startOfDayInZone,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
@@ -18,25 +21,14 @@ import {
   remainingEvents,
   splitDayEvents,
 } from "@/features/home/data"
+import { useDisplayZone } from "@/features/settings/prefs"
 
 const FUTURE_WINDOW_DAYS = 14
-
-function startOfLocalDay(date: Date): Date {
-  const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
-  return start
-}
-
-function localDayKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
 
 export function useHomeScreenController() {
   const { i18n } = useTranslation()
   const locale = resolveLocale(i18n.language)
+  const displayZone = useDisplayZone()
   const [now, setNow] = useState(() => new Date())
 
   useFocusEffect(
@@ -52,20 +44,27 @@ export function useHomeScreenController() {
   )
 
   const range = useMemo(() => {
-    const from = startOfLocalDay(now)
-    const to = new Date(from)
-    to.setDate(to.getDate() + FUTURE_WINDOW_DAYS)
-    return { from, to }
-  }, [now])
+    const from = startOfDayInZone(now, displayZone)
+    return { from, to: addDaysInZone(from, FUTURE_WINDOW_DAYS, displayZone) }
+  }, [now, displayZone])
   const events = useCalendarEvents(range)
-  const todayEvents = useMemo(() => eventsForDay(events, now), [events, now])
+  const todayEvents = useMemo(
+    () => eventsForDay(events, now, displayZone),
+    [events, now, displayZone],
+  )
   const { allDay, timed } = useMemo(
     () => splitDayEvents(todayEvents),
     [todayEvents],
   )
   const upcoming = useMemo(() => remainingEvents(timed, now), [timed, now])
-  const nextDay = useMemo(() => nextActiveDay(events, now), [events, now])
-  const hourRange = useMemo(() => dynamicHourRange(timed, now), [timed, now])
+  const nextDay = useMemo(
+    () => nextActiveDay(events, now, displayZone),
+    [events, now, displayZone],
+  )
+  const hourRange = useMemo(
+    () => dynamicHourRange(timed, now, displayZone),
+    [timed, now, displayZone],
+  )
   const caption = useMemo(
     () => dayCaption(todayEvents, now),
     [todayEvents, now],
@@ -79,12 +78,13 @@ export function useHomeScreenController() {
   const openCalendar = (day: Date) =>
     router.push({
       pathname: "/calendar",
-      params: { focusDate: localDayKey(day) },
+      params: { focusDate: dayKey(day, displayZone) },
     })
 
   return {
     now,
     locale,
+    displayZone,
     todayEvents,
     allDay,
     timed,

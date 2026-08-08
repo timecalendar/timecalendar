@@ -5,10 +5,12 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
+import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
 import {
   type PersonalEvent,
   usePersonalEvents,
 } from "@/features/personal-events/data"
+import { useDisplayZone } from "@/features/settings/prefs"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):
@@ -65,9 +67,11 @@ export function PersonalEventsList() {
 }
 
 function EventRow({ event }: { event: PersonalEvent }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const theme = useTheme()
-  const range = `${formatRange(event.startsAt)} – ${formatRange(event.endsAt)}`
+  const locale = resolveLocale(i18n.language)
+  const displayZone = useDisplayZone()
+  const range = `${formatShortDateTime(event.startsAt, locale, displayZone)} – ${formatShortDateTime(event.endsAt, locale, displayZone)}`
 
   return (
     <Link href={`/personal-event-form?uid=${event.uid}`} asChild>
@@ -106,18 +110,6 @@ function EventRow({ event }: { event: PersonalEvent }) {
       </Pressable>
     </Link>
   )
-}
-
-// A locale-neutral, deterministic range label (the i18n date-format deferral
-// stands — Architecture Book i18n "Deferred"). Uses the runtime locale's short
-// date+time via toLocaleString with no hardcoded copy.
-function formatRange(date: Date): string {
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
 }
 
 const styles = StyleSheet.create({

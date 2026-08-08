@@ -13,6 +13,7 @@ import {
   useSyncedEvents,
 } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
+import { useDisplayZone } from "@/features/settings/prefs"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The hidden-events management screen (D7) — PRESENTATIONAL (70% floor). Hide-by-
@@ -35,6 +36,7 @@ export function HiddenEventsScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
+  const displayZone = useDisplayZone()
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   const { unhideUid, unhideName, failed } = useHideActions()
   const syncedEvents = useSyncedEvents()
@@ -50,11 +52,16 @@ export function HiddenEventsScreen() {
         {
           uid,
           title: event.title,
-          time: formatTimeRange(event.startsAt, event.endsAt, locale),
+          time: formatTimeRange(
+            event.startsAt,
+            event.endsAt,
+            locale,
+            displayZone,
+          ),
         },
       ]
     })
-  }, [uidHiddenEvents, syncedEvents, locale])
+  }, [uidHiddenEvents, syncedEvents, locale, displayZone])
 
   const isEmpty = namedHiddenEvents.length === 0 && uidEntries.length === 0
 

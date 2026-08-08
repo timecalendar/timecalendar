@@ -1,3 +1,5 @@
+import { getCalendars } from "expo-localization"
+
 import { detectLocale, type SupportedLocale } from "@/i18n/detect-locale"
 import { getString, setString } from "@/storage"
 
@@ -5,11 +7,13 @@ import {
   type LanguagePreference,
   parseLanguagePreference,
   parseThemePreference,
+  parseTimezonePreference,
   SETTINGS_KEYS,
   type ThemePreference,
+  type TimezonePreference,
 } from "./types"
 
-// Imperative get/set for the two preferences over the @/storage seam. A pure
+// Imperative get/set for the three preferences over the @/storage seam. A pure
 // store-only module: it imports @/storage + ./types + the detect-locale leaf,
 // but NEVER the @/i18n instance — so the i18n startup read (getInitialLocale)
 // stays cycle-free (@/i18n init → this store → @/storage, no edge back; D5).
@@ -28,6 +32,27 @@ export function getLanguagePreference(): LanguagePreference {
 
 export function setLanguagePreference(preference: LanguagePreference): void {
   setString(SETTINGS_KEYS.language, preference)
+}
+
+export function getTimezonePreference(): TimezonePreference {
+  return parseTimezonePreference(getString(SETTINGS_KEYS.timezone))
+}
+
+export function setTimezonePreference(preference: TimezonePreference): void {
+  setString(SETTINGS_KEYS.timezone, preference)
+}
+
+// Resolve a timezone preference to the effective display zone: an explicit
+// curated zone wins, "system" falls through to the device IANA zone, and
+// "Europe/Paris" backstops a device that yields none (some simulators). The
+// `deviceZone` parameter defaults to the imperative expo-localization read;
+// the reactive hook passes `useCalendars()`'s value so a device-zone change
+// re-resolves under "system".
+export function resolveTimezone(
+  preference: TimezonePreference,
+  deviceZone: string | null = getCalendars()[0]?.timeZone ?? null,
+): string {
+  return preference === "system" ? (deviceZone ?? "Europe/Paris") : preference
 }
 
 // Resolve a language preference to a concrete locale: an explicit "fr"/"en"

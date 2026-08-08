@@ -33,6 +33,7 @@ export function CalendarScreen() {
     setView,
     anchorDate,
     visibleDate,
+    displayZone,
     range,
     timelineRef,
     goToToday,
@@ -61,7 +62,7 @@ export function CalendarScreen() {
   return (
     <ThemedView style={styles.container}>
       <CalendarScreenHeader
-        title={formatMonthYear(visibleDate, locale)}
+        title={formatMonthYear(visibleDate, locale, displayZone)}
         view={view}
         onViewChange={setView}
         onToday={goToToday}
@@ -78,6 +79,7 @@ export function CalendarScreen() {
             <AgendaList
               events={events}
               locale={locale}
+              displayZone={displayZone}
               refreshControl={refreshControl}
               onPressEvent={(event) => onPressEvent(event.id)}
             />
@@ -86,6 +88,7 @@ export function CalendarScreen() {
               ref={timelineRef}
               mode={view}
               anchorDate={anchorDate}
+              displayZone={displayZone}
               events={events}
               startMinute={GRID_START_MINUTE}
               endMinute={GRID_END_MINUTE}

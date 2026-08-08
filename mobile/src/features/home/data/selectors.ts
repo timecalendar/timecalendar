@@ -1,37 +1,30 @@
-import { type CalendarEvent } from "@/features/calendar/data"
+import {
+  addDaysInZone,
+  type CalendarEvent,
+  dayKey,
+  dayKeyToDate,
+  minuteOfDayInZone,
+  startOfDayInZone,
+  utcDayKey,
+} from "@/features/calendar/data"
 
-function localDayKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
+// Day-level selection runs on the DISPLAY zone's calendar (timezone design D4):
+// day bounds are zone-midnight instants, timed events key on their zone day,
+// and all-day events keep their floating UTC key. Only `greetingSelection`
+// stays device-local (D7 — it is about where the user physically is).
 
-function utcDayKey(date: Date): string {
-  const year = date.getUTCFullYear()
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0")
-  const day = String(date.getUTCDate()).padStart(2, "0")
-  return `${year}-${month}-${day}`
-}
-
-function representedDayKey(event: CalendarEvent): string {
-  return event.allDay ? utcDayKey(event.startsAt) : localDayKey(event.startsAt)
-}
-
-function localDateFromKey(key: string): Date {
-  const [year, month, day] = key.split("-").map(Number)
-  return new Date(year!, month! - 1, day!)
+function representedDayKey(event: CalendarEvent, zone: string): string {
+  return event.allDay ? utcDayKey(event.startsAt) : dayKey(event.startsAt, zone)
 }
 
 export function eventsForDay(
   events: CalendarEvent[],
   day: Date,
+  zone: string,
 ): CalendarEvent[] {
-  const dayStart = new Date(day)
-  dayStart.setHours(0, 0, 0, 0)
-  const dayEnd = new Date(dayStart)
-  dayEnd.setDate(dayEnd.getDate() + 1)
-  const floatingKey = localDayKey(dayStart)
+  const dayStart = startOfDayInZone(day, zone)
+  const dayEnd = addDaysInZone(dayStart, 1, zone)
+  const floatingKey = dayKey(dayStart, zone)
   return events
     .filter((event) =>
       event.allDay
@@ -71,15 +64,16 @@ export interface NextActiveDay {
 export function nextActiveDay(
   events: CalendarEvent[],
   now: Date,
+  zone: string,
 ): NextActiveDay | undefined {
-  const todayKey = localDayKey(now)
+  const todayKey = dayKey(now, zone)
   const firstKey = events
-    .map(representedDayKey)
+    .map((event) => representedDayKey(event, zone))
     .filter((key) => key > todayKey)
     .sort()[0]
   if (firstKey === undefined) return undefined
-  const day = localDateFromKey(firstKey)
-  const dayEvents = eventsForDay(events, day)
+  const day = dayKeyToDate(firstKey, zone)
+  const dayEvents = eventsForDay(events, day, zone)
   return {
     day,
     events: dayEvents,
@@ -101,6 +95,8 @@ export interface GreetingSelection {
   variant: 0 | 1
 }
 
+// Deliberately DEVICE-LOCAL (D7): good-morning/evening follows where the user
+// physically is, not the display-timezone preference.
 export function greetingSelection(now: Date): GreetingSelection {
   const hour = now.getHours()
   const period: GreetingPeriod =
@@ -115,7 +111,9 @@ export function greetingSelection(now: Date): GreetingSelection {
             : hour >= 18 && hour < 22
               ? "evening"
               : "night"
-  const hash = Number(localDayKey(now).replaceAll("-", ""))
+  // The numeric YYYYMMDD of the device-local day (the former localDayKey hash).
+  const hash =
+    now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate()
   return {
     period,
     weekend: now.getDay() === 0 || now.getDay() === 6,
@@ -158,13 +156,12 @@ export interface HourRange {
 export function dynamicHourRange(
   events: CalendarEvent[],
   day: Date,
+  zone: string,
 ): HourRange {
   const timed = events.filter((event) => !event.allDay)
   if (timed.length === 0) return { startHour: 8, endHour: 18 }
-  const dayStart = new Date(day)
-  dayStart.setHours(0, 0, 0, 0)
-  const dayEnd = new Date(dayStart)
-  dayEnd.setDate(dayEnd.getDate() + 1)
+  const dayStart = startOfDayInZone(day, zone)
+  const dayEnd = addDaysInZone(dayStart, 1, zone)
   let startMinute = 24 * 60
   let endMinute = 0
   for (const event of timed) {
@@ -173,11 +170,11 @@ export function dynamicHourRange(
     const startsAtMinute =
       visibleStart.getTime() === dayStart.getTime()
         ? 0
-        : visibleStart.getHours() * 60 + visibleStart.getMinutes()
+        : minuteOfDayInZone(visibleStart, zone)
     const endsAtMinute =
       visibleEnd.getTime() === dayEnd.getTime()
         ? 24 * 60
-        : visibleEnd.getHours() * 60 + visibleEnd.getMinutes()
+        : minuteOfDayInZone(visibleEnd, zone)
     startMinute = Math.min(startMinute, startsAtMinute)
     endMinute = Math.max(endMinute, endsAtMinute)
   }

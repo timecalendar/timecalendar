@@ -1,6 +1,9 @@
 import { render } from "@testing-library/react-native"
+import { fromZonedTime } from "date-fns-tz"
 
 import { usePersonalEvents } from "@/features/personal-events/data"
+import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
+import { remove } from "@/storage"
 
 import { PersonalEventsList } from "./personal-events-list"
 
@@ -55,5 +58,30 @@ describe("PersonalEventsList", () => {
     // is the hint.
     expect(row.props.accessibilityLabel).toBe("Lunch")
     expect(row.props.accessibilityHint).toBe("Opens the event to edit")
+  })
+
+  it("renders a 14:00 wall-clock entry as 14:00 under an explicit display zone", async () => {
+    // The D6 round-trip proof: an event created at 14:00 Réunion wall clock
+    // (stored as its instant) reads back 14:00 in the list when the display
+    // zone is the explicit Indian/Reunion preference — machine-TZ-independent.
+    setTimezonePreference("Indian/Reunion")
+    const startsAt = fromZonedTime("2030-01-01T14:00:00", "Indian/Reunion")
+    const endsAt = fromZonedTime("2030-01-01T15:00:00", "Indian/Reunion")
+    mockUsePersonalEvents.mockReturnValue([
+      {
+        uid: "u1",
+        title: "Lunch",
+        color: "#E91E63",
+        startsAt,
+        endsAt,
+        exportedAt: startsAt,
+        location: undefined,
+        description: undefined,
+      },
+    ])
+    const { getByText } = await render(<PersonalEventsList />)
+
+    expect(getByText("1 Jan 14:00 – 1 Jan 15:00")).toBeTruthy()
+    remove(SETTINGS_KEYS.timezone)
   })
 })

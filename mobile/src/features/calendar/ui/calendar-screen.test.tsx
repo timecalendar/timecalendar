@@ -8,11 +8,14 @@ import { router, useLocalSearchParams } from "expo-router"
 import { Platform } from "react-native"
 
 import {
+  dayKey,
   formatMonthYear,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { calendarTimelineEventWindow } from "@/features/calendar/renderer"
+import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
+import { remove } from "@/storage"
 
 import { CalendarScreen } from "./calendar-screen"
 
@@ -90,6 +93,11 @@ jest.mock(
       "react-native-safe-area-context/jest/mock",
     ).default,
 )
+
+// The screen resolves its display zone through useDisplayZone; under the
+// default "system" preference that is the machine zone (setup-localization), so
+// zone-parameterized expectations mirror the screen exactly.
+const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
@@ -228,7 +236,7 @@ describe("CalendarScreen", () => {
         to: Date
       }
       const settled = new Date("2026-11-15T12:00:00.000Z")
-      const expected = calendarTimelineEventWindow(settled)
+      const expected = calendarTimelineEventWindow(settled, ZONE)
       expect(range.from.getTime()).toBe(expected.from.getTime())
       expect(range.to.getTime()).toBe(expected.to.getTime())
     })
@@ -246,7 +254,10 @@ describe("CalendarScreen", () => {
     // quarter-cross wiring deleted, the feed would still be Q4's window.
     await render(<CalendarScreen />)
     fireEvent.press(screen.getByTestId("grid-cross-quarter"))
-    const q4 = calendarTimelineEventWindow(new Date("2026-11-15T12:00:00.000Z"))
+    const q4 = calendarTimelineEventWindow(
+      new Date("2026-11-15T12:00:00.000Z"),
+      ZONE,
+    )
     await waitFor(() => {
       const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
         from: Date
@@ -257,6 +268,7 @@ describe("CalendarScreen", () => {
     fireEvent.press(screen.getByTestId("grid-visible-cross-quarter"))
     const expected = calendarTimelineEventWindow(
       new Date("2027-02-10T12:00:00.000Z"),
+      ZONE,
     )
     await waitFor(() => {
       const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0] as {
@@ -512,11 +524,14 @@ describe("CalendarScreen — month title + Today action", () => {
   const scrolledTitle = formatMonthYear(
     new Date("2026-08-01T00:00:00.000Z"),
     "en",
+    ZONE,
   )
 
   it("renders the visible month + year as the header title", async () => {
     await render(<CalendarScreen />)
-    expect(screen.getByText(formatMonthYear(new Date(), "en"))).toBeTruthy()
+    expect(
+      screen.getByText(formatMonthYear(new Date(), "en", ZONE)),
+    ).toBeTruthy()
   })
 
   it("updates the title when the grid scrolls to another month", async () => {
@@ -536,6 +551,7 @@ describe("CalendarScreen — month title + Today action", () => {
     const visibleTitle = formatMonthYear(
       new Date("2026-09-01T00:00:00.000Z"),
       "en",
+      ZONE,
     )
     await waitFor(() => {
       expect(screen.getByText(visibleTitle)).toBeTruthy()
@@ -564,5 +580,35 @@ describe("CalendarScreen — month title + Today action", () => {
       expect(range.from.getTime()).toBeLessThanOrEqual(today.getTime())
       expect(range.to.getTime()).toBeGreaterThan(today.getTime())
     })
+  })
+})
+
+// The display-zone threading into the renderer (timezone design D5): the grid
+// receives the resolved zone as its timeZone prop and a zone day-key
+// initialDate, so calendar-kit's internal day division agrees with ours.
+describe("CalendarScreen — display zone threading", () => {
+  afterEach(() => {
+    remove(SETTINGS_KEYS.timezone)
+  })
+
+  it("feeds the resolved display zone and its day-key to the grid", async () => {
+    await render(<CalendarScreen />)
+    expect(screen.getByTestId("grid-time-zone").props.accessibilityLabel).toBe(
+      ZONE,
+    )
+    expect(
+      screen.getByTestId("grid-initial-date").props.accessibilityLabel,
+    ).toBe(dayKey(new Date(), ZONE))
+  })
+
+  it("feeds an explicit preference zone to the grid", async () => {
+    setTimezonePreference("Pacific/Noumea")
+    await render(<CalendarScreen />)
+    expect(screen.getByTestId("grid-time-zone").props.accessibilityLabel).toBe(
+      "Pacific/Noumea",
+    )
+    expect(
+      screen.getByTestId("grid-initial-date").props.accessibilityLabel,
+    ).toBe(dayKey(new Date(), "Pacific/Noumea"))
   })
 })
