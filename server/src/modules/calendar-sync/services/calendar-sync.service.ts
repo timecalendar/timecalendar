@@ -66,10 +66,20 @@ export class CalendarSyncService {
       source,
       code,
     )
+    const isNewCalendar = !id
+    if (
+      id &&
+      !(await this.calendarRepository.claimSyncIfDue(
+        id,
+        minSyncIntervalMinutes,
+      ))
+    ) {
+      return this.calendarRepository.findOne(id)
+    }
+
     const fetchedEvents = await this.fetchEvents(source, code)
 
     const isError = "error" in fetchedEvents
-    const isNewCalendar = !id
 
     this.calendarSyncMetricsService.calendarSyncCounter.add(1, {
       school: code ?? undefined,
@@ -147,11 +157,10 @@ export class CalendarSyncService {
 
     // Also written when the fetch failed: a university that is down must not be
     // retried on every client request.
-    const now = new Date()
-    await this.calendarRepository.update(calendarId, {
-      lastUpdatedAt: now,
-      syncPlannedAt: addMinutes(now, minSyncIntervalMinutes),
-    })
+    await this.calendarRepository.recordSyncAttempt(
+      calendarId,
+      minSyncIntervalMinutes,
+    )
 
     return this.calendarRepository.findOne(calendarId)
   }

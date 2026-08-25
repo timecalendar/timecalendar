@@ -78,6 +78,48 @@ export class CalendarRepository {
     return this.repository.update({ id: calendarId }, calendar)
   }
 
+  /**
+   * Atomically reserves one due calendar before upstream I/O. The same claim
+   * timestamp drives both the comparison and the new plan in one statement.
+   */
+  async claimSyncIfDue(
+    calendarId: string,
+    minSyncIntervalMinutes: number,
+  ): Promise<boolean> {
+    const claimTime = new Date()
+    const result = await this.repository
+      .createQueryBuilder()
+      .update(Calendar)
+      .set({
+        syncPlannedAt: () =>
+          "CAST(:claimTime AS timestamp) + make_interval(mins => :minSyncIntervalMinutes)",
+      })
+      .where(`"id" = :calendarId`, { calendarId })
+      .andWhere(`"syncPlannedAt" <= CAST(:claimTime AS timestamp)`)
+      .setParameter("claimTime", claimTime)
+      .setParameter("minSyncIntervalMinutes", minSyncIntervalMinutes)
+      .execute()
+
+    return result.affected === 1
+  }
+
+  /** Records a sync attempt without ever shortening its existing reservation. */
+  recordSyncAttempt(calendarId: string, minSyncIntervalMinutes: number) {
+    const attemptTime = new Date()
+    return this.repository
+      .createQueryBuilder()
+      .update(Calendar)
+      .set({
+        lastUpdatedAt: () => "CAST(:attemptTime AS timestamp)",
+        syncPlannedAt: () =>
+          'GREATEST("syncPlannedAt", CAST(:attemptTime AS timestamp) + make_interval(mins => :minSyncIntervalMinutes))',
+      })
+      .where(`"id" = :calendarId`, { calendarId })
+      .setParameter("attemptTime", attemptTime)
+      .setParameter("minSyncIntervalMinutes", minSyncIntervalMinutes)
+      .execute()
+  }
+
   save(calendar: DeepPartial<Calendar>) {
     return this.repository.save(calendar)
   }
