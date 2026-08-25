@@ -14,7 +14,7 @@ order — each document assumes the one before it.
 | 1 | [What OTA actually is](./01-what-is-ota.md) | What it is, why it exists, what it can and can't do, is it even allowed by Apple? | 10 min |
 | 2 | [The options](./02-options.md) | Every solution on the market in 2026, with an honest verdict on each | 12 min |
 | 3 | [What it costs](./03-costs.md) | Real numbers, at our scale, including the self-hosted path | 8 min |
-| 4 | [Recommendation](./04-recommendation.md) | What I think we should do, and why | 6 min |
+| 4 | [Recommendation](./04-recommendation.md) | What we should do, why, and what it takes | 8 min |
 | 5 | [Day-one runbook](./05-runbook.md) | How we'd actually ship, roll back, and stay safe | 8 min |
 
 ---
@@ -42,36 +42,43 @@ previous work also picked the *safe* setting for the single most dangerous OTA f
 (see "the fingerprint policy" in [document 1](./01-what-is-ota.md)). We are not starting from
 zero — we are choosing a supplier and writing down a discipline.
 
-**What it costs.** Expo's hosted service (EAS Update) is **free up to 1,000 monthly active
-users**, **$19/month up to 3,000**, and **$199/month up to 50,000**, with in-between overages
-at $0.005 per user. Self-hosting on the DigitalOcean cluster we already run costs roughly
-**$5/month** plus about **1–2 days of my time to set up** and a small permanent maintenance
-tax. Full numbers, including the crossover point, in [document 3](./03-costs.md).
+**What it costs — and why our size decides it.** Every hosted vendor bills per *monthly active
+user*. You told me we have **~60,000, and growing**. At that scale Expo's hosted service (EAS
+Update) is the **$199/month Production plan plus overage — about $249/month, ~$2,990/year**,
+and it grows every September. Running the same thing ourselves, on the Kubernetes cluster we
+already operate, is **about $0/month**, because the bundles go on Cloudflare R2 and R2 doesn't
+charge for bandwidth. Full numbers in [document 3](./03-costs.md).
 
-**My recommendation, in one line.** Ship 3.0 on **EAS Update on the paid Starter plan
-($19/month)**, not the free plan — because the free plan *hard-stops* when you cross 1,000
-users, with no option to pay your way out, and it would stop exactly during a September
-enrolment spike when you most need a hotfix. Then keep self-hosting as a documented escape
-hatch: **every self-hosted option speaks the same protocol as Expo's**, so switching later is
-a config change, not a rewrite. This decision is cheap and reversible — that is the main thing
-to understand about it. Reasoning in [document 4](./04-recommendation.md).
+**The recommendation, in one line.** **Self-host the update server (xprem) from day one, with
+the bundles on Cloudflare R2** — ~$0/month against ~$249, for 1–2 days of setup, paying itself
+back in about three days. Crucially, **build it now rather than at the cutover**: the app isn't
+in the stores yet, so we get months of dogfooding on our own server before a single student
+depends on it. That timing is what makes self-hosting the safe option rather than the brave
+one. Reasoning in [document 4](./04-recommendation.md).
+
+**And if we get it wrong?** Switching between hosted and self-hosted is a one-line URL change
+in `mobile/app.config.ts` — the app itself is identical either way, because Expo publishes the
+update protocol as an open spec. **This is not a one-way door in either direction.**
 
 ---
 
-## What I need from you
+## Decision record
 
-I've put six questions in the issue thread (TIM-170). The one that actually moves the number
-is **how many monthly active users the current Flutter app has at its September/January peak**
-— every hosted vendor prices per active user, so that single figure decides between $0, $19
-and $199 per month. If you don't know it offhand, it's in Firebase Analytics for
-`timecalendar-samuelprak`, or in the Play Console "Statistics" page.
+The recommendation in [document 4](./04-recommendation.md) was originally *hosted, $19/month*,
+provisional on our user count. Your answers on 2026-08-25 inverted it:
 
-The other five: budget ceiling, current Expo plan, appetite for self-hosting, whether EU data
-residency is a hard requirement, and whether you want OTA for emergencies only or for regular
-weekly delivery.
+| Question | Your answer | Effect |
+| --- | --- | --- |
+| Peak monthly active users | **60,000 and growing** | **Decisive** — flipped hosted → self-hosted |
+| Budget | *"$200/mo for 50k MAU is crazy"* | Confirms the flip |
+| Current Expo plan | Free | Nothing to unwind; free plan stays for build tooling |
+| Self-hosting appetite | *"You decide … so self-hosted?"* | Taken as delegated; §4.2 is the justification |
+| EU data residency | No constraint | Frees us to use Cloudflare R2 |
+| What OTA is for | Hotfix-heavy launch, then bi-weekly | Produced the two-posture runbook, [doc 5](./05-runbook.md) §5.0 |
 
-These answers **refine** [document 4](./04-recommendation.md); they don't invalidate documents
-1–3, which is why I wrote them now rather than waiting.
+[Document 4](./04-recommendation.md) §4.6 records the reversal in full — including what would
+change my mind back (if the 60k turns out to be *installs* rather than *monthly actives* and
+the real figure is under ~5,000).
 
 ## What this pack deliberately does not do
 
@@ -80,8 +87,9 @@ These answers **refine** [document 4](./04-recommendation.md); they don't invali
   Flutter app is being retired at the 3.0 cutover, so paying to add OTA to it now would be
   spending money on a codebase with months to live. Noted and dismissed in
   [document 2](./02-options.md).
-- **It doesn't set up billing.** No account changes, no plan upgrades — those are yours to
-  approve.
+- **It doesn't set up billing or infrastructure.** No account changes, no plan upgrades, no
+  servers deployed. The implementation is a separate issue (child of TIM-170) covering roughly
+  2.5 days of work, listed in [document 4](./04-recommendation.md) §4.7.
 
 ---
 

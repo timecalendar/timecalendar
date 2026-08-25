@@ -20,7 +20,8 @@ Which means:
 > later is a URL change in `mobile/app.config.ts` plus deploying a server — not an app
 > rewrite, not a store release, not a new client library. Users don't notice.
 
-That's why I'm comfortable recommending the pragmatic option now rather than agonising. The
+That's why this decision doesn't deserve agonising: hosted and self-hosted are the same app
+pointed at a different URL, and we can change our mind in either direction at any time. The
 expensive, irreversible choice would be adopting a vendor with a *proprietary client SDK*
 (§2.4 below) — that one we should avoid.
 
@@ -57,18 +58,20 @@ decision and a written process — I estimate half a day, not a project.**
 - Bundle diffing on by default in SDK 56 (~75% smaller downloads).
 
 **Honest downsides:**
-- **It's priced per monthly active user**, so the bill scales with success. See
-  [document 3](./03-costs.md).
-- **The free tier is a trap for production use.** It hard-stops at 1,000 monthly active users
-  with *no option to pay overage* — updates simply stop being served until the 1st of the next
-  month. A cap that engages silently, during a September enrolment spike, in the exact week
-  we'd want a hotfix, is not a cap I want between us and our users.
+- **It's priced per monthly active user, and we have ~60,000 of them.** That puts us on the
+  $199/month Production plan plus overage — **≈$249/month, ≈$2,990/year** — and the bill grows
+  every September. This is the one that decides it; see [document 3](./03-costs.md) §3.3.
+- **The free tier — which is what we're on today — is unusable for us.** It hard-stops at 1,000
+  monthly active users with *no option to pay overage*. At our scale we'd hit that wall within
+  hours of publishing, every month.
 - US vendor. Device-level update checks (IP, install id, app version) are processed outside
-  the EU. Materially the same posture as the Firebase Analytics/Crashlytics we already ship —
-  but worth a conscious decision, which is one of my questions to you.
+  the EU. Materially the same posture as the Firebase Analytics/Crashlytics we already ship,
+  and the CEO has confirmed no constraint here — noted rather than blocking.
 
-**Verdict: the default.** Lowest integration cost by a wide margin, best safety features, and
-zero lock-in thanks to the open protocol.
+**Verdict: the right default for most teams, and the wrong one for us.** Lowest integration
+cost by a wide margin, best safety features, zero lock-in — but at 60k MAU we'd be paying
+~$3,000/year for a service whose actual work fits in a small Go binary. **Kept as the fallback**
+(§2.0: switching is a URL change), not the choice. See [document 4](./04-recommendation.md).
 
 ---
 
@@ -84,19 +87,29 @@ bucket. Adding one more small service is a genuinely marginal cost.
 ### xprem (formerly `expo-open-ota`) — the serious one
 
 - Single Go binary, deploys via Docker or a Helm chart — drops straight into our cluster.
-- Storage on any S3-compatible bucket (we have one), served through a CDN. Crucially, **the
-  bundles don't flow through the server** — it only serves a small JSON manifest and points
-  the phone at the CDN. So the server stays tiny under load.
+- Storage on effectively any bucket — S3, Cloudflare R2, GCS, Azure, MinIO, DigitalOcean
+  Spaces, or local disk — served through a CDN. Crucially, **the bundles don't flow through the
+  server**: it serves a small JSON manifest and points the phone at the CDN. So the server
+  stays tiny under load, and the bandwidth bill lands on whichever bucket we choose
+  ([document 3](./03-costs.md) §3.4 — this is why the bucket choice, not the server, is the
+  cost decision).
+- Runs **stateless by default**. Postgres is only needed for the dashboard, and ClickHouse only
+  for its per-device crash/metrics feature — which we'd skip, since that's what Crashlytics
+  already does for us.
 - Feature parity on the things that matter: percentage rollouts, instant rollback, multi-app
-  dashboard, per-update crash and adoption metrics.
+  dashboard. Publishing is `npx eoas publish`.
 - Core is MIT-licensed and free. Some enterprise features (SSO, role-based access, branch
   protection) sit behind a commercial licence — none of which we need.
 - Maturity: ~500 GitHub stars, actively maintained, and the maintainers state it has served
-  production traffic since early 2025 to apps totalling **>1M monthly active users**.
+  production traffic since early 2025 to apps totalling **>1M monthly active users** — an order
+  of magnitude above us, which is the reassurance that matters.
+- It was renamed from `expo-open-ota` to `xprem` because "Expo" is a 650 Industries trademark
+  and the project is independent of them. Same codebase, same maintainers, same MIT core —
+  worth knowing so the older name doesn't look like a different product when you search.
 
-**Verdict: the credible self-hosted answer, and our escape hatch.** Not the day-one choice
-only because it costs 1–2 days of setup and a permanent (if small) ownership tax — see
-[document 4](./04-recommendation.md) for the trigger that would flip us to it.
+**Verdict: our choice.** At 60,000 MAU the hosted bill is ~$2,990/year and this is ~$0, against
+1–2 days of setup — a payback measured in days rather than the years it would have been at
+launch-scale. See [document 4](./04-recommendation.md).
 
 ### Xavia OTA
 
@@ -166,11 +179,12 @@ Worth stating explicitly, because "no OTA" is a legitimate choice and it's what 
 - **Fix latency:** 1–3 days to availability, ~1 week to broad adoption (see
   [document 1](./01-what-is-ota.md) §1.1).
 - **Risk:** a launch-week regression in the calendar is unfixable for days. During a
-  Flutter→React Native cutover — where our entire user base migrates to a codebase that has
-  never faced real users at scale — that's the highest-risk moment in this project's life.
+  Flutter→React Native cutover — where **60,000 users** migrate to a codebase that has never
+  faced real users at scale — that's the highest-risk moment in this project's life.
 
 **Verdict: not acceptable for the 3.0 cutover.** The cutover is precisely when a same-day fix
-is worth the most, and the marginal cost of having the capability is $0–19/month.
+is worth the most, and on the self-hosted path the marginal cost of having the capability is
+~$0/month plus a couple of days of setup.
 
 ---
 
@@ -191,12 +205,14 @@ current situation.
 
 ## 2.7 Summary
 
+*Ongoing cost is given at **our** scale — ~60,000 monthly active users.*
+
 | Option | Integration cost | Ongoing cost | Lock-in | Verdict |
 | --- | --- | --- | --- | --- |
-| **A. EAS Update** | ~½ day (already wired) | $0–199/mo by user count | None | ✅ **Default** |
-| **B. xprem (self-hosted)** | 1–2 days + ownership | ~$5/mo + our time | None | ✅ **Escape hatch** |
-| B. Xavia / Laravel / Expo demo | 1–3 days | ~$5/mo | None | ⚠️ Weaker or non-production |
-| **C. Hot Updater** | 2–3 days + rework | ~$5/mo | Moderate | ❌ Discards working setup |
+| **B. xprem (self-hosted) + R2** | 1–2 days + ownership | **≈ $0/mo** + our time | None | ✅ **Our choice** |
+| **A. EAS Update** | ~½ day (already wired) | **≈ $249/mo**, growing | None | ✅ **Fallback** — one URL away |
+| B. Xavia / Laravel / Expo demo | 1–3 days | ~$0–5/mo | None | ⚠️ Weaker or non-production |
+| **C. Hot Updater** | 2–3 days + rework | ~$0–5/mo | Moderate | ❌ Discards working setup |
 | C. Self-hosted CodePush | Days | Our time | Moderate | ❌ Abandoned upstream |
 | **D. Stallion / Revopush / …** | 1–2 days | Vendor pricing | High | ❌ Solves a problem we don't have |
 | **E. Do nothing** | 0 | €0 | — | ❌ Unacceptable at cutover |
