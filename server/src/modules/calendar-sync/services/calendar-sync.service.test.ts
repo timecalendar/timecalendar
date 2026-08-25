@@ -19,9 +19,11 @@ import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
+import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
+import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { schoolFactory } from "modules/school/factories/school.factory"
@@ -164,12 +166,19 @@ describe("CalendarSyncService", () => {
       const mockDate = new Date("2022-01-01T00:00:00.000Z")
       jest.useFakeTimers({ advanceTimers: true, now: mockDate })
 
-      calendar = await calendarFactory().create()
+      calendar = await calendarFactory().create({
+        syncPlannedAt: new Date("2021-12-31T00:00:00.000Z"),
+      })
     })
 
     afterEach(() => {
       jest.useRealTimers()
     })
+
+    const makeDue = (calendarId: string) =>
+      dataSource.getRepository(Calendar).update(calendarId, {
+        syncPlannedAt: new Date("2021-12-31T00:00:00.000Z"),
+      })
 
     it("syncs events for an existing calendar", async () => {
       events = [
@@ -219,6 +228,7 @@ describe("CalendarSyncService", () => {
       // The first sync goes from empty content to one event, which is itself a
       // change — drop its log to isolate the update under test
       await dataSource.query("DELETE FROM calendar_log")
+      await makeDue(calendar.id)
 
       const newEvents = [
         fetcherCalendarEventFactory.build({
@@ -258,6 +268,7 @@ describe("CalendarSyncService", () => {
       icalFetcher.fetch.mockImplementation(async () => sameEvents)
       await service.sync(calendar)
       await dataSource.query("DELETE FROM calendar_log")
+      await makeDue(calendar.id)
 
       await service.sync(calendar)
 
@@ -373,6 +384,7 @@ describe("CalendarSyncService", () => {
       icalFetcher.fetch.mockImplementation(async () => {
         throw new Error("Network error")
       })
+      await makeDue(calendar.id)
 
       // Attempt to sync again - this should fail but preserve existing events
       await assertChanges(
@@ -465,6 +477,64 @@ describe("CalendarSyncService", () => {
         expect(syncPlannedAt.getTime()).toBeGreaterThan(
           dueCalendar.syncPlannedAt.getTime(),
         )
+      })
+
+      it("returns last-known state without fetching when the claim is not due", async () => {
+        const futureCalendar = await calendarFactory()
+          .transient({
+            events: [calendarEventFactory.build({ uid: "last-known-event" })],
+          })
+          .create({ syncPlannedAt: new Date("2022-01-01T01:00:00.000Z") })
+
+        const result = await service.sync(futureCalendar)
+
+        expect(icalFetcher.fetch).not.toHaveBeenCalled()
+        expect(result.content.events[0].uid).toBe("last-known-event")
+      })
+
+      it("allows only one upstream fetch for concurrent Lyon callers", async () => {
+        const dueCalendar = await createDueCalendar(LYON1_URL)
+
+        await Promise.all([
+          service.sync(dueCalendar),
+          service.sync(dueCalendar),
+        ])
+
+        expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+        expect((await reloadPlan(dueCalendar.id)).plannedInMinutes).toBe(60)
+      })
+
+      it("keeps the Lyon claim after an upstream failure", async () => {
+        const dueCalendar = await createDueCalendar(LYON1_URL)
+        icalFetcher.fetch.mockRejectedValue(new Error("ADE unavailable"))
+
+        await expect(service.sync(dueCalendar)).rejects.toThrow(
+          "ADE unavailable",
+        )
+        await expect(service.sync(dueCalendar)).resolves.toMatchObject({
+          id: dueCalendar.id,
+        })
+
+        expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+        expect((await reloadPlan(dueCalendar.id)).plannedInMinutes).toBe(60)
+      })
+
+      it("keeps the Lyon claim when persistence fails after upstream I/O", async () => {
+        const dueCalendar = await createDueCalendar(LYON1_URL)
+        const saveSpy = jest
+          .spyOn(app.get(CalendarContentRepository), "saveWithTransaction")
+          .mockRejectedValueOnce(new Error("persistence unavailable"))
+
+        await expect(service.sync(dueCalendar)).rejects.toThrow(
+          "persistence unavailable",
+        )
+        await expect(service.sync(dueCalendar)).resolves.toMatchObject({
+          id: dueCalendar.id,
+        })
+
+        expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+        expect((await reloadPlan(dueCalendar.id)).plannedInMinutes).toBe(60)
+        saveSpy.mockRestore()
       })
     })
   })

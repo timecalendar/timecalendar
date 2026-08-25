@@ -1,3 +1,15 @@
+const icalFetcher = {
+  fetch: jest.fn(async () => {
+    throw new Error("ADE unavailable")
+  }),
+}
+
+jest.mock("modules/fetch/fetchers/ical-fetcher", () => ({
+  IcalFetcher: jest
+    .fn()
+    .mockImplementation(() => ({ fetch: icalFetcher.fetch })),
+}))
+
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { Job } from "bullmq"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
@@ -61,5 +73,20 @@ describe("SyncCalendarJob", () => {
     await expect(job.process(buildJob(calendar.id))).rejects.toThrow(
       "iCal source timed out",
     )
+  })
+
+  it("does not bypass the persisted claim when BullMQ retries", async () => {
+    syncSpy.mockRestore()
+    const calendar = await calendarFactory().create({
+      url: "https://adelb.univ-lyon1.fr/calendar.ics",
+      syncPlannedAt: new Date("2000-01-01T00:00:00Z"),
+    })
+
+    await expect(job.process(buildJob(calendar.id))).rejects.toThrow(
+      "ADE unavailable",
+    )
+    await expect(job.process(buildJob(calendar.id))).resolves.toBeUndefined()
+
+    expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
   })
 })

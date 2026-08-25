@@ -27,9 +27,9 @@ export class SyncCalendarsFanoutJob implements JobProcessorInterface {
   ) {}
 
   async process() {
-    // Dueness is the calendar's own plan, not a global delay: each sync writes
-    // `syncPlannedAt = now + the school's minSyncIntervalMinutes`, so a school
-    // that asks for a longer interval is simply not selected before then.
+    // Selection bounds fan-out work but is not the throttle: every sync entry
+    // point atomically claims the stored plan again before upstream I/O. A
+    // duplicate job or concurrent request therefore loses the same claim.
     const calendarIds = await this.calendarRepository.findDueCalendarIds({
       syncPlannedBefore: new Date(),
       lastAccessedAtAfter: calendarsActiveSince(),

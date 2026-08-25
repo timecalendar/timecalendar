@@ -7,6 +7,7 @@ import { CalendarRepository } from "modules/calendar/repositories/calendar.repos
 import { nanoid } from "nanoid"
 import createTestApp from "test-utils/create-test-app"
 import { DataSource } from "typeorm"
+import { v4 } from "uuid"
 
 describe("CalendarRepository", () => {
   let app: NestExpressApplication
@@ -229,6 +230,50 @@ describe("CalendarRepository", () => {
       expect(calendars.length).toBe(1)
       const [calendar] = calendars
       expect(calendar.id).toBe(expected[0].id)
+    })
+  })
+
+  describe("claimSyncIfDue", () => {
+    it("claims a due calendar and advances its plan", async () => {
+      const calendar = await calendarFactory().create({
+        syncPlannedAt: new Date("2000-01-01T00:00:00Z"),
+      })
+
+      await expect(repository.claimSyncIfDue(calendar.id, 60)).resolves.toBe(
+        true,
+      )
+
+      const claimed = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(claimed.syncPlannedAt.getTime()).toBeGreaterThan(Date.now())
+    })
+
+    it("does not claim a future calendar", async () => {
+      const calendar = await calendarFactory().create({
+        syncPlannedAt: new Date("2099-01-01T00:00:00Z"),
+      })
+
+      await expect(repository.claimSyncIfDue(calendar.id, 30)).resolves.toBe(
+        false,
+      )
+    })
+
+    it("does not claim a missing calendar", async () => {
+      await expect(repository.claimSyncIfDue(v4(), 30)).resolves.toBe(false)
+    })
+
+    it("allows only one of two concurrent claims", async () => {
+      const calendar = await calendarFactory().create({
+        syncPlannedAt: new Date("2000-01-01T00:00:00Z"),
+      })
+
+      const claims = await Promise.all([
+        repository.claimSyncIfDue(calendar.id, 60),
+        repository.claimSyncIfDue(calendar.id, 60),
+      ])
+
+      expect(claims.sort()).toEqual([false, true])
     })
   })
 
