@@ -26,10 +26,10 @@ the remote ref again for every candidate:
 ```bash
 git fetch origin main
 CANDIDATE_SHA="$(git rev-parse --verify origin/main^{commit})"
-case "$CANDIDATE_SHA" in
-  [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) ;;
-  *) echo "candidate is not a lowercase 40-character SHA" >&2; exit 1 ;;
-esac
+if ! [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "candidate is not a lowercase 40-character SHA" >&2
+  exit 1
+fi
 
 RUN_ID="$(gh run list --workflow ci-build-deploy.yml --branch main \
   --commit "$CANDIDATE_SHA" --status success --limit 1 \
