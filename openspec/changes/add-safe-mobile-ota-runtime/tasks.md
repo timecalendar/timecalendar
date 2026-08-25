@@ -23,7 +23,7 @@
 
 ## 5. Local-green and proposal compliance
 
-- [ ] 5.1 Run the focused Firebase and OTA Jest proof tests together and confirm the existing FCM top-level registration proof remains green
-- [ ] 5.2 Run `npx tsc --noEmit`, `npm run lint`, and Prettier check/format for every touched mobile source/config file; resolve all errors and warnings
-- [ ] 5.3 Run `npm test -- --coverage` so the focused OTA/Firebase proof executes in the same CI posture and the 90% logic/70% global thresholds remain green; Maestro is N/A because the change adds no screen, CTA, prompt, navigation, or automatable device transport
-- [ ] 5.4 Run `openspec validate add-safe-mobile-ota-runtime` and review the final diff for sensitive surfaces: only `mobile/app.config.ts` native config and `docs/mobile/architecture-book/**` binding rules may be touched; confirm no OpenAPI/generated client, migration, Firebase config file, EAS/store credential, CI/infra, server, or Flutter legacy changes
+- [x] 5.1 Run the focused Firebase and OTA Jest proof tests together and confirm the existing FCM top-level registration proof remains green
+- [x] 5.2 Run `npx tsc --noEmit`, `npm run lint`, and Prettier check/format for every touched mobile source/config file; resolve all errors and warnings
+- [x] 5.3 Run `npm test -- --coverage` so the focused OTA/Firebase proof executes in the same CI posture and the 90% logic/70% global thresholds remain green; Maestro is N/A because the change adds no screen, CTA, prompt, navigation, or automatable device transport
+- [x] 5.4 Run `openspec validate add-safe-mobile-ota-runtime` and review the final diff for sensitive surfaces: only `mobile/app.config.ts` native config and `docs/mobile/architecture-book/**` binding rules may be touched; confirm no OpenAPI/generated client, migration, Firebase config file, EAS/store credential, CI/infra, server, or Flutter legacy changes
