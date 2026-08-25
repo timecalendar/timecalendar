@@ -12,8 +12,8 @@
 
 ## 3. Explicit Expo launch policy
 
-- [ ] 3.1 Set `updates.fallbackToCacheTimeout: 0` explicitly beside the existing URL in `mobile/app.config.ts`, changing no URL, request header, channel/profile, runtime-version policy, plugin, identity, Firebase file, certificate, credential, or environment-switching input
-- [ ] 3.2 Resolve production and `APP_VARIANT=development` with `npx expo config --json`; verify both report timeout `0`, the unchanged update URL/fingerprint policy, and their existing app ids/Firebase files/network-exception split
+- [x] 3.1 Set `updates.fallbackToCacheTimeout: 0` explicitly beside the existing URL in `mobile/app.config.ts`, changing no URL, request header, channel/profile, runtime-version policy, plugin, identity, Firebase file, certificate, credential, or environment-switching input
+- [x] 3.2 Resolve production and `APP_VARIANT=development` with `npx expo config --json`; verify both report timeout `0`, the unchanged update URL/fingerprint policy, and their existing app ids/Firebase files/network-exception split
 
 ## 4. Architecture Book and human verification handoff
 
