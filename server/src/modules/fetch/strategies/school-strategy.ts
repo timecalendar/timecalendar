@@ -1,3 +1,4 @@
+import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
 import {
   CalendarCustomData,
@@ -7,16 +8,25 @@ import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { defaultPipes } from "modules/fetch/pipes/pipes"
 import { SchoolStrategyOptions } from "modules/fetch/strategies/school-strategy-options.type"
 
-const defaultOptions: SchoolStrategyOptions = {
+/**
+ * The options once merged with the defaults: `minSyncIntervalMinutes` is
+ * optional to declare but always resolved, so callers never handle undefined.
+ */
+export type ResolvedSchoolStrategyOptions = SchoolStrategyOptions & {
+  minSyncIntervalMinutes: number
+}
+
+const defaultOptions: ResolvedSchoolStrategyOptions = {
   school: "generic",
   urlRenamers: [],
   inheritGenericUrlRenamers: true,
   fetcher: new IcalFetcher(),
   eventPipes: [],
+  minSyncIntervalMinutes: DEFAULT_MIN_SYNC_INTERVAL_MINUTES,
 }
 
 export class SchoolStrategy {
-  private _options: SchoolStrategyOptions
+  private _options: ResolvedSchoolStrategyOptions
 
   public get options() {
     return this._options

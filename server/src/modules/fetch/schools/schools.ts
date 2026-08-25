@@ -5,6 +5,7 @@ import univangersStrategy from "modules/fetch/schools/univangers/univangers-stra
 import univbourgogneStrategy from "modules/fetch/schools/univbourgogne/univbourgogne-strategy"
 import univeiffelStrategy from "modules/fetch/schools/univeiffel/univeiffel-strategy"
 import univlehavreStrategy from "modules/fetch/schools/univlehavre/univlehavre-strategy"
+import univlyon1Strategy from "modules/fetch/schools/univlyon1/univlyon1-strategy"
 import univorleansStrategy from "modules/fetch/schools/univorleans/univorleans-strategy"
 import univpoitiersStrategy from "modules/fetch/schools/univpoitiers/univpoitiers-strategy"
 import univrennes1Strategy from "modules/fetch/schools/univrennes1/univrennes1-strategy"
@@ -21,6 +22,7 @@ const strategies = [
   univbourgogneStrategy,
   univeiffelStrategy,
   univlehavreStrategy,
+  univlyon1Strategy,
   univorleansStrategy,
   univpoitiersStrategy,
   univrennes1Strategy,

@@ -18,6 +18,7 @@ import {
   FetcherCalendarEvent,
 } from "modules/fetch/models/event.model"
 import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
+import schoolStrategies from "modules/fetch/schools/schools"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
@@ -211,6 +212,34 @@ describe("FetchService", () => {
           {},
         )
       })
+    })
+  })
+
+  describe("getMinSyncIntervalMinutes", () => {
+    // The real strategy list: this is what proves Lyon 1 is recognised.
+    const service = new FetchService(schoolStrategies)
+    const lyon1Url =
+      "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical"
+
+    const resolve = (url: string, school: string | null) =>
+      service.getMinSyncIntervalMinutes({ url, customData: null }, school)
+
+    it("returns 60 minutes for a Lyon 1 url", () => {
+      expect(resolve(lyon1Url, null)).toBe(60)
+    })
+
+    it("returns 60 minutes for the Lyon 1 school code", () => {
+      expect(resolve("https://calendar.example.com/ical", "univlyon1")).toBe(60)
+    })
+
+    it("returns the default for another calendar", () => {
+      expect(resolve("https://calendar.example.com/ical", null)).toBe(30)
+    })
+
+    it("returns the default for a url that only resembles a Lyon 1 one", () => {
+      expect(
+        resolve(lyon1Url.replace("univ-lyon1.fr", "univ-lyon2.fr"), null),
+      ).toBe(30)
     })
   })
 })

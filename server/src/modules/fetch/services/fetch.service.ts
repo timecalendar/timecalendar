@@ -37,6 +37,18 @@ export class FetchService {
     )
   }
 
+  /**
+   * Minimum number of minutes between two upstream fetches of this calendar,
+   * as declared by the strategy the calendar resolves to.
+   */
+  getMinSyncIntervalMinutes(
+    calendarSource: CalendarSource,
+    school: string | null,
+  ) {
+    const strategy = this.getStrategy(school, calendarSource) ?? genericStrategy
+    return strategy.options.minSyncIntervalMinutes
+  }
+
   async fetchEvents(
     calendarSource: CalendarSource,
     school: string | null,
