@@ -5,13 +5,6 @@
 // they churn (they're all alpha), the blast radius is this directory. This is
 // the roadmap step-10 insurance against alpha churn.
 
-export {
-  buildCalendarTheme,
-  CalendarBody,
-  CalendarContainer,
-  CalendarHeader,
-  type EventItem,
-} from "@/components/chrome/calendar-kit"
 export { GlassSurface } from "@/components/chrome/glass-surface"
 export { NativeTabs } from "@/components/chrome/native-tabs"
 
@@ -27,4 +20,10 @@ export { NativeTabs } from "@/components/chrome/native-tabs"
 // SwiftUI/Compose control, NOT `@react-native-community/datetimepicker` (it only
 // mirrors the RNC prop types), so no new dependency. Same wrapper, same ADR-010
 // universal posture; the control choice is recorded in ADR 012.
-export { DateTimePicker, Host, Picker } from "@/components/chrome/expo-ui"
+export {
+  DateTimePicker,
+  Host,
+  type MenuComponentRef,
+  MenuView,
+  Picker,
+} from "@/components/chrome/expo-ui"

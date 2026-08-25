@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { NotificationSubscription } from "modules/notification-subscription/models/entities/notification-subscription.entity"
 import { NotificationFrequency } from "modules/notification-subscription/models/notification-frequency.enum"
+import { NotificationLocale } from "modules/notification-subscription/models/notification-locale"
 import { DataSource, Repository } from "typeorm"
 
 @Injectable()
@@ -13,11 +14,17 @@ export class NotificationSubscriptionRepository {
     private readonly dataSource: DataSource,
   ) {}
 
+  async deactivate(subscriptionId: string): Promise<void> {
+    await this.repository.update(subscriptionId, { isActive: false })
+  }
+
   async createOrUpdateSubscription(
     subscriptionData: {
       frequency: NotificationFrequency
       nbDaysAhead: number
       isActive: boolean
+      locale: NotificationLocale
+      timezone: string
     },
     calendars: Calendar[],
     fcmToken: string,
@@ -38,6 +45,8 @@ export class NotificationSubscriptionRepository {
         existing.frequency = subscriptionData.frequency
         existing.nbDaysAhead = subscriptionData.nbDaysAhead
         existing.isActive = subscriptionData.isActive
+        existing.locale = subscriptionData.locale
+        existing.timezone = subscriptionData.timezone
         existing.calendars = calendars
 
         return manager.save(NotificationSubscription, existing)
@@ -47,6 +56,8 @@ export class NotificationSubscriptionRepository {
           frequency: subscriptionData.frequency,
           nbDaysAhead: subscriptionData.nbDaysAhead,
           isActive: subscriptionData.isActive,
+          locale: subscriptionData.locale,
+          timezone: subscriptionData.timezone,
           calendars,
         })
 

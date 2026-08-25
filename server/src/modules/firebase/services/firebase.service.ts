@@ -12,18 +12,31 @@ export class FirebaseService {
 
   constructor(private readonly metrics: FirebaseMetricsService) {}
 
-  async notify(token: string, { notification, data }: NotifyOptions) {
+  async notify(
+    token: string,
+    { notification, data, collapseId, collapseKey, threadId }: NotifyOptions,
+  ) {
     const type = data?.action ?? "unknown"
 
     try {
       const result = await firebaseAdmin.messaging().send({
         notification,
-        data: {
-          click_action: "FLUTTER_NOTIFICATION_CLICK",
-          ...data,
-        },
+        data,
         android: {
           priority: "high",
+          ...(collapseKey ? { collapseKey } : {}),
+          ...(collapseId ? { notification: { tag: collapseId } } : {}),
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+            ...(collapseId ? { "apns-collapse-id": collapseId } : {}),
+          },
+          payload: {
+            aps: {
+              ...(threadId ? { threadId } : {}),
+            },
+          },
         },
         token,
       })

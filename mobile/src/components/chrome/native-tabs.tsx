@@ -1,5 +1,6 @@
 import { NativeTabs as ExpoNativeTabs } from "expo-router/unstable-native-tabs"
 import type { ComponentProps } from "react"
+import { Platform } from "react-native"
 
 import { useTheme } from "@/theme"
 
@@ -12,6 +13,14 @@ import { useTheme } from "@/theme"
 // (app-tabs.tsx) stop reaching into the raw Colors map. Caller-supplied props
 // win (spread last). The `.Trigger` compound parts are re-attached so consumers
 // use `NativeTabs.Trigger` / `.Trigger.Label` / `.Trigger.Icon` as before.
+//
+// `backgroundColor` is set on Android only: an OPAQUE color there paints the
+// Material bar (the intended themed surface). On iOS it is DELIBERATELY omitted so
+// the OS keeps the native iOS 26 Liquid Glass material — passing an opaque hex
+// feeds `UITabBarAppearance.standardAppearance.tabBarBackgroundColor` (verified via
+// expo-router appearance.ios.js), which overrides the glass with a solid band the
+// moment scroll content passes under the bar. Omitting it is what lets a screen
+// scroll content under the translucent bar (the calendar surface relies on this).
 
 type NativeTabsProps = ComponentProps<typeof ExpoNativeTabs>
 
@@ -20,9 +29,17 @@ function ThemedNativeTabs(props: NativeTabsProps) {
 
   return (
     <ExpoNativeTabs
-      backgroundColor={colors.background}
+      // Omit entirely on iOS (not `undefined` — exactOptionalPropertyTypes) so the
+      // OS keeps the Liquid Glass material; set the themed color on Android only.
+      {...(Platform.OS === "ios" ? {} : { backgroundColor: colors.background })}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}
+      rippleColor={colors.primarySoft}
+      tintColor={colors.primary}
+      iconColor={{ default: colors.textSecondary, selected: colors.primary }}
+      labelStyle={{
+        default: { color: colors.textSecondary },
+        selected: { color: colors.text },
+      }}
       {...props}
     />
   )

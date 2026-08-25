@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   type LayoutChangeEvent,
+  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -10,7 +11,9 @@ import {
 
 import { ThemedText } from "@/components/themed-text"
 import {
+  addDaysInZone,
   type AppLocale,
+  atHourInZone,
   type CalendarEvent,
   eventHeight,
   formatTimeRange,
@@ -18,11 +21,15 @@ import {
   HOURS_COLUMN_WIDTH,
   layoutOverlaps,
   MIN_TILE_WIDTH,
+  minuteOfDayInZone,
   minuteToPixel,
   nowIndicatorPosition,
+  startOfDayInZone,
 } from "@/features/calendar/data"
 import { type HourRange } from "@/features/home/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+
+import { eventSurfaceColor } from "./event-surface"
 
 // The home today mini-timeline (D5) — PRESENTATIONAL (70% floor) and the FIRST
 // RENDERING consumer of the salvaged overlap engine (ADR 019's salvage payoff). A
@@ -40,11 +47,45 @@ const HOME_PIXELS_PER_HOUR = 70
 // The home content padding (Spacing.four each side, src/features/home home-screen
 // styles.content) the screen-derived fallback subtracts before the first layout pass.
 const CONTENT_HORIZONTAL_PADDING = Spacing.four * 2
+const MIN_TARGET_SIZE = Platform.OS === "android" ? 48 : 44
+
+// Day bounds + minute positioning on the DISPLAY zone's wall clock (timezone
+// design D4) — instant arithmetic stays on real timestamps, only the
+// minute-of-day read is zone-projected.
+function visibleGeometry(
+  event: CalendarEvent,
+  day: Date,
+  range: HourRange,
+  zone: string,
+) {
+  const dayStart = startOfDayInZone(day, zone)
+  const dayEnd = addDaysInZone(dayStart, 1, zone)
+  const rangeStart = atHourInZone(dayStart, range.startHour, zone)
+  const rangeEnd =
+    range.endHour === 24 ? dayEnd : atHourInZone(dayStart, range.endHour, zone)
+  const start = new Date(
+    Math.max(
+      event.startsAt.getTime(),
+      dayStart.getTime(),
+      rangeStart.getTime(),
+    ),
+  )
+  const end = new Date(
+    Math.min(event.endsAt.getTime(), dayEnd.getTime(), rangeEnd.getTime()),
+  )
+  const startMinute =
+    start.getTime() === dayStart.getTime() ? 0 : minuteOfDayInZone(start, zone)
+  return {
+    startMinute,
+    durationMinutes: Math.max(0, (end.getTime() - start.getTime()) / 60000),
+  }
+}
 
 export function TodayTimeline({
   events,
   range,
   locale,
+  displayZone,
   isToday,
   now,
   onPressEvent,
@@ -52,13 +93,14 @@ export function TodayTimeline({
   events: CalendarEvent[]
   range: HourRange
   locale: AppLocale
+  displayZone: string
   isToday: boolean
   now: Date
   onPressEvent: (event: CalendarEvent) => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { width: windowWidth } = useWindowDimensions()
+  const { width: windowWidth, fontScale } = useWindowDimensions()
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
   // multiplier is dynamic. The tile area is flex:1, so its real width is measured
@@ -85,13 +127,76 @@ export function TodayTimeline({
   })
 
   const placed = layoutOverlaps(events)
+  const usesReflowedList =
+    fontScale >= 1.3 ||
+    placed.some((entry) => {
+      const width = (entry.endX - entry.startX) * tileAreaWidth
+      const geometry = visibleGeometry(entry.item, now, range, displayZone)
+      const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
+      return (
+        (measuredWidth !== null && width < MIN_TARGET_SIZE) ||
+        height < MIN_TARGET_SIZE
+      )
+    })
   const nowIndicator = isToday
-    ? nowIndicatorPosition(now, {
+    ? nowIndicatorPosition(now, displayZone, {
         pixelsPerHour: HOME_PIXELS_PER_HOUR,
         startMinute,
         endMinute,
       })
     : { visible: false, pixel: 0, fraction: 0 }
+
+  if (usesReflowedList) {
+    return (
+      <View style={styles.reflowedList} testID="today-timeline-list">
+        {events.map((event) => {
+          const time = formatTimeRange(
+            event.startsAt,
+            event.endsAt,
+            locale,
+            displayZone,
+          )
+          const location = event.location ?? ""
+          return (
+            <Pressable
+              key={event.id}
+              testID={`today-tile-${event.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={t("home.event.openLabel", {
+                title: event.title,
+                time,
+                location,
+              })}
+              accessibilityHint={
+                event.userCalendarId !== undefined
+                  ? t("home.event.hint.details")
+                  : t("home.event.hint.edit")
+              }
+              onPress={() => onPressEvent(event)}
+              android_ripple={{ color: theme.ripple, foreground: true }}
+              style={({ pressed }) => [
+                styles.reflowedEvent,
+                {
+                  backgroundColor: eventSurfaceColor(event.color),
+                },
+                Platform.OS === "ios" && pressed && styles.iosPressed,
+              ]}
+            >
+              <ThemedText type="small" themeColor="textSecondary">
+                {time}
+              </ThemedText>
+              <ThemedText type="smallBold">{event.title}</ThemedText>
+              {location.length > 0 && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {location}
+                </ThemedText>
+              )}
+            </Pressable>
+          )
+        })}
+      </View>
+    )
+  }
 
   return (
     <View style={styles.container} testID="today-timeline">
@@ -143,17 +248,24 @@ export function TodayTimeline({
 
         {placed.map((entry) => {
           const event = entry.item
-          const top = minuteToPixel(
-            event.startsAt.getHours() * 60 + event.startsAt.getMinutes(),
-            { pixelsPerHour: HOME_PIXELS_PER_HOUR, startMinute },
+          const geometry = visibleGeometry(event, now, range, displayZone)
+          const top = minuteToPixel(geometry.startMinute, {
+            pixelsPerHour: HOME_PIXELS_PER_HOUR,
+            startMinute,
+          })
+          const height = eventHeight(
+            geometry.durationMinutes,
+            HOME_PIXELS_PER_HOUR,
           )
-          const durationMinutes =
-            (event.endsAt.getTime() - event.startsAt.getTime()) / 60000
-          const height = eventHeight(durationMinutes, HOME_PIXELS_PER_HOUR)
           const left = entry.startX * tileAreaWidth
           const width = (entry.endX - entry.startX) * tileAreaWidth
           const showText = width >= MIN_TILE_WIDTH
-          const time = formatTimeRange(event.startsAt, event.endsAt, locale)
+          const time = formatTimeRange(
+            event.startsAt,
+            event.endsAt,
+            locale,
+            displayZone,
+          )
           const location = event.location ?? ""
 
           return (
@@ -172,30 +284,28 @@ export function TodayTimeline({
                   : t("home.event.hint.edit")
               }
               onPress={() => onPressEvent(event)}
-              style={[
+              android_ripple={{ color: theme.ripple, foreground: true }}
+              style={({ pressed }) => [
                 styles.tile,
                 {
                   top,
                   left,
                   width,
-                  height: Math.max(height, 1),
-                  backgroundColor: event.color,
+                  height,
+                  backgroundColor: eventSurfaceColor(event.color),
                 },
+                Platform.OS === "ios" && pressed && styles.iosPressed,
               ]}
             >
               {showText && (
                 <>
-                  <ThemedText
-                    type="small"
-                    themeColor="background"
-                    numberOfLines={2}
-                  >
+                  <ThemedText type="small" numberOfLines={2}>
                     {event.title}
                   </ThemedText>
                   {location.length > 0 && (
                     <ThemedText
                       type="small"
-                      themeColor="background"
+                      themeColor="textSecondary"
                       numberOfLines={1}
                     >
                       {location}
@@ -238,6 +348,7 @@ const styles = StyleSheet.create({
   tileArea: {
     flex: 1,
     position: "relative",
+    overflow: "hidden",
   },
   gridLine: {
     position: "absolute",
@@ -247,8 +358,8 @@ const styles = StyleSheet.create({
   },
   tile: {
     position: "absolute",
-    padding: Spacing.one,
-    borderRadius: Radii.small,
+    padding: Spacing.two,
+    borderRadius: Radii.large,
     overflow: "hidden",
   },
   nowIndicator: {
@@ -258,4 +369,15 @@ const styles = StyleSheet.create({
     height: 2,
     borderRadius: Radii.pill,
   },
+  reflowedList: {
+    gap: Spacing.two,
+  },
+  reflowedEvent: {
+    minHeight: MIN_TARGET_SIZE,
+    padding: Spacing.two,
+    borderRadius: Radii.large,
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  iosPressed: { opacity: 0.62 },
 })

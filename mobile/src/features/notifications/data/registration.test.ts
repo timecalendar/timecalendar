@@ -1,15 +1,22 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native"
+import * as Localization from "expo-localization"
 
+import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { onFcmTokenRefresh, requestNotificationPermission } from "@/firebase"
+import i18n from "@/i18n"
+import { remove } from "@/storage"
 
 import { useNotificationRegistration } from "./registration"
 import { useSubscriptionRegistration } from "./subscription"
 
-// The first-PUT trigger (Decision 3): a once-effect that requests permission,
-// PUTs once a non-null token exists, and re-PUTs on token-refresh. The
-// subscription seam + firebase are mocked; we assert permission is requested,
-// register fires once, and the refresh listener re-PUTs with the new token and
-// is cleaned up.
+// The registration triggers (Decision 3 + design D3): a once-effect that
+// requests permission and PUTs, plus the re-PUT listeners (token-refresh,
+// i18next languageChanged, device-timezone change). The subscription seam +
+// firebase are mocked, so these cases prove each trigger FIRES register(); the
+// re-PUT body carrying the new locale/timezone is subscription.test's proof
+// (register reads the effective accessors at DTO-assembly time). The language
+// trigger is driven through the REAL i18n instance (setup-i18n); useCalendars
+// is spied so the zone is deterministic and drivable.
 jest.mock("@/firebase")
 jest.mock("./subscription")
 
@@ -17,6 +24,13 @@ const mockRegister = jest.fn().mockResolvedValue(undefined)
 const mockUseSubscriptionRegistration = useSubscriptionRegistration as jest.Mock
 const mockRequestPermission = requestNotificationPermission as jest.Mock
 const mockOnFcmTokenRefresh = onFcmTokenRefresh as jest.Mock
+
+const useCalendarsSpy = jest.spyOn(Localization, "useCalendars")
+
+const deviceCalendars = (...timeZones: (string | null)[]) =>
+  timeZones.map((timeZone) => ({ timeZone })) as ReturnType<
+    typeof Localization.useCalendars
+  >
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -28,6 +42,15 @@ beforeEach(() => {
   })
   mockRequestPermission.mockResolvedValue(undefined)
   mockOnFcmTokenRefresh.mockReturnValue(jest.fn())
+  useCalendarsSpy.mockReturnValue(deviceCalendars("Europe/Paris"))
+})
+
+afterEach(async () => {
+  // The language test switches the shared per-file i18n instance; restore the
+  // jest-expo default so later cases assert against EN. The timezone cases
+  // write the real preference store; reset to the "system" default.
+  await i18n.changeLanguage("en")
+  remove(SETTINGS_KEYS.timezone)
 })
 
 describe("useNotificationRegistration", () => {
@@ -82,6 +105,74 @@ describe("useNotificationRegistration", () => {
   it("subscribes to token-refresh on mount (cleanup is the returned unsubscribe)", async () => {
     await renderHook(() => useNotificationRegistration())
     await waitFor(() => expect(mockOnFcmTokenRefresh).toHaveBeenCalledTimes(1))
+  })
+
+  it("re-PUTs on a language change", async () => {
+    await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    await act(async () => {
+      await i18n.changeLanguage("fr")
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(2)
+  })
+
+  it("re-PUTs when the device timezone changes, skipping the initial value", async () => {
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    useCalendarsSpy.mockReturnValue(deviceCalendars("America/New_York"))
+    await act(async () => {
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(2)
+  })
+
+  it("re-PUTs when a zone appears after mounting with none", async () => {
+    useCalendarsSpy.mockReturnValue(
+      [] as unknown as ReturnType<typeof Localization.useCalendars>,
+    )
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    // No device zone resolves to the "Europe/Paris" fallback, so a fallback-
+    // equal zone appearing is inert (the resolved zone did not change); a
+    // DIFFERENT zone appearing re-PUTs.
+    useCalendarsSpy.mockReturnValue(deviceCalendars("America/New_York"))
+    await act(async () => {
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(2)
+  })
+
+  it("re-PUTs when the display-timezone preference changes", async () => {
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    await act(async () => {
+      setTimezonePreference("Indian/Reunion")
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps a device timezone change inert under an explicit preference", async () => {
+    setTimezonePreference("Indian/Reunion")
+    const { rerender } = await renderHook(() => useNotificationRegistration())
+    await waitFor(() => expect(mockRegister).toHaveBeenCalledTimes(1))
+
+    // The device zone changes but the resolved effective zone is still the
+    // explicit preference — no timezone-triggered PUT.
+    useCalendarsSpy.mockReturnValue(deviceCalendars("America/New_York"))
+    await act(async () => {
+      rerender(undefined)
+    })
+
+    expect(mockRegister).toHaveBeenCalledTimes(1)
   })
 
   it("swallows a rejected startup PUT (no on-screen surface)", async () => {

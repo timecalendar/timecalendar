@@ -37,6 +37,8 @@ describe("NotificationSubscriptionService", () => {
         frequency: NotificationFrequency.DAILY,
         nbDaysAhead: 14,
         isActive: true,
+        locale: "fr",
+        timezone: "Europe/Paris",
         calendarIds: calendars.map((c) => c.id),
         fcmToken,
       })
@@ -46,6 +48,8 @@ describe("NotificationSubscriptionService", () => {
           frequency: NotificationFrequency.DAILY,
           nbDaysAhead: 14,
           isActive: true,
+          locale: "fr",
+          timezone: "Europe/Paris",
         },
         expect.arrayContaining([
           expect.objectContaining({ id: calendars[0].id }),
@@ -69,6 +73,8 @@ describe("NotificationSubscriptionService", () => {
         frequency: NotificationFrequency.HOURLY,
         nbDaysAhead: 7,
         isActive: false,
+        locale: "fr",
+        timezone: "Europe/Paris",
         calendarIds: [existingCalendar.id, nonExistentId],
         fcmToken,
       })
@@ -78,6 +84,8 @@ describe("NotificationSubscriptionService", () => {
           frequency: NotificationFrequency.HOURLY,
           nbDaysAhead: 7,
           isActive: false,
+          locale: "fr",
+          timezone: "Europe/Paris",
         },
         [expect.objectContaining({ id: existingCalendar.id })], // Only existing calendar should be passed
         fcmToken,
@@ -96,6 +104,8 @@ describe("NotificationSubscriptionService", () => {
         frequency: NotificationFrequency.IMMEDIATELY,
         nbDaysAhead: 3,
         isActive: true,
+        locale: "fr",
+        timezone: "Europe/Paris",
         calendarIds: [],
         fcmToken,
       })
@@ -105,6 +115,8 @@ describe("NotificationSubscriptionService", () => {
           frequency: NotificationFrequency.IMMEDIATELY,
           nbDaysAhead: 3,
           isActive: true,
+          locale: "fr",
+          timezone: "Europe/Paris",
         },
         [], // Empty array should be passed
         fcmToken,
@@ -128,6 +140,8 @@ describe("NotificationSubscriptionService", () => {
         frequency: NotificationFrequency.DAILY,
         nbDaysAhead: 10,
         isActive: true,
+        locale: "fr",
+        timezone: "Europe/Paris",
         calendarIds: nonExistentIds,
         fcmToken,
       })
@@ -137,6 +151,8 @@ describe("NotificationSubscriptionService", () => {
           frequency: NotificationFrequency.DAILY,
           nbDaysAhead: 10,
           isActive: true,
+          locale: "fr",
+          timezone: "Europe/Paris",
         },
         [], // Should result in empty array
         fcmToken,
@@ -153,6 +169,8 @@ describe("NotificationSubscriptionService", () => {
         frequency: NotificationFrequency.HOURLY,
         nbDaysAhead: 5,
         isActive: true,
+        locale: "fr",
+        timezone: "Europe/Paris",
         calendarIds: calendars.map((c) => c.id),
         fcmToken,
       })
@@ -177,6 +195,8 @@ describe("NotificationSubscriptionService", () => {
         frequency: NotificationFrequency.DAILY,
         nbDaysAhead: 21,
         isActive: false,
+        locale: "fr",
+        timezone: "Europe/Paris",
         calendarIds: [calendar.id],
         fcmToken,
       })
@@ -186,6 +206,8 @@ describe("NotificationSubscriptionService", () => {
           frequency: NotificationFrequency.DAILY,
           nbDaysAhead: 21,
           isActive: false,
+          locale: "fr",
+          timezone: "Europe/Paris",
         },
         [expect.objectContaining({ id: calendar.id })],
         fcmToken,

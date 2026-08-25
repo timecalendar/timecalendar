@@ -18,12 +18,11 @@ import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
-import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import createTestApp from "test-utils/create-test-app"
-import { DataSource, In } from "typeorm"
+import { DataSource } from "typeorm"
 
 describe("CalendarSyncAllService", () => {
   let app: NestExpressApplication
@@ -181,83 +180,6 @@ describe("CalendarSyncAllService", () => {
       jest.setSystemTime(new Date("2022-01-05T13:05:00Z"))
       await service.syncAllForUser({ tokens: [calendar.token] })
       expect(icalFetcher.fetch).toHaveBeenCalledTimes(2)
-    })
-  })
-
-  describe("syncAllForCronJob", () => {
-    beforeEach(async () => {
-      const mockDate = new Date("2022-01-05T12:00:00Z")
-      jest.useFakeTimers({
-        doNotFake: ["nextTick", "setImmediate"],
-        now: mockDate,
-      })
-    })
-
-    afterEach(() => {
-      jest.useRealTimers()
-    })
-
-    it("syncs all calendars", async () => {
-      await calendarFactory().createList(2, {
-        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
-      })
-
-      await service.syncAllForCronJob()
-
-      const calendars = await dataSource.getRepository(Calendar).find()
-      expect(calendars).toHaveLength(2)
-      expect(calendars[0].lastUpdatedAt).toEqual(
-        new Date("2022-01-05T12:00:00Z"),
-      )
-      expect(calendars[1].lastUpdatedAt).toEqual(
-        new Date("2022-01-05T12:00:00Z"),
-      )
-      const contents = await dataSource
-        .getRepository(CalendarContent)
-        .findBy({ calendar: { id: In(calendars.map(({ id }) => id)) } })
-
-      expect(contents[0].events.length).toBe(1)
-      expect(contents[0].events[0].uid).toBe(events[0].uid)
-      expect(contents[1].events.length).toBe(1)
-      expect(contents[1].events[0].uid).toBe(events[0].uid)
-      expect(icalFetcher.fetch).toHaveBeenCalledTimes(2)
-    })
-
-    it("does not update a calendar whose next sync is planned later", async () => {
-      const calendar = await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:50:00Z"),
-        syncPlannedAt: new Date("2022-01-05T12:20:00Z"),
-      })
-
-      await service.syncAllForCronJob()
-
-      expect((await findCalendar(calendar.id)).lastUpdatedAt).toEqual(
-        new Date("2022-01-05T11:50:00Z"),
-      )
-      const content = await dataSource
-        .getRepository(CalendarContent)
-        .findOneByOrFail({ calendar: { id: calendar.id } })
-      expect(content.events.length).toBe(0)
-      expect(icalFetcher.fetch).not.toHaveBeenCalled()
-    })
-
-    it("does not update a calendar accessed more than 14 days ago", async () => {
-      const calendar = await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
-        syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
-        lastAccessedAt: new Date("2021-12-21T11:00:00Z"),
-      })
-
-      await service.syncAllForCronJob()
-
-      expect((await findCalendar(calendar.id)).lastUpdatedAt).toEqual(
-        new Date("2022-01-05T11:00:00Z"),
-      )
-      const content = await dataSource
-        .getRepository(CalendarContent)
-        .findOneByOrFail({ calendar: { id: calendar.id } })
-      expect(content.events.length).toBe(0)
-      expect(icalFetcher.fetch).not.toHaveBeenCalled()
     })
   })
 })

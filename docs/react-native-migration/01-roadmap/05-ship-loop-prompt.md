@@ -85,7 +85,7 @@ A clean refactor that prevents debt is SUCCESS, not a detour (migration-approach
 ## Guardrails
 - SERIAL only — never run two ships concurrently; both grow shared files (architecture.md, the event-details screen, useCalendarEvents, db schema/migrations, lockfile) and would collide.
 - Irreplaceable data: hold the verbatim-wire-format + tested-write-path bar especially hard. Every new schema mirrors the Flutter toMap()/fromMap() verbatim and is proven importer-ready as part of DoD.
-- Every real ship updates the Architecture Book + appends to architecture-changelog.md + adds an ADR if load-bearing (the implementer/reviewer enforce this — it's part of DoD).
+- Every real ship updates current Architecture Book guidance when needed and adds an ADR only if the decision is costly to reverse.
 - Report faithfully at each merge: change name, PR link, merge SHA, inbox handoffs, what's next. If CI is red, a write path is untested, or a step was skipped, say so plainly.
 - Delegate, don't code. Sub-agents do the shippable work.
 ```

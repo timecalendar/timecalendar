@@ -75,14 +75,10 @@ const storageBackendImportPatterns = [
 // Imports reachable only through a chrome wrapper (src/components/chrome/) — the
 // single-import-site mechanism. Applied below to every file EXCEPT the chrome
 // dir (the wrappers ARE the single import site), so feature/route code imports
-// @/components/chrome, never the wrapped library directly. Most entries are
-// alpha native-chrome APIs banned for ALPHA CHURN (D4); @howljs/calendar-kit is
-// a STABLE dep banned for SWAP-REVERSIBILITY (ADR 020 — the #1-risk calendar
-// surface on a single maintainer), so "alpha-ness" is incidental to the list —
-// the constant is named for the SEAM it protects, not the alpha-ness of its
-// members (ADR 020's revisit trigger, done). Caveat: this catches the static
-// import specifier, not a dynamic require()/import() evasion — it guards
-// accident, review covers adversaries (same posture as raw-fetch).
+// @/components/chrome, never the wrapped library directly. These are alpha
+// native-chrome APIs banned for churn. Caveat: this catches the static import
+// specifier, not a dynamic require()/import() evasion — it guards accident,
+// review covers adversaries (same posture as raw-fetch).
 const chromeSeamImportPatterns = [
   {
     regex: "^expo-router/unstable-native-tabs($|/)",
@@ -99,20 +95,23 @@ const chromeSeamImportPatterns = [
     message:
       "Use the @/components/chrome seam — @expo/ui is imported only inside src/components/chrome/.",
   },
-  {
-    // Stable dep, banned for swap-reversibility (not alpha churn) — ADR 020.
-    regex: "^@howljs/calendar-kit($|/)",
-    message:
-      "Use the @/components/chrome seam — @howljs/calendar-kit is imported only inside src/components/chrome/ (ADR 020).",
-  },
 ]
 
-// `banStorageBackends: false` / `banChromeSeam: false` are for the seam dirs
-// (src/storage/, src/db/, src/components/chrome/), which legitimately import the
-// backends/wrapped APIs the bans keep out of feature code.
+const calendarKitImportPattern = {
+  regex: "^@howljs/calendar-kit($|/)",
+  message:
+    "Use the @/features/calendar/renderer seam — @howljs/calendar-kit is imported only by renderer/calendar-kit/vendor.ts (ADR 033).",
+}
+
+// False options belong only to the exact seam dirs/files that legitimately import
+// the backends or wrapped APIs kept out of the rest of the app.
 const restrictedImports = (
   extraPatterns = [],
-  { banStorageBackends = true, banChromeSeam = true } = {},
+  {
+    banStorageBackends = true,
+    banChromeSeam = true,
+    banCalendarKit = true,
+  } = {},
 ) => [
   "error",
   {
@@ -120,6 +119,7 @@ const restrictedImports = (
       ...restrictedImportPatterns,
       ...(banStorageBackends ? storageBackendImportPatterns : []),
       ...(banChromeSeam ? chromeSeamImportPatterns : []),
+      ...(banCalendarKit ? [calendarKitImportPattern] : []),
       ...extraPatterns,
     ],
     paths: restrictedImportPaths,
@@ -220,13 +220,25 @@ module.exports = defineConfig([
   {
     // The chrome wrappers ARE the seam — each is the single import site for one
     // wrapped native-chrome API (expo-router/unstable-native-tabs, expo-glass-effect,
-    // @expo/ui, @howljs/calendar-kit) the ban keeps out of feature/route code, so
+    // @expo/ui) the ban keeps out of feature/route code, so
     // re-set no-restricted-imports without the chrome-seam ban (mirrors storage-seams).
     name: "timecalendar/chrome-seams",
     files: ["src/components/chrome/**"],
     rules: {
       "no-restricted-imports": restrictedImports([], {
         banChromeSeam: false,
+      }),
+    },
+  },
+  {
+    // calendar-kit is a feature renderer, not shared app chrome. Only this exact
+    // vendor module may import the package; the rest of the feature consumes the
+    // renderer-neutral facade or the adapter's local exports.
+    name: "timecalendar/calendar-kit-vendor-seam",
+    files: ["src/features/calendar/renderer/calendar-kit/vendor.ts"],
+    rules: {
+      "no-restricted-imports": restrictedImports([], {
+        banCalendarKit: false,
       }),
     },
   },

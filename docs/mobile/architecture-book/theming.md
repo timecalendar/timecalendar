@@ -2,12 +2,92 @@
 
 The design-token home and the **insurance layer** against alpha-API churn. Entries below are pointers plus the caveats tooling can't carry (R-1) — every rule that can be a type or a lint gate is one, and the prose states what can't be encoded.
 
+## Visual language — native calm with calendar color
+
+TimeCalendar is a native-first iOS and Android app with a quiet neutral foundation, a pink
+brand accent, and a pastel calendar spectrum. The target is colorful and joyful without
+making every control colorful. The platform owns the chrome; TimeCalendar's identity appears
+through its brand color, calendar data, and logo-derived graphic language.
+
+### Color roles
+
+- **Pink is the brand and action color.** It identifies TimeCalendar and tints primary actions,
+  active navigation, links, selection, and the current-time indicator. It does not need to fill
+  every header or large surface to make the app recognizable.
+- **Pastel colors belong to calendars and events.** The logo and real schedules establish the
+  character: pale lilac, pink, blue, green, yellow, coral, and neighboring generated hues. A
+  busy calendar is intentionally a soft mosaic. Event colors are user/data values, not semantic
+  theme tokens and not additional brand colors.
+- **Status colors keep their meaning.** Success, warning, error, and destructive states use
+  dedicated semantic colors. An arbitrary event green is not a success state, and an arbitrary
+  event coral is not an error state.
+- **Neutral system surfaces remain dominant.** Backgrounds, lists, fields, sheets, and most
+  controls use scheme-appropriate neutral tokens. As a working visual balance, a screen is
+  mostly neutral, with contextual event color used sparingly and pink reserved for brand and
+  action.
+
+### How event color appears outside the calendar
+
+Use a small vocabulary consistently:
+
+1. **Dot:** identifies a calendar, subject, or event in a list or summary.
+2. **Wash:** gives a card, selected item, or contextual header a very pale version of one event
+   color. Text remains on a verified neutral foreground rather than inheriting the event color.
+3. **Block:** uses the stronger pastel fill for actual event geometry in a timeline or calendar
+   grid. This is where the spectrum can be most visible.
+4. **Mosaic:** uses a small, structured group of rounded rectangles derived from the blocks in
+   the TimeCalendar logo. It is suitable for a welcome surface or empty state when no real event
+   colors are available.
+
+Prefer color that comes from the content. A Home summary can show dots for that day's events,
+and upcoming cards can use their event's pale surface. Event details should feature one
+contextual event color, not a rainbow of unrelated accents.
+
+Do **not** add a colored leading rail or rounded left border to generic cards. It reads as a
+decorative template rather than TimeCalendar. Also avoid loose confetti or cake-sprinkle
+shapes. When a decorative composition is useful, use the logo's aligned calendar-block
+geometry instead.
+
+### Light and dark are equal designs
+
+Every designed surface ships in light and dark mode. Dark mode is not an automatic inversion
+or a late recoloring pass:
+
+- choose neutral surfaces, separators, pastel washes, and strong event fills for each scheme;
+- preserve the soft pastel identity without making dark surfaces muddy or neon;
+- verify text and interactive-component contrast in both schemes;
+- never assume imported/generated event colors can carry readable text; resolve an explicit
+  foreground or keep the color decorative; and
+- review dense calendar screens and sparse non-calendar screens on-device in both schemes.
+
+Palette work must therefore define light and dark variants together. A new light-only visual
+token or color treatment is incomplete.
+
+### Native platform expression
+
+iOS and Android share product meaning and color roles, not necessarily component layout.
+Prefer native components and platform conventions whenever the operating system provides the
+pattern:
+
+- **iOS:** native navigation bars and large titles where appropriate, trailing navigation-bar
+  actions such as `+`, native tab bars, grouped lists, context menus/action sheets, SF Symbols,
+  and native pickers and switches.
+- **Android:** Material 3 top app bars, a FAB for the primary create action where appropriate,
+  Material navigation bars, menus/bottom sheets, Material Symbols, and native Material pickers
+  and switches.
+
+Do not introduce an iOS FAB merely to share the Android layout, and do not move an Android
+primary create action into an iOS-shaped header solely for visual parity. Platform-specific
+composition is expected when the idioms differ. Custom visual design is concentrated in brand
+surfaces and calendar content; native controls are tinted and composed rather than re-skinned.
+
 ## Token layer — typed TS constants under `src/theme/`
 
 - `src/theme/tokens.ts` holds the design tokens as plain `as const` TypeScript: `Colors` (light/dark records, including the brand **`primary`**), `Spacing`, the `Radii` scale (radius is a token, not a magic number), `Fonts`, and `MaxContentWidth`; `ThemeColor` is derived from `Colors`. **No styling runtime** (NativeWind / Tamagui / unistyles rejected, R-2 — `StyleSheet` + typed token constants is the pattern, and `tsc` is the only type gate). A missing/mistyped token key is a `tsc` error, not a silent fallback.
-- **Brand `primary` token (the pink hue, ADR [008](./decisions/008-brand-color.md)):** `light.primary = #E91E63` (the Flutter `Colors.pink` identity tone — used as an **accent/tint**, e.g. the nav active tint, *not* a fill carrying white body text), `dark.primary = #FF4081` (reads on the dark background). **The load-bearing usage rule:** white text on a brand fill MUST ride the darker **`#C2185B`** (white-on-`#C2185B` = 5.87:1, AA body) — the bright `#E91E63` is white-on-fill 4.35:1, below the body floor; `#E91E63` is the accent/large/UI tone (meets the 3:1 bar). The **`primaryStrong` (#C2185B) + `onPrimary` (#ffffff) token pair LANDED** (2026-06-16, the onboarding welcome filled CTA — the first white-text-on-brand consumer, R-2: earned not speculative): a filled brand button is `primaryStrong` carrying `onPrimary` (5.87:1, AA body, scheme-independent — the fill owns its white label), clearing the 3:1 UI-component bar against `background` in both schemes. `tokens.ts`'s contrast block documents the pair.
+- **Brand `primary` token (the pink hue, ADR [008](./decisions/008-brand-color.md)):** `light.primary = #E91E63` (the Flutter `Colors.pink` identity tone — used as an **accent/tint**, e.g. the nav active tint, _not_ a fill carrying white body text), `dark.primary = #FF4081` (reads on the dark background). **The load-bearing usage rule:** white text on a brand fill MUST ride the darker **`#C2185B`** (white-on-`#C2185B` = 5.87:1, AA body) — the bright `#E91E63` is white-on-fill 4.35:1, below the body floor; `#E91E63` is the accent/large/UI tone (meets the 3:1 bar). The **`primaryStrong` (#C2185B) + `onPrimary` (#ffffff) token pair LANDED** (2026-06-16, the onboarding welcome filled CTA — the first white-text-on-brand consumer, R-2: earned not speculative): a filled brand button is `primaryStrong` carrying `onPrimary` (5.87:1, AA body, scheme-independent — the fill owns its white label), clearing the 3:1 UI-component bar against `background` in both schemes. `tokens.ts`'s contrast block documents the pair.
 - `src/theme/use-theme.ts` owns light/dark resolution: `useTheme()` reads the `@/hooks/use-color-scheme` seam and returns `Colors[scheme]`.
-- **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` *and* the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched.
+- **Home welcome surface:** `homeHero` is a quiet pink paper (`#FCE4EC` light / `#321824` dark) carrying normal `text`; `homeHeroDate` is its stronger eyebrow (`#AD1457` light / `#FF80AB` dark). These are fixed scheme tokens rather than call-site alpha math. Event colors on Home remain non-text accent bars/dots because imported calendar colors cannot guarantee text contrast.
+- **Single color-scheme seam (C1):** `@/hooks/use-color-scheme` is the **one** scheme source — both `useTheme` _and_ the root `_layout.tsx` read it (never `useColorScheme` from `react-native` directly), so a theme override is a single-file change. The seam resolves the stored theme preference (a `"light"`/`"dark"` override wins, `"system"` falls through to the device scheme), **preserving the `ColorSchemeName` return contract** so `useTheme` / `buildNavTheme` / `theme.test.tsx` are untouched.
 - `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `ThemeColor` / `useTheme` / `buildNavTheme`) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `Themed*` consumers import from `@/theme`. `ThemedText`'s heading-role contract (`type="title"|"subtitle"` → `accessibilityRole="header"`, caller override wins) lives in the component (a11y rule).
 
@@ -23,8 +103,8 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 
 - **`chrome/native-tabs.tsx`** — the only import site for `expo-router/unstable-native-tabs`. Wraps `NativeTabs` so tab-bar colors come from `@/theme`; the `.Trigger` compound parts are re-attached (`Object.assign`) so callers use `NativeTabs.Trigger` / `.Trigger.Label` / `.Trigger.Icon` unchanged.
 - **`chrome/glass-surface.tsx`** — the only import site for `expo-glass-effect`. Centralizes the **Liquid-Glass degradation decision** in one place: `isLiquidGlassAvailable()` → `GlassView` (iOS 26+); else (iOS 16.4–25, Android, Jest) a plain `View` rendering the same children, dropping the glass-only props. `isLiquidGlassAvailable()` is itself alpha, so it lives here too.
-- **`chrome/expo-ui.tsx`** — the only import site for `@expo/ui` (SDK-56 native controls — SwiftUI / Jetpack Compose). Re-exports the **universal** entry's `Host` + `Picker` (the universal `Picker` carries `Picker.Item` as a static compound member) and `DateTimePicker` (from the `@expo/ui/community/datetime-picker` subpath — `@expo/ui`'s own SwiftUI/Compose control, **NOT** `@react-native-community/datetimepicker`; it only mirrors the RNC prop types `value` / `mode` / `onValueChange` / `minimumDate` / `maximumDate`, pulling in **no new dependency**). The wrapper is **thin**: it does **not** theme the pickers — the native control is OS-chromed and adopts the platform's own light/dark appearance; forcing `@/theme` colors onto it would be the LCD laziness R-2 rejects and breaks R-3 (the platform is the design reference). No higher-level composed control from one consumer (R-2). Operational facts: `@expo/ui` **autolinks** (ships `expo-module.config.json`, no `app.plugin.js`) → **no `app.config.ts` plugin entry**; its babel-plugin is **`Icon`-only** (not added until an `Icon` consumer); its native module has no off-device JS, so Jest needs the suite-wide `jest/setup-expo-ui.ts` mock (it mocks the subpath explicitly — the base `@expo/ui` mock doesn't cover subpaths). See ADR [010](./decisions/010-expo-ui-chrome-wrapper.md) (the wrapper + universal-entry posture) and ADR [012](./decisions/012-personal-event-datetime-picker.md) (the date/time control choice).
-- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host` + `Picker`, and `DateTimePicker`.
+- **`chrome/expo-ui.tsx`** — the only import site for `@expo/ui` (SDK-56 native controls — SwiftUI / Jetpack Compose). Re-exports the **universal** entry's `Host` + `Picker` (the universal `Picker` carries `Picker.Item` as a static compound member), `DateTimePicker` from `@expo/ui/community/datetime-picker`, and the anchored `MenuView` plus its ref type from `@expo/ui/community/menu`. The wrapper is **thin**: it does **not** theme native controls. Operational facts: `@expo/ui` **autolinks** (ships `expo-module.config.json`, no `app.plugin.js`) → **no `app.config.ts` plugin entry**; its babel-plugin is **`Icon`-only** (not added until an `Icon` consumer); its native module has no off-device JS, so Jest needs suite-wide mocks for each imported subpath. See ADR [010](./decisions/010-expo-ui-chrome-wrapper.md) and ADR [012](./decisions/012-personal-event-datetime-picker.md).
+- **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, and `MenuComponentRef`.
 
 ## Lint boundary — the R-1 enforcement
 

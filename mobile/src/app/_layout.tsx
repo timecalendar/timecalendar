@@ -98,13 +98,25 @@ export default function RootLayout() {
         <ThemeProvider value={navTheme}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="profile" />
             <Stack.Screen name="onboarding" />
-            <Stack.Screen name="settings" />
+            <Stack.Screen
+              name="appearance-settings"
+              options={{ headerShown: true }}
+            />
+            {/* The display-timezone picker screen — a Stack sibling of (tabs),
+                reached from Settings, mirroring appearance settings. Header
+                shown for the accessible back affordance + the screen's own
+                title. Deep-linkable: timecalendar-dev://timezone-settings. */}
+            <Stack.Screen
+              name="timezone-settings"
+              options={{ headerShown: true }}
+            />
             <Stack.Screen name="personal-event-form" />
             {/* The standalone personal-events list, relocated off the Home tab
                 (ADR 022 — the Home tab is now the today view). A Stack sibling of
-                (tabs), reached from a Profile entry link, mirroring calendar /
-                settings. Deep-linkable: timecalendar-dev://personal-events. */}
+                (tabs), reached from Settings, mirroring calendar management.
+                Deep-linkable: timecalendar-dev://personal-events. */}
             <Stack.Screen name="personal-events" />
             {/* Header shown so the read-only details screen has the default
                 accessible back affordance (the screen sets its localized title
@@ -115,7 +127,7 @@ export default function RootLayout() {
               options={{ headerShown: true }}
             />
             {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
-                sibling of (tabs), reached from a Profile entry link, where
+                sibling of (tabs), reached from Settings, where
                 hide-by-name (no per-event details surface) is un-hideable.
                 Header shown for the accessible back affordance + the screen's
                 own title. Deep-linkable: timecalendar-dev://hidden-events. */}
@@ -124,12 +136,21 @@ export default function RootLayout() {
               options={{ headerShown: true }}
             />
             {/* The notification subscription preferences screen (Phase 06 Ship
-                B) — a Stack sibling of (tabs), reached from a Profile entry
-                link, mirroring settings / hidden-events. Header shown for the
+                B) — a Stack sibling of (tabs), reached from Settings,
+                mirroring appearance settings / hidden-events. Header shown for the
                 accessible back affordance + the screen's own title.
                 Deep-linkable: timecalendar-dev://notification-settings. */}
             <Stack.Screen
               name="notification-settings"
+              options={{ headerShown: true }}
+            />
+            {/* The user-calendars management screen ("Mes calendriers") — a
+                Stack sibling of (tabs), reached from the Settings summary, where
+                a held calendar's visibility is toggled and a calendar deleted.
+                Header shown for the accessible back affordance + the screen's own
+                title. Deep-linkable: timecalendar-dev://user-calendars. */}
+            <Stack.Screen
+              name="user-calendars"
               options={{ headerShown: true }}
             />
             {/* The dev-only import deep-link target (ADR 030) — a Stack sibling

@@ -1,7 +1,11 @@
 import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import { SharedHealthModule } from "@lyrolab/nest-shared/health"
+import { SharedQueueModule } from "@lyrolab/nest-shared/queue"
 import { Module } from "@nestjs/common"
+import { BullMQOtel } from "bullmq-otel"
 import { COMMON_IMPORTS } from "common-imports"
+import { QUEUE_CONCURRENCY } from "config/constants"
+import { QUEUE_DEFINITIONS } from "config/queues"
 import { dataSourceOptions } from "data-source"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
@@ -11,10 +15,10 @@ import { FirebaseModule } from "modules/firebase/firebase.module"
 import { JobRunModule } from "modules/job-run/job-run.module"
 import { MailerModule } from "modules/mailer/mailer.module"
 import { NotifierModule } from "modules/notifier/notifier.module"
-import { QueueModule } from "modules/queue/queue.module"
 import { SchoolGroupModule } from "modules/school-group/school-group.module"
 import { SchoolModule } from "modules/school/school.module"
 import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
+import { NotificationPipelineModule } from "modules/notification-pipeline/notification-pipeline.module"
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
 import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 
@@ -29,7 +33,14 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
       entities: dataSourceOptions.entities as string[],
       migrations: dataSourceOptions.migrations as string[],
     }),
-    QueueModule,
+    // Runtime-only (design D1): the module instantiates one worker per queue at
+    // init, so it must not be mounted in jest test modules (no Redis, no cron
+    // scheduler writes) — tests get a no-op QueueService stub instead.
+    SharedQueueModule.forRoot({
+      concurrency: QUEUE_CONCURRENCY,
+      queues: QUEUE_DEFINITIONS,
+      telemetry: new BullMQOtel({ tracerName: "timecalendar-server" }),
+    }),
     FirebaseModule,
     NotifierModule,
     MailerModule,
@@ -42,6 +53,7 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
     SchoolGroupModule,
     ContactModule,
     SharedHealthModule,
+    NotificationPipelineModule,
     NotificationSubscriptionModule,
     FeatureFlagModule,
   ],

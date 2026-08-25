@@ -19,7 +19,7 @@
 - All three features pass the full DoD on both platforms.
 - Golden-path exemplar documented; scaffolding exists; a new feature can be started by copying it.
 - Architecture Book reflects reality (not Phase-0 guesses); ADRs cover the core patterns.
-- Any rule changed during this phase is logged in the Rule changelog.
+- Current reusable rules are reflected in the Architecture Book; Git holds their history.
 
 ## Risks & decisions
 

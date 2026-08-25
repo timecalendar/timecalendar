@@ -308,3 +308,43 @@ resolution logic is covered by the `FetchService` unit test.
 | A row escapes the writer and never syncs again | `NOT NULL DEFAULT now()` means an unwritten plan reads as "due now" (Decision 3). |
 | Users perceive Lyon 1 calendars as "not updating" | Expected and accepted: 30 extra minutes of staleness at worst, at the university's request. Content is still returned on every sync; only the upstream refetch is deferred. |
 | Retry amplification (`withRetries: true` → up to 15 requests per sync) undoes the intent | Lyon 1's strategy does not set `withRetries`, so it inherits 1 attempt. The CEO declined a broader look for now (answer to Q5: "not now"). |
+
+## Addendum — landing on the post-queue-refactor `main` (TIM-167)
+
+This change was designed and implemented against the pre-notifications-pipeline server. While
+it was in review, `main` landed `refactor-server-queue` (`27bb0ed`) and the notifications
+pipeline (`5993add`), which rewrote the same sync surface. The design holds; three of its
+anchors moved, and the merge resolved them as follows.
+
+**The cron entry point is no longer `syncAllForCronJob`.** Decision 6 was written when the
+background path was `SyncCalendarsJob.run()` → `CalendarSyncAllService.syncAllForCronJob()`,
+disabled. `main` deleted that method and replaced it with a live BullMQ fan-out:
+`SyncCalendarsFanoutJob` (cron `*/5`) selects due calendar **ids** via
+`CalendarRepository.findDueCalendarIds` and enqueues one `sync_calendar` job each. So the
+second entry point is now real rather than pending re-enable, and it is `findDueCalendarIds`
+— not `findDueForSyncWithContent` — that had to learn the plan. It now selects on
+`syncPlannedAt < now` and orders by `syncPlannedAt ASC`, exactly like the user path. Without
+that, the fan-out would enqueue a Lyon 1 calendar every 30 minutes and `CalendarSyncService`
+would fetch it, since the throttle lives in *selection*, not in `sync()`.
+
+**`UPDATE_AFTER_MIN` and its `calendarsDueBefore()` helper are both retired.** `main` had
+wrapped the constant in a `calendarsDueBefore()` cut-off helper shared by both entry points.
+With the plan persisted, the cut-off is just `new Date()` and the helper carries nothing; both
+callers pass `syncPlannedBefore: new Date()` directly. `calendarsActiveSince()` — the
+`INACTIVITY_DAYS` bound — is untouched and still used by the fan-out.
+
+**`findDueForSyncWithContent` loses its `lastAccessedAtAfter` parameter**, and Decision 5 is
+moot for it. `main` had already dropped the inactivity bound from the user path (a user
+opening the app *is* the proof of activity, so `syncEvenIfInactive: true` was the only value
+ever passed) and moved that bound into `findDueCalendarIds`, where the cron needs it. The
+merge keeps main's shape; the parameter had no remaining caller.
+
+**`UPDATE_CONCURRENCY` / `pLimit(10)` are gone** (`main`: worker concurrency is now the
+`sync` queue's `SYNC_QUEUE_CONCURRENCY` knob), so Decision 7's sketch of a future per-domain
+limiter would now live in the queue layer rather than in `syncAll()`. The decision itself —
+per-calendar throttling, not per-server rate limiting — is unaffected.
+
+Test coverage moved with the code: the two `syncAllForCronJob` eligibility tests (future plan
+→ not synced; inactive → not synced) are now `sync-calendars-fanout.job.test.ts` cases
+asserting what the job enqueues, and the ordering assertion moved onto `findDueCalendarIds`.
+Decision 8's other four anchors are unchanged.

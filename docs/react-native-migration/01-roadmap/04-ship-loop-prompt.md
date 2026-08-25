@@ -68,7 +68,7 @@ A clean refactor that prevents debt is SUCCESS, not a detour (migration-approach
 ## Guardrails
 - SERIAL only for ships 1–5 — never run two concurrently; they touch shared files (architecture.md, app.config.ts, lockfile, db schema, the calendar components) and would collide. (Parallel EXPLORE sub-agents during the spike are fine — they only read/prototype in scratch, not src/.)
 - Spike code never enters src/ and never ships to main (except the ADR). Quarantine or delete it. The coverage/lint/boundary gates apply to shipped code only.
-- Every real ship updates the Architecture Book + appends to architecture-changelog.md + adds an ADR if load-bearing (the implementer/reviewer enforce this — it's part of DoD). The calendar is a designed brand surface — hold the native-correctness + perf DoD axes especially hard.
+- Every real ship updates current Architecture Book guidance when needed and adds an ADR only if the decision is costly to reverse. The calendar is a designed brand surface — hold the native-correctness + perf DoD axes especially hard.
 - Report faithfully at each merge AND at the spike gate: spike decision + the numbers behind it, change name, PR link, merge SHA, inbox handoffs, what's next. If CI is red, a perf bar is unmet, or a step was skipped, say so plainly.
 - Spike = you may code (throwaway). Ships = delegate, don't code. Sub-agents do the shippable work.
 ```

@@ -91,16 +91,24 @@ phases 4–5 compile; phase 6 (tests + seed) is where the existing suite is migr
 - [x] 5.1 In `modules/calendar-sync/services/calendar-sync-all.service.ts`, rewrite
   `findCalendarsToSync` to call `findDueForSyncWithContent({ syncPlannedBefore: now, ... })`.
   Take `now` **once** per call instead of the current two `new Date()` calls, and drop the now
-  unused `subMinutes` import.
+  unused `subMinutes` import. *(TIM-167 rebase: `main` inlined `findCalendarsToSync` back into
+  `syncAllForUser` and deleted `syncAllForCronJob`, so this is now a single
+  `findDueForSyncWithContent({ syncPlannedBefore: new Date(), filterByTokens: tokens })` call —
+  see design addendum.)*
 - [x] 5.2 Delete `UPDATE_AFTER_MIN` from `modules/calendar-sync/calendar-sync.constants.ts`
   (its role is now `DEFAULT_MIN_SYNC_INTERVAL_MINUTES` in the fetch layer) and confirm no other
   reference survives (`grep -rn UPDATE_AFTER_MIN server/src` — note
   `scripts/seed-e2e-calendar.ts` references it in a comment, updated in 6.5). Leave
-  `INACTIVITY_DAYS` and `UPDATE_CONCURRENCY` untouched.
+  `INACTIVITY_DAYS` untouched. *(TIM-167 rebase: `main`'s `calendarsDueBefore()` wrapper around
+  `UPDATE_AFTER_MIN` goes with it — the cut-off is now just `new Date()`. `UPDATE_CONCURRENCY`
+  was already deleted by `main`'s queue refactor; `calendarsActiveSince()` stays.)*
 - [x] 5.3 Confirm `CalendarSyncAllService` gained **no** `FetchService` dependency — under this
   design the selection side knows nothing about strategies (design Decision 2).
-- [x] 5.4 Confirm both entry points are still covered: `syncAllForUser` and `syncAllForCronJob`
-  both go through `findCalendarsToSync`, and neither gains a bypass/force flag.
+- [x] 5.4 Confirm both entry points are still covered and neither gains a bypass/force flag.
+  *(TIM-167 rebase: the entry points are now `syncAllForUser` → `findDueForSyncWithContent` and
+  `SyncCalendarsFanoutJob` → `findDueCalendarIds`; the latter was retargeted onto
+  `syncPlannedAt` as part of the merge, since the throttle lives in selection and `sync()` does
+  not re-check it.)*
 
 ## 6. Tests, factories and the E2E seed
 
@@ -116,8 +124,9 @@ phases 4–5 compile; phase 6 (tests + seed) is where the existing suite is migr
   generic calendar gets `+ 30min`; a **failed** sync of an existing calendar still advances the
   plan (the retry-throttling invariant from 4.3).
 - [x] 6.4 In `modules/calendar-sync/services/calendar-sync-all.service.test.ts`: a calendar
-  with a future `syncPlannedAt` is not fetched, one with a past `syncPlannedAt` is, and
-  `syncAllForCronJob` behaves identically (that path goes live in a few weeks). Add the
+  with a future `syncPlannedAt` is not fetched, one with a past `syncPlannedAt` is, and the
+  cron path behaves identically. *(TIM-167 rebase: the cron-path assertions moved to
+  `jobs/sync-calendars-fanout.job.test.ts`, which now asserts what the fan-out enqueues.)* Add the
   **round-trip** test that is the real proof of this ticket: sync a Lyon-1-URL calendar, then
   run `syncAllForUser` with the clock at +45 min → no second fetch; at +65 min → it fetches.
   Prefer the **real** `FetchService` with mocking at the `IcalFetcher`/axios boundary over

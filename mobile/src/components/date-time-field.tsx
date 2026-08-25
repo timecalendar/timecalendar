@@ -1,8 +1,10 @@
+import { fromZonedTime, toZonedTime } from "date-fns-tz"
 import { useState } from "react"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
 import { DateTimePicker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
+import { type AppLocale, formatShortDateTime } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 // A compact, cross-platform date/time field over the @expo/ui DateTimePicker
@@ -18,11 +20,19 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // showing the current value and open the native date dialog on demand. The
 // dialog opens on mount (the @expo/ui Android contract), so it is mounted only
 // while open and unmounted again on confirm/dismiss.
+//
+// The picked wall clock is interpreted in the effective DISPLAY zone (timezone
+// design D6): the native picker only speaks device-local Dates, so the stored
+// instant round-trips through `toZonedTime` (instant → the zone's wall clock
+// for the picker) and `fromZonedTime` (the picked wall clock → instant). Under
+// the "system" preference both are identity — byte-for-byte today's behavior.
 
 type DateTimeFieldProps = {
   testID?: string
   accessibilityLabel?: string
   value: Date
+  locale: AppLocale
+  zone: string
   onChange: (date: Date) => void
 }
 
@@ -30,6 +40,8 @@ export function DateTimeField({
   testID,
   accessibilityLabel,
   value,
+  locale,
+  zone,
   onChange,
 }: DateTimeFieldProps) {
   const theme = useTheme()
@@ -40,8 +52,8 @@ export function DateTimeField({
       <DateTimePicker
         {...(testID !== undefined ? { testID } : {})}
         mode="datetime"
-        value={value}
-        onValueChange={(_event, date) => onChange(date)}
+        value={toZonedTime(value, zone)}
+        onValueChange={(_event, date) => onChange(fromZonedTime(date, zone))}
       />
     )
   }
@@ -55,15 +67,15 @@ export function DateTimeField({
         onPress={() => setOpen(true)}
         style={[styles.field, { backgroundColor: theme.backgroundElement }]}
       >
-        <ThemedText>{value.toLocaleString()}</ThemedText>
+        <ThemedText>{formatShortDateTime(value, locale, zone)}</ThemedText>
       </Pressable>
       {open && (
         <DateTimePicker
           mode="date"
           presentation="dialog"
-          value={value}
+          value={toZonedTime(value, zone)}
           onValueChange={(_event, date) => {
-            onChange(date)
+            onChange(fromZonedTime(date, zone))
             setOpen(false)
           }}
           onDismiss={() => setOpen(false)}

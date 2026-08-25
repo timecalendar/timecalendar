@@ -58,17 +58,19 @@ export async function setChecked(
 }
 
 // Re-number every item's `order` 1-based in the given (new) order and write them
-// in ONE db.transaction — the Flutter `updateItemOrders` → transactional
-// `updateAll`. Atomic so a crash mid-reorder never leaves duplicate/gap orders.
-// Stamps updatedAt on each touched row.
+// in ONE SYNCHRONOUS db.transaction — the Flutter `updateItemOrders` →
+// transactional `updateAll`. The non-async callback with `.run()` executors keeps
+// every update between begin and commit (the expo driver never awaits — an async
+// callback would let only the first update commit, D3), so a crash mid-reorder
+// never leaves duplicate/gap orders. Stamps updatedAt on each touched row.
 export async function reorder(items: ChecklistItem[]): Promise<void> {
   const now = new Date().toISOString()
-  await db.transaction(async (tx) => {
+  db.transaction((tx) => {
     for (const [index, item] of items.entries()) {
-      await tx
-        .update(checklistItems)
+      tx.update(checklistItems)
         .set({ order: index + 1, updatedAt: now })
         .where(eq(checklistItems.uuid, item.uuid))
+        .run()
     }
   })
 }

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { Pressable, ScrollView, StyleSheet } from "react-native"
+import { Platform, Pressable, ScrollView, StyleSheet } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -8,6 +8,8 @@ import {
   formatTimeRange,
 } from "@/features/calendar/data"
 import { Radii, Spacing, useTheme } from "@/theme"
+
+import { eventSurfaceColor } from "./event-surface"
 
 // The home upcoming scroller (D6) — PRESENTATIONAL (70% floor): a horizontal RN-core
 // ScrollView of the displayed day's events as cards (color accent + title +
@@ -21,10 +23,12 @@ const CARD_WIDTH = 200
 export function UpcomingScroller({
   events,
   locale,
+  displayZone,
   onPressEvent,
 }: {
   events: CalendarEvent[]
   locale: AppLocale
+  displayZone: string
   onPressEvent: (event: CalendarEvent) => void
 }) {
   if (events.length === 0) return null
@@ -41,6 +45,7 @@ export function UpcomingScroller({
           key={event.id}
           event={event}
           locale={locale}
+          zone={displayZone}
           onPress={() => onPressEvent(event)}
         />
       ))}
@@ -51,15 +56,19 @@ export function UpcomingScroller({
 function UpcomingCard({
   event,
   locale,
+  zone,
   onPress,
 }: {
   event: CalendarEvent
   locale: AppLocale
+  zone: string
   onPress: () => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const time = formatTimeRange(event.startsAt, event.endsAt, locale)
+  const time = event.allDay
+    ? t("home.today.allDay")
+    : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
 
   return (
@@ -77,12 +86,13 @@ function UpcomingCard({
           : t("home.event.hint.edit")
       }
       onPress={onPress}
-      style={[
+      android_ripple={{ color: theme.ripple, foreground: true }}
+      style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: theme.backgroundElement,
-          borderLeftColor: event.color,
+          backgroundColor: eventSurfaceColor(event.color),
         },
+        Platform.OS === "ios" && pressed && styles.iosPressed,
       ]}
     >
       <ThemedText type="smallBold" numberOfLines={2}>
@@ -107,10 +117,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    minHeight: 44,
+    minHeight: Platform.OS === "android" ? 48 : 44,
     padding: Spacing.three,
     borderRadius: Radii.large,
-    borderLeftWidth: Spacing.half,
     gap: Spacing.half,
+    overflow: "hidden",
   },
+  iosPressed: { opacity: 0.62 },
 })

@@ -31,6 +31,9 @@ module.exports = {
     "<rootDir>/jest/setup-db.ts",
     "<rootDir>/jest/setup-storage.ts",
     "<rootDir>/jest/setup-i18n.ts",
+    // setup-localization aligns the jest-expo device timezone with the machine
+    // zone so "system"-preference zone resolution matches device-local fixtures.
+    "<rootDir>/jest/setup-localization.ts",
     // setup-splash mocks expo-splash-screen (native preventAutoHide/hideAsync,
     // hit at import + on mount) and AccessibilityInfo's reduced-motion read.
     "<rootDir>/jest/setup-splash.ts",
@@ -44,11 +47,11 @@ module.exports = {
     // synthetic onBarcodeScanned can be driven through the real parser under Jest
     // (Phase-3 ship 3 — the camera can't be CI/Maestro-driven).
     "<rootDir>/jest/setup-expo-camera.ts",
-    // setup-calendar-kit mocks @howljs/calendar-kit (a Reanimated/worklet grid
+    // calendar-kit/setup mocks @howljs/calendar-kit (a Reanimated/worklet grid
     // with no off-device runtime) so the calendar screen renders through the
-    // chrome seam and its renderEvent→tile wiring is provable under Jest
+    // renderer adapter and its renderEvent→tile wiring is provable under Jest
     // (Phase-04 — the Reanimated grid can't be CI/Maestro-driven).
-    "<rootDir>/jest/setup-calendar-kit.ts",
+    "<rootDir>/jest/calendar-kit/setup.ts",
   ],
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [
@@ -103,7 +106,11 @@ module.exports = {
     // gets checked against BOTH) and would also evict ui from the global pool. With
     // ui excluded, the screens land in `global` — the same posture they had in
     // src/components, which also keeps the global pool (they're well-tested) ≥70.
-    "src/features/*/!(ui)/**": { lines: 90, branches: 90 },
+    "src/features/*/!(ui|renderer)/**": { lines: 90, branches: 90 },
+    "src/features/*/renderer/**/{event-adapter,event-window}.ts": {
+      lines: 90,
+      branches: 90,
+    },
     "src/hooks/**": { lines: 90, branches: 90 },
     "src/storage/**": { lines: 90, branches: 90 },
     "src/db/**": { lines: 90, branches: 90 },

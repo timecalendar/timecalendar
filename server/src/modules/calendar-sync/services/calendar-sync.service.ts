@@ -1,9 +1,8 @@
 import { Injectable, UnprocessableEntityException } from "@nestjs/common"
-import { EventEmitter2 } from "@nestjs/event-emitter"
 import { addMinutes } from "date-fns"
+import { DetectCalendarChangeService } from "modules/calendar-log/services/detect-calendar-change.service"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
-import { CalendarContentUpdatedEvent } from "modules/calendar-sync/events/calendar-content-updated.event"
 import { CalendarFailureRepository } from "modules/calendar-sync/repositories/calendar-failure.repository"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
@@ -34,7 +33,7 @@ export class CalendarSyncService {
     private readonly subjectService: SubjectService,
     private readonly calendarFailureRepository: CalendarFailureRepository,
     private readonly calendarSyncMetricsService: CalendarSyncMetricsService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly detectCalendarChangeService: DetectCalendarChangeService,
   ) {}
 
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
@@ -119,14 +118,6 @@ export class CalendarSyncService {
     let { id: calendarId } = calendar
     const isUpdate = !!calendarId
 
-    // Get old events before updating (only for existing calendars)
-    let oldEvents: CalendarEvent[] = []
-    if (isUpdate && events && calendarId) {
-      const existingContent =
-        await this.calendarContentRepository.findByCalendarId(calendarId)
-      oldEvents = existingContent?.events ?? []
-    }
-
     const savedCalendar = await this.calendarRepository.save({
       ...(calendarId ? idToEntity(calendarId) : calendar),
       content: undefined, // content is set just after
@@ -134,16 +125,24 @@ export class CalendarSyncService {
     calendarId = savedCalendar.id
 
     if (events) {
-      await this.calendarContentRepository.save(calendarId, { events })
+      // Content + its CalendarLog commit together (design D4): a crash between
+      // the two can no longer lose a detected change, and a job retry re-diffs
+      // old-vs-new because the old content was not overwritten.
+      await this.calendarContentRepository.saveWithTransaction(
+        calendarId,
+        { events },
+        async (manager, previousContent) => {
+          if (isUpdate) {
+            await this.detectCalendarChangeService.detectAndLogChanges(
+              manager,
+              savedCalendar.id,
+              previousContent?.events ?? [],
+              events,
+            )
+          }
+        },
+      )
       await this.subjectService.syncEventSubjects(calendarId, events)
-
-      // Emit event only for updates (not creation)
-      if (isUpdate) {
-        this.eventEmitter.emitAsync(
-          "calendar.content.updated",
-          new CalendarContentUpdatedEvent(calendarId, oldEvents, events),
-        )
-      }
     }
 
     // Also written when the fetch failed: a university that is down must not be

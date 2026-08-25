@@ -1,9 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react-native"
+import * as Localization from "expo-localization"
 import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources/data"
+import {
+  setLanguagePreference,
+  setTimezonePreference,
+  SETTINGS_KEYS,
+} from "@/features/settings/prefs"
 import { getFcmToken, recordUnknownError } from "@/firebase"
 
 import { setFrequency, setIsActive, setNbDaysAhead } from "./prefs"
@@ -12,14 +18,19 @@ import { NOTIFICATION_KEYS } from "./types"
 
 // The write-wiring proof (mock-at-mutator, testing.md): the register() PUT
 // assembles the DTO from local prefs + the user_calendars server ids + the
-// Ship-A token and PUTs it through the REAL generated mutation, mocked at the
-// customFetch mutator seam (never the network). Asserts PUT-on-change (the new
-// value), re-PUT-on-token-refresh (the new token), null token → no PUT, zero
-// calendars → calendarIds: [], and the failure path (PUT rejects → recordUnknownError +
-// the isError flag). Mocks @/firebase + useUserCalendars per case.
+// Ship-A token + the effective locale/timezone and PUTs it through the REAL
+// generated mutation, mocked at the customFetch mutator seam (never the
+// network). Asserts PUT-on-change (the new value), re-PUT-on-token-refresh (the
+// new token), null token → no PUT, zero calendars → calendarIds: [], and the
+// failure path (PUT rejects → recordUnknownError + the isError flag). Mocks
+// @/firebase + useUserCalendars per case; the device zone is pinned via a
+// getCalendars spy (the machine's real zone would make the body assertion
+// host-dependent).
 jest.mock("@/api/mutator")
 jest.mock("@/firebase")
 jest.mock("@/features/calendar-sources/data")
+
+const calendarsSpy = jest.spyOn(Localization, "getCalendars")
 
 const mockFetch = customFetch as jest.Mock
 const mockGetFcmToken = getFcmToken as jest.Mock
@@ -45,12 +56,17 @@ beforeEach(() => {
   remove(NOTIFICATION_KEYS.frequency)
   remove(NOTIFICATION_KEYS.nbDaysAhead)
   remove(NOTIFICATION_KEYS.isActive)
+  remove(SETTINGS_KEYS.language)
+  remove(SETTINGS_KEYS.timezone)
   mockGetFcmToken.mockResolvedValue("fcm-token")
   mockUseUserCalendars.mockReturnValue([
     { id: "srv-cal-1" },
     { id: "srv-cal-2" },
   ])
   mockFetch.mockResolvedValue(undefined)
+  calendarsSpy.mockReturnValue([
+    { timeZone: "America/New_York" },
+  ] as unknown as ReturnType<typeof Localization.getCalendars>)
 })
 
 describe("useSubscriptionRegistration", () => {
@@ -73,7 +89,38 @@ describe("useSubscriptionRegistration", () => {
       isActive: true,
       calendarIds: ["srv-cal-1", "srv-cal-2"],
       fcmToken: "fcm-token",
+      // The jest-expo device locale resolves to en; the zone is the pinned spy
+      // value (pass-through, not the server default).
+      locale: "en",
+      timezone: "America/New_York",
     })
+  })
+
+  it("the PUT carries the settings-override language as locale", async () => {
+    setLanguagePreference("fr")
+
+    const { result } = await renderHook(() => useSubscriptionRegistration(), {
+      wrapper,
+    })
+    await act(async () => {
+      await result.current.register()
+    })
+
+    expect(lastBody()).toMatchObject({ locale: "fr" })
+  })
+
+  it("the PUT carries the settings-override display timezone", async () => {
+    setTimezonePreference("Indian/Reunion")
+
+    const { result } = await renderHook(() => useSubscriptionRegistration(), {
+      wrapper,
+    })
+    await act(async () => {
+      await result.current.register()
+    })
+
+    // The explicit preference wins over the (spied) device zone.
+    expect(lastBody()).toMatchObject({ timezone: "Indian/Reunion" })
   })
 
   it("a PUT-on-change carries the new local value", async () => {

@@ -1,6 +1,7 @@
-// The two persisted Settings preferences (design D2). Both default to "system"
+// The three persisted Settings preferences (design D2). All default to "system"
 // so the app keeps following the device until the user explicitly overrides —
-// matching the foundation's device-follows posture for theme and locale.
+// matching the foundation's device-follows posture for theme, locale, and
+// display timezone.
 //
 // A read parses the raw stored string through a validator: any value outside
 // the union (unset / corrupt / legacy / downgrade) returns "system", so a read
@@ -9,11 +10,31 @@
 export type ThemePreference = "system" | "light" | "dark"
 export type LanguagePreference = "system" | "fr" | "en"
 
+// The curated display-timezone union (timezone design D1): Europe/Paris + the
+// French outre-mer zones. A closed union keeps the parser total and the picker
+// buildable; extending the list later is additive.
+export const CURATED_TIMEZONES = [
+  "Europe/Paris",
+  "America/Guadeloupe",
+  "America/Martinique",
+  "America/Cayenne",
+  "America/Miquelon",
+  "Indian/Reunion",
+  "Indian/Mayotte",
+  "Pacific/Noumea",
+  "Pacific/Wallis",
+  "Pacific/Tahiti",
+] as const
+
+export type CuratedTimezone = (typeof CURATED_TIMEZONES)[number]
+export type TimezonePreference = "system" | CuratedTimezone
+
 // Flat namespaced storage keys (the i18n flat-key convention applied to storage
 // for greppability — the string in code is the string in the store).
 export const SETTINGS_KEYS = {
   theme: "settings.themePreference",
   language: "settings.languagePreference",
+  timezone: "settings.timezonePreference",
 } as const
 
 // Build a total parser over a preference union: a raw string in the union is
@@ -33,4 +54,8 @@ export const parseThemePreference = makePreferenceParser<ThemePreference>([
 
 export const parseLanguagePreference = makePreferenceParser<LanguagePreference>(
   ["system", "fr", "en"],
+)
+
+export const parseTimezonePreference = makePreferenceParser<TimezonePreference>(
+  ["system", ...CURATED_TIMEZONES],
 )

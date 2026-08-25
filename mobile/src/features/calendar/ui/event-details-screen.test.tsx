@@ -71,6 +71,7 @@ function eventDetails(overrides: Partial<EventDetails> = {}): EventDetails {
     // Local-time dates so the formatted date/time is TZ-independent.
     startsAt: new Date(2026, 5, 16, 9, 0, 0, 0),
     endsAt: new Date(2026, 5, 16, 10, 30, 0, 0),
+    allDay: false,
     exportedAt: new Date(2026, 5, 15, 22, 0, 0, 0),
     location: "Room A1",
     description: "Intro lecture",
@@ -119,6 +120,23 @@ describe("EventDetailsScreen", () => {
     expect(
       screen.getByText("Tuesday, June 16th, 2026 · 09:00 – 10:30"),
     ).toBeTruthy()
+  })
+
+  it("drops the time and shows the date-only range for an all-day event", async () => {
+    // UTC-midnight boundaries (exclusive end) — an all-day event formats as one full
+    // date with NO time (the title block wiring passes event.allDay through).
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({
+        allDay: true,
+        startsAt: new Date("2026-05-25T00:00:00.000Z"),
+        endsAt: new Date("2026-05-26T00:00:00.000Z"),
+      }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+    // Exact-match getByText proves no time is appended (a timed same-day event would
+    // render "…May 25th, 2026 · 02:00 – 02:00", a different node string).
+    expect(screen.getByText("Monday, May 25th, 2026")).toBeTruthy()
   })
 
   it("labels the color swatch accessibly", async () => {

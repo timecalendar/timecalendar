@@ -54,18 +54,70 @@ describe("FirebaseService", () => {
         body: "Hello world",
       },
       data: {
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
         action: "calendar_changed",
         screen: "home",
       },
       android: {
         priority: "high",
       },
+      apns: {
+        headers: {
+          "apns-priority": "10",
+        },
+        payload: {
+          aps: {},
+        },
+      },
       token: "123",
     })
     expect(add).toBeCalledWith(1, {
       result: "success",
       type: "calendar_changed",
+    })
+  })
+
+  it("maps collapseId, collapseKey and threadId onto the android/apns blocks", async () => {
+    jest.doMock("config/firebase.ts", () => {
+      const send = jest.fn(() => Promise.resolve())
+
+      return {
+        messaging: jest.fn(() => ({
+          send,
+        })),
+      }
+    })
+
+    const module = require("modules/firebase/services/firebase.service")
+    const send = require("config/firebase").messaging().send
+    const { metrics } = buildMetrics()
+    const mockedService: FirebaseService = new module.FirebaseService(metrics)
+
+    await mockedService.notify("123", {
+      notification: { title: "t", body: "b" },
+      data: { action: "calendar_digest", count: "2" },
+      collapseId: "schedule-digest",
+      collapseKey: "schedule-digest",
+      threadId: "schedule",
+    })
+
+    expect(send).toBeCalledWith({
+      notification: { title: "t", body: "b" },
+      data: { action: "calendar_digest", count: "2" },
+      android: {
+        priority: "high",
+        collapseKey: "schedule-digest",
+        notification: { tag: "schedule-digest" },
+      },
+      apns: {
+        headers: {
+          "apns-priority": "10",
+          "apns-collapse-id": "schedule-digest",
+        },
+        payload: {
+          aps: { threadId: "schedule" },
+        },
+      },
+      token: "123",
     })
   })
 

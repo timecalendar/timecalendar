@@ -1,27 +1,25 @@
 import { Injectable } from "@nestjs/common"
-import { OnEvent } from "@nestjs/event-emitter"
 import { findEventChanges } from "modules/calendar-log/models/change-detection/find-event-changes"
 import { CalendarChange } from "modules/calendar-log/models/calendar-change"
-import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
-import { CalendarContentUpdatedEvent } from "modules/calendar-sync/events/calendar-content-updated.event"
+import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
+import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
+import { EntityManager } from "typeorm"
 
 @Injectable()
 export class DetectCalendarChangeService {
-  constructor(private readonly calendarLogRepository: CalendarLogRepository) {}
-
-  @OnEvent("calendar.content.updated")
-  async handleCalendarContentUpdated({
-    calendarId,
-    oldEvents,
-    newEvents,
-  }: CalendarContentUpdatedEvent) {
-    // Detect changes using the existing logic
+  // Takes the caller's EntityManager so the CalendarLog row commits in the same
+  // transaction as the calendar content it describes (design D4).
+  async detectAndLogChanges(
+    manager: EntityManager,
+    calendarId: string,
+    oldEvents: CalendarEvent[],
+    newEvents: CalendarEvent[],
+  ) {
     const referenceDate = new Date()
     const changes = findEventChanges(referenceDate, oldEvents, newEvents)
 
-    // Check if there are any changes to log
     if (this.hasChanges(changes)) {
-      await this.saveCalendarLog(calendarId, changes)
+      await this.saveCalendarLog(manager, calendarId, changes)
     }
   }
 
@@ -33,8 +31,12 @@ export class DetectCalendarChangeService {
     )
   }
 
-  private async saveCalendarLog(calendarId: string, changes: CalendarChange) {
-    await this.calendarLogRepository.save({
+  private async saveCalendarLog(
+    manager: EntityManager,
+    calendarId: string,
+    changes: CalendarChange,
+  ) {
+    await manager.getRepository(CalendarLog).save({
       calendar: { id: calendarId },
       calendarChange: changes,
     })
