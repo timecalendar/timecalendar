@@ -277,8 +277,8 @@ describe("FetchService", () => {
     it("keeps a Lyon 1 url's own projectId", async () => {
       await fetchWith("univ-lyon1.fr")
 
-      expect(icalFetcher.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("projectId=-1"),
+      expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining("&projectId=-1&"),
         {},
       )
     })
@@ -288,8 +288,8 @@ describe("FetchService", () => {
       // whoever adds the next strategy sees what registering one turns off.
       await fetchWith("unknown-school.example.com")
 
-      expect(icalFetcher.fetch).toHaveBeenCalledWith(
-        expect.stringContaining("projectId=3"),
+      expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining("&projectId=3&"),
         {},
       )
     })
