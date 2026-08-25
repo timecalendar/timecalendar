@@ -5,13 +5,19 @@ provisional on one unknown: our monthly active user count. You answered **60,000
 That answer inverts the recommendation, and §4.6 records exactly why — I'd rather you see the
 reversal than a document that pretends it was always obvious.*
 
+*Amended after your round-2 questions (2026-08-25): xprem now runs in **control-plane mode with
+Postgres** rather than stateless, **update code signing moves into the same batch** rather than
+being deferred, and **publishing moves into CI** with a human approval gate. Reasoning in
+[document 6](./06-your-questions-answered.md) §6.6, §6.15 and §6.11 respectively; the changes
+are marked below.*
+
 ---
 
 ## 4.1 The recommendation
 
 **Self-host the update server (xprem) on infrastructure we already run, from day one. Build it
-now — months before the 3.0 cutover — and dogfood it on the `preview` channel for the whole
-remaining porting period.**
+now — months before the 3.0 cutover — and run our own phones off it, on the `preview` channel,
+for the whole remaining porting period.**
 
 Cost: **~$0–5/month** against **~$249/month** for the hosted equivalent at our scale. Setup:
 **1–2 days**. Ongoing: **~1–2 hours a quarter**, plus owning an outage we'd otherwise have
@@ -19,9 +25,12 @@ outsourced.
 
 Five parts:
 
-1. **Run xprem** — the mature self-hosted implementation of the Expo Updates Protocol
-   ([document 2](./02-options.md) §2.2). Our app does not change: `expo-updates` stays, the
-   fingerprint policy stays, only the URL it points at changes.
+1. **Run xprem in control-plane mode** — the mature self-hosted implementation of the Expo
+   Updates Protocol ([document 2](./02-options.md) §2.2). Our app does not change:
+   `expo-updates` stays, the fingerprint policy stays, only the URL it points at changes.
+   *(Amended: a database in our existing Postgres server buys the dashboard and, crucially,
+   progressive rollouts — both MIT-licensed and free. See [doc 6](./06-your-questions-answered.md)
+   §6.6.)*
 2. **Put the bundles on Cloudflare R2**, not on our DigitalOcean bucket. R2 charges **nothing
    for egress** — which at 60k users and growing turns the one line item that would otherwise
    scale with our success into a permanent zero (§4.3).
@@ -29,7 +38,7 @@ Five parts:
    §4.4.
 4. **Keep the Expo account on the free plan.** We build locally (Architecture Book, ADR 006),
    so we lose nothing by not paying Expo. Self-hosting updates does not mean leaving Expo.
-5. **Record the reverse trigger too.** If the dogfood period shows we're bad at owning this,
+5. **Record the reverse trigger too.** If the internal-use period shows we're bad at owning this,
    flipping to EAS Update Production is the same one-line URL change in the other direction.
    The reversibility runs both ways, and that is what makes this decision cheap.
 
@@ -102,7 +111,7 @@ So the plan is not "self-host during the cutover" — it's:
 | When | What |
 | --- | --- |
 | **Now** (this sprint or the next) | Stand the server up. Point `preview` at it. |
-| **The whole remaining port** | Every dogfood build we install is served by our own server. Dozens of real updates to real devices before a single student is on it. |
+| **The whole remaining port** | Every internal build we install on our own phones is served by our own server. Dozens of real updates to real devices before a single student is on it. |
 | **Two weeks before submission** | Rehearse the incident: publish a deliberately broken update to `preview`, roll it back, time it. |
 | **At the cutover** | The mechanism is months old and boring. Exactly the property I wanted. |
 
@@ -126,7 +135,7 @@ postures rather than one process. [Document 5](./05-runbook.md) §5.0 defines bo
 
 - **Launch posture (first ~6–8 weeks).** Fast lane. Staged rollout is still mandatory —
   10% → 50% → 100% — but the pauses shrink to ~30 minutes and we accept publishing on more
-  days of the week. The discipline that survives is *dogfood first* and *watch Crashlytics*,
+  days of the week. The discipline that survives is *preview first* and *watch Crashlytics*,
   because those are the two that actually catch things.
 - **Steady posture (after).** Bi-weekly publish window, one fixed day, never a Friday
   afternoon, full monitoring pauses between rollout steps.
@@ -159,32 +168,46 @@ anything above ~15,000 the conclusion holds.
 
 Tracked as a child issue of TIM-170. None of it blocks feature work on the port.
 
+*Revised after your round-2 questions. Tasks 8–11 are new; 1 and 3 grew.*
+
 | # | Task | Effort |
 | --- | --- | --- |
-| 1 | Deploy xprem to `do-fra1-cluster01` (Helm chart), TLS on `ota.timecalendar.fr`, Cloudflare R2 bucket + custom domain, secrets in the existing sealed-secrets setup | 1 day |
+| 1 | Terraform the Cloudflare R2 bucket, custom domain, DNS and lifecycle rule ([doc 6](./06-your-questions-answered.md) §6.7); deploy xprem to `do-fra1-cluster01` via a new namespace + Argo Application (§6.8), in **control-plane mode** against a database on our existing Postgres, TLS on `ota.timecalendar.app`, secrets via the existing SealedSecrets setup | 1–1.5 days |
 | 2 | `npx eoas init` in `mobile/`, repoint `updates.url` in `app.config.ts`, wire the `preview` channel | 2 h |
-| 3 | Make the `expo-updates` runtime policy an explicit, documented choice — check-on-launch behaviour, startup timeout budget, and whether we ever prompt the user. Today only the URL is set; the defaults are sane but inherited | ½ day |
-| 4 | Verify end-to-end on a real device: publish to `preview`, confirm pickup, confirm a fingerprint-changing build correctly does **not** pick it up | ½ day |
+| 3 | Make the `expo-updates` runtime policy an explicit, documented choice — check-on-launch behaviour, startup timeout budget, and the foreground-reload pattern. [Doc 6 §6.16](./06-your-questions-answered.md) has the recommendation: don't block the splash; apply on return-to-foreground; never prompt | ½ day |
+| 4 | Verify end-to-end on a real device: publish to `preview`, confirm pickup, confirm a fingerprint-changing build correctly does **not** pick it up, and pin down how the channel is stamped on a locally-built binary (§6.17) | ½ day |
 | 5 | Rehearse a rollback on `preview`. The first `eoas rollback` we run must not be during an incident | 1 h |
 | 6 | Turn [document 5](./05-runbook.md) into the release checklist; write an ADR in the Architecture Book recording this decision | ½ day |
 | 7 | Load-sanity-check the manifest endpoint (§4.8) | 1 h |
+| 8 | **Update code signing** — generate the key pair, embed the certificate in the 3.0 build, publish signed. Must happen *before* the 3.0 store build (§6.15) | ½ day |
+| 9 | **Tag Crashlytics with the OTA update id**, channel, runtime version and `isEmbeddedLaunch`; investigate OTA source-map upload (§6.14) | ½ day |
+| 10 | **Publish from CI**, triggered by a git tag, with a `workflow_dispatch` approval gate for `production` (§6.11) | ½ day |
+| 11 | **Fingerprint check in CI** — label a PR that changes the native fingerprint, so "does this need a store release?" is answered by a bot (§6.3) | 2 h |
 
-**Total: ~2.5 days, spread over the remaining port.**
+**Total: ~4 days, spread over the remaining port.** Still none of it on the critical path.
 
 ### Deliberately deferred, with reasons
 
 - **The xprem observability stack.** Its per-device crash/metric feature wants ClickHouse
   alongside Postgres. We already ship Crashlytics and it answers the same question. Run xprem
-  in the mode that doesn't need ClickHouse; revisit only if Crashlytics proves insufficient.
-- **Update code signing.** `expo-updates` can cryptographically sign updates so a compromised
-  server can't push malicious JavaScript. My draft deferred this on the grounds that the server
-  was Expo's problem. **Self-hosting weakens that reasoning** — the server is now our attack
-  surface, and it's a server that can execute arbitrary code on 60,000 phones. I still think
-  it's not a launch blocker (the same key hygiene that protects our cluster protects this), but
-  it is now **a genuine follow-up rather than a shrug**, and it goes in the backlog attached to
-  the implementation issue rather than being waved away here.
-- **Automated publishing from CI.** A human should decide when 60,000 people get a surprise
-  update. Revisit if manual publishing becomes the bottleneck.
+  without ClickHouse; revisit only if Crashlytics proves insufficient.
+- **A git-declared, controller-reconciled channel state.** Tempting given how we run everything
+  else, and wrong here: rollout percentages move on human judgement inside a 30-minute window,
+  and rollback-under-pressure must not require a pull request. Reasoning in
+  [doc 6 §6.11](./06-your-questions-answered.md).
+- **Version branches on the update server.** A single `production` branch already serves
+  multiple runtime versions simultaneously; per-version branches are bookkeeping we don't need
+  at two supported lines ([doc 6 §6.2](./06-your-questions-answered.md)).
+
+### Two things that moved *out* of "deferred"
+
+- **Update code signing** (task 8). The certificate is embedded in the binary at build time, so
+  adding it later forces an extra store release. We are about to make the 3.0 build anyway —
+  this is the cheapest it will ever be. Full reasoning in [doc 6 §6.15](./06-your-questions-answered.md).
+- **Publishing from CI** (task 10). My original objection — "a human should decide when 60,000
+  people get a surprise update" — is about the *decision*, which an approval gate preserves
+  entirely. The *mechanism* should be code: credentials off my laptop, an audit trail, and a
+  procedure that can't be half-remembered at 1am. [Doc 6 §6.11](./06-your-questions-answered.md).
 
 ---
 
@@ -218,3 +241,6 @@ only ever hits the cheap endpoint.
 
 **Next:** [5 — Day-one runbook](./05-runbook.md) — how we'd actually operate this without
 hurting anyone.
+
+*Then: [6 — Your questions answered](./06-your-questions-answered.md) and
+[7 — Environments, builds and testers](./07-environments-and-testing.md).*
