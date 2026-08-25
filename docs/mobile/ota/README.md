@@ -16,6 +16,11 @@ order — each document assumes the one before it.
 | 3 | [What it costs](./03-costs.md) | Real numbers, at our scale, including the self-hosted path | 8 min |
 | 4 | [Recommendation](./04-recommendation.md) | What we should do, why, and what it takes | 8 min |
 | 5 | [Day-one runbook](./05-runbook.md) | How we'd actually ship, roll back, and stay safe | 8 min |
+| 6 | [Your questions answered](./06-your-questions-answered.md) | Round 2 — the 17 questions you asked after reading 1–5 | 20 min |
+| 7 | [Environments, builds and testers](./07-environments-and-testing.md) | Alpha/beta, TestFlight, Play tracks, and the in-app backend switch | 10 min |
+
+Documents 1–5 are the original investigation, **amended** where round 2 changed something.
+Documents 6 and 7 are the follow-up discussion. If you've already read 1–5, start at 6.
 
 ---
 
@@ -37,7 +42,7 @@ Details in [document 1](./01-what-is-ota.md).
 **Where we already stand.** This is the good news: **we are already 90% set up.** The RN app
 runs on Expo SDK 56, `expo-updates` is already installed and configured, the EAS project
 exists (`3b427ef6-…`, committed in `mobile/app.config.ts`), and `mobile/eas.json` already
-defines two delivery channels (`preview` for dogfooding, `production` for the store). The
+defines two delivery channels (`preview` for our own phones, `production` for the store). The
 previous work also picked the *safe* setting for the single most dangerous OTA failure mode
 (see "the fingerprint policy" in [document 1](./01-what-is-ota.md)). We are not starting from
 zero — we are choosing a supplier and writing down a discipline.
@@ -52,9 +57,9 @@ charge for bandwidth. Full numbers in [document 3](./03-costs.md).
 **The recommendation, in one line.** **Self-host the update server (xprem) from day one, with
 the bundles on Cloudflare R2** — ~$0/month against ~$249, for 1–2 days of setup, paying itself
 back in about three days. Crucially, **build it now rather than at the cutover**: the app isn't
-in the stores yet, so we get months of dogfooding on our own server before a single student
-depends on it. That timing is what makes self-hosting the safe option rather than the brave
-one. Reasoning in [document 4](./04-recommendation.md).
+in the stores yet, so we get months of running our own phones off our own server before a
+single student depends on it. That timing is what makes self-hosting the safe option rather
+than the brave one. Reasoning in [document 4](./04-recommendation.md).
 
 **And if we get it wrong?** Switching between hosted and self-hosted is a one-line URL change
 in `mobile/app.config.ts` — the app itself is identical either way, because Expo publishes the
@@ -79,6 +84,22 @@ provisional on our user count. Your answers on 2026-08-25 inverted it:
 [Document 4](./04-recommendation.md) §4.6 records the reversal in full — including what would
 change my mind back (if the 60k turns out to be *installs* rather than *monthly actives* and
 the real figure is under ~5,000).
+
+### Round 2 — what your follow-up questions changed
+
+You read 1–5 and came back with 17 questions. Five of them changed the plan:
+
+| Your question | What changed |
+| --- | --- |
+| *"We have a Postgres server, can we get a dashboard free?"* | **Yes.** xprem moves from stateless to **control-plane mode** — the dashboard *and* progressive rollouts are MIT-licensed and free, and rollouts need the database |
+| *"What does update code signing mean?"* | Re-examining it **promoted it from deferred to do-it-now**: the certificate is embedded at build time, so adding it later forces an extra store release |
+| *"We prefer declarative over imperative"* | **Publishing moves into CI**, triggered by a git tag with a human approval gate. My original "no CI publishing" conflated the *decision* with the *mechanism* |
+| *"Can Crashlytics report the OTA version?"* | Yes, but **not automatically** — it's now an explicit task, because without it a post-OTA crash appears under the build that was healthy yesterday |
+| *"One update usually contains several fixes"* | Correct — the runbook now publishes from a **`release/3.0` branch**, never from `main` |
+
+Plus: the domain is `timecalendar.app` (I invented the `.fr`), and the word "dogfood" is gone.
+Everything is in [document 6](./06-your-questions-answered.md), with the alpha/beta/TestFlight
+strategy split out into [document 7](./07-environments-and-testing.md).
 
 ## What this pack deliberately does not do
 

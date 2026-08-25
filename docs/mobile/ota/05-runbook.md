@@ -23,7 +23,7 @@ You asked for OTA to serve two different phases, and they want different amounts
 | Expectation | Frequent hotfixes; the RN port meets 60,000 real users for the first time | Store releases are the norm; OTA roughly bi-weekly |
 | Publish days | Any weekday. Friday afternoon still requires a live incident | One fixed publish day. Never Friday afternoon |
 | Rollout pauses | ~30 min between 10% → 50% → 100% | ≥1 hour, and overnight before 100% |
-| Non-negotiable in both | **Dogfood on `preview` first. Staged rollout. Watch Crashlytics. Roll back rather than fix forward.** | ← same |
+| Non-negotiable in both | **`preview` first. Staged rollout. Watch Crashlytics. Roll back rather than fix forward.** | ← same |
 
 The launch posture buys speed by shortening the *pauses*, never by skipping the *steps*. The
 step most likely to be dropped at 1am — rolling back instead of fixing forward — is the one
@@ -31,17 +31,19 @@ that matters most when 60,000 phones already have the bad bundle.
 
 ---
 
-## 5.1 The two channels
+## 5.1 The channels
 
-Already defined in `mobile/eas.json`:
+`preview` and `production` are already defined in `mobile/eas.json`;
+[document 7](./07-environments-and-testing.md) proposes adding `beta`.
 
-| Channel | Who's on it | Purpose |
-| --- | --- | --- |
-| `preview` | Us, internal dogfood builds | Every update lands here first. Cannot reach real users. |
-| `production` | Everyone with the store app | Real students. Rollouts and monitoring mandatory. |
+| Channel | Who's on it | How they installed it | Purpose |
+| --- | --- | --- | --- |
+| `preview` | Us, on our own phones | TestFlight internal / Play internal testing | Every update lands here first. Cannot reach real users. |
+| `beta` *(proposed)* | Opted-in students | TestFlight external / Play closed testing | Real-world exposure before general release; also our fast lane past Beta App Review |
+| `production` | Everyone with the store app | App Store / Play | Real students. Rollouts and monitoring mandatory. |
 
 **Rule 1: nothing reaches `production` that hasn't run on `preview` first.** Not "usually" —
-always. The whole point of the dogfood channel is that it costs us nothing and catches the
+always. The whole point of the internal channel is that it costs us nothing and catches the
 embarrassing class of mistake.
 
 ---
@@ -67,15 +69,38 @@ embarrassing class of mistake.
 
 ## 5.3 Publishing
 
+### First: what an update actually contains
+
+**An update is a snapshot of the entire JavaScript bundle, not a patch.** There is no way to
+ship "just this one fix" — whatever is in the tree you publish from *is* the update. A typical
+update therefore carries several fixes, and that's normal.
+
+The failure this creates: publish from `main` to fix one crash, and you also ship every feature
+that merged that morning — half-finished, never run on a device, now on 60,000 phones. The fix
+was urgent; its cargo wasn't.
+
+**So we publish from a release branch, never from `main`.** Work merges to `main`; anything
+destined for users is cherry-picked to `release/3.0`; we publish `release/3.0`. The same branch
+is what makes hotfixing an older line straightforward
+([document 6 §6.2](./06-your-questions-answered.md)) — one mechanism, two problems solved.
+
+### The sequence
+
 ```bash
-# 1. Dogfood first. Always.
-npx eoas publish --branch preview --message "TIM-xxx: fix duplicate events on week boundary"
+# 0. Assemble the update on the release branch, then tag it.
+git switch release/3.0
+git cherry-pick <sha>...          # the fixes going out, and only those
+git tag ota/3.0.4 && git push --tags
+
+# 1. `preview` first. Always.
+npx eoas publish --branch preview \
+  --message "3.0.4 — TIM-201 duplicate events on week boundary, TIM-205 FR month names, TIM-208 crash on empty week"
 
 # 2. Real device check on a preview build. Cold-start twice: once to download,
 #    once to run the new bundle.
 
 # 3. Production, to 10% of users.
-npx eoas publish --branch production --message "TIM-xxx: fix duplicate events on week boundary"
+npx eoas publish --branch production --message "3.0.4 — TIM-201, TIM-205, TIM-208"
 #    then set the rollout to 10% (CLI flag or the xprem dashboard — exact syntax
 #    pinned down in task 4 of document 4 §4.7, before this becomes the real checklist)
 
@@ -83,13 +108,24 @@ npx eoas publish --branch production --message "TIM-xxx: fix duplicate events on
 #    → 50%, watch again, → 100%.
 ```
 
-**Rule 2: staged rollout on `production` is mandatory.** 10% → 50% → 100%, with a real pause
-between steps. A bad update caught at 10% is an inconvenience; the same update at 100% is an
-incident. The cost of the discipline is a few hours of latency; the cost of skipping it is our
-reputation with students during enrolment week.
+Once task 10 in [document 4](./04-recommendation.md) §4.7 lands, steps 1 and 3 are a CI
+workflow triggered by that tag, with an approval gate on `production` — same sequence, run by a
+machine, with the credentials off anyone's laptop.
 
-**Message discipline:** always include the issue reference. In six months the update list in
-the xprem dashboard is the only record of what shipped when — make it readable.
+**Rule 2: staged rollout on `production` is mandatory.** 10% → 50% → 100%, with a real pause
+between steps. The split is decided server-side and is deterministic — a given phone is
+consistently inside or outside the 10%, it doesn't re-roll on each launch
+([document 6 §6.12](./06-your-questions-answered.md)). A bad update caught at 10% is an
+inconvenience; the same update at 100% is an incident.
+
+Note the constraint: **only one update per branch can be rolling out at a time** for a given
+runtime version. Finish or revert the current rollout before publishing the next one. That's
+deliberate — it stops two half-rolled-out changes overlapping so you can't tell which one broke
+things.
+
+**Message discipline:** a version-ish title plus the issue references, and a matching git tag.
+In six months the update list in the xprem dashboard is the only record of what shipped when —
+make it readable, and make every entry traceable to a SHA.
 
 ---
 
@@ -99,7 +135,11 @@ After each rollout step, watch for **at least one hour** (overnight before going
 
 - **Crashlytics** (`timecalendar-samuelprak`) — a crash-free-rate dip is the signal. It's the
   reason we already ship Crashlytics, and the reason we don't need xprem's ClickHouse-backed
-  metrics stack ([document 4](./04-recommendation.md) §4.7).
+  metrics stack ([document 4](./04-recommendation.md) §4.7). **This only works once we tag
+  reports with the OTA update id** — Crashlytics groups by *native* build, so without the tag a
+  post-OTA crash appears under the build that was healthy yesterday. Task 9 in
+  [document 4](./04-recommendation.md) §4.7; mechanism in
+  [document 6 §6.14](./06-your-questions-answered.md).
 - **Adoption** — the xprem dashboard shows how many devices took the update. Zero adoption
   after 30 minutes usually means a fingerprint mismatch: the change needed a store release
   after all.
@@ -164,7 +204,7 @@ enforce it whether or not we remember:**
 
 ## 5.8 The four rules, on one line each
 
-1. **Dogfood first** — `preview` before `production`, always, on a real device.
+1. **`preview` first** — before `production`, always, on a real device.
 2. **Roll out in stages** — 10% → 50% → 100%, with a real pause between each.
 3. **Watch, then widen** — a crash-free-rate dip means roll back first, diagnose second.
 4. **Rehearse the rollback** — before we need it, not during.
@@ -173,19 +213,25 @@ enforce it whether or not we remember:**
 
 ## 5.9 Open items to settle when we implement this
 
-- **Update-check UX.** Today only `updates.url` is configured; the check-on-launch behaviour
-  and startup timeout are inherited defaults. Sane defaults, but we should choose them
-  deliberately: how long may launch wait for the server on a bad connection, and do we ever
-  prompt "an update is ready — restart?" or always apply silently on next cold start?
-  (Task 3 in [document 4](./04-recommendation.md) §4.7.)
-- **Channel stamping for locally-built binaries.** `eas build` writes the channel into the
-  binary automatically. We build locally for E2E, so we must verify how the channel is set on
-  a locally-produced release build — cheap to check, annoying to discover late. (Task 4.)
-- **Update code signing.** Deferred, but a real follow-up rather than a shrug now that the
-  server is ours — see [document 4](./04-recommendation.md) §4.7.
-- **Exact rollout-percentage syntax** in the `eoas` CLI, pinned during task 4.
+- **Update-check UX.** Today only `updates.url` is configured; the check-on-launch behaviour and
+  startup timeout are inherited defaults. The recommendation is now written down —
+  don't block the splash, apply on return-to-foreground, never prompt — in
+  [document 6 §6.16](./06-your-questions-answered.md). Still needs implementing and measuring
+  against a real adoption curve. (Task 3 in [document 4](./04-recommendation.md) §4.7.)
+- **Channel stamping for locally-built binaries.** A channel is a label baked into the binary at
+  build time and sent as the `expo-channel-name` header; `eas build` writes it from `eas.json`,
+  but a local build doesn't read `eas.json` and would silently receive **no updates at all**.
+  The fix is to set it in `app.config.ts` via `updates.requestHeaders` — with one subtlety about
+  whether that feeds the fingerprint, to verify on a device.
+  [Document 6 §6.17](./06-your-questions-answered.md). (Task 4.)
+- **Exact rollout-percentage syntax** in the `eoas` CLI, pinned during task 4. Deliberately not
+  guessed here — this document gets followed during incidents.
 - **An ADR** in `docs/mobile/architecture-book/decisions/` recording the final choice, so this
   investigation folder can become history rather than the source of truth.
+
+*No longer open:* update code signing and CI publishing were listed here as deferred. Both moved
+into the implementation batch after the round-2 questions — tasks 8 and 10 in
+[document 4](./04-recommendation.md) §4.7.
 
 ---
 

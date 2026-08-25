@@ -48,8 +48,8 @@ doesn't degrade, it doesn't warn the user, and it doesn't invoice us — it just
 
 We are on the Free plan today, and we have ~60,000 users. So on the hosted path this cap isn't
 a risk to manage, it's a wall we'd hit **within hours of the first publish** — on roughly the
-2nd of every month, for the rest of the app's life. Free is fine for the `preview` dogfood
-channel and nothing else.
+2nd of every month, for the rest of the app's life. Free is fine for the `preview` channel —
+our own phones — and nothing else.
 
 *Source: Expo's documented free-plan enforcement — "Free plan accounts cannot incur overage
 charges", limits reset on the first of each calendar month.*
@@ -161,7 +161,7 @@ Whichever option we pick, OTA has a real non-monetary price and I'd rather name 
 
 | Scenario | Recommended | Cost/month |
 | --- | --- | --- |
-| Under 1,000 MAU, dogfood only, pre-launch | EAS Free | **$0** |
+| Under 1,000 MAU, internal builds only, pre-launch | EAS Free | **$0** |
 | Under ~3,000 MAU | EAS Starter | $19 |
 | 3,000–37,000 MAU | EAS Starter + overage | $19 → ~$190 |
 | ~37,000 MAU and up | EAS Production | $199+ |
