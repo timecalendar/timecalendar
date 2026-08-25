@@ -84,4 +84,3 @@ NOT perform or automate the production tag flip.
 - **THEN** the runbook requires the old image to be serving, writers to be quiesced, a
   named backup/restore point, and explicit human authorization before the column/index are
   dropped
-

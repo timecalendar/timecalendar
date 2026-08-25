@@ -1,7 +1,10 @@
 # timecalendar-release-operations Specification
 
 ## Purpose
-TBD - created by archiving change prove-rentree-rollout-safety. Update Purpose after archive.
+Defines the operator contract for selecting immutable TimeCalendar release images,
+proving migration and calendar-sync capacity safety, and applying explicit promotion,
+observation, abort, and rollback gates without automating the production tag flip.
+
 ## Requirements
 ### Requirement: A release candidate is bound to immutable build and runtime evidence
 
