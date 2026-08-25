@@ -19,6 +19,7 @@ order — each document assumes the one before it.
 | 6 | [Your questions answered](./06-your-questions-answered.md) | Round 2 — the 17 questions you asked after reading 1–5 | 20 min |
 | 7 | [Environments, builds and testers](./07-environments-and-testing.md) | Alpha/beta, TestFlight, Play tracks, and the in-app backend switch | 10 min |
 | 8 | [Your answers, locked](./08-infrastructure-answers.md) | Round 3 — Terraform & DNS safety, Argo, Postgres, what to call the testers | 10 min |
+| 9 | [Human checklist](./09-human-checklist.md) | The handover: what only the human can do, what's already done, decisions locked | 5 min |
 
 Documents 1–5 are the original investigation, **amended** where round 2 changed something.
 Documents 6–8 are the follow-up discussion. If you've already read 1–7, document 8 is the only
