@@ -56,7 +56,8 @@ Every `up` SHALL start from a known state: the `timecalendar_test` database is d
 migrated, and seeded with the fixture set, never touching a developer's development database.
 The seed SHALL include a token-addressable calendar under the constant
 `E2E_CALENDAR_TOKEN = "e2e-smoke-calendar"` / `E2E_CALENDAR_ID` (returned verbatim by
-`POST /calendars/sync` with a fresh `lastUpdatedAt`, so no external iCal fetch occurs), and
+`POST /calendars/sync` with a `syncPlannedAt` a day in the future, so no external iCal fetch
+occurs), and
 that calendar's events SHALL include BOTH the existing week-anchored events AND a
 **today-anchored** cluster on `now`'s UTC day with **at least two overlapping** timed events
 (for column-packing on the calendar grid and the home mini-timeline), with **deterministic,
@@ -88,8 +89,8 @@ the mobile import deep link resolves the same calendar.
 #### Scenario: Sync returns the seeded events without an external fetch
 
 - **WHEN** `POST /calendars/sync { tokens: ["e2e-smoke-calendar"] }` is called after the seed
-- **THEN** the seeded `CalendarContent` events are returned directly (the fresh
-  `lastUpdatedAt` keeps the server from making an external iCal call)
+- **THEN** the seeded `CalendarContent` events are returned directly (the future
+  `syncPlannedAt` keeps the server from making an external iCal call)
 
 ### Requirement: Boots without a real Firebase credential
 
