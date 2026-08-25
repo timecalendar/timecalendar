@@ -31,15 +31,15 @@ The migration documents SHALL identify `docs/mobile/architecture-book/` as the c
 ### Requirement: All five living artifacts exist as siblings under docs/mobile/architecture-book/
 The five living artifacts named in `migration-approach.md` §2 SHALL all exist under
 `docs/mobile/architecture-book/` — the Architecture Book (`architecture.md`), the ADR log
-(`decisions/`), the Definition of Done (`definition-of-done.md`), the Rule changelog
-(`architecture-changelog.md`), and the golden-path exemplar placeholder (`golden-path.md`).
-No artifact SHALL be created in a second location outside this directory.
+(`decisions/`), the Definition of Done (`definition-of-done.md`), the Architecture Book
+changelog (`CHANGELOG.md`), and the golden-path exemplar (`golden-path.md`). No artifact SHALL
+be created in a second location outside this directory.
 
-#### Scenario: The four remaining artifacts join the book
-- **WHEN** `docs/mobile/architecture-book/` is inspected after this change
+#### Scenario: The living artifacts use their canonical paths
+- **WHEN** `docs/mobile/architecture-book/` is inspected
 - **THEN** it contains `architecture.md`, a `decisions/` directory, `definition-of-done.md`,
-  `architecture-changelog.md`, and `golden-path.md`
-- **AND** none of these artifacts exists anywhere outside `docs/mobile/architecture-book/`
+  `CHANGELOG.md`, and `golden-path.md`
+- **AND** no duplicate `architecture-changelog.md` exists
 
 ### Requirement: The Architecture Book points at the other four artifacts
 The Architecture Book (`architecture.md`) SHALL link to each of the other four living
@@ -181,12 +181,39 @@ SHALL NOT supersede ADR 009's infra→feature-edge decision.
 - **AND** the ADR records the feature-boundary lint (TIM-135) as the pending encodable follow-up
 
 ### Requirement: The extraction is recorded in the Rule changelog
-The Rule changelog (`docs/mobile/architecture-book/architecture-changelog.md`) SHALL gain a dated entry recording
-the golden-path extraction, the Architecture Book reconciliation, and the new pattern ADR — because the
+The Rule changelog (`docs/mobile/architecture-book/CHANGELOG.md`) SHALL contain a dated entry recording
+the golden-path extraction, the Architecture Book reconciliation, and the pattern ADR — because the
 act of blessing the pattern and reconciling the book is itself a rule change (migration-approach §7).
 
 #### Scenario: The changelog entry exists
-- **WHEN** the Rule changelog is read after this change
-- **THEN** its newest entry records this change (golden-path exemplar extracted, book reconciled, ADR
-  added), dated, pointing at the affected sections
+- **WHEN** the Rule changelog is read
+- **THEN** it records the golden-path exemplar extraction, book reconciliation, and pattern ADR,
+  pointing at the affected sections
+
+### Requirement: ADR 036 ratifies the self-hosted OTA architecture
+The Architecture Book SHALL contain and index ADR 036 recording self-hosted xprem with Cloudflare R2 asset storage, xprem control-plane mode using the existing production Postgres service without ClickHouse, signed updates, fingerprint runtime compatibility, and silent application at a background-to-foreground boundary. The ADR SHALL contain the exact sentence: “channel pointers and rollout percentages are imperative, deliberately.”
+
+#### Scenario: OTA architecture is recorded before deployment inputs arrive
+- **WHEN** ADR 036 and the ADR index are read
+- **THEN** they identify xprem, R2, Postgres without ClickHouse, update signing, fingerprint compatibility, and silent foreground application as the ratified target
+- **AND** they distinguish that target from endpoint, identifier, credential, certificate-path, and publishing inputs deferred to later work
+
+#### Scenario: Rollout control is deliberately imperative
+- **WHEN** ADR 036 describes channel pointers and staged rollouts
+- **THEN** it contains the exact sentence “channel pointers and rollout percentages are imperative, deliberately.”
+- **AND** it explains that incident-time rollout and rollback changes are not reconciled from Git
+
+### Requirement: Current OTA and observability guidance reflects ADR 036
+The Architecture Book SHALL update `eas.md` with the non-blocking silent-apply policy and self-hosted target, update `firebase.md` with the five OTA Crashlytics keys and owned-seam rule, reconcile `architecture.md` so it points rule changes to the canonical existing `CHANGELOG.md`, and append this rule change there. `runtime.md` SHALL change only if the implementation changes its reusable runtime/native baseline contract.
+
+#### Scenario: Topical guidance points to the ratified decision
+- **WHEN** `eas.md` and `firebase.md` are read after implementation
+- **THEN** they describe their current OTA runtime and observability contracts
+- **AND** they point to ADR 036 instead of duplicating deployment inputs
+
+#### Scenario: Existing changelog receives the rule change
+- **WHEN** the Architecture Book directory is inspected
+- **THEN** `CHANGELOG.md` contains the OTA rule-change entry
+- **AND** `architecture.md` distinguishes the rule changelog from implementation history retained by Git
+- **AND** no `architecture-changelog.md` duplicate is created
 
