@@ -71,4 +71,3 @@ no first-class model for “source moved,” “source expired,” or “waiting
    and hard to roll back; never infer new resource identifiers.
 
 Follow-ups: [TIM-189](/TIM/issues/TIM-189) and [TIM-191](/TIM/issues/TIM-191).
-

@@ -73,4 +73,3 @@ absent from the log backend, or prevented from notifying anyone.
    after delivery and the underlying metrics are trustworthy.
 
 Follow-ups: [TIM-192](/TIM/issues/TIM-192) and [TIM-193](/TIM/issues/TIM-193).
-
