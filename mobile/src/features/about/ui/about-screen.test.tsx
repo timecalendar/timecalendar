@@ -1,8 +1,9 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import * as Linking from "expo-linking"
 import * as WebBrowser from "expo-web-browser"
 
 import { readApplicationInfo } from "@/features/about/data"
+import { recordUnknownError } from "@/firebase"
 import i18n from "@/i18n"
 
 import { AboutScreen } from "./about-screen"
@@ -10,6 +11,7 @@ import { AboutScreen } from "./about-screen"
 jest.mock("@/features/about/data", () => ({
   readApplicationInfo: jest.fn(),
 }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
@@ -21,6 +23,7 @@ jest.mock("expo-linking", () => ({ openURL: jest.fn() }))
 jest.mock("expo-web-browser", () => ({ openBrowserAsync: jest.fn() }))
 
 const mockReadApplicationInfo = readApplicationInfo as jest.Mock
+const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockOpenURL = Linking.openURL as jest.Mock
 const mockOpenBrowser = WebBrowser.openBrowserAsync as jest.Mock
 
@@ -31,6 +34,8 @@ beforeEach(async () => {
     version: "4.0.0",
     build: "135",
   })
+  mockOpenURL.mockResolvedValue(undefined)
+  mockOpenBrowser.mockResolvedValue(undefined)
   await i18n.changeLanguage("en")
 })
 
@@ -92,6 +97,58 @@ describe("AboutScreen", () => {
       ["https://www.samuelprak.fr/"],
       ["https://www.eddymonnot.com/"],
     ])
+  })
+
+  it("records a rejected browser action and shows recoverable feedback", async () => {
+    const error = new Error("browser unavailable")
+    mockOpenBrowser.mockRejectedValueOnce(error)
+    const view = await render(<AboutScreen />)
+
+    await act(async () => {
+      fireEvent.press(view.getByTestId("about-privacy"))
+    })
+
+    await waitFor(() => {
+      expect(mockRecordUnknownError).toHaveBeenCalledWith(
+        error,
+        "about/open-privacy",
+      )
+      expect(
+        view.getByText("We couldn’t open this link. Please try again."),
+      ).toBeTruthy()
+    })
+  })
+
+  it("records a rejected mail action and localizes recoverable feedback", async () => {
+    await i18n.changeLanguage("fr")
+    const error = new Error("mail unavailable")
+    mockOpenURL.mockRejectedValueOnce(error)
+    const view = await render(<AboutScreen />)
+
+    await act(async () => {
+      fireEvent.press(view.getByTestId("about-contact"))
+    })
+
+    await waitFor(() => {
+      expect(mockRecordUnknownError).toHaveBeenCalledWith(
+        error,
+        "about/open-contact",
+      )
+      expect(
+        view.getByText("Impossible d’ouvrir ce lien. Veuillez réessayer."),
+      ).toBeTruthy()
+    })
+  })
+
+  it("includes the bottom safe-area edge for the root destination", async () => {
+    const view = await render(<AboutScreen />)
+
+    expect(view.getByTestId("about-safe-area").props.edges).toEqual({
+      top: "off",
+      left: "additive",
+      right: "additive",
+      bottom: "additive",
+    })
   })
 
   it.each([

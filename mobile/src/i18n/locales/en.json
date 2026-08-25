@@ -97,6 +97,7 @@
   "about.developer.samuel": "Samuel Prak",
   "about.developer.eddy": "Eddy Monnot",
   "about.developer.hint": "Opens {{name}}’s website in the in-app browser",
+  "about.linkError": "We couldn’t open this link. Please try again.",
   "settings.title": "Appearance & language",
   "settings.theme.label": "Theme",
   "settings.theme.system": "System",

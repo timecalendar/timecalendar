@@ -97,6 +97,7 @@
   "about.developer.samuel": "Samuel Prak",
   "about.developer.eddy": "Eddy Monnot",
   "about.developer.hint": "Ouvre le site de {{name}} dans le navigateur intégré",
+  "about.linkError": "Impossible d’ouvrir ce lien. Veuillez réessayer.",
   "settings.title": "Apparence et langue",
   "settings.theme.label": "Thème",
   "settings.theme.system": "Système",

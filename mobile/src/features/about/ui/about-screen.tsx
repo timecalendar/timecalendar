@@ -2,6 +2,7 @@ import * as Linking from "expo-linking"
 import { Stack } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import type { TFunction } from "i18next"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -13,6 +14,7 @@ import {
   type SettingsRowProps,
   SettingsSection,
 } from "@/features/settings/ui"
+import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 const PRIVACY_URL = "https://timecalendar.app/privacy-policy"
@@ -37,7 +39,20 @@ function formatApplicationInfo(t: TFunction): string {
 export function AboutScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const [linkFailed, setLinkFailed] = useState(false)
   const versionValue = formatApplicationInfo(t)
+  const openLink = async (
+    context: string,
+    action: () => Promise<unknown>,
+  ): Promise<void> => {
+    setLinkFailed(false)
+    try {
+      await action()
+    } catch (error) {
+      recordUnknownError(error, context)
+      setLinkFailed(true)
+    }
+  }
   const sections: readonly {
     key: string
     title: string
@@ -58,7 +73,10 @@ export function AboutScreen() {
           label: t("about.privacy.label"),
           hint: t("about.privacy.hint"),
           testID: "about-privacy",
-          onPress: () => void WebBrowser.openBrowserAsync(PRIVACY_URL),
+          onPress: () =>
+            void openLink("about/open-privacy", () =>
+              WebBrowser.openBrowserAsync(PRIVACY_URL),
+            ),
         },
       ],
     },
@@ -74,7 +92,10 @@ export function AboutScreen() {
           secondary: t("about.contact.value"),
           hint: t("about.contact.hint"),
           testID: "about-contact",
-          onPress: () => void Linking.openURL(CONTACT_URL),
+          onPress: () =>
+            void openLink("about/open-contact", () =>
+              Linking.openURL(CONTACT_URL),
+            ),
         },
       ],
     },
@@ -105,7 +126,10 @@ export function AboutScreen() {
             name: t("about.developer.samuel"),
           }),
           testID: "about-developer-samuel",
-          onPress: () => void WebBrowser.openBrowserAsync(SAMUEL_URL),
+          onPress: () =>
+            void openLink("about/open-developer", () =>
+              WebBrowser.openBrowserAsync(SAMUEL_URL),
+            ),
         },
         {
           variant: "action",
@@ -115,7 +139,10 @@ export function AboutScreen() {
             name: t("about.developer.eddy"),
           }),
           testID: "about-developer-eddy",
-          onPress: () => void WebBrowser.openBrowserAsync(EDDY_URL),
+          onPress: () =>
+            void openLink("about/open-developer", () =>
+              WebBrowser.openBrowserAsync(EDDY_URL),
+            ),
         },
       ],
     },
@@ -123,7 +150,8 @@ export function AboutScreen() {
 
   return (
     <SafeAreaView
-      edges={["left", "right"]}
+      edges={["left", "right", "bottom"]}
+      testID="about-safe-area"
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
       <Stack.Screen options={{ title: t("about.title") }} />
@@ -138,6 +166,16 @@ export function AboutScreen() {
               {t("about.blurb.created")}
             </ThemedText>
           </View>
+          {linkFailed && (
+            <ThemedText
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert"
+              themeColor="textSecondary"
+              style={styles.linkError}
+            >
+              {t("about.linkError")}
+            </ThemedText>
+          )}
           {sections.map((section) => (
             <SettingsSection
               key={section.key}
@@ -169,4 +207,5 @@ const styles = StyleSheet.create({
     gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
   },
   blurb: { gap: Spacing.two, paddingHorizontal: Spacing.three },
+  linkError: { paddingHorizontal: Spacing.three },
 })
