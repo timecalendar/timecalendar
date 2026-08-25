@@ -1,121 +1,153 @@
 # Tasks
 
-Single PR, server-only. **Phase 1 is blocked on CEO answer Q1** (Lyon 1's host / school code)
-— every other phase can be written and tested before that answer lands, with the matcher left
-as the last edit.
+Single PR, server-only, one migration. No blockers remain — the CEO confirmed Lyon 1's host
+(`univ-lyon1.fr`), per-calendar scope, Lyon-1-only, cron stays off, and the `syncPlannedAt`
+design (see proposal `## CEO decisions`).
 
-## 1. Confirm the Lyon 1 identity (blocking — see proposal Q1)
+Order matters: phases 1–2 (fetch layer) are self-contained; phase 3 (schema) must land before
+phases 4–5 compile; phase 6 (tests + seed) is where the existing suite is migrated off
+`lastUpdatedAt`-as-predicate.
 
-- [ ] 1.1 Get a real Université Lyon 1 calendar URL (or the `school.code` row we use for them)
-  from the CEO. There is no `lyon` reference anywhere in the repo today, so their calendars
-  currently fall through to `genericStrategy`.
-- [ ] 1.2 Record the confirmed matcher(s) and the school code in this file before writing
-  `univlyon1-strategy.ts`, so the strategy's `match` and `school` are both grounded in a real
-  value rather than a guess.
+## 1. Fetch layer — the interval becomes a strategy option
 
-## 2. Fetch layer — the interval becomes a strategy option
-
-- [ ] 2.1 In `server/src/modules/fetch/constants.ts`, add
+- [ ] 1.1 In `server/src/modules/fetch/constants.ts`, add
   `export const DEFAULT_MIN_SYNC_INTERVAL_MINUTES = 30` with a docstring explaining it is the
   minimum time between two upstream fetches of the same calendar.
-- [ ] 2.2 In `modules/fetch/strategies/school-strategy-options.type.ts`, add the optional
+- [ ] 1.2 In `modules/fetch/strategies/school-strategy-options.type.ts`, add the optional
   `minSyncIntervalMinutes?: number` field, documented as "some universities ask us to limit how
-  often we hit their servers; raise this for them".
-- [ ] 2.3 In `modules/fetch/strategies/school-strategy.ts`, add
+  often we hit their servers; raise this for them". Match the surrounding doc-comment style.
+- [ ] 1.3 In `modules/fetch/strategies/school-strategy.ts`, add
   `minSyncIntervalMinutes: DEFAULT_MIN_SYNC_INTERVAL_MINUTES` to `defaultOptions` so the merged
   `options` always carries a concrete number and callers never handle `undefined`. Note the
-  field must move from optional-in-the-interface to always-present-after-merge — mirror how the
-  existing options are typed rather than inventing a new pattern.
+  field is optional in the interface but always present after the merge — mirror how the
+  existing optional options are typed rather than inventing a new pattern.
 
-## 3. Fetch layer — resolve the interval for a calendar
+## 2. Fetch layer — resolve the interval for a calendar
 
-- [ ] 3.1 In `modules/fetch/services/fetch.service.ts`, add
+- [ ] 2.1 In `modules/fetch/services/fetch.service.ts`, add
   `getMinSyncIntervalMinutes(calendarSource: CalendarSource, school: string | null): number`
   — reuse the existing private `getStrategy()`, fall back to `genericStrategy` exactly as
   `fetchEvents` does, and return `strategy.options.minSyncIntervalMinutes`.
-- [ ] 3.2 Add `readonly minSyncIntervalFloorMinutes: number`, computed **once in the
-  constructor** as the minimum over `this.strategies` (which already includes
-  `genericStrategy`). Do not recompute per call.
-- [ ] 3.3 Unit-test `FetchService` interval resolution in
-  `modules/fetch/services/fetch.service.test.ts`: (a) a real Lyon 1 URL with `school: null`
-  → 60; (b) `school: "univlyon1"` with an unrelated URL → 60; (c) an unrelated URL with
-  `school: null` → 30; (d) a deliberate **near-miss** URL (same ADE-style shape, different
-  host) → 30, guarding against an over-broad matcher; (e) `minSyncIntervalFloorMinutes` === 30
-  with the current strategy set.
+- [ ] 2.2 Create `modules/fetch/schools/univlyon1/univlyon1-strategy.ts`: a `SchoolStrategy`
+  with `school: "univlyon1"`, `match: ["univ-lyon1.fr"]`, `minSyncIntervalMinutes: 60`, and
+  nothing else — it inherits the default `IcalFetcher`, the generic URL renamers, and no event
+  pipes. Add a comment recording *why* (Lyon 1 asked us to cap at 1 h) and *when* (2026-08).
+  Note: schools live in the database, not the repo, so `"univlyon1"` is our chosen strategy
+  key. Check the `school` table for an existing Lyon 1 row and use its `code` if one exists —
+  if it does not match, only the code-based path is inert; the `univ-lyon1.fr` URL matcher
+  carries the behaviour either way.
+- [ ] 2.3 Register it in `modules/fetch/schools/schools.ts`, keeping the list's alphabetical
+  order (`univlehavre`, `univlyon1`, `univorleans`, …) in both the imports and the array.
+- [ ] 2.4 Confirm no other strategy's `match` also hits `univ-lyon1.fr` (`grep -rn "match:" -A4
+  src/modules/fetch/schools`). `getStrategy` is a `.find()` over `[genericStrategy,
+  ...strategies]` and `genericStrategy` only matches `school === "generic"`, so a new strategy
+  cannot shadow an existing one — but if two `match` lists overlap, ordering becomes
+  load-bearing and must be called out in the PR.
+- [ ] 2.5 Unit-test resolution in `modules/fetch/services/fetch.service.test.ts`: (a) a real
+  Lyon 1 URL with `school: null` → 60; (b) `school: "univlyon1"` with an unrelated URL → 60;
+  (c) an unrelated URL with `school: null` → 30; (d) a deliberate **near-miss** URL (same
+  ADE-style shape, different host) → 30, guarding against an over-broad matcher.
 
-## 4. Lyon 1 strategy
+## 3. Schema — the planned next sync
 
-- [ ] 4.1 Create `modules/fetch/schools/univlyon1/univlyon1-strategy.ts`: a `SchoolStrategy`
-  with the confirmed `school` code, `match: [<confirmed host(s)>]`,
-  `minSyncIntervalMinutes: 60`, and nothing else — it inherits the default `IcalFetcher`,
-  the generic URL renamers, and no event pipes. Add a comment recording *why* (Lyon 1's
-  request) and *when*.
-- [ ] 4.2 Register it in `modules/fetch/schools/schools.ts`, keeping the list's alphabetical
-  order (`univlehavre`, `univlyon1`, `univorleans`, …).
-- [ ] 4.3 Sanity-check strategy ordering: `getStrategy` is a `.find()` over
-  `[genericStrategy, ...strategies]`, and `genericStrategy` only matches on
-  `school === "generic"`, so adding a strategy cannot shadow an existing one. Confirm no other
-  strategy's `match` also hits the Lyon 1 host (grep the `match` lists) — if one does, the
-  first match wins and the ordering becomes load-bearing, which must be called out.
+- [ ] 3.1 In `modules/calendar/models/calendar.entity.ts`, add
+  `@Column({ type: "timestamp", default: () => "now()" }) syncPlannedAt: Date`, documented as
+  "when this calendar may next be fetched upstream". Not nullable — a missing plan must read as
+  "due now", never "never due" (design Decision 3).
+- [ ] 3.2 Generate the migration with `npm run db:generate`, then hand-edit it to add, in
+  `up()` and in this order: the `ADD COLUMN`, the backfill
+  `UPDATE "calendar" SET "syncPlannedAt" = "lastUpdatedAt" + interval '30 minutes'`, and
+  `CREATE INDEX "IDX_calendar_syncPlannedAt" ON "calendar" ("syncPlannedAt")`. `down()` drops
+  the index then the column. **Hardcode `30` in the SQL** — do not import
+  `DEFAULT_MIN_SYNC_INTERVAL_MINUTES`; a migration is frozen history (design Decision 4).
+- [ ] 3.3 Verify the migration round-trips locally against the docker-compose Postgres:
+  `npm run db:migrate`, check `\d calendar` shows the column, the index, and a sane
+  `syncPlannedAt` on existing rows, then `npm run typeorm migration:revert` and confirm a clean
+  drop. Re-run `npm run db:generate` afterwards and confirm it produces **no** new migration
+  (entity and schema agree).
+- [ ] 3.4 In `modules/calendar/repositories/calendar.repository.ts`, rename
+  `findLastUpdatedBeforeWithContent` → `findDueForSyncWithContent`, its `lastUpdatedBefore`
+  param → `syncPlannedBefore` (filtering `syncPlannedAt: LessThan(...)`), and its ordering →
+  `{ syncPlannedAt: "ASC" }`. Rename the params type to match.
+- [ ] 3.5 Confirm `syncPlannedAt` did **not** leak into `CalendarForPublicDto` — it is
+  server-internal (`modules/calendar/models/dto/calendar-for-public.dto.ts` picks fields
+  explicitly, so this should be a no-op check, but the OpenAPI diff in 7.4 is the real gate).
 
-## 5. Sync layer — apply the per-calendar interval
+## 4. Sync layer — write the plan
 
-- [ ] 5.1 In `modules/calendar-sync/services/calendar-sync-all.service.ts`, inject
-  `FetchService` (no module change needed: `CalendarSyncModule` already imports `FetchModule`,
-  which exports it).
-- [ ] 5.2 Rewrite `findCalendarsToSync` to the two-stage form (design Decision 3): query with
-  `subMinutes(now, this.fetchService.minSyncIntervalFloorMinutes)`, then
-  `.filter(...)` on a private `isDueForSync(calendar, now)` that resolves the calendar's own
-  interval from `{ url, customData }` + `calendar.school?.code ?? null`. Take `now` **once**
-  per call and thread it through, instead of the current three separate `new Date()` calls.
-- [ ] 5.3 Delete `UPDATE_AFTER_MIN` from `modules/calendar-sync/calendar-sync.constants.ts`
+- [ ] 4.1 In `modules/calendar-sync/services/calendar-sync.service.ts`, in `sync()`, resolve
+  `const minSyncIntervalMinutes = this.fetchService.getMinSyncIntervalMinutes(source, code)`
+  next to the existing `code` resolution, and pass it to `saveCalendar`.
+- [ ] 4.2 In `saveCalendar`, take `now` once and write both fields in the existing final
+  update: `{ lastUpdatedAt: now, syncPlannedAt: addMinutes(now, minSyncIntervalMinutes) }`
+  (`addMinutes` from `date-fns`, already a dependency).
+- [ ] 4.3 Confirm the failure path is unchanged in shape: an existing calendar whose fetch
+  errored still reaches `saveCalendar`, so it still advances both timestamps and is not retried
+  before its interval. A *new* calendar whose fetch errored still throws before any write.
+
+## 5. Sync layer — read the plan
+
+- [ ] 5.1 In `modules/calendar-sync/services/calendar-sync-all.service.ts`, rewrite
+  `findCalendarsToSync` to call `findDueForSyncWithContent({ syncPlannedBefore: now, ... })`.
+  Take `now` **once** per call instead of the current two `new Date()` calls, and drop the now
+  unused `subMinutes` import.
+- [ ] 5.2 Delete `UPDATE_AFTER_MIN` from `modules/calendar-sync/calendar-sync.constants.ts`
   (its role is now `DEFAULT_MIN_SYNC_INTERVAL_MINUTES` in the fetch layer) and confirm no other
-  reference survives (`grep -rn UPDATE_AFTER_MIN server/src`). Leave `INACTIVITY_DAYS` and
-  `UPDATE_CONCURRENCY` untouched.
-- [ ] 5.4 Confirm both entry points are still covered: `syncAllForUser` and
-  `syncAllForCronJob` both go through `findCalendarsToSync`, and neither gains a bypass flag.
+  reference survives (`grep -rn UPDATE_AFTER_MIN server/src` — note
+  `scripts/seed-e2e-calendar.ts` references it in a comment, updated in 6.5). Leave
+  `INACTIVITY_DAYS` and `UPDATE_CONCURRENCY` untouched.
+- [ ] 5.3 Confirm `CalendarSyncAllService` gained **no** `FetchService` dependency — under this
+  design the selection side knows nothing about strategies (design Decision 2).
+- [ ] 5.4 Confirm both entry points are still covered: `syncAllForUser` and `syncAllForCronJob`
+  both go through `findCalendarsToSync`, and neither gains a bypass/force flag.
 
-## 6. Tests — the throttle is proven end to end
+## 6. Tests, factories and the E2E seed
 
-- [ ] 6.1 In `modules/calendar-sync/services/calendar-sync-all.service.test.ts`, resolve the
-  `FetchService` mock question from design Decision 7: prefer using the **real** `FetchService`
-  and mocking at the `IcalFetcher`/axios boundary so real strategy resolution is exercised;
-  fall back to extending the existing `{ fetchEvents }` mock with
-  `getMinSyncIntervalMinutes` + `minSyncIntervalFloorMinutes` if the suite's wiring makes the
-  real service awkward. Whichever route is taken, state it in the PR description.
-- [ ] 6.2 Add: a Lyon-1-URL calendar with `lastUpdatedAt = now - 45min` is **not** fetched by
-  `syncAllForUser` (assert `fetchEvents` not called for it **and** `lastUpdatedAt` unchanged),
-  while a generic calendar at `now - 45min` **is** — one test with both calendars is the
-  strongest form, since it also proves the floor query does not drop the generic one.
-- [ ] 6.3 Add: the same Lyon-1-URL calendar at `now - 65min` **is** fetched.
-- [ ] 6.4 Add the equivalent Lyon-1 assertion for `syncAllForCronJob`, so the dead-but-tested
-  path cannot regress when it is re-enabled.
-- [ ] 6.5 Fix the stale test name `"does not update a calendar updated less than 15 min ago"`
-  → 30 minutes (the constant has not been 15 for years), and use the new constant name in the
-  comment if one is referenced.
-- [ ] 6.6 Confirm `calendarFactory()` can build a calendar with an arbitrary `url` (check
-  `modules/calendar/factories/calendar.factory.ts`); if the URL is fixed by the factory, pass
-  it as an override rather than changing the factory's default.
+- [ ] 6.1 In `modules/calendar/factories/calendar.factory.ts`, add an explicit `syncPlannedAt`
+  default consistent with the existing `lastUpdatedAt: new Date()` (i.e. a calendar built by
+  the factory is *not* due): `addMinutes(new Date(), DEFAULT_MIN_SYNC_INTERVAL_MINUTES)`.
+- [ ] 6.2 Migrate every existing test that manipulated `lastUpdatedAt` to control sync
+  eligibility over to `syncPlannedAt` — deliberately, one by one, not with a blind
+  search-replace: `calendar-sync-all.service.test.ts` and `calendar.repository.test.ts` are the
+  two suites concerned. `lastUpdatedAt` assertions that are about *content freshness* stay.
+- [ ] 6.3 In `modules/calendar-sync/services/calendar-sync.service.test.ts`, prove the plan is
+  written: syncing a Lyon-1-URL calendar sets `syncPlannedAt ≈ lastUpdatedAt + 60min`; a
+  generic calendar gets `+ 30min`; a **failed** sync of an existing calendar still advances the
+  plan (the retry-throttling invariant from 4.3).
+- [ ] 6.4 In `modules/calendar-sync/services/calendar-sync-all.service.test.ts`: a calendar
+  with a future `syncPlannedAt` is not fetched, one with a past `syncPlannedAt` is, and
+  `syncAllForCronJob` behaves identically (that path goes live in a few weeks). Add the
+  **round-trip** test that is the real proof of this ticket: sync a Lyon-1-URL calendar, then
+  run `syncAllForUser` with the clock at +45 min → no second fetch; at +65 min → it fetches.
+  Prefer the **real** `FetchService` with mocking at the `IcalFetcher`/axios boundary over
+  extending the existing `{ fetchEvents }` mock, so real strategy resolution is exercised; if
+  the suite's wiring makes that awkward, extend the mock and say so in the PR description.
+- [ ] 6.5 Update `scripts/seed-e2e-calendar.ts`: it sets `lastUpdatedAt: now` precisely so
+  `/calendars/sync` does not make a real iCal call. Set a future `syncPlannedAt` as well and
+  rewrite the explanatory comment (it names `UPDATE_AFTER_MIN`, which no longer exists).
+  **Without this the E2E suite starts hitting the network** (design Risks).
+- [ ] 6.6 Fix the stale test name `"does not update a calendar updated less than 15 min ago"`
+  → the constant has not been 15 for years; name it after the planned-date behaviour now.
 
 ## 7. Verification
 
 - [ ] 7.1 `cd server && npm run lint` clean.
 - [ ] 7.2 `cd server && npx tsc --noEmit` clean.
-- [ ] 7.3 `cd server && npm test -- calendar-sync fetch` green (needs the docker-compose
-  Postgres; the DB-backed suite uses the parallel worker-isolated harness).
+- [ ] 7.3 `cd server && npm test -- calendar-sync fetch calendar.repository` green (needs the
+  docker-compose Postgres; the DB-backed suite uses the parallel worker-isolated harness).
 - [ ] 7.4 `cd server && npm run generate:openapi` → **no diff** in the committed spec (this
-  change touches no controller or DTO; a diff means something leaked into the API surface).
-- [ ] 7.5 Post-merge sanity, no new instrumentation needed: the existing
-  `calendarSyncMetricsService.calendarSyncCounter` already carries `school` and `domain`
-  labels, so fetch rate per Lyon 1 domain is readable from the Grafana stack — that is the
-  evidence to send back to Lyon 1.
+  change touches no controller or DTO; a diff means `syncPlannedAt` leaked into the API
+  surface).
+- [ ] 7.5 Migration round trip verified in 3.3 is re-confirmed on a clean database
+  (`npm run db:init` then `npm run db:migrate`).
+- [ ] 7.6 Post-merge sanity, no new instrumentation needed: `calendarSyncCounter` already
+  carries `school` and `domain` labels, so fetch rate per Lyon 1 domain is readable from
+  Grafana — that is the evidence to send back to Lyon 1. Direct spot check:
+  `SELECT "syncPlannedAt" - "lastUpdatedAt" FROM calendar WHERE url LIKE '%univ-lyon1.fr%'`
+  should read `01:00:00` for rows synced after the deploy.
 
 ## 8. Follow-ups to file (not part of this change)
 
-- [ ] 8.1 If the CEO answers Q2 with "aggregate rate cap", file a ticket for per-domain rate
-  limiting / per-strategy concurrency (design Decision 6).
-- [ ] 8.2 If the CEO wants the sync cron reconsidered (Q3), file a ticket to re-enable
-  `SyncCalendarsJob` with a load estimate — after this change lands.
-- [ ] 8.3 If the CEO wants us to identify ourselves upstream (Q5), file a ticket for a
-  descriptive `User-Agent` + contact URL on `IcalFetcher`, and for whether `withRetries: true`
-  (up to 15 attempts per sync) should be bounded by the same interval budget.
+- [ ] 8.1 Re-enabling `SyncCalendarsJob` at the start of the academic year (CEO's stated plan),
+  with a load estimate. This change leaves that path correct and indexes the predicate it
+  scans.

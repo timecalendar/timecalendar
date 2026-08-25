@@ -8,25 +8,31 @@ The interval SHALL be enforced server-side on every automatic sync entry point �
 user-triggered batch sync and the background job alike — and SHALL NOT be overridable by a
 client request.
 
-#### Scenario: A recently updated calendar is not re-fetched
+#### Scenario: A recently synced calendar is not re-fetched
 
-- **WHEN** `POST /calendars/sync` is called for a calendar whose `lastUpdatedAt` is more
-  recent than its minimum sync interval
+- **WHEN** `POST /calendars/sync` is called for a calendar whose last sync is more recent than
+  its minimum sync interval
 - **THEN** no request is made to the calendar's upstream source, and the calendar is still
   returned to the client with its last-known content and an unchanged `lastUpdatedAt`
 
 #### Scenario: An outdated calendar is re-fetched
 
-- **WHEN** `POST /calendars/sync` is called for a calendar whose `lastUpdatedAt` is older
-  than its minimum sync interval
-- **THEN** the upstream source is fetched, the stored content is replaced, and
-  `lastUpdatedAt` is set to now
+- **WHEN** `POST /calendars/sync` is called for a calendar whose last sync is older than its
+  minimum sync interval
+- **THEN** the upstream source is fetched, the stored content is replaced, `lastUpdatedAt` is
+  set to now, and the next sync is planned one interval later
 
 #### Scenario: The background job honours the same interval
 
 - **WHEN** the calendar sync job runs
 - **THEN** it selects calendars using the same per-calendar minimum sync interval as the
   user-triggered path, so no entry point can fetch a calendar sooner than its interval allows
+
+#### Scenario: A failed sync still consumes the interval
+
+- **WHEN** an existing calendar's upstream source fails to respond during a sync
+- **THEN** the calendar's next sync is planned one interval later, exactly as for a successful
+  sync, so a failing university is not retried on every client request
 
 ### Requirement: The minimum sync interval is configured per university
 
@@ -35,15 +41,15 @@ already resolves for a calendar — by the school code the user selected **or** 
 calendar URL — so that a university which asks us to reduce our request frequency is
 configured in exactly one place, alongside the rest of that university's fetch configuration.
 A strategy that does not declare an interval SHALL use the default interval of 30 minutes.
-The interval SHALL be declared in code (no database column, no migration, no runtime
-configuration).
+The interval value SHALL be declared in code: no database column holds the policy, and it is
+not runtime-configurable.
 
 #### Scenario: A university with a declared interval is throttled to it
 
 - **WHEN** a calendar resolves to a school strategy declaring a minimum sync interval of 60
-  minutes, and its `lastUpdatedAt` is 45 minutes old
-- **THEN** the calendar is not re-fetched, and it becomes eligible again once `lastUpdatedAt`
-  is older than 60 minutes
+  minutes, and it was last synced 45 minutes ago
+- **THEN** the calendar is not re-fetched, and it becomes eligible again 60 minutes after that
+  last sync
 
 #### Scenario: The university is recognised by URL as well as by school code
 
@@ -62,7 +68,8 @@ configuration).
 ### Requirement: Université Lyon 1 is capped at one upstream fetch per hour per calendar
 
 Calendars served by Université Lyon 1 SHALL declare a minimum sync interval of 60 minutes, at
-that university's request.
+that university's request. A calendar SHALL be recognised as Lyon 1's by its URL, so that the
+cap applies whether or not the user selected Lyon 1 as their school.
 
 #### Scenario: A Lyon 1 calendar resolves to a 60-minute interval
 
@@ -70,19 +77,42 @@ that university's request.
   Lyon 1 calendar URL, or whose selected school is Université Lyon 1
 - **THEN** the resolved interval is 60 minutes
 
-### Requirement: Selecting calendars to sync stays a single indexed query
+#### Scenario: A calendar from another university is unaffected
 
-Applying per-university intervals SHALL NOT turn calendar selection into a per-calendar
-database round trip. The server SHALL select candidates with one query bounded by the
-**smallest** interval any strategy declares, then discard candidates whose own interval has
-not yet elapsed.
+- **WHEN** the minimum sync interval is resolved for a calendar whose URL resembles a Lyon 1
+  URL but is served by a different host
+- **THEN** the resolved interval is the 30-minute default
 
-#### Scenario: The candidate query is a superset
+### Requirement: The next sync date is planned per calendar and stored
+
+Each calendar SHALL carry the date at which it may next be fetched upstream. That date SHALL
+be written when a sync completes, as the time of that sync plus the interval resolved for the
+calendar at that moment, and selection of calendars to sync SHALL be a single query on that
+stored date. Selection SHALL NOT resolve school strategies, and SHALL NOT load calendars it
+then discards.
+
+A calendar whose planned date is missing SHALL be treated as due immediately, so that a
+calendar can never become permanently ineligible for syncing.
+
+#### Scenario: Selection is one query on the planned date
 
 - **WHEN** calendars are selected for a sync
-- **THEN** the database query filters on the smallest interval declared by any strategy — so
-  no calendar that is due under its own interval can be excluded by the query — and the
-  per-calendar interval is applied to the rows already loaded, with no additional query
+- **THEN** exactly the calendars whose planned sync date has passed are loaded — subject to the
+  inactivity and token bounds — with no per-calendar strategy resolution and no additional
+  query
+
+#### Scenario: A newly created calendar is planned from its own university's interval
+
+- **WHEN** a calendar is created for a university declaring a 60-minute interval
+- **THEN** its upstream source is fetched immediately as part of creation, and its next sync is
+  planned 60 minutes later
+
+#### Scenario: An interval change takes effect from the next sync
+
+- **WHEN** a university's declared interval changes and a calendar already has a planned sync
+  date computed from the previous interval
+- **THEN** that pending date is honoured as-is, and the new interval applies from that
+  calendar's next completed sync onwards
 
 ### Requirement: Creating a calendar is not throttled
 
