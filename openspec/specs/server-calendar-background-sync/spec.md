@@ -4,7 +4,7 @@
 TBD - created by archiving change refactor-server-queue. Update Purpose after archive.
 ## Requirements
 ### Requirement: Fan-out cron enqueues one job per due calendar
-The server SHALL run a `sync_calendars_fanout` cron job every 5 minutes on the `sync` queue that selects due calendars (last updated more than 30 minutes ago, accessed within the inactivity window) as an IDs-only projection and enqueues one `sync_calendar { calendarId }` job per calendar via `addBulk`.
+The server SHALL run a `sync_calendars_fanout` cron job every 5 minutes on the `sync` queue that selects due calendars (planned sync date already in the past, accessed within the inactivity window) as an IDs-only projection and enqueues one `sync_calendar { calendarId }` job per calendar via `addBulk`.
 
 #### Scenario: Due calendars are enqueued
 - **WHEN** the fan-out cron runs and calendars are due for sync
