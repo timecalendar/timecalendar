@@ -69,4 +69,3 @@ release.
    recommended.
 
 Follow-up: [TIM-187](/TIM/issues/TIM-187).
-

@@ -76,4 +76,3 @@ Production is in a high-risk rentrée state:
   the behavior exists, not its complete frequency distribution.
 - Live-feed results are deliberately summarized without source URLs. Rechecking every
   school was avoided to limit upstream load during rentrée.
-

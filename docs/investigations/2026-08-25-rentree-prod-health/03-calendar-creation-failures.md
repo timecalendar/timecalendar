@@ -101,4 +101,3 @@ general cause.
    evidence with schools; never disable TLS verification or bypass authentication.
 
 Follow-ups: [TIM-189](/TIM/issues/TIM-189) and [TIM-190](/TIM/issues/TIM-190).
-

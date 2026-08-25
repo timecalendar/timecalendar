@@ -88,4 +88,3 @@ inside the restart fix.
    noise but are not substitutes for sync-path profiling.
 
 Follow-ups: [TIM-188](/TIM/issues/TIM-188) and [TIM-194](/TIM/issues/TIM-194).
-
