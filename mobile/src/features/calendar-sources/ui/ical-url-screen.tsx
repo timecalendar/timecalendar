@@ -10,6 +10,7 @@ import {
   useAddCalendar,
   validateIcalUrl,
 } from "@/features/calendar-sources/data"
+import { useSchools, useSelectedSchool } from "@/features/school-selection"
 import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
@@ -38,8 +39,24 @@ export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const { addCalendarFromUrl, isPending, isError, reset } = useAddCalendar()
+  const selection = useSelectedSchool()
+  const { schools } = useSchools()
   const [url, setUrl] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
+  const selectedSchoolName = schools.find(
+    (school) => school.id === selection?.schoolId,
+  )?.name
+
+  const report = () => {
+    router.push({
+      pathname: "/feedback",
+      params: {
+        calendarUrl: url.trim(),
+        ...(selection?.schoolId ? { schoolId: selection.schoolId } : {}),
+        ...(selectedSchoolName ? { schoolName: selectedSchoolName } : {}),
+      },
+    })
+  }
 
   const submit = () => {
     const validationKey = validateIcalUrl(url)
@@ -165,6 +182,25 @@ export default function IcalUrlScreen() {
             >
               <ThemedText type="smallBold">
                 {t("calendarSources.icalUrl.retry")}
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              testID="ical-url-report"
+              accessibilityRole="link"
+              accessibilityLabel={t("calendarSources.icalUrl.report")}
+              accessibilityHint={t("calendarSources.icalUrl.reportHint")}
+              hitSlop={Spacing.two}
+              onPress={report}
+              style={[
+                styles.cta,
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.primary,
+                },
+              ]}
+            >
+              <ThemedText type="smallBold">
+                {t("calendarSources.icalUrl.report")}
               </ThemedText>
             </Pressable>
           </View>

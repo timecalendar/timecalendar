@@ -11,6 +11,7 @@ code and product specifications.
 | `school-selection` | School/group queries, search, and selected identities | TanStack Query plus `@/storage` |
 | `onboarding` | Localized welcome → agenda → notifications carousel and source-selection flow | Presentation-only; native pager composes school and calendar-source features |
 | `calendar-sources` | QR/iCal import and user-calendar management | `expo-camera`, generated API, `user_calendars` table |
+| `feedback` | Validated suggestions and recorded iCal-failure reports | `@/storage` for the last valid e-mail, `@/firebase` for body-free failures, generated contact API |
 | `calendar` | Day/week grid, agenda, sync, event details, and routing | Renderer-neutral timeline facade with an isolated calendar-kit adapter, generated sync API, `calendar_events` table |
 | `hidden-events` | Hide and restore synced events | One validated `@/storage` value; filtering occurs at the calendar event-source seam |
 | `event-checklist` | Checklist CRUD and ordering for either event kind | `checklist_items` table |
@@ -27,6 +28,9 @@ code and product specifications.
   continue to the edit form; synced events remain read-only.
 - User-calendar rows contain server calendar IDs and durable source tokens. Notification
   registration sends server IDs, not tokens.
+- Feedback sends every held calendar's server ID. Calendar sources may open Feedback
+  after a recorded iCal import failure with only the attempted URL and available
+  selected-school ID/name; local invalid-URL errors never offer reporting.
 - Notification receipt always requests a calendar sync. Only notification taps navigate.
 - Local preference parsers are total: absent, corrupt, or legacy values return safe
   defaults instead of throwing.
