@@ -1,5 +1,4 @@
 import { Injectable } from "@nestjs/common"
-import { calendarsDueBefore } from "modules/calendar-sync/calendar-sync.constants"
 import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
@@ -14,11 +13,10 @@ export class CalendarSyncAllService {
   ) {}
 
   async syncAllForUser({ tokens }: SyncCalendarsDto) {
-    const calendars =
-      await this.calendarRepository.findLastUpdatedBeforeWithContent({
-        lastUpdatedBefore: calendarsDueBefore(),
-        filterByTokens: tokens,
-      })
+    const calendars = await this.calendarRepository.findDueForSyncWithContent({
+      syncPlannedBefore: new Date(),
+      filterByTokens: tokens,
+    })
     await Promise.all(
       calendars.map((calendar) =>
         this.calendarSyncService.sync(calendar).catch(() => {

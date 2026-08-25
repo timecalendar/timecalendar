@@ -10,13 +10,13 @@ import {
 } from "typeorm"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 
-type FindLastUpdatedBeforeWithContentParams = {
-  lastUpdatedBefore: Date
+type FindDueForSyncWithContentParams = {
+  syncPlannedBefore: Date
   filterByTokens?: string[]
 }
 
 type FindDueCalendarIdsParams = {
-  lastUpdatedBefore: Date
+  syncPlannedBefore: Date
   lastAccessedAtAfter: Date
 }
 
@@ -43,16 +43,16 @@ export class CalendarRepository {
   // IDs-only projection: the fan-out cron runs against the full calendar table
   // every 5 minutes and must not hydrate content relations (design D2).
   async findDueCalendarIds({
-    lastUpdatedBefore,
+    syncPlannedBefore,
     lastAccessedAtAfter,
   }: FindDueCalendarIdsParams): Promise<string[]> {
     const calendars = await this.repository.find({
       select: { id: true },
       where: {
-        lastUpdatedAt: LessThan(lastUpdatedBefore),
+        syncPlannedAt: LessThan(syncPlannedBefore),
         lastAccessedAt: MoreThan(lastAccessedAtAfter),
       },
-      order: { lastUpdatedAt: "ASC" },
+      order: { syncPlannedAt: "ASC" },
     })
     return calendars.map(({ id }) => id)
   }
@@ -82,17 +82,17 @@ export class CalendarRepository {
     return this.repository.save(calendar)
   }
 
-  findLastUpdatedBeforeWithContent({
-    lastUpdatedBefore,
+  findDueForSyncWithContent({
+    syncPlannedBefore,
     filterByTokens,
-  }: FindLastUpdatedBeforeWithContentParams) {
+  }: FindDueForSyncWithContentParams) {
     return this.repository.find({
       relations: { school: true, content: true },
       where: {
-        lastUpdatedAt: LessThan(lastUpdatedBefore),
+        syncPlannedAt: LessThan(syncPlannedBefore),
         ...(filterByTokens && { token: In(filterByTokens) }),
       },
-      order: { lastUpdatedAt: "ASC" },
+      order: { syncPlannedAt: "ASC" },
     })
   }
 

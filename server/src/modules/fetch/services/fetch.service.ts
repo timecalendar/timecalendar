@@ -24,6 +24,12 @@ export class FetchService {
     school: string | null,
     schoolStrategy: SchoolStrategy | undefined,
   ) {
+    // Note the fallback on the second line: a calendar that matched no strategy
+    // runs through *every* strategy's renamers. Registering a strategy for a
+    // school therefore turns those off for it — see univlyon1-strategy.ts, where
+    // that was a real behaviour change. Note too that genericStrategy is applied
+    // twice in that branch (explicitly, and again as this.strategies[0]); that
+    // is a no-op only because nbWeeksRenamer and webcalRenamer are idempotent.
     const strategiesUsedToTransformUrl: SchoolStrategy[] = [
       schoolStrategy?.options?.inheritGenericUrlRenamers !== false
         ? genericStrategy
@@ -35,6 +41,18 @@ export class FetchService {
       (acc, strategy) => strategy.transformUrl(acc, school),
       url,
     )
+  }
+
+  /**
+   * Minimum number of minutes between two upstream fetches of this calendar,
+   * as declared by the strategy the calendar resolves to.
+   */
+  getMinSyncIntervalMinutes(
+    calendarSource: CalendarSource,
+    school: string | null,
+  ) {
+    const strategy = this.getStrategy(school, calendarSource) ?? genericStrategy
+    return strategy.options.minSyncIntervalMinutes
   }
 
   async fetchEvents(

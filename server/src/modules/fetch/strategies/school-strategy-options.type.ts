@@ -42,4 +42,11 @@ export interface SchoolStrategyOptions {
    * Transformers to apply to the events.
    */
   eventPipes: EventTransformPipe[]
+
+  /**
+   * Minimum number of minutes between two upstream fetches of the same calendar.
+   * Some universities ask us to limit how often we hit their servers: raise it
+   * for them. Defaults to DEFAULT_MIN_SYNC_INTERVAL_MINUTES.
+   */
+  minSyncIntervalMinutes: number
 }

@@ -18,6 +18,7 @@ import {
   FetcherCalendarEvent,
 } from "modules/fetch/models/event.model"
 import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
+import schoolStrategies from "modules/fetch/schools/schools"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
@@ -211,6 +212,86 @@ describe("FetchService", () => {
           {},
         )
       })
+    })
+  })
+
+  describe("getMinSyncIntervalMinutes", () => {
+    // The real strategy list: this is what proves Lyon 1 is recognised.
+    const service = new FetchService(schoolStrategies)
+    const lyon1Url =
+      "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical"
+
+    const resolve = (url: string, school: string | null) =>
+      service.getMinSyncIntervalMinutes({ url, customData: null }, school)
+
+    it("returns 60 minutes for a Lyon 1 url", () => {
+      expect(resolve(lyon1Url, null)).toBe(60)
+    })
+
+    it("returns 60 minutes for the Lyon 1 school code", () => {
+      expect(resolve("https://calendar.example.com/ical", "univlyon1")).toBe(60)
+    })
+
+    it("returns the default for another calendar", () => {
+      expect(resolve("https://calendar.example.com/ical", null)).toBe(30)
+    })
+
+    it("returns the default for a url that only resembles a Lyon 1 one", () => {
+      expect(
+        resolve(lyon1Url.replace("univ-lyon1.fr", "univ-lyon2.fr"), null),
+      ).toBe(30)
+    })
+
+    it("over-matches a suffix-planted host, which is the safe direction", () => {
+      // `match` is a substring test for every strategy in the repo, not just
+      // this one, so a host that merely contains the domain resolves to Lyon 1.
+      // Left as-is deliberately: the only consequence is syncing that host less
+      // often. Under-matching would be the dangerous direction, because it is
+      // what would break the once-per-hour promise we made to Lyon 1.
+      expect(
+        resolve(
+          lyon1Url.replace("univ-lyon1.fr", "univ-lyon1.fr.example.com"),
+          null,
+        ),
+      ).toBe(60)
+    })
+  })
+
+  describe("url transformation with the real strategy list", () => {
+    // Registering univlyon1 took Lyon 1 urls out of transformUrl's
+    // "matched nothing -> apply every strategy's renamers" fallback. These two
+    // pin the consequence, which is otherwise invisible: `projectId` is now
+    // left as the user's export url carries it, instead of being rewritten to
+    // univstetienne's id 3.
+    const service = new FetchService(schoolStrategies)
+    const adeUrl = (host: string) =>
+      `https://adelb.${host}/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=-1&calType=ical&nbWeeks=4`
+
+    const fetchWith = async (host: string) => {
+      icalFetcher.fetch.mockImplementationOnce(() =>
+        Promise.resolve([fetcherCalendarEventFactory.build()]),
+      )
+      await service.fetchEvents({ url: adeUrl(host), customData: null }, null)
+    }
+
+    it("keeps a Lyon 1 url's own projectId", async () => {
+      await fetchWith("univ-lyon1.fr")
+
+      expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining("&projectId=-1&"),
+        {},
+      )
+    })
+
+    it("still rewrites projectId for a url matching no strategy", async () => {
+      // The pre-existing fallback, unchanged by this strategy — kept here so
+      // whoever adds the next strategy sees what registering one turns off.
+      await fetchWith("unknown-school.example.com")
+
+      expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
+        expect.stringContaining("&projectId=3&"),
+        {},
+      )
     })
   })
 })

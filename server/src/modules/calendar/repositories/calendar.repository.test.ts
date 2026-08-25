@@ -59,15 +59,15 @@ describe("CalendarRepository", () => {
     })
   })
 
-  describe("findLastUpdatedBeforeWithContent", () => {
-    it("finds calendars updated before a date", async () => {
+  describe("findDueForSyncWithContent", () => {
+    it("finds calendars planned before a date", async () => {
       await calendarFactory().create()
       const expected = await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
-      const calendars = await repository.findLastUpdatedBeforeWithContent({
-        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+      const calendars = await repository.findDueForSyncWithContent({
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
       })
 
       expect(calendars.length).toBe(1)
@@ -75,29 +75,44 @@ describe("CalendarRepository", () => {
       expect(calendars[0].content.events.length).toBe(0)
     })
 
-    it("does not find calendars updated after the date", async () => {
+    it("does not find calendars planned after the date", async () => {
       await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:30:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
       })
 
-      const calendars = await repository.findLastUpdatedBeforeWithContent({
-        lastUpdatedBefore: new Date("2022-01-05T11:00:00Z"),
+      const calendars = await repository.findDueForSyncWithContent({
+        syncPlannedBefore: new Date("2022-01-05T11:00:00Z"),
       })
 
       expect(calendars.length).toBe(0)
     })
 
+    it("returns the calendars planned first", async () => {
+      const second = await calendarFactory().create({
+        syncPlannedAt: new Date("2022-01-05T11:20:00Z"),
+      })
+      const first = await calendarFactory().create({
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      const calendars = await repository.findDueForSyncWithContent({
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
+      })
+
+      expect(calendars.map(({ id }) => id)).toEqual([first.id, second.id])
+    })
+
     it("finds calendars by token", async () => {
       await calendarFactory().create()
       await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       })
       const expected = await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
-      const calendars = await repository.findLastUpdatedBeforeWithContent({
-        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+      const calendars = await repository.findDueForSyncWithContent({
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
         filterByTokens: [expected.token],
       })
 
@@ -107,28 +122,28 @@ describe("CalendarRepository", () => {
   })
 
   describe("findDueCalendarIds", () => {
-    it("returns ids of calendars updated before the due date and accessed recently", async () => {
+    it("returns ids of calendars planned before the due date and accessed recently", async () => {
       const expected = await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
         lastAccessedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
       const calendarIds = await repository.findDueCalendarIds({
-        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
         lastAccessedAtAfter: new Date("2022-01-01T00:00:00Z"),
       })
 
       expect(calendarIds).toEqual([expected.id])
     })
 
-    it("skips calendars updated after the due date", async () => {
+    it("skips calendars planned after the due date", async () => {
       await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:30:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
         lastAccessedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
       const calendarIds = await repository.findDueCalendarIds({
-        lastUpdatedBefore: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedBefore: new Date("2022-01-05T11:00:00Z"),
         lastAccessedAtAfter: new Date("2022-01-01T00:00:00Z"),
       })
 
@@ -137,12 +152,12 @@ describe("CalendarRepository", () => {
 
     it("skips calendars last accessed before the inactivity threshold", async () => {
       await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
         lastAccessedAt: new Date("2022-01-01T00:00:00Z"),
       })
 
       const calendarIds = await repository.findDueCalendarIds({
-        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
         lastAccessedAtAfter: new Date("2022-01-05T11:00:00Z"),
       })
 
@@ -151,16 +166,32 @@ describe("CalendarRepository", () => {
 
     it("skips calendars without a last accessed date", async () => {
       await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
         lastAccessedAt: null,
       })
 
       const calendarIds = await repository.findDueCalendarIds({
-        lastUpdatedBefore: new Date("2022-01-05T11:30:00Z"),
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
         lastAccessedAtAfter: new Date("2022-01-05T11:00:00Z"),
       })
 
       expect(calendarIds).toEqual([])
+    })
+
+    it("returns the calendars planned first", async () => {
+      const second = await calendarFactory().create({
+        syncPlannedAt: new Date("2022-01-05T11:20:00Z"),
+      })
+      const first = await calendarFactory().create({
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      const calendarIds = await repository.findDueCalendarIds({
+        syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
+        lastAccessedAtAfter: new Date("2022-01-01T00:00:00Z"),
+      })
+
+      expect(calendarIds).toEqual([first.id, second.id])
     })
   })
 

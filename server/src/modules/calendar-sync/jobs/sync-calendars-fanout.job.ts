@@ -5,10 +5,7 @@ import {
 } from "@lyrolab/nest-shared/queue"
 import { Injectable } from "@nestjs/common"
 import { SYNC_QUEUE } from "config/queues"
-import {
-  calendarsActiveSince,
-  calendarsDueBefore,
-} from "modules/calendar-sync/calendar-sync.constants"
+import { calendarsActiveSince } from "modules/calendar-sync/calendar-sync.constants"
 import {
   SYNC_CALENDAR_JOB,
   syncCalendarJobOptions,
@@ -30,8 +27,11 @@ export class SyncCalendarsFanoutJob implements JobProcessorInterface {
   ) {}
 
   async process() {
+    // Dueness is the calendar's own plan, not a global delay: each sync writes
+    // `syncPlannedAt = now + the school's minSyncIntervalMinutes`, so a school
+    // that asks for a longer interval is simply not selected before then.
     const calendarIds = await this.calendarRepository.findDueCalendarIds({
-      lastUpdatedBefore: calendarsDueBefore(),
+      syncPlannedBefore: new Date(),
       lastAccessedAtAfter: calendarsActiveSince(),
     })
 
