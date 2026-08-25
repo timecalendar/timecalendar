@@ -18,6 +18,23 @@ Artifacts are **forced by distribution**: `preview` is `distribution: "internal"
 
 In `app.config.ts`. An `eas update` JS bundle is delivered **only** to a build whose native runtime fingerprint matches; any native-affecting change (new config plugin, a dep with native code, an SDK bump) changes the fingerprint and **forces a fresh native build** instead of a silently-incompatible OTA. This is the intended safety property — **an expected OTA that "doesn't apply" usually means the change touched native config**, not a bug. Chosen over `appVersion` (a plugin change without a version bump could ship an incompatible OTA) and manual `nativeVersion` (more bookkeeping, no better safety). Load-bearing for a skeleton that churns native config feature-by-feature → ADR [006](./decisions/006-eas-distribution.md).
 
+## Self-hosted OTA and silent application
+
+ADR [036](./decisions/036-self-hosted-ota-runtime.md) ratifies self-hosted xprem with Cloudflare
+R2 assets, the existing production Postgres service as its control plane, and signed updates.
+ClickHouse is deliberately omitted because Crashlytics remains the client observability system.
+The concrete endpoint, signing material, xprem identifiers, and publishing automation are deferred.
+
+`updates.fallbackToCacheTimeout: 0` keeps cold launch non-blocking: the cached or embedded bundle
+starts immediately while Expo checks and downloads in the background. `OtaUpdateRuntime`, the
+single owned `src/updates/` boundary, never displays progress or prompts. A downloaded compatible
+bundle remains pending until the app has genuinely entered `background` and later becomes
+`active`; it then makes one silent `reloadAsync()` attempt per JavaScript runtime. A rejected
+attempt is recorded and left for a later cold launch rather than retried into a loop.
+
+Channel promotion and progressive rollout remain operator actions in xprem; declarative
+reconciliation must not overwrite incident-time rollback decisions. See ADR 036 for the rule.
+
 ## Channels mapped to profiles
 
 Two channels: `preview` (internal dogfood) and `production` (store). `eas update --channel <name>` reaches only installed builds on the matching channel. Channel names mirror profile names (the EAS convention) so the command is unambiguous.

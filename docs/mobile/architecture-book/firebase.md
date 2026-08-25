@@ -25,6 +25,19 @@ Crash reporting + analytics. These are the load-bearing rules and the caveats to
 - **Feature write hooks use `useRecordedAction(scope)` (`@/hooks/use-recorded-action`), not a hand-rolled try/catch.** It is the shared write controller returning `{ run, failed }`: `run(action, write)` records a throw through `recordUnknownError` under `` `${scope}/${action}` `` (empty `scope` → the bare `action` as a full literal context) **and** flips an accessible `failed` flag (ADR [024](./decisions/024-event-checklist-storage-and-surfacing.md) / D6). `run` returns a `boolean` for a sync write (so a synchronous action interface like `HideActions` stays synchronous) and a `Promise<boolean>` for an async one. A new write-capable feature gets the record-on-throw + a11y-failable contract for free — do not re-derive it. Context tags in use: `hidden-events/<action>`, `event-checklist/<action>`, `personal-events/<action>`, `calendar-sources/<action>`, `notifications/subscription`, `notifications/tap-routing`, and — Phase 07, `add-mobile-user-calendars` — `user-calendars/<action>` (`setVisible`/`remove`, the async repo writes over `@/db`).
 - **Crashlytics/Analytics need no `import "@/firebase"` in `_layout.tsx`.** RNFirebase **auto-initializes** the native default app from the bundled config files and **auto-installs the global JS exception handler** — so unhandled JS errors reach Crashlytics for free and there is nothing to run at startup for *those* surfaces. **Messaging is the exception** (ADR [026](./decisions/026-fcm-messaging-seam.md)): its background handler is a JS registration that *must* run early, so the seam **is** now a side-effect `import "@/firebase"` in `_layout.tsx` (mirroring i18n) — see **Cloud Messaging** below. Do not "fix" that import out.
 
+## OTA bundle identity
+
+ADR [036](./decisions/036-self-hosted-ota-runtime.md) adds bundle identity through the same owned
+seam. `src/updates/` calls the lazy `setCrashlyticsAttributes` helper once per JavaScript runtime;
+runtime and layout code never import RNFirebase directly. The string keys are `otaUpdateId`,
+`otaChannel`, `otaRuntimeVersion`, `otaCreatedAt`, and `otaIsEmbedded`.
+
+Missing development or embedded values resolve deterministically to `"embedded"` for the update
+id and `""` for channel, runtime version, and creation time. A present creation time is ISO-8601,
+and the embedded flag is `String(isEmbeddedLaunch)`. Attribute and reload failures use only the
+constant contexts `ota/attributes` and `ota/reload`; no manifest, URL, user, calendar, event, or
+schedule data is attached.
+
 ## Cloud Messaging
 
 FCM push **receive** behind the same seam (Phase 06 Ship A, ADR [026](./decisions/026-fcm-messaging-seam.md); parity with the Flutter `notification.dart`). Receive only — token→backend registration, prefs UI, tap-routing, and local reminders are later ships.

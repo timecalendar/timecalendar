@@ -1,5 +1,15 @@
 # Architecture Book changelog
 
+## 2026-08-25
+
+- Ratified signed, self-hosted xprem OTA delivery with Cloudflare R2 assets, the existing
+  production Postgres control plane without ClickHouse, fingerprint runtime compatibility,
+  deliberately imperative channel/rollout controls, non-blocking launch, silent one-attempt
+  foreground-boundary application, and five bundle-identity Crashlytics keys (ADR 036,
+  eas.md, firebase.md).
+- Reconciled `architecture.md` so this file is the canonical Architecture Book rule-change log,
+  while Git retains implementation history and detailed diffs.
+
 ## 2026-08-08
 
 - Added the curated display-timezone preference (`settings.timezonePreference`,

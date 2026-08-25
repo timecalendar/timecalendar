@@ -17,9 +17,9 @@
 
 ## 4. Architecture Book and human verification handoff
 
-- [ ] 4.1 Add and index ADR 036 with the ratified xprem + Cloudflare R2, existing production Postgres control plane/no ClickHouse, signed-update, fingerprint-compatibility, and silent foreground-apply decisions; include exactly “channel pointers and rollout percentages are imperative, deliberately.” and label endpoint/signing/deployment inputs as deferred
-- [ ] 4.2 Update `docs/mobile/architecture-book/eas.md` and `firebase.md` with the current OTA runtime/Crashlytics contracts, reconcile `architecture.md` so `CHANGELOG.md` is the canonical rule-change log while Git retains implementation history, and append this dated rule change to the existing `CHANGELOG.md`; do not create `architecture-changelog.md`, and update `runtime.md` only if its baseline contract actually changed
-- [ ] 4.3 Add a `docs/react-native-migration/inbox/` note tagged `(HUMAN: ...)` for real-device proof after endpoint/signing work: background download, no foreground interruption, one reload after return, embedded/downloaded Crashlytics keys, and both platforms/release configuration; record it as deferred, never a blocker
+- [x] 4.1 Add and index ADR 036 with the ratified xprem + Cloudflare R2, existing production Postgres control plane/no ClickHouse, signed-update, fingerprint-compatibility, and silent foreground-apply decisions; include exactly “channel pointers and rollout percentages are imperative, deliberately.” and label endpoint/signing/deployment inputs as deferred
+- [x] 4.2 Update `docs/mobile/architecture-book/eas.md` and `firebase.md` with the current OTA runtime/Crashlytics contracts, reconcile `architecture.md` so `CHANGELOG.md` is the canonical rule-change log while Git retains implementation history, and append this dated rule change to the existing `CHANGELOG.md`; do not create `architecture-changelog.md`, and update `runtime.md` only if its baseline contract actually changed
+- [x] 4.3 Add a `docs/react-native-migration/inbox/` note tagged `(HUMAN: ...)` for real-device proof after endpoint/signing work: background download, no foreground interruption, one reload after return, embedded/downloaded Crashlytics keys, and both platforms/release configuration; record it as deferred, never a blocker
 
 ## 5. Local-green and proposal compliance
 
