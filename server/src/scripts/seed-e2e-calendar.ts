@@ -1,3 +1,4 @@
+import { addDays } from "date-fns"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
@@ -53,10 +54,10 @@ export const E2E_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000001"
  * the device's local-time `isToday` could disagree with this UTC "today" — a
  * known local-run edge, not a CI flake.
  *
- * `lastUpdatedAt` is set to "now" on purpose: `CalendarSyncAllService` only
- * re-fetches a calendar whose `lastUpdatedAt` is older than `UPDATE_AFTER_MIN`,
- * so a fresh timestamp keeps `/calendars/sync` from making an external iCal
- * call — it just returns this seeded `CalendarContent`.
+ * `syncPlannedAt` is set well into the future on purpose: `CalendarSyncAllService`
+ * only re-fetches a calendar whose planned sync date has passed, so a future
+ * plan keeps `/calendars/sync` from making an external iCal call — it just
+ * returns this seeded `CalendarContent`.
  */
 export const seedE2eCalendar = async (dataSource: DataSource) => {
   const calendarRepository = dataSource.getRepository(Calendar)
@@ -213,6 +214,7 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
     customData: null,
     school: school ?? undefined,
     lastUpdatedAt: now,
+    syncPlannedAt: addDays(now, 1),
     lastAccessedAt: now,
   })
 

@@ -1,3 +1,4 @@
+import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
 import {
   CalendarCustomData,
@@ -13,6 +14,7 @@ const defaultOptions: SchoolStrategyOptions = {
   inheritGenericUrlRenamers: true,
   fetcher: new IcalFetcher(),
   eventPipes: [],
+  minSyncIntervalMinutes: DEFAULT_MIN_SYNC_INTERVAL_MINUTES,
 }
 
 export class SchoolStrategy {

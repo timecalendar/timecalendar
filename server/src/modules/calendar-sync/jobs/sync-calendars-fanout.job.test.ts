@@ -39,7 +39,7 @@ describe("SyncCalendarsFanoutJob", () => {
 
   it("enqueues one sync_calendar job per due calendar with dedup + retry options", async () => {
     const due = await calendarFactory().create({
-      lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+      syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       lastAccessedAt: new Date("2022-01-05T10:00:00Z"),
     })
 
@@ -61,9 +61,9 @@ describe("SyncCalendarsFanoutJob", () => {
     ])
   })
 
-  it("skips calendars updated within the due window", async () => {
+  it("skips calendars whose next sync is planned later", async () => {
     await calendarFactory().create({
-      lastUpdatedAt: new Date("2022-01-05T11:50:00Z"),
+      syncPlannedAt: new Date("2022-01-05T12:20:00Z"),
       lastAccessedAt: new Date("2022-01-05T10:00:00Z"),
     })
 
@@ -74,7 +74,7 @@ describe("SyncCalendarsFanoutJob", () => {
 
   it("skips calendars inactive for more than the inactivity window", async () => {
     await calendarFactory().create({
-      lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+      syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       lastAccessedAt: new Date("2021-12-21T11:00:00Z"),
     })
 

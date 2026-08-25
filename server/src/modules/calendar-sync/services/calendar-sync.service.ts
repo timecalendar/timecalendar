@@ -1,4 +1,5 @@
 import { Injectable, UnprocessableEntityException } from "@nestjs/common"
+import { addMinutes } from "date-fns"
 import { DetectCalendarChangeService } from "modules/calendar-log/services/detect-calendar-change.service"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
@@ -8,6 +9,7 @@ import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
+import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { CalendarSource } from "modules/fetch/models/calendar-source"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
@@ -37,6 +39,11 @@ export class CalendarSyncService {
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
     const { url, schoolId, schoolName, customData, name } = body
 
+    // Both timestamps are placeholders overwritten by `saveCalendar` at the end
+    // of this same sync. `syncPlannedAt` has to be one of them: without it the
+    // insert takes the column's `now()` default and the row is briefly due,
+    // which would let a concurrent request fetch a brand-new calendar twice.
+    const now = new Date()
     const calendar = await this.sync({
       token: nanoid(),
       school: schoolId ? idToEntity(schoolId) : undefined,
@@ -44,7 +51,8 @@ export class CalendarSyncService {
       url,
       customData,
       name,
-      lastUpdatedAt: new Date(),
+      lastUpdatedAt: now,
+      syncPlannedAt: addMinutes(now, DEFAULT_MIN_SYNC_INTERVAL_MINUTES),
     })
 
     return { token: calendar.token }
@@ -54,6 +62,10 @@ export class CalendarSyncService {
     const { id, url, customData, school } = calendar
     const source = { url, customData }
     const code = await this.findSchoolCode(school?.id)
+    const minSyncIntervalMinutes = this.fetchService.getMinSyncIntervalMinutes(
+      source,
+      code,
+    )
     const fetchedEvents = await this.fetchEvents(source, code)
 
     const isError = "error" in fetchedEvents
@@ -91,6 +103,7 @@ export class CalendarSyncService {
     const savedCalendar = await this.saveCalendar(
       calendar,
       fetchedEvents.events,
+      minSyncIntervalMinutes,
     )
     if (isError) throw fetchedEvents.error
 
@@ -100,6 +113,7 @@ export class CalendarSyncService {
   private async saveCalendar(
     calendar: CalendarForSync,
     events: CalendarEvent[] | undefined,
+    minSyncIntervalMinutes: number,
   ) {
     let { id: calendarId } = calendar
     const isUpdate = !!calendarId
@@ -131,8 +145,12 @@ export class CalendarSyncService {
       await this.subjectService.syncEventSubjects(calendarId, events)
     }
 
+    // Also written when the fetch failed: a university that is down must not be
+    // retried on every client request.
+    const now = new Date()
     await this.calendarRepository.update(calendarId, {
-      lastUpdatedAt: new Date(),
+      lastUpdatedAt: now,
+      syncPlannedAt: addMinutes(now, minSyncIntervalMinutes),
     })
 
     return this.calendarRepository.findOne(calendarId)

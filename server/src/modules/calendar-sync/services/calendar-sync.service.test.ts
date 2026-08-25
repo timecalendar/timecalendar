@@ -1,5 +1,20 @@
+// The real FetchService is used here — mocking at the fetcher boundary keeps
+// strategy resolution (and therefore the resolved sync interval) real.
+const icalFetcher: {
+  fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
+} = {
+  fetch: jest.fn(() => Promise.resolve([])),
+}
+
+jest.mock("modules/fetch/fetchers/ical-fetcher", () => ({
+  IcalFetcher: jest
+    .fn()
+    .mockImplementation(() => ({ fetch: icalFetcher.fetch })),
+}))
+
 import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
+import { differenceInMinutes } from "date-fns"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
@@ -9,7 +24,6 @@ import { CalendarContent } from "modules/calendar/models/calendar-content.entity
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
-import { FetchService } from "modules/fetch/services/fetch.service"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 import { CalendarSubject } from "modules/subject/models/calendar-subject.entity"
@@ -23,22 +37,16 @@ describe("CalendarSyncService", () => {
   let service: CalendarSyncService
   let dataSource: DataSource
   let events: FetcherCalendarEvent[]
-  const mockFetchService = {
-    fetchEvents: jest.fn(),
-  }
 
   beforeAll(async () => {
-    app = await createTestApp(
-      { imports: [CalendarSyncModule] },
-      { overrides: [{ provide: FetchService, useValue: mockFetchService }] },
-    )
+    app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
   })
 
   beforeEach(async () => {
     events = [fetcherCalendarEventFactory.build()]
-    mockFetchService.fetchEvents = jest.fn(async () => events)
+    icalFetcher.fetch.mockImplementation(async () => events)
     await dataSource.query("DELETE FROM calendar_log")
   })
 
@@ -206,7 +214,7 @@ describe("CalendarSyncService", () => {
           end: new Date("2022-01-02T08:00:00.000Z"),
         }),
       ]
-      mockFetchService.fetchEvents = jest.fn(async () => initialEvents)
+      icalFetcher.fetch.mockImplementation(async () => initialEvents)
       await service.sync(calendar)
       // The first sync goes from empty content to one event, which is itself a
       // change — drop its log to isolate the update under test
@@ -220,7 +228,7 @@ describe("CalendarSyncService", () => {
           end: new Date("2022-01-02T10:00:00.000Z"),
         }),
       ]
-      mockFetchService.fetchEvents = jest.fn(async () => newEvents)
+      icalFetcher.fetch.mockImplementation(async () => newEvents)
 
       await service.sync(calendar)
 
@@ -247,7 +255,7 @@ describe("CalendarSyncService", () => {
           end: new Date("2022-01-02T08:00:00.000Z"),
         }),
       ]
-      mockFetchService.fetchEvents = jest.fn(async () => sameEvents)
+      icalFetcher.fetch.mockImplementation(async () => sameEvents)
       await service.sync(calendar)
       await dataSource.query("DELETE FROM calendar_log")
 
@@ -283,7 +291,7 @@ describe("CalendarSyncService", () => {
     })
 
     it("does not create a calendar when there is an error", async () => {
-      mockFetchService.fetchEvents = jest.fn(async () => {
+      icalFetcher.fetch.mockImplementation(async () => {
         throw new Error("Something went wrong")
       })
 
@@ -324,7 +332,7 @@ describe("CalendarSyncService", () => {
         now: new Date("2022-01-01T00:00:01.000Z"),
       })
 
-      mockFetchService.fetchEvents = jest.fn(async () => {
+      icalFetcher.fetch.mockImplementation(async () => {
         throw new Error("Something went wrong")
       })
       await assertChanges(dataSource, [[CalendarFailure, 0]], async () => {
@@ -351,7 +359,7 @@ describe("CalendarSyncService", () => {
           title: "Existing Event",
         }),
       ]
-      mockFetchService.fetchEvents = jest.fn(async () => initialEvents)
+      icalFetcher.fetch.mockImplementation(async () => initialEvents)
       await service.sync(calendar)
 
       // Verify initial content was saved
@@ -362,7 +370,7 @@ describe("CalendarSyncService", () => {
       expect(initialContent.events[0].uid).toBe("existing-event")
 
       // Now make the fetch fail
-      mockFetchService.fetchEvents = jest.fn(async () => {
+      icalFetcher.fetch.mockImplementation(async () => {
         throw new Error("Network error")
       })
 
@@ -396,6 +404,68 @@ describe("CalendarSyncService", () => {
 
       // A failed fetch never reaches the content+log transaction
       expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
+    describe("syncPlannedAt", () => {
+      const LYON1_URL =
+        "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical"
+
+      const createDueCalendar = (url?: string) =>
+        calendarFactory().create({
+          ...(url && { url }),
+          syncPlannedAt: new Date("2021-12-31T00:00:00.000Z"),
+        })
+
+      const reloadPlan = async (calendarId: string) => {
+        const { lastUpdatedAt, syncPlannedAt } = await dataSource
+          .getRepository(Calendar)
+          .findOneByOrFail({ id: calendarId })
+        return {
+          syncPlannedAt,
+          plannedInMinutes: differenceInMinutes(syncPlannedAt, lastUpdatedAt),
+        }
+      }
+
+      it("plans the next sync one default interval later", async () => {
+        const dueCalendar = await createDueCalendar()
+
+        await service.sync(dueCalendar)
+
+        const { syncPlannedAt, plannedInMinutes } = await reloadPlan(
+          dueCalendar.id,
+        )
+        expect(plannedInMinutes).toBe(30)
+        expect(syncPlannedAt.getTime()).toBeGreaterThan(
+          dueCalendar.syncPlannedAt.getTime(),
+        )
+      })
+
+      it("plans the next sync from the interval the school declares", async () => {
+        const dueCalendar = await createDueCalendar(LYON1_URL)
+
+        await service.sync(dueCalendar)
+
+        expect((await reloadPlan(dueCalendar.id)).plannedInMinutes).toBe(60)
+      })
+
+      it("still plans the next sync when the fetch fails", async () => {
+        const dueCalendar = await createDueCalendar()
+        icalFetcher.fetch.mockImplementation(async () => {
+          throw new Error("Upstream is down")
+        })
+
+        await expect(service.sync(dueCalendar)).rejects.toThrow(
+          new Error("Upstream is down"),
+        )
+
+        const { syncPlannedAt, plannedInMinutes } = await reloadPlan(
+          dueCalendar.id,
+        )
+        expect(plannedInMinutes).toBe(30)
+        expect(syncPlannedAt.getTime()).toBeGreaterThan(
+          dueCalendar.syncPlannedAt.getTime(),
+        )
+      })
     })
   })
 })
