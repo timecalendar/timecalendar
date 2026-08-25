@@ -104,6 +104,7 @@ export default function RootLayout() {
               name="appearance-settings"
               options={{ headerShown: true }}
             />
+            <Stack.Screen name="about" options={{ headerShown: true }} />
             {/* The display-timezone picker screen — a Stack sibling of (tabs),
                 reached from Settings, mirroring appearance settings. Header
                 shown for the accessible back affordance + the screen's own
