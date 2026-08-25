@@ -168,11 +168,13 @@ anything above ~15,000 the conclusion holds.
 
 Tracked as a child issue of TIM-170. None of it blocks feature work on the port.
 
-*Revised after your round-2 questions. Tasks 8–11 are new; 1 and 3 grew.*
+*Revised after your round-2 questions. Tasks 8–11 are new; 1 and 3 grew. Round 3 split task 1
+in two, now that the infrastructure targets are all decided.*
 
 | # | Task | Effort |
 | --- | --- | --- |
-| 1 | Terraform the Cloudflare R2 bucket, custom domain, DNS and lifecycle rule ([doc 6](./06-your-questions-answered.md) §6.7); deploy xprem to `do-fra1-cluster01` via a new namespace + Argo Application (§6.8), in **control-plane mode** against a database on our existing Postgres, TLS on `ota.timecalendar.app`, secrets via the existing SealedSecrets setup | 1–1.5 days |
+| 1a | **Terraform** (`lyrolab/platform`): add the `cloudflare/cloudflare` v5 provider + `CLOUDFLARE_API_TOKEN` to both infra workflows; declare the R2 bucket, its custom domain `ota-assets.timecalendar.app`, the lifecycle rule, and the single `ota.timecalendar.app` DNS record via the **zone data source** — no zone resource, no bulk import ([doc 8](./08-infrastructure-answers.md) §8.2–8.4) | ½ day |
+| 1b | **Argo**: namespace `timecalendar-ota` on `do-fra1-cluster01` + Argo Application (upstream chart + our values), xprem in **control-plane mode** against a new database on the TimeCalendar production DO Postgres cluster, R2 key and `DATABASE_URL` as SealedSecrets (§8.5–8.6) | ¾ day |
 | 2 | `npx eoas init` in `mobile/`, repoint `updates.url` in `app.config.ts`, wire the `preview` channel | 2 h |
 | 3 | Make the `expo-updates` runtime policy an explicit, documented choice — check-on-launch behaviour, startup timeout budget, and the foreground-reload pattern. [Doc 6 §6.16](./06-your-questions-answered.md) has the recommendation: don't block the splash; apply on return-to-foreground; never prompt | ½ day |
 | 4 | Verify end-to-end on a real device: publish to `preview`, confirm pickup, confirm a fingerprint-changing build correctly does **not** pick it up, and pin down how the channel is stamped on a locally-built binary (§6.17) | ½ day |

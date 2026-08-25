@@ -248,19 +248,20 @@ submission.
 
 ---
 
-## 7.8 Open questions for you
+## 7.8 Open questions — two of three answered
 
-1. **Do we want a public beta programme for 3.0 at all?** If "us on TestFlight internal" is
-   enough until launch, we build two channels instead of three and skip the `beta` profile
-   entirely. It's cheaper to decide now than to retrofit — but it's genuinely your call, and it
-   depends on whether you want a few hundred students seeing the RN app before the cutover.
-2. **Do we want the environment switch in production builds?** My recommendation is no (§7.5),
-   with the visible-in-preview alternative. Say the word if you'd rather have it everywhere and
-   I'll build it with the three guardrails.
-3. **Play production access** (§7.4): can you confirm in the Play Console that TimeCalendar has
-   production access under the existing package? I'm confident it does, and the consequence of
-   being wrong is a 14-day delay on the cutover, so it's worth thirty seconds of checking.
+1. ~~**Do we want a public beta programme for 3.0 at all?**~~ **Yes** — two populations, so
+   three channels. The names we'll use for them, and the practical mechanics of running each
+   programme, are in [doc 8 §8.7](./08-infrastructure-answers.md).
+2. **Do we want the environment switch in production builds?** Still open. My recommendation is
+   no (§7.5), with the visible-in-preview alternative. Say the word if you'd rather have it
+   everywhere and I'll build it with the three guardrails.
+3. ~~**Play production access**~~ **Confirmed** — 3.0 ships as an update to the existing
+   listing, so the 12-testers-for-14-days rule doesn't apply. That was the one item that could
+   have put a two-week delay on the cutover; it's off the critical path.
 
 ---
 
+**Next:** [8 — Your answers, locked](./08-infrastructure-answers.md) — Terraform, DNS, Argo,
+Postgres and tester naming.
 *Back to the [index](./README.md) · previous: [6 — Your questions answered](./06-your-questions-answered.md).*

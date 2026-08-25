@@ -225,10 +225,9 @@ document 7.
 Correct, and I invented the `.fr`. Fixed in documents 2 and 4. The OTA hostname is
 **`ota.timecalendar.app`**.
 
-*(One thing I need from you: is the `timecalendar.app` zone already managed in our Cloudflare
-account? If yes, the DNS record for the bundle CDN is a couple of lines of Terraform in the
-same change. If it's at another registrar's nameservers, that's a separate migration and I'd
-use a Cloudflare-provided hostname for the bucket instead.)*
+*(Answered: the zone **is** in our Cloudflare account, but no DNS is in Terraform yet. That
+turned out to be a question worth a section of its own — [doc 8 §8.2](./08-infrastructure-answers.md)
+covers whether Terraforming one record endangers the rest of the zone. Short answer: it can't.)*
 
 ---
 
@@ -255,13 +254,10 @@ policy we can just… follow).
 That was wrong for two reasons: rollouts need the control plane, and you're offering the
 database for free. **Control-plane mode it is.**
 
-What I need to know before building (see §6.18):
-
-- Which Postgres, and where does it live? Is it reachable from `do-fra1-cluster01`, or is it on
-  the Hetzner `lt` box behind the network boundary?
-- Is it backed up? If the xprem database is lost we lose the *history and the channel
-  pointers*, not the bundles (those are in R2) — recoverable but unpleasant, so I'd like to
-  know whether it's inside an existing backup job or whether I should add one.
+**Answered:** the DigitalOcean managed cluster that TimeCalendar production already uses — so
+it's reachable from `do-fra1-cluster01` over the private network and DO's managed backups
+already cover it. No new database server, no new backup job. Details in
+[doc 8 §8.6](./08-infrastructure-answers.md).
 
 ---
 
@@ -279,7 +275,7 @@ In `terraform/envs/infra/` — a new `70-timecalendar-ota-r2.auto.tfvars` alongs
 | --- | --- |
 | `cloudflare_r2_bucket` | The bucket holding the JS bundles. Location hint `WEUR` |
 | `cloudflare_r2_custom_domain` | Serves the bucket at a hostname of ours over Cloudflare's CDN |
-| `cloudflare_dns_record` | The DNS entry for that hostname (only if the zone is in our account — §6.5) |
+| `cloudflare_dns_record` | The DNS entry for **`ota.timecalendar.app`** (the xprem server). The bundle hostname's record is created by Cloudflare itself — see the trap in [doc 8 §8.3](./08-infrastructure-answers.md) |
 | `cloudflare_r2_bucket_lifecycle` | Optional: expire bundles older than N months, so history doesn't grow forever |
 
 Plus a new provider in `versions.tf` / `providers.tf` (`cloudflare/cloudflare`, v5.x — the v5
@@ -370,15 +366,15 @@ The Application uses the two-source shape (chart from upstream, values from this
 resolving against `lyrolab/platform`. Same `syncPolicy: automated / prune / selfHeal` as
 everything else.
 
-**One naming decision I'd like your call on:** every existing namespace is `<app>-<env>`
+**Namespace — decided: `timecalendar-ota`.** The reasoning, kept because it records an
+intentional exception to a convention: every existing namespace is `<app>-<env>`
 (`timecalendar-preprod`, `timecalendar-production`). The OTA server isn't per-environment —
 one server serves the `preview`, `beta` and `production` channels, because channels are an
 *application-level* concept, not an infrastructure one. So I'd call the namespace
 **`timecalendar-ota`** with no env suffix, and note the exception in the change. The
 alternative — folding it into `timecalendar-production` — is tidier against the convention but
 means the internal-testing update path shares a namespace and a blast radius with the
-production API. **I'd take the separate namespace.** Tell me if you'd rather keep the
-convention clean.
+production API. You took the separate namespace.
 
 ---
 
@@ -791,23 +787,21 @@ so there is exactly one source of truth.
 
 ---
 
-## 6.18 What I need from you before implementation
+## 6.18 What I needed from you before implementation — all answered
 
-Nothing here is blocking today's work — the implementation issue stays in the backlog until you
-say go.
+These five are closed. [Document 8](./08-infrastructure-answers.md) records the answers and
+what each one changed.
 
-1. **The namespace name** (§6.8): `timecalendar-ota` as a new no-env-suffix namespace, or fold
-   it into `timecalendar-production`? I'd take the former; it's your convention.
-2. **Postgres** (§6.6): which server, and is it reachable from `do-fra1-cluster01`? Is it in an
-   existing backup job?
-3. **The `timecalendar.app` zone** (§6.5): already in our Cloudflare account, or still at
-   another registrar's nameservers?
-4. **Public beta testers** ([doc 7](./07-environments-and-testing.md)): do we actually want a
-   public beta programme for 3.0, or is "us on TestFlight internal" enough until launch? It
-   changes whether we build two channels or three, and it's worth deciding now rather than
-   retrofitting.
-5. **Sanity-check the 60k** if it was from memory rather than a dashboard — it's still the
-   number the entire recommendation rests on.
+| | Question | Answer |
+| --- | --- | --- |
+| 1 | **Namespace** (§6.8) | `timecalendar-ota`, new namespace |
+| 2 | **Postgres** (§6.6) | The TimeCalendar production DO managed cluster; backups already covered |
+| 3 | **The `timecalendar.app` zone** (§6.5) | In Cloudflare — but no DNS in Terraform yet ([doc 8 §8.2](./08-infrastructure-answers.md)) |
+| 4 | **Public beta** ([doc 7](./07-environments-and-testing.md)) | Yes — two populations, so **three** channels |
+| 5 | **Play production access** | Confirmed; the 14-day rule doesn't apply to us |
+
+Still worth a five-minute confirmation, not blocking: **sanity-check the 60k** if it came from
+memory rather than a dashboard — it's the number the recommendation rests on.
 
 ---
 
