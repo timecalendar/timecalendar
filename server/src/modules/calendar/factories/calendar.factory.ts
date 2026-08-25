@@ -1,6 +1,8 @@
+import { addMinutes } from "date-fns"
 import { calendarContentFactory } from "modules/calendar/factories/calendar-content.factory"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
+import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { School } from "modules/school/models/school.entity"
 import {
@@ -35,6 +37,12 @@ export const calendarFactory = factoryBuilder(() => [
         school: associations.school,
         url: "https://timecalendar.app/calendar/ical",
         lastUpdatedAt: new Date(),
+        // Consistent with `lastUpdatedAt`: a calendar built by the factory has
+        // just been synced, so it is not due.
+        syncPlannedAt: addMinutes(
+          new Date(),
+          DEFAULT_MIN_SYNC_INTERVAL_MINUTES,
+        ),
         lastAccessedAt: new Date(),
         content: factoryToEntity(
           calendarContentFactory().params({

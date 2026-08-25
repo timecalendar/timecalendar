@@ -1,8 +1,7 @@
 import { Injectable } from "@nestjs/common"
-import { subDays, subMinutes } from "date-fns"
+import { subDays } from "date-fns"
 import {
   INACTIVITY_DAYS,
-  UPDATE_AFTER_MIN,
   UPDATE_CONCURRENCY,
 } from "modules/calendar-sync/calendar-sync.constants"
 import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
@@ -44,11 +43,12 @@ export class CalendarSyncAllService {
     tokens,
     syncEvenIfInactive,
   }: FindCalendarsToSyncParams = {}) {
-    return this.calendarRepository.findLastUpdatedBeforeWithContent({
-      lastUpdatedBefore: subMinutes(new Date(), UPDATE_AFTER_MIN),
+    const now = new Date()
+    return this.calendarRepository.findDueForSyncWithContent({
+      syncPlannedBefore: now,
       lastAccessedAtAfter: syncEvenIfInactive
         ? undefined
-        : subDays(new Date(), INACTIVITY_DAYS),
+        : subDays(now, INACTIVITY_DAYS),
       filterByTokens: tokens,
     })
   }

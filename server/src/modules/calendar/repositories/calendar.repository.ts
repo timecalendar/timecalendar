@@ -3,8 +3,8 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { DeepPartial, In, LessThan, MoreThan, Repository } from "typeorm"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 
-type FindLastUpdatedBeforeWithContentParams = {
-  lastUpdatedBefore: Date
+type FindDueForSyncWithContentParams = {
+  syncPlannedBefore: Date
   lastAccessedAtAfter?: Date
   filterByTokens?: string[]
 }
@@ -48,21 +48,21 @@ export class CalendarRepository {
     return this.repository.save(calendar)
   }
 
-  findLastUpdatedBeforeWithContent({
-    lastUpdatedBefore,
+  findDueForSyncWithContent({
+    syncPlannedBefore,
     lastAccessedAtAfter,
     filterByTokens,
-  }: FindLastUpdatedBeforeWithContentParams) {
+  }: FindDueForSyncWithContentParams) {
     return this.repository.find({
       relations: { school: true, content: true },
       where: {
-        lastUpdatedAt: LessThan(lastUpdatedBefore),
+        syncPlannedAt: LessThan(syncPlannedBefore),
         ...(lastAccessedAtAfter && {
           lastAccessedAt: MoreThan(lastAccessedAtAfter),
         }),
         ...(filterByTokens && { token: In(filterByTokens) }),
       },
-      order: { lastUpdatedAt: "ASC" },
+      order: { syncPlannedAt: "ASC" },
     })
   }
 

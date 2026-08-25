@@ -46,6 +46,14 @@ export class Calendar {
   @Column()
   lastUpdatedAt: Date
 
+  /**
+   * When this calendar may next be fetched upstream. Never null: a missing plan
+   * must read as "due now", never as "never due".
+   */
+  @Column({ type: "timestamp", default: () => "now()" })
+  @Index("IDX_calendar_syncPlannedAt")
+  syncPlannedAt: Date
+
   @Column({ type: "timestamp", nullable: true })
   lastAccessedAt: Date | null
 

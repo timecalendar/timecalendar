@@ -1,5 +1,6 @@
 import { Injectable, UnprocessableEntityException } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
+import { addMinutes } from "date-fns"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
 import { CalendarContentUpdatedEvent } from "modules/calendar-sync/events/calendar-content-updated.event"
@@ -55,6 +56,10 @@ export class CalendarSyncService {
     const { id, url, customData, school } = calendar
     const source = { url, customData }
     const code = await this.findSchoolCode(school?.id)
+    const minSyncIntervalMinutes = this.fetchService.getMinSyncIntervalMinutes(
+      source,
+      code,
+    )
     const fetchedEvents = await this.fetchEvents(source, code)
 
     const isError = "error" in fetchedEvents
@@ -92,6 +97,7 @@ export class CalendarSyncService {
     const savedCalendar = await this.saveCalendar(
       calendar,
       fetchedEvents.events,
+      minSyncIntervalMinutes,
     )
     if (isError) throw fetchedEvents.error
 
@@ -101,6 +107,7 @@ export class CalendarSyncService {
   private async saveCalendar(
     calendar: CalendarForSync,
     events: CalendarEvent[] | undefined,
+    minSyncIntervalMinutes: number,
   ) {
     let { id: calendarId } = calendar
     const isUpdate = !!calendarId
@@ -132,8 +139,12 @@ export class CalendarSyncService {
       }
     }
 
+    // Also written when the fetch failed: a university that is down must not be
+    // retried on every client request.
+    const now = new Date()
     await this.calendarRepository.update(calendarId, {
-      lastUpdatedAt: new Date(),
+      lastUpdatedAt: now,
+      syncPlannedAt: addMinutes(now, minSyncIntervalMinutes),
     })
 
     return this.calendarRepository.findOne(calendarId)

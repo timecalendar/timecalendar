@@ -4,6 +4,7 @@ import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
+import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { FetchService } from "modules/fetch/services/fetch.service"
@@ -15,7 +16,12 @@ describe("CalendarSyncController", () => {
   let app: NestExpressApplication
   let dataSource: DataSource
   const events: FetcherCalendarEvent[] = [fetcherCalendarEventFactory.build()]
-  const mockFetchService = { fetchEvents: jest.fn(async () => events) }
+  // This suite is about the HTTP surface, not the fetch layer: the interval is
+  // stubbed here and resolved for real in the service suites.
+  const mockFetchService = {
+    fetchEvents: jest.fn(async () => events),
+    getMinSyncIntervalMinutes: jest.fn(() => DEFAULT_MIN_SYNC_INTERVAL_MINUTES),
+  }
 
   beforeAll(async () => {
     app = await createTestApp(
@@ -75,7 +81,7 @@ describe("CalendarSyncController", () => {
 
       calendar = await calendarFactory()
         .school()
-        .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") })
+        .create({ syncPlannedAt: new Date("2022-01-05T11:00:00Z") })
     })
 
     afterEach(() => {

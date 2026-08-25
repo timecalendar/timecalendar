@@ -1,3 +1,18 @@
+// The real FetchService is used here — mocking at the fetcher boundary keeps
+// strategy resolution (and therefore the resolved sync interval) real, which is
+// what the Lyon 1 round-trip below actually exercises.
+const icalFetcher: {
+  fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
+} = {
+  fetch: jest.fn(() => Promise.resolve([])),
+}
+
+jest.mock("modules/fetch/fetchers/ical-fetcher", () => ({
+  IcalFetcher: jest
+    .fn()
+    .mockImplementation(() => ({ fetch: icalFetcher.fetch })),
+}))
+
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
@@ -7,7 +22,6 @@ import { CalendarContent } from "modules/calendar/models/calendar-content.entity
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
-import { FetchService } from "modules/fetch/services/fetch.service"
 import createTestApp from "test-utils/create-test-app"
 import { DataSource, In } from "typeorm"
 
@@ -16,23 +30,20 @@ describe("CalendarSyncAllService", () => {
   let service: CalendarSyncAllService
   let dataSource: DataSource
   let events: FetcherCalendarEvent[]
-  const mockFetchService = {
-    fetchEvents: jest.fn(),
-  }
 
   beforeAll(async () => {
-    app = await createTestApp(
-      { imports: [CalendarSyncModule] },
-      { overrides: [{ provide: FetchService, useValue: mockFetchService }] },
-    )
+    app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncAllService)
     dataSource = app.get(DataSource)
   })
 
   beforeEach(() => {
     events = [fetcherCalendarEventFactory.build()]
-    mockFetchService.fetchEvents = jest.fn(() => events)
+    icalFetcher.fetch.mockImplementation(async () => events)
   })
+
+  const findCalendar = (calendarId: string) =>
+    dataSource.getRepository(Calendar).findOneByOrFail({ id: calendarId })
 
   describe("syncAllForUser", () => {
     beforeEach(async () => {
@@ -50,7 +61,7 @@ describe("CalendarSyncAllService", () => {
     it("fetches a calendar", async () => {
       const calendar = await calendarFactory()
         .school()
-        .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") })
+        .create({ syncPlannedAt: new Date("2022-01-05T11:00:00Z") })
       const data = await service.syncAllForUser({
         tokens: [calendar.token],
       })
@@ -60,9 +71,7 @@ describe("CalendarSyncAllService", () => {
       expect(data[0].events).toHaveLength(1)
       expect(data[0].events[0].uid).toBe(events[0].uid)
 
-      const updated = await dataSource
-        .getRepository(Calendar)
-        .findOneByOrFail({ id: calendar.id })
+      const updated = await findCalendar(calendar.id)
       expect(updated.lastAccessedAt).not.toBeNull()
     })
 
@@ -70,10 +79,10 @@ describe("CalendarSyncAllService", () => {
       const expected = [
         await calendarFactory()
           .school()
-          .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") }),
+          .create({ syncPlannedAt: new Date("2022-01-05T11:00:00Z") }),
         await calendarFactory()
           .school()
-          .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") }),
+          .create({ syncPlannedAt: new Date("2022-01-05T11:00:00Z") }),
       ]
 
       const data = await service.syncAllForUser({
@@ -89,10 +98,8 @@ describe("CalendarSyncAllService", () => {
       const anotherEvent = calendarEventFactory.build()
       const calendar = await calendarFactory()
         .transient({ events: [anotherEvent] })
-        .create({ lastUpdatedAt: new Date("2022-01-05T11:00:00Z") })
-      mockFetchService.fetchEvents = jest
-        .fn()
-        .mockRejectedValueOnce(new Error())
+        .create({ syncPlannedAt: new Date("2022-01-05T11:00:00Z") })
+      icalFetcher.fetch.mockRejectedValueOnce(new Error())
 
       const data = await service.syncAllForUser({
         tokens: [calendar.token],
@@ -107,57 +114,73 @@ describe("CalendarSyncAllService", () => {
     it("syncs only user calendars", async () => {
       const [expected, untouched] = await calendarFactory().createList(2, {
         lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
       })
 
       await service.syncAllForUser({ tokens: [expected.token] })
 
-      const expectedUpdated = await dataSource
-        .getRepository(Calendar)
-        .findOneByOrFail({ id: expected.id })
+      const expectedUpdated = await findCalendar(expected.id)
       expect(expectedUpdated.lastUpdatedAt).toEqual(
         new Date("2022-01-05T12:00:00Z"),
       )
-      const expectedUntouched = await dataSource
-        .getRepository(Calendar)
-        .findOneByOrFail({ id: untouched.id })
+      const expectedUntouched = await findCalendar(untouched.id)
       expect(expectedUntouched.lastUpdatedAt).toEqual(
         new Date("2022-01-05T11:00:00Z"),
       )
-      expect(mockFetchService.fetchEvents).toHaveBeenCalledTimes(1)
+      expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
     })
 
     it("sets last accessed at even for calendars that do not need a sync", async () => {
       const expected = await calendarFactory().create({
         lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
       })
       const untouched = await calendarFactory().create({
-        lastUpdatedAt: new Date("2022-01-05T12:00:00Z"),
+        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T12:30:00Z"),
       })
 
       await service.syncAllForUser({
         tokens: [expected.token, untouched.token],
       })
 
-      const expectedUpdated = await dataSource
-        .getRepository(Calendar)
-        .findOneByOrFail({ id: expected.id })
+      const expectedUpdated = await findCalendar(expected.id)
       expect(expectedUpdated.lastUpdatedAt).toEqual(
         new Date("2022-01-05T12:00:00Z"),
       )
       expect(expectedUpdated.lastAccessedAt).toEqual(
         new Date("2022-01-05T12:00:00Z"),
       )
-      const expectedUntouched = await dataSource
-        .getRepository(Calendar)
-        .findOneByOrFail({ id: untouched.id })
+      const expectedUntouched = await findCalendar(untouched.id)
       expect(expectedUntouched.lastUpdatedAt).toEqual(
-        new Date("2022-01-05T12:00:00Z"),
+        new Date("2022-01-05T11:00:00Z"),
       )
       expect(expectedUntouched.lastAccessedAt).toEqual(
         new Date("2022-01-05T12:00:00Z"),
       )
 
-      expect(mockFetchService.fetchEvents).toHaveBeenCalledTimes(1)
+      expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it("re-fetches a Lyon 1 calendar only once its hour has elapsed", async () => {
+      const calendar = await calendarFactory().create({
+        url: "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical",
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
+      })
+
+      await service.syncAllForUser({ tokens: [calendar.token] })
+      expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+      expect((await findCalendar(calendar.id)).syncPlannedAt).toEqual(
+        new Date("2022-01-05T13:00:00Z"),
+      )
+
+      jest.setSystemTime(new Date("2022-01-05T12:45:00Z"))
+      await service.syncAllForUser({ tokens: [calendar.token] })
+      expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+
+      jest.setSystemTime(new Date("2022-01-05T13:05:00Z"))
+      await service.syncAllForUser({ tokens: [calendar.token] })
+      expect(icalFetcher.fetch).toHaveBeenCalledTimes(2)
     })
   })
 
@@ -176,7 +199,7 @@ describe("CalendarSyncAllService", () => {
 
     it("syncs all calendars", async () => {
       await calendarFactory().createList(2, {
-        lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
       await service.syncAllForCronJob()
@@ -197,38 +220,44 @@ describe("CalendarSyncAllService", () => {
       expect(contents[0].events[0].uid).toBe(events[0].uid)
       expect(contents[1].events.length).toBe(1)
       expect(contents[1].events[0].uid).toBe(events[0].uid)
-      expect(mockFetchService.fetchEvents).toHaveBeenCalledTimes(2)
+      expect(icalFetcher.fetch).toHaveBeenCalledTimes(2)
     })
 
-    it("does not update a calendar updated less than 15 min ago", async () => {
+    it("does not update a calendar whose next sync is planned later", async () => {
       const calendar = await calendarFactory().create({
         lastUpdatedAt: new Date("2022-01-05T11:50:00Z"),
+        syncPlannedAt: new Date("2022-01-05T12:20:00Z"),
       })
 
       await service.syncAllForCronJob()
 
-      expect(calendar.lastUpdatedAt).toEqual(new Date("2022-01-05T11:50:00Z"))
+      expect((await findCalendar(calendar.id)).lastUpdatedAt).toEqual(
+        new Date("2022-01-05T11:50:00Z"),
+      )
       const content = await dataSource
         .getRepository(CalendarContent)
         .findOneByOrFail({ calendar: { id: calendar.id } })
       expect(content.events.length).toBe(0)
-      expect(mockFetchService.fetchEvents).not.toHaveBeenCalled()
+      expect(icalFetcher.fetch).not.toHaveBeenCalled()
     })
 
     it("does not update a calendar accessed more than 14 days ago", async () => {
       const calendar = await calendarFactory().create({
         lastUpdatedAt: new Date("2022-01-05T11:00:00Z"),
+        syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
         lastAccessedAt: new Date("2021-12-21T11:00:00Z"),
       })
 
       await service.syncAllForCronJob()
 
-      expect(calendar.lastUpdatedAt).toEqual(new Date("2022-01-05T11:00:00Z"))
+      expect((await findCalendar(calendar.id)).lastUpdatedAt).toEqual(
+        new Date("2022-01-05T11:00:00Z"),
+      )
       const content = await dataSource
         .getRepository(CalendarContent)
         .findOneByOrFail({ calendar: { id: calendar.id } })
       expect(content.events.length).toBe(0)
-      expect(mockFetchService.fetchEvents).not.toHaveBeenCalled()
+      expect(icalFetcher.fetch).not.toHaveBeenCalled()
     })
   })
 })
