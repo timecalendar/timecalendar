@@ -8,15 +8,7 @@ import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { defaultPipes } from "modules/fetch/pipes/pipes"
 import { SchoolStrategyOptions } from "modules/fetch/strategies/school-strategy-options.type"
 
-/**
- * The options once merged with the defaults: `minSyncIntervalMinutes` is
- * optional to declare but always resolved, so callers never handle undefined.
- */
-export type ResolvedSchoolStrategyOptions = SchoolStrategyOptions & {
-  minSyncIntervalMinutes: number
-}
-
-const defaultOptions: ResolvedSchoolStrategyOptions = {
+const defaultOptions: SchoolStrategyOptions = {
   school: "generic",
   urlRenamers: [],
   inheritGenericUrlRenamers: true,
@@ -26,7 +18,7 @@ const defaultOptions: ResolvedSchoolStrategyOptions = {
 }
 
 export class SchoolStrategy {
-  private _options: ResolvedSchoolStrategyOptions
+  private _options: SchoolStrategyOptions
 
   public get options() {
     return this._options

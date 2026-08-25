@@ -48,5 +48,5 @@ export interface SchoolStrategyOptions {
    * Some universities ask us to limit how often we hit their servers: raise it
    * for them. Defaults to DEFAULT_MIN_SYNC_INTERVAL_MINUTES.
    */
-  minSyncIntervalMinutes?: number
+  minSyncIntervalMinutes: number
 }
