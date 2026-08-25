@@ -18,9 +18,12 @@ order — each document assumes the one before it.
 | 5 | [Day-one runbook](./05-runbook.md) | How we'd actually ship, roll back, and stay safe | 8 min |
 | 6 | [Your questions answered](./06-your-questions-answered.md) | Round 2 — the 17 questions you asked after reading 1–5 | 20 min |
 | 7 | [Environments, builds and testers](./07-environments-and-testing.md) | Alpha/beta, TestFlight, Play tracks, and the in-app backend switch | 10 min |
+| 8 | [Your answers, locked](./08-infrastructure-answers.md) | Round 3 — Terraform & DNS safety, Argo, Postgres, what to call the testers | 10 min |
 
 Documents 1–5 are the original investigation, **amended** where round 2 changed something.
-Documents 6 and 7 are the follow-up discussion. If you've already read 1–5, start at 6.
+Documents 6–8 are the follow-up discussion. If you've already read 1–7, document 8 is the only
+new one — and §8.2 (does Terraforming one DNS record endanger the zone?) is the part with real
+content in it.
 
 ---
 
@@ -100,6 +103,19 @@ You read 1–5 and came back with 17 questions. Five of them changed the plan:
 Plus: the domain is `timecalendar.app` (I invented the `.fr`), and the word "dogfood" is gone.
 Everything is in [document 6](./06-your-questions-answered.md), with the alpha/beta/TestFlight
 strategy split out into [document 7](./07-environments-and-testing.md).
+
+### Round 3 — the last five answers
+
+| Your answer | What it settles |
+| --- | --- |
+| Namespace `timecalendar-ota` | One xprem serving all three channels, in its own blast radius |
+| Postgres: the TimeCalendar production DO cluster | Reachable privately, backups already covered — **no new database, no new backup job** |
+| Zone is in Cloudflare, **but no DNS is in Terraform yet** | The real question of the round: does Terraforming one record endanger the zone? **It can't** — [doc 8 §8.2](./08-infrastructure-answers.md), including the three ways it *could* go wrong and why none apply |
+| Public beta: yes, two populations | **Three** channels confirmed. What to call the two groups, and the mechanics of each store's programme — [doc 8 §8.7](./08-infrastructure-answers.md) |
+| Play production access confirmed | 3.0 ships as an update. The 14-day testing rule is off the cutover critical path |
+
+Still open, non-blocking: the environment switcher in production builds (my answer: no —
+compile it out), and a five-minute sanity check on the 60,000 figure.
 
 ## What this pack deliberately does not do
 
