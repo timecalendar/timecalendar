@@ -25,7 +25,7 @@ the remote ref again for every candidate:
 
 ```bash
 git fetch origin main
-CANDIDATE_SHA="$(git rev-parse --verify origin/main^{commit})"
+export CANDIDATE_SHA="$(git rev-parse --verify origin/main^{commit})"
 if ! [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
   echo "candidate is not a lowercase 40-character SHA" >&2
   exit 1
@@ -243,7 +243,7 @@ Use Bull Board or run this inside one server pod to record bounded `sync` queue 
 oldest waiting age without displaying the Redis URL:
 
 ```bash
-kubectl -n "$PREPROD_NAMESPACE" exec deploy/"$SERVER_DEPLOYMENT" -- node - <<'NODE'
+kubectl -n "$PREPROD_NAMESPACE" exec -i deploy/"$SERVER_DEPLOYMENT" -- node - <<'NODE'
 const { Queue } = require("bullmq")
 const queue = new Queue("sync", { connection: { url: process.env.REDIS_URL } })
 Promise.all([queue.getJobCounts("waiting", "active", "delayed", "failed"), queue.getJobs(["waiting"], 0, 0, true)])
@@ -260,15 +260,18 @@ sum(rate(queue_jobs_completed_total{deployment_environment_name="preproduction",
 histogram_quantile(0.95, sum by (le) (rate(queue_job_duration_ms_bucket{deployment_environment_name="preproduction",queue="sync"}[15m]))) / 1000
 sum(rate(traces_spanmetrics_calls_total{deployment_environment_name="preproduction",span_kind="SPAN_KIND_CLIENT"}[5m]))
 sum(rate(traces_spanmetrics_calls_total{deployment_environment_name="preproduction",span_kind="SPAN_KIND_CLIENT",status_code="STATUS_CODE_ERROR"}[5m]))
-sum(rate(traces_spanmetrics_duration_milliseconds_count{deployment_environment_name="preproduction",span_kind="SPAN_KIND_CLIENT"}[5m]))
+histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_duration_milliseconds_bucket{deployment_environment_name="preproduction",span_kind="SPAN_KIND_CLIENT"}[15m])))
 sum(rate(traces_spanmetrics_calls_total{deployment_environment_name="preproduction",span_kind="SPAN_KIND_CLIENT"}[5m]))
 /
 sum(rate(queue_jobs_completed_total{deployment_environment_name="preproduction",queue="sync"}[5m]))
 ```
 
-If outgoing calendar requests cannot be separated from unrelated HTTP, the ADE attempt
-rate/error ratio is **unknown and no-go**. Do not substitute `calendar_sync_total`: its
-replica-colliding series is known to be invalid.
+Discover and add the platform's reviewed destination/operation labels to every outbound
+query before using it as calendar or ADE evidence. If outgoing calendar requests cannot
+be separated from unrelated HTTP, or their p95 latency cannot be isolated from the
+duration histogram, the ADE attempt rate, error ratio, and outbound latency are
+**unknown and no-go**. Do not substitute `calendar_sync_total`: its replica-colliding
+series is known to be invalid.
 
 Fill one row per five-minute window:
 
@@ -281,15 +284,17 @@ Fill one row per five-minute window:
 | observed amplification | outbound calendar HTTP attempts / completed calendar jobs |
 | worst amplification | candidate fetch attempts × BullMQ job attempts |
 | ADE requests/minute | ADE jobs/minute × observed or worst amplification |
+| outbound p95 latency | isolated calendar client-span duration histogram |
 | headroom | `(capacity - arrivals) / capacity × 100%` |
 
 Go requires: at least 30% modeled capacity headroom; initial bucket drains within 15
 minutes; waiting depth and oldest age do not grow for three consecutive five-minute
 windows; p95 service time is no worse than 1.5× the pre-soak baseline; no pod restart;
 event-loop p95 no worse than 1.25× baseline and below 500 ms; working set below 70% of
-limit; ADE error ratio below 5% and request rate below the lower of the reviewed provider
-budget or 1.25× baseline. Lyon evidence must show at most one fetch claim per calendar in
-the first full hour. Unknown input means no-go.
+limit; ADE error ratio below 5%, request rate below the lower of the reviewed provider
+budget or 1.25× baseline, and outbound p95 latency no worse than 1.5× the pre-soak
+baseline. Lyon evidence must show at most one fetch claim per calendar in the first full
+hour. Unknown input means no-go.
 
 ### Sanitized production baseline, 2026-08-25
 
