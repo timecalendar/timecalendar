@@ -1,7 +1,7 @@
 ## 1. Firebase OTA observability seam
 
-- [ ] 1.1 Extend `mobile/src/firebase/index.ts` with a lazy modular RNFirebase v24 `setAttributes(getCrashlytics(), attributes)` helper, retaining the existing top-level FCM background-handler registration as the only native-on-import exception; verify TypeScript exposes only string attributes through `@/firebase`
-- [ ] 1.2 Extend `mobile/jest/setup-firebase.ts` and `mobile/src/firebase/firebase.test.ts` to prove the helper forwards the complete map to modular `setAttributes` and that `setBackgroundMessageHandler` still registers exactly once; verify with `npx jest --runInBand src/firebase/firebase.test.ts`
+- [x] 1.1 Extend `mobile/src/firebase/index.ts` with a lazy modular RNFirebase v24 `setAttributes(getCrashlytics(), attributes)` helper, retaining the existing top-level FCM background-handler registration as the only native-on-import exception; verify TypeScript exposes only string attributes through `@/firebase`
+- [x] 1.2 Extend `mobile/jest/setup-firebase.ts` and `mobile/src/firebase/firebase.test.ts` to prove the helper forwards the complete map to modular `setAttributes` and that `setBackgroundMessageHandler` still registers exactly once; verify with `npx jest --runInBand src/firebase/firebase.test.ts`
 
 ## 2. Silent OTA runtime boundary
 

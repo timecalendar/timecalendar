@@ -7,6 +7,7 @@ import {
   getCrashlytics,
   log,
   recordError as crashlyticsRecordError,
+  setAttributes,
 } from "@react-native-firebase/crashlytics"
 import {
   getAPNSToken,
@@ -32,6 +33,7 @@ import {
   recordError,
   recordUnknownError,
   requestNotificationPermission,
+  setCrashlyticsAttributes,
 } from "@/firebase"
 
 // Proof (mirrors the i18n/a11y proof tests): assert the wrapper drives the
@@ -112,6 +114,21 @@ describe("firebase wrapper", () => {
 
     expect(getCrashlytics).toHaveBeenCalled()
     expect(crash).toHaveBeenCalled()
+  })
+
+  it("forwards a complete string attribute map to Crashlytics", async () => {
+    const attributes = {
+      otaUpdateId: "update-id",
+      otaChannel: "production",
+      otaRuntimeVersion: "runtime-version",
+      otaCreatedAt: "2026-08-25T12:00:00.000Z",
+      otaIsEmbedded: "false",
+    }
+
+    await setCrashlyticsAttributes(attributes)
+
+    expect(getCrashlytics).toHaveBeenCalled()
+    expect(setAttributes).toHaveBeenCalledWith(expect.anything(), attributes)
   })
 })
 
