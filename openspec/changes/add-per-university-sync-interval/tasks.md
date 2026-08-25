@@ -13,14 +13,15 @@ phases 4–5 compile; phase 6 (tests + seed) is where the existing suite is migr
 - [x] 1.1 In `server/src/modules/fetch/constants.ts`, add
   `export const DEFAULT_MIN_SYNC_INTERVAL_MINUTES = 30` with a docstring explaining it is the
   minimum time between two upstream fetches of the same calendar.
-- [x] 1.2 In `modules/fetch/strategies/school-strategy-options.type.ts`, add the optional
-  `minSyncIntervalMinutes?: number` field, documented as "some universities ask us to limit how
+- [x] 1.2 In `modules/fetch/strategies/school-strategy-options.type.ts`, add the
+  `minSyncIntervalMinutes: number` field, documented as "some universities ask us to limit how
   often we hit their servers; raise this for them". Match the surrounding doc-comment style.
 - [x] 1.3 In `modules/fetch/strategies/school-strategy.ts`, add
   `minSyncIntervalMinutes: DEFAULT_MIN_SYNC_INTERVAL_MINUTES` to `defaultOptions` so the merged
-  `options` always carries a concrete number and callers never handle `undefined`. Note the
-  field is optional in the interface but always present after the merge — mirror how the
-  existing optional options are typed rather than inventing a new pattern.
+  `options` always carries a concrete number and callers never handle `undefined`. Mirror how
+  the existing defaulted options (`school`, `urlRenamers`, `fetcher`, `eventPipes`) are typed —
+  required in the interface, declared optionally by strategies because the constructor takes
+  `Partial<SchoolStrategyOptions>` — rather than inventing a new pattern.
 
 ## 2. Fetch layer — resolve the interval for a calendar
 

@@ -61,11 +61,13 @@ Four facts from reading the code that this design leans on:
  * for this school. Some universities ask us to limit how often we hit their
  * servers. Defaults to DEFAULT_MIN_SYNC_INTERVAL_MINUTES.
  */
-minSyncIntervalMinutes?: number
+minSyncIntervalMinutes: number
 ```
 
-resolved through `SchoolStrategy`'s existing `defaultOptions` merge, so every strategy has a
-concrete value and callers never handle `undefined`.
+Required in the interface and resolved through `SchoolStrategy`'s existing `defaultOptions`
+merge — exactly like `school`, `urlRenamers`, `fetcher` and `eventPipes` — so every strategy has
+a concrete value and callers never handle `undefined`. Individual strategies still declare it
+optionally, because the constructor takes `Partial<SchoolStrategyOptions>`.
 
 **Why here.** "How often may we talk to this university's server" is a property of that
 university's server, and the strategy is already the single place where per-university
