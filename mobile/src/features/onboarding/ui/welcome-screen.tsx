@@ -27,7 +27,6 @@ const ACTIVE_INDICATOR_WIDTH = 24
 const INACTIVE_INDICATOR_WIDTH = 16
 const ILLUSTRATION_HEIGHT_RATIO = 0.25
 const MAX_ILLUSTRATION_HEIGHT = 260
-const PAGE_COUNT = 3
 const CONTROL_MIN_HEIGHT = Platform.OS === "ios" ? 44 : 48
 
 const PAGES = [
@@ -51,6 +50,7 @@ const PAGES = [
       require("@/assets/images/onboarding/notifications.png") as ImageSource,
   },
 ] as const
+const PAGE_COUNT = PAGES.length
 
 export default function WelcomeScreen() {
   const { t } = useTranslation()
