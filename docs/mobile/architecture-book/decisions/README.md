@@ -29,6 +29,7 @@ decision changes; use Git for its history.
 | [033](./033-calendar-renderer-module-boundary.md) | Own the calendar renderer boundary inside the calendar feature |
 | [034](./034-settings-third-tab-identity.md) | Use Settings as the canonical third tab and secondary-destination hub |
 | [035](./035-display-timezone-preference.md) | Resolve the curated display-timezone preference at one seam |
+| [036](./036-native-onboarding-pager.md) | Use the native pager bridge for onboarding |
 
 ## Superseded or completed records
 

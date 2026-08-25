@@ -9,7 +9,7 @@ code and product specifications.
 | `notifications` | Subscription preferences, FCM registration, and notification routing | `@/storage`, `@/firebase`, generated notification API |
 | `personal-events` | Local event CRUD, validation, and forms | `@/db`; dates stored as ISO-8601 UTC text |
 | `school-selection` | School/group queries, search, and selected identities | TanStack Query plus `@/storage` |
-| `onboarding` | Welcome and source-selection flow | Presentation-only; composes school and calendar-source features |
+| `onboarding` | Localized welcome → agenda → notifications carousel and source-selection flow | Presentation-only; native pager composes school and calendar-source features |
 | `calendar-sources` | QR/iCal import and user-calendar management | `expo-camera`, generated API, `user_calendars` table |
 | `calendar` | Day/week grid, agenda, sync, event details, and routing | Renderer-neutral timeline facade with an isolated calendar-kit adapter, generated sync API, `calendar_events` table |
 | `hidden-events` | Hide and restore synced events | One validated `@/storage` value; filtering occurs at the calendar event-source seam |
