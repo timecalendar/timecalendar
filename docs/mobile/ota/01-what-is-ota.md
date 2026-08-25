@@ -178,9 +178,11 @@ The concrete sequence, so the vocabulary in the rest of this pack makes sense:
 
 Two terms you'll see repeatedly:
 
-- **Channel** — which audience a build listens to. We already have two: `preview` (internal
-  dogfood builds) and `production` (what's in the stores). Publishing to `preview` cannot
-  possibly reach real users. This separation already exists in `mobile/eas.json`.
+- **Channel** — which audience a build listens to, baked into the binary at build time. We
+  already have two: `preview` (internal builds on our own phones) and `production` (what's in
+  the stores), and [document 7](./07-environments-and-testing.md) proposes a third, `beta`, for
+  opted-in student testers. Publishing to `preview` cannot possibly reach real users. This
+  separation already exists in `mobile/eas.json`.
 - **Rollout** — publishing to a *percentage* of users. Ship to 10%, watch our Crashlytics
   dashboard for an hour, then go to 100% — or roll back having exposed only one user in ten.
 
@@ -202,3 +204,6 @@ Three honest limitations, so expectations are calibrated:
 
 **Next:** [2 — The options](./02-options.md) — who sells this, who gives it away, and what
 each is actually like to live with.
+
+*Follow-up reading: [6 — Your questions answered](./06-your-questions-answered.md) goes deeper
+on the fingerprint, multi-version hotfixes, rollouts and code signing.*

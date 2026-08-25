@@ -12,7 +12,7 @@ Before the list, the thing that de-risks the whole choice:
 **Expo publishes the update mechanism as an open specification** — the *Expo Updates Protocol
 v1*. Our app's native shell (`expo-updates`) speaks that protocol to a URL. Today that URL is
 `https://u.expo.dev/3b427ef6-…`, which is Expo's hosted service. It could just as well be
-`https://ota.timecalendar.fr`, run by us.
+`https://ota.timecalendar.app`, run by us.
 
 Which means:
 
@@ -93,13 +93,19 @@ bucket. Adding one more small service is a genuinely marginal cost.
   stays tiny under load, and the bandwidth bill lands on whichever bucket we choose
   ([document 3](./03-costs.md) §3.4 — this is why the bucket choice, not the server, is the
   cost decision).
-- Runs **stateless by default**. Postgres is only needed for the dashboard, and ClickHouse only
-  for its per-device crash/metrics feature — which we'd skip, since that's what Crashlytics
-  already does for us.
+- Two shapes. **Stateless** needs no database but has no dashboard and **no progressive
+  rollouts**. **Control plane** adds Postgres and gives you the multi-app dashboard, channel
+  management, progressive rollouts and rollback history. ClickHouse is a third, separate
+  addition, only for its per-device crash/metrics feature — which we skip, since that's what
+  Crashlytics already does for us. **We want control-plane mode**: rollouts are non-negotiable,
+  and we have a Postgres server with room for another database
+  ([document 6](./06-your-questions-answered.md) §6.6).
 - Feature parity on the things that matter: percentage rollouts, instant rollback, multi-app
   dashboard. Publishing is `npx eoas publish`.
-- Core is MIT-licensed and free. Some enterprise features (SSO, role-based access, branch
-  protection) sit behind a commercial licence — none of which we need.
+- **The dashboard and progressive rollouts are MIT and free** — the project states the release
+  engine (branches, channels, rollouts, storage backends, dashboard) "is MIT and will stay
+  MIT". Four features sit behind a commercial licence: RBAC, SSO, branch protection and custom
+  device attributes. We need none of them.
 - Maturity: ~500 GitHub stars, actively maintained, and the maintainers state it has served
   production traffic since early 2025 to apps totalling **>1M monthly active users** — an order
   of magnitude above us, which is the reassurance that matters.
