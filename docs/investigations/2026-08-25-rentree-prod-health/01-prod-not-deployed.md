@@ -69,3 +69,5 @@ release.
    recommended.
 
 Follow-up: [TIM-187](/TIM/issues/TIM-187).
+
+Operator procedure: [rentrée server/web release runbook](../../server/rentree-release-runbook.md).
