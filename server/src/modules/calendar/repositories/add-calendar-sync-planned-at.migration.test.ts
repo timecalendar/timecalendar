@@ -114,26 +114,19 @@ describe("AddCalendarSyncPlannedAt1787641039755", () => {
       )
       expect(indexExists).toBe(true)
 
-      const [{ dueBeforeHour }, { dueAfterHour }] = await Promise.all([
-        runner.manager
-          .query<{ count: string }[]>(
-            `SELECT count(*)::text AS "count"
-             FROM "calendar"
-             WHERE "syncPlannedAt" <= $1`,
-            [new Date("2026-08-25T12:29:59.999Z")],
-          )
-          .then(([result]) => ({ dueBeforeHour: +result.count })),
-        runner.manager
-          .query<{ count: string }[]>(
-            `SELECT count(*)::text AS "count"
-             FROM "calendar"
-             WHERE "syncPlannedAt" <= $1`,
-            [new Date("2026-08-25T12:30:00.000Z")],
-          )
-          .then(([result]) => ({ dueAfterHour: +result.count })),
-      ])
-      expect(dueBeforeHour).toBe(2)
-      expect(dueAfterHour).toBe(3)
+      const [{ dueBeforeHour, dueAfterHour }] = await runner.manager.query<
+        { dueBeforeHour: string; dueAfterHour: string }[]
+      >(
+        `SELECT count(*) FILTER (WHERE "syncPlannedAt" <= $1)::text AS "dueBeforeHour",
+                count(*) FILTER (WHERE "syncPlannedAt" <= $2)::text AS "dueAfterHour"
+         FROM "calendar"`,
+        [
+          new Date("2026-08-25T12:29:59.999Z"),
+          new Date("2026-08-25T12:30:00.000Z"),
+        ],
+      )
+      expect(+dueBeforeHour).toBe(2)
+      expect(+dueAfterHour).toBe(3)
 
       const downStartedAt = performance.now()
       await migration.down(runner)
