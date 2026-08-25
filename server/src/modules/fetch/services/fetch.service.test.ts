@@ -241,5 +241,57 @@ describe("FetchService", () => {
         resolve(lyon1Url.replace("univ-lyon1.fr", "univ-lyon2.fr"), null),
       ).toBe(30)
     })
+
+    it("over-matches a suffix-planted host, which is the safe direction", () => {
+      // `match` is a substring test for every strategy in the repo, not just
+      // this one, so a host that merely contains the domain resolves to Lyon 1.
+      // Left as-is deliberately: the only consequence is syncing that host less
+      // often. Under-matching would be the dangerous direction, because it is
+      // what would break the once-per-hour promise we made to Lyon 1.
+      expect(
+        resolve(
+          lyon1Url.replace("univ-lyon1.fr", "univ-lyon1.fr.example.com"),
+          null,
+        ),
+      ).toBe(60)
+    })
+  })
+
+  describe("url transformation with the real strategy list", () => {
+    // Registering univlyon1 took Lyon 1 urls out of transformUrl's
+    // "matched nothing -> apply every strategy's renamers" fallback. These two
+    // pin the consequence, which is otherwise invisible: `projectId` is now
+    // left as the user's export url carries it, instead of being rewritten to
+    // univstetienne's id 3.
+    const service = new FetchService(schoolStrategies)
+    const adeUrl = (host: string) =>
+      `https://adelb.${host}/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=-1&calType=ical&nbWeeks=4`
+
+    const fetchWith = async (host: string) => {
+      icalFetcher.fetch.mockImplementationOnce(() =>
+        Promise.resolve([fetcherCalendarEventFactory.build()]),
+      )
+      await service.fetchEvents({ url: adeUrl(host), customData: null }, null)
+    }
+
+    it("keeps a Lyon 1 url's own projectId", async () => {
+      await fetchWith("univ-lyon1.fr")
+
+      expect(icalFetcher.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("projectId=-1"),
+        {},
+      )
+    })
+
+    it("still rewrites projectId for a url matching no strategy", async () => {
+      // The pre-existing fallback, unchanged by this strategy — kept here so
+      // whoever adds the next strategy sees what registering one turns off.
+      await fetchWith("unknown-school.example.com")
+
+      expect(icalFetcher.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("projectId=3"),
+        {},
+      )
+    })
   })
 })

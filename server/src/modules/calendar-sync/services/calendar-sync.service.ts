@@ -10,6 +10,7 @@ import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
+import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { CalendarSource } from "modules/fetch/models/calendar-source"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
@@ -39,6 +40,11 @@ export class CalendarSyncService {
   async createCalendar(body: CreateCalendarDto): Promise<CreateCalendarRepDto> {
     const { url, schoolId, schoolName, customData, name } = body
 
+    // Both timestamps are placeholders overwritten by `saveCalendar` at the end
+    // of this same sync. `syncPlannedAt` has to be one of them: without it the
+    // insert takes the column's `now()` default and the row is briefly due,
+    // which would let a concurrent request fetch a brand-new calendar twice.
+    const now = new Date()
     const calendar = await this.sync({
       token: nanoid(),
       school: schoolId ? idToEntity(schoolId) : undefined,
@@ -46,7 +52,8 @@ export class CalendarSyncService {
       url,
       customData,
       name,
-      lastUpdatedAt: new Date(),
+      lastUpdatedAt: now,
+      syncPlannedAt: addMinutes(now, DEFAULT_MIN_SYNC_INTERVAL_MINUTES),
     })
 
     return { token: calendar.token }
