@@ -24,6 +24,7 @@ import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
+import { OtaUpdateRuntime } from "@/updates"
 
 // Anchor the back stack at the tab group so a cold deep link into a non-tab
 // route (e.g. timecalendar-dev://personal-event-form, or a notification target)
@@ -92,6 +93,7 @@ export default function RootLayout() {
         client={queryClient}
         persistOptions={persistOptions}
       >
+        <OtaUpdateRuntime />
         <StartupSync />
         <NotificationRegistration />
         <NotificationTapRouting />

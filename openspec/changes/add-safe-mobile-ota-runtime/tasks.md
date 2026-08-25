@@ -5,10 +5,10 @@
 
 ## 2. Silent OTA runtime boundary
 
-- [ ] 2.1 Add the owned `mobile/src/updates/` non-visual runtime component and barrel: consume `useUpdates()`, install the five deterministic OTA Crashlytics keys once per JavaScript runtime, and catch attribute-installation rejection through `recordUnknownError(error, "ota/attributes")`; verify no module outside the boundary imports `expo-updates` for runtime behavior and no module outside `@/firebase` imports RNFirebase
-- [ ] 2.2 Implement one stable AppState subscription using refs for pending state, a consumed background marker, and a pre-call reload latch; call `reloadAsync()` only after a real `background → active` boundary and record a rejection once through `recordUnknownError(error, "ota/reload")`
-- [ ] 2.3 Mount the OTA runtime exactly once in `mobile/src/app/_layout.tsx` without changing splash gating, FCM side-effect import/registration, navigation, providers, visible UI, or user-facing text; verify the component renders `null`
-- [ ] 2.4 Add focused `ota-update-runtime.test.tsx` CI proof cases for: pending-while-active no-op, background/inactive/active reload, no-pending boundary consumption, inactive-only no-op, pending-ref freshness without listener churn, duplicate events/remount guards, rejected reload recording/no retry, deterministic embedded/development keys, and listener cleanup; verify with `npx jest --runInBand src/updates/ota-update-runtime.test.tsx`
+- [x] 2.1 Add the owned `mobile/src/updates/` non-visual runtime component and barrel: consume `useUpdates()`, install the five deterministic OTA Crashlytics keys once per JavaScript runtime, and catch attribute-installation rejection through `recordUnknownError(error, "ota/attributes")`; verify no module outside the boundary imports `expo-updates` for runtime behavior and no module outside `@/firebase` imports RNFirebase
+- [x] 2.2 Implement one stable AppState subscription using refs for pending state, a consumed background marker, and a pre-call reload latch; call `reloadAsync()` only after a real `background → active` boundary and record a rejection once through `recordUnknownError(error, "ota/reload")`
+- [x] 2.3 Mount the OTA runtime exactly once in `mobile/src/app/_layout.tsx` without changing splash gating, FCM side-effect import/registration, navigation, providers, visible UI, or user-facing text; verify the component renders `null`
+- [x] 2.4 Add focused `ota-update-runtime.test.tsx` CI proof cases for: pending-while-active no-op, background/inactive/active reload, no-pending boundary consumption, inactive-only no-op, pending-ref freshness without listener churn, duplicate events/remount guards, rejected reload recording/no retry, deterministic embedded/development keys, and listener cleanup; verify with `npx jest --runInBand src/updates/ota-update-runtime.test.tsx`
 
 ## 3. Explicit Expo launch policy
 
