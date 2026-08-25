@@ -146,6 +146,7 @@ describe("IcalUrlScreen", () => {
 
   it("reports only a recorded failure with available school context", async () => {
     addState = { isPending: false, isError: true }
+    mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
     mockUseSelectedSchool.mockReturnValue({
       schoolId: "school-1",
       groupValues: [],
@@ -162,6 +163,14 @@ describe("IcalUrlScreen", () => {
         "  https://example.com/cal.ics  ",
       )
     })
+    await act(async () => fireEvent.press(getByTestId("ical-url-submit")))
+    await waitFor(() => expect(getByTestId("ical-url-report")).toBeTruthy())
+    await act(async () => {
+      fireEvent.changeText(
+        getByTestId("ical-url-input"),
+        "https://example.com/never-failed.ics",
+      )
+    })
     await act(async () => fireEvent.press(getByTestId("ical-url-report")))
     expect(router.push).toHaveBeenCalledWith({
       pathname: "/feedback",
@@ -170,6 +179,28 @@ describe("IcalUrlScreen", () => {
         schoolId: "school-1",
         schoolName: "Université",
       },
+    })
+  })
+
+  it("omits absent school context from the recorded failed attempt", async () => {
+    addState = { isPending: false, isError: true }
+    mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
+    const { getByTestId } = await render(<IcalUrlScreen />)
+    await act(async () => {
+      fireEvent.changeText(
+        getByTestId("ical-url-input"),
+        "https://example.com/cal.ics",
+      )
+    })
+    await act(async () => {
+      fireEvent.press(getByTestId("ical-url-submit"))
+    })
+    await waitFor(() => expect(getByTestId("ical-url-report")).toBeTruthy())
+    await act(async () => fireEvent.press(getByTestId("ical-url-report")))
+
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/feedback",
+      params: { calendarUrl: "https://example.com/cal.ics" },
     })
   })
 

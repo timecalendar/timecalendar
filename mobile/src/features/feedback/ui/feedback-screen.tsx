@@ -24,7 +24,6 @@ import {
   type FeedbackFormErrors,
   validateFeedbackForm,
 } from "@/features/feedback/form"
-import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 const MAX_CONTEXT_LENGTH = 2_048
@@ -53,15 +52,20 @@ export default function FeedbackScreen() {
     ...(schoolId ? { schoolId } : {}),
     ...(schoolName ? { schoolName } : {}),
   }
-  const { sendFeedback, isPending, reset } = useSendFeedback()
+  const {
+    sendFeedback,
+    isPending,
+    failed: submitFailed,
+    reset,
+  } = useSendFeedback()
   const messageRef = useRef<TextInput>(null)
+  const submitInFlightRef = useRef(false)
   const [email, setEmail] = useState(getRememberedEmail)
   const [message, setMessage] = useState("")
   const [errors, setErrors] = useState<FeedbackFormErrors>({})
-  const [submitFailed, setSubmitFailed] = useState(false)
 
   const submit = async () => {
-    if (isPending) return
+    if (isPending || submitInFlightRef.current) return
     const validation = validateFeedbackForm({ email, message })
     if (!validation.valid) {
       setErrors(validation.errors)
@@ -69,18 +73,21 @@ export default function FeedbackScreen() {
     }
 
     setErrors({})
-    setSubmitFailed(false)
     reset()
     setRememberedEmail(validation.values.email)
+    submitInFlightRef.current = true
 
     try {
-      await sendFeedback({ ...validation.values, ...context })
-      Alert.alert(t("feedback.success.title"), t("feedback.success.message"), [
-        { text: t("feedback.close"), onPress: () => router.back() },
-      ])
-    } catch (error: unknown) {
-      recordUnknownError(error, "feedback/contact-submit")
-      setSubmitFailed(true)
+      const sent = await sendFeedback({ ...validation.values, ...context })
+      if (sent) {
+        Alert.alert(
+          t("feedback.success.title"),
+          t("feedback.success.message"),
+          [{ text: t("feedback.close"), onPress: () => router.back() }],
+        )
+      }
+    } finally {
+      submitInFlightRef.current = false
     }
   }
 

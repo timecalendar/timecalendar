@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources"
+import { recordUnknownError } from "@/firebase"
 
 import { buildFeedbackDto, useSendFeedback } from "./use-send-feedback"
 
@@ -11,6 +12,7 @@ jest.mock("@/api/mutator")
 jest.mock("@/features/calendar-sources", () => ({
   useUserCalendars: jest.fn(),
 }))
+jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("./device-info", () => ({ getDeviceInfo: () => "device-info" }))
 
 const mockFetch = customFetch as jest.Mock
@@ -84,17 +86,22 @@ it("POSTs every held calendar id through the real generated mutation", async () 
   await waitFor(() => expect(result.current.isPending).toBe(false))
 })
 
-it("rejects through the generated mutation without a live server", async () => {
-  mockFetch.mockRejectedValue(new Error("mail rejected"))
+it("records a body-free failure through the shared write controller", async () => {
+  const error = new Error("mail rejected")
+  mockFetch.mockRejectedValue(error)
   const { result } = await renderHook(() => useSendFeedback(), { wrapper })
-  let caught: unknown
+  let sent: boolean | undefined
   await act(async () => {
-    try {
-      await result.current.sendFeedback({ email: "a@b.fr", message: "hello" })
-    } catch (error: unknown) {
-      caught = error
-    }
+    sent = await result.current.sendFeedback({
+      email: "private@example.fr",
+      message: "private body",
+    })
   })
-  expect(caught).toEqual(new Error("mail rejected"))
+  expect(sent).toBe(false)
+  expect(recordUnknownError).toHaveBeenCalledWith(
+    error,
+    "feedback/contact-submit",
+  )
+  expect(result.current.failed).toBe(true)
   await waitFor(() => expect(result.current.isPending).toBe(false))
 })

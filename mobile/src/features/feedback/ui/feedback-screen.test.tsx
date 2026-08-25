@@ -7,7 +7,6 @@ import {
   setRememberedEmail,
   useSendFeedback,
 } from "@/features/feedback/data"
-import { recordUnknownError } from "@/firebase"
 
 import FeedbackScreen, { normalizeFeedbackParam } from "./feedback-screen"
 
@@ -16,7 +15,6 @@ jest.mock("expo-router", () => ({
   Stack: { Screen: () => null },
   useLocalSearchParams: jest.fn(),
 }))
-jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/feedback/data", () => ({
   getRememberedEmail: jest.fn(),
   setRememberedEmail: jest.fn(),
@@ -36,6 +34,7 @@ beforeEach(() => {
   mockUseSendFeedback.mockReturnValue({
     sendFeedback,
     isPending: false,
+    failed: false,
     reset,
   })
 })
@@ -70,7 +69,7 @@ it("prefills remembered e-mail and submits normalized values with route context"
     schoolId: "school",
     schoolName: "University",
   })
-  sendFeedback.mockResolvedValue(undefined)
+  sendFeedback.mockResolvedValue(true)
   const alert = jest.spyOn(Alert, "alert").mockImplementation()
   const { getByTestId } = await render(<FeedbackScreen />)
   expect(getByTestId("feedback-email-input").props.value).toBe(
@@ -101,9 +100,14 @@ it("prefills remembered e-mail and submits normalized values with route context"
   alert.mockRestore()
 })
 
-it("retains input, records body-free telemetry, and permits retry", async () => {
-  const error = new Error("failure")
-  sendFeedback.mockRejectedValueOnce(error).mockResolvedValueOnce(undefined)
+it("retains input and permits retry after a recorded failure", async () => {
+  mockUseSendFeedback.mockReturnValue({
+    sendFeedback,
+    isPending: false,
+    failed: true,
+    reset,
+  })
+  sendFeedback.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
   jest.spyOn(Alert, "alert").mockImplementation()
   const { getByTestId } = await render(<FeedbackScreen />)
   await act(async () =>
@@ -119,11 +123,7 @@ it("retains input, records body-free telemetry, and permits retry", async () => 
     ),
   )
   await act(async () => fireEvent.press(getByTestId("feedback-submit")))
-  await waitFor(() => expect(getByTestId("feedback-submit-error")).toBeTruthy())
-  expect(recordUnknownError).toHaveBeenCalledWith(
-    error,
-    "feedback/contact-submit",
-  )
+  expect(getByTestId("feedback-submit-error")).toBeTruthy()
   expect(getByTestId("feedback-message-input").props.value).toBe(
     "Private message",
   )
@@ -135,7 +135,12 @@ it("retains input, records body-free telemetry, and permits retry", async () => 
 })
 
 it("disables duplicate submit and exposes pending status", async () => {
-  mockUseSendFeedback.mockReturnValue({ sendFeedback, isPending: true, reset })
+  mockUseSendFeedback.mockReturnValue({
+    sendFeedback,
+    isPending: true,
+    failed: false,
+    reset,
+  })
   const { getByTestId, getByText } = await render(<FeedbackScreen />)
   expect(getByTestId("feedback-submit").props.accessibilityState).toEqual({
     disabled: true,
@@ -144,4 +149,23 @@ it("disables duplicate submit and exposes pending status", async () => {
   expect(getByText("Sending…").props.accessibilityLiveRegion).toBe("polite")
   fireEvent.press(getByTestId("feedback-submit"))
   expect(sendFeedback).not.toHaveBeenCalled()
+})
+
+it("synchronously ignores a rapid second submit before pending renders", async () => {
+  sendFeedback.mockResolvedValue(false)
+  const { getByTestId } = await render(<FeedbackScreen />)
+  await act(async () => {
+    fireEvent.changeText(
+      getByTestId("feedback-email-input"),
+      "student@example.fr",
+    )
+    fireEvent.changeText(getByTestId("feedback-message-input"), "Hello")
+  })
+  await act(async () => {
+    fireEvent.press(getByTestId("feedback-submit"))
+    fireEvent.press(getByTestId("feedback-submit"))
+    await Promise.resolve()
+  })
+
+  expect(sendFeedback).toHaveBeenCalledTimes(1)
 })
