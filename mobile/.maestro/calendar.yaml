@@ -40,11 +40,11 @@ appId: fr.samuelprak.timecalendar.dev
 # sync settles before the first synced-title assertion (do NOT weaken this to an
 # empty/reachability assertion — that reintroduces the gap this flow closes).
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: ".*E2E Today Lecture.*"
     timeout: 60000
 # Tap the synced tile → its REAL event-details (a Stack sibling of (tabs)).
 - tapOn:
-    text: "E2E Today Lecture"
+    text: ".*E2E Today Lecture.*"
 # Event-details shows REAL content — the seeded title + location render. This is
 # the round-trip proof: the not-found screen has no title/location, so a visible
 # seeded title + location IS the resolved-details state (the old reachability flow
