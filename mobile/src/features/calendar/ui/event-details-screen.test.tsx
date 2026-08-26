@@ -206,6 +206,7 @@ describe("EventDetailsScreen", () => {
 describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
   it("offers the hide action for a synced event", async () => {
     await render(<EventDetailsScreen />)
+    expect(screen.getByTestId("event-details-hide-action")).toBeTruthy()
     expect(screen.getByLabelText("Hide this event")).toBeTruthy()
   })
 
