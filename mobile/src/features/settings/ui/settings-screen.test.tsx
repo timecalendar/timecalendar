@@ -48,14 +48,26 @@ describe("SettingsScreen", () => {
     await render(<SettingsScreen />)
     const events = screen.getByTestId("settings-section-events")
     const preferences = screen.getByTestId("settings-section-preferences")
+    const app = screen.getByTestId("settings-section-app")
     expect(events).toBeOnTheScreen()
     expect(preferences).toBeOnTheScreen()
+    expect(app).toBeOnTheScreen()
+    expect(
+      screen
+        .getAllByTestId(/^settings-section-/)
+        .map((section) => section.props.testID),
+    ).toEqual([
+      "settings-section-events",
+      "settings-section-preferences",
+      "settings-section-app",
+    ])
     expect(screen.getByText("Personal events")).toBeTruthy()
     expect(screen.getByText("Hidden events")).toBeTruthy()
     expect(screen.getByText("Appearance & language")).toBeTruthy()
+    expect(screen.getByText("Time zone")).toBeTruthy()
     expect(screen.getByText("Notifications")).toBeTruthy()
+    expect(screen.getByText("About")).toBeTruthy()
     expect(screen.queryByText("Activity")).toBeNull()
-    expect(screen.queryByText("About")).toBeNull()
     expect(screen.queryByText("Feedback")).toBeNull()
     expect(screen.queryByText("Add calendar")).toBeNull()
     expect(screen.queryByText("TIMECALENDAR")).toBeNull()
@@ -113,7 +125,9 @@ describe("SettingsScreen", () => {
       ["settings-personal-events", "/personal-events"],
       ["settings-hidden-events", "/hidden-events"],
       ["settings-appearance", "/appearance-settings"],
+      ["settings-timezone", "/timezone-settings"],
       ["settings-notifications", "/notification-settings"],
+      ["settings-about", "/about"],
     ] as const
     for (const [testID, route] of routes) {
       const row = screen.getByTestId(testID)
@@ -123,7 +137,7 @@ describe("SettingsScreen", () => {
         flexDirection: "row",
         alignItems: "center",
       })
-      fireEvent.press(row)
+      await fireEvent.press(row)
       expect(mockPush).toHaveBeenLastCalledWith(route)
     }
   })

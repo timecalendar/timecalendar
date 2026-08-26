@@ -6,54 +6,55 @@ import { Platform, Pressable, StyleSheet, View } from "react-native"
 import { ThemedText } from "@/components/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-interface SettingsRowProps {
-  href: Href
-  icon: {
-    ios: SFSymbol
-    android: AndroidSymbol
-    web: AndroidSymbol
-  }
+interface SettingsRowBaseProps {
+  icon: { ios: SFSymbol; android: AndroidSymbol; web: AndroidSymbol }
   label: string
   accessibilityLabel?: string
-  hint: string
   testID: string
-  secondary?: string
   first?: boolean
 }
 
-export function SettingsRow({
-  href,
-  icon,
-  label,
-  accessibilityLabel,
-  hint,
-  testID,
-  secondary,
-  first = false,
-}: SettingsRowProps) {
+interface SettingsRouterRowProps extends SettingsRowBaseProps {
+  variant?: "router"
+  href: Href
+  hint: string
+  secondary?: string
+  onPress?: never
+  value?: never
+}
+
+interface SettingsActionRowProps extends SettingsRowBaseProps {
+  variant: "action"
+  onPress: () => void
+  hint: string
+  secondary?: string
+  href?: never
+  value?: never
+}
+
+interface SettingsValueRowProps extends SettingsRowBaseProps {
+  variant: "value"
+  value: string
+  href?: never
+  hint?: never
+  onPress?: never
+  secondary?: never
+}
+
+export type SettingsRowProps =
+  | SettingsRouterRowProps
+  | SettingsActionRowProps
+  | SettingsValueRowProps
+
+export function SettingsRow(props: SettingsRowProps) {
   const theme = useTheme()
   const minimumHeight = Platform.OS === "ios" ? 44 : 48
+  const isValue = props.variant === "value"
+  const secondary = isValue ? props.value : props.secondary
 
-  return (
-    <Pressable
-      accessibilityRole="link"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityHint={hint}
-      testID={testID}
-      onPress={() => router.push(href)}
-      android_ripple={{ color: theme.ripple, foreground: true }}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          minHeight: minimumHeight,
-          backgroundColor:
-            Platform.OS === "ios" && pressed
-              ? theme.backgroundSelected
-              : theme.backgroundElement,
-        },
-      ]}
-    >
-      {!first ? (
+  const content = (
+    <>
+      {!props.first ? (
         <View
           accessible={false}
           importantForAccessibility="no-hide-descendants"
@@ -67,36 +68,88 @@ export function SettingsRow({
         style={[styles.icon, { backgroundColor: theme.primarySoft }]}
       >
         <SymbolView
-          name={icon}
+          name={props.icon}
           size={20}
           tintColor={theme.primary}
           style={styles.symbol}
         />
       </View>
       <View style={styles.text}>
-        <ThemedText style={styles.label}>{label}</ThemedText>
+        <ThemedText style={styles.label}>{props.label}</ThemedText>
         {secondary ? (
           <ThemedText themeColor="textSecondary" type="small">
             {secondary}
           </ThemedText>
         ) : null}
       </View>
+      {!isValue ? (
+        <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={styles.chevronContainer}
+        >
+          <SymbolView
+            name={{
+              ios: "chevron.right",
+              android: "chevron_right",
+              web: "chevron_right",
+            }}
+            size={16}
+            tintColor={theme.textTertiary}
+            style={styles.chevron}
+          />
+        </View>
+      ) : null}
+    </>
+  )
+
+  if (isValue) {
+    return (
       <View
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
-        style={styles.chevronContainer}
+        accessible
+        accessibilityLabel={props.accessibilityLabel ?? props.label}
+        accessibilityValue={{ text: props.value }}
+        testID={props.testID}
+        style={[
+          styles.row,
+          {
+            minHeight: minimumHeight,
+            backgroundColor: theme.backgroundElement,
+          },
+        ]}
       >
-        <SymbolView
-          name={{
-            ios: "chevron.right",
-            android: "chevron_right",
-            web: "chevron_right",
-          }}
-          size={16}
-          tintColor={theme.textTertiary}
-          style={styles.chevron}
-        />
+        {content}
       </View>
+    )
+  }
+
+  const onPress =
+    props.variant === "action"
+      ? props.onPress
+      : () => {
+          router.push(props.href)
+        }
+
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={props.accessibilityLabel ?? props.label}
+      accessibilityHint={props.hint}
+      testID={props.testID}
+      onPress={onPress}
+      android_ripple={{ color: theme.ripple, foreground: true }}
+      style={({ pressed }) => [
+        styles.row,
+        {
+          minHeight: minimumHeight,
+          backgroundColor:
+            Platform.OS === "ios" && pressed
+              ? theme.backgroundSelected
+              : theme.backgroundElement,
+        },
+      ]}
+    >
+      {content}
     </Pressable>
   )
 }
@@ -119,14 +172,8 @@ const styles = StyleSheet.create({
   },
   symbol: { width: 20, height: 20 },
   chevron: { width: 16, height: 16 },
-  text: {
-    flex: 1,
-    minWidth: 0,
-    gap: Spacing.one,
-  },
-  label: {
-    flexShrink: 1,
-  },
+  text: { flex: 1, minWidth: 0, gap: Spacing.one },
+  label: { flexShrink: 1 },
   chevronContainer: { flexShrink: 0 },
   separator: {
     position: "absolute",

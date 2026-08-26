@@ -73,9 +73,21 @@ const destinations = [
     hint: "settingsHub.notifications.hint" as const,
     testID: "settings-notifications",
   },
+  {
+    section: "app" as const,
+    href: "/about" as const,
+    icon: {
+      ios: "info.circle",
+      android: "info",
+      web: "info",
+    } as const,
+    label: "settingsHub.about.label" as const,
+    hint: "settingsHub.about.hint" as const,
+    testID: "settings-about",
+  },
 ] as const
 
-const sections = ["events", "preferences"] as const
+const sections = ["events", "preferences", "app"] as const
 
 export function SettingsScreen() {
   const { t } = useTranslation()
