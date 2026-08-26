@@ -31,14 +31,14 @@ that the ordinary preview artifact becomes production.
 
 ## 4.3 What changes between preview and production
 
-| Concern | Store preview | Production candidate |
-| --- | --- | --- |
-| App identity | Existing production identity | Same |
-| Native signing | Real store-compatible signing | Same accepted signing chain |
-| OTA channel | `preview` | `production` |
-| Audience | The team | Internal rehearsal, then reviewed staged public rollout |
-| Build source | Recorded green SHA | Protected release SHA/tag |
-| Rollout authority | Internal group/track | Human-owned store release act |
+| Concern           | Store preview                 | Production candidate                                    |
+| ----------------- | ----------------------------- | ------------------------------------------------------- |
+| App identity      | Existing production identity  | Same                                                    |
+| Native signing    | Real store-compatible signing | Same accepted signing chain                             |
+| OTA channel       | `preview`                     | `production`                                            |
+| Audience          | The team                      | Internal rehearsal, then reviewed staged public rollout |
+| Build source      | Recorded green SHA            | Protected release SHA/tag                               |
+| Rollout authority | Internal group/track          | Human-owned store release act                           |
 
 ## 4.4 Rollback is containment plus a forward fix
 

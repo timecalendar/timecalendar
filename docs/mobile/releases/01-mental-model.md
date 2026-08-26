@@ -25,13 +25,13 @@ step 4.
 
 ## 1.2 What changed since Flutter v3
 
-| Flutter v3 | React Native v4 |
-| --- | --- |
-| Flutter/Fastlane built the native binaries | EAS Build is the planned signed-build service |
-| Android read a local gitignored `key.properties` and keystore | EAS can hold/import the Android key used for uploads |
-| iOS Fastlane Match synchronized certificates/profiles | EAS can manage a fresh valid certificate/profile on the same Apple team |
-| Fastlane Supply/Pilot uploaded builds | EAS Submit uploads the selected EAS build |
-| Store consoles controlled testers and rollout | Still true; Expo does not replace them |
+| Flutter v3                                                    | React Native v4                                                         |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Flutter/Fastlane built the native binaries                    | EAS Build is the planned signed-build service                           |
+| Android read a local gitignored `key.properties` and keystore | EAS can hold/import the Android key used for uploads                    |
+| iOS Fastlane Match synchronized certificates/profiles         | EAS can manage a fresh valid certificate/profile on the same Apple team |
+| Fastlane Supply/Pilot uploaded builds                         | EAS Submit uploads the selected EAS build                               |
+| Store consoles controlled testers and rollout                 | Still true; Expo does not replace them                                  |
 
 The important continuity is the **store identity**, not the JavaScript framework:
 

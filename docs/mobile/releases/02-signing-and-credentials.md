@@ -2,11 +2,11 @@
 
 ## 2.1 Three things commonly called “the Android key”
 
-| Item | Purpose | Can it be replaced? |
-| --- | --- | --- |
-| **App-signing key** | Google signs APKs delivered to users | Google retains it when Play App Signing is enabled; otherwise loss is normally fatal for updating the same app |
-| **Upload key** | EAS/developer signs the `.aab` uploaded to Play | Resettable when Play App Signing is enabled |
-| **Play service-account JSON** | Lets EAS Submit call the Play Developer API | Rotatable; it is not an app-signing key |
+| Item                          | Purpose                                         | Can it be replaced?                                                                                            |
+| ----------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **App-signing key**           | Google signs APKs delivered to users            | Google retains it when Play App Signing is enabled; otherwise loss is normally fatal for updating the same app |
+| **Upload key**                | EAS/developer signs the `.aab` uploaded to Play | Resettable when Play App Signing is enabled                                                                    |
+| **Play service-account JSON** | Lets EAS Submit call the Play Developer API     | Rotatable; it is not an app-signing key                                                                        |
 
 That distinction decides whether the missing Flutter file is a nuisance or a blocker.
 

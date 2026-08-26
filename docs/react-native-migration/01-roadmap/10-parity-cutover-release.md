@@ -37,4 +37,4 @@ The separate `.dev` Firebase prerequisite remains owned by
 
 - **The cutover is one-shot for existing users** — a bad release degrades every user at once. Staged rollout + close migration-metric watch + the Phase 09 safety net are the guardrails.
 - Have a **rollback plan**: if the RN release misbehaves, can we re-ship Flutter? (Store + signing implications — decide before release.)
-</content>
+  </content>

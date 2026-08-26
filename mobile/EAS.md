@@ -14,11 +14,11 @@ not EAS.
 Three build profiles in [`eas.json`](./eas.json), split along the `APP_VARIANT`
 identity line (not a third identity — design D1):
 
-| Profile       | `APP_VARIANT` | Identity / Firebase                            | Distribution | Artifacts                       | Update channel |
-| ------------- | ------------- | ---------------------------------------------- | ------------ | ------------------------------- | -------------- |
-| `development` | `development` | `…timecalendar.dev` / `timecalendar-dev`       | `internal`   | iOS **simulator** + Android APK | —              |
-| `preview`     | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak`    | `internal`   | iOS device **.ipa** + Android APK | `preview`      |
-| `production`  | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak`    | `store`      | iOS **.ipa** + Android **.aab** | `production`   |
+| Profile       | `APP_VARIANT` | Identity / Firebase                         | Distribution | Artifacts                         | Update channel |
+| ------------- | ------------- | ------------------------------------------- | ------------ | --------------------------------- | -------------- |
+| `development` | `development` | `…timecalendar.dev` / `timecalendar-dev`    | `internal`   | iOS **simulator** + Android APK   | —              |
+| `preview`     | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak` | `internal`   | iOS device **.ipa** + Android APK | `preview`      |
+| `production`  | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak` | `store`      | iOS **.ipa** + Android **.aab**   | `production`   |
 
 - `development` is the fast inner loop: `developmentClient: true`, simulator + APK, no
   signing needed. It carries the `.dev` id, the dev Firebase project, and the dev-variant

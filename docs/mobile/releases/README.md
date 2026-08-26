@@ -34,24 +34,24 @@ path. [Document 5](./05-readiness-and-gaps.md) turns those facts into a finite c
 
 ## Reading order
 
-| # | Document | Question answered |
-| --- | --- | --- |
-| 1 | [The release mental model](./01-mental-model.md) | What do Expo, Apple and Google each do? |
-| 2 | [Signing and credential recovery](./02-signing-and-credentials.md) | Which old files matter, and what if they are lost? |
-| 3 | [First preview release](./03-first-preview.md) | What is needed for TestFlight and Play internal testing? |
-| 4 | [Production v4 cutover](./04-production-cutover.md) | How does an internal build become the v4 store update? |
-| 5 | [Readiness and gaps](./05-readiness-and-gaps.md) | What exists today, what is unknown, and what happens next? |
+| #   | Document                                                           | Question answered                                          |
+| --- | ------------------------------------------------------------------ | ---------------------------------------------------------- |
+| 1   | [The release mental model](./01-mental-model.md)                   | What do Expo, Apple and Google each do?                    |
+| 2   | [Signing and credential recovery](./02-signing-and-credentials.md) | Which old files matter, and what if they are lost?         |
+| 3   | [First preview release](./03-first-preview.md)                     | What is needed for TestFlight and Play internal testing?   |
+| 4   | [Production v4 cutover](./04-production-cutover.md)                | How does an internal build become the v4 store update?     |
+| 5   | [Readiness and gaps](./05-readiness-and-gaps.md)                   | What exists today, what is unknown, and what happens next? |
 
 ## Decisions supplied by the owner
 
-| Decision | Answer |
-| --- | --- |
-| v4 identity | Replace the existing Flutter listing |
-| Apple access | Apple Developer and App Store Connect access available |
-| Expo ownership | Keep the current personal Expo account for now |
-| First preview | Store-internal first: TestFlight + Play internal |
-| Recovery custody | Vaultwarden |
-| Operator model | Owner bootstraps; CI/automation later |
+| Decision                 | Answer                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| v4 identity              | Replace the existing Flutter listing                                            |
+| Apple access             | Apple Developer and App Store Connect access available                          |
+| Expo ownership           | Keep the current personal Expo account for now                                  |
+| First preview            | Store-internal first: TestFlight + Play internal                                |
+| Recovery custody         | Vaultwarden                                                                     |
+| Operator model           | Owner bootstraps; CI/automation later                                           |
 | Android Play App Signing | **Not yet confirmed**; the supplied screen was Play protection, not app signing |
 
 ## Vocabulary

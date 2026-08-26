@@ -64,16 +64,16 @@ name lands. The operator should select the explicit profile and recorded build I
 
 ## 3.4 What Expo needs from the owner
 
-| Need | Why | Once or recurring? |
-| --- | --- | --- |
-| Login to the personal Expo account owning the project | Run/configure EAS | Initial + recovery |
-| Authorized Apple Developer access | Create/select iOS signing credentials | Initial/rotation |
-| App Store Connect app/team identifiers | Target the existing app | Initial, then stable |
-| Accepted Android upload key or completed reset | Sign an upload Play accepts | Initial/rotation |
-| Play service-account authorization | Let EAS Submit upload | Initial/rotation |
-| Live store version counters | Avoid duplicate/lower build rejection | Initial sync |
-| Tester membership | Deliver internal builds | As team changes |
-| Explicit submit/rollout approval | A store upload/release is a deploy act | Every release |
+| Need                                                  | Why                                    | Once or recurring?   |
+| ----------------------------------------------------- | -------------------------------------- | -------------------- |
+| Login to the personal Expo account owning the project | Run/configure EAS                      | Initial + recovery   |
+| Authorized Apple Developer access                     | Create/select iOS signing credentials  | Initial/rotation     |
+| App Store Connect app/team identifiers                | Target the existing app                | Initial, then stable |
+| Accepted Android upload key or completed reset        | Sign an upload Play accepts            | Initial/rotation     |
+| Play service-account authorization                    | Let EAS Submit upload                  | Initial/rotation     |
+| Live store version counters                           | Avoid duplicate/lower build rejection  | Initial sync         |
+| Tester membership                                     | Deliver internal builds                | As team changes      |
+| Explicit submit/rollout approval                      | A store upload/release is a deploy act | Every release        |
 
 Expo does **not** need the owner's Apple password stored in git or CI. It does not need the Android
 app-signing private key when Google already holds it under Play App Signing. It does not need

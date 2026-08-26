@@ -2,24 +2,24 @@
 
 ## 5.1 Current facts
 
-| Area | Status on 2026-08-26 | Evidence / consequence |
-| --- | --- | --- |
-| v4 store identity | **Ready in source** | iOS and Android use `fr.samuelprak.timecalendar` outside the dev variant |
-| User-facing version | **Ready in source** | `4.0.0`; live store build counters still need synchronization |
-| EAS project link | **Ready** | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b` |
-| EAS ownership | **Decision made** | personal Expo account for now; recovery inventory still needs recording |
-| Current preview profile | **Wrong distribution for chosen preview** | creates direct-install APK/ad hoc IPA, not Play/TestFlight builds |
-| Production build profile | **Configured, unproved** | store IPA/AAB, production OTA channel, remote auto-increment |
-| Submission config | **Skeleton only** | iOS IDs are environment references; Android points to an absent local service-account path and internal track |
-| Apple access | **Owner confirmed** | Apple Developer + App Store Connect access available |
-| Legacy iOS custody | **Located** | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS |
-| Android Play App Signing | **Unknown / first gate** | supplied console text was Play protection, not the Play app-signing page |
-| Legacy Android keystore | **Not found** | absent from known TimeCalendar workspaces and git history; may be recoverable elsewhere or resettable depending on Play state |
-| EAS-managed credentials | **Unverified** | no live credential mutation or inspection was performed for this docs task |
-| Store tester groups | **Unverified** | create/confirm **The team** in TestFlight and Play |
-| Signed build/install | **Not done in this task** | first store-internal preview remains a controlled rollout action |
-| Build automation/Mac runner | **Future work** | not required for the first manual EAS preview |
-| OTA infrastructure | **Separate programme** | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready |
+| Area                        | Status on 2026-08-26                      | Evidence / consequence                                                                                                        |
+| --------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| v4 store identity           | **Ready in source**                       | iOS and Android use `fr.samuelprak.timecalendar` outside the dev variant                                                      |
+| User-facing version         | **Ready in source**                       | `4.0.0`; live store build counters still need synchronization                                                                 |
+| EAS project link            | **Ready**                                 | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b`                                                 |
+| EAS ownership               | **Decision made**                         | personal Expo account for now; recovery inventory still needs recording                                                       |
+| Current preview profile     | **Wrong distribution for chosen preview** | creates direct-install APK/ad hoc IPA, not Play/TestFlight builds                                                             |
+| Production build profile    | **Configured, unproved**                  | store IPA/AAB, production OTA channel, remote auto-increment                                                                  |
+| Submission config           | **Skeleton only**                         | iOS IDs are environment references; Android points to an absent local service-account path and internal track                 |
+| Apple access                | **Owner confirmed**                       | Apple Developer + App Store Connect access available                                                                          |
+| Legacy iOS custody          | **Located**                               | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                         |
+| Android Play App Signing    | **Unknown / first gate**                  | supplied console text was Play protection, not the Play app-signing page                                                      |
+| Legacy Android keystore     | **Not found**                             | absent from known TimeCalendar workspaces and git history; may be recoverable elsewhere or resettable depending on Play state |
+| EAS-managed credentials     | **Unverified**                            | no live credential mutation or inspection was performed for this docs task                                                    |
+| Store tester groups         | **Unverified**                            | create/confirm **The team** in TestFlight and Play                                                                            |
+| Signed build/install        | **Not done in this task**                 | first store-internal preview remains a controlled rollout action                                                              |
+| Build automation/Mac runner | **Future work**                           | not required for the first manual EAS preview                                                                                 |
+| OTA infrastructure          | **Separate programme**                    | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready             |
 
 ## 5.2 Gates to the first preview
 
