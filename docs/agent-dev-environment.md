@@ -1,6 +1,6 @@
 # TimeCalendar — Agent & Dev-Environment Handbook
 
-> **Purpose.** This document captures *exactly* how the current autonomous agent
+> **Purpose.** This document captures _exactly_ how the current autonomous agent
 > (Claude Code, orchestrated by the [Paperclip](#9-paperclip-control-plane-agent-management)
 > control plane) develops TimeCalendar on this server: the repo layout, how the
 > dev environment is set up and run, git worktree management, the end-to-end test
@@ -22,13 +22,13 @@
 TimeCalendar is a calendar app for students (French university schedules). It has
 four code surfaces in one monorepo:
 
-| Path | Stack | Role |
-| --- | --- | --- |
-| `app/` | **Flutter** (Dart) | The **legacy** mobile app, currently in the stores. Under R-5 *bounded maintenance only* — security/critical fixes. |
-| `mobile/` | **React Native + Expo SDK 56** (TypeScript) | The **new** mobile app actively being built to replace `app/`. This is where most feature work happens. |
-| `server/` | **NestJS** (TypeScript) + Postgres + Redis | The backend API. Serves both mobile clients on `:3005`. |
-| `web/` | **Next.js** (TypeScript) | The marketing/web surface. |
-| `openapi/` | OpenAPI spec + generated JS client | `openapi/openapi.json` is the **single committed server↔client contract**. |
+| Path       | Stack                                       | Role                                                                                                                |
+| ---------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `app/`     | **Flutter** (Dart)                          | The **legacy** mobile app, currently in the stores. Under R-5 _bounded maintenance only_ — security/critical fixes. |
+| `mobile/`  | **React Native + Expo SDK 56** (TypeScript) | The **new** mobile app actively being built to replace `app/`. This is where most feature work happens.             |
+| `server/`  | **NestJS** (TypeScript) + Postgres + Redis  | The backend API. Serves both mobile clients on `:3005`.                                                             |
+| `web/`     | **Next.js** (TypeScript)                    | The marketing/web surface.                                                                                          |
+| `openapi/` | OpenAPI spec + generated JS client          | `openapi/openapi.json` is the **single committed server↔client contract**.                                          |
 
 **The strategic context:** the project was unmaintained for ~2 years and is being
 taken over. The active program is a **Flutter → React Native migration** plus
@@ -36,7 +36,7 @@ dependency/maintenance work. The new `mobile/` app is built feature-by-feature
 through a rigorous, documented process — that process is the main subject of this
 handbook.
 
-### Governing documents (read these to understand *why*, not just *how*)
+### Governing documents (read these to understand _why_, not just _how_)
 
 - **`docs/mobile/architecture-book/`** — the current mobile architecture reference.
   `architecture.md` is the index, `decisions/` retains costly-to-reverse decisions,
@@ -57,15 +57,15 @@ handbook.
 
 This is what must exist on the machine for the dev env and the pipelines to run.
 
-| Tool | Version / location | Notes |
-| --- | --- | --- |
-| **Node.js** | `24.13.0` (pinned in `.nvmrc`) | npm workspaces at the root (`web`, `openapi/javascript`); `server/` and `mobile/` are **standalone** npm projects with their own lockfiles. |
-| **Docker** | required | Runs the dev-env services and is the lifecycle manager for the E2E server stack. |
-| **Flutter SDK** | `3.41.9` stable, installed at **`/home/dev/flutter`** (NOT on `PATH`) | Invoke as `/home/dev/flutter/bin/flutter`. Only needed for `app/` (legacy) work and the Flutter E2E harness. |
-| **JDK** | **JDK 21** available (`/usr/lib/jvm/java-21-openjdk-amd64`); native Android mobile builds historically needed **JDK 17** + `ANDROID_HOME` exported | `ANDROID_HOME` is **unset by default** — export it (and the right `JAVA_HOME`) before `expo run:android`/Gradle. Pure `mobile/` CI checks (tsc/lint/jest) do **not** need the native toolchain. |
-| **Maestro** | on `PATH` for mobile E2E | Install: `curl -fsSL https://get.maestro.mobile.dev \| bash`. JVM-based, needs a JDK. |
-| **gh CLI** | authenticated as **`samuelprak`** (admin/push) | Git protocol is **SSH**; the remote is `git@gh-perso:timecalendar/timecalendar.git` (a host alias in `~/.ssh/config`). A second account `vincefox1` is also logged in — ensure `samuelprak` is the *active* one (`gh auth switch`). |
-| **Git identity** | `Samuel Prak <samuel.prak.p@gmail.com>` | |
+| Tool             | Version / location                                                                                                                                 | Notes                                                                                                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js**      | `24.13.0` (pinned in `.nvmrc`)                                                                                                                     | npm workspaces at the root (`web`, `openapi/javascript`); `server/` and `mobile/` are **standalone** npm projects with their own lockfiles.                                                                                         |
+| **Docker**       | required                                                                                                                                           | Runs the dev-env services and is the lifecycle manager for the E2E server stack.                                                                                                                                                    |
+| **Flutter SDK**  | `3.41.9` stable, installed at **`/home/dev/flutter`** (NOT on `PATH`)                                                                              | Invoke as `/home/dev/flutter/bin/flutter`. Only needed for `app/` (legacy) work and the Flutter E2E harness.                                                                                                                        |
+| **JDK**          | **JDK 21** available (`/usr/lib/jvm/java-21-openjdk-amd64`); native Android mobile builds historically needed **JDK 17** + `ANDROID_HOME` exported | `ANDROID_HOME` is **unset by default** — export it (and the right `JAVA_HOME`) before `expo run:android`/Gradle. Pure `mobile/` CI checks (tsc/lint/jest) do **not** need the native toolchain.                                     |
+| **Maestro**      | 2.8.0 on `PATH` for mobile E2E                                                                                                                     | Install with `export MAESTRO_VERSION=2.8.0`, then `curl -fsSL https://get.maestro.mobile.dev \| bash`; add `$HOME/.maestro/bin` to `PATH` and verify with `maestro --version`. JVM-based, needs a JDK.                              |
+| **gh CLI**       | authenticated as **`samuelprak`** (admin/push)                                                                                                     | Git protocol is **SSH**; the remote is `git@gh-perso:timecalendar/timecalendar.git` (a host alias in `~/.ssh/config`). A second account `vincefox1` is also logged in — ensure `samuelprak` is the _active_ one (`gh auth switch`). |
+| **Git identity** | `Samuel Prak <samuel.prak.p@gmail.com>`                                                                                                            |                                                                                                                                                                                                                                     |
 
 ### The dev host has **no KVM / nested virtualization**
 
@@ -103,12 +103,15 @@ The canonical quickstart is `README.md`; the agent-relevant essentials:
 
 1. **Start the backing services** (Postgres, Redis, nginx TLS proxy) — compose
    file lives in `server/`:
+
    ```bash
    cd server && docker compose up -d
    ```
+
    - Postgres is published on host port **37291** (→ container 5432), Redis on
      **37292**, and an nginx TLS proxy on **1443** terminating
      `https://api.timecalendar.host:1443` using `ci/certificates/`.
+
 2. **Install dependencies** (root workspaces):
    ```bash
    npm install        # root: web + openapi/javascript
@@ -209,8 +212,8 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
     `Co-Authored-By: Paperclip <noreply@paperclip.ing>`
   - **The dev-cycle squad sub-agents** (implementer/simplifier) end commits with:
     `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
-  A future system should standardize on one footer; the point is that **every
-  commit carries an attributable co-author footer**.
+    A future system should standardize on one footer; the point is that **every
+    commit carries an attributable co-author footer**.
 - **Pre-commit hook** (`.husky/`, via root `prepare`/`husky install`): `lint-staged`
   runs `dart format` + `bin/flutter-analyze.sh` on staged `*.dart` (the `app/`
   surface) and `eslint --cache --fix` on staged `mobile/` sources. Do **not** bypass
@@ -272,15 +275,21 @@ ci/e2e-server.sh logs [--native]
 
 ```bash
 cd mobile
-./e2e/run_e2e.sh              # up → maestro test .maestro/ → down (teardown always)
+./e2e/run_e2e.sh              # up once → one process per top-level YAML → down once
 ./e2e/run_e2e.sh --keep-up    # leave the stack up for debugging
 ./e2e/run_e2e.sh --native     # Docker-less host
+./e2e/run_e2e.sh --native --startup-attempts 4 # iOS CI only
 ```
 
 - Flows live in `mobile/.maestro/*.yaml` (e.g. `schools.yaml`, `settings.yaml`,
   `personal-events.yaml`) and are shared across iOS+Android (assert stable seeded
   text, no per-platform selectors).
 - The wrapper owns only the Maestro half; the server half is `ci/e2e-server.sh`.
+- Each top-level YAML is discovered lexically and receives a fresh Maestro
+  process. Attempts default to one. `--startup-attempts` is bounded to 1–4 and
+  retries only a proven first-`launchApp` XCTest driver transport failure with
+  no assertion evidence; assertion, application, and unknown failures stop
+  immediately with their original status.
 - It does **not** build/install the app. A **release-config, `development`-variant**
   build must already be installed on the connected simulator/emulator, with
   `EXPO_PUBLIC_API_URL` baked at build time to the platform's host path:
@@ -339,12 +348,12 @@ so concerns stay separated. The orchestrator is the `/ship` command
 loop acts as the **conductor** — it owns git/PR/merge and dispatches the sub-agents;
 it does **not** write the change's code itself.
 
-| Stage | Sub-agent (`.claude/agents/`) | Does | Skill used |
-| --- | --- | --- | --- |
-| **1. PLAN** | `change-planner` (opus) | Turns a roadmap step / feature idea into a complete, apply-ready OpenSpec change (proposal + design + specs + tasks). **Decides autonomously**, records load-bearing decisions in `design.md`, inboxes human-only items. | `openspec-propose` |
-| **2. APPLY** | `change-implementer` (opus) | Implements every task on the branch, updates the Architecture Book, gets **local green** (`tsc`/`lint`/`jest` in `mobile/`), commits. Also the FIX phase on reviewer findings. | `openspec-apply-change` |
-| **3. SIMPLIFY** | `change-simplifier` (opus) | Quality-only cleanup of the diff (reuse, dedup, dead-code, altitude). No behavior changes, no bug hunting. Commits only if it changed something. | `simplify` |
-| **4. REVIEW** | `change-reviewer` (opus, read-only) | The **merge gate**. Runs `code-review` at high effort, verifies tasks/specs/DoD/Architecture-Book/R-1, re-runs local green, emits a structured `VERDICT: APPROVE \| REQUEST_CHANGES`. | `code-review` |
+| Stage           | Sub-agent (`.claude/agents/`)       | Does                                                                                                                                                                                                                     | Skill used              |
+| --------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| **1. PLAN**     | `change-planner` (opus)             | Turns a roadmap step / feature idea into a complete, apply-ready OpenSpec change (proposal + design + specs + tasks). **Decides autonomously**, records load-bearing decisions in `design.md`, inboxes human-only items. | `openspec-propose`      |
+| **2. APPLY**    | `change-implementer` (opus)         | Implements every task on the branch, updates the Architecture Book, gets **local green** (`tsc`/`lint`/`jest` in `mobile/`), commits. Also the FIX phase on reviewer findings.                                           | `openspec-apply-change` |
+| **3. SIMPLIFY** | `change-simplifier` (opus)          | Quality-only cleanup of the diff (reuse, dedup, dead-code, altitude). No behavior changes, no bug hunting. Commits only if it changed something.                                                                         | `simplify`              |
+| **4. REVIEW**   | `change-reviewer` (opus, read-only) | The **merge gate**. Runs `code-review` at high effort, verifies tasks/specs/DoD/Architecture-Book/R-1, re-runs local green, emits a structured `VERDICT: APPROVE \| REQUEST_CHANGES`.                                    | `code-review`           |
 
 ### The `/ship` conductor flow (`.claude/commands/ship.md`)
 
@@ -393,10 +402,17 @@ of concerns holds. The `ship` skill is the solo equivalent of the `/ship` comman
 
 ## 10. CI pipelines (`.github/workflows/`)
 
-| Workflow | Trigger | What it gates |
-| --- | --- | --- |
-| **`ci-mobile.yml`** | push touching `mobile/**` or `openapi/**` | The fast `test-mobile` job: **generated-client drift check** (`npm run generate` must produce no diff in `src/api/generated`), generate Expo type decls (`npx expo customize tsconfig.json`), **`tsc --noEmit`**, **`npm run lint`** (`--max-warnings 0`), **`npm test -- --coverage`** (coverage gate in config). This is the gate the conductor watches for `mobile/` changes. |
-| **`ci-mobile-e2e.yml`** | on-demand: PRs with the **`run-e2e`** label; always on `main`/`production` when mobile/openapi changed | Native Maestro E2E on an Android emulator (KVM) and an iOS simulator (macOS runner). Slow (~20–30 min/platform). Builds its own server image. |
+| Workflow                | Trigger                                                                                                | What it gates                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`ci-mobile.yml`**     | push touching `mobile/**` or `openapi/**`                                                              | The fast `test-mobile` job: **generated-client drift check** (`npm run generate` must produce no diff in `src/api/generated`), generate Expo type decls (`npx expo customize tsconfig.json`), **`tsc --noEmit`**, **`npm run lint`** (`--max-warnings 0`), **`npm test -- --coverage`** (coverage gate in config). This is the gate the conductor watches for `mobile/` changes. |
+| **`ci-mobile-e2e.yml`** | on-demand: PRs with the **`run-e2e`** label; always on `main`/`production` when mobile/openapi changed | Native Maestro E2E on an Android emulator (KVM) and an iOS simulator (macOS runner). Slow (~20–30 min/platform). Builds its own server image.                                                                                                                                                                                                                                    |
+
+The native workflow pins and prints Maestro 2.8.0 in both jobs. Android bounds
+the Release Gradle build to 3072 MiB heap, 1024 MiB Metaspace, two workers, and
+no daemon. iOS prints the Xcode path/version and available plus selected
+simulator name, UDID, and runtime. Local shell/static checks prove harness and
+workflow control flow; only the post-merge `main` run on GitHub-hosted runners
+provides definitive simulator/emulator proof on this non-virtualized host.
 | **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
 | **`delete-old-images.yaml`** | scheduled | Image cleanup. |
@@ -404,7 +420,7 @@ of concerns holds. The `ship` skill is the solo equivalent of the `/ship` comman
 **Per the project owner, `run-e2e` is normally NOT added to PRs — native E2E runs on
 `main` only** (it is slow). For extra confidence on runtime-heavy changes, run Maestro
 locally instead (where the host supports it). Path-filtered jobs that are skipped do
-not report a status; none are *required* checks today.
+not report a status; none are _required_ checks today.
 
 ### OpenAPI contract drift
 
@@ -436,7 +452,7 @@ migrate away from. What a replacement system must replicate:
   action named** — never a bare "blocked". Human-only steps go to
   `docs/react-native-migration/inbox/` tagged `(HUMAN: …)` and do **not** block the
   rest of the change.
-- **Interactions.** Structured requests to the board/user use issue *interactions*
+- **Interactions.** Structured requests to the board/user use issue _interactions_
   (`suggest_tasks`, `ask_user_questions`, `request_confirmation`) — e.g. plan
   approval before spawning implementation subtasks.
 - **Roles.** The founding-engineer agent reports to a CEO agent and owns technical

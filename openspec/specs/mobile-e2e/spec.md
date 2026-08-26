@@ -1,8 +1,11 @@
 # mobile-e2e Specification
 
 ## Purpose
+
 TBD - created by archiving change add-mobile-test-harness. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Real-round-trip Maestro flow
 
 The mobile app SHALL have Maestro flows that prove the app ↔ server contract end to end
@@ -113,17 +116,31 @@ assertion (to cover a release-config cold start plus the sync settle).
 
 ### Requirement: Single-command local e2e run
 
-The repository SHALL provide one command that boots the server stack, runs the Maestro flows against the connected simulator/emulator, reports pass/fail, and tears the stack down — including on failure — with a `--keep-up` debugging escape hatch matching the Flutter harness's UX.
+The repository SHALL provide one command that boots the server stack once, runs every
+top-level Maestro YAML against the connected simulator/emulator in a separate Maestro CLI
+process, reports pass/fail, and tears the stack down once—including on failure—with a
+`--keep-up` debugging escape hatch matching the Flutter harness's UX. The flow list SHALL be
+derived deterministically from `mobile/.maestro/*.yaml`; no existing top-level YAML may be
+omitted.
 
-#### Scenario: One command runs the whole loop
+#### Scenario: One command runs the whole isolated loop
 
-- **WHEN** `mobile/e2e/run_e2e.sh` is run with a booted iOS simulator or Android emulator and an installed e2e build
-- **THEN** it brings the server stack up via the shared lifecycle, runs `maestro test` on the flows, exits with Maestro's pass/fail status, and tears the stack down on success and failure alike
+- **WHEN** `mobile/e2e/run_e2e.sh` is run with a booted iOS simulator or Android emulator and
+  an installed e2e build
+- **THEN** it brings the server stack up once via the shared lifecycle, invokes
+  `maestro test <flow>` once per top-level YAML in deterministic order, exits with the first
+  terminal non-zero flow status or zero after all pass, and tears the stack down once
 
 #### Scenario: --keep-up leaves the stack for debugging
 
 - **WHEN** the wrapper is run with `--keep-up`
-- **THEN** the server stack stays up after the run and the command reports how to inspect logs and tear down manually
+- **THEN** the server stack stays up after the run and the command reports how to inspect logs
+  and tear down manually
+
+#### Scenario: A newly added top-level flow is not skipped
+
+- **WHEN** a valid YAML file is added directly under `mobile/.maestro/`
+- **THEN** the next wrapper run discovers and executes it without a separate manifest change
 
 ### Requirement: E2E builds reach the local server
 
@@ -141,20 +158,74 @@ The `development` app variant SHALL be able to reach a server on the host machin
 
 ### Requirement: CI runs Maestro on both platforms
 
-CI SHALL run the Maestro flows on an Android emulator (Linux runner) and an iOS simulator (macOS runner) on every push, using binaries built on the runners — no Metro, no EAS.
+CI SHALL run every top-level Maestro flow on an Android emulator (Linux runner) and an iOS
+simulator (macOS runner), using release-config development-variant binaries built on the
+runners—no Metro and no EAS. Both jobs SHALL install the same explicitly pinned Maestro
+version, print it, and preserve debug output and server logs on failure.
 
-#### Scenario: Android e2e in CI
+#### Scenario: Android e2e builds within explicit hosted-runner bounds
 
 - **WHEN** the `e2e-mobile-android` job runs
-- **THEN** it loads the `build-server` image artifact into the shared lifecycle, builds a release APK via `expo prebuild` + Gradle, installs it on a hardware-accelerated emulator, runs the Maestro flows, and fails the job on any flow failure
+- **THEN** it loads the `build-server` image artifact, builds the release APK via
+  `expo prebuild` and Gradle with a 3072 MiB heap, 1024 MiB Metaspace, at most two workers,
+  and no persistent daemon, installs it on the hardware-accelerated emulator, and proceeds to
+  every Maestro flow without a Metaspace OOM or orphan Gradle process
 
-#### Scenario: iOS e2e in CI
+#### Scenario: iOS e2e uses isolated XCTest lifecycles
 
 - **WHEN** the `e2e-mobile-ios` job runs on a macOS runner
-- **THEN** it provisions Postgres/Redis natively (macOS runners have no Docker), boots the server via the shared lifecycle's native mode, builds a Release simulator app via `expo prebuild` + xcodebuild, installs it with `simctl`, runs the Maestro flows, and fails the job on any flow failure
+- **THEN** it provisions Postgres/Redis natively, builds and installs the Release simulator
+  app, boots the server once through native mode, and invokes every top-level flow in a fresh
+  Maestro process so a dead driver from one flow is not reused by another
+
+#### Scenario: CI records the selected native toolchain
+
+- **WHEN** either native job installs Maestro and the iOS job selects its simulator
+- **THEN** logs contain Maestro 2.8.0 exactly and the iOS logs also contain the selected Xcode
+  version/path, simulator name and UDID, and iOS runtime
 
 #### Scenario: Failures leave evidence
 
-- **WHEN** a Maestro flow fails in CI
-- **THEN** Maestro's debug output (screenshots/logs) and the server logs are uploaded as workflow artifacts
+- **WHEN** a native build or Maestro flow fails in CI
+- **THEN** the job remains failed and uploads Maestro debug output plus server logs without
+  introducing secrets
 
+### Requirement: XCTest startup retries cannot mask flow failures
+
+The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
+A failed attempt SHALL be retried only when its captured output proves the first
+`launchApp` setup failed because the local XCTest driver was not listening or refused the
+connection and contains no completed assertion or assertion-failure evidence. Unknown,
+application, and assertion failures SHALL be terminal on their first occurrence.
+
+#### Scenario: A driver startup failure is retried within the bound
+
+- **WHEN** a flow's first `launchApp` fails during `setPermissions` with a known XCTest
+  driver-not-listening or local connection-refused signature before any assertion runs
+- **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
+  and attempt number, and never exceeds the configured maximum attempts
+
+#### Scenario: A real assertion failure is never retried
+
+- **WHEN** Maestro reports a missing element, content wait timeout, failed assertion, or any
+  failure not positively classified as first-launch driver startup
+- **THEN** the harness returns that non-zero result immediately, does not run the flow again,
+  and does not continue to later flows
+
+#### Scenario: Android and normal local runs remain single-attempt
+
+- **WHEN** the harness is invoked without the explicit iOS startup-attempt option
+- **THEN** each top-level flow is attempted exactly once
+
+### Requirement: Main CI supplies terminal native proof
+
+The recovery SHALL not be considered complete until a `main` SHA containing onboarding merge
+`482f134f` records `SUCCESS` for both `Run mobile E2E (iOS)` and
+`Run mobile E2E (Android)`, and the run includes the current onboarding flow without any flow
+being ignored or optional.
+
+#### Scenario: Both post-merge jobs prove the recovered gate
+
+- **WHEN** the recovery change is merged to a `main` SHA descending from the onboarding merge
+- **THEN** both named native jobs complete successfully and their direct job links are
+  recorded before the recovery issue closes
