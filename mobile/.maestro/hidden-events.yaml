@@ -26,8 +26,8 @@
 # clearState (each calendar-family flow wipes the slate first).
 #
 # Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
-# seeding the token. Shared across iOS and Android: stable localized text
-# assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
+# seeding the token. Shared across iOS and Android with one native-alert
+# disambiguation on iOS. Run via mobile/e2e/run_e2e.sh.
 appId: fr.samuelprak.timecalendar.dev
 ---
 # Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
@@ -53,8 +53,21 @@ appId: fr.samuelprak.timecalendar.dev
 # event" hides by uid and pops back.
 - tapOn:
     id: "event-details-hide-action"
-- tapOn:
-    text: "Hide this event"
+# iOS keeps the underlying header action in the accessibility tree while the
+# native alert is open, so the alert option is the second matching element.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Hide this event"
+          index: 1
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: "Hide this event"
 # Wait for the successful MMKV write to drive the alert callback's router.back()
 # before terminating the app. On iOS, stopApp immediately after tapping the native
 # alert can suspend the JS callback before the navigation transition proves it ran.
