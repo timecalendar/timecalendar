@@ -4,7 +4,16 @@ import { calendarControllerFindCalendarByToken } from "@/api/generated/calendars
 // The sibling create seam, by its full @/ path (not "../create" — the parent-
 // relative ban; not the data/ sub-barrel — that would close a barrel cycle since
 // data/index re-exports this very sub-module).
-import { useCreateCalendar } from "@/features/calendar-sources/data/create"
+import {
+  CalendarSchoolContext,
+  useCreateCalendar,
+} from "@/features/calendar-sources/data/create"
+import {
+  CalendarImportRecovery,
+  CalendarImportRecoveryError,
+  mapCalendarImportError,
+} from "@/features/calendar-sources/data/recovery"
+import { recordError } from "@/firebase"
 
 import { upsert } from "./repository"
 import { fromCalendarForPublic } from "./types"
@@ -26,9 +35,13 @@ import { fromCalendarForPublic } from "./types"
 // rejects so the screen records via @/firebase + surfaces an accessible failure.
 
 export interface UseAddCalendar {
-  addCalendarFromUrl: (url: string) => Promise<void>
+  addCalendarFromUrl: (
+    url: string,
+    school?: CalendarSchoolContext,
+  ) => Promise<void>
   isPending: boolean
   isError: boolean
+  recovery: CalendarImportRecovery | null
   reset: () => void
 }
 
@@ -36,18 +49,24 @@ export function useAddCalendar(): UseAddCalendar {
   const { createCalendar, reset: resetCreate } = useCreateCalendar()
   const [isPending, setIsPending] = useState(false)
   const [isError, setIsError] = useState(false)
+  const [recovery, setRecovery] = useState<CalendarImportRecovery | null>(null)
 
   const addCalendarFromUrl = useCallback(
-    async (url: string): Promise<void> => {
+    async (url: string, school?: CalendarSchoolContext): Promise<void> => {
       setIsPending(true)
       setIsError(false)
+      setRecovery(null)
       try {
-        const { token } = await createCalendar(url)
+        const { token } = await createCalendar(url, school)
         const dto = await calendarControllerFindCalendarByToken(token)
         await upsert(fromCalendarForPublic(dto))
       } catch (error) {
+        const mapped = mapCalendarImportError(error)
+        const sanitizedError = new CalendarImportRecoveryError(mapped)
         setIsError(true)
-        throw error
+        setRecovery(mapped)
+        recordError(sanitizedError, "calendar-sources/ical-import")
+        throw sanitizedError
       } finally {
         setIsPending(false)
       }
@@ -59,7 +78,8 @@ export function useAddCalendar(): UseAddCalendar {
     resetCreate()
     setIsError(false)
     setIsPending(false)
+    setRecovery(null)
   }, [resetCreate])
 
-  return { addCalendarFromUrl, isPending, isError, reset }
+  return { addCalendarFromUrl, isPending, isError, recovery, reset }
 }

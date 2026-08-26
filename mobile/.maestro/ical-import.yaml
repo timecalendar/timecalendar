@@ -6,14 +6,10 @@
 # stable title assertion), and submits with an EMPTY field to assert the inline
 # validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
 #
-# The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
-# seeds no parseable .ics import endpoint and a live external .ics would be flaky
-# cross-platform (same posture as ship 3's camera, and the onboarding.yaml note
-# about the Jest-proven group step). The validate→create→handoff wiring + the
-# server-failure → recordError + retry path are proven deterministically by the
-# Jest proof (ical-url-screen.test.tsx, mocking the customFetch mutator). The real
-# import + a11y + Crashlytics arrival is an inbox/DoD on-device pass
-# (inbox/2026-06-15-ical-import-dod-manual.md).
+# Recovery is exercised without a university: the Tours URL is rejected by the
+# server's value-blind preflight before fetch, and the RFC-reserved `.invalid`
+# host deterministically produces a bounded upstream failure. No feedback is
+# sent. The top-level flow remains lifecycle-isolated by ADR 038.
 #
 # Requires the harness server up (ci/e2e-server.sh up) + a release-config
 # dev-variant build installed (mobile/e2e/run_e2e.sh). Shared across iOS and
@@ -47,3 +43,28 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "Enter a calendar URL."
     timeout: 10000
+# Known unsupported web UI: server preflight, no upstream request.
+- tapOn:
+    id: "ical-url-input"
+- inputText: "https://ade.univ-tours.fr/login"
+- tapOn:
+    id: "ical-url-submit"
+- extendedWaitUntil:
+    visible: "Use a Tours iCal export"
+    timeout: 20000
+- assertNotVisible:
+    id: "ical-url-retry"
+- tapOn:
+    id: "ical-url-correct"
+- eraseText
+# RFC 2606 reserved host: deterministic DNS failure, never a university.
+- inputText: "https://calendar-outage.invalid/export.ics"
+- tapOn:
+    id: "ical-url-submit"
+- extendedWaitUntil:
+    visible: "Timetable service unavailable"
+    timeout: 30000
+- assertVisible:
+    id: "ical-url-retry"
+- assertVisible:
+    id: "ical-url-report"

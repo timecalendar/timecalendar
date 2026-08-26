@@ -20,9 +20,23 @@ describe("CalendarFailureRepository", () => {
       const calendar = await assertChanges(
         app.get(DataSource),
         [[CalendarFailure, 1]],
-        () => repository.create("https://calendar.com", "Error"),
+        () =>
+          repository.create({
+            schoolCode: "univtours",
+            classification: "unsupported_link",
+            helpKey: "tours_export",
+            retryable: false,
+            errorKind: "unsupported_shape",
+          }),
       )
       expect(calendar.id).toBeDefined()
+      expect(calendar).toMatchObject({
+        schoolCode: "univtours",
+        classification: "unsupported_link",
+        helpKey: "tours_export",
+        retryable: false,
+        errorKind: "unsupported_shape",
+      })
     })
   })
 })

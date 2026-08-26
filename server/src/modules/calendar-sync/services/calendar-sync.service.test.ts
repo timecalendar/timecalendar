@@ -12,13 +12,13 @@ jest.mock("modules/fetch/fetchers/ical-fetcher", () => ({
     .mockImplementation(() => ({ fetch: icalFetcher.fetch })),
 }))
 
-import { NotFoundException } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { differenceInMinutes } from "date-fns"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
+import { CalendarSyncMetricsService } from "modules/calendar-sync/services/calendar-sync-metrics.service"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
@@ -39,11 +39,16 @@ describe("CalendarSyncService", () => {
   let service: CalendarSyncService
   let dataSource: DataSource
   let events: FetcherCalendarEvent[]
+  let metricAdd: jest.SpyInstance
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
+    metricAdd = jest.spyOn(
+      app.get(CalendarSyncMetricsService).calendarSyncCounter,
+      "add",
+    )
   })
 
   beforeEach(async () => {
@@ -58,6 +63,36 @@ describe("CalendarSyncService", () => {
       .findBy({ calendar: { id: calendarId } })
 
   describe("createCalendar", () => {
+    it("rejects a Rennes direct page before the fetch boundary", async () => {
+      const school = await schoolFactory().create({ code: "univrennes1" })
+
+      await expect(
+        service.createCalendar({
+          url: "https://planning.univ-rennes.fr/direct/index.jsp?data=resource-123",
+          schoolId: school.id,
+          name: "Rennes",
+          customData: null,
+        }),
+      ).rejects.toMatchObject({
+        response: {
+          code: "calendar_import_failed",
+          classification: "unsupported_link",
+          helpKey: "rennes_export",
+          retryable: false,
+        },
+      })
+      expect(icalFetcher.fetch).not.toHaveBeenCalled()
+      expect(metricAdd).toHaveBeenCalledWith(1, {
+        school: "univrennes1",
+        status: "error",
+        classification: "unsupported_link",
+        help_key: "rennes_export",
+        error_kind: "unsupported_shape",
+        action: "create",
+      })
+      expect(JSON.stringify(metricAdd.mock.calls)).not.toContain("resource-123")
+    })
+
     it("creates a calendar with an existing school", async () => {
       const school = await schoolFactory().create()
 
@@ -142,6 +177,7 @@ describe("CalendarSyncService", () => {
         [
           [Calendar, 0],
           [CalendarContent, 0],
+          [CalendarFailure, 1],
         ],
         async () => {
           const promise = service.createCalendar({
@@ -151,9 +187,14 @@ describe("CalendarSyncService", () => {
             customData: null,
           })
 
-          await expect(promise).rejects.toThrow(
-            new NotFoundException("No events found"),
-          )
+          await expect(promise).rejects.toMatchObject({
+            response: {
+              code: "calendar_import_failed",
+              classification: "unknown",
+              helpKey: "generic_unknown",
+              retryable: false,
+            },
+          })
         },
       )
     })
@@ -301,7 +342,7 @@ describe("CalendarSyncService", () => {
       expect(await findCalendarLogs(created.id)).toHaveLength(0)
     })
 
-    it("does not create a calendar when there is an error", async () => {
+    it("stores only bounded diagnostics when a new calendar fails", async () => {
       icalFetcher.fetch.mockImplementation(async () => {
         throw new Error("Something went wrong")
       })
@@ -318,21 +359,31 @@ describe("CalendarSyncService", () => {
         async () => {
           const promise = service.sync(calendar)
 
-          await expect(promise).rejects.toThrow(
-            new Error("Something went wrong"),
-          )
+          await expect(promise).rejects.toMatchObject({
+            response: {
+              code: "calendar_import_failed",
+              classification: "unknown",
+              helpKey: "generic_unknown",
+              retryable: false,
+            },
+          })
 
           const calendarFailures = await dataSource
             .getRepository(CalendarFailure)
             .find()
           const [calendarFailure] = calendarFailures
 
-          expect(calendarFailure.url).toBe(calendar.url)
-          expect(JSON.parse(calendarFailure.error)).toMatchObject({
-            name: "Error",
-            message: "Something went wrong",
-            stack: expect.any(String),
+          expect(calendarFailure).toMatchObject({
+            schoolCode: null,
+            classification: "unknown",
+            helpKey: "generic_unknown",
+            retryable: false,
+            errorKind: "unknown",
           })
+          expect(JSON.stringify(calendarFailure)).not.toContain(calendar.url)
+          expect(JSON.stringify(calendarFailure)).not.toContain(
+            "Something went wrong",
+          )
         },
       )
     })

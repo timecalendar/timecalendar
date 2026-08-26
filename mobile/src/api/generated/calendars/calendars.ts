@@ -23,6 +23,7 @@ import type {
 
 import type {
   CalendarForPublic,
+  CalendarImportErrorDto,
   CalendarWithContent,
   CreateCalendarDto,
   CreateCalendarRepDto,
@@ -236,7 +237,7 @@ export const calendarSyncControllerCreateCalendar = async (
 }
 
 export const getCalendarSyncControllerCreateCalendarMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<CalendarImportErrorDto>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -278,13 +279,13 @@ export type CalendarSyncControllerCreateCalendarMutationResult = NonNullable<
 >
 export type CalendarSyncControllerCreateCalendarMutationBody = CreateCalendarDto
 export type CalendarSyncControllerCreateCalendarMutationError =
-  ErrorType<unknown>
+  ErrorType<CalendarImportErrorDto>
 
 /**
  * @summary Create a calendar
  */
 export const useCalendarSyncControllerCreateCalendar = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<CalendarImportErrorDto>,
   TContext = unknown,
 >(
   options?: {

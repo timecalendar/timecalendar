@@ -2,6 +2,9 @@
 
 ## 2026-08-26
 
+- Added the typed calendar-create recovery boundary: server-owned school/link
+  classification, generated safe error metadata, feature-domain mapping, localized FR/EN
+  recovery actions, and diagnostics/reporting limited to bounded classification/help keys.
 - Isolated each top-level Maestro flow in its own CLI/XCTest lifecycle while retaining one
   shared backend lifecycle, and bounded iOS retries to positively classified startup-only
   transport failures so assertion and application failures remain terminal (ADR 038,

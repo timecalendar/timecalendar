@@ -1,4 +1,10 @@
-import { IsOptional, IsString } from "class-validator"
+import { IsIn, IsOptional, IsString } from "class-validator"
+import {
+  CalendarImportClassification,
+  CalendarImportHelpKey,
+  calendarImportClassifications,
+  calendarImportHelpKeys,
+} from "modules/calendar-sync/recovery/calendar-import-recovery"
 
 export enum MessageSubject {
   APP_ISSUE = "app_issue",
@@ -20,21 +26,17 @@ export class SendMessageDto {
 
   @IsString()
   @IsOptional()
-  schoolId?: string
-
-  @IsString()
-  @IsOptional()
-  schoolName?: string
-
-  @IsString()
-  @IsOptional()
   gradeName?: string
 
   @IsString()
   @IsOptional()
   deviceInfo?: string
 
-  @IsString()
+  @IsIn(calendarImportClassifications)
   @IsOptional()
-  calendarUrl?: string
+  recoveryClassification?: CalendarImportClassification
+
+  @IsIn(calendarImportHelpKeys)
+  @IsOptional()
+  recoveryHelpKey?: CalendarImportHelpKey
 }

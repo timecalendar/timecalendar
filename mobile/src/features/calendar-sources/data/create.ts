@@ -17,8 +17,16 @@ export interface CreateCalendarResult {
   token: string
 }
 
+export interface CalendarSchoolContext {
+  schoolId: string
+  schoolName: string
+}
+
 export interface UseCreateCalendar {
-  createCalendar: (url: string) => Promise<CreateCalendarResult>
+  createCalendar: (
+    url: string,
+    school?: CalendarSchoolContext,
+  ) => Promise<CreateCalendarResult>
   isPending: boolean
   isError: boolean
   reset: () => void
@@ -28,16 +36,18 @@ export function useCreateCalendar(): UseCreateCalendar {
   const mutation = useCalendarSyncControllerCreateCalendar()
 
   const createCalendar = useCallback(
-    async (url: string): Promise<CreateCalendarResult> => {
-      // TEMP: the server requires one of schoolId / schoolName, and the
-      // calendar.name column is NOT-NULL. The real school-name-first flow
-      // (Flutter school_selection → importIcal) isn't wired yet, so dummy
-      // schoolName + name unblock import until that screen lands.
+    async (
+      url: string,
+      school?: CalendarSchoolContext,
+    ): Promise<CreateCalendarResult> => {
+      const name = school?.schoolName ?? "Imported calendar"
       const { token } = await mutation.mutateAsync({
         data: {
           url: url.trim(),
-          schoolName: "Dev import",
-          name: "Dev import",
+          ...(school
+            ? { schoolId: school.schoolId }
+            : { schoolName: "Imported calendar" }),
+          name,
           customData: null,
         },
       })

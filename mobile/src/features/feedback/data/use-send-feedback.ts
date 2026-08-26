@@ -1,5 +1,9 @@
 import { useContactControllerSendMessage } from "@/api/generated/contact/contact"
 import type { SendMessageDto } from "@/api/generated/timeCalendar.schemas"
+import type {
+  CalendarImportClassification,
+  CalendarImportHelpKey,
+} from "@/features/calendar-sources"
 import { useUserCalendars } from "@/features/calendar-sources"
 import type { ValidFeedbackForm } from "@/features/feedback/form"
 import { useRecordedAction } from "@/hooks/use-recorded-action"
@@ -7,34 +11,26 @@ import { useRecordedAction } from "@/hooks/use-recorded-action"
 import { getDeviceInfo } from "./device-info"
 
 export interface FeedbackContext {
-  calendarUrl?: string
-  schoolId?: string
-  schoolName?: string
+  classification?: CalendarImportClassification
+  helpKey?: CalendarImportHelpKey
 }
 
 export type SendFeedbackInput = ValidFeedbackForm & FeedbackContext
-
-function optional(value: string | undefined): string | undefined {
-  const normalized = value?.trim()
-  return normalized ? normalized : undefined
-}
 
 export function buildFeedbackDto(
   input: SendFeedbackInput,
   calendarIds: string[],
   deviceInfo: string,
 ): SendMessageDto {
-  const calendarUrl = optional(input.calendarUrl)
-  const schoolId = optional(input.schoolId)
-  const schoolName = optional(input.schoolName)
+  const recoveryClassification = input.classification
+  const recoveryHelpKey = input.helpKey
   return {
     email: input.email,
     message: input.message,
     calendarIds,
     deviceInfo,
-    ...(calendarUrl ? { calendarUrl } : {}),
-    ...(schoolId ? { schoolId } : {}),
-    ...(schoolName ? { schoolName } : {}),
+    ...(recoveryClassification ? { recoveryClassification } : {}),
+    ...(recoveryHelpKey ? { recoveryHelpKey } : {}),
   }
 }
 

@@ -1,6 +1,5 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
-import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CrispClient } from "modules/contact/clients/crisp.client"
 import { ContactModule } from "modules/contact/contact.module"
 import createTestApp from "test-utils/create-test-app"
@@ -25,17 +24,16 @@ describe("ContactController", () => {
 
   describe("POST /contact", () => {
     it("sends a message", async () => {
-      const calendar = await calendarFactory().school().create()
-
       await request(app)
         .post("/contact")
         .send({
           message: "My message",
           email: "martin.matin@email.com",
-          calendarIds: [calendar.id],
-          schoolId: calendar.school?.id,
+          calendarIds: ["calendar-id"],
           gradeName: "My Grade",
           deviceInfo: "iPhone 14 Pro",
+          recoveryClassification: "unsupported_link",
+          recoveryHelpKey: "tours_export",
         })
         .expect(201)
 
@@ -44,10 +42,11 @@ describe("ContactController", () => {
         email: "martin.matin@email.com",
         name: "Martin Matin",
         data: {
-          schoolId: calendar.school?.id,
           gradeName: "My Grade",
           deviceInfo: "iPhone 14 Pro",
-          calendarIds: calendar.id,
+          recoveryClassification: "unsupported_link",
+          recoveryHelpKey: "tours_export",
+          calendarIds: "calendar-id",
         },
       })
     })

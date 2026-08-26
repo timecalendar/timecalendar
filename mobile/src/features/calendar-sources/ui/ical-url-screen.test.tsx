@@ -1,10 +1,14 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
 
-import { useAddCalendar } from "@/features/calendar-sources/data"
+import {
+  CalendarImportRecoveryError,
+  useAddCalendar,
+} from "@/features/calendar-sources/data"
 import { useSchools, useSelectedSchool } from "@/features/school-selection"
-import { recordUnknownError } from "@/firebase"
+import i18n from "@/i18n"
 
+import { focusCalendarUrl } from "./focus-calendar-url"
 import IcalUrlScreen from "./ical-url-screen"
 
 // Presentational (70% floor): renders through the real theme + i18n trees. Mocks
@@ -17,7 +21,6 @@ import IcalUrlScreen from "./ical-url-screen"
 jest.mock("expo-router", () => ({
   router: { back: jest.fn(), push: jest.fn() },
 }))
-jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({
   ...jest.requireActual("@/features/calendar-sources/data"),
   useAddCalendar: jest.fn(),
@@ -26,19 +29,24 @@ jest.mock("@/features/school-selection", () => ({
   useSchools: jest.fn(),
   useSelectedSchool: jest.fn(),
 }))
+jest.mock("./focus-calendar-url", () => ({ focusCalendarUrl: jest.fn() }))
 
 const mockBack = router.back as jest.Mock
-const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
 const mockUseSchools = useSchools as jest.Mock
 const mockUseSelectedSchool = useSelectedSchool as jest.Mock
-const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string]>()
+const mockAddCalendarFromUrl = jest.fn<
+  Promise<void>,
+  [string, { schoolId: string; schoolName: string }?]
+>()
 const mockReset = jest.fn()
+const mockFocusCalendarUrl = focusCalendarUrl as jest.Mock
 
 let addState: { isPending: boolean; isError: boolean }
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks()
+  await i18n.changeLanguage("en")
   addState = { isPending: false, isError: false }
   mockUseAddCalendar.mockImplementation(() => ({
     addCalendarFromUrl: mockAddCalendarFromUrl,
@@ -75,9 +83,9 @@ describe("IcalUrlScreen", () => {
     await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
     expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
       "  https://example.com/cal.ics  ",
+      undefined,
     )
     expect(mockReset).toHaveBeenCalledTimes(1)
-    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("shows the inline validation error and does not persist on empty", async () => {
@@ -89,7 +97,6 @@ describe("IcalUrlScreen", () => {
 
     expect(getByText("Enter a calendar URL.")).toBeTruthy()
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
-    expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 
   it("shows the inline invalid error for a non-URL value", async () => {
@@ -106,8 +113,14 @@ describe("IcalUrlScreen", () => {
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
   })
 
-  it("records the error and shows an accessible error + retry on persist failure", async () => {
-    mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
+  it("shows an accessible outage recovery with retry and report", async () => {
+    mockAddCalendarFromUrl.mockRejectedValue(
+      new CalendarImportRecoveryError({
+        classification: "upstream_unavailable",
+        helpKey: "toulouse3_outage",
+        retryable: true,
+      }),
+    )
     addState = { isPending: false, isError: true }
     const { getByTestId, getByText } = await render(<IcalUrlScreen />)
 
@@ -122,16 +135,8 @@ describe("IcalUrlScreen", () => {
     })
 
     await waitFor(() =>
-      expect(mockRecordUnknownError).toHaveBeenCalledWith(
-        expect.any(Error),
-        "calendar-sources/ical-import",
-      ),
+      expect(getByText("Toulouse 3 timetable unavailable")).toBeTruthy(),
     )
-    expect(
-      getByText(
-        "We couldn't import that calendar. Check the URL and try again.",
-      ),
-    ).toBeTruthy()
     expect(getByTestId("ical-url-retry")).toBeTruthy()
     expect(getByTestId("ical-url-report")).toBeTruthy()
     expect(mockBack).not.toHaveBeenCalled()
@@ -144,9 +149,15 @@ describe("IcalUrlScreen", () => {
     await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
   })
 
-  it("reports only a recorded failure with available school context", async () => {
+  it("submits selected school identity but reports only bounded recovery context", async () => {
     addState = { isPending: false, isError: true }
-    mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
+    mockAddCalendarFromUrl.mockRejectedValue(
+      new CalendarImportRecoveryError({
+        classification: "unsupported_link",
+        helpKey: "tours_export",
+        retryable: false,
+      }),
+    )
     mockUseSelectedSchool.mockReturnValue({
       schoolId: "school-1",
       groupValues: [],
@@ -156,7 +167,7 @@ describe("IcalUrlScreen", () => {
         { id: "school-1", name: "Université", code: "U", imageUrl: "" },
       ],
     })
-    const { getByTestId } = await render(<IcalUrlScreen />)
+    const { getByTestId, queryByTestId } = await render(<IcalUrlScreen />)
     await act(async () => {
       fireEvent.changeText(
         getByTestId("ical-url-input"),
@@ -165,6 +176,11 @@ describe("IcalUrlScreen", () => {
     })
     await act(async () => fireEvent.press(getByTestId("ical-url-submit")))
     await waitFor(() => expect(getByTestId("ical-url-report")).toBeTruthy())
+    expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
+      "  https://example.com/cal.ics  ",
+      { schoolId: "school-1", schoolName: "Université" },
+    )
+    expect(queryByTestId("ical-url-retry")).toBeNull()
     await act(async () => {
       fireEvent.changeText(
         getByTestId("ical-url-input"),
@@ -175,17 +191,24 @@ describe("IcalUrlScreen", () => {
     expect(router.push).toHaveBeenCalledWith({
       pathname: "/feedback",
       params: {
-        calendarUrl: "https://example.com/cal.ics",
-        schoolId: "school-1",
-        schoolName: "Université",
+        classification: "unsupported_link",
+        helpKey: "tours_export",
       },
     })
   })
 
-  it("omits absent school context from the recorded failed attempt", async () => {
+  it("returns focus to the URL field for unsupported Rennes guidance", async () => {
     addState = { isPending: false, isError: true }
-    mockAddCalendarFromUrl.mockRejectedValue(new Error("boom"))
-    const { getByTestId } = await render(<IcalUrlScreen />)
+    mockAddCalendarFromUrl.mockRejectedValue(
+      new CalendarImportRecoveryError({
+        classification: "unsupported_link",
+        helpKey: "rennes_export",
+        retryable: false,
+      }),
+    )
+    const { getByTestId, getByText, queryByTestId } = await render(
+      <IcalUrlScreen />,
+    )
     await act(async () => {
       fireEvent.changeText(
         getByTestId("ical-url-input"),
@@ -195,14 +218,79 @@ describe("IcalUrlScreen", () => {
     await act(async () => {
       fireEvent.press(getByTestId("ical-url-submit"))
     })
-    await waitFor(() => expect(getByTestId("ical-url-report")).toBeTruthy())
-    await act(async () => fireEvent.press(getByTestId("ical-url-report")))
-
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: "/feedback",
-      params: { calendarUrl: "https://example.com/cal.ics" },
-    })
+    await waitFor(() =>
+      expect(getByText("Use a Rennes iCal export")).toBeTruthy(),
+    )
+    expect(queryByTestId("ical-url-retry")).toBeNull()
+    await act(async () => fireEvent.press(getByTestId("ical-url-correct")))
+    expect(mockFocusCalendarUrl).toHaveBeenCalledWith(expect.anything())
   })
+
+  it("renders representative French outage guidance", async () => {
+    await i18n.changeLanguage("fr")
+    mockAddCalendarFromUrl.mockRejectedValue(
+      new CalendarImportRecoveryError({
+        classification: "upstream_unavailable",
+        helpKey: "bordeaux_inp_outage",
+        retryable: true,
+      }),
+    )
+    const { getByTestId, getByText } = await render(<IcalUrlScreen />)
+    await act(async () => {
+      fireEvent.changeText(
+        getByTestId("ical-url-input"),
+        "https://example.com/cal.ics",
+      )
+    })
+    await act(async () => {
+      fireEvent.press(getByTestId("ical-url-submit"))
+    })
+    await waitFor(() =>
+      expect(
+        getByText("Emploi du temps de Bordeaux INP indisponible"),
+      ).toBeTruthy(),
+    )
+    expect(getByTestId("ical-url-retry")).toBeTruthy()
+  })
+
+  it.each([
+    [
+      "saint_etienne_outage",
+      "upstream_unavailable",
+      true,
+      "Saint-Étienne timetable unavailable",
+    ],
+    [
+      "generic_invalid_calendar",
+      "invalid_calendar",
+      false,
+      "This is not an iCal feed",
+    ],
+    ["generic_unknown", "unknown", true, "Calendar import failed"],
+  ] as const)(
+    "renders %s recovery",
+    async (helpKey, classification, retryable, title) => {
+      mockAddCalendarFromUrl.mockRejectedValue(
+        new CalendarImportRecoveryError({
+          classification,
+          helpKey,
+          retryable,
+        }),
+      )
+      const { getByTestId, getByText, queryByTestId } = await render(
+        <IcalUrlScreen />,
+      )
+      await act(async () => {
+        fireEvent.changeText(
+          getByTestId("ical-url-input"),
+          "https://example.com/cal.ics",
+        )
+      })
+      await act(async () => fireEvent.press(getByTestId("ical-url-submit")))
+      await waitFor(() => expect(getByText(title)).toBeTruthy())
+      expect(Boolean(queryByTestId("ical-url-retry"))).toBe(retryable)
+    },
+  )
 
   it("never offers Report for a local validation error", async () => {
     const { getByTestId, queryByTestId } = await render(<IcalUrlScreen />)

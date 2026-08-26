@@ -1,5 +1,12 @@
 import { Body, Controller, Post } from "@nestjs/common"
-import { ApiOperation, ApiTags } from "@nestjs/swagger"
+import {
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnprocessableEntityResponse,
+} from "@nestjs/swagger"
+import { CalendarImportErrorDto } from "modules/calendar-sync/models/dto/calendar-import-error.dto"
+import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
 import { SyncCalendarsDto } from "modules/calendar-sync/models/dto/sync-calendars.dto"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
@@ -15,7 +22,11 @@ export class CalendarSyncController {
 
   @Post()
   @ApiOperation({ summary: "Create a calendar" })
-  createCalendar(@Body() payload: CreateCalendarDto) {
+  @ApiCreatedResponse({ type: CreateCalendarRepDto })
+  @ApiUnprocessableEntityResponse({ type: CalendarImportErrorDto })
+  createCalendar(
+    @Body() payload: CreateCalendarDto,
+  ): Promise<CreateCalendarRepDto> {
     return this.service.createCalendar(payload)
   }
 

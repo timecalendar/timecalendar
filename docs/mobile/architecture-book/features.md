@@ -29,8 +29,9 @@ code and product specifications.
 - User-calendar rows contain server calendar IDs and durable source tokens. Notification
   registration sends server IDs, not tokens.
 - Feedback sends every held calendar's server ID. Calendar sources may open Feedback
-  after a recorded iCal import failure with only the attempted URL and available
-  selected-school ID/name; local invalid-URL errors never offer reporting.
+  after an operational iCal failure with only allowlisted classification/help keys;
+  attempted URLs, selected-school identity, credentials, tokens, and timetable resource
+  identifiers are never report context. Local invalid-URL errors never offer reporting.
 - Notification receipt always requests a calendar sync. Only notification taps navigate.
 - Local preference parsers are total: absent, corrupt, or legacy values return safe
   defaults instead of throwing.

@@ -11,11 +11,20 @@ export class CalendarFailure {
   @PrimaryGeneratedColumn("uuid")
   id: string
 
-  @Column()
-  url: string
+  @Column({ type: "varchar", nullable: true })
+  schoolCode: string | null
 
   @Column()
-  error: string
+  classification: string
+
+  @Column()
+  helpKey: string
+
+  @Column()
+  retryable: boolean
+
+  @Column()
+  errorKind: string
 
   @CreateDateColumn()
   createdAt: Date

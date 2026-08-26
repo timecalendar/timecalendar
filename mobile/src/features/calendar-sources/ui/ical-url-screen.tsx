@@ -1,5 +1,5 @@
 import { router } from "expo-router"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -7,17 +7,77 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
+  CalendarImportHelpKey,
+  CalendarImportRecoveryError,
   useAddCalendar,
   validateIcalUrl,
 } from "@/features/calendar-sources/data"
 import { useSchools, useSelectedSchool } from "@/features/school-selection"
-import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
-interface FailedIcalAttempt {
-  calendarUrl: string
-  schoolId?: string
-  schoolName?: string
+import { focusCalendarUrl } from "./focus-calendar-url"
+
+interface RecoveryCopy {
+  title: `calendarSources.icalUrl.recovery.${CalendarImportHelpKey}.title`
+  instruction: `calendarSources.icalUrl.recovery.${CalendarImportHelpKey}.instruction`
+}
+
+const RECOVERY_COPY: Record<CalendarImportHelpKey, RecoveryCopy> = {
+  rennes_export: {
+    title: "calendarSources.icalUrl.recovery.rennes_export.title",
+    instruction: "calendarSources.icalUrl.recovery.rennes_export.instruction",
+  },
+  tours_export: {
+    title: "calendarSources.icalUrl.recovery.tours_export.title",
+    instruction: "calendarSources.icalUrl.recovery.tours_export.instruction",
+  },
+  reunion_export: {
+    title: "calendarSources.icalUrl.recovery.reunion_export.title",
+    instruction: "calendarSources.icalUrl.recovery.reunion_export.instruction",
+  },
+  montpellier_export: {
+    title: "calendarSources.icalUrl.recovery.montpellier_export.title",
+    instruction:
+      "calendarSources.icalUrl.recovery.montpellier_export.instruction",
+  },
+  ube_export: {
+    title: "calendarSources.icalUrl.recovery.ube_export.title",
+    instruction: "calendarSources.icalUrl.recovery.ube_export.instruction",
+  },
+  lyon2_export: {
+    title: "calendarSources.icalUrl.recovery.lyon2_export.title",
+    instruction: "calendarSources.icalUrl.recovery.lyon2_export.instruction",
+  },
+  saint_etienne_outage: {
+    title: "calendarSources.icalUrl.recovery.saint_etienne_outage.title",
+    instruction:
+      "calendarSources.icalUrl.recovery.saint_etienne_outage.instruction",
+  },
+  bordeaux_inp_outage: {
+    title: "calendarSources.icalUrl.recovery.bordeaux_inp_outage.title",
+    instruction:
+      "calendarSources.icalUrl.recovery.bordeaux_inp_outage.instruction",
+  },
+  toulouse3_outage: {
+    title: "calendarSources.icalUrl.recovery.toulouse3_outage.title",
+    instruction:
+      "calendarSources.icalUrl.recovery.toulouse3_outage.instruction",
+  },
+  generic_invalid_calendar: {
+    title: "calendarSources.icalUrl.recovery.generic_invalid_calendar.title",
+    instruction:
+      "calendarSources.icalUrl.recovery.generic_invalid_calendar.instruction",
+  },
+  generic_upstream_unavailable: {
+    title:
+      "calendarSources.icalUrl.recovery.generic_upstream_unavailable.title",
+    instruction:
+      "calendarSources.icalUrl.recovery.generic_upstream_unavailable.instruction",
+  },
+  generic_unknown: {
+    title: "calendarSources.icalUrl.recovery.generic_unknown.title",
+    instruction: "calendarSources.icalUrl.recovery.generic_unknown.instruction",
+  },
 }
 
 // The iCal-URL entry screen (Phase-3 ship 4, rewired by ship 5 / ADR 018) —
@@ -44,14 +104,14 @@ interface FailedIcalAttempt {
 export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { addCalendarFromUrl, isPending, isError, reset } = useAddCalendar()
+  const { addCalendarFromUrl, isPending, reset } = useAddCalendar()
   const selection = useSelectedSchool()
   const { schools } = useSchools()
   const [url, setUrl] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
-  const [failedAttempt, setFailedAttempt] = useState<FailedIcalAttempt | null>(
-    null,
-  )
+  const [failedAttempt, setFailedAttempt] =
+    useState<CalendarImportRecoveryError | null>(null)
+  const inputRef = useRef<TextInput>(null)
   const selectedSchoolName = schools.find(
     (school) => school.id === selection?.schoolId,
   )?.name
@@ -60,7 +120,10 @@ export default function IcalUrlScreen() {
     if (!failedAttempt) return
     router.push({
       pathname: "/feedback",
-      params: { ...failedAttempt },
+      params: {
+        classification: failedAttempt.recovery.classification,
+        helpKey: failedAttempt.recovery.helpKey,
+      },
     })
   }
 
@@ -74,20 +137,24 @@ export default function IcalUrlScreen() {
     setErrorKey(null)
     reset()
     setFailedAttempt(null)
-    const attempt: FailedIcalAttempt = {
-      calendarUrl: url.trim(),
-      ...(selection?.schoolId ? { schoolId: selection.schoolId } : {}),
-      ...(selectedSchoolName ? { schoolName: selectedSchoolName } : {}),
-    }
-    void addCalendarFromUrl(url)
+    const school =
+      selection?.schoolId && selectedSchoolName
+        ? { schoolId: selection.schoolId, schoolName: selectedSchoolName }
+        : undefined
+    void addCalendarFromUrl(url, school)
       .then(() => {
         router.back()
       })
       .catch((error: unknown) => {
-        // Genuine create / resolve / persist failure — record through the seam,
-        // surface the a11y error + Retry.
-        recordUnknownError(error, "calendar-sources/ical-import")
-        setFailedAttempt(attempt)
+        setFailedAttempt(
+          error instanceof CalendarImportRecoveryError
+            ? error
+            : new CalendarImportRecoveryError({
+                classification: "unknown",
+                helpKey: "generic_unknown",
+                retryable: true,
+              }),
+        )
       })
   }
 
@@ -107,6 +174,7 @@ export default function IcalUrlScreen() {
           {t("calendarSources.icalUrl.fieldLabel")}
         </ThemedText>
         <TextInput
+          ref={inputRef}
           testID="ical-url-input"
           accessibilityLabel={t("calendarSources.icalUrl.fieldLabel")}
           placeholder={t("calendarSources.icalUrl.placeholder")}
@@ -170,41 +238,33 @@ export default function IcalUrlScreen() {
           </ThemedText>
         )}
 
-        {isError && (
+        {failedAttempt && (
           <View style={styles.errorBlock}>
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-            >
-              {t("calendarSources.icalUrl.serverError")}
-            </ThemedText>
-            <Pressable
-              testID="ical-url-retry"
-              accessibilityRole="button"
-              accessibilityLabel={t("calendarSources.icalUrl.retryLabel")}
-              hitSlop={Spacing.two}
-              onPress={submit}
-              style={[
-                styles.cta,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">
-                {t("calendarSources.icalUrl.retry")}
-              </ThemedText>
-            </Pressable>
-            {failedAttempt ? (
+            {(() => {
+              const copy = RECOVERY_COPY[failedAttempt.recovery.helpKey]
+              return (
+                <>
+                  <ThemedText
+                    type="subtitle"
+                    themeColor="textSecondary"
+                    accessibilityLiveRegion="polite"
+                    accessibilityRole="alert"
+                  >
+                    {t(copy.title)}
+                  </ThemedText>
+                  <ThemedText themeColor="textSecondary">
+                    {t(copy.instruction)}
+                  </ThemedText>
+                </>
+              )
+            })()}
+            {failedAttempt.recovery.retryable ? (
               <Pressable
-                testID="ical-url-report"
-                accessibilityRole="link"
-                accessibilityLabel={t("calendarSources.icalUrl.report")}
-                accessibilityHint={t("calendarSources.icalUrl.reportHint")}
+                testID="ical-url-retry"
+                accessibilityRole="button"
+                accessibilityLabel={t("calendarSources.icalUrl.retryLabel")}
                 hitSlop={Spacing.two}
-                onPress={report}
+                onPress={submit}
                 style={[
                   styles.cta,
                   {
@@ -214,10 +274,48 @@ export default function IcalUrlScreen() {
                 ]}
               >
                 <ThemedText type="smallBold">
-                  {t("calendarSources.icalUrl.report")}
+                  {t("calendarSources.icalUrl.retry")}
                 </ThemedText>
               </Pressable>
-            ) : null}
+            ) : (
+              <Pressable
+                testID="ical-url-correct"
+                accessibilityRole="button"
+                accessibilityLabel={t("calendarSources.icalUrl.correctLabel")}
+                hitSlop={Spacing.two}
+                onPress={() => focusCalendarUrl(inputRef.current)}
+                style={[
+                  styles.cta,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.primary,
+                  },
+                ]}
+              >
+                <ThemedText type="smallBold">
+                  {t("calendarSources.icalUrl.correct")}
+                </ThemedText>
+              </Pressable>
+            )}
+            <Pressable
+              testID="ical-url-report"
+              accessibilityRole="link"
+              accessibilityLabel={t("calendarSources.icalUrl.report")}
+              accessibilityHint={t("calendarSources.icalUrl.reportHint")}
+              hitSlop={Spacing.two}
+              onPress={report}
+              style={[
+                styles.cta,
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.primary,
+                },
+              ]}
+            >
+              <ThemedText type="smallBold">
+                {t("calendarSources.icalUrl.report")}
+              </ThemedText>
+            </Pressable>
           </View>
         )}
       </SafeAreaView>

@@ -3,7 +3,7 @@ import { join } from "path"
 import { setupMsw } from "test-utils/setup-msw"
 import { http, HttpResponse } from "msw"
 import { IcalFetcher } from "modules/fetch/fetchers/ical-fetcher"
-import { BadRequestException } from "@nestjs/common"
+import { CalendarFetchError } from "modules/fetch/models/calendar-fetch-outcome"
 
 const server = setupMsw()
 
@@ -33,9 +33,7 @@ describe("IcalFetcher", () => {
     const fetcher = new IcalFetcher({ withRetries: false })
 
     await expect(fetcher.fetch("https://example.com")).rejects.toThrow(
-      new BadRequestException(
-        "Failed to request the API: Request failed with status code 500",
-      ),
+      new CalendarFetchError("http_5xx"),
     )
   })
 
@@ -54,4 +52,24 @@ describe("IcalFetcher", () => {
 
     expect(events).toHaveLength(1)
   })
+
+  it.each([
+    ["", "text/calendar", "empty_body"],
+    ["<html>sign in</html>", "text/html", "html_response"],
+    ["not a calendar", "text/plain", "invalid_content"],
+    ["BEGIN:VCALENDAR\nEND:VCALENDAR", "text/calendar", "empty_calendar"],
+  ] as const)(
+    "returns the bounded %s outcome",
+    async (body, contentType, kind) => {
+      server.use(
+        http.get("https://example.com", () =>
+          HttpResponse.text(body, { headers: { "content-type": contentType } }),
+        ),
+      )
+
+      await expect(
+        new IcalFetcher().fetch("https://example.com"),
+      ).rejects.toThrow(new CalendarFetchError(kind))
+    },
+  )
 })

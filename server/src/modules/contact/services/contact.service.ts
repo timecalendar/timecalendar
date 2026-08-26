@@ -14,11 +14,10 @@ export class ContactService {
       email: message.email,
       name: emailToName(message.email),
       data: removeUndefinedValues({
-        schoolId: message.schoolId,
-        schoolName: message.schoolName,
         gradeName: message.gradeName,
         deviceInfo: message.deviceInfo,
-        calendarUrl: message.calendarUrl,
+        recoveryClassification: message.recoveryClassification,
+        recoveryHelpKey: message.recoveryHelpKey,
         calendarIds: message.calendarIds?.join(","),
       }),
     })

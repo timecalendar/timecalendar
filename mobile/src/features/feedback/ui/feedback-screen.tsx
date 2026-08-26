@@ -16,6 +16,10 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
+  isCalendarImportClassification,
+  isCalendarImportHelpKey,
+} from "@/features/calendar-sources"
+import {
   getRememberedEmail,
   setRememberedEmail,
   useSendFeedback,
@@ -40,17 +44,18 @@ export default function FeedbackScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const params = useLocalSearchParams<{
-    calendarUrl?: string | string[]
-    schoolId?: string | string[]
-    schoolName?: string | string[]
+    classification?: string | string[]
+    helpKey?: string | string[]
   }>()
-  const calendarUrl = normalizeFeedbackParam(params.calendarUrl)
-  const schoolId = normalizeFeedbackParam(params.schoolId)
-  const schoolName = normalizeFeedbackParam(params.schoolName)
+  const rawClassification = normalizeFeedbackParam(params.classification)
+  const rawHelpKey = normalizeFeedbackParam(params.helpKey)
+  const classification = isCalendarImportClassification(rawClassification)
+    ? rawClassification
+    : undefined
+  const helpKey = isCalendarImportHelpKey(rawHelpKey) ? rawHelpKey : undefined
   const context = {
-    ...(calendarUrl ? { calendarUrl } : {}),
-    ...(schoolId ? { schoolId } : {}),
-    ...(schoolName ? { schoolName } : {}),
+    ...(classification ? { classification } : {}),
+    ...(helpKey ? { helpKey } : {}),
   }
   const {
     sendFeedback,

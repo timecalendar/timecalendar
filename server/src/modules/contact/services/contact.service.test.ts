@@ -30,10 +30,10 @@ describe("ContactService", () => {
         message: "Message",
         email: "martin.matin@email.com",
         calendarIds: ["123"],
-        schoolId: "456",
-        schoolName: "School Name",
         gradeName: "Grade Name",
         deviceInfo: "Device Info",
+        recoveryClassification: "unsupported_link" as const,
+        recoveryHelpKey: "tours_export" as const,
       }
 
       await service.sendMessage(sendMessageDto)
@@ -43,10 +43,10 @@ describe("ContactService", () => {
         email: "martin.matin@email.com",
         name: "Martin Matin",
         data: {
-          schoolId: "456",
-          schoolName: "School Name",
           gradeName: "Grade Name",
           deviceInfo: "Device Info",
+          recoveryClassification: "unsupported_link",
+          recoveryHelpKey: "tours_export",
           calendarIds: "123",
         },
       })

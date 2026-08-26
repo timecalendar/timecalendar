@@ -1,10 +1,12 @@
-import { BadRequestException } from "@nestjs/common"
 import axios, { AxiosError, AxiosRequestConfig } from "axios"
 import { Fetcher } from "modules/fetch/fetchers/fetcher"
+import {
+  CalendarFetchError,
+  CalendarFetchOutcomeKind,
+} from "modules/fetch/models/calendar-fetch-outcome"
 import { CalendarCustomData } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { parseIcal } from "modules/fetch/parsers/parse-ical"
-import { CustomError } from "modules/shared/errors/custom-error"
 import { HttpsProxyAgent } from "https-proxy-agent"
 import { PROXY_URL } from "config/constants"
 
@@ -16,6 +18,45 @@ type IcalFetcherOptions = {
 const defaultOptions: IcalFetcherOptions = {
   withRetries: false,
   useProxy: false,
+}
+
+const classifyAxiosError = (error: AxiosError): CalendarFetchOutcomeKind => {
+  const status = error.response?.status
+  if (status === 401 || status === 403) return "authentication_required"
+  if (status !== undefined && status >= 500) return "http_5xx"
+
+  const code = error.code?.toUpperCase()
+  if (code === "ECONNABORTED" || code === "ETIMEDOUT") return "timeout"
+  if (code === "ENOTFOUND" || code === "EAI_AGAIN") return "dns"
+  if (
+    code?.includes("CERT") ||
+    code?.includes("TLS") ||
+    code === "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+  ) {
+    return "tls"
+  }
+  return "unknown"
+}
+
+const parseResponse = (
+  data: unknown,
+  contentType: unknown,
+): FetcherCalendarEvent[] => {
+  if (typeof data !== "string") throw new CalendarFetchError("invalid_content")
+  if (data.length === 0) throw new CalendarFetchError("empty_body")
+
+  const looksLikeHtml =
+    (typeof contentType === "string" && contentType.includes("text/html")) ||
+    /^\s*(?:<!doctype\s+html|<html\b)/i.test(data)
+  if (looksLikeHtml) throw new CalendarFetchError("html_response")
+
+  try {
+    return parseIcal(data)
+  } catch {
+    throw new CalendarFetchError(
+      /BEGIN:VCALENDAR/i.test(data) ? "empty_calendar" : "invalid_content",
+    )
+  }
 }
 
 export class IcalFetcher implements Fetcher {
@@ -46,38 +87,35 @@ export class IcalFetcher implements Fetcher {
       axiosConfig.auth = data.auth
     }
 
-    let lastError: unknown
+    let lastOutcome: CalendarFetchOutcomeKind = "unknown"
 
     for (let i = 0; i < nbRetries; i++) {
       try {
-        const rep = await axios.request(axiosConfig)
-
-        return parseIcal(rep.data)
+        const rep = await axios.request<unknown>(axiosConfig)
+        return parseResponse(rep.data, rep.headers["content-type"])
       } catch (error: unknown) {
-        lastError = error
+        lastOutcome =
+          error instanceof CalendarFetchError
+            ? error.kind
+            : error instanceof AxiosError
+            ? classifyAxiosError(error)
+            : "unknown"
 
-        if (error instanceof AxiosError && error.response?.status === 401) {
-          // handle HTTP basic authorization
-          if (error.response.headers["www-authenticate"]) {
-            if (data?.auth) {
-              // Bad credentials
-              throw new CustomError("Basic Authorization required", {
-                basicAuth: "failed",
-              })
-            } else {
-              throw new CustomError("Basic Authorization required", {
-                auth: "basic",
-              })
-            }
-          }
+        // Authentication and returned page/content failures cannot recover by
+        // repeating the same request. Preserve the existing transient retry
+        // count for network and provider failures only.
+        if (
+          lastOutcome === "authentication_required" ||
+          lastOutcome === "html_response" ||
+          lastOutcome === "empty_body" ||
+          lastOutcome === "empty_calendar" ||
+          lastOutcome === "invalid_content"
+        ) {
+          break
         }
       }
     }
 
-    throw new BadRequestException(
-      `Failed to request the API: ${
-        lastError instanceof Error ? lastError.message : lastError
-      }`,
-    )
+    throw new CalendarFetchError(lastOutcome)
   }
 }
