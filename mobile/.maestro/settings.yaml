@@ -21,7 +21,17 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "My calendars"
     timeout: 60000
-- back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: "BackButton"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
 - extendedWaitUntil:
     visible: "Settings"
     timeout: 60000
@@ -30,7 +40,17 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "Appearance & language"
     timeout: 60000
-- back
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          id: "BackButton"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
 - extendedWaitUntil:
     visible: "Settings"
     timeout: 60000
