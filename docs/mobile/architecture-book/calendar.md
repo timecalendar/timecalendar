@@ -74,7 +74,7 @@ Due-calendar selection is oldest-first and metadata-only: it loads the school re
 but not stored event JSON. A successful fetch loads previous content exactly once under
 the existing persistence lock for atomic diff/log writes; final response hydration remains
 separate. The binding contract and regression scenarios live in the
-[server calendar sync policy](../../../openspec/changes/eliminate-calendar-sync-stalls/specs/server-calendar-sync-policy/spec.md).
+[server calendar sync policy](../../../openspec/specs/server-calendar-sync-policy/spec.md).
 
 ## Surfaces
 

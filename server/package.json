@@ -28,7 +28,7 @@
     "db:init": "npm run app:tsnode ./src/scripts/seed-database.ts -- --drop",
     "db:migrate": "npm run typeorm migration:run",
     "db:generate": "npm run typeorm -- migration:generate ./src/migrations/migration && eslint src/migrations/* --fix",
-    "profile:calendar-sync": "npm run build && node --cpu-prof dist/scripts/profile-calendar-sync.js fixed"
+    "profile:calendar-sync": "npm run build && node --cpu-prof --cpu-prof-dir=\"${PROFILE_OUTPUT_DIR:-${TMPDIR:-/tmp}}\" dist/scripts/profile-calendar-sync.js verify"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -1,4 +1,5 @@
 import { monitorEventLoopDelay, performance } from "node:perf_hooks"
+import assert from "node:assert/strict"
 import { plainToInstance } from "class-transformer"
 import {
   EventForChangeDetection,
@@ -14,6 +15,7 @@ const SIMULATED_UPSTREAM_MS = 5
 const REFERENCE_DATE = new Date("2026-08-01T00:00:00.000Z")
 
 type ProfileMode = "baseline" | "fixed"
+type RunMode = ProfileMode | "verify"
 
 type ProfileResult = {
   fixture: {
@@ -88,12 +90,9 @@ const runRequest = async (mode: ProfileMode) => {
   )
 }
 
-const main = async () => {
-  const mode = (process.argv[2] ?? "baseline") as ProfileMode
-  if (mode !== "baseline" && mode !== "fixed") {
-    throw new Error("mode must be 'baseline' or 'fixed'")
-  }
-
+const runProfile = async (mode: ProfileMode): Promise<ProfileResult> => {
+  activeOperations = 0
+  peakOperations = 0
   const loopDelay = monitorEventLoopDelay({ resolution: 1 })
   loopDelay.enable()
   const durations: number[] = []
@@ -105,7 +104,7 @@ const main = async () => {
   }
   loopDelay.disable()
 
-  const result: ProfileResult = {
+  return {
     fixture: {
       calendars: CALENDAR_COUNT,
       eventsPerCalendar: EVENTS_PER_CALENDAR,
@@ -119,6 +118,58 @@ const main = async () => {
     maxEventLoopDelayMs: Number((loopDelay.max / 1_000_000).toFixed(1)),
     unfinishedOperations: activeOperations,
   }
+}
+
+const assertFixedBounds = (fixed: ProfileResult, baseline?: ProfileResult) => {
+  assert.equal(
+    fixed.peakUpstreamConcurrency,
+    3,
+    "fixed fixture must exercise and respect the three-worker bound",
+  )
+  assert.equal(
+    fixed.unfinishedOperations,
+    0,
+    "fixed fixture must leave no detached work",
+  )
+  assert.ok(
+    fixed.requestP95Ms < 15_000,
+    `fixed p95 ${fixed.requestP95Ms}ms exceeded the 15s client timeout`,
+  )
+  if (baseline) {
+    assert.ok(
+      baseline.peakUpstreamConcurrency > fixed.peakUpstreamConcurrency,
+      "baseline must demonstrate the prior unbounded fan-out",
+    )
+    assert.equal(
+      baseline.unfinishedOperations,
+      0,
+      "baseline fixture must settle before comparison",
+    )
+    assert.ok(
+      fixed.maxEventLoopDelayMs < baseline.maxEventLoopDelayMs,
+      `fixed max loop delay ${fixed.maxEventLoopDelayMs}ms was not below same-run baseline ${baseline.maxEventLoopDelayMs}ms`,
+    )
+  }
+}
+
+const main = async () => {
+  const mode = (process.argv[2] ?? "verify") as RunMode
+  if (mode !== "baseline" && mode !== "fixed" && mode !== "verify") {
+    throw new Error("mode must be 'baseline', 'fixed', or 'verify'")
+  }
+
+  if (mode === "verify") {
+    const baseline = await runProfile("baseline")
+    const fixed = await runProfile("fixed")
+    assertFixedBounds(fixed, baseline)
+    process.stdout.write(
+      `${JSON.stringify({ assertions: "passed", baseline, fixed }, null, 2)}\n`,
+    )
+    return
+  }
+
+  const result = await runProfile(mode)
+  if (mode === "fixed") assertFixedBounds(result)
 
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
 }

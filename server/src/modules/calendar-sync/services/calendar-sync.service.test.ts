@@ -447,6 +447,36 @@ describe("CalendarSyncService", () => {
       expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
     })
 
+    it("does not enter the content transaction when cancellation wins after fetch", async () => {
+      const original = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      const controller = new AbortController()
+      const reason = new CalendarSyncAbortError("deadline")
+      const calendarRepository = dataSource.getRepository(Calendar)
+      const originalSave = calendarRepository.save.bind(calendarRepository)
+      jest
+        .spyOn(calendarRepository, "save")
+        .mockImplementationOnce(async (...args) => {
+          const saved = await originalSave(...args)
+          controller.abort(reason)
+          return saved
+        })
+      const transaction = jest.spyOn(contentRepository, "saveWithTransaction")
+
+      await expect(
+        service.sync(calendar, { signal: controller.signal }),
+      ).rejects.toBe(reason)
+
+      expect(transaction).not.toHaveBeenCalled()
+      const unchanged = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(unchanged.lastUpdatedAt).toEqual(original.lastUpdatedAt)
+      expect(unchanged.syncPlannedAt).toEqual(original.syncPlannedAt)
+      expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
     it("lets an entered content transaction settle atomically after abort", async () => {
       events = [
         fetcherCalendarEventFactory.build({

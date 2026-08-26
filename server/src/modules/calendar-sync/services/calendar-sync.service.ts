@@ -141,17 +141,31 @@ export class CalendarSyncService {
       throw fetchedEvents.error
     }
 
-    const savedCalendar = await withCalendarSyncSpan(
-      "calendar_sync.diff_persist",
-      () =>
-        this.calendarSyncMetricsService.measurePhase("diff_persist", () =>
-          this.saveCalendar(
-            calendar,
-            fetchedEvents.ok ? fetchedEvents.events : undefined,
-            minSyncIntervalMinutes,
+    let savedCalendar: Calendar
+    try {
+      savedCalendar = await withCalendarSyncSpan(
+        "calendar_sync.diff_persist",
+        () =>
+          this.calendarSyncMetricsService.measurePhase("diff_persist", () =>
+            this.saveCalendar(
+              calendar,
+              fetchedEvents.ok ? fetchedEvents.events : undefined,
+              minSyncIntervalMinutes,
+              context.signal,
+            ),
           ),
-        ),
-    )
+      )
+    } catch (error) {
+      if (
+        id &&
+        claimed &&
+        originalSyncPlannedAt &&
+        isCalendarSyncAbort(error, context.signal)
+      ) {
+        await this.calendarRepository.restoreSyncPlan(id, originalSyncPlannedAt)
+      }
+      throw error
+    }
     if (!fetchedEvents.ok) throw fetchedEvents.error
 
     return savedCalendar
@@ -161,6 +175,7 @@ export class CalendarSyncService {
     calendar: CalendarForSync,
     events: CalendarEvent[] | undefined,
     minSyncIntervalMinutes: number,
+    signal?: AbortSignal,
   ) {
     let { id: calendarId } = calendar
     const isUpdate = !!calendarId
@@ -172,6 +187,9 @@ export class CalendarSyncService {
     calendarId = savedCalendar.id
 
     if (events) {
+      // There is no asynchronous boundary between this gate and transaction
+      // entry. Once invoked, the content and CalendarLog transaction settles.
+      throwIfCalendarSyncAborted(signal)
       // Content + its CalendarLog commit together (design D4): a crash between
       // the two can no longer lose a detected change, and a job retry re-diffs
       // old-vs-new because the old content was not overwritten.

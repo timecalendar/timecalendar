@@ -42,9 +42,17 @@ content-fallback change detector without using production data.
 Run from `server/`:
 
 ```sh
-npm run build
-node --cpu-prof --cpu-prof-dir <scratch-dir> dist/scripts/profile-calendar-sync.js baseline
+PROFILE_OUTPUT_DIR=<scratch-dir> npm run profile:calendar-sync
 ```
+
+The command runs the baseline and fixed modes in the same process, emits both result
+objects, and exits non-zero unless the fixed path exercises exactly three workers,
+leaves zero unfinished operations, stays below the 15-second client timeout, and has a
+lower maximum event-loop delay than that same run's baseline. The optional CPU profile
+directory should be a run-owned scratch directory so machine-specific profiles do not
+dirty the repository. To inspect either mode alone after building, run
+`node dist/scripts/profile-calendar-sync.js baseline` or `fixed`; fixed mode still
+asserts the concurrency, unfinished-work, and p95 bounds.
 
 Baseline result (Node 24.13.0, local workspace):
 
@@ -91,6 +99,10 @@ application frames are now `eventComparisonKey` (241 samples) and `buildEventInd
 (132), while the old new-event, removed/changed, and bad-iCal callbacks fall to 41, 41,
 and 27 samples respectively.
 
+The assertion-backed rework run on 2026-08-26 also passed: its same-process baseline/fixed
+p95 values were 257.1/85.7 ms, maximum event-loop delays were 253.9/32.4 ms, peak
+concurrency fell from eight to three, and both modes returned with zero unfinished work.
+
 ## Local verification
 
 Run from `server/` on Node 24.13.0:
@@ -101,7 +113,7 @@ npm run build
 DATABASE_URL=postgres://postgres@localhost:37291/timecalendar_tim188 npm test -- --runInBand modules/calendar-sync/calendar-sync.constants.test.ts modules/calendar-sync/controllers/calendar-sync-lifecycle.test.ts modules/calendar-sync/controllers/calendar-sync.controller.test.ts modules/calendar-sync/services/calendar-sync-workers.test.ts modules/calendar-sync/services/calendar-sync-metrics.service.test.ts modules/calendar-sync/services/calendar-sync-all.service.test.ts modules/calendar-sync/services/calendar-sync.service.test.ts modules/calendar-sync/calendar-sync-tracing.test.ts modules/calendar-sync/calendar-sync-ci-proof.test.ts modules/calendar/repositories/calendar.repository.test.ts modules/calendar/repositories/calendar-content.repository.unit.test.ts modules/calendar-log/models/change-detection/find-event-changes.test.ts modules/fetch/fetchers/ical-fetcher.test.ts config/observability/tracer.test.ts
 ```
 
-Results: ESLint and Nest build passed; 14 targeted suites passed (84 tests). The local
+Results: ESLint and Nest build passed; 14 targeted suites passed (85 tests). The local
 database name is intentionally issue-specific because another worktree was running Jest
 against the shared default worker database at the same time.
 
