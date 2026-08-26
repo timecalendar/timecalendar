@@ -1,5 +1,9 @@
 # EAS — build, submit, and over-the-air updates
 
+For the ELI5 release flow, signing recovery and current readiness audit, start with
+[`docs/mobile/releases/`](../docs/mobile/releases/README.md). This file describes the committed
+configuration; the release pack explains what an operator must do around it.
+
 How `mobile/` ships. Configured by the `add-mobile-eas` change (foundation roadmap
 step 11). EAS is **human-invoked** — there is no CI wiring (see the Architecture Book
 "EAS / distribution", decision D4). The native E2E keeps building via `expo prebuild`,
@@ -41,9 +45,9 @@ production default in `app.config.ts`. **Verify with the variant diff:**
   changes the fingerprint and therefore **requires a fresh native build**; it will not (and
   must not) ship as an OTA. This is the intended safety property, not a bug: if an expected
   OTA "doesn't apply," check whether the change touched native config.
-- `updates.url` and `extra.eas.projectId` are derived from `EAS_PROJECT_ID`. Until a human
-  runs `eas init` (no EAS project exists yet) the config uses a zero-UUID **placeholder** so
-  `tsc` / `expo config --json` stay green. `eas init` fills the real id.
+- `updates.url` and `extra.eas.projectId` are derived from `EAS_PROJECT_ID`, falling back to the
+  committed real EAS project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b` for
+  `@samuelprak/timecalendar`. The ID is public build metadata, not a secret.
 - Push an update: `eas update --channel preview` (dogfood) / `eas update --channel production`
   (store). Updates only reach installed builds on the matching channel.
 
@@ -66,11 +70,18 @@ bundle id, so EAS targets the existing App Store record (the RN app ships as an 
 
 ## Human prerequisites (cannot be automated)
 
-These unlock real builds/installs; the config above is green without them. See
-[`docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`](../docs/react-native-migration/inbox/2026-06-13-eas-credentials.md):
+These unlock real builds/installs; the config above is green without them. See the release guide's
+[readiness and gaps checklist](../docs/mobile/releases/05-readiness-and-gaps.md):
 
-1. `eas login` + `eas init` → real `projectId` / `updates.url` (commit the resolved id — not a secret).
+1. `eas login` to the personal account currently owning `@samuelprak/timecalendar`; record account
+   recovery and collaborator custody in Vaultwarden.
 2. Apple Developer credentials + EAS-managed iOS signing; supply the `$EXPO_*` submit env vars.
-3. Google Play service-account key at the `serviceAccountKeyPath`.
-4. `eas build --profile preview` (both platforms) + real-device install; TestFlight internal + Play internal testing setup.
-5. Verify `eas update --channel preview` is picked up and production crashes/analytics land in `timecalendar-samuelprak`.
+3. Confirm Play App Signing for the existing listing; import the accepted upload key or complete an
+   upload-key reset before configuring Android EAS credentials.
+4. Google Play service-account authorization for EAS Submit, stored outside git.
+5. Add a store-distributed preview profile before using TestFlight/Play internal; the current
+   `preview` profile is direct EAS internal distribution (`.ipa`/`.apk`) and is not store-submittable.
+6. Initialize EAS remote build versions from the highest live-store values, then build/submit both
+   platforms and verify real-device installs.
+7. Verify a compatible `preview` OTA is picked up and production crashes/analytics land in
+   `timecalendar-samuelprak` when the OTA runtime is ready.

@@ -14,6 +14,10 @@
 6. **Release** — submit via EAS; staged store rollout; watch Crashlytics + migration success metrics closely.
 7. **Retire Flutter** — once stable in production, stop Flutter maintenance ([R-5](../00-exploration/migration-approach.md#6-working-rules-seed-of-the-architecture-book)); archive `app/`.
 
+Operator-facing explanation, signing recovery, store-preview flow and current gaps are in the
+[mobile release guide](../../mobile/releases/README.md). The human-only first-preview actions are
+tracked in the [(HUMAN: mobile release bootstrap) inbox note](../inbox/2026-08-26-mobile-release-bootstrap.md).
+
 ## Human prerequisites — credentials, signing & store accounts
 
 The EAS **config half is landed** (`mobile/eas.json`, `expo-updates` wiring, channel/profile
