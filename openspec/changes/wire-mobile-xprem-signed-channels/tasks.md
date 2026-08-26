@@ -110,7 +110,7 @@
       build or publish workflow, credential, publish/channel/rollback automation, or Flutter legacy
       change; permit only the existing generic Expo type-generation CI step to declare
       `APP_VARIANT=development` without `OTA_CHANNEL`
-- [ ] 8.4 Push the implementation on the existing issue branch/PR and use exact-head GitHub CI as
+- [x] 8.4 Push the implementation on the existing issue branch/PR and use exact-head GitHub CI as
       the proof test; first prove `APP_VARIANT=development npx expo customize tsconfig.json` locally
       and verify the workflow declaration is step-local with no `OTA_CHANNEL`; do not mark apply
       complete until required mobile checks are green or a concrete pipeline blocker is escalated
