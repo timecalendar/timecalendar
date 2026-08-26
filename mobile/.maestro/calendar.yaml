@@ -33,9 +33,8 @@ appId: fr.samuelprak.timecalendar.dev
 - runFlow: import-seed.yaml
 # Switch to the agenda view — the robust surface to assert + tap a synced title.
 - tapOn:
-    id: "calendar-view-agenda"
-- assertVisible:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn: "Agenda"
 # The real synced tile renders: `E2E Today Lecture` is a today-anchored seeded
 # event returned by POST /calendars/sync. Generous timeout so the just-triggered
 # sync settles before the first synced-title assertion (do NOT weaken this to an

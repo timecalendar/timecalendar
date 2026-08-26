@@ -72,7 +72,8 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn: "Agenda"
 - extendedWaitUntil:
     visible: "E2E Today Lecture"
     timeout: 60000
@@ -107,7 +108,8 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn: "Agenda"
 - extendedWaitUntil:
     visible: "E2E Today Seminar"
     timeout: 60000
