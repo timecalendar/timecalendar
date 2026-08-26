@@ -16,7 +16,7 @@ are marked below.*
 ## 4.1 The recommendation
 
 **Self-host the update server (xprem) on infrastructure we already run, from day one. Build it
-now — months before the 3.0 cutover — and run our own phones off it, on the `preview` channel,
+now — months before the 4.0 cutover — and run our own phones off it, on the `preview` channel,
 for the whole remaining porting period.**
 
 Cost: **~$0–5/month** against **~$249/month** for the hosted equivalent at our scale. Setup:
@@ -100,7 +100,7 @@ so this is reversible too. **I'd take R2.**
 
 My draft's strongest argument against self-hosting was not the money — it was timing:
 
-> *"The 3.0 cutover is the highest-risk moment in this project's life. On that day I want our
+> *"The 4.0 cutover is the highest-risk moment in this project's life. On that day I want our
 > emergency mechanism to be the boring, battle-tested one that someone else is on call for."*
 
 That argument is still correct, and it is **entirely defused by building this now.** The app
@@ -181,7 +181,7 @@ in two, now that the infrastructure targets are all decided.*
 | 5 | Rehearse a rollback on `preview`. The first `eoas rollback` we run must not be during an incident | 1 h |
 | 6 | Turn [document 5](./05-runbook.md) into the release checklist; write an ADR in the Architecture Book recording this decision | ½ day |
 | 7 | Load-sanity-check the manifest endpoint (§4.8) | 1 h |
-| 8 | **Update code signing** — generate the key pair, embed the certificate in the 3.0 build, publish signed. Must happen *before* the 3.0 store build (§6.15) | ½ day |
+| 8 | **Update code signing** — generate the key pair, embed the certificate in the 4.0 build, publish signed. Must happen *before* the 4.0 store build (§6.15) | ½ day |
 | 9 | **Tag Crashlytics with the OTA update id**, channel, runtime version and `isEmbeddedLaunch`; investigate OTA source-map upload (§6.14) | ½ day |
 | 10 | **Publish from CI**, triggered by a git tag, with a `workflow_dispatch` approval gate for `production` (§6.11) | ½ day |
 | 11 | **Fingerprint check in CI** — label a PR that changes the native fingerprint, so "does this need a store release?" is answered by a bot (§6.3) | 2 h |
@@ -204,7 +204,7 @@ in two, now that the infrastructure targets are all decided.*
 ### Two things that moved *out* of "deferred"
 
 - **Update code signing** (task 8). The certificate is embedded in the binary at build time, so
-  adding it later forces an extra store release. We are about to make the 3.0 build anyway —
+  adding it later forces an extra store release. We are about to make the 4.0 build anyway —
   this is the cheapest it will ever be. Full reasoning in [doc 6 §6.15](./06-your-questions-answered.md).
 - **Publishing from CI** (task 10). My original objection — "a human should decide when 60,000
   people get a surprise update" — is about the *decision*, which an approval gate preserves

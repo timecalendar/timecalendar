@@ -1,5 +1,14 @@
 # Mobile build infrastructure
 
+> [!NOTE]
+> **This folder is exploration, not rules.** It records how a decision was reached and is not
+> maintained against the shipped configuration. The binding rules live in the Architecture Book's
+> [EAS / distribution](../architecture-book/eas.md) page and its ADRs; the operator steps live in
+> [`docs/mobile/releases/`](../releases/README.md). Where this folder disagrees with those, they win.
+>
+> Superseded here by ADR [040](../architecture-book/decisions/040-local-store-builds-and-store-preview.md)
+> (2026-08-26): `eas build --local` on the macOS host is the build path (this pack rejected local builds on cache/secret grounds that do not apply to manual store builds); the proposed `internal-store` profile is dropped in favour of making `preview` store-distributed; release selection is by annotated tag, not a `production` branch.
+
 - **Status:** recommendation for [TIM-212](/TIM/issues/TIM-212)
 - **Written:** 2026-08-26
 - **Roadmap:** React Native migration, Phase 10 — parity, cutover and release
