@@ -29,7 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: IS_DEV ? "TimeCalendar (Dev)" : "TimeCalendar",
   slug: "timecalendar",
-  version: "1.0.0",
+  version: "4.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: IS_DEV ? "timecalendar-dev" : "timecalendar",
@@ -41,6 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   runtimeVersion: { policy: "fingerprint" },
   updates: {
     url: `https://u.expo.dev/${easProjectId}`,
+    fallbackToCacheTimeout: 0,
   },
   ios: {
     // iOS uses the top-level `icon` (the brand 1024² master, opaque, no alpha).

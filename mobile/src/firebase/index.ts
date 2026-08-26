@@ -7,6 +7,7 @@ import {
   getCrashlytics,
   log,
   recordError as crashlyticsRecordError,
+  setAttributes,
 } from "@react-native-firebase/crashlytics"
 import {
   getAPNSToken,
@@ -70,6 +71,13 @@ export function recordUnknownError(error: unknown, context: string): void {
     error instanceof Error ? error : new Error(String(error)),
     context,
   )
+}
+
+/** Attach string-only diagnostic context to the current Crashlytics runtime. */
+export async function setCrashlyticsAttributes(
+  attributes: Record<string, string>,
+): Promise<void> {
+  await setAttributes(getCrashlytics(), attributes)
 }
 
 /** Force a native crash — the step-8 end-to-end Crashlytics verification. */

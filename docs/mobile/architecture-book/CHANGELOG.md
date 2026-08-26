@@ -1,5 +1,26 @@
 # Architecture Book changelog
 
+## 2026-08-26
+
+- Isolated each top-level Maestro flow in its own CLI/XCTest lifecycle while retaining one
+  shared backend lifecycle, and bounded iOS retries to positively classified startup-only
+  transport failures so assertion and application failures remain terminal (ADR 038,
+  testing.md).
+
+## 2026-08-25
+
+- Ratified signed, self-hosted xprem OTA delivery with Cloudflare R2 assets, the existing
+  production Postgres control plane without ClickHouse, fingerprint runtime compatibility,
+  deliberately imperative channel/rollout controls, non-blocking launch, silent one-attempt
+  foreground-boundary application, and five bundle-identity Crashlytics keys (ADR 037,
+  eas.md, firebase.md).
+- Reconciled `architecture.md` so this file is the canonical Architecture Book rule-change log,
+  while Git retains implementation history and detailed diffs.
+- Replaced the interim onboarding welcome with a neutral, localized three-page carousel and adopted the feature-local `react-native-pager-view` native bridge. ADR 036 records its native paging/event contract, suite-wide Jest seam, autolink/no-permission posture, and fresh-binary fingerprint consequence.
+- Added the layered Feedback root route, validated last-e-mail persistence, existing
+  generated contact-client seam, Settings support entry, and DTO-bounded report action
+  for recorded iCal import failures. Contact failure telemetry remains body-free.
+
 ## 2026-08-08
 
 - Added the curated display-timezone preference (`settings.timezonePreference`,

@@ -1,0 +1,36 @@
+# About reachability flow (TIM-183). Shared across iOS and Android; the device
+# locale is EN, so assertions use stable English catalog values.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar-dev://about
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Privacy policy"
+    timeout: 60000
+- assertVisible: "Email us"
+- assertVisible: "Samuel Prak"
+- assertVisible: "Eddy Monnot"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-about"
+    timeout: 60000
+- tapOn:
+    id: "settings-about"
+- extendedWaitUntil:
+    visible: "Privacy policy"
+    timeout: 60000
