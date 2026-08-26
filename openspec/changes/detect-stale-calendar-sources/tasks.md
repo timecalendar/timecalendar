@@ -66,8 +66,8 @@
 
 ## 10. iOS Settings return remediation
 
-- [ ] 10.1 Replace each generic return in `mobile/.maestro/settings.yaml` with a required platform-conditional sequence: tap the visible `BackButton` on iOS and retain `back` on Android, covering both My calendars and Appearance & language.
-- [ ] 10.2 Retain the existing `settings-calendar-summary`, My calendars, Settings, Appearance & language, Events, Personal events, Hidden events, Preferences, and Notifications assertions; add no optional navigation, assertion removal, or timeout-only workaround.
-- [ ] 10.3 Run focused YAML parse and Prettier checks for `settings.yaml`, inspect both platform branches, and run any relevant mobile static/test checks required by the touched flow.
-- [ ] 10.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro platform interaction, and verify the remediation touches no product navigation, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface; return to Founding Engineering if any becomes necessary.
+- [x] 10.1 Replace each generic return in `mobile/.maestro/settings.yaml` with a required platform-conditional sequence: tap the visible `BackButton` on iOS and retain `back` on Android, covering both My calendars and Appearance & language.
+- [x] 10.2 Retain the existing `settings-calendar-summary`, My calendars, Settings, Appearance & language, Events, Personal events, Hidden events, Preferences, and Notifications assertions; add no optional navigation, assertion removal, or timeout-only workaround.
+- [x] 10.3 Run focused YAML parse and Prettier checks for `settings.yaml`, inspect both platform branches, and run any relevant mobile static/test checks required by the touched flow.
+- [x] 10.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro platform interaction, and verify the remediation touches no product navigation, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface; return to Founding Engineering if any becomes necessary.
 - [ ] 10.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the real seeded import, `E2E Today Lecture`, and `Room E2E Lecture` assertions, then record exact check URLs/results for Reviewer sign-off.
