@@ -37,7 +37,7 @@ identifiers until those destinations are implemented.
 - **THEN** rows grow rather than clip or overlap
 - **AND** every interactive row remains one full-width target
 
-### Requirement: About behavior is covered by automated and on-device proofs
+### Requirement: About behavior has automated and device proof
 
 The pure application-info derivation SHALL clear the configured 90% logic threshold for all
 native version/build combinations. The About screen SHALL have component coverage for EN/FR

@@ -16,6 +16,9 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "Privacy policy"
     timeout: 60000
+- assertVisible: "Email us"
+- assertVisible: "Samuel Prak"
+- assertVisible: "Eddy Monnot"
 - tapOn:
     id: "about-changelog"
 - extendedWaitUntil:
@@ -24,9 +27,6 @@ appId: fr.samuelprak.timecalendar.dev
 - assertVisible: "A fresh new design"
 - assertVisible: "A faster calendar"
 - assertVisible: "A truly native feel"
-- assertVisible: "Email us"
-- assertVisible: "Samuel Prak"
-- assertVisible: "Eddy Monnot"
 - stopApp
 - launchApp
 - extendedWaitUntil:
