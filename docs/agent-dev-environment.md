@@ -103,12 +103,15 @@ The canonical quickstart is `README.md`; the agent-relevant essentials:
 
 1. **Start the backing services** (Postgres, Redis, nginx TLS proxy) — compose
    file lives in `server/`:
+
    ```bash
    cd server && docker compose up -d
    ```
+
    - Postgres is published on host port **37291** (→ container 5432), Redis on
      **37292**, and an nginx TLS proxy on **1443** terminating
      `https://api.timecalendar.host:1443` using `ci/certificates/`.
+
 2. **Install dependencies** (root workspaces):
    ```bash
    npm install        # root: web + openapi/javascript
@@ -285,8 +288,8 @@ cd mobile
 - Each top-level YAML is discovered lexically and receives a fresh Maestro
   process. Attempts default to one. `--startup-attempts` is bounded to 1–4 and
   retries only a proven first-`launchApp` XCTest driver transport failure with
-  no assertion evidence; assertion, application, and unknown failures stop at
-  once with their original status.
+  no assertion evidence; assertion, application, and unknown failures stop
+  immediately with their original status.
 - It does **not** build/install the app. A **release-config, `development`-variant**
   build must already be installed on the connected simulator/emulator, with
   `EXPO_PUBLIC_API_URL` baked at build time to the platform's host path:

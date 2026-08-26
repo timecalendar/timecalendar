@@ -161,11 +161,11 @@ for flow in "$MAESTRO_DIR"/*.yaml; do
   [ -e "$flow" ] || fail "no top-level Maestro YAML files found in $MAESTRO_DIR"
   flow_count=$((flow_count + 1))
   if run_flow "$flow"; then
-    flow_exit=0
+    :
   else
     flow_exit=$?
+    break
   fi
-  [ "$flow_exit" -eq 0 ] || break
 done
 log "executed ${flow_count} top-level flow(s)."
 
