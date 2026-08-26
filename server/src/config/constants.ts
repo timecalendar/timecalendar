@@ -36,6 +36,18 @@ export const CLIENT_URL = env.CLIENT_URL ?? ""
 export const QUEUE_CONCURRENCY = +(env.QUEUE_CONCURRENCY ?? 100)
 export const SYNC_QUEUE_CONCURRENCY = +(env.SYNC_QUEUE_CONCURRENCY ?? 10)
 
+/**
+ * Cron pattern driving the background calendar-sync fan-out, or "" to run no
+ * background sync at all. Empty is the default *on purpose*: the fan-out talks
+ * to third-party university servers, so an environment has to opt in rather
+ * than inherit it. On-access sync is unaffected either way.
+ *
+ * Production is deliberately empty until mid-September 2026 — university
+ * timetables are still churning at the rentrée, so background re-syncs mostly
+ * push noise to students. Re-enabling is a values.yaml change, not a release.
+ */
+export const SYNC_CALENDARS_CRON = env.SYNC_CALENDARS_CRON ?? ""
+
 export const SMTP_URL = env.SMTP_URL ?? ""
 export const SMTP_FROM = env.SMTP_FROM ?? ""
 export const SERVICE_ACCOUNT_KEY_PATH =

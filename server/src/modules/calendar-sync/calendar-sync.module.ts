@@ -5,6 +5,7 @@ import { CalendarSyncController } from "modules/calendar-sync/controllers/calend
 import { LegacySchedulerCleanupService } from "modules/calendar-sync/jobs/legacy-scheduler-cleanup.service"
 import { SyncCalendarJob } from "modules/calendar-sync/jobs/sync-calendar.job"
 import { SyncCalendarsFanoutJob } from "modules/calendar-sync/jobs/sync-calendars-fanout.job"
+import { SyncSchedulerStateService } from "modules/calendar-sync/jobs/sync-scheduler-state.service"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarFailureRepository } from "modules/calendar-sync/repositories/calendar-failure.repository"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
@@ -30,6 +31,7 @@ import { CalendarSyncMetricsService } from "./services/calendar-sync-metrics.ser
     SyncCalendarsFanoutJob,
     SyncCalendarJob,
     LegacySchedulerCleanupService,
+    SyncSchedulerStateService,
     CalendarFailureRepository,
     CalendarSyncMetricsService,
   ],
