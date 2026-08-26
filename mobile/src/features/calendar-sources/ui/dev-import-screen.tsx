@@ -41,27 +41,31 @@ export function DevImportScreen() {
   // Guard against the effect firing twice (React 18 double-invoke / a param
   // re-read): the import must run once per mount.
   const startedRef = useRef(false)
+  const mountedRef = useRef(false)
+
+  useEffect(() => {
+    mountedRef.current = true
+
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!isDev || token === undefined || startedRef.current) return
     startedRef.current = true
 
-    let cancelled = false
     const run = async () => {
       try {
         await addCalendarFromToken(token)
         await sync()
-        if (!cancelled) router.replace("/calendar")
+        if (mountedRef.current) router.replace("/calendar")
       } catch (caught) {
         recordUnknownError(caught, "dev-import")
-        if (!cancelled) setError(true)
+        if (mountedRef.current) setError(true)
       }
     }
     void run()
-
-    return () => {
-      cancelled = true
-    }
   }, [isDev, token, sync, router])
 
   return (
