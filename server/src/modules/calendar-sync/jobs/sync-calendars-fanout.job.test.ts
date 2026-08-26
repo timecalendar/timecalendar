@@ -1,9 +1,25 @@
-import { QueueService } from "@lyrolab/nest-shared/queue"
+import { JobProcessor, QueueService } from "@lyrolab/nest-shared/queue"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { SyncCalendarsFanoutJob } from "modules/calendar-sync/jobs/sync-calendars-fanout.job"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import createTestApp from "test-utils/create-test-app"
+
+describe("SyncCalendarsFanoutJob scheduling", () => {
+  // Guards the regression that put background sync into production unnoticed:
+  // the fan-out's cron used to be hardcoded, so there was no way to turn it off
+  // short of editing and redeploying the job. It must come from config, and
+  // config must default to "no background sync".
+  it("registers no cron by default, leaving the fan-out unscheduled", () => {
+    const metadata = Reflect.getMetadata(
+      JobProcessor.KEY,
+      SyncCalendarsFanoutJob,
+    )
+
+    expect(metadata).toMatchObject({ name: "sync_calendars_fanout" })
+    expect(metadata.cron).toBeUndefined()
+  })
+})
 
 describe("SyncCalendarsFanoutJob", () => {
   let app: NestExpressApplication

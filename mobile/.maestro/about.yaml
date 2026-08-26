@@ -19,6 +19,14 @@ appId: fr.samuelprak.timecalendar.dev
 - assertVisible: "Email us"
 - assertVisible: "Samuel Prak"
 - assertVisible: "Eddy Monnot"
+- tapOn:
+    id: "about-changelog"
+- extendedWaitUntil:
+    visible: "Version 4.0"
+    timeout: 60000
+- assertVisible: "A fresh new design"
+- assertVisible: "A faster calendar"
+- assertVisible: "A truly native feel"
 - stopApp
 - launchApp
 - extendedWaitUntil:

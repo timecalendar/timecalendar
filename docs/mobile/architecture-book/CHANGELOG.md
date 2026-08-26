@@ -19,6 +19,9 @@
   eas.md, firebase.md).
 - Reconciled `architecture.md` so this file is the canonical Architecture Book rule-change log,
   while Git retains implementation history and detailed diffs.
+- Added the bundled Changelog history and tabs-only once-per-version sheet contract. ADR 039
+  records the integer MMKV gate, fresh-install suppression, OTA semantics, and Phase 09 import
+  ordering.
 - Replaced the interim onboarding welcome with a neutral, localized three-page carousel and adopted the feature-local `react-native-pager-view` native bridge. ADR 036 records its native paging/event contract, suite-wide Jest seam, autolink/no-permission posture, and fresh-binary fingerprint consequence.
 - Added the layered Feedback root route, validated last-e-mail persistence, existing
   generated contact-client seam, Settings support entry, and DTO-bounded report action

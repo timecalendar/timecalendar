@@ -38,6 +38,7 @@ describe("CalendarSyncService", () => {
   let app: NestExpressApplication
   let service: CalendarSyncService
   let dataSource: DataSource
+  let metrics: CalendarSyncMetricsService
   let events: FetcherCalendarEvent[]
   let metricAdd: jest.SpyInstance
 
@@ -45,10 +46,8 @@ describe("CalendarSyncService", () => {
     app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
-    metricAdd = jest.spyOn(
-      app.get(CalendarSyncMetricsService).calendarSyncCounter,
-      "add",
-    )
+    metrics = app.get(CalendarSyncMetricsService)
+    metricAdd = jest.spyOn(metrics, "add")
   })
 
   beforeEach(async () => {
@@ -82,7 +81,7 @@ describe("CalendarSyncService", () => {
         },
       })
       expect(icalFetcher.fetch).not.toHaveBeenCalled()
-      expect(metricAdd).toHaveBeenCalledWith(1, {
+      expect(metricAdd).toHaveBeenCalledWith({
         school: "univrennes1",
         status: "error",
         classification: "unsupported_link",
@@ -467,6 +466,28 @@ describe("CalendarSyncService", () => {
 
       // A failed fetch never reaches the content+log transaction
       expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
+    it.each([
+      "https://ade.ensea.fr/feed",
+      "https://calendar.example.test/feed",
+      "http://127.0.0.1/feed",
+    ])("records %s without a URL-derived metric label", async (url) => {
+      metricAdd.mockClear()
+
+      await service.sync(calendarFactory().build({ url }))
+
+      expect(metricAdd).toHaveBeenCalledWith({
+        school: "unknown",
+        status: "success",
+        classification: undefined,
+        help_key: undefined,
+        error_kind: undefined,
+        action: "create",
+      })
+      expect(JSON.stringify(metricAdd.mock.calls)).not.toContain(
+        new URL(url).hostname,
+      )
     })
 
     describe("syncPlannedAt", () => {
