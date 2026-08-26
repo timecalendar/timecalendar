@@ -62,11 +62,12 @@ The file is a local credential handoff to the assigned agent. Do not print it. T
 use it only to authenticate to the deployed xprem dashboard/API and will never place its value
 in git or Paperclip.
 
-## Why
+## Why this flow was selected
 
-- `ota.timecalendar.app` and `ota-assets.timecalendar.app` currently have no DNS answers.
-- Directing `ota.timecalendar.app` to ingress `67.207.79.128` currently reaches nginx but returns
-  `503`; public TLS is not available without the Cloudflare edge.
+- Before the Terraform edge apply and Argo reconciliation, `ota.timecalendar.app` and
+  `ota-assets.timecalendar.app` had no DNS answers.
+- In that same pre-apply state, directing `ota.timecalendar.app` to ingress `67.207.79.128`
+  reached nginx but returned `503`; public TLS was not yet available without the Cloudflare edge.
 - This agent's `do-fra1-cluster01-paperclip` service account cannot read the namespace, pods, or
   Secret. The full production kubeconfig and Terraform credentials are deliberately unavailable.
 - xprem `v3.1.2` uses database-key mode for dashboard-created apps: it generates and encrypts the
