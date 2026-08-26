@@ -118,6 +118,12 @@ strategy split out into [document 7](./07-environments-and-testing.md).
 Still open, non-blocking: the environment switcher in production builds (my answer: no —
 compile it out), and a five-minute sanity check on the 60,000 figure.
 
+## Related: native builds and E2E
+
+[The mobile build-infrastructure recommendation](../build-infrastructure/README.md) covers the
+other half of delivery: GitHub Actions, the always-on Mac Mini, native build caching, Maestro,
+TestFlight/Play submission and the React Native 4.0 release path. OTA remains a separate mechanism.
+
 ## What this pack deliberately does not do
 
 - **It changes no code.** Nothing here alters the app. It's documentation for a decision.
