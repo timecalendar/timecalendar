@@ -47,11 +47,8 @@ export function DevImportScreen() {
 
   useEffect(() => {
     syncRef.current = sync
-  }, [sync])
-
-  useEffect(() => {
     routerRef.current = router
-  }, [router])
+  }, [sync, router])
 
   // Mounted lifetime is independent of the orchestration dependencies. In
   // particular, the source-health MMKV write synchronously re-renders mounted
