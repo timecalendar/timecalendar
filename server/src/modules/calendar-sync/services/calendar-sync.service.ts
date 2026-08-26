@@ -65,13 +65,14 @@ export class CalendarSyncService {
   async sync(calendar: CalendarForSync) {
     const { id, url, customData, school } = calendar
     const isNewCalendar = !id
+    const action = isNewCalendar ? "create" : "update"
     const upstreamDomain = classifyUpstreamDomain(url)
 
     return this.tracer.startActiveSpan(
       "calendar.sync",
       {
         attributes: {
-          action: isNewCalendar ? "create" : "update",
+          action,
           "upstream.domain": upstreamDomain,
         },
       },
@@ -102,7 +103,7 @@ export class CalendarSyncService {
             domain: upstreamDomain,
             status: isError ? "error" : "success",
             error_type: isError ? toErrorType(fetchedEvents.error) : undefined,
-            action: isNewCalendar ? "create" : "update",
+            action,
           })
 
           if (isError && isNewCalendar) {

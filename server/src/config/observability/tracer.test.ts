@@ -73,10 +73,13 @@ describe("observability SDK configuration", () => {
 
 describe("bounded SDK shutdown", () => {
   it("is idempotent", async () => {
+    jest.useFakeTimers()
     const sdk = { shutdown: jest.fn(() => Promise.resolve()) }
     const shutdown = createBoundedSdkShutdown(sdk)
     await Promise.all([shutdown(), shutdown()])
     expect(sdk.shutdown).toHaveBeenCalledTimes(1)
+    expect(jest.getTimerCount()).toBe(0)
+    jest.useRealTimers()
   })
 
   it("is a no-op when telemetry is disabled", async () => {

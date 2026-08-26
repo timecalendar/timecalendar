@@ -98,10 +98,12 @@ export const createBoundedSdkShutdown = (
     if (!sdk) return Promise.resolve()
     if (shutdown) return shutdown
 
+    const sdkShutdown = sdk.shutdown()
+    let timer: ReturnType<typeof setTimeout>
     shutdown = Promise.race([
-      sdk.shutdown(),
+      sdkShutdown.finally(() => clearTimeout(timer)),
       new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, timeoutMs)
+        timer = setTimeout(resolve, timeoutMs)
         timer.unref?.()
       }),
     ])
