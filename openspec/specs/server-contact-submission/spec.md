@@ -1,7 +1,8 @@
 # server-contact-submission Specification
 
 ## Purpose
-TBD - created by archiving change repair-contact-feedback-submissions. Update Purpose after archive.
+Define privacy-bounded contact delivery, recoverable downstream failure semantics, and finite-cardinality observability for `POST /contact`.
+
 ## Requirements
 ### Requirement: Contact submissions deliver through privacy-bounded Crisp metadata
 
