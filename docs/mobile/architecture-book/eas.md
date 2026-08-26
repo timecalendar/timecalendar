@@ -7,7 +7,7 @@
 `mobile/eas.json` has `development` / `preview` / `production`, split along the `APP_VARIANT` line — **not** a third identity:
 
 - **`development`** sets `env.APP_VARIANT = "development"` → `.dev` id, `timecalendar-dev` Firebase, dev network exceptions, `developmentClient: true`, simulator + APK.
-- **`preview`** and **`production`** **omit** `APP_VARIANT` so they take the production default in `app.config.ts` (real `fr.samuelprak.timecalendar`, `timecalendar-samuelprak` Firebase, no cleartext). Dogfooders run the *real* store bundle so their crashes/analytics land in production.
+- **`preview`** and **`production`** **omit** `APP_VARIANT` so they take the production default in `app.config.ts` (real `fr.samuelprak.timecalendar`, `timecalendar-samuelprak` Firebase, no cleartext). Dogfooders run the _real_ store bundle so their crashes/analytics land in production.
 - `preview` vs. `production` differ by **distribution + artifact + channel**, not identity.
 
 Artifacts are **forced by distribution**: `preview` is `distribution: "internal"` → directly-installable iOS device `.ipa` + Android `.apk` (internal can't serve an `.aab`); `production` is `distribution: "store"` → `.aab` (Play) + store `.ipa`, `autoIncrement`. `cli.appVersionSource: "remote"` (EAS owns the build number, pairs with `autoIncrement`).
@@ -17,6 +17,25 @@ Artifacts are **forced by distribution**: `preview` is `distribution: "internal"
 ## `runtimeVersion: { policy: "fingerprint" }`
 
 In `app.config.ts`. An `eas update` JS bundle is delivered **only** to a build whose native runtime fingerprint matches; any native-affecting change (new config plugin, a dep with native code, an SDK bump) changes the fingerprint and **forces a fresh native build** instead of a silently-incompatible OTA. This is the intended safety property — **an expected OTA that "doesn't apply" usually means the change touched native config**, not a bug. Chosen over `appVersion` (a plugin change without a version bump could ship an incompatible OTA) and manual `nativeVersion` (more bookkeeping, no better safety). Load-bearing for a skeleton that churns native config feature-by-feature → ADR [006](./decisions/006-eas-distribution.md).
+
+The onboarding carousel's `react-native-pager-view` dependency is one concrete fingerprint move: its `UIPageViewController`/`ViewPager2` bridge requires a fresh development, preview, or production EAS build before the carousel can run. EAS remains human-invoked; this consequence adds no workflow or `eas.json` change.
+
+## Self-hosted OTA and silent application
+
+ADR [037](./decisions/037-self-hosted-ota-runtime.md) ratifies self-hosted xprem with Cloudflare
+R2 assets, the existing production Postgres service as its control plane, and signed updates.
+ClickHouse is deliberately omitted because Crashlytics remains the client observability system.
+The concrete endpoint, signing material, xprem identifiers, and publishing automation are deferred.
+
+`updates.fallbackToCacheTimeout: 0` keeps cold launch non-blocking: the cached or embedded bundle
+starts immediately while Expo checks and downloads in the background. `OtaUpdateRuntime`, the
+single owned `src/updates/` boundary, never displays progress or prompts. A downloaded compatible
+bundle remains pending until the app has genuinely entered `background` and later becomes
+`active`; it then makes one silent `reloadAsync()` attempt per JavaScript runtime. A rejected
+attempt is recorded and left for a later cold launch rather than retried into a loop.
+
+Channel promotion and progressive rollout remain operator actions in xprem; declarative
+reconciliation must not overwrite incident-time rollback decisions. See ADR 037 for the rule.
 
 ## Channels mapped to profiles
 
@@ -34,14 +53,14 @@ Two channels: `preview` (internal dogfood) and `production` (store). `eas update
 
 ## CI untouched — EAS is human-invoked
 
-EAS Build/Submit/Update are **not** wired into CI; **no `.eas/workflows/`**. The native E2E keeps building via `expo prebuild` + Gradle/`xcodebuild`. Reasons: a CI `eas build` would be a *second* build path to maintain and pay for (EAS Build minutes) for no new signal; dogfood cadence is human-driven; and `.eas/workflows/` needs the EAS project that doesn't exist yet.
+EAS Build/Submit/Update are **not** wired into CI; **no `.eas/workflows/`**. The native E2E keeps building via `expo prebuild` + Gradle/`xcodebuild`. Reasons: a CI `eas build` would be a _second_ build path to maintain and pay for (EAS Build minutes) for no new signal; dogfood cadence is human-driven; and `.eas/workflows/` needs the EAS project that doesn't exist yet.
 
 - **Recorded debt:** a `.eas/workflows/` (or GH Action) that builds+submits the dogfood build on a tag/label — **trigger:** manual dogfood builds become a friction point.
 - **Consequence accepted:** a broken `eas.json` is only caught when a human runs `eas build` (the first human verification step) — the EAS CLI requires login even for offline config validation.
 
 ## No Jest proof test
 
-This is build/release *configuration*, not runtime app behavior — a fabricated "eas.json parses" Jest test would be cargo-cult. The enforcing gates (R-1) are the **EAS CLI** (validates `eas.json` at build time — human) and `expo config --json` (the variant diff, covered by the existing `tsc`/lint gates). The DoD's E2E axis is **N/A** for this config.
+This is build/release _configuration_, not runtime app behavior — a fabricated "eas.json parses" Jest test would be cargo-cult. The enforcing gates (R-1) are the **EAS CLI** (validates `eas.json` at build time — human) and `expo config --json` (the variant diff, covered by the existing `tsc`/lint gates). The DoD's E2E axis is **N/A** for this config.
 
 ## Human prerequisites (inbox — not blockers)
 

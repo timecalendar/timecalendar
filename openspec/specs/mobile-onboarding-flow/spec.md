@@ -4,43 +4,35 @@
 TBD - created by archiving change add-mobile-onboarding-flow. Update Purpose after archive.
 ## Requirements
 ### Requirement: A native-default brand/welcome surface is the onboarding entry, in its own presentation-only feature folder
-The app SHALL provide a first-run brand/welcome surface as the entry of the onboarding flow,
-implemented as a presentational screen in a new onboarding feature folder
-`mobile/src/features/onboarding/` with a single `ui/` sublayer (no `data/`/`store/`/`form/`),
-mirroring the splash feature's presentation-only shape. The welcome screen SHALL render the app
-brand (the app name as a heading, a tagline, and the value-proposition messages) using `@/theme`
-tokens and the brand `primary` accent — with no raw color literals, no Material-style widget port,
-and no copied Flutter illustrations (the platform is the design reference). The screen SHALL
-consume only shared `@/components/*`, `@/theme`, `expo-router`, and i18n — it SHALL NOT import the
-school-selection seams or its own feature barrel.
+The app SHALL provide a three-page native onboarding carousel as the entry of the onboarding flow, implemented in the presentation-only `mobile/src/features/onboarding/ui/` sublayer with no `data/`, `store/`, or `form/` sublayer. Pages SHALL appear in the fixed order welcome → agenda → notifications and render the approved localized title/body plus mapped decorative illustration. The screen SHALL use React Native/shared components, `@/theme`, `expo-router`, `expo-image`, `expo-symbols`, `react-native-pager-view`, and i18n without importing school-selection internals or its own feature barrel.
 
-#### Scenario: The welcome surface is the onboarding entry
-- **WHEN** the onboarding flow is entered (`timecalendar-dev://onboarding` or the Profile entry link)
-- **THEN** the brand/welcome surface is shown
-- **AND** it renders the app name as a heading and the value-proposition copy from translation keys
+#### Scenario: The carousel is the onboarding entry
+- **WHEN** the onboarding flow is entered at `timecalendar-dev://onboarding`
+- **THEN** page 1 is the welcome page and its title includes the literal string `TimeCalendar`
+- **AND** swiping forward reveals agenda followed by notifications
 
-#### Scenario: The welcome surface is a presentation-only feature folder
-- **WHEN** the onboarding feature folder is located
-- **THEN** it is `mobile/src/features/onboarding/` with only a `ui/` sublayer (screen + colocated test + barrels)
+#### Scenario: The onboarding feature remains presentation-only
+- **WHEN** `mobile/src/features/onboarding/` is inspected
+- **THEN** its product implementation remains under the `ui/` sublayer
 - **AND** it has no `data/`, `store/`, or `form/` sublayer
 
-#### Scenario: The welcome screen respects feature boundaries
-- **WHEN** the welcome screen's imports are inspected
-- **THEN** it imports only `@/components/*`, `@/theme`, `expo-router`, and i18n
-- **AND** it does not import the school-selection seams (`@/features/school-selection/*` internals) or its own feature barrel
+#### Scenario: The screen respects feature boundaries
+- **WHEN** the carousel screen's imports are inspected
+- **THEN** it uses only the shared/theme/router/i18n and declared image/symbol/pager UI dependencies
+- **AND** it does not import school-selection internals or its own feature barrel
 
 ### Requirement: The brand surface uses brand color with verified contrast
-The welcome surface SHALL use the brand `primary` token as an accent and SHALL respect the
-documented WCAG-AA brand contrast rule in `mobile/src/theme/tokens.ts`: white text SHALL NOT be
-placed on the bright identity-pink brand fill (`#E91E63`, below the body contrast floor). A
-white-on-brand surface, if used, SHALL ride the darker brand tone (`#C2185B`); otherwise the brand
-SHALL be used as a foreground accent / large/UI element on a token background. The chosen
-foreground/background pairing SHALL be one of the documented verified pairs.
+The carousel SHALL use the scheme-appropriate `background` as its screen surface and `backgroundElement` for each rounded illustration card. Titles and bodies SHALL use `text` and `textSecondary`. The brand `primary` token SHALL be limited to active/accent treatments (active indicator, Skip, and Next), while the final filled CTA SHALL use the documented `primaryStrong` background with `onPrimary` text. Inactive indicators SHALL use `backgroundSelected`. No raw color literal or Flutter gradient SHALL be added.
 
-#### Scenario: The brand CTA meets the contrast rule
-- **WHEN** the welcome call-to-action renders with a brand color
-- **THEN** its text/background pairing is a documented WCAG-AA-verified pair
-- **AND** white text is not placed on the bright `#E91E63` brand fill
+#### Scenario: Light and dark surfaces use verified token pairs
+- **WHEN** any carousel page renders in light or dark mode
+- **THEN** all screen, card, text, indicator, and action colors resolve from `@/theme`
+- **AND** the final CTA uses the `primaryStrong`/`onPrimary` AA pair
+
+#### Scenario: Flutter gradient is not ported
+- **WHEN** the screen styles and dependencies are inspected
+- **THEN** there is no coral-to-pink full-screen gradient or `expo-linear-gradient`
+- **AND** pink appears only as an action or active-state accent
 
 ### Requirement: The onboarding Stack is welcome-first, with the school step at its own route
 The nested onboarding Stack SHALL be ordered so the welcome surface is its entry: the entry route
@@ -69,17 +61,25 @@ development deep links SHALL be: `timecalendar-dev://onboarding` (welcome),
 - **AND** its nested stack layout is unchanged
 
 ### Requirement: The welcome call-to-action navigates into the existing school step
-The welcome surface SHALL provide a single primary call-to-action that navigates to the school
-step (`/onboarding/school`) using Expo Router. Selecting a school in that step SHALL continue to
-push the group step for that school (unchanged from the existing read flow).
+The carousel SHALL expose Skip as a trailing top-bar text button on pages 1–2, Next as a trailing footer text button on pages 1–2, and a full-width filled final CTA on page 3. Skip and the final CTA SHALL push `/onboarding/school`. Next SHALL page forward through the native pager and SHALL use the non-animated pager method when reduced motion is enabled. Skip and Next SHALL be absent on the final page. The prior welcome QR and URL actions SHALL be removed from this screen without removing their routes or the school picker's iCal fallback.
 
-#### Scenario: The call-to-action opens the school step
-- **WHEN** the user activates the welcome call-to-action
-- **THEN** the school step (`/onboarding/school`) is pushed onto the onboarding stack
+#### Scenario: Skip opens the school step
+- **WHEN** the user activates Skip on page 1 or 2
+- **THEN** `/onboarding/school` is pushed
 
-#### Scenario: The downstream school→group navigation is unchanged
-- **WHEN** the user selects a school in the school step
-- **THEN** the group step for that school's id is pushed (the existing behavior)
+#### Scenario: Next advances one page
+- **WHEN** the user activates Next on page 1 or 2
+- **THEN** the pager advances exactly one page and the selected page state updates
+- **AND** the final page hides Skip and Next
+
+#### Scenario: Final CTA opens the school step
+- **WHEN** the user activates `onboarding-welcome-cta` on the notifications page
+- **THEN** `/onboarding/school` is pushed
+
+#### Scenario: Downstream routes remain available
+- **WHEN** the carousel entry controls are inspected
+- **THEN** QR and URL controls are absent from the carousel
+- **AND** `/onboarding/qr-scan`, the URL path, and school-to-group navigation remain unchanged and deep-linkable
 
 ### Requirement: Onboarding is reachable but not a hard startup gate
 The onboarding flow SHALL be reachable from the Profile tab via an accessible entry control whose
@@ -98,69 +98,100 @@ owns the startup gate.
 - **AND** the onboarding-complete derivation in the school-selection store is unchanged
 
 ### Requirement: The welcome surface is accessible
-The welcome title SHALL be exposed as a heading (via the `ThemedText` heading-role contract). The
-call-to-action SHALL declare an accessibility role and a meaningful translated accessibility label
-and provide a touch target of at least 44pt (iOS) / 48dp (Android). No text SHALL disable font
-scaling. Any entrance motion SHALL honor the reduced-motion setting; a static surface (no motion)
-trivially satisfies this.
+Each page title SHALL be exposed as a heading through `ThemedText type="title"`; body text SHALL retain font scaling. Skip, Next, and the final CTA SHALL declare button roles, translated labels, and at least 44pt iOS / 48dp Android targets. The three visual indicator pills SHALL be grouped into one accessibility element labeled with the localized current/total page state and SHALL NOT be individually focusable. The existing 300ms entrance fade SHALL remain when motion is allowed; reduced motion SHALL snap entrance opacity, indicator widths, and programmatic page advancement to their final states.
 
-#### Scenario: The welcome title is a heading
-- **WHEN** the welcome surface renders its title
-- **THEN** the title is exposed with a heading accessibility role
+#### Scenario: Every page exposes one heading
+- **WHEN** assistive technology traverses any carousel page
+- **THEN** that page's localized title is exposed as a heading
+- **AND** the decorative illustration does not take focus
 
-#### Scenario: The call-to-action is accessible
-- **WHEN** the call-to-action renders
-- **THEN** it declares an accessibility role and a translated accessibility label
-- **AND** it provides a ≥44pt/48dp touch target
+#### Scenario: Page indicator is one localized accessibility element
+- **WHEN** the current page is 2 of 3
+- **THEN** assistive technology encounters one indicator labeled with the localized equivalent of “Page 2 of 3”
+- **AND** it does not encounter three focusable dots
 
-#### Scenario: Reduced motion is honored
-- **WHEN** the surface ships static, or any entrance animation is added
-- **THEN** no motion plays under the reduced-motion setting and the final visual frame is identical
+#### Scenario: Controls meet accessibility contracts
+- **WHEN** Skip, Next, or the final CTA renders
+- **THEN** it has a translated accessibility label and button role
+- **AND** its touch target meets the platform minimum
+
+#### Scenario: Reduced motion snaps every programmatic animation
+- **WHEN** reduced motion is enabled before or during the screen lifetime
+- **THEN** entrance opacity and indicator widths take their final values without timing animation
+- **AND** Next calls `setPageWithoutAnimation` instead of `setPage`
 
 ### Requirement: The welcome surface strings are fully localized (FR + EN)
-Every user-facing string on the welcome surface SHALL be a translation key with complete FR and EN
-catalog entries — the title, the tagline, the value-proposition messages, the call-to-action
-label, and the call-to-action accessibility label. Localization SHALL be enforced by the
-no-hardcoded-strings lint rule and by `tsc`-typed bidirectional FR/EN parity.
+Every user-facing string on the carousel SHALL use the approved flat translation keys under `onboarding.page.*`, `onboarding.skip`, `onboarding.skipLabel`, `onboarding.next`, `onboarding.nextLabel`, `onboarding.cta`, `onboarding.ctaLabel`, and `onboarding.pageIndicator`, with complete French and English catalog parity. The welcome title SHALL contain literal `TimeCalendar` in both locales. Every obsolete `onboarding.welcome.*` key SHALL be removed once it has no consumer.
 
-#### Scenario: No hardcoded user-facing string on the welcome surface
-- **WHEN** the welcome surface renders text or an accessibility label
-- **THEN** that string comes from a translation key
-- **AND** the no-hardcoded-strings lint rule passes
+#### Scenario: Approved copy resolves on every page
+- **WHEN** the carousel renders in French or English
+- **THEN** each page title/body and each visible/accessibility control string matches the approved catalog value
+- **AND** the welcome title contains `TimeCalendar`
 
-#### Scenario: FR and EN catalogs stay in parity
-- **WHEN** a welcome key is added to one catalog
-- **THEN** the same key exists in the other catalog
-- **AND** `tsc` fails if a key is missing or extra in either direction
+#### Scenario: Catalogs have parity and no dead welcome keys
+- **WHEN** TypeScript and repository key searches run
+- **THEN** French and English key sets are identical and every new key is a valid typed `t()` argument
+- **AND** no obsolete `onboarding.welcome.*` key or call site remains
 
 ### Requirement: The welcome surface is verified by an automated component test under the coverage gates
-The unit-test suite SHALL include a colocated test for the welcome screen (under the 70% floor —
-it is a `ui/` sublayer) that renders the screen through the real theme + i18n trees and asserts:
-the localized brand title and value-proposition copy render (not raw keys), and activating the
-call-to-action navigates to the school step (asserted via a mocked router). The configured
-coverage thresholds SHALL stay green without changing `jest.config.js`; no new 90%-logic glob is
-introduced (the welcome surface adds no logic sublayer).
+The colocated welcome-screen test SHALL render through the real theme and i18n setup with the manual pager mock. It SHALL verify every page's localized title/body, swipe and Next state changes, current-page indicator labels, Skip and final navigation, last-page control absence, accessibility grouping/labels, and both motion-enabled and reduced-motion branches. The complete mobile suite SHALL retain its configured global and logic coverage gates, and the focused coverage report for `welcome-screen.tsx` SHALL show at least 90% branch coverage without lowering project thresholds.
 
-#### Scenario: The welcome screen test asserts localized render and navigation
-- **WHEN** the welcome screen test runs
-- **THEN** it asserts the localized title and value-proposition strings render
-- **AND** it asserts the call-to-action navigates to `/onboarding/school`
+#### Scenario: Page content and state transitions are covered
+- **WHEN** the welcome-screen suite runs
+- **THEN** it asserts all three localized page titles/bodies and indicator states
+- **AND** it proves both native page-selection events and Next advance through the production state path
 
-#### Scenario: The coverage gate stays green without config changes
-- **WHEN** the suite runs with coverage
-- **THEN** all configured thresholds still pass
-- **AND** `jest.config.js` `coverageThreshold` is unchanged
+#### Scenario: Navigation and last-page controls are covered
+- **WHEN** the suite activates Skip and the final CTA
+- **THEN** each pushes `/onboarding/school`
+- **AND** the suite proves Skip and Next are absent on the final page
+
+#### Scenario: Motion branches and coverage remain green
+- **WHEN** focused and full coverage commands run
+- **THEN** the test distinguishes animated from snapping pager/indicator behavior and `welcome-screen.tsx` reaches at least 90% branch coverage
+- **AND** the repository's configured coverage thresholds are not weakened
 
 ### Requirement: The Maestro onboarding flow proves welcome → call-to-action → live school read
-The e2e suite's `mobile/.maestro/onboarding.yaml` SHALL be extended (not replaced) to cold-launch
-the development-variant app, deep-link to the welcome surface (`timecalendar-dev://onboarding`),
-assert the brand title renders, activate the call-to-action, then assert a seeded school renders
-from the live `GET /schools` round-trip (app → generated client → `customFetch` → NestJS →
-Postgres, nothing mocked) using the existing stable ASCII seeded fixture name. The flow SHALL stay
-shared across iOS and Android (stable localized text / testIDs, no per-platform selectors).
+`mobile/.maestro/onboarding.yaml` SHALL cold-launch the development variant, deep-link to `timecalendar-dev://onboarding`, assert a visible title containing `TimeCalendar`, activate `onboarding-next` twice, assert the localized notifications title, activate `onboarding-welcome-cta`, and retain the existing school-step, seeded live-read, and search assertions. The same flow SHALL run on iOS and Android without platform-specific page selectors.
 
-#### Scenario: The flow proves the welcome surface and the live read
-- **WHEN** the onboarding Maestro flow runs on iOS or Android
-- **THEN** it deep-links to the welcome surface and asserts the brand title renders
-- **AND** after activating the call-to-action it asserts the seeded school name renders from the live endpoint
+#### Scenario: Maestro traverses all carousel pages before the live read
+- **WHEN** the onboarding flow runs on iOS or Android
+- **THEN** it asserts the welcome page, advances twice by `onboarding-next`, and asserts the notifications title
+- **AND** the final CTA opens the school step
+
+#### Scenario: Existing school round-trip proof remains intact
+- **WHEN** the final CTA completes navigation
+- **THEN** the flow retains the seeded school visibility and search assertions from the live `GET /schools` round trip
+- **AND** it remains shared across both platforms
+
+### Requirement: The onboarding carousel uses the platform-native pager with an off-device test seam
+The onboarding screen SHALL use the Expo-compatible `react-native-pager-view` native dependency, backed by `UIPageViewController` on iOS and `ViewPager2` on Android. The dependency SHALL autolink without an `app.config.ts` plugin or new permission and SHALL be represented in the committed mobile package manifest and lockfile. Jest SHALL provide a manual mock that renders pager children in a React Native `View`, forwards a ref, exposes `setPage` and `setPageWithoutAnimation`, and emits page-selection events that exercise the production state path.
+
+#### Scenario: Native pager dependency is installed without native configuration
+- **WHEN** the mobile dependency and Expo configuration are inspected
+- **THEN** the Expo-compatible `react-native-pager-view` version is committed in the manifest and lockfile
+- **AND** no pager plugin or permission is added to `app.config.ts`
+
+#### Scenario: Jest can drive imperative paging
+- **WHEN** a component test invokes Next with motion enabled or reduced
+- **THEN** the manual pager mock receives `setPage` or `setPageWithoutAnimation` respectively
+- **AND** its emitted page-selection event updates the production indicator and controls
+
+#### Scenario: Native fingerprint consequence is documented
+- **WHEN** runtime and EAS guidance is read after the dependency lands
+- **THEN** it states that the pager changes the native fingerprint and requires fresh development/EAS binaries
+- **AND** no EAS or CI workflow configuration is changed
+
+### Requirement: Legacy illustrations are copied as immutable decorative assets
+The three Flutter PNGs SHALL be copied byte-for-byte into `mobile/assets/images/onboarding/` with the mapping `schools.png` → `welcome.png`, `home.png` → `agenda.png`, and `notifications.png` → `notifications.png`. The React Native screen SHALL render each through `expo-image` with `contentFit="contain"`, mark it decorative and inaccessible, and place it inside a rounded `backgroundElement` card. The legacy `app/` files SHALL NOT be modified.
+
+#### Scenario: Assets retain the approved mapping
+- **WHEN** the three carousel pages render
+- **THEN** welcome uses the copied schools image, agenda uses the copied home image, and notifications uses the copied notifications image
+- **AND** each copy matches its legacy source bytes
+
+#### Scenario: Illustration is decorative and scheme-safe
+- **WHEN** assistive technology traverses a page in light or dark mode
+- **THEN** the illustration is excluded from focus and has no alternative text
+- **AND** the page heading/body convey its meaning while the image sits on a tokenized neutral card
 

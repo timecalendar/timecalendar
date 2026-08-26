@@ -45,5 +45,5 @@ these pages describe the system as it is now.
 | Architectural decisions | [decisions/README.md](./decisions/README.md) |
 
 For a new feature, use [golden-path.md](./golden-path.md). Update a topical page
-when its current contract changes. Use Git history rather than a documentation
-changelog.
+when its current contract changes. Record Architecture Book rule changes in
+[CHANGELOG.md](./CHANGELOG.md); Git retains the implementation history and detailed diffs.

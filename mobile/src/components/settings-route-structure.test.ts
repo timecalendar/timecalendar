@@ -27,4 +27,15 @@ describe("Settings route structure", () => {
     expect(route("more.tsx")).toContain('<Redirect href="/settings" />')
     expect(route("(tabs)/_layout.tsx")).not.toContain("profile")
   })
+
+  it("keeps About as a thin feature route registered in the root Stack", () => {
+    expect(route("about.tsx").trim()).toBe(
+      'export { AboutScreen as default } from "@/features/about/ui"',
+    )
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toContain(
+      '<Stack.Screen name="about" options={{ headerShown: true }} />',
+    )
+    expect(rootLayout).toContain('initialRouteName: "(tabs)"')
+  })
 })

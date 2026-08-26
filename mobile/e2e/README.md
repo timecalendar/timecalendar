@@ -7,8 +7,8 @@ an Android emulator, locally and in CI.
 
 - **Flows:** `mobile/.maestro/*.yaml` (Maestro's convention). Shared across
   platforms — they assert stable seeded text, so no per-platform selectors.
-- **Wrapper:** `mobile/e2e/run_e2e.sh` boots the server stack, runs the flows,
-  and tears it down.
+- **Wrapper:** `mobile/e2e/run_e2e.sh` boots the server stack once, runs each
+  top-level flow in a fresh Maestro process, and tears the stack down once.
 - **Server lifecycle:** owned by `../../ci/e2e-server.sh` (compose-first, shared
   with the Flutter harness). This harness never hand-rolls server boot/seed.
 
@@ -19,9 +19,12 @@ an Android emulator, locally and in CI.
   build or install the app — only the server + Maestro.
 - **Docker** (for the default compose lifecycle) — except macOS CI, which uses
   `--native`.
-- **Maestro** on `PATH`:
+- **Maestro 2.8.0** on `PATH` (the same exact version CI installs and prints):
   ```bash
+  export MAESTRO_VERSION=2.8.0
   curl -fsSL https://get.maestro.mobile.dev | bash
+  export PATH="$HOME/.maestro/bin:$PATH"
+  maestro --version
   ```
   Maestro is JVM-based and needs a JDK on `PATH`.
 - A booted iOS simulator **or** Android emulator. Maestro auto-detects the
@@ -49,14 +52,20 @@ APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
 ## Run
 
 ```bash
-./e2e/run_e2e.sh              # up → maestro test .maestro/ → down
+./e2e/run_e2e.sh              # up once → one process per *.yaml → down once
 ./e2e/run_e2e.sh --keep-up    # leave the server stack up for debugging
 ./e2e/run_e2e.sh --native     # Docker-less host: caller provisions Postgres/Redis
+./e2e/run_e2e.sh --native --startup-attempts 4 # iOS CI startup recovery
 ```
 
 The script exits with Maestro's pass/fail status and tears the stack down on
 success and failure alike. On failure it dumps the backend log tail. With
 `--keep-up` it prints the commands to inspect logs and tear down manually.
+`--startup-attempts` accepts 1–4 and defaults to one. A retry is allowed only
+for a pinned 2.8.0 first-`launchApp`/`setPermissions` XCTest driver-not-listening
+or connection-refused signature with no assertion evidence. Assertion,
+application, and unknown failures stop immediately, retain their exit status,
+and prevent later flows from running.
 
 ## Add a flow
 
@@ -71,7 +80,8 @@ success and failure alike. On failure it dumps the backend log tail. With
    - openLink: timecalendar-dev://<route>
    - assertVisible: "<seeded text>"
    ```
-2. `run_e2e.sh` runs the whole `.maestro/` directory — no wiring needed.
+2. `run_e2e.sh` discovers every top-level YAML lexically — no manifest wiring
+   needed — and gives each one a fresh Maestro process.
 3. Keep assertions on stable seeded text (ASCII-safe avoids accent-matching
    fragility across platforms).
 4. To assert **real synced calendar data**, start the flow with the shared import
@@ -95,6 +105,13 @@ native Postgres/Redis via `--native`) in
 [`../../.github/workflows/ci-mobile-e2e.yml`](../../.github/workflows/ci-mobile-e2e.yml)
 build the binary on the runner, install it, and run the flows. Maestro debug
 output and server logs upload as artifacts on failure.
+
+Both jobs pin and print Maestro 2.8.0. Android assembles Release with a 3072 MiB
+heap, 1024 MiB Metaspace, at most two Gradle workers, and no persistent daemon.
+iOS logs the selected Xcode path/version plus available and selected simulator
+runtime, name, and UDID before running the harness with four startup attempts.
+The shell proofs and workflow assertions run without a device; definitive native
+proof is the path-triggered post-merge `main` run on GitHub-hosted runners.
 
 These jobs are **on-demand** (a cold native build + device boot is ~20–30 min
 each): add the **`run-e2e` label** to a PR to run them, and they always run on
