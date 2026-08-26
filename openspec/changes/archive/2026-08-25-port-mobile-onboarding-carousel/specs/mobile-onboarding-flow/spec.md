@@ -1,8 +1,38 @@
-# mobile-onboarding-flow Specification
+## ADDED Requirements
 
-## Purpose
-TBD - created by archiving change add-mobile-onboarding-flow. Update Purpose after archive.
-## Requirements
+### Requirement: The onboarding carousel uses the platform-native pager with an off-device test seam
+The onboarding screen SHALL use the Expo-compatible `react-native-pager-view` native dependency, backed by `UIPageViewController` on iOS and `ViewPager2` on Android. The dependency SHALL autolink without an `app.config.ts` plugin or new permission and SHALL be represented in the committed mobile package manifest and lockfile. Jest SHALL provide a manual mock that renders pager children in a React Native `View`, forwards a ref, exposes `setPage` and `setPageWithoutAnimation`, and emits page-selection events that exercise the production state path.
+
+#### Scenario: Native pager dependency is installed without native configuration
+- **WHEN** the mobile dependency and Expo configuration are inspected
+- **THEN** the Expo-compatible `react-native-pager-view` version is committed in the manifest and lockfile
+- **AND** no pager plugin or permission is added to `app.config.ts`
+
+#### Scenario: Jest can drive imperative paging
+- **WHEN** a component test invokes Next with motion enabled or reduced
+- **THEN** the manual pager mock receives `setPage` or `setPageWithoutAnimation` respectively
+- **AND** its emitted page-selection event updates the production indicator and controls
+
+#### Scenario: Native fingerprint consequence is documented
+- **WHEN** runtime and EAS guidance is read after the dependency lands
+- **THEN** it states that the pager changes the native fingerprint and requires fresh development/EAS binaries
+- **AND** no EAS or CI workflow configuration is changed
+
+### Requirement: Legacy illustrations are copied as immutable decorative assets
+The three Flutter PNGs SHALL be copied byte-for-byte into `mobile/assets/images/onboarding/` with the mapping `schools.png` → `welcome.png`, `home.png` → `agenda.png`, and `notifications.png` → `notifications.png`. The React Native screen SHALL render each through `expo-image` with `contentFit="contain"`, mark it decorative and inaccessible, and place it inside a rounded `backgroundElement` card. The legacy `app/` files SHALL NOT be modified.
+
+#### Scenario: Assets retain the approved mapping
+- **WHEN** the three carousel pages render
+- **THEN** welcome uses the copied schools image, agenda uses the copied home image, and notifications uses the copied notifications image
+- **AND** each copy matches its legacy source bytes
+
+#### Scenario: Illustration is decorative and scheme-safe
+- **WHEN** assistive technology traverses a page in light or dark mode
+- **THEN** the illustration is excluded from focus and has no alternative text
+- **AND** the page heading/body convey its meaning while the image sits on a tokenized neutral card
+
+## MODIFIED Requirements
+
 ### Requirement: A native-default brand/welcome surface is the onboarding entry, in its own presentation-only feature folder
 The app SHALL provide a three-page native onboarding carousel as the entry of the onboarding flow, implemented in the presentation-only `mobile/src/features/onboarding/ui/` sublayer with no `data/`, `store/`, or `form/` sublayer. Pages SHALL appear in the fixed order welcome → agenda → notifications and render the approved localized title/body plus mapped decorative illustration. The screen SHALL use React Native/shared components, `@/theme`, `expo-router`, `expo-image`, `expo-symbols`, `react-native-pager-view`, and i18n without importing school-selection internals or its own feature barrel.
 
@@ -34,32 +64,6 @@ The carousel SHALL use the scheme-appropriate `background` as its screen surface
 - **THEN** there is no coral-to-pink full-screen gradient or `expo-linear-gradient`
 - **AND** pink appears only as an action or active-state accent
 
-### Requirement: The onboarding Stack is welcome-first, with the school step at its own route
-The nested onboarding Stack SHALL be ordered so the welcome surface is its entry: the entry route
-(`mobile/src/app/onboarding/index.tsx`) SHALL re-export the welcome screen, the school-picker step
-SHALL move to its own route (`mobile/src/app/onboarding/school.tsx`), and the group-picker step
-(`mobile/src/app/onboarding/groups.tsx`) SHALL be unchanged. Each route SHALL remain a thin
-entrypoint that only re-exports a feature `ui/` sub-barrel (the route-structure rule). The
-`onboarding` group SHALL remain a `Stack` sibling of the `(tabs)` group in the root layout. The
-development deep links SHALL be: `timecalendar-dev://onboarding` (welcome),
-`timecalendar-dev://onboarding/school` (school step), and
-`timecalendar-dev://onboarding/groups?schoolId=<id>` (group step).
-
-#### Scenario: The welcome surface is the entry route
-- **WHEN** `mobile/src/app/onboarding/index.tsx` is located
-- **THEN** it re-exports the welcome screen from `@/features/onboarding/ui`
-- **AND** it is a one-line thin route entrypoint
-
-#### Scenario: The school step has its own route
-- **WHEN** `mobile/src/app/onboarding/school.tsx` is located
-- **THEN** it re-exports `SchoolPickerScreen` from `@/features/school-selection/ui`
-- **AND** the school-picker screen implementation itself is unchanged
-
-#### Scenario: The onboarding group remains a Stack sibling of the tabs
-- **WHEN** the root layout declares its routes
-- **THEN** `onboarding` is a `Stack` screen sibling of the `(tabs)` group
-- **AND** its nested stack layout is unchanged
-
 ### Requirement: The welcome call-to-action navigates into the existing school step
 The carousel SHALL expose Skip as a trailing top-bar text button on pages 1–2, Next as a trailing footer text button on pages 1–2, and a full-width filled final CTA on page 3. Skip and the final CTA SHALL push `/onboarding/school`. Next SHALL page forward through the native pager and SHALL use the non-animated pager method when reduced motion is enabled. Skip and Next SHALL be absent on the final page. The prior welcome QR and URL actions SHALL be removed from this screen without removing their routes or the school picker's iCal fallback.
 
@@ -80,22 +84,6 @@ The carousel SHALL expose Skip as a trailing top-bar text button on pages 1–2,
 - **WHEN** the carousel entry controls are inspected
 - **THEN** QR and URL controls are absent from the carousel
 - **AND** `/onboarding/qr-scan`, the URL path, and school-to-group navigation remain unchanged and deep-linkable
-
-### Requirement: Onboarding is reachable but not a hard startup gate
-The onboarding flow SHALL be reachable from the Profile tab via an accessible entry control whose
-target is the welcome surface (`/onboarding`), and via the development deep link. The app SHALL
-NOT auto-route a first-run user into onboarding by gating first paint; the school-selection store's
-derived onboarding-complete signal SHALL be left unchanged and available for the later step that
-owns the startup gate.
-
-#### Scenario: Onboarding is reachable from Profile
-- **WHEN** the user activates the onboarding entry control on the Profile tab
-- **THEN** the welcome surface is shown
-
-#### Scenario: First launch is not force-gated into onboarding
-- **WHEN** the app cold-launches with no school selected
-- **THEN** the app does not auto-redirect first paint into the onboarding flow
-- **AND** the onboarding-complete derivation in the school-selection store is unchanged
 
 ### Requirement: The welcome surface is accessible
 Each page title SHALL be exposed as a heading through `ThemedText type="title"`; body text SHALL retain font scaling. Skip, Next, and the final CTA SHALL declare button roles, translated labels, and at least 44pt iOS / 48dp Android targets. The three visual indicator pills SHALL be grouped into one accessibility element labeled with the localized current/total page state and SHALL NOT be individually focusable. The existing 300ms entrance fade SHALL remain when motion is allowed; reduced motion SHALL snap entrance opacity, indicator widths, and programmatic page advancement to their final states.
@@ -163,35 +151,3 @@ The colocated welcome-screen test SHALL render through the real theme and i18n s
 - **WHEN** the final CTA completes navigation
 - **THEN** the flow retains the seeded school visibility and search assertions from the live `GET /schools` round trip
 - **AND** it remains shared across both platforms
-
-### Requirement: The onboarding carousel uses the platform-native pager with an off-device test seam
-The onboarding screen SHALL use the Expo-compatible `react-native-pager-view` native dependency, backed by `UIPageViewController` on iOS and `ViewPager2` on Android. The dependency SHALL autolink without an `app.config.ts` plugin or new permission and SHALL be represented in the committed mobile package manifest and lockfile. Jest SHALL provide a manual mock that renders pager children in a React Native `View`, forwards a ref, exposes `setPage` and `setPageWithoutAnimation`, and emits page-selection events that exercise the production state path.
-
-#### Scenario: Native pager dependency is installed without native configuration
-- **WHEN** the mobile dependency and Expo configuration are inspected
-- **THEN** the Expo-compatible `react-native-pager-view` version is committed in the manifest and lockfile
-- **AND** no pager plugin or permission is added to `app.config.ts`
-
-#### Scenario: Jest can drive imperative paging
-- **WHEN** a component test invokes Next with motion enabled or reduced
-- **THEN** the manual pager mock receives `setPage` or `setPageWithoutAnimation` respectively
-- **AND** its emitted page-selection event updates the production indicator and controls
-
-#### Scenario: Native fingerprint consequence is documented
-- **WHEN** runtime and EAS guidance is read after the dependency lands
-- **THEN** it states that the pager changes the native fingerprint and requires fresh development/EAS binaries
-- **AND** no EAS or CI workflow configuration is changed
-
-### Requirement: Legacy illustrations are copied as immutable decorative assets
-The three Flutter PNGs SHALL be copied byte-for-byte into `mobile/assets/images/onboarding/` with the mapping `schools.png` → `welcome.png`, `home.png` → `agenda.png`, and `notifications.png` → `notifications.png`. The React Native screen SHALL render each through `expo-image` with `contentFit="contain"`, mark it decorative and inaccessible, and place it inside a rounded `backgroundElement` card. The legacy `app/` files SHALL NOT be modified.
-
-#### Scenario: Assets retain the approved mapping
-- **WHEN** the three carousel pages render
-- **THEN** welcome uses the copied schools image, agenda uses the copied home image, and notifications uses the copied notifications image
-- **AND** each copy matches its legacy source bytes
-
-#### Scenario: Illustration is decorative and scheme-safe
-- **WHEN** assistive technology traverses a page in light or dark mode
-- **THEN** the illustration is excluded from focus and has no alternative text
-- **AND** the page heading/body convey its meaning while the image sits on a tokenized neutral card
-

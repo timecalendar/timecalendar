@@ -67,9 +67,9 @@ Add `fallbackToCacheTimeout: 0` beside the existing `updates.url`. This document
 
 Alternatives considered: a positive startup timeout charges every cold launch for rare updates and still cannot guarantee the bundle download completes; a custom splash/progress gate conflicts with the acceptance criteria.
 
-## Decision 6 — ADR 036 ratifies the architecture, not unavailable deployment inputs
+## Decision 6 — ADR 037 ratifies the architecture, not unavailable deployment inputs
 
-ADR 036 records: self-hosted xprem; Cloudflare R2 for assets; xprem control-plane mode on the existing production Postgres service; no ClickHouse while Crashlytics supplies client observability; signed updates; fingerprint runtime compatibility; silent foreground-boundary application; and the exact operational rule: “channel pointers and rollout percentages are imperative, deliberately.” The latter keeps incident-time rollout/rollback changes out of declarative reconciliation loops.
+ADR 037 records: self-hosted xprem; Cloudflare R2 for assets; xprem control-plane mode on the existing production Postgres service; no ClickHouse while Crashlytics supplies client observability; signed updates; fingerprint runtime compatibility; silent foreground-boundary application; and the exact operational rule: “channel pointers and rollout percentages are imperative, deliberately.” The latter keeps incident-time rollout/rollback changes out of declarative reconciliation loops.
 
 The ADR, index, `eas.md`, `firebase.md`, and existing `CHANGELOG.md` become current guidance. `architecture.md` is reconciled so Git remains implementation history while `CHANGELOG.md` records Architecture Book rule changes. The stale `architecture-changelog.md` requirement in the same OpenSpec Architecture Book seam is corrected to `CHANGELOG.md`; no duplicate file is created. `runtime.md` changes only if application work uncovers a reusable baseline contract not already captured by EAS/Firebase guidance.
 
@@ -90,7 +90,7 @@ Alternatives considered: deferring the ADR leaves later endpoint/signing work wi
 1. Add and test the Firebase attribute wrapper without changing the existing FCM module-init registration.
 2. Add the OTA runtime component/state machine and mount it once in the root layout.
 3. Set the explicit zero-wait config and validate both app variants.
-4. Add ADR 036 and reconcile the Architecture Book guidance/changelog pointer.
+4. Add ADR 037 and reconcile the Architecture Book guidance/changelog pointer.
 5. Run focused Jest tests, TypeScript, lint/format, full mobile coverage, OpenSpec validation, and Expo config validation.
 6. Record real-device download/reload/Crashlytics confirmation as a `(HUMAN: ...)` inbox follow-up; it becomes executable only after the later endpoint/signing inputs land.
 

@@ -1,4 +1,4 @@
-# 036 — Self-host OTA updates and apply them at foreground boundaries
+# 037 — Self-host OTA updates and apply them at foreground boundaries
 
 ## Status
 

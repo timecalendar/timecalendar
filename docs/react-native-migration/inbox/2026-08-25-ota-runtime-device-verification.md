@@ -1,8 +1,8 @@
 # OTA runtime — release-device verification
 
-**Date:** 2026-08-25  
-**Change:** `add-safe-mobile-ota-runtime`  
-**ADR:** [036](../../mobile/architecture-book/decisions/036-self-hosted-ota-runtime.md)  
+**Date:** 2026-08-25
+**Change:** `add-safe-mobile-ota-runtime`
+**ADR:** [037](../../mobile/architecture-book/decisions/037-self-hosted-ota-runtime.md)
 **For:** Samuel `(HUMAN: physical iOS and Android release-device pass after endpoint and signing work)`
 
 ## What I need
