@@ -7,9 +7,7 @@ what it must contain, and the requirement that migration docs treat it as the
 single source of rules so no second book ever appears. Companion to
 [`mobile-app-scaffold`](../mobile-app-scaffold/spec.md); the book's change
 process is defined in `docs/react-native-migration/00-exploration/migration-approach.md` §7.
-
 ## Requirements
-
 ### Requirement: The Architecture Book lives at docs/mobile/architecture-book/
 
 The living Architecture Book for the React Native app SHALL exist as Markdown files under `docs/mobile/architecture-book/` — this directory IS the book, not a mirror of one maintained elsewhere.
@@ -225,50 +223,60 @@ act of blessing the pattern and reconciling the book is itself a rule change (mi
 
 ### Requirement: ADR 037 ratifies the self-hosted OTA architecture
 
-The Architecture Book SHALL contain and index ADR 037 recording self-hosted xprem with Cloudflare R2 asset storage, xprem control-plane mode using the existing production Postgres service without ClickHouse, signed updates, fingerprint runtime compatibility, and silent application at a background-to-foreground boundary. The ADR SHALL contain the exact sentence: “channel pointers and rollout percentages are imperative, deliberately.”
+The Architecture Book SHALL contain and index ADR 037 recording self-hosted xprem with Cloudflare
+R2 asset storage, xprem control-plane mode using the existing production Postgres service without
+ClickHouse, signed updates, fingerprint runtime compatibility, and silent application at a
+background-to-foreground boundary. ADR 037 SHALL also bind the implemented manifest URL, required
+request headers, one-source build-time channel contract, public certificate path and metadata,
+private-key custody boundary, retained EAS project linkage, and empirical fingerprint result. It
+SHALL contain the exact sentence: “channel pointers and rollout percentages are imperative,
+deliberately.”
 
-#### Scenario: OTA architecture is recorded before deployment inputs arrive
+#### Scenario: OTA client contract is recorded after wiring
 
-- **WHEN** ADR 037 and the ADR index are read
-- **THEN** they identify xprem, R2, Postgres without ClickHouse, update signing, fingerprint compatibility, and silent foreground application as the ratified target
-- **AND** they distinguish that target from endpoint, identifier, credential, certificate-path, and publishing inputs deferred to later work
+- **WHEN** ADR 037 and the ADR index are read after implementation
+- **THEN** they identify xprem, R2, Postgres without ClickHouse, signed updates, fingerprint
+  compatibility, and silent foreground application as the ratified architecture
+- **AND** ADR 037 records `https://ota.timecalendar.app/manifest`, the three xprem request headers,
+  certificate verification contract, and `OTA_CHANNEL` source of truth
+- **AND** it corrects the earlier deferral of endpoint, identifier, and certificate-path inputs
 
-#### Scenario: Rollout control is deliberately imperative
+#### Scenario: Rollout control remains deliberately imperative
 
 - **WHEN** ADR 037 describes channel pointers and staged rollouts
-- **THEN** it contains the exact sentence “channel pointers and rollout percentages are imperative, deliberately.”
+- **THEN** it contains the exact sentence “channel pointers and rollout percentages are imperative,
+  deliberately.”
 - **AND** it explains that incident-time rollout and rollback changes are not reconciled from Git
 
 ### Requirement: Current OTA and observability guidance reflects ADR 037
 
-The Architecture Book SHALL keep `eas.md` aligned with the non-blocking silent-apply policy and
-self-hosted xprem target, and SHALL record the deployed endpoint, public app UUID,
-database-managed signing mode, public certificate path, and certificate fingerprint once those
-bootstrap inputs exist. It SHALL distinguish available public inputs from downstream client wiring
-and publishing work. The book SHALL keep `firebase.md` aligned with the five OTA Crashlytics keys
-and owned-seam rule, keep `architecture.md` pointed at the canonical existing `CHANGELOG.md`, and
-append each rule change there. `runtime.md` SHALL change only if implementation changes its reusable
+The Architecture Book SHALL keep `eas.md` aligned with the non-blocking silent-apply policy and the
+implemented signed xprem client contract. It SHALL record the manifest endpoint, app UUID,
+`expo-channel-name`/`expo-app-id`/`xprem-branch` headers, `OTA_CHANNEL` profile/local-build source,
+database-managed signing mode, public certificate path/fingerprint/metadata, development OTA
+disablement, retained EAS project linkage, and reproducible iOS/Android fingerprint result. It SHALL
+keep `firebase.md` aligned with the five OTA Crashlytics keys and owned-seam rule, keep
+`architecture.md` pointed at the canonical existing `CHANGELOG.md`, and append the client-wiring
+rule change there. `runtime.md` SHALL change only if implementation changes its reusable
 runtime/native baseline contract.
 
-#### Scenario: Topical guidance points to the ratified decision
+#### Scenario: Topical guidance describes the implemented client contract
 
-- **WHEN** `eas.md` and `firebase.md` are read after implementation
-- **THEN** they describe their current OTA runtime and observability contracts
-- **AND** they point to ADR 037 instead of duplicating its architectural rationale
+- **WHEN** `eas.md` is read after implementation
+- **THEN** it describes the exact release endpoint, headers, channel source, certificate
+  verification, development disablement, and retained EAS id
+- **AND** it distinguishes declarative build inputs from out-of-scope imperative publishing,
+  channel mapping, rollout, and rollback actions
 
-#### Scenario: Completed bootstrap inputs are current guidance
+#### Scenario: Fingerprint evidence is reusable current guidance
 
-- **WHEN** the deployed xprem app bootstrap is complete
-- **THEN** `eas.md` records `https://ota.timecalendar.app`, app UUID
-  `e89170b9-5b32-44f0-8f78-33eadb60ec28`, database-key mode, and
-  `mobile/codesigning/certs/certificate.pem` with its verified fingerprint
-- **AND** it states that client endpoint, request-header, channel, and certificate wiring remain
-  downstream until the app configuration consumes those inputs
+- **WHEN** `eas.md` and ADR 037 are read
+- **THEN** they record the exact SDK-56 commands and iOS/Android preview-versus-production result
+- **AND** they record the native-affecting control result and any narrow correction or the reason no
+  `.fingerprintignore` was added
 
-#### Scenario: Existing changelog receives the rule change
+#### Scenario: Existing changelog receives the client-wiring rule change
 
 - **WHEN** the Architecture Book directory is inspected
-- **THEN** `CHANGELOG.md` contains the OTA bootstrap-input rule-change entry
-- **AND** `architecture.md` distinguishes the rule changelog from implementation history retained
-  by Git
-- **AND** no `architecture-changelog.md` duplicate is created
+- **THEN** `CHANGELOG.md` contains the signed xprem client-wiring and fingerprint-evidence entry
+- **AND** no duplicate Architecture Book or `architecture-changelog.md` is created
