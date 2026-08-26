@@ -30,15 +30,22 @@ const parseBody = async (response: Response): Promise<unknown> => {
   }
 }
 
+const safeRoute = (url: string): string => {
+  const path = url.split("?")[0] ?? ""
+  const [resource = ""] = path.split("/").filter(Boolean)
+  return `/${resource}`
+}
+
 export const customFetch = async <T>(
   url: string,
   options: RequestInit,
 ): Promise<T> => {
   const fullUrl = `${API_BASE_URL}${url}`
   const method = options.method ?? "GET"
+  const route = safeRoute(url)
 
   if (__DEV__) {
-    console.log(`[api] → ${method} ${fullUrl}`, options.body ?? "")
+    console.log(`[api] → ${method} ${route}`)
   }
 
   // Compose the caller's cancellation (TanStack Query aborts via `options.signal`
@@ -70,7 +77,7 @@ export const customFetch = async <T>(
     const body = await parseBody(response)
 
     if (__DEV__) {
-      console.log(`[api] ← ${response.status} ${method} ${fullUrl}`, body ?? "")
+      console.log(`[api] ← ${response.status} ${method} ${route}`)
     }
 
     if (!response.ok) {

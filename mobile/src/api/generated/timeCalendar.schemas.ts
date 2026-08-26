@@ -191,6 +191,48 @@ export interface CreateCalendarRepDto {
   token: string
 }
 
+export type CalendarImportErrorDtoCode =
+  (typeof CalendarImportErrorDtoCode)[keyof typeof CalendarImportErrorDtoCode]
+
+export const CalendarImportErrorDtoCode = {
+  calendar_import_failed: "calendar_import_failed",
+} as const
+
+export type CalendarImportErrorDtoClassification =
+  (typeof CalendarImportErrorDtoClassification)[keyof typeof CalendarImportErrorDtoClassification]
+
+export const CalendarImportErrorDtoClassification = {
+  unsupported_link: "unsupported_link",
+  upstream_unavailable: "upstream_unavailable",
+  invalid_calendar: "invalid_calendar",
+  unknown: "unknown",
+} as const
+
+export type CalendarImportErrorDtoHelpKey =
+  (typeof CalendarImportErrorDtoHelpKey)[keyof typeof CalendarImportErrorDtoHelpKey]
+
+export const CalendarImportErrorDtoHelpKey = {
+  rennes_export: "rennes_export",
+  tours_export: "tours_export",
+  reunion_export: "reunion_export",
+  montpellier_export: "montpellier_export",
+  ube_export: "ube_export",
+  lyon2_export: "lyon2_export",
+  saint_etienne_outage: "saint_etienne_outage",
+  bordeaux_inp_outage: "bordeaux_inp_outage",
+  toulouse3_outage: "toulouse3_outage",
+  generic_invalid_calendar: "generic_invalid_calendar",
+  generic_upstream_unavailable: "generic_upstream_unavailable",
+  generic_unknown: "generic_unknown",
+} as const
+
+export interface CalendarImportErrorDto {
+  code: CalendarImportErrorDtoCode
+  classification: CalendarImportErrorDtoClassification
+  helpKey: CalendarImportErrorDtoHelpKey
+  retryable: boolean
+}
+
 export interface SyncCalendarsDto {
   tokens: string[]
 }
@@ -268,15 +310,42 @@ export interface GetSchoolGroupsIcalUrlRepDto {
   url: string
 }
 
+export type SendMessageDtoRecoveryClassification =
+  (typeof SendMessageDtoRecoveryClassification)[keyof typeof SendMessageDtoRecoveryClassification]
+
+export const SendMessageDtoRecoveryClassification = {
+  unsupported_link: "unsupported_link",
+  upstream_unavailable: "upstream_unavailable",
+  invalid_calendar: "invalid_calendar",
+  unknown: "unknown",
+} as const
+
+export type SendMessageDtoRecoveryHelpKey =
+  (typeof SendMessageDtoRecoveryHelpKey)[keyof typeof SendMessageDtoRecoveryHelpKey]
+
+export const SendMessageDtoRecoveryHelpKey = {
+  rennes_export: "rennes_export",
+  tours_export: "tours_export",
+  reunion_export: "reunion_export",
+  montpellier_export: "montpellier_export",
+  ube_export: "ube_export",
+  lyon2_export: "lyon2_export",
+  saint_etienne_outage: "saint_etienne_outage",
+  bordeaux_inp_outage: "bordeaux_inp_outage",
+  toulouse3_outage: "toulouse3_outage",
+  generic_invalid_calendar: "generic_invalid_calendar",
+  generic_upstream_unavailable: "generic_upstream_unavailable",
+  generic_unknown: "generic_unknown",
+} as const
+
 export interface SendMessageDto {
   email: string
   message: string
   calendarIds?: string[]
-  schoolId?: string
-  schoolName?: string
   gradeName?: string
   deviceInfo?: string
-  calendarUrl?: string
+  recoveryClassification?: SendMessageDtoRecoveryClassification
+  recoveryHelpKey?: SendMessageDtoRecoveryHelpKey
 }
 
 export interface FeatureFlagEvaluationResponseDto {

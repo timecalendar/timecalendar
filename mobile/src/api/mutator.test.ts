@@ -34,6 +34,27 @@ afterEach(() => {
 })
 
 describe("customFetch", () => {
+  it("logs only method, bounded route, and status without bodies or identifiers", async () => {
+    const sentinel = "synthetic-password-resource-123"
+    fetchMock.mockResolvedValue(
+      jsonResponse(422, {
+        code: "calendar_import_failed",
+        detail: sentinel,
+      }),
+    )
+    const log = jest.spyOn(console, "log").mockImplementation()
+
+    await customFetch(`/calendars/private-token?url=${sentinel}`, {
+      method: "POST",
+      body: JSON.stringify({ url: sentinel }),
+    }).catch(() => undefined)
+
+    expect(log).toHaveBeenNthCalledWith(1, "[api] → POST /calendars")
+    expect(log).toHaveBeenNthCalledWith(2, "[api] ← 422 POST /calendars")
+    expect(JSON.stringify(log.mock.calls)).not.toContain(sentinel)
+    log.mockRestore()
+  })
+
   it("resolves with the parsed body and targets <baseURL><url> with JSON headers", async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { id: "e-1" }))
 

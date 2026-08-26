@@ -8,6 +8,8 @@ import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { FetchService } from "modules/fetch/services/fetch.service"
+import { schoolFactory } from "modules/school/factories/school.factory"
+import { CalendarFetchError } from "modules/fetch/models/calendar-fetch-outcome"
 import createTestApp from "test-utils/create-test-app"
 import { assertChanges } from "test-utils/typeorm/assert-changes"
 import { DataSource } from "typeorm"
@@ -32,6 +34,10 @@ describe("CalendarSyncController", () => {
   })
 
   describe("POST /calendars", () => {
+    beforeEach(() => {
+      mockFetchService.fetchEvents.mockResolvedValue(events)
+    })
+
     it("creates a calendar", async () => {
       const { body } = await assertChanges(
         dataSource,
@@ -66,6 +72,51 @@ describe("CalendarSyncController", () => {
           name: "My Calendar",
         })
         .expect(400)
+    })
+
+    it("rejects a Tours login page before fetching and returns only safe keys", async () => {
+      const sentinel = "synthetic-login:synthetic-password"
+      const response = await request(app)
+        .post("/calendars")
+        .send({
+          url: `https://${sentinel}@ade.univ-tours.fr/login?resources=resource-123`,
+          schoolName: "Tours",
+          name: "Tours",
+        })
+        .expect(422)
+
+      expect(mockFetchService.fetchEvents).not.toHaveBeenCalled()
+      expect(response.body).toEqual({
+        code: "calendar_import_failed",
+        classification: "unsupported_link",
+        helpKey: "tours_export",
+        retryable: false,
+      })
+      expect(JSON.stringify(response.body)).not.toContain(sentinel)
+      expect(JSON.stringify(response.body)).not.toContain("resource-123")
+    })
+
+    it("distinguishes an upstream outage from unsupported input", async () => {
+      mockFetchService.fetchEvents.mockRejectedValueOnce(
+        new CalendarFetchError("http_5xx"),
+      )
+      const school = await schoolFactory().create({ code: "univtoulouse3" })
+
+      const response = await request(app)
+        .post("/calendars")
+        .send({
+          url: "https://edt.univ-tlse3.fr/export.ics",
+          schoolId: school.id,
+          name: "Toulouse 3",
+        })
+        .expect(422)
+
+      expect(response.body).toEqual({
+        code: "calendar_import_failed",
+        classification: "upstream_unavailable",
+        helpKey: "toulouse3_outage",
+        retryable: true,
+      })
     })
   })
 

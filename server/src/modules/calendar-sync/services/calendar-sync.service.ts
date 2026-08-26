@@ -1,11 +1,15 @@
-import { Injectable, UnprocessableEntityException } from "@nestjs/common"
-import { classifyUpstreamDomain } from "config/observability/upstream-domain"
-import { SpanStatusCode, trace } from "@opentelemetry/api"
+import { Injectable } from "@nestjs/common"
+import { SpanStatusCode, trace, type Span } from "@opentelemetry/api"
 import { addMinutes } from "date-fns"
 import { DetectCalendarChangeService } from "modules/calendar-log/services/detect-calendar-change.service"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
 import { CalendarFailureRepository } from "modules/calendar-sync/repositories/calendar-failure.repository"
+import { CalendarImportException } from "modules/calendar-sync/recovery/calendar-import.exception"
+import {
+  CalendarImportDiagnostic,
+  classifyCalendarImport,
+} from "modules/calendar-sync/recovery/calendar-import-recovery"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
@@ -13,9 +17,9 @@ import { CalendarContentRepository } from "modules/calendar/repositories/calenda
 import { CalendarRepository } from "modules/calendar/repositories/calendar.repository"
 import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { CalendarSource } from "modules/fetch/models/calendar-source"
+import { CalendarFetchError } from "modules/fetch/models/calendar-fetch-outcome"
 import { FetchService } from "modules/fetch/services/fetch.service"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
-import { toErrorType } from "modules/shared/utils/to-error-type"
 import { idToEntity } from "modules/shared/utils/typeorm/id-to-entity"
 import { SubjectService } from "modules/subject/services/subject.service"
 import { nanoid } from "nanoid"
@@ -66,23 +70,30 @@ export class CalendarSyncService {
     const { id, url, customData, school } = calendar
     const isNewCalendar = !id
     const action = isNewCalendar ? "create" : "update"
-    const upstreamDomain = classifyUpstreamDomain(url)
 
     return this.tracer.startActiveSpan(
       "calendar.sync",
       {
-        attributes: {
-          action,
-          "upstream.domain": upstreamDomain,
-        },
+        attributes: { action },
       },
       async (span) => {
+        let errorKind: CalendarImportDiagnostic["errorKind"] = "unknown"
         try {
           const source = { url, customData }
           const code = await this.findSchoolCode(school?.id)
-          const boundedSchool =
-            code && /^[a-z0-9_-]{1,64}$/.test(code) ? code : "unknown"
+          const boundedSchool = this.boundedSchool(code)
           span.setAttribute("school", boundedSchool)
+          const preflight = classifyCalendarImport({
+            sourceUrl: url,
+            schoolCode: code,
+          })
+          if (preflight) {
+            errorKind = preflight.errorKind
+            this.setDiagnosticSpanAttributes(span, preflight)
+            await this.recordFailure(preflight, isNewCalendar)
+            throw new CalendarImportException(preflight)
+          }
+
           const minSyncIntervalMinutes =
             this.fetchService.getMinSyncIntervalMinutes(source, code)
           if (
@@ -100,29 +111,24 @@ export class CalendarSyncService {
 
           this.calendarSyncMetricsService.add({
             school: boundedSchool,
-            domain: upstreamDomain,
             status: isError ? "error" : "success",
-            error_type: isError ? toErrorType(fetchedEvents.error) : undefined,
+            classification: isError
+              ? fetchedEvents.diagnostic.classification
+              : undefined,
+            help_key: isError ? fetchedEvents.diagnostic.helpKey : undefined,
+            error_kind: isError
+              ? fetchedEvents.diagnostic.errorKind
+              : undefined,
             action,
           })
 
           if (isError && isNewCalendar) {
-            const error = fetchedEvents.error
-            const serializedError = {
-              name: error?.name ?? null,
-              message: error?.message ?? null,
-              stack: error?.stack ?? null,
-              error: error?.error ?? null,
-            }
+            errorKind = fetchedEvents.diagnostic.errorKind
+            this.setDiagnosticSpanAttributes(span, fetchedEvents.diagnostic)
             await this.calendarFailureRepository.create(
-              url,
-              JSON.stringify(
-                Object.fromEntries(
-                  Object.entries(serializedError).filter(([, v]) => v != null),
-                ),
-              ),
+              fetchedEvents.diagnostic,
             )
-            throw fetchedEvents.error
+            throw new CalendarImportException(fetchedEvents.diagnostic)
           }
 
           const savedCalendar = await this.saveCalendar(
@@ -130,12 +136,16 @@ export class CalendarSyncService {
             fetchedEvents.events,
             minSyncIntervalMinutes,
           )
-          if (isError) throw fetchedEvents.error
+          if (isError) {
+            errorKind = fetchedEvents.diagnostic.errorKind
+            this.setDiagnosticSpanAttributes(span, fetchedEvents.diagnostic)
+            throw fetchedEvents.error
+          }
 
           span.setStatus({ code: SpanStatusCode.OK })
           return savedCalendar
         } catch (error) {
-          span.setAttribute("error.type", toErrorType(error))
+          span.setAttribute("error.type", errorKind)
           span.setStatus({ code: SpanStatusCode.ERROR })
           throw error
         } finally {
@@ -193,11 +203,19 @@ export class CalendarSyncService {
   private async fetchEvents(
     source: CalendarSource,
     code: string | null,
-  ): Promise<{ error: any; events: undefined } | { events: CalendarEvent[] }> {
+  ): Promise<
+    | {
+        error: unknown
+        diagnostic: CalendarImportDiagnostic
+        events: undefined
+      }
+    | { events: CalendarEvent[] }
+  > {
     try {
       const fetchedEvents = await this.fetchService.fetchEvents(source, code)
-      if (fetchedEvents.length === 0)
-        throw new UnprocessableEntityException("No events found")
+      if (fetchedEvents.length === 0) {
+        throw new CalendarFetchError("empty_calendar")
+      }
 
       return {
         events: fetchedEvents.map((event) =>
@@ -205,7 +223,15 @@ export class CalendarSyncService {
         ),
       }
     } catch (err) {
-      return { error: err, events: undefined }
+      const outcome =
+        err instanceof CalendarFetchError ? err.kind : ("unknown" as const)
+      const diagnostic = classifyCalendarImport({
+        sourceUrl: source.url,
+        schoolCode: code,
+        outcome,
+      })
+      if (!diagnostic) throw new Error("Missing calendar import diagnostic")
+      return { error: err, diagnostic, events: undefined }
     }
   }
 
@@ -213,5 +239,36 @@ export class CalendarSyncService {
     if (!schoolId) return null
     const school = await this.schoolRepository.findOneOrFail(schoolId)
     return school.code
+  }
+  private async recordFailure(
+    diagnostic: CalendarImportDiagnostic,
+    isNewCalendar: boolean,
+  ) {
+    this.calendarSyncMetricsService.add({
+      school: this.boundedSchool(diagnostic.schoolCode),
+      status: "error",
+      classification: diagnostic.classification,
+      help_key: diagnostic.helpKey,
+      error_kind: diagnostic.errorKind,
+      action: isNewCalendar ? "create" : "update",
+    })
+    if (isNewCalendar) {
+      await this.calendarFailureRepository.create(diagnostic)
+    }
+  }
+
+  private boundedSchool(code: string | null) {
+    return code && /^[a-z0-9_-]{1,64}$/.test(code) ? code : "unknown"
+  }
+
+  private setDiagnosticSpanAttributes(
+    span: Span,
+    diagnostic: CalendarImportDiagnostic,
+  ) {
+    span.setAttributes({
+      classification: diagnostic.classification,
+      help_key: diagnostic.helpKey,
+      error_kind: diagnostic.errorKind,
+    })
   }
 }

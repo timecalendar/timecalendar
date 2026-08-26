@@ -14,5 +14,6 @@ while the following native interactions require real devices:
   Alert has one Close action that returns to the previous screen.
 - Force a contact rejection and verify both inputs remain populated, the inline error is
   announced, and Send is enabled for retry.
-- Force a recorded iCal import failure and verify Report carries the trimmed URL and
-  available school ID/name; confirm an invalid-URL prefilter never shows Report.
+- Force a recorded iCal import failure and verify Report carries only the allowlisted
+  classification/help key; confirm the URL, school identity, credentials, and timetable
+  resource identifiers are absent and an invalid-URL prefilter never shows Report.

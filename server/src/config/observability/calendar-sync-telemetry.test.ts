@@ -71,7 +71,7 @@ describe("calendar sync HTTP trace topology", () => {
   it("uses production instrumentation and keeps every request child bounded", async () => {
     const proof = await runTopologyProof()
     expect(proof.statusCode).toBe(201)
-    expect(proof.failureMessage).toBe("SyntheticUpstreamError")
+    expect(proof.failureMessage).toBe("Calendar Import Exception")
 
     const successfulSync = proof.spans.find(
       (span) => span.name === "calendar.sync" && !span.attributes["error.type"],
@@ -87,9 +87,9 @@ describe("calendar sync HTTP trace topology", () => {
       attributes: {
         action: "create",
         school: "unknown",
-        "upstream.domain": "ensea.fr",
       },
     })
+    expect(successfulSync?.attributes).not.toHaveProperty("upstream.domain")
 
     const descendants = proof.spans.filter(
       (span) => span.parentSpanId === successfulSync?.spanId,
@@ -148,8 +148,12 @@ describe("calendar sync HTTP trace topology", () => {
     const failedSync = proof.spans.find(
       (span) =>
         span.name === "calendar.sync" &&
-        span.attributes["error.type"] === "Error",
+        span.attributes["error.type"] === "unknown",
     )
-    expect(failedSync).toBeDefined()
+    expect(failedSync?.attributes).toMatchObject({
+      classification: "unknown",
+      help_key: "generic_unknown",
+      error_kind: "unknown",
+    })
   })
 })

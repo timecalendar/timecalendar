@@ -1,12 +1,13 @@
 import { Injectable } from "@nestjs/common"
 import meter from "config/observability/meter"
-import { UpstreamDomain } from "config/observability/upstream-domain"
+import { CalendarImportDiagnostic } from "modules/calendar-sync/recovery/calendar-import-recovery"
 
 export type CalendarSyncMetricAttributes = {
   school: string
-  domain: UpstreamDomain
   status: "success" | "error"
-  error_type?: string
+  classification?: CalendarImportDiagnostic["classification"]
+  help_key?: CalendarImportDiagnostic["helpKey"]
+  error_kind?: CalendarImportDiagnostic["errorKind"]
   action: "create" | "update"
 }
 
@@ -15,12 +16,10 @@ export class CalendarSyncMetricsService {
   private readonly counter = meter.createCounter("calendar_sync_total", {
     // All labels are bounded to keep VictoriaMetrics cardinality finite:
     //   school     - school code slug (enum-like)
-    //   domain     - reviewed provider domain | "custom" | "invalid"
     //   status     - "success" | "error"
-    //   error_type - the exception's name/class (bounded; never the raw message)
+    //   classification/help_key/error_kind - closed recovery values
     //   action     - "create" | "update"
-    description:
-      "Count of calendar syncs (all labels bounded for cardinality safety)",
+    description: "Count of calendar syncs with bounded recovery labels",
     unit: "{requests}",
   })
 
