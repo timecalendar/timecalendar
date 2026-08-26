@@ -17,6 +17,15 @@ identity, calendar content, and indexed calendar-change history. The mobile app 
 has an offline-safe event cache and an MMKV seam suitable for a rebuildable advisory
 snapshot, so neither server nor SQLite schema evolution is required.
 
+The applied source-health snapshot exposed a leaf orchestration race in the existing
+dev-import E2E seam. `replaceSourceHealthSnapshot` synchronously notifies a mounted Calendar
+subscriber, rerendering the production tree while the import's async effect is still in
+flight. Because that effect's cleanup currently marks the run cancelled whenever hook
+dependencies change identity, the successful real sync can skip its guarded
+`router.replace("/calendar")` and leave native E2E on the loading screen. Separately, the
+committed Maestro flows still target the removed `calendar-view-agenda` item id even though
+the live UI now exposes a `calendar-view` native menu whose action is labelled `Agenda`.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -28,6 +37,10 @@ snapshot, so neither server nor SQLite schema evolution is required.
 - Keep URLs/tokens out of the new DTO, local health snapshot, UI, accessibility strings,
   analytics, Crashlytics, and test output.
 - Make the classifier deterministic and cheap enough for batch sync responses.
+- Preserve the real dev-import add → sync → SQLite path while guaranteeing exactly one
+  Calendar navigation across source-health subscriber rerenders when still mounted.
+- Drive Agenda through the current native menu on Android and iOS without weakening seeded
+  event or event-details assertions.
 
 **Non-Goals:**
 
@@ -35,6 +48,8 @@ snapshot, so neither server nor SQLite schema evolution is required.
 - Automatically rewriting stored URLs, deleting old sources, or migrating subscriptions.
 - Adding a failure-history table, schema migration, production backfill, or deploy act.
 - Changing the legacy Flutter app or solving generic iCal import failures.
+- Adding timeouts, mocking the native round-trip, restoring removed menu-item test IDs, or
+  changing CI/workflow files to mask the failures.
 
 ## Decision: Return advisory health beside each batch-sync calendar
 
@@ -127,6 +142,43 @@ This avoids a Drizzle migration for advisory, server-rebuildable state and prese
 would disappear on restart/offline launch; adding health columns to `user_calendars` was
 rejected because it couples rebuildable server advice to irreplaceable identity storage.
 
+## Decision: Separate dev-import mounted lifetime from reactive dependency churn
+
+The dev-import screen keeps its one-run guard, but mounted lifetime is tracked independently
+from the async orchestration effect. The import uses current sync/router operations without
+making ordinary callback identity changes equivalent to unmount. A successful token add and
+real `useSyncCalendars().sync()` therefore performs one guarded
+`router.replace("/calendar")` if the screen is still mounted; a genuine unmount suppresses
+both navigation and error-state updates.
+
+The regression proof mounts a reactive `useSourceHealthSnapshot` consumer in the same test
+tree as `DevImportScreen`, drives the real generated sync hook with `customFetch` mocked at
+the documented seam, and uses the existing DB/storage test seams. Its successful response
+writes SQLite events and the MMKV health snapshot, forcing the rerender that previously
+cancelled navigation. It asserts one add, one sync request/write sequence, and exactly one
+Calendar replacement. Existing production-inert and failure tests remain unchanged.
+
+This is a local lifecycle correction, not a new reusable navigation or storage rule, so it
+does not amend ADR 030 or the Architecture Book. Moving navigation into the sync hook was
+rejected because the data-layer seam must remain route-agnostic. Removing the mounted guard
+was rejected because a completed request must not update or navigate an actually unmounted
+screen. A timeout/retry was rejected because it would only hide deterministic cancellation.
+
+## Decision: Exercise the live native Calendar view menu in Maestro
+
+Maestro opens the stable `calendar-view` control and selects the visible `Agenda` native
+menu action on both platforms. The Applier replaces every committed use of the removed
+`calendar-view-agenda` selector in the affected calendar-family flows, not only the first
+lexically failing flow, so the process-per-flow native suite can reach its integrated end.
+The anchor `calendar.yaml` flow continues to assert `E2E Today Lecture`, open that real synced
+event, and assert `Room E2E Lecture`; stale recovery and hidden-event flows retain their own
+existing seeded assertions and actions.
+
+Restoring implementation-only item test IDs was rejected because native menu children are
+platform-owned and the stable public interaction is the menu plus localized action label.
+Skipping Agenda or weakening the seeded assertions was rejected because it would stop
+proving the server → generated client → SQLite → Calendar round-trip.
+
 ## Decision: Recovery is additive and user-controlled
 
 If any held calendar is stale, Calendar shows an accessible non-modal banner above the
@@ -168,6 +220,12 @@ rollback), while implementation-specific thresholds remain in tested code.
   event visibility or deletion. A later successful sync replaces it.
 - **[New banner affects dense calendar layout]** → Keep it compact/non-modal, component-test
   large text, and require QA/device review through the migration inbox and CI Maestro.
+- **[A hook callback changes identity during an in-flight import]** → Decouple mounted
+  lifetime from render dependencies and prove the synchronous MMKV subscriber rerender with
+  the real sync hook.
+- **[A later Maestro flow still uses the removed agenda selector]** → Replace every
+  committed `calendar-view-agenda` use in the affected native flows and require both
+  platform jobs on the exact integrated head.
 
 ## Migration Plan
 
@@ -179,6 +237,9 @@ rollback), while implementation-specific thresholds remain in tested code.
    field defensively as `unknown` during mixed-version rollout.
 4. Rollback is code-only: revert server/mobile behavior. Existing events and calendar
    identities are untouched; the namespaced MMKV advisory value can be ignored or removed.
+5. Before Reviewer sign-off, run the focused dev-import regression plus existing import,
+   sync, and source-health tests, then require green Android and iOS labelled native E2E on
+   the exact integrated head. No workflow edit, deploy act, or separate QA gate is needed.
 
 ## Open Questions
 
