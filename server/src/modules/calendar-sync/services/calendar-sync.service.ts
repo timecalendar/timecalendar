@@ -1,4 +1,6 @@
 import { Injectable, UnprocessableEntityException } from "@nestjs/common"
+import { classifyUpstreamDomain } from "config/observability/upstream-domain"
+import { SpanStatusCode, trace } from "@opentelemetry/api"
 import { addMinutes } from "date-fns"
 import { DetectCalendarChangeService } from "modules/calendar-log/services/detect-calendar-change.service"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
@@ -24,6 +26,8 @@ type CalendarForSync = Pick<Calendar, "url" | "customData"> &
 
 @Injectable()
 export class CalendarSyncService {
+  private readonly tracer = trace.getTracer("calendar-sync")
+
   constructor(
     private readonly fetchService: FetchService,
     private readonly schoolRepository: SchoolRepository,
@@ -60,64 +64,84 @@ export class CalendarSyncService {
 
   async sync(calendar: CalendarForSync) {
     const { id, url, customData, school } = calendar
-    const source = { url, customData }
-    const code = await this.findSchoolCode(school?.id)
-    const minSyncIntervalMinutes = this.fetchService.getMinSyncIntervalMinutes(
-      source,
-      code,
-    )
     const isNewCalendar = !id
-    if (
-      id &&
-      !(await this.calendarRepository.claimSyncIfDue(
-        id,
-        minSyncIntervalMinutes,
-      ))
-    ) {
-      return this.calendarRepository.findOne(id)
-    }
+    const upstreamDomain = classifyUpstreamDomain(url)
 
-    const fetchedEvents = await this.fetchEvents(source, code)
+    return this.tracer.startActiveSpan(
+      "calendar.sync",
+      {
+        attributes: {
+          action: isNewCalendar ? "create" : "update",
+          "upstream.domain": upstreamDomain,
+        },
+      },
+      async (span) => {
+        try {
+          const source = { url, customData }
+          const code = await this.findSchoolCode(school?.id)
+          const boundedSchool =
+            code && /^[a-z0-9_-]{1,64}$/.test(code) ? code : "unknown"
+          span.setAttribute("school", boundedSchool)
+          const minSyncIntervalMinutes =
+            this.fetchService.getMinSyncIntervalMinutes(source, code)
+          if (
+            id &&
+            !(await this.calendarRepository.claimSyncIfDue(
+              id,
+              minSyncIntervalMinutes,
+            ))
+          ) {
+            return this.calendarRepository.findOne(id)
+          }
 
-    const isError = "error" in fetchedEvents
+          const fetchedEvents = await this.fetchEvents(source, code)
+          const isError = "error" in fetchedEvents
 
-    this.calendarSyncMetricsService.calendarSyncCounter.add(1, {
-      school: code ?? undefined,
-      domain: this.parseDomain(url),
-      status: isError ? "error" : "success",
-      error_type: isError ? toErrorType(fetchedEvents.error) : undefined,
-      action: isNewCalendar ? "create" : "update",
-    })
+          this.calendarSyncMetricsService.add({
+            school: boundedSchool,
+            domain: upstreamDomain,
+            status: isError ? "error" : "success",
+            error_type: isError ? toErrorType(fetchedEvents.error) : undefined,
+            action: isNewCalendar ? "create" : "update",
+          })
 
-    if (isError && isNewCalendar) {
-      const error = fetchedEvents.error
+          if (isError && isNewCalendar) {
+            const error = fetchedEvents.error
+            const serializedError = {
+              name: error?.name ?? null,
+              message: error?.message ?? null,
+              stack: error?.stack ?? null,
+              error: error?.error ?? null,
+            }
+            await this.calendarFailureRepository.create(
+              url,
+              JSON.stringify(
+                Object.fromEntries(
+                  Object.entries(serializedError).filter(([, v]) => v != null),
+                ),
+              ),
+            )
+            throw fetchedEvents.error
+          }
 
-      const serializedError = {
-        name: error?.name ?? null,
-        message: error?.message ?? null,
-        stack: error?.stack ?? null,
-        error: error?.error ?? null,
-      }
+          const savedCalendar = await this.saveCalendar(
+            calendar,
+            fetchedEvents.events,
+            minSyncIntervalMinutes,
+          )
+          if (isError) throw fetchedEvents.error
 
-      await this.calendarFailureRepository.create(
-        url,
-        JSON.stringify(
-          Object.fromEntries(
-            Object.entries(serializedError).filter(([, v]) => v != null),
-          ),
-        ),
-      )
-      throw fetchedEvents.error
-    }
-
-    const savedCalendar = await this.saveCalendar(
-      calendar,
-      fetchedEvents.events,
-      minSyncIntervalMinutes,
+          span.setStatus({ code: SpanStatusCode.OK })
+          return savedCalendar
+        } catch (error) {
+          span.setAttribute("error.type", toErrorType(error))
+          span.setStatus({ code: SpanStatusCode.ERROR })
+          throw error
+        } finally {
+          span.end()
+        }
+      },
     )
-    if (isError) throw fetchedEvents.error
-
-    return savedCalendar
   }
 
   private async saveCalendar(
@@ -188,13 +212,5 @@ export class CalendarSyncService {
     if (!schoolId) return null
     const school = await this.schoolRepository.findOneOrFail(schoolId)
     return school.code
-  }
-
-  private parseDomain(url: string) {
-    try {
-      return new URL(url).hostname
-    } catch {
-      return undefined
-    }
   }
 }
