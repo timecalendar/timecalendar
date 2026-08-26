@@ -1,25 +1,24 @@
 import type { ConfigContext, ExpoConfig } from "expo/config"
 
-const OTA_CHANNELS = ["preview", "production"] as const
-type OtaChannel = (typeof OTA_CHANNELS)[number]
-
-const getOtaChannel = (isDev: boolean): OtaChannel | undefined => {
+const getOtaChannel = (
+  isDev: boolean,
+): "preview" | "production" | undefined => {
   if (isDev) return undefined
 
   const channel = process.env.OTA_CHANNEL
-  if (OTA_CHANNELS.some((allowedChannel) => allowedChannel === channel)) {
-    return channel as OtaChannel
+  if (channel === "preview" || channel === "production") {
+    return channel
   }
 
   throw new Error(
-    `OTA_CHANNEL must be one of ${OTA_CHANNELS.join(", ")} for release builds; received ${channel ?? "an unset value"}`,
+    `OTA_CHANNEL must be one of preview, production for release builds; received ${channel ?? "an unset value"}`,
   )
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {
-  const IS_DEV = process.env.APP_VARIANT === "development"
-  const otaChannel = getOtaChannel(IS_DEV)
-  const appId = IS_DEV
+  const isDev = process.env.APP_VARIANT === "development"
+  const otaChannel = getOtaChannel(isDev)
+  const appId = isDev
     ? "fr.samuelprak.timecalendar.dev"
     : "fr.samuelprak.timecalendar"
 
@@ -28,10 +27,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // (.dev appId) is registered in the `timecalendar-dev` project; production
   // reuses the Flutter app's `timecalendar-samuelprak` config files. The four
   // files live (committed) in mobile/firebase/ — see mobile/firebase/README.md.
-  const googleServicesAndroid = IS_DEV
+  const googleServicesAndroid = isDev
     ? "./firebase/google-services.dev.json"
     : "./firebase/google-services.json"
-  const googleServicesIOS = IS_DEV
+  const googleServicesIOS = isDev
     ? "./firebase/GoogleService-Info.dev.plist"
     : "./firebase/GoogleService-Info.plist"
 
@@ -44,12 +43,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: IS_DEV ? "TimeCalendar (Dev)" : "TimeCalendar",
+    name: isDev ? "TimeCalendar (Dev)" : "TimeCalendar",
     slug: "timecalendar",
     version: "4.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: IS_DEV ? "timecalendar-dev" : "timecalendar",
+    scheme: isDev ? "timecalendar-dev" : "timecalendar",
     userInterfaceStyle: "automatic",
     // fingerprint policy: an OTA JS update is only delivered to a build whose
     // native runtime is compatible; any native-affecting change (new plugin, a
@@ -80,7 +79,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         // Dev variant only: let release-config e2e builds reach the harness server
         // on http://localhost:3005. ATS already exempts loopback, so this is
         // belt-and-braces; the production identity carries no exception (D6).
-        ...(IS_DEV
+        ...(isDev
           ? { NSAppTransportSecurity: { NSAllowsLocalNetworking: true } }
           : {}),
       },
@@ -159,7 +158,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // which would silently break the http://10.0.2.2:3005 e2e call (D6).
           android: {
             minSdkVersion: 24,
-            ...(IS_DEV ? { usesCleartextTraffic: true } : {}),
+            ...(isDev ? { usesCleartextTraffic: true } : {}),
           },
         },
       ],
@@ -197,9 +196,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // an explicit named field — not __DEV__ (false in the release-config dev-
       // variant e2e build) nor scheme-sniffing — is the security boundary that keeps
       // the import inert in production. Pure JS config; no fingerprint bump.
-      appVariant: IS_DEV ? "development" : "production",
+      appVariant: isDev ? "development" : "production",
     },
-    updates: IS_DEV
+    updates: isDev
       ? { enabled: false }
       : {
           enabled: true,
