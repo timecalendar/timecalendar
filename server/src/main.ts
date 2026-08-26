@@ -12,11 +12,16 @@ import basicAuth from "express-basic-auth"
 import { setupSwagger } from "config/swagger"
 import { runMigrations } from "modules/shared/utils/run-migrations"
 import bullBoardAdapter from "modules/shared/adapters/bull-board.adapter"
+import { TelemetryLogger } from "config/observability/telemetry-logger"
 
 async function bootstrap() {
   if (RUN_MIGRATIONS) await runMigrations(dataSourceOptions)
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  })
+  app.useLogger(new TelemetryLogger())
+  app.flushLogs()
 
   const server = app.getHttpServer()
 
