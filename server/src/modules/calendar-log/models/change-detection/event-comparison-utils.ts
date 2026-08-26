@@ -46,7 +46,7 @@ export const eventComparisonKey = (
       ])
     : event.uid
 
-/** Buckets retain duplicate events instead of overwriting them in a single map slot. */
+/** Retain the first event for each key to preserve the previous Array.find semantics. */
 export const buildEventIndex = <T extends EventForChangeDetection>(
   events: T[],
   compareWithContent = false,

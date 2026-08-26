@@ -7,6 +7,7 @@ import {
 } from "modules/calendar-log/models/change-detection/find-event-changes"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { runBoundedCalendarSync } from "modules/calendar-sync/services/calendar-sync-all.service"
+import { findEventChangesByRepeatedScan } from "./profile-calendar-sync-baseline"
 
 const CALENDAR_COUNT = 8
 const EVENTS_PER_CALENDAR = 1500
@@ -24,6 +25,7 @@ type ProfileResult = {
     requestSamples: number
     unstableUids: boolean
   }
+  changeDetector: "repeated_scan" | "indexed"
   mode: ProfileMode
   requestP50Ms: number
   requestP95Ms: number
@@ -70,7 +72,11 @@ const runCalendar = async (mode: ProfileMode) => {
           )
         : oldEvents
     const newEvents = makeEvents("unstable")
-    findEventChanges(REFERENCE_DATE, hydrated, newEvents)
+    if (mode === "baseline") {
+      findEventChangesByRepeatedScan(REFERENCE_DATE, hydrated, newEvents)
+    } else {
+      findEventChanges(REFERENCE_DATE, hydrated, newEvents)
+    }
   } finally {
     activeOperations--
   }
@@ -111,6 +117,7 @@ const runProfile = async (mode: ProfileMode): Promise<ProfileResult> => {
       requestSamples: REQUEST_SAMPLES,
       unstableUids: true,
     },
+    changeDetector: mode === "baseline" ? "repeated_scan" : "indexed",
     mode,
     requestP50Ms: Number(percentile(durations, 0.5).toFixed(1)),
     requestP95Ms: Number(percentile(durations, 0.95).toFixed(1)),
@@ -136,6 +143,16 @@ const assertFixedBounds = (fixed: ProfileResult, baseline?: ProfileResult) => {
     `fixed p95 ${fixed.requestP95Ms}ms exceeded the 15s client timeout`,
   )
   if (baseline) {
+    assert.equal(
+      baseline.changeDetector,
+      "repeated_scan",
+      "baseline must exercise the versioned repeated-scan detector",
+    )
+    assert.equal(
+      fixed.changeDetector,
+      "indexed",
+      "fixed mode must exercise the production indexed detector",
+    )
     assert.ok(
       baseline.peakUpstreamConcurrency > fixed.peakUpstreamConcurrency,
       "baseline must demonstrate the prior unbounded fan-out",

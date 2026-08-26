@@ -88,20 +88,25 @@ therefore index change detection and remove candidate content hydration.
 The identical fixture and Node version were rerun with three workers, metadata-only
 selection, and indexed UID/content matching:
 
-| Mode     |      p50 |        p95 | Peak upstream | Max event-loop delay | Unfinished at return |
-| -------- | -------: | ---------: | ------------: | -------------------: | -------------------: |
-| Baseline | 793.3 ms | 1,428.8 ms |             8 |           1,425.0 ms |                    0 |
-| Fixed    |  92.4 ms |   133.0 ms |             3 |              76.6 ms |                    0 |
+| Mode                       |      p50 |        p95 | Peak upstream | Max event-loop delay | Unfinished at return |
+| -------------------------- | -------: | ---------: | ------------: | -------------------: | -------------------: |
+| Baseline (`repeated_scan`) | 708.6 ms | 1,256.3 ms |             8 |           1,253.0 ms |                    0 |
+| Fixed (`indexed`)          |  82.6 ms |    97.5 ms |             3 |              37.8 ms |                    0 |
 
-The fixed p95 is 91% lower and remains far below the 15-second mobile timeout. Maximum
-event-loop delay is 95% lower. The previous scan callbacks no longer dominate: the top
-application frames are now `eventComparisonKey` (241 samples) and `buildEventIndex`
-(132), while the old new-event, removed/changed, and bad-iCal callbacks fall to 41, 41,
-and 27 samples respectively.
+The fixed p95 is 92% lower and remains far below the 15-second mobile timeout. Maximum
+event-loop delay is 97% lower. Baseline mode routes through the checked-in
+`profile-calendar-sync-baseline.ts` oracle, which preserves the pre-optimisation
+`Array.find` scans and unstable-UID recursive pass; fixed mode routes through the
+production indexed detector. The command asserts those detector identities in the same
+run, so the comparison covers removal of the quadratic frames as well as hydration and
+fan-out.
 
-The assertion-backed rework run on 2026-08-26 also passed: its same-process baseline/fixed
-p95 values were 257.1/85.7 ms, maximum event-loop delays were 253.9/32.4 ms, peak
-concurrency fell from eight to three, and both modes returned with zero unfinished work.
+The combined CPU profile attributed 4,109 hit samples to the repeated-scan oracle and
+329 to the indexed `event-comparison-utils` source. Named baseline frames included
+`findRemovedAndChangedEventsByRepeatedScan` and `detectsBadIcalByRepeatedScan`; the
+former scan callbacks alone accounted for more than 900 samples. Class transformation
+accounted for 348 samples. The raw synthetic-only profile was written to the run-owned
+scratch directory and was not retained because it contains machine-specific paths.
 
 ## Local verification
 
