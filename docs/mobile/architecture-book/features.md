@@ -17,6 +17,7 @@ code and product specifications.
 | `home` | Today-only dashboard and next-active-day summary | Reads the unified calendar event source |
 | `settings` | Third-tab grouped navigation and held-calendar summary | Reads the public calendar-sources hooks; persists no state |
 | `splash` | Startup presentation | Presentation-only |
+| `about` | Localized product, privacy, contact, installed-version, and developer information | `expo-application`, `expo-web-browser`, and `expo-linking`; persists no state |
 
 ## Cross-feature contracts
 
@@ -31,13 +32,16 @@ code and product specifications.
   defaults instead of throwing.
 - UI failures are accessible. Unexpected native, persistence, and background failures are
   recorded through `@/firebase` without personal data.
+- About owns its standalone `features/about` module and consumes the Settings grouped-row
+  primitives. This reversible local ownership choice does not require an ADR.
 
 ## Navigation
 
 The root contains Home, Calendar, and Settings tabs. Settings, notification settings,
-personal events, event details, calendar-source management, and onboarding are stack
+personal events, event details, calendar-source management, About, and onboarding are stack
 routes outside the tab group. Settings owns a nested native Stack and a thin feature UI
-entrypoint. `/settings` is canonical; root `/profile` temporarily redirects to it.
+entrypoint. `/about` is a root Stack sibling reached from Settings; `/settings` is canonical,
+and root `/profile` temporarily redirects to it.
 
 See [calendar.md](./calendar.md), [storage.md](./storage.md), and
 [golden-path.md](./golden-path.md) for shared implementation contracts.

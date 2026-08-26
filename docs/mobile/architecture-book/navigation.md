@@ -15,6 +15,7 @@ So the screen lives outside `src/app/` (tested there), and `src/app/<name>.tsx` 
 Under a root `NativeTabs` layout, only declared `NativeTabs.Trigger` routes are reachable — a bare sibling route is registered but **cannot** be navigated to (`hidden` triggers are unreachable too).
 
 The layout is therefore:
+
 - `src/app/_layout.tsx` = root `Stack` (+ the QueryClient/Theme providers).
 - `src/app/(tabs)/_layout.tsx` = the native tabs; tab screens under `(tabs)/`.
 - Non-tab routes (deep-link / modal / onboarding targets) as `Stack` siblings of `(tabs)`.
@@ -26,5 +27,9 @@ tab routes. `src/app/(tabs)/settings/index.tsx` is a thin export from
 `@/features/settings/ui`; derivation and tested presentation stay in the feature.
 The root `/profile` route is a compatibility redirect to `/settings` for one released
 React Native version, and is not an internal navigation target.
+
+`/about` is a root Stack sibling with a visible localized header and a one-line route export
+from `@/features/about/ui`. The Settings hub's explicit App section owns the `/about` entry;
+the feature owns the content and consumes Settings' exported grouped-list primitives.
 
 The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`), `onboarding/groups` = the group picker (`…/onboarding/groups?schoolId=<id>`). Its index is the first-run deep-link surface, not the bare list; adding calendars from Settings continues through calendar management's native header action.
