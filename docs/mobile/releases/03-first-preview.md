@@ -21,20 +21,15 @@ ID/package and cannot coexist.
 
 TestFlight accepts only a store-distribution build, and Play accepts an `.aab`, not the current
 preview APK. Reusing the current `production` profile for ordinary preview would bake in the
-production OTA channel. Before the first preview, add a distinct **store-distributed preview
-profile** that keeps:
+production OTA channel. Before the first preview, implement the **store-distributed internal
+profile** specified by the build-infrastructure
+[workflow contract](../build-infrastructure/03-workflow-contracts.md#32-mobile-internal-build).
 
-- identity `fr.samuelprak.timecalendar`;
-- `distribution: "store"`;
-- channel `preview`;
-- auto-incrementing remote iOS/Android build numbers;
-- Android app-bundle output;
-- submit routing to Play internal and the existing App Store Connect app.
-
-Whether the profile is named `preview` (replacing ad hoc behavior) or `internal-store` is an
-implementation decision. Do not keep two ambiguous profiles both called “preview.” This touches
-`mobile/eas.json` and possibly `mobile/app.config.ts`, so it is a sensitive native/store-config
-change and needs its own reviewed implementation ticket. It must not contain credentials.
+That contract provisionally names the profile `internal-store` and retains the current `preview`
+profile for direct installation. Repurposing or renaming `preview` requires the deliberate,
+ADR-backed configuration change described there. This touches `mobile/eas.json` and possibly
+`mobile/app.config.ts`, so it is a sensitive native/store-config change and needs its own reviewed
+implementation ticket. It must not contain credentials.
 
 ## 3.3 One-time owner bootstrap
 

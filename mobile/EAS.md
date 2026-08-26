@@ -70,18 +70,9 @@ bundle id, so EAS targets the existing App Store record (the RN app ships as an 
 
 ## Human prerequisites (cannot be automated)
 
-These unlock real builds/installs; the config above is green without them. See the release guide's
-[readiness and gaps checklist](../docs/mobile/releases/05-readiness-and-gaps.md):
-
-1. `eas login` to the personal account currently owning `@samuelprak/timecalendar`; record account
-   recovery and collaborator custody in Vaultwarden.
-2. Apple Developer credentials + EAS-managed iOS signing; supply the `$EXPO_*` submit env vars.
-3. Confirm Play App Signing for the existing listing; import the accepted upload key or complete an
-   upload-key reset before configuring Android EAS credentials.
-4. Google Play service-account authorization for EAS Submit, stored outside git.
-5. Add a store-distributed preview profile before using TestFlight/Play internal; the current
-   `preview` profile is direct EAS internal distribution (`.ipa`/`.apk`) and is not store-submittable.
-6. Initialize EAS remote build versions from the highest live-store values, then build/submit both
-   platforms and verify real-device installs.
-7. Verify a compatible `preview` OTA is picked up and production crashes/analytics land in
-   `timecalendar-samuelprak` when the OTA runtime is ready.
+Real builds still require account access, signing and submission credentials, remote version
+initialization, and physical-device verification. The current `preview` profile creates direct
+installation artifacts and is not store-submittable. The release guide's
+[readiness checklist](../docs/mobile/releases/05-readiness-and-gaps.md) owns current status, and the
+[(HUMAN: mobile release bootstrap) inbox note](../docs/react-native-migration/inbox/2026-08-26-mobile-release-bootstrap.md)
+owns the exact operator actions. No credential or private key belongs in git.
