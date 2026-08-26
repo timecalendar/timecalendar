@@ -18,7 +18,8 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn: "Agenda"
 - extendedWaitUntil:
     visible: "E2E Last Good Lecture"
     timeout: 60000
