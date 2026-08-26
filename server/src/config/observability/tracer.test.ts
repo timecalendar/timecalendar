@@ -6,6 +6,7 @@ import {
   annotateOutgoingHttpSpan,
   createBoundedSdkShutdown,
   createObservabilitySdk,
+  sanitizedOutgoingHttpAttributes,
 } from "./tracer"
 
 describe("observability SDK configuration", () => {
@@ -64,10 +65,43 @@ describe("observability SDK configuration", () => {
       host,
       protocol: "https:",
     } as never)
-    expect(setAttribute.mock.calls).toEqual([
-      ["peer.service", expected],
-      ["upstream.domain", expected],
-    ])
+    expect(Object.fromEntries(setAttribute.mock.calls)).toMatchObject({
+      "http.host": expected,
+      "net.peer.name": expected,
+      "server.address": expected,
+      "peer.service": expected,
+      "upstream.domain": expected,
+    })
+  })
+
+  it("replaces every request-derived legacy and stable HTTP attribute", () => {
+    const attributes = sanitizedOutgoingHttpAttributes({
+      hostname: "private.example.test",
+      path: "/calendar/student@example.test?token=top-secret",
+      protocol: "https:",
+      auth: "student:password",
+      headers: { authorization: "Bearer top-secret", host: "raw-host.test" },
+    })
+
+    expect(attributes).toMatchObject({
+      "http.url": "https://custom/",
+      "url.full": "https://custom/",
+      "http.target": "/",
+      "url.path": "/",
+      "url.query": "",
+      "http.host": "custom",
+      "net.peer.name": "custom",
+      "net.peer.ip": "[redacted]",
+      "server.address": "custom",
+      "network.peer.address": "[redacted]",
+      "http.user_agent": "[redacted]",
+      "user_agent.original": "[redacted]",
+      "peer.service": "custom",
+      "upstream.domain": "custom",
+    })
+    expect(JSON.stringify(attributes)).not.toMatch(
+      /private\.example|student|top-secret|raw-host|password/,
+    )
   })
 })
 

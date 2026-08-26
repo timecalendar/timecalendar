@@ -1,183 +1,155 @@
-import { context, SpanKind, trace } from "@opentelemetry/api"
-import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks"
-import { Body, Controller, Post } from "@nestjs/common"
-import { Test } from "@nestjs/testing"
-import {
-  BasicTracerProvider,
-  InMemorySpanExporter,
-  SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base"
-import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
-import request from "supertest"
+import { fork } from "node:child_process"
+import { join } from "node:path"
+import { SpanKind } from "@opentelemetry/api"
 
-const SYNTHETIC_URL =
-  "https://ade.ensea.fr/feed?token=synthetic-calendar-token-never-export"
-
-@Controller("telemetry-sync")
-class TelemetrySyncController {
-  constructor(private readonly service: CalendarSyncService) {}
-
-  @Post()
-  sync(@Body() body: { url: string }) {
-    return this.service.sync({
-      url: body.url,
-      customData: null,
-      name: "Synthetic",
-    })
-  }
+type SerializedSpan = {
+  name: string
+  kind: SpanKind
+  attributes: Record<string, unknown>
+  traceId: string
+  spanId: string
+  parentSpanId?: string
+  endTimeNs: number
 }
 
-const endNs = ([seconds, nanos]: [number, number]) =>
-  seconds * 1_000_000_000 + nanos
+type TopologyProof = {
+  error?: string
+  statusCode: number
+  failureMessage: string
+  spans: SerializedSpan[]
+}
+
+const SYNTHETIC_TOKEN = "synthetic-calendar-token-never-export"
+
+const runTopologyProof = () =>
+  new Promise<TopologyProof>((resolve, reject) => {
+    const child = fork(
+      join(__dirname, "calendar-sync-telemetry.fixture.ts"),
+      [],
+      {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          OTEL_ENABLED: "false",
+          OTEL_LOGS_EXPORTER: "none",
+          OTEL_METRICS_EXPORTER: "none",
+        },
+        execArgv: [
+          "--require",
+          "ts-node/register",
+          "--require",
+          "tsconfig-paths/register",
+        ],
+        silent: true,
+      },
+    )
+    let stderr = ""
+    let result: TopologyProof | undefined
+    child.stderr?.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString()
+    })
+    child.once("message", (message: TopologyProof) => {
+      result = message
+    })
+    child.once("error", reject)
+    child.once("exit", (code) => {
+      if (result?.error) return reject(new Error(result.error))
+      if (!result || code !== 0) {
+        return reject(
+          new Error(
+            `Topology fixture exited ${code ?? "without a code"}: ${stderr}`,
+          ),
+        )
+      }
+      resolve(result)
+    })
+  })
 
 describe("calendar sync HTTP trace topology", () => {
-  const exporter = new InMemorySpanExporter()
-  const provider = new BasicTracerProvider({
-    spanProcessors: [new SimpleSpanProcessor(exporter)],
-  })
-  const contextManager = new AsyncLocalStorageContextManager()
-  const testTracer = provider.getTracer("calendar-sync-topology-test")
-  let failFetch = false
+  jest.setTimeout(20_000)
 
-  beforeAll(() => {
-    trace.disable()
-    context.disable()
-    trace.setGlobalTracerProvider(provider)
-    context.setGlobalContextManager(contextManager.enable())
-  })
+  it("uses production instrumentation and keeps every request child bounded", async () => {
+    const proof = await runTopologyProof()
+    expect(proof.statusCode).toBe(201)
+    expect(proof.failureMessage).toBe("SyntheticUpstreamError")
 
-  afterAll(async () => {
-    await provider.shutdown()
-    contextManager.disable()
-    trace.disable()
-    context.disable()
-  })
-
-  beforeEach(() => {
-    exporter.reset()
-    failFetch = false
-  })
-
-  const inChildSpan = <T>(name: string, work: () => Promise<T>) =>
-    testTracer.startActiveSpan(name, async (span) => {
-      try {
-        return await work()
-      } finally {
-        span.end()
-      }
-    })
-
-  const createApp = async () => {
-    const fetchService = {
-      getMinSyncIntervalMinutes: () => 30,
-      fetchEvents: () =>
-        inChildSpan("HTTP GET", async () => {
-          if (failFetch) throw new Error("SyntheticUpstreamError")
-          return [{ fields: { canceled: false } }]
-        }),
-    }
-    const calendarRepository = {
-      save: jest.fn(async () => ({ id: "calendar-1" })),
-      recordSyncAttempt: jest.fn(async () => undefined),
-      findOne: jest.fn(async () => ({ id: "calendar-1" })),
-    }
-    const calendarContentRepository = {
-      saveWithTransaction: jest.fn(
-        async (_id, _content, callback: (manager: object) => Promise<void>) =>
-          inChildSpan("postgres.query", () => callback({})),
-      ),
-    }
-    const service = new CalendarSyncService(
-      fetchService as never,
-      { findOneOrFail: jest.fn() } as never,
-      calendarRepository as never,
-      calendarContentRepository as never,
-      {
-        fromFetcherCalendarEvent: jest.fn(() => ({ uid: "event-1" })),
-      } as never,
-      { syncEventSubjects: jest.fn(async () => undefined) } as never,
-      { create: jest.fn(async () => undefined) } as never,
-      { add: jest.fn() } as never,
-      { detectAndLogChanges: jest.fn() } as never,
+    const successfulSync = proof.spans.find(
+      (span) => span.name === "calendar.sync" && !span.attributes["error.type"],
     )
-    const module = await Test.createTestingModule({
-      controllers: [TelemetrySyncController],
-      providers: [{ provide: CalendarSyncService, useValue: service }],
-    }).compile()
-    const app = module.createNestApplication({ logger: false })
-    app.use((_req, response, next) => {
-      testTracer.startActiveSpan(
-        "POST /telemetry-sync",
-        { kind: SpanKind.SERVER },
-        (span) => {
-          response.once("finish", () => span.end())
-          next()
-        },
-      )
-    })
-    await app.init()
-    return { app, service }
-  }
-
-  it("contains awaited upstream/database work inside the HTTP server span", async () => {
-    const { app } = await createApp()
-    await request(app.getHttpServer())
-      .post("/telemetry-sync")
-      .send({ url: SYNTHETIC_URL })
-      .expect(201)
-    await provider.forceFlush()
-
-    const spans = exporter.getFinishedSpans()
-    const server = spans.find((span) => span.kind === SpanKind.SERVER)
-    const sync = spans.find((span) => span.name === "calendar.sync")
+    const server = proof.spans.find(
+      (span) =>
+        span.kind === SpanKind.SERVER &&
+        span.spanId === successfulSync?.parentSpanId,
+    )
     expect(server).toBeDefined()
-    expect(sync?.parentSpanContext?.spanId).toBe(server?.spanContext().spanId)
-    expect(sync?.attributes).toMatchObject({
-      action: "create",
-      school: "unknown",
-      "upstream.domain": "ensea.fr",
+    expect(successfulSync).toMatchObject({
+      parentSpanId: server?.spanId,
+      attributes: {
+        action: "create",
+        school: "unknown",
+        "upstream.domain": "ensea.fr",
+      },
     })
+
+    const descendants = proof.spans.filter(
+      (span) => span.parentSpanId === successfulSync?.spanId,
+    )
+    expect(descendants.some((span) => span.kind === SpanKind.CLIENT)).toBe(true)
     expect(
-      spans
-        .filter((span) => ["HTTP GET", "postgres.query"].includes(span.name))
-        .every(
-          (span) =>
-            span.parentSpanContext?.spanId === sync?.spanContext().spanId,
-        ),
+      descendants.some(
+        (span) =>
+          span.attributes["db.system"] === "postgresql" ||
+          span.attributes["db.system.name"] === "postgresql",
+      ),
     ).toBe(true)
+    const descendantIds = new Set([server!.spanId])
+    let previousSize = 0
+    while (descendantIds.size !== previousSize) {
+      previousSize = descendantIds.size
+      for (const span of proof.spans) {
+        if (span.parentSpanId && descendantIds.has(span.parentSpanId)) {
+          descendantIds.add(span.spanId)
+        }
+      }
+    }
     expect(
-      spans
+      proof.spans
         .filter(
           (span) =>
-            span.spanContext().traceId === server?.spanContext().traceId,
+            span.spanId !== server?.spanId && descendantIds.has(span.spanId),
         )
-        .every((span) => endNs(span.endTime) <= endNs(server!.endTime)),
+        .every((span) => span.endTimeNs <= server!.endTimeNs),
     ).toBe(true)
-    expect(spans.some((span) => span.name.startsWith("middleware"))).toBe(false)
-    expect(
-      JSON.stringify(
-        spans.map(({ name, attributes }) => ({ name, attributes })),
-      ),
-    ).not.toMatch(/synthetic-calendar-token-never-export|ade\.ensea\.fr\/feed/)
-    await app.close()
-  })
+    expect(proof.spans.some((span) => span.name.startsWith("middleware"))).toBe(
+      false,
+    )
 
-  it("ends the sync span and preserves the original failure", async () => {
-    const { app, service } = await createApp()
-    failFetch = true
-    await expect(
-      service.sync({ url: SYNTHETIC_URL, customData: null, name: "Synthetic" }),
-    ).rejects.toThrow("SyntheticUpstreamError")
-    await provider.forceFlush()
-
-    const sync = exporter
-      .getFinishedSpans()
-      .find((span) => span.name === "calendar.sync")
-    expect(sync?.attributes).toMatchObject({
-      "error.type": "Error",
+    const upstream = descendants.find(
+      (span) =>
+        span.kind === SpanKind.CLIENT &&
+        span.attributes["upstream.domain"] === "ensea.fr",
+    )
+    expect(upstream?.attributes).toMatchObject({
+      "http.url": "http://ensea.fr/",
+      "url.full": "http://ensea.fr/",
+      "http.target": "/",
+      "url.path": "/",
+      "url.query": "",
+      "http.host": "ensea.fr",
+      "net.peer.name": "ensea.fr",
+      "server.address": "ensea.fr",
+      "peer.service": "ensea.fr",
       "upstream.domain": "ensea.fr",
     })
-    expect(sync?.duration).toBeDefined()
-    await app.close()
+    expect(JSON.stringify(proof.spans)).not.toMatch(
+      new RegExp(`${SYNTHETIC_TOKEN}|ade\\.ensea\\.fr|/feed`),
+    )
+
+    const failedSync = proof.spans.find(
+      (span) =>
+        span.name === "calendar.sync" &&
+        span.attributes["error.type"] === "Error",
+    )
+    expect(failedSync).toBeDefined()
   })
 })

@@ -22,6 +22,20 @@ describe("sanitizeLog", () => {
     }
   })
 
+  it.each([
+    ["FCM token no longer registered (token suffix=…deadbeef)", "deadbeef"],
+    [
+      'Raw response text: {"student":"private profile","token":"short"}',
+      "private profile",
+    ],
+    ["request body=private event contents", "private event contents"],
+  ])("redacts sensitive scalar log forms: %s", (message, secret) => {
+    const result = sanitizeLog(message)
+
+    expect(result.body).not.toContain(secret)
+    expect(result.body).toMatch(/\[(?:redacted|body:redacted)\]/)
+  })
+
   it("drops unknown structured keys, bodies, stacks, and nested domain data", () => {
     const result = sanitizeLog({
       context: "sync",
