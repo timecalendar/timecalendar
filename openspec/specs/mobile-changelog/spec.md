@@ -160,4 +160,3 @@ seam, and its state transitions SHALL remain covered by Jest.
 - **WHEN** implementation is handed off on the no-simulator host
 - **THEN** the migration inbox contains a non-blocking iOS/Android checklist for modal
   presentation, all dismissal paths, schemes, screen readers, and large text
-
