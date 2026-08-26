@@ -14,7 +14,3 @@
 - [x] 3.1 Review `docs/mobile/architecture-book/testing.md`, `navigation.md`, `data.md`, and ADR 030 against the applied diff; record Architecture Book/ADR updates as N/A because this leaf fix changes no reusable rule or load-bearing decision and the issue restricts implementation to the two mobile files.
 - [x] 3.2 Run `cd mobile && npx tsc --noEmit`, `npm run lint`, and `npx prettier --check src/features/calendar-sources/ui/dev-import-screen.tsx src/features/calendar-sources/ui/dev-import-screen.test.tsx`, then run `git diff --check` from the repository root.
 - [x] 3.3 Confirm the final implementation diff contains only `mobile/src/features/calendar-sources/ui/dev-import-screen.tsx` and its colocated test, with no Maestro timeout/retry, onboarding/recovery, contract/generated API, schema, native config, CI/workflow, infrastructure, deploy, secret, or Flutter changes.
-
-## 4. Native acceptance after merge
-
-- [ ] 4.1 After Reviewer merge, use the path-triggered `main` mobile E2E workflow as the definitive CI proof that both Android and iOS pass the unchanged `mobile/.maestro/import-seed.yaml`; do not extend retries/timeouts or weaken assertions to obtain a pass.
