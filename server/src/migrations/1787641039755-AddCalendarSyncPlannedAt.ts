@@ -9,12 +9,11 @@ export class AddCalendarSyncPlannedAt1787641039755
     await queryRunner.query(
       `ALTER TABLE "calendar" ADD "syncPlannedAt" TIMESTAMP NOT NULL DEFAULT now()`,
     )
-    // Reproduce the behaviour of the global 30-minute throttle this column
-    // replaces, so the deploy is neutral at the instant it lands. The 30 is
-    // deliberately hardcoded: a migration is frozen history and must not follow
-    // a constant that later changes.
+    // Give every existing calendar a one-time conservative one-hour floor so
+    // the first rollout wave cannot violate Lyon 1's upstream limit. Runtime
+    // policy takes over after the next sync (30 minutes for generic sources).
     await queryRunner.query(
-      `UPDATE "calendar" SET "syncPlannedAt" = "lastUpdatedAt" + interval '30 minutes'`,
+      `UPDATE "calendar" SET "syncPlannedAt" = "lastUpdatedAt" + interval '60 minutes'`,
     )
     await queryRunner.query(
       `CREATE INDEX "IDX_calendar_syncPlannedAt" ON "calendar" ("syncPlannedAt") `,
