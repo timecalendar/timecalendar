@@ -18,6 +18,8 @@ Artifacts are **forced by distribution**: `preview` is `distribution: "internal"
 
 In `app.config.ts`. An `eas update` JS bundle is delivered **only** to a build whose native runtime fingerprint matches; any native-affecting change (new config plugin, a dep with native code, an SDK bump) changes the fingerprint and **forces a fresh native build** instead of a silently-incompatible OTA. This is the intended safety property — **an expected OTA that "doesn't apply" usually means the change touched native config**, not a bug. Chosen over `appVersion` (a plugin change without a version bump could ship an incompatible OTA) and manual `nativeVersion` (more bookkeeping, no better safety). Load-bearing for a skeleton that churns native config feature-by-feature → ADR [006](./decisions/006-eas-distribution.md).
 
+The onboarding carousel's `react-native-pager-view` dependency is one concrete fingerprint move: its `UIPageViewController`/`ViewPager2` bridge requires a fresh development, preview, or production EAS build before the carousel can run. EAS remains human-invoked; this consequence adds no workflow or `eas.json` change.
+
 ## Channels mapped to profiles
 
 Two channels: `preview` (internal dogfood) and `production` (store). `eas update --channel <name>` reaches only installed builds on the matching channel. Channel names mirror profile names (the EAS convention) so the command is unambiguous.

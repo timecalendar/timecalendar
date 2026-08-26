@@ -3,7 +3,8 @@
 #
 # Cold-launches the development-variant app, deep-links to the onboarding WELCOME
 # surface (now the onboarding entry — the school step moved to /onboarding/school),
-# asserts the brand welcome title renders, taps the "Get started" CTA, then asserts
+# asserts the brand welcome title renders, advances through the three-page carousel,
+# taps the final CTA, then asserts
 # a seeded school renders from the LIVE GET /schools round-trip (app → generated
 # client → customFetch → NestJS → Postgres, nothing mocked) — proving welcome →
 # CTA → live server-data read. The Phase-2 live-read proof is preserved, just
@@ -55,7 +56,14 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "TimeCalendar"
     timeout: 60000
-# Tap the "Get started" CTA → pushes /onboarding/school (the existing picker).
+# Advance welcome → agenda → notifications through the stable, platform-neutral
+# control and prove the final page before entering the existing school picker.
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible: "Get notified"
+# Tap the final CTA → pushes /onboarding/school (the existing picker).
 - tapOn:
     id: "onboarding-welcome-cta"
 # The school step renders.

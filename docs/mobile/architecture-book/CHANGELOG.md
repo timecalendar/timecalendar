@@ -1,5 +1,9 @@
 # Architecture Book changelog
 
+## 2026-08-25
+
+- Replaced the interim onboarding welcome with a neutral, localized three-page carousel and adopted the feature-local `react-native-pager-view` native bridge. ADR 036 records its native paging/event contract, suite-wide Jest seam, autolink/no-permission posture, and fresh-binary fingerprint consequence.
+
 ## 2026-08-08
 
 - Added the curated display-timezone preference (`settings.timezonePreference`,
