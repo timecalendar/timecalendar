@@ -37,8 +37,9 @@ Complete these in order after that profile exists:
 
 1. **Inventory the live stores.** Record the highest Android version code and iOS build number,
    current Apple team/app IDs, package/bundle ID and Play signing fingerprints.
-2. **Resolve Android signing.** Follow [document 2](./02-signing-and-credentials.md). Do not start a
-   Play build while Play App Signing status is unknown.
+2. **Resolve Android signing.** Play App Signing is confirmed enabled. Record the public app-signing
+   and upload-certificate fingerprints, then follow [document 2](./02-signing-and-credentials.md) to
+   recover the accepted upload key or complete an upload-key reset before starting a Play build.
 3. **Initialize EAS remote versions.** The repo uses `appVersionSource: "remote"`; initialize each
    platform from the highest live-store value with `eas build:version:set`, then let the store
    preview profile auto-increment. Flutter's repo says `3.1.0+134`, but the live consoles—not that

@@ -2,31 +2,30 @@
 
 ## 5.1 Current facts
 
-| Area                        | Status on 2026-08-26                      | Evidence / consequence                                                                                                        |
-| --------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| v4 store identity           | **Ready in source**                       | iOS and Android use `fr.samuelprak.timecalendar` outside the dev variant                                                      |
-| User-facing version         | **Ready in source**                       | `4.0.0`; live store build counters still need synchronization                                                                 |
-| EAS project link            | **Ready**                                 | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b`                                                 |
-| EAS ownership               | **Decision made**                         | personal Expo account for now; recovery inventory still needs recording                                                       |
-| Current preview profile     | **Wrong distribution for chosen preview** | creates direct-install APK/ad hoc IPA, not Play/TestFlight builds                                                             |
-| Production build profile    | **Configured, unproved**                  | store IPA/AAB, production OTA channel, remote auto-increment                                                                  |
-| Submission config           | **Skeleton only**                         | iOS IDs are environment references; Android points to an absent local service-account path and internal track                 |
-| Apple access                | **Owner confirmed**                       | Apple Developer + App Store Connect access available                                                                          |
-| Legacy iOS custody          | **Located**                               | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                         |
-| Android Play App Signing    | **Unknown / first gate**                  | supplied console text was Play protection, not the Play app-signing page                                                      |
-| Legacy Android keystore     | **Not found**                             | absent from known TimeCalendar workspaces and git history; may be recoverable elsewhere or resettable depending on Play state |
-| EAS-managed credentials     | **Unverified**                            | no live credential mutation or inspection was performed for this docs task                                                    |
-| Store tester groups         | **Unverified**                            | create/confirm **The team** in TestFlight and Play                                                                            |
-| Signed build/install        | **Not done in this task**                 | first store-internal preview remains a controlled rollout action                                                              |
-| Build automation/Mac runner | **Future work**                           | not required for the first manual EAS preview                                                                                 |
-| OTA infrastructure          | **Separate programme**                    | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready             |
+| Area                        | Status on 2026-08-26                      | Evidence / consequence                                                                                                    |
+| --------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| v4 store identity           | **Ready in source**                       | iOS and Android use `fr.samuelprak.timecalendar` outside the dev variant                                                  |
+| User-facing version         | **Ready in source**                       | `4.0.0`; live store build counters still need synchronization                                                             |
+| EAS project link            | **Ready**                                 | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b`                                             |
+| EAS ownership               | **Decision made**                         | personal Expo account for now; recovery inventory still needs recording                                                   |
+| Current preview profile     | **Wrong distribution for chosen preview** | creates direct-install APK/ad hoc IPA, not Play/TestFlight builds                                                         |
+| Production build profile    | **Configured, unproved**                  | store IPA/AAB, production OTA channel, remote auto-increment                                                              |
+| Submission config           | **Skeleton only**                         | iOS IDs are environment references; Android points to an absent local service-account path and internal track             |
+| Apple access                | **Owner confirmed**                       | Apple Developer + App Store Connect access available                                                                      |
+| Legacy iOS custody          | **Located**                               | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                     |
+| Android Play App Signing    | **Owner confirmed enabled**               | Play signs releases; the app-signing key is in use and an upload-key certificate exists                                   |
+| Legacy Android keystore     | **Not found**                             | absent from known TimeCalendar workspaces and git history; recover the accepted upload key or use Play's upload-key reset |
+| EAS-managed credentials     | **Unverified**                            | no live credential mutation or inspection was performed for this docs task                                                |
+| Store tester groups         | **Unverified**                            | create/confirm **The team** in TestFlight and Play                                                                        |
+| Signed build/install        | **Not done in this task**                 | first store-internal preview remains a controlled rollout action                                                          |
+| Build automation/Mac runner | **Future work**                           | not required for the first manual EAS preview                                                                             |
+| OTA infrastructure          | **Separate programme**                    | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready         |
 
 ## 5.2 Gates to the first preview
 
 Do these in order:
 
-1. **Owner — confirm Play App Signing** on the specific Play app-signing page and record public
-   app-signing/upload fingerprints.
+1. **Owner — record the public Play app-signing and upload-certificate fingerprints.**
 2. **Engineering ticket — implement the store-preview profile** and submit routing described in
    [document 3](./03-first-preview.md), with no credential material in the diff.
 3. **Owner — resolve Android upload-key custody** by importing the matching key or completing a
@@ -58,14 +57,15 @@ submission and tester distribution are explicit operator/deploy acts.
 
 - The React Native app already has the correct existing-store identity and a real EAS project.
 - Apple access is available, so losing an old local Xcode certificate is not by itself a blocker.
-- If Play App Signing is enabled—as is common for existing Play apps—the missing Android file is
-  likely an upload-key recovery/reset problem rather than loss of the user-facing signing key.
+- Play App Signing is confirmed enabled, so the missing Android file is an upload-key
+  recovery/reset problem rather than loss of the user-facing signing key.
 - Store-internal previews do not require the future Mac runner, CI release pipeline or completed OTA
   automation. The owner can bootstrap them manually through EAS, then automate the proven path.
 - No secret needs to be committed to finish this plan.
 
-## 5.5 The one uncomfortable fact
+## 5.5 The remaining Android signing work
 
-Do not schedule the first Android preview until Play App Signing is positively confirmed. That one
-console fact changes the recovery path from “reset/import an upload key” to “find the original
-app-signing key.” Everything else is normal setup work with known owners and finite steps.
+Play App Signing is enabled and Google holds the app-signing key. Before the first Android preview,
+record the public app-signing and upload-certificate fingerprints, then recover the accepted upload
+key or complete Google's upload-key reset. These are finite custody/recovery steps; the missing
+legacy keystore is not a loss of the user-facing signing key.

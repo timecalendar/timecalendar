@@ -25,25 +25,16 @@ No secret value was opened during this audit.
 
 ## 2.3 Android: the recovery decision tree
 
-In Play Console, open TimeCalendar and find the page specifically named **Play app signing** under
-App integrity / Play Store protection. The earlier “Protection Play Store / Play Integrity” screen
-does not answer this question.
+The owner has confirmed Play App Signing is enabled for TimeCalendar: Play signs releases, the
+app-signing key is in use and an upload-key certificate exists. The remaining recovery path is:
 
-1. Record whether Play App Signing is enabled and record the public SHA-256 fingerprints for the
-   **app-signing certificate** and **upload certificate**. Public fingerprints are metadata, not
-   private keys.
-2. If enabled:
-   - compare the upload-certificate fingerprint with any existing EAS/legacy credential;
-   - if the old upload keystore is unavailable, generate a new upload key under controlled custody
-     and request an upload-key reset in Play Console;
-   - after Google activates it, configure EAS-managed credentials with that key and prove one
-     internal-track upload.
-3. If not enabled:
-   - stop the v4 update path;
-   - recover the original app-signing keystore and password from old machines, backups or the
-     former operator's vault;
-   - do not let EAS generate a replacement and assume Play will accept it—it will not sign an
-     update compatible with installed v3 copies.
+1. Record the public SHA-256 fingerprints for the **app-signing certificate** and **upload
+   certificate**. Public fingerprints are metadata, not private keys.
+2. Compare the upload-certificate fingerprint with any existing EAS/legacy credential.
+3. If the old upload keystore is unavailable, generate a new upload key under controlled custody
+   and request an upload-key reset in Play Console.
+4. After Google activates it, configure EAS-managed credentials with that key and prove one
+   internal-track upload.
 
 Do not reset, revoke or delete an old key merely because a likely replacement was found. Compare
 fingerprints and complete a Play internal upload first.

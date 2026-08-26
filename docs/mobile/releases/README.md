@@ -28,9 +28,11 @@ For TimeCalendar, v4 will replace the existing Flutter app, keeping
   repeat builds and submissions later.
 
 This is reassuring overall: the code-side EAS project, production identity, version `4.0.0`, OTA
-fingerprint policy and a store-build profile already exist. The main unknown is Android signing,
-and the current `preview` profile is for direct installation rather than the chosen store-internal
-path. [Document 5](./05-readiness-and-gaps.md) turns those facts into a finite checklist.
+fingerprint policy and a store-build profile already exist. Play App Signing is confirmed enabled;
+the remaining Android signing work is to record the public certificate fingerprints and recover or
+reset the accepted upload key. The current `preview` profile is for direct installation rather than
+the chosen store-internal path. [Document 5](./05-readiness-and-gaps.md) turns those facts into a
+finite checklist.
 
 ## Reading order
 
@@ -44,15 +46,15 @@ path. [Document 5](./05-readiness-and-gaps.md) turns those facts into a finite c
 
 ## Decisions supplied by the owner
 
-| Decision                 | Answer                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------- |
-| v4 identity              | Replace the existing Flutter listing                                            |
-| Apple access             | Apple Developer and App Store Connect access available                          |
-| Expo ownership           | Keep the current personal Expo account for now                                  |
-| First preview            | Store-internal first: TestFlight + Play internal                                |
-| Recovery custody         | Vaultwarden                                                                     |
-| Operator model           | Owner bootstraps; CI/automation later                                           |
-| Android Play App Signing | **Not yet confirmed**; the supplied screen was Play protection, not app signing |
+| Decision                 | Answer                                                                                                         |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| v4 identity              | Replace the existing Flutter listing                                                                           |
+| Apple access             | Apple Developer and App Store Connect access available                                                         |
+| Expo ownership           | Keep the current personal Expo account for now                                                                 |
+| First preview            | Store-internal first: TestFlight + Play internal                                                               |
+| Recovery custody         | Vaultwarden                                                                                                    |
+| Operator model           | Owner bootstraps; CI/automation later                                                                          |
+| Android Play App Signing | **Confirmed enabled**; Play signs releases, the app-signing key is in use and an upload-key certificate exists |
 
 ## Vocabulary
 

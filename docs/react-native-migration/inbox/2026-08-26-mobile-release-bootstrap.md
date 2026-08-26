@@ -9,12 +9,10 @@ React Native preview through TestFlight and Play internal testing.
 
 ## Before the build
 
-- [ ] Open the existing Play app's **Play app signing** page and record whether it is enabled plus
-      the public app-signing and upload-certificate SHA-256 fingerprints. The Play protection /
-      Play Integrity dashboard is not sufficient.
-- [ ] If needed, recover the accepted Android upload key or complete Google's upload-key reset.
-      If Play App Signing is not enabled and the original app-signing key is unavailable, stop and
-      escalate before building.
+- [x] Confirm Play App Signing is enabled: Play signs releases, the app-signing key is in use and
+      an upload-key certificate exists.
+- [ ] Record the public app-signing and upload-certificate SHA-256 fingerprints.
+- [ ] Recover the accepted Android upload key or complete Google's upload-key reset.
 - [ ] In Vaultwarden, record Expo account recovery/custody, EAS project ownership, Apple team/app
       IDs, Play account/package, public fingerprints and credential rotation owners. Never paste a
       private key or service-account JSON into this note.
