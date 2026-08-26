@@ -15,7 +15,13 @@ describe("classifyUpstreamDomain", () => {
     ["http://127.0.0.1/feed", "invalid"],
     ["http://10.2.3.4/feed", "invalid"],
     ["http://169.254.169.254/feed", "invalid"],
+    ["http://[2606:4700:4700::1111]/feed", "custom"],
+    ["http://[::]/feed", "invalid"],
     ["http://[::1]/feed", "invalid"],
+    ["http://[fc00::1]/feed", "invalid"],
+    ["http://[fd12:3456:789a::1]/feed", "invalid"],
+    ["http://[fe80::1]/feed", "invalid"],
+    ["http://[::ffff:127.0.0.1]/feed", "invalid"],
   ])("classifies %s as %s", (input, expected) => {
     expect(classifyUpstreamDomain(input)).toBe(expected)
   })

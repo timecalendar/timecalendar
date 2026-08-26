@@ -36,6 +36,20 @@ describe("sanitizeLog", () => {
     expect(result.body).toMatch(/\[(?:redacted|body:redacted)\]/)
   })
 
+  it.each([
+    [
+      'cookie="session=super secret"; preference=private-value',
+      "cookie=[redacted]",
+    ],
+    ["cookie=session-secret; tracking=second-secret", "cookie=[redacted]"],
+    [
+      "raw response body: private line one\nprivate line two",
+      "[body:redacted]",
+    ],
+  ])("redacts the complete sensitive field in %s", (message, expected) => {
+    expect(sanitizeLog(message).body).toBe(expected)
+  })
+
   it("drops unknown structured keys, bodies, stacks, and nested domain data", () => {
     const result = sanitizeLog({
       context: "sync",

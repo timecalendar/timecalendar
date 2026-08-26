@@ -38,18 +38,28 @@ const isPrivateIpv4 = (hostname: string) => {
   )
 }
 
+const embeddedIpv4 = (hostname: string): string | undefined => {
+  const match = /^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(hostname)
+  if (!match) return undefined
+  const high = Number.parseInt(match[1], 16)
+  const low = Number.parseInt(match[2], 16)
+  return `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`
+}
+
 const isUnsafeAddress = (hostname: string) => {
   if (hostname === "localhost" || hostname.endsWith(".localhost")) return true
   const ipVersion = isIP(hostname)
   if (ipVersion === 4) return isPrivateIpv4(hostname)
   if (ipVersion === 6) {
     const normalized = hostname.toLowerCase()
+    const ipv4 = embeddedIpv4(normalized)
     return (
       normalized === "::" ||
       normalized === "::1" ||
       normalized.startsWith("fc") ||
       normalized.startsWith("fd") ||
-      /^fe[89ab]/.test(normalized)
+      /^fe[89ab]/.test(normalized) ||
+      (ipv4 !== undefined && isPrivateIpv4(ipv4))
     )
   }
   return false
@@ -66,7 +76,10 @@ const parseHostname = (input: string): string | undefined => {
     const url = new URL(hasScheme ? value : `http://${value}`)
     if (!/^https?:$/.test(url.protocol) || url.username || url.password)
       return undefined
-    const hostname = url.hostname.toLowerCase().replace(/\.+$/, "")
+    const hostname = url.hostname
+      .toLowerCase()
+      .replace(/^\[|\]$/g, "")
+      .replace(/\.+$/, "")
     if (!hostname || hostname.length > 253 || isUnsafeAddress(hostname))
       return undefined
     if (

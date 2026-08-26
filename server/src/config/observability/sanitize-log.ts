@@ -24,7 +24,7 @@ const ALLOWED_STRUCTURED_KEYS = new Set([
 const sanitizeText = (input: string) =>
   input
     .replace(
-      /\b(?:raw\s+response(?:\s+(?:text|body))?|request\s+body|response\s+body)\s*[:=]\s*.*$/gim,
+      /\b(?:raw\s+response(?:\s+(?:text|body))?|request\s+body|response\s+body)\s*[:=][\s\S]*$/gi,
       "[body:redacted]",
     )
     .replace(/[a-z][a-z\d+.-]*:\/\/[^\s"'<>]+/gi, (url) => {
@@ -34,7 +34,7 @@ const sanitizeText = (input: string) =>
     })
     .replace(/\b(?:bearer|basic)\s+[a-z\d._~+/-]+=*/gi, "[credential:redacted]")
     .replace(
-      /\b(?:authorization|cookie|set-cookie|token(?:\s+suffix)?|password|secret)\s*[:=]\s*[^\s,;)\]}]+/gi,
+      /\b(?:authorization|set-cookie|cookie|token(?:\s+suffix)?|password|secret)\s*[:=][^\r\n]*/gi,
       (match) => `${match.split(/[:=]/, 1)[0]}=[redacted]`,
     )
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[email:redacted]")
