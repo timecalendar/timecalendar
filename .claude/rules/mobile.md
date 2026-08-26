@@ -43,9 +43,8 @@ can't encode). For a load-bearing decision, also read the relevant ADR.
 - **`docs/mobile/releases/`** — the operator guide and readiness checklist: signing custody, the
   first store preview, the v4 cutover, and what is still owner-only. Read it with `eas.md`.
 - **`mobile/EAS.md`** — the commands.
-- **`docs/mobile/ota/`** and **`docs/mobile/build-infrastructure/`** are **exploration**: how
-  those decisions were reached. They are not maintained against the config and must not be read
-  as rules. `eas.md` and the ADRs win.
+- **`docs/mobile/ota/`** is **exploration**: how that decision was reached. It is not maintained
+  against the config and must not be read as rules. `eas.md` and the ADRs win.
 
 > Changing a rule? Update the topical file **and** append to `architecture-changelog.md`
 > (migration-approach §7). Adding a load-bearing decision? Write an ADR in `decisions/`.
