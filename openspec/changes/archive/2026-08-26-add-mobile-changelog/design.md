@@ -54,11 +54,11 @@ by Settings rows.
 
 The first catalog contains exactly these localized concepts:
 
-| Icon concept | English | French |
-| --- | --- | --- |
-| design | A fresh new design — A calmer, clearer experience designed for your phone. | Un tout nouveau design — Une expérience plus claire et agréable, pensée pour votre téléphone. |
-| speed | A faster calendar — Your schedule loads quickly and stays useful offline. | Un calendrier plus rapide — Votre emploi du temps se charge rapidement et reste disponible hors ligne. |
-| native phone | A truly native feel — Navigation and controls now follow iOS and Android. | Une expérience vraiment native — La navigation et les commandes s’adaptent maintenant à iOS et Android. |
+| Icon concept | English                                                                    | French                                                                                                  |
+| ------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| design       | A fresh new design — A calmer, clearer experience designed for your phone. | Un tout nouveau design — Une expérience plus claire et agréable, pensée pour votre téléphone.           |
+| speed        | A faster calendar — Your schedule loads quickly and stays useful offline.  | Un calendrier plus rapide — Votre emploi du temps se charge rapidement et reste disponible hors ligne.  |
+| native phone | A truly native feel — Navigation and controls now follow iOS and Android.  | Une expérience vraiment native — La navigation et les commandes s’adaptent maintenant à iOS et Android. |
 
 The exact natural-language copy may be polished during apply while preserving meaning and
 FR/EN parity. I18n keys rather than embedded translated objects keep the established typed
