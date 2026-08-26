@@ -32,6 +32,7 @@ decision changes; use Git for its history.
 | [036](./036-native-onboarding-pager.md)               | Use the native pager bridge for onboarding                            |
 | [037](./037-self-hosted-ota-runtime.md)               | Self-host signed OTA updates and apply them at foreground boundaries  |
 | [038](./038-isolate-maestro-flow-lifecycles.md)       | Isolate each Maestro flow in a fresh CLI process                      |
+| [039](./039-changelog-version-gating.md)              | Gate bundled Changelog releases with an integer                       |
 
 ## Superseded or completed records
 

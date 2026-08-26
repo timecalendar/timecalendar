@@ -25,12 +25,12 @@ all statements finish.
 
 ## Tables
 
-| Table | Purpose | Important representation |
-| --- | --- | --- |
-| `personal_events` | Durable local user-created events | Dates are ISO-8601 UTC text; colors are `#RRGGBB`; IDs come from `expo-crypto` |
-| `user_calendars` | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text |
-| `calendar_events` | Replaceable offline cache of synced events | Server fields remain verbatim; structured fields are validated JSON text |
-| `checklist_items` | Event checklist items and order | Soft reference by event UID; deletion is hard; reordering is transactional |
+| Table             | Purpose                                           | Important representation                                                           |
+| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `personal_events` | Durable local user-created events                 | Dates are ISO-8601 UTC text; colors are `#RRGGBB`; IDs come from `expo-crypto`     |
+| `user_calendars`  | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text |
+| `calendar_events` | Replaceable offline cache of synced events        | Server fields remain verbatim; structured fields are validated JSON text           |
+| `checklist_items` | Event checklist items and order                   | Soft reference by event UID; deletion is hard; reordering is transactional         |
 
 Repository mappers own database encoding and defensive decoding. UI and forms work with
 domain values, not rows.
@@ -38,8 +38,14 @@ domain values, not rows.
 ## MMKV values
 
 MMKV holds settings, notification preferences, query persistence, school/group identity,
-and hidden-event identifiers. Keys are flat and namespaced. Reads are total and return a
-safe default for missing, malformed, or legacy values.
+hidden-event identifiers, and Changelog acknowledgement. Keys are flat and namespaced.
+Reads are total and return a safe default for missing, malformed, or legacy values.
+
+Changelog stores the flat numeric key `changelogSeenVersion`. Its feature store accepts only
+finite, non-negative safe integers; missing, malformed, negative, or fractional values decode
+as absent. The tabs gate silently seeds an absent value to the bundled current integer, while
+an older integer presents only newer bundled releases. Phase 09 validates Flutter's
+`current_version` and calls `setChangelogSeenVersion` before tabs eligibility runs.
 
 Hidden events use one validated value shaped as `{ uidHiddenEvents, namedHiddenEvents }`.
 They are filtered at the calendar event-source seam, not deleted from the synced cache.
