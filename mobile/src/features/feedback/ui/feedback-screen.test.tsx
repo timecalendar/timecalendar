@@ -65,9 +65,8 @@ it("renders accessible fields and rejects an empty form locally", async () => {
 it("prefills remembered e-mail and submits normalized values with route context", async () => {
   mockGetRememberedEmail.mockReturnValue("remembered@example.fr")
   mockParams.mockReturnValue({
-    calendarUrl: [" https://example.fr/a.ics "],
-    schoolId: "school",
-    schoolName: "University",
+    classification: [" unsupported_link "],
+    helpKey: "tours_export",
   })
   sendFeedback.mockResolvedValue(true)
   const alert = jest.spyOn(Alert, "alert").mockImplementation()
@@ -83,9 +82,8 @@ it("prefills remembered e-mail and submits normalized values with route context"
     expect(sendFeedback).toHaveBeenCalledWith({
       email: "remembered@example.fr",
       message: "Hello",
-      calendarUrl: "https://example.fr/a.ics",
-      schoolId: "school",
-      schoolName: "University",
+      classification: "unsupported_link",
+      helpKey: "tours_export",
     }),
   )
   expect(setRememberedEmail).toHaveBeenCalledWith("remembered@example.fr")
@@ -98,6 +96,33 @@ it("prefills remembered e-mail and submits normalized values with route context"
   close?.onPress?.()
   expect(router.back).toHaveBeenCalled()
   alert.mockRestore()
+})
+
+it("drops non-allowlisted route context", async () => {
+  mockParams.mockReturnValue({
+    classification: "https://synthetic-login.example/resource-123",
+    helpKey: "synthetic-password",
+    calendarUrl: "https://should-not-exist.example",
+    schoolId: "school-secret",
+  })
+  sendFeedback.mockResolvedValue(true)
+  jest.spyOn(Alert, "alert").mockImplementation()
+  const { getByTestId } = await render(<FeedbackScreen />)
+  await act(async () => {
+    fireEvent.changeText(getByTestId("feedback-email-input"), "a@b.fr")
+    fireEvent.changeText(getByTestId("feedback-message-input"), "Hello")
+  })
+  await act(async () => {
+    fireEvent.press(getByTestId("feedback-submit"))
+  })
+  await waitFor(() =>
+    expect(sendFeedback).toHaveBeenCalledWith({
+      email: "a@b.fr",
+      message: "Hello",
+    }),
+  )
+  expect(JSON.stringify(sendFeedback.mock.calls)).not.toContain("resource-123")
+  expect(JSON.stringify(sendFeedback.mock.calls)).not.toContain("school-secret")
 })
 
 it("retains input and permits retry after a recorded failure", async () => {

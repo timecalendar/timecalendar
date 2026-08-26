@@ -3,7 +3,7 @@ import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 
 const univrennes1Strategy = new SchoolStrategy({
   school: "univrennes1",
-  match: ["univ-rennes1.fr"],
+  match: ["univ-rennes1.fr", "planning.univ-rennes.fr"],
   fetcher: new IcalFetcher({ withRetries: true }),
 })
 

@@ -231,6 +231,16 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarImportErrorDto"
+                }
+              }
+            }
           }
         },
         "summary": "Create a calendar",
@@ -983,6 +993,52 @@
           "token"
         ]
       },
+      "CalendarImportErrorDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "calendar_import_failed"
+            ]
+          },
+          "classification": {
+            "enum": [
+              "unsupported_link",
+              "upstream_unavailable",
+              "invalid_calendar",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "helpKey": {
+            "enum": [
+              "rennes_export",
+              "tours_export",
+              "reunion_export",
+              "montpellier_export",
+              "ube_export",
+              "lyon2_export",
+              "saint_etienne_outage",
+              "bordeaux_inp_outage",
+              "toulouse3_outage",
+              "generic_invalid_calendar",
+              "generic_upstream_unavailable",
+              "generic_unknown"
+            ],
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "classification",
+          "helpKey",
+          "retryable"
+        ]
+      },
       "SyncCalendarsDto": {
         "type": "object",
         "properties": {
@@ -1241,20 +1297,37 @@
               "type": "string"
             }
           },
-          "schoolId": {
-            "type": "string"
-          },
-          "schoolName": {
-            "type": "string"
-          },
           "gradeName": {
             "type": "string"
           },
           "deviceInfo": {
             "type": "string"
           },
-          "calendarUrl": {
-            "type": "string"
+          "recoveryClassification": {
+            "type": "string",
+            "enum": [
+              "unsupported_link",
+              "upstream_unavailable",
+              "invalid_calendar",
+              "unknown"
+            ]
+          },
+          "recoveryHelpKey": {
+            "type": "string",
+            "enum": [
+              "rennes_export",
+              "tours_export",
+              "reunion_export",
+              "montpellier_export",
+              "ube_export",
+              "lyon2_export",
+              "saint_etienne_outage",
+              "bordeaux_inp_outage",
+              "toulouse3_outage",
+              "generic_invalid_calendar",
+              "generic_upstream_unavailable",
+              "generic_unknown"
+            ]
           }
         },
         "required": [

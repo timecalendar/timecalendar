@@ -33,7 +33,7 @@ from `@/features/about/ui`. The Settings hub's explicit App section owns the `/a
 the feature owns the content and consumes Settings' exported grouped-list primitives.
 
 Root `/feedback` is a header-capable Stack sibling reached from Settings or a recorded
-iCal import failure. Its optional route parameters are limited to `calendarUrl`,
-`schoolId`, and `schoolName`; the route is a thin re-export from the feedback feature.
+iCal import failure. Its optional route parameters are limited to allowlisted recovery
+`classification` and `helpKey`; the route is a thin re-export from the feedback feature.
 
 The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`), `onboarding/groups` = the group picker (`…/onboarding/groups?schoolId=<id>`). Its index is the first-run deep-link surface, not the bare list; adding calendars from Settings continues through calendar management's native header action.

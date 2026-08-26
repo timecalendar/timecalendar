@@ -48,9 +48,8 @@ it("builds standard and optional-context DTOs without unsupported fields", () =>
       {
         email: "a@b.fr",
         message: "hello",
-        calendarUrl: " https://example.fr/a.ics ",
-        schoolId: " school ",
-        schoolName: " University ",
+        classification: "unsupported_link",
+        helpKey: "tours_export",
       },
       [],
       "device",
@@ -60,9 +59,8 @@ it("builds standard and optional-context DTOs without unsupported fields", () =>
     message: "hello",
     calendarIds: [],
     deviceInfo: "device",
-    calendarUrl: "https://example.fr/a.ics",
-    schoolId: "school",
-    schoolName: "University",
+    recoveryClassification: "unsupported_link",
+    recoveryHelpKey: "tours_export",
   })
 })
 

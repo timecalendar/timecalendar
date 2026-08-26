@@ -4,7 +4,14 @@
 // other or this barrel (the no-self-barrel-cycle rule, B-2).
 export {
   addCalendarFromToken,
+  type CalendarImportClassification,
+  type CalendarImportHelpKey,
+  type CalendarImportRecovery,
+  CalendarImportRecoveryError,
+  type CalendarSchoolContext,
   type CreateCalendarResult,
+  isCalendarImportClassification,
+  isCalendarImportHelpKey,
   parseScannedSource,
   type ScannedCalendarSource,
   type UseAddCalendar,
