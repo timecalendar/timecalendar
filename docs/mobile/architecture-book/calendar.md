@@ -74,6 +74,13 @@ Sync runs at startup, foreground/resume, manual refresh, source changes, and not
 receipt. `calendar_events` is disposable cache and is rebuilt from durable source tokens;
 it is not a migration/import target.
 
+Server sync telemetry is owned by the
+[server observability runbook](../../server/observability.md), not by the mobile sync
+seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses
+only its reviewed finite upstream classifier; this boundary changes neither the mobile
+API nor local sync behavior. Unexpected mobile-local failures continue to use the
+privacy-safe `@/firebase` seam.
+
 ## Surfaces
 
 - Calendar offers day/week timeline and agenda modes, with platform-specific native chrome.

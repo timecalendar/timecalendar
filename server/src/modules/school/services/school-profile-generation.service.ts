@@ -114,10 +114,10 @@ export class SchoolProfileGenerationService {
         generatedData = JSON.parse(jsonText)
       } catch (parseError) {
         this.logger.error(
-          `Failed to parse JSON response: ${parseError.message}`,
+          "Failed to parse generated profile response",
+          parseError,
         )
-        this.logger.error(`Raw response text: ${text}`)
-        throw new Error(`Invalid JSON response from AI: ${parseError.message}`)
+        throw new Error("Invalid JSON response from AI")
       }
 
       // Validate the generated data against our schema

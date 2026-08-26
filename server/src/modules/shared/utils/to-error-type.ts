@@ -12,9 +12,12 @@ export function toErrorType(error: unknown): string {
       name?: unknown
       constructor?: { name?: unknown }
     }
-    if (typeof name === "string" && name) return name
+    if (typeof name === "string" && name)
+      return /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(name) ? name : "unknown"
     if (typeof constructor?.name === "string" && constructor.name)
-      return constructor.name
+      return /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(constructor.name)
+        ? constructor.name
+        : "unknown"
   }
   return "unknown"
 }

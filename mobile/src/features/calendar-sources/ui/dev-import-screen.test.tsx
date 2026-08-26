@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react-native"
+import { act, render, screen, waitFor } from "@testing-library/react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 
 import { isDevVariant } from "@/config/variant"
@@ -59,6 +59,30 @@ describe("DevImportScreen", () => {
     expect(mockAddCalendarFromToken).toHaveBeenCalledWith("e2e-smoke-calendar")
     expect(mockSync).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+  })
+
+  it("finishes the mounted import when the sync callback changes during its rerender", async () => {
+    mockIsDevVariant.mockReturnValue(true)
+    let finishSync: () => void = () => undefined
+    const firstSync = jest.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishSync = resolve
+        }),
+    )
+    const nextSync = jest.fn(() => Promise.resolve())
+    mockUseSyncCalendars
+      .mockReturnValueOnce({ sync: firstSync })
+      .mockReturnValue({ sync: nextSync })
+
+    const view = await render(<DevImportScreen />)
+    await waitFor(() => expect(firstSync).toHaveBeenCalledTimes(1))
+
+    await view.rerender(<DevImportScreen />)
+    await act(async () => finishSync())
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
+    expect(nextSync).not.toHaveBeenCalled()
   })
 
   it("production variant: performs NO import and shows the inert state (security boundary)", async () => {

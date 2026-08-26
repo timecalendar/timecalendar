@@ -42,18 +42,7 @@ export function DevImportScreen() {
   // re-read): the import must run once per mount.
   const startedRef = useRef(false)
   const mountedRef = useRef(false)
-  const syncRef = useRef(sync)
-  const routerRef = useRef(router)
 
-  useEffect(() => {
-    syncRef.current = sync
-    routerRef.current = router
-  }, [sync, router])
-
-  // Mounted lifetime is independent of the orchestration dependencies. In
-  // particular, the source-health MMKV write synchronously re-renders mounted
-  // subscribers, which can change hook callback identities without unmounting
-  // this screen.
   useEffect(() => {
     mountedRef.current = true
 
@@ -69,15 +58,15 @@ export function DevImportScreen() {
     const run = async () => {
       try {
         await addCalendarFromToken(token)
-        await syncRef.current()
-        if (mountedRef.current) routerRef.current.replace("/calendar")
+        await sync()
+        if (mountedRef.current) router.replace("/calendar")
       } catch (caught) {
         recordUnknownError(caught, "dev-import")
         if (mountedRef.current) setError(true)
       }
     }
     void run()
-  }, [isDev, token])
+  }, [isDev, token, sync, router])
 
   return (
     <ThemedView style={styles.container}>
