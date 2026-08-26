@@ -1,7 +1,10 @@
 # server-ade-export-window Specification
 
 ## Purpose
-TBD - created by archiving change normalize-ade-export-date-windows. Update Purpose after archive.
+Define how the server recognizes and normalizes ADE iCal export date windows at fetch time
+using a bounded rolling policy while preserving stored URLs and school-specific strategy
+behavior.
+
 ## Requirements
 ### Requirement: Recognized ADE iCal date windows are normalized at fetch time
 
@@ -110,4 +113,3 @@ before the existing non-generic fallback renamers.
 - **WHEN** no school strategy matches an eligible ADE calendar
 - **THEN** a single UTC date sample produces one generic normalization before the existing
   fallback school renamers run
-

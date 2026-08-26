@@ -210,4 +210,3 @@ calendar SHALL continue to be fetched only when selected by the existing stored
 - **WHEN** a normalized ADE calendar resolves to a strategy using the 30-minute default or
   another declared interval
 - **THEN** its next-fetch planning continues to use that unchanged interval
-
