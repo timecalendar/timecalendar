@@ -47,6 +47,10 @@ module.exports = {
     // synthetic onBarcodeScanned can be driven through the real parser under Jest
     // (Phase-3 ship 3 — the camera can't be CI/Maestro-driven).
     "<rootDir>/jest/setup-expo-camera.ts",
+    // react-native-pager-view is a native UIPageViewController/ViewPager2
+    // bridge. Its mock renders every page and exposes the imperative methods so
+    // tests drive production onPageSelected state without a native runtime.
+    "<rootDir>/jest/setup-pager-view.ts",
     // calendar-kit/setup mocks @howljs/calendar-kit (a Reanimated/worklet grid
     // with no off-device runtime) so the calendar screen renders through the
     // renderer adapter and its renderEvent→tile wiring is provable under Jest
