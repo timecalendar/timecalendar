@@ -44,7 +44,7 @@ reconciliation must not overwrite incident-time rollback decisions. See ADR 037 
 
 Two channels: `preview` (internal dogfood) and `production` (store). `eas update --channel <name>` reaches only installed builds on the matching channel. Channel names mirror profile names (the EAS convention) so the command is unambiguous.
 
-## The `expo-updates` seam without a project
+## The initialized `expo-updates` project seam
 
 `expo-updates` is in `plugins`; `updates.url` (`https://u.expo.dev/<id>`) and `extra.eas.projectId` are derived from `easProjectId` = `process.env.EAS_PROJECT_ID` ?? the **committed real id** (`eas init` produced `@samuelprak/timecalendar`, projectId `3b427ef6-1aae-4175-8217-ea447ee6df6b`). The id is **not a secret** — it ships in the binary and the EAS project is public-by-id — so committing it as the fallback means a fresh clone / a CI build works with no env. (An earlier **zero-UUID placeholder** was wrong: a fake-but-present id makes EAS believe the project is already linked and **refuse `eas init`** — "Project already linked … Experience with id … does not exist". `eas init` was run with the id left `undefined`, which let it create and link the fresh project; the returned id is now the committed fallback.) `tsc`/lint/Jest don't read `projectId`, so CI `test-mobile` is unaffected.
 
@@ -68,10 +68,11 @@ This is build/release _configuration_, not runtime app behavior — a fabricated
 ## Human prerequisites (inbox — not blockers)
 
 The real `projectId`/`updates.url` link is complete. Account login/recovery, Apple credentials +
-EAS-managed iOS signing, confirmation or recovery of Android signing, store submission credentials,
-a store-distributed preview profile, actual `eas build`/`submit` runs, real-device installs and
-TestFlight/Play internal groups remain. The [release readiness checklist](../releases/05-readiness-and-gaps.md)
-owns their current status. The config is green without them; these unlock builds/installs.
+EAS-managed iOS signing, recording the public Play app-signing/upload fingerprints, recovering or
+resetting the Play-accepted upload key, store submission credentials, a store-distributed preview
+profile, actual `eas build`/`submit` runs, real-device installs and TestFlight/Play internal groups
+remain. The [release readiness checklist](../releases/05-readiness-and-gaps.md) owns their current
+status. The config is green without them; these unlock builds/installs.
 
 ## Deferred (recorded debt — not built)
 
