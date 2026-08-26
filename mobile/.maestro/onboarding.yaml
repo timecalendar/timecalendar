@@ -50,11 +50,13 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
-# The welcome surface renders. Generous timeout: a release-config iOS cold start +
-# JS bundle load can land just past Maestro's ~17s default. extendedWaitUntil is
-# the assert-with-timeout.
+# The welcome surface renders. The title can wrap into separate accessibility
+# nodes on narrow Android screens, so use the stable Skip control as the
+# render-ready assertion. A release-config iOS cold start + JS bundle load can
+# land just past Maestro's ~17s default.
 - extendedWaitUntil:
-    visible: "TimeCalendar"
+    visible:
+      id: "onboarding-skip"
     timeout: 60000
 # Advance welcome → agenda → notifications through the stable, platform-neutral
 # control and prove the final page before entering the existing school picker.
@@ -76,12 +78,12 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "My Gaming Academia"
     timeout: 60000
 # Stable accent-free school-search step (Phase-3 ship 2): typing a matching needle
-# keeps the seeded ASCII school visible; a non-matching needle hides it; clearing
-# brings it back. Cross-platform stable — the seeded name + the filter testID are
-# fixed, no fixture-dependent selectors (unlike the group leaves — those stay
-# Jest-proven, D5). Proves the search filter end to end against the live list.
+# into the live native-header search field keeps the seeded ASCII school visible;
+# a non-matching needle hides it; clearing brings it back. No fixture-dependent
+# selectors are used (unlike the group leaves — those stay Jest-proven, D5).
+# Proves the search filter end to end against the live list.
 - tapOn:
-    id: "onboarding-school-filter"
+    text: "Search schools"
 - inputText: "Gaming"
 - extendedWaitUntil:
     visible: "My Gaming Academia"
