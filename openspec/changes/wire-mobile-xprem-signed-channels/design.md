@@ -38,8 +38,9 @@ numbering error: ADR 036 owns the onboarding pager; ADR 037 is the OTA decision 
 - Publishing, republishing, rollback, channel/branch creation or mapping, progressive rollout,
   source-map upload, or release automation.
 - Store builds/submission, credentials, device installation, or real-device OTA proof.
-- xprem, R2, Postgres, Terraform, Kubernetes, Cloudflare, server, OpenAPI, Firebase file, CI
-  workflow, or Flutter legacy changes.
+- xprem, R2, Postgres, Terraform, Kubernetes, Cloudflare, server, OpenAPI, Firebase file,
+  EAS/GitHub build or publish workflow, or Flutter legacy changes. The existing generic mobile CI
+  config render may declare development identity; it must not declare a release channel.
 - A `beta` channel, runtime channel picker, environment switcher, or weakening Expo anti-bricking
   measures.
 
@@ -150,6 +151,20 @@ a run-owned scratch copy for both release lanes.
 This test proves deterministic JavaScript/config behavior, not device transport or cryptography.
 Real signature rejection and channel delivery remain part of the downstream human device ticket.
 
+## Decision 8 — Generic CI config rendering declares development identity explicitly
+
+The existing `Generate Expo type declarations` step in `.github/workflows/ci-mobile.yml` sets only
+`APP_VARIANT=development`. `npx expo customize tsconfig.json` resolves dynamic Expo config while
+generating gitignored development type declarations, so the caller must explicitly select the
+Metro/development identity instead of falling into the release identity that requires an
+`OTA_CHANNEL`.
+
+This is a caller declaration, not a fallback in `mobile/app.config.ts`: release configuration keeps
+failing closed when its channel is missing or invalid. The step does not set `OTA_CHANNEL`, and the
+workflow does not gain a job-wide/default channel, EAS/native build, publish, channel mutation,
+rollout, rollback, or credential. Special-casing `CI` or this command inside app config was rejected
+because it would make release identity depend on caller detection rather than explicit inputs.
+
 ## Risks / Trade-offs
 
 - **[A release command omits or misspells `OTA_CHANNEL`]** → fail config resolution before a binary
@@ -166,6 +181,9 @@ Real signature rejection and channel delivery remain part of the downstream huma
   native-affecting control change to move the hash after any correction.
 - **[Secrets appear while inspecting CLI output]** → use only public inputs, never fetch/read a
   private key, scan the diff and logs, and keep credential-bearing build/publish work out of scope.
+- **[Generic CI config rendering is mistaken for a release build]** → declare
+  `APP_VARIANT=development` only on the Expo type-generation step; never supply `OTA_CHANNEL` or
+  weaken the release config's fail-closed contract.
 
 ## Migration Plan
 

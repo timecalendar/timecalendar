@@ -78,19 +78,29 @@ unknown release-channel values SHALL fail config resolution rather than defaulti
 - **WHEN** production-identity config is resolved without `OTA_CHANNEL` or with an unknown value
 - **THEN** config resolution fails before a binary or update can be produced
 
-### Requirement: EAS Build remains human-invoked; CI is not changed
+### Requirement: EAS Build remains human-invoked; CI has no release automation
 
 EAS Build and Submit SHALL remain deliberately invoked and SHALL NOT add an EAS or GitHub build
 workflow in this change. xprem publishing, channel/branch administration, rollout, and rollback
 SHALL remain separate operator actions and SHALL NOT be added by this change. The native E2E path
-SHALL continue to build through Expo prebuild and native tooling rather than EAS.
+SHALL continue to build through Expo prebuild and native tooling rather than EAS. The existing
+generic `Generate Expo type declarations` CI step SHALL set `APP_VARIANT=development` so its Expo
+config render explicitly selects Metro/development mode; it SHALL NOT set `OTA_CHANNEL` or establish
+a job-wide/default release channel.
 
 #### Scenario: No build or publish automation is added
 
 - **WHEN** the change is applied
-- **THEN** `.eas/workflows/` and `.github/workflows/` are unchanged
+- **THEN** `.eas/workflows/` and every EAS/GitHub build or publish workflow are unchanged
 - **AND** no publish token, publish command wrapper, channel mutation, rollout, or rollback action is
   added
+
+#### Scenario: Generic type generation resolves development config explicitly
+
+- **WHEN** the existing `Generate Expo type declarations` CI step runs
+- **THEN** that step sets `APP_VARIANT=development`
+- **AND** it sets no `OTA_CHANNEL` and no job-wide/default channel exists
+- **AND** release config resolution still fails closed without an explicit valid `OTA_CHANNEL`
 
 ### Requirement: Expo Updates launch fallback is explicitly non-blocking
 

@@ -44,6 +44,8 @@ jobs:
     # documented way to typecheck in CI without a dev server.
     - name: Generate Expo type declarations
       working-directory: ./mobile
+      env:
+        APP_VARIANT: development
       run: npx expo customize tsconfig.json
 
     - name: Typecheck

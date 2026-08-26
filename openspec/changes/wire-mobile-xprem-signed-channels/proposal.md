@@ -44,8 +44,11 @@ None.
   certificate path, private-key ignore rules, and `.fingerprintignore` only if empirical evidence
   proves a narrow correction is necessary.
 - Validation/tooling: focused config proof, project-local Expo Updates fingerprint commands, Expo
-  config/prebuild rendering, TypeScript, lint/format, and CI-equivalent mobile checks.
+  config/prebuild rendering, TypeScript, lint/format, CI-equivalent mobile checks, and an explicit
+  `APP_VARIANT=development` declaration on the existing generic Expo type-generation CI step.
 - Documentation: `mobile/EAS.md`, `docs/mobile/architecture-book/eas.md`, ADR 037,
   `CHANGELOG.md`, and the Phase 10 roadmap.
-- No OpenAPI/generated-client, database migration, server, Terraform/Kubernetes, GitHub workflow,
-  Firebase configuration, store credential, publish automation, or legacy Flutter change.
+- No OpenAPI/generated-client, database migration, server, Terraform/Kubernetes, EAS/GitHub build
+  or publish workflow, Firebase configuration, store credential, publish/channel/rollback
+  automation, or legacy Flutter change. The existing mobile CI workflow changes only to identify
+  its generic config render as development/Metro mode; it supplies no release channel.

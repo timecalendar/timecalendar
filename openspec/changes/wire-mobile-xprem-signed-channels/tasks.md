@@ -106,8 +106,11 @@
       ticket
 - [x] 8.3 Run `openspec validate wire-mobile-xprem-signed-channels --strict` and
       `openspec validate --all --strict`; review the final diff against scope and explicitly confirm no
-      OpenAPI/generated client, migration, Firebase file, server, Terraform/Kubernetes, workflow,
-      credential, publish automation, or Flutter legacy change
+      OpenAPI/generated client, migration, Firebase file, server, Terraform/Kubernetes, EAS/GitHub
+      build or publish workflow, credential, publish/channel/rollback automation, or Flutter legacy
+      change; permit only the existing generic Expo type-generation CI step to declare
+      `APP_VARIANT=development` without `OTA_CHANNEL`
 - [ ] 8.4 Push the implementation on the existing issue branch/PR and use exact-head GitHub CI as
-      the proof test; do not mark apply complete until required mobile checks are green or a concrete
-      pipeline blocker is escalated
+      the proof test; first prove `APP_VARIANT=development npx expo customize tsconfig.json` locally
+      and verify the workflow declaration is step-local with no `OTA_CHANNEL`; do not mark apply
+      complete until required mobile checks are green or a concrete pipeline blocker is escalated
