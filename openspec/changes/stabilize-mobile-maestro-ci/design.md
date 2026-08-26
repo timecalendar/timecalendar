@@ -132,10 +132,10 @@ Alternatives rejected:
 - Retry the full suite: repeats already-passing flows, resets the server, and masks failures.
 - No startup retry: the diagnosed run needed multiple attempts before any driver listened.
 
-## Decision 5 — Record the harness rule as ADR 037 and require `main` proof
+## Decision 5 — Record the harness rule as ADR 038 and require `main` proof
 
 The process-per-flow and startup-only retry boundary changes the binding testing rule, so the
-Applier writes ADR 037, indexes it, and updates `testing.md`, the E2E README, and the agent
+Applier writes ADR 038, indexes it, and updates `testing.md`, the E2E README, and the agent
 handbook. The ADR is explicitly revisitable when Maestro documents a fixed iOS 26 driver
 lifecycle and a pinned upgrade passes repeated directory-suite proof.
 

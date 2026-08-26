@@ -31,6 +31,7 @@ decision changes; use Git for its history.
 | [035](./035-display-timezone-preference.md)           | Resolve the curated display-timezone preference at one seam           |
 | [036](./036-native-onboarding-pager.md)               | Use the native pager bridge for onboarding                            |
 | [037](./037-self-hosted-ota-runtime.md)               | Self-host signed OTA updates and apply them at foreground boundaries  |
+| [038](./038-isolate-maestro-flow-lifecycles.md)       | Isolate each Maestro flow in a fresh CLI process                      |
 
 ## Superseded or completed records
 
