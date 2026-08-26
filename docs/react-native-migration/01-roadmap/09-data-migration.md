@@ -9,6 +9,10 @@
 1. **Read legacy stores natively** on first launch:
    - **sembast** `simple_database.db` (JSONL) → replay the log (last-write-wins, drop tombstones) per the verified parser in the research doc §3.2.
    - **shared_preferences** (`flutter.`-prefixed) → native prefs read.
+   - Validate `flutter.current_version` as a finite, non-negative safe integer and call
+     Changelog's exported `setChangelogSeenVersion` **before `(tabs)` can mount**. In
+     particular, importing Flutter value 3 must allow the bundled version 4 sheet to show
+     once and then persist 4. Implementing this native import remains Phase 09 scope.
 2. **Recover the irreplaceable set only:** `user_calendars.token`, `personal_events`, `checklist_items`, `hidden_events` → write into the new RN schemas (Phases 03/05).
 3. **Re-sync everything else** from the server using the recovered token(s) — do **not** migrate `calendar_events` / `calendar_logs`.
 4. **Optionally** copy `flutter.`-prefixed settings (theme, view type) for UX continuity.
@@ -26,4 +30,4 @@
 
 - **Permanent data loss if wrong.** This is the single most dangerous feature — treat it as such: extensive fixtures, real-device dumps, retry-safe.
 - Built **late** (needs target schemas) but its **target shape was considered early** (Phases 02/03/05 designed schemas to receive recovered records).
-</content>
+  </content>
