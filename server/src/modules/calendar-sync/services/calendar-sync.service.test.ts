@@ -113,6 +113,61 @@ describe("CalendarSyncService", () => {
       expect(content.events[0].uid).toBe(events[0].uid)
     })
 
+    it("recomputes a bounded ADE window without changing the stored source", async () => {
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: new Date("2026-08-25T12:00:00.000Z"),
+      })
+      const sourceUrl =
+        "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?firstDate=2020-01-01&resources=12345&projectId=-1&calType=ical&extra=a%20b&lastDate=2020-01-02#calendar"
+      const customData = {
+        auth: { username: "calendar-user", password: "calendar-password" },
+      }
+
+      const created = await service.createCalendar({
+        url: sourceUrl,
+        schoolName: "Lyon 1",
+        name: "My ADE Calendar",
+        customData,
+      })
+      const calendar = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ token: created.token })
+      const fetchCalls = icalFetcher.fetch.mock.calls as unknown as [
+        string,
+        typeof customData,
+      ][]
+      const creationUrl = new URL(fetchCalls[0][0])
+
+      expect(creationUrl.searchParams.get("firstDate")).toBe("2025-08-25")
+      expect(creationUrl.searchParams.get("lastDate")).toBe("2027-08-25")
+      expect(creationUrl.searchParams.get("resources")).toBe("12345")
+      expect(creationUrl.searchParams.get("projectId")).toBe("-1")
+      expect(creationUrl.searchParams.get("extra")).toBe("a b")
+      expect(creationUrl.hash).toBe("#calendar")
+      expect(fetchCalls[0][1]).toEqual(customData)
+      expect(calendar.url).toBe(sourceUrl)
+      expect(calendar.customData).toEqual(customData)
+
+      jest.setSystemTime(new Date("2026-08-26T12:00:00.000Z"))
+      await dataSource.getRepository(Calendar).update(calendar.id, {
+        syncPlannedAt: new Date("2026-08-26T11:00:00.000Z"),
+      })
+      await service.sync(calendar)
+
+      const resyncUrl = new URL(fetchCalls[1][0])
+      expect(resyncUrl.searchParams.get("firstDate")).toBe("2025-08-26")
+      expect(resyncUrl.searchParams.get("lastDate")).toBe("2027-08-26")
+      expect(resyncUrl.searchParams.get("resources")).toBe("12345")
+      expect(resyncUrl.searchParams.get("extra")).toBe("a b")
+      expect(
+        await dataSource.getRepository(Calendar).findOneByOrFail({
+          id: calendar.id,
+        }),
+      ).toMatchObject({ url: sourceUrl, customData })
+      jest.useRealTimers()
+    })
+
     it("throws when the school does not exist", async () => {
       await assertChanges(
         dataSource,
@@ -451,7 +506,6 @@ describe("CalendarSyncService", () => {
           dueCalendar.syncPlannedAt.getTime(),
         )
       })
-
       it("plans the next sync from the interval the school declares", async () => {
         const dueCalendar = await createDueCalendar(LYON1_URL)
 
