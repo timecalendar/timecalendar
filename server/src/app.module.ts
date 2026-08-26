@@ -21,6 +21,7 @@ import { UnivOrleansModule } from "modules/univ-orleans/univ-orleans.module"
 import { NotificationPipelineModule } from "modules/notification-pipeline/notification-pipeline.module"
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
 import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
+import { ObservabilityLifecycleService } from "config/observability/observability-lifecycle.service"
 
 @Module({
   imports: [
@@ -58,7 +59,7 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
     FeatureFlagModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [ObservabilityLifecycleService],
   exports: [],
 })
 export class AppModule {}

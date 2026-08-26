@@ -51,9 +51,7 @@ export class FirebaseService {
           type,
         })
         this.logger.warn(
-          `FCM token no longer registered (token suffix=${tokenSuffix(
-            token,
-          )}); ` + `caller should remove this token from its subscriber list.`,
+          "FCM token no longer registered; caller should remove it from its subscriber list.",
         )
         return null
       }
@@ -70,8 +68,4 @@ function isInvalidTokenError(e: unknown): boolean {
   return (
     code === INVALID_TOKEN_ERROR_CODE || message === INVALID_TOKEN_ERROR_MESSAGE
   )
-}
-
-function tokenSuffix(token: string): string {
-  return token.length > 8 ? `…${token.slice(-8)}` : token
 }
