@@ -42,6 +42,13 @@ data:
   CRISP_IDENTIFIER: {{ .Values.timecalendar.crisp.identifier }}
   CRISP_WEBSITE_ID: {{ .Values.timecalendar.crisp.websiteId }}
 
+  # Background calendar sync fan-out. Empty = no background sync at all
+  # (on-access sync is unaffected). Production stays empty until mid-September
+  # 2026: rentree timetables still churn, so re-syncs are noise for students.
+  # Flipping this is a values change — no image rebuild — and the server tears
+  # down the live BullMQ scheduler when it is emptied.
+  SYNC_CALENDARS_CRON: {{ .Values.timecalendar.syncCalendarsCron | quote }}
+
   # OTEL
   OTEL_ENABLED: {{ .Values.timecalendar.otel.enabled | quote }}
   OTEL_EXPORTER_URL: {{ .Values.timecalendar.otel.exporterUrl }}
