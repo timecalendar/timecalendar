@@ -26,6 +26,12 @@ dependencies change identity, the successful real sync can skip its guarded
 committed Maestro flows still target the removed `calendar-view-agenda` item id even though
 the live UI now exposes a `calendar-view` native menu whose action is labelled `Agenda`.
 
+After those remediations reached native CI, Android completed the full suite but iOS failed
+twice in `settings.yaml`: Maestro reported its generic `back` command complete while the app
+remained on **My calendars**. The failure artifact shows the visible native Stack header
+control is present and exposes resource id `BackButton`; the route itself is therefore live,
+and the failure is confined to how Maestro asks iOS to return.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -41,6 +47,9 @@ the live UI now exposes a `calendar-view` native menu whose action is labelled `
   Calendar navigation across source-health subscriber rerenders when still mounted.
 - Drive Agenda through the current native menu on Android and iOS without weakening seeded
   event or event-details assertions.
+- Make both Settings child-route returns deterministic by driving the visible iOS native
+  header affordance while preserving Android's supported system-back interaction and every
+  existing Settings assertion.
 
 **Non-Goals:**
 
@@ -50,6 +59,8 @@ the live UI now exposes a `calendar-view` native menu whose action is labelled `
 - Changing the legacy Flutter app or solving generic iCal import failures.
 - Adding timeouts, mocking the native round-trip, restoring removed menu-item test IDs, or
   changing CI/workflow files to mask the failures.
+- Changing product navigation to compensate for a Maestro platform-interaction mismatch, or
+  making either Settings return optional.
 
 ## Decision: Return advisory health beside each batch-sync calendar
 
@@ -179,6 +190,27 @@ platform-owned and the stable public interaction is the menu plus localized acti
 Skipping Agenda or weakening the seeded assertions was rejected because it would stop
 proving the server → generated client → SQLite → Calendar round-trip.
 
+## Decision: Use the visible iOS header affordance for Settings returns
+
+For each return from **My calendars** and **Appearance & language**, `settings.yaml` uses
+Maestro platform-conditional commands: iOS taps the visible native Stack header control by
+its observed resource id `BackButton`, while Android retains the generic `back` command that
+already passes. After each interaction, the existing extended wait for **Settings** remains
+the required assertion before the flow continues.
+
+The same interaction shape is applied to both child routes so a later step cannot retain the
+same iOS mismatch. The iOS tap is not optional, and no assertion, timeout, or Settings-section
+check is removed. Focused verification parses/formats the YAML and inspects the resulting
+platform branches; exact-head labelled native CI remains the only definitive device proof on
+this host.
+
+A timeout increase was rejected because the completed generic iOS command did not navigate.
+An optional header tap or optional Settings assertion was rejected because it could hide the
+regression. Changing Expo Router or the product header was rejected because the failure
+artifact proves the visible native control and destination route exist. Replacing Android's
+working system-back interaction was rejected because platform-appropriate divergence is
+already established and bounded to the Maestro flow.
+
 ## Decision: Recovery is additive and user-controlled
 
 If any held calendar is stale, Calendar shows an accessible non-modal banner above the
@@ -226,6 +258,11 @@ rollback), while implementation-specific thresholds remain in tested code.
 - **[A later Maestro flow still uses the removed agenda selector]** → Replace every
   committed `calendar-view-agenda` use in the affected native flows and require both
   platform jobs on the exact integrated head.
+- **[The iOS header selector changes in a future native-stack upgrade]** → Keep the selector
+  scoped to the observed native resource id, retain the post-navigation Settings assertion,
+  and let exact-head iOS CI fail rather than making the interaction optional.
+- **[Only the first Settings return is corrected]** → Apply the same conditional return
+  sequence after both My calendars and Appearance & language and verify both in one flow.
 
 ## Migration Plan
 
@@ -240,6 +277,10 @@ rollback), while implementation-specific thresholds remain in tested code.
 5. Before Reviewer sign-off, run the focused dev-import regression plus existing import,
    sync, and source-health tests, then require green Android and iOS labelled native E2E on
    the exact integrated head. No workflow edit, deploy act, or separate QA gate is needed.
+6. For the Settings-return remediation, run focused YAML parse/format checks and relevant
+   mobile checks, then rerun the same exact-head Android+iOS native gate. If the visible iOS
+   `BackButton` does not activate, stop for Founding Engineering rescope rather than changing
+   product navigation or CI infrastructure in this child.
 
 ## Open Questions
 

@@ -63,3 +63,11 @@
 - [x] 9.4 Confirm this leaf fix requires no Architecture Book/ADR change and touches no contract/generated API, server migration, native/store configuration, infrastructure/workflow, CI harness, or legacy Flutter surface; if any such surface becomes necessary, stop and return to Founding Engineering.
 - [x] 9.5 Run the focused dev-import integration regression plus existing dev-import screen, sync, and source-health store tests; then run TypeScript/lint/format checks scoped to changed mobile files and `openspec validate detect-stale-calendar-sources --strict`.
 - [ ] 9.6 Push the integrated head with the existing `run-e2e` label and require green Android and iOS native jobs before Reviewer sign-off, recording exact check URLs/results in the handoff; there is no separate QA gate.
+
+## 10. iOS Settings return remediation
+
+- [ ] 10.1 Replace each generic return in `mobile/.maestro/settings.yaml` with a required platform-conditional sequence: tap the visible `BackButton` on iOS and retain `back` on Android, covering both My calendars and Appearance & language.
+- [ ] 10.2 Retain the existing `settings-calendar-summary`, My calendars, Settings, Appearance & language, Events, Personal events, Hidden events, Preferences, and Notifications assertions; add no optional navigation, assertion removal, or timeout-only workaround.
+- [ ] 10.3 Run focused YAML parse and Prettier checks for `settings.yaml`, inspect both platform branches, and run any relevant mobile static/test checks required by the touched flow.
+- [ ] 10.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro platform interaction, and verify the remediation touches no product navigation, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface; return to Founding Engineering if any becomes necessary.
+- [ ] 10.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the real seeded import, `E2E Today Lecture`, and `Room E2E Lecture` assertions, then record exact check URLs/results for Reviewer sign-off.
