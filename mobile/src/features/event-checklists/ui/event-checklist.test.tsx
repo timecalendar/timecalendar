@@ -104,10 +104,17 @@ describe("EventChecklist", () => {
 
   it("edits an item's content via the inline input", async () => {
     mockUseChecklist.mockReturnValue([item({ uuid: "u-1", content: "" })])
-    await render(<EventChecklist eventUid="ev-1" />)
+    const view = await render(<EventChecklist eventUid="ev-1" />)
     const user = userEvent.setup()
-    await user.type(screen.getByTestId("checklist-input-u-1"), "X")
-    expect(actions.setContent).toHaveBeenCalledWith("u-1", "X")
+    await user.type(screen.getByTestId("checklist-input-u-1"), "Buy notebook")
+    expect(actions.setContent).toHaveBeenLastCalledWith("u-1", "Buy notebook")
+
+    mockUseChecklist.mockReturnValue([
+      item({ uuid: "u-1", content: "Buy notebok" }),
+    ])
+    view.rerender(<EventChecklist eventUid="ev-1" />)
+
+    expect(screen.getByDisplayValue("Buy notebook")).toBeTruthy()
   })
 
   it("moves an item up / down via the reorder controls", async () => {
