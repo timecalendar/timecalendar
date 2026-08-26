@@ -24,6 +24,11 @@ React Native preview through TestFlight and Play internal testing.
       accepted upload key.
 - [ ] Configure least-privilege App Store Connect / Play submission authorization outside git.
 - [ ] Create or confirm **The team** internal tester group/list in both stores.
+- [ ] While authenticated to the public EAS project, validate both release profiles on both
+      platforms with `npx eas-cli@20.1.0 config --platform <ios|android> --profile
+    <preview|production> --json`. The source-side config test and clean prebuild proof are green;
+      this CLI command is recorded here because it requires `eas login` or an `EXPO_TOKEN`, neither
+      of which belongs in git or unauthenticated CI.
 
 ## Build, submit and verify
 
