@@ -4,7 +4,6 @@ import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-ho
 import {
   BasicTracerProvider,
   InMemorySpanExporter,
-  ReadableSpan,
   SimpleSpanProcessor,
 } from "@opentelemetry/sdk-trace-base"
 import { Request, Response } from "express"
@@ -18,9 +17,6 @@ import { CalendarSyncMetricsService } from "./services/calendar-sync-metrics.ser
 import { CalendarSyncService } from "./services/calendar-sync.service"
 
 type Outcome = "success" | "deadline" | "disconnect"
-
-const endNanos = (span: ReadableSpan) =>
-  BigInt(span.endTime[0]) * BigInt(1_000_000_000) + BigInt(span.endTime[1])
 
 describe("calendar sync tracing", () => {
   afterEach(() => {
@@ -141,9 +137,18 @@ describe("calendar sync tracing", () => {
           "calendar_sync.response_hydration",
         ]),
       )
+      const batchIndex = spans.indexOf(batch!)
+      const spansById = new Map(
+        spans.map((span) => [span.spanContext().spanId, span]),
+      )
       for (const span of spans.filter((span) => span !== batch)) {
         expect(span.spanContext().traceId).toBe(batch!.spanContext().traceId)
-        expect(endNanos(span) <= endNanos(batch!)).toBe(true)
+        expect(spans.indexOf(span)).toBeLessThan(batchIndex)
+        let parentId = span.parentSpanContext?.spanId
+        while (parentId && parentId !== batch!.spanContext().spanId) {
+          parentId = spansById.get(parentId)?.parentSpanContext?.spanId
+        }
+        expect(parentId).toBe(batch!.spanContext().spanId)
       }
 
       await provider.shutdown()
