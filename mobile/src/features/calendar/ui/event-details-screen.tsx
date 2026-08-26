@@ -150,6 +150,13 @@ export function EventDetailsScreen() {
           title: t("eventDetails.title"),
           headerRight: () => (
             <Pressable
+              testID={
+                isPersonal
+                  ? "event-details-edit-action"
+                  : isHidden
+                    ? "event-details-unhide-action"
+                    : "event-details-hide-action"
+              }
               accessibilityRole="button"
               accessibilityLabel={t(action.label)}
               hitSlop={Spacing.two}
