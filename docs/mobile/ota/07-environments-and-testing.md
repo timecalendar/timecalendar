@@ -122,8 +122,8 @@ OTA than production users are.
 after 13 November 2023 to run a closed test with **12 testers for 14 consecutive days** before
 they can ship to production. **This does not apply to us** — the rule is per-app and applies to
 gaining production access, and TimeCalendar already has a production app under this package
-name. Version 3.0 is an *update* to that existing listing, not a new app, so it inherits
-production access. **Worth confirming in the Play Console before we plan the 3.0 timeline**,
+name. Version 4.0 is an *update* to that existing listing, not a new app, so it inherits
+production access. **Worth confirming in the Play Console before we plan the 4.0 timeline**,
 because if I'm wrong about the account's status, it's a 14-day item on the critical path and I
 would very much rather find that out now than in launch week.
 
@@ -243,20 +243,20 @@ That's rule 1 of the runbook and it's the one that has saved every team that kep
 | Environment switch: UI, `appVariant` gate, and the state-reset path | ½–1 day |
 | **Total** | **~2 days**, none of it on the critical path |
 
-Most of it is console clicking rather than code, and it can happen any time before the 3.0
+Most of it is console clicking rather than code, and it can happen any time before the 4.0
 submission.
 
 ---
 
 ## 7.8 Open questions — two of three answered
 
-1. ~~**Do we want a public beta programme for 3.0 at all?**~~ **Yes** — two populations, so
+1. ~~**Do we want a public beta programme for 4.0 at all?**~~ **Yes** — two populations, so
    three channels. The names we'll use for them, and the practical mechanics of running each
    programme, are in [doc 8 §8.7](./08-infrastructure-answers.md).
 2. **Do we want the environment switch in production builds?** Still open. My recommendation is
    no (§7.5), with the visible-in-preview alternative. Say the word if you'd rather have it
    everywhere and I'll build it with the three guardrails.
-3. ~~**Play production access**~~ **Confirmed** — 3.0 ships as an update to the existing
+3. ~~**Play production access**~~ **Confirmed** — 4.0 ships as an update to the existing
    listing, so the 12-testers-for-14-days rule doesn't apply. That was the one item that could
    have put a two-week delay on the cutover; it's off the critical path.
 

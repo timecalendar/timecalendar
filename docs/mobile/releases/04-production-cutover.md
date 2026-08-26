@@ -24,10 +24,15 @@ EAS build.
 8. After approval, start a small staged rollout and watch crash-free rate, migration success and
    support signals before widening.
 
-Daily preview builds listen to the `preview` OTA channel. A production candidate must be rebuilt
-with the `production` channel before rehearsal; otherwise promoting it would expose customers to
-preview updates. “Build once” means one production candidate artifact is tested then promoted, not
-that the ordinary preview artifact becomes production.
+Preview builds listen to the `preview` OTA channel, and a future `beta` build would listen to
+`beta`. **A candidate for the store is built with the `production` channel from the start** and
+rehearsed as itself. Promoting a `preview` or `beta` binary to the production track would leave
+customers permanently on a non-production update channel — and Play's console offers exactly that
+promotion, one click from the closed-testing release you were just testing. Do not use it.
+
+“Build once” means one production-channel artifact is tested and then promoted **within the
+production lane** — internal track, then production track, same binary. It never means a preview
+or beta artifact becomes production.
 
 ## 4.3 What changes between preview and production
 
@@ -37,7 +42,7 @@ that the ordinary preview artifact becomes production.
 | Native signing    | Real store-compatible signing | Same accepted signing chain                             |
 | OTA channel       | `preview`                     | `production`                                            |
 | Audience          | The team                      | Internal rehearsal, then reviewed staged public rollout |
-| Build source      | Recorded green SHA            | Protected release SHA/tag                               |
+| Build source      | Recorded green SHA            | Annotated release tag on a commit reachable from `main` |
 | Rollout authority | Internal group/track          | Human-owned store release act                           |
 
 ## 4.4 Rollback is containment plus a forward fix

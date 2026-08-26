@@ -27,7 +27,7 @@ step 4.
 
 | Flutter v3                                                    | React Native v4                                                         |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Flutter/Fastlane built the native binaries                    | EAS Build is the planned signed-build service                           |
+| Flutter/Fastlane built the native binaries                    | `eas build --local` on our own macOS host builds and signs             |
 | Android read a local gitignored `key.properties` and keystore | EAS can hold/import the Android key used for uploads                    |
 | iOS Fastlane Match synchronized certificates/profiles         | EAS can manage a fresh valid certificate/profile on the same Apple team |
 | Fastlane Supply/Pilot uploaded builds                         | EAS Submit uploads the selected EAS build                               |
@@ -42,16 +42,19 @@ The important continuity is the **store identity**, not the JavaScript framework
 
 ## 1.3 Build, submit and release are deliberately separate
 
-EAS Build produces an artifact and records its build ID. EAS Submit can upload that exact artifact.
-The upload does not publish iOS to customers: it becomes a processed TestFlight/App Store Connect
-build. On Android, the selected Play track and release status control where the upload lands.
+A build produces an artifact. EAS Submit uploads that exact artifact. The upload does not publish
+iOS to customers: it becomes a processed TestFlight/App Store Connect build. On Android, the
+selected Play track and release status control where the upload lands.
 
-TimeCalendar's future automation must preserve this separation:
+TimeCalendar's process preserves this separation:
 
-- build automatically only from an approved exact SHA;
-- submit only the recorded build ID after the submission gate;
+- build deliberately, from a named commit — never as a side effect of merging;
+- submit only the recorded artifact, after the submission gate;
 - start or widen production rollout as a separate human-owned act;
-- never rebuild between approval and submission.
+- never rebuild between approval and submission;
+- **never promote a build from one channel's track to another's** — the channel is baked in at
+  build time, so a `preview` binary promoted to production would leave store users on the
+  internal update channel.
 
 ## 1.4 Preview still needs signing
 
@@ -65,8 +68,9 @@ This is different from Expo “internal distribution”:
 - Play internal testing requires an Android App Bundle (`.aab`) signed with the accepted upload
   key.
 
-The current `preview` profile is the first kind. The owner selected the second kind. The required
-profile change is called out in [document 3](./03-first-preview.md).
+Both of our release profiles are therefore the second kind. `preview` and `production` are both
+`distribution: "store"`; they differ by OTA channel and audience, not artifact shape. The only
+non-store profile is `development`, which is a dev-client build rather than a release.
 
 ## 1.5 OTA is the fast lane after a native build exists
 

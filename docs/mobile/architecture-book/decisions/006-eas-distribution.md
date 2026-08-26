@@ -6,7 +6,12 @@
 
 ## Status
 
-Accepted.
+**Partially superseded by ADR [040](./040-local-store-builds-and-store-preview.md).**
+Decision 1 (the `fingerprint` runtime-version policy) remains in force. Decision 2
+(human-invoked EAS with no CI path) and the `preview` profile's `internal` distribution
+are replaced: `preview` is now store-distributed, store binaries are built with
+`eas build --local` on the macOS host, and builds are triggered by manual dispatch.
+Retained below as the original record.
 
 ## Context
 

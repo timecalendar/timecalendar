@@ -125,16 +125,16 @@ git switch main
 npx eoas publish --branch production --message "3.1.2 — TIM-201 duplicate events"
 
 # The previous line, still in a lot of hands
-git switch release/3.0                # a maintenance branch we keep alive
+git switch release/4.0                # a maintenance branch we keep alive
 git cherry-pick <sha>                 # the same fix
 npx eoas publish --branch production --message "3.0.5 — TIM-201 duplicate events"
 ```
 
 Two commands, one branch on the server, no channel gymnastics. The fingerprints sort themselves
-out — the second publish is automatically stamped `A` because `release/3.0` still has the old
+out — the second publish is automatically stamped `A` because `release/4.0` still has the old
 dependency set.
 
-**Keeping `release/3.0` alive as a real git branch is the whole trick.** Without it you'd be
+**Keeping `release/4.0` alive as a real git branch is the whole trick.** Without it you'd be
 detaching HEAD at a tag under pressure at 23:00, which is exactly when you don't want to be
 doing git archaeology.
 
@@ -153,7 +153,7 @@ Three postures, in increasing order of cost:
 
 **My recommendation for us: posture 1 by default, posture 2 during the 6–8 week launch
 window.** During the cutover, "3.0 has a bad bug and store adoption is only at 40%" is exactly
-the scenario OTA exists for, so we hold `release/3.0` open. After it settles, drop back to
+the scenario OTA exists for, so we hold `release/4.0` open. After it settles, drop back to
 "latest only" and stop paying the tax.
 
 ### One reframing that makes this much less scary
@@ -551,18 +551,18 @@ Two consequences, and the second is the one that bites:
 readable six months later:
 
 ```
-3.0.4 — TIM-201 duplicate events on week boundary, TIM-205 FR month names, TIM-208 crash on empty week
+4.0.4 — TIM-201 duplicate events on week boundary, TIM-205 FR month names, TIM-208 crash on empty week
 ```
 
-and tag the commit (`ota/3.0.4`) so every update maps to an exact SHA.
+and tag the commit (`ota/4.0.4`) so every update maps to an exact SHA.
 
 **2. Publish from a deliberate commit, never from whatever happens to be on `main`.**
 This is the real point. If you publish `main` to fix one crash, you also ship every feature
 that merged that morning — half-finished, unreviewed on device, and now on 60,000 phones. The
 fix was urgent; the cargo it carried wasn't.
 
-So: **keep a `release/3.0` branch.** Work merges to `main`; fixes destined for users get
-cherry-picked to `release/3.0`; **we publish `release/3.0`.** Then an emergency publish carries
+So: **keep a `release/4.0` branch.** Work merges to `main`; fixes destined for users get
+cherry-picked to `release/4.0`; **we publish `release/4.0`.** Then an emergency publish carries
 exactly what we intended and nothing else — and, conveniently, it's the same branch that makes
 hotfixing an older line easy (§6.2b). One mechanism, two problems solved.
 
@@ -663,7 +663,7 @@ Document 4 called this "deferred, but a genuine follow-up". Re-examining it beca
 - **The certificate is embedded in the binary at build time.** So adding code signing later
   requires a **new store release** — a full build, submission and review — before it protects
   anybody.
-- We are about to make the 3.0 build anyway. **The natural moment to embed the certificate is
+- We are about to make the 4.0 build anyway. **The natural moment to embed the certificate is
   the build we're already making.** Doing it then costs about half a day. Doing it in six
   months costs a forced store release we wouldn't otherwise need.
 

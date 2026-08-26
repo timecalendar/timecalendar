@@ -12,7 +12,7 @@ decision changes; use Git for its history.
 | [001](./001-sdk-target.md)                            | Use the latest stable Expo SDK at scaffold/upgrade time               |
 | [002](./002-minimum-os.md)                            | Support iOS 16.4+ and Android API 24+                                 |
 | [003](./003-coverage-threshold.md)                    | Require 90% logic and 70% global test coverage                        |
-| [006](./006-eas-distribution.md)                      | Use fingerprint runtime versions and human-invoked EAS releases       |
+| [006](./006-eas-distribution.md)                      | Use fingerprint runtime versions (decision 2 superseded by 040)       |
 | [007](./007-drop-web-target.md)                       | Ship iOS and Android only                                             |
 | [011](./011-personal-event-storage.md)                | Store personal-event dates as UTC text and colors as hex text         |
 | [013](./013-query-persister-and-policy.md)            | Persist TanStack Query through the MMKV seam                          |
@@ -33,6 +33,7 @@ decision changes; use Git for its history.
 | [037](./037-self-hosted-ota-runtime.md)               | Self-host signed OTA updates and apply them at foreground boundaries  |
 | [038](./038-isolate-maestro-flow-lifecycles.md)       | Isolate each Maestro flow in a fresh CLI process                      |
 | [039](./039-changelog-version-gating.md)              | Gate bundled Changelog releases with an integer                       |
+| [040](./040-local-store-builds-and-store-preview.md)  | Build store binaries locally and distribute `preview` through stores  |
 
 ## Superseded or completed records
 
