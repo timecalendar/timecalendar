@@ -63,4 +63,3 @@ SQLite event replacement and MMKV source-health write rather than mocking the sy
 - **WHEN** the generated sync mutation returns a calendar with events and source-health data
 - **THEN** the test observes the real event/store writes, the subscriber rerender, and exactly
   one `/calendar` replacement
-
