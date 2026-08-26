@@ -55,6 +55,12 @@ appId: fr.samuelprak.timecalendar.dev
     id: "event-details-hide-action"
 - tapOn:
     text: "Hide this event"
+# Wait for the successful MMKV write to drive the alert callback's router.back()
+# before terminating the app. On iOS, stopApp immediately after tapping the native
+# alert can suspend the JS callback before the navigation transition proves it ran.
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
 # Prove it is GONE from the calendar view. Cold-restart into the agenda: the token
 # is still held (un-hide restores state; the hidden set is device-local), so the
 # synced events render — but `E2E Today Seminar` is filtered out while
@@ -76,9 +82,9 @@ appId: fr.samuelprak.timecalendar.dev
     id: "calendar-view"
 - tapOn: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: ".*E2E Today Lecture.*"
     timeout: 60000
-- assertNotVisible: "E2E Today Seminar"
+- assertNotVisible: ".*E2E Today Seminar.*"
 # Open the hidden-events management screen and assert the hidden event is listed.
 - stopApp
 - openLink: timecalendar-dev://hidden-events
@@ -112,5 +118,5 @@ appId: fr.samuelprak.timecalendar.dev
     id: "calendar-view"
 - tapOn: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Seminar"
+    visible: ".*E2E Today Seminar.*"
     timeout: 60000
