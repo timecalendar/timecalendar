@@ -67,15 +67,24 @@
       change may differ; confirm no secrets, flow removals, ignored outcomes, API/schema/native
       config, deploy/infrastructure, or legacy Flutter edits.
 
-## 5. CI proof and close-out
+## 5. Pre-merge verification and issue close-out boundary
 
-- [ ] 5.1 Let normal PR checks verify the implementation without adding the `run-e2e` label
-      solely to compensate for this host's lack of KVM; Reviewer confirms the sensitive workflow
-      remains non-deploying and failure diagnostics still upload.
-- [ ] 5.2 After merge, confirm the path-triggered `main` workflow runs on a SHA containing
-      onboarding merge `482f134f`, and verify the logs show Maestro 2.8.0 plus the chosen Apple
-      toolchain/runtime and that `onboarding.yaml` ran as part of the complete flow set.
-- [ ] 5.3 Record direct `SUCCESS` job links for `Run mobile E2E (iOS)` and
-      `Run mobile E2E (Android)` on the recovery issue before closing it so the onboarding issue
-      can consume terminal proof; keep the recovery issue open and repair within this scope if
-      either job fails.
+- [x] 5.1 Run normal PR checks without adding the `run-e2e` label solely to compensate for
+      this host's lack of KVM. The pre-rework head passed `Run mobile checks`; the rebased head
+      receives the same normal exact-head gate before merge.
+- [x] 5.2 Confirm during review that the sensitive workflow remains non-deploying and that
+      Maestro debug output plus server logs still upload on failure. Reviewer confirmed both on
+      the complete implementation diff before requesting this ADR/archive-only rework.
+- [x] 5.3 Keep definitive native proof as recovery-issue close-out evidence rather than an
+      impossible pre-merge OpenSpec task. The issue remains open after merge until the
+      path-triggered `main` workflow proves both platforms.
+
+Post-merge evidence required on the recovery issue (not part of this archived implementation
+ledger):
+
+- Confirm the tested `main` SHA descends from onboarding merge `482f134f`.
+- Verify logs show Maestro 2.8.0, the selected Apple toolchain/runtime, and execution of
+  `onboarding.yaml` within the complete top-level flow set.
+- Record direct `SUCCESS` job links for `Run mobile E2E (iOS)` and
+  `Run mobile E2E (Android)` before closing the recovery issue; repair within this scope if
+  either job fails.
