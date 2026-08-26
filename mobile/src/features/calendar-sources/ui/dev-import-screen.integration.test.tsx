@@ -33,7 +33,7 @@ jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(),
   useRouter: jest.fn(),
 }))
-jest.spyOn(syncRepository, "replaceAll").mockResolvedValue(undefined)
+jest.spyOn(syncRepository, "replaceAll")
 
 const mockFetch = customFetch as jest.Mock
 const mockIsDevVariant = isDevVariant as jest.Mock
