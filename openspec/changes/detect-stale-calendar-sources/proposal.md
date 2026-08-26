@@ -31,6 +31,10 @@ the university now publishes 2026–27 schedules through a different service.
   using the removed agenda-item id, while retaining the real seeded event/details assertions.
   Record simulator/device-only visual and accessibility checks as a `(HUMAN: …)` migration
   inbox note.
+- Stabilize both Settings child-route returns in the shared Maestro flow by activating the
+  visible native iOS `BackButton` and retaining Android's supported system-back interaction.
+  Keep the existing Settings, My calendars, Appearance & language, and section assertions;
+  do not replace them with timeouts, optional navigation, or product-route changes.
 - Keep bulk rewriting, backfill, production rollout, and changes to legacy Flutter out of
   this merge. Any later migration/backfill is a separate human-gated rollout ticket.
 
@@ -48,7 +52,8 @@ the university now publishes 2026–27 schedules through a different service.
 - `mobile-calendar-import-token`: The dev-only import completes exactly once across reactive
   source-health rerenders and navigates only while its screen remains mounted.
 - `mobile-e2e`: Seeded calendar flows select Agenda through the live native view menu and
-  continue to prove the unmocked server → client → SQLite round-trip on both platforms.
+  continue to prove the unmocked server → client → SQLite round-trip on both platforms;
+  the Settings flow uses each platform's supported return interaction for both child routes.
 - `mobile-user-calendars`: Calendar management identifies stale sources and offers a
   non-destructive, accessible re-add path.
 
@@ -60,8 +65,9 @@ the university now publishes 2026–27 schedules through a different service.
   `mobile/src/api/generated/` output (generated, never hand-edited).
 - Mobile calendar sync data/store seam, Calendar status UI, calendar-source management UI,
   dev-import orchestration/integration tests, typed French/English translations, and
-  existing Maestro flows. The remediation does not change the API contract, schema, native
-  configuration, or binding Architecture Book rules.
+  existing Maestro flows. The Settings-return remediation is limited to
+  `mobile/.maestro/settings.yaml`; it does not change product navigation, the API contract,
+  schema, native configuration, or binding Architecture Book rules.
 - `docs/mobile/architecture-book/calendar.md` changes because sync now carries reusable
   source-health/recovery semantics. The classifier registry is application policy, not a
   destructive migration mechanism.
