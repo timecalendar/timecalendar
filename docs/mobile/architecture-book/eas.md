@@ -3,9 +3,9 @@
 > R-1 pointer note: entries below are pointers plus the caveats tooling can't carry. The config is encoded in `mobile/eas.json` + `mobile/app.config.ts`; the operator guide is [`mobile/EAS.md`](../../../mobile/EAS.md); the load-bearing decisions are **ADR [006](./decisions/006-eas-distribution.md)** (fingerprint policy), **ADR [037](./decisions/037-self-hosted-ota-runtime.md)** (self-hosted OTA runtime) and **ADR [040](./decisions/040-local-store-builds-and-store-preview.md)** (local store builds, store-distributed `preview`, no channel promotion).
 
 For the plain-language release flow, signing custody and current readiness audit, see the
-[mobile release guide](../releases/README.md). The `../ota/` and `../build-infrastructure/`
-folders are **exploration**, not rules: they record how these decisions were reached and are
-not maintained against the config. Where they disagree with this page or an ADR, this page wins.
+[mobile release guide](../releases/README.md). The `../ota/` folder is **exploration**, not
+rules: it records how that decision was reached and is not maintained against the config. Where
+it disagrees with this page or an ADR, this page wins.
 
 ## Three profiles, two identities
 

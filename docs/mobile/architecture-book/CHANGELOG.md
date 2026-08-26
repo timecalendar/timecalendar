@@ -2,6 +2,11 @@
 
 ## 2026-08-26
 
+- Removed `docs/mobile/build-infrastructure/` and its `mobile-build-infrastructure-guidance`
+  spec: the pack recommended EAS Build for signed binaries and a separate `internal-store`
+  profile, both rejected by ADR 040, and had no surviving content that `eas.md`,
+  `docs/mobile/releases/` or the ADRs did not already carry. Corrected the release guide's
+  remaining "EAS build ID" wording to the local artifact record.
 - Made `preview` a store-distributed profile (`app-bundle` + store `.ipa`, `autoIncrement`, own
   `submit.preview`), moved store binary production to `eas build --local` on the macOS host with
   EAS retained as credential authority and upload transport, established annotated tags on `main`
