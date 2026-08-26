@@ -4,7 +4,7 @@
 
 ```text
 approved git SHA
-  → EAS Build signs an iOS .ipa and Android .aab
+  → eas build --local on the macOS host signs an iOS .ipa and Android .aab
   → EAS Submit uploads those exact files
   → TestFlight / Play internal testing distributes them to the team
   → store review and staged rollout distribute a production candidate to users
@@ -30,7 +30,7 @@ step 4.
 | Flutter/Fastlane built the native binaries                    | `eas build --local` on our own macOS host builds and signs             |
 | Android read a local gitignored `key.properties` and keystore | EAS can hold/import the Android key used for uploads                    |
 | iOS Fastlane Match synchronized certificates/profiles         | EAS can manage a fresh valid certificate/profile on the same Apple team |
-| Fastlane Supply/Pilot uploaded builds                         | EAS Submit uploads the selected EAS build                               |
+| Fastlane Supply/Pilot uploaded builds                         | EAS Submit uploads the recorded local artifact                         |
 | Store consoles controlled testers and rollout                 | Still true; Expo does not replace them                                  |
 
 The important continuity is the **store identity**, not the JavaScript framework:
