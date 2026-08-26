@@ -10,7 +10,7 @@ import "@/firebase"
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { Stack, ThemeProvider } from "expo-router"
-import { StyleSheet } from "react-native"
+import { Platform, StyleSheet } from "react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { queryClient } from "@/api/query-client"
@@ -107,6 +107,17 @@ export default function RootLayout() {
               options={{ headerShown: true }}
             />
             <Stack.Screen name="about" options={{ headerShown: true }} />
+            <Stack.Screen name="changelog" options={{ headerShown: true }} />
+            <Stack.Screen
+              name="changelog-sheet"
+              options={{
+                headerShown: true,
+                presentation:
+                  Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                sheetAllowedDetents: [1],
+                sheetGrabberVisible: true,
+              }}
+            />
             {/* The display-timezone picker screen — a Stack sibling of (tabs),
                 reached from Settings, mirroring appearance settings. Header
                 shown for the accessible back affordance + the screen's own
@@ -147,6 +158,7 @@ export default function RootLayout() {
               name="notification-settings"
               options={{ headerShown: true }}
             />
+            <Stack.Screen name="feedback" options={{ headerShown: true }} />
             {/* The user-calendars management screen ("Mes calendriers") — a
                 Stack sibling of (tabs), reached from the Settings summary, where
                 a held calendar's visibility is toggled and a calendar deleted.

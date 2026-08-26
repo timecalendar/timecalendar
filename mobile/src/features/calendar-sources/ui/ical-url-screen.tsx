@@ -10,8 +10,15 @@ import {
   useAddCalendar,
   validateIcalUrl,
 } from "@/features/calendar-sources/data"
+import { useSchools, useSelectedSchool } from "@/features/school-selection"
 import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+
+interface FailedIcalAttempt {
+  calendarUrl: string
+  schoolId?: string
+  schoolName?: string
+}
 
 // The iCal-URL entry screen (Phase-3 ship 4, rewired by ship 5 / ADR 018) —
 // PRESENTATIONAL (70% floor): a labeled RN-core TextInput for the calendar URL, a
@@ -38,8 +45,24 @@ export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const { addCalendarFromUrl, isPending, isError, reset } = useAddCalendar()
+  const selection = useSelectedSchool()
+  const { schools } = useSchools()
   const [url, setUrl] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
+  const [failedAttempt, setFailedAttempt] = useState<FailedIcalAttempt | null>(
+    null,
+  )
+  const selectedSchoolName = schools.find(
+    (school) => school.id === selection?.schoolId,
+  )?.name
+
+  const report = () => {
+    if (!failedAttempt) return
+    router.push({
+      pathname: "/feedback",
+      params: { ...failedAttempt },
+    })
+  }
 
   const submit = () => {
     const validationKey = validateIcalUrl(url)
@@ -50,6 +73,12 @@ export default function IcalUrlScreen() {
     }
     setErrorKey(null)
     reset()
+    setFailedAttempt(null)
+    const attempt: FailedIcalAttempt = {
+      calendarUrl: url.trim(),
+      ...(selection?.schoolId ? { schoolId: selection.schoolId } : {}),
+      ...(selectedSchoolName ? { schoolName: selectedSchoolName } : {}),
+    }
     void addCalendarFromUrl(url)
       .then(() => {
         router.back()
@@ -58,6 +87,7 @@ export default function IcalUrlScreen() {
         // Genuine create / resolve / persist failure — record through the seam,
         // surface the a11y error + Retry.
         recordUnknownError(error, "calendar-sources/ical-import")
+        setFailedAttempt(attempt)
       })
   }
 
@@ -167,6 +197,27 @@ export default function IcalUrlScreen() {
                 {t("calendarSources.icalUrl.retry")}
               </ThemedText>
             </Pressable>
+            {failedAttempt ? (
+              <Pressable
+                testID="ical-url-report"
+                accessibilityRole="link"
+                accessibilityLabel={t("calendarSources.icalUrl.report")}
+                accessibilityHint={t("calendarSources.icalUrl.reportHint")}
+                hitSlop={Spacing.two}
+                onPress={report}
+                style={[
+                  styles.cta,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.primary,
+                  },
+                ]}
+              >
+                <ThemedText type="smallBold">
+                  {t("calendarSources.icalUrl.report")}
+                </ThemedText>
+              </Pressable>
+            ) : null}
           </View>
         )}
       </SafeAreaView>

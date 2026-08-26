@@ -4,6 +4,7 @@ import {
   QueueService,
 } from "@lyrolab/nest-shared/queue"
 import { Injectable } from "@nestjs/common"
+import { SYNC_CALENDARS_CRON } from "config/constants"
 import { SYNC_QUEUE } from "config/queues"
 import { calendarsActiveSince } from "modules/calendar-sync/calendar-sync.constants"
 import {
@@ -15,9 +16,12 @@ import { CalendarRepository } from "modules/calendar/repositories/calendar.repos
 export const SYNC_CALENDARS_FANOUT_JOB = "sync_calendars_fanout"
 
 @Injectable()
+// An empty SYNC_CALENDARS_CRON registers the processor without a schedule, so
+// the job stays invocable by hand while nothing fires it. SyncSchedulerStateService
+// tears down any scheduler a previous boot armed.
 @JobProcessor({
   name: SYNC_CALENDARS_FANOUT_JOB,
-  cron: "*/5 * * * *",
+  cron: SYNC_CALENDARS_CRON || undefined,
   queue: SYNC_QUEUE,
 })
 export class SyncCalendarsFanoutJob implements JobProcessorInterface {
@@ -27,9 +31,9 @@ export class SyncCalendarsFanoutJob implements JobProcessorInterface {
   ) {}
 
   async process() {
-    // Dueness is the calendar's own plan, not a global delay: each sync writes
-    // `syncPlannedAt = now + the school's minSyncIntervalMinutes`, so a school
-    // that asks for a longer interval is simply not selected before then.
+    // Selection bounds fan-out work but is not the throttle: every sync entry
+    // point atomically claims the stored plan again before upstream I/O. A
+    // duplicate job or concurrent request therefore loses the same claim.
     const calendarIds = await this.calendarRepository.findDueCalendarIds({
       syncPlannedBefore: new Date(),
       lastAccessedAtAfter: calendarsActiveSince(),
