@@ -30,11 +30,11 @@
 
 - [x] 5.1 Run the post-change synthetic load/profile with the same fixture and parameters as task 1, record the before/after CPU frames, p50/p95, peak concurrency, unfinished work, and event-loop maximum, and require response p95 below 15 seconds plus a lower event-loop maximum than baseline.
 - [x] 5.2 Add a CI proof test that exercises more than three due calendars with never-settling/retrying upstreams and large stored content; it MUST fail the old unbounded/15-attempt/content-hydrating implementation and pass only when concurrency, cancellation, attempt, query-shape, and no-detached-work invariants hold.
-- [ ] 5.3 Run local-green verification from `server/`: TypeScript build/typecheck, ESLint for touched sources, and the targeted calendar-sync, calendar repository, change-detection, fetcher, metrics, tracing, and CI-proof suites; record exact commands and results in the investigation evidence.
+- [x] 5.3 Run local-green verification from `server/`: TypeScript build/typecheck, ESLint for touched sources, and the targeted calendar-sync, calendar repository, change-detection, fetcher, metrics, tracing, and CI-proof suites; record exact commands and results in the investigation evidence.
 
 ## 6. Durable guidance and rollout proof
 
 - [x] 6.1 Update `docs/mobile/architecture-book/calendar.md` with the current server-side sync budget, cancellation, concurrency, last-known-content, and metadata-only selection contract; link to the OpenSpec capability instead of duplicating implementation detail.
 - [x] 6.2 Complete the production-health investigation entry with the root-cause explanation, redacted baseline/fixed evidence, metric names, and copy-paste Tempo/PromQL queries for endpoint p95, event-loop delay, pod restarts, attempt amplification, cancellations, and per-instance counter validity.
 - [x] 6.3 Add a rollout acceptance checklist owned by the deployment follow-up: after the code is deployed through the existing platform process, compare a traffic-normalised 24-hour window against baseline and require lower sync p95/event-loop delay/restart rate with no material school success-rate regression; explicitly state that this PR neither deploys nor changes probes.
-- [ ] 6.4 Confirm the final diff does not touch `openapi/openapi.json`, generated clients, migrations, `k8s/`, Terraform, workflows, native/store config, or legacy Flutter; if implementation discovers any such need, stop and flag the sensitive-surface expansion before applying it.
+- [x] 6.4 Confirm the final diff does not touch `openapi/openapi.json`, generated clients, migrations, `k8s/`, Terraform, workflows, native/store config, or legacy Flutter; if implementation discovers any such need, stop and flag the sensitive-surface expansion before applying it.

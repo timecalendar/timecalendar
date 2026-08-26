@@ -83,13 +83,27 @@ selection, and indexed UID/content matching:
 | Mode     |      p50 |        p95 | Peak upstream | Max event-loop delay | Unfinished at return |
 | -------- | -------: | ---------: | ------------: | -------------------: | -------------------: |
 | Baseline | 793.3 ms | 1,428.8 ms |             8 |           1,425.0 ms |                    0 |
-| Fixed    |  91.2 ms |   114.9 ms |             3 |              39.9 ms |                    0 |
+| Fixed    |  92.4 ms |   133.0 ms |             3 |              76.6 ms |                    0 |
 
-The fixed p95 is 92% lower and remains far below the 15-second mobile timeout. Maximum
-event-loop delay is 97% lower. The previous scan callbacks no longer dominate: the top
-application frames are now `eventComparisonKey` (252 samples) and `buildEventIndex`
-(112), while the old new-event, removed/changed, and bad-iCal callbacks fall to 34, 38,
-and 31 samples respectively.
+The fixed p95 is 91% lower and remains far below the 15-second mobile timeout. Maximum
+event-loop delay is 95% lower. The previous scan callbacks no longer dominate: the top
+application frames are now `eventComparisonKey` (241 samples) and `buildEventIndex`
+(132), while the old new-event, removed/changed, and bad-iCal callbacks fall to 41, 41,
+and 27 samples respectively.
+
+## Local verification
+
+Run from `server/` on Node 24.13.0:
+
+```sh
+npm run lint
+npm run build
+DATABASE_URL=postgres://postgres@localhost:37291/timecalendar_tim188 npm test -- --runInBand modules/calendar-sync/calendar-sync.constants.test.ts modules/calendar-sync/controllers/calendar-sync-lifecycle.test.ts modules/calendar-sync/controllers/calendar-sync.controller.test.ts modules/calendar-sync/services/calendar-sync-workers.test.ts modules/calendar-sync/services/calendar-sync-metrics.service.test.ts modules/calendar-sync/services/calendar-sync-all.service.test.ts modules/calendar-sync/services/calendar-sync.service.test.ts modules/calendar-sync/calendar-sync-tracing.test.ts modules/calendar-sync/calendar-sync-ci-proof.test.ts modules/calendar/repositories/calendar.repository.test.ts modules/calendar/repositories/calendar-content.repository.unit.test.ts modules/calendar-log/models/change-detection/find-event-changes.test.ts modules/fetch/fetchers/ical-fetcher.test.ts config/observability/tracer.test.ts
+```
+
+Results: ESLint and Nest build passed; 14 targeted suites passed (84 tests). The local
+database name is intentionally issue-specific because another worktree was running Jest
+against the shared default worker database at the same time.
 
 ## Telemetry and rollout queries
 
