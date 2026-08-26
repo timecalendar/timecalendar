@@ -40,7 +40,7 @@
 - [x] 6.1 Add a sanitized deterministic E2E calendar/source-health seed that returns last-good events plus stale recovery metadata without making an external university request.
 - [x] 6.2 Add a shared Maestro recovery flow that imports the stale seed, asserts a last-good event remains visible, opens calendar management from the banner, and reaches the existing add-calendar flow from the stale row.
 - [x] 6.3 Add `docs/react-native-migration/inbox/<date>-stale-source-recovery-device-checks.md` tagged `(HUMAN: …)` with iOS/Android visual, VoiceOver/TalkBack, large-text, touch-target, and real AMU-copy checks; state that this host has no simulator.
-- [ ] 6.4 Apply the PR `run-e2e` label after implementation, require both Android and iOS Maestro jobs, and record their check URLs/results in the issue handoff before QA.
+- [x] 6.4 Apply the PR `run-e2e` label after implementation, require both Android and iOS Maestro jobs, and record their check URLs/results in the issue handoff before QA.
 
 ## 7. Architecture Book and decision record
 
