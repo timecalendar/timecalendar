@@ -176,9 +176,9 @@ gate and the project must retain the 70% global floor.
 
 ### Decision 8 — Record the long-lived version/migration contract
 
-Add ADR 037 for integer gate versioning, absent-value suppression, tabs ownership, JS-bundle
+Add ADR 039 for integer gate versioning, absent-value suppression, tabs ownership, JS-bundle
 OTA semantics, and the Phase 09 setter contract. Update `features.md`, `navigation.md`, and
-`storage.md`; add ADR 037 to the decision index and one line to the existing uppercase
+`storage.md`; add ADR 039 to the decision index and one line to the existing uppercase
 Architecture Book `CHANGELOG.md`. Mark Phase 07 Changelog shipped with the eventual draft PR
 number and add to Phase 09: read `flutter.current_version`, validate the integer, and call
 `setChangelogSeenVersion` before the first tabs eligibility check.

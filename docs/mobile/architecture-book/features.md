@@ -19,6 +19,7 @@ code and product specifications.
 | `settings` | Third-tab grouped navigation and held-calendar summary | Reads the public calendar-sources hooks; persists no state |
 | `splash` | Startup presentation | Presentation-only |
 | `about` | Localized product, privacy, contact, installed-version, and developer information | `expo-application`, `expo-web-browser`, and `expo-linking`; persists no state |
+| `changelog`        | Bundled localized release history and tabs-eligible once-per-version presentation | `@/storage` integer `changelogSeenVersion`; Phase 09 imports through `setChangelogSeenVersion` before tabs mount; JS-bundle version bumps remain OTA-capable |
 
 ## Cross-feature contracts
 
@@ -38,6 +39,9 @@ code and product specifications.
   recorded through `@/firebase` without personal data.
 - About owns its standalone `features/about` module and consumes the Settings grouped-row
   primitives. This reversible local ownership choice does not require an ADR.
+- Changelog owns its typed newest-first catalog, total seen-version store, gate, and shared
+  history/sheet content. Phase 09 must call its exported setter before `(tabs)` mounts; every
+  future `CHANGELOG_VERSION` bump must ship matching bundled content in the same JS update.
 
 ## Navigation
 
