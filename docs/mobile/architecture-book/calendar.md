@@ -62,6 +62,20 @@ Sync runs at startup, foreground/resume, manual refresh, source changes, and not
 receipt. `calendar_events` is disposable cache and is rebuilt from durable source tokens;
 it is not a migration/import target.
 
+The server gives batch sync a ten-second work budget inside the client's 15-second
+request timeout. Disconnect and deadline cancellation propagate to upstream iCalendar
+requests; at most three due calendars run concurrently, queued work does not start after
+cancellation, and every started operation settles before the batch returns. Retry-enabled
+sources make at most two attempts inside a shared nine-second fetch budget (seven seconds
+maximum per attempt). Failed, cancelled, or unstarted calendars retain last-known content
+in the unchanged response shape.
+
+Due-calendar selection is oldest-first and metadata-only: it loads the school relation
+but not stored event JSON. A successful fetch loads previous content exactly once under
+the existing persistence lock for atomic diff/log writes; final response hydration remains
+separate. The binding contract and regression scenarios live in the
+[server calendar sync policy](../../../openspec/changes/eliminate-calendar-sync-stalls/specs/server-calendar-sync-policy/spec.md).
+
 ## Surfaces
 
 - Calendar offers day/week timeline and agenda modes, with platform-specific native chrome.

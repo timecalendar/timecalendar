@@ -1,7 +1,8 @@
 import { EventForChangeDetection } from "./find-event-changes"
 import {
+  buildEventIndex,
+  eventComparisonKey,
   eventContentEquals,
-  eventEquals,
   shouldSkipPastEventPair,
 } from "./event-comparison-utils"
 
@@ -25,11 +26,12 @@ export const findRemovedAndChangedEvents = <T extends EventForChangeDetection>(
 } => {
   const oldItems: T[] = []
   const changedItems: [T, T][] = []
+  const newEventsByKey = buildEventIndex(newArray, compareWithContent)
 
   oldArray.forEach((oldItem) => {
-    const correspondingNewEv = newArray.find((newItem) =>
-      eventEquals(oldItem, newItem, compareWithContent),
-    )
+    const correspondingNewEv = newEventsByKey.get(
+      eventComparisonKey(oldItem, compareWithContent),
+    )?.[0]
     // Check if events are in the past
     if (shouldSkipPastEventPair(oldItem, correspondingNewEv, referenceDate)) {
       // Do not add events in the past

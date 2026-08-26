@@ -1,7 +1,10 @@
 // The real FetchService is used here — mocking at the fetcher boundary keeps
 // strategy resolution (and therefore the resolved sync interval) real.
 const icalFetcher: {
-  fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
+  fetch: jest.Mock<
+    Promise<FetcherCalendarEvent[]>,
+    [string?, unknown?, { signal?: AbortSignal }?]
+  >
 } = {
   fetch: jest.fn(() => Promise.resolve([])),
 }
@@ -19,6 +22,7 @@ import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
+import { CalendarSyncAbortError } from "modules/calendar-sync/models/calendar-sync-context"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
@@ -38,12 +42,14 @@ describe("CalendarSyncService", () => {
   let app: NestExpressApplication
   let service: CalendarSyncService
   let dataSource: DataSource
+  let contentRepository: CalendarContentRepository
   let events: FetcherCalendarEvent[]
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
+    contentRepository = app.get(CalendarContentRepository)
   })
 
   beforeEach(async () => {
@@ -416,6 +422,56 @@ describe("CalendarSyncService", () => {
 
       // A failed fetch never reaches the content+log transaction
       expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
+    it("restores timestamps when cancellation happens before persistence", async () => {
+      const original = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      const controller = new AbortController()
+      const reason = new CalendarSyncAbortError("deadline")
+      icalFetcher.fetch.mockImplementationOnce(async () => {
+        controller.abort(reason)
+        throw reason
+      })
+
+      await expect(
+        service.sync(calendar, { signal: controller.signal }),
+      ).rejects.toBe(reason)
+
+      const unchanged = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(unchanged.lastUpdatedAt).toEqual(original.lastUpdatedAt)
+      expect(unchanged.syncPlannedAt).toEqual(original.syncPlannedAt)
+      expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
+    it("lets an entered content transaction settle atomically after abort", async () => {
+      events = [
+        fetcherCalendarEventFactory.build({
+          uid: "committed-after-boundary",
+          start: new Date("2022-01-02T07:00:00.000Z"),
+          end: new Date("2022-01-02T08:00:00.000Z"),
+        }),
+      ]
+      const controller = new AbortController()
+      const originalSave =
+        contentRepository.saveWithTransaction.bind(contentRepository)
+      jest
+        .spyOn(contentRepository, "saveWithTransaction")
+        .mockImplementationOnce(async (...args) => {
+          controller.abort(new CalendarSyncAbortError("deadline"))
+          return originalSave(...args)
+        })
+
+      await service.sync(calendar, { signal: controller.signal })
+
+      const content = await dataSource
+        .getRepository(CalendarContent)
+        .findOneByOrFail({ calendar: { id: calendar.id } })
+      expect(content.events[0].uid).toBe("committed-after-boundary")
+      expect(await findCalendarLogs(calendar.id)).toHaveLength(1)
     })
 
     describe("syncPlannedAt", () => {

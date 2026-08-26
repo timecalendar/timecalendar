@@ -1,37 +1,5 @@
 import { EventForChangeDetection } from "./find-event-changes"
-
-/**
- * Compare events by their contents (title, location, start, end)
- *
- * @param a The first event
- * @param b The second event
- */
-const eventContentEquals = (
-  a: EventForChangeDetection,
-  b: EventForChangeDetection,
-) =>
-  a.startsAt.getTime() === b.startsAt.getTime() &&
-  a.endsAt.getTime() === b.endsAt.getTime() &&
-  a.title === b.title &&
-  a.location === b.location
-
-/**
- * Compare events by their uids, or by their contents
- *
- * @param a The first event
- * @param b The second event
- * @param compareWithContent True if the contents should be compared. Defaults to false
- */
-const eventEquals = (
-  a: EventForChangeDetection,
-  b: EventForChangeDetection,
-  compareWithContent = false,
-) => {
-  if (compareWithContent) {
-    return eventContentEquals(a, b)
-  }
-  return a.uid === b.uid
-}
+import { buildEventIndex, eventComparisonKey } from "./event-comparison-utils"
 
 /**
  * Check if an event is in the past relative to the reference time
@@ -62,13 +30,14 @@ export const findNewEvents = <T extends EventForChangeDetection>(
   referenceDate: Date,
 ): T[] => {
   const newItems: T[] = []
+  const oldEventsByKey = buildEventIndex(oldArray, compareWithContent)
 
   newArray.forEach((newItem) => {
     // Do not add events in the past
     if (isEventInPast(newItem, referenceDate)) return
-    const existingOldEvent = oldArray.find((oldItem) =>
-      eventEquals(oldItem, newItem, compareWithContent),
-    )
+    const existingOldEvent = oldEventsByKey.get(
+      eventComparisonKey(newItem, compareWithContent),
+    )?.[0]
     if (!existingOldEvent) {
       newItems.push(newItem)
     }

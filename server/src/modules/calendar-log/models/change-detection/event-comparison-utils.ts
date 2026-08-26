@@ -33,6 +33,34 @@ export const eventEquals = (
   return a.uid === b.uid
 }
 
+export const eventComparisonKey = (
+  event: EventForChangeDetection,
+  compareWithContent = false,
+) =>
+  compareWithContent
+    ? JSON.stringify([
+        event.title,
+        event.location,
+        event.startsAt.getTime(),
+        event.endsAt.getTime(),
+      ])
+    : event.uid
+
+/** Buckets retain duplicate events instead of overwriting them in a single map slot. */
+export const buildEventIndex = <T extends EventForChangeDetection>(
+  events: T[],
+  compareWithContent = false,
+) => {
+  const index = new Map<string, T[]>()
+  for (const event of events) {
+    const key = eventComparisonKey(event, compareWithContent)
+    const bucket = index.get(key)
+    if (bucket) bucket.push(event)
+    else index.set(key, [event])
+  }
+  return index
+}
+
 /**
  * Check if an event is in the past relative to the reference time
  *

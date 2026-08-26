@@ -4,6 +4,12 @@ import { DetectCalendarChangeService } from "modules/calendar-log/services/detec
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
 import { CreateCalendarDto } from "modules/calendar-sync/models/dto/create-calendar.dto"
 import { CalendarFailureRepository } from "modules/calendar-sync/repositories/calendar-failure.repository"
+import { withCalendarSyncSpan } from "modules/calendar-sync/calendar-sync-tracing"
+import {
+  CalendarSyncContext,
+  isCalendarSyncAbort,
+  throwIfCalendarSyncAborted,
+} from "modules/calendar-sync/models/calendar-sync-context"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
@@ -58,8 +64,9 @@ export class CalendarSyncService {
     return { token: calendar.token }
   }
 
-  async sync(calendar: CalendarForSync) {
+  async sync(calendar: CalendarForSync, context: CalendarSyncContext = {}) {
     const { id, url, customData, school } = calendar
+    throwIfCalendarSyncAborted(context.signal)
     const source = { url, customData }
     const code = await this.findSchoolCode(school?.id)
     const minSyncIntervalMinutes = this.fetchService.getMinSyncIntervalMinutes(
@@ -67,29 +74,53 @@ export class CalendarSyncService {
       code,
     )
     const isNewCalendar = !id
-    if (
+    if (id && !calendar.syncPlannedAt) {
+      throw new Error("Existing calendar sync requires syncPlannedAt metadata")
+    }
+    const originalSyncPlannedAt = calendar.syncPlannedAt
+    const claimed =
       id &&
-      !(await this.calendarRepository.claimSyncIfDue(
-        id,
-        minSyncIntervalMinutes,
-      ))
-    ) {
+      (await this.calendarRepository.claimSyncIfDue(id, minSyncIntervalMinutes))
+    if (id && !claimed) {
       return this.calendarRepository.findOne(id)
     }
 
-    const fetchedEvents = await this.fetchEvents(source, code)
+    let fetchedEvents: Awaited<ReturnType<CalendarSyncService["fetchEvents"]>>
+    try {
+      this.calendarSyncMetricsService.upstreamStarted()
+      try {
+        fetchedEvents = await this.fetchEvents(source, code, {
+          ...context,
+          onAttempt: () => this.calendarSyncMetricsService.recordAttempt(),
+        })
+      } finally {
+        this.calendarSyncMetricsService.upstreamCompleted()
+      }
+      throwIfCalendarSyncAborted(context.signal)
+    } catch (error) {
+      if (
+        id &&
+        claimed &&
+        originalSyncPlannedAt &&
+        isCalendarSyncAbort(error, context.signal)
+      ) {
+        await this.calendarRepository.restoreSyncPlan(id, originalSyncPlannedAt)
+      }
+      throw error
+    }
 
-    const isError = "error" in fetchedEvents
+    const isError = !fetchedEvents.ok
 
     this.calendarSyncMetricsService.calendarSyncCounter.add(1, {
       school: code ?? undefined,
-      domain: this.parseDomain(url),
       status: isError ? "error" : "success",
-      error_type: isError ? toErrorType(fetchedEvents.error) : undefined,
+      error_type: !fetchedEvents.ok
+        ? toErrorType(fetchedEvents.error)
+        : undefined,
       action: isNewCalendar ? "create" : "update",
     })
 
-    if (isError && isNewCalendar) {
+    if (!fetchedEvents.ok && isNewCalendar) {
       const error = fetchedEvents.error
 
       const serializedError = {
@@ -110,12 +141,18 @@ export class CalendarSyncService {
       throw fetchedEvents.error
     }
 
-    const savedCalendar = await this.saveCalendar(
-      calendar,
-      fetchedEvents.events,
-      minSyncIntervalMinutes,
+    const savedCalendar = await withCalendarSyncSpan(
+      "calendar_sync.diff_persist",
+      () =>
+        this.calendarSyncMetricsService.measurePhase("diff_persist", () =>
+          this.saveCalendar(
+            calendar,
+            fetchedEvents.ok ? fetchedEvents.events : undefined,
+            minSyncIntervalMinutes,
+          ),
+        ),
     )
-    if (isError) throw fetchedEvents.error
+    if (!fetchedEvents.ok) throw fetchedEvents.error
 
     return savedCalendar
   }
@@ -168,19 +205,29 @@ export class CalendarSyncService {
   private async fetchEvents(
     source: CalendarSource,
     code: string | null,
-  ): Promise<{ error: any; events: undefined } | { events: CalendarEvent[] }> {
+    context: CalendarSyncContext,
+  ): Promise<
+    { ok: false; error: any } | { ok: true; events: CalendarEvent[] }
+  > {
     try {
-      const fetchedEvents = await this.fetchService.fetchEvents(source, code)
+      const fetchedEvents = await this.fetchService.fetchEvents(
+        source,
+        code,
+        undefined,
+        context,
+      )
       if (fetchedEvents.length === 0)
         throw new UnprocessableEntityException("No events found")
 
       return {
+        ok: true,
         events: fetchedEvents.map((event) =>
           this.calendarEventHelper.fromFetcherCalendarEvent(event),
         ),
       }
     } catch (err) {
-      return { error: err, events: undefined }
+      if (isCalendarSyncAbort(err, context.signal)) throw err
+      return { ok: false, error: err }
     }
   }
 
@@ -188,13 +235,5 @@ export class CalendarSyncService {
     if (!schoolId) return null
     const school = await this.schoolRepository.findOneOrFail(schoolId)
     return school.code
-  }
-
-  private parseDomain(url: string) {
-    try {
-      return new URL(url).hostname
-    } catch {
-      return undefined
-    }
   }
 }
