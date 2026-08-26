@@ -36,12 +36,12 @@ export const detectBadIcalImplementations = <T extends EventForChangeDetection>(
     let nbReallyUpdatedEvents = 0
     const oldItemsByContent = buildEventIndex(difference.oldItems, true)
 
-    difference.newItems.forEach((oldEv) => {
-      const correspondingEv = oldItemsByContent.get(
-        eventComparisonKey(oldEv, true),
-      )?.[0]
+    difference.newItems.forEach((newEvent) => {
+      const matchingOldEvent = oldItemsByContent.get(
+        eventComparisonKey(newEvent, true),
+      )
 
-      if (correspondingEv) nbReallyUpdatedEvents++
+      if (matchingOldEvent) nbReallyUpdatedEvents++
     })
 
     if (nbReallyUpdatedEvents > nbEventsThreshold) {

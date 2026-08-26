@@ -37,7 +37,7 @@ export const findNewEvents = <T extends EventForChangeDetection>(
     if (isEventInPast(newItem, referenceDate)) return
     const existingOldEvent = oldEventsByKey.get(
       eventComparisonKey(newItem, compareWithContent),
-    )?.[0]
+    )
     if (!existingOldEvent) {
       newItems.push(newItem)
     }

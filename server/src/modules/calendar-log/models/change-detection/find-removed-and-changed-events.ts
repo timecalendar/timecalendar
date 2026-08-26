@@ -31,7 +31,7 @@ export const findRemovedAndChangedEvents = <T extends EventForChangeDetection>(
   oldArray.forEach((oldItem) => {
     const correspondingNewEv = newEventsByKey.get(
       eventComparisonKey(oldItem, compareWithContent),
-    )?.[0]
+    )
     // Check if events are in the past
     if (shouldSkipPastEventPair(oldItem, correspondingNewEv, referenceDate)) {
       // Do not add events in the past

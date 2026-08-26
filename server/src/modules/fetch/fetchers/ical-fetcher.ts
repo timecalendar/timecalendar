@@ -87,20 +87,15 @@ export class IcalFetcher implements Fetcher {
             throw context.signal.reason
           }
 
-          if (error instanceof AxiosError && error.response?.status === 401) {
-            // handle HTTP basic authorization
-            if (error.response.headers["www-authenticate"]) {
-              if (data?.auth) {
-                // Bad credentials
-                throw new CustomError("Basic Authorization required", {
-                  basicAuth: "failed",
-                })
-              } else {
-                throw new CustomError("Basic Authorization required", {
-                  auth: "basic",
-                })
-              }
-            }
+          if (
+            error instanceof AxiosError &&
+            error.response?.status === 401 &&
+            error.response.headers["www-authenticate"]
+          ) {
+            throw new CustomError(
+              "Basic Authorization required",
+              data?.auth ? { basicAuth: "failed" } : { auth: "basic" },
+            )
           }
 
           if (budgetController.signal.aborted) break
