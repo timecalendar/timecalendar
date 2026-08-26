@@ -50,4 +50,3 @@ not alter the mobile API or local sync behavior.
 #### Scenario: Engineer changes calendar sync
 - **WHEN** an engineer reads the Calendar Architecture Book before modifying sync
 - **THEN** they can locate the server observability contract and preserve the no-token/no-URL telemetry boundary
-

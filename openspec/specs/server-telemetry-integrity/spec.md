@@ -87,4 +87,3 @@ minor cohort. The change MUST NOT introduce a major dependency bump.
 #### Scenario: Dependency tree is inspected
 - **WHEN** the server dependency tree is installed from the committed lockfile
 - **THEN** `npm ls` reports no invalid peer dependency and no stale 0.218 SDK/exporter cohort alongside the selected 0.219-compatible instrumentations
-

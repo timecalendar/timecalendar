@@ -1,6 +1,7 @@
 import { sanitizeLog } from "./sanitize-log"
 
 describe("sanitizeLog", () => {
+  const calendarToken = "V1StGXR8_Z5jdHi6B-myT"
   const fixtures = {
     url: "https://ade.ensea.fr/feed?token=calendar-secret",
     bearer: "Bearer abc.def.ghi",
@@ -20,6 +21,16 @@ describe("sanitizeLog", () => {
     for (const fixture of Object.values(fixtures)) {
       expect(result.body).not.toContain(fixture)
     }
+  })
+
+  it("redacts a default-length nanoid calendar token from scalar and error messages", () => {
+    const scalar = sanitizeLog(`calendar ${calendarToken} failed`)
+    const error = sanitizeLog(new Error(`calendar ${calendarToken} failed`))
+
+    expect(scalar.body).toContain("[id:redacted]")
+    expect(error.body).toContain("[id:redacted]")
+    expect(scalar.body).not.toContain(calendarToken)
+    expect(error.body).not.toContain(calendarToken)
   })
 
   it.each([

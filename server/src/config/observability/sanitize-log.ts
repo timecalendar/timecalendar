@@ -42,7 +42,7 @@ const sanitizeText = (input: string) =>
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
       "[id:redacted]",
     )
-    .replace(/\b(?:[A-Za-z\d_-]{24,}|\d{10,})\b/g, "[id:redacted]")
+    .replace(/\b(?:[A-Za-z\d_-]{21,}|\d{10,})\b/g, "[id:redacted]")
     .slice(0, MAX_SCALAR_LENGTH)
 
 const sanitizeContext = (input: string) =>
