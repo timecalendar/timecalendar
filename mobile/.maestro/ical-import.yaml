@@ -2,9 +2,9 @@
 # 4 / add-mobile-ical-import).
 #
 # Cold-launches the development-variant app, deep-links to the onboarding welcome
-# surface, taps the "Add by URL" CTA, asserts the URL-entry screen renders (a
-# stable title assertion), and submits with an EMPTY field to assert the inline
-# validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
+# surface, follows the stable Skip → missing-school controls to the URL entry,
+# asserts that screen renders, and submits with an EMPTY field to assert the
+# inline validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
 #
 # The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
 # seeds no parseable .ics import endpoint and a live external .ics would be flaky
@@ -31,12 +31,22 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
+# The title can wrap into separate accessibility nodes on narrow Android screens,
+# so use the stable welcome control as the render-ready assertion.
 - extendedWaitUntil:
-    visible: "TimeCalendar"
+    visible:
+      id: "onboarding-skip"
     timeout: 60000
-# Tap the "Add by URL" CTA → pushes /onboarding/ical-url.
+# Skip the welcome carousel → pushes /onboarding/school.
 - tapOn:
-    id: "onboarding-welcome-url-cta"
+    id: "onboarding-skip"
+# The live school picker owns the current URL-import entry point.
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-school-missing"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-school-missing"
 # The URL-entry screen renders.
 - extendedWaitUntil:
     visible: "Add a calendar by URL"
