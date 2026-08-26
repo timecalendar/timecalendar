@@ -2,6 +2,9 @@
 
 > R-1 pointer note: entries below are pointers plus the caveats tooling can't carry. The config is encoded in `mobile/eas.json` + `mobile/app.config.ts`; the operator guide is [`mobile/EAS.md`](../../../mobile/EAS.md); the load-bearing decisions are **ADR [006](./decisions/006-eas-distribution.md)** (fingerprint policy + human-invoked EAS).
 
+For the plain-language release flow, signing recovery and current readiness audit, see the
+[mobile release guide](../releases/README.md).
+
 ## Three profiles, two identities
 
 `mobile/eas.json` has `development` / `preview` / `production`, split along the `APP_VARIANT` line — **not** a third identity:
@@ -41,7 +44,7 @@ reconciliation must not overwrite incident-time rollback decisions. See ADR 037 
 
 Two channels: `preview` (internal dogfood) and `production` (store). `eas update --channel <name>` reaches only installed builds on the matching channel. Channel names mirror profile names (the EAS convention) so the command is unambiguous.
 
-## The `expo-updates` seam without a project
+## The initialized `expo-updates` project seam
 
 `expo-updates` is in `plugins`; `updates.url` (`https://u.expo.dev/<id>`) and `extra.eas.projectId` are derived from `easProjectId` = `process.env.EAS_PROJECT_ID` ?? the **committed real id** (`eas init` produced `@samuelprak/timecalendar`, projectId `3b427ef6-1aae-4175-8217-ea447ee6df6b`). The id is **not a secret** — it ships in the binary and the EAS project is public-by-id — so committing it as the fallback means a fresh clone / a CI build works with no env. (An earlier **zero-UUID placeholder** was wrong: a fake-but-present id makes EAS believe the project is already linked and **refuse `eas init`** — "Project already linked … Experience with id … does not exist". `eas init` was run with the id left `undefined`, which let it create and link the fresh project; the returned id is now the committed fallback.) `tsc`/lint/Jest don't read `projectId`, so CI `test-mobile` is unaffected.
 
@@ -53,7 +56,7 @@ Two channels: `preview` (internal dogfood) and `production` (store). `eas update
 
 ## CI untouched — EAS is human-invoked
 
-EAS Build/Submit/Update are **not** wired into CI; **no `.eas/workflows/`**. The native E2E keeps building via `expo prebuild` + Gradle/`xcodebuild`. Reasons: a CI `eas build` would be a _second_ build path to maintain and pay for (EAS Build minutes) for no new signal; dogfood cadence is human-driven; and `.eas/workflows/` needs the EAS project that doesn't exist yet.
+EAS Build/Submit/Update are **not** wired into CI; **no `.eas/workflows/`**. The native E2E keeps building via `expo prebuild` + Gradle/`xcodebuild`. Reasons: a CI `eas build` would be a _second_ build path to maintain and pay for (EAS Build minutes) for no new signal; dogfood cadence is human-driven; and the protected exact-SHA build/submit workflow and credential gates are still design work. The EAS project itself now exists.
 
 - **Recorded debt:** a `.eas/workflows/` (or GH Action) that builds+submits the dogfood build on a tag/label — **trigger:** manual dogfood builds become a friction point.
 - **Consequence accepted:** a broken `eas.json` is only caught when a human runs `eas build` (the first human verification step) — the EAS CLI requires login even for offline config validation.
@@ -64,10 +67,15 @@ This is build/release _configuration_, not runtime app behavior — a fabricated
 
 ## Human prerequisites (inbox — not blockers)
 
-`eas login` + `eas init` (real `projectId`/`updates.url`), Apple/Google credentials + EAS-managed signing, the actual `eas build`/`submit`/`update` runs, real-device install, TestFlight-internal + Play-internal setup — all in `docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`, tagged `(HUMAN: …)`. The config is green without them; these unlock builds/installs.
+The real `projectId`/`updates.url` link is complete. Account login/recovery, Apple credentials +
+EAS-managed iOS signing, recording the public Play app-signing/upload fingerprints, recovering or
+resetting the Play-accepted upload key, store submission credentials, a store-distributed preview
+profile, actual `eas build`/`submit` runs, real-device installs and TestFlight/Play internal groups
+remain. The [release readiness checklist](../releases/05-readiness-and-gaps.md) owns their current
+status. The config is green without them; these unlock builds/installs.
 
 ## Deferred (recorded debt — not built)
 
 - **No `.eas/workflows/` / CI EAS path** (trigger above).
-- **No real `projectId`/credentials/device install** (inbox).
+- **No verified live EAS/store credentials or device install**; the real EAS project link is done.
 - **No `match`→EAS bridge** (intentional).

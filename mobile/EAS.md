@@ -1,5 +1,9 @@
 # EAS — build, submit, and over-the-air updates
 
+For the ELI5 release flow, signing recovery and current readiness audit, start with
+[`docs/mobile/releases/`](../docs/mobile/releases/README.md). This file describes the committed
+configuration; the release pack explains what an operator must do around it.
+
 How `mobile/` ships. Configured by the `add-mobile-eas` change (foundation roadmap
 step 11). EAS is **human-invoked** — there is no CI wiring (see the Architecture Book
 "EAS / distribution", decision D4). The native E2E keeps building via `expo prebuild`,
@@ -10,11 +14,11 @@ not EAS.
 Three build profiles in [`eas.json`](./eas.json), split along the `APP_VARIANT`
 identity line (not a third identity — design D1):
 
-| Profile       | `APP_VARIANT` | Identity / Firebase                            | Distribution | Artifacts                       | Update channel |
-| ------------- | ------------- | ---------------------------------------------- | ------------ | ------------------------------- | -------------- |
-| `development` | `development` | `…timecalendar.dev` / `timecalendar-dev`       | `internal`   | iOS **simulator** + Android APK | —              |
-| `preview`     | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak`    | `internal`   | iOS device **.ipa** + Android APK | `preview`      |
-| `production`  | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak`    | `store`      | iOS **.ipa** + Android **.aab** | `production`   |
+| Profile       | `APP_VARIANT` | Identity / Firebase                         | Distribution | Artifacts                         | Update channel |
+| ------------- | ------------- | ------------------------------------------- | ------------ | --------------------------------- | -------------- |
+| `development` | `development` | `…timecalendar.dev` / `timecalendar-dev`    | `internal`   | iOS **simulator** + Android APK   | —              |
+| `preview`     | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak` | `internal`   | iOS device **.ipa** + Android APK | `preview`      |
+| `production`  | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak` | `store`      | iOS **.ipa** + Android **.aab**   | `production`   |
 
 - `development` is the fast inner loop: `developmentClient: true`, simulator + APK, no
   signing needed. It carries the `.dev` id, the dev Firebase project, and the dev-variant
@@ -41,9 +45,9 @@ production default in `app.config.ts`. **Verify with the variant diff:**
   changes the fingerprint and therefore **requires a fresh native build**; it will not (and
   must not) ship as an OTA. This is the intended safety property, not a bug: if an expected
   OTA "doesn't apply," check whether the change touched native config.
-- `updates.url` and `extra.eas.projectId` are derived from `EAS_PROJECT_ID`. Until a human
-  runs `eas init` (no EAS project exists yet) the config uses a zero-UUID **placeholder** so
-  `tsc` / `expo config --json` stay green. `eas init` fills the real id.
+- `updates.url` and `extra.eas.projectId` are derived from `EAS_PROJECT_ID`, falling back to the
+  committed real EAS project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b` for
+  `@samuelprak/timecalendar`. The ID is public build metadata, not a secret.
 - Push an update: `eas update --channel preview` (dogfood) / `eas update --channel production`
   (store). Updates only reach installed builds on the matching channel.
 
@@ -66,11 +70,9 @@ bundle id, so EAS targets the existing App Store record (the RN app ships as an 
 
 ## Human prerequisites (cannot be automated)
 
-These unlock real builds/installs; the config above is green without them. See
-[`docs/react-native-migration/inbox/2026-06-13-eas-credentials.md`](../docs/react-native-migration/inbox/2026-06-13-eas-credentials.md):
-
-1. `eas login` + `eas init` → real `projectId` / `updates.url` (commit the resolved id — not a secret).
-2. Apple Developer credentials + EAS-managed iOS signing; supply the `$EXPO_*` submit env vars.
-3. Google Play service-account key at the `serviceAccountKeyPath`.
-4. `eas build --profile preview` (both platforms) + real-device install; TestFlight internal + Play internal testing setup.
-5. Verify `eas update --channel preview` is picked up and production crashes/analytics land in `timecalendar-samuelprak`.
+Real builds still require account access, signing and submission credentials, remote version
+initialization, and physical-device verification. The current `preview` profile creates direct
+installation artifacts and is not store-submittable. The release guide's
+[readiness checklist](../docs/mobile/releases/05-readiness-and-gaps.md) owns current status, and the
+[(HUMAN: mobile release bootstrap) inbox note](../docs/react-native-migration/inbox/2026-08-26-mobile-release-bootstrap.md)
+owns the exact operator actions. No credential or private key belongs in git.
