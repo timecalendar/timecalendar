@@ -3,7 +3,9 @@ import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { calendarLogFactory } from "modules/calendar-log/factories/calendar-log.factory"
 import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
+import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import createTestApp from "test-utils/create-test-app"
+import { DataSource } from "typeorm"
 
 describe("CalendarLogRepository", () => {
   let app: NestExpressApplication
@@ -158,6 +160,77 @@ describe("CalendarLogRepository", () => {
       expect(logs[0].calendar.id).toBe(calendar.id)
       expect(logs[0].calendar.token).toBe(calendar.token)
       expect(logs[0].calendar.name).toBe(calendar.name)
+    })
+  })
+
+  describe("findLatestCreatedAtByCalendarIds", () => {
+    it("maps only the latest timestamp for each calendar", async () => {
+      const first = await calendarFactory().create()
+      const second = await calendarFactory().create()
+      const firstLog = await calendarLogFactory().calendar(first.id).create()
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      const latestFirstLog = await calendarLogFactory()
+        .calendar(first.id)
+        .create()
+      const secondLog = await calendarLogFactory().calendar(second.id).create()
+
+      const result = await repository.findLatestCreatedAtByCalendarIds([
+        first.id,
+        second.id,
+      ])
+
+      expect(result[first.id]).toEqual(latestFirstLog.createdAt)
+      expect(result[first.id]).not.toEqual(firstLog.createdAt)
+      expect(result[second.id]).toEqual(secondLog.createdAt)
+    })
+
+    it("does not query for an empty calendar set", async () => {
+      const typeormRepository = app.get(DataSource).getRepository(CalendarLog)
+      const query = jest.spyOn(typeormRepository, "createQueryBuilder")
+
+      await expect(
+        repository.findLatestCreatedAtByCalendarIds([]),
+      ).resolves.toEqual({})
+      expect(query).not.toHaveBeenCalled()
+      query.mockRestore()
+    })
+
+    it("uses one grouped timestamp-only projection", async () => {
+      const typeormRepository = app.get(DataSource).getRepository(CalendarLog)
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([
+          {
+            calendarId: "calendar-1",
+            latestCreatedAt: "2026-08-25T12:00:00.000Z",
+          },
+        ]),
+      }
+      const query = jest
+        .spyOn(typeormRepository, "createQueryBuilder")
+        .mockReturnValue(queryBuilder as never)
+
+      await expect(
+        repository.findLatestCreatedAtByCalendarIds(["calendar-1"]),
+      ).resolves.toEqual({
+        "calendar-1": new Date("2026-08-25T12:00:00.000Z"),
+      })
+      expect(queryBuilder.select).toHaveBeenCalledWith(
+        "calendarLog.calendarId",
+        "calendarId",
+      )
+      expect(queryBuilder.addSelect).toHaveBeenCalledWith(
+        "MAX(calendarLog.createdAt)",
+        "latestCreatedAt",
+      )
+      expect(queryBuilder.groupBy).toHaveBeenCalledWith(
+        "calendarLog.calendarId",
+      )
+      expect(queryBuilder.getRawMany).toHaveBeenCalledTimes(1)
+      query.mockRestore()
     })
   })
 })

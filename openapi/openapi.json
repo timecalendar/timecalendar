@@ -1129,6 +1129,47 @@
           "exportedAt"
         ]
       },
+      "CalendarSourceHealthDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "healthy",
+              "unknown",
+              "stale"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "enum": [
+              "expired_export_window",
+              "known_source_transition"
+            ],
+            "type": "string"
+          },
+          "recoveryAction": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "re_add"
+            ]
+          },
+          "guide": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "amu_2026_2027"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "recoveryAction",
+          "guide"
+        ]
+      },
       "CalendarWithContent": {
         "type": "object",
         "properties": {
@@ -1140,11 +1181,15 @@
             "items": {
               "$ref": "#/components/schemas/CalendarEventForPublic"
             }
+          },
+          "sourceHealth": {
+            "$ref": "#/components/schemas/CalendarSourceHealthDto"
           }
         },
         "required": [
           "calendar",
-          "events"
+          "events",
+          "sourceHealth"
         ]
       },
       "SchoolGroupItem": {

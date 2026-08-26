@@ -4,7 +4,14 @@ import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
+import {
+  getSourceHealthSnapshot,
+  replaceSourceHealthSnapshot,
+  SOURCE_HEALTH_KEY,
+} from "@/features/calendar-sources/store"
+import * as sourceHealthStore from "@/features/calendar-sources/store/store"
 import { recordUnknownError } from "@/firebase"
+import { remove } from "@/storage"
 
 import * as repository from "./repository"
 import { useSyncCalendars } from "./sync"
@@ -27,6 +34,12 @@ const mockFetch = customFetch as jest.Mock
 const mockFindAll = findAllUserCalendars as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockReplaceAll = repository.replaceAll as jest.Mock
+const actualReplaceSourceHealthSnapshot =
+  sourceHealthStore.replaceSourceHealthSnapshot
+const mockReplaceSourceHealthSnapshot = jest.spyOn(
+  sourceHealthStore,
+  "replaceSourceHealthSnapshot",
+)
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -67,6 +80,12 @@ const syncResponse = [
   {
     calendar: { id: "cal-1", token: "tok_123", name: "ENSEEIHT" },
     events: [dtoEvent],
+    sourceHealth: {
+      status: "stale",
+      reason: "expired_export_window",
+      recoveryAction: "re_add",
+      guide: null,
+    },
   },
 ]
 
@@ -74,6 +93,10 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockReplaceAll.mockResolvedValue(undefined)
   mockFindAll.mockResolvedValue([calendarToken])
+  remove(SOURCE_HEALTH_KEY)
+  mockReplaceSourceHealthSnapshot.mockImplementation(
+    actualReplaceSourceHealthSnapshot,
+  )
 })
 
 describe("useSyncCalendars", () => {
@@ -103,6 +126,9 @@ describe("useSyncCalendars", () => {
       { name: "CM", color: "#FF0000", icon: "book" },
     ])
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+    expect(getSourceHealthSnapshot()).toEqual({
+      "cal-1": syncResponse[0]!.sourceHealth,
+    })
   })
 
   it("is a no-op (no request) when there are no tokens", async () => {
@@ -119,6 +145,14 @@ describe("useSyncCalendars", () => {
   })
 
   it("flips isError without recordError when the fetch fails (recoverable)", async () => {
+    replaceSourceHealthSnapshot({
+      previous: {
+        status: "unknown",
+        reason: null,
+        recoveryAction: null,
+        guide: null,
+      },
+    })
     mockFetch.mockRejectedValueOnce(new Error("offline"))
 
     const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
@@ -130,9 +164,18 @@ describe("useSyncCalendars", () => {
     expect(mockReplaceAll).not.toHaveBeenCalled()
     // A fetch failure is recoverable — the last-good rows render; NOT recorded.
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+    expect(getSourceHealthSnapshot()).toHaveProperty("previous")
   })
 
   it("records a replaceAll transaction failure (crash-worthy local write)", async () => {
+    replaceSourceHealthSnapshot({
+      previous: {
+        status: "unknown",
+        reason: null,
+        recoveryAction: null,
+        guide: null,
+      },
+    })
     mockFetch.mockResolvedValueOnce(syncResponse)
     mockReplaceAll.mockRejectedValueOnce(new Error("sqlite boom"))
 
@@ -144,6 +187,30 @@ describe("useSyncCalendars", () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
+    expect(getSourceHealthSnapshot()).toHaveProperty("previous")
+  })
+
+  it("writes health after events and records a privacy-safe health failure", async () => {
+    mockFetch.mockResolvedValueOnce(syncResponse)
+    mockReplaceSourceHealthSnapshot.mockImplementationOnce(() => {
+      throw new Error("mmkv boom")
+    })
+
+    const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+
+    expect(mockReplaceAll).toHaveBeenCalledTimes(1)
+    expect(mockReplaceSourceHealthSnapshot).toHaveBeenCalledTimes(1)
+    expect(mockReplaceAll.mock.invocationCallOrder[0]!).toBeLessThan(
+      mockReplaceSourceHealthSnapshot.mock.invocationCallOrder[0]!,
+    )
+    expect(mockRecordUnknownError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "calendar/source-health",
+    )
+    expect(result.current.isError).toBe(true)
   })
 
   it("records a dtoToRow mapping failure (a malformed DTO is crash-worthy, not a silent fetch error)", async () => {

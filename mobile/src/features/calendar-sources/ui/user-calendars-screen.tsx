@@ -25,6 +25,10 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
+import {
+  type CalendarSourceHealth,
+  useSourceHealthSnapshot,
+} from "@/features/calendar-sources/store"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The user-calendars management screen ("Mes calendriers") — PRESENTATIONAL (70%
@@ -44,6 +48,7 @@ export function UserCalendarsScreen() {
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const { setVisible, remove, failed } = useUserCalendarActions()
+  const sourceHealth = useSourceHealthSnapshot()
 
   // A native Alert confirms the non-undoable delete. The success announce is
   // gated on the resolved write so a failed delete keeps the screen and its
@@ -145,8 +150,23 @@ export function UserCalendarsScreen() {
               <CalendarRow
                 key={calendar.id}
                 calendar={calendar}
+                sourceHealth={sourceHealth[calendar.id]}
                 onToggle={(visible) => setVisible(calendar.id, visible)}
                 onDelete={confirmDelete}
+                onRecover={() =>
+                  router.push({
+                    pathname: "/onboarding/school",
+                    params: {
+                      source: "stale-recovery",
+                      calendarId: calendar.id,
+                      ...(calendar.schoolId && {
+                        schoolId: calendar.schoolId,
+                      }),
+                      reason: sourceHealth[calendar.id]?.reason ?? "unknown",
+                      guide: sourceHealth[calendar.id]?.guide ?? "generic",
+                    },
+                  })
+                }
               />
             ))}
           </ScrollView>
@@ -183,12 +203,16 @@ export function UserCalendarsScreen() {
 
 function CalendarRow({
   calendar,
+  sourceHealth,
   onToggle,
   onDelete,
+  onRecover,
 }: {
   calendar: UserCalendar
+  sourceHealth: CalendarSourceHealth | undefined
   onToggle: (visible: boolean) => Promise<boolean>
   onDelete: (id: string, name: string) => void
+  onRecover: () => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -259,6 +283,41 @@ function CalendarRow({
       </View>
 
       <View style={[styles.separator, { backgroundColor: theme.separator }]} />
+      {sourceHealth?.status === "stale" && (
+        <View
+          style={styles.recovery}
+          accessibilityLiveRegion="polite"
+          testID={`user-calendar-stale-${calendar.id}`}
+        >
+          <ThemedText type="smallBold" themeColor="destructive">
+            {t("userCalendars.stale.label")}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {sourceHealth.guide === "amu_2026_2027"
+              ? t("userCalendars.stale.amu")
+              : t("userCalendars.stale.expired")}
+          </ThemedText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("userCalendars.stale.reAddLabel", { name })}
+            accessibilityHint={t("userCalendars.stale.reAddHint")}
+            onPress={onRecover}
+            style={[
+              styles.recoveryButton,
+              { backgroundColor: theme.backgroundSelected },
+            ]}
+          >
+            <ThemedText type="smallBold">
+              {t("userCalendars.stale.reAdd")}
+            </ThemedText>
+          </Pressable>
+        </View>
+      )}
+      {sourceHealth?.status === "stale" && (
+        <View
+          style={[styles.separator, { backgroundColor: theme.separator }]}
+        />
+      )}
       <VisibilityControl
         calendarId={calendar.id}
         name={name}
@@ -438,6 +497,14 @@ const styles = StyleSheet.create({
   separator: {
     height: StyleSheet.hairlineWidth,
     marginVertical: Spacing.two + Spacing.one,
+  },
+  recovery: { gap: Spacing.one, paddingVertical: Spacing.one },
+  recoveryButton: {
+    minHeight: 48,
+    alignSelf: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radii.medium,
   },
   visibilityRow: {
     minHeight: 44,

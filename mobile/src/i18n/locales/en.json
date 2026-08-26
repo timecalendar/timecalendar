@@ -248,6 +248,9 @@
   "calendar.agenda.nowLabel": "Up next",
   "calendar.sync.refreshingLabel": "Refreshing your calendar",
   "calendar.sync.error": "We couldn't refresh your calendar. Showing your last update.",
+  "calendar.sourceHealth.attention": "A calendar source needs attention. Saved events are still shown and may be out of date.",
+  "calendar.sourceHealth.manage": "Review",
+  "calendar.sourceHealth.manageLabel": "Review calendar sources that need attention",
   "calendar.sync.retry": "Retry",
   "calendar.sync.retryLabel": "Retry refreshing your calendar",
   "eventDetails.title": "Event",
@@ -314,5 +317,11 @@
   "userCalendars.delete.action": "Delete",
   "userCalendars.delete.title": "Confirm deletion",
   "userCalendars.delete.message": "Are you sure you want to delete the calendar {{name}}?",
-  "userCalendars.delete.confirm": "Delete"
+  "userCalendars.delete.confirm": "Delete",
+  "userCalendars.stale.label": "Source needs attention",
+  "userCalendars.stale.expired": "This saved export period has ended. Add an updated calendar to recover future events.",
+  "userCalendars.stale.amu": "AMU changed its schedule service for 2026–27. Add the current calendar from the new service.",
+  "userCalendars.stale.reAdd": "Add updated calendar",
+  "userCalendars.stale.reAddLabel": "Add an updated calendar for {{name}}",
+  "userCalendars.stale.reAddHint": "Keeps this calendar until you choose to delete it"
 }

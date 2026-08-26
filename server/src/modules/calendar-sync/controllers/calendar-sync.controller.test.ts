@@ -2,6 +2,7 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
+import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
@@ -99,6 +100,56 @@ describe("CalendarSyncController", () => {
       expect(body[0].calendar.id).toBe(calendar.id)
       expect(body[0].events).toHaveLength(1)
       expect(body[0].events[0].uid).toBe(events[0].uid)
+      expect(body[0].sourceHealth).toEqual({
+        status: "unknown",
+        reason: null,
+        recoveryAction: null,
+        guide: null,
+      })
+    })
+
+    it("keeps last-good content and source when an expired feed is empty", async () => {
+      const lastGoodEvent = calendarEventFactory.build({
+        uid: "last-good-event",
+      })
+      const expiredUrl =
+        "https://calendar.example.test/export?firstDate=2020-09-01&lastDate=2021-06-30"
+      const staleCalendar = await calendarFactory()
+        .school()
+        .transient({ events: [lastGoodEvent] })
+        .create({
+          url: expiredUrl,
+          syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
+        })
+      mockFetchService.fetchEvents.mockResolvedValueOnce([])
+
+      const { body } = await request(app)
+        .post("/calendars/sync")
+        .send({ tokens: [staleCalendar.token] })
+        .expect(201)
+
+      expect(body[0].events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ uid: "last-good-event" }),
+        ]),
+      )
+      expect(body[0].sourceHealth).toEqual({
+        status: "stale",
+        reason: "expired_export_window",
+        recoveryAction: "re_add",
+        guide: null,
+      })
+
+      const persisted = await dataSource.getRepository(Calendar).findOneOrFail({
+        relations: { content: true },
+        where: { id: staleCalendar.id },
+      })
+      expect(persisted.url).toBe(expiredUrl)
+      expect(persisted.content.events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ uid: "last-good-event" }),
+        ]),
+      )
     })
   })
 })

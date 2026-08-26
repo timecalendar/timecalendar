@@ -5,6 +5,7 @@ import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { DEFAULT_COLOR } from "modules/calendar/helpers/calendar-event.helper"
 import { CalendarHelper } from "modules/calendar/helpers/calendar.helper"
 import { Calendar } from "modules/calendar/models/calendar.entity"
+import { CalendarSourceHealthStatus } from "modules/calendar/models/source-health.model"
 import createTestApp from "test-utils/create-test-app"
 import { DataSource } from "typeorm"
 
@@ -12,6 +13,12 @@ describe("CalendarHelper", () => {
   let app: NestExpressApplication
   let dataSource: DataSource
   let helper: CalendarHelper
+  const sourceHealth = {
+    status: CalendarSourceHealthStatus.Unknown,
+    reason: null,
+    recoveryAction: null,
+    guide: null,
+  }
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarModule] })
@@ -35,6 +42,7 @@ describe("CalendarHelper", () => {
       const { calendar, events } = helper.withContentForPublic({
         calendar: calendarWithContent,
         subjects: [{ name: "cours", color: "#ff0000" }],
+        sourceHealth,
       })
 
       expect(calendar.id).toBe(created.id)
@@ -66,6 +74,7 @@ describe("CalendarHelper", () => {
       const { events } = helper.withContentForPublic({
         calendar: calendarWithContent,
         subjects: [{ name: "maths", color: "#53cf8a" }],
+        sourceHealth,
       })
 
       expect(events.length).toBe(2)

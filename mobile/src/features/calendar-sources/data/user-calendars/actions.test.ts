@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react-native"
 
+import { removeCalendarSourceHealth } from "@/features/calendar-sources/store"
 import { recordUnknownError } from "@/firebase"
 
 import { useUserCalendarActions } from "./actions"
@@ -16,15 +17,20 @@ jest.mock("./repository", () => ({
   setVisible: jest.fn(),
   remove: jest.fn(),
 }))
+jest.mock("@/features/calendar-sources/store", () => ({
+  removeCalendarSourceHealth: jest.fn(),
+}))
 
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockSetVisible = setVisible as jest.Mock
 const mockRemove = remove as jest.Mock
+const mockRemoveCalendarSourceHealth = removeCalendarSourceHealth as jest.Mock
 
 beforeEach(() => {
   mockSetVisible.mockReset().mockResolvedValue(undefined)
   mockRemove.mockReset().mockResolvedValue(undefined)
   mockRecordUnknownError.mockReset()
+  mockRemoveCalendarSourceHealth.mockReset()
 })
 
 describe("useUserCalendarActions", () => {
@@ -41,6 +47,7 @@ describe("useUserCalendarActions", () => {
 
     expect(mockSetVisible).toHaveBeenCalledWith("cal-1", false)
     expect(mockRemove).toHaveBeenCalledWith("cal-1")
+    expect(mockRemoveCalendarSourceHealth).toHaveBeenCalledWith("cal-1")
     expect(visibleOk).toBe(true)
     expect(removeOk).toBe(true)
     expect(result.current.failed).toBe(false)
@@ -62,6 +69,7 @@ describe("useUserCalendarActions", () => {
       "user-calendars/setVisible",
     )
     expect(result.current.failed).toBe(true)
+    expect(mockRemoveCalendarSourceHealth).not.toHaveBeenCalled()
   })
 
   it("records a remove failure under its tag, resolves false, and flips the flag", async () => {

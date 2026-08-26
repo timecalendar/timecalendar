@@ -30,6 +30,30 @@ export class CalendarLogRepository {
     })
   }
 
+  async findLatestCreatedAtByCalendarIds(
+    calendarIds: string[],
+  ): Promise<Record<string, Date>> {
+    if (calendarIds.length === 0) return {}
+
+    const rows: { calendarId: string; latestCreatedAt: Date | string }[] =
+      await this.repository
+        .createQueryBuilder("calendarLog")
+        .select("calendarLog.calendarId", "calendarId")
+        .addSelect("MAX(calendarLog.createdAt)", "latestCreatedAt")
+        .where("calendarLog.calendarId IN (:...calendarIds)", { calendarIds })
+        .groupBy("calendarLog.calendarId")
+        .getRawMany()
+
+    return Object.fromEntries(
+      rows.map(({ calendarId, latestCreatedAt }) => [
+        calendarId,
+        latestCreatedAt instanceof Date
+          ? latestCreatedAt
+          : new Date(latestCreatedAt),
+      ]),
+    )
+  }
+
   // Bounded batches keep each DELETE's lock footprint and WAL burst small.
   async pruneOlderThan(cutoff: Date, batchSize: number): Promise<number> {
     let total = 0

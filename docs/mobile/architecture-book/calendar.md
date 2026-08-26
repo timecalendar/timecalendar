@@ -54,6 +54,18 @@ Sync sends durable user-calendar tokens to the generated batch endpoint and repl
 last good local rows and produces a recoverable UI state. A local transaction failure
 is unexpected and is recorded through `@/firebase`.
 
+Each successful batch also carries a server-owned, URL-free source-health object.
+After event replacement succeeds, mobile fully replaces one rebuildable MMKV health
+snapshot keyed by calendar ID; request or SQLite failure preserves both previous
+snapshots. Missing, malformed, and future codes decode to `unknown`. Health is
+advisory only: it never filters events or mutates durable calendar identity.
+
+A stale source keeps its last-good events visible and adds a compact Calendar warning
+plus reason-specific recovery controls in calendar management. Recovery starts the
+existing add-calendar flow and never rewrites or removes the old source. The existing
+explicit confirm-gated delete remains the only removal path. See
+[ADR 039](./decisions/039-preserve-content-and-advise-source-recovery.md).
+
 SQLite live reads are coalesced to one whole-table read per macrotask. Repositories must
 use synchronous Drizzle transaction callbacks with `.run()` executors because the Expo
 SQLite synchronous driver does not await async callbacks.

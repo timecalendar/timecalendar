@@ -1,5 +1,6 @@
 import { useCallback } from "react"
 
+import { removeCalendarSourceHealth } from "@/features/calendar-sources/store"
 import { useRecordedAction } from "@/hooks/use-recorded-action"
 
 import { remove, setVisible } from "./repository"
@@ -31,7 +32,14 @@ export function useUserCalendarActions(): UserCalendarActions {
         run("setVisible", () => setVisible(id, visible)),
       [run],
     ),
-    remove: useCallback((id: string) => run("remove", () => remove(id)), [run]),
+    remove: useCallback(
+      (id: string) =>
+        run("remove", async () => {
+          await remove(id)
+          removeCalendarSourceHealth(id)
+        }),
+      [run],
+    ),
     failed,
   }
 }

@@ -11,6 +11,7 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
+import { useSourceHealthSnapshot } from "@/features/calendar-sources/store"
 
 import { UserCalendarsScreen } from "./user-calendars-screen"
 
@@ -25,6 +26,9 @@ jest.mock("@/features/calendar-sources/data", () => ({
   useUserCalendars: jest.fn(),
   useUserCalendarsLoaded: jest.fn(),
   useUserCalendarActions: jest.fn(),
+}))
+jest.mock("@/features/calendar-sources/store", () => ({
+  useSourceHealthSnapshot: jest.fn(),
 }))
 
 jest.mock("@/components/chrome", () => {
@@ -69,6 +73,7 @@ jest.mock("expo-router", () => ({
 const mockUseUserCalendars = useUserCalendars as jest.Mock
 const mockUseUserCalendarsLoaded = useUserCalendarsLoaded as jest.Mock
 const mockUseUserCalendarActions = useUserCalendarActions as jest.Mock
+const mockUseSourceHealthSnapshot = useSourceHealthSnapshot as jest.Mock
 
 const actions = {
   setVisible: jest.fn(),
@@ -97,6 +102,7 @@ beforeEach(() => {
   actions.setVisible.mockResolvedValue(true)
   actions.remove.mockResolvedValue(true)
   mockUseUserCalendarActions.mockReturnValue({ ...actions, failed: false })
+  mockUseSourceHealthSnapshot.mockReturnValue({})
   mockInsets = { top: 0, right: 0, bottom: 0, left: 0 }
 })
 
@@ -135,6 +141,71 @@ describe("UserCalendarsScreen", () => {
         attributes: { destructive: true },
       },
     ])
+  })
+
+  it("renders generic stale guidance and routes with safe recovery codes", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar()])
+    mockUseSourceHealthSnapshot.mockReturnValue({
+      "cal-1": {
+        status: "stale",
+        reason: "expired_export_window",
+        recoveryAction: "re_add",
+        guide: null,
+      },
+    })
+    await render(<UserCalendarsScreen />)
+
+    expect(screen.getByText("Source needs attention")).toBeTruthy()
+    expect(
+      screen.getByText(
+        "This saved export period has ended. Add an updated calendar to recover future events.",
+      ),
+    ).toBeTruthy()
+    fireEvent.press(
+      screen.getByRole("button", {
+        name: "Add an updated calendar for ENSEEIHT",
+      }),
+    )
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/onboarding/school",
+      params: {
+        source: "stale-recovery",
+        calendarId: "cal-1",
+        schoolId: "sch-1",
+        reason: "expired_export_window",
+        guide: "generic",
+      },
+    })
+    expect(JSON.stringify(mockPush.mock.calls)).not.toMatch(/https|token/)
+  })
+
+  it("renders AMU transition guidance and hides recovery for unknown", async () => {
+    mockUseUserCalendars.mockReturnValue([
+      calendar({ id: "amu", name: "AMU", schoolId: "amu-school" }),
+      calendar({ id: "unknown", name: "Other" }),
+    ])
+    mockUseSourceHealthSnapshot.mockReturnValue({
+      amu: {
+        status: "stale",
+        reason: "known_source_transition",
+        recoveryAction: "re_add",
+        guide: "amu_2026_2027",
+      },
+      unknown: {
+        status: "unknown",
+        reason: null,
+        recoveryAction: null,
+        guide: null,
+      },
+    })
+    await render(<UserCalendarsScreen />)
+
+    expect(
+      screen.getByText(
+        "AMU changed its schedule service for 2026–27. Add the current calendar from the new service.",
+      ),
+    ).toBeTruthy()
+    expect(screen.queryByTestId("user-calendar-stale-unknown")).toBeNull()
   })
 
   it("applies safe-area or design insets once, whichever is larger", async () => {

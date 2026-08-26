@@ -248,6 +248,9 @@
   "calendar.agenda.nowLabel": "À venir",
   "calendar.sync.refreshingLabel": "Actualisation de votre calendrier",
   "calendar.sync.error": "Impossible d'actualiser votre calendrier. Affichage de votre dernière mise à jour.",
+  "calendar.sourceHealth.attention": "Une source de calendrier nécessite votre attention. Les événements enregistrés restent affichés et peuvent être obsolètes.",
+  "calendar.sourceHealth.manage": "Vérifier",
+  "calendar.sourceHealth.manageLabel": "Vérifier les sources de calendrier qui nécessitent votre attention",
   "calendar.sync.retry": "Réessayer",
   "calendar.sync.retryLabel": "Réessayer d'actualiser votre calendrier",
   "eventDetails.title": "Événement",
@@ -314,5 +317,11 @@
   "userCalendars.delete.action": "Supprimer",
   "userCalendars.delete.title": "Confirmer la suppression",
   "userCalendars.delete.message": "Êtes-vous sûr de vouloir supprimer le calendrier {{name}} ?",
-  "userCalendars.delete.confirm": "Supprimer"
+  "userCalendars.delete.confirm": "Supprimer",
+  "userCalendars.stale.label": "Source à vérifier",
+  "userCalendars.stale.expired": "La période d’export enregistrée est terminée. Ajoutez un calendrier à jour pour récupérer les événements futurs.",
+  "userCalendars.stale.amu": "AMU a changé de service d’emploi du temps pour 2026–2027. Ajoutez le calendrier actuel depuis le nouveau service.",
+  "userCalendars.stale.reAdd": "Ajouter le calendrier à jour",
+  "userCalendars.stale.reAddLabel": "Ajouter un calendrier à jour pour {{name}}",
+  "userCalendars.stale.reAddHint": "Conserve ce calendrier jusqu’à ce que vous décidiez de le supprimer"
 }
