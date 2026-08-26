@@ -75,7 +75,8 @@ A later implementation needs a store-distributed internal profile (provisional n
 - `preview` OTA channel;
 - AAB on Android and store IPA on iOS;
 - remote auto-incremented build numbers;
-- submit configuration naming the TestFlight internal group(s) and targeting Play internal testing.
+- submit configuration targeting Play internal testing; the TestFlight internal group names are
+  supplied after approval with the EAS CLI `--groups` argument.
 
 Do not silently repurpose the existing `preview` profile; retain it for direct/ad hoc installs or
 rename it in a deliberate ADR-backed config change.
@@ -98,9 +99,10 @@ rename it in a deliberate ADR-backed config change.
 4. Record EAS build IDs, fingerprints, versions and artifact links.
 5. If `submit=false`, stop successfully with downloadable build evidence.
 6. If `submit=true`, wait at GitHub environment `mobile-internal-submit`.
-7. After approval, submit those exact EAS build IDs to the named TestFlight internal group(s) and
-   Play internal track. Expo supports `groups` in the iOS submit profile/CLI; do not rely on a human
-   to attach the build after upload.
+7. After approval, submit the exact iOS EAS build ID with
+   `eas submit --platform ios --id <build-id> --groups <internal-group>` and the exact Android EAS
+   build ID to the Play internal track. `--groups` accepts existing TestFlight internal group names
+   only; do not rely on a human to attach the build after upload.
 8. Record App Store Connect/Play processing links and tester-facing release notes.
 
 Uploading to internal testers is a deploy act. Automation may prepare it; the existing human release
@@ -112,9 +114,12 @@ Use the beta population described in [OTA document 7](../ota/07-environments-and
 
 - exact SHA required;
 - EAS store build with a future `beta` profile and `beta` OTA channel;
-- TestFlight external / Play closed testing destination;
+- after the protected approval, pass the exact iOS EAS build ID to an EAS Workflows `testflight`
+  job with the named `external_groups`, tester `changelog` and `submit_beta_review: true`; complete
+  the required TestFlight test information in App Store Connect before invoking the job;
+- submit the exact Android EAS build ID to the Play closed testing destination;
 - protected `mobile-beta-submit` environment before submission;
-- first TestFlight build of a version may require Beta App Review;
+- the first TestFlight build of each app version requires Beta App Review;
 - submit the existing build IDs, never rebuild after approval.
 
 ## 3.4 `mobile-production-build`
@@ -184,4 +189,6 @@ future QA role, but the adoption plan does not create or depend on that role.
 Sources: [Apple TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview),
 [Apple internal testers](https://developer.apple.com/help/app-store-connect/test-a-beta-version/add-internal-testers/),
 [Google Play testing tracks](https://support.google.com/googleplay/android-developer/answer/9845334),
-[Expo Android submission](https://docs.expo.dev/submit/android/).
+[Expo Android submission](https://docs.expo.dev/submit/android/),
+[Expo TestFlight distribution](https://docs.expo.dev/submit/testflight/) and
+[Expo Workflows `testflight` job](https://docs.expo.dev/eas/workflows/pre-packaged-jobs/#testflight).

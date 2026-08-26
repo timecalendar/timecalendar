@@ -44,8 +44,8 @@ Expo explicitly documents that `eas build --local` does not support its build ca
 environment values must be supplied on the local machine. A hand-maintained Fastlane/Xcode path
 would also become a second release implementation alongside EAS.
 
-Keep signed builds boring: EAS-managed credentials, EAS Build, EAS Submit, immutable SHA, protected
-submission environment.
+Keep signed builds boring: EAS-managed credentials, EAS Build, EAS Submit or the EAS Workflows
+`testflight` job as appropriate, immutable SHA, protected submission environment.
 
 ### Do not attach the persistent runner to the public repository
 

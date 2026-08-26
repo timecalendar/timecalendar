@@ -15,8 +15,9 @@ The answer is **both, with different responsibilities**:
   concurrency for persistent-host jobs.
 - **The Mac Mini is a trusted execution worker** for iOS simulator builds and Maestro runs from
   trusted commits. It is not available to pull-request code and is not the only way to run E2E.
-- **EAS Build and EAS Submit remain the signed distribution path** for TestFlight, Play internal,
-  beta and production. Store credentials do not live on the Mac Mini.
+- **EAS remains the signed distribution path**: EAS Build creates the binaries, EAS Submit uploads
+  internal and production builds, and the EAS Workflows `testflight` job handles external-beta
+  groups and Beta App Review. Store credentials do not live on the Mac Mini.
 - **GitHub-hosted runners remain the fallback** and continue to run ordinary PR checks and the
   Android job until a measured pilot proves moving Android is worthwhile.
 

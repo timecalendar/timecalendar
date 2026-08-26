@@ -26,16 +26,16 @@ remains useful for break-glass human maintenance, not normal job execution.
 
 ## 2.2 Workload placement
 
-| Workload                                       | Trigger                                        | Runner                                 | Secrets                         | Rationale                                           |
-| ---------------------------------------------- | ---------------------------------------------- | -------------------------------------- | ------------------------------- | --------------------------------------------------- |
-| TypeScript, lint, Jest, generated-client drift | PR/push                                        | GitHub-hosted Linux                    | none                            | Clean, cheap, parallel and already working          |
-| Android Maestro                                | trusted `main`; labelled PR per current policy | GitHub-hosted Linux                    | throwaway test material only    | Keeps KVM path and parallelism during pilot         |
-| iOS Maestro                                    | private dispatch for trusted `main` SHA        | **Mac Mini**                           | throwaway test material only    | Public PR workflows cannot address the runner       |
-| iOS Maestro fallback                           | manual trusted SHA                             | GitHub-hosted macOS                    | throwaway test material only    | Recovery when the Mac is offline or suspect         |
-| Development simulator build                    | manual trusted SHA                             | Mac Mini                               | none                            | Fast install for an operator; no store distribution |
-| Internal/beta/production binary                | manual trusted SHA/tag                         | **EAS Build**                          | EAS-managed signing             | One signing path and managed credentials            |
-| Submit existing EAS build                      | manual approval                                | GitHub-hosted Linux calling EAS Submit | environment-scoped API tokens   | No store secret enters the Mac                      |
-| OTA publish/promotion                          | existing OTA runbook                           | hosted CI/operator gate                | OTA signing/publish credentials | Separate deploy mechanism and policy                |
+| Workload                                       | Trigger                                        | Runner                          | Secrets                         | Rationale                                           |
+| ---------------------------------------------- | ---------------------------------------------- | ------------------------------- | ------------------------------- | --------------------------------------------------- |
+| TypeScript, lint, Jest, generated-client drift | PR/push                                        | GitHub-hosted Linux             | none                            | Clean, cheap, parallel and already working          |
+| Android Maestro                                | trusted `main`; labelled PR per current policy | GitHub-hosted Linux             | throwaway test material only    | Keeps KVM path and parallelism during pilot         |
+| iOS Maestro                                    | private dispatch for trusted `main` SHA        | **Mac Mini**                    | throwaway test material only    | Public PR workflows cannot address the runner       |
+| iOS Maestro fallback                           | manual trusted SHA                             | GitHub-hosted macOS             | throwaway test material only    | Recovery when the Mac is offline or suspect         |
+| Development simulator build                    | manual trusted SHA                             | Mac Mini                        | none                            | Fast install for an operator; no store distribution |
+| Internal/beta/production binary                | manual trusted SHA/tag                         | **EAS Build**                   | EAS-managed signing             | One signing path and managed credentials            |
+| Submit existing EAS build                      | manual approval                                | GitHub-hosted Linux calling EAS | environment-scoped API tokens   | Submit uploads; `testflight` distributes externally |
+| OTA publish/promotion                          | existing OTA runbook                           | hosted CI/operator gate         | OTA signing/publish credentials | Separate deploy mechanism and policy                |
 
 ## 2.3 Runner topology
 
@@ -85,7 +85,8 @@ resolved SHA
   -> EAS build ID + platform artifact
   -> automated smoke/metadata checks
   -> protected environment approval
-  -> EAS Submit of that exact build ID
+  -> EAS Submit of that exact build ID (internal/production upload)
+     or EAS Workflows `testflight` with that build ID (external beta)
   -> store processing ID/link
 ```
 
