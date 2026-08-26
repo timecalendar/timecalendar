@@ -2,6 +2,9 @@
 
 ## 2026-08-26
 
+- Recorded the live xprem endpoint and TimeCalendar app UUID plus xprem's database-managed
+  per-app signing mode, single public certificate path/fingerprint, and private-key custody
+  boundary. Client endpoint/header/channel/certificate wiring remains downstream (eas.md).
 - Removed `docs/mobile/build-infrastructure/` and its `mobile-build-infrastructure-guidance`
   spec: the pack recommended EAS Build for signed binaries and a separate `internal-store`
   profile, both rejected by ADR 040, and had no surviving content that `eas.md`,
