@@ -41,6 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   runtimeVersion: { policy: "fingerprint" },
   updates: {
     url: `https://u.expo.dev/${easProjectId}`,
+    fallbackToCacheTimeout: 0,
   },
   ios: {
     // iOS uses the top-level `icon` (the brand 1024² master, opaque, no alpha).
