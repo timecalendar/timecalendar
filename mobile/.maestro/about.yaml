@@ -10,9 +10,14 @@ appId: fr.samuelprak.timecalendar.dev
     when:
       platform: iOS
     commands:
+      # This is the suite's first custom-scheme deep link on a fresh simulator,
+      # so iOS always asks for confirmation. Wait for the system dialog before
+      # tapping it; an optional immediate tap can run before the dialog appears.
+      - extendedWaitUntil:
+          visible: "Open"
+          timeout: 10000
       - tapOn:
           text: "Open"
-          optional: true
 - extendedWaitUntil:
     visible: "Privacy policy"
     timeout: 60000
