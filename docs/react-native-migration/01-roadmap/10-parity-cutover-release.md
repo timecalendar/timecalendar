@@ -16,27 +16,16 @@
 
 ## Human prerequisites — credentials, signing & store accounts
 
-The EAS **config half is landed** (`mobile/eas.json`, `expo-updates` wiring, channel/profile
-mapping; `eas init` done — the real `projectId` `3b427ef6-1aae-4175-8217-ea447ee6df6b` is
-committed in `app.config.ts`, not a secret). What remains is irreducibly human — account access
-+ credentials + real-device/console steps — and was carried here from the EAS setup inbox note.
-None of it blocks `tsc`/lint/test; it unlocks actual builds, installs, and store submission.
+The EAS config half is landed, but account access, credentials, store-console work and real-device
+verification remain operator-owned. None of those actions blocks source checks; they gate actual
+builds, installs and store submission.
 
-1. **Apple Developer credentials + signing (iOS).** On the first
-   `eas build --profile preview --platform ios` (or `eas credentials`), link the Apple Developer
-   account and let **EAS manage signing** (dist cert + provisioning profile for
-   `fr.samuelprak.timecalendar`). Provide `$EXPO_APPLE_ID` / `$EXPO_ASC_APP_ID` /
-   `$EXPO_APPLE_TEAM_ID` for `submit.production.ios` — never commit them. We do **not** bridge the
-   Flutter Fastlane `match` repo into EAS (it stays with `app/` — R-5); same bundle id → it targets
-   the existing App Store record (RN ships as an update).
-2. **Google Play service account (Android submit).** Supply a Play service-account JSON key and
-   point `submit.production.android.serviceAccountKeyPath` at it (outside git, e.g. `ci/keys/…`).
-3. **Real-device install + internal-distribution channels.** `eas build --profile preview` for both
-   platforms; install on a real device from the EAS internal URL (iOS: register UDID / TestFlight
-   internal; Android: `.apk` / Play internal testing). Stand up the **TestFlight internal** group +
-   the **Play Console internal testing** track so dogfooders get builds (feeds step 3 above).
-4. **`.dev` Firebase apps** — owned by `mobile/firebase/README.md`; the `development` EAS profile
-   builds the `.dev` identity and needs those config files present (already tracked).
+The [mobile release guide](../../mobile/releases/README.md) owns the explanation and current gaps;
+the [(HUMAN: mobile release bootstrap) inbox note](../inbox/2026-08-26-mobile-release-bootstrap.md)
+owns the executable checklist.
+
+The separate `.dev` Firebase prerequisite remains owned by
+[`mobile/firebase/README.md`](../../../mobile/firebase/README.md).
 
 ## Exit criteria
 
@@ -48,4 +37,4 @@ None of it blocks `tsc`/lint/test; it unlocks actual builds, installs, and store
 
 - **The cutover is one-shot for existing users** — a bad release degrades every user at once. Staged rollout + close migration-metric watch + the Phase 09 safety net are the guardrails.
 - Have a **rollback plan**: if the RN release misbehaves, can we re-ship Flutter? (Store + signing implications — decide before release.)
-</content>
+  </content>
