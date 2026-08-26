@@ -6,21 +6,27 @@ import type { AppStateStatus, NativeEventSubscription } from "react-native"
 const mockReloadAsync = jest.fn(() => Promise.resolve())
 const mockRecordUnknownError = jest.fn()
 const mockSetCrashlyticsAttributes = jest.fn(() => Promise.resolve())
-let mockUpdateState: Pick<
+type MockUpdateState = Pick<
   UseUpdatesReturnType,
   "currentlyRunning" | "isUpdatePending"
-> = {
-  currentlyRunning: {
-    updateId: "update-id",
-    channel: "production",
-    runtimeVersion: "runtime-version",
-    createdAt: new Date("2026-08-25T12:00:00.000Z"),
-    isEmbeddedLaunch: false,
-    isEmergencyLaunch: false,
-    emergencyLaunchReason: null,
-  },
-  isUpdatePending: false,
+>
+
+function createMockUpdateState(): MockUpdateState {
+  return {
+    currentlyRunning: {
+      updateId: "update-id",
+      channel: "production",
+      runtimeVersion: "runtime-version",
+      createdAt: new Date("2026-08-25T12:00:00.000Z"),
+      isEmbeddedLaunch: false,
+      isEmergencyLaunch: false,
+      emergencyLaunchReason: null,
+    },
+    isUpdatePending: false,
+  }
 }
+
+let mockUpdateState = createMockUpdateState()
 
 jest.mock("expo-updates", () => ({
   reloadAsync: mockReloadAsync,
@@ -73,18 +79,7 @@ describe("OtaUpdateRuntime", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     listeners.clear()
-    mockUpdateState = {
-      currentlyRunning: {
-        updateId: "update-id",
-        channel: "production",
-        runtimeVersion: "runtime-version",
-        createdAt: new Date("2026-08-25T12:00:00.000Z"),
-        isEmbeddedLaunch: false,
-        isEmergencyLaunch: false,
-        emergencyLaunchReason: null,
-      },
-      isUpdatePending: false,
-    }
+    mockUpdateState = createMockUpdateState()
   })
 
   afterEach(async () => {
