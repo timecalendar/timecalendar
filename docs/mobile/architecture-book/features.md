@@ -32,6 +32,10 @@ code and product specifications.
 - Feedback sends every held calendar's server ID. Calendar sources may open Feedback
   after a recorded iCal import failure with only the attempted URL and available
   selected-school ID/name; local invalid-URL errors never offer reporting.
+- Feedback treats contact-service 503 responses as recoverable: the form retains the
+  e-mail and message, re-enables explicit retry, announces equivalent FR/EN guidance,
+  and records only the error plus the static `feedback/contact-submit` context. The
+  shared API mutator never prints contact request or response bodies in development.
 - Notification receipt always requests a calendar sync. Only notification taps navigate.
 - Local preference parsers are total: absent, corrupt, or legacy values return safe
   defaults instead of throwing.

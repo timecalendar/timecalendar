@@ -36,9 +36,12 @@ export const customFetch = async <T>(
 ): Promise<T> => {
   const fullUrl = `${API_BASE_URL}${url}`
   const method = options.method ?? "GET"
+  const path = new URL(fullUrl).pathname
+  const redactPayload = path === "/contact"
 
   if (__DEV__) {
-    console.log(`[api] → ${method} ${fullUrl}`, options.body ?? "")
+    if (redactPayload) console.log(`[api] → ${method} ${path}`)
+    else console.log(`[api] → ${method} ${fullUrl}`, options.body ?? "")
   }
 
   // Compose the caller's cancellation (TanStack Query aborts via `options.signal`
@@ -70,7 +73,13 @@ export const customFetch = async <T>(
     const body = await parseBody(response)
 
     if (__DEV__) {
-      console.log(`[api] ← ${response.status} ${method} ${fullUrl}`, body ?? "")
+      if (redactPayload)
+        console.log(`[api] ← ${response.status} ${method} ${path}`)
+      else
+        console.log(
+          `[api] ← ${response.status} ${method} ${fullUrl}`,
+          body ?? "",
+        )
     }
 
     if (!response.ok) {

@@ -2,6 +2,9 @@
 
 ## 2026-08-26
 
+- Made contact-service 503 failures explicitly retryable in Feedback while retaining
+  form values, added equivalent accessible FR/EN guidance, and redacted `/contact`
+  request/response bodies from development API diagnostics (data.md, features.md).
 - Isolated each top-level Maestro flow in its own CLI/XCTest lifecycle while retaining one
   shared backend lifecycle, and bounded iOS retries to positively classified startup-only
   transport failures so assertion and application failures remain terminal (ADR 038,
