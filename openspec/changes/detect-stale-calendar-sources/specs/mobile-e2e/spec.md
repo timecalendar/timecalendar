@@ -24,4 +24,3 @@ the real seeded-event and event-details assertions after switching views.
 - **WHEN** the exact integrated PR head is ready for Reviewer sign-off
 - **THEN** the labelled Android and iOS native E2E jobs both pass without a timeout-only
   workaround, mock-only import path, workflow change, or weakened seeded-data assertion
-
