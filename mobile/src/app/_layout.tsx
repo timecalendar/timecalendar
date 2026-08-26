@@ -147,6 +147,7 @@ export default function RootLayout() {
               name="notification-settings"
               options={{ headerShown: true }}
             />
+            <Stack.Screen name="feedback" options={{ headerShown: true }} />
             {/* The user-calendars management screen ("Mes calendriers") — a
                 Stack sibling of (tabs), reached from the Settings summary, where
                 a held calendar's visibility is toggled and a calendar deleted.

@@ -1,0 +1,24 @@
+# Feedback navigation and client-validation proof. This flow intentionally never
+# enters valid values: pressing Send with an empty form cannot reach POST /contact
+# (which sends real mail). Shared across iOS and Android.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-feedback"
+    timeout: 60000
+- tapOn:
+    id: "settings-feedback"
+- extendedWaitUntil:
+    visible: "Feedback"
+    timeout: 60000
+- tapOn:
+    id: "feedback-submit"
+- assertVisible: "Enter your e-mail address."
+- assertVisible: "Enter your message."

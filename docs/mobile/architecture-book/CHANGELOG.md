@@ -10,6 +10,9 @@
 - Reconciled `architecture.md` so this file is the canonical Architecture Book rule-change log,
   while Git retains implementation history and detailed diffs.
 - Replaced the interim onboarding welcome with a neutral, localized three-page carousel and adopted the feature-local `react-native-pager-view` native bridge. ADR 036 records its native paging/event contract, suite-wide Jest seam, autolink/no-permission posture, and fresh-binary fingerprint consequence.
+- Added the layered Feedback root route, validated last-e-mail persistence, existing
+  generated contact-client seam, Settings support entry, and DTO-bounded report action
+  for recorded iCal import failures. Contact failure telemetry remains body-free.
 
 ## 2026-08-08
 
