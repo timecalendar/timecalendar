@@ -38,4 +38,28 @@ describe("Settings route structure", () => {
     )
     expect(rootLayout).toContain('initialRouteName: "(tabs)"')
   })
+
+  it("keeps both Changelog routes thin with tabs-only gate ownership", () => {
+    expect(route("changelog.tsx").trim()).toBe(
+      'export { ChangelogHistoryScreen as default } from "@/features/changelog/ui"',
+    )
+    expect(route("changelog-sheet.tsx").trim()).toBe(
+      'export { ChangelogSheetScreen as default } from "@/features/changelog/ui"',
+    )
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toContain(
+      '<Stack.Screen name="changelog" options={{ headerShown: true }} />',
+    )
+    expect(rootLayout).toContain('name="changelog-sheet"')
+    expect(rootLayout).toContain(
+      'Platform.OS === "ios" ? "formSheet" : "fullScreenModal"',
+    )
+    expect(rootLayout).toContain("sheetAllowedDetents: [1]")
+    expect(rootLayout).toContain("sheetGrabberVisible: true")
+    expect(rootLayout).not.toContain("ChangelogGate")
+
+    const tabsLayout = route("(tabs)/_layout.tsx")
+    expect(tabsLayout).toContain("<ChangelogGate />")
+    expect(route("onboarding/_layout.tsx")).not.toContain("ChangelogGate")
+  })
 })

@@ -23,6 +23,9 @@ timecalendar:
   # DATABASE_URL / REDIS_URL are supplied via the timecalendar-env-secret, not
   # here — the split database.{host,port,username,database} values are gone.
   apiUsername: ""
+  # Cron for the background calendar-sync fan-out; "" disables it. Opt-in by
+  # design — the fan-out hits third-party university servers.
+  syncCalendarsCron: ""
   smtpFrom: ""
   s3PublicBucketClientUrl: ""
   crisp:

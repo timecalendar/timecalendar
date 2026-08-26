@@ -1,5 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import * as Linking from "expo-linking"
+import { router } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 
 import { readApplicationInfo } from "@/features/about/data"
@@ -26,6 +27,7 @@ const mockReadApplicationInfo = readApplicationInfo as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockOpenURL = Linking.openURL as jest.Mock
 const mockOpenBrowser = WebBrowser.openBrowserAsync as jest.Mock
+const mockPush = router.push as jest.Mock
 
 beforeEach(async () => {
   jest.clearAllMocks()
@@ -55,7 +57,7 @@ describe("AboutScreen", () => {
     expect(view.getByText("Eddy Monnot")).toBeTruthy()
     expect(view.queryByText(/suggestions/i)).toBeNull()
     expect(view.queryByText(/debug/i)).toBeNull()
-    expect(view.queryByText(/changelog/i)).toBeNull()
+    expect(view.getByText("What’s new")).toBeTruthy()
 
     const sectionIds = ["privacy", "contact", "app", "developers"]
     expect(
@@ -81,6 +83,26 @@ describe("AboutScreen", () => {
     expect(view.getByText("Nous écrire")).toBeTruthy()
     expect(view.getByText("Informations sur l’application")).toBeTruthy()
     expect(view.getByText("Développeurs")).toBeTruthy()
+    expect(view.getByText("Nouveautés")).toBeTruthy()
+  })
+
+  it("opens Changelog history through one full-width localized link", async () => {
+    const view = await render(<AboutScreen />)
+    const row = view.getByTestId("about-changelog")
+    expect(row.props.accessibilityRole).toBe("link")
+    expect(row.props.accessibilityHint).toBe("Opens the full release history")
+    await fireEvent.press(row)
+    expect(mockPush).toHaveBeenCalledWith("/changelog")
+    expect(
+      view
+        .getAllByTestId(/^about-section-/)
+        .map((section) => section.props.testID),
+    ).toEqual([
+      "about-section-privacy",
+      "about-section-contact",
+      "about-section-app",
+      "about-section-developers",
+    ])
   })
 
   it("dispatches browser and mail actions through their native seams", async () => {
@@ -173,6 +195,7 @@ describe("AboutScreen", () => {
     for (const testID of [
       "about-privacy",
       "about-contact",
+      "about-changelog",
       "about-developer-samuel",
       "about-developer-eddy",
     ]) {

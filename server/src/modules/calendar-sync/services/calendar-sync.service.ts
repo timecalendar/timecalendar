@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common"
+import { SpanStatusCode, trace, type Span } from "@opentelemetry/api"
 import { addMinutes } from "date-fns"
 import { DetectCalendarChangeService } from "modules/calendar-log/services/detect-calendar-change.service"
 import { CreateCalendarRepDto } from "modules/calendar-sync/models/dto/create-calendar-rep.dto"
@@ -29,6 +30,8 @@ type CalendarForSync = Pick<Calendar, "url" | "customData"> &
 
 @Injectable()
 export class CalendarSyncService {
+  private readonly tracer = trace.getTracer("calendar-sync")
+
   constructor(
     private readonly fetchService: FetchService,
     private readonly schoolRepository: SchoolRepository,
@@ -65,60 +68,91 @@ export class CalendarSyncService {
 
   async sync(calendar: CalendarForSync) {
     const { id, url, customData, school } = calendar
-    const source = { url, customData }
-    const code = await this.findSchoolCode(school?.id)
     const isNewCalendar = !id
-    const preflight = classifyCalendarImport({
-      sourceUrl: url,
-      schoolCode: code,
-    })
-    if (preflight) {
-      await this.recordFailure(preflight, isNewCalendar)
-      throw new CalendarImportException(preflight)
-    }
+    const action = isNewCalendar ? "create" : "update"
 
-    const minSyncIntervalMinutes = this.fetchService.getMinSyncIntervalMinutes(
-      source,
-      code,
+    return this.tracer.startActiveSpan(
+      "calendar.sync",
+      {
+        attributes: { action },
+      },
+      async (span) => {
+        let errorKind: CalendarImportDiagnostic["errorKind"] = "unknown"
+        try {
+          const source = { url, customData }
+          const code = await this.findSchoolCode(school?.id)
+          const boundedSchool = this.boundedSchool(code)
+          span.setAttribute("school", boundedSchool)
+          const preflight = classifyCalendarImport({
+            sourceUrl: url,
+            schoolCode: code,
+          })
+          if (preflight) {
+            errorKind = preflight.errorKind
+            this.setDiagnosticSpanAttributes(span, preflight)
+            await this.recordFailure(preflight, isNewCalendar)
+            throw new CalendarImportException(preflight)
+          }
+
+          const minSyncIntervalMinutes =
+            this.fetchService.getMinSyncIntervalMinutes(source, code)
+          if (
+            id &&
+            !(await this.calendarRepository.claimSyncIfDue(
+              id,
+              minSyncIntervalMinutes,
+            ))
+          ) {
+            return this.calendarRepository.findOne(id)
+          }
+
+          const fetchedEvents = await this.fetchEvents(source, code)
+          const isError = "error" in fetchedEvents
+
+          this.calendarSyncMetricsService.add({
+            school: boundedSchool,
+            status: isError ? "error" : "success",
+            classification: isError
+              ? fetchedEvents.diagnostic.classification
+              : undefined,
+            help_key: isError ? fetchedEvents.diagnostic.helpKey : undefined,
+            error_kind: isError
+              ? fetchedEvents.diagnostic.errorKind
+              : undefined,
+            action,
+          })
+
+          if (isError && isNewCalendar) {
+            errorKind = fetchedEvents.diagnostic.errorKind
+            this.setDiagnosticSpanAttributes(span, fetchedEvents.diagnostic)
+            await this.calendarFailureRepository.create(
+              fetchedEvents.diagnostic,
+            )
+            throw new CalendarImportException(fetchedEvents.diagnostic)
+          }
+
+          const savedCalendar = await this.saveCalendar(
+            calendar,
+            fetchedEvents.events,
+            minSyncIntervalMinutes,
+          )
+          if (isError) {
+            errorKind = fetchedEvents.diagnostic.errorKind
+            this.setDiagnosticSpanAttributes(span, fetchedEvents.diagnostic)
+            throw fetchedEvents.error
+          }
+
+          span.setStatus({ code: SpanStatusCode.OK })
+          return savedCalendar
+        } catch (error) {
+          span.setAttribute("error.type", errorKind)
+          span.setStatus({ code: SpanStatusCode.ERROR })
+          throw error
+        } finally {
+          span.end()
+        }
+      },
     )
-    if (
-      id &&
-      !(await this.calendarRepository.claimSyncIfDue(
-        id,
-        minSyncIntervalMinutes,
-      ))
-    ) {
-      return this.calendarRepository.findOne(id)
-    }
-
-    const fetchedEvents = await this.fetchEvents(source, code)
-
-    const isError = "error" in fetchedEvents
-
-    this.calendarSyncMetricsService.calendarSyncCounter.add(1, {
-      school: code ?? undefined,
-      status: isError ? "error" : "success",
-      classification: isError
-        ? fetchedEvents.diagnostic.classification
-        : undefined,
-      help_key: isError ? fetchedEvents.diagnostic.helpKey : undefined,
-      error_kind: isError ? fetchedEvents.diagnostic.errorKind : undefined,
-      action: isNewCalendar ? "create" : "update",
-    })
-
-    if (isError && isNewCalendar) {
-      await this.calendarFailureRepository.create(fetchedEvents.diagnostic)
-      throw new CalendarImportException(fetchedEvents.diagnostic)
-    }
-
-    const savedCalendar = await this.saveCalendar(
-      calendar,
-      fetchedEvents.events,
-      minSyncIntervalMinutes,
-    )
-    if (isError) throw fetchedEvents.error
-
-    return savedCalendar
   }
 
   private async saveCalendar(
@@ -206,13 +240,12 @@ export class CalendarSyncService {
     const school = await this.schoolRepository.findOneOrFail(schoolId)
     return school.code
   }
-
   private async recordFailure(
     diagnostic: CalendarImportDiagnostic,
     isNewCalendar: boolean,
   ) {
-    this.calendarSyncMetricsService.calendarSyncCounter.add(1, {
-      school: diagnostic.schoolCode ?? undefined,
+    this.calendarSyncMetricsService.add({
+      school: this.boundedSchool(diagnostic.schoolCode),
       status: "error",
       classification: diagnostic.classification,
       help_key: diagnostic.helpKey,
@@ -222,5 +255,20 @@ export class CalendarSyncService {
     if (isNewCalendar) {
       await this.calendarFailureRepository.create(diagnostic)
     }
+  }
+
+  private boundedSchool(code: string | null) {
+    return code && /^[a-z0-9_-]{1,64}$/.test(code) ? code : "unknown"
+  }
+
+  private setDiagnosticSpanAttributes(
+    span: Span,
+    diagnostic: CalendarImportDiagnostic,
+  ) {
+    span.setAttributes({
+      classification: diagnostic.classification,
+      help_key: diagnostic.helpKey,
+      error_kind: diagnostic.errorKind,
+    })
   }
 }
