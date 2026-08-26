@@ -48,7 +48,7 @@ export function ChangelogSheetScreen() {
       ]}
       testID="changelog-continue"
     >
-      <ThemedText style={{ color: theme.onPrimary }}>
+      <ThemedText themeColor="onPrimary">
         {t("changelog.continue.label")}
       </ThemedText>
     </Pressable>
@@ -68,7 +68,7 @@ export function ChangelogSheetScreen() {
               onPress={acknowledgeAndDismiss}
               testID="changelog-close"
             >
-              <ThemedText style={{ color: theme.actionText }}>
+              <ThemedText themeColor="actionText">
                 {t("changelog.close.label")}
               </ThemedText>
             </Pressable>
