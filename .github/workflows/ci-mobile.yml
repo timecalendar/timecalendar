@@ -4,6 +4,9 @@ name: CI mobile checks
 # every push that touches mobile sources or the shared OpenAPI spec. The slow
 # native E2E jobs live in ci-mobile-e2e (label-gated).
 on:
+  # Keep the required mobile gate runnable when a follow-up commit only changes
+  # paths outside the push filter (for example, archiving an OpenSpec change).
+  workflow_dispatch:
   push:
     paths:
       - 'mobile/**'
