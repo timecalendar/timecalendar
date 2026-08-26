@@ -55,21 +55,21 @@ appId: fr.samuelprak.timecalendar.dev
     id: "checklist-add"
 # Type a stable ASCII item into the focused input, then dismiss the keyboard so the
 # content-text assertion is unobstructed.
-- inputText: "Buy notebook"
+- inputText: "Buy pen"
 - hideKeyboard
 # The typed content round-trips into the live `checklist_items` read and renders.
-- assertVisible: "Buy notebook"
+- assertVisible: "Buy pen"
 # Toggle the item checked (single row → the uuid-suffixed check id via `.*` regex).
 - tapOn:
     id: "checklist-check-.*"
 # The item is still present after toggling (the check state is visual; the content
 # stays).
-- assertVisible: "Buy notebook"
+- assertVisible: "Buy pen"
 # Delete the item (single row → the uuid-suffixed remove id via `.*` regex).
 - tapOn:
     id: "checklist-remove-.*"
 # The deleted item is gone from the live read — the delete round-tripped through the
 # real store, restoring device state.
 - extendedWaitUntil:
-    notVisible: "Buy notebook"
+    notVisible: "Buy pen"
     timeout: 60000
