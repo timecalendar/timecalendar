@@ -111,7 +111,7 @@
 - [x] 6.5 Run local-green gates: server TypeScript/lint/tests for touched modules, mobile
   `npx tsc --noEmit`, lint, formatting, and Jest with coverage; run
   `openspec validate add-school-import-recovery` and resolve every validation error.
-- [ ] 6.6 Re-run both OpenAPI and Orval generators and prove `git diff --exit-code --
+- [x] 6.6 Re-run both OpenAPI and Orval generators and prove `git diff --exit-code --
   openapi/openapi.json mobile/src/api/generated` after committed output. Inspect the full
   diff/history for synthetic/real URLs, credentials, tokens, resource IDs, secrets, raw
   exception text, or scope expansion.
