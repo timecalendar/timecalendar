@@ -29,7 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: IS_DEV ? "TimeCalendar (Dev)" : "TimeCalendar",
   slug: "timecalendar",
-  version: "1.0.0",
+  version: "4.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: IS_DEV ? "timecalendar-dev" : "timecalendar",
