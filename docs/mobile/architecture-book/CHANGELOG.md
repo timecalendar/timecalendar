@@ -2,6 +2,16 @@
 
 ## 2026-08-26
 
+- Made `preview` a store-distributed profile (`app-bundle` + store `.ipa`, `autoIncrement`, own
+  `submit.preview`), moved store binary production to `eas build --local` on the macOS host with
+  EAS retained as credential authority and upload transport, established annotated tags on `main`
+  as the release selector, and prohibited promoting a build across channel lanes. ADR 040 records
+  it and supersedes decision 2 of ADR 006; decision 1 (the `fingerprint` policy) is unchanged
+  (eas.md, `mobile/EAS.md`, `mobile/eas.json`).
+- Marked `docs/mobile/ota/` and `docs/mobile/build-infrastructure/` as exploration rather than
+  rules, and indexed `docs/mobile/releases/` from the Architecture Book and the rules pointer, so
+  the binding release contract has one home.
+
 - Isolated each top-level Maestro flow in its own CLI/XCTest lifecycle while retaining one
   shared backend lifecycle, and bounded iOS retries to positively classified startup-only
   transport failures so assertion and application failures remain terminal (ADR 038,

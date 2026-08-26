@@ -64,7 +64,7 @@ A stale source keeps its last-good events visible and adds a compact Calendar wa
 plus reason-specific recovery controls in calendar management. Recovery starts the
 existing add-calendar flow and never rewrites or removes the old source. The existing
 explicit confirm-gated delete remains the only removal path. See
-[ADR 040](./decisions/040-preserve-content-and-advise-source-recovery.md).
+[ADR 041](./decisions/041-preserve-content-and-advise-source-recovery.md).
 
 SQLite live reads are coalesced to one whole-table read per macrotask. Repositories must
 use synchronous Drizzle transaction callbacks with `.run()` executors because the Expo

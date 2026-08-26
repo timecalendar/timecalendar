@@ -40,6 +40,7 @@ these pages describe the system as it is now.
 | Theme and native chrome | [theming.md](./theming.md) |
 | Firebase and push | [firebase.md](./firebase.md) |
 | EAS distribution | [eas.md](./eas.md) |
+| Release operations | [../releases/README.md](../releases/README.md) |
 | Calendar rendering and sync | [calendar.md](./calendar.md) |
 | Feature map | [features.md](./features.md) |
 | Architectural decisions | [decisions/README.md](./decisions/README.md) |

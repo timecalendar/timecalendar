@@ -34,9 +34,18 @@ can't encode). For a load-bearing decision, also read the relevant ADR.
 | `accessibility.md` | The `ThemedText` heading-role contract + what lint can/can't encode |
 | `theming.md` | The `src/theme/` token layer, `buildNavTheme`, the `src/components/chrome/` wrapper seam |
 | `firebase.md` | Crashlytics + Analytics behind the `@/firebase` seam, one project per environment |
-| `eas.md` | Build profiles, the `fingerprint` runtime policy, channels, human-invoked builds |
+| `eas.md` | Build profiles, `fingerprint` runtime policy, local store builds, channels, no cross-channel promotion |
 | `calendar.md` | The calendar surface — `@howljs/calendar-kit` behind a chrome seam, events-source seam, sync, details |
 | `features.md` | Per-feature index (Settings, Personal events, School selection, Calendar, Home, Hidden events, …) |
+
+## Release operations (outside the book)
+
+- **`docs/mobile/releases/`** — the operator guide and readiness checklist: signing custody, the
+  first store preview, the v4 cutover, and what is still owner-only. Read it with `eas.md`.
+- **`mobile/EAS.md`** — the commands.
+- **`docs/mobile/ota/`** and **`docs/mobile/build-infrastructure/`** are **exploration**: how
+  those decisions were reached. They are not maintained against the config and must not be read
+  as rules. `eas.md` and the ADRs win.
 
 > Changing a rule? Update the topical file **and** append to `architecture-changelog.md`
 > (migration-approach §7). Adding a load-bearing decision? Write an ADR in `decisions/`.
