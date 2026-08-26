@@ -77,13 +77,22 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "My Gaming Academia"
     timeout: 60000
-# Stable accent-free school-search step (Phase-3 ship 2): typing a matching needle
-# into the live native-header search field keeps the seeded ASCII school visible;
-# a non-matching needle hides it; clearing brings it back. No fixture-dependent
-# selectors are used (unlike the group leaves — those stay Jest-proven, D5).
-# Proves the search filter end to end against the live list.
-- tapOn:
-    text: "Search schools"
+# Stable accent-free school-search step (Phase-3 ship 2): focus the live native
+# header search field (Android exposes a collapsed Search action; iOS exposes the
+# field by its placeholder), then type a matching needle. The seeded ASCII school
+# remains visible; a non-matching needle hides it; clearing brings it back. No
+# fixture-dependent selectors are used (unlike the group leaves — those stay
+# Jest-proven, D5). Proves the search filter end to end against the live list.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: "Search"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Search schools"
 - inputText: "Gaming"
 - extendedWaitUntil:
     visible: "My Gaming Academia"
