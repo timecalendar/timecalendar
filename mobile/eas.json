@@ -18,10 +18,11 @@
       }
     },
     "preview": {
-      "distribution": "internal",
+      "distribution": "store",
       "channel": "preview",
+      "autoIncrement": true,
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       }
     },
     "production": {
@@ -34,6 +35,17 @@
     }
   },
   "submit": {
+    "preview": {
+      "ios": {
+        "appleId": "$EXPO_APPLE_ID",
+        "ascAppId": "$EXPO_ASC_APP_ID",
+        "appleTeamId": "$EXPO_APPLE_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "../ci/keys/eas-android-sa-key.json",
+        "track": "internal"
+      }
+    },
     "production": {
       "ios": {
         "appleId": "$EXPO_APPLE_ID",

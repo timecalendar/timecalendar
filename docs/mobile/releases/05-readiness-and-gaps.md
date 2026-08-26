@@ -8,38 +8,41 @@
 | User-facing version         | **Ready in source**                       | `4.0.0`; live store build counters still need synchronization                                                             |
 | EAS project link            | **Ready**                                 | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b`                                             |
 | EAS ownership               | **Decision made**                         | personal Expo account for now; recovery inventory still needs recording                                                   |
-| Current preview profile     | **Wrong distribution for chosen preview** | creates direct-install APK/ad hoc IPA, not Play/TestFlight builds                                                         |
+| `preview` build profile     | **Ready in source**                       | store-distributed (`.aab` + store `.ipa`), `preview` channel, remote auto-increment (ADR 040)                             |
 | Production build profile    | **Configured, unproved**                  | store IPA/AAB, production OTA channel, remote auto-increment                                                              |
-| Submission config           | **Skeleton only**                         | iOS IDs are environment references; Android points to an absent local service-account path and internal track             |
+| Submission config           | **Skeleton only**                         | `submit.preview` + `submit.production`; iOS IDs are environment references; Android points to an absent local service-account path |
 | Apple access                | **Owner confirmed**                       | Apple Developer + App Store Connect access available                                                                      |
 | Legacy iOS custody          | **Located**                               | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                     |
 | Android Play App Signing    | **Owner confirmed enabled**               | Play signs releases; the app-signing key is in use and an upload-key certificate exists                                   |
-| Legacy Android keystore     | **Not found**                             | absent from known TimeCalendar workspaces and git history; recover the accepted upload key or use Play's upload-key reset |
+| Android upload key          | **Owner confirmed held**                  | backed up in three separate locations; import into EAS-managed credentials — **no upload-key reset needed**               |
 | EAS-managed credentials     | **Unverified**                            | no live credential mutation or inspection was performed for this docs task                                                |
 | Store tester groups         | **Unverified**                            | create/confirm **The team** in TestFlight and Play                                                                        |
 | Signed build/install        | **Not done in this task**                 | first store-internal preview remains a controlled rollout action                                                          |
-| Build automation/Mac runner | **Future work**                           | not required for the first manual EAS preview                                                                             |
+| Build host                  | **Ready**                                 | store binaries build with `eas build --local` on the owner's macOS host; no EAS build quota, free plan sufficient (ADR 040) |
 | OTA infrastructure          | **Separate programme**                    | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready         |
 
 ## 5.2 Gates to the first preview
 
-Do these in order:
+~~Engineering — implement the store-distributed `preview` profile.~~ **Done**: `preview` is
+`distribution: "store"` with `app-bundle`/store `.ipa`, `autoIncrement` and a `submit.preview`
+profile (ADR 040). No repository implementation now blocks the first preview.
+
+Everything remaining is an operator act, in order:
 
 1. **Owner — record the public Play app-signing and upload-certificate fingerprints.**
-2. **Engineering ticket — implement the store-preview profile** and submit routing described in
-   [document 3](./03-first-preview.md), with no credential material in the diff.
-3. **Owner — resolve Android upload-key custody** by importing the matching key or completing a
-   Play upload-key reset.
-4. **Owner — inventory Apple/EAS identifiers and recovery** in Vaultwarden and add the trusted
-   account recovery owner.
-5. **Owner — initialize EAS remote version counters** from the live consoles, not the historical
+2. **Owner — import the held Android upload key** into EAS-managed credentials and confirm its
+   fingerprint matches what Play expects. Do **not** request a reset.
+3. **Owner — configure EAS-managed Apple signing** against the correct Apple team, and
+   least-privilege store submission access (App Store Connect API key, Play service account).
+4. **Owner — initialize EAS remote version counters** from the live consoles, not the historical
    Flutter `+134` alone.
-6. **Owner — configure EAS-managed Apple signing and least-privilege store submission access.**
-7. **Owner — create/confirm The team tester groups** in both stores.
-8. **Release operator — build, submit and physically install** both recorded store-preview builds.
+5. **Owner — inventory Apple/EAS identifiers and recovery** in Vaultwarden and add the trusted
+   account recovery owner.
+6. **Owner — create/confirm The team tester groups** in both stores.
+7. **Release operator — build both platforms locally, submit and physically install.**
 
-Only item 2 is a repository implementation. Account login, key reset, credential creation, build,
-submission and tester distribution are explicit operator/deploy acts.
+Account login, credential creation, build, submission and tester distribution are explicit
+operator/deploy acts.
 
 ## 5.3 Additional gates before public v4
 
@@ -57,15 +60,19 @@ submission and tester distribution are explicit operator/deploy acts.
 
 - The React Native app already has the correct existing-store identity and a real EAS project.
 - Apple access is available, so losing an old local Xcode certificate is not by itself a blocker.
-- Play App Signing is confirmed enabled, so the missing Android file is an upload-key
-  recovery/reset problem rather than loss of the user-facing signing key.
-- Store-internal previews do not require the future Mac runner, CI release pipeline or completed OTA
-  automation. The owner can bootstrap them manually through EAS, then automate the proven path.
+- Android signing is fully accounted for: Google holds the app-signing key under Play App
+  Signing, and the owner holds the upload key with three backups. Nothing is lost and nothing
+  needs resetting, so Google's activation queue is not on the critical path.
+- Store binaries build on hardware we already own with `eas build --local`, consuming no EAS
+  build quota — the free Expo plan carries the whole release process.
+- Store-internal previews do not require a CI release pipeline or completed OTA automation. The
+  owner can bootstrap them by hand, then automate the proven path.
 - No secret needs to be committed to finish this plan.
 
-## 5.5 The remaining Android signing work
+## 5.5 Android signing is settled
 
-Play App Signing is enabled and Google holds the app-signing key. Before the first Android preview,
-record the public app-signing and upload-certificate fingerprints, then recover the accepted upload
-key or complete Google's upload-key reset. These are finite custody/recovery steps; the missing
-legacy keystore is not a loss of the user-facing signing key.
+Both halves of the chain are accounted for: Play App Signing is enabled so Google holds the
+user-facing app-signing key, and the owner holds the upload key backed up in three places. The
+remaining work is import and proof — record the public fingerprints, import the key into
+EAS-managed credentials, and prove one internal-track upload. **No upload-key reset is required**,
+and requesting one would invalidate working backups for nothing.

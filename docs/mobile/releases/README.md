@@ -7,9 +7,10 @@
 
 ## The one-minute answer
 
-React Native did not remove Apple and Android signing. **Expo EAS performs the Xcode/Gradle
-build and can hold the signing credentials for us.** EAS Submit then uploads that signed file to
-App Store Connect or Play Console. Apple and Google still own testing, review and rollout.
+React Native did not remove Apple and Android signing. **We run the Xcode/Gradle build on our own
+macOS host with `eas build --local`, and Expo holds the signing credentials for us.** EAS Submit
+then uploads that signed file to App Store Connect or Play Console. Apple and Google still own
+testing, review and rollout.
 
 For TimeCalendar, v4 will replace the existing Flutter app, keeping
 `fr.samuelprak.timecalendar`. Therefore:
@@ -17,9 +18,9 @@ For TimeCalendar, v4 will replace the existing Flutter app, keeping
 - iOS needs the existing Apple team and app record, but not necessarily the old Mac or the exact
   old distribution certificate. EAS can create a current distribution certificate and provisioning
   profile after an authorized Apple login.
-- Android must preserve signing continuity. If **Play App Signing is enabled**, Google retains the
-  app-signing key and a lost upload key can be reset. If it is not enabled, the original app-signing
-  private key is required to update the existing listing.
+- Android signing continuity is intact. **Play App Signing is enabled**, so Google retains the
+  app-signing key, and the owner holds the upload key with three backups. Both halves are
+  accounted for; nothing needs resetting.
 - the first previews will use **TestFlight internal testing and Play internal testing**, not direct
   EAS install links;
 - Expo remains in the owner's personal account for now, with account recovery and credential
@@ -28,11 +29,10 @@ For TimeCalendar, v4 will replace the existing Flutter app, keeping
   repeat builds and submissions later.
 
 This is reassuring overall: the code-side EAS project, production identity, version `4.0.0`, OTA
-fingerprint policy and a store-build profile already exist. Play App Signing is confirmed enabled;
-the remaining Android signing work is to record the public certificate fingerprints and recover or
-reset the accepted upload key. The current `preview` profile is for direct installation rather than
-the chosen store-internal path. [Document 5](./05-readiness-and-gaps.md) turns those facts into a
-finite checklist.
+fingerprint policy and **both store-build profiles** already exist, and the build runs on hardware
+we own with no EAS build quota and no paid plan. Android signing is settled. **No repository change
+now blocks the first preview** — everything remaining is an operator act with a live console.
+[Document 5](./05-readiness-and-gaps.md) turns those facts into a finite checklist.
 
 ## Reading order
 
@@ -54,7 +54,9 @@ finite checklist.
 | First preview            | Store-internal first: TestFlight + Play internal                                                               |
 | Recovery custody         | Vaultwarden                                                                                                    |
 | Operator model           | Owner bootstraps; CI/automation later                                                                          |
-| Android Play App Signing | **Confirmed enabled**; Play signs releases, the app-signing key is in use and an upload-key certificate exists |
+| Android Play App Signing | **Confirmed enabled**; Play signs releases, and the owner holds the upload key, backed up in three places |
+| Build host               | The owner's macOS host, via `eas build --local` — no EAS build quota, free Expo plan                          |
+| Release selection        | Annotated git tags on `main`; no long-lived release branch                                                    |
 
 ## Vocabulary
 
@@ -66,6 +68,14 @@ finite checklist.
 - **OTA update:** replace compatible JavaScript/assets inside an installed native build. It cannot
   add native libraries or repair signing and store metadata.
 
-Related detail: [OTA](../ota/README.md), [build infrastructure](../build-infrastructure/README.md),
-the current [EAS operator guide](../../../mobile/EAS.md), and the
+**Binding rules** live in the Architecture Book's
+[EAS / distribution](../architecture-book/eas.md) page and ADRs
+[006](../architecture-book/decisions/006-eas-distribution.md) /
+[037](../architecture-book/decisions/037-self-hosted-ota-runtime.md) /
+[040](../architecture-book/decisions/040-local-store-builds-and-store-preview.md); the commands
+live in the [EAS operator guide](../../../mobile/EAS.md). The
+[OTA](../ota/README.md) and [build infrastructure](../build-infrastructure/README.md) folders are
+**exploration** — how these decisions were reached — and are not maintained against the config.
+
+See also the
 [(HUMAN: first store-preview bootstrap) inbox note](../../react-native-migration/inbox/2026-08-26-mobile-release-bootstrap.md).

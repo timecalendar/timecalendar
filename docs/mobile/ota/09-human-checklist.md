@@ -110,7 +110,7 @@ command to run on this machine and paste back.
 
 ### 3.1 Generate and store the update code-signing key
 
-⚠️ **Deadline: before the first 3.0 store build** — the certificate is embedded in the binary
+⚠️ **Deadline: before the first 4.0 store build** — the certificate is embedded in the binary
 at build time; missing it costs a full extra store release ([doc 6 §6.15](./06-your-questions-answered.md)).
 
 ```bash

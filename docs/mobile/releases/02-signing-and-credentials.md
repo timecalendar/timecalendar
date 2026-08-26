@@ -13,10 +13,13 @@ That distinction decides whether the missing Flutter file is a nuisance or a blo
 ## 2.2 What the repository audit found
 
 - Flutter Android expected `app/android/key.properties`, which pointed at a `.jks` or
-  `.keystore`. Both were deliberately gitignored.
-- No production keystore, `key.properties`, `.p12` or `.p8` was found in the known TimeCalendar
-  workspaces or git history. Dependency debug keystores are irrelevant and must not be used.
-- the old Play service-account file is also absent from this checkout.
+  `.keystore`. Both were deliberately gitignored, and correctly so.
+- No production keystore, `key.properties`, `.p12` or `.p8` is in the repository or its git
+  history, which is the intended state. **The upload key itself is held by the owner and backed
+  up in three separate locations** (confirmed 2026-08-26). Dependency debug keystores are
+  irrelevant and must not be used.
+- the old Play service-account file is likewise not in this checkout; it is rotatable and is not
+  an app-signing key.
 - Flutter iOS used Fastlane Match with the private repository
   `samuelprak/app-certificates-and-profiles`; the current GitHub identity still has access to that
   repository. It is legacy Flutter custody, not the planned React Native signing source.
@@ -25,19 +28,19 @@ No secret value was opened during this audit.
 
 ## 2.3 Android: the recovery decision tree
 
-The owner has confirmed Play App Signing is enabled for TimeCalendar: Play signs releases, the
-app-signing key is in use and an upload-key certificate exists. The remaining recovery path is:
+**There is no recovery problem.** Play App Signing is enabled — Google holds the user-facing
+app-signing key — and the owner holds the upload key, backed up in three places. Both halves of
+the Android signing chain are accounted for. What remains is import and proof:
 
 1. Record the public SHA-256 fingerprints for the **app-signing certificate** and **upload
-   certificate**. Public fingerprints are metadata, not private keys.
-2. Compare the upload-certificate fingerprint with any existing EAS/legacy credential.
-3. If the old upload keystore is unavailable, generate a new upload key under controlled custody
-   and request an upload-key reset in Play Console.
-4. After Google activates it, configure EAS-managed credentials with that key and prove one
-   internal-track upload.
+   certificate** from Play Console. Public fingerprints are metadata, not private keys.
+2. Import the held upload key into EAS-managed credentials, and confirm its fingerprint matches
+   the upload certificate Play expects.
+3. Prove it with one Play internal-track upload before relying on it for a release.
 
-Do not reset, revoke or delete an old key merely because a likely replacement was found. Compare
-fingerprints and complete a Play internal upload first.
+**Do not request an upload-key reset.** A reset is the remedy for a lost key; we have not lost
+it, and resetting would invalidate working backups for no gain. If step 2's fingerprints ever
+disagree, stop and investigate before touching anything in Play Console.
 
 ## 2.4 iOS: continuity is account/team based
 
