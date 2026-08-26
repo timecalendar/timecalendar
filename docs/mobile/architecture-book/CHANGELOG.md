@@ -1,5 +1,12 @@
 # Architecture Book changelog
 
+## 2026-08-26
+
+- Isolated each top-level Maestro flow in its own CLI/XCTest lifecycle while retaining one
+  shared backend lifecycle, and bounded iOS retries to positively classified startup-only
+  transport failures so assertion and application failures remain terminal (ADR 038,
+  testing.md).
+
 ## 2026-08-25
 
 - Ratified signed, self-hosted xprem OTA delivery with Cloudflare R2 assets, the existing
