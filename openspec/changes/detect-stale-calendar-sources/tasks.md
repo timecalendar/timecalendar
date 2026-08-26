@@ -54,3 +54,12 @@
 - [x] 8.2 Run targeted mobile store/sync/UI tests, then `npx tsc --noEmit`, lint, formatting, and `npm test -- --coverage`; confirm the new logic clears 90% and the project remains above 70%.
 - [x] 8.3 Run `openspec validate detect-stale-calendar-sources --strict` and review the final diff for accidental URL/token fixtures, unrelated generated churn, migrations, infrastructure, native config, or Flutter changes.
 - [ ] 8.4 Use PR CI as the independent proof: require green server/mobile contract and generated-drift jobs plus the labelled Android/iOS Maestro recovery jobs; do not perform a deploy, bulk rewrite, or backfill from this change.
+
+## 9. Seeded-import native E2E remediation
+
+- [ ] 9.1 Refactor the dev-import orchestration so reactive sync/router callback identity changes cannot cancel an in-flight mounted run; retain the one-run guard, suppress navigation/state updates after a genuine unmount, and assert exactly one `/calendar` replacement after success.
+- [ ] 9.2 Add a focused integration regression that renders `DevImportScreen` with a mounted `useSourceHealthSnapshot` subscriber, drives the real `useSyncCalendars` generated-hook path with the existing `customFetch`, DB, and storage seams, and proves the SQLite event write plus MMKV notification cannot suppress navigation.
+- [ ] 9.3 Update `mobile/.maestro/calendar.yaml` and every affected committed calendar-family flow to tap `calendar-view` then the visible `Agenda` native menu action on Android and iOS; remove all `calendar-view-agenda` references while retaining the seeded event, details, stale-recovery, and hidden-event assertions.
+- [ ] 9.4 Confirm this leaf fix requires no Architecture Book/ADR change and touches no contract/generated API, server migration, native/store configuration, infrastructure/workflow, CI harness, or legacy Flutter surface; if any such surface becomes necessary, stop and return to Founding Engineering.
+- [ ] 9.5 Run the focused dev-import integration regression plus existing dev-import screen, sync, and source-health store tests; then run TypeScript/lint/format checks scoped to changed mobile files and `openspec validate detect-stale-calendar-sources --strict`.
+- [ ] 9.6 Push the integrated head with the existing `run-e2e` label and require green Android and iOS native jobs before Reviewer sign-off, recording exact check URLs/results in the handoff; there is no separate QA gate.
