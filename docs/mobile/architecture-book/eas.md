@@ -56,8 +56,18 @@ Two channels today: `preview` (internal testers) and `production` (store). A thi
 ADR [037](./decisions/037-self-hosted-ota-runtime.md) ratifies self-hosted xprem with Cloudflare
 R2 assets, the existing production Postgres service as its control plane, and signed updates.
 ClickHouse is deliberately omitted because Crashlytics remains the client observability system.
-The concrete endpoint, signing material, xprem identifiers, and publishing automation are deferred;
-`updates.url` still points at the hosted default until that delivery change lands.
+
+The deployed control plane is live at `https://ota.timecalendar.app`. Its `TimeCalendar` app UUID
+is `e89170b9-5b32-44f0-8f78-33eadb60ec28`, and xprem v3.1.2 uses its database-managed per-app
+signing key as the single trust root. The exported public certificate is committed at
+`mobile/codesigning/certs/certificate.pem`; its SHA-256 fingerprint is
+`D9:24:B6:3E:67:2D:0F:D3:3D:28:F9:C9:24:C5:33:89:62:8E:83:3B:92:94:08:50:01:66:1B:E8:6F:4D:64:4A`.
+The private key stays encrypted in xprem's database-key store and is never committed. Do not
+generate a separate Expo key pair: it would create an unrelated trust root that xprem does not use.
+
+These are available public inputs, not completed client wiring. `updates.url` still points at the
+hosted default until the downstream delivery change configures the endpoint, request headers,
+channel, app identifier and certificate verification. Publishing automation also remains deferred.
 
 `updates.fallbackToCacheTimeout: 0` keeps cold launch non-blocking: the cached or embedded bundle
 starts immediately while the update is checked and downloaded in the background. `OtaUpdateRuntime`,
@@ -87,7 +97,8 @@ This is build/release _configuration_, not runtime app behavior — a fabricated
 
 ## Human prerequisites (inbox — not blockers)
 
-The real `projectId`/`updates.url` link is complete and the Android upload key is held and backed up.
+The EAS project link and public xprem bootstrap inputs are complete, and the Android upload key is
+held and backed up. The app still uses the hosted `updates.url` until downstream client wiring lands.
 Remaining: Apple credential setup + EAS-managed iOS signing, EAS remote version counters initialized
 from the live store consoles, store submission credentials, TestFlight/Play internal tester groups,
 and the first real `eas build --local` / `eas submit` / device install. The
