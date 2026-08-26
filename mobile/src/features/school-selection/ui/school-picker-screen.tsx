@@ -54,7 +54,8 @@ export default function SchoolPickerScreen() {
   const theme = useTheme()
   const insets = useSafeAreaInsets()
   const { source } = useLocalSearchParams<{ source?: string }>()
-  const fromCalendarManagement = source === "calendar-management"
+  const fromCalendarManagement =
+    source === "calendar-management" || source === "stale-recovery"
   const { height: windowHeight } = useWindowDimensions()
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")

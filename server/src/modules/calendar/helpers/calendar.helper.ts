@@ -3,12 +3,14 @@ import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.hel
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarForPublic } from "modules/calendar/models/dto/calendar-for-public.dto"
 import { CalendarWithContent } from "modules/calendar/models/dto/calendar-with-content.dto"
+import { CalendarSourceHealth } from "modules/calendar/models/source-health.model"
 import { slugify } from "modules/shared/utils/slugify"
 import { EventSubject } from "modules/subject/models/event-subject.model"
 
 type WithContentForPublicParams = {
   calendar: Calendar
   subjects: EventSubject[]
+  sourceHealth: CalendarSourceHealth
 }
 
 @Injectable()
@@ -18,6 +20,7 @@ export class CalendarHelper {
   withContentForPublic({
     calendar,
     subjects,
+    sourceHealth,
   }: WithContentForPublicParams): CalendarWithContent {
     const colorBySubjects = subjects.reduce(
       (acc, subject) => ({ ...acc, [subject.name]: subject.color }),
@@ -32,6 +35,7 @@ export class CalendarHelper {
           color: colorBySubjects[slugify(event.title)] || null,
         }),
       ),
+      sourceHealth,
     }
   }
 

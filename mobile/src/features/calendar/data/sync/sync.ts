@@ -5,6 +5,8 @@ import { useCalendarSyncControllerSyncCalendars } from "@/api/generated/calendar
 // of the user_calendars identity store — the calendar feature is the legitimate
 // consumer of the held subscription tokens). Not a relative import (the ../ ban).
 import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
+import { replaceSourceHealthSnapshot } from "@/features/calendar-sources/store/store"
+import { mapSourceHealthSnapshot } from "@/features/calendar-sources/store/types"
 import { recordUnknownError } from "@/firebase"
 
 import { replaceAll } from "./repository"
@@ -63,10 +65,17 @@ export function useSyncCalendars(): UseSyncCalendars {
       // runs inside this branch (not before it) so a mapping throw is recorded,
       // not silently mis-bucketed as a transient fetch failure.
       try {
+        const healthSnapshot = mapSourceHealthSnapshot(result)
         const rows = result.flatMap((calendar) =>
           calendar.events.map((event) => dtoToRow(event, calendar.calendar.id)),
         )
         await replaceAll(rows)
+        try {
+          replaceSourceHealthSnapshot(healthSnapshot)
+        } catch (error) {
+          recordUnknownError(error, "calendar/source-health")
+          setIsError(true)
+        }
       } catch (error) {
         recordUnknownError(error, "calendar/sync")
         setIsError(true)

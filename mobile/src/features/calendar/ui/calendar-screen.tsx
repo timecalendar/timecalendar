@@ -14,6 +14,7 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { CalendarTimeline } from "@/features/calendar/renderer"
+import { useSourceHealthSnapshot } from "@/features/calendar-sources/store"
 import { Spacing, useTheme } from "@/theme"
 
 import { AgendaList } from "./agenda-list"
@@ -42,6 +43,10 @@ export function CalendarScreen() {
   } = useCalendarScreenController()
   const events = useCalendarEvents(range)
   const { sync, isSyncing, isError } = useSyncCalendars()
+  const sourceHealth = useSourceHealthSnapshot()
+  const hasStaleSource = Object.values(sourceHealth).some(
+    (health) => health.status === "stale",
+  )
 
   const onPressEvent = (uid: string) => router.push(eventRoute(uid))
   const onAdd = () => router.push("/personal-event-form")
@@ -72,7 +77,9 @@ export function CalendarScreen() {
         <CalendarScreenStatus
           isEmpty={events.length === 0}
           isError={isError}
+          hasStaleSource={hasStaleSource}
           onRetry={onSync}
+          onManageSources={() => router.push("/user-calendars")}
         />
         <View style={styles.calendar}>
           {view === "agenda" ? (

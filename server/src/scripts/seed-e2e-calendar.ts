@@ -18,6 +18,7 @@ import { DataSource } from "typeorm"
  * `UserCalendar`; that path is gone.
  */
 export const E2E_CALENDAR_TOKEN = "e2e-smoke-calendar"
+export const E2E_STALE_CALENDAR_TOKEN = "e2e-stale-calendar"
 
 /**
  * Fixed primary key so the imported `user_calendars` row shares the backend
@@ -26,6 +27,7 @@ export const E2E_CALENDAR_TOKEN = "e2e-smoke-calendar"
  * import idempotent across runs.
  */
 export const E2E_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000001"
+export const E2E_STALE_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000002"
 
 /**
  * Seeds the deterministic E2E smoke calendar (`Calendar` + `CalendarContent`).
@@ -226,5 +228,45 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
     id: existingContent?.id,
     events,
     calendar: { id: calendar.id },
+  })
+
+  // Dedicated source-recovery fixture: its bounded export ended long before
+  // the current test run, it has no CalendarLog rows after that window, and its
+  // future sync plan prevents any external request. The retained event proves
+  // stale advice is additive to last-good content.
+  const staleCalendar = await calendarRepository.save({
+    id: E2E_STALE_CALENDAR_ID,
+    token: E2E_STALE_CALENDAR_TOKEN,
+    name: "E2E Stale Calendar",
+    schoolName: school ? null : "My Gaming Academia",
+    url: "https://e2e.timecalendar.test/calendar.ics?firstDate=2024-09-01&lastDate=2025-06-30",
+    customData: null,
+    school: school ?? undefined,
+    lastUpdatedAt: now,
+    syncPlannedAt: addDays(now, 1),
+    lastAccessedAt: now,
+  })
+  const staleContent = await calendarContentRepository.findOneBy({
+    calendar: { id: staleCalendar.id },
+  })
+  await calendarContentRepository.save({
+    id: staleContent?.id,
+    events: [
+      {
+        uid: "e2e-stale-last-good",
+        title: "E2E Last Good Lecture",
+        startsAt: today(9),
+        endsAt: today(10),
+        location: "Room E2E Last Good",
+        allDay: false,
+        description: "Retained event for the stale-source recovery journey.",
+        teachers: ["E2E Teacher"],
+        tags: [],
+        type: EventType.CM,
+        fields: null,
+        exportedAt: now,
+      },
+    ],
+    calendar: { id: staleCalendar.id },
   })
 }
