@@ -55,7 +55,9 @@ platforms.
 The stale-source Maestro flow SHALL require the unique retained-event title within the
 visible agenda row's accessibility text on Android and iOS. The assertion SHALL support the
 grouped iOS label without becoming optional, changing its 60-second synchronization bound,
-or weakening any downstream recovery gate.
+or weakening any downstream recovery gate. Its immediately following required wait and tap
+SHALL match the visible `Review` title within the control's accessibility label on both
+platforms while preserving the existing 60-second wait.
 
 #### Scenario: Grouped iOS label proves the retained event
 
@@ -73,3 +75,10 @@ or weakening any downstream recovery gate.
 - **WHEN** the retained event has been observed
 - **THEN** the flow still requires **Review**, **E2E Stale Calendar**, **Source needs
   attention**, **Add updated calendar**, and the final school-selection destination
+
+#### Scenario: Grouped iOS label activates the Review control
+
+- **WHEN** iOS exposes the visible Review button as a grouped accessibility label containing
+  `Review` together with its calendar-source guidance
+- **THEN** the required wait observes that title within 60 seconds and the required tap uses
+  the same title-bearing selector before every later recovery gate runs

@@ -24,9 +24,9 @@ appId: fr.samuelprak.timecalendar.dev
     visible: ".*E2E Last Good Lecture.*"
     timeout: 60000
 - extendedWaitUntil:
-    visible: "Review"
+    visible: ".*Review.*"
     timeout: 60000
-- tapOn: "Review"
+- tapOn: ".*Review.*"
 - extendedWaitUntil:
     visible: "E2E Stale Calendar"
     timeout: 60000

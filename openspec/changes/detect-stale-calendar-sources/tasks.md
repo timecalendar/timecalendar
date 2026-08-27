@@ -79,3 +79,11 @@
 - [x] 11.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
 - [x] 11.4 Confirm the Architecture Book and ADRs need no update because this reuses an established leaf Maestro selector pattern, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface; return to Founding Engineering if any becomes necessary.
 - [ ] 11.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, `E2E Today Lecture`, and `Room E2E Lecture` proofs, then record exact check URLs/results for Reviewer sign-off without merging the PR.
+
+## 12. iOS grouped Review-control remediation
+
+- [x] 12.1 Change both the required Review wait and tap in `mobile/.maestro/stale-source-recovery.yaml` to the same title-containing grouped-label selector `.*Review.*`, preserving Android support.
+- [x] 12.2 Retain the Review wait's existing 60-second bound and every later required `E2E Stale Calendar`, `Source needs attention`, `Add updated calendar`, and school-selection assertion/action; add no optionalization, timeout-only workaround, skipped flow, or seeded-data substitution.
+- [x] 12.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
+- [x] 12.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro grouped-label selector correction, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface.
+- [ ] 12.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, `E2E Today Lecture`, `Room E2E Lecture`, retained-event proof, and every downstream stale-source gate, then record exact check URLs/results for Reviewer sign-off without merging the PR.
