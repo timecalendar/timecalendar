@@ -49,3 +49,27 @@ platforms.
 - **WHEN** either platform cannot activate its supported return interaction
 - **THEN** the flow fails without an optionalized command, removed Settings assertion,
   timeout-only workaround, product-navigation change, or CI/workflow change
+
+### Requirement: Stale recovery observes retained content through the native agenda label
+
+The stale-source Maestro flow SHALL require the unique retained-event title within the
+visible agenda row's accessibility text on Android and iOS. The assertion SHALL support the
+grouped iOS label without becoming optional, changing its 60-second synchronization bound,
+or weakening any downstream recovery gate.
+
+#### Scenario: Grouped iOS label proves the retained event
+
+- **WHEN** iOS exposes the agenda row as a grouped label containing `E2E Last Good Lecture`
+  together with its time, room, and details action
+- **THEN** the flow observes the required title and continues to the recovery journey
+
+#### Scenario: Android retains the same semantic proof
+
+- **WHEN** Android renders the seeded retained event in Agenda
+- **THEN** the same title-bearing selector observes `E2E Last Good Lecture` within 60 seconds
+
+#### Scenario: Downstream recovery gates remain mandatory
+
+- **WHEN** the retained event has been observed
+- **THEN** the flow still requires **Review**, **E2E Stale Calendar**, **Source needs
+  attention**, **Add updated calendar**, and the final school-selection destination

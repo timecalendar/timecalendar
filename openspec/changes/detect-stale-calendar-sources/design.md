@@ -32,6 +32,13 @@ remained on **My calendars**. The failure artifact shows the visible native Stac
 control is present and exposes resource id `BackButton`; the route itself is therefore live,
 and the failure is confined to how Maestro asks iOS to return.
 
+At the next exact head, Android completed the full suite and iOS completed `settings.yaml`,
+including both native header returns, before failing on the retained-event assertion in
+`stale-source-recovery.yaml`. The event is visibly rendered, but iOS exposes its agenda row as
+one grouped accessibility label: `E2E Last Good Lecture, 09:00 – 10:00 Room E2E Last Good.
+View details`. The exact-title selector therefore misses the live element. Existing agenda
+proofs already use a title-containing regex that matches both grouped iOS labels and Android.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -50,6 +57,8 @@ and the failure is confined to how Maestro asks iOS to return.
 - Make both Settings child-route returns deterministic by driving the visible iOS native
   header affordance while preserving Android's supported system-back interaction and every
   existing Settings assertion.
+- Observe the retained stale-source event through its title inside the live grouped iOS
+  accessibility label while keeping the same semantic assertion required on Android.
 
 **Non-Goals:**
 
@@ -61,6 +70,8 @@ and the failure is confined to how Maestro asks iOS to return.
   changing CI/workflow files to mask the failures.
 - Changing product navigation to compensate for a Maestro platform-interaction mismatch, or
   making either Settings return optional.
+- Removing or optionalizing the retained-event proof, changing its synchronization bound,
+  or weakening any later stale-source recovery assertion or action.
 
 ## Decision: Return advisory health beside each batch-sync calendar
 
@@ -211,6 +222,26 @@ artifact proves the visible native control and destination route exist. Replacin
 working system-back interaction was rejected because platform-appropriate divergence is
 already established and bounded to the Maestro flow.
 
+## Decision: Match the retained title inside the grouped agenda label
+
+`stale-source-recovery.yaml` changes only the retained-event selector from the exact string
+`E2E Last Good Lecture` to `.*E2E Last Good Lecture.*`. This is the established agenda shape
+in `calendar.yaml`, `home.yaml`, and `hidden-events.yaml`: it still requires the unique seeded
+title, while allowing iOS to expose the row's title, time, room, and action as one accessible
+element. Android continues to satisfy the same title-bearing regex.
+
+The existing `extendedWaitUntil` and 60-second timeout remain unchanged. The later required
+wait for **Review**, tap on **Review**, wait for **E2E Stale Calendar**, assertion of **Source
+needs attention**, tap on **Add updated calendar**, and final school-selection wait all remain
+mandatory. Focused verification parses and formats the YAML, checks the exact diff, and runs
+strict OpenSpec validation; exact-head Android and iOS native CI remains the definitive proof.
+
+An exact iOS full-label selector was rejected because it would couple the flow to grouped
+time, room, punctuation, and action copy and would not preserve the established Android
+shape. Platform-conditional duplicate assertions were rejected because both platforms can
+share the same semantic title proof. Assertion removal, optionalization, timeout-only changes,
+and product or CI changes were rejected because they would mask rather than fix the mismatch.
+
 ## Decision: Recovery is additive and user-controlled
 
 If any held calendar is stale, Calendar shows an accessible non-modal banner above the
@@ -263,6 +294,10 @@ rollback), while implementation-specific thresholds remain in tested code.
   and let exact-head iOS CI fail rather than making the interaction optional.
 - **[Only the first Settings return is corrected]** → Apply the same conditional return
   sequence after both My calendars and Appearance & language and verify both in one flow.
+- **[A broad regex matches the wrong agenda content]** → Keep the unique seeded title intact
+  inside the regex and retain every downstream stale-calendar and recovery assertion.
+- **[The selector fix passes only one platform]** → Use the existing cross-platform grouped
+  agenda-label pattern and require both native jobs on the exact integrated head.
 
 ## Migration Plan
 
@@ -281,6 +316,9 @@ rollback), while implementation-specific thresholds remain in tested code.
    mobile checks, then rerun the same exact-head Android+iOS native gate. If the visible iOS
    `BackButton` does not activate, stop for Founding Engineering rescope rather than changing
    product navigation or CI infrastructure in this child.
+7. For the retained-event remediation, change only the title selector, run focused YAML and
+   strict OpenSpec checks, and rerun the same exact-head Android+iOS native gate. Preserve the
+   60-second bound and every later stale-source recovery gate; no separate QA stage is added.
 
 ## Open Questions
 
