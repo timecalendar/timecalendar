@@ -19,6 +19,7 @@ import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
+import { CalendarSyncMetricsService } from "modules/calendar-sync/services/calendar-sync-metrics.service"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
@@ -38,12 +39,14 @@ describe("CalendarSyncService", () => {
   let app: NestExpressApplication
   let service: CalendarSyncService
   let dataSource: DataSource
+  let metrics: CalendarSyncMetricsService
   let events: FetcherCalendarEvent[]
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
+    metrics = app.get(CalendarSyncMetricsService)
   })
 
   beforeEach(async () => {
@@ -472,6 +475,24 @@ describe("CalendarSyncService", () => {
       // A failed fetch never reaches the content+log transaction
       expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
     })
+
+    it.each([
+      ["https://ade.ensea.fr/feed", "ensea.fr"],
+      ["https://calendar.example.test/feed", "custom"],
+      ["http://127.0.0.1/feed", "invalid"],
+    ])(
+      "records %s through the bounded %s metric bucket",
+      async (url, domain) => {
+        const add = jest.spyOn(metrics, "add").mockImplementation()
+
+        await service.sync(calendarFactory().build({ url }))
+
+        expect(add).toHaveBeenCalledWith(
+          expect.objectContaining({ domain, status: "success" }),
+        )
+        add.mockRestore()
+      },
+    )
 
     describe("syncPlannedAt", () => {
       const LYON1_URL =

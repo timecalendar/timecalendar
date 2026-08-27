@@ -1,6 +1,35 @@
 # Architecture Book changelog
 
+## 2026-08-28
+
+- Added the nullable school dark-logo API contract and mobile theme selection with required light
+  fallback. ADR 041 records the relative-key server mapping, generated-client obligation, and
+  additive Flutter/web compatibility (data.md, theming.md, features.md).
+
 ## 2026-08-26
+
+- Wired preview and production native builds to signed xprem delivery: one validated
+  `OTA_CHANNEL` source, exact endpoint/app/branch headers, embedded public certificate metadata,
+  development OTA disablement, and retained independent EAS linkage. SDK 56 fingerprint evidence
+  records conservative per-channel iOS/Android runtimes plus a native-change control; no
+  `.fingerprintignore` weakens native config protection (ADR 037, eas.md, `mobile/EAS.md`).
+- Recorded the live xprem endpoint and TimeCalendar app UUID plus xprem's database-managed
+  per-app signing mode, single public certificate path/fingerprint, and private-key custody
+  boundary. Client endpoint/header/channel/certificate wiring remains downstream (eas.md).
+- Removed `docs/mobile/build-infrastructure/` and its `mobile-build-infrastructure-guidance`
+  spec: the pack recommended EAS Build for signed binaries and a separate `internal-store`
+  profile, both rejected by ADR 040, and had no surviving content that `eas.md`,
+  `docs/mobile/releases/` or the ADRs did not already carry. Corrected the release guide's
+  remaining "EAS build ID" wording to the local artifact record.
+- Made `preview` a store-distributed profile (`app-bundle` + store `.ipa`, `autoIncrement`, own
+  `submit.preview`), moved store binary production to `eas build --local` on the macOS host with
+  EAS retained as credential authority and upload transport, established annotated tags on `main`
+  as the release selector, and prohibited promoting a build across channel lanes. ADR 040 records
+  it and supersedes decision 2 of ADR 006; decision 1 (the `fingerprint` policy) is unchanged
+  (eas.md, `mobile/EAS.md`, `mobile/eas.json`).
+- Marked `docs/mobile/ota/` and `docs/mobile/build-infrastructure/` as exploration rather than
+  rules, and indexed `docs/mobile/releases/` from the Architecture Book and the rules pointer, so
+  the binding release contract has one home.
 
 - Isolated each top-level Maestro flow in its own CLI/XCTest lifecycle while retaining one
   shared backend lifecycle, and bounded iOS retries to positively classified startup-only
@@ -16,6 +45,9 @@
   eas.md, firebase.md).
 - Reconciled `architecture.md` so this file is the canonical Architecture Book rule-change log,
   while Git retains implementation history and detailed diffs.
+- Added the bundled Changelog history and tabs-only once-per-version sheet contract. ADR 039
+  records the integer MMKV gate, fresh-install suppression, OTA semantics, and Phase 09 import
+  ordering.
 - Replaced the interim onboarding welcome with a neutral, localized three-page carousel and adopted the feature-local `react-native-pager-view` native bridge. ADR 036 records its native paging/event contract, suite-wide Jest seam, autolink/no-permission posture, and fresh-binary fingerprint consequence.
 - Added the layered Feedback root route, validated last-e-mail persistence, existing
   generated contact-client seam, Settings support entry, and DTO-bounded report action

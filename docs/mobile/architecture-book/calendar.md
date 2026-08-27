@@ -73,6 +73,13 @@ can expire. The enforcing boundary is
 with recognition and sync-cadence coverage beside the renamer and in the fetch/calendar-sync
 service tests.
 
+Server sync telemetry is owned by the
+[server observability runbook](../../server/observability.md), not by the mobile sync
+seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses
+only its reviewed finite upstream classifier; this boundary changes neither the mobile
+API nor local sync behavior. Unexpected mobile-local failures continue to use the
+privacy-safe `@/firebase` seam.
+
 ## Surfaces
 
 - Calendar offers day/week timeline and agenda modes, with platform-specific native chrome.

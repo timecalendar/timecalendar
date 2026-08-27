@@ -1,6 +1,8 @@
 # Owned React Native calendar renderer implementation prompt
 
-Use the following prompt to plan and implement the replacement for `@howljs/calendar-kit`.
+> **Status: historical, unapproved implementation prompt. Do not implement from this file.** Product scope discovery now lives in [`../03-owned-calendar-renderer/README.md`](../03-owned-calendar-renderer/README.md). Every proposed feature, threshold, API, and technology below remains unconfirmed unless it is later recorded as an explicit product-owner decision.
+
+The historical prompt is reproduced below for audit. Do not execute it.
 
 ## Prompt
 

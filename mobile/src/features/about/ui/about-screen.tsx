@@ -111,6 +111,14 @@ export function AboutScreen() {
           value: versionValue,
           testID: "about-version",
         },
+        {
+          variant: "router",
+          icon: { ios: "sparkles", android: "history", web: "history" },
+          label: t("about.changelog.label"),
+          hint: t("about.changelog.hint"),
+          href: "/changelog",
+          testID: "about-changelog",
+        },
       ],
     },
     {

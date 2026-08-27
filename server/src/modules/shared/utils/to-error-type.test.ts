@@ -35,4 +35,9 @@ describe("toErrorType", () => {
     expect(toErrorType(undefined)).toBe("unknown")
     expect(toErrorType(42)).toBe("unknown")
   })
+
+  it("rejects unsafe or oversized error names", () => {
+    expect(toErrorType({ name: "unsafe error value" })).toBe("unknown")
+    expect(toErrorType({ name: "E".repeat(65) })).toBe("unknown")
+  })
 })
