@@ -17,12 +17,12 @@ documentation finalization). A single PR is acceptable but two is recommended.
 - [x] 1.4 Correct the stale docstrings: remove the `calendar_flow_test.dart` / "Flutter side
   seeds a matching local `UserCalendar`" references (that harness is retired); document that
   the RN dev-import deep link is the mechanism and note the UTC-"today" caveat.
-- [ ] 1.5 Verify the seed runs clean: `cd server && NODE_ENV=test npm run db:init` (or via
+- [x] 1.5 Verify the seed runs clean: `cd server && NODE_ENV=test npm run db:init` (or via
   `ci/e2e-server.sh up`) and confirm `POST /calendars/sync {tokens:["e2e-smoke-calendar"]}`
   returns the today-anchored + week events with a fresh `lastUpdatedAt` (no external fetch).
-  <!-- Deferred: needs a project Postgres + test DB not provisioned in this apply
-  env (booting docker is not required per the apply brief). `npx tsc --noEmit` on
-  server passes; the CI e2e-server runs this seed on device. -->
+  Verified by exact-head native CI run `33071444520`: `ci/e2e-server.sh` recreated and
+  seeded the test database, and the Android/iOS seeded-import flows resolved, synced, and
+  rendered the deterministic today events through the real API without an external fetch.
 - [x] 1.6 Confirm no OpenAPI drift (`server` `npm run generate:openapi` — the seed change
   touches no controller/DTO, so the committed spec must be unchanged). Verified by
   construction: the diff is confined to `CalendarEvent` seed-row content + docstrings; no
@@ -120,16 +120,18 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 8. CI proof — the on-device E2E gate (the real proof)
 
-- [ ] 8.1 Add the **`run-e2e` label** to each PR so `ci-mobile-e2e.yml` runs the flows on the
+- [x] 8.1 Add the **`run-e2e` label** to each PR so `ci-mobile-e2e.yml` runs the flows on the
   Android emulator AND the iOS simulator (the flows are only fully verifiable on device; local
   Jest cannot assert the synced render).
 - [ ] 8.2 Confirm `e2e-mobile-android` + `e2e-mobile-ios` are green: the rewritten flows import
   the seeded token, sync, and assert real synced data / round-trips on both platforms. (No
   rebuild step needed — the dev-variant binary is built per CI run via `expo prebuild`, so the
   new `dev-import` route ships automatically.)
-- [ ] 8.3 If a flow flakes on timing, widen the first-synced-assertion `extendedWaitUntil`
+- [x] 8.3 If a flow flakes on timing, widen the first-synced-assertion `extendedWaitUntil`
   before merging (do not weaken the assertion to an empty/reachability state — that would
   reintroduce the gap this change closes).
+  No seeded-data timing flake occurred on run `33071444520`; every seeded-import assertion
+  passed within the existing 60-second bound, so no timeout change was needed.
 
 ## 9. DoD close-out
 
