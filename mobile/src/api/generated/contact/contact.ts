@@ -40,7 +40,7 @@ export const contactControllerSendMessage = async (
 }
 
 export const getContactControllerSendMessageMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<void>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -81,13 +81,13 @@ export type ContactControllerSendMessageMutationResult = NonNullable<
   Awaited<ReturnType<typeof contactControllerSendMessage>>
 >
 export type ContactControllerSendMessageMutationBody = SendMessageDto
-export type ContactControllerSendMessageMutationError = ErrorType<unknown>
+export type ContactControllerSendMessageMutationError = ErrorType<void>
 
 /**
  * @summary Contact the developers
  */
 export const useContactControllerSendMessage = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<void>,
   TContext = unknown,
 >(
   options?: {
