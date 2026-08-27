@@ -1,7 +1,8 @@
 # server-compose-development-environment Specification
 
 ## Purpose
-TBD - created by archiving change isolate-server-compose-stacks. Update Purpose after archive.
+Define the local server Compose contract for worktree-isolated resources, overrideable host
+ports, dependency-only startup, and non-mutating configuration diagnostics.
 ## Requirements
 ### Requirement: Worktree-scoped Compose identity
 
@@ -86,4 +87,3 @@ The procedure MUST NOT stop, restart, remove, or otherwise alter existing Docker
 - **WHEN** the verification is run for two worktree roots with different alternate ports
 - **THEN** it compares their `docker compose config` output, confirms all scoped names and
   published ports differ as intended, and performs no lifecycle command
-
