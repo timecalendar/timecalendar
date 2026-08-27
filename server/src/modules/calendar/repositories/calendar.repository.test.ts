@@ -60,20 +60,20 @@ describe("CalendarRepository", () => {
     })
   })
 
-  describe("findDueForSyncWithContent", () => {
+  describe("findDueForSync", () => {
     it("finds calendars planned before a date", async () => {
       await calendarFactory().create()
-      const expected = await calendarFactory().create({
-        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
-      })
+      const expected = await calendarFactory()
+        .transient({ events: calendarEventFactory.buildList(1_000) })
+        .create({ syncPlannedAt: new Date("2022-01-05T11:00:00Z") })
 
-      const calendars = await repository.findDueForSyncWithContent({
+      const calendars = await repository.findDueForSync({
         syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
       })
 
       expect(calendars.length).toBe(1)
       expect(calendars[0].id).toBe(expected.id)
-      expect(calendars[0].content.events.length).toBe(0)
+      expect(calendars[0].content).toBeUndefined()
     })
 
     it("does not find calendars planned after the date", async () => {
@@ -81,7 +81,7 @@ describe("CalendarRepository", () => {
         syncPlannedAt: new Date("2022-01-05T11:30:00Z"),
       })
 
-      const calendars = await repository.findDueForSyncWithContent({
+      const calendars = await repository.findDueForSync({
         syncPlannedBefore: new Date("2022-01-05T11:00:00Z"),
       })
 
@@ -96,7 +96,7 @@ describe("CalendarRepository", () => {
         syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
-      const calendars = await repository.findDueForSyncWithContent({
+      const calendars = await repository.findDueForSync({
         syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
       })
 
@@ -112,7 +112,7 @@ describe("CalendarRepository", () => {
         syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
       })
 
-      const calendars = await repository.findDueForSyncWithContent({
+      const calendars = await repository.findDueForSync({
         syncPlannedBefore: new Date("2022-01-05T11:30:00Z"),
         filterByTokens: [expected.token],
       })
