@@ -32,9 +32,7 @@ export function getAllowedBackendEnvironments(
 export function getDefaultBackendEnvironment(
   capability: BackendEnvironmentCapability,
 ): BackendEnvironment {
-  if (capability === "development") return "local"
-  if (capability === "preview") return "preprod"
-  return "production"
+  return getAllowedBackendEnvironments(capability)[0]!
 }
 
 export function parseBackendEnvironment(

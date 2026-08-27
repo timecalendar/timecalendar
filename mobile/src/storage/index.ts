@@ -119,8 +119,7 @@ export function clearBackendBoundStorage(): void {
     )[key]
     if (
       classification !== "environment-independent" &&
-      key !== STORAGE_KEYS.selectedBackendEnvironment &&
-      key !== STORAGE_KEYS.backendResetJournal
+      classification !== "reset-control"
     ) {
       storage.remove(key)
     }
