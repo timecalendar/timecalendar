@@ -123,10 +123,15 @@ documentation finalization). A single PR is acceptable but two is recommended.
 - [x] 8.1 Add the **`run-e2e` label** to each PR so `ci-mobile-e2e.yml` runs the flows on the
   Android emulator AND the iOS simulator (the flows are only fully verifiable on device; local
   Jest cannot assert the synced render).
-- [ ] 8.2 Confirm `e2e-mobile-android` + `e2e-mobile-ios` are green: the rewritten flows import
+- [x] 8.2 Confirm `e2e-mobile-android` + `e2e-mobile-ios` are green: the rewritten flows import
   the seeded token, sync, and assert real synced data / round-trips on both platforms. (No
   rebuild step needed — the dev-variant binary is built per CI run via `expo prebuild`, so the
   new `dev-import` route ships automatically.)
+  Exact-head run `33086750474` at `c9d40830d72202e3e63fdf7fe74de71fed6e3b82`
+  passed Android job `98569123713` and iOS job `98568359291`. Both logs show
+  `calendar`, `event-checklists`, `hidden-events`, and `home` passing through the real
+  seeded import; the calendar flow completed the `E2E Today Lecture` and
+  `Room E2E Lecture` details assertions.
 - [x] 8.3 If a flow flakes on timing, widen the first-synced-assertion `extendedWaitUntil`
   before merging (do not weaken the assertion to an empty/reachability state — that would
   reintroduce the gap this change closes).
@@ -135,10 +140,18 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 9. DoD close-out
 
-- [ ] 9.1 Walk the Definition of Done for the affected features (calendar / home /
+- [x] 9.1 Walk the Definition of Done for the affected features (calendar / home /
   event-details / event-checklists / hidden-events): the **E2E axis** flips from
   reachability-only to real-round-trip green on both platforms; every other axis stays green or
   N/A-with-reason. Record the E2E-axis upgrade against those features.
+  Recorded against exact-head run `33086750474`: calendar + event-details passed the seeded
+  title/location detail proof; home passed the today-timeline proof; event-checklists passed
+  add/toggle/delete against SQLite; hidden-events passed hide/un-hide and restored state on
+  Android and iOS. The automated type, lint, coverage, generation-drift, localization, and
+  production-safety axes remain covered by tasks 4.5, 7.1–7.4, and 9.2. The remaining manual
+  accessibility, low-end performance, analytics, and unexpected-failure axes are N/A to this
+  leaf shell-harness rework because it changes no product UI, interaction, telemetry, or
+  production runtime behavior.
 - [x] 9.2 Confirm production safety: a unit test proves the production branch of the import
   route performs no import (the security boundary is the runtime gate, not the scheme).
 
@@ -165,6 +178,10 @@ documentation finalization). A single PR is acceptable but two is recommended.
   Confirm the diff is limited to `mobile/e2e/{run_e2e.sh,test_run_e2e.sh,README.md}` and this
   existing OpenSpec change—no `.github/workflows/`, `ci/`, API/generated contract,
   migrations, native/store config, legacy Flutter, or binding Architecture Book files.
-- [ ] 10.6 Re-run exact-head labelled native CI. Keep 8.2 and 9.1 unchecked until both
+- [x] 10.6 Re-run exact-head labelled native CI. Keep 8.2 and 9.1 unchecked until both
   Android and iOS are green while preserving `E2E Today Lecture`, `Room E2E Lecture`, every
   seeded-data/event-details assertion, and the real server → client → SQLite round-trip.
+  Run `33086750474` passed all 14 top-level flows on both platforms at exact head
+  `c9d40830d72202e3e63fdf7fe74de71fed6e3b82`. Logs retain the seeded
+  `E2E Today Lecture` / `Room E2E Lecture` assertions and the downstream
+  `E2E Last Good Lecture` stale-source gate; no assertion was removed or optionalized.
