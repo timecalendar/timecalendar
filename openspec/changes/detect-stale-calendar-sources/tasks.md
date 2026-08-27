@@ -87,3 +87,11 @@
 - [x] 12.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
 - [x] 12.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro grouped-label selector correction, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface.
 - [ ] 12.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, `E2E Today Lecture`, `Room E2E Lecture`, retained-event proof, and every downstream stale-source gate, then record exact check URLs/results for Reviewer sign-off without merging the PR.
+
+## 13. iOS grouped re-add-control remediation
+
+- [x] 13.1 Change the required re-add tap in `mobile/.maestro/stale-source-recovery.yaml` to the cross-platform semantic grouped-label selector `.*Add.*updated calendar.*`.
+- [x] 13.2 Retain the preceding `E2E Stale Calendar` and `Source needs attention` proofs plus the final required school-selection destination; add no optionalization, timeout-only workaround, skipped flow, or seeded-data substitution.
+- [x] 13.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
+- [x] 13.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro accessibility-selector correction, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface.
+- [ ] 13.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, retained-event proof, Review interaction, stale row proofs, re-add action, and final destination, then record exact check URLs/results for Reviewer sign-off without merging the PR.

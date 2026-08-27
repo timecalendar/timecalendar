@@ -31,7 +31,7 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "E2E Stale Calendar"
     timeout: 60000
 - assertVisible: "Source needs attention"
-- tapOn: "Add updated calendar"
+- tapOn: ".*Add.*updated calendar.*"
 - extendedWaitUntil:
     visible: "Select your school"
     timeout: 60000
