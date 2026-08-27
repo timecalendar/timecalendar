@@ -8,6 +8,7 @@ import { realpathSync } from "node:fs";
 
 const scriptRoot = realpathSync(join(dirname(fileURLToPath(import.meta.url)), ".."));
 const wrapper = join(scriptRoot, "bin", "server-compose.sh");
+const setup = join(scriptRoot, "bin", "setup-dev.sh");
 
 function run(command, args, cwd, env = {}) {
   return execFileSync(command, args, {
@@ -144,6 +145,27 @@ assert.equal(
 );
 assert.equal(overlay.services.server.environment.REDIS_URL, "redis://redis:6379");
 assertScopedModel(overlay, projects[1], portSets[1]);
+
+const unreachablePort = 65534;
+assert.equal(
+  run(setup, ["--http-status", `http://127.0.0.1:${unreachablePort}/`], scriptRoot),
+  "000",
+  "a failed backend probe must normalize curl's status to exactly 000",
+);
+assert.equal(
+  run(
+    setup,
+    [
+      "--http-status",
+      "--cacert",
+      join(scriptRoot, "ci", "certificates", "cert.pem"),
+      `https://127.0.0.1:${unreachablePort}/`,
+    ],
+    scriptRoot,
+  ),
+  "000",
+  "a failed TLS probe must normalize curl's status to exactly 000",
+);
 
 const evidence = projects.map((project, index) => ({
   root: roots[index],
