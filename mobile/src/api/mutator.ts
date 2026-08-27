@@ -19,6 +19,7 @@ export type ErrorType<TBody> = ApiError<TBody>
 // recovery. The timeout aborts the request so the failure surfaces as an ordinary
 // (recoverable) network error instead of an unresolvable hang.
 const DEFAULT_TIMEOUT_MS = 15000
+const CONTACT_PATH = "/contact"
 
 const parseBody = async (response: Response): Promise<unknown> => {
   const text = await response.text()
@@ -36,11 +37,10 @@ export const customFetch = async <T>(
 ): Promise<T> => {
   const fullUrl = `${API_BASE_URL}${url}`
   const method = options.method ?? "GET"
-  const path = new URL(fullUrl).pathname
-  const redactPayload = path === "/contact"
+  const redactPayload = __DEV__ && new URL(fullUrl).pathname === CONTACT_PATH
 
   if (__DEV__) {
-    if (redactPayload) console.log(`[api] → ${method} ${path}`)
+    if (redactPayload) console.log(`[api] → ${method} ${CONTACT_PATH}`)
     else console.log(`[api] → ${method} ${fullUrl}`, options.body ?? "")
   }
 
@@ -74,7 +74,7 @@ export const customFetch = async <T>(
 
     if (__DEV__) {
       if (redactPayload)
-        console.log(`[api] ← ${response.status} ${method} ${path}`)
+        console.log(`[api] ← ${response.status} ${method} ${CONTACT_PATH}`)
       else
         console.log(
           `[api] ← ${response.status} ${method} ${fullUrl}`,

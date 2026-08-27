@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { CRISP_IDENTIFIER, CRISP_KEY, CRISP_WEBSITE_ID } from "config/constants"
 import Crisp from "crisp-api"
+import { removeUndefinedValues } from "modules/shared/helpers/remove-undefined-values"
 
 type CreateConversationParams = {
   message: string
@@ -31,11 +32,10 @@ export const buildContactMetas = ({
   data,
 }: ConversationMetasParams) => {
   const nickname = nonEmpty(name)
-  const normalizedData = Object.fromEntries(
-    Object.entries(data).flatMap(([key, value]) => {
-      const normalized = nonEmpty(value)
-      return normalized ? [[key, normalized]] : []
-    }),
+  const normalizedData = removeUndefinedValues(
+    Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, nonEmpty(value)]),
+    ),
   )
 
   return {

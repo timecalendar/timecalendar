@@ -15,9 +15,7 @@ describe("ContactService", () => {
   const add = jest.fn()
   const service = new ContactService(
     { createConversation } as unknown as CrispClient,
-    {
-      contactSubmissionsCounter: { add },
-    } as unknown as ContactMetricsService,
+    { add } as unknown as ContactMetricsService,
   )
 
   beforeEach(() => {
@@ -51,7 +49,7 @@ describe("ContactService", () => {
       },
     })
     expect(add).toHaveBeenCalledTimes(1)
-    expect(add).toHaveBeenCalledWith(1, {
+    expect(add).toHaveBeenCalledWith({
       result: "success",
       stage: "complete",
     })
@@ -88,9 +86,8 @@ describe("ContactService", () => {
       expect((error as Error).message).toBe(CONTACT_UNAVAILABLE_MESSAGE)
       expect(String(error)).not.toMatch(/private|example\.fr|invalid_data/)
       expect(add).toHaveBeenCalledTimes(1)
-      expect(add).toHaveBeenCalledWith(1, { result: "error", stage })
+      expect(add).toHaveBeenCalledWith({ result: "error", stage })
       expect(add).not.toHaveBeenCalledWith(
-        1,
         expect.objectContaining({ result: "success" }),
       )
     },

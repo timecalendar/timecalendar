@@ -36,14 +36,14 @@ export class ContactService {
     } catch (error) {
       if (!(error instanceof CrispDeliveryError)) throw error
 
-      this.metrics.contactSubmissionsCounter.add(1, {
+      this.metrics.add({
         result: "error",
         stage: error.stage,
       })
       throw new ServiceUnavailableException(CONTACT_UNAVAILABLE_MESSAGE)
     }
 
-    this.metrics.contactSubmissionsCounter.add(1, {
+    this.metrics.add({
       result: "success",
       stage: "complete",
     })
