@@ -13,7 +13,7 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc"
 import { resourceFromAttributes } from "@opentelemetry/resources"
 import { BatchLogRecordProcessor } from "@opentelemetry/sdk-logs"
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics"
-import { NodeSDK } from "@opentelemetry/sdk-node"
+import { NodeSDK, type NodeSDKConfiguration } from "@opentelemetry/sdk-node"
 import {
   ATTR_SERVICE_NAME,
   SEMRESATTRS_SERVICE_INSTANCE_ID,
@@ -90,28 +90,29 @@ const isOutgoingHttpRequest = (
 ): request is ClientRequest =>
   typeof (request as ClientRequest).getHeader === "function"
 
-export const createNodeInstrumentations = () => [
-  getNodeAutoInstrumentations({
-    "@opentelemetry/instrumentation-fs": { enabled: false },
-    "@opentelemetry/instrumentation-express": { enabled: false },
-    // HTTP spans retain the bounded upstream. Lower-level connect spans expose
-    // the original destination hostname and add no causal layer of their own.
-    "@opentelemetry/instrumentation-net": { enabled: false },
-    "@opentelemetry/instrumentation-http": {
-      startOutgoingSpanHook: sanitizedOutgoingHttpAttributes,
-      requestHook: (span, request) => {
-        if (isOutgoingHttpRequest(request)) {
-          annotateOutgoingHttpSpan(span, request)
-        }
+export const createNodeInstrumentations =
+  (): NodeSDKConfiguration["instrumentations"] => [
+    getNodeAutoInstrumentations({
+      "@opentelemetry/instrumentation-fs": { enabled: false },
+      "@opentelemetry/instrumentation-express": { enabled: false },
+      // HTTP spans retain the bounded upstream. Lower-level connect spans expose
+      // the original destination hostname and add no causal layer of their own.
+      "@opentelemetry/instrumentation-net": { enabled: false },
+      "@opentelemetry/instrumentation-http": {
+        startOutgoingSpanHook: sanitizedOutgoingHttpAttributes,
+        requestHook: (span, request) => {
+          if (isOutgoingHttpRequest(request)) {
+            annotateOutgoingHttpSpan(span, request)
+          }
+        },
+        applyCustomAttributesOnSpan: (span, request) => {
+          if (isOutgoingHttpRequest(request)) {
+            annotateOutgoingHttpSpan(span, request)
+          }
+        },
       },
-      applyCustomAttributesOnSpan: (span, request) => {
-        if (isOutgoingHttpRequest(request)) {
-          annotateOutgoingHttpSpan(span, request)
-        }
-      },
-    },
-  }),
-]
+    }),
+  ]
 
 export const createObservabilitySdk = (
   runtime: ObservabilityRuntimeConfig,

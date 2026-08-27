@@ -398,6 +398,12 @@
         "responses": {
           "201": {
             "description": ""
+          },
+          "400": {
+            "description": "Invalid contact submission"
+          },
+          "503": {
+            "description": "Contact service is temporarily unavailable. Please try again."
           }
         },
         "summary": "Contact the developers",

@@ -246,7 +246,7 @@
   "feedback.sending": "Envoi en cours…",
   "feedback.success.title": "Message envoyé",
   "feedback.success.message": "Merci pour votre message !",
-  "feedback.failure": "Une erreur est survenue. Veuillez réessayer.",
+  "feedback.failure": "Votre message n’a pas été envoyé. Veuillez réessayer.",
   "feedback.close": "Fermer",
   "calendar.tab.label": "Calendrier",
   "calendar.view.day": "Jour",
