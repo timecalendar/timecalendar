@@ -26,17 +26,15 @@ export class CalendarService {
   ): Promise<CalendarWithContent[]> {
     const calendarsWithContent =
       await this.repository.findByTokensWithContent(tokens)
+    const calendarIds = calendarsWithContent.map((calendar) => calendar.id)
+    const now = new Date()
 
-    const subjects =
-      await this.calendarSubjectRepository.findSubjectsByCalendarIds(
-        calendarsWithContent.map((calendar) => calendar.id),
-      )
-
-    const latestChangeAtByCalendarId = this.calendarLogService
-      ? await this.calendarLogService.getLatestChangeAtByCalendarIds(
-          calendarsWithContent.map((calendar) => calendar.id),
-        )
-      : {}
+    const [subjects, latestChangeAtByCalendarId] = await Promise.all([
+      this.calendarSubjectRepository.findSubjectsByCalendarIds(calendarIds),
+      this.calendarLogService
+        ? this.calendarLogService.getLatestChangeAtByCalendarIds(calendarIds)
+        : Promise.resolve({}),
+    ])
 
     return calendarsWithContent.map((calendar) =>
       this.calendarHelper.withContentForPublic({
@@ -46,7 +44,7 @@ export class CalendarService {
           sourceUrl: calendar.url,
           schoolCode: calendar.school?.code,
           latestSuccessfulChangeAt: latestChangeAtByCalendarId[calendar.id],
-          now: new Date(),
+          now,
         }),
       }),
     )
