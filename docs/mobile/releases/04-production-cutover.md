@@ -15,7 +15,7 @@ EAS build.
 1. Select an exact protected release SHA after parity, migration and release CI are green.
 2. Set the user-facing version deliberately (`4.0.0` for the initial cutover).
 3. Build a **production-channel** iOS and Android candidate with remote build-number incrementing.
-4. Submit those exact production build IDs to TestFlight/Play internal first.
+4. Submit those exact production artifacts to TestFlight/Play internal first.
 5. Exercise upgrade-from-Flutter on physical devices, migration success, login, calendars,
    notifications, OTA identity and Crashlytics.
 6. On iOS, select that processed TestFlight build for App Review. On Android, promote the same AAB
@@ -64,7 +64,7 @@ installed native fingerprint.
 
 The release record should contain:
 
-- approved SHA/tag, EAS build IDs and store build numbers;
+- approved SHA/tag, artifact paths, host toolchain versions and store build numbers;
 - bundle/package identity and signing fingerprints;
 - CI/Reviewer evidence on the exact SHA;
 - physical-device upgrade-from-v3 evidence on both platforms;

@@ -72,6 +72,8 @@ export interface SchoolForList {
   siteUrl: string
   imageUrl: string
   /** @nullable */
+  imageUrlDark: string | null
+  /** @nullable */
   intranetUrl: string | null
   visible: boolean
   createdAt: string
@@ -129,6 +131,8 @@ export interface SchoolForSeo {
   seoUrl?: string
   siteUrl: string
   imageUrl: string
+  /** @nullable */
+  imageUrlDark: string | null
   /** @nullable */
   intranetUrl: string | null
   visible: boolean

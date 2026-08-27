@@ -73,9 +73,8 @@ now blocks the first preview** — everything remaining is an operator act with 
 [006](../architecture-book/decisions/006-eas-distribution.md) /
 [037](../architecture-book/decisions/037-self-hosted-ota-runtime.md) /
 [040](../architecture-book/decisions/040-local-store-builds-and-store-preview.md); the commands
-live in the [EAS operator guide](../../../mobile/EAS.md). The
-[OTA](../ota/README.md) and [build infrastructure](../build-infrastructure/README.md) folders are
-**exploration** — how these decisions were reached — and are not maintained against the config.
+live in the [EAS operator guide](../../../mobile/EAS.md). The [OTA](../ota/README.md) folder is
+**exploration** — how that decision was reached — and is not maintained against the config.
 
 See also the
 [(HUMAN: first store-preview bootstrap) inbox note](../../react-native-migration/inbox/2026-08-26-mobile-release-bootstrap.md).

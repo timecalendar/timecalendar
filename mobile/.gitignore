@@ -13,9 +13,12 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
+*.pfx
 *.key
+*.pkcs8
 *.mobileprovision
 
 # Metro
@@ -29,6 +32,10 @@ yarn-error.*
 # macOS
 .DS_Store
 *.pem
+!codesigning/certs/certificate.pem
+codesigning/keys/
+codesigning/private/
+**/private-keys/
 
 # local env files
 .env*.local
