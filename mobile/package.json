@@ -80,6 +80,8 @@
     "generate:migrations": "drizzle-kit generate",
     "lint": "expo lint --max-warnings 0",
     "test": "jest --ci",
+    "test:ios-device-contract": "node ./scripts/assert-ios-device-contract.mjs --self-test",
+    "verify:ios-device-contract": "bash ./scripts/verify-ios-device-contract.sh",
     "postinstall": "patch-package --error-on-fail"
   },
   "private": true,

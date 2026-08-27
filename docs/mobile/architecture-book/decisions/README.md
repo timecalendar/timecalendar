@@ -35,6 +35,7 @@ decision changes; use Git for its history.
 | [039](./039-changelog-version-gating.md)              | Gate bundled Changelog releases with an integer                       |
 | [040](./040-local-store-builds-and-store-preview.md)  | Build store binaries locally and distribute `preview` through stores  |
 | [041](./041-school-logo-theme-variants.md)            | Keep a nullable dark school logo beside the required default logo     |
+| [042](./042-iphone-ipad-portrait-contract.md)         | Support iPhone and iPad in portrait-only full-screen mode             |
 
 ## Superseded or completed records
 

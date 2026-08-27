@@ -5,7 +5,8 @@ For the release flow, signing custody and readiness audit, start with
 Architecture Book's [EAS / distribution](../docs/mobile/architecture-book/eas.md) page and
 ADRs [006](../docs/mobile/architecture-book/decisions/006-eas-distribution.md) /
 [037](../docs/mobile/architecture-book/decisions/037-self-hosted-ota-runtime.md) /
-[040](../docs/mobile/architecture-book/decisions/040-local-store-builds-and-store-preview.md).
+[040](../docs/mobile/architecture-book/decisions/040-local-store-builds-and-store-preview.md) /
+[042](../docs/mobile/architecture-book/decisions/042-iphone-ipad-portrait-contract.md).
 This file describes the committed configuration and the commands.
 
 Store binaries are built **locally on the macOS host** with `eas build --local` (ADR 040). EAS
@@ -44,6 +45,20 @@ production default in `app.config.ts`. Release config requires exactly `OTA_CHAN
 — the production config must show `fr.samuelprak.timecalendar` and the
 `timecalendar-samuelprak` Firebase files; the dev config the `.dev` id and the
 `timecalendar-dev` files.
+
+## iPhone and iPad contract
+
+All variants support iPhone and iPad in portrait-only full-screen mode. The source contract lives
+in `app.config.ts`; `app.config.test.ts` proves each resolved variant. Verify Expo's generated
+preview target without leaving an `ios/` directory behind:
+
+```bash
+npm run verify:ios-device-contract
+```
+
+The command requires application-target `TARGETED_DEVICE_FAMILY=1,2`,
+`UIRequiresFullScreen=true`, and portrait-only effective iPad orientations. Full-screen mode means
+iPad Slide Over and Split View are intentionally unsupported.
 
 ## Building
 
@@ -127,14 +142,16 @@ channel header:
 
 | Platform | `preview`                                  | `production`                               |
 | -------- | ------------------------------------------ | ------------------------------------------ |
-| iOS      | `6ff251db2b8617429a2bd6db0fb8b3c9aa02e36a` | `800d5a3e394fb9384994250fe3b02d61689ba7bf` |
+| iOS      | `0fc2a429052003b4ee3042c6e55cb06b05176b89` | `cc3763c96401c5920b66957a226cb7b6ce1c3a05` |
 | Android  | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `42ded73f46ab802da4472931415b66664ab96328` |
 
 Reproduce with `OTA_CHANNEL=<lane> node ./node_modules/expo-updates/bin/cli.js
-runtimeversion:resolve --platform <ios|android> --workflow managed --debug`. A scratch-only
-`ios.buildNumber` probe changed the iOS preview hash to
-`5b9c0293c3218d045d6e8428f2224b851fc8906f`, proving native changes still move it. No
-`.fingerprintignore` was added because excluding app config would weaken compatibility protection.
+runtimeversion:resolve --platform <ios|android> --workflow managed --debug`. The restored device
+family moved the previous iOS preview/production values (`6ff251…` / `800d5a…`); no
+`.fingerprintignore` was added or broadened. The corrected native shell requires a fresh signed
+iOS preview binary and is not OTA-compatible with the rejected or previous shell. Android was not
+remeasured and remains unchanged. This engineering change did not build, upload, or submit a store
+artifact.
 
 ## Signing
 
