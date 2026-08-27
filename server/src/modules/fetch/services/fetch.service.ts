@@ -27,14 +27,12 @@ export class FetchService {
     // school's renamers after the generic strategy. Registering a strategy for a
     // school therefore turns the other school renamers off for it — see
     // univlyon1-strategy.ts, where that was a real behaviour change.
-    let strategiesUsedToTransformUrl = this.strategies
-    if (schoolStrategy) {
-      strategiesUsedToTransformUrl =
-        schoolStrategy === genericStrategy ||
+    const strategiesUsedToTransformUrl = !schoolStrategy
+      ? this.strategies
+      : schoolStrategy === genericStrategy ||
         schoolStrategy.options.inheritGenericUrlRenamers === false
-          ? [schoolStrategy]
-          : [genericStrategy, schoolStrategy]
-    }
+      ? [schoolStrategy]
+      : [genericStrategy, schoolStrategy]
 
     return strategiesUsedToTransformUrl.reduce(
       (acc, strategy) => strategy.transformUrl(acc, school),
