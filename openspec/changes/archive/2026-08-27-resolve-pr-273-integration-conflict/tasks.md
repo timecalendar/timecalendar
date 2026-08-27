@@ -71,12 +71,18 @@
     no remediation-added migration, native/store config, credential, workflow, deploy,
     production-data, or legacy Flutter path was present. The committed-head triple-dot check is
     repeated after the merge commit.
-- [ ] 4.2 Run `openspec validate resolve-pr-273-integration-conflict --strict`, mark every task
+- [x] 4.2 Run `openspec validate resolve-pr-273-integration-conflict --strict`, mark every task
   complete with exact commands/results, and archive this one-off operational change using
   `openspec archive resolve-pr-273-integration-conflict --skip-specs -y` before the final push.
-- [ ] 4.3 Run `openspec validate --all --strict` after archival, confirm the active change is
+  - Result: strict change validation passed; this task record was completed before running the
+    required one-off archive command with `--skip-specs`, while the remaining post-archive and
+    exact-head evidence tasks stay open until their gates complete.
+- [x] 4.3 Run `openspec validate --all --strict` after archival, confirm the active change is
   absent from `openspec list`, and verify the archived artifacts are present while no
   `same-pr-conflict-remediation` canonical product spec was created.
+  - Result: `openspec validate --all --strict` passed all 69 items; `openspec list --json`
+    omitted the archived change; the dated archive is present and
+    `openspec/specs/same-pr-conflict-remediation/spec.md` is absent as required.
 
 ## 5. Exact-head CI and pipeline handoff
 
