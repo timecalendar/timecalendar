@@ -47,7 +47,10 @@ appId: fr.samuelprak.timecalendar.dev
 # the gap this flow closes).
 - scrollUntilVisible:
     element:
+      id: "today-tile-e2e-today-lecture"
       text: ".*E2E Today Lecture.*"
     direction: DOWN
     timeout: 60000
-- assertVisible: ".*E2E Today Lecture.*"
+- assertVisible:
+    id: "today-tile-e2e-today-lecture"
+    text: ".*E2E Today Lecture.*"
