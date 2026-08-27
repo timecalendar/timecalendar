@@ -136,6 +136,7 @@ describe("FetchService", () => {
       expect(crazyschoolFetcher).toHaveBeenCalledWith(
         "https://google.com/search?export=json&format=1",
         {},
+        {},
       )
     })
 
@@ -159,6 +160,7 @@ describe("FetchService", () => {
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&crazy=true&firstDate=2025-08-25&lastDate=2027-08-25",
           {},
+          {},
         )
         jest.useRealTimers()
       })
@@ -180,6 +182,7 @@ describe("FetchService", () => {
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://google.com/search?export=json&nbWeeks=4",
           {},
+          {},
         )
       })
 
@@ -189,7 +192,7 @@ describe("FetchService", () => {
 
         await fetchService.fetchEvents({ url, customData: null }, "generic")
 
-        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {})
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {}, {})
       })
 
       it("uses all strategies if no school is provided", async () => {
@@ -206,6 +209,7 @@ describe("FetchService", () => {
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
+          {},
           {},
         )
       })
@@ -224,6 +228,7 @@ describe("FetchService", () => {
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
+          {},
           {},
         )
       })
@@ -300,6 +305,7 @@ describe("FetchService", () => {
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=-1&"),
         {},
+        {},
       )
     })
 
@@ -310,6 +316,7 @@ describe("FetchService", () => {
 
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=3&"),
+        {},
         {},
       )
     })
