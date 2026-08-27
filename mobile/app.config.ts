@@ -59,6 +59,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // iOS uses the top-level `icon` (the brand 1024² master, opaque, no alpha).
       // No per-platform `icon` override and no Icon Composer `.icon` bundle: the
       // app ships the flat TimeCalendar brand mark, not a liquid-glass treatment.
+      supportsTablet: true,
+      // Portrait-only on iPad requires full-screen presentation. Without this,
+      // iPad multitasking requires both landscape orientations as well.
+      requireFullScreen: true,
       bundleIdentifier: appId,
       googleServicesFile: googleServicesIOS,
       // Export-compliance: the app uses only standard/exempt encryption (HTTPS/TLS
