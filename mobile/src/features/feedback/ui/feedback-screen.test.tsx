@@ -7,6 +7,7 @@ import {
   setRememberedEmail,
   useSendFeedback,
 } from "@/features/feedback/data"
+import i18n from "@/i18n"
 
 import FeedbackScreen, { normalizeFeedbackParam } from "./feedback-screen"
 
@@ -27,8 +28,9 @@ const mockGetRememberedEmail = getRememberedEmail as jest.Mock
 const sendFeedback = jest.fn()
 const reset = jest.fn()
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks()
+  await i18n.changeLanguage("en")
   mockParams.mockReturnValue({})
   mockGetRememberedEmail.mockReturnValue("")
   mockUseSendFeedback.mockReturnValue({
@@ -100,39 +102,55 @@ it("prefills remembered e-mail and submits normalized values with route context"
   alert.mockRestore()
 })
 
-it("retains input and permits retry after a recorded failure", async () => {
-  mockUseSendFeedback.mockReturnValue({
-    sendFeedback,
-    isPending: false,
-    failed: true,
-    reset,
-  })
-  sendFeedback.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
-  jest.spyOn(Alert, "alert").mockImplementation()
-  const { getByTestId } = await render(<FeedbackScreen />)
-  await act(async () =>
-    fireEvent.changeText(
-      getByTestId("feedback-email-input"),
+it.each([
+  ["en", "Your message was not sent. Please try again."],
+  ["fr", "Votre message n’a pas été envoyé. Veuillez réessayer."],
+] as const)(
+  "retains input, announces retry guidance, and permits retry after a 503 in %s",
+  async (locale, guidance) => {
+    await i18n.changeLanguage(locale)
+    mockUseSendFeedback.mockReturnValue({
+      sendFeedback,
+      isPending: false,
+      failed: true,
+      reset,
+    })
+    sendFeedback.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+    const alert = jest.spyOn(Alert, "alert").mockImplementation()
+    const { getByTestId, getByText } = await render(<FeedbackScreen />)
+    await act(async () =>
+      fireEvent.changeText(
+        getByTestId("feedback-email-input"),
+        "student@example.fr",
+      ),
+    )
+    await act(async () =>
+      fireEvent.changeText(
+        getByTestId("feedback-message-input"),
+        "Private message",
+      ),
+    )
+    await act(async () => fireEvent.press(getByTestId("feedback-submit")))
+
+    const error = getByText(guidance)
+    expect(error.props.accessibilityRole).toBe("alert")
+    expect(error.props.accessibilityLiveRegion).toBe("polite")
+    expect(getByTestId("feedback-email-input").props.value).toBe(
       "student@example.fr",
-    ),
-  )
-  await act(async () =>
-    fireEvent.changeText(
-      getByTestId("feedback-message-input"),
+    )
+    expect(getByTestId("feedback-message-input").props.value).toBe(
       "Private message",
-    ),
-  )
-  await act(async () => fireEvent.press(getByTestId("feedback-submit")))
-  expect(getByTestId("feedback-submit-error")).toBeTruthy()
-  expect(getByTestId("feedback-message-input").props.value).toBe(
-    "Private message",
-  )
-  expect(getByTestId("feedback-submit").props.accessibilityState.disabled).toBe(
-    false,
-  )
-  await act(async () => fireEvent.press(getByTestId("feedback-submit")))
-  expect(sendFeedback).toHaveBeenCalledTimes(2)
-})
+    )
+    expect(
+      getByTestId("feedback-submit").props.accessibilityState.disabled,
+    ).toBe(false)
+
+    await act(async () => fireEvent.press(getByTestId("feedback-submit")))
+    expect(sendFeedback).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(alert).toHaveBeenCalled())
+    alert.mockRestore()
+  },
+)
 
 it("disables duplicate submit and exposes pending status", async () => {
   mockUseSendFeedback.mockReturnValue({

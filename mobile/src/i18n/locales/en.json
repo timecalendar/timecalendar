@@ -246,7 +246,7 @@
   "feedback.sending": "Sending…",
   "feedback.success.title": "Message sent",
   "feedback.success.message": "Thanks for your message!",
-  "feedback.failure": "Something went wrong. Please try again.",
+  "feedback.failure": "Your message was not sent. Please try again.",
   "feedback.close": "Close",
   "calendar.tab.label": "Calendar",
   "calendar.view.day": "Day",

@@ -1,12 +1,48 @@
 import { Injectable } from "@nestjs/common"
 import { CRISP_IDENTIFIER, CRISP_KEY, CRISP_WEBSITE_ID } from "config/constants"
 import Crisp from "crisp-api"
+import { removeUndefinedValues } from "modules/shared/helpers/remove-undefined-values"
 
 type CreateConversationParams = {
   message: string
   email: string
   name: string
   data: Record<string, string>
+}
+
+export type CrispDeliveryStage = "create" | "metadata" | "message"
+
+export class CrispDeliveryError extends Error {
+  constructor(readonly stage: CrispDeliveryStage) {
+    super("Contact delivery failed")
+    Object.defineProperty(this, "name", { value: "CrispDeliveryError" })
+  }
+}
+
+type ConversationMetasParams = Omit<CreateConversationParams, "message">
+
+const nonEmpty = (value: string): string | undefined => {
+  const normalized = value.trim()
+  return normalized || undefined
+}
+
+export const buildContactMetas = ({
+  email,
+  name,
+  data,
+}: ConversationMetasParams) => {
+  const nickname = nonEmpty(name)
+  const normalizedData = removeUndefinedValues(
+    Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [key, nonEmpty(value)]),
+    ),
+  )
+
+  return {
+    email,
+    ...(nickname ? { nickname } : {}),
+    ...(Object.keys(normalizedData).length > 0 ? { data: normalizedData } : {}),
+  }
 }
 
 @Injectable()
@@ -28,18 +64,19 @@ export class CrispClient {
     name,
     data,
   }: CreateConversationParams) {
-    const { session_id: sessionId } =
-      await this.client.website.createNewConversation(CRISP_WEBSITE_ID)
+    const { session_id: sessionId } = await this.runStage<{
+      session_id: string
+    }>("create", () =>
+      this.client.website.createNewConversation(CRISP_WEBSITE_ID),
+    )
 
-    const metas = {
-      nickname: name,
-      email,
-      data,
-    }
-    await this.client.website.updateConversationMetas(
-      CRISP_WEBSITE_ID,
-      sessionId,
-      metas,
+    const metas = buildContactMetas({ email, name, data })
+    await this.runStage("metadata", () =>
+      this.client.website.updateConversationMetas(
+        CRISP_WEBSITE_ID,
+        sessionId,
+        metas,
+      ),
     )
 
     const crispMessage = {
@@ -48,10 +85,23 @@ export class CrispClient {
       origin: "chat",
       content: message,
     }
-    await this.client.website.sendMessageInConversation(
-      CRISP_WEBSITE_ID,
-      sessionId,
-      crispMessage,
+    await this.runStage("message", () =>
+      this.client.website.sendMessageInConversation(
+        CRISP_WEBSITE_ID,
+        sessionId,
+        crispMessage,
+      ),
     )
+  }
+
+  private async runStage<T>(
+    stage: CrispDeliveryStage,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await operation()
+    } catch {
+      throw new CrispDeliveryError(stage)
+    }
   }
 }
