@@ -53,7 +53,7 @@
 - [x] 8.1 Run targeted server classifier/repository/service/controller tests and the OpenAPI generation/drift check.
 - [x] 8.2 Run targeted mobile store/sync/UI tests, then `npx tsc --noEmit`, lint, formatting, and `npm test -- --coverage`; confirm the new logic clears 90% and the project remains above 70%.
 - [x] 8.3 Run `openspec validate detect-stale-calendar-sources --strict` and review the final diff for accidental URL/token fixtures, unrelated generated churn, migrations, infrastructure, native config, or Flutter changes.
-- [ ] 8.4 Use PR CI as the independent proof: require green server/mobile contract and generated-drift jobs plus the labelled Android/iOS Maestro recovery jobs; do not perform a deploy, bulk rewrite, or backfill from this change.
+- [x] 8.4 Use PR CI as the independent proof: exact head `965695db178cf39181255d3b81abd11e7cded0b8` passed [server tests](https://github.com/timecalendar/timecalendar/actions/runs/33049825847/job/98442909955), [mobile checks](https://github.com/timecalendar/timecalendar/actions/runs/33049825831/job/98442325419), [Android Maestro](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481105432), and [iOS Maestro](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481075191) with the `run-e2e` label applied; no deploy, bulk rewrite, or backfill was performed.
 
 ## 9. Seeded-import native E2E remediation
 
@@ -62,7 +62,7 @@
 - [x] 9.3 Update `mobile/.maestro/calendar.yaml` and every affected committed calendar-family flow to tap `calendar-view` then the visible `Agenda` native menu action on Android and iOS; remove all `calendar-view-agenda` references while retaining the seeded event, details, stale-recovery, and hidden-event assertions.
 - [x] 9.4 Confirm this leaf fix requires no Architecture Book/ADR change and touches no contract/generated API, server migration, native/store configuration, infrastructure/workflow, CI harness, or legacy Flutter surface; if any such surface becomes necessary, stop and return to Founding Engineering.
 - [x] 9.5 Run the focused dev-import integration regression plus existing dev-import screen, sync, and source-health store tests; then run TypeScript/lint/format checks scoped to changed mobile files and `openspec validate detect-stale-calendar-sources --strict`.
-- [ ] 9.6 Push the integrated head with the existing `run-e2e` label and require green Android and iOS native jobs before Reviewer sign-off, recording exact check URLs/results in the handoff; there is no separate QA gate.
+- [x] 9.6 Exact integrated head `965695db178cf39181255d3b81abd11e7cded0b8` was pushed with `run-e2e`; [Android](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481105432) and [iOS](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481075191) both passed the full native suite before Reviewer sign-off. There is no separate QA gate.
 
 ## 10. iOS Settings return remediation
 
@@ -70,7 +70,7 @@
 - [x] 10.2 Retain the existing `settings-calendar-summary`, My calendars, Settings, Appearance & language, Events, Personal events, Hidden events, Preferences, and Notifications assertions; add no optional navigation, assertion removal, or timeout-only workaround.
 - [x] 10.3 Run focused YAML parse and Prettier checks for `settings.yaml`, inspect both platform branches, and run any relevant mobile static/test checks required by the touched flow.
 - [x] 10.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro platform interaction, and verify the remediation touches no product navigation, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface; return to Founding Engineering if any becomes necessary.
-- [ ] 10.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the real seeded import, `E2E Today Lecture`, and `Room E2E Lecture` assertions, then record exact check URLs/results for Reviewer sign-off.
+- [x] 10.5 Exact remediation head `965695db178cf39181255d3b81abd11e7cded0b8` was pushed to inherited PR #273 with `run-e2e`; [Android](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481105432) and [iOS](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481075191) passed the full suite, including the real seeded import, `E2E Today Lecture`, and `Room E2E Lecture` assertions.
 
 ## 11. iOS grouped retained-event remediation
 
@@ -78,7 +78,7 @@
 - [x] 11.2 Retain the existing 60-second retained-event synchronization bound and every later required `Review`, `E2E Stale Calendar`, `Source needs attention`, `Add updated calendar`, and school-selection assertion/action; add no optionalization, timeout-only workaround, skipped flow, or seeded-data substitution.
 - [x] 11.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
 - [x] 11.4 Confirm the Architecture Book and ADRs need no update because this reuses an established leaf Maestro selector pattern, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface; return to Founding Engineering if any becomes necessary.
-- [ ] 11.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, `E2E Today Lecture`, and `Room E2E Lecture` proofs, then record exact check URLs/results for Reviewer sign-off without merging the PR.
+- [x] 11.5 Exact remediation head `965695db178cf39181255d3b81abd11e7cded0b8` remained on inherited PR #273 with `run-e2e`; [Android](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481105432) and [iOS](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481075191) passed the full suite with seeded import, Settings returns, `E2E Today Lecture`, and `Room E2E Lecture` proofs retained. The PR was not merged.
 
 ## 12. iOS grouped Review-control remediation
 
@@ -86,7 +86,7 @@
 - [x] 12.2 Retain the Review wait's existing 60-second bound and every later required `E2E Stale Calendar`, `Source needs attention`, `Add updated calendar`, and school-selection assertion/action; add no optionalization, timeout-only workaround, skipped flow, or seeded-data substitution.
 - [x] 12.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
 - [x] 12.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro grouped-label selector correction, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface.
-- [ ] 12.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, `E2E Today Lecture`, `Room E2E Lecture`, retained-event proof, and every downstream stale-source gate, then record exact check URLs/results for Reviewer sign-off without merging the PR.
+- [x] 12.5 Exact remediation head `965695db178cf39181255d3b81abd11e7cded0b8` remained on inherited PR #273 with `run-e2e`; [Android](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481105432) and [iOS](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481075191) passed the full suite with seeded import, Settings returns, seeded event/details, retained-event proof, and downstream stale-source gates intact. The PR was not merged.
 
 ## 13. iOS grouped re-add-control remediation
 
@@ -94,4 +94,4 @@
 - [x] 13.2 Retain the preceding `E2E Stale Calendar` and `Source needs attention` proofs plus the final required school-selection destination; add no optionalization, timeout-only workaround, skipped flow, or seeded-data substitution.
 - [x] 13.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
 - [x] 13.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro accessibility-selector correction, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface.
-- [ ] 13.5 Push the exact remediation head to inherited PR #273 with `run-e2e` still applied; require full-suite Android and iOS success while retaining the seeded import, Settings returns, retained-event proof, Review interaction, stale row proofs, re-add action, and final destination, then record exact check URLs/results for Reviewer sign-off without merging the PR.
+- [x] 13.5 Exact remediation head `965695db178cf39181255d3b81abd11e7cded0b8` remained on inherited PR #273 with `run-e2e`; [Android](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481105432) and [iOS](https://github.com/timecalendar/timecalendar/actions/runs/33049829910/job/98481075191) passed the full suite with seeded import, Settings returns, retained event, Review interaction, stale-row proofs, re-add action, and final destination intact. The PR was not merged.
