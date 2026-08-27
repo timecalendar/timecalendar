@@ -6,6 +6,12 @@
   fallback. ADR 041 records the relative-key server mapping, generated-client obligation, and
   additive Flutter/web compatibility (data.md, theming.md, features.md).
 
+## 2026-08-27
+
+- Established the worktree-scoped local Compose entrypoint and the reusable
+  Postgres/Redis-only prerequisite for OpenAPI generation and server tests, while
+  preserving `ci/e2e-server.sh` as the E2E lifecycle owner (testing.md).
+
 ## 2026-08-26
 
 - Wired preview and production native builds to signed xprem delivery: one validated
@@ -35,12 +41,6 @@
   shared backend lifecycle, and bounded iOS retries to positively classified startup-only
   transport failures so assertion and application failures remain terminal (ADR 038,
   testing.md).
-
-## 2026-08-27
-
-- Established the worktree-scoped local Compose entrypoint and the reusable
-  Postgres/Redis-only prerequisite for OpenAPI generation and server tests, while
-  preserving `ci/e2e-server.sh` as the E2E lifecycle owner (testing.md).
 
 ## 2026-08-25
 
