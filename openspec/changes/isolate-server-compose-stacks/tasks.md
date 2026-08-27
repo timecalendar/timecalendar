@@ -17,19 +17,19 @@
 
 ## 2. Diagnostics and contributor commands
 
-- [ ] 2.1 Update `bin/setup-dev.sh` to report the selected Compose project and effective
+- [x] 2.1 Update `bin/setup-dev.sh` to report the selected Compose project and effective
   TLS/Postgres/Redis ports, use the effective TLS port for reachability/remediation output,
   and keep the backend `localhost:3005` check accurate. Verify the script with `bash -n` and
   non-mutating diagnostic paths only; do not start/stop Docker or contact the orphaned
   `1443` listener during implementation proof.
-- [ ] 2.2 Update `README.md` so local full-stack startup uses `bin/server-compose.sh up -d`,
+- [x] 2.2 Update `README.md` so local full-stack startup uses `bin/server-compose.sh up -d`,
   documents the unchanged default URLs, and gives one concise alternate-port example plus
   `bin/server-compose.sh up -d postgres redis` for generation/tests.
-- [ ] 2.3 Update `docs/agent-dev-environment.md` with the worktree-name derivation,
+- [x] 2.3 Update `docs/agent-dev-environment.md` with the worktree-name derivation,
   `COMPOSE_PROJECT_NAME` escape hatch, all port variables, matching `DATABASE_URL` /
   `REDIS_URL` examples, project/port troubleshooting commands, and the explicit rule that
   shared Docker services are never cleaned up as routine setup.
-- [ ] 2.4 Update `docs/mobile/architecture-book/testing.md` with the reusable local
+- [x] 2.4 Update `docs/mobile/architecture-book/testing.md` with the reusable local
   dependency-only server prerequisite and preserved `ci/e2e-server.sh` lifecycle boundary;
   record the Architecture Book contract update in
   `docs/mobile/architecture-book/CHANGELOG.md`.

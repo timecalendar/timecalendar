@@ -36,6 +36,12 @@
   transport failures so assertion and application failures remain terminal (ADR 038,
   testing.md).
 
+## 2026-08-27
+
+- Established the worktree-scoped local Compose entrypoint and the reusable
+  Postgres/Redis-only prerequisite for OpenAPI generation and server tests, while
+  preserving `ci/e2e-server.sh` as the E2E lifecycle owner (testing.md).
+
 ## 2026-08-25
 
 - Ratified signed, self-hosted xprem OTA delivery with Cloudflare R2 assets, the existing
