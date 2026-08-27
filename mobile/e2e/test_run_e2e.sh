@@ -55,6 +55,21 @@ case "$SCENARIO" in
     echo 'launchApp setPermissions: java.net.ConnectException: Connection refused' >&2
     exit 42
     ;;
+  ios_driver_timeout_then_pass)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      echo 'IOSDriverTimeoutException: iOS driver not ready in time' >&2
+      exit 44
+    fi
+    exit 0
+    ;;
+  ios_driver_timeout_exhausted)
+    echo 'IOSDriverTimeoutException: iOS driver not ready in time' >&2
+    exit 44
+    ;;
+  ios_driver_timeout_assertion)
+    echo 'IOSDriverTimeoutException: iOS driver not ready in time; Assertion failed: assertVisible element not found' >&2
+    exit 45
+    ;;
   assertion)
     if [ "$flow" = alpha ]; then
       echo 'launchApp completed; Assertion failed: assertVisible element not found' >&2
@@ -158,6 +173,21 @@ assert_count 2 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+
+fixture="$(make_fixture ios_driver_timeout_then_pass)"
+run_fixture "$fixture" ios_driver_timeout_then_pass 0 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+assert_count 1 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture ios_driver_timeout_exhausted)"
+run_fixture "$fixture" ios_driver_timeout_exhausted 44 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture ios_driver_timeout_assertion)"
+run_fixture "$fixture" ios_driver_timeout_assertion 45 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
 
 fixture="$(make_fixture assertion)"
 run_fixture "$fixture" assertion 37 --startup-attempts 4

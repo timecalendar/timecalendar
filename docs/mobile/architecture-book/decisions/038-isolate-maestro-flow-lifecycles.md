@@ -12,7 +12,7 @@ On iOS 26, Maestro 2.8.0 can lose its XCTest driver during a directory suite and
 
 Run each top-level `mobile/.maestro/*.yaml` file in lexical order through a separate Maestro process while booting, seeding, and tearing down the shared backend exactly once. Every flow remains responsible for starting with `clearState` where durable state isolation is required; no flow is omitted or made optional.
 
-Normal local and Android runs attempt each flow once. iOS CI may request up to four attempts per flow, but the harness retries only when Maestro 2.8.0 output positively identifies a first-`launchApp`/`setPermissions` XCTest driver transport failure and contains no assertion-failure evidence. Assertion, application, and unknown failures are terminal immediately.
+Normal local and Android runs attempt each flow once. iOS CI may request up to four attempts per flow, but the harness retries only when Maestro 2.8.0 output positively identifies an XCTest driver startup transport failure and contains no assertion-failure evidence. Qualifying output is either first-`launchApp`/`setPermissions` driver-not-listening/connection-refused output or the standalone `IOSDriverTimeoutException: iOS driver not ready in time` startup exception. Assertion, application, and unknown failures are terminal immediately.
 
 Keeping one directory-scoped Maestro process was rejected because it reuses the failed driver lifecycle. Retrying every failure or the whole suite was rejected because it can hide application regressions. Restarting the backend for every flow was rejected because server lifecycle and device-driver lifecycle are separate concerns.
 
