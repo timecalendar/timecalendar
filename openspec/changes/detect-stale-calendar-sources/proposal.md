@@ -39,6 +39,9 @@ the university now publishes 2026–27 schedules through a different service.
   label shape already used by other agenda assertions. Keep the title proof required, retain
   its 60-second synchronization bound, and preserve every downstream recovery assertion and
   action.
+- Match the immediately following Review control through a required label-containing
+  selector on both platforms because iOS groups its visible title and guidance into one
+  accessibility label. Keep the existing 60-second wait and all later recovery gates.
 - Keep bulk rewriting, backfill, production rollout, and changes to legacy Flutter out of
   this merge. Any later migration/backfill is a separate human-gated rollout ticket.
 
@@ -58,8 +61,8 @@ the university now publishes 2026–27 schedules through a different service.
 - `mobile-e2e`: Seeded calendar flows select Agenda through the live native view menu and
   continue to prove the unmocked server → client → SQLite round-trip on both platforms;
   the Settings flow uses each platform's supported return interaction for both child routes;
-  stale recovery matches the retained event inside the grouped iOS accessibility label
-  without weakening Android or later recovery gates.
+  stale recovery matches the retained event and Review control inside their grouped iOS
+  accessibility labels without weakening Android or later recovery gates.
 - `mobile-user-calendars`: Calendar management identifies stale sources and offers a
   non-destructive, accessible re-add path.
 
@@ -72,10 +75,9 @@ the university now publishes 2026–27 schedules through a different service.
 - Mobile calendar sync data/store seam, Calendar status UI, calendar-source management UI,
   dev-import orchestration/integration tests, typed French/English translations, and
   existing Maestro flows. The Settings-return remediation is limited to
-  `mobile/.maestro/settings.yaml`, and the retained-event remediation is limited to one
-  assertion in `mobile/.maestro/stale-source-recovery.yaml`; neither changes product
-  navigation, the API contract, schema, native configuration, or binding Architecture Book
-  rules.
+  `mobile/.maestro/settings.yaml`, and the grouped-label remediations are limited to selectors
+  in `mobile/.maestro/stale-source-recovery.yaml`; neither changes product navigation, the API
+  contract, schema, native configuration, or binding Architecture Book rules.
 - `docs/mobile/architecture-book/calendar.md` changes because sync now carries reusable
   source-health/recovery semantics. The classifier registry is application policy, not a
   destructive migration mechanism.

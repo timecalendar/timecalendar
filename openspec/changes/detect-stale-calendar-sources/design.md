@@ -39,6 +39,12 @@ one grouped accessibility label: `E2E Last Good Lecture, 09:00 – 10:00 Room E2
 View details`. The exact-title selector therefore misses the live element. Existing agenda
 proofs already use a title-containing regex that matches both grouped iOS labels and Android.
 
+After the retained-title selector passed on the next exact head, iOS reached the recovery
+banner but the exact `Review` selector failed. The artifact exposes the visibly rendered
+button as one accessibility label: `Review calendar sources that need attention`. The same
+exact selector is used for the bounded wait and the tap, so both must use one shared
+label-containing shape while remaining required.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -59,6 +65,8 @@ proofs already use a title-containing regex that matches both grouped iOS labels
   existing Settings assertion.
 - Observe the retained stale-source event through its title inside the live grouped iOS
   accessibility label while keeping the same semantic assertion required on Android.
+- Activate the required Review control through its visible title inside the grouped iOS
+  accessibility label while retaining the same required interaction on Android.
 
 **Non-Goals:**
 
@@ -72,6 +80,8 @@ proofs already use a title-containing regex that matches both grouped iOS labels
   making either Settings return optional.
 - Removing or optionalizing the retained-event proof, changing its synchronization bound,
   or weakening any later stale-source recovery assertion or action.
+- Making the Review wait/tap optional, increasing its timeout as a workaround, or removing
+  any later stale-calendar, attention, re-add, or destination gate.
 
 ## Decision: Return advisory health beside each batch-sync calendar
 
@@ -242,6 +252,19 @@ shape. Platform-conditional duplicate assertions were rejected because both plat
 share the same semantic title proof. Assertion removal, optionalization, timeout-only changes,
 and product or CI changes were rejected because they would mask rather than fix the mismatch.
 
+## Decision: Match the Review title inside its grouped control label
+
+The required wait and tap immediately after the retained-event proof both use
+`.*Review.*`. This preserves the visible control title as the semantic anchor while allowing
+iOS to expose the button title and its guidance as the grouped accessibility label
+`Review calendar sources that need attention`. Android continues to match the same title.
+
+The existing 60-second wait remains unchanged, the tap remains mandatory, and the later
+**E2E Stale Calendar**, **Source needs attention**, **Add updated calendar**, and final
+school-selection gates remain required. An exact full-label match was rejected because it
+would couple the flow to guidance copy, and optionalization or a timeout-only change was
+rejected because either could mask a missing recovery control.
+
 ## Decision: Recovery is additive and user-controlled
 
 If any held calendar is stale, Calendar shows an accessible non-modal banner above the
@@ -296,6 +319,9 @@ rollback), while implementation-specific thresholds remain in tested code.
   sequence after both My calendars and Appearance & language and verify both in one flow.
 - **[A broad regex matches the wrong agenda content]** → Keep the unique seeded title intact
   inside the regex and retain every downstream stale-calendar and recovery assertion.
+- **[A label-containing Review selector matches unrelated text]** → Keep the selector in
+  sequence after the unique retained event and retain the destination and row-level recovery
+  assertions that prove the activated control.
 - **[The selector fix passes only one platform]** → Use the existing cross-platform grouped
   agenda-label pattern and require both native jobs on the exact integrated head.
 
@@ -319,6 +345,9 @@ rollback), while implementation-specific thresholds remain in tested code.
 7. For the retained-event remediation, change only the title selector, run focused YAML and
    strict OpenSpec checks, and rerun the same exact-head Android+iOS native gate. Preserve the
    60-second bound and every later stale-source recovery gate; no separate QA stage is added.
+8. For the Review-control remediation, change both its bounded wait and tap to the same
+   title-containing selector, run focused YAML and strict OpenSpec checks, and rerun the same
+   exact-head Android+iOS native gate without weakening any downstream recovery gate.
 
 ## Open Questions
 
