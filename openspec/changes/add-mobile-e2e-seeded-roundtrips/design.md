@@ -226,6 +226,52 @@ three dependent flows pile on. A single PR is acceptable if the implementer pref
 `run-e2e` cycle, but two is recommended to de-risk the anchor first. The `tasks.md` phases
 map to this split.
 
+### Decision 7 — Retry only a fresh, current-flow iOS app-process `SIGSEGV(11)` within the existing attempt bound
+
+**Choice.** Extend the existing per-flow retry classifier rather than adding a second loop
+or changing CI. Immediately before each Maestro attempt, capture an attempt-start timestamp.
+If that attempt fails and a booted iOS simulator is available, query its unified log from
+that timestamp forward, filter to the TimeCalendar development app identity
+(`fr.samuelprak.timecalendar.dev` and its app process), and save the result beside the
+Maestro output as a flow-and-attempt-specific simulator log. A retry is eligible when that
+fresh log positively reports the app process exiting with `SIGSEGV(11)` during the failed
+launch/relaunch.
+
+The SIGSEGV classifier runs before interpreting the visibility assertion that Maestro emits
+after the process has already died: that assertion is a consequence of the proven launch
+death, not an independent product assertion. If no fresh app-specific SIGSEGV evidence is
+present, the existing XCTest transport classifier applies unchanged, including its
+assertion-evidence exclusion. Everything unmatched is terminal.
+
+The retry consumes the same `--startup-attempts` budget already configured per flow and
+starts a fresh `maestro test <flow>` process. The server remains single-lived. When the last
+allowed attempt also has the signal, the harness returns that final failed attempt's nonzero
+status and does not run later flows.
+
+**Freshness and attribution are part of the safety boundary.** Classification reads only
+the simulator-log result queried for the current flow and current attempt after its recorded
+start. It never scans the persistent Maestro log root, a prior attempt's simulator log, or
+another flow's artifacts. The query must match the TimeCalendar dev app identity as well as
+`SIGSEGV(11)`; a crash from SpringBoard, Maestro, XCTest, or another process is not eligible.
+If simulator log collection is unavailable, fails, or produces an unfamiliar shape, the
+failure remains terminal.
+
+**Why this is a leaf harness refinement, not an architecture-rule change.** The existing
+rule remains bounded startup recovery with fresh Maestro processes and fail-closed unknown
+classification. Exact-head evidence identifies this app-process death as an intermittent
+iOS release-simulator launch failure before the import request, while multiple earlier
+flows in the same job complete the real seeded round-trip. The refinement adds a second
+positive startup signal; it does not retry arbitrary app crashes, weaken assertions, alter
+timeouts, or change the server → client → SQLite proof.
+
+**Alternatives considered.** Retrying every failed visibility assertion was rejected
+because it hides real data and navigation regressions. Scanning all simulator history or
+reusing an old crash artifact was rejected because stale or cross-flow evidence could make
+an unrelated failure retry. Raising the attempt ceiling or timeout was rejected because
+neither classifies the process death. Editing `.github/workflows/` or `ci/` was rejected:
+the harness already receives the bounded attempt count and can inspect the booted simulator
+without a pipeline change.
+
 ## Risks / Trade-offs
 
 - **[Prod route reachable via `timecalendar://dev-import`]** → The runtime variant gate
@@ -253,13 +299,21 @@ map to this split.
 - **[Only run-e2e-labelled PRs run the flows]** → Both PRs must carry the `run-e2e` label to
   exercise the change's core proof in CI before merge (main always runs it on mobile changes,
   but pre-merge needs the label). Called out in tasks.md.
+- **[A stale crash could mask a real assertion]** → Record the attempt boundary before
+  launching Maestro, query only the current simulator window, persist per-flow/per-attempt
+  evidence, and never scan earlier artifacts. Filter to the dev app plus `SIGSEGV(11)`.
+- **[Unified-log collection is unavailable or changes shape]** → Fail closed: retain the
+  original Maestro exit and do not retry. No broad fallback classifier is permitted.
+- **[A repeated simulator crash consumes CI time]** → Reuse the existing maximum of four
+  attempts; exhaustion stays red and later flows do not run.
 
 ## Migration Plan
 
 No runtime migration — no schema change, no new native module, no EAS-fingerprint bump. The
 dev-variant e2e binary is rebuilt every CI run via `expo prebuild`, so the new
 `src/app/dev-import.tsx` route ships automatically; no separate rebuild step is required.
-Rollback is a straight revert (the prod app is unaffected — the route is inert there, and no
+The SIGSEGV recovery is shell-harness-only and needs no workflow or `ci/` change. Rollback
+is a straight revert (the prod app is unaffected — the route is inert there, and no
 API/schema changed).
 
 ## Open Questions
