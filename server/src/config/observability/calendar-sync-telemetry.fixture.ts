@@ -107,7 +107,14 @@ async function run() {
     { fromFetcherCalendarEvent: () => ({ uid: "event-1" }) } as never,
     { syncEventSubjects: async () => undefined } as never,
     { create: async () => undefined } as never,
-    { add: () => undefined } as never,
+    {
+      add: () => undefined,
+      upstreamStarted: () => undefined,
+      upstreamCompleted: () => undefined,
+      recordAttempt: () => undefined,
+      measurePhase: async (_phase: string, work: () => Promise<unknown>) =>
+        work(),
+    } as never,
     { detectAndLogChanges: () => undefined } as never,
   )
 

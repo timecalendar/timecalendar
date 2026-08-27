@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { InjectStrategies } from "modules/fetch/decorators/inject-strategies"
 import { CalendarSource } from "modules/fetch/models/calendar-source"
+import { FetchContext } from "modules/fetch/models/fetch-context"
 import genericStrategy from "modules/fetch/strategies/generic-strategy"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
 import { notEmpty } from "modules/shared/utils/not-empty"
@@ -59,6 +60,7 @@ export class FetchService {
     calendarSource: CalendarSource,
     school: string | null,
     debugObject?: Record<string, any>,
+    context: FetchContext = {},
   ) {
     const { url, customData } = calendarSource
 
@@ -71,7 +73,11 @@ export class FetchService {
       debugObject.strategy = schoolStrategy?.options.school || null
     }
 
-    const rawEvents = await strategy.fetchEvents(transformedUrl, customData)
+    const rawEvents = await strategy.fetchEvents(
+      transformedUrl,
+      customData,
+      context,
+    )
     const events = strategy.transformEvents(rawEvents)
     return events.filter((event) => !event.fields.canceled)
   }

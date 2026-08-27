@@ -91,8 +91,20 @@ describe("calendar sync HTTP trace topology", () => {
       },
     })
 
+    const syncDescendantIds = new Set([successfulSync!.spanId])
+    let syncPreviousSize = 0
+    while (syncDescendantIds.size !== syncPreviousSize) {
+      syncPreviousSize = syncDescendantIds.size
+      for (const span of proof.spans) {
+        if (span.parentSpanId && syncDescendantIds.has(span.parentSpanId)) {
+          syncDescendantIds.add(span.spanId)
+        }
+      }
+    }
     const descendants = proof.spans.filter(
-      (span) => span.parentSpanId === successfulSync?.spanId,
+      (span) =>
+        span.spanId !== successfulSync?.spanId &&
+        syncDescendantIds.has(span.spanId),
     )
     expect(descendants.some((span) => span.kind === SpanKind.CLIENT)).toBe(true)
     expect(
