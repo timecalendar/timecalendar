@@ -62,9 +62,61 @@ case "$SCENARIO" in
     fi
     exit 0
     ;;
+  sigsegv_then_pass)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      echo 'Assertion failed: assertVisible Calendar' >&2
+      exit 43
+    fi
+    exit 0
+    ;;
+  sigsegv_exhausted)
+    echo 'Assertion failed: assertVisible Calendar' >&2
+    exit 43
+    ;;
+  seeded_data)
+    echo 'Element E2E Today Lecture not found' >&2
+    exit 38
+    ;;
+  server_failure)
+    echo 'POST /calendars/sync returned 500' >&2
+    exit 39
+    ;;
+  unknown|stale|prior_attempt|other_flow|other_process|log_unavailable)
+    echo 'Unexpected Maestro failure' >&2
+    exit 40
+    ;;
 esac
 SH
   chmod +x "$fixture/bin/maestro"
+
+  cat > "$fixture/bin/xcrun" <<'SH'
+#!/usr/bin/env bash
+echo "xcrun:$*" >> "$CALL_LOG"
+
+if [ "$SCENARIO" = log_unavailable ]; then
+  exit 1
+fi
+
+if [ "$1 $2 $3 $4 $5" = 'simctl list devices booted -j' ]; then
+  echo '{"devices":{"com.apple.CoreSimulator.SimRuntime.iOS-26-5":[{"state":"Booted"}]}}'
+  exit 0
+fi
+
+if [ "$1 $2 $3 $4 $5" = 'simctl spawn booted log show' ]; then
+  case "$SCENARIO" in
+    sigsegv_then_pass|sigsegv_exhausted)
+      echo 'runningboardd: [app<fr.samuelprak.timecalendar.dev((null))>:91525] exited with context code:SIGSEGV(11)'
+      ;;
+    other_process)
+      echo 'runningboardd: [app<com.example.other((null))>:91525] exited with context code:SIGSEGV(11)'
+      ;;
+  esac
+  exit 0
+fi
+
+exit 1
+SH
+  chmod +x "$fixture/bin/xcrun"
   echo "$fixture"
 }
 
@@ -113,5 +165,66 @@ assert_count 1 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+
+fixture="$(make_fixture sigsegv_then_pass)"
+run_fixture "$fixture" sigsegv_then_pass 0 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+assert_count 1 '^beta:' "$fixture/calls"
+assert_count 1 '^xcrun:simctl spawn booted log show --start ' "$fixture/calls"
+grep -Eq 'app<fr\.samuelprak\.timecalendar\.dev.*SIGSEGV\(11\)' \
+  "$fixture/logs/alpha-attempt-1-simulator.log" || fail 'qualifying SIGSEGV artifact was not persisted'
+
+fixture="$(make_fixture sigsegv_exhausted)"
+run_fixture "$fixture" sigsegv_exhausted 43 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+assert_count 2 '^xcrun:simctl spawn booted log show --start ' "$fixture/calls"
+
+fixture="$(make_fixture seeded_data)"
+run_fixture "$fixture" seeded_data 38 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture server_failure)"
+run_fixture "$fixture" server_failure 39 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture unknown)"
+run_fixture "$fixture" unknown 40 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture stale)"
+printf '%s\n' \
+  'runningboardd: [app<fr.samuelprak.timecalendar.dev((null))>:1] code:SIGSEGV(11)' \
+  > "$fixture/logs/alpha-attempt-1-simulator.log"
+run_fixture "$fixture" stale 40 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 'SIGSEGV(11)' "$fixture/logs/alpha-attempt-1-simulator.log"
+
+fixture="$(make_fixture prior_attempt)"
+printf '%s\n' \
+  'runningboardd: [app<fr.samuelprak.timecalendar.dev((null))>:1] code:SIGSEGV(11)' \
+  > "$fixture/logs/alpha-attempt-0-simulator.log"
+run_fixture "$fixture" prior_attempt 40 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+
+fixture="$(make_fixture other_flow)"
+printf '%s\n' \
+  'runningboardd: [app<fr.samuelprak.timecalendar.dev((null))>:1] code:SIGSEGV(11)' \
+  > "$fixture/logs/beta-attempt-1-simulator.log"
+run_fixture "$fixture" other_flow 40 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+
+fixture="$(make_fixture other_process)"
+run_fixture "$fixture" other_process 40 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture log_unavailable)"
+run_fixture "$fixture" log_unavailable 40 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
 
 echo '[test_run_e2e] PASS'
