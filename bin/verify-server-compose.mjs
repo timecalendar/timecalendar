@@ -93,15 +93,17 @@ function assertScopedModel(model, project, ports) {
 const currentRoot = realpathSync(run("git", ["rev-parse", "--show-toplevel"], scriptRoot));
 const commonDir = realpathSync(run("git", ["rev-parse", "--git-common-dir"], scriptRoot));
 const mainRoot = realpathSync(join(commonDir, ".."));
-const listedRoots = run("git", ["worktree", "list", "--porcelain"], scriptRoot)
-  .split("\n")
-  .filter((line) => line.startsWith("worktree "))
-  .map((line) => realpathSync(line.slice("worktree ".length)));
-const secondRoot = [currentRoot, ...listedRoots].find((root) => root !== mainRoot);
+const secondRoot =
+  currentRoot !== mainRoot
+    ? currentRoot
+    : run("git", ["worktree", "list", "--porcelain"], scriptRoot)
+        .split("\n")
+        .find((line) => line.startsWith("worktree ") && line.slice("worktree ".length) !== mainRoot)
+        ?.slice("worktree ".length);
 
 assert.ok(secondRoot, "verification needs the main checkout and one linked worktree");
 
-const roots = [mainRoot, secondRoot];
+const roots = [mainRoot, realpathSync(secondRoot)];
 const projects = roots.map(selectedProject);
 assert.equal(projects[0], "server", "the main checkout must preserve project server");
 assert.notEqual(projects[0], projects[1], "checkout project names must be distinct");
