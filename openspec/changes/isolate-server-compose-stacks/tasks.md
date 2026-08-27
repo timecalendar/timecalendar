@@ -36,16 +36,16 @@
 
 ## 3. Static resolved-model proof
 
-- [ ] 3.1 Add a focused repository verification script/test that resolves two distinct
+- [x] 3.1 Add a focused repository verification script/test that resolves two distinct
   project identities and alternate port sets, parses Compose JSON, and asserts distinct
   project/container/network/volume names plus the expected published ports. It MUST use
   `config` only and contain no `up`, `down`, `stop`, `rm`, prune, daemon restart, or other
   resource-mutating command.
-- [ ] 3.2 Extend the static proof to resolve
+- [x] 3.2 Extend the static proof to resolve
   `server/docker-compose.yml` + `server/docker-compose.e2e.yml` together and assert the
   server service, health/dependency wiring, service-name database/Redis URLs, and certificate
   mount contract remain intact.
-- [ ] 3.3 Run the proof against this checkout and one available sibling worktree (or two
+- [x] 3.3 Run the proof against this checkout and one available sibling worktree (or two
   synthetic canonical worktree roots through the tested name resolver) and record the two
   derived project names and volume names. Use only `docker compose config`; no live stack is
   required.
