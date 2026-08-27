@@ -97,10 +97,13 @@ npx eas submit --profile preview --platform ios     --path ./build/preview-ios.i
 npx eas submit --profile preview --platform android --path ./build/preview-android.aab
 ```
 
-`submit.preview` and `submit.production` in `eas.json` are **structure only — no secrets**:
-iOS `appleId` / `ascAppId` / `appleTeamId` read from `$EXPO_APPLE_ID` / `$EXPO_ASC_APP_ID` /
-`$EXPO_APPLE_TEAM_ID`; Android `serviceAccountKeyPath` points at `../ci/keys/eas-android-sa-key.json`
-(outside git), `track: internal`. Never committed.
+`submit.preview.ios.ascAppId` commits public destination metadata for the existing TimeCalendar App
+Store Connect app, `1479613630`. Preview's credential-bearing `appleId` / `appleTeamId` still read
+from `$EXPO_APPLE_ID` / `$EXPO_APPLE_TEAM_ID`; production's full iOS submit shape remains
+environment-backed, including `$EXPO_ASC_APP_ID`. Android `serviceAccountKeyPath` points at
+`../ci/keys/eas-android-sa-key.json` (outside git), `track: internal`. Credentials are never
+committed, and a store upload still requires explicit operator authorization. This configuration
+correction did not build, sign, upload, or submit an artifact.
 
 A production release is submitted to the internal track first, verified on real devices, and
 then promoted **within the Play console for that same production-channel artifact**. That is
