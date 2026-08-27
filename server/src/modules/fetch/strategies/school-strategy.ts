@@ -5,6 +5,7 @@ import {
   CalendarSource,
 } from "modules/fetch/models/calendar-source"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
+import { FetchContext } from "modules/fetch/models/fetch-context"
 import { defaultPipes } from "modules/fetch/pipes/pipes"
 import { SchoolStrategyOptions } from "modules/fetch/strategies/school-strategy-options.type"
 
@@ -77,7 +78,11 @@ export class SchoolStrategy {
     return events.map((event) => pipes.reduce((acc, pipe) => pipe(acc), event))
   }
 
-  fetchEvents(url: string, data: CalendarCustomData | null) {
-    return this.options.fetcher.fetch(url, data ?? {})
+  fetchEvents(
+    url: string,
+    data: CalendarCustomData | null,
+    context: FetchContext = {},
+  ) {
+    return this.options.fetcher.fetch(url, data ?? {}, context)
   }
 }

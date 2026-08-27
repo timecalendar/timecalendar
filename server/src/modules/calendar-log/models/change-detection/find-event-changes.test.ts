@@ -229,6 +229,42 @@ describe("findEventChanges", () => {
   })
 
   describe("complex realistic scenarios", () => {
+    it("preserves duplicate-content fallback semantics", () => {
+      const oldArray = Array.from({ length: 12 }, (_, index) =>
+        createEvent(`old-${index}`, "Duplicate", "Same room"),
+      )
+      const newArray = Array.from({ length: 6 }, (_, index) =>
+        createEvent(`unstable-${index}`, "Duplicate", "Same room"),
+      )
+
+      expect(findEventChanges(referenceDate, oldArray, newArray)).toEqual({
+        oldItems: [],
+        newItems: [],
+        changedItems: [],
+      })
+    })
+
+    it("does not scan either large event array with Array.find", () => {
+      const oldArray = Array.from({ length: 2_000 }, (_, index) =>
+        createEvent(`old-${index}`, `Course ${index}`, `Room ${index}`),
+      )
+      const newArray = oldArray.map((event, index) => ({
+        ...event,
+        uid: `unstable-${index}`,
+      }))
+      const failOnFind = () => {
+        throw new Error("quadratic array scan")
+      }
+      Object.defineProperty(oldArray, "find", { value: failOnFind })
+      Object.defineProperty(newArray, "find", { value: failOnFind })
+
+      expect(findEventChanges(referenceDate, oldArray, newArray)).toEqual({
+        oldItems: [],
+        newItems: [],
+        changedItems: [],
+      })
+    })
+
     it("should handle a typical calendar sync scenario", () => {
       const oldArray = [
         createEvent("meeting-1", "Team Meeting", "Conference Room A"),

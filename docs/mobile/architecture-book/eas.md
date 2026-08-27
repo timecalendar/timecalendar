@@ -1,6 +1,6 @@
 # EAS / distribution
 
-> R-1 pointer note: entries below are pointers plus the caveats tooling can't carry. The config is encoded in `mobile/eas.json` + `mobile/app.config.ts`; the operator guide is [`mobile/EAS.md`](../../../mobile/EAS.md); the load-bearing decisions are **ADR [006](./decisions/006-eas-distribution.md)** (fingerprint policy), **ADR [037](./decisions/037-self-hosted-ota-runtime.md)** (self-hosted OTA runtime) and **ADR [040](./decisions/040-local-store-builds-and-store-preview.md)** (local store builds, store-distributed `preview`, no channel promotion).
+> R-1 pointer note: entries below are pointers plus the caveats tooling can't carry. The config is encoded in `mobile/eas.json` + `mobile/app.config.ts`; the operator guide is [`mobile/EAS.md`](../../../mobile/EAS.md); the load-bearing decisions are **ADR [006](./decisions/006-eas-distribution.md)** (fingerprint policy), **ADR [037](./decisions/037-self-hosted-ota-runtime.md)** (self-hosted OTA runtime), **ADR [040](./decisions/040-local-store-builds-and-store-preview.md)** (local store builds, store-distributed `preview`, no channel promotion), and **ADR [042](./decisions/042-iphone-ipad-portrait-contract.md)** (iPhone+iPad, portrait-only/full-screen).
 
 For the plain-language release flow, signing custody and current readiness audit, see the
 [mobile release guide](../releases/README.md). The `../ota/` folder is **exploration**, not
@@ -18,6 +18,17 @@ it disagrees with this page or an ADR, this page wins.
 **Both release profiles are `distribution: "store"`** (ADR 040): Android `app-bundle`, store `.ipa`, `autoIncrement`, with `cli.appVersionSource: "remote"` so EAS owns the build number. `preview` reaches TestFlight internal + Play internal testing; `production` reaches the App Store and the Play production track. There is deliberately **no directly-installable release artifact** — an ad hoc `.ipa` or a raw `.apk` cannot enter either store's testing track, and there is no audience for one.
 
 **Variant-drift is the headline risk** — a `preview`/`production` profile accidentally carrying `APP_VARIANT=development` would ship the `.dev` id + dev Firebase + cleartext to testers or the store. The guard: only `development` sets the env var, and the `expo config --json` **variant diff** verifies it (production → prod id/Firebase, dev → `.dev`). Can't be a lint rule (config-shape, not source), hence this prose (R-1).
+
+## iOS device-family and orientation contract
+
+Every variant supports iPhone and iPad while remaining portrait-only and full-screen. The source
+fields are `orientation: "portrait"`, `ios.supportsTablet: true`, and
+`ios.requireFullScreen: true` in `mobile/app.config.ts`; full-screen mode deliberately disables
+iPad Slide Over and Split View because Expo SDK 56 otherwise requires landscape orientations.
+`mobile/app.config.test.ts` proves each resolved variant. From `mobile/`, run
+`npm run verify:ios-device-contract` to generate a clean preview project in a disposable directory
+and assert the application target has `TARGETED_DEVICE_FAMILY=1,2`, `UIRequiresFullScreen=true`,
+and portrait-only effective iPad orientations. Generated `mobile/ios/` remains uncommitted.
 
 ## `runtimeVersion: { policy: "fingerprint" }`
 
@@ -108,19 +119,22 @@ OTA_CHANNEL=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:r
 OTA_CHANNEL=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
 ```
 
-On 2026-08-26 the resolved versions were:
+On 2026-08-27 the resolved versions were:
 
 | Platform | `preview`                                  | `production`                               |
 | -------- | ------------------------------------------ | ------------------------------------------ |
-| iOS      | `6ff251db2b8617429a2bd6db0fb8b3c9aa02e36a` | `800d5a3e394fb9384994250fe3b02d61689ba7bf` |
+| iOS      | `0fc2a429052003b4ee3042c6e55cb06b05176b89` | `cc3763c96401c5920b66957a226cb7b6ce1c3a05` |
 | Android  | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `42ded73f46ab802da4472931415b66664ab96328` |
 
-The debug source is the resolved `expoConfig`: its hash is `f5b859…` for preview and `53cc97…`
-for production because the embedded request header is native config. This conservative lane split is
-intentional. No `.fingerprintignore` was added: excluding `app.config.ts` would weaken protection
-for plugins, signing and other native config. As a control, adding only `ios.buildNumber: "999"` in
-a run-owned copy changed iOS preview from `6ff251…` to `5b9c0293c3218d045d6e8428f2224b851fc8906f`;
-the copy was discarded and the working tree never contained the probe.
+The debug source is the resolved `expoConfig`: its hash is
+`ffe67e4c3779f2bbd58d53b044fcc8dcda48a4ea` for preview and
+`6e4569b0ae2b636ec8998734b102fee012a47365` for production. The iOS versions moved from
+`6ff251db2b8617429a2bd6db0fb8b3c9aa02e36a` and
+`800d5a3e394fb9384994250fe3b02d61689ba7bf` when the device-family contract changed. A fresh
+signed iOS preview binary is therefore required; the corrected native shell is not OTA-compatible
+with the rejected or previous shell. Android was not remeasured and its recorded values remain
+unchanged. No `.fingerprintignore` was added or broadened: excluding `app.config.ts` would weaken
+protection for plugins, signing and other native config.
 
 ## Submit skeleton, no secrets
 
@@ -133,9 +147,10 @@ the copy was discarded and the working tree never contained the probe.
 `mobile/app.config.test.ts` resolves isolated development, preview and production configs and parses
 `eas.json`. It enforces identity/Firebase selection, development OTA disablement, release endpoint,
 headers and certificate metadata, EAS-link independence, invalid-channel rejection, profile
-artifact guarantees and recursive absence of `channel` keys. Clean Expo config/prebuild renders
-remain the native embedding proof. The DoD's Maestro axis is N/A for build/runtime configuration;
-real signed delivery and rejection stay in the human device ticket.
+artifact guarantees, recursive absence of `channel` keys, and the tablet/full-screen/portrait
+source contract. `cd mobile && npm run verify:ios-device-contract` is the generated-native proof.
+The DoD's Maestro axis is N/A for build/runtime configuration; real signed delivery and rejection
+stay in the human device ticket.
 
 ## Human prerequisites (inbox — not blockers)
 

@@ -1,5 +1,6 @@
 import { CalendarChange } from "modules/calendar-log/models/calendar-change"
 import { EventForChangeDetection } from "modules/calendar-log/models/change-detection/find-event-changes"
+import { buildEventIndex, eventComparisonKey } from "./event-comparison-utils"
 
 /**
  * Detects bad ICal implementation
@@ -33,18 +34,14 @@ export const detectBadIcalImplementations = <T extends EventForChangeDetection>(
   if (difference.newItems.length >= nbEventsThreshold) {
     // Find the number of events really updated (title, location, start, end)
     let nbReallyUpdatedEvents = 0
+    const oldItemsByContent = buildEventIndex(difference.oldItems, true)
 
-    difference.newItems.forEach((oldEv) => {
-      // Find a corresponding event in the new array
-      const correspondingEv = difference.oldItems.find(
-        (newEv) =>
-          newEv.title === oldEv.title &&
-          newEv.location === oldEv.location &&
-          newEv.startsAt.getTime() === oldEv.startsAt.getTime() &&
-          newEv.endsAt.getTime() === oldEv.endsAt.getTime(),
+    difference.newItems.forEach((newEvent) => {
+      const matchingOldEvent = oldItemsByContent.get(
+        eventComparisonKey(newEvent, true),
       )
 
-      if (correspondingEv) nbReallyUpdatedEvents++
+      if (matchingOldEvent) nbReallyUpdatedEvents++
     })
 
     if (nbReallyUpdatedEvents > nbEventsThreshold) {
