@@ -135,6 +135,7 @@ describe("FetchService", () => {
       expect(crazyschoolFetcher).toHaveBeenCalledWith(
         "https://google.com/search?export=json&format=1",
         {},
+        {},
       )
     })
 
@@ -153,6 +154,7 @@ describe("FetchService", () => {
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=true&firstDate=2000-01-01&lastDate=2038-01-01",
+          {},
           {},
         )
       })
@@ -174,6 +176,7 @@ describe("FetchService", () => {
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://google.com/search?export=json&nbWeeks=4",
           {},
+          {},
         )
       })
 
@@ -192,6 +195,7 @@ describe("FetchService", () => {
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
           {},
+          {},
         )
       })
 
@@ -209,6 +213,7 @@ describe("FetchService", () => {
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
           "https://bing.com/search?export=json&crazy=false",
+          {},
           {},
         )
       })
@@ -280,6 +285,7 @@ describe("FetchService", () => {
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=-1&"),
         {},
+        {},
       )
     })
 
@@ -290,6 +296,7 @@ describe("FetchService", () => {
 
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=3&"),
+        {},
         {},
       )
     })
