@@ -277,16 +277,17 @@ rejected because either could mask a missing recovery control.
 
 ## Decision: Match the re-add action inside its calendar-specific label
 
-The required re-add tap uses `.*Add.*updated calendar.*`. Android's visible
-`Add updated calendar` title satisfies this semantic selector, while iOS's accessibility
-label `Add an updated calendar for E2E Stale Calendar` may include its article and
-calendar-specific context. The selector still requires the Add/update/calendar terms in
-order and remains sequenced after the unique stale calendar and source-attention proofs.
+The required re-add tap uses
+`^Add( an)? updated calendar( for E2E Stale Calendar)?$`. Android's visible
+`Add updated calendar` title and iOS's accessibility label
+`Add an updated calendar for E2E Stale Calendar` both satisfy this selector. Anchoring both
+ends prevents Android from selecting the non-clickable explanatory sentence, which also
+contains `Add an updated calendar` but continues with recovery guidance. The action remains
+sequenced after the unique stale calendar and source-attention proofs.
 
 The tap remains mandatory and the final **Select your school** wait remains required. An
-exact iOS full-label selector was rejected because it would couple the flow to seeded
-calendar identity; an optional action or removed destination assertion was rejected because
-either could hide a broken recovery route.
+optional action or removed destination assertion was rejected because either could hide a
+broken recovery route.
 
 ## Decision: Recovery is additive and user-controlled
 

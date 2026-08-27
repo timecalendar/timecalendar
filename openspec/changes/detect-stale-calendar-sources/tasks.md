@@ -90,7 +90,7 @@
 
 ## 13. iOS grouped re-add-control remediation
 
-- [x] 13.1 Change the required re-add tap in `mobile/.maestro/stale-source-recovery.yaml` to the cross-platform semantic grouped-label selector `.*Add.*updated calendar.*`.
+- [x] 13.1 Change the required re-add tap in `mobile/.maestro/stale-source-recovery.yaml` to the anchored cross-platform button-label selector `^Add( an)? updated calendar( for E2E Stale Calendar)?$`, excluding similarly worded explanatory prose.
 - [x] 13.2 Retain the preceding `E2E Stale Calendar` and `Source needs attention` proofs plus the final required school-selection destination; add no optionalization, timeout-only workaround, skipped flow, or seeded-data substitution.
 - [x] 13.3 Run focused YAML parse and Prettier checks for `stale-source-recovery.yaml`, inspect the exact diff, and run `openspec validate detect-stale-calendar-sources --strict`.
 - [x] 13.4 Confirm the Architecture Book and ADRs need no update because this is a leaf Maestro accessibility-selector correction, and verify the remediation touches no product UI/navigation/state, API/generated contract, server migration, native/store config, infrastructure/workflow, CI harness, or legacy Flutter surface.
