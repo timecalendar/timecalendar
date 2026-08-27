@@ -191,15 +191,25 @@ version, print it, and preserve debug output and server logs on failure.
 ### Requirement: XCTest startup retries cannot mask flow failures
 
 The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
-A failed attempt SHALL be retried only when its captured output proves the first
-`launchApp` setup failed because the local XCTest driver was not listening or refused the
-connection and contains no completed assertion or assertion-failure evidence. Unknown,
-application, and assertion failures SHALL be terminal on their first occurrence.
+A failed attempt SHALL be retried only when its captured output proves XCTest driver startup
+failed: either the first `launchApp` setup reports that the driver was not listening or
+refused the connection, or Maestro 2.8.0 emits
+`IOSDriverTimeoutException: iOS driver not ready in time`. Captured output containing
+completed assertion or assertion-failure evidence SHALL NOT retry. Unknown, application,
+and assertion failures SHALL be terminal on their first occurrence.
 
 #### Scenario: A driver startup failure is retried within the bound
 
 - **WHEN** a flow's first `launchApp` fails during `setPermissions` with a known XCTest
   driver-not-listening or local connection-refused signature before any assertion runs
+- **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
+  and attempt number, and never exceeds the configured maximum attempts
+
+#### Scenario: A standalone driver timeout is retried within the bound
+
+- **WHEN** Maestro 2.8.0 fails before any assertion with
+  `IOSDriverTimeoutException: iOS driver not ready in time`, without emitting a
+  `launchApp` or `setPermissions` token
 - **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
   and attempt number, and never exceeds the configured maximum attempts
 

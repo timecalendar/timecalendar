@@ -67,9 +67,9 @@ for either:
 - a fresh booted-iOS-simulator unified-log record, queried from immediately
   before the current Maestro attempt, that attributes `SIGSEGV(11)` to the
   `fr.samuelprak.timecalendar.dev` app process; or
-- a pinned 2.8.0 first-`launchApp`/`setPermissions` XCTest
-  driver-not-listening or connection-refused signature with no assertion
-  evidence.
+- a pinned 2.8.0 XCTest startup signature with no assertion evidence: either
+  first-`launchApp`/`setPermissions` driver-not-listening/connection-refused
+  output, or `IOSDriverTimeoutException: iOS driver not ready in time`.
 
 Both classifiers reuse the same per-flow attempt bound and every retry starts a
 fresh Maestro process; the server stays up once for the whole run. The simulator
