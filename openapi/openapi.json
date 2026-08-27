@@ -591,6 +591,10 @@
           "imageUrl": {
             "type": "string"
           },
+          "imageUrlDark": {
+            "type": "string",
+            "nullable": true
+          },
           "intranetUrl": {
             "type": "string",
             "nullable": true
@@ -623,6 +627,7 @@
           "name",
           "siteUrl",
           "imageUrl",
+          "imageUrlDark",
           "intranetUrl",
           "visible",
           "createdAt",
@@ -770,6 +775,10 @@
           "imageUrl": {
             "type": "string"
           },
+          "imageUrlDark": {
+            "type": "string",
+            "nullable": true
+          },
           "intranetUrl": {
             "type": "string",
             "nullable": true
@@ -805,6 +814,7 @@
           "name",
           "siteUrl",
           "imageUrl",
+          "imageUrlDark",
           "intranetUrl",
           "visible",
           "createdAt",
