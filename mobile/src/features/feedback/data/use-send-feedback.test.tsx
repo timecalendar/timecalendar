@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react-native"
 import type { ReactNode } from "react"
 
-import { customFetch } from "@/api/mutator"
+import { ApiError, customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { recordUnknownError } from "@/firebase"
 
@@ -86,8 +86,12 @@ it("POSTs every held calendar id through the real generated mutation", async () 
   await waitFor(() => expect(result.current.isPending).toBe(false))
 })
 
-it("records a body-free failure through the shared write controller", async () => {
-  const error = new Error("mail rejected")
+it("records a static 503 through the body-free shared write controller", async () => {
+  const error = new ApiError(503, {
+    statusCode: 503,
+    message: "Contact service is temporarily unavailable. Please try again.",
+    error: "Service Unavailable",
+  })
   mockFetch.mockRejectedValue(error)
   const { result } = await renderHook(() => useSendFeedback(), { wrapper })
   let sent: boolean | undefined
