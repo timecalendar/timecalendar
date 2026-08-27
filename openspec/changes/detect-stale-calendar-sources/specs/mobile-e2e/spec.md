@@ -57,7 +57,9 @@ visible agenda row's accessibility text on Android and iOS. The assertion SHALL 
 grouped iOS label without becoming optional, changing its 60-second synchronization bound,
 or weakening any downstream recovery gate. Its immediately following required wait and tap
 SHALL match the visible `Review` title within the control's accessibility label on both
-platforms while preserving the existing 60-second wait.
+platforms while preserving the existing 60-second wait. The later required re-add tap SHALL
+match its Add/update/calendar semantics within the visible control label on both platforms
+and SHALL preserve the final school-selection destination gate.
 
 #### Scenario: Grouped iOS label proves the retained event
 
@@ -82,3 +84,10 @@ platforms while preserving the existing 60-second wait.
   `Review` together with its calendar-source guidance
 - **THEN** the required wait observes that title within 60 seconds and the required tap uses
   the same title-bearing selector before every later recovery gate runs
+
+#### Scenario: Calendar-specific iOS label activates re-add
+
+- **WHEN** iOS exposes the visible re-add control as a label containing `Add`, `updated
+  calendar`, and the stale calendar's name
+- **THEN** the required tap activates that control and the flow still requires the final
+  school-selection destination

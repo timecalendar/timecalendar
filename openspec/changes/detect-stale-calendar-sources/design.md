@@ -45,6 +45,12 @@ button as one accessibility label: `Review calendar sources that need attention`
 exact selector is used for the bounded wait and the tap, so both must use one shared
 label-containing shape while remaining required.
 
+On the exact-head rerun, iOS completed the retained-title proof, the label-containing Review
+wait and tap, the stale calendar destination, and the source-attention assertion before the
+exact `Add updated calendar` tap failed. The live hierarchy exposes the same visible control
+as `Add an updated calendar for E2E Stale Calendar`, so the required tap needs a bounded
+label-containing selector that tolerates the inserted article and calendar-specific suffix.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -67,6 +73,8 @@ label-containing shape while remaining required.
   accessibility label while keeping the same semantic assertion required on Android.
 - Activate the required Review control through its visible title inside the grouped iOS
   accessibility label while retaining the same required interaction on Android.
+- Activate the required re-add control through its semantic title inside the calendar-specific
+  iOS accessibility label while retaining the same required interaction on Android.
 
 **Non-Goals:**
 
@@ -82,6 +90,8 @@ label-containing shape while remaining required.
   or weakening any later stale-source recovery assertion or action.
 - Making the Review wait/tap optional, increasing its timeout as a workaround, or removing
   any later stale-calendar, attention, re-add, or destination gate.
+- Making the re-add tap optional, removing the school-selection destination proof, or matching
+  one exact platform-specific full label.
 
 ## Decision: Return advisory health beside each batch-sync calendar
 
@@ -265,6 +275,19 @@ school-selection gates remain required. An exact full-label match was rejected b
 would couple the flow to guidance copy, and optionalization or a timeout-only change was
 rejected because either could mask a missing recovery control.
 
+## Decision: Match the re-add action inside its calendar-specific label
+
+The required re-add tap uses `.*Add.*updated calendar.*`. Android's visible
+`Add updated calendar` title satisfies this semantic selector, while iOS's accessibility
+label `Add an updated calendar for E2E Stale Calendar` may include its article and
+calendar-specific context. The selector still requires the Add/update/calendar terms in
+order and remains sequenced after the unique stale calendar and source-attention proofs.
+
+The tap remains mandatory and the final **Select your school** wait remains required. An
+exact iOS full-label selector was rejected because it would couple the flow to seeded
+calendar identity; an optional action or removed destination assertion was rejected because
+either could hide a broken recovery route.
+
 ## Decision: Recovery is additive and user-controlled
 
 If any held calendar is stale, Calendar shows an accessible non-modal banner above the
@@ -322,6 +345,8 @@ rollback), while implementation-specific thresholds remain in tested code.
 - **[A label-containing Review selector matches unrelated text]** → Keep the selector in
   sequence after the unique retained event and retain the destination and row-level recovery
   assertions that prove the activated control.
+- **[A flexible re-add selector matches unrelated copy]** → Require Add/update/calendar
+  terms in order and keep the preceding row identity plus final school-selection assertion.
 - **[The selector fix passes only one platform]** → Use the existing cross-platform grouped
   agenda-label pattern and require both native jobs on the exact integrated head.
 
@@ -348,6 +373,9 @@ rollback), while implementation-specific thresholds remain in tested code.
 8. For the Review-control remediation, change both its bounded wait and tap to the same
    title-containing selector, run focused YAML and strict OpenSpec checks, and rerun the same
    exact-head Android+iOS native gate without weakening any downstream recovery gate.
+9. For the re-add-control remediation, change only its required tap to the cross-platform
+   semantic title selector, run focused YAML and strict OpenSpec checks, and rerun the same
+   exact-head Android+iOS native gate while preserving the final destination assertion.
 
 ## Open Questions
 

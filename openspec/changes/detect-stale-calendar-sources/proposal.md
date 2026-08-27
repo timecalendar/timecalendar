@@ -42,6 +42,9 @@ the university now publishes 2026–27 schedules through a different service.
 - Match the immediately following Review control through a required label-containing
   selector on both platforms because iOS groups its visible title and guidance into one
   accessibility label. Keep the existing 60-second wait and all later recovery gates.
+- Match the required re-add control through a label-containing selector that accepts the
+  visible Android title and iOS's calendar-specific accessibility label. Keep the action
+  mandatory and preserve the final school-selection destination gate.
 - Keep bulk rewriting, backfill, production rollout, and changes to legacy Flutter out of
   this merge. Any later migration/backfill is a separate human-gated rollout ticket.
 
@@ -61,8 +64,8 @@ the university now publishes 2026–27 schedules through a different service.
 - `mobile-e2e`: Seeded calendar flows select Agenda through the live native view menu and
   continue to prove the unmocked server → client → SQLite round-trip on both platforms;
   the Settings flow uses each platform's supported return interaction for both child routes;
-  stale recovery matches the retained event and Review control inside their grouped iOS
-  accessibility labels without weakening Android or later recovery gates.
+  stale recovery matches the retained event, Review control, and re-add control inside their
+  grouped iOS accessibility labels without weakening Android or later recovery gates.
 - `mobile-user-calendars`: Calendar management identifies stale sources and offers a
   non-destructive, accessible re-add path.
 
