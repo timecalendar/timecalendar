@@ -29,7 +29,10 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
           pressed && { backgroundColor: theme.backgroundSelected },
       ]}
     >
-      <SchoolLogo key={school.imageUrl} school={school} />
+      <SchoolLogo
+        key={`${school.imageUrl}:${school.imageUrlDark ?? ""}`}
+        school={school}
+      />
       <ThemedText style={styles.rowName}>{school.name}</ThemedText>
       {Platform.OS === "ios" && (
         <SymbolView

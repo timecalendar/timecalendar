@@ -23,6 +23,15 @@
 
 - `mobile/src/api/config.ts`: `EXPO_PUBLIC_API_URL` ?? production default (`https://api-v2.timecalendar.app` — the Flutter production `MAIN_API_URL`, `app/Fastfile`), inlined at build time. The Android-emulator `10.0.2.2` gotcha is documented at the constant.
 
+## School logo contract
+
+- `SchoolForList.imageUrl` remains the required default logo URL consumed by every client.
+  `imageUrlDark` is required-but-nullable in the wire shape: the server prefixes a stored
+  relative key when present and emits `null` otherwise. The school-selection data seam carries
+  both values; the UI selection and light fallback are defined in `theming.md` and ADR 041.
+- The additive field preserves legacy Flutter and web compatibility. Any server change to either
+  field must regenerate `openapi/openapi.json` and the committed Orval client.
+
 ## Query runtime
 
 - One module-scoped `QueryClient` in `mobile/src/api/query-client.ts`, mounted in `mobile/src/app/_layout.tsx`. It sets an explicit `defaultOptions.queries` policy: a non-zero `staleTime`, a `gcTime >= maxAge`, and a bounded `retry`.

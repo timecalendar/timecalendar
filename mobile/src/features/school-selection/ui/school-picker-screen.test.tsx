@@ -3,6 +3,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo } from "react-native"
 
 import { useSchools } from "@/features/school-selection/data"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
@@ -19,6 +20,10 @@ import SchoolPickerScreen from "./school-picker-screen"
 jest.mock("@/features/school-selection/data", () => ({
   ...jest.requireActual("@/features/school-selection/data"),
   useSchools: jest.fn(),
+}))
+
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: jest.fn(() => "light"),
 }))
 
 jest.mock("expo-router", () => ({
@@ -42,6 +47,7 @@ const mockPush = router.push as jest.Mock
 const mockDismiss = router.dismiss as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockStackScreen = Stack.Screen as unknown as jest.Mock
+const mockUseColorScheme = useColorScheme as jest.Mock
 
 const screenOptions = () =>
   mockStackScreen.mock.lastCall?.[0].options as {
@@ -66,16 +72,23 @@ const typeSearch = async (text: string) => {
 }
 
 const ready = (
-  schools: { id: string; name: string; code?: string; imageUrl: string }[],
+  schools: {
+    id: string
+    name: string
+    code?: string
+    imageUrl: string
+    imageUrlDark?: string | null
+  }[],
   refetch = jest.fn(),
 ) => ({
-  schools: schools.map((s) => ({ code: "", ...s })),
+  schools: schools.map((s) => ({ code: "", imageUrlDark: null, ...s })),
   isLoading: false,
   isError: false,
   refetch,
 })
 
 beforeEach(() => {
+  mockUseColorScheme.mockReturnValue("light")
   mockPush.mockClear()
   mockDismiss.mockClear()
   mockUseLocalSearchParams.mockReturnValue({})
@@ -297,6 +310,39 @@ describe("SchoolPickerScreen", () => {
 
     expect(getByTestId("onboarding-school-logo-a")).toBeTruthy()
     expect(queryByTestId("onboarding-school-monogram-a")).toBeNull()
+  })
+
+  it("renders the dark logo in dark mode", async () => {
+    mockUseColorScheme.mockReturnValue("dark")
+    mockUseSchools.mockReturnValue(
+      ready([
+        {
+          id: "a",
+          name: "Alpha",
+          imageUrl: "https://cdn.example/a.png",
+          imageUrlDark: "https://cdn.example/a-dark.png",
+        },
+      ]),
+    )
+    const { getByTestId } = await render(<SchoolPickerScreen />)
+
+    expect(getByTestId("onboarding-school-logo-a").props.source).toEqual([
+      { uri: "https://cdn.example/a-dark.png" },
+    ])
+  })
+
+  it("uses the light logo in dark mode when no dark logo exists", async () => {
+    mockUseColorScheme.mockReturnValue("dark")
+    mockUseSchools.mockReturnValue(
+      ready([
+        { id: "a", name: "Alpha", imageUrl: "https://cdn.example/a.png" },
+      ]),
+    )
+    const { getByTestId } = await render(<SchoolPickerScreen />)
+
+    expect(getByTestId("onboarding-school-logo-a").props.source).toEqual([
+      { uri: "https://cdn.example/a.png" },
+    ])
   })
 
   it("falls back to the monogram when there is no logo url", async () => {
