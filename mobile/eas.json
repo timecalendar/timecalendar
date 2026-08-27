@@ -19,16 +19,20 @@
     },
     "preview": {
       "distribution": "store",
-      "channel": "preview",
       "autoIncrement": true,
+      "env": {
+        "OTA_CHANNEL": "preview"
+      },
       "android": {
         "buildType": "app-bundle"
       }
     },
     "production": {
       "distribution": "store",
-      "channel": "production",
       "autoIncrement": true,
+      "env": {
+        "OTA_CHANNEL": "production"
+      },
       "android": {
         "buildType": "app-bundle"
       }

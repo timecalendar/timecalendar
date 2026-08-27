@@ -2,6 +2,11 @@
 
 ## 2026-08-26
 
+- Wired preview and production native builds to signed xprem delivery: one validated
+  `OTA_CHANNEL` source, exact endpoint/app/branch headers, embedded public certificate metadata,
+  development OTA disablement, and retained independent EAS linkage. SDK 56 fingerprint evidence
+  records conservative per-channel iOS/Android runtimes plus a native-change control; no
+  `.fingerprintignore` weakens native config protection (ADR 037, eas.md, `mobile/EAS.md`).
 - Recorded the live xprem endpoint and TimeCalendar app UUID plus xprem's database-managed
   per-app signing mode, single public certificate path/fingerprint, and private-key custody
   boundary. Client endpoint/header/channel/certificate wiring remains downstream (eas.md).
