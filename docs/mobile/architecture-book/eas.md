@@ -13,7 +13,7 @@ it disagrees with this page or an ADR, this page wins.
 
 - **`development`** sets `env.APP_VARIANT = "development"` → `.dev` id, `timecalendar-dev` Firebase, dev network exceptions, `developmentClient: true`, simulator + APK. The only non-store profile, and it is a dev-client artifact rather than a release.
 - **`preview`** and **`production`** **omit** `APP_VARIANT` so they take the production default in `app.config.ts` (real `fr.samuelprak.timecalendar`, `timecalendar-samuelprak` Firebase, no cleartext). Internal testers run the _real_ store bundle so their crashes/analytics land in production.
-- `preview` vs. `production` differ by **channel and audience**, not identity and not artifact shape.
+- `preview` vs. `production` differ by **`OTA_CHANNEL` and audience**, not identity and not artifact shape. Their profile `env` values stamp the matching `expo-channel-name` request header; `eas.json` contains no `channel` key, so local and EAS builds share one authority.
 
 **Both release profiles are `distribution: "store"`** (ADR 040): Android `app-bundle`, store `.ipa`, `autoIncrement`, with `cli.appVersionSource: "remote"` so EAS owns the build number. `preview` reaches TestFlight internal + Play internal testing; `production` reaches the App Store and the Play production track. There is deliberately **no directly-installable release artifact** — an ad hoc `.ipa` or a raw `.apk` cannot enter either store's testing track, and there is no audience for one.
 
@@ -65,9 +65,17 @@ signing key as the single trust root. The exported public certificate is committ
 The private key stays encrypted in xprem's database-key store and is never committed. Do not
 generate a separate Expo key pair: it would create an unrelated trust root that xprem does not use.
 
-These are available public inputs, not completed client wiring. `updates.url` still points at the
-hosted default until the downstream delivery change configures the endpoint, request headers,
-channel, app identifier and certificate verification. Publishing automation also remains deferred.
+Release configs are wired to `https://ota.timecalendar.app/manifest` with these request headers:
+
+- `expo-channel-name`: required `OTA_CHANNEL`, exactly `preview` or `production`;
+- `expo-app-id`: `e89170b9-5b32-44f0-8f78-33eadb60ec28`;
+- `xprem-branch`: empty, so xprem's channel mapping selects the branch.
+
+They embed `./codesigning/certs/certificate.pem` with key id `main` and algorithm
+`rsa-v1_5-sha256`. Expo filters the certificate fields from public config output, but prebuild
+embeds them in both native projects. The release config has no signing-disable switch. Development
+sets `updates.enabled: false`, carries no release headers, and stays on Metro/dev-client. Publishing,
+channel administration, rollout and rollback remain deliberately separate operator actions.
 
 `updates.fallbackToCacheTimeout: 0` keeps cold launch non-blocking: the cached or embedded bundle
 starts immediately while the update is checked and downloaded in the background. `OtaUpdateRuntime`,
@@ -79,11 +87,40 @@ rejected attempt is recorded and left for a later cold launch rather than retrie
 Channel promotion and progressive rollout remain operator actions in xprem; declarative
 reconciliation must not overwrite incident-time rollback decisions. See ADR 037 for the rule.
 
-## The initialized `expo-updates` project seam
+## Signed xprem client seam
 
-`expo-updates` is in `plugins`; `updates.url` and `extra.eas.projectId` are derived from `easProjectId` = `process.env.EAS_PROJECT_ID` ?? the **committed real id** (`eas init` produced `@samuelprak/timecalendar`, projectId `3b427ef6-1aae-4175-8217-ea447ee6df6b`). The id is **not a secret** — it ships in the binary and the EAS project is public-by-id — so committing it as the fallback means a fresh clone / a CI build works with no env. (An earlier **zero-UUID placeholder** was wrong: a fake-but-present id makes EAS believe the project is already linked and **refuse `eas init`** — "Project already linked … Experience with id … does not exist". `eas init` was run with the id left `undefined`, which let it create and link the fresh project; the returned id is now the committed fallback.) `tsc`/lint/Jest don't read `projectId`, so CI `test-mobile` is unaffected.
+`expo-updates` is in `plugins`. `extra.eas.projectId` resolves from `EAS_PROJECT_ID` with committed
+fallback `3b427ef6-1aae-4175-8217-ea447ee6df6b` (`@samuelprak/timecalendar`). The public EAS id is
+retained only for Build/Submit linkage; changing it cannot redirect `updates.url` or xprem headers.
 
-**A locally-built binary does not read `eas.json`,** so it carries **no channel** and silently receives no updates. The fix is `updates.requestHeaders` in `app.config.ts` (`expo-channel-name`), with the open question of whether that feeds the fingerprint — verify on a device before relying on it. Until it lands, treat channel membership of a local build as unproven.
+Production identity fails config resolution when `OTA_CHANNEL` is missing or not `preview` /
+`production`. `eas.json` supplies the value for its two release profiles. Local release commands
+must supply the same input explicitly; there is no silent production fallback.
+
+## Fingerprint evidence (SDK 56)
+
+Run from `mobile/`, substituting both platforms and both channels:
+
+```bash
+OTA_CHANNEL=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform ios --workflow managed --debug
+OTA_CHANNEL=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform ios --workflow managed --debug
+OTA_CHANNEL=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
+OTA_CHANNEL=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
+```
+
+On 2026-08-26 the resolved versions were:
+
+| Platform | `preview`                                  | `production`                               |
+| -------- | ------------------------------------------ | ------------------------------------------ |
+| iOS      | `6ff251db2b8617429a2bd6db0fb8b3c9aa02e36a` | `800d5a3e394fb9384994250fe3b02d61689ba7bf` |
+| Android  | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `42ded73f46ab802da4472931415b66664ab96328` |
+
+The debug source is the resolved `expoConfig`: its hash is `f5b859…` for preview and `53cc97…`
+for production because the embedded request header is native config. This conservative lane split is
+intentional. No `.fingerprintignore` was added: excluding `app.config.ts` would weaken protection
+for plugins, signing and other native config. As a control, adding only `ios.buildNumber: "999"` in
+a run-owned copy changed iOS preview from `6ff251…` to `5b9c0293c3218d045d6e8428f2224b851fc8906f`;
+the copy was discarded and the working tree never contained the probe.
 
 ## Submit skeleton, no secrets
 
@@ -91,9 +128,14 @@ reconciliation must not overwrite incident-time rollback decisions. See ADR 037 
 
 **EAS owns signing** (managed credentials — the iOS distribution cert + provisioning profile, and the Android upload key). The Flutter Fastlane `match` repo is **not** bridged into EAS; it stays with the Flutter app as a rollback asset (R-5 bounded maintenance). Same production bundle id → EAS targets the existing App Store record and Play listing (RN ships as an update, not a new app). Two signing mechanisms coexist during migration; no shared state to corrupt.
 
-## No Jest proof test
+## CI config proof
 
-This is build/release _configuration_, not runtime app behavior — a fabricated "eas.json parses" Jest test would be cargo-cult. The enforcing gates (R-1) are the **EAS CLI** (validates `eas.json` at build time — human) and `expo config --json` (the variant diff, covered by the existing `tsc`/lint gates). The DoD's E2E axis is **N/A** for this config.
+`mobile/app.config.test.ts` resolves isolated development, preview and production configs and parses
+`eas.json`. It enforces identity/Firebase selection, development OTA disablement, release endpoint,
+headers and certificate metadata, EAS-link independence, invalid-channel rejection, profile
+artifact guarantees and recursive absence of `channel` keys. Clean Expo config/prebuild renders
+remain the native embedding proof. The DoD's Maestro axis is N/A for build/runtime configuration;
+real signed delivery and rejection stay in the human device ticket.
 
 ## Human prerequisites (inbox — not blockers)
 
@@ -108,7 +150,6 @@ config is green without them; these unlock builds and installs.
 ## Deferred (recorded debt — not built)
 
 - **No manual-dispatch build workflow yet** — builds are run by hand on the host until one exists.
-- **`updates.requestHeaders` channel stamping** for locally-built binaries (above).
 - **The `beta` profile and channel**, after the 4.0 cutover.
 - **No verified live store credentials or device install**; the real EAS project link is done.
 - **No `match`→EAS bridge** (intentional).

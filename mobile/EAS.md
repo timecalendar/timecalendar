@@ -18,11 +18,11 @@ or uploads anything.
 Three build profiles in [`eas.json`](./eas.json), split along the `APP_VARIANT`
 identity line (not a third identity — design D1):
 
-| Profile       | `APP_VARIANT` | Identity / Firebase                         | Distribution | Artifacts                        | Channel      | Audience                            |
-| ------------- | ------------- | ------------------------------------------- | ------------ | -------------------------------- | ------------ | ----------------------------------- |
-| `development` | `development` | `…timecalendar.dev` / `timecalendar-dev`    | `internal`   | iOS **simulator** + Android APK  | —            | Us, at a laptop                     |
-| `preview`     | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak` | `store`      | store **.ipa** + Android **.aab** | `preview`    | TestFlight internal / Play internal |
-| `production`  | _(unset)_     | `…timecalendar` / `timecalendar-samuelprak` | `store`      | store **.ipa** + Android **.aab** | `production` | App Store / Play production         |
+| Profile       | `APP_VARIANT` | `OTA_CHANNEL` | Identity / Firebase                         | Distribution | Artifacts                         | Audience                            |
+| ------------- | ------------- | ------------- | ------------------------------------------- | ------------ | --------------------------------- | ----------------------------------- |
+| `development` | `development` | —             | `…timecalendar.dev` / `timecalendar-dev`    | `internal`   | iOS **simulator** + Android APK   | Us, at a laptop                     |
+| `preview`     | _(unset)_     | `preview`     | `…timecalendar` / `timecalendar-samuelprak` | `store`      | store **.ipa** + Android **.aab** | TestFlight internal / Play internal |
+| `production`  | _(unset)_     | `production`  | `…timecalendar` / `timecalendar-samuelprak` | `store`      | store **.ipa** + Android **.aab** | App Store / Play production         |
 
 - `development` is the fast inner loop: `developmentClient: true`, simulator + APK, no
   signing needed. It carries the `.dev` id, the dev Firebase project, and the dev-variant
@@ -37,8 +37,10 @@ identity line (not a third identity — design D1):
   the 4.0 cutover: 4.0 ships to everyone at parity, and only later features go to beta first.
 
 Only `development` sets `APP_VARIANT`; `preview`/`production` omit it so they take the
-production default in `app.config.ts`. **Verify with the variant diff:**
-`npx expo config --json` (production) vs `APP_VARIANT=development npx expo config --json`
+production default in `app.config.ts`. Release config requires exactly `OTA_CHANNEL=preview` or
+`OTA_CHANNEL=production`; there is no implicit production fallback and no `channel` key in
+`eas.json`. **Verify with the variant diff:** `OTA_CHANNEL=production npx expo config --json` vs
+`APP_VARIANT=development npx expo config --json`
 — the production config must show `fr.samuelprak.timecalendar` and the
 `timecalendar-samuelprak` Firebase files; the dev config the `.dev` id and the
 `timecalendar-dev` files.
@@ -48,8 +50,8 @@ production default in `app.config.ts`. **Verify with the variant diff:**
 Run on the macOS host, one platform per invocation (`--platform all` is unavailable locally):
 
 ```bash
-npx eas build --profile preview --platform ios     --local --output ./build/preview-ios.ipa
-npx eas build --profile preview --platform android --local --output ./build/preview-android.aab
+OTA_CHANNEL=preview npx eas build --profile preview --platform ios     --local --output ./build/preview-ios.ipa
+OTA_CHANNEL=preview npx eas build --profile preview --platform android --local --output ./build/preview-android.aab
 ```
 
 Requires `eas login` (managed credentials are downloaded at build time, not stored here), plus
@@ -106,15 +108,33 @@ is not part of the mobile release path.
   fingerprint and therefore **requires a fresh native build**; it will not (and must not) ship
   as an OTA. This is the intended safety property, not a bug: if an expected OTA "doesn't
   apply," check whether the change touched native config.
-- Updates are served by **self-hosted xprem** (ADR 037), published with `eoas`, not
-  `eas update`. The endpoint, signing material and publish workflow are still being delivered;
-  `updates.url` points at the hosted default until that change lands, so **do not publish yet**.
-- `updates.url` and `extra.eas.projectId` derive from `EAS_PROJECT_ID`, falling back to the
-  committed real EAS project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b` for
-  `@samuelprak/timecalendar`. The ID is public build metadata, not a secret.
-- **A locally-built binary does not read `eas.json`**, so it carries no channel and receives no
-  updates at all. The fix is `updates.requestHeaders` in `app.config.ts`; it is not wired yet,
-  so treat a local build's channel membership as unproven until it is verified on a device.
+- Updates are served by **self-hosted xprem** (ADR 037), published with `eoas`, not `eas update`.
+  Release config uses `https://ota.timecalendar.app/manifest` and sends `expo-channel-name`
+  (`OTA_CHANNEL`), `expo-app-id` (`e89170b9-5b32-44f0-8f78-33eadb60ec28`) and an empty
+  `xprem-branch`. Development disables automatic updates. Publishing, channel administration,
+  rollout and rollback are not added here.
+- Release config embeds `./codesigning/certs/certificate.pem` with key id `main` and algorithm
+  `rsa-v1_5-sha256`. xprem holds the corresponding private key in its encrypted database-key
+  store; no private key or signature-disable switch belongs in a build environment or git.
+- `extra.eas.projectId` resolves independently from `EAS_PROJECT_ID`, falling back to public EAS
+  project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b` for `@samuelprak/timecalendar`. It does not
+  select the xprem endpoint.
+- Local builds must set `OTA_CHANNEL` explicitly, as shown above. EAS release profiles set the
+  same value in `env`, and `eas.json` has no second channel authority.
+
+SDK 56 fingerprints deliberately differ by lane because resolved native `expoConfig` includes the
+channel header:
+
+| Platform | `preview`                                  | `production`                               |
+| -------- | ------------------------------------------ | ------------------------------------------ |
+| iOS      | `6ff251db2b8617429a2bd6db0fb8b3c9aa02e36a` | `800d5a3e394fb9384994250fe3b02d61689ba7bf` |
+| Android  | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `42ded73f46ab802da4472931415b66664ab96328` |
+
+Reproduce with `OTA_CHANNEL=<lane> node ./node_modules/expo-updates/bin/cli.js
+runtimeversion:resolve --platform <ios|android> --workflow managed --debug`. A scratch-only
+`ios.buildNumber` probe changed the iOS preview hash to
+`5b9c0293c3218d045d6e8428f2224b851fc8906f`, proving native changes still move it. No
+`.fingerprintignore` was added because excluding app config would weaken compatibility protection.
 
 ## Signing
 
@@ -124,6 +144,9 @@ places; Play App Signing is enabled, so Google holds the user-facing app-signing
 **not** reuse the Flutter Fastlane `match` repo — that stays with the Flutter app as a rollback
 asset (design D5). Same production bundle id, so EAS targets the existing App Store record and
 Play listing (the RN app ships as an update, not a new app).
+
+OTA signing is a separate trust boundary from store signing. The committed xprem certificate is
+public verification material; the matching private key never leaves xprem custody.
 
 ## Human prerequisites (cannot be automated)
 

@@ -1,9 +1,5 @@
-# mobile-distribution Specification
+## MODIFIED Requirements
 
-## Purpose
-
-TBD - created by archiving change add-mobile-eas. Update Purpose after archive.
-## Requirements
 ### Requirement: EAS build profiles aligned to the app variants
 
 The project SHALL define an `eas.json` with three build profiles — `development`, `preview`, and
@@ -82,20 +78,6 @@ unknown release-channel values SHALL fail config resolution rather than defaulti
 - **WHEN** production-identity config is resolved without `OTA_CHANNEL` or with an unknown value
 - **THEN** config resolution fails before a binary or update can be produced
 
-### Requirement: Submit configuration skeleton without committed secrets
-
-`eas.json` SHALL include a `submit` configuration skeleton for iOS (App Store Connect)
-and Android (Play) such that a human can run `eas submit` after supplying credentials.
-Credential-bearing values (Apple id, App Store Connect app id, Apple team id, Google Play
-service-account key) SHALL be referenced via environment variables or a key-file path and
-SHALL NOT be committed.
-
-#### Scenario: Submit skeleton carries no secrets
-
-- **WHEN** `eas.json` is inspected in the repository
-- **THEN** the `submit` profiles reference credentials by env var or key-file path
-- **AND** no Apple/Google credential value is committed
-
 ### Requirement: EAS Build remains human-invoked; CI has no release automation
 
 EAS Build and Submit SHALL remain deliberately invoked and SHALL NOT add an EAS or GitHub build
@@ -171,6 +153,18 @@ separately generated Expo signing key pair.
 - **THEN** private-key directories and common private key/container extensions are ignored
 - **AND** the committed public certificate remains the only signing material in the repository
 - **AND** no private key, dashboard credential, API token, or second signing trust root is present
+
+## REMOVED Requirements
+
+### Requirement: Internal distribution profile for dogfooding
+
+**Reason**: ADR 040 already replaced the direct-install preview profile with store distribution,
+but the canonical specification retained the obsolete requirement.
+
+**Migration**: Use the added `Store distribution profiles for release lanes` requirement, which
+preserves the current `mobile/eas.json` artifact and audience contract.
+
+## ADDED Requirements
 
 ### Requirement: Store distribution profiles for release lanes
 
