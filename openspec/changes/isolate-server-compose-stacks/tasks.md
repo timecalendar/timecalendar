@@ -1,16 +1,16 @@
 ## 1. Compose project and port contract
 
-- [ ] 1.1 Add executable `bin/server-compose.sh`: resolve the caller's git top-level and
+- [x] 1.1 Add executable `bin/server-compose.sh`: resolve the caller's git top-level and
   main checkout, honor explicit `COMPOSE_PROJECT_NAME`, preserve `server` for main, and
   derive a bounded `server-<slug>-<path-hash>` name for worktrees; provide a non-mutating
   `project-name` diagnostic and forward all other arguments to
   `server/docker-compose.yml` with `--project-name`. Verify with `bash -n` plus main/worktree
   and explicit-override name assertions.
-- [ ] 1.2 Parameterize only the host side of the nginx, Postgres, and Redis port mappings in
+- [x] 1.2 Parameterize only the host side of the nginx, Postgres, and Redis port mappings in
   `server/docker-compose.yml` using `TIMECALENDAR_TLS_PORT` (default `1443`),
   `TIMECALENDAR_POSTGRES_PORT` (default `37291`), and `TIMECALENDAR_REDIS_PORT` (default
   `37292`). Verify default and alternate values in `docker compose config --format json`.
-- [ ] 1.3 Confirm the resolved named volumes and default network remain Compose-project
+- [x] 1.3 Confirm the resolved named volumes and default network remain Compose-project
   scoped (no explicit global `name:`/`container_name` fields), and confirm the nginx
   `ci/certificates/` bind source/target is unchanged without reading or modifying its
   contents.
