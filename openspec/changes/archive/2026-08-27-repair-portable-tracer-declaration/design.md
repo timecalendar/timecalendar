@@ -85,4 +85,3 @@ proof gate; no workflow edit is needed.
 - **An in-flight observability change also touches tracer code.** → Keep this repair to
   the exported type boundary so later branch refreshes have a minimal, reviewable conflict
   surface.
-
