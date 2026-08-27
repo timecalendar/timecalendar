@@ -64,7 +64,7 @@ A stale source keeps its last-good events visible and adds a compact Calendar wa
 plus reason-specific recovery controls in calendar management. Recovery starts the
 existing add-calendar flow and never rewrites or removes the old source. The existing
 explicit confirm-gated delete remains the only removal path. See
-[ADR 042](./decisions/042-preserve-content-and-advise-source-recovery.md).
+[ADR 043](./decisions/043-preserve-content-and-advise-source-recovery.md).
 
 SQLite live reads are coalesced to one whole-table read per macrotask. Repositories must
 use synchronous Drizzle transaction callbacks with `.run()` executors because the Expo
@@ -80,6 +80,20 @@ seam. Calendar URLs and tokens must never become telemetry dimensions. The serve
 only its reviewed finite upstream classifier; this boundary changes neither the mobile
 API nor local sync behavior. Unexpected mobile-local failures continue to use the
 privacy-safe `@/firebase` seam.
+
+The server gives batch sync a ten-second work budget inside the client's 15-second
+request timeout. Disconnect and deadline cancellation propagate to upstream iCalendar
+requests; at most three due calendars run concurrently, queued work does not start after
+cancellation, and every started operation settles before the batch returns. Retry-enabled
+sources make at most two attempts inside a shared nine-second fetch budget (seven seconds
+maximum per attempt). Failed, cancelled, or unstarted calendars retain last-known content
+in the unchanged response shape.
+
+Due-calendar selection is oldest-first and metadata-only: it loads the school relation
+but not stored event JSON. A successful fetch loads previous content exactly once under
+the existing persistence lock for atomic diff/log writes; final response hydration remains
+separate. The binding contract and regression scenarios live in the
+[server calendar sync policy](../../../openspec/specs/server-calendar-sync-policy/spec.md).
 
 ## Surfaces
 

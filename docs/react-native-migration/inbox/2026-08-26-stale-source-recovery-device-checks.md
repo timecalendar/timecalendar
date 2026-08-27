@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-26
 **Change:** `detect-stale-calendar-sources`
-**ADR:** [042](../../mobile/architecture-book/decisions/042-preserve-content-and-advise-source-recovery.md)
+**ADR:** [043](../../mobile/architecture-book/decisions/043-preserve-content-and-advise-source-recovery.md)
 **For:** Samuel `(HUMAN: physical iOS and Android stale-source recovery pass)`
 
 ## Why this is inboxed
