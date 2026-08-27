@@ -87,7 +87,8 @@ and SHALL preserve the final school-selection destination gate.
 
 #### Scenario: Calendar-specific iOS label activates re-add
 
-- **WHEN** iOS exposes the visible re-add control as a label containing `Add`, `updated
-  calendar`, and the stale calendar's name
-- **THEN** the required tap activates that control and the flow still requires the final
-  school-selection destination
+- **WHEN** Android exposes `Add updated calendar`, iOS exposes
+  `Add an updated calendar for E2E Stale Calendar`, and explanatory copy contains similar
+  words
+- **THEN** the required tap selects only one of the complete button labels and the flow still
+  requires the final school-selection destination

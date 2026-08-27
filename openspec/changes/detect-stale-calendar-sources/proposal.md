@@ -42,9 +42,10 @@ the university now publishes 2026–27 schedules through a different service.
 - Match the immediately following Review control through a required label-containing
   selector on both platforms because iOS groups its visible title and guidance into one
   accessibility label. Keep the existing 60-second wait and all later recovery gates.
-- Match the required re-add control through a label-containing selector that accepts the
-  visible Android title and iOS's calendar-specific accessibility label. Keep the action
-  mandatory and preserve the final school-selection destination gate.
+- Match the required re-add control through an anchored cross-platform selector that accepts
+  only the visible Android button title or iOS's calendar-specific accessibility label, not
+  explanatory prose containing the same words. Keep the action mandatory and preserve the
+  final school-selection destination gate.
 - Keep bulk rewriting, backfill, production rollout, and changes to legacy Flutter out of
   this merge. Any later migration/backfill is a separate human-gated rollout ticket.
 
