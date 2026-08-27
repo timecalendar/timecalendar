@@ -52,11 +52,11 @@
 
 ## 4. Local green and scope audit
 
-- [ ] 4.1 Run `bash -n` on every changed shell script and run the focused static Compose
+- [x] 4.1 Run `bash -n` on every changed shell script and run the focused static Compose
   proof with both default and alternate ports.
-- [ ] 4.2 Run `openspec validate isolate-server-compose-stacks --strict` and confirm all
+- [x] 4.2 Run `openspec validate isolate-server-compose-stacks --strict` and confirm all
   proposal tasks/spec scenarios remain represented by the implementation.
-- [ ] 4.3 Inspect `git diff --check` and the final path diff. Confirm there is no change to
+- [x] 4.3 Inspect `git diff --check` and the final path diff. Confirm there is no change to
   `.github/workflows/ci-build-deploy.yml`, `ci/certificates/` contents,
   `openapi/openapi.json`, generated clients, migrations, native/store config,
   `terraform/`, `k8s/`, or `app/`, and confirm no Docker lifecycle command was run for local

@@ -18,4 +18,3 @@ and Redis by Compose service name and SHALL retain its existing explicit lifecyc
 - **WHEN** `ci/e2e-server.sh` invokes its existing Compose function
 - **THEN** it continues to own `up`, `down`, `logs`, and seed operations without being
   redirected through the local development entrypoint
-

@@ -41,12 +41,19 @@ function render(project, ports, extraFiles = [], services = []) {
   }
   args.push("config", "--format", "json", ...services);
 
+  const env = cleanEnvironment();
+  env.COMPOSE_PROJECT_NAME = project;
+  if (ports) {
+    env.TIMECALENDAR_TLS_PORT = String(ports.tls);
+    env.TIMECALENDAR_POSTGRES_PORT = String(ports.postgres);
+    env.TIMECALENDAR_REDIS_PORT = String(ports.redis);
+  }
+
   return JSON.parse(
-    run(wrapper, args, scriptRoot, {
-      COMPOSE_PROJECT_NAME: project,
-      TIMECALENDAR_TLS_PORT: String(ports.tls),
-      TIMECALENDAR_POSTGRES_PORT: String(ports.postgres),
-      TIMECALENDAR_REDIS_PORT: String(ports.redis),
+    execFileSync(wrapper, args, {
+      cwd: scriptRoot,
+      encoding: "utf8",
+      env,
     }),
   );
 }
@@ -107,6 +114,11 @@ const portSets = [
 ];
 const models = projects.map((project, index) => render(project, portSets[index]));
 models.forEach((model, index) => assertScopedModel(model, projects[index], portSets[index]));
+assertScopedModel(render(projects[1], null), projects[1], {
+  tls: 1443,
+  postgres: 37291,
+  redis: 37292,
+});
 
 for (const service of ["nginx", "postgres", "redis"]) {
   assert.notEqual(`${projects[0]}-${service}-1`, `${projects[1]}-${service}-1`);

@@ -83,4 +83,3 @@ The procedure MUST NOT stop, restart, remove, or otherwise alter existing Docker
 - **WHEN** the verification is run for two worktree roots with different alternate ports
 - **THEN** it compares their `docker compose config` output, confirms all scoped names and
   published ports differ as intended, and performs no lifecycle command
-

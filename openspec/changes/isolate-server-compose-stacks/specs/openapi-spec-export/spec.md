@@ -18,4 +18,3 @@ support alternate published database and Redis ports through matching `DATABASE_
 - **WHEN** the default ports are available in a single checkout
 - **THEN** the documented dependency-only startup and generation commands use the existing
   `37291` and `37292` connection defaults without additional configuration
-
