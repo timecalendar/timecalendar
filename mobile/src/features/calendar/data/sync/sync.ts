@@ -5,8 +5,10 @@ import { useCalendarSyncControllerSyncCalendars } from "@/api/generated/calendar
 // of the user_calendars identity store — the calendar feature is the legitimate
 // consumer of the held subscription tokens). Not a relative import (the ../ ban).
 import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
-import { replaceSourceHealthSnapshot } from "@/features/calendar-sources/store/store"
-import { mapSourceHealthSnapshot } from "@/features/calendar-sources/store/types"
+import {
+  mapSourceHealthSnapshot,
+  replaceSourceHealthSnapshot,
+} from "@/features/calendar-sources/store"
 import { recordUnknownError } from "@/firebase"
 
 import { replaceAll } from "./repository"
