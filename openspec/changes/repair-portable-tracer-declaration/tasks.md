@@ -30,6 +30,6 @@
 - [x] 3.3 Review the final path diff and confirm no contact code, generated mobile client,
   controller/DTO semantics, dependency/lockfile, migration/schema, native/store/EAS,
   deploy/CI/infrastructure, secret/certificate, or legacy Flutter change entered scope.
-- [ ] 3.4 Push the implementation head and require the existing `build-server` image build
+- [x] 3.4 Push the implementation head and require the existing `build-server` image build
   plus server test/OpenAPI drift job in `.github/workflows/ci-build-deploy.yml` to pass as
   the CI proof; no workflow edit is intended.
