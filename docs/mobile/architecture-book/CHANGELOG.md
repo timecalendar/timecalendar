@@ -6,6 +6,15 @@
   fallback. ADR 041 records the relative-key server mapping, generated-client obligation, and
   additive Flutter/web compatibility (data.md, theming.md, features.md).
 
+## 2026-08-27
+
+- Restored the iPhone+iPad App Store continuity contract while retaining portrait-only,
+  full-screen behavior and intentionally disabling iPad multitasking. Source-config tests and a
+  disposable generated-native assertion enforce device families `1,2`, full-screen presentation,
+  and portrait-only iPad orientations. Refreshed iOS fingerprint evidence records the required
+  fresh signed preview binary and OTA incompatibility; no build or submission occurred (ADR 042,
+  runtime.md, eas.md, `mobile/EAS.md`).
+
 ## 2026-08-26
 
 - Wired preview and production native builds to signed xprem delivery: one validated
