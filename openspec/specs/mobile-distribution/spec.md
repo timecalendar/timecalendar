@@ -3,7 +3,9 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-eas. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: EAS build profiles aligned to the app variants
 
 The project SHALL define an `eas.json` with three build profiles — `development`, `preview`, and `production` — each setting build behavior consistent with the existing `APP_VARIANT` identity rules and an independent explicit backend-environment capability. The `development` profile SHALL build the development variant (`APP_VARIANT=development` → app id `fr.samuelprak.timecalendar.dev`) and set the development backend capability; the `preview` and `production` profiles SHALL build the production identity (`fr.samuelprak.timecalendar`, `APP_VARIANT` unset), set `OTA_CHANNEL` to their matching profile name, and independently set respectively the preview and production backend capability.

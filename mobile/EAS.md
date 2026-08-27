@@ -147,14 +147,15 @@ channel header and backend capability. The 2026-08-27 selector result is:
 
 | Platform | `preview`                                  | `production`                               |
 | -------- | ------------------------------------------ | ------------------------------------------ |
-| iOS      | pending post-rebase measurement            | pending post-rebase measurement            |
-| Android  | pending post-rebase measurement            | pending post-rebase measurement            |
+| iOS      | `528a496b844aa35f469d21ab8950c7db3f0b382b` | `bc617dff81b2f6592fd4e54b51fbd3c9c8937fc0` |
+| Android  | `ed259cbefbe0cf6acc290ce242b547e69fb9a6a6` | `c6eafecd2ef61472381bfb8f663f36753918434f` |
 
 Reproduce with `OTA_CHANNEL=<lane> BACKEND_ENVIRONMENT_CAPABILITY=<lane> node
 ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform <ios|android> --workflow
-managed --debug`. The retained iPad-restoration baseline is iOS `0fc2a429…` / `cc3763c9…` and
-Android `ffa945e7…` / `42ded73f…`; the exact combined hashes are recomputed after the rebase. No
-`.fingerprintignore` was added or broadened. This record performs no build or release act.
+managed --debug`. All four differ from the retained iPad-restoration baseline: iOS `0fc2a429…` /
+`cc3763c9…` and Android `ffa945e7…` / `42ded73f…`. The next preview and production artifacts for
+both platforms must therefore be fresh native builds. No `.fingerprintignore` was added or
+broadened. This record performs no build or release act.
 
 ## Signing
 

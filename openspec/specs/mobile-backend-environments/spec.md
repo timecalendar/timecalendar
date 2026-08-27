@@ -1,8 +1,11 @@
 # mobile-backend-environments Specification
 
 ## Purpose
+
 TBD - created by archiving change add-mobile-backend-environment-selector. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Build capability authorizes backend choices independently
 
 The app SHALL resolve a dedicated backend-environment capability with exactly three valid values: `development`, `preview`, and `production`. It SHALL NOT infer this capability from app identity, `APP_VARIANT`, bundle/package id, scheme, Firebase project, `__DEV__`, or OTA channel/update metadata. A missing, malformed, or unknown capability SHALL behave as `production` at runtime.
@@ -158,4 +161,3 @@ Automated tests SHALL cover config capability/default matrices, exact URL allowl
 - **WHEN** the host cannot run native iOS/Android verification
 - **THEN** the remaining device checks are recorded as a tagged inbox checklist
 - **AND** the PR does not request native E2E merely because this host lacks KVM
-

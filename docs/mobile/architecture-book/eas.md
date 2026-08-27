@@ -124,13 +124,23 @@ OTA_CHANNEL=preview BACKEND_ENVIRONMENT_CAPABILITY=preview node ./node_modules/e
 OTA_CHANNEL=production BACKEND_ENVIRONMENT_CAPABILITY=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
 ```
 
-The exact post-rebase selector hashes are recomputed after all commits replay. The retained
-baseline is the iPad-restoration head: iOS preview
-`0fc2a429052003b4ee3042c6e55cb06b05176b89`, iOS production
-`cc3763c96401c5920b66957a226cb7b6ce1c3a05`, Android preview
-`ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7`, and Android production
-`42ded73f46ab802da4472931415b66664ab96328`. No `.fingerprintignore` was added or broadened:
-excluding `app.config.ts` would weaken protection for plugins, signing and other native config.
+The post-iPad baseline and exact post-selector results on 2026-08-27 are:
+
+| Platform | Lane       | Post-iPad baseline                         | Post-selector                              |
+| -------- | ---------- | ------------------------------------------ | ------------------------------------------ |
+| iOS      | preview    | `0fc2a429052003b4ee3042c6e55cb06b05176b89` | `528a496b844aa35f469d21ab8950c7db3f0b382b` |
+| iOS      | production | `cc3763c96401c5920b66957a226cb7b6ce1c3a05` | `bc617dff81b2f6592fd4e54b51fbd3c9c8937fc0` |
+| Android  | preview    | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `ed259cbefbe0cf6acc290ce242b547e69fb9a6a6` |
+| Android  | production | `42ded73f46ab802da4472931415b66664ab96328` | `c6eafecd2ef61472381bfb8f663f36753918434f` |
+
+All four lanes changed. Relevant combined-head sources are `expoConfig` (preview
+`7c53cca87a4acf3d4d5375c4b13d080453086c2f`; production
+`a7645628d2820dc74a037ff18a93e6060eee7fce`), `eas.json`
+(`b4f0b05d403ddb435c0e9434e01a9330000c7285`) and package scripts
+(`781272c9fdbd25824cf0c3e7f998c635d7d88a3e`). Therefore preview and production both require
+fresh iOS and Android native builds before receiving this code. No `.fingerprintignore` was added
+or broadened: excluding `app.config.ts` would weaken protection for plugins, signing and other
+native config. No build, submission, publish, promotion or rollout was performed.
 
 ## Submit skeleton, no secrets
 
