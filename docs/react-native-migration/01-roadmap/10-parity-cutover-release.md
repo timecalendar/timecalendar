@@ -8,35 +8,24 @@
 
 1. **Parity sweep** — verify every Flutter feature has a DoD-complete RN equivalent. Close gaps.
 2. **Maestro parity suite** — e2e flows mirroring the Flutter `integration_test` regression set: onboarding (school/QR/iCal), calendar render/scroll, personal-event CRUD, hide-event, notification tap-through, assistant, **and the data migration**.
-3. **Beta hardening** — widen internal/TestFlight + Play internal testing; dogfood real upgrades from a Flutter install (exercises Phase 09 for real).
-4. **Cutover prep** — reuse existing **bundle ID / package name / signing keys** + Firebase config so stores treat it as an update; bump version over the current Flutter `3.1.0+134`.
-5. **OTA** — EAS Update channels (`preview`, `production`), rollout/rollback discipline. Investigated in [`docs/mobile/ota/`](../../mobile/ota/README.md) (TIM-170): the option landscape, costs, a recommendation (paid Starter plan — **not** the free tier, whose 1,000-MAU hard stop would disable hotfixes mid-term) and the day-one runbook.
+3. **Internal hardening** — widen TestFlight internal + Play internal testing on the `preview` channel; run real upgrades from a Flutter install (exercises Phase 09 for real). A public beta programme is deliberately **post-cutover**.
+4. **Cutover prep** — reuse the existing **bundle ID / package name** + Firebase config so stores treat it as an update; bump version over the current Flutter `3.1.0+134`. Signing: Play App Signing holds the Android app-signing key and the upload key is held with three backups; iOS uses EAS-managed credentials on the same Apple team, **not** the Flutter `match` repo. Store binaries build with `eas build --local` on the owner's macOS host (ADR [040](../../mobile/architecture-book/decisions/040-local-store-builds-and-store-preview.md)). Release candidates are annotated tags on `main`; the legacy `production` branch is not part of the mobile release path.
+5. **OTA client wiring ✅** — preview/production native config points at signed self-hosted xprem on Cloudflare R2 with explicit `OTA_CHANNEL`, embedded public trust root and measured per-lane SDK 56 fingerprints (ADR [037](../../mobile/architecture-book/decisions/037-self-hosted-ota-runtime.md)). Rollout/rollback discipline and **never promoting a build across channels** remain operator rules; actual publish/rollback and physical-device signed delivery/rejection proof remain later work. A `beta` channel for opted-in students lands **after** the cutover, since 4.0 ships to everyone at parity. Binding rules: [`architecture-book/eas.md`](../../mobile/architecture-book/eas.md). The exploration that produced them is [`docs/mobile/ota/`](../../mobile/ota/README.md) (TIM-170) — not maintained, not authoritative.
 6. **Release** — submit via EAS; staged store rollout; watch Crashlytics + migration success metrics closely.
 7. **Retire Flutter** — once stable in production, stop Flutter maintenance ([R-5](../00-exploration/migration-approach.md#6-working-rules-seed-of-the-architecture-book)); archive `app/`.
 
 ## Human prerequisites — credentials, signing & store accounts
 
-The EAS **config half is landed** (`mobile/eas.json`, `expo-updates` wiring, channel/profile
-mapping; `eas init` done — the real `projectId` `3b427ef6-1aae-4175-8217-ea447ee6df6b` is
-committed in `app.config.ts`, not a secret). What remains is irreducibly human — account access
-+ credentials + real-device/console steps — and was carried here from the EAS setup inbox note.
-None of it blocks `tsc`/lint/test; it unlocks actual builds, installs, and store submission.
+The EAS config half is landed, but account access, credentials, store-console work and real-device
+verification remain operator-owned. None of those actions blocks source checks; they gate actual
+builds, installs and store submission.
 
-1. **Apple Developer credentials + signing (iOS).** On the first
-   `eas build --profile preview --platform ios` (or `eas credentials`), link the Apple Developer
-   account and let **EAS manage signing** (dist cert + provisioning profile for
-   `fr.samuelprak.timecalendar`). Provide `$EXPO_APPLE_ID` / `$EXPO_ASC_APP_ID` /
-   `$EXPO_APPLE_TEAM_ID` for `submit.production.ios` — never commit them. We do **not** bridge the
-   Flutter Fastlane `match` repo into EAS (it stays with `app/` — R-5); same bundle id → it targets
-   the existing App Store record (RN ships as an update).
-2. **Google Play service account (Android submit).** Supply a Play service-account JSON key and
-   point `submit.production.android.serviceAccountKeyPath` at it (outside git, e.g. `ci/keys/…`).
-3. **Real-device install + internal-distribution channels.** `eas build --profile preview` for both
-   platforms; install on a real device from the EAS internal URL (iOS: register UDID / TestFlight
-   internal; Android: `.apk` / Play internal testing). Stand up the **TestFlight internal** group +
-   the **Play Console internal testing** track so dogfooders get builds (feeds step 3 above).
-4. **`.dev` Firebase apps** — owned by `mobile/firebase/README.md`; the `development` EAS profile
-   builds the `.dev` identity and needs those config files present (already tracked).
+The [mobile release guide](../../mobile/releases/README.md) owns the explanation and current gaps;
+the [(HUMAN: mobile release bootstrap) inbox note](../inbox/2026-08-26-mobile-release-bootstrap.md)
+owns the executable checklist.
+
+The separate `.dev` Firebase prerequisite remains owned by
+[`mobile/firebase/README.md`](../../../mobile/firebase/README.md).
 
 ## Exit criteria
 
@@ -48,4 +37,4 @@ None of it blocks `tsc`/lint/test; it unlocks actual builds, installs, and store
 
 - **The cutover is one-shot for existing users** — a bad release degrades every user at once. Staged rollout + close migration-metric watch + the Phase 09 safety net are the guardrails.
 - Have a **rollback plan**: if the RN release misbehaves, can we re-ship Flutter? (Store + signing implications — decide before release.)
-</content>
+  </content>

@@ -188,7 +188,7 @@ Worth stating explicitly, because "no OTA" is a legitimate choice and it's what 
   Flutter→React Native cutover — where **60,000 users** migrate to a codebase that has never
   faced real users at scale — that's the highest-risk moment in this project's life.
 
-**Verdict: not acceptable for the 3.0 cutover.** The cutover is precisely when a same-day fix
+**Verdict: not acceptable for the 4.0 cutover.** The cutover is precisely when a same-day fix
 is worth the most, and on the self-hosted path the marginal cost of having the capability is
 ~$0/month plus a couple of days of setup.
 
@@ -199,7 +199,7 @@ is worth the most, and on the self-hosted path the marginal cost of having the c
 The Flutter ecosystem has its own OTA product (**Shorebird**), which works on a similar
 principle. It's a real option *for a Flutter app you intend to keep*.
 
-We don't. The Flutter app is retired at the 3.0 cutover. Adding an OTA integration — and a
+We don't. The Flutter app is retired at the 4.0 cutover. Adding an OTA integration — and a
 subscription — to a codebase with months to live is spending money to accelerate fixes we've
 already decided to stop making. I did not price it.
 

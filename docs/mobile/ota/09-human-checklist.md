@@ -19,13 +19,13 @@ Everything in this section is **done** except 1.3 (commit this file).
 In the Cloudflare dashboard (the account that owns the `timecalendar.app` zone):
 **My Profile → API Tokens → Create Token → Create Custom Token**, with exactly:
 
-| Scope | Permission |
-| --- | --- |
-| Account → Workers R2 Storage | Edit |
-| Zone → DNS | Edit — **restrict Zone Resources to `timecalendar.app` only** |
-| Zone → Zone | Read |
+| Scope                        | Permission                                                    |
+| ---------------------------- | ------------------------------------------------------------- |
+| Account → Workers R2 Storage | Edit                                                          |
+| Zone → DNS                   | Edit — **restrict Zone Resources to `timecalendar.app` only** |
+| Zone → Zone                  | Read                                                          |
 
-Do **not** grant *User → API Tokens: Edit* (see [doc 6 §6.7](./06-your-questions-answered.md)
+Do **not** grant _User → API Tokens: Edit_ (see [doc 6 §6.7](./06-your-questions-answered.md)
 for why).
 
 Notes on your two constraints:
@@ -90,7 +90,7 @@ Each output goes under `spec.encryptedData` in
 (sealing binds to namespace + secret name, so data-key names can be renamed freely). The
 agents will write this rotation procedure into the `timecalendar-ota` README in the platform
 repo — full key-mint automation is impossible by design, because it would require the
-*User API Tokens: Edit* grant we refused in 1.1.
+_User API Tokens: Edit_ grant we refused in 1.1.
 
 ### 2.2 Review and merge platform-repo PRs
 
@@ -108,24 +108,23 @@ command to run on this machine and paste back.
 
 ## 3. When you take over (after agents finish)
 
-### 3.1 Generate and store the update code-signing key
+### 3.1 Verify the xprem-managed update code-signing trust
 
-⚠️ **Deadline: before the first 3.0 store build** — the certificate is embedded in the binary
+⚠️ **Deadline: before the first 4.0 store build** — the certificate is embedded in the binary
 at build time; missing it costs a full extra store release ([doc 6 §6.15](./06-your-questions-answered.md)).
 
-```bash
-cd ~/Projects/Perso/timecalendar/mobile
-npx expo-updates codesigning:generate \
-  --key-output-directory codesigning/keys \
-  --certificate-output-directory codesigning/certs \
-  --certificate-validity-duration-years 10 \
-  --certificate-common-name "TimeCalendar"
-```
+**Complete for the deployed xprem v3.1.2 app.** The dashboard created the `TimeCalendar` app in
+database-key mode, generated and encrypted its per-app private key, and exposed the corresponding
+public certificate. The certificate is committed at
+`mobile/codesigning/certs/certificate.pem`; its verified SHA-256 fingerprint is
+`D9:24:B6:3E:67:2D:0F:D3:3D:28:F9:C9:24:C5:33:89:62:8E:83:3B:92:94:08:50:01:66:1B:E8:6F:4D:64:4A`.
 
-- The **certificate** (`codesigning/certs/`) is committed — the agents will have wired
-  `app.config.ts` to reference its path.
-- The **private key** (`codesigning/keys/`) goes into **Vaultwarden**, alongside the store
-  signing keys, then is deleted from disk. Never in the repo, never in a SealedSecret.
+- The **public certificate** is the build-time trust input. The downstream client-wiring change
+  will reference it from `app.config.ts`.
+- The **private key** remains inside xprem's encrypted database-key store. There is no local key
+  file to collect into Vaultwarden or delete.
+- Do **not** run `npx expo-updates codesigning:generate` for this app. It would create a second,
+  unrelated trust root that cannot verify updates signed by xprem's database-managed key.
 
 ### 3.2 Verify on real devices
 
@@ -145,26 +144,26 @@ build does **not** pick up the update ([doc 4 §4.7](./04-recommendation.md) tas
 
 ## 4. Already done (2026-08-25 handover, on the prod-access machine)
 
-| Item | Detail |
-| --- | --- |
-| Postgres database | `timecalendarota` created on the existing DO cluster `db-postgresql-fra1` (`f8f25297-bcbe-4caa-899a-2acef599c13c`) |
-| Postgres user | `timecalendarota`, owner of the database; verified it can connect and create tables (PG 14). Password refetchable anytime with `doctl databases user get f8f25297-bcbe-4caa-899a-2acef599c13c timecalendarota` |
-| SealedSecret | `timecalendar-ota-env-secret` pre-sealed with `DATABASE_URL` (private host `private-db-postgresql-fra1-…:25060`, `sslmode=require`) and a generated `ADMIN_PASSWORD`; committed to the platform repo by PR; R2 keys join it via §2.1. The admin password exists only in ciphertext until the app deploys — read it then, on this machine, with `kubectl get secret -n timecalendar-ota timecalendar-ota-env-secret -o jsonpath='{.data.ADMIN_PASSWORD}' \| base64 -d` |
-| devlt sealing capability | `kubectl` v1.33.4 + `kubeseal` 0.18.1 installed in `devlt:~/.local/bin`; `paperclip-agent-kubeseal` Role (kube-system, `services/proxy` scoped to the controller Service) applied and committed; verified end-to-end from devlt: cert fetch + seal both work |
-| R2 bucket | `timecalendar-ota` (WEUR), Terraform-managed via the `cloudflare/r2` module (platform PR #68, applied by CI); `CLOUDFLARE_API_TOKEN` wired into the plan/apply infra workflows and the README credentials table |
-| R2 access keys | Hand-minted in the dashboard, bucket-scoped, sealed into `timecalendar-ota-env-secret` (platform PR #69). The secret is complete: `DATABASE_URL`, `ADMIN_PASSWORD`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
-| Machine audit | `kubectl`, `doctl`, `gh` (samuelprak), Expo login, `kubeseal`, `terraform` (HCP login present) all working on this machine; `platform/.env` holds `DIGITALOCEAN_TOKEN`, `SPACES_*`, `HCLOUD_TOKEN`, `TF_VAR_grafana_auth` |
+| Item                     | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Postgres database        | `timecalendarota` created on the existing DO cluster `db-postgresql-fra1` (`f8f25297-bcbe-4caa-899a-2acef599c13c`)                                                                                                                                                                                                                                                                                                                                                    |
+| Postgres user            | `timecalendarota`, owner of the database; verified it can connect and create tables (PG 14). Password refetchable anytime with `doctl databases user get f8f25297-bcbe-4caa-899a-2acef599c13c timecalendarota`                                                                                                                                                                                                                                                        |
+| SealedSecret             | `timecalendar-ota-env-secret` pre-sealed with `DATABASE_URL` (private host `private-db-postgresql-fra1-…:25060`, `sslmode=require`) and a generated `ADMIN_PASSWORD`; committed to the platform repo by PR; R2 keys join it via §2.1. The admin password exists only in ciphertext until the app deploys — read it then, on this machine, with `kubectl get secret -n timecalendar-ota timecalendar-ota-env-secret -o jsonpath='{.data.ADMIN_PASSWORD}' \| base64 -d` |
+| devlt sealing capability | `kubectl` v1.33.4 + `kubeseal` 0.18.1 installed in `devlt:~/.local/bin`; `paperclip-agent-kubeseal` Role (kube-system, `services/proxy` scoped to the controller Service) applied and committed; verified end-to-end from devlt: cert fetch + seal both work                                                                                                                                                                                                          |
+| R2 bucket                | `timecalendar-ota` (WEUR), Terraform-managed via the `cloudflare/r2` module (platform PR #68, applied by CI); `CLOUDFLARE_API_TOKEN` wired into the plan/apply infra workflows and the README credentials table                                                                                                                                                                                                                                                       |
+| R2 access keys           | Hand-minted in the dashboard, bucket-scoped, sealed into `timecalendar-ota-env-secret` (platform PR #69). The secret is complete: `DATABASE_URL`, `ADMIN_PASSWORD`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`                                                                                                                                                                                                                                                        |
+| Machine audit            | `kubectl`, `doctl`, `gh` (samuelprak), Expo login, `kubeseal`, `terraform` (HCP login present) all working on this machine; `platform/.env` holds `DIGITALOCEAN_TOKEN`, `SPACES_*`, `HCLOUD_TOKEN`, `TF_VAR_grafana_auth`                                                                                                                                                                                                                                             |
 
 ## 5. Decisions locked at handover (agents: do not re-litigate)
 
-| Decision | Value |
-| --- | --- |
-| Self-hosted xprem + Cloudflare R2 | **Ratified** |
-| Storage | **R2** (not DO Spaces) |
-| Environment switcher | **Compiled out of production**; visible Settings row in development/preview/beta only |
-| Tester group names | **"The team"** and **"Beta testers"** — the word *alpha* is banned |
-| R2 lifecycle rule | **Skipped** for now |
-| Steady-state publish day | Undecided, irrelevant until publishing exists |
-| 60,000 MAU | Confirmed by the owner |
-| Scope of this phase | **OTA infrastructure only** — no store submission, no publish pipeline, no tester programmes |
-| DB naming | `timecalendarota` (database and user), lowercase, no underscores |
+| Decision                          | Value                                                                                        |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| Self-hosted xprem + Cloudflare R2 | **Ratified**                                                                                 |
+| Storage                           | **R2** (not DO Spaces)                                                                       |
+| Environment switcher              | **Compiled out of production**; visible Settings row in development/preview/beta only        |
+| Tester group names                | **"The team"** and **"Beta testers"** — the word _alpha_ is banned                           |
+| R2 lifecycle rule                 | **Skipped** for now                                                                          |
+| Steady-state publish day          | Undecided, irrelevant until publishing exists                                                |
+| 60,000 MAU                        | Confirmed by the owner                                                                       |
+| Scope of this phase               | **OTA infrastructure only** — no store submission, no publish pipeline, no tester programmes |
+| DB naming                         | `timecalendarota` (database and user), lowercase, no underscores                             |

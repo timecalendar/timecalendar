@@ -18,7 +18,7 @@ binary.
 
 You asked for OTA to serve two different phases, and they want different amounts of friction:
 
-| | **Launch posture** (first ~6–8 weeks after 3.0) | **Steady posture** (after) |
+| | **Launch posture** (first ~6–8 weeks after 4.0) | **Steady posture** (after) |
 | --- | --- | --- |
 | Expectation | Frequent hotfixes; the RN port meets 60,000 real users for the first time | Store releases are the norm; OTA roughly bi-weekly |
 | Publish days | Any weekday. Friday afternoon still requires a live incident | One fixed publish day. Never Friday afternoon |
@@ -80,7 +80,7 @@ that merged that morning — half-finished, never run on a device, now on 60,000
 was urgent; its cargo wasn't.
 
 **So we publish from a release branch, never from `main`.** Work merges to `main`; anything
-destined for users is cherry-picked to `release/3.0`; we publish `release/3.0`. The same branch
+destined for users is cherry-picked to `release/4.0`; we publish `release/4.0`. The same branch
 is what makes hotfixing an older line straightforward
 ([document 6 §6.2](./06-your-questions-answered.md)) — one mechanism, two problems solved.
 
@@ -88,19 +88,19 @@ is what makes hotfixing an older line straightforward
 
 ```bash
 # 0. Assemble the update on the release branch, then tag it.
-git switch release/3.0
+git switch release/4.0
 git cherry-pick <sha>...          # the fixes going out, and only those
-git tag ota/3.0.4 && git push --tags
+git tag ota/4.0.4 && git push --tags
 
 # 1. `preview` first. Always.
 npx eoas publish --branch preview \
-  --message "3.0.4 — TIM-201 duplicate events on week boundary, TIM-205 FR month names, TIM-208 crash on empty week"
+  --message "4.0.4 — TIM-201 duplicate events on week boundary, TIM-205 FR month names, TIM-208 crash on empty week"
 
 # 2. Real device check on a preview build. Cold-start twice: once to download,
 #    once to run the new bundle.
 
 # 3. Production, to 10% of users.
-npx eoas publish --branch production --message "3.0.4 — TIM-201, TIM-205, TIM-208"
+npx eoas publish --branch production --message "4.0.4 — TIM-201, TIM-205, TIM-208"
 #    then set the rollout to 10% (CLI flag or the xprem dashboard — exact syntax
 #    pinned down in task 4 of document 4 §4.7, before this becomes the real checklist)
 

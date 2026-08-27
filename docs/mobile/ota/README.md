@@ -1,9 +1,18 @@
 # OTA updates for the TimeCalendar React Native app
 
-**Status:** investigation (TIM-170) · **Written:** 2026-08-25 · **Audience:** the CEO, then the team
-**Decision needed by:** the 3.0 store cutover (roadmap step 10 — *Parity, cutover & release*)
+> [!NOTE]
+> **This folder is exploration, not rules.** It records how a decision was reached and is not
+> maintained against the shipped configuration. The binding rules live in the Architecture Book's
+> [EAS / distribution](../architecture-book/eas.md) page and its ADRs; the operator steps live in
+> [`docs/mobile/releases/`](../releases/README.md). Where this folder disagrees with those, they win.
+>
+> Superseded here by ADR [040](../architecture-book/decisions/040-local-store-builds-and-store-preview.md)
+> (2026-08-26): store binaries are built locally rather than on EAS Build; `preview` is store-distributed; the `beta` channel lands after the 4.0 cutover, not before it.
 
-This folder answers one question: **when we ship the React Native app as version 3.0, how do
+**Status:** investigation (TIM-170) · **Written:** 2026-08-25 · **Audience:** the CEO, then the team
+**Decision needed by:** the 4.0 store cutover (roadmap step 10 — *Parity, cutover & release*)
+
+This folder answers one question: **when we ship the React Native app as version 4.0, how do
 we push a fix to users without waiting for the App Store?**
 
 You said you know nothing about OTA. So this pack starts from zero and builds up. Read it in
@@ -99,7 +108,7 @@ You read 1–5 and came back with 17 questions. Five of them changed the plan:
 | *"What does update code signing mean?"* | Re-examining it **promoted it from deferred to do-it-now**: the certificate is embedded at build time, so adding it later forces an extra store release |
 | *"We prefer declarative over imperative"* | **Publishing moves into CI**, triggered by a git tag with a human approval gate. My original "no CI publishing" conflated the *decision* with the *mechanism* |
 | *"Can Crashlytics report the OTA version?"* | Yes, but **not automatically** — it's now an explicit task, because without it a post-OTA crash appears under the build that was healthy yesterday |
-| *"One update usually contains several fixes"* | Correct — the runbook now publishes from a **`release/3.0` branch**, never from `main` |
+| *"One update usually contains several fixes"* | Correct — the runbook now publishes from a **`release/4.0` branch**, never from `main` |
 
 Plus: the domain is `timecalendar.app` (I invented the `.fr`), and the word "dogfood" is gone.
 Everything is in [document 6](./06-your-questions-answered.md), with the alpha/beta/TestFlight
@@ -113,16 +122,21 @@ strategy split out into [document 7](./07-environments-and-testing.md).
 | Postgres: the TimeCalendar production DO cluster | Reachable privately, backups already covered — **no new database, no new backup job** |
 | Zone is in Cloudflare, **but no DNS is in Terraform yet** | The real question of the round: does Terraforming one record endanger the zone? **It can't** — [doc 8 §8.2](./08-infrastructure-answers.md), including the three ways it *could* go wrong and why none apply |
 | Public beta: yes, two populations | **Three** channels confirmed. What to call the two groups, and the mechanics of each store's programme — [doc 8 §8.7](./08-infrastructure-answers.md) |
-| Play production access confirmed | 3.0 ships as an update. The 14-day testing rule is off the cutover critical path |
+| Play production access confirmed | 4.0 ships as an update. The 14-day testing rule is off the cutover critical path |
 
 Still open, non-blocking: the environment switcher in production builds (my answer: no —
 compile it out), and a five-minute sanity check on the 60,000 figure.
+
+## Related: native builds and store delivery
+
+Native builds, signing and TestFlight/Play submission are the other half of delivery; the
+[mobile release guide](../releases/README.md) owns them. OTA remains a separate mechanism.
 
 ## What this pack deliberately does not do
 
 - **It changes no code.** Nothing here alters the app. It's documentation for a decision.
 - **It doesn't cover the Flutter app.** Flutter has its own OTA product (Shorebird), but the
-  Flutter app is being retired at the 3.0 cutover, so paying to add OTA to it now would be
+  Flutter app is being retired at the 4.0 cutover, so paying to add OTA to it now would be
   spending money on a codebase with months to live. Noted and dismissed in
   [document 2](./02-options.md).
 - **It doesn't set up billing or infrastructure.** No account changes, no plan upgrades, no

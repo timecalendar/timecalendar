@@ -14,8 +14,11 @@ The app SHALL expose a deep-link route reachable as
 `fromCalendarForPublic`, and `upsert`s a durable `user_calendars` row — reusing the existing
 resolve+upsert persist chain (NOT a new persistence path). The route SHALL then trigger a
 calendar sync and route to the calendar surface so the newly-held token's events sync and
-render. The resolve + `upsert` call SHALL stay inside the `calendar-sources/data/` sublayer
-(B-1 — the generated-hook and durable-write seam is `data/`-only).
+render. An import SHALL start at most once per mounted screen instance, SHALL continue across
+ordinary dependency-driven rerenders, and SHALL suppress post-await navigation or error-state
+updates only after the screen actually unmounts. The resolve + `upsert` call SHALL stay inside
+the `calendar-sources/data/` sublayer (B-1 — the generated-hook and durable-write seam is
+`data/`-only).
 
 #### Scenario: Importing a token holds it durably and syncs
 
@@ -24,6 +27,19 @@ render. The resolve + `upsert` call SHALL stay inside the `calendar-sources/data
 - **THEN** the app resolves the calendar by token, upserts a `user_calendars` row for it,
   triggers a sync that fetches the seeded events via `POST /calendars/sync`, and routes to
   the calendar so the seeded events render
+
+#### Scenario: An in-flight import survives a sync callback identity change
+
+- **WHEN** the first sync is in flight and its mutation-driven rerender provides a different
+  `sync` callback while the dev-import screen remains mounted
+- **THEN** the first import completes and routes to `/calendar`, and the replacement callback
+  does not start another import
+
+#### Scenario: An actual unmount cancels post-await screen work
+
+- **WHEN** the dev-import screen unmounts before its import or sync promise settles
+- **THEN** the settled operation performs no navigation and no error-state update on the
+  unmounted screen
 
 #### Scenario: The persist chain is the existing one, reused
 

@@ -14,7 +14,7 @@ DNS, was a real question with a real trap in it, and it gets most of the space b
 | **Postgres** | The same server as TimeCalendar production; company DB, backed up externally; creds at implementation time | Control-plane mode confirmed — dashboard **and** progressive rollouts. §8.7 |
 | **Cloudflare zone** | `timecalendar.app` is in Cloudflare, but **no DNS is in Terraform yet** | The whole of §8.2–8.5 |
 | **Public beta** | Yes — two populations: internal staff, and student volunteers | **Three** channels, not two. Naming in §8.8 |
-| **Play production access** | Confirmed | 3.0 ships as an update to the existing listing. The 14-day testing rule does **not** apply. One risk off the cutover critical path |
+| **Play production access** | Confirmed | 4.0 ships as an update to the existing listing. The 14-day testing rule does **not** apply. One risk off the cutover critical path |
 
 Everything in documents 4, 6 and 7 now stands unamended except where this document says otherwise.
 

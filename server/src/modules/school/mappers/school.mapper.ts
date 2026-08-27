@@ -20,6 +20,9 @@ export class SchoolMapper {
     return {
       ...school,
       imageUrl: S3_PUBLIC_BUCKET_CLIENT_URL + school.imageUrl,
+      imageUrlDark: school.imageUrlDark
+        ? S3_PUBLIC_BUCKET_CLIENT_URL + school.imageUrlDark
+        : null,
       assistant: ensureNotNull(getSchoolAssistant(assistant)),
       fallbackAssistant: getSchoolAssistant(fallbackAssistant) ?? undefined,
     }
