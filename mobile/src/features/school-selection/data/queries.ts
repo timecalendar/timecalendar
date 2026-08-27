@@ -22,6 +22,7 @@ function toSchoolListItem(school: SchoolForList): SchoolListItem {
     name: school.name,
     code: school.code,
     imageUrl: school.imageUrl,
+    imageUrlDark: school.imageUrlDark,
   }
 }
 

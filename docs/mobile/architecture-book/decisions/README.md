@@ -34,6 +34,7 @@ decision changes; use Git for its history.
 | [038](./038-isolate-maestro-flow-lifecycles.md)       | Isolate each Maestro flow in a fresh CLI process                      |
 | [039](./039-changelog-version-gating.md)              | Gate bundled Changelog releases with an integer                       |
 | [040](./040-local-store-builds-and-store-preview.md)  | Build store binaries locally and distribute `preview` through stores  |
+| [041](./041-school-logo-theme-variants.md)            | Keep a nullable dark school logo beside the required default logo     |
 
 ## Superseded or completed records
 

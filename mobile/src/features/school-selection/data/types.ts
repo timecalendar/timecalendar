@@ -11,6 +11,7 @@ export interface SchoolListItem {
   name: string
   code: string
   imageUrl: string
+  imageUrlDark: string | null
 }
 
 // A node in the school-group tree — mirrors the generated SchoolGroupItem

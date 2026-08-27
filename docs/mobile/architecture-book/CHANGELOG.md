@@ -1,5 +1,11 @@
 # Architecture Book changelog
 
+## 2026-08-28
+
+- Added the nullable school dark-logo API contract and mobile theme selection with required light
+  fallback. ADR 041 records the relative-key server mapping, generated-client obligation, and
+  additive Flutter/web compatibility (data.md, theming.md, features.md).
+
 ## 2026-08-26
 
 - Wired preview and production native builds to signed xprem delivery: one validated

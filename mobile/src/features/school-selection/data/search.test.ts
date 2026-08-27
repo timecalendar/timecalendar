@@ -10,6 +10,7 @@ const eiffel: SchoolListItem = {
   name: "Université Gustave Eiffel",
   code: "UPEM-77",
   imageUrl: "",
+  imageUrlDark: null,
 }
 
 describe("normalize", () => {
