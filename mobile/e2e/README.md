@@ -62,10 +62,25 @@ The script exits with Maestro's pass/fail status and tears the stack down on
 success and failure alike. On failure it dumps the backend log tail. With
 `--keep-up` it prints the commands to inspect logs and tear down manually.
 `--startup-attempts` accepts 1–4 and defaults to one. A retry is allowed only
-for a pinned 2.8.0 first-`launchApp`/`setPermissions` XCTest driver-not-listening
-or connection-refused signature with no assertion evidence. Assertion,
-application, and unknown failures stop immediately, retain their exit status,
-and prevent later flows from running.
+for either:
+
+- a fresh booted-iOS-simulator unified-log record, queried from immediately
+  before the current Maestro attempt, that attributes `SIGSEGV(11)` to the
+  `fr.samuelprak.timecalendar.dev` app process; or
+- a pinned 2.8.0 first-`launchApp`/`setPermissions` XCTest
+  driver-not-listening or connection-refused signature with no assertion
+  evidence.
+
+Both classifiers reuse the same per-flow attempt bound and every retry starts a
+fresh Maestro process; the server stays up once for the whole run. The simulator
+query is saved beside the Maestro output as
+`<flow>-attempt-<n>-simulator.log`. Only that current attempt's timestamp-bounded,
+app-attributed result is inspected: persistent Maestro logs, prior attempts,
+other flows, and other-process crashes cannot authorize a retry. If simulator
+inspection is unavailable, fails, or has an unknown shape, classification fails
+closed. Ordinary assertion, seeded-data, server, application, and unknown
+failures stop immediately, retain their exit status, and prevent later flows
+from running.
 
 ## Add a flow
 

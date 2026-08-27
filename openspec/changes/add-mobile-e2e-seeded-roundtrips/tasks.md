@@ -144,23 +144,23 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 10. iOS release-simulator launch recovery rework
 
-- [ ] 10.1 In `mobile/e2e/run_e2e.sh`, capture a fresh timestamp immediately before each
+- [x] 10.1 In `mobile/e2e/run_e2e.sh`, capture a fresh timestamp immediately before each
   Maestro attempt; after a failed attempt on a booted iOS simulator, query unified logs only
   from that boundary and persist the result under a flow-and-attempt-specific filename.
-- [ ] 10.2 Extend retry classification so only a fresh log matching the TimeCalendar dev
+- [x] 10.2 Extend retry classification so only a fresh log matching the TimeCalendar dev
   app identity and `SIGSEGV(11)` may consume another existing `--startup-attempts` slot.
   Preserve the current XCTest transport classifier, fresh Maestro process per retry, shared
   server lifecycle, attempt ceiling, final nonzero status on exhaustion, and fail-closed
   behavior when simulator-log inspection is unavailable or unknown.
-- [ ] 10.3 Extend `mobile/e2e/test_run_e2e.sh` with device-free fake-process proofs for:
+- [x] 10.3 Extend `mobile/e2e/test_run_e2e.sh` with device-free fake-process proofs for:
   first-attempt fresh app launch SIGSEGV then pass; repeated SIGSEGV exhaustion; ordinary
   assertion, seeded-data/server, and unknown failures staying single-attempt terminal; and
   stale, prior-attempt, another-flow, or other-process log evidence never authorizing retry.
   Retain the existing transport-retry and teardown/order coverage.
-- [ ] 10.4 Update `mobile/e2e/README.md` to document the app-process SIGSEGV classifier,
+- [x] 10.4 Update `mobile/e2e/README.md` to document the app-process SIGSEGV classifier,
   freshness/app-attribution rules, reuse of the existing bound, and fail-closed behavior.
   Do not change binding Architecture Book rules or add an ADR for this leaf harness fix.
-- [ ] 10.5 Run `bash mobile/e2e/test_run_e2e.sh` and the existing shell/static harness proof
+- [x] 10.5 Run `bash mobile/e2e/test_run_e2e.sh` and the existing shell/static harness proof
   used by native CI; run `openspec validate add-mobile-e2e-seeded-roundtrips --strict`.
   Confirm the diff is limited to `mobile/e2e/{run_e2e.sh,test_run_e2e.sh,README.md}` and this
   existing OpenSpec change—no `.github/workflows/`, `ci/`, API/generated contract,
