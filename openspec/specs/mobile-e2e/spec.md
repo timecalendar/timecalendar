@@ -215,6 +215,50 @@ application, and assertion failures SHALL be terminal on their first occurrence.
 - **WHEN** the harness is invoked without the explicit iOS startup-attempt option
 - **THEN** each top-level flow is attempted exactly once
 
+### Requirement: iOS launch SIGSEGV recovery is bounded and attributable
+
+When `--startup-attempts` allows retries, the E2E harness SHALL retry a failed flow only
+when fresh simulator-log evidence for that flow's current attempt positively identifies
+the TimeCalendar development app process exiting with `SIGSEGV(11)` during launch or
+relaunch, or when the existing positively classified XCTest startup transport failure
+applies. The retry SHALL consume the existing per-flow attempt ceiling and SHALL start a
+fresh Maestro process. The harness SHALL NOT weaken, remove, or make optional any seeded
+data, event-details, application, server, or persistence assertion.
+
+#### Scenario: First-attempt app launch SIGSEGV recovers
+
+- **WHEN** the first attempt fails and only that attempt's fresh, app-specific simulator
+  log identifies a launch/relaunch `SIGSEGV(11)`, and the next attempt passes
+- **THEN** the harness starts a fresh Maestro process for the retry and reports the flow as
+  passed without restarting the shared server
+
+#### Scenario: Repeated app launch SIGSEGV exhausts the existing bound
+
+- **WHEN** every attempt through the configured per-flow ceiling has fresh, app-specific
+  simulator-log evidence of launch/relaunch `SIGSEGV(11)` and fails
+- **THEN** the harness makes no attempt beyond that ceiling, returns the final nonzero flow
+  result, and does not run later flows
+
+#### Scenario: Ordinary failures remain terminal
+
+- **WHEN** a flow fails an assertion, seeded-data check, server interaction, application
+  behavior, or unknown step without fresh qualifying app-process SIGSEGV or existing XCTest
+  transport evidence
+- **THEN** the harness returns that first nonzero result without retrying the flow
+
+#### Scenario: Stale and cross-flow simulator logs cannot authorize a retry
+
+- **WHEN** `SIGSEGV(11)` evidence exists only before the current attempt boundary, in a
+  prior attempt's artifact, for another flow, or for another process
+- **THEN** the current failure is terminal and the harness does not retry
+
+#### Scenario: Simulator-log inspection fails closed
+
+- **WHEN** the booted simulator cannot be queried or its log output does not positively
+  match the current attempt, app identity, and `SIGSEGV(11)`
+- **THEN** the simulator-log classifier does not authorize a retry and the original failure
+  classification remains in force
+
 ### Requirement: Main CI supplies terminal native proof
 
 The recovery SHALL not be considered complete until a `main` SHA containing onboarding merge
