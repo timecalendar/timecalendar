@@ -2,9 +2,7 @@
 
 ## Purpose
 Dev-variant deep-link seam that imports a calendar by token into the durable token store — used by E2E flows to inject the seeded calendar without going through the full onboarding UI.
-
 ## Requirements
-
 ### Requirement: A dev-variant deep link imports a calendar by token into the durable token store
 
 The app SHALL expose a deep-link route reachable as
@@ -14,11 +12,11 @@ The app SHALL expose a deep-link route reachable as
 `fromCalendarForPublic`, and `upsert`s a durable `user_calendars` row — reusing the existing
 resolve+upsert persist chain (NOT a new persistence path). The route SHALL then trigger a
 calendar sync and route to the calendar surface so the newly-held token's events sync and
-render. An import SHALL start at most once per mounted screen instance, SHALL continue across
-ordinary dependency-driven rerenders, and SHALL suppress post-await navigation or error-state
-updates only after the screen actually unmounts. The resolve + `upsert` call SHALL stay inside
-the `calendar-sources/data/` sublayer (B-1 — the generated-hook and durable-write seam is
-`data/`-only).
+render. While the route remains mounted, reactive rerenders caused by the sync SHALL NOT
+cancel this sequence; one successful import SHALL navigate to `/calendar` exactly once. A
+genuine unmount SHALL suppress later navigation or state updates. The resolve + `upsert`
+call SHALL stay inside the `calendar-sources/data/` sublayer (B-1 — the generated-hook and
+durable-write seam is `data/`-only).
 
 #### Scenario: Importing a token holds it durably and syncs
 
@@ -26,20 +24,19 @@ the `calendar-sources/data/` sublayer (B-1 — the generated-hook and durable-wr
   with the harness server running
 - **THEN** the app resolves the calendar by token, upserts a `user_calendars` row for it,
   triggers a sync that fetches the seeded events via `POST /calendars/sync`, and routes to
-  the calendar so the seeded events render
+  the calendar exactly once so the seeded events render
 
-#### Scenario: An in-flight import survives a sync callback identity change
+#### Scenario: A source-health subscriber rerender does not cancel navigation
 
-- **WHEN** the first sync is in flight and its mutation-driven rerender provides a different
-  `sync` callback while the dev-import screen remains mounted
-- **THEN** the first import completes and routes to `/calendar`, and the replacement callback
-  does not start another import
+- **WHEN** the real sync hook writes a source-health snapshot while a reactive source-health
+  subscriber is mounted in the production tree
+- **THEN** the resulting synchronous rerender does not suppress the successful import's
+  single navigation to `/calendar`
 
-#### Scenario: An actual unmount cancels post-await screen work
+#### Scenario: A genuine unmount suppresses late effects
 
-- **WHEN** the dev-import screen unmounts before its import or sync promise settles
-- **THEN** the settled operation performs no navigation and no error-state update on the
-  unmounted screen
+- **WHEN** the dev-import screen genuinely unmounts before its add or sync promise settles
+- **THEN** completion does not navigate or update the unmounted screen
 
 #### Scenario: The persist chain is the existing one, reused
 
@@ -114,3 +111,16 @@ screen SHALL be presentational, delegating the import to the `data/` seam.
 - **WHEN** the dev-import route is added
 - **THEN** `src/app/dev-import.tsx` re-exports the screen from a feature `ui/` sub-barrel and
   holds no logic itself, and the screen's test lives with the screen (not under `src/app/`)
+
+### Requirement: Dev-import rerender behavior is covered at the real sync boundary
+
+The mobile integration suite SHALL render the dev-import screen with a mounted reactive
+source-health subscriber and drive the real `useSyncCalendars` hook over the generated client
+with `customFetch` mocked at the documented seam. The proof SHALL exercise the successful
+SQLite event replacement and MMKV source-health write rather than mocking the sync hook.
+
+#### Scenario: The regression test reproduces the production rerender path
+
+- **WHEN** the generated sync mutation returns a calendar with events and source-health data
+- **THEN** the test observes the real event/store writes, the subscriber rerender, and exactly
+  one `/calendar` replacement
