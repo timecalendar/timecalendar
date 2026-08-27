@@ -1,5 +1,12 @@
 # Architecture Book changelog
 
+## 2026-08-27
+
+- Added the independent backend capability, fixed endpoint allowlist, visible preview/development
+  selector, persistent non-production marker and journaled destructive cross-store reset. ADR 043
+  records fail-closed production behavior, state classification and the future-auth participant
+  invariant; all four release fingerprints changed and require fresh native builds.
+
 ## 2026-08-28
 
 - Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months

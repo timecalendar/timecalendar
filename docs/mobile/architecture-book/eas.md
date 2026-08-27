@@ -15,6 +15,11 @@ it disagrees with this page or an ADR, this page wins.
 - **`preview`** and **`production`** **omit** `APP_VARIANT` so they take the production default in `app.config.ts` (real `fr.samuelprak.timecalendar`, `timecalendar-samuelprak` Firebase, no cleartext). Internal testers run the _real_ store bundle so their crashes/analytics land in production.
 - `preview` vs. `production` differ by **`OTA_CHANNEL` and audience**, not identity and not artifact shape. Their profile `env` values stamp the matching `expo-channel-name` request header; `eas.json` contains no `channel` key, so local and EAS builds share one authority.
 
+Each profile also sets an independent `BACKEND_ENVIRONMENT_CAPABILITY`: development, preview or
+production respectively. Preview defaults to preproduction and exposes fixed
+preproduction/production choices; production is locked to production. This input changes no app
+identity, Firebase, OTA header/signing, artifact or submission setting (ADR 043).
+
 **Both release profiles are `distribution: "store"`** (ADR 040): Android `app-bundle`, store `.ipa`, `autoIncrement`, with `cli.appVersionSource: "remote"` so EAS owns the build number. `preview` reaches TestFlight internal + Play internal testing; `production` reaches the App Store and the Play production track. There is deliberately **no directly-installable release artifact** — an ad hoc `.ipa` or a raw `.apk` cannot enter either store's testing track, and there is no audience for one.
 
 **Variant-drift is the headline risk** — a `preview`/`production` profile accidentally carrying `APP_VARIANT=development` would ship the `.dev` id + dev Firebase + cleartext to testers or the store. The guard: only `development` sets the env var, and the `expo config --json` **variant diff** verifies it (production → prod id/Firebase, dev → `.dev`). Can't be a lint rule (config-shape, not source), hence this prose (R-1).
@@ -113,28 +118,19 @@ must supply the same input explicitly; there is no silent production fallback.
 Run from `mobile/`, substituting both platforms and both channels:
 
 ```bash
-OTA_CHANNEL=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform ios --workflow managed --debug
-OTA_CHANNEL=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform ios --workflow managed --debug
-OTA_CHANNEL=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
-OTA_CHANNEL=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
+OTA_CHANNEL=preview BACKEND_ENVIRONMENT_CAPABILITY=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform ios --workflow managed --debug
+OTA_CHANNEL=production BACKEND_ENVIRONMENT_CAPABILITY=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform ios --workflow managed --debug
+OTA_CHANNEL=preview BACKEND_ENVIRONMENT_CAPABILITY=preview node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
+OTA_CHANNEL=production BACKEND_ENVIRONMENT_CAPABILITY=production node ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform android --workflow managed --debug
 ```
 
-On 2026-08-27 the resolved versions were:
-
-| Platform | `preview`                                  | `production`                               |
-| -------- | ------------------------------------------ | ------------------------------------------ |
-| iOS      | `0fc2a429052003b4ee3042c6e55cb06b05176b89` | `cc3763c96401c5920b66957a226cb7b6ce1c3a05` |
-| Android  | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `42ded73f46ab802da4472931415b66664ab96328` |
-
-The debug source is the resolved `expoConfig`: its hash is
-`ffe67e4c3779f2bbd58d53b044fcc8dcda48a4ea` for preview and
-`6e4569b0ae2b636ec8998734b102fee012a47365` for production. The iOS versions moved from
-`6ff251db2b8617429a2bd6db0fb8b3c9aa02e36a` and
-`800d5a3e394fb9384994250fe3b02d61689ba7bf` when the device-family contract changed. A fresh
-signed iOS preview binary is therefore required; the corrected native shell is not OTA-compatible
-with the rejected or previous shell. Android was not remeasured and its recorded values remain
-unchanged. No `.fingerprintignore` was added or broadened: excluding `app.config.ts` would weaken
-protection for plugins, signing and other native config.
+The exact post-rebase selector hashes are recomputed after all commits replay. The retained
+baseline is the iPad-restoration head: iOS preview
+`0fc2a429052003b4ee3042c6e55cb06b05176b89`, iOS production
+`cc3763c96401c5920b66957a226cb7b6ce1c3a05`, Android preview
+`ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7`, and Android production
+`42ded73f46ab802da4472931415b66664ab96328`. No `.fingerprintignore` was added or broadened:
+excluding `app.config.ts` would weaken protection for plugins, signing and other native config.
 
 ## Submit skeleton, no secrets
 

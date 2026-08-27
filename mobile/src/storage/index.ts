@@ -5,6 +5,11 @@ import {
   useMMKVString,
 } from "react-native-mmkv"
 
+import {
+  BACKEND_ENVIRONMENTS,
+  type BackendEnvironment,
+} from "@/config/backend-environment"
+
 // Thin seam over react-native-mmkv (v4 / Nitro) — the single place the app
 // touches the KV backend, so it stays swappable and feature call sites import
 // @/storage, never react-native-mmkv directly (lint-enforced, see eslint.config.js).
@@ -12,6 +17,115 @@ import {
 // no encryption/multi-instance until a consumer needs them (R-2).
 
 const storage = createMMKV()
+
+export const STORAGE_KEYS = {
+  theme: "settings.themePreference",
+  language: "settings.languagePreference",
+  timezone: "settings.timezonePreference",
+  changelogSeenVersion: "changelogSeenVersion",
+  selectedBackendEnvironment: "backendEnvironment.selected",
+  backendResetJournal: "backendEnvironment.resetJournal",
+  schoolId: "schoolSelection.schoolId",
+  schoolGroupValues: "schoolSelection.groupValues",
+  hiddenEvents: "hiddenEvents.set",
+  notificationFrequency: "notifications.frequency",
+  notificationDaysAhead: "notifications.nbDaysAhead",
+  notificationIsActive: "notifications.isActive",
+  feedbackLastEmail: "feedback.lastEmail",
+  persistedSchoolSelectionQuery: "rq.schoolSelection.cache",
+} as const
+
+export type KnownStorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
+export type StorageKeyClassification =
+  | "environment-independent"
+  | "reset-control"
+  | "backend-bound"
+
+export const STORAGE_KEY_CLASSIFICATION = {
+  [STORAGE_KEYS.theme]: "environment-independent",
+  [STORAGE_KEYS.language]: "environment-independent",
+  [STORAGE_KEYS.timezone]: "environment-independent",
+  [STORAGE_KEYS.changelogSeenVersion]: "environment-independent",
+  [STORAGE_KEYS.selectedBackendEnvironment]: "reset-control",
+  [STORAGE_KEYS.backendResetJournal]: "reset-control",
+  [STORAGE_KEYS.schoolId]: "backend-bound",
+  [STORAGE_KEYS.schoolGroupValues]: "backend-bound",
+  [STORAGE_KEYS.hiddenEvents]: "backend-bound",
+  [STORAGE_KEYS.notificationFrequency]: "backend-bound",
+  [STORAGE_KEYS.notificationDaysAhead]: "backend-bound",
+  [STORAGE_KEYS.notificationIsActive]: "backend-bound",
+  [STORAGE_KEYS.feedbackLastEmail]: "backend-bound",
+  [STORAGE_KEYS.persistedSchoolSelectionQuery]: "backend-bound",
+} as const satisfies Record<KnownStorageKey, StorageKeyClassification>
+
+export interface BackendResetJournal {
+  version: 1
+  current: BackendEnvironment
+  target: BackendEnvironment
+}
+
+export type BackendResetJournalRead =
+  | { state: "absent" }
+  | { state: "malformed" }
+  | { state: "valid"; journal: BackendResetJournal }
+
+const isBackendEnvironment = (value: unknown): value is BackendEnvironment =>
+  BACKEND_ENVIRONMENTS.includes(value as BackendEnvironment)
+
+export function readBackendResetJournal(): BackendResetJournalRead {
+  const raw = getString(STORAGE_KEYS.backendResetJournal)
+  if (raw === undefined) return { state: "absent" }
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (parsed === null || typeof parsed !== "object") {
+      return { state: "malformed" }
+    }
+    const record = parsed as Record<string, unknown>
+    if (
+      record.version !== 1 ||
+      !isBackendEnvironment(record.current) ||
+      !isBackendEnvironment(record.target)
+    ) {
+      return { state: "malformed" }
+    }
+    return {
+      state: "valid",
+      journal: {
+        version: 1,
+        current: record.current,
+        target: record.target,
+      },
+    }
+  } catch {
+    return { state: "malformed" }
+  }
+}
+
+export function writeBackendResetJournal(journal: BackendResetJournal): void {
+  setString(STORAGE_KEYS.backendResetJournal, JSON.stringify(journal))
+}
+
+export function clearBackendResetJournal(): void {
+  remove(STORAGE_KEYS.backendResetJournal)
+}
+
+export function clearBackendBoundStorage(): void {
+  for (const key of storage.getAllKeys()) {
+    const classification = (
+      STORAGE_KEY_CLASSIFICATION as Record<
+        string,
+        StorageKeyClassification | undefined
+      >
+    )[key]
+    if (
+      classification !== "environment-independent" &&
+      key !== STORAGE_KEYS.selectedBackendEnvironment &&
+      key !== STORAGE_KEYS.backendResetJournal
+    ) {
+      storage.remove(key)
+    }
+  }
+}
 
 export function getString(key: string): string | undefined {
   return storage.getString(key)
