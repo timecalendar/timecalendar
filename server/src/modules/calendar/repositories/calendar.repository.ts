@@ -10,7 +10,7 @@ import {
 } from "typeorm"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 
-type FindDueForSyncWithContentParams = {
+type FindDueForSyncParams = {
   syncPlannedBefore: Date
   filterByTokens?: string[]
 }
@@ -120,16 +120,17 @@ export class CalendarRepository {
       .execute()
   }
 
+  restoreSyncPlan(calendarId: string, syncPlannedAt: Date) {
+    return this.repository.update({ id: calendarId }, { syncPlannedAt })
+  }
+
   save(calendar: DeepPartial<Calendar>) {
     return this.repository.save(calendar)
   }
 
-  findDueForSyncWithContent({
-    syncPlannedBefore,
-    filterByTokens,
-  }: FindDueForSyncWithContentParams) {
+  findDueForSync({ syncPlannedBefore, filterByTokens }: FindDueForSyncParams) {
     return this.repository.find({
-      relations: { school: true, content: true },
+      relations: { school: true },
       where: {
         syncPlannedAt: LessThan(syncPlannedBefore),
         ...(filterByTokens && { token: In(filterByTokens) }),
