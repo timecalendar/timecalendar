@@ -33,6 +33,9 @@ export class School {
   imageUrl: string
 
   @Column({ type: "varchar", nullable: true })
+  imageUrlDark: string | null
+
+  @Column({ type: "varchar", nullable: true })
   intranetUrl: string | null
 
   @Column({ default: true })

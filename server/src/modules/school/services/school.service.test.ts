@@ -20,6 +20,7 @@ describe("SchoolService", () => {
       const { schools } = await service.findSchools()
       expect(schools.length).toBe(1)
       expect(schools[0].name).toBe("My Gaming Academia")
+      expect(schools[0].imageUrlDark).toBeNull()
     })
   })
 
@@ -69,6 +70,7 @@ describe("SchoolService", () => {
         seoUrl: "test-url",
         name: "Test School",
         imageUrl: "test-image.jpg",
+        imageUrlDark: "test-image-dark.jpg",
         assistant: "groups",
         fallbackAssistant: "select",
       })
@@ -81,6 +83,7 @@ describe("SchoolService", () => {
         fallbackAssistant: expect.objectContaining({ slug: "select" }),
       })
       expect(result[0].imageUrl).toContain("test-image.jpg")
+      expect(result[0].imageUrlDark).toContain("test-image-dark.jpg")
     })
 
     it("returns school with profile when profile exists", async () => {

@@ -26,12 +26,14 @@ const schoolsResponse: FindSchoolsRepDto = {
       name: "My Gaming Academia",
       code: "MGA",
       imageUrl: "a.png",
+      imageUrlDark: "a-dark.png",
     },
     {
       id: "univeiffel",
       name: "Université Gustave Eiffel",
       code: "UPEM",
       imageUrl: "b.png",
+      imageUrlDark: null,
     },
   ] as SchoolForList[],
 }
@@ -74,6 +76,7 @@ describe("useSchools", () => {
       name: "My Gaming Academia",
       code: "MGA",
       imageUrl: "a.png",
+      imageUrlDark: "a-dark.png",
     })
     expect(result.current.isError).toBe(false)
     expect(typeof result.current.refetch).toBe("function")

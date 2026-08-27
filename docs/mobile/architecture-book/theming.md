@@ -63,6 +63,11 @@ or a late recoloring pass:
 Palette work must therefore define light and dark variants together. A new light-only visual
 token or color treatment is incomplete.
 
+School logos follow the nullable-pair contract in ADR 041. `SchoolLogo` reads the active scheme
+through the single color-scheme seam, uses `imageUrlDark` in dark mode when present, and otherwise
+uses the required `imageUrl`. The fallback is intentional because some schools publish no
+credible reversed mark.
+
 ### Native platform expression
 
 iOS and Android share product meaning and color roles, not necessarily component layout.

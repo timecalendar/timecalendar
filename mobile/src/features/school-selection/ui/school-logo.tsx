@@ -4,15 +4,21 @@ import { StyleSheet, View } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import { type SchoolListItem } from "@/features/school-selection/data"
+import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Radii, useTheme } from "@/theme"
 
 export const LogoSize = 40
 
 export function SchoolLogo({ school }: { school: SchoolListItem }) {
   const theme = useTheme()
+  const colorScheme = useColorScheme()
   const [failed, setFailed] = useState(false)
+  const imageUrl =
+    colorScheme === "dark"
+      ? (school.imageUrlDark ?? school.imageUrl)
+      : school.imageUrl
 
-  if (!school.imageUrl || failed) {
+  if (!imageUrl || failed) {
     return (
       <View
         testID={`onboarding-school-monogram-${school.id}`}
@@ -35,7 +41,7 @@ export function SchoolLogo({ school }: { school: SchoolListItem }) {
     >
       <Image
         testID={`onboarding-school-logo-${school.id}`}
-        source={{ uri: school.imageUrl }}
+        source={{ uri: imageUrl }}
         contentFit="contain"
         onError={() => setFailed(true)}
         style={styles.logoImage}

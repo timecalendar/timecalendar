@@ -9,8 +9,8 @@ Accepted.
 TimeCalendar needs bundle-level updates without hosted-update pricing, while preserving native
 compatibility and avoiding interruptions during active student use. The existing production
 platform already operates Postgres, and Crashlytics already provides client crash observability.
-The endpoint, xprem identifiers, signing material, and deployment automation are not available
-yet, so this record fixes the architecture without inventing those inputs.
+The client now has a deployed xprem endpoint, app identifier and public signing certificate. The
+private signing key remains encrypted in xprem's database-key store.
 
 ## Decision
 
@@ -24,9 +24,22 @@ yet, so this record fixes the architecture without inventing those inputs.
 - Operate channel promotion and progressive rollout from xprem during release and incident work:
   channel pointers and rollout percentages are imperative, deliberately. Git records the release
   procedure and resulting history, but reconciliation must not undo an incident-time rollback.
+- Release binaries use `https://ota.timecalendar.app/manifest` and send `expo-channel-name` from
+  required build input `OTA_CHANNEL`, `expo-app-id: e89170b9-5b32-44f0-8f78-33eadb60ec28`, and an
+  empty `xprem-branch`. `eas.json` supplies `preview` / `production` and contains no second
+  `channel` authority; development disables automatic updates.
+- Release binaries verify every downloaded update with
+  `mobile/codesigning/certs/certificate.pem`, key id `main`, algorithm `rsa-v1_5-sha256`. xprem
+  alone holds the corresponding private key. `extra.eas.projectId` remains independent public
+  metadata for EAS Build/Submit.
+- SDK 56 fingerprint resolution intentionally produces separate preview/production versions on
+  iOS and Android because the channel header is part of resolved native `expoConfig`. No
+  `.fingerprintignore` excludes app config; a scratch `ios.buildNumber` control changed the iOS
+  fingerprint, confirming native-affecting changes remain protected. Exact commands and hashes
+  live in `eas.md`.
 
-The concrete update endpoint, request headers, xprem app identifiers, certificate paths, private
-keys, deployment resources, and publish workflow remain deferred to their delivery changes.
+Publishing, channel administration, rollout, rollback and device verification remain separate
+delivery/operator work; none is automated by this client-wiring decision.
 
 ## Consequences
 
@@ -35,7 +48,9 @@ keys, deployment resources, and publish workflow remain deferred to their delive
 - A failed foreground reload is reported once and falls back to a later cold launch instead of
   entering a reload loop.
 - xprem depends on production Postgres and R2 availability, but does not add a second analytics
-  database. Later delivery work must supply signing and endpoint inputs before publishing.
+  database.
+- Missing or invalid `OTA_CHANNEL` fails release config resolution instead of silently selecting
+  production, and preview/production remain separate runtime-compatibility lanes.
 
 ## Revisit if
 
