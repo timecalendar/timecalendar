@@ -139,7 +139,7 @@ describe("Expo distribution configuration", () => {
     },
   )
 
-  it("keeps eas.json profile guarantees with no second channel authority", () => {
+  it("keeps lane-specific eas.json profile guarantees with no second channel authority", () => {
     expect(containsKey(easConfig, "channel")).toBe(false)
     expect(easConfig.build.development).toEqual({
       developmentClient: true,
