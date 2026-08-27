@@ -32,6 +32,15 @@ nothing mocked". This change closes the gap that keeps the four flows from meeti
 bar. It is a Phase-04/05 **DoD backfill**, not a new feature — the E2E axis for the
 calendar/details/checklists/hidden/home features is finished honestly.
 
+Exact-head native CI subsequently proved that import, sync, SQLite persistence, Agenda
+selection, seeded event rendering, and event details all work on Android and iOS. The
+remaining iOS failure is different: the release-simulator app intermittently exits with
+`SIGSEGV(11)` during a launch/relaunch, before the failed flow makes its import request.
+Maestro emits no crash artifact and reports the later visibility assertion, so the current
+transport-only startup classifier treats this runner-level launch death as terminal. A
+bounded, evidence-based simulator-log classifier is needed to recover that one known launch
+failure without making product assertions flaky or optional.
+
 ## What Changes
 
 - **A dev-variant deep-link import seam.** A new stable deep link
@@ -64,6 +73,14 @@ calendar/details/checklists/hidden/home features is finished honestly.
   per-event testID and Maestro taps by text — so tile assertion/tap is by seeded title
   text. Where a text tap is ambiguous or missing, add stable `testID`s (e.g. a
   `calendar-empty` marker) — additive, no behaviour change.
+- **Bounded iOS release-simulator launch recovery.** Extend `mobile/e2e/run_e2e.sh` so a
+  failed attempt may reuse the existing per-flow attempt ceiling only when a simulator-log
+  query, bounded to that attempt and filtered to the TimeCalendar dev app, positively
+  identifies `SIGSEGV(11)`. Each retry remains a fresh Maestro process. Existing XCTest
+  transport recovery remains intact; ordinary assertion, seeded-data, server, and unknown
+  failures remain single-attempt terminal. Focused shell regression tests prove one crash
+  then pass, repeated crash exhaustion, terminal ordinary failures, and rejection of stale
+  or cross-flow log evidence.
 
 ## Capabilities
 
@@ -95,12 +112,18 @@ calendar/details/checklists/hidden/home features is finished honestly.
   `NODE_ENV=test` via `db:init`. No API/schema change — the sync endpoint and DTOs are
   untouched; only the seeded row content changes.
 - **E2E harness:** the four rewritten flows + one shared `import-seed.yaml` subflow;
-  `mobile/e2e/README.md` "add a flow" note refreshed. Full verification is on
+  `mobile/e2e/run_e2e.sh` and `mobile/e2e/test_run_e2e.sh` for narrowly classified iOS
+  launch recovery; `mobile/e2e/README.md` documents the operator-visible retry contract.
+  Full verification is on
   device/emulator (`ci-mobile-e2e.yml`, both platforms). Locally: Jest for the new
-  `addCalendarFromToken` + variant-gate units, `tsc`, lint.
+  `addCalendarFromToken` + variant-gate units, `tsc`, lint, and the device-free harness
+  regression suite.
 - **Architecture Book:** a new ADR (dev-only import + runtime variant gate); `testing.md`
   E2E section updated to describe the seeded-token round-trip pattern; the new ADR indexed
   in `decisions/README.md`; a `architecture-changelog.md` entry.
 - **PR split (recommended — 2 PRs):** see design.md. PR 1 lands the **seam** (server seed
   enrichment + the import deep link + `calendar.yaml` as the anchor proof). PR 2 converts
   the remaining three flows (`home` / `event-checklists` / `hidden-events`) on top.
+- **Current rework scope:** the inherited branch and PR only. No workflow/`ci/`, API or
+  generated-contract, migration, native/store configuration, legacy Flutter, or binding
+  Architecture Book change. Sensitive surfaces expected: none.
