@@ -64,9 +64,9 @@
 
 ## 5. CI compatibility proof
 
-- [ ] 5.1 Push the implementation and confirm the existing `ci-build-deploy.yml` `test` job
+- [x] 5.1 Push the implementation and confirm the existing `ci-build-deploy.yml` `test` job
   passes unchanged: its direct base-Compose invocation starts Postgres/Redis on historical
   defaults, server tests pass, and the OpenAPI drift check remains green. Do not edit the
   workflow to obtain this proof.
-- [ ] 5.2 Confirm no device or human-only gate applies. Record CI links/results and the
+- [x] 5.2 Confirm no device or human-only gate applies. Record CI links/results and the
   static resolved-model evidence in the issue/PR handoff for Reviewer verification.
