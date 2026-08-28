@@ -71,18 +71,38 @@
 
 ## 5. Exact-head CI and downstream gates
 
-- [ ] 5.1 Commit the integration/remediation with the required Paperclip co-author footer and
+- [x] 5.1 Commit the integration/remediation with the required Paperclip co-author footer and
       push without force to the existing branch. Verify PR #273 remains the same open/non-draft
       PR, retains `run-e2e`, and has current `main` as an ancestor after GitHub recomputes state.
-- [ ] 5.2 Update the existing PR body—never open another PR—so Apply is complete and the third
+- [x] 5.2 Update the existing PR body—never open another PR—so Apply is complete and the third
       integration's contact/tracer union, source-health preservation, unchanged native config,
       sensitive exclusions, no-QA posture, and autonomous Reviewer-owned squash-merge route are
       accurate.
-- [ ] 5.3 Record the final pushed SHA and successful URLs for every required scheduled check at
+- [x] 5.3 Record the final pushed SHA and successful URLs for every required scheduled check at
       exactly that SHA, including server images, web build, tests, Android native E2E, and iOS
       native E2E. Retain `run-e2e`; old-head results do not satisfy this task and no check may be
       skipped, weakened, or optionalized.
-- [ ] 5.4 Hand the same issue, branch, and PR to Simplifier for a fresh exact-head pass, then to
+- [x] 5.4 Hand the same issue, branch, and PR to Simplifier for a fresh exact-head pass, then to
       Reviewer for a fresh exact-head verdict. Reviewer may autonomously squash-merge only after
       the latest PR preflight, ancestry, scope, CI, and review gates are clean; no separate QA gate
       or deploy act applies.
+
+      Evidence: integration/archive commit `7ba7d5194ad352d2b688f341e5d09812be84581d`
+      was pushed without force to the existing branch and PR. The PR body records Apply complete,
+      the exact contract union and exclusions, the no-QA posture, and Reviewer-owned autonomous
+      squash merge. Simplifier completed its fresh pass as
+      `4314b1f3bef8699764fc731ad30b1083b116409a`; `origin/main` remains an ancestor, PR #273 is
+      open/non-draft and mergeable, and `run-e2e` remains applied. Every scheduled check for that
+      exact code-bearing head succeeded:
+
+      - [CI build & deploy: server image](https://github.com/timecalendar/timecalendar/actions/runs/33127550929/job/98709175800)
+      - [CI build & deploy: web image](https://github.com/timecalendar/timecalendar/actions/runs/33127550929/job/98709175969)
+      - [CI build & deploy: tests](https://github.com/timecalendar/timecalendar/actions/runs/33127550929/job/98709706765)
+      - [CI mobile checks](https://github.com/timecalendar/timecalendar/actions/runs/33127550903/job/98709175837)
+      - [CI mobile E2E: server image](https://github.com/timecalendar/timecalendar/actions/runs/33127554017/job/98709185939)
+      - [CI mobile E2E: Android](https://github.com/timecalendar/timecalendar/actions/runs/33127554017/job/98709683631)
+      - [CI mobile E2E: iOS](https://github.com/timecalendar/timecalendar/actions/runs/33127554017/job/98709185707)
+
+      This evidence-only closure commit is handed directly to Reviewer. Its own exact-head
+      scheduled checks remain a mandatory merge gate; the successful code-bearing-head results
+      above are not authorization to bypass CI on the documentation successor.
