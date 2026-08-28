@@ -56,3 +56,17 @@ They are filtered at the calendar event-source seam, not deleted from the synced
 data. `calendar_events` and the TanStack Query cache are rebuildable caches. Schema changes
 require a committed migration and mapper tests; destructive cache replacement must remain
 transactional.
+
+## Backend environment reset
+
+- `@/storage` centrally enumerates and classifies every known MMKV key. Theme, language,
+  display-timezone and Changelog acknowledgement survive; selected backend and the temporary
+  reset journal are controls; school/group selection, hidden events, notification values,
+  remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
+  backend-bound and are removed. Type coverage fails when a centralized known key is unclassified.
+- `@/db.resetBackendDatabase()` synchronously deletes `checklist_items`, `calendar_events`,
+  `user_calendars` and `personal_events` in that order inside one transaction.
+- The version-1 current/target journal bridges stores that cannot share a transaction. It is written
+  before clearing and removed only after the selected target commits. Valid or malformed journals
+  block startup; valid recovery retries the idempotent participants. See ADR
+  [043](./decisions/043-backend-environment-reset.md).

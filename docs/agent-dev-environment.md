@@ -102,15 +102,56 @@ k8s/, terraform/   deployment infra
 The canonical quickstart is `README.md`; the agent-relevant essentials:
 
 1. **Start the backing services** (Postgres, Redis, nginx TLS proxy) — compose
-   file lives in `server/`:
+   file lives in `server/`, but local commands use the repository wrapper:
 
    ```bash
-   cd server && docker compose up -d
+   bin/server-compose.sh up -d
    ```
 
    - Postgres is published on host port **37291** (→ container 5432), Redis on
      **37292**, and an nginx TLS proxy on **1443** terminating
      `https://api.timecalendar.host:1443` using `ci/certificates/`.
+   - The main checkout keeps Compose project `server`. A worktree derives
+     `server-<lowercase-worktree-slug>-<8-char-path-hash>`, so its default
+     network, containers, `postgres_data`, and `redis_data` volume names do not
+     overlap another checkout. `bin/server-compose.sh project-name` prints the
+     selected identity; an explicit valid `COMPOSE_PROJECT_NAME` wins unchanged.
+   - Override only published host ports with `TIMECALENDAR_TLS_PORT`,
+     `TIMECALENDAR_POSTGRES_PORT`, and `TIMECALENDAR_REDIS_PORT`. Container ports
+     and Compose service discovery stay unchanged. For example:
+
+     ```bash
+     TIMECALENDAR_TLS_PORT=24443 TIMECALENDAR_POSTGRES_PORT=47291 \
+       TIMECALENDAR_REDIS_PORT=47292 bin/server-compose.sh up -d
+     ```
+
+   - Generation and server tests can avoid nginx entirely:
+
+     ```bash
+     bin/server-compose.sh up -d postgres redis
+
+     TIMECALENDAR_POSTGRES_PORT=47291 TIMECALENDAR_REDIS_PORT=47292 \
+       bin/server-compose.sh up -d postgres redis
+     cd server
+     DATABASE_URL=postgres://postgres@localhost:47291/timecalendar_test \
+       REDIS_URL=redis://127.0.0.1:47292 npm run generate:openapi
+     ```
+
+     Keep `DATABASE_URL` and `REDIS_URL` on the server command in sync with any
+     alternate host ports; never rewrite the shared, symlinked `.env` to carry a
+     worktree override.
+
+   - For non-mutating ownership/port troubleshooting, inspect the selected inputs
+     and resolved model before considering any cleanup:
+
+     ```bash
+     bin/server-compose.sh project-name
+     bin/setup-dev.sh --compose-config
+     bin/server-compose.sh config --format json | jq '{name, networks, volumes, services}'
+     ```
+
+     Shared-host resources may belong to another checkout. Routine setup must
+     never stop, remove, prune, or otherwise clean another Compose project.
 
 2. **Install dependencies** (root workspaces):
    ```bash
@@ -142,6 +183,11 @@ local HTTPS dev env:
    iOS Simulator (macOS only),
 4. the API is reachable through nginx with a valid cert, and the backend answers on
    `:3005`.
+
+The script prints the selected Compose project and effective TLS/Postgres/Redis
+ports. `bin/setup-dev.sh --compose-config` prints only those diagnostics and does
+not change files or contact a service. Its nginx check uses the effective TLS
+port; its backend check remains `http://localhost:3005`.
 
 ### Firebase
 
@@ -425,7 +471,10 @@ not report a status; none are _required_ checks today.
 ### OpenAPI contract drift
 
 `openapi/openapi.json` is the single server↔mobile contract. Regenerate it with
-`npm run generate:openapi` in `server/` (needs the local docker services up). The
+`npm run generate:openapi` in `server/`. It needs only Postgres and Redis, so the
+supported prerequisite is `bin/server-compose.sh up -d postgres redis` from the
+repository root; nginx and its TLS port are not required. With alternate ports,
+use the matching test-profile `DATABASE_URL` and `REDIS_URL` shown in §4. The
 mobile client (`mobile/src/api/generated/`, Orval-generated) is **committed and never
 hand-edited** — `npm run generate` in `mobile/` regenerates it; CI fails on drift.
 
@@ -481,7 +530,7 @@ system should carry equivalent durable cross-session memory.
 nvm use                                   # honors .nvmrc
 
 # 1. Dev env (once per machine)
-cd server && docker compose up -d         # Postgres:37291 Redis:37292 nginx:1443
+bin/server-compose.sh up -d               # isolated project; Postgres:37291 Redis:37292 nginx:1443
 npm install                               # root workspaces
 cd server && npm ci && cp .env.sample .env  # NODE_ENV=development
 npm run db:migrate && npm run db:seed     # from server/
@@ -505,6 +554,10 @@ gh pr create --fill                       # main is UNPROTECTED — never --auto
 gh pr checks <pr> --watch --interval 30   # wait for green
 gh pr merge <pr> --squash --delete-branch # only after SUCCESS
 ```
+
+Before troubleshooting ownership or ports, use the non-mutating commands in §4.
+Do not routinely stop, remove, or clean Docker resources owned by another checkout;
+identify the owning project and coordinate an explicit cleanup instead.
 
 **The non-negotiables:** keep the Architecture Book (`docs/mobile/architecture-book/`) and its
 Definition of Done binding; encode rules before documenting them (R-1); the reviewer

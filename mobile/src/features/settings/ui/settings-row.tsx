@@ -27,6 +27,7 @@ interface SettingsActionRowProps extends SettingsRowBaseProps {
   variant: "action"
   onPress: () => void
   hint: string
+  accessibilityRole?: "button" | "link"
   secondary?: string
   href?: never
   value?: never
@@ -132,7 +133,11 @@ export function SettingsRow(props: SettingsRowProps) {
 
   return (
     <Pressable
-      accessibilityRole="link"
+      accessibilityRole={
+        props.variant === "action"
+          ? (props.accessibilityRole ?? "link")
+          : "link"
+      }
       accessibilityLabel={props.accessibilityLabel ?? props.label}
       accessibilityHint={props.hint}
       testID={props.testID}

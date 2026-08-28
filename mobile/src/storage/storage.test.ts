@@ -4,6 +4,8 @@
 import { act, renderHook } from "@testing-library/react-native"
 
 import {
+  clearBackendBoundStorage,
+  clearBackendResetJournal,
   getBoolean,
   getNumber,
   getString,
@@ -11,11 +13,15 @@ import {
   isStringArray,
   mmkvQueryStorage,
   parseJsonArray,
+  readBackendResetJournal,
   remove,
   setBoolean,
   setNumber,
   setString,
+  STORAGE_KEY_CLASSIFICATION,
+  STORAGE_KEYS,
   useParsedStoredString,
+  writeBackendResetJournal,
 } from "./index"
 
 describe("storage seam", () => {
@@ -114,6 +120,51 @@ describe("storage seam", () => {
       mmkvQueryStorage.setItem("rq.gone", "{}")
       mmkvQueryStorage.removeItem("rq.gone")
       expect(mmkvQueryStorage.getItem("rq.gone")).toBeNull()
+    })
+  })
+
+  describe("backend reset ownership", () => {
+    it("classifies every known key", () => {
+      expect(Object.keys(STORAGE_KEY_CLASSIFICATION).sort()).toEqual(
+        Object.values(STORAGE_KEYS).sort(),
+      )
+    })
+
+    it("preserves only global and reset-control values", () => {
+      setString(STORAGE_KEYS.theme, "dark")
+      setString(STORAGE_KEYS.selectedBackendEnvironment, "preprod")
+      setString(STORAGE_KEYS.backendResetJournal, "journal")
+      setString(STORAGE_KEYS.schoolId, "school-1")
+      setString("future.unclassified", "must be removed")
+
+      clearBackendBoundStorage()
+
+      expect(getString(STORAGE_KEYS.theme)).toBe("dark")
+      expect(getString(STORAGE_KEYS.selectedBackendEnvironment)).toBe("preprod")
+      expect(getString(STORAGE_KEYS.backendResetJournal)).toBe("journal")
+      expect(getString(STORAGE_KEYS.schoolId)).toBeUndefined()
+      expect(getString("future.unclassified")).toBeUndefined()
+    })
+
+    it("round-trips a versioned journal and total-parses invalid input", () => {
+      clearBackendResetJournal()
+      expect(readBackendResetJournal()).toEqual({ state: "absent" })
+
+      const journal = {
+        version: 1,
+        current: "production",
+        target: "preprod",
+      } as const
+      writeBackendResetJournal(journal)
+      expect(readBackendResetJournal()).toEqual({ state: "valid", journal })
+
+      setString(STORAGE_KEYS.backendResetJournal, "not json")
+      expect(readBackendResetJournal()).toEqual({ state: "malformed" })
+      setString(
+        STORAGE_KEYS.backendResetJournal,
+        JSON.stringify({ version: 2, current: "production", target: "evil" }),
+      )
+      expect(readBackendResetJournal()).toEqual({ state: "malformed" })
     })
   })
 })

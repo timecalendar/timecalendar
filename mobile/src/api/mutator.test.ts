@@ -1,4 +1,5 @@
-import { API_BASE_URL } from "./config"
+import { PRODUCTION_API_URL } from "@/config/backend-environment"
+
 import { ApiError, customFetch } from "./mutator"
 
 // The mutator's first DIRECT unit test — the one place `@/api/mutator` is NOT
@@ -41,7 +42,7 @@ describe("customFetch", () => {
 
     expect(result).toEqual({ id: "e-1" })
     expect(fetchMock).toHaveBeenCalledWith(
-      `${API_BASE_URL}/events/e-1`,
+      `${PRODUCTION_API_URL}/events/e-1`,
       expect.objectContaining({
         headers: expect.objectContaining({ Accept: "application/json" }),
       }),
@@ -113,12 +114,12 @@ describe("customFetch", () => {
 
     expect(log).toHaveBeenNthCalledWith(
       1,
-      `[api] → POST ${API_BASE_URL}/events`,
+      `[api] → POST ${PRODUCTION_API_URL}/events`,
       JSON.stringify({ title: "Lecture" }),
     )
     expect(log).toHaveBeenNthCalledWith(
       2,
-      `[api] ← 200 POST ${API_BASE_URL}/events`,
+      `[api] ← 200 POST ${PRODUCTION_API_URL}/events`,
       { id: "event-1" },
     )
     log.mockRestore()
