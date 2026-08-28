@@ -142,9 +142,15 @@ fresh iOS and Android native builds before receiving this code. No `.fingerprint
 or broadened: excluding `app.config.ts` would weaken protection for plugins, signing and other
 native config. No build, submission, publish, promotion or rollout was performed.
 
-## Submit skeleton, no secrets
+## Submit profiles, no secrets
 
-`submit.production` is structure only: iOS `appleId`/`ascAppId`/`appleTeamId` read from `$EXPO_APPLE_ID`/`$EXPO_ASC_APP_ID`/`$EXPO_APPLE_TEAM_ID`; Android `serviceAccountKeyPath` points outside git (`../ci/keys/eas-android-sa-key.json`), `track: internal`. **No Apple/Google credential value is committed.**
+`submit.preview.ios.ascAppId` commits the public App Store Connect destination `1479613630`, so
+preview submissions deterministically target the existing TimeCalendar app. Its credential-bearing
+`appleId` and `appleTeamId` inputs remain environment-backed. `submit.production` remains structure
+only: iOS `appleId`/`ascAppId`/`appleTeamId` read from `$EXPO_APPLE_ID`/`$EXPO_ASC_APP_ID`/
+`$EXPO_APPLE_TEAM_ID`. Both Android profiles point outside git at
+`../ci/keys/eas-android-sa-key.json`, on `track: internal`. **No Apple/Google credential value is
+committed.**
 
 **EAS owns signing** (managed credentials — the iOS distribution cert + provisioning profile, and the Android upload key). The Flutter Fastlane `match` repo is **not** bridged into EAS; it stays with the Flutter app as a rollback asset (R-5 bounded maintenance). Same production bundle id → EAS targets the existing App Store record and Play listing (RN ships as an update, not a new app). Two signing mechanisms coexist during migration; no shared state to corrupt.
 
@@ -154,7 +160,10 @@ native config. No build, submission, publish, promotion or rollout was performed
 `eas.json`. It enforces identity/Firebase selection, development OTA disablement, release endpoint,
 headers and certificate metadata, EAS-link independence, invalid-channel rejection, profile
 artifact guarantees, recursive absence of `channel` keys, and the tablet/full-screen/portrait
-source contract. `cd mobile && npm run verify:ios-device-contract` is the generated-native proof.
+source contract. It also proves preview's exact App Store Connect destination, rejects an unresolved
+app-id placeholder there, and preserves the production submit shape. Pair it with
+`jq -e -r '.submit.preview.ios.ascAppId == "1479613630"' mobile/eas.json` from the repository root.
+`cd mobile && npm run verify:ios-device-contract` is the generated-native proof.
 The DoD's Maestro axis is N/A for build/runtime configuration; real signed delivery and rejection
 stay in the human device ticket.
 
