@@ -2,6 +2,10 @@
 
 ## 2026-08-28
 
+- Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
+  before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
+  persisted with expiring dates, while existing sync cadence and school-specific exceptions
+  remain unchanged (calendar.md).
 - Added the nullable school dark-logo API contract and mobile theme selection with required light
   fallback. ADR 041 records the relative-key server mapping, generated-client obligation, and
   additive Flutter/web compatibility (data.md, theming.md, features.md).
