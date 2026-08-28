@@ -1,0 +1,22 @@
+# Development-build happy path for the visible environment switch. The flow is
+# committed for the device-capable CI/host; this no-KVM agent host does not run it.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "TEST ENVIRONMENT · Local"
+    timeout: 60000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-environment"
+    timeout: 60000
+- tapOn:
+    id: "settings-environment"
+- tapOn: "Preproduction"
+- assertVisible: "Clear data and switch?"
+- tapOn: "Clear and switch"
+- extendedWaitUntil:
+    visible: "TEST ENVIRONMENT · Preproduction"
+    timeout: 60000

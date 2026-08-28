@@ -8,7 +8,8 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "APP_VARIANT": "development"
+        "APP_VARIANT": "development",
+        "BACKEND_ENVIRONMENT_CAPABILITY": "development"
       },
       "ios": {
         "simulator": true
@@ -21,7 +22,8 @@
       "distribution": "store",
       "autoIncrement": true,
       "env": {
-        "OTA_CHANNEL": "preview"
+        "OTA_CHANNEL": "preview",
+        "BACKEND_ENVIRONMENT_CAPABILITY": "preview"
       },
       "android": {
         "buildType": "app-bundle"
@@ -31,7 +33,8 @@
       "distribution": "store",
       "autoIncrement": true,
       "env": {
-        "OTA_CHANNEL": "production"
+        "OTA_CHANNEL": "production",
+        "BACKEND_ENVIRONMENT_CAPABILITY": "production"
       },
       "android": {
         "buildType": "app-bundle"

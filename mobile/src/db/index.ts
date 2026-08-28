@@ -3,6 +3,13 @@ import { drizzle } from "drizzle-orm/expo-sqlite"
 import { openDatabaseSync } from "expo-sqlite"
 
 import { useLiveQuery } from "./live-query"
+import { resetBackendDatabaseWith } from "./reset"
+import {
+  calendarEvents,
+  checklistItems,
+  personalEvents,
+  userCalendars,
+} from "./schema"
 
 // Thin seam over expo-sqlite + Drizzle — the single place the app opens the
 // database and constructs Drizzle, so the backend stays swappable and feature
@@ -20,6 +27,16 @@ const expoDb = openDatabaseSync("timecalendar.db", {
 })
 
 export const db = drizzle(expoDb)
+
+/* istanbul ignore next -- native singleton wiring; reset.ts owns the tested transaction */
+export function resetBackendDatabase(): void {
+  resetBackendDatabaseWith(db, {
+    checklistItems,
+    calendarEvents,
+    userCalendars,
+    personalEvents,
+  })
+}
 
 // Re-export only the query surface a feature consumer needs (the encoded form of
 // "the feature never imports drizzle-orm"): the operators the repositories build

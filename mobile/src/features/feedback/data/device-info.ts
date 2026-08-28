@@ -1,6 +1,9 @@
 import Constants from "expo-constants"
 import * as Device from "expo-device"
 
+import { BACKEND_ENVIRONMENTS } from "@/config/backend-environment"
+import { getEffectiveBackendEnvironment } from "@/features/environment/data/store"
+
 export interface DeviceInfoParts {
   model?: string | null | undefined
   osName?: string | null | undefined
@@ -9,6 +12,7 @@ export interface DeviceInfoParts {
   appVersion?: string | null | undefined
   buildVersion?: string | null | undefined
   appVariant?: unknown
+  backendEnvironment?: unknown
 }
 
 const fallback = (value: string | null | undefined, missing: string) =>
@@ -25,8 +29,13 @@ export function formatDeviceInfo(parts: DeviceInfoParts): string {
     typeof parts.appVariant === "string" && parts.appVariant.trim()
       ? parts.appVariant.trim()
       : "unknown"
+  const environment = BACKEND_ENVIRONMENTS.includes(
+    parts.backendEnvironment as (typeof BACKEND_ENVIRONMENTS)[number],
+  )
+    ? String(parts.backendEnvironment)
+    : "unknown"
 
-  return `${model} (${osName} ${osVersion}) · ${appName} ${appVersion} (${buildVersion}) · ${variant}`
+  return `${model} (${osName} ${osVersion}) · ${appName} ${appVersion} (${buildVersion}) · ${variant} · environment: ${environment}`
 }
 
 export function getDeviceInfo(): string {
@@ -38,5 +47,6 @@ export function getDeviceInfo(): string {
     appVersion: Constants.expoConfig?.version,
     buildVersion: Constants.nativeBuildVersion,
     appVariant: Constants.expoConfig?.extra?.appVariant,
+    backendEnvironment: getEffectiveBackendEnvironment(),
   })
 }

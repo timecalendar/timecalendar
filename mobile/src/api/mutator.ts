@@ -1,4 +1,6 @@
-import { API_BASE_URL } from "./config"
+import { isBackendRuntimeReady } from "@/config/backend-runtime"
+
+import { getApiBaseUrl } from "./config"
 
 export class ApiError<TBody = unknown> extends Error {
   constructor(
@@ -20,6 +22,12 @@ export type ErrorType<TBody> = ApiError<TBody>
 // (recoverable) network error instead of an unresolvable hang.
 const DEFAULT_TIMEOUT_MS = 15000
 const CONTACT_PATH = "/contact"
+const inFlightControllers = new Set<AbortController>()
+
+export function cancelInFlightApiRequests(): void {
+  for (const controller of inFlightControllers) controller.abort()
+  inFlightControllers.clear()
+}
 
 const parseBody = async (response: Response): Promise<unknown> => {
   const text = await response.text()
@@ -35,7 +43,10 @@ export const customFetch = async <T>(
   url: string,
   options: RequestInit,
 ): Promise<T> => {
-  const fullUrl = `${API_BASE_URL}${url}`
+  if (!isBackendRuntimeReady()) {
+    throw new Error("Backend runtime is resetting")
+  }
+  const fullUrl = `${getApiBaseUrl()}${url}`
   const method = options.method ?? "GET"
   const redactPayload = __DEV__ && new URL(fullUrl).pathname === CONTACT_PATH
 
@@ -47,6 +58,7 @@ export const customFetch = async <T>(
   // Compose the caller's cancellation (TanStack Query aborts via `options.signal`
   // on unmount) with the timeout controller so EITHER source aborts the request.
   const controller = new AbortController()
+  inFlightControllers.add(controller)
   const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS)
   const callerSignal = options.signal
   if (callerSignal) {
@@ -87,6 +99,7 @@ export const customFetch = async <T>(
     }
     return body as T
   } finally {
+    inFlightControllers.delete(controller)
     clearTimeout(timeout)
   }
 }
