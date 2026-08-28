@@ -337,14 +337,17 @@ cd mobile
   no assertion evidence; assertion, application, and unknown failures stop
   immediately with their original status.
 - It does **not** build/install the app. A **release-config, `development`-variant**
-  build must already be installed on the connected simulator/emulator, with
-  `EXPO_PUBLIC_API_URL` baked at build time to the platform's host path:
+  build with the independent `development` backend capability must already be
+  installed on the connected simulator/emulator. Supply the complete build
+  contract, with `EXPO_PUBLIC_API_URL` baked to the platform's host path:
   - Android emulator: `http://10.0.2.2:3005`
   - iOS simulator: `http://localhost:3005`
   ```bash
-  APP_VARIANT=development EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
+  APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+    EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
     npx expo run:android --variant release
-  APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
+  APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+    EXPO_PUBLIC_API_URL=http://localhost:3005 \
     npx expo run:ios --configuration Release
   ```
 
@@ -457,8 +460,11 @@ The native workflow pins and prints Maestro 2.8.0 in both jobs. Android bounds
 the Release Gradle build to 3072 MiB heap, 1024 MiB Metaspace, two workers, and
 no daemon. iOS prints the Xcode path/version and available plus selected
 simulator name, UDID, and runtime. Local shell/static checks prove harness and
-workflow control flow; only the post-merge `main` run on GitHub-hosted runners
-provides definitive simulator/emulator proof on this non-virtualized host.
+workflow control flow, including the complete `APP_VARIANT=development`,
+`BACKEND_ENVIRONMENT_CAPABILITY=development`, and platform-local URL contract in
+every prebuild and release-compilation step. A labeled PR run with baseline,
+Android, and iOS checks passing on the same exact head provides definitive
+simulator/emulator proof on this non-virtualized host.
 | **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
 | **`delete-old-images.yaml`** | scheduled | Image cleanup. |

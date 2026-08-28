@@ -2,6 +2,10 @@
 
 ## 2026-08-28
 
+- Restored release-config native E2E routing to the seeded local backend by requiring the
+  development app variant, independent development backend capability, and platform-local URL
+  in every Android/iOS prebuild and release-compilation step, with step-scoped workflow proof
+  (testing.md).
 - Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
   before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
   persisted with expiring dates, while existing sync cadence and school-specific exceptions

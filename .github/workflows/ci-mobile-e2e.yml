@@ -104,6 +104,8 @@ jobs:
         working-directory: ./mobile
         env:
           APP_VARIANT: development
+          BACKEND_ENVIRONMENT_CAPABILITY: development
+          EXPO_PUBLIC_API_URL: http://10.0.2.2:3005
         run: npx expo prebuild --platform android --clean
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL is
@@ -112,6 +114,7 @@ jobs:
         working-directory: ./mobile/android
         env:
           APP_VARIANT: development
+          BACKEND_ENVIRONMENT_CAPABILITY: development
           EXPO_PUBLIC_API_URL: http://10.0.2.2:3005
         run: |
           echo 'Gradle bounds: heap=3072 MiB, Metaspace=1024 MiB, max-workers=2, daemon=off'
@@ -249,6 +252,8 @@ jobs:
         working-directory: ./mobile
         env:
           APP_VARIANT: development
+          BACKEND_ENVIRONMENT_CAPABILITY: development
+          EXPO_PUBLIC_API_URL: http://localhost:3005
         run: npx expo prebuild --platform ios --clean
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
@@ -257,6 +262,7 @@ jobs:
         working-directory: ./mobile/ios
         env:
           APP_VARIANT: development
+          BACKEND_ENVIRONMENT_CAPABILITY: development
           EXPO_PUBLIC_API_URL: http://localhost:3005
         run: |
           WORKSPACE="$(ls -d *.xcworkspace | head -n1)"

@@ -35,17 +35,21 @@ an Android emulator, locally and in CI.
 ## Build & install the e2e binary
 
 Release config so the JS bundle is embedded (no Metro), `development` variant so
-the `timecalendar-dev` scheme and local-server network exceptions apply.
+the `timecalendar-dev` scheme and local-server network exceptions apply, and the
+independent `development` backend capability so the runtime can select `local`.
 `EXPO_PUBLIC_API_URL` is baked at build time and must match the platform's path
-to the host server on port 3005:
+to the host server on port 3005. Supply all three inputs to both prebuild and
+release compilation:
 
 ```bash
 # Android — 10.0.2.2 is the host loopback from the emulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
   npx expo run:android --variant release
 
 # iOS — localhost reaches the host from the simulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://localhost:3005 \
   npx expo run:ios --configuration Release
 ```
 
@@ -111,7 +115,8 @@ heap, 1024 MiB Metaspace, at most two Gradle workers, and no persistent daemon.
 iOS logs the selected Xcode path/version plus available and selected simulator
 runtime, name, and UDID before running the harness with four startup attempts.
 The shell proofs and workflow assertions run without a device; definitive native
-proof is the path-triggered post-merge `main` run on GitHub-hosted runners.
+proof is the labeled PR run on GitHub-hosted runners, with baseline, Android, and
+iOS checks passing on the same exact head.
 
 These jobs are **on-demand** (a cold native build + device boot is ~20–30 min
 each): add the **`run-e2e` label** to a PR to run them, and they always run on

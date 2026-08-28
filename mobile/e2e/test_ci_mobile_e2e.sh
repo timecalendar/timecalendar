@@ -26,6 +26,45 @@ assert_absent() {
   ! grep -Fq -- "$1" "$WORKFLOW" || fail "forbidden workflow pattern remains: $1"
 }
 
+assert_step_contract() {
+  local step_name="$1" expected_url="$2" forbidden_url="$3" block pattern actual
+  block="$(awk -v target="$step_name" '
+    $0 == "      - name: " target { inside = 1 }
+    inside && seen && /^      - name:/ { exit }
+    inside { print; seen = 1 }
+  ' "$WORKFLOW")"
+  [ -n "$block" ] || fail "missing workflow step: $step_name"
+
+  for pattern in \
+    'APP_VARIANT: development' \
+    'BACKEND_ENVIRONMENT_CAPABILITY: development' \
+    "EXPO_PUBLIC_API_URL: $expected_url"; do
+    actual="$(grep -Fc -- "$pattern" <<< "$block" || true)"
+    [ "$actual" -eq 1 ] || \
+      fail "expected exactly one '$pattern' in step '$step_name', got $actual"
+  done
+
+  ! grep -Fq -- "EXPO_PUBLIC_API_URL: $forbidden_url" <<< "$block" || \
+    fail "step '$step_name' contains the opposite platform URL: $forbidden_url"
+}
+
+assert_step_contract \
+  'Prebuild Android (dev variant)' \
+  'http://10.0.2.2:3005' \
+  'http://localhost:3005'
+assert_step_contract \
+  'Build release APK' \
+  'http://10.0.2.2:3005' \
+  'http://localhost:3005'
+assert_step_contract \
+  'Prebuild iOS (dev variant)' \
+  'http://localhost:3005' \
+  'http://10.0.2.2:3005'
+assert_step_contract \
+  'Build Release simulator app' \
+  'http://localhost:3005' \
+  'http://10.0.2.2:3005'
+
 assert_count 2 'export MAESTRO_VERSION=2.8.0'
 assert_count 2 'maestro --version'
 assert_present 'Xcode developer directory: $(xcode-select -p)'
