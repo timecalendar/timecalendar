@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 WORKFLOW="$REPO_ROOT/.github/workflows/ci-mobile-e2e.yml"
+BASELINE_WORKFLOW="$REPO_ROOT/.github/workflows/ci-mobile.yml"
 
 fail() {
   echo "[test_ci_mobile_e2e] FAIL: $*" >&2
@@ -79,5 +80,18 @@ assert_present 'name: maestro-debug-android'
 assert_present 'name: maestro-debug-ios'
 assert_present 'name: e2e-server-logs-android'
 assert_present 'name: e2e-server-logs-ios'
+
+# The guard above only guards anything if it runs. The native jobs that invoke it
+# are label-gated on pull requests, so a PR editing ci-mobile-e2e.yml alone would
+# run neither gate and land the break on main. The baseline mobile workflow must
+# therefore watch that file and run both proofs itself.
+assert_baseline() {
+  grep -Fq -- "$1" "$BASELINE_WORKFLOW" || \
+    fail "ci-mobile.yml is missing the E2E-contract invariant: $1"
+}
+
+assert_baseline "- '.github/workflows/ci-mobile-e2e.yml'"
+assert_baseline './mobile/e2e/test_run_e2e.sh'
+assert_baseline './mobile/e2e/test_ci_mobile_e2e.sh'
 
 echo '[test_ci_mobile_e2e] PASS'
