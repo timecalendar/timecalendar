@@ -1,8 +1,8 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { fromZonedTime, toZonedTime } from "date-fns-tz"
-import { Platform } from "react-native"
 
 import { formatShortDateTime } from "@/features/calendar/data"
+import { usePlatform } from "@/test-support/platform"
 
 import { DateTimeField } from "./date-time-field"
 
@@ -18,9 +18,10 @@ const INITIAL = new Date("2026-01-01T00:00:00.000Z")
 const DEVICE_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 const NOUMEA = "Pacific/Noumea"
 
-afterEach(() => {
-  jest.restoreAllMocks()
-})
+// No file-level jest.restoreAllMocks(): it existed only to undo the Android
+// Platform.OS override below, which now restores itself through usePlatform.
+// A blanket restore here would also discard the suite-wide AccessibilityInfo
+// spies from jest/setup-splash.ts (TIM-273 task 3).
 
 describe("DateTimeField", () => {
   it("renders the inline picker on iOS and reports its change (identity under the device zone)", async () => {
@@ -67,38 +68,41 @@ describe("DateTimeField", () => {
     expect(onChange).toHaveBeenCalledWith(fromZonedTime(FIXED, NOUMEA))
   })
 
-  it("opens the dialog on tap and reports the selected date on Android", async () => {
-    jest.replaceProperty(Platform, "OS", "android")
-    const onChange = jest.fn()
-    const dialogValue = toZonedTime(INITIAL, NOUMEA).toISOString()
-    const { getByTestId, queryByText, getByText } = await render(
-      <DateTimeField
-        testID="field"
-        accessibilityLabel="Start"
-        value={INITIAL}
-        locale="en"
-        zone={NOUMEA}
-        onChange={onChange}
-      />,
-    )
+  describe("on Android", () => {
+    usePlatform("android")
 
-    // The compact field echoes through the zone-aware format seam (no raw
-    // toLocaleString), and the dialog is not mounted until tapped.
-    expect(getByText(formatShortDateTime(INITIAL, "en", NOUMEA))).toBeTruthy()
-    expect(queryByText(dialogValue)).toBeNull()
+    it("opens the dialog on tap and reports the selected date", async () => {
+      const onChange = jest.fn()
+      const dialogValue = toZonedTime(INITIAL, NOUMEA).toISOString()
+      const { getByTestId, queryByText, getByText } = await render(
+        <DateTimeField
+          testID="field"
+          accessibilityLabel="Start"
+          value={INITIAL}
+          locale="en"
+          zone={NOUMEA}
+          onChange={onChange}
+        />,
+      )
 
-    await act(async () => {
-      fireEvent.press(getByTestId("field"))
+      // The compact field echoes through the zone-aware format seam (no raw
+      // toLocaleString), and the dialog is not mounted until tapped.
+      expect(getByText(formatShortDateTime(INITIAL, "en", NOUMEA))).toBeTruthy()
+      expect(queryByText(dialogValue)).toBeNull()
+
+      await act(async () => {
+        fireEvent.press(getByTestId("field"))
+      })
+
+      // The dialog (mock DateTimePicker) is now mounted, rendering the zone
+      // wall-clock value.
+      await act(async () => {
+        fireEvent.press(getByText(dialogValue))
+      })
+
+      expect(onChange).toHaveBeenCalledWith(fromZonedTime(FIXED, NOUMEA))
+      // Confirming closes the dialog (unmounts it).
+      expect(queryByText(dialogValue)).toBeNull()
     })
-
-    // The dialog (mock DateTimePicker) is now mounted, rendering the zone
-    // wall-clock value.
-    await act(async () => {
-      fireEvent.press(getByText(dialogValue))
-    })
-
-    expect(onChange).toHaveBeenCalledWith(fromZonedTime(FIXED, NOUMEA))
-    // Confirming closes the dialog (unmounts it).
-    expect(queryByText(dialogValue)).toBeNull()
   })
 })

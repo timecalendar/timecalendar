@@ -4,13 +4,14 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import { AccessibilityInfo, Alert, Platform, StyleSheet } from "react-native"
+import { AccessibilityInfo, Alert, StyleSheet } from "react-native"
 
 import {
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
+import { usePlatform } from "@/test-support/platform"
 
 import { UserCalendarsScreen } from "./user-calendars-screen"
 
@@ -326,16 +327,21 @@ describe("UserCalendarsScreen", () => {
     expect(announceSpy).not.toHaveBeenCalled()
   })
 
-  it("renders Android visibility, delete, and FAB controls", async () => {
-    jest.replaceProperty(Platform, "OS", "android")
-    mockUseUserCalendars.mockReturnValue([calendar()])
-    await render(<UserCalendarsScreen />)
+  describe("on Android", () => {
+    usePlatform("android")
 
-    expect(screen.getByLabelText("Show ENSEEIHT in the app")).toBeTruthy()
-    expect(
-      screen.getByRole("button", { name: "Delete calendar ENSEEIHT" }),
-    ).toBeTruthy()
-    expect(screen.getByRole("button", { name: "Add a calendar" })).toBeTruthy()
+    it("renders Android visibility, delete, and FAB controls", async () => {
+      mockUseUserCalendars.mockReturnValue([calendar()])
+      await render(<UserCalendarsScreen />)
+
+      expect(screen.getByLabelText("Show ENSEEIHT in the app")).toBeTruthy()
+      expect(
+        screen.getByRole("button", { name: "Delete calendar ENSEEIHT" }),
+      ).toBeTruthy()
+      expect(
+        screen.getByRole("button", { name: "Add a calendar" }),
+      ).toBeTruthy()
+    })
   })
 
   it("surfaces an accessible failure state when a write failed", async () => {
