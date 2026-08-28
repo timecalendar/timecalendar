@@ -21,8 +21,12 @@ read the live version counter, cannot upload, and cannot read back what Play del
       internal-track submission needs (release to testing tracks for `fr.samuelprak.timecalendar`).
       Do not grant production release or account-admin rights.
 - [ ] Register the key with EAS (`eas credentials --platform android` → *Google Service Account*),
-      or place it at the path `mobile/eas.json` expects (`ci/keys/eas-android-sa-key.json`) on the
-      build host only. **Never commit it**; `ci/keys/` is intentionally absent from git.
+      or place it at the path `mobile/eas.json` expects on the build host only. That field reads
+      `../ci/keys/eas-android-sa-key.json` — relative to `mobile/`, so the file belongs at
+      **`ci/keys/eas-android-sa-key.json` at the repository root**, not under `mobile/`.
+      **Never commit it**; the root `.gitignore` entry `ci/keys/` is anchored and covers the
+      root directory only — a key dropped at `mobile/ci/keys/` would be both invisible to EAS
+      and committable.
 - [ ] Record its identity (client email, project) in Vaultwarden — identity only, never the JSON.
 
 Tell the Founding Engineer when this is done. From there the build, the submit and the Play-side

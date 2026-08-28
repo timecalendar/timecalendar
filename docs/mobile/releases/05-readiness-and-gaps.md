@@ -17,7 +17,7 @@
 | Android upload key       | **Imported into EAS**                   | held key (alias `upload`, SHA-1 `99f82ae8…`) imported and set as default build credentials, 2026-08-28; **no upload-key reset requested** — see [document 3](./03-first-preview.md) §3.7               |
 | EAS-managed credentials  | **iOS + Android signing live**          | iOS proved by shipped build 142 (§3.6); Android upload keystore imported and read back (§3.7). **No Play service account** — `eas submit --platform android` cannot authenticate                        |
 | EAS remote versions      | **iOS initialized, Android not**        | iOS `buildNumber` is `142`; Android `versionCode` is still `1` against a live Play counter far above it — must be set from the live console before any Android build                                    |
-| Store tester groups      | **Unverified**                          | create/confirm **The team** in TestFlight and Play                                                                                                                                                    |
+| Store tester groups      | **iOS confirmed, Play unverified**      | TestFlight internal group **The Team** carries build 142 (§3.6); the Play internal tester list still needs creating/confirming                                                                         |
 | Signed build/install     | **Not done in this task**               | first store-internal preview remains a controlled rollout action                                                                                                                                      |
 | Build host               | **Ready**                               | store binaries build with `eas build --local` on the owner's macOS host; no EAS build quota, free plan sufficient (ADR 040)                                                                           |
 | OTA infrastructure       | **Separate programme**                  | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready                                                                                     |
@@ -47,7 +47,8 @@ Everything remaining is an operator act, in order:
    `1`. iOS is initialized at `142`. The historical Flutter `+134` is not authoritative.
 5. **Owner — inventory Apple/EAS identifiers and recovery** in Vaultwarden and add the trusted
    account recovery owner.
-6. **Owner — create/confirm The team tester groups** in both stores.
+6. **Owner — create/confirm the Play internal tester list.** The TestFlight side is done: internal
+   group **The Team** received build 142 (§3.6).
 7. **Release operator — build both platforms locally, submit and physically install.**
 
 Account login, credential creation, build, submission and tester distribution are explicit
