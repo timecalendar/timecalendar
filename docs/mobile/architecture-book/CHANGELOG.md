@@ -8,7 +8,13 @@
   screen composition relative to a production build, so headers can be integration-tested and
   screenshotted at their shipped position. Supersedes the marker consequence of ADR 043
   (043-backend-environment-reset.md, features.md).
-
+- Set an explicit per-test time budget for the Jest harness (`testTimeout: 30000`) with a
+  config-drift guard at a 20 000 ms floor, resolving the baseline gate's named intermittent —
+  a per-test timeout misread as a `getByText` miss. ADR 044 records the measurements and the
+  binding rule: the budget is a harness capacity setting and may never be cited for a longer
+  query wait, a retry, or a weakened matcher. Also added `usePlatform`
+  (`src/test-support/platform.ts`) so a `Platform.OS` override always restores, a separate
+  latent order dependence (testing.md, ADR 044).
 - Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
   before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
   persisted with expiring dates, while existing sync cadence and school-specific exceptions
