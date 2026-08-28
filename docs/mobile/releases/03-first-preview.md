@@ -104,6 +104,37 @@ The first preview is complete only when:
   the OTA service is ready;
 - no secret or private key appears in git, build logs or issue comments.
 
+## 3.6 Shipped record — iOS internal preview, 2026-08-28
+
+The iOS half of the first preview shipped. Android has not.
+
+| Field               | Value                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Source SHA          | `20cadefff9b328accf5ce2420b1858894b3fe469` on `main`                                               |
+| Version / build     | `4.0.0` / `142`                                                                                    |
+| Runtime fingerprint | `7db7c8dbe3b26b05c50d92899e5ee586968cfff7`                                                         |
+| Artifact SHA-256    | `b71bb9476721440705e9fda970f7b215cf199c3e2692f2b88c15f14e14e452d0` (26,733,857 bytes)              |
+| Bundle ID           | `fr.samuelprak.timecalendar`, `UIDeviceFamily` `[1, 2]`, `MinimumOSVersion` `16.4`                 |
+| OTA channel         | `expo-channel-name = preview`, `EXUpdatesRuntimeVersion = file:fingerprint`                        |
+| Signing             | `iPhone Distribution: Samuel Prak (9629G25NH7)`, App Store profile, `aps-environment` `production` |
+| Host toolchain      | macOS 26.5.1, Xcode 26.6 (17F113), Node 24.13.0, eas-cli 22.5.0, CocoaPods 1.17.0                  |
+| Destination         | App Store Connect app `1479613630`, internal group **The Team**                                    |
+
+Apple-side state, read back from the App Store Connect API rather than from the submit log:
+`processingState = VALID`, `internalBuildState = IN_BETA_TESTING`, and build 142 is attached to
+the internal group **The Team**. `externalBuildState` remains `READY_FOR_BETA_SUBMISSION` and the
+external group **Alpha** does not carry build 142 — nothing was submitted for Beta App Review,
+App Store review or production release.
+
+Two caveats belong on this record:
+
+- **The E2E exception.** `20cadeff` is green on `CI mobile checks` and `CI build & deploy`, but
+  `CI mobile E2E` fails there. The board owner waived that gate for this preview; the failures are
+  E2E-harness concerns owned separately, not preview-build defects.
+- **§3.5 is not yet satisfied.** Physical-device install and verification, the Android half, and
+  the OTA fingerprint-compatibility cases all remain open. This record covers upload and internal
+  TestFlight availability only.
+
 ## Official references
 
 - [Expo: TestFlight distribution](https://docs.expo.dev/submit/testflight/)
