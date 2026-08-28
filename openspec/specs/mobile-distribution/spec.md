@@ -3,31 +3,26 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-eas. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: EAS build profiles aligned to the app variants
 
-The project SHALL define an `eas.json` with three build profiles — `development`, `preview`, and
-`production` — each setting build behavior consistent with the existing `APP_VARIANT` identity
-rules. The `development` profile SHALL build the development variant
-(`APP_VARIANT=development` → app id `fr.samuelprak.timecalendar.dev`); the `preview` and
-`production` profiles SHALL build the production identity (`fr.samuelprak.timecalendar`,
-`APP_VARIANT` unset) and SHALL set `OTA_CHANNEL` to their matching profile name.
+The project SHALL define an `eas.json` with three build profiles — `development`, `preview`, and `production` — each setting build behavior consistent with the existing `APP_VARIANT` identity rules and an independent explicit backend-environment capability. The `development` profile SHALL build the development variant (`APP_VARIANT=development` → app id `fr.samuelprak.timecalendar.dev`) and set the development backend capability; the `preview` and `production` profiles SHALL build the production identity (`fr.samuelprak.timecalendar`, `APP_VARIANT` unset), set `OTA_CHANNEL` to their matching profile name, and independently set respectively the preview and production backend capability.
 
 #### Scenario: Development profile builds the dev variant
 
-- **WHEN** a build runs with the `development` profile
-- **THEN** `APP_VARIANT=development` is set for the build
-- **AND** the resulting app id is `fr.samuelprak.timecalendar.dev` with the
-  `timecalendar-dev` Firebase config and the dev-variant network exceptions
+- **WHEN** a build runs with the development profile
+- **THEN** `APP_VARIANT=development` and the explicit development backend capability are set
+- **AND** the resulting app id is `fr.samuelprak.timecalendar.dev` with the `timecalendar-dev` Firebase config and dev-variant network exceptions
 - **AND** automatic OTA delivery is disabled
 
-#### Scenario: Preview and production profiles build the production identity
+#### Scenario: Preview and production profiles share identity but not backend authorization
 
-- **WHEN** a build runs with the `preview` or `production` profile
-- **THEN** `APP_VARIANT` is not set to `development`
-- **AND** `OTA_CHANNEL` is respectively `preview` or `production`
-- **AND** the resulting app id is `fr.samuelprak.timecalendar` with the
-  `timecalendar-samuelprak` Firebase config and no cleartext/local-networking exception
+- **WHEN** a build runs with the preview or production profile
+- **THEN** `APP_VARIANT` is not set to development and `OTA_CHANNEL` is respectively preview or production
+- **AND** the independent backend capability is respectively preview or production
+- **AND** both retain app id `fr.samuelprak.timecalendar`, production Firebase config, and no cleartext/local-networking exception
 
 ### Requirement: expo-updates wired with a fingerprint runtime version policy
 
@@ -211,3 +206,72 @@ is proven safe and the native-change control remains effective.
 - **WHEN** the recorded native-affecting fixture is applied in a scratch copy
 - **THEN** the fingerprint differs from its unchanged control on the affected platform
 - **AND** no broad fingerprint exclusion was used to obtain the result
+
+### Requirement: iOS builds preserve the iPhone and iPad device-family contract
+
+The mobile app SHALL support both iPhone and iPad for development, preview, and production iOS configurations. Expo source configuration SHALL remain the authority for that contract, and a clean production-identity prebuild SHALL generate application-target device families `1,2`. Generated native projects SHALL remain disposable and uncommitted.
+
+#### Scenario: Every Expo variant declares tablet support
+
+- **WHEN** development, preview, and production Expo configurations are resolved
+- **THEN** each configuration has `ios.supportsTablet` set to `true`
+- **AND** each configuration retains the same iPhone+iPad product support contract
+
+#### Scenario: Preview prebuild generates both device families
+
+- **WHEN** a clean iOS prebuild is generated with `OTA_CHANNEL=preview`
+- **THEN** the generated application target resolves `TARGETED_DEVICE_FAMILY` to `1,2`
+- **AND** no generated `mobile/ios/` project is committed as source
+
+### Requirement: iPad support remains portrait-only
+
+The app SHALL retain top-level Expo orientation `portrait` while supporting tablets and SHALL set `ios.requireFullScreen` to `true`. A clean iOS prebuild SHALL require full-screen presentation, expose only portrait orientations for iPad, and SHALL NOT enable either iPad landscape orientation. Side-by-side iPad multitasking is intentionally outside the supported contract because it requires landscape orientations.
+
+#### Scenario: Source configuration retains portrait intent
+
+- **WHEN** development, preview, and production Expo configurations are resolved
+- **THEN** each resolved configuration has `orientation` equal to `portrait`
+- **AND** each has `ios.requireFullScreen` set to `true`
+
+#### Scenario: Generated iPad orientations exclude landscape
+
+- **WHEN** the clean preview iOS prebuild is inspected
+- **THEN** `UIRequiresFullScreen` is true
+- **AND** the effective iPad-supported orientation list uses its iPad-specific value when present or the generic fallback and contains portrait orientation values only
+- **AND** `UIInterfaceOrientationLandscapeLeft` and `UIInterfaceOrientationLandscapeRight` are absent
+
+### Requirement: Restored iPad support refreshes runtime compatibility evidence
+
+The repository SHALL resolve and record the post-change SDK 56 iOS runtime fingerprints for preview and production using the project-local managed-workflow commands. Documentation SHALL state that the native device-family change requires a fresh signed iOS binary and SHALL NOT be delivered to the rejected or previous shell as an OTA update. Fingerprint protection SHALL NOT be weakened to preserve an old hash.
+
+#### Scenario: Authoritative fingerprint tables match the corrected source
+
+- **WHEN** the documented iOS preview and production fingerprint commands run on the applied change
+- **THEN** their exact results match the values recorded in the Architecture Book and operator guide
+- **AND** no broad `.fingerprintignore` excludes native configuration
+
+#### Scenario: Engineering completion does not submit a build
+
+- **WHEN** this change is completed
+- **THEN** documentation identifies a fresh signed iOS preview binary as the next release requirement
+- **AND** no EAS build, upload, App Store Connect submission, or store-console mutation has been performed by this ticket
+
+### Requirement: Backend capability config preserves OTA and identity authorities
+
+Resolved app config SHALL expose the normalized backend capability in `extra` without deriving or changing `appVariant`, EAS project linkage, xprem URL, channel request headers, code-signing metadata, bundle/package identity, scheme, Firebase files, permissions, or submission behavior. Config tests SHALL prove all three profiles and malformed/missing fail-closed runtime values.
+
+#### Scenario: Backend capability changes no release authority
+
+- **WHEN** preview and production resolved configs are compared after the capability is added
+- **THEN** identity, Firebase, signing, xprem, channel headers, and submit shape remain governed by their existing inputs
+- **AND** only the explicit backend capability authorizes runtime environment choices
+
+### Requirement: Post-change fingerprints and native-build consequence are recorded
+
+The implementation SHALL recompute SDK 56 preview and production runtime fingerprints for iOS and Android using the repository-prescribed commands, record the exact results and relevant source differences, and state per lane whether this change is OTA-compatible or requires a fresh native build. It SHALL NOT weaken fingerprint inputs or perform a build, submission, publish, promotion, or rollout.
+
+#### Scenario: Four-lane fingerprint proof is reproducible
+
+- **WHEN** the documented commands run for both profiles and platforms
+- **THEN** the recorded hashes can be reproduced and compared with the prior baseline
+- **AND** release guidance states the native-build consequence without performing that release act

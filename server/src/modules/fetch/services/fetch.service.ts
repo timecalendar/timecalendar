@@ -1,9 +1,9 @@
 import { Injectable } from "@nestjs/common"
 import { InjectStrategies } from "modules/fetch/decorators/inject-strategies"
 import { CalendarSource } from "modules/fetch/models/calendar-source"
+import { FetchContext } from "modules/fetch/models/fetch-context"
 import genericStrategy from "modules/fetch/strategies/generic-strategy"
 import { SchoolStrategy } from "modules/fetch/strategies/school-strategy"
-import { notEmpty } from "modules/shared/utils/not-empty"
 
 @Injectable()
 export class FetchService {
@@ -24,18 +24,16 @@ export class FetchService {
     school: string | null,
     schoolStrategy: SchoolStrategy | undefined,
   ) {
-    // Note the fallback on the second line: a calendar that matched no strategy
-    // runs through *every* strategy's renamers. Registering a strategy for a
-    // school therefore turns those off for it — see univlyon1-strategy.ts, where
-    // that was a real behaviour change. Note too that genericStrategy is applied
-    // twice in that branch (explicitly, and again as this.strategies[0]); that
-    // is a no-op only because nbWeeksRenamer and webcalRenamer are idempotent.
-    const strategiesUsedToTransformUrl: SchoolStrategy[] = [
-      schoolStrategy?.options?.inheritGenericUrlRenamers !== false
-        ? genericStrategy
-        : null,
-      ...(schoolStrategy ? [schoolStrategy] : this.strategies),
-    ].filter(notEmpty)
+    // A calendar that matched no school strategy runs through every registered
+    // school's renamers after the generic strategy. Registering a strategy for a
+    // school therefore turns the other school renamers off for it — see
+    // univlyon1-strategy.ts, where that was a real behaviour change.
+    const strategiesUsedToTransformUrl = !schoolStrategy
+      ? this.strategies
+      : schoolStrategy === genericStrategy ||
+        schoolStrategy.options.inheritGenericUrlRenamers === false
+      ? [schoolStrategy]
+      : [genericStrategy, schoolStrategy]
 
     return strategiesUsedToTransformUrl.reduce(
       (acc, strategy) => strategy.transformUrl(acc, school),
@@ -59,6 +57,7 @@ export class FetchService {
     calendarSource: CalendarSource,
     school: string | null,
     debugObject?: Record<string, any>,
+    context: FetchContext = {},
   ) {
     const { url, customData } = calendarSource
 
@@ -71,7 +70,11 @@ export class FetchService {
       debugObject.strategy = schoolStrategy?.options.school || null
     }
 
-    const rawEvents = await strategy.fetchEvents(transformedUrl, customData)
+    const rawEvents = await strategy.fetchEvents(
+      transformedUrl,
+      customData,
+      context,
+    )
     const events = strategy.transformEvents(rawEvents)
     return events.filter((event) => !event.fields.canceled)
   }

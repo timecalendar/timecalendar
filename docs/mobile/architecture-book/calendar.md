@@ -62,12 +62,37 @@ Sync runs at startup, foreground/resume, manual refresh, source changes, and not
 receipt. `calendar_events` is disposable cache and is rebuilt from durable source tokens;
 it is not a migration/import target.
 
+The server normalizes recognized ADE iCal export URLs immediately before each upstream
+fetch. Explicit `firstDate`/`lastDate` pairs and `nbWeeks` links use a rolling UTC window
+from 12 calendar months before through 12 calendar months after the fetch date. Because a
+successful sync replaces the cached upstream content, events older than that retained year
+can disappear. The normalized URL is ephemeral: the original source URL remains stored so
+creation and every later eligible sync recompute the window instead of persisting dates that
+can expire. The enforcing boundary is
+[`AdeExportWindowRenamer`](../../../server/src/modules/fetch/renamers/ade-export-window-renamer.ts),
+with recognition and sync-cadence coverage beside the renamer and in the fetch/calendar-sync
+service tests.
+
 Server sync telemetry is owned by the
 [server observability runbook](../../server/observability.md), not by the mobile sync
 seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses
 only its reviewed finite upstream classifier; this boundary changes neither the mobile
 API nor local sync behavior. Unexpected mobile-local failures continue to use the
 privacy-safe `@/firebase` seam.
+
+The server gives batch sync a ten-second work budget inside the client's 15-second
+request timeout. Disconnect and deadline cancellation propagate to upstream iCalendar
+requests; at most three due calendars run concurrently, queued work does not start after
+cancellation, and every started operation settles before the batch returns. Retry-enabled
+sources make at most two attempts inside a shared nine-second fetch budget (seven seconds
+maximum per attempt). Failed, cancelled, or unstarted calendars retain last-known content
+in the unchanged response shape.
+
+Due-calendar selection is oldest-first and metadata-only: it loads the school relation
+but not stored event JSON. A successful fetch loads previous content exactly once under
+the existing persistence lock for atomic diff/log writes; final response hydration remains
+separate. The binding contract and regression scenarios live in the
+[server calendar sync policy](../../../openspec/specs/server-calendar-sync-policy/spec.md).
 
 ## Surfaces
 

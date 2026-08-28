@@ -2,12 +2,35 @@
 
 ## 2026-08-28
 
+- Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
+  before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
+  persisted with expiring dates, while existing sync cadence and school-specific exceptions
+  remain unchanged (calendar.md).
 - Added the nullable school dark-logo API contract and mobile theme selection with required light
   fallback. ADR 041 records the relative-key server mapping, generated-client obligation, and
   additive Flutter/web compatibility (data.md, theming.md, features.md).
 
+## 2026-08-27
+
+- Added the independent backend capability, fixed endpoint allowlist, visible preview/development
+  selector, persistent non-production marker and journaled destructive cross-store reset. ADR 043
+  records fail-closed production behavior, state classification and the future-auth participant
+  invariant; all four release fingerprints changed and require fresh native builds.
+- Restored the iPhone+iPad App Store continuity contract while retaining portrait-only,
+  full-screen behavior and intentionally disabling iPad multitasking. Source-config tests and a
+  disposable generated-native assertion enforce device families `1,2`, full-screen presentation,
+  and portrait-only iPad orientations. Refreshed iOS fingerprint evidence records the required
+  fresh signed preview binary and OTA incompatibility; no build or submission occurred (ADR 042,
+  runtime.md, eas.md, `mobile/EAS.md`).
+- Established the worktree-scoped local Compose entrypoint and the reusable
+  Postgres/Redis-only prerequisite for OpenAPI generation and server tests, while
+  preserving `ci/e2e-server.sh` as the E2E lifecycle owner (testing.md).
+
 ## 2026-08-26
 
+- Made contact-service 503 failures explicitly retryable in Feedback while retaining
+  form values, added equivalent accessible FR/EN guidance, and redacted `/contact`
+  request/response bodies from development API diagnostics (data.md, features.md).
 - Wired preview and production native builds to signed xprem delivery: one validated
   `OTA_CHANNEL` source, exact endpoint/app/branch headers, embedded public certificate metadata,
   development OTA disablement, and retained independent EAS linkage. SDK 56 fingerprint evidence

@@ -1,5 +1,14 @@
 import type { ConfigContext, ExpoConfig } from "expo/config"
 
+type BackendEnvironmentCapability = "development" | "preview" | "production"
+
+const parseBackendEnvironmentCapability = (
+  value: unknown,
+): BackendEnvironmentCapability =>
+  value === "development" || value === "preview" || value === "production"
+    ? value
+    : "production"
+
 const getOtaChannel = (
   isDev: boolean,
 ): "preview" | "production" | undefined => {
@@ -18,6 +27,9 @@ const getOtaChannel = (
 export default ({ config }: ConfigContext): ExpoConfig => {
   const isDev = process.env.APP_VARIANT === "development"
   const otaChannel = getOtaChannel(isDev)
+  const backendEnvironmentCapability = parseBackendEnvironmentCapability(
+    process.env.BACKEND_ENVIRONMENT_CAPABILITY,
+  )
   const appId = isDev
     ? "fr.samuelprak.timecalendar.dev"
     : "fr.samuelprak.timecalendar"
@@ -59,6 +71,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // iOS uses the top-level `icon` (the brand 1024² master, opaque, no alpha).
       // No per-platform `icon` override and no Icon Composer `.icon` bundle: the
       // app ships the flat TimeCalendar brand mark, not a liquid-glass treatment.
+      supportsTablet: true,
+      // Portrait-only on iPad requires full-screen presentation. Without this,
+      // iPad multitasking requires both landscape orientations as well.
+      requireFullScreen: true,
       bundleIdentifier: appId,
       googleServicesFile: googleServicesIOS,
       // Export-compliance: the app uses only standard/exempt encryption (HTTPS/TLS
@@ -197,6 +213,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // variant e2e build) nor scheme-sniffing — is the security boundary that keeps
       // the import inert in production. Pure JS config; no fingerprint bump.
       appVariant: isDev ? "development" : "production",
+      backendEnvironmentCapability,
     },
     updates: isDev
       ? { enabled: false }

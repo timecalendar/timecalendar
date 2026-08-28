@@ -3,7 +3,7 @@ services:
     image: nginx
     restart: always
     ports:
-      - '1443:443'
+      - '${TIMECALENDAR_TLS_PORT:-1443}:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ../ci/certificates:/etc/nginx/certificates
@@ -14,7 +14,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_HOST_AUTH_METHOD: trust
     ports:
-      - '37291:5432'
+      - '${TIMECALENDAR_POSTGRES_PORT:-37291}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./bin/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
@@ -28,7 +28,7 @@ services:
     image: redis
     restart: always
     ports:
-      - '37292:6379'
+      - '${TIMECALENDAR_REDIS_PORT:-37292}:6379'
     volumes: 
       - redis_data:/data
     healthcheck:

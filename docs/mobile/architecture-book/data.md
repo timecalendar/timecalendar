@@ -18,10 +18,18 @@
 - Every generated operation calls `customFetch` in `mobile/src/api/mutator.ts`: base-URL prefixing, JSON headers, non-2xx → typed `ApiError<TBody>` carrying status + parsed body. **No axios in mobile.**
 - **Every request is time-bounded** (`DEFAULT_TIMEOUT_MS`, an internal `AbortController`): RN's `fetch` has no timeout, so a black-hole network would hang a query forever — the timeout aborts it and the failure surfaces as an ordinary recoverable `isError`. The mutator also **forwards the caller's `options.signal`** (TanStack Query's per-query cancellation) by composing it with the timeout controller, so either source aborts the in-flight `fetch`. The seam's contract is proven directly in `mutator.test.ts` (the one suite that does NOT mock `@/api/mutator`).
 - Enforced by codegen config (`orval.config.ts` mutator) and by lint: `no-restricted-globals` bans `fetch` everywhere except `src/api/mutator.ts`, and `no-restricted-imports` bans `axios` — both in `mobile/eslint.config.js`.
+- Development diagnostics identify `POST /contact` by method/path/status but redact both request and response payloads, because either side can contain submitted e-mail or message content. Other API paths retain the existing payload diagnostics. Enforced at the shared mutator seam by `src/api/mutator.test.ts`.
 
 ## Base URL
 
-- `mobile/src/api/config.ts`: `EXPO_PUBLIC_API_URL` ?? production default (`https://api-v2.timecalendar.app` — the Flutter production `MAIN_API_URL`, `app/Fastfile`), inlined at build time. The Android-emulator `10.0.2.2` gotcha is documented at the constant.
+- Every `customFetch` call resolves the effective typed environment at request time. Production is
+  exactly `https://api-v2.timecalendar.app`, preproduction exactly
+  `https://preprod-api.timecalendar.app`, and local uses only the valid absolute HTTP(S)
+  `EXPO_PUBLIC_API_URL` compiled into a development-capable build. There is no custom URL setter.
+- During a journaled environment reset, the mutator rejects new work and aborts in-flight requests;
+  the Query participant cancels queries, removes the MMKV persister and clears query/mutation
+  caches before reload. `mutator.test.ts`, `query-client.test.ts` and the environment orchestrator
+  suite enforce the contract (ADR [043](./decisions/043-backend-environment-reset.md)).
 
 ## School logo contract
 

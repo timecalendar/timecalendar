@@ -1,4 +1,5 @@
-import { API_BASE_URL } from "./config"
+import { PRODUCTION_API_URL } from "@/config/backend-environment"
+
 import { ApiError, customFetch } from "./mutator"
 
 // The mutator's first DIRECT unit test — the one place `@/api/mutator` is NOT
@@ -41,7 +42,7 @@ describe("customFetch", () => {
 
     expect(result).toEqual({ id: "e-1" })
     expect(fetchMock).toHaveBeenCalledWith(
-      `${API_BASE_URL}/events/e-1`,
+      `${PRODUCTION_API_URL}/events/e-1`,
       expect.objectContaining({
         headers: expect.objectContaining({ Accept: "application/json" }),
       }),
@@ -73,6 +74,55 @@ describe("customFetch", () => {
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).status).toBe(422)
     expect((error as ApiError).body).toEqual({ message: "invalid" })
+  })
+
+  it("redacts contact request and response bodies from development diagnostics", async () => {
+    const log = jest.spyOn(console, "log").mockImplementation()
+    fetchMock.mockResolvedValue(
+      jsonResponse(503, {
+        message: "private response echo",
+        email: "private@example.fr",
+      }),
+    )
+
+    await customFetch("/contact", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "private@example.fr",
+        message: "private submitted message",
+      }),
+    }).catch(() => undefined)
+
+    expect(log.mock.calls).toEqual([
+      ["[api] → POST /contact"],
+      ["[api] ← 503 POST /contact"],
+    ])
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(
+      /private|example\.fr|submitted message|response echo/,
+    )
+    log.mockRestore()
+  })
+
+  it("keeps payload diagnostics for non-sensitive API paths", async () => {
+    const log = jest.spyOn(console, "log").mockImplementation()
+    fetchMock.mockResolvedValue(jsonResponse(200, { id: "event-1" }))
+
+    await customFetch("/events", {
+      method: "POST",
+      body: JSON.stringify({ title: "Lecture" }),
+    })
+
+    expect(log).toHaveBeenNthCalledWith(
+      1,
+      `[api] → POST ${PRODUCTION_API_URL}/events`,
+      JSON.stringify({ title: "Lecture" }),
+    )
+    expect(log).toHaveBeenNthCalledWith(
+      2,
+      `[api] ← 200 POST ${PRODUCTION_API_URL}/events`,
+      { id: "event-1" },
+    )
+    log.mockRestore()
   })
 
   it("falls back to the raw text body when the response is not JSON", async () => {

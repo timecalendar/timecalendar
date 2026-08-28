@@ -17,11 +17,50 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CERT="$ROOT/ci/certificates/cert.pem"
 HOSTS=(timecalendar.host api.timecalendar.host web.timecalendar.host)
+TLS_PORT="${TIMECALENDAR_TLS_PORT:-1443}"
+POSTGRES_PORT="${TIMECALENDAR_POSTGRES_PORT:-37291}"
+REDIS_PORT="${TIMECALENDAR_REDIS_PORT:-37292}"
+COMPOSE_PROJECT="$(cd "$ROOT" && "$ROOT/bin/server-compose.sh" project-name)"
 
 green() { printf '\033[32m%s\033[0m\n' "$*"; }
 yellow() { printf '\033[33m%s\033[0m\n' "$*"; }
 red() { printf '\033[31m%s\033[0m\n' "$*"; }
 step() { printf '\n\033[1m%s\033[0m\n' "$*"; }
+
+http_status() {
+  local status
+  if ! status="$(curl -s -o /dev/null -w '%{http_code}' "$@" 2>/dev/null)"; then
+    status=000
+  fi
+  printf '%s\n' "$status"
+}
+
+print_compose_config() {
+  printf 'Compose project: %s\n' "$COMPOSE_PROJECT"
+  printf 'Host ports: TLS=%s Postgres=%s Redis=%s; backend=3005\n' \
+    "$TLS_PORT" "$POSTGRES_PORT" "$REDIS_PORT"
+}
+
+if [ "${1:-}" = "--http-status" ]; then
+  shift
+  if [ "$#" -eq 0 ]; then
+    red "--http-status requires curl arguments and a URL"
+    exit 1
+  fi
+  http_status "$@"
+  exit 0
+fi
+
+if [ "${1:-}" = "--compose-config" ]; then
+  if [ "$#" -ne 1 ]; then
+    red "--compose-config does not accept additional arguments"
+    exit 1
+  fi
+  print_compose_config
+  exit 0
+fi
+
+print_compose_config
 
 fail=0
 
@@ -76,16 +115,16 @@ fi
 
 # 4. end-to-end reachability --------------------------------------------------
 step "4/4  API reachable through nginx with a valid cert"
-code="$(curl -s -o /dev/null -w '%{http_code}' --cacert "$CERT" \
-  https://api.timecalendar.host:1443/ 2>/dev/null || echo 000)"
+code="$(http_status --cacert "$CERT" "https://api.timecalendar.host:${TLS_PORT}/")"
 if [ "$code" = "000" ]; then
-  red "✗ cannot reach https://api.timecalendar.host:1443 (DNS, nginx, or cert)."
-  echo "  Is the Docker stack up?  cd server && docker compose up -d"
+  red "✗ cannot reach https://api.timecalendar.host:${TLS_PORT} (DNS, nginx, or cert)."
+  echo "  Is the Docker stack up?  bin/server-compose.sh up -d"
+  echo "  Selected project: $COMPOSE_PROJECT (TLS=$TLS_PORT Postgres=$POSTGRES_PORT Redis=$REDIS_PORT)"
   fail=1
 else
   green "✓ API responded (HTTP $code) — DNS + nginx + cert all good"
 fi
-backend="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3005/ 2>/dev/null || echo 000)"
+backend="$(http_status http://localhost:3005/)"
 if [ "$backend" = "000" ]; then
   yellow "✗ backend not answering on :3005 — start it:  cd server && npm run dev"
   fail=1

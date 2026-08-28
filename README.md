@@ -7,10 +7,39 @@
 To start working on TimeCalendar, you must first [install Docker](https://docs.docker.com/get-docker/).
 
 Once Docker is installed, start the dev-env services (Postgres, Redis, and an
-nginx TLS proxy) in the background. The compose file lives in `server/`:
+nginx TLS proxy) in the background from the repository root:
 
 ```bash
-cd server && docker compose up -d
+bin/server-compose.sh up -d
+```
+
+The wrapper keeps the main checkout's historical `server` Compose project and
+gives each worktree its own project, network, containers, and named volumes. The
+default URLs remain `https://api.timecalendar.host:1443`, Postgres on
+`localhost:37291`, Redis on `127.0.0.1:37292`, and the separately started NestJS
+server on `http://localhost:3005`.
+
+Choose unoccupied host ports for another worktree with shell-scoped overrides:
+
+```bash
+TIMECALENDAR_TLS_PORT=24443 TIMECALENDAR_POSTGRES_PORT=47291 \
+  TIMECALENDAR_REDIS_PORT=47292 bin/server-compose.sh up -d
+```
+
+Generation and server tests do not need nginx. Start only their dependencies:
+
+```bash
+bin/server-compose.sh up -d postgres redis
+```
+
+With alternate ports, pass the same ports to the test-profile server command:
+
+```bash
+TIMECALENDAR_POSTGRES_PORT=47291 TIMECALENDAR_REDIS_PORT=47292 \
+  bin/server-compose.sh up -d postgres redis
+cd server
+DATABASE_URL=postgres://postgres@localhost:47291/timecalendar_test \
+  REDIS_URL=redis://127.0.0.1:47292 npm run generate:openapi
 ```
 
 ### Node.js

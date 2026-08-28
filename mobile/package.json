@@ -73,13 +73,15 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "APP_VARIANT=development expo start",
-    "android": "APP_VARIANT=development expo run:android",
-    "ios": "APP_VARIANT=development expo run:ios",
+    "start": "APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development expo start",
+    "android": "APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development expo run:android",
+    "ios": "APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development expo run:ios",
     "generate": "orval",
     "generate:migrations": "drizzle-kit generate",
     "lint": "expo lint --max-warnings 0",
     "test": "jest --ci",
+    "test:ios-device-contract": "node ./scripts/assert-ios-device-contract.mjs --self-test",
+    "verify:ios-device-contract": "bash ./scripts/verify-ios-device-contract.sh",
     "postinstall": "patch-package --error-on-fail"
   },
   "private": true,

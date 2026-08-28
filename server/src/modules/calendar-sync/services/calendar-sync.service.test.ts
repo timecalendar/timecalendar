@@ -1,7 +1,10 @@
 // The real FetchService is used here — mocking at the fetcher boundary keeps
 // strategy resolution (and therefore the resolved sync interval) real.
 const icalFetcher: {
-  fetch: jest.Mock<Promise<FetcherCalendarEvent[]>, []>
+  fetch: jest.Mock<
+    Promise<FetcherCalendarEvent[]>,
+    [string?, unknown?, { signal?: AbortSignal }?]
+  >
 } = {
   fetch: jest.fn(() => Promise.resolve([])),
 }
@@ -20,6 +23,7 @@ import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarFailure } from "modules/calendar-sync/models/calendar-failure.entity"
 import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { CalendarSyncMetricsService } from "modules/calendar-sync/services/calendar-sync-metrics.service"
+import { CalendarSyncAbortError } from "modules/calendar-sync/models/calendar-sync-context"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
@@ -40,6 +44,7 @@ describe("CalendarSyncService", () => {
   let service: CalendarSyncService
   let dataSource: DataSource
   let metrics: CalendarSyncMetricsService
+  let contentRepository: CalendarContentRepository
   let events: FetcherCalendarEvent[]
 
   beforeAll(async () => {
@@ -47,6 +52,7 @@ describe("CalendarSyncService", () => {
     service = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
     metrics = app.get(CalendarSyncMetricsService)
+    contentRepository = app.get(CalendarContentRepository)
   })
 
   beforeEach(async () => {
@@ -114,6 +120,61 @@ describe("CalendarSyncService", () => {
       const [content] = calendarContents
       expect(content.events.length).toBe(1)
       expect(content.events[0].uid).toBe(events[0].uid)
+    })
+
+    it("recomputes a bounded ADE window without changing the stored source", async () => {
+      jest.useFakeTimers({
+        doNotFake: ["nextTick", "setImmediate"],
+        now: new Date("2026-08-25T12:00:00.000Z"),
+      })
+      const sourceUrl =
+        "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?firstDate=2020-01-01&resources=12345&projectId=-1&calType=ical&extra=a%20b&lastDate=2020-01-02#calendar"
+      const customData = {
+        auth: { username: "calendar-user", password: "calendar-password" },
+      }
+
+      const created = await service.createCalendar({
+        url: sourceUrl,
+        schoolName: "Lyon 1",
+        name: "My ADE Calendar",
+        customData,
+      })
+      const calendar = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ token: created.token })
+      const fetchCalls = icalFetcher.fetch.mock.calls as unknown as [
+        string,
+        typeof customData,
+      ][]
+      const creationUrl = new URL(fetchCalls[0][0])
+
+      expect(creationUrl.searchParams.get("firstDate")).toBe("2025-08-25")
+      expect(creationUrl.searchParams.get("lastDate")).toBe("2027-08-25")
+      expect(creationUrl.searchParams.get("resources")).toBe("12345")
+      expect(creationUrl.searchParams.get("projectId")).toBe("-1")
+      expect(creationUrl.searchParams.get("extra")).toBe("a b")
+      expect(creationUrl.hash).toBe("#calendar")
+      expect(fetchCalls[0][1]).toEqual(customData)
+      expect(calendar.url).toBe(sourceUrl)
+      expect(calendar.customData).toEqual(customData)
+
+      jest.setSystemTime(new Date("2026-08-26T12:00:00.000Z"))
+      await dataSource.getRepository(Calendar).update(calendar.id, {
+        syncPlannedAt: new Date("2026-08-26T11:00:00.000Z"),
+      })
+      await service.sync(calendar)
+
+      const resyncUrl = new URL(fetchCalls[1][0])
+      expect(resyncUrl.searchParams.get("firstDate")).toBe("2025-08-26")
+      expect(resyncUrl.searchParams.get("lastDate")).toBe("2027-08-26")
+      expect(resyncUrl.searchParams.get("resources")).toBe("12345")
+      expect(resyncUrl.searchParams.get("extra")).toBe("a b")
+      expect(
+        await dataSource.getRepository(Calendar).findOneByOrFail({
+          id: calendar.id,
+        }),
+      ).toMatchObject({ url: sourceUrl, customData })
+      jest.useRealTimers()
     })
 
     it("throws when the school does not exist", async () => {
@@ -439,6 +500,86 @@ describe("CalendarSyncService", () => {
       },
     )
 
+    it("restores timestamps when cancellation happens before persistence", async () => {
+      const original = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      const controller = new AbortController()
+      const reason = new CalendarSyncAbortError("deadline")
+      icalFetcher.fetch.mockImplementationOnce(async () => {
+        controller.abort(reason)
+        throw reason
+      })
+
+      await expect(
+        service.sync(calendar, { signal: controller.signal }),
+      ).rejects.toBe(reason)
+
+      const unchanged = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(unchanged.lastUpdatedAt).toEqual(original.lastUpdatedAt)
+      expect(unchanged.syncPlannedAt).toEqual(original.syncPlannedAt)
+      expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
+    it("does not enter the content transaction when cancellation wins after fetch", async () => {
+      const original = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      const controller = new AbortController()
+      const reason = new CalendarSyncAbortError("deadline")
+      const calendarRepository = dataSource.getRepository(Calendar)
+      const originalSave = calendarRepository.save.bind(calendarRepository)
+      jest
+        .spyOn(calendarRepository, "save")
+        .mockImplementationOnce(async (...args) => {
+          const saved = await originalSave(...args)
+          controller.abort(reason)
+          return saved
+        })
+      const transaction = jest.spyOn(contentRepository, "saveWithTransaction")
+
+      await expect(
+        service.sync(calendar, { signal: controller.signal }),
+      ).rejects.toBe(reason)
+
+      expect(transaction).not.toHaveBeenCalled()
+      const unchanged = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ id: calendar.id })
+      expect(unchanged.lastUpdatedAt).toEqual(original.lastUpdatedAt)
+      expect(unchanged.syncPlannedAt).toEqual(original.syncPlannedAt)
+      expect(await findCalendarLogs(calendar.id)).toHaveLength(0)
+    })
+
+    it("lets an entered content transaction settle atomically after abort", async () => {
+      events = [
+        fetcherCalendarEventFactory.build({
+          uid: "committed-after-boundary",
+          start: new Date("2022-01-02T07:00:00.000Z"),
+          end: new Date("2022-01-02T08:00:00.000Z"),
+        }),
+      ]
+      const controller = new AbortController()
+      const originalSave =
+        contentRepository.saveWithTransaction.bind(contentRepository)
+      jest
+        .spyOn(contentRepository, "saveWithTransaction")
+        .mockImplementationOnce(async (...args) => {
+          controller.abort(new CalendarSyncAbortError("deadline"))
+          return originalSave(...args)
+        })
+
+      await service.sync(calendar, { signal: controller.signal })
+
+      const content = await dataSource
+        .getRepository(CalendarContent)
+        .findOneByOrFail({ calendar: { id: calendar.id } })
+      expect(content.events[0].uid).toBe("committed-after-boundary")
+      expect(await findCalendarLogs(calendar.id)).toHaveLength(1)
+    })
+
     describe("syncPlannedAt", () => {
       const LYON1_URL =
         "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical"
@@ -472,7 +613,6 @@ describe("CalendarSyncService", () => {
           dueCalendar.syncPlannedAt.getTime(),
         )
       })
-
       it("plans the next sync from the interval the school declares", async () => {
         const dueCalendar = await createDueCalendar(LYON1_URL)
 

@@ -16,11 +16,12 @@
 
 ## TypeScript
 
-- `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` on top of `expo/tsconfig.base`; `npx tsc --noEmit` must stay clean. *Gate:* `mobile/tsconfig.json`.
+- `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` on top of `expo/tsconfig.base`; `npx tsc --noEmit` must stay clean. _Gate:_ `mobile/tsconfig.json`.
 
 ## Native projects: CNG
 
 - `mobile/ios/` and `mobile/android/` are **generated, gitignored, never hand-edited**. All native config flows through `app.config.ts` + config plugins; `npx expo prebuild --clean` is the only way native projects change.
+- **iPhone + iPad, portrait-only/full-screen** is the iOS platform contract (ADR [042](./decisions/042-iphone-ipad-portrait-contract.md)). `mobile/app.config.ts` owns `orientation`, `ios.supportsTablet`, and `ios.requireFullScreen`; `mobile/app.config.test.ts` checks every variant, and `cd mobile && npm run verify:ios-device-contract` proves a disposable preview prebuild generates application-target families `1,2`, full-screen presentation, and no iPad landscape orientation. iPad multitasking is intentionally disabled.
 
 ## Native deps & permission config
 
@@ -33,10 +34,22 @@ Most native deps **autolink with no `plugins` entry** (`react-native-mmkv` v4/Ni
 ## App identity: `APP_VARIANT`
 
 - Dynamic `app.config.ts`, switched on `APP_VARIANT`:
-  - unset / `production` → `fr.samuelprak.timecalendar` / "TimeCalendar" / scheme `timecalendar` — **preserves store identity** (RN ships as an *update* to the Flutter app).
+  - unset / `production` → `fr.samuelprak.timecalendar` / "TimeCalendar" / scheme `timecalendar` — **preserves store identity** (RN ships as an _update_ to the Flutter app).
   - `development` → `fr.samuelprak.timecalendar.dev` / "TimeCalendar (Dev)" / scheme `timecalendar-dev` — **coexists** with the store app on devices.
 - The `ios` / `android` / `start` npm scripts set `APP_VARIANT=development`. Switching variants requires `expo prebuild --clean`.
 - The `.dev` identifier needs its own Firebase registration (owned by the Firebase setup).
+
+## Backend capability (independent from identity and OTA)
+
+- `extra.backendEnvironmentCapability` is parsed from the dedicated build input into
+  `development | preview | production`; missing or malformed input fails closed to production.
+- Development allows local/preproduction/production and defaults local; preview allows
+  preproduction/production and defaults preproduction; production is locked to production.
+- This capability is never inferred from `APP_VARIANT`, Firebase, scheme, `__DEV__`, bundle id or
+  OTA metadata. Config matrix tests and `src/config/backend-environment.test.ts` enforce the split.
+- `EnvironmentRuntimeGate` inspects the reset journal before mounting Query, routes, startup sync
+  or notification registration. Recovery rolls forward idempotently; its watchdog must never
+  bypass an incomplete destructive reset (ADR [043](./decisions/043-backend-environment-reset.md)).
 
 ## Minimum OS floors
 
