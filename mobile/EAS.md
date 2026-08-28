@@ -77,6 +77,10 @@ OTA_CHANNEL=preview npx eas build --profile preview --platform android --local -
 Requires `eas login` (managed credentials are downloaded at build time, not stored here), plus
 Xcode, fastlane, CocoaPods and the Android SDK/NDK installed on the host.
 
+Install dependencies under the Node version pinned in `.nvmrc`. A host default `node` older than
+that pin fails `npm ci` in `mobile/` against the committed lockfile; the pinned version installs it
+unchanged.
+
 Local builds carry caveats the CLI won't remind you of:
 
 - **No build caching.** Expo does not support it for local builds.
@@ -93,9 +97,17 @@ upload — a rebuild can resolve different packages or take a new build number, 
 no longer refers to it.
 
 ```bash
-npx eas submit --profile preview --platform ios     --path ./build/preview-ios.ipa
-npx eas submit --profile preview --platform android --path ./build/preview-android.aab
+OTA_CHANNEL=preview npx eas submit --profile preview --platform ios     --path ./build/preview-ios.ipa --groups "The team"
+OTA_CHANNEL=preview npx eas submit --profile preview --platform android --path ./build/preview-android.aab
 ```
+
+`OTA_CHANNEL` is required to submit, not only to build: `eas submit` resolves the Expo config, and
+`app.config.ts` rejects an unset channel on a release build. Without it the submit aborts with
+`expo/bin/cli config --json exited with non-zero code: 1` before anything is uploaded. The build
+profile's `env` does not cover this — it applies to `build`, not `submit`.
+
+`--groups` attaches the upload to internal TestFlight groups (iOS). Internal groups need no Beta App
+Review, so the build reaches those testers as soon as Apple finishes processing.
 
 `submit.preview` and `submit.production` in `eas.json` contain **no secrets**. iOS commits the
 existing App Store Connect app ID (`ascAppId`); EAS holds the project-scoped App Store Connect API
