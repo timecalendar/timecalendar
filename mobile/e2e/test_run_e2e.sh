@@ -328,10 +328,12 @@ retryable_case() {
   assert_retried_then_passed "$fixture" "$what"
 }
 
+# `expected_status`, not `status`: `run_fixture` assigns a global `status`, and
+# bash dynamic scoping would land that write in this function's local.
 terminal_case() {
-  local scenario="$1" status="$2" what="$3"
+  local scenario="$1" expected_status="$2" what="$3"
   fixture="$(make_fixture "$scenario")"
-  run_fixture "$fixture" "$scenario" "$status" --startup-attempts 4
+  run_fixture "$fixture" "$scenario" "$expected_status" --startup-attempts 4
   assert_terminal "$fixture" "$what"
 }
 

@@ -41,8 +41,10 @@ import fs from "node:fs"
 // `scrollUntilVisible`, which asserts visibility after scrolling. Matching the
 // family by prefix means a future `assert*` command counts as evidence by
 // default, which errs toward "terminal": the safe direction.
+// A missing kind is not an assertion, so it falls through to the non-startup
+// branch and counts as terminal evidence — the same safe direction.
 const isAssertionCommand = (kind) =>
-  kind.startsWith("assert") || kind.startsWith("scrollUntilVisible")
+  Boolean(kind?.startsWith("assert") || kind?.startsWith("scrollUntilVisible"))
 
 // A command has been *evaluated* once it reaches a terminal state. RUNNING and
 // PENDING mean Maestro died mid-command; SKIPPED means a `when:` guard declined
