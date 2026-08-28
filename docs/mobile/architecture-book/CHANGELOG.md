@@ -6,6 +6,13 @@
   development app variant, independent development backend capability, and platform-local URL
   in every Android/iOS prebuild and release-compilation step, with step-scoped workflow proof
   (testing.md).
+- Widened the ADR 038 iOS startup-retry class from "first-`launchApp` XCTest transport failure"
+  to the two shapes a driver-startup failure actually takes, the second being the driver never
+  binding its port (`IOSDriverTimeoutException`). Maestro raises that while creating the session,
+  before it opens the flow, so its output carries no flow command — anchoring the classifier on
+  `launchApp` made the most canonical startup flake terminal and spent none of the four-attempt
+  budget. Assertion, application, and unknown failures stay terminal on first occurrence
+  (ADR 038, testing.md).
 - Required Maestro flow `id:` selectors to resolve against real `mobile/src` testIDs, enforced by
   `mobile/e2e/maestro-selectors.test.ts` in the baseline (not the on-demand native) gate.
   Selectors match as regexes, testIDs count as JSX attributes and object properties, and

@@ -55,6 +55,16 @@ case "$SCENARIO" in
     echo 'launchApp setPermissions: java.net.ConnectException: Connection refused' >&2
     exit 42
     ;;
+  driver_timeout)
+    # The driver never bound its port, so Maestro aborts before it opens the
+    # flow: the output names no flow command at all.
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      echo 'iOS driver not ready in time, consider increasing timeout by configuring MAESTRO_DRIVER_STARTUP_TIMEOUT env variable' >&2
+      echo 'xcuitest.installer.LocalXCTestInstaller$IOSDriverTimeoutException' >&2
+      exit 42
+    fi
+    exit 0
+    ;;
   assertion)
     if [ "$flow" = alpha ]; then
       echo 'launchApp completed; Assertion failed: assertVisible element not found' >&2
@@ -106,6 +116,13 @@ assert_count 2 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+
+fixture="$(make_fixture driver_timeout)"
+run_fixture "$fixture" driver_timeout 0 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+assert_count 1 '^beta:' "$fixture/calls"
+grep -q 'retryable XCTest driver-startup failure' "$fixture/output" || \
+  fail 'a pre-flow iOS driver-startup timeout was not classified as retryable'
 
 fixture="$(make_fixture assertion)"
 run_fixture "$fixture" assertion 37 --startup-attempts 4

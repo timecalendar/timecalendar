@@ -22,7 +22,7 @@
 #     --native    Pass through to the lifecycle (Docker-less hosts, e.g. macOS
 #                 CI): the caller provisions Postgres/Redis; see ci/e2e-server.sh.
 #     --startup-attempts N
-#                 Retry a proven XCTest startup transport failure up to N total
+#                 Retry a proven XCTest driver-startup failure up to N total
 #                 attempts per flow (1-4, default 1). Other failures are terminal.
 #
 # Prerequisites and CI notes: see e2e/README.md.
@@ -102,6 +102,17 @@ is_retryable_startup_failure() {
     return 1
   fi
 
+  # (a) The XCTest driver never bound its port at all. Maestro aborts inside
+  # MaestroSessionManager.createIOS, *before* it opens the flow, so the output
+  # carries no flow command to anchor on — matching on `launchApp` below would
+  # miss it. This is the same cold start MAESTRO_DRIVER_STARTUP_TIMEOUT bounds,
+  # and relaunching the driver in a fresh process is its documented remedy.
+  if grep -Eiq 'IOSDriverTimeoutException|iOS driver not ready in time' "$output_file"; then
+    return 0
+  fi
+
+  # (b) The driver came up, then its transport dropped while the flow was
+  # launching the app.
   grep -Eiq 'launchApp|setPermissions' "$output_file" && \
     grep -Eiq \
       'XCTest driver.*not listening|driver.*failed to listen|connection refused|connectexception.*refused|failed to connect.*(localhost|127\.0\.0\.1)' \
@@ -130,7 +141,7 @@ run_flow() {
 
     if is_retryable_startup_failure "$attempt_log"; then
       if [ "$attempt" -lt "$STARTUP_ATTEMPTS" ]; then
-        log "flow ${flow_name}: retryable XCTest startup transport failure; starting a fresh Maestro process"
+        log "flow ${flow_name}: retryable XCTest driver-startup failure; starting a fresh Maestro process"
         attempt=$((attempt + 1))
         continue
       fi

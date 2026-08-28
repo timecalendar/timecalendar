@@ -39,7 +39,7 @@ catch the next real break. The three matching rules below are load-bearing.
 
 ## 5. Update binding and operator documentation
 
-- [x] 5.1 Update `docs/mobile/architecture-book/testing.md` so release-config native E2E builds require the explicit development backend capability with the development variant and platform URL, and add the rule change to `docs/mobile/architecture-book/CHANGELOG.md`; preserve ADR 038 unchanged because this correction introduces no new costly-to-reverse decision.
+- [x] 5.1 Update `docs/mobile/architecture-book/testing.md` so release-config native E2E builds require the explicit development backend capability with the development variant and platform URL, and add the rule change to `docs/mobile/architecture-book/CHANGELOG.md`; preserve ADR 038 unchanged because this correction introduces no new costly-to-reverse decision. (Superseded in one respect by §8.3: gate `33167661438` disproved a factual claim ADR 038 makes about its own retry classifier, so that paragraph is corrected in place there. The decision itself — per-flow processes, a bounded budget, terminal assertions — still stands unchanged.)
 - [x] 5.2 Update `mobile/e2e/README.md` and `docs/agent-dev-environment.md` build examples and CI contract to include `BACKEND_ENVIRONMENT_CAPABILITY=development` for Android and iOS.
 - [x] 5.3 Extend the `testing.md` Maestro bullet to record the selector rule: flow selectors resolve against real `mobile/src` `testID`s, enforced by `mobile/e2e/maestro-selectors.test.ts` in the baseline gate; note the calendar-family agenda switch goes through the `calendar-view` control. Append the corresponding line to `docs/mobile/architecture-book/CHANGELOG.md`. Treat both files as sensitive binding documentation and keep the edits to the existing contract — no new ADR.
 - [x] 5.4 Confirm the documentation adds no credential, device-install, or console-registration action; therefore no `(HUMAN: …)` migration inbox note is required.
@@ -57,3 +57,20 @@ catch the next real break. The three matching rules below are load-bearing.
 - [ ] 7.2 Inspect the Android and iOS logs far enough to confirm the seeded calendar import traverses the real platform-local server path AND that the complete flow set runs through: the calendar family past the agenda switch, `ical-import.yaml` through the school-step entry, and `onboarding.yaml` through the header search bar. Retain ADR 038 terminal-failure semantics.
 - [ ] 7.3 A further stale selector or text assertion surfaced by the gate in a flow the native run had not reached since the UI rework (`environment-switch`, `event-checklists`, `home`, `personal-events`, `settings`, `user-calendars` are the unreached six) is an **in-scope material fix on this ticket**, not a new one — repair it in `mobile/.maestro/**` and take a fresh gate. Escalate to the Founding Engineer only if a repair genuinely requires a `mobile/src` change (the [TIM-265](/TIM/issues/TIM-265) boundary) — most likely the Android native-stack `SearchView` rendering collapsed to an icon, which would make the `"Search schools"` placeholder unmatchable until expanded.
 - [ ] 7.4 Record the exact commit SHA and direct workflow/job links in the issue handoff, naming which flows passed. No separate QA gate applies; the Reviewer performs fresh exact-head preflight and autonomously merges after green CI.
+
+## 8. Classify the pre-flow iOS driver-startup timeout as retryable
+
+Gate `33167661438` at `288a7704` proved the §1–§5 work on iOS as far as it could: the
+server seeded, the stack came up, and then flow `about` — the _first_ flow — never ran,
+because Maestro could not create the iOS session at all (`IOSDriverTimeoutException`,
+4 min of `MAESTRO_DRIVER_STARTUP_TIMEOUT`). The job had `--startup-attempts 4` available
+and spent one, because `is_retryable_startup_failure` anchors on `launchApp`, which that
+output cannot contain: the abort happens in `MaestroSessionManager.createIOS`, before the
+flow is opened. The most canonical possible startup failure was classified `terminal
+non-startup failure; not retrying`. This is a real gap in the classifier, not a rerun
+excuse — the ADR 038 retry budget exists for exactly this flake and never got to spend it.
+
+- [x] 8.1 Add a second, independent branch to `is_retryable_startup_failure` in `mobile/e2e/run_e2e.sh` matching `IOSDriverTimeoutException|iOS driver not ready in time`, placed after the assertion guard (so assertion evidence still wins) and **before** the `launchApp` branch, since this shape has no flow command to anchor on. Leave the existing transport branch byte-identical.
+- [x] 8.2 Add a `driver_timeout` scenario to `mobile/e2e/test_run_e2e.sh` whose fake Maestro emits the real CI signature with **no** `launchApp` line, and assert the flow is attempted twice, the later flow still runs, and the retry reason is logged. Replay the classifier against the captured job-`98836832386` output to confirm it flips terminal → retryable.
+- [x] 8.3 Widen the ADR 038 decision paragraph, `docs/mobile/architecture-book/testing.md`, and `mobile/e2e/README.md` from "first-`launchApp` transport failure" to the two-shape driver-startup class, and append the change to `docs/mobile/architecture-book/CHANGELOG.md`. ADR 038's decision is refined in place, not replaced: per-flow processes, the bounded budget, and terminal assertions are all unchanged. Flag the ADR edit as a sensitive binding-document surface in the handoff.
+- [x] 8.4 Repair the OpenSpec delta's section headers in the same commit: `Flow selectors resolve against the shipped app` does not exist in `openspec/specs/mobile-e2e/spec.md`, so it must sit under `## ADDED Requirements` or `openspec archive` aborts at merge time. Carry the widened retry contract as a genuine `MODIFIED` of the shipped `XCTest startup retries cannot mask flow failures`.

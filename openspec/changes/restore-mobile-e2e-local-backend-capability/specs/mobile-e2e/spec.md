@@ -26,6 +26,89 @@ The `development` app variant SHALL be able to reach a server on the host machin
 - **WHEN** the backend capability is missing or malformed, including alongside a development app identity
 - **THEN** the backend capability remains failed closed to production
 
+### Requirement: CI runs Maestro on both platforms
+
+CI SHALL run every top-level Maestro flow on an Android emulator (Linux runner) and an iOS
+simulator (macOS runner), using release-config development-variant binaries built on the
+runners—no Metro and no EAS. Both jobs SHALL install the same explicitly pinned Maestro
+version, print it, and preserve debug output and server logs on failure. A recovery PR that
+changes this build contract SHALL pass the baseline gate and both native jobs on one exact
+reviewed head, and its handoff SHALL record that commit plus direct run/job links.
+
+#### Scenario: Android e2e builds within explicit hosted-runner bounds
+
+- **WHEN** the `e2e-mobile-android` job runs
+- **THEN** it loads the `build-server` image artifact, builds the release APK via
+  `expo prebuild` and Gradle with a 3072 MiB heap, 1024 MiB Metaspace, at most two workers,
+  and no persistent daemon, installs it on the hardware-accelerated emulator, and proceeds to
+  every Maestro flow without a Metaspace OOM or orphan Gradle process
+
+#### Scenario: iOS e2e uses isolated XCTest lifecycles
+
+- **WHEN** the `e2e-mobile-ios` job runs on a macOS runner
+- **THEN** it provisions Postgres/Redis natively, builds and installs the Release simulator
+  app, boots the server once through native mode, and invokes every top-level flow in a fresh
+  Maestro process so a dead driver from one flow is not reused by another
+
+#### Scenario: CI records the selected native toolchain
+
+- **WHEN** either native job installs Maestro and the iOS job selects its simulator
+- **THEN** logs contain Maestro 2.8.0 exactly and the iOS logs also contain the selected Xcode
+  version/path, simulator name and UDID, and iOS runtime
+
+#### Scenario: Failures leave evidence
+
+- **WHEN** a native build or Maestro flow fails in CI
+- **THEN** the job remains failed and uploads Maestro debug output plus server logs without
+  introducing secrets
+
+#### Scenario: One exact head proves seeded local routing on both platforms
+
+- **WHEN** the recovery PR is ready for review
+- **THEN** its baseline gate and both named native jobs report success for the same commit SHA
+- **AND** the flow set completes seeded calendar import through the real local server and the full calendar-family round trip — agenda switch, seeded-title assertion, event details, hide/un-hide — before later B10 assertions
+- **AND** the issue handoff records the exact SHA and direct run/job links, and names any flow that remains blocked by a separately ticketed stale selector rather than reporting the full set green
+
+### Requirement: XCTest startup retries cannot mask flow failures
+
+The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
+A failed attempt SHALL be retried only when its captured output proves the local XCTest
+driver never reached a usable state and contains no completed assertion or assertion-failure
+evidence. That proof has two shapes and both SHALL be retryable: Maestro aborting while it
+creates the iOS session because the driver did not bind its port within the configured
+startup timeout — which happens before the flow is opened, so that output names no flow
+command and cannot be anchored on `launchApp` — or the first `launchApp`/`setPermissions`
+failing because the driver was not listening or refused the connection. Unknown,
+application, and assertion failures SHALL be terminal on their first occurrence.
+
+#### Scenario: A driver startup failure is retried within the bound
+
+- **WHEN** a flow's first `launchApp` fails during `setPermissions` with a known XCTest
+  driver-not-listening or local connection-refused signature before any assertion runs
+- **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
+  and attempt number, and never exceeds the configured maximum attempts
+
+#### Scenario: A driver that never binds its port is retried
+
+- **WHEN** Maestro aborts before opening the flow because the iOS driver was not ready in
+  time, so the attempt output carries the driver-startup timeout and no flow command at all
+- **THEN** the harness classifies it as a startup failure rather than an unknown one, and
+  starts a fresh Maestro process for the same flow within the configured bound
+
+#### Scenario: A real assertion failure is never retried
+
+- **WHEN** Maestro reports a missing element, content wait timeout, failed assertion, or any
+  failure not positively classified as driver startup
+- **THEN** the harness returns that non-zero result immediately, does not run the flow again,
+  and does not continue to later flows
+
+#### Scenario: Android and normal local runs remain single-attempt
+
+- **WHEN** the harness is invoked without the explicit iOS startup-attempt option
+- **THEN** each top-level flow is attempted exactly once
+
+## ADDED Requirements
+
 ### Requirement: Flow selectors resolve against the shipped app
 
 Every selector id used by a Maestro flow SHALL resolve to a `testID` that exists in
@@ -81,46 +164,3 @@ interaction shared by both platforms, with no per-platform selector or branch.
 
 - **WHEN** an id listed in the proof's known-stale allowlist is reintroduced as a real `testID`
 - **THEN** the proof fails until that id is removed from the allowlist
-
-### Requirement: CI runs Maestro on both platforms
-
-CI SHALL run every top-level Maestro flow on an Android emulator (Linux runner) and an iOS
-simulator (macOS runner), using release-config development-variant binaries built on the
-runners—no Metro and no EAS. Both jobs SHALL install the same explicitly pinned Maestro
-version, print it, and preserve debug output and server logs on failure. A recovery PR that
-changes this build contract SHALL pass the baseline gate and both native jobs on one exact
-reviewed head, and its handoff SHALL record that commit plus direct run/job links.
-
-#### Scenario: Android e2e builds within explicit hosted-runner bounds
-
-- **WHEN** the `e2e-mobile-android` job runs
-- **THEN** it loads the `build-server` image artifact, builds the release APK via
-  `expo prebuild` and Gradle with a 3072 MiB heap, 1024 MiB Metaspace, at most two workers,
-  and no persistent daemon, installs it on the hardware-accelerated emulator, and proceeds to
-  every Maestro flow without a Metaspace OOM or orphan Gradle process
-
-#### Scenario: iOS e2e uses isolated XCTest lifecycles
-
-- **WHEN** the `e2e-mobile-ios` job runs on a macOS runner
-- **THEN** it provisions Postgres/Redis natively, builds and installs the Release simulator
-  app, boots the server once through native mode, and invokes every top-level flow in a fresh
-  Maestro process so a dead driver from one flow is not reused by another
-
-#### Scenario: CI records the selected native toolchain
-
-- **WHEN** either native job installs Maestro and the iOS job selects its simulator
-- **THEN** logs contain Maestro 2.8.0 exactly and the iOS logs also contain the selected Xcode
-  version/path, simulator name and UDID, and iOS runtime
-
-#### Scenario: Failures leave evidence
-
-- **WHEN** a native build or Maestro flow fails in CI
-- **THEN** the job remains failed and uploads Maestro debug output plus server logs without
-  introducing secrets
-
-#### Scenario: One exact head proves seeded local routing on both platforms
-
-- **WHEN** the recovery PR is ready for review
-- **THEN** its baseline gate and both named native jobs report success for the same commit SHA
-- **AND** the flow set completes seeded calendar import through the real local server and the full calendar-family round trip — agenda switch, seeded-title assertion, event details, hide/un-hide — before later B10 assertions
-- **AND** the issue handoff records the exact SHA and direct run/job links, and names any flow that remains blocked by a separately ticketed stale selector rather than reporting the full set green
