@@ -4,6 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HARNESS="$SCRIPT_DIR/run_e2e.sh"
+FEEDBACK_FLOW="$SCRIPT_DIR/../.maestro/feedback.yaml"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/timecalendar-e2e-harness.XXXXXX")"
 trap 'rm -rf "$TEST_ROOT"' EXIT
 
@@ -18,6 +19,22 @@ assert_count() {
   [ "$actual" -eq "$expected" ] || \
     fail "expected $expected occurrence(s) of '$pattern' in $file, got $actual"
 }
+
+assert_literal_block() {
+  local description="$1" expected="$2" file="$3" contents
+  contents="$(<"$file")"
+  [[ "$contents" == *"$expected"* ]] || fail "$description changed in $file"
+}
+
+assert_literal_block \
+  'Feedback reveal-before-wait-before-tap sequence' \
+  $'- tapOn: "Settings"\n- scrollUntilVisible:\n    element:\n      id: "settings-feedback"\n    direction: DOWN\n    timeout: 60000\n- extendedWaitUntil:\n    visible:\n      id: "settings-feedback"\n    timeout: 60000\n- tapOn:\n    id: "settings-feedback"' \
+  "$FEEDBACK_FLOW"
+
+assert_literal_block \
+  'Feedback mail-safe validation tail' \
+  $'- extendedWaitUntil:\n    visible: "Feedback"\n    timeout: 60000\n- tapOn:\n    id: "feedback-submit"\n- assertVisible: "Enter your e-mail address."\n- assertVisible: "Enter your message."' \
+  "$FEEDBACK_FLOW"
 
 make_fixture() {
   local scenario="$1"
