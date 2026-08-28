@@ -59,6 +59,12 @@ export function EnvironmentSettingsControl() {
     )
   }
 
+  const value = t(
+    switching
+      ? "environment.selector.switching"
+      : `environment.choice.${current}`,
+  )
+
   return (
     <SettingsRow
       first
@@ -66,11 +72,8 @@ export function EnvironmentSettingsControl() {
       accessibilityRole="button"
       icon={{ ios: "server.rack", android: "dns", web: "dns" }}
       label={t("environment.selector.label")}
-      secondary={t(
-        switching
-          ? "environment.selector.switching"
-          : `environment.choice.${current}`,
-      )}
+      accessibilityLabel={t("environment.selector.a11yLabel", { value })}
+      secondary={value}
       hint={t("environment.selector.hint")}
       onPress={choose}
       testID="settings-environment"
