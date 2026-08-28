@@ -44,8 +44,12 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
+# The carousel's first-page title, NOT the bare app name — `TimeCalendar` is
+# `app.name` verbatim and does render, but on the home screen, not here (see
+# onboarding.yaml for the full note). Android reached this flow first and failed
+# here against a screenshot showing the welcome page correctly rendered.
 - extendedWaitUntil:
-    visible: "TimeCalendar"
+    visible: "Welcome to TimeCalendar!"
     timeout: 60000
 # Advance the welcome carousel and take the final CTA → pushes /onboarding/school.
 - tapOn:

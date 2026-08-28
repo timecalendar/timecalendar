@@ -55,18 +55,29 @@ appId: fr.samuelprak.timecalendar.dev
 # event returned by POST /calendars/sync. Generous timeout so the just-triggered
 # sync settles before the first synced-title assertion (do NOT weaken this to an
 # empty/reachability assertion — that reintroduces the gap this flow closes).
+#
+# The `(,.*)?` suffix is REQUIRED, not cosmetic. An agenda tile is a Pressable with
+# accessibilityRole="button" + accessibilityLabel (agenda-list.tsx), so XCUITest
+# collapses it into ONE element exposing only the composed label
+# `E2E Today Lecture, 14:00 – 16:00 Room E2E Lecture. View details` — the child
+# ThemedText title is not in the iOS hierarchy at all. A Maestro text selector is a
+# FULLY ANCHORED regex, so the bare title matched nothing and the assertion failed
+# against a screen that visibly showed the event. The optional `,`-anchored tail
+# matches the composed label on iOS AND the bare text node on Android, with no
+# platform fork, and still cannot match a different title that merely starts the
+# same way. Guarded by mobile/e2e/maestro-selectors.test.ts.
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
 # Tap the synced tile → its REAL event-details (a Stack sibling of (tabs)).
 - tapOn:
-    text: "E2E Today Lecture"
+    text: "E2E Today Lecture(,.*)?"
 # Event-details shows REAL content — the seeded title + location render. This is
 # the round-trip proof: the not-found screen has no title/location, so a visible
 # seeded title + location IS the resolved-details state (the old reachability flow
 # asserted the not-found message instead — locale-specific text we avoid here so
 # the assertion stays cross-platform + locale-stable).
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
 - assertVisible: "Room E2E Lecture"

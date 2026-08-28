@@ -53,8 +53,17 @@ appId: fr.samuelprak.timecalendar.dev
 # The welcome surface renders. Generous timeout: a release-config iOS cold start +
 # JS bundle load can land just past Maestro's ~17s default. extendedWaitUntil is
 # the assert-with-timeout.
+#
+# Assert the carousel's FIRST-PAGE title, not the bare app name. `TimeCalendar` is
+# `app.name` verbatim, so it looks valid and does render — but on the HOME screen,
+# not here: the carousel (482f134) renders `onboarding.page.welcome.title`, and a
+# Maestro text selector is a fully anchored regex, so the bare app name matched
+# nothing on the very screen this step exists to prove. The id guard cannot catch
+# this one — both strings are real, they just belong to different screens — so the
+# EN literal is asserted directly, as onboarding.pageIndicator's neighbours below
+# already do (the e2e device runs in EN).
 - extendedWaitUntil:
-    visible: "TimeCalendar"
+    visible: "Welcome to TimeCalendar!"
     timeout: 60000
 # Advance welcome → agenda → notifications through the stable, platform-neutral
 # control and prove the final page before entering the existing school picker.

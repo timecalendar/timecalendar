@@ -48,7 +48,7 @@ appId: fr.samuelprak.timecalendar.dev
 # Real details render (the seeded title), proving the synced event resolved (NOT
 # the not-found state). Generous timeout for the cold start + JS bundle load.
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
 # Add a checklist item — the add button auto-focuses the new row's input.
 - tapOn:

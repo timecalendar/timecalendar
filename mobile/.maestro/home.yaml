@@ -44,7 +44,9 @@ appId: fr.samuelprak.timecalendar.dev
 # The real synced today event renders on the today timeline — `E2E Today Lecture`
 # is a today-anchored seeded event. Its presence (NOT "Nothing planned.") is the
 # round-trip proof (do NOT weaken this to the empty-day state — that reintroduces
-# the gap this flow closes).
+# the gap this flow closes). `(,.*)?` because a today-timeline tile is an
+# accessibility container labelled `{{title}}, {{time}} {{location}}`, so iOS
+# exposes only that composed label — see calendar.yaml for the full rationale.
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000

@@ -13,6 +13,15 @@
   `launchApp` made the most canonical startup flake terminal and spent none of the four-attempt
   budget. Assertion, application, and unknown failures stay terminal on first occurrence
   (ADR 038, testing.md).
+- Required a Maestro seeded-title text selector to match every surface that renders that title,
+  enforced by a second guard in `mobile/e2e/maestro-selectors.test.ts` in the baseline gate. An
+  agenda or today-timeline tile is an accessibility container whose label _extends_ the title
+  (`{{title}}, {{time}} {{location}}`); XCUITest collapses it and drops the child text, and a
+  Maestro text selector is a fully anchored regex — so a bare title matched nothing on iOS
+  against a screen that plainly showed the event, and one `assertNotVisible` passed vacuously.
+  Flows now use `"<title>(,.*)?"`, one cross-platform form with no loss of strength. Distinct
+  from a stale id and from a below-the-fold control: the id guard is correct to stay silent,
+  since only the iOS projection of a real string differs (testing.md).
 - Required Maestro flow `id:` selectors to resolve against real `mobile/src` testIDs, enforced by
   `mobile/e2e/maestro-selectors.test.ts` in the baseline (not the on-demand native) gate.
   Selectors match as regexes, testIDs count as JSX attributes and object properties, and

@@ -50,7 +50,7 @@ appId: fr.samuelprak.timecalendar.dev
           optional: true
 # Real details render, proving the synced event resolved (NOT the not-found state).
 - extendedWaitUntil:
-    visible: "E2E Today Seminar"
+    visible: "E2E Today Seminar(,.*)?"
     timeout: 60000
 # Hide it: the header "Hide" action opens the native Alert chooser; "Hide this
 # event" hides by uid and pops back.
@@ -63,6 +63,11 @@ appId: fr.samuelprak.timecalendar.dev
 # synced events render — but `E2E Today Seminar` is filtered out while
 # `E2E Today Lecture` (NOT hidden) still renders (proving the filter hides ONLY the
 # target, not an empty-view false positive).
+#
+# The `(,.*)?` suffix carries real weight on the assertNotVisible below: an agenda
+# tile is an iOS accessibility container exposing only its composed label (see
+# calendar.yaml), so the bare title matched nothing on iOS and the "it is hidden"
+# assertion passed VACUOUSLY — it would have passed with the event still on screen.
 - stopApp
 - openLink: timecalendar-dev://calendar
 - runFlow:
@@ -80,9 +85,9 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     text: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
-- assertNotVisible: "E2E Today Seminar"
+- assertNotVisible: "E2E Today Seminar(,.*)?"
 # Open the hidden-events management screen and assert the hidden event is listed.
 - stopApp
 - openLink: timecalendar-dev://hidden-events
@@ -94,7 +99,7 @@ appId: fr.samuelprak.timecalendar.dev
           text: "Open"
           optional: true
 - extendedWaitUntil:
-    visible: "E2E Today Seminar"
+    visible: "E2E Today Seminar(,.*)?"
     timeout: 60000
 # Un-hide it (a11y label "Un-hide <title>" — unambiguous with a single hidden event).
 - tapOn:
@@ -117,5 +122,5 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     text: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Seminar"
+    visible: "E2E Today Seminar(,.*)?"
     timeout: 60000
