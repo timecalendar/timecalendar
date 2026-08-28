@@ -12,6 +12,10 @@
 
 ## 2026-08-27
 
+- Added the independent backend capability, fixed endpoint allowlist, visible preview/development
+  selector, persistent non-production marker and journaled destructive cross-store reset. ADR 043
+  records fail-closed production behavior, state classification and the future-auth participant
+  invariant; all four release fingerprints changed and require fresh native builds.
 - Restored the iPhone+iPad App Store continuity contract while retaining portrait-only,
   full-screen behavior and intentionally disabling iPad multitasking. Source-config tests and a
   disposable generated-native assertion enforce device families `1,2`, full-screen presentation,

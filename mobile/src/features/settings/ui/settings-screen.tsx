@@ -6,6 +6,10 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources"
+import {
+  EnvironmentSettingsControl,
+  getBackendEnvironmentCapability,
+} from "@/features/environment"
 import { deriveCalendarSummary } from "@/features/settings/data"
 import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
@@ -107,6 +111,8 @@ export function SettingsScreen() {
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const summary = deriveCalendarSummary(calendars, loaded)
+  const showEnvironmentControl =
+    getBackendEnvironmentCapability() !== "production"
 
   const secondary =
     summary.state === "loaded" && summary.calendarCount === 0
@@ -184,6 +190,14 @@ export function SettingsScreen() {
                 ))}
             </SettingsSection>
           ))}
+          {showEnvironmentControl ? (
+            <SettingsSection
+              title={t("environment.selector.section")}
+              testID="settings-section-environment"
+            >
+              <EnvironmentSettingsControl />
+            </SettingsSection>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

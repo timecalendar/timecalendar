@@ -55,15 +55,29 @@ hang, and the mutator's existing success/error contract (base-URL prefix, JSON h
   behavior change to the success path)
 
 ### Requirement: Base URL is configurable per environment
-The mutator's base URL SHALL resolve from `EXPO_PUBLIC_API_URL` when set, defaulting to the production API URL (`https://api.timecalendar.host:1443`) otherwise.
 
-#### Scenario: Development override
-- **WHEN** the app is built/started with `EXPO_PUBLIC_API_URL` pointing at a local server
-- **THEN** all generated operations target that URL
+Every generated request SHALL resolve its base URL at call time through the typed backend-environment seam. Production SHALL map exactly to `https://api-v2.timecalendar.app`, preprod exactly to `https://preprod-api.timecalendar.app`, and local only to the valid absolute HTTP(S) `EXPO_PUBLIC_API_URL` compiled into a development build. The generated client and mutator contract SHALL expose no custom URL input; capability-aware persistence validation SHALL prevent a production runtime from resolving any other URL.
 
-#### Scenario: No override set
-- **WHEN** `EXPO_PUBLIC_API_URL` is not set
-- **THEN** operations target the production API URL
+#### Scenario: Development local selection
+
+- **WHEN** a development build with a valid developer-configured `EXPO_PUBLIC_API_URL` has local effective
+- **THEN** every generated operation targets that compiled URL
+
+#### Scenario: Preview preprod default
+
+- **WHEN** a preview build has no valid persisted selection
+- **THEN** every generated operation targets `https://preprod-api.timecalendar.app`
+
+#### Scenario: Production is locked
+
+- **WHEN** a production or fail-closed build resolves a request while storage contains any malformed or non-production selection
+- **THEN** the operation targets `https://api-v2.timecalendar.app`
+
+#### Scenario: A completed switch changes subsequent requests only
+
+- **WHEN** the reset protocol commits an allowed target and reloads
+- **THEN** requests after reload resolve the target environment at call time
+- **AND** no request runs during the quiesced reset interval
 
 ### Requirement: TanStack Query runtime is mounted at the app root
 `mobile/` SHALL install `@tanstack/react-query` v5 and mount a `QueryClientProvider` in the root layout so any screen can use generated hooks. Query defaults SHALL remain stock (no project-specific policy yet).

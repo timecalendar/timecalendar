@@ -1,5 +1,14 @@
 import type { ConfigContext, ExpoConfig } from "expo/config"
 
+type BackendEnvironmentCapability = "development" | "preview" | "production"
+
+const parseBackendEnvironmentCapability = (
+  value: unknown,
+): BackendEnvironmentCapability =>
+  value === "development" || value === "preview" || value === "production"
+    ? value
+    : "production"
+
 const getOtaChannel = (
   isDev: boolean,
 ): "preview" | "production" | undefined => {
@@ -18,6 +27,9 @@ const getOtaChannel = (
 export default ({ config }: ConfigContext): ExpoConfig => {
   const isDev = process.env.APP_VARIANT === "development"
   const otaChannel = getOtaChannel(isDev)
+  const backendEnvironmentCapability = parseBackendEnvironmentCapability(
+    process.env.BACKEND_ENVIRONMENT_CAPABILITY,
+  )
   const appId = isDev
     ? "fr.samuelprak.timecalendar.dev"
     : "fr.samuelprak.timecalendar"
@@ -201,6 +213,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // variant e2e build) nor scheme-sniffing — is the security boundary that keeps
       // the import inert in production. Pure JS config; no fingerprint bump.
       appVariant: isDev ? "development" : "production",
+      backendEnvironmentCapability,
     },
     updates: isDev
       ? { enabled: false }

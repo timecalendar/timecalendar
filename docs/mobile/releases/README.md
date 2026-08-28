@@ -46,17 +46,17 @@ now blocks the first preview** — everything remaining is an operator act with 
 
 ## Decisions supplied by the owner
 
-| Decision                 | Answer                                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| v4 identity              | Replace the existing Flutter listing                                                                           |
-| Apple access             | Apple Developer and App Store Connect access available                                                         |
-| Expo ownership           | Keep the current personal Expo account for now                                                                 |
-| First preview            | Store-internal first: TestFlight + Play internal                                                               |
-| Recovery custody         | Vaultwarden                                                                                                    |
-| Operator model           | Owner bootstraps; CI/automation later                                                                          |
+| Decision                 | Answer                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| v4 identity              | Replace the existing Flutter listing                                                                      |
+| Apple access             | Apple Developer and App Store Connect access available                                                    |
+| Expo ownership           | Keep the current personal Expo account for now                                                            |
+| First preview            | Store-internal first: TestFlight + Play internal                                                          |
+| Recovery custody         | Vaultwarden                                                                                               |
+| Operator model           | Owner bootstraps; CI/automation later                                                                     |
 | Android Play App Signing | **Confirmed enabled**; Play signs releases, and the owner holds the upload key, backed up in three places |
-| Build host               | The owner's macOS host, via `eas build --local` — no EAS build quota, free Expo plan                          |
-| Release selection        | Annotated git tags on `main`; no long-lived release branch                                                    |
+| Build host               | The owner's macOS host, via `eas build --local` — no EAS build quota, free Expo plan                      |
+| Release selection        | Annotated git tags on `main`; no long-lived release branch                                                |
 
 ## Vocabulary
 
@@ -75,6 +75,18 @@ now blocks the first preview** — everything remaining is an operator act with 
 [040](../architecture-book/decisions/040-local-store-builds-and-store-preview.md); the commands
 live in the [EAS operator guide](../../../mobile/EAS.md). The [OTA](../ota/README.md) folder is
 **exploration** — how that decision was reached — and is not maintained against the config.
+
+## Backend selection in release lanes
+
+Backend capability is independent from app identity and OTA channel. Store-preview builds use the
+production identity/Firebase project and preview OTA channel, but explicitly default to
+preproduction and show a fixed preproduction/production Settings selector. Production builds are
+locked to production and render no selector. Switching confirms a destructive local reset and
+reload; a persistent marker identifies every non-production screen and screenshot.
+
+The capability changed all four SDK 56 preview/production fingerprints, so the next iOS and Android
+artifact in both lanes must be a fresh native build. That consequence is recorded here only: this
+change performs and authorizes no build, submission, OTA publish, channel promotion or rollout.
 
 See also the
 [(HUMAN: first store-preview bootstrap) inbox note](../../react-native-migration/inbox/2026-08-26-mobile-release-bootstrap.md).
