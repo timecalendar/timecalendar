@@ -16,6 +16,7 @@ jest.mock("modules/fetch/fetchers/ical-fetcher", () => ({
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { CalendarSyncModule } from "modules/calendar-sync/calendar-sync.module"
 import { CalendarSyncAllService } from "modules/calendar-sync/services/calendar-sync-all.service"
+import { CalendarSyncService } from "modules/calendar-sync/services/calendar-sync.service"
 import { calendarEventFactory } from "modules/calendar/factories/calendar-event.factory"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { Calendar } from "modules/calendar/models/calendar.entity"
@@ -27,12 +28,14 @@ import { DataSource } from "typeorm"
 describe("CalendarSyncAllService", () => {
   let app: NestExpressApplication
   let service: CalendarSyncAllService
+  let calendarSyncService: CalendarSyncService
   let dataSource: DataSource
   let events: FetcherCalendarEvent[]
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarSyncModule] })
     service = app.get(CalendarSyncAllService)
+    calendarSyncService = app.get(CalendarSyncService)
     dataSource = app.get(DataSource)
   })
 
@@ -161,25 +164,40 @@ describe("CalendarSyncAllService", () => {
       expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
     })
 
-    it("re-fetches a Lyon 1 calendar only once its hour has elapsed", async () => {
-      const calendar = await calendarFactory().create({
-        url: "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical",
-        syncPlannedAt: new Date("2022-01-05T11:00:00Z"),
+    it("fetches a Lyon 1 ADE calendar only once per hour with a fresh due window", async () => {
+      const sourceUrl =
+        "https://adelb.univ-lyon1.fr/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=6&calType=ical&firstDate=2020-01-01&lastDate=2020-01-02"
+      const { token } = await calendarSyncService.createCalendar({
+        url: sourceUrl,
+        schoolName: "Lyon 1",
+        name: "Lyon ADE",
+        customData: null,
       })
+      const calendar = await dataSource
+        .getRepository(Calendar)
+        .findOneByOrFail({ token })
+      const fetchCalls = icalFetcher.fetch.mock.calls as unknown as [string][]
 
-      await service.syncAllForUser({ tokens: [calendar.token] })
       expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
+      expect(new URL(fetchCalls[0][0]).searchParams.get("firstDate")).toBe(
+        "2021-01-05",
+      )
       expect((await findCalendar(calendar.id)).syncPlannedAt).toEqual(
         new Date("2022-01-05T13:00:00Z"),
       )
 
+      await service.syncAllForUser({ tokens: [calendar.token] })
       jest.setSystemTime(new Date("2022-01-05T12:45:00Z"))
       await service.syncAllForUser({ tokens: [calendar.token] })
       expect(icalFetcher.fetch).toHaveBeenCalledTimes(1)
 
-      jest.setSystemTime(new Date("2022-01-05T13:05:00Z"))
+      jest.setSystemTime(new Date("2022-01-06T13:05:00Z"))
       await service.syncAllForUser({ tokens: [calendar.token] })
       expect(icalFetcher.fetch).toHaveBeenCalledTimes(2)
+      expect(new URL(fetchCalls[1][0]).searchParams.get("firstDate")).toBe(
+        "2021-01-06",
+      )
+      expect((await findCalendar(calendar.id)).url).toBe(sourceUrl)
     })
   })
 })

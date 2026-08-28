@@ -62,6 +62,17 @@ Sync runs at startup, foreground/resume, manual refresh, source changes, and not
 receipt. `calendar_events` is disposable cache and is rebuilt from durable source tokens;
 it is not a migration/import target.
 
+The server normalizes recognized ADE iCal export URLs immediately before each upstream
+fetch. Explicit `firstDate`/`lastDate` pairs and `nbWeeks` links use a rolling UTC window
+from 12 calendar months before through 12 calendar months after the fetch date. Because a
+successful sync replaces the cached upstream content, events older than that retained year
+can disappear. The normalized URL is ephemeral: the original source URL remains stored so
+creation and every later eligible sync recompute the window instead of persisting dates that
+can expire. The enforcing boundary is
+[`AdeExportWindowRenamer`](../../../server/src/modules/fetch/renamers/ade-export-window-renamer.ts),
+with recognition and sync-cadence coverage beside the renamer and in the fetch/calendar-sync
+service tests.
+
 Server sync telemetry is owned by the
 [server observability runbook](../../server/observability.md), not by the mobile sync
 seam. Calendar URLs and tokens must never become telemetry dimensions. The server uses
