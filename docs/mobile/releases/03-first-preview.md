@@ -151,11 +151,15 @@ three Android prerequisites actually looked like, read back from the Expo API ra
 
 EAS app credentials `b275bfa0` held a keystore auto-generated on 2026-06-16 (alias
 `aa6e0585cc9509022841fb151be2dddc`, SHA-1 `135a8d77bfa841dc0a09f594b3d56db667b9dbc7`). That
-certificate has never signed anything for this app identity: it is not the held upload key, and it
-is not among the four SHA-1 certificate hashes `mobile/firebase/google-services.json` registers for
-`fr.samuelprak.timecalendar`. An `.aab` signed with it would have been rejected by Play as signed
-with the wrong upload key — and the EAS Android submission history is empty, so nothing had ever
-proved otherwise.
+certificate has never signed anything for this app identity: it is not the held upload key, and the
+EAS Android submission history is empty, so nothing had ever proved otherwise. An `.aab` signed with
+it would have been rejected by Play as signed with the wrong upload key.
+
+Do **not** use `mobile/firebase/google-services.json` as the test here. That file registers four
+SHA-1 hashes for `fr.samuelprak.timecalendar`, and the *accepted* upload certificate `99f82ae8…` is
+absent from them too — under Play App Signing those hashes track the app-signing and debug
+certificates, not the upload certificate, so the check rejects the correct key as readily as the
+wrong one. The decisive evidence is the two facts above.
 
 The accepted upload key is the one the Flutter release build used
 (`app/android/key.properties` → `keyAlias=upload`, `storeFile=~/upload-keystore.jks` on the owner's
@@ -187,8 +191,9 @@ Two prerequisites are still open, and both need Play Console access an agent doe
   rejection. Guessing a safely-high number instead of reading the console is exactly the
   improvisation this document forbids.
 - **No Play service account.** `submit.preview.android.serviceAccountKeyPath` points at
-  `ci/keys/eas-android-sa-key.json`, which is correctly absent from git, and EAS holds no service
-  account key for this project. `eas submit --platform android` cannot authenticate.
+  `../ci/keys/eas-android-sa-key.json` — repo-root `ci/keys/`, which is correctly absent from git —
+  and EAS holds no service account key for this project. `eas submit --platform android` cannot
+  authenticate.
 
 The second one also blocks the read-back: confirming the **Play-delivered app-signing fingerprint**
 requires the Play Developer API, which needs that same service account. That §3.5 line therefore
