@@ -69,6 +69,18 @@ beforeEach(() => {
   ] as unknown as ReturnType<typeof Localization.getCalendars>)
 })
 
+afterEach(() => {
+  mockFetch.mockReset()
+  mockGetFcmToken.mockReset()
+  mockUseUserCalendars.mockReset()
+  calendarsSpy.mockReset()
+  remove(NOTIFICATION_KEYS.frequency)
+  remove(NOTIFICATION_KEYS.nbDaysAhead)
+  remove(NOTIFICATION_KEYS.isActive)
+  remove(SETTINGS_KEYS.language)
+  remove(SETTINGS_KEYS.timezone)
+})
+
 describe("useSubscriptionRegistration", () => {
   it("PUTs the assembled DTO with defaults + the user_calendars server ids", async () => {
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
@@ -201,6 +213,33 @@ describe("useSubscriptionRegistration", () => {
     )
   })
 
+  it("reset clears the error state", async () => {
+    mockGetFcmToken.mockResolvedValue("fcm-token")
+    mockFetch.mockRejectedValue(new Error("boom"))
+
+    const { result } = await renderHook(() => useSubscriptionRegistration(), {
+      wrapper,
+    })
+    await expect(
+      act(async () => {
+        await result.current.register()
+      }),
+    ).rejects.toThrow("boom")
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    await act(() => {
+      result.current.reset()
+    })
+    await waitFor(() => expect(result.current.isError).toBe(false))
+
+    mockFetch.mockResolvedValueOnce(undefined)
+    mockGetFcmToken.mockResolvedValueOnce(null)
+    mockUseUserCalendars.mockReturnValueOnce([])
+    calendarsSpy.mockReturnValueOnce([
+      { timeZone: "Europe/Paris" },
+    ] as unknown as ReturnType<typeof Localization.getCalendars>)
+  })
+
   it("forwards a non-Error rejection to the seam under its tag", async () => {
     mockGetFcmToken.mockResolvedValue("fcm-token")
     mockFetch.mockRejectedValue("plain string boom")
@@ -220,25 +259,5 @@ describe("useSubscriptionRegistration", () => {
       "plain string boom",
       "notifications/subscription",
     )
-  })
-
-  it("reset clears the error state", async () => {
-    mockGetFcmToken.mockResolvedValue("fcm-token")
-    mockFetch.mockRejectedValue(new Error("boom"))
-
-    const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
-    })
-    await expect(
-      act(async () => {
-        await result.current.register()
-      }),
-    ).rejects.toThrow("boom")
-    await waitFor(() => expect(result.current.isError).toBe(true))
-
-    act(() => {
-      result.current.reset()
-    })
-    await waitFor(() => expect(result.current.isError).toBe(false))
   })
 })
