@@ -12,12 +12,19 @@
 
 ## 2026-08-27
 
+- Added the independent backend capability, fixed endpoint allowlist, visible preview/development
+  selector, persistent non-production marker and journaled destructive cross-store reset. ADR 043
+  records fail-closed production behavior, state classification and the future-auth participant
+  invariant; all four release fingerprints changed and require fresh native builds.
 - Restored the iPhone+iPad App Store continuity contract while retaining portrait-only,
   full-screen behavior and intentionally disabling iPad multitasking. Source-config tests and a
   disposable generated-native assertion enforce device families `1,2`, full-screen presentation,
   and portrait-only iPad orientations. Refreshed iOS fingerprint evidence records the required
   fresh signed preview binary and OTA incompatibility; no build or submission occurred (ADR 042,
   runtime.md, eas.md, `mobile/EAS.md`).
+- Established the worktree-scoped local Compose entrypoint and the reusable
+  Postgres/Redis-only prerequisite for OpenAPI generation and server tests, while
+  preserving `ci/e2e-server.sh` as the E2E lifecycle owner (testing.md).
 
 ## 2026-08-26
 

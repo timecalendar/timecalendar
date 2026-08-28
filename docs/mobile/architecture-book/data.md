@@ -22,7 +22,14 @@
 
 ## Base URL
 
-- `mobile/src/api/config.ts`: `EXPO_PUBLIC_API_URL` ?? production default (`https://api-v2.timecalendar.app` — the Flutter production `MAIN_API_URL`, `app/Fastfile`), inlined at build time. The Android-emulator `10.0.2.2` gotcha is documented at the constant.
+- Every `customFetch` call resolves the effective typed environment at request time. Production is
+  exactly `https://api-v2.timecalendar.app`, preproduction exactly
+  `https://preprod-api.timecalendar.app`, and local uses only the valid absolute HTTP(S)
+  `EXPO_PUBLIC_API_URL` compiled into a development-capable build. There is no custom URL setter.
+- During a journaled environment reset, the mutator rejects new work and aborts in-flight requests;
+  the Query participant cancels queries, removes the MMKV persister and clears query/mutation
+  caches before reload. `mutator.test.ts`, `query-client.test.ts` and the environment orchestrator
+  suite enforce the contract (ADR [043](./decisions/043-backend-environment-reset.md)).
 
 ## School logo contract
 

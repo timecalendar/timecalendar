@@ -23,15 +23,22 @@ jest.mock("expo-constants", () => ({
 
 it("formats complete device and app metadata", () => {
   expect(getDeviceInfo()).toBe(
-    "Pixel 9 (Android 16) · TimeCalendar 3.1.0 (42) · production",
+    "Pixel 9 (Android 16) · TimeCalendar 3.1.0 (42) · production · environment: production",
   )
   expect(Device.modelName).toBe("Pixel 9")
   expect(Constants.nativeBuildVersion).toBe("42")
 })
 
 it("uses deterministic fallbacks and trims a valid variant", () => {
-  expect(formatDeviceInfo({ appVariant: " beta " })).toBe(
-    "Unknown device (Unknown OS unknown) · TimeCalendar unknown (unknown) · beta",
+  expect(
+    formatDeviceInfo({
+      appVariant: " beta ",
+      backendEnvironment: "preprod",
+    }),
+  ).toBe(
+    "Unknown device (Unknown OS unknown) · TimeCalendar unknown (unknown) · beta · environment: preprod",
   )
-  expect(formatDeviceInfo({ appVariant: 3 })).toContain(" · unknown")
+  expect(formatDeviceInfo({ appVariant: 3 })).toContain(
+    " · unknown · environment: unknown",
+  )
 })

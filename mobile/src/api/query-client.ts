@@ -1,5 +1,9 @@
 import { QueryClient } from "@tanstack/react-query"
 
+import { mmkvQueryStorage, STORAGE_KEYS } from "@/storage"
+
+import { cancelInFlightApiRequests } from "./mutator"
+
 // The app-wide read policy (ADR 013 / design D2), the first server-read feature
 // (School selection) earns it — the QueryClient previously shipped with stock
 // defaults. Set once on defaultOptions.queries so it is the app-wide default; a
@@ -29,3 +33,13 @@ const queryDefaults = {
 export const queryClient = new QueryClient({
   defaultOptions: { queries: queryDefaults },
 })
+
+export async function quiesceQueryRuntime(): Promise<void> {
+  cancelInFlightApiRequests()
+  await queryClient.cancelQueries()
+}
+
+export function clearQueryRuntime(): void {
+  mmkvQueryStorage.removeItem(STORAGE_KEYS.persistedSchoolSelectionQuery)
+  queryClient.clear()
+}

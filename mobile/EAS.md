@@ -25,6 +25,11 @@ identity line (not a third identity — design D1):
 | `preview`     | _(unset)_     | `preview`     | `…timecalendar` / `timecalendar-samuelprak` | `store`      | store **.ipa** + Android **.aab** | TestFlight internal / Play internal |
 | `production`  | _(unset)_     | `production`  | `…timecalendar` / `timecalendar-samuelprak` | `store`      | store **.ipa** + Android **.aab** | App Store / Play production         |
 
+The independent `BACKEND_ENVIRONMENT_CAPABILITY` is respectively `development`, `preview` and
+`production`. It does not select identity, Firebase or OTA delivery. Preview defaults to
+preproduction and exposes fixed preproduction/production choices; production is locked and renders
+no selector.
+
 - `development` is the fast inner loop: `developmentClient: true`, simulator + APK, no
   signing needed. It carries the `.dev` id, the dev Firebase project, and the dev-variant
   network exceptions (cleartext / local-networking). It is the **only** non-store profile.
@@ -138,20 +143,19 @@ is not part of the mobile release path.
   same value in `env`, and `eas.json` has no second channel authority.
 
 SDK 56 fingerprints deliberately differ by lane because resolved native `expoConfig` includes the
-channel header:
+channel header and backend capability. The 2026-08-27 selector result is:
 
 | Platform | `preview`                                  | `production`                               |
 | -------- | ------------------------------------------ | ------------------------------------------ |
-| iOS      | `0fc2a429052003b4ee3042c6e55cb06b05176b89` | `cc3763c96401c5920b66957a226cb7b6ce1c3a05` |
-| Android  | `ffa945e7c6723b2a93341bd7a9b5c4de891aa5f7` | `42ded73f46ab802da4472931415b66664ab96328` |
+| iOS      | `528a496b844aa35f469d21ab8950c7db3f0b382b` | `bc617dff81b2f6592fd4e54b51fbd3c9c8937fc0` |
+| Android  | `ed259cbefbe0cf6acc290ce242b547e69fb9a6a6` | `c6eafecd2ef61472381bfb8f663f36753918434f` |
 
-Reproduce with `OTA_CHANNEL=<lane> node ./node_modules/expo-updates/bin/cli.js
-runtimeversion:resolve --platform <ios|android> --workflow managed --debug`. The restored device
-family moved the previous iOS preview/production values (`6ff251…` / `800d5a…`); no
-`.fingerprintignore` was added or broadened. The corrected native shell requires a fresh signed
-iOS preview binary and is not OTA-compatible with the rejected or previous shell. Android was not
-remeasured and remains unchanged. This engineering change did not build, upload, or submit a store
-artifact.
+Reproduce with `OTA_CHANNEL=<lane> BACKEND_ENVIRONMENT_CAPABILITY=<lane> node
+./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform <ios|android> --workflow
+managed --debug`. All four differ from the retained iPad-restoration baseline: iOS `0fc2a429…` /
+`cc3763c9…` and Android `ffa945e7…` / `42ded73f…`. The next preview and production artifacts for
+both platforms must therefore be fresh native builds. No `.fingerprintignore` was added or
+broadened. This record performs no build or release act.
 
 ## Signing
 
