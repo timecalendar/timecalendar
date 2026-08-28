@@ -3,6 +3,8 @@
 > **Goal:** the one-shot, first-RN-launch importer that recovers existing users' irreplaceable on-device data when the RN binary lands on top of Flutter. **Non-negotiable** — there is no server backup for personal events / checklists / hidden events.
 >
 > **Depends on:** all data-owning schemas existing (Phases 03 + 05). **Modules:** new `migration` module. **Full research (device-verified):** [`../00-exploration/data-persistence-migration.md`](../00-exploration/data-persistence-migration.md).
+>
+> **Acceptance suite:** [`../04-migration-qa/`](../04-migration-qa/README.md) — the manual QA playbook that verifies this phase on a real in-place store update (data inventory, seed packs, iOS/Android execution, offline+online scenarios, recovery checks, report template). Its [open questions](../04-migration-qa/09-open-engineering-questions.md) list what this phase still has to decide.
 
 ## Rough steps
 
