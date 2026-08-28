@@ -2,6 +2,21 @@
 
 ## 2026-08-28
 
+- Replaced ADR 038's three stack-trace signatures with a single **structural** retry rule.
+  `mobile/e2e/classify-maestro-attempt.mjs` reads Maestro's own per-flow `commands.json`:
+  an attempt is retryable only when no assertion command reached `COMPLETED`/`FAILED` and
+  the last recorded command is a startup-phase one (or no record exists at all). The
+  assertion guard still runs first and still wins outright. A fourth iOS startup shape had
+  arrived carrying **no exception text at all**, so no signature could ever have matched
+  it — the matching strategy was the defect, not any individual pattern. Documented bound:
+  a deterministic launch failure matches the same shape, exhausts the four attempts, and
+  still exits non-zero; retry costs attempts, never correctness (ADR 038, testing.md).
+- Moved the native-E2E harness and workflow-contract proofs into the baseline gate.
+  `ci-mobile.yml` now watches `.github/workflows/ci-mobile-e2e.yml` and runs
+  `test_run_e2e.sh` + `test_ci_mobile_e2e.sh`. Previously both ran only inside the
+  label-gated native jobs, so a PR that edited `ci-mobile-e2e.yml` alone — exactly the
+  file whose build contract they enforce — ran neither gate and surfaced red on `main`
+  (testing.md).
 - Corrected the ADR 038 deep-link reopen signature to require `NSPOSIXErrorDomain` and
   `code=60` as independent fragments instead of the literal `NSPOSIXErrorDomain code=60`,
   which never matched: Maestro prints `(domain=NSPOSIXErrorDomain, code=60)`. The rule is

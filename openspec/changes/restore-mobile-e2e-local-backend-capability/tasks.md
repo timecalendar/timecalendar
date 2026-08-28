@@ -144,3 +144,24 @@ fragments were present and no assertion evidence matched.
 - [x] 13.2 Replace the positive fixture with the exact captured CI lines, punctuation included, and prove it retries in a fresh Maestro process and continues to the next flow. Add negative coverage for omission of the domain fragment and omission of the code fragment; retain the assertion, partial, generic-timeout, application, and unknown negatives.
 - [x] 13.3 Correct ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, the agent handbook, and this delta to the five-fragment wording, recording why the domain and code are matched independently. Sensitive binding-document surface; still a refinement of the existing bounded decision, so no new ADR.
 - [x] 13.4 Run the focused shell harness proof, shell syntax/format checks, OpenSpec validation, and `git diff --check`; push the material head and take a fresh labeled baseline plus Android/iOS gate. Do not rerun `d788a881` unchanged.
+
+## 14. Replace the signature classifier with a structural rule, and gate the workflow proof
+
+Exact-head gate `33187454002` at `dfc8c82f` vindicated every selector repair — Android
+reached flow 5 of 14 through `TEST ENVIRONMENT · Local`, a real seeded import, the agenda
+round-trip and a full environment switch — and then failed two new ways. Android
+`event-checklists` exposed a genuine application defect (a controlled `TextInput` over an
+async live query drops typed characters), split out as TIM-268 and explicitly **not** to be
+worked around in the flow. iOS `about` attempt 2 recorded `launchApp(clearState)` stuck at
+`RUNNING` with **no exception text anywhere** in the harness log, so no signature could
+match and two of four attempts were spent on a flow that evaluated zero assertions. That is
+the fourth distinct startup shape and the third to cost a full native cycle; the matching
+strategy is the defect. Triage amendment #6 authorizes a structural rule that subsumes the
+three signatures, plus the F1 gate-coverage fix.
+
+- [x] 14.1 Classify each attempt from Maestro's own per-flow `commands.json`: retryable only when the output holds no assertion evidence, no assertion command reached `COMPLETED`/`FAILED`, and the last recorded command is a startup-phase command — or no record exists at all. Collapse the three stack-trace signatures into it rather than adding a fourth. Keep the assertion guard first, the four-attempt maximum, one Maestro process per attempt/flow, one shared server lifecycle, flow order, and the original non-zero status on exhaustion. Fail closed on a malformed record.
+- [x] 14.2 Prove the rule in `test_run_e2e.sh` in both directions: the captured no-assertion `launchApp` shape retries (with a fixture that emits **no** error text, so only the record can classify it), a session that never opened the flow retries, a deep-link reopen that never completed retries, a declined (`SKIPPED`) assertion inside startup retries; and an evaluated assertion — `COMPLETED` or `FAILED` — stays terminal even when the last command is a startup one, assertion evidence in the output wins over the record, a failure past startup stays terminal, a malformed record stays terminal, and a deterministic launch failure exhausts the budget and exits non-zero.
+- [x] 14.3 F1: add `.github/workflows/ci-mobile-e2e.yml` to `ci-mobile.yml`'s push paths and invoke `test_run_e2e.sh` + `test_ci_mobile_e2e.sh` from the baseline job, so the workflow build contract is checked by a gate that actually fires on a change to that file alone. Extend `test_ci_mobile_e2e.sh` to assert those three baseline invariants.
+- [x] 14.4 Refine ADR 038 in place — three positively identified shapes become one structural rule, with the deterministic-launch-failure bound stated plainly — and align `testing.md`, the Architecture Book changelog, `mobile/e2e/README.md`, `docs/agent-dev-environment.md`, and this delta. Sensitive binding-document surface; no new ADR, since this narrows an existing bounded decision.
+- [x] 14.5 Verify locally: both harness proofs, mutation-check that each proof discriminates, classify the real captured `commands.json` artifacts from run `33187454002` in both directions, `bash -n`, YAML parse, mobile lint/typecheck/Jest, OpenSpec strict validation, `git diff --check`.
+- [ ] 14.6 Land TIM-268 on `main` first — the `pull_request` merge ref picks it up with no rebase — then take a fresh labeled exact-head baseline plus Android/iOS gate. Do not rerun `dfc8c82f` unchanged, and keep the `run-e2e` label on.

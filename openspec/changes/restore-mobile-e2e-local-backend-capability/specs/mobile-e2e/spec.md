@@ -2,7 +2,7 @@
 
 ### Requirement: E2E builds reach the local server
 
-The `development` app variant SHALL be able to reach a server on the host machine over plain HTTP. Every Android and iOS native E2E prebuild and release-compilation step SHALL explicitly resolve `APP_VARIANT=development`, `BACKEND_ENVIRONMENT_CAPABILITY=development`, and the platform-correct base URL (`http://10.0.2.2:3005` on Android, `http://localhost:3005` on iOS) via `EXPO_PUBLIC_API_URL`. Android cleartext traffic and iOS local-networking ATS exceptions SHALL remain enabled for that variant only. Focused workflow structure proof SHALL fail if any platform or build phase omits, duplicates, or misstates one of those inputs.
+The `development` app variant SHALL be able to reach a server on the host machine over plain HTTP. Every Android and iOS native E2E prebuild and release-compilation step SHALL explicitly resolve `APP_VARIANT=development`, `BACKEND_ENVIRONMENT_CAPABILITY=development`, and the platform-correct base URL (`http://10.0.2.2:3005` on Android, `http://localhost:3005` on iOS) via `EXPO_PUBLIC_API_URL`. Android cleartext traffic and iOS local-networking ATS exceptions SHALL remain enabled for that variant only. Focused workflow structure proof SHALL fail if any platform or build phase omits, duplicates, or misstates one of those inputs. That proof SHALL run in a gate that fires on a change to the native E2E workflow file alone: the baseline mobile workflow SHALL include the native E2E workflow file in its path filter and SHALL invoke both the workflow structure proof and the harness proof itself, because the native jobs that also invoke them are label-gated and therefore do not run on every pull request.
 
 #### Scenario: A release-config dev-variant build calls the harness server
 
@@ -15,6 +15,14 @@ The `development` app variant SHALL be able to reach a server on the host machin
 - **WHEN** the focused workflow structure proof inspects Android prebuild, Android release assembly, iOS prebuild, and iOS Release simulator build
 - **THEN** each step contains exactly one development identity, exactly one development backend capability, and exactly one URL for its own platform
 - **AND** no platform build step contains the other platform's local URL
+
+#### Scenario: A change to the native E2E workflow alone is still gated
+
+- **WHEN** a pull request modifies only the native E2E workflow file, so its label-gated
+  native jobs do not run
+- **THEN** the baseline mobile workflow runs anyway and executes both the workflow structure
+  proof and the harness proof, failing the pull request rather than surfacing the break on
+  the default branch
 
 #### Scenario: The production variant carries no exceptions
 
@@ -72,60 +80,76 @@ reviewed head, and its handoff SHALL record that commit plus direct run/job link
 ### Requirement: XCTest startup retries cannot mask flow failures
 
 The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
-A failed attempt SHALL be retried only when its captured output positively identifies an
-XCTest startup-transport failure and contains no completed assertion or assertion-failure
-evidence. That failure has three shapes and all SHALL be retryable: Maestro aborting while it
-creates the iOS session because the driver did not bind its port within the configured
-startup timeout — which happens before the flow is opened, so that output names no flow
-command and cannot be anchored on `launchApp` — or the first `launchApp`/`setPermissions`
-failing because the driver was not listening or refused the connection, or a deep-link reopen
-whose output contains the complete conjunction `IOSDriver.openLink`, `NSPOSIXErrorDomain`,
-`code=60`, `Simulator device failed to open`, and `Operation timed out`. The domain and the
-code SHALL be required as independent fragments rather than as a single literal, because
-Maestro prints them as `(domain=NSPOSIXErrorDomain, code=60)`; omitting either fragment SHALL
-leave the failure terminal. The assertion guard SHALL run before all three positive branches.
-A partial conjunction, generic timeout, application failure, unknown failure, or any output
-carrying assertion evidence SHALL be terminal on its first occurrence.
+Whether a failed attempt may be retried SHALL be decided structurally, from Maestro's own
+machine-readable per-flow command record, and SHALL NOT depend on matching stack-trace text
+against a catalogue of signatures. A failed attempt SHALL be retried only when all of the
+following hold: its captured output contains no assertion-failure evidence; no assertion
+command in the record reached a terminal evaluated state; and the last recorded command is a
+startup-phase command, or no per-flow record exists at all. Assertion commands SHALL comprise
+Maestro's `assertConditionCommand` — into which `assertVisible`, `assertNotVisible` and
+`extendedWaitUntil` all collapse — and `scrollUntilVisible`. `COMPLETED` and `FAILED` SHALL
+count as evaluated; `RUNNING`, `PENDING` and `SKIPPED` SHALL NOT. Startup-phase commands SHALL
+comprise `defineVariablesCommand`, `applyConfigurationCommand`, `launchAppCommand`,
+`stopAppCommand`, `openLinkCommand` and `runFlowCommand`. The output assertion guard SHALL run
+first and SHALL win outright. Any other failure — including one past startup with no assertion,
+and an unreadable or malformed record — SHALL be terminal on its first occurrence, so the
+classifier fails closed. This rule SHALL subsume the previously enumerated session-creation,
+first-`launchApp` and deep-link-reopen signatures rather than being applied alongside them.
 
-#### Scenario: A driver startup failure is retried within the bound
+#### Scenario: A session that never opened the flow is retried
 
-- **WHEN** a flow's first `launchApp` fails during `setPermissions` with a known XCTest
-  driver-not-listening or local connection-refused signature before any assertion runs
-- **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
-  and attempt number, and never exceeds the configured maximum attempts
-
-#### Scenario: A driver that never binds its port is retried
-
-- **WHEN** Maestro aborts before opening the flow because the iOS driver was not ready in
-  time, so the attempt output carries the driver-startup timeout and no flow command at all
+- **WHEN** Maestro aborts while creating the iOS session, so no per-flow command record exists
+  for the attempt
 - **THEN** the harness classifies it as a startup failure rather than an unknown one, and
   starts a fresh Maestro process for the same flow within the configured bound
 
-#### Scenario: A simulator deep-link command times out during app reopen
+#### Scenario: An attempt that died mid-launch is retried without any error text
 
-- **WHEN** a flow reaches `openLink` and the captured output contains `IOSDriver.openLink`,
-  `NSPOSIXErrorDomain`, `code=60`, `Simulator device failed to open`, and `Operation timed out`
-  with no assertion evidence — including when the driver prints the domain and code together
-  as `(domain=NSPOSIXErrorDomain, code=60)`
+- **WHEN** the record shows the flow's `launchAppCommand` still at `RUNNING`, no assertion
+  command evaluated, and the captured output names no exception, signature or error at all
+- **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
+  and attempt number, and never exceeds the configured maximum attempts
+
+#### Scenario: A deep-link reopen that never completed is retried
+
+- **WHEN** the record shows `launchAppCommand` and `stopAppCommand` completed, the last
+  recorded command is `openLinkCommand`, and no assertion command evaluated
 - **THEN** the harness starts a fresh Maestro process for the same flow within the configured
   bound and may continue to later flows after that retry succeeds
 
-#### Scenario: A deep-link timeout missing the domain or the code fragment is terminal
+#### Scenario: An evaluated assertion makes the attempt terminal even inside startup
 
-- **WHEN** output carries every other fragment of the deep-link timeout signature but omits
-  either `NSPOSIXErrorDomain` or `code=60`
+- **WHEN** the record contains an assertion command at `COMPLETED` or `FAILED` but the last
+  recorded command is a startup-phase command, because the flow relaunched the app and died
+  there
 - **THEN** the harness returns the original non-zero result immediately and does not retry
 
-#### Scenario: A partial or assertion-bearing deep-link timeout is terminal
+#### Scenario: Assertion evidence in the output wins over the record
 
-- **WHEN** output carries only part of the deep-link timeout signature, a generic timeout,
-  application or unknown failure evidence, or the complete signature plus assertion evidence
+- **WHEN** the command record alone would look like a startup failure but the captured output
+  carries assertion-failure evidence
 - **THEN** the harness returns the original non-zero result immediately and does not retry
+
+#### Scenario: A failure past startup with no assertion is terminal
+
+- **WHEN** no assertion command evaluated but the last recorded command is not a startup-phase
+  command — for example a failed tap, or a skipped assertion followed by an interaction
+- **THEN** the harness returns the original non-zero result immediately and does not retry
+
+#### Scenario: An unreadable command record is terminal
+
+- **WHEN** the per-flow record exists but cannot be parsed as a command list
+- **THEN** the harness treats the attempt as terminal and returns the original non-zero result
+
+#### Scenario: A deterministic launch failure exhausts the bound and still fails
+
+- **WHEN** every attempt for a flow dies mid-launch, matching the startup shape each time
+- **THEN** the harness spends the configured maximum attempts, does not run later flows, and
+  exits with the original non-zero status
 
 #### Scenario: A real assertion failure is never retried
 
-- **WHEN** Maestro reports a missing element, content wait timeout, failed assertion, or any
-  failure not positively classified as driver startup
+- **WHEN** Maestro reports a missing element, content wait timeout, or failed assertion
 - **THEN** the harness returns that non-zero result immediately, does not run the flow again,
   and does not continue to later flows
 
