@@ -35,6 +35,13 @@
 - Made contact-service 503 failures explicitly retryable in Feedback while retaining
   form values, added equivalent accessible FR/EN guidance, and redacted `/contact`
   request/response bodies from development API diagnostics (data.md, features.md).
+- Made iOS submit profiles target the existing App Store Connect record with the committed public
+  `ascAppId`; EAS-managed API-key authentication remains off-repo. Removed literal `$EXPO_*`
+  strings because `eas.json` does not shell-expand field values (eas.md, `mobile/EAS.md`,
+  `mobile/eas.json`).
+- Confirmed from the signed local iOS preview artifact that `eas build --local` stamps the selected
+  profile's `expo-channel-name` into `Expo.plist`; removed the incorrect deferred
+  `updates.requestHeaders` work (eas.md, `mobile/EAS.md`).
 - Wired preview and production native builds to signed xprem delivery: one validated
   `OTA_CHANNEL` source, exact endpoint/app/branch headers, embedded public certificate metadata,
   development OTA disablement, and retained independent EAS linkage. SDK 56 fingerprint evidence
