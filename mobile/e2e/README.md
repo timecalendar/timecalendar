@@ -65,19 +65,28 @@ APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
 The script exits with Maestro's pass/fail status and tears the stack down on
 success and failure alike. On failure it dumps the backend log tail. With
 `--keep-up` it prints the commands to inspect logs and tear down manually.
-`--startup-attempts` accepts 1–4 and defaults to one. A retry is allowed only
-for a pinned 2.8.0 XCTest startup-transport signature with no assertion evidence,
-in one of three shapes: the driver never binds its port (`IOSDriverTimeoutException`
-/ "iOS driver not ready in time" — Maestro aborts before it opens the flow, so
-that output names no flow command); the first `launchApp`/`setPermissions` hits
-a driver-not-listening or connection-refused transport error; or a deep-link
-reopen emits the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain` + `code=60` +
-`Simulator device failed to open` + `Operation timed out` conjunction (the domain
-and the code are matched independently because Maestro prints them as
-`(domain=NSPOSIXErrorDomain, code=60)`). A partial
-signature, generic timeout, assertion-bearing output, application failure, or
-unknown failure stops immediately, retains its exit status, and prevents later
-flows from running.
+`--startup-attempts` accepts 1–4 and defaults to one. Whether a failure may be
+retried is decided **structurally**, from Maestro's own per-flow
+`~/.maestro/tests/<run>/<flow>/commands.json` — never from stack-trace text
+(ADR 038; the rule lives in `e2e/classify-maestro-attempt.mjs`). An attempt is
+retryable only when it proved nothing about the app:
+
+- the harness output carries no assertion-failure evidence (this guard runs
+  first and wins outright), **and**
+- no assertion command reached a terminal evaluated state — `assertConditionCommand`
+  (which `assertVisible`, `assertNotVisible` and `extendedWaitUntil` all collapse
+  into) or `scrollUntilVisible`, at status `COMPLETED` or `FAILED`; `RUNNING`,
+  `PENDING` and `SKIPPED` are not evidence — **and**
+- the last recorded command is a startup-phase one (`defineVariablesCommand`,
+  `applyConfigurationCommand`, `launchAppCommand`, `stopAppCommand`,
+  `openLinkCommand`, `runFlowCommand`), or there is no per-flow record at all,
+  which is how a session that aborted before opening the flow appears.
+
+Everything else — a failing or passing assertion, a failed tap, a malformed
+record — stops immediately, retains its exit status, and prevents later flows
+from running. Note the bound: an app that *deterministically* fails to launch
+also matches the startup shape. It still ends red, having spent all four
+attempts; retry costs attempts, never correctness.
 
 ## Add a flow
 
