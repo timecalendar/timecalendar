@@ -15,8 +15,25 @@
 #
 # Selector notes: the hide action is the details header button (visually localized
 # "Hide", but exposed to Maestro by its accessibility label "Hide this event")
-# opening a native Alert chooser whose "Hide this event" option hides by uid. The
-# management-screen un-hide row renders the event title + a "Un-hide" control (a11y
+# opening a native Alert chooser whose "Hide this event" option hides by uid.
+#
+# Those two strings are BYTE-IDENTICAL and come from two different i18n keys —
+# `eventDetails.hide.actionLabel` (the header button's a11y label) and
+# `eventDetails.hide.thisEvent` (the alert option). A bare `text: "Hide this event"`
+# therefore matches BOTH, and Maestro picks by hierarchy order, not by intent: on iOS
+# it ranked the app-window header first, so the chooser option was never tapped, the
+# event was never hidden, and the assertNotVisible below failed on a genuinely
+# visible tile (run 33206115891 — both taps resolved to the same header element,
+# bounds [334,62][382,106]). Android passed the same YAML only because its dialog
+# happened to sort ahead of the header; the selector was non-deterministic on both.
+# The second tap is therefore anchored `below` the Alert's title "Hide event"
+# (`eventDetails.hide.title`) — a full-match regex that cannot match "Hide this
+# event", and an anchor the header button (y 62-106, above the alert on both
+# platforms) can never satisfy. One cross-platform selector, no platform fork. The
+# `extendedWaitUntil` in front of it turns a future "the alert never opened" into an
+# explicit failure instead of a silent re-tap on the header.
+#
+# The management-screen un-hide row renders the event title + a "Un-hide" control (a11y
 # label "Un-hide <title>"). The agenda switch goes through ONE control shared by
 # both platforms: `calendar-view` is the iOS `@expo/ui` `Picker`
 # (`appearance="menu"`) and the Android `@react-native-menu/menu` trigger
@@ -54,11 +71,18 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "E2E Today Seminar(,.*)?"
     timeout: 60000
 # Hide it: the header's accessible "Hide this event" action opens the native Alert
-# chooser; the identically labelled chooser option hides by uid and pops back.
+# chooser; the identically labelled chooser option hides by uid and pops back. The
+# second tap is anchored under the alert title so the header cannot satisfy it (see
+# the selector notes above), and the wait proves the chooser is actually up first.
 - tapOn:
     text: "Hide this event"
+- extendedWaitUntil:
+    visible: "Hide all events of the same name"
+    timeout: 30000
 - tapOn:
     text: "Hide this event"
+    below:
+      text: "Hide event"
 # Prove it is GONE from the calendar view. Cold-restart into the agenda: the token
 # is still held (un-hide restores state; the hidden set is device-local), so the
 # synced events render — but `E2E Today Seminar` is filtered out while
