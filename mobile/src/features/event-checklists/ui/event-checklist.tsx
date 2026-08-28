@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
   Pressable,
@@ -130,6 +130,7 @@ function ChecklistRow({
   const { t } = useTranslation()
   const theme = useTheme()
   const inputRef = useRef<RNTextInput>(null)
+  const [text, onType] = useDraftContent(item.content, onContentChange)
 
   // Auto-focus the newly-added item (D6) — focus once the live read renders the
   // new row. lint can't know which input to focus; it is authorial intent
@@ -172,8 +173,8 @@ function ChecklistRow({
       <TextInput
         ref={setRef}
         accessibilityLabel={t("eventChecklist.item.contentLabel")}
-        value={item.content}
-        onChangeText={onContentChange}
+        value={text}
+        onChangeText={onType}
         style={[inputStyle, styles.rowInput]}
         testID={`checklist-input-${item.uuid}`}
       />
@@ -220,6 +221,49 @@ function ChecklistRow({
       </Pressable>
     </View>
   )
+}
+
+// The row's inline input owns the text being typed; the live value only feeds it
+// back when it is NOT this row's own echo.
+//
+// `content` here comes from the useLiveQuery read over `checklist_items`, so it
+// trails every keystroke by a full round-trip (JS → async SQLite write → live-query
+// re-emit → re-render). Binding the input straight to it made a keystroke that
+// landed inside that window get clobbered when the stale value snapped back —
+// characters vanished silently and the truncated note was persisted (TIM-268).
+//
+// So: the draft is the input's value, each keystroke writes through, and an
+// incoming live value is adopted only when this row never wrote it (a genuine
+// external change). Matching values are our own echoes — possibly several writes
+// behind — and are dropped along with everything that preceded them. No focus
+// tracking: a missed focus/blur event would silently bring the data loss back.
+function useDraftContent(
+  content: string,
+  onContentChange: (text: string) => void,
+): [string, (text: string) => void] {
+  const [draft, setDraft] = useState(content)
+  const written = useRef<string[]>([])
+
+  useEffect(() => {
+    const echo = written.current.indexOf(content)
+    if (echo !== -1) {
+      written.current = written.current.slice(echo + 1)
+      return
+    }
+    written.current = []
+    setDraft(content)
+  }, [content])
+
+  const onType = useCallback(
+    (text: string) => {
+      written.current = [...written.current, text]
+      setDraft(text)
+      onContentChange(text)
+    },
+    [onContentChange],
+  )
+
+  return [draft, onType]
 }
 
 const styles = StyleSheet.create({
