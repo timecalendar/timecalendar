@@ -22,13 +22,15 @@
 
 ## 2. Make the Settings entry the readable indicator
 
-- [x] 2.1 Add `"environment.selector.a11yLabel"` to both locales, in the `environment.selector.*`
-      block so key order stays parallel: EN `"Environment, {{value}}"`, FR
-      `"Environnement, {{value}}"`.
+- [x] 2.1 Add `"environment.selector.accessibilityLabel"` to both locales, in the
+      `environment.selector.*` block so key order stays parallel. Reuse the repo's existing
+      composition template rather than hardcoding the label word: `"{{primary}}, {{secondary}}"` in
+      EN and FR, matching `settingsHub.summary.accessibilityLabel`.
 - [x] 2.2 In `mobile/src/features/environment/ui/environment-settings-control.tsx`, compute the
       displayed value once (`switching` → `environment.selector.switching`, else
       `environment.choice.${current}`), pass it as `secondary`, and pass
-      `accessibilityLabel={t("environment.selector.a11yLabel", { value })}`. Do not change
+      `accessibilityLabel={t("environment.selector.accessibilityLabel", { primary: label,
+      secondary: value })}`. Do not change
       `SettingsRow`, the `testID`, the icon, the hint, the alerts, or the production early return.
 - [x] 2.3 In `environment-settings-control.test.tsx`, assert the row's `accessibilityLabel` includes
       the effective environment in both the preview (`Preproduction`) and development (`Local`)

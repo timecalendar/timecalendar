@@ -12,7 +12,7 @@ import { readBackendResetJournal } from "@/storage"
 
 import { EnvironmentRuntimeGate } from "./environment-runtime-gate"
 
-let mockEnvironment: "local" | "preprod" | "production" = "preprod"
+const mockEnvironment = "preprod"
 const mockRecover = jest.fn()
 
 jest.mock("@/features/environment/data/store", () => ({
@@ -35,7 +35,6 @@ const mockReadJournal = readBackendResetJournal as jest.Mock
 const mockAttributes = setCrashlyticsAttributes as jest.Mock
 
 beforeEach(() => {
-  mockEnvironment = "preprod"
   mockRecover.mockReset().mockResolvedValue("switched")
   mockReadJournal.mockReset().mockReturnValue({ state: "absent" })
   mockAttributes.mockReset().mockResolvedValue(undefined)

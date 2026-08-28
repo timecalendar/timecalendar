@@ -82,7 +82,7 @@
   "settingsHub.summary.hint": "Opens calendar management",
   "environment.selector.section": "Test environment",
   "environment.selector.label": "Environment",
-  "environment.selector.a11yLabel": "Environment, {{value}}",
+  "environment.selector.accessibilityLabel": "{{primary}}, {{secondary}}",
   "environment.selector.title": "Choose an environment",
   "environment.selector.body": "Only approved TimeCalendar services are available.",
   "environment.selector.hint": "Choose which TimeCalendar service this test build uses",

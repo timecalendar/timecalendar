@@ -43,15 +43,22 @@ invisible to VoiceOver is not an indicator. It is also the reason a Maestro asse
 secondary text would pass Android and fail iOS — the known selector trap in this repo.
 
 So the control passes an explicit accessible name that includes the value, through a new localized
-key, and keeps the same visible secondary text:
+key, and keeps the same visible secondary text. That key reuses the composition template the settings
+hub already uses for the same job — `settingsHub.summary.accessibilityLabel`, `"{{primary}},
+{{secondary}}"` — so the label word is not duplicated into the catalogs a second time:
 
 ```tsx
+const label = t("environment.selector.label")
 const value = t(
   switching ? "environment.selector.switching" : `environment.choice.${current}`,
 )
 // …
 <SettingsRow
-  accessibilityLabel={t("environment.selector.a11yLabel", { value })}
+  label={label}
+  accessibilityLabel={t("environment.selector.accessibilityLabel", {
+    primary: label,
+    secondary: value,
+  })}
   secondary={value}
   …
 />
