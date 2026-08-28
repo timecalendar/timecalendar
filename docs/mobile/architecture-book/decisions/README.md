@@ -37,6 +37,7 @@ decision changes; use Git for its history.
 | [041](./041-school-logo-theme-variants.md)            | Keep a nullable dark school logo beside the required default logo     |
 | [042](./042-iphone-ipad-portrait-contract.md)         | Support iPhone and iPad in portrait-only full-screen mode             |
 | [043](./043-backend-environment-reset.md)             | Authorize backend choices explicitly and switch via journaled reset   |
+| [044](./044-preserve-content-and-advise-source-recovery.md) | Preserve last-good content and make source recovery advisory          |
 
 ## Superseded or completed records
 

@@ -130,6 +130,7 @@ function ChecklistRow({
   const { t } = useTranslation()
   const theme = useTheme()
   const inputRef = useRef<RNTextInput>(null)
+  const [content, setContent] = useState(item.content)
 
   // Auto-focus the newly-added item (D6) — focus once the live read renders the
   // new row. lint can't know which input to focus; it is authorial intent
@@ -172,8 +173,11 @@ function ChecklistRow({
       <TextInput
         ref={setRef}
         accessibilityLabel={t("eventChecklist.item.contentLabel")}
-        value={item.content}
-        onChangeText={onContentChange}
+        value={content}
+        onChangeText={(text) => {
+          setContent(text)
+          onContentChange(text)
+        }}
         style={[inputStyle, styles.rowInput]}
         testID={`checklist-input-${item.uuid}`}
       />

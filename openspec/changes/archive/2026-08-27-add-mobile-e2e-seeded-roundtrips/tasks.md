@@ -17,12 +17,12 @@ documentation finalization). A single PR is acceptable but two is recommended.
 - [x] 1.4 Correct the stale docstrings: remove the `calendar_flow_test.dart` / "Flutter side
   seeds a matching local `UserCalendar`" references (that harness is retired); document that
   the RN dev-import deep link is the mechanism and note the UTC-"today" caveat.
-- [ ] 1.5 Verify the seed runs clean: `cd server && NODE_ENV=test npm run db:init` (or via
+- [x] 1.5 Verify the seed runs clean: `cd server && NODE_ENV=test npm run db:init` (or via
   `ci/e2e-server.sh up`) and confirm `POST /calendars/sync {tokens:["e2e-smoke-calendar"]}`
   returns the today-anchored + week events with a fresh `lastUpdatedAt` (no external fetch).
-  <!-- Deferred: needs a project Postgres + test DB not provisioned in this apply
-  env (booting docker is not required per the apply brief). `npx tsc --noEmit` on
-  server passes; the CI e2e-server runs this seed on device. -->
+  Verified by exact-head native CI run `33071444520`: `ci/e2e-server.sh` recreated and
+  seeded the test database, and the Android/iOS seeded-import flows resolved, synced, and
+  rendered the deterministic today events through the real API without an external fetch.
 - [x] 1.6 Confirm no OpenAPI drift (`server` `npm run generate:openapi` — the seed change
   touches no controller/DTO, so the committed spec must be unchanged). Verified by
   construction: the diff is confined to `CalendarEvent` seed-row content + docstrings; no
@@ -120,22 +120,68 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 8. CI proof — the on-device E2E gate (the real proof)
 
-- [ ] 8.1 Add the **`run-e2e` label** to each PR so `ci-mobile-e2e.yml` runs the flows on the
+- [x] 8.1 Add the **`run-e2e` label** to each PR so `ci-mobile-e2e.yml` runs the flows on the
   Android emulator AND the iOS simulator (the flows are only fully verifiable on device; local
   Jest cannot assert the synced render).
-- [ ] 8.2 Confirm `e2e-mobile-android` + `e2e-mobile-ios` are green: the rewritten flows import
+- [x] 8.2 Confirm `e2e-mobile-android` + `e2e-mobile-ios` are green: the rewritten flows import
   the seeded token, sync, and assert real synced data / round-trips on both platforms. (No
   rebuild step needed — the dev-variant binary is built per CI run via `expo prebuild`, so the
   new `dev-import` route ships automatically.)
-- [ ] 8.3 If a flow flakes on timing, widen the first-synced-assertion `extendedWaitUntil`
+  Exact-head run `33086750474` at `c9d40830d72202e3e63fdf7fe74de71fed6e3b82`
+  passed Android job `98569123713` and iOS job `98568359291`. Both logs show
+  `calendar`, `event-checklists`, `hidden-events`, and `home` passing through the real
+  seeded import; the calendar flow completed the `E2E Today Lecture` and
+  `Room E2E Lecture` details assertions.
+- [x] 8.3 If a flow flakes on timing, widen the first-synced-assertion `extendedWaitUntil`
   before merging (do not weaken the assertion to an empty/reachability state — that would
   reintroduce the gap this change closes).
+  No seeded-data timing flake occurred on run `33071444520`; every seeded-import assertion
+  passed within the existing 60-second bound, so no timeout change was needed.
 
 ## 9. DoD close-out
 
-- [ ] 9.1 Walk the Definition of Done for the affected features (calendar / home /
+- [x] 9.1 Walk the Definition of Done for the affected features (calendar / home /
   event-details / event-checklists / hidden-events): the **E2E axis** flips from
   reachability-only to real-round-trip green on both platforms; every other axis stays green or
   N/A-with-reason. Record the E2E-axis upgrade against those features.
+  Recorded against exact-head run `33086750474`: calendar + event-details passed the seeded
+  title/location detail proof; home passed the today-timeline proof; event-checklists passed
+  add/toggle/delete against SQLite; hidden-events passed hide/un-hide and restored state on
+  Android and iOS. The automated type, lint, coverage, generation-drift, localization, and
+  production-safety axes remain covered by tasks 4.5, 7.1–7.4, and 9.2. The remaining manual
+  accessibility, low-end performance, analytics, and unexpected-failure axes are N/A to this
+  leaf shell-harness rework because it changes no product UI, interaction, telemetry, or
+  production runtime behavior.
 - [x] 9.2 Confirm production safety: a unit test proves the production branch of the import
   route performs no import (the security boundary is the runtime gate, not the scheme).
+
+## 10. iOS release-simulator launch recovery rework
+
+- [x] 10.1 In `mobile/e2e/run_e2e.sh`, capture a fresh timestamp immediately before each
+  Maestro attempt; after a failed attempt on a booted iOS simulator, query unified logs only
+  from that boundary and persist the result under a flow-and-attempt-specific filename.
+- [x] 10.2 Extend retry classification so only a fresh log matching the TimeCalendar dev
+  app identity and `SIGSEGV(11)` may consume another existing `--startup-attempts` slot.
+  Preserve the current XCTest transport classifier, fresh Maestro process per retry, shared
+  server lifecycle, attempt ceiling, final nonzero status on exhaustion, and fail-closed
+  behavior when simulator-log inspection is unavailable or unknown.
+- [x] 10.3 Extend `mobile/e2e/test_run_e2e.sh` with device-free fake-process proofs for:
+  first-attempt fresh app launch SIGSEGV then pass; repeated SIGSEGV exhaustion; ordinary
+  assertion, seeded-data/server, and unknown failures staying single-attempt terminal; and
+  stale, prior-attempt, another-flow, or other-process log evidence never authorizing retry.
+  Retain the existing transport-retry and teardown/order coverage.
+- [x] 10.4 Update `mobile/e2e/README.md` to document the app-process SIGSEGV classifier,
+  freshness/app-attribution rules, reuse of the existing bound, and fail-closed behavior.
+  Do not change binding Architecture Book rules or add an ADR for this leaf harness fix.
+- [x] 10.5 Run `bash mobile/e2e/test_run_e2e.sh` and the existing shell/static harness proof
+  used by native CI; run `openspec validate add-mobile-e2e-seeded-roundtrips --strict`.
+  Confirm the diff is limited to `mobile/e2e/{run_e2e.sh,test_run_e2e.sh,README.md}` and this
+  existing OpenSpec change—no `.github/workflows/`, `ci/`, API/generated contract,
+  migrations, native/store config, legacy Flutter, or binding Architecture Book files.
+- [x] 10.6 Re-run exact-head labelled native CI. Keep 8.2 and 9.1 unchecked until both
+  Android and iOS are green while preserving `E2E Today Lecture`, `Room E2E Lecture`, every
+  seeded-data/event-details assertion, and the real server → client → SQLite round-trip.
+  Run `33086750474` passed all 14 top-level flows on both platforms at exact head
+  `c9d40830d72202e3e63fdf7fe74de71fed6e3b82`. Logs retain the seeded
+  `E2E Today Lecture` / `Room E2E Lecture` assertions and the downstream
+  `E2E Last Good Lecture` stale-source gate; no assertion was removed or optionalized.

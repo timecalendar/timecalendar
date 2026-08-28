@@ -13,8 +13,9 @@
 # flow's `E2E Today Lecture` so the two flows don't collide) is the event hidden and
 # un-hidden here.
 #
-# Selector notes: the hide action is the details header button (localized "Hide")
-# opening a native Alert chooser whose "Hide this event" option hides by uid. The
+# Selector notes: the hide action is the stable details header button
+# `event-details-hide-action`, opening a native Alert chooser whose localized
+# "Hide this event" option hides by uid. The
 # management-screen un-hide row renders the event title + a "Un-hide" control (a11y
 # label "Un-hide <title>"). The e2e device runs in EN (the established convention —
 # settings.yaml asserts "Settings", the old hidden-events flow asserted "Hidden
@@ -25,8 +26,8 @@
 # clearState (each calendar-family flow wipes the slate first).
 #
 # Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
-# seeding the token. Shared across iOS and Android: stable localized text
-# assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
+# seeding the token. Shared across iOS and Android with one native-alert
+# disambiguation on iOS. Run via mobile/e2e/run_e2e.sh.
 appId: fr.samuelprak.timecalendar.dev
 ---
 # Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
@@ -51,9 +52,28 @@ appId: fr.samuelprak.timecalendar.dev
 # Hide it: the header "Hide" action opens the native Alert chooser; "Hide this
 # event" hides by uid and pops back.
 - tapOn:
-    text: "Hide"
-- tapOn:
-    text: "Hide this event"
+    id: "event-details-hide-action"
+# iOS keeps the underlying header action in the accessibility tree while the
+# native alert is open, so the alert option is the second matching element.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Hide this event"
+          index: 1
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: "Hide this event"
+# Wait for the successful MMKV write to drive the alert callback's router.back()
+# before terminating the app. On iOS, stopApp immediately after tapping the native
+# alert can suspend the JS callback before the navigation transition proves it ran.
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
 # Prove it is GONE from the calendar view. Cold-restart into the agenda: the token
 # is still held (un-hide restores state; the hidden set is device-local), so the
 # synced events render — but `E2E Today Seminar` is filtered out while
@@ -72,11 +92,12 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: ".*E2E Today Lecture.*"
     timeout: 60000
-- assertNotVisible: "E2E Today Seminar"
+- assertNotVisible: ".*E2E Today Seminar.*"
 # Open the hidden-events management screen and assert the hidden event is listed.
 - stopApp
 - openLink: timecalendar-dev://hidden-events
@@ -107,7 +128,8 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Seminar"
+    visible: ".*E2E Today Seminar.*"
     timeout: 60000

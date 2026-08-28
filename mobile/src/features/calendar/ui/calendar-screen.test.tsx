@@ -14,6 +14,7 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { calendarTimelineEventWindow } from "@/features/calendar/renderer"
+import { useSourceHealthSnapshot } from "@/features/calendar-sources/store"
 import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { remove } from "@/storage"
 
@@ -37,6 +38,9 @@ jest.mock("@/features/calendar/data", () => {
     useSyncCalendars: jest.fn(),
   }
 })
+jest.mock("@/features/calendar-sources/store", () => ({
+  useSourceHealthSnapshot: jest.fn(),
+}))
 
 // The month title + the view-menu / Today / Add actions live in the native nav
 // bar (a nested Stack under the Calendar tab). Render the header slots so they are
@@ -105,6 +109,7 @@ const mockSync = jest.fn()
 const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
+const mockUseSourceHealthSnapshot = useSourceHealthSnapshot as jest.Mock
 
 function syncState(overrides = {}) {
   return {
@@ -144,6 +149,7 @@ beforeEach(() => {
   mockSetParams.mockReset()
   mockUseLocalSearchParams.mockReturnValue({})
   mockUseSyncCalendars.mockReturnValue(syncState())
+  mockUseSourceHealthSnapshot.mockReturnValue({})
 })
 
 describe("CalendarScreen", () => {
@@ -338,6 +344,42 @@ describe("CalendarScreen", () => {
     await render(<CalendarScreen />)
     expect(screen.queryByTestId("calendar-sync-error")).toBeNull()
   })
+
+  it("shows stale-source attention without hiding cached events", async () => {
+    mockUseSourceHealthSnapshot.mockReturnValue({
+      "cal-1": {
+        status: "stale",
+        reason: "expired_export_window",
+        recoveryAction: "re_add",
+        guide: null,
+      },
+    })
+    await render(<CalendarScreen />)
+
+    expect(screen.getByText("Algorithms")).toBeTruthy()
+    expect(screen.getByTestId("calendar-source-attention")).toBeTruthy()
+    const manage = screen.getByRole("button", {
+      name: "Review calendar sources that need attention",
+    })
+    fireEvent.press(manage)
+    expect(mockPush).toHaveBeenCalledWith("/user-calendars")
+  })
+
+  it.each(["healthy", "unknown"])(
+    "does not alarm for %s source health",
+    async (status) => {
+      mockUseSourceHealthSnapshot.mockReturnValue({
+        "cal-1": {
+          status,
+          reason: null,
+          recoveryAction: null,
+          guide: null,
+        },
+      })
+      await render(<CalendarScreen />)
+      expect(screen.queryByTestId("calendar-source-attention")).toBeNull()
+    },
+  )
 
   it("pull-to-refresh on the agenda triggers a sync", async () => {
     await render(<CalendarScreen />)

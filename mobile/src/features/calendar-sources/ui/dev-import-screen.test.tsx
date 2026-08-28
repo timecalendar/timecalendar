@@ -109,4 +109,23 @@ describe("DevImportScreen", () => {
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
     expect(mockReplace).not.toHaveBeenCalled()
   })
+
+  it("genuine unmount: suppresses navigation after an in-flight import settles", async () => {
+    mockIsDevVariant.mockReturnValue(true)
+    let resolveImport: (() => void) | undefined
+    mockAddCalendarFromToken.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveImport = resolve
+      }),
+    )
+
+    const view = await render(<DevImportScreen />)
+    view.unmount()
+
+    resolveImport?.()
+    await waitFor(() => expect(mockSync).toHaveBeenCalledTimes(1))
+
+    expect(mockReplace).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
+  })
 })

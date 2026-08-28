@@ -244,9 +244,63 @@ export interface CalendarEventForPublic {
   exportedAt: string
 }
 
+export type CalendarSourceHealthDtoStatus =
+  (typeof CalendarSourceHealthDtoStatus)[keyof typeof CalendarSourceHealthDtoStatus]
+
+export const CalendarSourceHealthDtoStatus = {
+  healthy: "healthy",
+  unknown: "unknown",
+  stale: "stale",
+} as const
+
+/**
+ * @nullable
+ */
+export type CalendarSourceHealthDtoReason =
+  | (typeof CalendarSourceHealthDtoReason)[keyof typeof CalendarSourceHealthDtoReason]
+  | null
+
+export const CalendarSourceHealthDtoReason = {
+  expired_export_window: "expired_export_window",
+  known_source_transition: "known_source_transition",
+} as const
+
+/**
+ * @nullable
+ */
+export type CalendarSourceHealthDtoRecoveryAction =
+  | (typeof CalendarSourceHealthDtoRecoveryAction)[keyof typeof CalendarSourceHealthDtoRecoveryAction]
+  | null
+
+export const CalendarSourceHealthDtoRecoveryAction = {
+  re_add: "re_add",
+} as const
+
+/**
+ * @nullable
+ */
+export type CalendarSourceHealthDtoGuide =
+  | (typeof CalendarSourceHealthDtoGuide)[keyof typeof CalendarSourceHealthDtoGuide]
+  | null
+
+export const CalendarSourceHealthDtoGuide = {
+  amu_2026_2027: "amu_2026_2027",
+} as const
+
+export interface CalendarSourceHealthDto {
+  status: CalendarSourceHealthDtoStatus
+  /** @nullable */
+  reason: CalendarSourceHealthDtoReason
+  /** @nullable */
+  recoveryAction: CalendarSourceHealthDtoRecoveryAction
+  /** @nullable */
+  guide: CalendarSourceHealthDtoGuide
+}
+
 export interface CalendarWithContent {
   calendar: CalendarForPublic
   events: CalendarEventForPublic[]
+  sourceHealth: CalendarSourceHealthDto
 }
 
 export interface SchoolGroupItem {

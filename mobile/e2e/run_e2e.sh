@@ -22,8 +22,9 @@
 #     --native    Pass through to the lifecycle (Docker-less hosts, e.g. macOS
 #                 CI): the caller provisions Postgres/Redis; see ci/e2e-server.sh.
 #     --startup-attempts N
-#                 Retry a proven XCTest startup transport failure up to N total
-#                 attempts per flow (1-4, default 1). Other failures are terminal.
+#                 Retry a proven iOS app launch SIGSEGV or XCTest startup
+#                 transport failure up to N total attempts per flow (1-4,
+#                 default 1). Other failures are terminal.
 #
 # Prerequisites and CI notes: see e2e/README.md.
 
@@ -63,6 +64,8 @@ REPO_ROOT="$(cd "$MOBILE_DIR/.." && pwd)"
 E2E_SERVER="${E2E_SERVER:-$REPO_ROOT/ci/e2e-server.sh}"
 MAESTRO_DIR="${MAESTRO_DIR:-$MOBILE_DIR/.maestro}"
 MAESTRO_LOG_ROOT="${MAESTRO_LOG_ROOT:-${HOME}/.maestro/tests/timecalendar-harness}"
+IOS_APP_ID="fr.samuelprak.timecalendar.dev"
+IOS_APP_PROCESS_PATTERN='app<fr\.samuelprak\.timecalendar\.dev(\(\(null\)\))?>:[0-9]+'
 
 log()  { echo "[run_e2e] $*"; }
 fail() { echo "[run_e2e] ERROR: $*" >&2; exit 1; }
@@ -102,20 +105,58 @@ is_retryable_startup_failure() {
     return 1
   fi
 
+  if grep -Eiq \
+    'IOSDriverTimeoutException.*iOS driver not ready in time' \
+    "$output_file"; then
+    return 0
+  fi
+
   grep -Eiq 'launchApp|setPermissions' "$output_file" && \
     grep -Eiq \
       'XCTest driver.*not listening|driver.*failed to listen|connection refused|connectexception.*refused|failed to connect.*(localhost|127\.0\.0\.1)' \
       "$output_file"
 }
 
+collect_ios_attempt_log() {
+  local attempt_started_at="$1"
+  local simulator_log="$2"
+  local booted_devices
+
+  command -v xcrun >/dev/null 2>&1 || return 1
+  booted_devices="$(xcrun simctl list devices booted -j 2>/dev/null)" || return 1
+  printf '%s\n' "$booted_devices" | grep -q '"state"[[:space:]]*:[[:space:]]*"Booted"' || return 1
+
+  # The query boundary and app-id predicate are the freshness/attribution
+  # boundary. Never scan Maestro's persistent device logs or another attempt's
+  # artifact when deciding whether to retry this failure.
+  xcrun simctl spawn booted log show \
+    --start "$attempt_started_at" \
+    --style compact \
+    --predicate "eventMessage CONTAINS[c] '$IOS_APP_ID' AND eventMessage CONTAINS[c] 'SIGSEGV(11)'" \
+    > "$simulator_log" 2>&1
+}
+
+is_retryable_app_sigsegv() {
+  local simulator_log="$1"
+
+  # RunningBoard's process-exit record names the exact app process handle and
+  # signal on one line. Requiring both prevents another process's SIGSEGV from
+  # authorizing a retry merely because the bundle id appeared elsewhere.
+  grep -Eiq \
+    "${IOS_APP_PROCESS_PATTERN}.*code:SIGSEGV\\(11\\)" \
+    "$simulator_log"
+}
+
 run_flow() {
   local flow="$1"
-  local flow_name attempt attempt_log flow_exit
+  local flow_name attempt attempt_log attempt_started_at simulator_log flow_exit retry_reason
   flow_name="$(basename "$flow" .yaml)"
   attempt=1
 
   while [ "$attempt" -le "$STARTUP_ATTEMPTS" ]; do
     attempt_log="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.log"
+    simulator_log="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}-simulator.log"
+    attempt_started_at="$(date -u '+%Y-%m-%d %H:%M:%S')"
     log "flow ${flow_name}: attempt ${attempt}/${STARTUP_ATTEMPTS}"
     if maestro test "$flow" 2>&1 | tee "$attempt_log"; then
       flow_exit=0
@@ -128,9 +169,17 @@ run_flow() {
       return 0
     fi
 
-    if is_retryable_startup_failure "$attempt_log"; then
+    retry_reason=""
+    if collect_ios_attempt_log "$attempt_started_at" "$simulator_log" && \
+      is_retryable_app_sigsegv "$simulator_log"; then
+      retry_reason="app launch SIGSEGV(11)"
+    elif is_retryable_startup_failure "$attempt_log"; then
+      retry_reason="XCTest startup transport failure"
+    fi
+
+    if [ -n "$retry_reason" ]; then
       if [ "$attempt" -lt "$STARTUP_ATTEMPTS" ]; then
-        log "flow ${flow_name}: retryable XCTest startup transport failure; starting a fresh Maestro process"
+        log "flow ${flow_name}: retryable ${retry_reason}; starting a fresh Maestro process"
         attempt=$((attempt + 1))
         continue
       fi

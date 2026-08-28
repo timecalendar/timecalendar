@@ -17,4 +17,8 @@ export class CalendarLogService {
     const logs = await this.repository.findByCalendarTokens(payload.tokens)
     return logs.map((log) => this.mapper.toCalendarLogGet(log))
   }
+
+  getLatestChangeAtByCalendarIds(calendarIds: string[]) {
+    return this.repository.findLatestCreatedAtByCalendarIds(calendarIds)
+  }
 }

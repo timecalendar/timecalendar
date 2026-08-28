@@ -3,9 +3,7 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-test-harness. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: Real-round-trip Maestro flow
 
 The mobile app SHALL have Maestro flows that prove the app ↔ server contract end to end
@@ -193,15 +191,25 @@ version, print it, and preserve debug output and server logs on failure.
 ### Requirement: XCTest startup retries cannot mask flow failures
 
 The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
-A failed attempt SHALL be retried only when its captured output proves the first
-`launchApp` setup failed because the local XCTest driver was not listening or refused the
-connection and contains no completed assertion or assertion-failure evidence. Unknown,
-application, and assertion failures SHALL be terminal on their first occurrence.
+A failed attempt SHALL be retried only when its captured output proves XCTest driver startup
+failed: either the first `launchApp` setup reports that the driver was not listening or
+refused the connection, or Maestro 2.8.0 emits
+`IOSDriverTimeoutException: iOS driver not ready in time`. Captured output containing
+completed assertion or assertion-failure evidence SHALL NOT retry. Unknown, application,
+and assertion failures SHALL be terminal on their first occurrence.
 
 #### Scenario: A driver startup failure is retried within the bound
 
 - **WHEN** a flow's first `launchApp` fails during `setPermissions` with a known XCTest
   driver-not-listening or local connection-refused signature before any assertion runs
+- **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
+  and attempt number, and never exceeds the configured maximum attempts
+
+#### Scenario: A standalone driver timeout is retried within the bound
+
+- **WHEN** Maestro 2.8.0 fails before any assertion with
+  `IOSDriverTimeoutException: iOS driver not ready in time`, without emitting a
+  `launchApp` or `setPermissions` token
 - **THEN** the harness starts a fresh Maestro process for the same flow, logs the retry reason
   and attempt number, and never exceeds the configured maximum attempts
 
@@ -217,6 +225,50 @@ application, and assertion failures SHALL be terminal on their first occurrence.
 - **WHEN** the harness is invoked without the explicit iOS startup-attempt option
 - **THEN** each top-level flow is attempted exactly once
 
+### Requirement: iOS launch SIGSEGV recovery is bounded and attributable
+
+When `--startup-attempts` allows retries, the E2E harness SHALL retry a failed flow only
+when fresh simulator-log evidence for that flow's current attempt positively identifies
+the TimeCalendar development app process exiting with `SIGSEGV(11)` during launch or
+relaunch, or when the existing positively classified XCTest startup transport failure
+applies. The retry SHALL consume the existing per-flow attempt ceiling and SHALL start a
+fresh Maestro process. The harness SHALL NOT weaken, remove, or make optional any seeded
+data, event-details, application, server, or persistence assertion.
+
+#### Scenario: First-attempt app launch SIGSEGV recovers
+
+- **WHEN** the first attempt fails and only that attempt's fresh, app-specific simulator
+  log identifies a launch/relaunch `SIGSEGV(11)`, and the next attempt passes
+- **THEN** the harness starts a fresh Maestro process for the retry and reports the flow as
+  passed without restarting the shared server
+
+#### Scenario: Repeated app launch SIGSEGV exhausts the existing bound
+
+- **WHEN** every attempt through the configured per-flow ceiling has fresh, app-specific
+  simulator-log evidence of launch/relaunch `SIGSEGV(11)` and fails
+- **THEN** the harness makes no attempt beyond that ceiling, returns the final nonzero flow
+  result, and does not run later flows
+
+#### Scenario: Ordinary failures remain terminal
+
+- **WHEN** a flow fails an assertion, seeded-data check, server interaction, application
+  behavior, or unknown step without fresh qualifying app-process SIGSEGV or existing XCTest
+  transport evidence
+- **THEN** the harness returns that first nonzero result without retrying the flow
+
+#### Scenario: Stale and cross-flow simulator logs cannot authorize a retry
+
+- **WHEN** `SIGSEGV(11)` evidence exists only before the current attempt boundary, in a
+  prior attempt's artifact, for another flow, or for another process
+- **THEN** the current failure is terminal and the harness does not retry
+
+#### Scenario: Simulator-log inspection fails closed
+
+- **WHEN** the booted simulator cannot be queried or its log output does not positively
+  match the current attempt, app identity, and `SIGSEGV(11)`
+- **THEN** the simulator-log classifier does not authorize a retry and the original failure
+  classification remains in force
+
 ### Requirement: Main CI supplies terminal native proof
 
 The recovery SHALL not be considered complete until a `main` SHA containing onboarding merge
@@ -229,3 +281,96 @@ being ignored or optional.
 - **WHEN** the recovery change is merged to a `main` SHA descending from the onboarding merge
 - **THEN** both named native jobs complete successfully and their direct job links are
   recorded before the recovery issue closes
+
+### Requirement: Seeded calendar flows use the live native view menu
+
+Calendar-family Maestro flows that require Agenda SHALL open the stable `calendar-view`
+control and select its visible `Agenda` native menu action on Android and iOS. They SHALL NOT
+target the removed `calendar-view-agenda` item id. The anchor `calendar.yaml` flow SHALL keep
+the real seeded-event and event-details assertions after switching views.
+
+#### Scenario: Calendar round-trip reaches Agenda through the native menu
+
+- **WHEN** `calendar.yaml` completes the seeded dev import
+- **THEN** it opens `calendar-view`, selects `Agenda`, sees `E2E Today Lecture`, opens that
+  synced event, and sees `Room E2E Lecture`
+
+#### Scenario: Every affected flow avoids the removed selector
+
+- **WHEN** the native suite runs all committed calendar-family Maestro flows
+- **THEN** no affected flow refers to `calendar-view-agenda`, and each retains its existing
+  seeded content and journey assertions
+
+#### Scenario: Both native jobs prove the integrated head
+
+- **WHEN** the exact integrated PR head is ready for Reviewer sign-off
+- **THEN** the labelled Android and iOS native E2E jobs both pass without a timeout-only
+  workaround, mock-only import path, workflow change, or weakened seeded-data assertion
+
+### Requirement: Settings child routes return through supported platform interactions
+
+The shared Settings Maestro flow SHALL activate the visible native header back affordance
+on iOS and SHALL retain the supported system-back interaction on Android after visiting each
+Settings child route. Navigation and destination assertions SHALL remain required on both
+platforms.
+
+#### Scenario: My calendars returns to Settings
+
+- **WHEN** the flow opens **My calendars** from `settings-calendar-summary`
+- **THEN** iOS activates `BackButton`, Android performs system back, and both platforms
+  observe **Settings** before continuing
+
+#### Scenario: Appearance and language returns to Settings
+
+- **WHEN** the flow opens **Appearance & language** from Settings
+- **THEN** iOS activates `BackButton`, Android performs system back, and both platforms
+  observe **Settings** after the return
+
+#### Scenario: Return remains a strict gate
+
+- **WHEN** either platform cannot activate its supported return interaction
+- **THEN** the flow fails without an optionalized command, removed Settings assertion,
+  timeout-only workaround, product-navigation change, or CI/workflow change
+
+### Requirement: Stale recovery observes retained content through the native agenda label
+
+The stale-source Maestro flow SHALL require the unique retained-event title within the
+visible agenda row's accessibility text on Android and iOS. The assertion SHALL support the
+grouped iOS label without becoming optional, changing its 60-second synchronization bound,
+or weakening any downstream recovery gate. Its immediately following required wait and tap
+SHALL match the visible `Review` title within the control's accessibility label on both
+platforms while preserving the existing 60-second wait. The later required re-add tap SHALL
+match its Add/update/calendar semantics within the visible control label on both platforms
+and SHALL preserve the final school-selection destination gate.
+
+#### Scenario: Grouped iOS label proves the retained event
+
+- **WHEN** iOS exposes the agenda row as a grouped label containing `E2E Last Good Lecture`
+  together with its time, room, and details action
+- **THEN** the flow observes the required title and continues to the recovery journey
+
+#### Scenario: Android retains the same semantic proof
+
+- **WHEN** Android renders the seeded retained event in Agenda
+- **THEN** the same title-bearing selector observes `E2E Last Good Lecture` within 60 seconds
+
+#### Scenario: Downstream recovery gates remain mandatory
+
+- **WHEN** the retained event has been observed
+- **THEN** the flow still requires **Review**, **E2E Stale Calendar**, **Source needs
+  attention**, **Add updated calendar**, and the final school-selection destination
+
+#### Scenario: Grouped iOS label activates the Review control
+
+- **WHEN** iOS exposes the visible Review button as a grouped accessibility label containing
+  `Review` together with its calendar-source guidance
+- **THEN** the required wait observes that title within 60 seconds and the required tap uses
+  the same title-bearing selector before every later recovery gate runs
+
+#### Scenario: Calendar-specific iOS label activates re-add
+
+- **WHEN** Android exposes `Add updated calendar`, iOS exposes
+  `Add an updated calendar for E2E Stale Calendar`, and explanatory copy contains similar
+  words
+- **THEN** the required tap selects only one of the complete button labels and the flow still
+  requires the final school-selection destination

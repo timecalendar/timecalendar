@@ -1,0 +1,37 @@
+# Stale-source recovery journey. The deterministic server seed has a bounded,
+# already-expired URL and future sync plan, so POST /calendars/sync returns one
+# retained event plus typed stale metadata without contacting a university.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar-dev://dev-import?token=e2e-stale-calendar
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible: ".*E2E Last Good Lecture.*"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: ".*Review.*"
+    timeout: 60000
+- tapOn: ".*Review.*"
+- extendedWaitUntil:
+    visible: "E2E Stale Calendar"
+    timeout: 60000
+- assertVisible: "Source needs attention"
+- tapOn: "^Add( an)? updated calendar( for E2E Stale Calendar)?$"
+- extendedWaitUntil:
+    visible: "Select your school"
+    timeout: 60000
