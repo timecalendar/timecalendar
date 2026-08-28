@@ -183,8 +183,10 @@ plain-language confirmation required by its answering protocol.
   to seven days, and always settles on a complete Monday-based calendar week.
 - The selected day anchors a day-to-week switch. A week-to-day switch selects that week's
   Monday.
-- The logical timeline contains the full 24-hour day, while a fresh viewport focuses on a
-  useful portion rather than midnight. The exact focus rule is not yet decided.
+- The logical timeline contains the full 24-hour day. A fresh day or week viewport scrolls
+  to the current time without using event times, leaving previous-hour context above it and
+  placing the current-time indicator roughly 30% down the viewport; the exact placement is
+  design tuning to validate against Google Calendar rather than a fixed pixel contract.
 - Pinch zoom is P0 and must keep the time under the fingers visually stationary, matching
   Google Calendar's visible behavior. Every operation also needs a non-pinch alternative.
 - Synced and personal events, all-day events, and timed events crossing midnight are in
@@ -207,11 +209,12 @@ plain-language confirmation required by its answering protocol.
 
 ### Round 2 disposition
 
-The owner answered Round 2 on 2026-08-28. The accepted decisions are recorded below and in
-the row-level questionnaire. The response to question 3 settled the fresh **date** anchor but
-did not settle the timeline's initial **vertical time** or the full Today-action behavior;
-those details remain unanswered rather than being inferred. Production workload percentiles
-remain research-blocked rather than owner questions.
+The owner answered Round 2 and its focused clarification on 2026-08-28. The accepted
+decisions are recorded below and in the row-level questionnaire. The first response to
+question 3 settled the fresh **date** anchor without answering the separate vertical-time
+rule; the follow-up then confirmed current-time positioning, Today behavior, and zoom
+continuity. Production workload percentiles remain research-blocked rather than owner
+questions.
 
 ## Round 1 bounded research (2026-08-27)
 
@@ -462,7 +465,7 @@ metrics such as universal 100% coverage of presentation glue.
 | R1-GAP-01 | P-002 allows retention only if new evidence proves calendar-kit reliable, while M-001 says it must never ship.                    | Resolved: remove calendar-kit as early as practical; it must not ship, and there is no fallback path.                                       |
 | R1-GAP-02 | P-005 lists three outcomes but does not settle the order when correctness, accessibility, fluidity, and visual richness conflict. | Resolved by Round 2 question 1.                                                                                                             |
 | R1-GAP-03 | “Persist the last mode” does not define navigation, process restart, reinstall, or calendar-source boundaries.                    | Resolved by Round 2 question 2.                                                                                                             |
-| R1-GAP-04 | The full-day grid is confirmed, but the initial viewport and Today behavior are not.                                              | Partly resolved: current day/week date anchors are confirmed; initial vertical time and Today state effects still need owner clarification. |
+| R1-GAP-04 | The full-day grid is confirmed, but the initial viewport and Today behavior are not.                                              | Resolved by the Round 2 clarification: current day/week date anchors, current-time vertical positioning, Today mode/zoom preservation, and zoom continuity are confirmed. Event-selection and animation details remain later non-blocking questions. |
 | R1-GAP-05 | Monday whole-week paging is confirmed, but Sunday-first support and the React Native weekend-control location are not.            | Resolved by Round 2 question 4.                                                                                                             |
 | R1-GAP-06 | All-day storage facts are known but E-008 remains an owner decision.                                                              | Resolved by Round 2 question 5.                                                                                                             |
 | R1-GAP-07 | Cross-midnight timed events are required, but per-segment labels, continuation cues, and hit targets are not explicit.            | Resolved by Round 2 question 6.                                                                                                             |
@@ -525,7 +528,7 @@ question 5. The two free-text responses are split across the exact questions the
 | ------------ | ----------------- | ------------------- |
 | 1 — Priority | `CONFIRMED_IN`: correct dates/content, privacy, and complete accessibility; then agreed performance budgets; then visual richness. | None for this ordering. |
 | 2 — Mode persistence | `CONFIRMED_IN`: persist per installation across navigation, backgrounding, and process restart; reinstall resets to week; calendar-source changes do not reset it. | None for the stated boundaries. |
-| 3 — Fresh position and Today | `CONFIRMED_IN`: a fresh day-mode open selects the current day and a fresh week-mode open selects the current Monday-based week. Event presence must never make a fresh open select another day or week. | `UNANSWERED`: the initial vertical time within that current day/week, whether a mounted screen preserves its vertical offset, and whether Today preserves mode/zoom or scrolls to now. |
+| 3 — Fresh position and Today | `CONFIRMED_IN`: a fresh day-mode open selects the current day and a fresh week-mode open selects the current Monday-based week. Event presence must never make a fresh open select another day or week. A fresh viewport scrolls to the current time without using event times, leaves previous-hour context, and aims to place now roughly 30% down from the top. Today selects the current day/week, scrolls to now, and preserves mode and zoom; zoom also persists across fresh opens and day/week switches. | Exact current-time placement is design tuning for side-by-side Google Calendar validation. Mounted-screen vertical-offset persistence, Today selection handling and Today animation remain unanswered later questions. |
 | 4 — Week rule | `CONFIRMED_IN`: Monday-first in French and English and every display timezone; no Sunday-first at launch; Settings → Calendar owns a default-on “Show weekends” switch. | None for launch. |
 | 5 — All-day dates | `CONFIRMED_IN`: imported all-day events are floating dates with an exclusive end. | None for this contract. |
 | 6 — Cross-midnight events | `CONFIRMED_IN`: render one clipped timed segment per covered local day; every segment exposes continuation, a complete accessible label and target, and opens the same event; 24-hour-or-longer timed events stay timed. | Exact visual styling remains design work, not an unanswered semantic. |
@@ -534,7 +537,17 @@ question 5. The two free-text responses are split across the exact questions the
 | 9 — Boundaries and quality | `CONFIRMED_IN`: accept the four-owner split and objective quality/debt gates. Remove calendar-kit as early as practical; an incomplete calendar on `main` during development is acceptable because React Native is unshipped. | This does not relax the accepted launch gates or authorize dual-renderer fallback. |
 | 10 — Dataset catalog | `CONFIRMED_IN`: accept the finite fixture-family catalog. | `NEEDS_RESEARCH`: production aggregates supply the numeric p50/p95/p99 shapes. |
 
-The remaining initial-vertical-position and Today details need one narrowly scoped owner
-clarification before architecture design relies on them. All other Round 2 recommendations are
-confirmed product or acceptance requirements, subject only to the explicit research dependencies
-above.
+### Focused Round 2 clarification (2026-08-28)
+
+The owner clarified that both fresh day and week views should show the current time with
+some preceding-hour context. Google Calendar's placement—slightly above the viewport's
+middle, approximately 30% from the top—is the comparison target, while the exact percentage
+remains design tuning. The owner also expected zoom to remain preserved as it does in Google
+Calendar and accepted the proposed Today rule: select the current day/week, scroll to now,
+and preserve mode and zoom.
+
+All Round 2 owner decisions and the focused clarification are now recorded. Architecture
+planning may rely on the confirmed date anchor, fresh vertical-time rule, Today behavior, and
+zoom continuity while leaving the explicitly named non-blocking interaction details open. The
+release-profile baseline and privacy-safe production workload percentiles remain bounded
+technical research dependencies rather than product questions.
