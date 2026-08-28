@@ -135,6 +135,15 @@ describe("EventChecklist", () => {
     await rerender(<EventChecklist eventUid="ev-1" />)
 
     expect(screen.getByDisplayValue("Buy")).toBeTruthy()
+
+    // ...and again, one write behind. Each echo must drop only itself and what
+    // preceded it: forgetting the *rest* of the writes makes this second echo
+    // look external, and the row adopts "Bu" over what the user typed. One echo
+    // per keystroke is the normal path, so this is the common case, not an edge.
+    mockUseChecklist.mockReturnValue([item({ uuid: "u-1", content: "Bu" })])
+    await rerender(<EventChecklist eventUid="ev-1" />)
+
+    expect(screen.getByDisplayValue("Buy")).toBeTruthy()
   })
 
   it("adopts a live value the row never wrote", async () => {
