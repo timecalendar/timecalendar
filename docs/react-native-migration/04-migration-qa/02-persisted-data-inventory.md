@@ -198,8 +198,8 @@ Legend for **Class**:
 | **Flutter stores it** | sembast `hidden_events`, **one single record** holding `{ uidHiddenEvents: [], namedHiddenEvents: [] }`. The repository deletes the store and re-adds one record on every write (`hidden_event_repository.dart` `setHiddenEvents`), so the record key is auto-generated and changes on each save. |
 | **RN expects it** | MMKV key `hiddenEvents.set`, a single JSON blob in the **same verbatim shape** (`mobile/src/features/hidden-events/data/types.ts`) |
 | **Class** | 🔴 **DEVICE** |
-| **Visible offline right after the update** | **Réglages → Événements masqués** lists them under "Événements masqués", and the hidden courses do not render on Accueil/Calendrier. |
-| **Verified by** | `OFF-10`, `ON-05`, `OFF-19` |
+| **Visible offline right after the update** | **Not visible in the RN UI while the course cache is empty.** The management screen filters out a hidden uid until it resolves to a synced course (`mobile/src/features/hidden-events/ui/hidden-events-screen.tsx:44-50`). The blob still retains the uid. Prove survival with decoded MMKV storage evidence when available, or with the resolved entry and filtering behavior after refetch in `ON-05`; do not infer loss from an empty by-uid section offline. |
+| **Verified by** | `OFF-10` (explicitly not UI-observable offline), `ON-05`; optional decoded storage evidence |
 
 <a id="d-11"></a>
 #### D-11 · Hidden events — by name
@@ -227,17 +227,39 @@ Legend for **Class**:
 | **Visible offline right after the update** | **Nothing, and that is correct.** The calendar and today view are expected to be empty of *courses* while offline, because the RN table starts empty and the first sync needs network. Personal events still show. |
 | **Verified by** | `OFF-01` (empty course list is expected, not a failure), `ON-01` |
 
+The cached entity is fully inventoried below. "Storage evidence" means a decoded
+`calendar_events` row (normally Android `sqlite3` / a pulled database), because not every nested
+value has a dedicated RN visual surface.
+
+| Flutter `calendar_events` field | RN target | QA observable |
+| --- | --- | --- |
+| `uid` | `calendar_events.uid` primary key | Course identity and hidden/checklist joins in `ON-01`, `ON-03`, `ON-05`; exact value in storage evidence |
+| `title` | `title` | Course title in `ON-01` |
+| `color`, `groupColor` | `color`, `group_color` | Rendered course colour in `ON-01`; both exact hex values in storage evidence |
+| `startsAt`, `endsAt`, `exportedAt` | `starts_at`, `ends_at`, `exported_at` | Start/end in `ON-01`; all three UTC ISO-8601 values in storage evidence |
+| `location?`, `description?` | nullable `location`, `description` | Event details in `ON-01` when the selected reference course supplies them |
+| `allDay` | `all_day` | All-day/timed placement in `ON-01` |
+| `teachers[]` | JSON text `teachers` | Event details in `ON-01`; full array in storage evidence |
+| `tags[]` | JSON text `tags` | Each nested tag is `{ name, color, icon }` (`app/lib/modules/calendar/models/event_tag.dart:41-43`). RN rendering projects tag names, so `ON-01` observes names; storage evidence proves all three nested fields. |
+| `fields?` | nullable JSON text `fields` | The nested object is `{ canceled?, shortDescription?, subject?, groupColor? }` (`app/lib/modules/calendar/models/calendar_event_custom_fields.dart:3-34`). `ON-01` records any rendered canceled/short-description/subject state; storage evidence proves the full object. |
+| `userCalendarId` | `user_calendar_id` | Parent calendar association in `ON-01`; exact value in storage evidence |
+| *(not persisted by Flutter)* | required `type` | RN-only richer server field. Live sync supplies the API enum; the importer must use its documented safe default for any recovered cache row (`mobile/src/db/schema.ts:92-98`). No Flutter value exists to compare. |
+
 <a id="d-13"></a>
 #### D-13 · Activity / change log (`calendar_logs`)
 
 | | |
 | --- | --- |
-| **What / owner** | The "Activité" feed of timetable changes. Cached from `GET /calendar-logs` (`app/lib/modules/activity/repositories/calendar_log_repository.dart`). |
+| **What / owner** | The "Activité" feed of timetable changes. Cached from `GET /calendar-logs` (`app/lib/modules/activity/repositories/calendar_log_repository.dart`). Top-level fields are `id`, `calendarId`, `calendarToken`, `calendarName`, `calendarChange`, `createdAt`, `updatedAt` (`app/lib/modules/activity/models/calendar_log.dart:8-45`). `calendarChange` contains `oldItems[]`, `newItems[]`, and `changedItems[]`; each changed item is an old/new pair. Every nested event contains `uid`, `title`, `startsAt`, `endsAt`, and nullable `location` (`app/lib/modules/activity/models/calendar_change.dart:8-59`; `app/lib/modules/activity/models/calendar_log_event.dart:7-39`). |
 | **Flutter stores it** | sembast `calendar_logs` |
 | **RN expects it** | **Nothing.** There is no activity feature in `mobile/src/features/`. |
 | **Class** | 🟡 **SERVER** + feature not ported |
 | **Visible offline right after the update** | Nothing. The RN app has no Activité screen. |
 | **Verified by** | `OFF-13` (record the absence of the feature; not a data-loss failure — the server holds the logs) |
+
+There is no per-field RN mapping: **all** top-level fields, the three change collections, both
+members of each changed pair, and every nested event field have **no RN target**. `OFF-13` records
+that no Activité surface exists; it does not attempt to compare a cache the RN product cannot read.
 
 ### 2.3 Preferences — `shared_preferences`
 
@@ -253,8 +275,8 @@ and appear on-device with the `flutter.` prefix.
 | **What / owner** | `theme` ∈ `system` \| `light` \| `dark` (default `system`). `dark_mode` is the pre-2.x legacy boolean, still written, and used once to seed `theme` when `theme` is absent. Settings. |
 | **Flutter stores it** | `flutter.theme` (string), `flutter.dark_mode` (bool) |
 | **RN expects it** | MMKV `settings.themePreference` ∈ `system` \| `light` \| `dark` (`mobile/src/features/settings/prefs/types.ts`) — the **same three values**, so a straight copy is possible. |
-| **Class** | 🔴 **DEVICE** but low-stakes (roadmap 09 step 4 calls preference copying "optional, for UX continuity") |
-| **Visible offline right after the update** | **Réglages → Apparence et langue → Thème** shows the pre-update choice, and the app renders in it. |
+| **Class** | ❓ **UNKNOWN** pending [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy). Roadmap 09 step 4 calls preference copying "optional, for UX continuity"; matching value domains prove only that copying is possible, not that it is required. |
+| **Visible offline right after the update** | **Observe and record** Réglages → Apparence et langue → Thème and the rendered appearance. Do not pass/fail the imported choice until Q-10 settles the contract. |
 | **Verified by** | `OFF-12` |
 
 <a id="d-15"></a>
@@ -434,6 +456,18 @@ and appear on-device with the `flutter.` prefix.
 | **Visible offline right after the update** | Nothing in the UI — this is evidence collected via `adb`/device tooling. |
 | **Verified by** | `REC-04` |
 
+<a id="d-29"></a>
+#### D-29 · Remembered feedback email
+
+| | |
+| --- | --- |
+| **What / owner** | The last valid email entered in the RN feedback form, normalized by trimming surrounding whitespace (case is preserved) and reused to prefill the next form. Feedback. |
+| **Flutter stores it** | Nothing. Flutter has no corresponding durable feedback-email preference. |
+| **RN expects it** | MMKV `feedback.lastEmail` (`mobile/src/storage/index.ts:34,57`). `getRememberedEmail()` validates on read; `setRememberedEmail()` stores only a valid normalized address (`mobile/src/features/feedback/data/remembered-email.ts:4-18`). The form writes it before making the request (`mobile/src/features/feedback/ui/feedback-screen.tsx:67-81`). |
+| **Class** | ⚪ **RN-ONLY**, classified `backend-bound` |
+| **Visible offline right after the update** | Initially the feedback email field is empty. After a valid offline send attempt, the request fails but the normalized email prefills the form after close/reopen and app restart. |
+| **Verified by** | `OFF-20` |
+
 ---
 
 ## 3. Coverage cross-check
@@ -452,11 +486,11 @@ an engineering answer. This table is the check.
 | [D-07](#d-07) checklist↔event link | 🔴 | `OFF-09`, `ON-03` | — |
 | [D-08](#d-08) checklist ordering | 🔴 | `OFF-08`, `OFF-19` | — |
 | [D-09](#d-09) checklist `deletedAt` | 🔵 | `OFF-08` | — |
-| [D-10](#d-10) hidden by uid | 🔴 | `OFF-10`, `ON-05`, `OFF-19` | — |
+| [D-10](#d-10) hidden by uid | 🔴 | `OFF-10` (offline limitation recorded), `ON-05` | — |
 | [D-11](#d-11) hidden by name | 🔴 | `OFF-10`, `ON-05` | [Q-09](./09-open-engineering-questions.md#q-09--is-hiddenevents-being-backend-bound-correct-for-a-migrated-user) |
 | [D-12](#d-12) timetable courses | 🟡 | `OFF-01`, `ON-01` | — |
 | [D-13](#d-13) activity log | 🟡 | `OFF-13` | [Q-08](./09-open-engineering-questions.md#q-08--is-the-activité-feature-intentionally-not-ported) |
-| [D-14](#d-14) theme / dark_mode | 🔴 | `OFF-12` | [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy) |
+| [D-14](#d-14) theme / dark_mode | ❓ | `OFF-12` (observation) | [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy) |
 | [D-15](#d-15) `current_version` | 🔴 | `OFF-11`, `REC-02` | — |
 | [D-16](#d-16) `calendar_view_type` | ❓ | `OFF-13` | [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) |
 | [D-17](#d-17) weekends / group colours / hour height / startup screen | ❓ | `OFF-13` | [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) |
@@ -471,6 +505,7 @@ an engineering answer. This table is the check.
 | [D-26](#d-26) query cache | 🔵 | — | — |
 | [D-27](#d-27) backend environment | ⚪ | — | — |
 | [D-28](#d-28) legacy sembast file | 🔴 | `REC-04` | [Q-11](./09-open-engineering-questions.md#q-11--is-the-one-release-sembast-safety-net-implemented) |
+| [D-29](#d-29) remembered feedback email | ⚪ | `OFF-20` | — |
 
 Three rows have no scenario on purpose: [D-19](#d-19) and [D-26](#d-26) are inert, and
 [D-27](#d-27) is a control a tester must not touch. All three are documented so that a tester who

@@ -40,7 +40,7 @@ of scope by design (see [Non-goals](#non-goals)).
 | 03 | [Flutter seed packs](./03-flutter-seed-packs.md) | The two deterministic datasets (`SEED-A` compact, `SEED-B` large) with exact creation steps, exact values, and the baseline record sheet |
 | 04 | [iOS in-place update execution](./04-ios-in-place-update.md) | Installing the released Flutter build, then replacing it in place via TestFlight / the App Store without wiping the container |
 | 05 | [Android in-place update execution](./05-android-in-place-update.md) | The same, via Google Play internal/closed testing, plus the `adb` evidence commands |
-| 06 | [Offline & online verification scenarios](./06-offline-and-online-verification-scenarios.md) | `OFF-01…OFF-19` (offline, immediately after update) and `ON-01…ON-06` (after network is restored) |
+| 06 | [Offline & online verification scenarios](./06-offline-and-online-verification-scenarios.md) | `OFF-01…OFF-20` (offline, immediately after update) and `ON-01…ON-06` (after network is restored) |
 | 07 | [Failure, restart & recovery scenarios](./07-failure-restart-and-recovery-scenarios.md) | `REC-01…REC-07` — first launch with no network, kill/restart around first launch, retry idempotency, sync resumption |
 | 08 | [QA execution report](./08-qa-execution-report-template.md) | The reusable report: run header, per-scenario pass/fail rows, evidence placeholders, and the sign-off block |
 | 09 | [Open engineering questions](./09-open-engineering-questions.md) | `Q-01…Q-12` — every "unknown" in the inventory, phrased as the exact question engineering must answer |

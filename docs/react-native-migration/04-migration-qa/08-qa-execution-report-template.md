@@ -18,7 +18,7 @@
 | Report date | |
 | Tester | |
 | Platform | ☐ iOS ☐ Android |
-| Seed pack | ☐ `SEED-A` (compact) ☐ `SEED-B` (large) ☐ reduced (`REC-02` pass) |
+| Seed pack | ☐ `SEED-A` (compact) ☐ `SEED-B` (large) ☐ reduced (`REC-02` / `REC-06` fresh pass) |
 | Device model | |
 | OS version | |
 | Device timezone | |
@@ -91,7 +91,7 @@ here.
 | `BASE-12` | App visibly in dark theme | |
 | `BASE-13` | Mes calendriers — 1 calendar, visible | |
 | `BASE-14` | Post-relaunch confirmation + Flutter version | |
-| `BASE-B1` | 3 calendars, names/schools/order, which is hidden | |
+| `BASE-B1` | 3 calendar name/school pairs (unordered set), which is hidden | |
 | `BASE-B2` | Personal-event count = 60 + sentinel screenshots | |
 | `BASE-B3` | Checklist item count = 134 + per-event counts | |
 | `BASE-B4` | Hidden by uid = 21, by name = 6, full list in screen order | |
@@ -133,16 +133,17 @@ here.
 | `OFF-07` | Time and date boundaries correct | D-04 | | | |
 | `OFF-08` | Checklists: content, checked state, order | D-06, D-08, D-09 | | | |
 | `OFF-09` | Checklists attached to the right event | D-07 | | | |
-| `OFF-10` | Hidden events survived, both kinds | D-10, D-11 | | | |
+| `OFF-10` | Hidden names survived; UID proof deferred unless storage decodes | D-10, D-11 | | UID offline: ☐ NOT OBSERVABLE ☐ decoded storage | |
 | `OFF-11` | Changelog gate shows v4 exactly once | D-15 | | | |
-| `OFF-12` | Theme + RN-only language/timezone defaults | D-14, D-24 | | | |
+| `OFF-12` | Theme **observation** + RN-only language/timezone defaults | D-14, D-24 | ☐ RECORDED | theme observed: ___ | |
 | `OFF-13` | Flutter-only prefs & features — **observation** | D-13, D-16, D-17, D-20 | ☐ RECORDED | | |
 | `OFF-14` | Not sent back through onboarding | D-23 | | | |
 | `OFF-15` | Notification preferences default sanely | D-18, D-25 | | | |
 | `OFF-16` | A migrated personal event is usable | D-04 | | | |
 | `OFF-17` | A migrated checklist item is usable | D-06, D-08 | | | |
 | `OFF-18` | Uniqueness sweep — nothing migrated twice | D-01, D-04, D-06 | | | |
-| `OFF-19` | Large pack complete, ordered, usable | D-02, D-04, D-06, D-08, D-10 | ☐ N/A (pack A) | | |
+| `OFF-19` | Large pack complete, ordered, usable | D-02, D-04, D-06, D-08, D-11 | ☐ N/A (pack A) | UID-hidden offline: ☐ NOT OBSERVABLE ☐ storage evidence | |
+| `OFF-20` | Remembered feedback email starts empty and survives restart | D-29 | | normalized value: ___ | |
 
 #### `OFF-13` observation sheet
 
@@ -162,7 +163,7 @@ here.
 | Personal events | | | | |
 | `PE-A1` checklist items | | | | |
 | Calendars | | | | |
-| Hidden by uid | | | | |
+| Hidden by uid | | Offline UI: `NOT OBSERVABLE`; decoded storage if available | | Must resolve/count in `ON-05` |
 | Hidden by name | | | | |
 | SQLite row counts (Android, if collected) | | | | |
 
@@ -181,20 +182,21 @@ here.
 
 | ID | Scenario | Data | Result | Notes | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `REC-01` | Survives repeated offline launches | D-01, D-04, D-06, D-10, D-11, D-14, D-15 | | | |
-| `REC-02` | Killed during first launch, then relaunched | D-01, D-04, D-06, D-10, D-15 | | kill timing: ___ s; reduced seed? ☐ | |
-| `REC-03` | Device restart around first launch | D-01, D-04, D-06, D-10, D-14, D-15 | | | |
+| `REC-01` | Survives repeated offline launches | D-01, D-04, D-06, D-11, D-14 observation, D-15 | | UID-hidden: ☐ NOT OBSERVABLE ☐ storage evidence | |
+| `REC-02` | Killed during first launch, then relaunched | D-01, D-04, D-06, D-15 | | kill timing: ___ s; reduced seed? ☐; UID proof deferred to `ON-05` unless storage decodes | |
+| `REC-03` | Device restart around first launch | D-01, D-04, D-06, D-11, D-14 observation, D-15 | | UID-hidden: ☐ NOT OBSERVABLE ☐ storage evidence | |
 | `REC-04` | Legacy Flutter data still on disk | D-28 | | | |
 | `REC-05` | Sync interrupted mid-flight | D-04, D-06, D-12 | | | |
-| `REC-06` | Backgrounded and resumed during first launch | D-01, D-04, D-06, D-10 | | | |
+| `REC-06` | Backgrounded and resumed during a **separate fresh offline first launch** | D-01, D-04, D-06 | | fresh pass report/link: ___; UID proof deferred to `ON-05` unless storage decodes | |
 | `REC-07` | Later OTA update does not disturb data | D-01, D-04, D-06, D-10, D-15 | | | |
 
 ---
 
 ## Data-inventory coverage check
 
-Every 🔴 **DEVICE** datum must end the run with a recorded outcome. Fill in the outcome column
-from the scenario results above; an empty cell means the run is incomplete.
+Every 🔴 **DEVICE** datum, plus every inventory item explicitly listed below, must end the run
+with a recorded outcome or observation. Fill in the outcome column from the scenario results above;
+an empty cell means the run is incomplete.
 
 | Datum | Verified by | Outcome |
 | --- | --- | --- |
@@ -207,11 +209,11 @@ from the scenario results above; an empty cell means the run is incomplete.
 | [D-07](./02-persisted-data-inventory.md#d-07) Checklist↔event link | `OFF-09`, `ON-03` | |
 | [D-08](./02-persisted-data-inventory.md#d-08) Checklist ordering | `OFF-08`, `OFF-19` | |
 | [D-09](./02-persisted-data-inventory.md#d-09) Deleted item stays deleted | `OFF-08` | |
-| [D-10](./02-persisted-data-inventory.md#d-10) Hidden by uid | `OFF-10`, `ON-05` | |
+| [D-10](./02-persisted-data-inventory.md#d-10) Hidden by uid | `OFF-10` limitation/evidence, `ON-05` required UI proof | |
 | [D-11](./02-persisted-data-inventory.md#d-11) Hidden by name | `OFF-10`, `ON-05` | |
 | [D-12](./02-persisted-data-inventory.md#d-12) Timetable courses refetch | `OFF-01`, `ON-01` | |
 | [D-13](./02-persisted-data-inventory.md#d-13) Activity log / feature | `OFF-13` | |
-| [D-14](./02-persisted-data-inventory.md#d-14) Theme | `OFF-12` | |
+| [D-14](./02-persisted-data-inventory.md#d-14) Theme (contract unresolved) | `OFF-12` observation | |
 | [D-15](./02-persisted-data-inventory.md#d-15) Changelog seen-version | `OFF-11`, `REC-02` | |
 | [D-16](./02-persisted-data-inventory.md#d-16) Calendar view type | `OFF-13` | |
 | [D-17](./02-persisted-data-inventory.md#d-17) Weekends / group colours / hour height / startup screen | `OFF-13` | |
@@ -223,6 +225,7 @@ from the scenario results above; an empty cell means the run is incomplete.
 | [D-24](./02-persisted-data-inventory.md#d-24) Language / timezone | `OFF-12` | |
 | [D-25](./02-persisted-data-inventory.md#d-25) Notification frequency | `OFF-15` | |
 | [D-28](./02-persisted-data-inventory.md#d-28) Legacy sembast file | `REC-04` | |
+| [D-29](./02-persisted-data-inventory.md#d-29) Remembered feedback email | `OFF-20` | |
 
 ---
 

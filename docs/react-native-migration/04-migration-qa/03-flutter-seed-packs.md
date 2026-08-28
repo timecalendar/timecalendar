@@ -313,7 +313,7 @@ checks.
 
 | ID | Baseline value to record |
 | --- | --- |
-| `BASE-B1` | The three calendar names and schools, in the order shown. Which one is hidden. Screenshot. |
+| `BASE-B1` | The three calendar name/school pairs as an unordered set, and which named calendar is hidden. Screenshot. RN does not promise row order. |
 
 ### 4.3 `SEED-B-02` — 55 more personal events (60 total)
 
@@ -379,7 +379,7 @@ each 3 items following the same naming, so the pack has checklists on both event
 | --- | --- |
 | Calendars | 3 (one hidden) |
 | Personal events | 60 |
-| Checklist items | 134, across 15 owning events (12 personal + 3 courses) |
+| Checklist items | 134, across 17 owning events (2 from `SEED-A` + 15 from `SEED-B`: 12 personal + 3 courses) |
 | Hidden by uid | 21 |
 | Hidden by name | 6 |
 | Non-default preferences | 6 |
@@ -408,7 +408,7 @@ unreportable — you will have nothing to compare against.
 | `BASE-12` | App visibly in dark theme | A, B | |
 | `BASE-13` | Mes calendriers — 1 calendar, visible | A | |
 | `BASE-14` | Post-relaunch confirmation + Flutter version from À propos | A, B | |
-| `BASE-B1` | 3 calendars, names/schools/order, which is hidden | B | |
+| `BASE-B1` | 3 calendar name/school pairs (unordered set), which is hidden | B | |
 | `BASE-B2` | Personal-event count = 60 + sentinel screenshots | B | |
 | `BASE-B3` | Checklist item count = 134 + per-event counts | B | |
 | `BASE-B4` | Hidden by uid = 21, by name = 6, full list in screen order | B | |

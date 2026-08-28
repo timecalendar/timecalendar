@@ -2,7 +2,7 @@
 
 ← [05 — Android in-place update](./05-android-in-place-update.md) · [Section index](./README.md) · next: [07 — Failure, restart & recovery](./07-failure-restart-and-recovery-scenarios.md)
 
-> `OFF-01` … `OFF-19` run **while the device is still offline**, immediately after the in-place
+> `OFF-01` … `OFF-20` run **while the device is still offline**, immediately after the in-place
 > update. `ON-01` … `ON-06` run after the network is restored.
 >
 > Record every scenario in [08 — QA execution report](./08-qa-execution-report-template.md), even
@@ -124,8 +124,10 @@ hand. Duplicating it means duplicated events forever after. Covers
 
 **Offline expected result.**
 
-- Pack A: exactly **1** calendar. Pack B: exactly **3**, in a stable order.
-- The name matches `BASE-02` (`BASE-B1`) character for character.
+- Pack A: exactly **1** calendar. Pack B: exactly **3**. Compare the **set** of calendar identities;
+  row order is not a criterion because RN `findAll()` has no `ORDER BY`
+  (`mobile/src/features/calendar-sources/data/user-calendars/repository.ts:14-16`).
+- Every name matches `BASE-02` (`BASE-B1`) character for character, paired with the correct school.
 - The school line matches `BASE-01`.
 - The summary card's counts match ("1 calendrier" / "3 calendriers"; the school count matches the
   number of distinct schools).
@@ -439,17 +441,23 @@ they chose not to see. Covers [D-10](./02-persisted-data-inventory.md#d-10),
 **Steps.**
 
 1. Réglages → **Événements masqués**.
-2. Read the **Masqués par nom** section.
-3. Read the **Événements masqués** (by uid) section.
-4. Compare counts and contents against baseline.
+2. Read the **Masqués par nom** section and compare it with the baseline.
+3. Look for the **Événements masqués** (by uid) section, but do **not** infer a missing
+   migration from its absence: RN suppresses uid entries until they resolve to synced courses.
+4. If the QA build/tooling can decode MMKV, capture `hiddenEvents.set` and compare the
+   `uidHiddenEvents` set/count with the baseline. Otherwise record the uid half as
+   `NOT OBSERVABLE OFFLINE` and defer its proof to `ON-05`.
 
 **Offline expected result.**
 
 - **Masqués par nom** contains `COURSE-3`'s exact title. Pack B: **6** names.
-- The by-uid section lists **1** entry in pack A, **21** in pack B. The uid entries may render as
-  raw identifiers rather than titles while offline (the courses they refer to have not synced yet)
-  — that is acceptable; what matters is the **count** and that they are not lost.
-- The screen must not show "Aucun événement masqué."
+- The by-uid section is normally absent while offline because `calendar_events` is empty and the
+  screen filters unresolved uids (`mobile/src/features/hidden-events/ui/hidden-events-screen.tsx:44-50`). This is expected, not a
+  `FAIL`; the blob retains the uids. When decoded storage evidence is available it contains **1**
+  uid for pack A / **21** for pack B.
+- Because the named section is populated, the screen must not show "Aucun événement masqué."
+- Without decoded storage evidence, this scenario proves [D-11](./02-persisted-data-inventory.md#d-11)
+  only. [D-10](./02-persisted-data-inventory.md#d-10) remains pending until `ON-05`.
 
 **Online expected result.** See `ON-05` — the hidden set must actually filter the freshly synced
 courses.
@@ -506,7 +514,7 @@ notes), and not on every launch (an unclosable nag). Covers
 
 ---
 
-## `OFF-12` — Theme (and the RN-only language/timezone preferences)
+## `OFF-12` — Theme observation (and RN-only language/timezone defaults)
 
 **Purpose / risk.** Low stakes but highly visible: a student who chose dark mode should not be
 blinded on first launch. Also confirms the RN-only preferences default sanely. Covers
@@ -530,22 +538,22 @@ dark mode.
 3. Read **Thème**, **Langue**.
 4. Back → **Fuseau horaire**.
 
-**Offline expected result.**
+**Offline observation / expected RN-only defaults.**
 
-- **Thème** = **Sombre**, and the app renders dark despite the device being light.
+- Record **Thème** and the rendered appearance. If it is **Sombre**, the optional preference was
+  imported; if it is **Système**, it was not. Neither observation is a pass/fail result for D-14
+  until [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy)
+  settles whether theme import is required.
 - **Langue** = **Système** (RN-only; nothing to import —
   [D-24](./02-persisted-data-inventory.md#d-24)). The app's text is French on a French device.
 - **Fuseau horaire** = **Automatique (fuseau de l'appareil)**.
 
-**If Thème = Système** and the app follows the device: the theme preference was not imported.
-Record it as a `FAIL` against [D-14](./02-persisted-data-inventory.md#d-14) and cross-reference
-[Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy),
-since roadmap 09 calls preference copying "optional" — engineering may consider this intended.
-State what you observed; do not decide.
+Only the RN-only language/timezone defaults have settled pass/fail expectations here. State exactly
+what theme behavior you observed; do not convert the unresolved product contract into a failure.
 
 **Online expected result.** n/a.
 
-**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
+**Result:** ☐ RECORDED ☐ BLOCKED
 **Notes:**
 **Evidence:** `[Apparence et langue screenshot]` `[app screenshot showing dark rendering with device in light mode]`
 
@@ -787,7 +795,9 @@ compound at every sync. Covers [D-04](./02-persisted-data-inventory.md#d-04),
 1. **Mes événements** — count rows; scan for repeated titles.
 2. `PE-A1` → **Liste de tâches** — count items; scan for repeated content.
 3. **Mes calendriers** — count rows; scan for repeated names.
-4. **Événements masqués** — count both sections; scan for repeated entries.
+4. **Événements masqués** — count the by-name section; scan it for repeated entries. The
+   by-uid section is not UI-observable until courses refetch. If MMKV can be decoded, separately
+   compare the stored `uidHiddenEvents` set/count; otherwise defer it to `ON-05`.
 5. Android with `run-as` available: run the row-count query from
    [05 §6](./05-android-in-place-update.md#after-the-update-react-native-installed) and compare
    the counts to what the UI shows.
@@ -799,10 +809,10 @@ compound at every sync. Covers [D-04](./02-persisted-data-inventory.md#d-04),
 | Personal events | 4 (5 seeded, 1 deleted in `OFF-16`) | 59 |
 | `PE-A1` checklist | 4 (3 seeded + 1 added in `OFF-17`) | 4 |
 | Calendars | 1 | 3 |
-| Hidden by uid | 1 | 21 |
+| Hidden by uid | `NOT OBSERVABLE OFFLINE` (or decoded MMKV: 1) | `NOT OBSERVABLE OFFLINE` (or decoded MMKV: 21) |
 | Hidden by name | 1 | 6 |
 
-- No title, content, calendar name or hidden entry appears twice.
+- No title, content, calendar name or **visible/stored-as-evidence** hidden entry appears twice.
 - On Android, the SQLite counts match the UI counts. A mismatch means rows exist that the UI is not
   showing — a different bug from data loss, and worth distinguishing.
 
@@ -820,7 +830,8 @@ compound at every sync. Covers [D-04](./02-persisted-data-inventory.md#d-04),
 where a technically-correct import can still be unusable. Covers
 [D-02](./02-persisted-data-inventory.md#d-02), [D-04](./02-persisted-data-inventory.md#d-04),
 [D-06](./02-persisted-data-inventory.md#d-06), [D-08](./02-persisted-data-inventory.md#d-08),
-[D-10](./02-persisted-data-inventory.md#d-10).
+[D-11](./02-persisted-data-inventory.md#d-11). UID-hidden completeness is proved after refetch in
+`ON-05`, not from the offline screen.
 
 **Platforms.** At least one per release; prefer Android, and the slower device if available.
 **Packs.** B only.
@@ -833,14 +844,16 @@ where a technically-correct import can still be unusable. Covers
 
 **Steps.**
 
-1. **Counts.** Personal events, checklist items per owning event, calendars, hidden-by-uid,
-   hidden-by-name. Compare each to `BASE-B*`.
+1. **Counts.** Personal events, checklist items per owning event, calendars, and hidden-by-name.
+   Compare each to `BASE-B*`. Record hidden-by-uid as `NOT OBSERVABLE OFFLINE` unless decoded MMKV
+   evidence is available; its required UI/filter proof is `ON-05`.
 2. **Sentinels.** Confirm `PE-B-001`, `PE-B-028`, `PE-B-055` are all present, with their overridden
    titles and colours intact.
 3. **Ordering.** Open three of the 10-item checklists (`PE-B-001`, `PE-B-028`, `PE-B-055`).
    Confirm `item 01 — PREMIER` is first and `item 10 — DERNIER` is last, and that the
    even-numbered items are the checked ones.
-4. **Hidden list.** Scroll the whole **Événements masqués** screen; count both sections.
+4. **Hidden list.** Scroll the whole **Événements masqués** screen; count the by-name section.
+   Do not expect unresolved uid rows before sync.
 5. **Usability.** Record, informally:
    - Time from tap to interactive on first launch (compare with `OFF-01`'s pack-A figure).
    - Whether scrolling **Mes événements** is smooth end-to-end.
@@ -855,7 +868,8 @@ where a technically-correct import can still be unusable. Covers
   `OFF-16`/`OFF-17`, redo this arithmetic from your own baseline and **write it out in the
   report** rather than quoting this number.
 - Calendars: **3**, one with visibility off.
-- Hidden by uid: **21**. Hidden by name: **6**.
+- Hidden by name: **6**. Hidden by uid is `NOT OBSERVABLE OFFLINE` unless decoded MMKV evidence
+  shows **21**; `ON-05` must show all **21** after refetch.
 - All three sentinels present and correct. **A missing first or last sentinel is the signature of a
   truncated import** — say which one.
 - Every checklist reads `PREMIER` → … → `DERNIER`.
@@ -870,6 +884,45 @@ where a technically-correct import can still be unusable. Covers
 **Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
 **Notes:**
 **Evidence:** `[count screenshots for each surface]` `[sentinel screenshots]` `[scroll recording]` `[launch timing notes]`
+
+---
+
+## `OFF-20` — RN remembered feedback email starts empty and survives restart
+
+**Purpose / risk.** Completes the inventory of RN-only persisted state and proves that a failed
+offline request does not prevent the feedback form from remembering a valid normalized address.
+Covers [D-29](./02-persisted-data-inventory.md#d-29).
+
+**Platforms.** iOS + Android. **Packs.** A, B.
+
+**Preconditions.** Global. No feedback form has been submitted in this RN install.
+
+**Flutter setup.** None; Flutter has no corresponding durable value.
+
+**Baseline.** None.
+
+**Steps.**
+
+1. Réglages → **Vos retours et suggestions**. Confirm **Adresse e-mail** is empty.
+2. Enter email `  Etudiant.QA+Migration@Example.FR  ` and message `OFF-20 — hors ligne`.
+3. Tap **Envoyer**. The offline request should fail; capture the failure message. Do not restore
+   the network.
+4. Leave and reopen **Vos retours et suggestions**.
+5. Force-quit and relaunch the app, still offline; reopen the form again.
+
+**Offline expected result.**
+
+- Before step 2 the field is empty: no Flutter value was fabricated.
+- After both reopen and full restart, the field is prefilled with the trimmed, case-preserving
+  `Etudiant.QA+Migration@Example.FR` exactly once.
+- The message is **not** remembered; only the email is persisted.
+- The send failure is expected offline and is not itself a failure of this scenario.
+
+**Online expected result.** n/a. Do not resend the synthetic QA message after restoring network.
+
+**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
+**Notes:**
+**Evidence:** `[initial empty form]` `[offline failure]` `[prefill after reopen]` `[prefill after restart]`
 
 ---
 
@@ -903,12 +956,18 @@ Covers [D-01](./02-persisted-data-inventory.md#d-01), [D-12](./02-persisted-data
 1. With the network restored, force-quit and relaunch the app (this fires the startup sync).
 2. Wait for **Calendrier** to populate. If it does not, pull to refresh.
 3. Compare the visible week against the `BASE-03` screenshot.
-4. Open `COURSE-1` and read its details.
+4. Open `COURSE-1` and compare every displayed field available in `BASE-03`: title, start/end,
+   all-day/timed placement, room, description, teachers, tag names, cancellation state, and colour.
+5. On Android when database extraction is available, decode one `calendar_events` row and record
+   the exact `uid`, both colours, all three timestamps, parent calendar id, `type`, full teachers
+   array, each tag's `{name,color,icon}`, and the full custom-fields object. Mark unavailable fields
+   `NOT OBSERVABLE` on iOS/store builds; do not guess them from the UI.
 
 **Online expected result.**
 
 - Courses appear on **Calendrier** and **Accueil** within a normal sync time.
-- `COURSE-1` is present, on its baseline date and time, with its room.
+- `COURSE-1` is present with every baseline field the RN UI exposes unchanged. Any field not
+  supplied by the reference course is recorded as empty, not silently skipped.
 - The set of courses matches what Flutter showed in `BASE-03` (minus the hidden ones — see
   `ON-05`).
 - No sync error banner persists after a successful refresh.
@@ -1075,7 +1134,9 @@ titles were transformed. Covers [D-10](./02-persisted-data-inventory.md#d-10),
   visible — hiding by uid is per-occurrence.
 - **No** occurrence of `COURSE-3` is visible anywhere in the 14-day window — hiding by name is
   wholesale.
-- The **Événements masqués** screen shows the same counts as `OFF-10`.
+- The **Événements masqués** screen now resolves the full baseline set: by uid **1** (pack A) /
+  **21** (pack B), and by name **1** / **6**. This post-refetch check (or decoded MMKV evidence) is
+  the proof that UID-hidden data survived; `OFF-10` alone cannot prove it from the UI.
 - Un-hide and re-hide both work on migrated entries (they are usable, not just present).
 
 **A hidden-by-uid entry that no longer matches** (the course reappears) means the uid changed
@@ -1144,7 +1205,8 @@ degrades after several. This is the cheapest way to catch a per-sync leak. Cover
 | `OFF-16` | D-04 |
 | `OFF-17` | D-06, D-08 |
 | `OFF-18` | D-01, D-04, D-06 |
-| `OFF-19` | D-02, D-04, D-06, D-08, D-10 |
+| `OFF-19` | D-02, D-04, D-06, D-08, D-11 |
+| `OFF-20` | D-29 |
 | `ON-01` | D-01, D-12 |
 | `ON-02` | D-01, D-04 |
 | `ON-03` | D-06, D-07 |

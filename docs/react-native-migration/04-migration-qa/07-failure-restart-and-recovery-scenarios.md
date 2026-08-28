@@ -15,8 +15,10 @@
 
 `REC-01`…`REC-04` run at **step 8** of the canonical order
 ([01 §6](./01-scope-prerequisites-and-execution-order.md#6-the-canonical-execution-order)) —
-after the offline scenarios, still offline. `REC-05`…`REC-07` run at **step 10**, after the network
-is back.
+after the offline scenarios, still offline. `REC-05` and `REC-07` run at **step 10**, after the
+network is back. `REC-06` is a **separate fresh offline pass**: reinstall the released Flutter
+source, seed/baseline it, update in place, keep the first RN launch offline, and background that
+fresh first launch. It cannot be appended to the already-online standard pass.
 
 **Global preconditions:** the same as the `OFF-*` / `ON-*` scenarios in
 [06](./06-offline-and-online-verification-scenarios.md). Nothing has been reinstalled, cleared, or
@@ -30,7 +32,8 @@ reset.
 the app, and there is no usable connection. If the import is entangled with a network call, or if
 a failed sync aborts it, the data is gone on the very first launch a real user sees. Covers
 [D-01](./02-persisted-data-inventory.md#d-01), [D-04](./02-persisted-data-inventory.md#d-04),
-[D-06](./02-persisted-data-inventory.md#d-06), [D-10](./02-persisted-data-inventory.md#d-10).
+[D-06](./02-persisted-data-inventory.md#d-06), and the UI-observable
+[D-11](./02-persisted-data-inventory.md#d-11). D-10 is storage-observable only until refetch.
 
 **Platforms.** iOS + Android. **Packs.** A, B.
 
@@ -45,14 +48,17 @@ a failed sync aborts it, the data is gone on the very first launch a real user s
 1. Force-quit the app (swipe it away from the app switcher; on Android also acceptable:
    `adb shell am force-stop fr.samuelprak.timecalendar`).
 2. Relaunch. Still offline.
-3. Check: personal-event count, `PE-A1` checklist count, calendar count, both hidden sections,
-   theme.
+3. Check: personal-event count, `PE-A1` checklist count, calendar count, the hidden-by-name
+   section, and that the theme remains the same as the `OFF-12` observation. UID-hidden rows remain
+   unresolvable offline; compare decoded MMKV evidence if available, otherwise leave their
+   durability proof to `ON-05`.
 4. Repeat steps 1–3 **three** times in total.
 
 **Offline expected result.**
 
 - Every launch succeeds. No crash, no onboarding, no empty state.
-- All counts identical on every launch — no growth (a re-running import) and no shrinkage.
+- All UI-observable counts (plus decoded-storage counts, if collected) are identical on every
+  launch — no growth (a re-running import) and no shrinkage.
 - The **Nouveautés** sheet does not reappear after the first time (this re-confirms `OFF-11`
   across restarts).
 - The sync-error banner may appear each launch. Expected offline.
@@ -104,13 +110,16 @@ reduced seed.
    switcher, or `adb shell am force-stop fr.samuelprak.timecalendar`.
 3. Relaunch. Let it settle fully.
 4. Verify: calendar count, personal events (titles and values), `PE-A1`'s 3 checklist items in
-   order, both hidden sections, theme.
+   order, the hidden-by-name section, and the observed theme. UID-hidden rows cannot resolve while
+   the course cache is empty; use decoded MMKV evidence if available and otherwise defer them to
+   the post-refetch `ON-05` check for this fresh pass.
 5. Force-quit and relaunch once more; re-verify.
 6. Repeat the whole scenario a second time with the kill at ~3 seconds instead of ~1.
 
 **Offline expected result.**
 
-- After the relaunch in step 3, **all** seeded data is present, exactly once.
+- After the relaunch in step 3, all UI-observable seeded data is present exactly once. UID-hidden
+  survival is not inferred from the offline screen; decoded storage or the later `ON-05` proves it.
 - Nothing is duplicated — no doubled personal events, no doubled checklist items, no second
   calendar row.
 - Nothing is missing.
@@ -156,8 +165,10 @@ process. Students reboot phones constantly. Covers the same data as `REC-02`.
 2. If connectivity came back, turn it off again **before** launching the app, and note that it
    happened.
 3. Launch the app.
-4. Verify: personal-event count, `PE-A1` checklist and its order, calendar count, both hidden
-   sections, theme, and that the **Nouveautés** sheet does not reappear.
+4. Verify: personal-event count, `PE-A1` checklist and its order, calendar count, the
+   hidden-by-name section, the same theme behavior recorded in `OFF-12`, and that the
+   **Nouveautés** sheet does not reappear. Treat UID-hidden rows as unobservable offline unless
+   decoded MMKV evidence is available.
 
 **Offline expected result.**
 
@@ -276,8 +287,10 @@ Covers the same data as `REC-02`.
 
 **Platforms.** iOS + Android. **Packs.** A, B.
 
-**Preconditions.** Best run as part of the `REC-02` second pass, on a fresh migration. If run on an
-already-migrated install it still has value as a general durability check — say which you did.
+**Preconditions.** A separate fresh Flutter → RN migration pass, prepared like the `REC-02` second
+pass. Network is disabled before the update and remains disabled through this scenario. An
+already-migrated install is only a general background/resume smoke check and **does not execute
+`REC-06`**; record it separately rather than marking this scenario passed.
 
 **Flutter setup.** As for `REC-02`.
 
@@ -288,13 +301,15 @@ already-migrated install it still has value as a general durability check — sa
 1. Tap the icon, and within ~1 second press **Home** (or swipe up) to background the app.
 2. Wait 30 seconds.
 3. Return to the app from the app switcher.
-4. Wait for it to settle, then verify all the seeded data.
+4. Wait for it to settle, then verify all UI-observable seeded data. UID-hidden rows remain
+   unobservable offline unless MMKV can be decoded; defer their UI proof to `ON-05`.
 5. Force-quit, relaunch, verify again.
 
 **Offline expected result.**
 
 - The app resumes without a crash.
-- All seeded data is present, exactly once, after step 3.
+- All UI-observable seeded data is present, exactly once, after step 3. Do not fail the scenario
+  because the unresolved UID-hidden section is absent offline.
 - Step 5 changes nothing.
 - If the OS terminated the app while backgrounded and it cold-started in step 3, that is fine —
   and it makes this a second sample of `REC-02`. Note which happened.
@@ -368,12 +383,12 @@ For the record, so the omissions read as decisions rather than gaps:
 
 | Scenario | Data covered |
 | --- | --- |
-| `REC-01` | D-01, D-04, D-06, D-10, D-11, D-14, D-15 |
-| `REC-02` | D-01, D-04, D-06, D-10, D-15 |
-| `REC-03` | D-01, D-04, D-06, D-10, D-14, D-15 |
+| `REC-01` | D-01, D-04, D-06, D-11, D-14 observation, D-15; D-10 only with decoded storage |
+| `REC-02` | D-01, D-04, D-06, D-15; D-10 only with decoded storage / later ON-05 |
+| `REC-03` | D-01, D-04, D-06, D-11, D-14 observation, D-15; D-10 only with decoded storage |
 | `REC-04` | D-28 |
 | `REC-05` | D-04, D-06, D-12 |
-| `REC-06` | D-01, D-04, D-06, D-10 |
+| `REC-06` | D-01, D-04, D-06; D-10 only with decoded storage / later ON-05 |
 | `REC-07` | D-01, D-04, D-06, D-10, D-15 |
 
 ---

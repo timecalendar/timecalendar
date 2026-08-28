@@ -179,11 +179,16 @@ the migration actually dropped. Running the update online first destroys the evi
 | 4 | **Disable the network** (airplane mode) | [04 §2](./04-ios-in-place-update.md#2-cut-the-network) / [05 §2](./05-android-in-place-update.md#2-cut-the-network) | Airplane mode confirmed on-screen |
 | 5 | Install the **React Native** build as an in-place store update. **Do not uninstall. Do not clear app data.** | [04 §3](./04-ios-in-place-update.md#3-install-the-react-native-build-in-place) / [05 §3](./05-android-in-place-update.md#3-install-the-react-native-build-in-place) | Exactly one TimeCalendar icon remains |
 | 6 | Launch React Native **while still offline** | [06](./06-offline-and-online-verification-scenarios.md) | `OFF-01` passes |
-| 7 | Verify every device-owned value survived **exactly once** and is usable | `OFF-02…OFF-19` | All offline scenarios recorded |
+| 7 | Verify every device-owned value survived **exactly once** and is usable; record RN-only persistence defaults | `OFF-02…OFF-20` | All offline scenarios recorded |
 | 8 | Force-quit, relaunch, repeat the essential durability checks — still offline | [07](./07-failure-restart-and-recovery-scenarios.md) `REC-01…REC-03` | Durability scenarios recorded |
 | 9 | **Restore the network** | — | Connectivity confirmed |
-| 10 | Verify server-owned data refetches, and that sync neither removes migrated local content nor duplicates anything | `ON-01…ON-06`, `REC-05…REC-07` | All online scenarios recorded |
+| 10 | Verify server-owned data refetches, and that sync neither removes migrated local content nor duplicates anything | `ON-01…ON-06`, `REC-05`, `REC-07` | All online scenarios recorded |
 | 11 | Complete the report with pass/fail and evidence | [08](./08-qa-execution-report-template.md) | Report signed off |
+
+`REC-06` is **not** part of step 10. It requires another fresh Flutter → RN in-place update whose
+first RN launch is kept offline and backgrounded immediately. Run it as a separate fresh offline
+pass (or on a second prepared device) after preserving the standard pass report; see
+[07 · REC-06](./07-failure-restart-and-recovery-scenarios.md#rec-06--backgrounded-and-resumed-during-first-launch).
 
 ### Step 5, spelled out because it is the step people get wrong
 
