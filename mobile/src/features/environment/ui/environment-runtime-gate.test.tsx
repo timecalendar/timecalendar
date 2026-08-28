@@ -10,12 +10,9 @@ import { setBackendRuntimeReady } from "@/config/backend-runtime"
 import { setCrashlyticsAttributes } from "@/firebase"
 import { readBackendResetJournal } from "@/storage"
 
-import {
-  EnvironmentRuntimeGate,
-  NonProductionEnvironmentMarker,
-} from "./environment-runtime-gate"
+import { EnvironmentRuntimeGate } from "./environment-runtime-gate"
 
-let mockEnvironment: "local" | "preprod" | "production" = "preprod"
+const mockEnvironment = "preprod"
 const mockRecover = jest.fn()
 
 jest.mock("@/features/environment/data/store", () => ({
@@ -38,28 +35,10 @@ const mockReadJournal = readBackendResetJournal as jest.Mock
 const mockAttributes = setCrashlyticsAttributes as jest.Mock
 
 beforeEach(() => {
-  mockEnvironment = "preprod"
   mockRecover.mockReset().mockResolvedValue("switched")
   mockReadJournal.mockReset().mockReturnValue({ state: "absent" })
   mockAttributes.mockReset().mockResolvedValue(undefined)
   setBackendRuntimeReady(true)
-})
-
-it("renders a high-contrast accessible marker outside production", async () => {
-  const { rerender } = await render(<NonProductionEnvironmentMarker />)
-  const marker = screen.getByTestId("backend-environment-marker")
-  expect(marker).toHaveTextContent("TEST ENVIRONMENT · Preproduction")
-  expect(marker.props.accessibilityRole).toBe("text")
-  expect(marker.props.allowFontScaling).toBe(true)
-  expect(marker).toHaveStyle({
-    backgroundColor: "#7A2800",
-    color: "#FFFFFF",
-    textAlign: "center",
-  })
-
-  mockEnvironment = "production"
-  await rerender(<NonProductionEnvironmentMarker />)
-  expect(screen.queryByTestId("backend-environment-marker")).toBeNull()
 })
 
 it("mounts children only with no journal and records safe diagnostics", async () => {

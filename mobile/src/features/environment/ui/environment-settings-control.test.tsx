@@ -38,6 +38,7 @@ it("offers only preview choices and requires destructive confirmation", async ()
   const row = screen.getByTestId("settings-environment")
   expect(row.props.accessibilityRole).toBe("button")
   expect(screen.getByText("Preproduction")).toBeTruthy()
+  expect(row.props.accessibilityLabel).toBe("Environment, Preproduction")
 
   fireEvent.press(row)
   const choiceButtons = (Alert.alert as jest.Mock).mock.calls[0]?.[2] as {
@@ -72,7 +73,11 @@ it("adds local only for the development capability", async () => {
   mockCapability = "development"
   mockEnvironment = "local"
   await render(<EnvironmentSettingsControl />)
-  fireEvent.press(screen.getByTestId("settings-environment"))
+  const row = screen.getByTestId("settings-environment")
+  expect(screen.getByText("Local")).toBeTruthy()
+  expect(row.props.accessibilityLabel).toBe("Environment, Local")
+
+  fireEvent.press(row)
 
   const buttons = (Alert.alert as jest.Mock).mock.calls[0]?.[2] as {
     text: string

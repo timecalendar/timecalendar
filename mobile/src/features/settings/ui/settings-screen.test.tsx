@@ -33,6 +33,13 @@ jest.mock("expo-symbols", () => ({
   SymbolView: () => null,
 }))
 
+let mockCapability: "development" | "preview" | "production" = "production"
+
+jest.mock("@/features/environment", () => ({
+  getBackendEnvironmentCapability: () => mockCapability,
+  EnvironmentSettingsControl: () => null,
+}))
+
 const mockCalendars = useUserCalendars as jest.Mock
 const mockLoaded = useUserCalendarsLoaded as jest.Mock
 const mockPush = router.push as jest.Mock
@@ -40,6 +47,7 @@ const mockPush = router.push as jest.Mock
 beforeEach(() => {
   mockCalendars.mockReturnValue([])
   mockLoaded.mockReturnValue(true)
+  mockCapability = "production"
   mockPush.mockReset()
 })
 
@@ -78,6 +86,17 @@ describe("SettingsScreen", () => {
     expect(
       screen.queryByText("Calendars, events, and preferences in one place."),
     ).toBeNull()
+  })
+
+  it("keeps the environment entry in the final section outside production", async () => {
+    mockCapability = "development"
+    await render(<SettingsScreen />)
+    expect(
+      screen
+        .getAllByTestId(/^settings-section-/)
+        .map((section) => section.props.testID)
+        .at(-1),
+    ).toBe("settings-section-environment")
   })
 
   it("does not announce an empty summary while loading", async () => {

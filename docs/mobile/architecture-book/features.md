@@ -20,7 +20,7 @@ code and product specifications.
 | `splash`           | Startup presentation                                                                | Presentation-only                                                                                                                                            |
 | `about`            | Localized product, privacy, contact, installed-version, and developer information   | `expo-application`, `expo-web-browser`, and `expo-linking`; persists no state                                                                                |
 | `changelog`        | Bundled localized release history and tabs-eligible once-per-version presentation   | `@/storage` integer `changelogSeenVersion`; Phase 09 imports through `setChangelogSeenVersion` before tabs mount; JS-bundle version bumps remain OTA-capable |
-| `environment`      | Build-authorized backend selection, global test marker and journaled reset/recovery | `app.config` capability, `@/storage` journal/classification, `@/db`, Query runtime, Firebase diagnostics and injected reload                                 |
+| `environment`      | Build-authorized backend selection, the Settings entry that is the sole environment indicator, and journaled reset/recovery | `app.config` capability, `@/storage` journal/classification, `@/db`, Query runtime, Firebase diagnostics and injected reload                                 |
 
 ## Cross-feature contracts
 
