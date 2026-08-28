@@ -79,12 +79,12 @@
       environment feature's remaining tests must pass without the deleted marker test propping up
       coverage on `environment-runtime-gate.tsx`; if the file drops below threshold, cover the gate
       path rather than restoring the marker.
-- [ ] 5.4 `npx openspec validate remove-mobile-environment-banner --strict`, then dry-run the archive
+- [x] 5.4 `npx openspec validate remove-mobile-environment-banner --strict`, then dry-run the archive
       (`npx openspec archive remove-mobile-environment-banner --dry-run` or the equivalent no-write
       invocation) to prove both MODIFIED headers still match
       `openspec/specs/mobile-backend-environments/spec.md` byte-for-byte. Archive is the only step
       that checks those headers, and it aborts at merge time behind the native gate — catch it now.
-- [ ] 5.5 Review the complete diff (`git diff origin/main...HEAD`): only the environment feature UI,
+- [x] 5.5 Review the complete diff (`git diff origin/main...HEAD`): only the environment feature UI,
       its two tests, the two locale files, the Maestro flow, the Architecture Book ADR/features/
       CHANGELOG, the inbox note and this OpenSpec change may differ. No `openapi/`, no
       `mobile/src/api/generated/`, no server migration, no `app.config.ts`/`eas.json`/`firebase/`,
