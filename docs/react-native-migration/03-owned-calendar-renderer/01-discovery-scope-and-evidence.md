@@ -205,16 +205,19 @@ plain-language confirmation required by its answering protocol.
 - Do not use an Android minimum-version increase as a substitute for meeting the agreed
   non-flagship performance floor.
 
-### Still awaiting owner decisions
+### Round 2 disposition
 
-The unresolved product choices are ordered and phrased in **Round 2** below. Production
-workload percentiles remain research-blocked rather than owner questions.
+The owner answered Round 2 on 2026-08-28. The accepted decisions are recorded below and in
+the row-level questionnaire. The response to question 3 settled the fresh **date** anchor but
+did not settle the timeline's initial **vertical time** or the full Today-action behavior;
+those details remain unanswered rather than being inferred. Production workload percentiles
+remain research-blocked rather than owner questions.
 
 ## Round 1 bounded research (2026-08-27)
 
 The labels below distinguish repository observations, external facts, inferences, and
-recommendations. Recommendations are not confirmed requirements until the owner answers
-Round 2.
+recommendations. The Round 2 disposition after the research records which recommendations
+the owner subsequently confirmed.
 
 ### PL-003 — platform floor and representative hardware
 
@@ -442,27 +445,29 @@ split changes the accepted renderer-boundary rule.
   engine, and comments only where the reason cannot be expressed in names, types, or tests;
 - no `TODO`, `FIXME`, `HACK`, compatibility shim, temporary dual renderer, unexplained magic
   timeout, disabled check, knowingly flaky test, or accepted P0/P1 correctness, accessibility,
-  privacy, or performance defect at cutover; and
+  privacy, or performance defect at the accepted React Native launch; and
 - calendar-kit, its patch and adapter, temporary flags/scaffolding, and obsolete instrumentation
-  removed in the cutover commit. Any genuinely separate enhancement must be explicitly out of
-  first-release scope rather than relabeled as renderer debt.
+  removed before launch. Calendar-kit removal should happen as early as practical: because the
+  React Native app has not shipped, an incomplete calendar may temporarily exist on `main`
+  during development. That development allowance is not a waiver of the first-release gates and
+  does not permit a temporary dual renderer or fallback.
 
 This makes “excellent” auditable without claiming bug-free software or requiring meaningless
 metrics such as universal 100% coverage of presentation glue.
 
 ## Contradictions and missing precision after Round 1
 
-| ID        | Finding                                                                                                                           | Resolution path                                                                                                                                         |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R1-GAP-01 | P-002 allows retention only if new evidence proves calendar-kit reliable, while M-001 says it must never ship.                    | Treat replacement as the active decision. Only an explicit owner reversal based on bounded evidence may change M-001; no silent library-retention path. |
-| R1-GAP-02 | P-005 lists three outcomes but does not settle the order when correctness, accessibility, fluidity, and visual richness conflict. | Round 2 question 1.                                                                                                                                     |
-| R1-GAP-03 | “Persist the last mode” does not define navigation, process restart, reinstall, or calendar-source boundaries.                    | Round 2 question 2.                                                                                                                                     |
-| R1-GAP-04 | The full-day grid is confirmed, but the initial viewport and Today behavior are not.                                              | Round 2 question 3.                                                                                                                                     |
-| R1-GAP-05 | Monday whole-week paging is confirmed, but Sunday-first support and the React Native weekend-control location are not.            | Round 2 question 4.                                                                                                                                     |
-| R1-GAP-06 | All-day storage facts are known but E-008 remains an owner decision.                                                              | Round 2 question 5.                                                                                                                                     |
-| R1-GAP-07 | Cross-midnight timed events are required, but per-segment labels, continuation cues, and hit targets are not explicit.            | Round 2 question 6.                                                                                                                                     |
-| R1-GAP-08 | “120 fps” cannot bind a 60 or 90 Hz panel, and the proposed budgets have no measured baseline yet.                                | Round 2 question 8 plus a later release-profile spike.                                                                                                  |
-| R1-GAP-09 | The acceptance matrix names dimensions but not exact devices or a finite dataset catalog.                                         | Round 2 questions 8 and 10; production percentile research remains blocked on authorized read-only DB access.                                           |
+| ID        | Finding                                                                                                                           | Round 2 or research disposition                                                                                                             |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1-GAP-01 | P-002 allows retention only if new evidence proves calendar-kit reliable, while M-001 says it must never ship.                    | Resolved: remove calendar-kit as early as practical; it must not ship, and there is no fallback path.                                       |
+| R1-GAP-02 | P-005 lists three outcomes but does not settle the order when correctness, accessibility, fluidity, and visual richness conflict. | Resolved by Round 2 question 1.                                                                                                             |
+| R1-GAP-03 | “Persist the last mode” does not define navigation, process restart, reinstall, or calendar-source boundaries.                    | Resolved by Round 2 question 2.                                                                                                             |
+| R1-GAP-04 | The full-day grid is confirmed, but the initial viewport and Today behavior are not.                                              | Partly resolved: current day/week date anchors are confirmed; initial vertical time and Today state effects still need owner clarification. |
+| R1-GAP-05 | Monday whole-week paging is confirmed, but Sunday-first support and the React Native weekend-control location are not.            | Resolved by Round 2 question 4.                                                                                                             |
+| R1-GAP-06 | All-day storage facts are known but E-008 remains an owner decision.                                                              | Resolved by Round 2 question 5.                                                                                                             |
+| R1-GAP-07 | Cross-midnight timed events are required, but per-segment labels, continuation cues, and hit targets are not explicit.            | Resolved by Round 2 question 6.                                                                                                             |
+| R1-GAP-08 | “120 fps” cannot bind a 60 or 90 Hz panel, and the proposed budgets have no measured baseline yet.                                | Metrics and initial budgets are confirmed; a release-profile baseline remains `NEEDS_RESEARCH`.                                            |
+| R1-GAP-09 | The acceptance matrix names dimensions but not exact devices or a finite dataset catalog.                                        | Matrix and catalog are confirmed; numeric production percentiles remain `NEEDS_RESEARCH` behind authorized read-only DB access.            |
 
 ## Round 2 — owner questions and recommendations
 
@@ -510,3 +515,26 @@ needed. These are ordered by how many later questions they unblock.
     arbitrary colors; hidden calendars/events; live event insertion/removal; loading/stale/error;
     and maximum text size. Production research supplies the numeric p50/p95/p99 shapes. Accept,
     or name one missing family?
+
+## Round 2 owner response (2026-08-28)
+
+The owner accepted questions 1, 2, and 4 through 10, including the all-day confirmation in
+question 5. The two free-text responses are split across the exact questions they answer:
+
+| Round 2 item | Recorded decision | Remaining precision |
+| ------------ | ----------------- | ------------------- |
+| 1 — Priority | `CONFIRMED_IN`: correct dates/content, privacy, and complete accessibility; then agreed performance budgets; then visual richness. | None for this ordering. |
+| 2 — Mode persistence | `CONFIRMED_IN`: persist per installation across navigation, backgrounding, and process restart; reinstall resets to week; calendar-source changes do not reset it. | None for the stated boundaries. |
+| 3 — Fresh position and Today | `CONFIRMED_IN`: a fresh day-mode open selects the current day and a fresh week-mode open selects the current Monday-based week. Event presence must never make a fresh open select another day or week. | `UNANSWERED`: the initial vertical time within that current day/week, whether a mounted screen preserves its vertical offset, and whether Today preserves mode/zoom or scrolls to now. |
+| 4 — Week rule | `CONFIRMED_IN`: Monday-first in French and English and every display timezone; no Sunday-first at launch; Settings → Calendar owns a default-on “Show weekends” switch. | None for launch. |
+| 5 — All-day dates | `CONFIRMED_IN`: imported all-day events are floating dates with an exclusive end. | None for this contract. |
+| 6 — Cross-midnight events | `CONFIRMED_IN`: render one clipped timed segment per covered local day; every segment exposes continuation, a complete accessible label and target, and opens the same event; 24-hour-or-longer timed events stay timed. | Exact visual styling remains design work, not an unanswered semantic. |
+| 7 — Accessibility | `CONFIRMED_IN`: accept the proposed native WCAG 2.2 A/AA, WCAG2ICT, EN 301 549, platform-guidance, assistive-technology, large-text, motion, contrast, focus, and non-pinch engineering bar. | Any legal declaration remains outside this engineering recommendation. |
+| 8 — Performance | `CONFIRMED_IN`: accept the proposed device matrix, refresh-relative metrics, initial 250/500 ms budgets, API 24 floor, and minimum-OS compatibility smoke tests. | `NEEDS_RESEARCH`: the release-profile baseline must validate capability and measurement; PF-006–PF-008 still need privacy-safe production aggregates. |
+| 9 — Boundaries and quality | `CONFIRMED_IN`: accept the four-owner split and objective quality/debt gates. Remove calendar-kit as early as practical; an incomplete calendar on `main` during development is acceptable because React Native is unshipped. | This does not relax the accepted launch gates or authorize dual-renderer fallback. |
+| 10 — Dataset catalog | `CONFIRMED_IN`: accept the finite fixture-family catalog. | `NEEDS_RESEARCH`: production aggregates supply the numeric p50/p95/p99 shapes. |
+
+The remaining initial-vertical-position and Today details need one narrowly scoped owner
+clarification before architecture design relies on them. All other Round 2 recommendations are
+confirmed product or acceptance requirements, subject only to the explicit research dependencies
+above.
