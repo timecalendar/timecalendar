@@ -31,29 +31,6 @@ function getInitialRecoveryJournal(): BackendResetJournal | undefined {
   return result.state === "valid" ? result.journal : productionRecoveryJournal
 }
 
-export function NonProductionEnvironmentMarker() {
-  const { t } = useTranslation()
-  const environment = useEffectiveBackendEnvironment()
-  if (environment === "production") return null
-
-  return (
-    <SafeAreaView edges={["top"]} style={styles.markerSafeArea}>
-      <Text
-        accessibilityRole="text"
-        accessibilityLiveRegion="polite"
-        allowFontScaling
-        maxFontSizeMultiplier={2}
-        style={styles.markerText}
-        testID="backend-environment-marker"
-      >
-        {t("environment.marker", {
-          environment: t(`environment.choice.${environment}`),
-        })}
-      </Text>
-    </SafeAreaView>
-  )
-}
-
 export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
   const { t } = useTranslation()
   const environment = useEffectiveBackendEnvironment()
@@ -132,27 +109,10 @@ export function EnvironmentRuntimeGate({ children }: PropsWithChildren) {
     )
   }
 
-  return (
-    <View style={styles.root}>
-      <NonProductionEnvironmentMarker />
-      <View style={styles.content}>{children}</View>
-    </View>
-  )
+  return <>{children}</>
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  content: { flex: 1 },
-  markerSafeArea: { backgroundColor: "#7A2800" },
-  markerText: {
-    backgroundColor: "#7A2800",
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    textAlign: "center",
-  },
   recoverySafeArea: {
     flex: 1,
     backgroundColor: "#FFFFFF",
