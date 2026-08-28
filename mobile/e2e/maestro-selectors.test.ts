@@ -165,10 +165,24 @@ function renderings(title: string): string[] {
   ]
 }
 
+/**
+ * The bare `back` command. iOS has no hardware back key, so Maestro issues a
+ * left-edge swipe that reports COMPLETED without popping a native-stack Screen —
+ * a one-platform failure Android's hardware key hides.
+ */
+function backCommands(yaml: string): number[] {
+  return yaml
+    .split("\n")
+    .map((line, index) => ({ line, number: index + 1 }))
+    .filter(({ line }) => /^\s*-\s*back\s*$/.test(line))
+    .map(({ number }) => number)
+}
+
 const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
   name: file.slice(flowsDir.length + 1),
   selectors: flowSelectors(readFileSync(file, "utf8")),
   textSelectors: flowTextSelectors(readFileSync(file, "utf8")),
+  backCommands: backCommands(readFileSync(file, "utf8")),
 }))
 
 /** Maestro compiles a text selector as a fully anchored regex — so does this. */
@@ -239,6 +253,27 @@ describe("Maestro flow selectors", () => {
 
   it("resolves a testID declared as an object property", () => {
     expect(resolves("settings-feedback")).toBe(true)
+  })
+})
+
+describe("Maestro back navigation", () => {
+  it("uses no bare back command", () => {
+    // run 33211705313: settings.yaml's `back` reported COMPLETED on iOS and the
+    // captured hierarchy still showed the pushed "My calendars" screen, so the
+    // next assertion failed 60s later on a screen the flow believed it had left.
+    // Android's hardware key makes the same command pass, so only iOS ever sees
+    // it. Re-enter a root screen with `stopApp` + `launchApp` instead.
+    const offenders = flows.flatMap((flow) =>
+      flow.backCommands.map((line) => `${flow.name}:${line}`),
+    )
+
+    expect(offenders).toEqual([])
+  })
+
+  it("detects a bare back command", () => {
+    // The guard's own failure mode: a parser matching nothing passes vacuously.
+    expect(backCommands("- launchApp\n- back\n")).toEqual([2])
+    expect(backCommands("- tapOn: back\n- assertVisible: back\n")).toEqual([])
   })
 })
 

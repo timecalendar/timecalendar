@@ -1,3 +1,18 @@
+# Settings hub navigation e2e flow.
+#
+# Asserts the Settings list renders its sections/rows, then walks the two pushed
+# destinations it links to (My calendars, Appearance & language), re-entering the
+# hub between legs.
+#
+# Re-entry idiom — do NOT use `back` here. iOS has no hardware back key, so
+# Maestro's `back` is a left-edge swipe, and on these native-stack Screens it
+# reports COMPLETED without popping: run 33211705313 died at this flow with the
+# captured step-016 hierarchy still showing "My calendars". Android passes `back`
+# via its hardware key, so a `back` regression is invisible on one platform. The
+# `stopApp` + `launchApp` cold restart used below is the same cross-platform
+# re-entry about.yaml uses, and needs no per-platform fork. The header back button
+# cannot be selected either: iOS exposes it as id "BackButton" (a11y label
+# "(tabs)"), Android's toolbar navigation icon exposes neither.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
@@ -21,16 +36,29 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "My calendars"
     timeout: 60000
-- back
+- stopApp
+- launchApp
 - extendedWaitUntil:
     visible: "Settings"
     timeout: 60000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-appearance"
+    timeout: 60000
 - tapOn:
     id: "settings-appearance"
+# Assert a control that exists ONLY on the Appearance destination. "Appearance &
+# language" is also the row label on the hub (asserted above), so on its own it
+# cannot prove the push happened. settings-theme-picker is the same testID
+# appearance-settings.yaml lands on.
 - extendedWaitUntil:
-    visible: "Appearance & language"
+    visible:
+      id: "settings-theme-picker"
     timeout: 60000
-- back
+# Leave the shared device session back at the root, not on a pushed screen.
+- stopApp
+- launchApp
 - extendedWaitUntil:
     visible: "Settings"
     timeout: 60000
