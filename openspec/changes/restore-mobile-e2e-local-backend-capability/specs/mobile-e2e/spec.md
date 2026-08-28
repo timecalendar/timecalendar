@@ -160,6 +160,14 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **AND** `onboarding.yaml` addresses the native-header search bar by its placeholder, since that control can carry no `testID`
 - **AND** both flows' existing assertions are unchanged
 
+#### Scenario: A flow reaches a row below the fold
+
+- **WHEN** a flow selects a control that renders outside the first screenful, such as the
+  Settings hub's `settings-feedback` and `settings-environment` rows
+- **THEN** it reaches that control with `scrollUntilVisible` rather than a plain visibility
+  wait, because the repository proof resolves ids in source and cannot observe the device
+  viewport — an existing `testID` below the fold otherwise fails identically to a deleted one
+
 #### Scenario: A known-stale selector is repaired
 
 - **WHEN** an id listed in the proof's known-stale allowlist is reintroduced as a real `testID`

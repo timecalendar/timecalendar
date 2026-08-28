@@ -1,5 +1,11 @@
 # Development-build happy path for the visible environment switch. The flow is
 # committed for the device-capable CI/host; this no-KVM agent host does not run it.
+#
+# `settings-environment` is the LAST row of the Settings ScrollView — its own
+# section, below every destination section. Maestro's assertions match only
+# what is on screen, so this must be reached with scrollUntilVisible; run
+# 33167661438 timed out 60s on a plain wait for a row that renders correctly
+# and simply sits below the fold.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
@@ -8,9 +14,10 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "TEST ENVIRONMENT · Local"
     timeout: 60000
 - tapOn: "Settings"
-- extendedWaitUntil:
-    visible:
+- scrollUntilVisible:
+    element:
       id: "settings-environment"
+    direction: DOWN
     timeout: 60000
 - tapOn:
     id: "settings-environment"

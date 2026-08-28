@@ -1,6 +1,11 @@
 # Feedback navigation and client-validation proof. This flow intentionally never
 # enters valid values: pressing Send with an empty form cannot reach POST /contact
 # (which sends real mail). Shared across iOS and Android.
+#
+# `settings-feedback` is the last destination row, one below `settings-about`,
+# so it can fall below the fold on a phone-sized device even though `about.yaml`
+# finds its own row without scrolling. Same rule as environment-switch.yaml:
+# reach an off-screen Settings row with scrollUntilVisible, never a plain wait.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
@@ -9,9 +14,10 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Settings"
     timeout: 60000
 - tapOn: "Settings"
-- extendedWaitUntil:
-    visible:
+- scrollUntilVisible:
+    element:
       id: "settings-feedback"
+    direction: DOWN
     timeout: 60000
 - tapOn:
     id: "settings-feedback"

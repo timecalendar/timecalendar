@@ -101,7 +101,23 @@ and prevent later flows from running.
    you believe works, fix the flow or the guard — never allowlist it. For a
    control that can carry no testID at all (the native-header search bar), select
    its EN label; the e2e device runs in EN.
-5. To assert **real synced calendar data**, start the flow with the shared import
+5. A `testID` that exists is not the same as one that is **on screen**. Maestro
+   matches only the visible hierarchy, so a row below the fold fails a plain
+   `assertVisible`/`extendedWaitUntil` after the full timeout, and the failure
+   reads exactly like a deleted `testID` — `maestro-selectors.test.ts` cannot
+   catch this, since the id resolves fine in source. Reach anything past the
+   first screenful with `scrollUntilVisible` instead:
+   ```yaml
+   - scrollUntilVisible:
+       element:
+         id: "settings-environment"
+       direction: DOWN
+       timeout: 60000
+   ```
+   The Settings hub is the live example: `settings-about` is on screen while
+   `settings-feedback` (one row lower) and `settings-environment` (its own
+   section, last on the page) are not.
+6. To assert **real synced calendar data**, start the flow with the shared import
    preamble so the app durably holds the seeded token and syncs it (ADR 030):
    ```yaml
    - runFlow: import-seed.yaml

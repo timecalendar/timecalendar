@@ -74,3 +74,21 @@ excuse — the ADR 038 retry budget exists for exactly this flake and never got 
 - [x] 8.2 Add a `driver_timeout` scenario to `mobile/e2e/test_run_e2e.sh` whose fake Maestro emits the real CI signature with **no** `launchApp` line, and assert the flow is attempted twice, the later flow still runs, and the retry reason is logged. Replay the classifier against the captured job-`98836832386` output to confirm it flips terminal → retryable.
 - [x] 8.3 Widen the ADR 038 decision paragraph, `docs/mobile/architecture-book/testing.md`, and `mobile/e2e/README.md` from "first-`launchApp` transport failure" to the two-shape driver-startup class, and append the change to `docs/mobile/architecture-book/CHANGELOG.md`. ADR 038's decision is refined in place, not replaced: per-flow processes, the bounded budget, and terminal assertions are all unchanged. Flag the ADR edit as a sensitive binding-document surface in the handoff.
 - [x] 8.4 Repair the OpenSpec delta's section headers in the same commit: `Flow selectors resolve against the shipped app` does not exist in `openspec/specs/mobile-e2e/spec.md`, so it must sit under `## ADDED Requirements` or `openspec archive` aborts at merge time. Carry the widened retry contract as a genuine `MODIFIED` of the shipped `XCTest startup retries cannot mask flow failures`.
+
+## 9. Reach Settings rows that render below the fold
+
+Android at `288a7704` passed `about`, `appearance-settings`, and `calendar` — including
+the whole `calendar-view` → Agenda → seeded-title → details round trip, which proves §3
+and §4 on a real device — then failed `environment-switch` at
+`Assert that id: settings-environment is visible`, after the full 60s.
+
+This is **not** selector drift, and `maestro-selectors.test.ts` is right to pass:
+`settings-environment` exists in `mobile/src` and renders correctly. It is the last row
+of the Settings `ScrollView`, in its own section below every destination section, so it
+is simply off screen — and Maestro matches only the visible hierarchy. An existing
+`testID` below the fold fails identically to a deleted one, which is exactly why the
+static guard cannot cover this class.
+
+- [x] 9.1 In `mobile/.maestro/environment-switch.yaml`, replace the `extendedWaitUntil` on `id: "settings-environment"` with `scrollUntilVisible` (`direction: DOWN`, same 60000 ms). Leave the launch, the `TEST ENVIRONMENT · Local` wait, the tap, the `Preproduction` choice, the confirm dialog, and the final banner assertion untouched.
+- [x] 9.2 Apply the same repair to `mobile/.maestro/feedback.yaml`, which selects `settings-feedback` — one row below the `settings-about` that `about.yaml` finds on screen, so it is the next flow to hit this and would cost another full native cycle to discover. **Flag the [TIM-263](/TIM/issues/TIM-263) overlap explicitly in the handoff**: revealing that row is the parent's stated deliverable, and this is a two-line unblock taken here only because leaving it red makes acceptance criterion 6 unreachable on this ticket.
+- [x] 9.3 Confirm the guard still resolves both ids through the new `scrollUntilVisible.element.id` shape (`npx jest e2e/maestro-selectors`), and add the below-the-fold rule to `mobile/e2e/README.md`'s "Add a flow" checklist with the Settings hub as the worked example. It is a device-viewport property, so no repository proof can encode it — the checklist is the only place it can live.
