@@ -76,6 +76,11 @@ beforeEach(() => {
   mockFindAll.mockResolvedValue([calendarToken])
 })
 
+afterEach(() => {
+  mockFetch.mockReset()
+  mockReplaceAll.mockReset()
+})
+
 describe("useSyncCalendars", () => {
   it("reads tokens, batch-syncs, and replaces with the flattened+mapped events", async () => {
     mockFetch.mockResolvedValueOnce(syncResponse)
@@ -169,6 +174,24 @@ describe("useSyncCalendars", () => {
     expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
   })
 
+  it("reset clears the error state", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("offline"))
+
+    const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    await act(() => {
+      result.current.reset()
+    })
+    await waitFor(() => expect(result.current.isError).toBe(false))
+
+    mockFetch.mockRejectedValueOnce(new Error("must not leak"))
+    mockReplaceAll.mockRejectedValueOnce(new Error("must not leak"))
+  })
+
   it("forwards a non-Error replaceAll rejection to the seam under its tag", async () => {
     mockFetch.mockResolvedValueOnce(syncResponse)
     mockReplaceAll.mockRejectedValueOnce("plain string boom")
@@ -184,20 +207,5 @@ describe("useSyncCalendars", () => {
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError.mock.calls[0]?.[0]).toBe("plain string boom")
     expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
-  })
-
-  it("reset clears the error state", async () => {
-    mockFetch.mockRejectedValueOnce(new Error("offline"))
-
-    const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
-    await act(async () => {
-      await result.current.sync()
-    })
-    await waitFor(() => expect(result.current.isError).toBe(true))
-
-    act(() => {
-      result.current.reset()
-    })
-    await waitFor(() => expect(result.current.isError).toBe(false))
   })
 })

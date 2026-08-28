@@ -51,13 +51,17 @@ function lastBody(): Record<string, unknown> {
   return JSON.parse(call?.[1].body as string) as Record<string, unknown>
 }
 
-beforeEach(() => {
-  jest.clearAllMocks()
+function clearStoredPreferences() {
   remove(NOTIFICATION_KEYS.frequency)
   remove(NOTIFICATION_KEYS.nbDaysAhead)
   remove(NOTIFICATION_KEYS.isActive)
   remove(SETTINGS_KEYS.language)
   remove(SETTINGS_KEYS.timezone)
+}
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  clearStoredPreferences()
   mockGetFcmToken.mockResolvedValue("fcm-token")
   mockUseUserCalendars.mockReturnValue([
     { id: "srv-cal-1" },
@@ -67,6 +71,14 @@ beforeEach(() => {
   calendarsSpy.mockReturnValue([
     { timeZone: "America/New_York" },
   ] as unknown as ReturnType<typeof Localization.getCalendars>)
+})
+
+afterEach(() => {
+  mockFetch.mockReset()
+  mockGetFcmToken.mockReset()
+  mockUseUserCalendars.mockReset()
+  calendarsSpy.mockReset()
+  clearStoredPreferences()
 })
 
 describe("useSubscriptionRegistration", () => {
@@ -201,6 +213,33 @@ describe("useSubscriptionRegistration", () => {
     )
   })
 
+  it("reset clears the error state", async () => {
+    mockGetFcmToken.mockResolvedValue("fcm-token")
+    mockFetch.mockRejectedValue(new Error("boom"))
+
+    const { result } = await renderHook(() => useSubscriptionRegistration(), {
+      wrapper,
+    })
+    await expect(
+      act(async () => {
+        await result.current.register()
+      }),
+    ).rejects.toThrow("boom")
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    await act(() => {
+      result.current.reset()
+    })
+    await waitFor(() => expect(result.current.isError).toBe(false))
+
+    mockFetch.mockResolvedValueOnce(undefined)
+    mockGetFcmToken.mockResolvedValueOnce(null)
+    mockUseUserCalendars.mockReturnValueOnce([])
+    calendarsSpy.mockReturnValueOnce([
+      { timeZone: "Europe/Paris" },
+    ] as unknown as ReturnType<typeof Localization.getCalendars>)
+  })
+
   it("forwards a non-Error rejection to the seam under its tag", async () => {
     mockGetFcmToken.mockResolvedValue("fcm-token")
     mockFetch.mockRejectedValue("plain string boom")
@@ -220,25 +259,5 @@ describe("useSubscriptionRegistration", () => {
       "plain string boom",
       "notifications/subscription",
     )
-  })
-
-  it("reset clears the error state", async () => {
-    mockGetFcmToken.mockResolvedValue("fcm-token")
-    mockFetch.mockRejectedValue(new Error("boom"))
-
-    const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
-    })
-    await expect(
-      act(async () => {
-        await result.current.register()
-      }),
-    ).rejects.toThrow("boom")
-    await waitFor(() => expect(result.current.isError).toBe(true))
-
-    act(() => {
-      result.current.reset()
-    })
-    await waitFor(() => expect(result.current.isError).toBe(false))
   })
 })

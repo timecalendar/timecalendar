@@ -42,6 +42,11 @@ beforeEach(() => {
   mockUpsert.mockResolvedValue(undefined)
 })
 
+afterEach(() => {
+  mockFetch.mockReset()
+  mockUpsert.mockReset()
+})
+
 describe("useAddCalendar", () => {
   it("posts the url, resolves by token, and upserts the mapped durable row", async () => {
     mockFetch
@@ -94,6 +99,29 @@ describe("useAddCalendar", () => {
     await waitFor(() => expect(result.current.isError).toBe(true))
   })
 
+  it("reset clears the error state", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ token: "tok_123" })
+      .mockRejectedValueOnce(new Error("boom"))
+
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+
+    await expect(
+      act(async () => {
+        await result.current.addCalendarFromUrl("https://example.com/cal.ics")
+      }),
+    ).rejects.toThrow("boom")
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    await act(() => {
+      result.current.reset()
+    })
+    await waitFor(() => expect(result.current.isError).toBe(false))
+
+    mockFetch.mockResolvedValueOnce({ token: "must-not-leak" })
+    mockUpsert.mockRejectedValueOnce(new Error("must not leak"))
+  })
+
   it("rejects and flips isError when the durable upsert fails", async () => {
     mockFetch
       .mockResolvedValueOnce({ token: "tok_123" })
@@ -109,25 +137,5 @@ describe("useAddCalendar", () => {
     ).rejects.toThrow("upsert boom")
 
     await waitFor(() => expect(result.current.isError).toBe(true))
-  })
-
-  it("reset clears the error state", async () => {
-    mockFetch
-      .mockResolvedValueOnce({ token: "tok_123" })
-      .mockRejectedValueOnce(new Error("boom"))
-
-    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-
-    await expect(
-      act(async () => {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics")
-      }),
-    ).rejects.toThrow("boom")
-    await waitFor(() => expect(result.current.isError).toBe(true))
-
-    act(() => {
-      result.current.reset()
-    })
-    await waitFor(() => expect(result.current.isError).toBe(false))
   })
 })
