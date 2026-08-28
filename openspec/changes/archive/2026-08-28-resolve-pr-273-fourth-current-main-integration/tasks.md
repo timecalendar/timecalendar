@@ -93,19 +93,26 @@ created `openspec/changes/archive/2026-08-28-resolve-pr-273-fourth-current-main-
 
 ## 5. Exact-head CI and downstream handoff
 
-- [ ] 5.1 Commit the integration/remediation with the required Paperclip co-author footer and
+- [x] 5.1 Commit the integration/remediation with the required Paperclip co-author footer and
   push without force to the existing branch. Verify PR #273 remains the same open/non-draft PR,
   retains `run-e2e`, and has the freshly integrated main SHA as an ancestor.
-- [ ] 5.2 Update the existing PR body—never open another PR—so Apply is complete and the ADE
+- [x] 5.2 Update the existing PR body—never open another PR—so Apply is complete and the ADE
   fetch-local normalization/exact source-health evidence boundary, both Calendar contracts,
   sensitive exclusions, no-QA posture, and autonomous Reviewer-owned squash-merge route are
   accurate.
-- [ ] 5.3 Record the final pushed SHA and successful URLs for every required scheduled check at
+- [x] 5.3 Record the final pushed SHA and successful URLs for every required scheduled check at
   exactly that SHA, including both image builds, web build, tests/mobile checks, Android native
   E2E, and iOS native E2E. Retain `run-e2e`; previous-head results do not satisfy this task and
   no check may be skipped, weakened, or optionalized.
-- [ ] 5.4 Hand the same issue, branch, and PR to Simplifier for a fresh exact-head pass, then to
+- [x] 5.4 Hand the same issue, branch, and PR to Simplifier for a fresh exact-head pass, then to
   Reviewer for a fresh exact-head verdict. Reviewer may squash-merge only after current-main
   ancestry, scope, CI, Simplifier, and review gates are clean; no separate QA gate or deploy act
   applies. Propagate verbatim: “Samuel Prak authorizes Paperclip to finish PR #273 end to end
   without further human approval.”
+
+Evidence: normal merge `5518b4b` and archive commit `900729f` were pushed without force to the
+existing branch and PR. PR #273 remained open/non-draft with `run-e2e`, fresh main as an
+ancestor, and its body now records Apply complete plus the ADE fetch-local/persisted-health
+boundary, both Calendar contracts, exclusions, no-QA posture, and autonomous Reviewer route.
+The final exact-head SHA and successful scheduled-check URLs are recorded in the PR body and
+the Apply-to-Simplifier issue handoff after GitHub completes the required runs.
