@@ -104,6 +104,119 @@ The first preview is complete only when:
   the OTA service is ready;
 - no secret or private key appears in git, build logs or issue comments.
 
+## 3.6 Shipped record — iOS internal preview, 2026-08-28
+
+The iOS half of the first preview shipped. Android has not.
+
+| Field               | Value                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| Source SHA          | `20cadefff9b328accf5ce2420b1858894b3fe469` on `main`                                               |
+| Version / build     | `4.0.0` / `142`                                                                                    |
+| Runtime fingerprint | `7db7c8dbe3b26b05c50d92899e5ee586968cfff7`                                                         |
+| Artifact SHA-256    | `b71bb9476721440705e9fda970f7b215cf199c3e2692f2b88c15f14e14e452d0` (26,733,857 bytes)              |
+| Bundle ID           | `fr.samuelprak.timecalendar`, `UIDeviceFamily` `[1, 2]`, `MinimumOSVersion` `16.4`                 |
+| OTA channel         | `expo-channel-name = preview`, `EXUpdatesRuntimeVersion = file:fingerprint`                        |
+| Signing             | `iPhone Distribution: Samuel Prak (9629G25NH7)`, App Store profile, `aps-environment` `production` |
+| Host toolchain      | macOS 26.5.1, Xcode 26.6 (17F113), Node 24.13.0, eas-cli 22.5.0, CocoaPods 1.17.0                  |
+| Destination         | App Store Connect app `1479613630`, internal group **The Team**                                    |
+
+Apple-side state, read back from the App Store Connect API rather than from the submit log:
+`processingState = VALID`, `internalBuildState = IN_BETA_TESTING`, and build 142 is attached to
+the internal group **The Team**. `externalBuildState` remains `READY_FOR_BETA_SUBMISSION` and the
+external group **Alpha** does not carry build 142 — nothing was submitted for Beta App Review,
+App Store review or production release.
+
+Two caveats belong on this record:
+
+- **The E2E exception.** `20cadeff` is green on `CI mobile checks` and `CI build & deploy`, but
+  `CI mobile E2E` fails there. The board owner waived that gate for this preview; the failures are
+  E2E-harness concerns owned separately, not preview-build defects.
+- **§3.5 is not yet satisfied.** Physical-device install and verification, the Android half, and
+  the OTA fingerprint-compatibility cases all remain open. This record covers upload and internal
+  TestFlight availability only.
+
+## 3.7 Android preview — prerequisite state, 2026-08-28
+
+The Android half was attempted and stopped before building. §3.3 step 2–5 was only partly done, and
+building on top of the state that was there would have produced an upload Play rejects. What the
+three Android prerequisites actually looked like, read back from the Expo API rather than assumed:
+
+| Prerequisite                        | State found                                                                     | State now                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------- |
+| Upload key in EAS credentials       | An unrelated EAS-generated keystore, alias `aa6e0585…`, SHA-1 `135a8d77…`       | **Fixed** — the held upload key is imported   |
+| EAS remote `versionCode`            | `1`                                                                             | Still `1` — needs the live Play value         |
+| Play service account for EAS Submit | `googleServiceAccountKeyForSubmissions = null`                                   | Still absent — Play Console act, see the inbox |
+
+### The keystore that was there was not the upload key
+
+EAS app credentials `b275bfa0` held a keystore auto-generated on 2026-06-16 (alias
+`aa6e0585cc9509022841fb151be2dddc`, SHA-1 `135a8d77bfa841dc0a09f594b3d56db667b9dbc7`). That
+certificate has never signed anything for this app identity: it is not the held upload key, and the
+EAS Android submission history is empty, so nothing had ever proved otherwise. An `.aab` signed with
+it would have been rejected by Play as signed with the wrong upload key.
+
+Do **not** use `mobile/firebase/google-services.json` as the test here. That file registers four
+SHA-1 hashes for `fr.samuelprak.timecalendar`, and the *accepted* upload certificate `99f82ae8…` is
+absent from them too — under Play App Signing those hashes track the app-signing and debug
+certificates, not the upload certificate, so the check rejects the correct key as readily as the
+wrong one. The decisive evidence is the two facts above.
+
+The accepted upload key is the one the Flutter release build used
+(`app/android/key.properties` → `keyAlias=upload`, `storeFile=~/upload-keystore.jks` on the owner's
+macOS host) — the config that signed every `.aab` Play has accepted for this package. It is now
+imported into EAS-managed credentials and attached as the default build credentials, per
+[document 2](./02-signing-and-credentials.md) §2.3 step 2. **No upload-key reset was requested;
+nothing was lost.** Read back from the Expo API after the import:
+
+| Field                | Value                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| Keystore             | `af4cc224-cc07-40ac-9907-3e8571f8eb73`, type `JKS`, alias `upload`                                 |
+| Upload cert SHA-1    | `99f82ae836448f35ed388a0f305bbea409839a9e`                                                        |
+| Upload cert SHA-256  | `1a04470a148208644775d1f09692fa75de7baddd20b5fbe32afbcca5a4e1491c`                                 |
+| Subject / validity   | `CN=Samuel Prak, O=Samuel Prak, L=Paris, C=FR`, 2023-09-01 → 2051-01-16                            |
+| Attached to          | app credentials `b275bfa0` (`fr.samuelprak.timecalendar`), build credentials `6c76a474`, default   |
+
+Only public certificate metadata appears here. The keystore, its passwords and the owner's
+`key.properties` stayed on the owner's host; nothing private was copied into this repository, a log
+or a ticket.
+
+### Why the build was not run
+
+Two prerequisites are still open, and both need Play Console access an agent does not have:
+
+- **EAS remote `versionCode` is `1`.** `preview` carries `autoIncrement`, so the next Android build
+  would be `versionCode 2`. Play's live counter is far above that — the Flutter repo records
+  `3.1.0+134`, and §3.3 step 3 is explicit that the live console, not that historical file, is
+  authoritative. Building now would burn a build on a guaranteed "version code already used"
+  rejection. Guessing a safely-high number instead of reading the console is exactly the
+  improvisation this document forbids.
+- **No Play service account.** `submit.preview.android.serviceAccountKeyPath` points at
+  `../ci/keys/eas-android-sa-key.json` — repo-root `ci/keys/`, which is correctly absent from git —
+  and EAS holds no service account key for this project. `eas submit --platform android` cannot
+  authenticate.
+
+The second one also blocks the read-back: confirming the **Play-delivered app-signing fingerprint**
+requires the Play Developer API, which needs that same service account. That §3.5 line therefore
+stays open rather than being answered from a submit log.
+
+Once the service account exists, the rest is agent work — it lets EAS read the live version counter,
+submit, and read Play-side state back. It is filed as one operator item in
+[`inbox/2026-08-28-android-preview-play-access.md`](../../react-native-migration/inbox/2026-08-28-android-preview-play-access.md),
+together with the physical-device verification §3.5 requires on both platforms.
+
+### §3.5 scoreboard after this pass
+
+| §3.5 line                                        | iOS                       | Android                          |
+| ------------------------------------------------ | ------------------------- | -------------------------------- |
+| Store accepted a build for the existing identity | ✅ build 142               | ❌ not built                      |
+| Named physical device installed it               | ❌ operator item           | ❌ operator item                  |
+| Build numbers exceed previous uploads            | ✅ 142                     | ❌ remote counter is `1`          |
+| Host toolchain recorded                          | ✅ §3.6                    | ➖ no build                       |
+| Play-delivered signing fingerprint matches       | n/a                       | ❌ needs the Play API             |
+| Build identifies the approved SHA/profile/channel | ✅                        | ➖ no build                       |
+| OTA compatible + incompatible cases              | ⏸ waits on the OTA service | ⏸ waits on the OTA service        |
+| No secret or private key in git/logs/comments    | ✅                         | ✅                                |
+
 ## Official references
 
 - [Expo: TestFlight distribution](https://docs.expo.dev/submit/testflight/)

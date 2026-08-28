@@ -57,6 +57,19 @@ module.exports = {
     // (Phase-04 — the Reanimated grid can't be CI/Maestro-driven).
     "<rootDir>/jest/calendar-kit/setup.ts",
   ],
+  // Per-test wall-clock budget (ADR 044, TIM-273). Jest's 5 000 ms default is
+  // sized for trivial units; this harness mounts real React Native trees under
+  // coverage instrumentation. RN/Expo host components do their transform,
+  // evaluation and host-component registration LAZILY on first render, so that
+  // whole one-time cost is billed to whichever test happens to mount them
+  // first. ADR 044 is the canonical record of the load-regime measurements and
+  // sizing rationale. CI is cold on every run (ci-mobile.yml caches npm only),
+  // so that headroom is what the gate sits on.
+  //
+  // This is a CAPACITY setting: it bounds how long a test may take to execute.
+  // It is NEVER a tool for giving a failing query more chances to find an
+  // element — no waitFor/findBy timeout, retry, or matcher is relaxed by it.
+  testTimeout: 30000,
   // Tests are colocated as *.test.ts(x) next to the source they cover.
   collectCoverageFrom: [
     "src/**/*.{ts,tsx}",

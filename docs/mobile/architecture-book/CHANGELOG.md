@@ -8,6 +8,13 @@
   screen composition relative to a production build, so headers can be integration-tested and
   screenshotted at their shipped position. Supersedes the marker consequence of ADR 043
   (043-backend-environment-reset.md, features.md).
+- Set an explicit per-test time budget for the Jest harness (`testTimeout: 30000`) with a
+  config-drift guard at a 20 000 ms floor, resolving the baseline gate's named intermittent —
+  a per-test timeout misread as a `getByText` miss. ADR 044 records the measurements and the
+  binding rule: the budget is a harness capacity setting and may never be cited for a longer
+  query wait, a retry, or a weakened matcher. Also added `usePlatform`
+  (`src/test-support/platform.ts`) so a `Platform.OS` override always restores, a separate
+  latent order dependence (testing.md, ADR 044).
 - Replaced ADR 038's three stack-trace signatures with a single **structural** retry rule.
   `mobile/e2e/classify-maestro-attempt.mjs` reads Maestro's own per-flow `commands.json`:
   captured-output assertion evidence wins globally, as does any earlier command with status
