@@ -27,7 +27,7 @@ npx jest --ci --coverage --verbose --cacheDirectory /tmp/tim273-cache \
       the excerpt that made this look like a `getByText("ENSEEIHT")` failure.
       **Verification:** the failure text says `Exceeded timeout`, never
       `Unable to find an element`.
-- [ ] 1.3 (optional, if you want the component-level breakdown) render one primitive per
+- [~] 1.3 (optional - SKIPPED, see note, if you want the component-level breakdown) render one primitive per
       test in a throwaway file, cold, with `--coverage`: `View`+`Text` ≈ 2.6–2.9 s,
       `ScrollView` ≈ 4.3 s, `SymbolView` ≈ 2.2–3.5 s, `Switch` ≈ 0.2 s, second render of
       the same tree ≈ 7 ms. Delete the file afterwards — it is a measurement, not a test.
@@ -102,16 +102,34 @@ it clearly labelled as such in the commit message and the handoff.
 
 ## 5. Green + handoff
 
-- [ ] 5.1 `cd mobile && npx tsc --noEmit`, `npm run lint`, `npm test -- --coverage` — all
+- [x] 5.1 `cd mobile && npx tsc --noEmit`, `npm run lint`, `npm test -- --coverage` — all
       clean, coverage gate still satisfied (nothing here moves coverage; the new
       `jest.config.test.ts` sits outside `collectCoverageFrom`'s `src/**` glob).
-- [ ] 5.2 Re-run the contended cold repro from 1.2 at least 3× — green each time, with the
+- [x] 5.2 Re-run the contended cold repro from 1.2 at least 3× — green each time, with the
       canary's real duration recorded. State the numbers in the PR body; they are the
       evidence, and "it passed N times" on its own is not.
-- [ ] 5.3 File a follow-up ticket (its own worktree, not a child of this one): whole-suite
+- [x] 5.3 File a follow-up ticket (its own worktree, not a child of this one): whole-suite
       `jest --randomize` currently fails 4 unrelated suites — `calendar/data/sync/sync.test.tsx`,
       `notifications/data/subscription.test.tsx`, `settings/ui/timezone-settings-screen.test.tsx`,
       `calendar-sources/data/user-calendars/add-calendar.test.tsx`. Each is a latent
       intra-file order dependence of the same class as task 3. Out of scope for TIM-273 —
       do not fix them here.
 - [ ] 5.4 Update the PR body's stage line to `apply ✅` and hand to the Simplifier.
+
+## Applier notes
+
+- **1.3 skipped** (it is marked optional). The Proposer's per-primitive breakdown was not
+  re-derived; tasks 1.1/1.2 reproduced the failure directly, which is what the change is
+  justified by.
+- **Load regimes matter more than the proposal assumed.** The canary's cost is dominated by
+  how much else competes for the box. Measured after the fix: whole suite cold on 4 cores
+  (what CI runs) 0.3 s; single file cold and dedicated 4.1–4.6 s; single file cold with one
+  competing suite 7.7–9.8 s (3/3 green — the regime that was red at 5 s); with **two**
+  competing cold suites 27–60 s, which exceeds even 30 s. That last regime is ~3× the work
+  CI ever does and is not a target — recorded in ADR 044 so a reviewer re-running a heavier
+  stress harness does not read expected red as a failed fix.
+- **Task 3 extra:** `date-time-field.test.tsx`'s file-level `jest.restoreAllMocks()` existed
+  only to undo the `Platform.OS` override. `usePlatform` now owns that restore, so the
+  blanket call was removed — it is the exact hazard the design rejects (it would also
+  discard `jest/setup-splash.ts`'s `AccessibilityInfo` spies). No assertion changed.
+- **5.3 filed as TIM-276** (isolated workspace, no parent).

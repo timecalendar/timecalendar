@@ -29,11 +29,11 @@ billed to whichever test happens to mount them first. Measured cold (`--coverage
 | `Switch` | 0.17–0.24 s |
 | the same tree a second time | **7 ms** |
 
-In the affected file: the first test that mounts the populated list reports **4.1 s idle
-and 9.0–9.6 s under CPU contention**, while every other test in the file reports
-4–600 ms. Jest's default per-test budget is 5 000 ms, so the gate was passing at ~83 % of
-budget on a canary test — and `ci-mobile.yml` caches npm only, so every CI run is a
-cold-cache run.
+In the affected file: the first test that mounts the populated list reports **4.1 s on a
+dedicated cold run and 7.7–9.8 s with one competing suite**, while every other test in the
+file reports 4–600 ms. Jest's default per-test budget is 5 000 ms, so the gate was passing
+at ~83 % of budget on a canary test — and `ci-mobile.yml` caches npm only, so every CI run
+is a cold-cache run.
 
 ## Decision
 
@@ -50,11 +50,32 @@ what TIM-273 banned and was right to ban. Every assertion keeps the strength it 
 with the row's name removed from the screen, the test still fails at the assertion in
 **432 ms** with `Unable to find an element with text: ENSEEIHT`.
 
-30 000 ms is ~3.1× the worst observed single-test cost (9.6 s at ~3× CPU
-oversubscription on 16 cores). The CI runner is weaker than the measurement box *and*
-always cold, so the headroom absorbs a machine we cannot measure from here. It stays far
-inside the job budget: on a genuinely hung test, the difference between failing at 5 s and
-at 30 s is noise against a 20-minute job.
+30 000 ms is ~3× the worst cost observed in a CI-shaped regime. It stays far inside the
+job budget: on a genuinely hung test, the difference between failing at 5 s and at 30 s is
+noise against a 20-minute job.
+
+**Which load the number is sized against** — this matters, because the canary's cost is
+almost entirely a function of how much else is competing for the box, and a stress harness
+can always be made heavy enough to blow any finite budget:
+
+| Regime | Canary cost | vs. 5 s default | vs. 30 s |
+| --- | --- | --- | --- |
+| Whole suite, cold, 4 cores (**what CI runs**) | 0.3 s | green | green |
+| Single file, cold, dedicated, 2–16 cores | 4.1–4.6 s | **at the edge** | green |
+| Single file, cold, one competing cold suite | 7.7–9.8 s | **red** | green |
+| Single file, cold, two competing cold suites | 27–60 s | red | **red** |
+
+The whole-suite figure is low for the same reason the bug is intermittent: the lazy
+registration cost is paid by whichever test in a **worker process** mounts the components
+first, and under full-suite scheduling that is often some other suite. Which test gets
+billed shifts with worker assignment, which is what made this look like a flake.
+
+The last row is a measurement artifact, not a target: three simultaneous cold coverage
+invocations put ~48 Jest workers on 16 cores, roughly 3× the work CI ever does on a runner
+where `test-mobile` is the only Jest process. Sizing the budget to survive arbitrary
+oversubscription is not achievable and not the goal. Anyone re-running the reproduction
+under that load will see red, and that is expected — reproduce against row 3, which is the
+regime that was failing.
 
 Alternatives rejected:
 
