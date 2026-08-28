@@ -11,13 +11,16 @@
       shows progress, clears data and reloads into an empty target state on iOS and Android.
 - [ ] Kill the app during reset on each platform. Cold restart blocks normal routes, offers retry,
       completes idempotently and never makes a request with mixed state.
-- [ ] The Local/Preproduction marker survives every tab and pushed route, remains screenshot-visible
-      under light/dark themes, respects safe areas and is absent in production.
-- [ ] VoiceOver and TalkBack announce selector, current value, confirmation, progress, marker,
+- [ ] VoiceOver and TalkBack announce selector, current value, confirmation, progress,
       recovery alert and retry in sensible order. Largest text does not clip, and controls meet
       44pt iOS / 48dp Android targets.
 - [ ] A successful switch appears once in Firebase DebugView with enum-only from/to parameters, and
       Crashlytics carries only the effective environment enum. Cancellation/failure emits no success.
+
+Since TIM-269 there is no persistent marker: the Settings environment entry is the sole indicator,
+so this device pass reads the effective environment from that entry (and from its VoiceOver /
+TalkBack announcement) rather than from a banner. Confirm as part of the pass that no environment
+chrome consumes the top inset on either platform.
 
 The committed `mobile/.maestro/environment-switch.yaml` covers the ordinary development happy path;
 the restart timing, native reload and assistive-technology checks above remain device-only.

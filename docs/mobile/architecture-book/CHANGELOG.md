@@ -2,6 +2,13 @@
 
 ## 2026-08-28
 
+- Removed the persistent non-production environment marker. The Settings environment entry is now
+  the single non-production indicator and must expose the effective environment in its accessible
+  name on both platforms; no environment surface may consume layout insets or otherwise change
+  screen composition relative to a production build, so headers can be integration-tested and
+  screenshotted at their shipped position. Supersedes the marker consequence of ADR 043
+  (043-backend-environment-reset.md, features.md).
+
 - Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
   before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
   persisted with expiring dates, while existing sync cadence and school-specific exceptions

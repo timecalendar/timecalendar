@@ -37,8 +37,14 @@ session feature must register an idempotent clear participant before shipping.
 
 Preview defaults to preproduction and exposes an ordinary Settings control. Development also
 offers local. Production renders no control and cannot resolve persisted non-production state.
-Local and preproduction show a persistent accessible marker. The reset intentionally deletes local
-personal events and checklists as part of the coherent-empty-state promise.
+The reset intentionally deletes local personal events and checklists as part of the
+coherent-empty-state promise.
+
+Superseded 2026-08-28 (TIM-269): the original consequence "Local and preproduction show a
+persistent accessible marker" no longer holds. The Settings environment entry is the sole
+non-production indicator and must expose the effective environment in its accessible name on both
+platforms. No environment chrome may consume layout insets or otherwise change screen composition
+relative to a production build. Only this consequence is superseded; Context and Decision stand.
 
 The embedded capability changes SDK 56 fingerprints in all preview/production lanes; fresh native
 builds are required before this JavaScript can be distributed there. This decision does not itself
