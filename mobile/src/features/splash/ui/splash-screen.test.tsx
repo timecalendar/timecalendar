@@ -64,21 +64,29 @@ describe("SplashScreen", () => {
   })
 
   describe("dismissal (readiness true, timers controlled)", () => {
+    const isReduceMotionEnabled = jest.spyOn(
+      AccessibilityInfo,
+      "isReduceMotionEnabled",
+    )
+    const timing = jest.spyOn(Animated, "timing")
+
     beforeEach(() => {
       mockUseAppReady.mockReturnValue(true)
       jest.useFakeTimers()
     })
 
     afterEach(() => {
-      jest.runOnlyPendingTimers()
-      jest.useRealTimers()
+      try {
+        jest.runOnlyPendingTimers()
+      } finally {
+        timing.mockClear()
+        isReduceMotionEnabled.mockReset().mockResolvedValue(false)
+        jest.useRealTimers()
+      }
     })
 
     it("dismisses with no animation scheduled under reduced motion", async () => {
-      jest
-        .spyOn(AccessibilityInfo, "isReduceMotionEnabled")
-        .mockResolvedValueOnce(true)
-      const timing = jest.spyOn(Animated, "timing")
+      isReduceMotionEnabled.mockResolvedValueOnce(true)
 
       const { queryByRole } = await render(<SplashScreen />)
 
@@ -96,10 +104,7 @@ describe("SplashScreen", () => {
     })
 
     it("schedules the fade and dismisses once ready when motion is allowed", async () => {
-      jest
-        .spyOn(AccessibilityInfo, "isReduceMotionEnabled")
-        .mockResolvedValueOnce(false)
-      const timing = jest.spyOn(Animated, "timing")
+      isReduceMotionEnabled.mockResolvedValueOnce(false)
 
       const { queryByRole } = await render(<SplashScreen />)
 
