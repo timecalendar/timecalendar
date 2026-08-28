@@ -13,7 +13,8 @@
 # flow's `E2E Today Lecture` so the two flows don't collide) is the event hidden and
 # un-hidden here.
 #
-# Selector notes: the hide action is the details header button (localized "Hide")
+# Selector notes: the hide action is the details header button (visually localized
+# "Hide", but exposed to Maestro by its accessibility label "Hide this event")
 # opening a native Alert chooser whose "Hide this event" option hides by uid. The
 # management-screen un-hide row renders the event title + a "Un-hide" control (a11y
 # label "Un-hide <title>"). The agenda switch goes through ONE control shared by
@@ -52,10 +53,10 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "E2E Today Seminar(,.*)?"
     timeout: 60000
-# Hide it: the header "Hide" action opens the native Alert chooser; "Hide this
-# event" hides by uid and pops back.
+# Hide it: the header's accessible "Hide this event" action opens the native Alert
+# chooser; the identically labelled chooser option hides by uid and pops back.
 - tapOn:
-    text: "Hide"
+    text: "Hide this event"
 - tapOn:
     text: "Hide this event"
 # Prove it is GONE from the calendar view. Cold-restart into the agenda: the token
