@@ -36,6 +36,12 @@
       the effective environment in both the preview (`Preproduction`) and development (`Local`)
       cases, alongside the existing visible-secondary assertion. Keep every alert-ordering
       assertion untouched.
+- [x] 2.4 In `mobile/src/features/settings/ui/settings-screen.test.tsx`, mock `@/features/environment`
+      with a controllable capability (defaulting to `production`, which is what the jest env resolves
+      today, so the existing section-order assertion is unchanged) and add one test that renders with
+      a non-production capability and asserts `settings-section-environment` is the **last**
+      `settings-section-*`. Without it the spec's "SHALL remain in Settings' final section" is
+      unenforced prose, which R-1 forbids.
 
 ## 3. Rewrite the Maestro flow
 
@@ -81,11 +87,12 @@
       environment feature's remaining tests must pass without the deleted marker test propping up
       coverage on `environment-runtime-gate.tsx`; if the file drops below threshold, cover the gate
       path rather than restoring the marker.
-- [x] 5.4 `npx openspec validate remove-mobile-environment-banner --strict`, then dry-run the archive
-      (`npx openspec archive remove-mobile-environment-banner --dry-run` or the equivalent no-write
-      invocation) to prove both MODIFIED headers still match
-      `openspec/specs/mobile-backend-environments/spec.md` byte-for-byte. Archive is the only step
-      that checks those headers, and it aborts at merge time behind the native gate — catch it now.
+- [x] 5.4 `npx openspec validate remove-mobile-environment-banner --strict`, then run the archive for
+      real in this PR: `npx openspec archive remove-mobile-environment-banner -y`. There is no
+      `--dry-run` (the CLI offers only `-y`, `--skip-specs`, `--no-validate`), and `--skip-specs`
+      must **not** be used — rewriting `openspec/specs/mobile-backend-environments/spec.md` is the
+      point. Archive is the only step that checks the `MODIFIED` headers byte-for-byte, and in this
+      repo the archive ships inside the feature PR so `main` never contradicts itself.
 - [x] 5.5 Review the complete diff (`git diff origin/main...HEAD`): only the environment feature UI,
       its two tests, the two locale files, the Maestro flow, the Architecture Book ADR/features/
       CHANGELOG, the inbox note and this OpenSpec change may differ. No `openapi/`, no
