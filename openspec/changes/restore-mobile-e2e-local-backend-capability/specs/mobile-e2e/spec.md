@@ -26,6 +26,37 @@ The `development` app variant SHALL be able to reach a server on the host machin
 - **WHEN** the backend capability is missing or malformed, including alongside a development app identity
 - **THEN** the backend capability remains failed closed to production
 
+### Requirement: Flow selectors resolve against the shipped app
+
+Every literal selector id used by a Maestro flow SHALL correspond to a `testID` that exists in
+`mobile/src`. A repository proof running in the **baseline** gate SHALL enforce this, so a UI
+rework that removes a `testID` fails at the commit that causes it rather than at an on-demand
+native run. Selectors deliberately written as regexes SHALL be exempt. Ids knowingly left
+unresolved SHALL be enumerated in a documented allowlist carrying their follow-up ticket, and
+the proof SHALL also fail when an allowlisted id becomes present, so the allowlist cannot rot.
+
+The shared calendar-family flows SHALL reach the agenda surface through the calendar-view
+header control (`calendar-view`) and the locale-stable "Agenda" entry of its menu — one
+interaction shared by both platforms, with no per-platform selector or branch.
+
+#### Scenario: A UI rework removes a testID a flow depends on
+
+- **WHEN** a change deletes or renames a `testID` that a Maestro flow selects by literal id
+- **THEN** the baseline gate fails on that change
+- **AND** the failure names the flow file and the unresolved id
+
+#### Scenario: The calendar-family flows switch to the agenda view
+
+- **WHEN** `calendar.yaml` or `hidden-events.yaml` needs the agenda surface
+- **THEN** it taps the `calendar-view` control and selects "Agenda", the same steps on Android and iOS
+- **AND** `calendar.yaml` asserts the agenda list (`agenda-section-list`) mounted, which happens only in the agenda view
+- **AND** the seeded-title round-trip assertions that follow are unchanged
+
+#### Scenario: A known-stale selector is repaired
+
+- **WHEN** an id listed in the proof's known-stale allowlist is reintroduced as a real `testID`
+- **THEN** the proof fails until that id is removed from the allowlist
+
 ### Requirement: CI runs Maestro on both platforms
 
 CI SHALL run every top-level Maestro flow on an Android emulator (Linux runner) and an iOS
@@ -66,5 +97,5 @@ reviewed head, and its handoff SHALL record that commit plus direct run/job link
 
 - **WHEN** the recovery PR is ready for review
 - **THEN** its baseline gate and both named native jobs report success for the same commit SHA
-- **AND** the unchanged flow set completes seeded calendar import through the real local server before later B10 assertions
-- **AND** the issue handoff records the exact SHA and direct run/job links
+- **AND** the flow set completes seeded calendar import through the real local server and the full calendar-family round trip — agenda switch, seeded-title assertion, event details, hide/un-hide — before later B10 assertions
+- **AND** the issue handoff records the exact SHA and direct run/job links, and names any flow that remains blocked by a separately ticketed stale selector rather than reporting the full set green
