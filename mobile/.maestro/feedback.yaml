@@ -6,6 +6,16 @@
 # so it can fall below the fold on a phone-sized device even though `about.yaml`
 # finds its own row without scrolling. Same rule as environment-switch.yaml:
 # reach an off-screen Settings row with scrollUntilVisible, never a plain wait.
+#
+# `centerElement` is required here and is NOT cosmetic. Unlike `settings-environment`,
+# this row is not the last thing on the screen — the environment section renders below
+# it — so the scroll stops the instant the row first peeks in at the bottom edge, where
+# the floating tab bar is drawn over it. The view hierarchy still reports it visible, so
+# the scroll and the tap both report COMPLETED, but the tap lands on the tab bar: at the
+# row's centre X (screen centre) the bar's middle button is Calendar, so the app silently
+# navigates to the Calendar tab and the "Feedback" wait then times out looking like a
+# missing screen. Centring parks the row mid-screen, clear of the bar. Observed on iOS in
+# run 33193527228; Android's non-floating bar does not overlap and passed either way.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
@@ -18,6 +28,7 @@ appId: fr.samuelprak.timecalendar.dev
     element:
       id: "settings-feedback"
     direction: DOWN
+    centerElement: true
     timeout: 60000
 - tapOn:
     id: "settings-feedback"
