@@ -51,13 +51,17 @@ function lastBody(): Record<string, unknown> {
   return JSON.parse(call?.[1].body as string) as Record<string, unknown>
 }
 
-beforeEach(() => {
-  jest.clearAllMocks()
+function clearStoredPreferences() {
   remove(NOTIFICATION_KEYS.frequency)
   remove(NOTIFICATION_KEYS.nbDaysAhead)
   remove(NOTIFICATION_KEYS.isActive)
   remove(SETTINGS_KEYS.language)
   remove(SETTINGS_KEYS.timezone)
+}
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  clearStoredPreferences()
   mockGetFcmToken.mockResolvedValue("fcm-token")
   mockUseUserCalendars.mockReturnValue([
     { id: "srv-cal-1" },
@@ -74,11 +78,7 @@ afterEach(() => {
   mockGetFcmToken.mockReset()
   mockUseUserCalendars.mockReset()
   calendarsSpy.mockReset()
-  remove(NOTIFICATION_KEYS.frequency)
-  remove(NOTIFICATION_KEYS.nbDaysAhead)
-  remove(NOTIFICATION_KEYS.isActive)
-  remove(SETTINGS_KEYS.language)
-  remove(SETTINGS_KEYS.timezone)
+  clearStoredPreferences()
 })
 
 describe("useSubscriptionRegistration", () => {
