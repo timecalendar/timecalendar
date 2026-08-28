@@ -92,9 +92,14 @@ appId: fr.samuelprak.timecalendar.dev
 #
 # The search field is now the native-header search bar (`headerSearchBarOptions`
 # in school-picker-screen.tsx), which react-native-screens' SearchBarProps cannot
-# carry a testID through — so it is addressed by its placeholder, exactly as
-# locale-stable as this file's existing "Select your school" assertion (the e2e
-# device runs in EN). The former `onboarding-school-filter` testID is gone.
+# carry a testID through. Android initially collapses that control to a `Search`
+# accessibility action, while iOS exposes the field directly, so the shared flow
+# optionally expands it before addressing the `Search schools` placeholder. Both
+# labels are locale-stable under the suite's EN-device convention. The former
+# `onboarding-school-filter` testID is gone.
+- tapOn:
+    text: "Search"
+    optional: true
 - tapOn:
     text: "Search schools"
 - inputText: "Gaming"
