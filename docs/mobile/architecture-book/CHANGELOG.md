@@ -18,6 +18,9 @@
   and portrait-only iPad orientations. Refreshed iOS fingerprint evidence records the required
   fresh signed preview binary and OTA incompatibility; no build or submission occurred (ADR 042,
   runtime.md, eas.md, `mobile/EAS.md`).
+- Established the worktree-scoped local Compose entrypoint and the reusable
+  Postgres/Redis-only prerequisite for OpenAPI generation and server tests, while
+  preserving `ci/e2e-server.sh` as the E2E lifecycle owner (testing.md).
 
 ## 2026-08-26
 
