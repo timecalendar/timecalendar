@@ -2,6 +2,15 @@
 
 ## 2026-08-28
 
+- Isolated four mobile Jest suites from declaration order by awaiting RNTL 14 async helpers and
+  adding targeted exception-safe teardown for one-shot mocks, spy implementations, and MMKV test
+  preferences. Global mock restoration remains prohibited because it would remove harness-owned
+  native spies. No ADR is needed: this applies the existing test-isolation contract without a
+  costly-to-reverse architecture decision (testing.md).
+- Required suite-owned spy history and queued one-shot implementations to be reset through
+  exception-safe, targeted teardown before another test runs, while preserving persistent
+  `jest/setup-*.ts` spy wrappers. The splash dismissal suite is the concrete pattern; this is an
+  R-4 test-harness leaf fix and adds no ADR (testing.md).
 - Removed the persistent non-production environment marker. The Settings environment entry is now
   the single non-production indicator and must expose the effective environment in its accessible
   name on both platforms; no environment surface may consume layout insets or otherwise change
