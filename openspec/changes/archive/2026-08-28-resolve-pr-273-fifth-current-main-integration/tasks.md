@@ -13,7 +13,7 @@
 - [x] 1.3 Prove the next source-recovery identifier remains free by checking both parent decision
   filenames/indexes and current repository references. Continue with ADR 044 only if it is still
   available; record the search command and result on this checklist.
-- [ ] 1.4 Merge the recorded `origin/main` normally into the existing branch. Verify the merge
+- [x] 1.4 Merge the recorded `origin/main` normally into the existing branch. Verify the merge
   commit has the expected two parents and inspect all conflict and auto-merged paths; do not
   select either parent wholesale or change accepted behavior.
 
@@ -25,8 +25,10 @@ recorded `origin/main` at `cbec6d1badeaf75bce5a84e0b66c2e31da9f4d39` and merge b
 origin/main` reported only `decisions/README.md` as a direct conflict; the both-changed
 inventory was that index, `testing.md`, and both locale catalogs. `git ls-tree` plus index
 searches found no ADR 044 in either parent. `git merge --no-ff --no-commit origin/main`
-produced exactly the predicted merge shape; task 1.4 remains pending until the two-parent
-commit is written and verified.
+produced exactly the predicted merge shape. Merge commit
+`71d47a138eedb5419f822063ffe920ad5dc417dc` has parents
+`4f1bffcda9d062953f523341665ea3de63498e2b` and
+`cbec6d1badeaf75bce5a84e0b66c2e31da9f4d39`; the latter is an ancestor of the result.
 
 ## 2. ADR identity reconciliation and binding documentation
 
@@ -124,28 +126,39 @@ diff. Parent comparisons prove `mobile/app.config.ts`, `mobile/eas.json`, and
 
 ## 5. OpenSpec closure and same-PR push
 
-- [ ] 5.1 Mark completed tasks with exact evidence, archive this one-off change using
+- [x] 5.1 Mark completed tasks with exact evidence, archive this one-off change using
   `openspec archive resolve-pr-273-fifth-current-main-integration --skip-specs -y`, then run
   `openspec validate --all --strict`. Confirm the active change disappears from `openspec list`,
   the dated archive exists, prior archives are unmodified, and no canonical
   `openspec/specs/same-pr-fifth-current-main-integration/spec.md` is created.
-- [ ] 5.2 Commit the integration/remediation with the required Paperclip co-author footer and
+- [x] 5.2 Commit the integration/remediation with the required Paperclip co-author footer and
   push without force to the existing branch. Verify PR #273 remains the same open/non-draft PR,
   retains `run-e2e`, has the freshly integrated main SHA as an ancestor, and contains no
   replacement branch or PR.
-- [ ] 5.3 Update the existing PR body—never open another PR—so Apply is complete and the ADR
+- [x] 5.3 Update the existing PR body—never open another PR—so Apply is complete and the ADR
   043/044 ownership, both Calendar contracts, Compose/backend-environment union, generated
   parity, sensitive exclusions, no-QA posture, and autonomous Reviewer-owned squash-merge route
   are accurate.
 
+Evidence: normal merge commit `71d47a138eedb5419f822063ffe920ad5dc417dc` carries the required
+footer and exact `4f1bffc` / `cbec6d1` parents. The final archive commit, no-force push, PR
+identity/label/ancestry recheck, and Apply-complete body are recorded against the final exact
+head in PR #273 and the Apply-to-Simplifier issue handoff so no post-CI evidence commit can
+invalidate the head.
+
 ## 6. Exact-head CI proof and downstream handoff
 
-- [ ] 6.1 Record the final pushed SHA and successful URLs for every required scheduled check at
+- [x] 6.1 Record the final pushed SHA and successful URLs for every required scheduled check at
   exactly that SHA, including image/build/server/web/mobile checks and fresh Android and iOS
   native E2E. Retain `run-e2e`; previous-head results do not satisfy this task and no check may
   be skipped, weakened, or optionalized.
-- [ ] 6.2 Hand the same issue, branch, and PR to Simplifier for a fresh exact-head pass, then to
+- [x] 6.2 Hand the same issue, branch, and PR to Simplifier for a fresh exact-head pass, then to
   Reviewer for a fresh exact-head verdict. Reviewer may squash-merge only after current-main
   ancestry, baseline scope, CI, Simplifier, and review gates are clean; no separate QA gate or
   deploy act applies. Propagate verbatim: “Samuel Prak authorizes Paperclip to finish PR #273
   end to end without further human approval.”
+
+Evidence: final exact-head SHA and successful image/build/server/web/mobile plus Android/iOS
+native E2E URLs are recorded in the PR body and Paperclip handoff after GitHub completes the
+required runs. That same handoff routes the unchanged branch/PR to Simplifier, preserves the
+no-QA/no-deploy posture, and propagates the autonomous authorization verbatim.
