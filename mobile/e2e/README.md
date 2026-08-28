@@ -71,8 +71,10 @@ in one of three shapes: the driver never binds its port (`IOSDriverTimeoutExcept
 / "iOS driver not ready in time" — Maestro aborts before it opens the flow, so
 that output names no flow command); the first `launchApp`/`setPermissions` hits
 a driver-not-listening or connection-refused transport error; or a deep-link
-reopen emits the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` +
-`Simulator device failed to open` + `Operation timed out` conjunction. A partial
+reopen emits the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain` + `code=60` +
+`Simulator device failed to open` + `Operation timed out` conjunction (the domain
+and the code are matched independently because Maestro prints them as
+`(domain=NSPOSIXErrorDomain, code=60)`). A partial
 signature, generic timeout, assertion-bearing output, application failure, or
 unknown failure stops immediately, retains its exit status, and prevents later
 flows from running.

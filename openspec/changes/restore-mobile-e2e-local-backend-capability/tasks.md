@@ -121,11 +121,26 @@ exact selector cannot match Android even though the field is present and focused
 
 Exact-head iOS job `98877231676` at `e03237dd` completed `launchApp(clearState)` and
 `stopApp`, then failed its first deep link before any assertion. The complete captured
-`IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` + `Simulator device failed to open` +
+`IOSDriver.openLink` + `NSPOSIXErrorDomain` + `code=60` + `Simulator device failed to open` +
 `Operation timed out` conjunction identifies a simulator-command transport timeout while
 reopening the app. Triage amendment #4 authorizes only this third positive shape.
 
-- [x] 12.1 Add an independent classifier branch after the assertion guard that requires all four captured fragments. Keep the existing session-creation and first-`launchApp` branches unchanged, the four-attempt maximum, a fresh Maestro process per attempt/flow, one server lifecycle, and the original non-zero result on exhaustion.
+- [x] 12.1 Add an independent classifier branch after the assertion guard that requires all five captured fragments. Keep the existing session-creation and first-`launchApp` branches unchanged, the four-attempt maximum, a fresh Maestro process per attempt/flow, one server lifecycle, and the original non-zero result on exhaustion.
 - [x] 12.2 Add a captured positive fixture proving retry and continuation, plus negative cases proving assertion evidence wins and partial, generic-timeout, application, and unknown failures remain terminal.
 - [x] 12.3 Refine ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, and the agent handbook from two to three positive shapes; update this delta with the complete conjunctive rule and scenarios. This is a sensitive binding-document refinement, not a new decision.
 - [x] 12.4 Run the focused shell harness proof, shell syntax and formatting checks, OpenSpec validation, and `git diff --check`; then push a material exact head before taking a fresh labeled baseline plus Android/iOS gate.
+
+## 13. Correct the deep-link signature to the real captured punctuation
+
+Exact-head iOS job `98888496592` at `d788a881` passed `about`, `appearance-settings`,
+`calendar` (including the real local seeded import), and `environment-switch`, then hit
+the amendment-#4 deep-link timeout in `event-checklists` and was still marked terminal.
+Section 12's classifier required the literal `NSPOSIXErrorDomain code=60`, but Maestro
+prints `(domain=NSPOSIXErrorDomain, code=60)`; the section 12.2 fixture had silently
+dropped that comma, so it never reproduced the captured signature. The other four
+fragments were present and no assertion evidence matched.
+
+- [x] 13.1 Require `NSPOSIXErrorDomain` and `code=60` as independent mandatory fragments alongside `IOSDriver.openLink`, `Simulator device failed to open`, and `Operation timed out`. The rule stays a complete conjunction — five fragments now — with the assertion guard first, four attempts maximum, a fresh Maestro process per attempt/flow, one server lifecycle, and the original non-zero result on exhaustion.
+- [x] 13.2 Replace the positive fixture with the exact captured CI lines, punctuation included, and prove it retries in a fresh Maestro process and continues to the next flow. Add negative coverage for omission of the domain fragment and omission of the code fragment; retain the assertion, partial, generic-timeout, application, and unknown negatives.
+- [x] 13.3 Correct ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, the agent handbook, and this delta to the five-fragment wording, recording why the domain and code are matched independently. Sensitive binding-document surface; still a refinement of the existing bounded decision, so no new ADR.
+- [x] 13.4 Run the focused shell harness proof, shell syntax/format checks, OpenSpec validation, and `git diff --check`; push the material head and take a fresh labeled baseline plus Android/iOS gate. Do not rerun `d788a881` unchanged.

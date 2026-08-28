@@ -335,9 +335,11 @@ cd mobile
   process. Attempts default to one. `--startup-attempts` is bounded to 1–4 and
   retries only one of three proven XCTest startup-transport failures with no
   assertion evidence: a driver-bind timeout, a first-`launchApp` transport loss,
-  or the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` +
+  or the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain` + `code=60` +
   `Simulator device failed to open` + `Operation timed out` deep-link reopen
-  signature. Partial signatures, generic timeouts, assertion-bearing output,
+  signature, whose domain and code fragments are matched independently because
+  Maestro prints them as `(domain=NSPOSIXErrorDomain, code=60)`. Partial
+  signatures, generic timeouts, assertion-bearing output,
   application failures, and unknown failures stop immediately with their
   original status.
 - It does **not** build/install the app. A **release-config, `development`-variant**

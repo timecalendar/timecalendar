@@ -66,32 +66,60 @@ case "$SCENARIO" in
     exit 0
     ;;
   open_link_timeout)
+    # Verbatim transcription of the captured iOS CI failure, punctuation
+    # included: Maestro prints `(domain=NSPOSIXErrorDomain, code=60)`, not
+    # `NSPOSIXErrorDomain code=60`.
     if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
-      echo 'at maestro.ios.IOSDriver.openLink(IOSDriver.kt:123)' >&2
-      echo 'Error Domain=NSPOSIXErrorDomain code=60' >&2
-      echo 'Simulator device failed to open timecalendar-dev://calendar' >&2
-      echo 'The operation couldn\x27t be completed. Operation timed out' >&2
+      echo 'Open timecalendar-dev://event-details/e2e-today-lecture...com.github.michaelbull.result.UnwrapException: kotlin.Unit java.lang.IllegalStateException: An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=60):' >&2
+      echo 'Simulator device failed to open timecalendar-dev://event-details/e2e-today-lecture.' >&2
+      echo 'Operation timed out' >&2
+      echo 'Underlying error (domain=NSPOSIXErrorDomain, code=60):' >&2
+      echo '	at maestro.drivers.IOSDriver.openLink$lambda$42(IOSDriver.kt:744)' >&2
+      echo '	at maestro.drivers.IOSDriver.openLink(IOSDriver.kt:450)' >&2
       exit 43
     fi
     exit 0
     ;;
   open_link_timeout_assertion)
     if [ "$flow" = alpha ]; then
-      echo 'at maestro.ios.IOSDriver.openLink(IOSDriver.kt:123)' >&2
-      echo 'Error Domain=NSPOSIXErrorDomain code=60' >&2
-      echo 'Simulator device failed to open timecalendar-dev://calendar' >&2
+      echo 'An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=60):' >&2
+      echo 'Simulator device failed to open timecalendar-dev://calendar.' >&2
       echo 'Operation timed out' >&2
+      echo '	at maestro.drivers.IOSDriver.openLink(IOSDriver.kt:450)' >&2
       echo 'Assertion failed: assertVisible element not found' >&2
       exit 44
     fi
     exit 0
     ;;
   open_link_partial)
+    # Everything but `Simulator device failed to open`.
     if [ "$flow" = alpha ]; then
-      echo 'at maestro.ios.IOSDriver.openLink(IOSDriver.kt:123)' >&2
-      echo 'Error Domain=NSPOSIXErrorDomain code=60' >&2
+      echo 'An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=60):' >&2
       echo 'Operation timed out' >&2
+      echo '	at maestro.drivers.IOSDriver.openLink(IOSDriver.kt:450)' >&2
       exit 45
+    fi
+    exit 0
+    ;;
+  open_link_missing_domain)
+    # Everything but the `NSPOSIXErrorDomain` fragment.
+    if [ "$flow" = alpha ]; then
+      echo 'An error was encountered processing the command (code=60):' >&2
+      echo 'Simulator device failed to open timecalendar-dev://calendar.' >&2
+      echo 'Operation timed out' >&2
+      echo '	at maestro.drivers.IOSDriver.openLink(IOSDriver.kt:450)' >&2
+      exit 49
+    fi
+    exit 0
+    ;;
+  open_link_missing_code)
+    # Everything but the `code=60` fragment.
+    if [ "$flow" = alpha ]; then
+      echo 'An error was encountered processing the command (domain=NSPOSIXErrorDomain):' >&2
+      echo 'Simulator device failed to open timecalendar-dev://calendar.' >&2
+      echo 'Operation timed out' >&2
+      echo '	at maestro.drivers.IOSDriver.openLink(IOSDriver.kt:450)' >&2
+      exit 50
     fi
     exit 0
     ;;
@@ -191,6 +219,16 @@ assert_count 0 '^beta:' "$fixture/calls"
 
 fixture="$(make_fixture open_link_partial)"
 run_fixture "$fixture" open_link_partial 45 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture open_link_missing_domain)"
+run_fixture "$fixture" open_link_missing_domain 49 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture open_link_missing_code)"
+run_fixture "$fixture" open_link_missing_code 50 --startup-attempts 4
 assert_count 1 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
 

@@ -105,9 +105,12 @@ is_retryable_startup_failure() {
   # (c) The session and flow started, but the simulator command transport timed
   # out while Maestro reopened the app through a deep link. This is retryable
   # only for the complete captured signature: every fragment is required so a
-  # generic openLink or timeout failure remains terminal.
+  # generic openLink or timeout failure remains terminal. The domain and the
+  # code are matched independently because Maestro prints them as
+  # `(domain=NSPOSIXErrorDomain, code=60)` — punctuation we must not depend on.
   if grep -Fiq 'IOSDriver.openLink' "$output_file" && \
-    grep -Fiq 'NSPOSIXErrorDomain code=60' "$output_file" && \
+    grep -Fiq 'NSPOSIXErrorDomain' "$output_file" && \
+    grep -Fiq 'code=60' "$output_file" && \
     grep -Fiq 'Simulator device failed to open' "$output_file" && \
     grep -Fiq 'Operation timed out' "$output_file"; then
     return 0

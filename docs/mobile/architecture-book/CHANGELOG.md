@@ -2,9 +2,14 @@
 
 ## 2026-08-28
 
+- Corrected the ADR 038 deep-link reopen signature to require `NSPOSIXErrorDomain` and
+  `code=60` as independent fragments instead of the literal `NSPOSIXErrorDomain code=60`,
+  which never matched: Maestro prints `(domain=NSPOSIXErrorDomain, code=60)`. The rule is
+  still the complete conjunction — now five fragments — and the assertion guard still runs
+  first (ADR 038, testing.md).
 - Refined ADR 038's bounded iOS startup-transport classifier from two to three positive
   shapes. A deep-link reopen is retryable only when output contains the complete
-  `IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` + `Simulator device failed to open` +
+  `IOSDriver.openLink` + `NSPOSIXErrorDomain` + `code=60` + `Simulator device failed to open` +
   `Operation timed out` conjunction after the assertion guard; partial signatures, generic
   timeouts, assertion-bearing output, application failures, and unknown failures remain
   terminal with their original result (ADR 038, testing.md).

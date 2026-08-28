@@ -79,11 +79,13 @@ creates the iOS session because the driver did not bind its port within the conf
 startup timeout — which happens before the flow is opened, so that output names no flow
 command and cannot be anchored on `launchApp` — or the first `launchApp`/`setPermissions`
 failing because the driver was not listening or refused the connection, or a deep-link reopen
-whose output contains the complete conjunction `IOSDriver.openLink`,
-`NSPOSIXErrorDomain code=60`, `Simulator device failed to open`, and `Operation timed out`.
-The assertion guard SHALL run before all three positive branches. A partial conjunction,
-generic timeout, application failure, unknown failure, or any output carrying assertion
-evidence SHALL be terminal on its first occurrence.
+whose output contains the complete conjunction `IOSDriver.openLink`, `NSPOSIXErrorDomain`,
+`code=60`, `Simulator device failed to open`, and `Operation timed out`. The domain and the
+code SHALL be required as independent fragments rather than as a single literal, because
+Maestro prints them as `(domain=NSPOSIXErrorDomain, code=60)`; omitting either fragment SHALL
+leave the failure terminal. The assertion guard SHALL run before all three positive branches.
+A partial conjunction, generic timeout, application failure, unknown failure, or any output
+carrying assertion evidence SHALL be terminal on its first occurrence.
 
 #### Scenario: A driver startup failure is retried within the bound
 
@@ -102,10 +104,17 @@ evidence SHALL be terminal on its first occurrence.
 #### Scenario: A simulator deep-link command times out during app reopen
 
 - **WHEN** a flow reaches `openLink` and the captured output contains `IOSDriver.openLink`,
-  `NSPOSIXErrorDomain code=60`, `Simulator device failed to open`, and `Operation timed out`
-  with no assertion evidence
+  `NSPOSIXErrorDomain`, `code=60`, `Simulator device failed to open`, and `Operation timed out`
+  with no assertion evidence — including when the driver prints the domain and code together
+  as `(domain=NSPOSIXErrorDomain, code=60)`
 - **THEN** the harness starts a fresh Maestro process for the same flow within the configured
   bound and may continue to later flows after that retry succeeds
+
+#### Scenario: A deep-link timeout missing the domain or the code fragment is terminal
+
+- **WHEN** output carries every other fragment of the deep-link timeout signature but omits
+  either `NSPOSIXErrorDomain` or `code=60`
+- **THEN** the harness returns the original non-zero result immediately and does not retry
 
 #### Scenario: A partial or assertion-bearing deep-link timeout is terminal
 
