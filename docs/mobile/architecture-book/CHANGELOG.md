@@ -2,6 +2,12 @@
 
 ## 2026-08-28
 
+- Refined ADR 038's bounded iOS startup-transport classifier from two to three positive
+  shapes. A deep-link reopen is retryable only when output contains the complete
+  `IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` + `Simulator device failed to open` +
+  `Operation timed out` conjunction after the assertion guard; partial signatures, generic
+  timeouts, assertion-bearing output, application failures, and unknown failures remain
+  terminal with their original result (ADR 038, testing.md).
 - Restored release-config native E2E routing to the seeded local backend by requiring the
   development app variant, independent development backend capability, and platform-local URL
   in every Android/iOS prebuild and release-compilation step, with step-scoped workflow proof

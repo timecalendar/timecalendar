@@ -66,13 +66,16 @@ The script exits with Maestro's pass/fail status and tears the stack down on
 success and failure alike. On failure it dumps the backend log tail. With
 `--keep-up` it prints the commands to inspect logs and tear down manually.
 `--startup-attempts` accepts 1–4 and defaults to one. A retry is allowed only
-for a pinned 2.8.0 XCTest driver-startup signature with no assertion evidence,
-in either of its two shapes: the driver never binds its port (`IOSDriverTimeoutException`
+for a pinned 2.8.0 XCTest startup-transport signature with no assertion evidence,
+in one of three shapes: the driver never binds its port (`IOSDriverTimeoutException`
 / "iOS driver not ready in time" — Maestro aborts before it opens the flow, so
-that output names no flow command), or the first `launchApp`/`setPermissions`
-hits a driver-not-listening or connection-refused transport error. Assertion,
-application, and unknown failures stop immediately, retain their exit status,
-and prevent later flows from running.
+that output names no flow command); the first `launchApp`/`setPermissions` hits
+a driver-not-listening or connection-refused transport error; or a deep-link
+reopen emits the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` +
+`Simulator device failed to open` + `Operation timed out` conjunction. A partial
+signature, generic timeout, assertion-bearing output, application failure, or
+unknown failure stops immediately, retains its exit status, and prevents later
+flows from running.
 
 ## Add a flow
 

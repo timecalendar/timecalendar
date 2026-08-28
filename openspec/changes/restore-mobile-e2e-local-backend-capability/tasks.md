@@ -116,3 +116,16 @@ exact selector cannot match Android even though the field is present and focused
 
 - [x] 11.1 Change the shared placeholder selector to `.*Search schools`, accepting Android's native leading-space projection while still requiring the complete locale-stable label and matching the exact iOS value without a platform branch.
 - [x] 11.2 Run the focused selector/format/OpenSpec proofs, push the material fix, and require a fresh exact-head baseline plus Android/iOS gate.
+
+## 12. Classify the captured iOS deep-link reopen timeout
+
+Exact-head iOS job `98877231676` at `e03237dd` completed `launchApp(clearState)` and
+`stopApp`, then failed its first deep link before any assertion. The complete captured
+`IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` + `Simulator device failed to open` +
+`Operation timed out` conjunction identifies a simulator-command transport timeout while
+reopening the app. Triage amendment #4 authorizes only this third positive shape.
+
+- [x] 12.1 Add an independent classifier branch after the assertion guard that requires all four captured fragments. Keep the existing session-creation and first-`launchApp` branches unchanged, the four-attempt maximum, a fresh Maestro process per attempt/flow, one server lifecycle, and the original non-zero result on exhaustion.
+- [x] 12.2 Add a captured positive fixture proving retry and continuation, plus negative cases proving assertion evidence wins and partial, generic-timeout, application, and unknown failures remain terminal.
+- [x] 12.3 Refine ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, and the agent handbook from two to three positive shapes; update this delta with the complete conjunctive rule and scenarios. This is a sensitive binding-document refinement, not a new decision.
+- [x] 12.4 Run the focused shell harness proof, shell syntax and formatting checks, OpenSpec validation, and `git diff --check`; then push a material exact head before taking a fresh labeled baseline plus Android/iOS gate.

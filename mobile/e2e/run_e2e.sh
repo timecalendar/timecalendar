@@ -102,6 +102,17 @@ is_retryable_startup_failure() {
     return 1
   fi
 
+  # (c) The session and flow started, but the simulator command transport timed
+  # out while Maestro reopened the app through a deep link. This is retryable
+  # only for the complete captured signature: every fragment is required so a
+  # generic openLink or timeout failure remains terminal.
+  if grep -Fiq 'IOSDriver.openLink' "$output_file" && \
+    grep -Fiq 'NSPOSIXErrorDomain code=60' "$output_file" && \
+    grep -Fiq 'Simulator device failed to open' "$output_file" && \
+    grep -Fiq 'Operation timed out' "$output_file"; then
+    return 0
+  fi
+
   # (a) The XCTest driver never bound its port at all. Maestro aborts inside
   # MaestroSessionManager.createIOS, *before* it opens the flow, so the output
   # carries no flow command to anchor on — matching on `launchApp` below would

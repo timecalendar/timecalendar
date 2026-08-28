@@ -333,9 +333,13 @@ cd mobile
 - The wrapper owns only the Maestro half; the server half is `ci/e2e-server.sh`.
 - Each top-level YAML is discovered lexically and receives a fresh Maestro
   process. Attempts default to one. `--startup-attempts` is bounded to 1–4 and
-  retries only a proven first-`launchApp` XCTest driver transport failure with
-  no assertion evidence; assertion, application, and unknown failures stop
-  immediately with their original status.
+  retries only one of three proven XCTest startup-transport failures with no
+  assertion evidence: a driver-bind timeout, a first-`launchApp` transport loss,
+  or the complete `IOSDriver.openLink` + `NSPOSIXErrorDomain code=60` +
+  `Simulator device failed to open` + `Operation timed out` deep-link reopen
+  signature. Partial signatures, generic timeouts, assertion-bearing output,
+  application failures, and unknown failures stop immediately with their
+  original status.
 - It does **not** build/install the app. A **release-config, `development`-variant**
   build with the independent `development` backend capability must already be
   installed on the connected simulator/emulator. Supply the complete build

@@ -65,6 +65,57 @@ case "$SCENARIO" in
     fi
     exit 0
     ;;
+  open_link_timeout)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      echo 'at maestro.ios.IOSDriver.openLink(IOSDriver.kt:123)' >&2
+      echo 'Error Domain=NSPOSIXErrorDomain code=60' >&2
+      echo 'Simulator device failed to open timecalendar-dev://calendar' >&2
+      echo 'The operation couldn\x27t be completed. Operation timed out' >&2
+      exit 43
+    fi
+    exit 0
+    ;;
+  open_link_timeout_assertion)
+    if [ "$flow" = alpha ]; then
+      echo 'at maestro.ios.IOSDriver.openLink(IOSDriver.kt:123)' >&2
+      echo 'Error Domain=NSPOSIXErrorDomain code=60' >&2
+      echo 'Simulator device failed to open timecalendar-dev://calendar' >&2
+      echo 'Operation timed out' >&2
+      echo 'Assertion failed: assertVisible element not found' >&2
+      exit 44
+    fi
+    exit 0
+    ;;
+  open_link_partial)
+    if [ "$flow" = alpha ]; then
+      echo 'at maestro.ios.IOSDriver.openLink(IOSDriver.kt:123)' >&2
+      echo 'Error Domain=NSPOSIXErrorDomain code=60' >&2
+      echo 'Operation timed out' >&2
+      exit 45
+    fi
+    exit 0
+    ;;
+  generic_timeout)
+    if [ "$flow" = alpha ]; then
+      echo 'Operation timed out' >&2
+      exit 48
+    fi
+    exit 0
+    ;;
+  application_failure)
+    if [ "$flow" = alpha ]; then
+      echo 'launchApp completed; application failed to import calendar' >&2
+      exit 46
+    fi
+    exit 0
+    ;;
+  unknown_failure)
+    if [ "$flow" = alpha ]; then
+      echo 'unexpected Maestro failure' >&2
+      exit 47
+    fi
+    exit 0
+    ;;
   assertion)
     if [ "$flow" = alpha ]; then
       echo 'launchApp completed; Assertion failed: assertVisible element not found' >&2
@@ -123,6 +174,40 @@ assert_count 2 '^alpha:' "$fixture/calls"
 assert_count 1 '^beta:' "$fixture/calls"
 grep -q 'retryable XCTest driver-startup failure' "$fixture/output" || \
   fail 'a pre-flow iOS driver-startup timeout was not classified as retryable'
+
+fixture="$(make_fixture open_link_timeout)"
+run_fixture "$fixture" open_link_timeout 0 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+assert_count 1 '^beta:' "$fixture/calls"
+assert_count 1 '^up$' "$fixture/calls"
+assert_count 1 '^down$' "$fixture/calls"
+grep -q 'retryable XCTest driver-startup failure' "$fixture/output" || \
+  fail 'the captured iOS openLink code-60 timeout was not classified as retryable'
+
+fixture="$(make_fixture open_link_timeout_assertion)"
+run_fixture "$fixture" open_link_timeout_assertion 44 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture open_link_partial)"
+run_fixture "$fixture" open_link_partial 45 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture generic_timeout)"
+run_fixture "$fixture" generic_timeout 48 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture application_failure)"
+run_fixture "$fixture" application_failure 46 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+
+fixture="$(make_fixture unknown_failure)"
+run_fixture "$fixture" unknown_failure 47 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
 
 fixture="$(make_fixture assertion)"
 run_fixture "$fixture" assertion 37 --startup-attempts 4

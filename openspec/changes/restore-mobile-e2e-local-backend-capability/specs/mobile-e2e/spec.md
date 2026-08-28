@@ -72,14 +72,18 @@ reviewed head, and its handoff SHALL record that commit plus direct run/job link
 ### Requirement: XCTest startup retries cannot mask flow failures
 
 The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
-A failed attempt SHALL be retried only when its captured output proves the local XCTest
-driver never reached a usable state and contains no completed assertion or assertion-failure
-evidence. That proof has two shapes and both SHALL be retryable: Maestro aborting while it
+A failed attempt SHALL be retried only when its captured output positively identifies an
+XCTest startup-transport failure and contains no completed assertion or assertion-failure
+evidence. That failure has three shapes and all SHALL be retryable: Maestro aborting while it
 creates the iOS session because the driver did not bind its port within the configured
 startup timeout — which happens before the flow is opened, so that output names no flow
 command and cannot be anchored on `launchApp` — or the first `launchApp`/`setPermissions`
-failing because the driver was not listening or refused the connection. Unknown,
-application, and assertion failures SHALL be terminal on their first occurrence.
+failing because the driver was not listening or refused the connection, or a deep-link reopen
+whose output contains the complete conjunction `IOSDriver.openLink`,
+`NSPOSIXErrorDomain code=60`, `Simulator device failed to open`, and `Operation timed out`.
+The assertion guard SHALL run before all three positive branches. A partial conjunction,
+generic timeout, application failure, unknown failure, or any output carrying assertion
+evidence SHALL be terminal on its first occurrence.
 
 #### Scenario: A driver startup failure is retried within the bound
 
@@ -94,6 +98,20 @@ application, and assertion failures SHALL be terminal on their first occurrence.
   time, so the attempt output carries the driver-startup timeout and no flow command at all
 - **THEN** the harness classifies it as a startup failure rather than an unknown one, and
   starts a fresh Maestro process for the same flow within the configured bound
+
+#### Scenario: A simulator deep-link command times out during app reopen
+
+- **WHEN** a flow reaches `openLink` and the captured output contains `IOSDriver.openLink`,
+  `NSPOSIXErrorDomain code=60`, `Simulator device failed to open`, and `Operation timed out`
+  with no assertion evidence
+- **THEN** the harness starts a fresh Maestro process for the same flow within the configured
+  bound and may continue to later flows after that retry succeeds
+
+#### Scenario: A partial or assertion-bearing deep-link timeout is terminal
+
+- **WHEN** output carries only part of the deep-link timeout signature, a generic timeout,
+  application or unknown failure evidence, or the complete signature plus assertion evidence
+- **THEN** the harness returns the original non-zero result immediately and does not retry
 
 #### Scenario: A real assertion failure is never retried
 
