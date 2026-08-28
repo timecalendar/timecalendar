@@ -32,7 +32,7 @@
       diff, and confirm the only sensitive surface changed is `mobile/eas.json`; confirm no production
       submit, credential/key/certificate, generated native, OpenAPI/generated client, migration,
       Firebase, dependency, infrastructure, workflow, deployment, or legacy Flutter change exists.
-- [x] 4.3 Push implementation commits to the existing draft PR and use green GitHub mobile CI at
-      the exact reviewed head as the CI proof test; because store submission behavior is Tier H, obtain
-      Reviewer sign-off and then wait for a human merge without auto-merge, build, signing, upload,
-      submission, tester assignment, or production distribution.
+- [x] 4.3 Push implementation commits to the existing PR and use green GitHub mobile CI at the
+      exact reviewed head as the CI proof test; obtain Reviewer sign-off and then merge the
+      repository change autonomously without building, signing, uploading, submitting, assigning
+      testers, or distributing to production.

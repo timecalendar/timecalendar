@@ -9,8 +9,9 @@ signing material remain separately protected inputs.
 
 The affected Jest test currently parameterizes preview and production as identical submit objects.
 The documentation repeats that all three iOS values are environment references and therefore must
-be corrected alongside the executable config. This is a sensitive Tier-H store-targeting change,
-but the ticket authorizes no deploy act: the Applier must not build, sign, upload, or submit an IPA.
+be corrected alongside the executable config. This is a sensitive store-targeting change that
+receives extra review scrutiny, while repository merge remains autonomous. The ticket authorizes
+no deploy act: the Applier must not build, sign, upload, or submit an IPA.
 
 ## Goals / Non-Goals
 
@@ -21,7 +22,7 @@ but the ticket authorizes no deploy act: the Applier must not build, sign, uploa
   unresolved placeholder.
 - Preserve every credential boundary and all unrelated build/submit behavior.
 - Keep current-state, operator, readiness, and Architecture Book guidance truthful.
-- Provide local and exact-head CI evidence suitable for Tier-H human review.
+- Provide local and exact-head CI evidence suitable for Reviewer sign-off.
 
 **Non-Goals:**
 
@@ -74,7 +75,7 @@ reverse architecture.
 ## Risks / Trade-offs
 
 - **[Wrong app receives a future upload]** → Bind the exact public identifier in source, assert it
-  with both Jest and `jq`, flag `mobile/eas.json` as sensitive, and require Tier-H human review.
+  with both Jest and `jq`, flag `mobile/eas.json` as sensitive, and require extra Reviewer scrutiny.
 - **[A credential is mistaken for public metadata]** → Limit the committed value to `ascAppId` and
   verify Apple account/team values, keys, and certificates remain outside git.
 - **[Production changes accidentally]** → Keep an exact production expectation in the focused test
@@ -92,14 +93,14 @@ reverse architecture.
 3. Run the focused Jest test, direct `jq` assertion, formatting/diff checks, and strict OpenSpec
    validation; then run the repository-prescribed local mobile gate proportionate to the config
    change.
-4. Push to the existing draft PR and require green CI at the exact reviewed head.
-5. After Reviewer sign-off, wait for a human merge. The separate release operation may later select
-   a reviewed green `main` SHA and submit its exact signed IPA.
+4. Push to the existing PR and require green CI at the exact reviewed head.
+5. After Reviewer sign-off, merge the repository change autonomously. The separate human-owned
+   release operation may later select a reviewed green `main` SHA and submit its exact signed IPA.
 
 Rollback is a normal source revert before any subsequent store action. Because this ticket performs
 no deploy act, it creates no external state to unwind.
 
 ## Open Questions
 
-None. The target app identifier, credential boundary, preview-only scope, and human merge gate are
-explicit in the issue.
+None. The target app identifier, credential boundary, preview-only scope, autonomous repository
+merge, and separate human-owned store operation are explicit in the issue.

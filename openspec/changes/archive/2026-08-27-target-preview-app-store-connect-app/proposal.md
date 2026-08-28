@@ -16,7 +16,7 @@ so the profile must encode that destination before the signed preview release op
 - Synchronize the directly affected EAS and first-preview release documentation with the committed
   preview target and the boundary between a public app identifier and credential values.
 - Require a direct `jq` assertion, focused Jest proof, local-green checks, and exact-head CI before
-  implementation is handed onward for human-reviewed merge.
+  Reviewer sign-off and autonomous repository merge.
 
 ## Capabilities
 
@@ -35,7 +35,8 @@ None.
 - Regression proof: `mobile/app.config.test.ts`.
 - Current-state and operator documentation: `docs/mobile/architecture-book/eas.md`, `mobile/EAS.md`,
   `docs/mobile/releases/03-first-preview.md`, and `docs/mobile/releases/05-readiness-and-gaps.md`.
-- Store submission behavior is Tier H and requires human review and merge, but this change performs
-  no build, signing, upload, submission, tester assignment, or production distribution action.
+- Store submission configuration receives extra review scrutiny, but repository merge remains
+  autonomous. This change performs no build, signing, upload, submission, tester assignment, or
+  production distribution action.
 - No API contract, generated client, database schema/migration, dependency, Firebase, credential,
   certificate, infrastructure, workflow, generated native project, or legacy Flutter change.
