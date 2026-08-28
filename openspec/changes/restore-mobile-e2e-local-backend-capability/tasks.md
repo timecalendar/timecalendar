@@ -105,3 +105,14 @@ stale app assertion, below-the-fold row, or driver-startup failure.
 
 - [x] 10.1 In `mobile/.maestro/about.yaml`, repeat the iOS `Open` dismissal once as a second optional tap. Keep both taps inside the existing iOS-only system-dialog block; when the first dismissal holds, the second is inert, and no later flow or app assertion changes.
 - [x] 10.2 Run the Maestro selector guard and applicable YAML/format checks, record the terminal gate artifact and prior passing control in the handoff, then push a material exact head for a fresh labeled gate.
+
+## 11. Match Android's padded native search placeholder
+
+The superseded `e13152ee` Android job reached `onboarding.yaml` after passing the
+preceding ten top-level flows, including `feedback`. Its failure artifact shows the
+native search field expanded and visibly rendering `Search schools`, while the UI
+hierarchy reports `text: "   Search schools"`. Maestro anchors text regexes, so the
+exact selector cannot match Android even though the field is present and focused.
+
+- [x] 11.1 Change the shared placeholder selector to `.*Search schools`, accepting Android's native leading-space projection while still requiring the complete locale-stable label and matching the exact iOS value without a platform branch.
+- [x] 11.2 Run the focused selector/format/OpenSpec proofs, push the material fix, and require a fresh exact-head baseline plus Android/iOS gate.

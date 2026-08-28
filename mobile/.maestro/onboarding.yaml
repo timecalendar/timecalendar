@@ -94,14 +94,16 @@ appId: fr.samuelprak.timecalendar.dev
 # in school-picker-screen.tsx), which react-native-screens' SearchBarProps cannot
 # carry a testID through. Android initially collapses that control to a `Search`
 # accessibility action, while iOS exposes the field directly, so the shared flow
-# optionally expands it before addressing the `Search schools` placeholder. Both
-# labels are locale-stable under the suite's EN-device convention. The former
-# `onboarding-school-filter` testID is gone.
+# optionally expands it before addressing the `Search schools` placeholder.
+# Android's native SearchView exposes that placeholder with leading spaces in
+# its hierarchy, so the anchored Maestro regex accepts only that native prefix.
+# Both labels are locale-stable under the suite's EN-device convention. The
+# former `onboarding-school-filter` testID is gone.
 - tapOn:
     text: "Search"
     optional: true
 - tapOn:
-    text: "Search schools"
+    text: ".*Search schools"
 - inputText: "Gaming"
 - extendedWaitUntil:
     visible: "My Gaming Academia"
