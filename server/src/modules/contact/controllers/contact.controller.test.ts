@@ -1,8 +1,12 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
-import { CrispClient } from "modules/contact/clients/crisp.client"
+import {
+  CrispClient,
+  CrispDeliveryError,
+} from "modules/contact/clients/crisp.client"
 import { ContactModule } from "modules/contact/contact.module"
+import { CONTACT_UNAVAILABLE_MESSAGE } from "modules/contact/services/contact.service"
 import createTestApp from "test-utils/create-test-app"
 
 describe("ContactController", () => {
@@ -21,6 +25,11 @@ describe("ContactController", () => {
         ],
       },
     )
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    crispClient.createConversation.mockResolvedValue(undefined)
   })
 
   describe("POST /contact", () => {
@@ -50,6 +59,36 @@ describe("ContactController", () => {
           calendarIds: calendar.id,
         },
       })
+    })
+
+    it("keeps DTO validation failures at 400", async () => {
+      await request(app).post("/contact").send({}).expect(400)
+
+      expect(crispClient.createConversation).not.toHaveBeenCalled()
+    })
+
+    it("returns a static 503 when Crisp rejects metadata", async () => {
+      crispClient.createConversation.mockRejectedValueOnce(
+        new CrispDeliveryError("metadata"),
+      )
+
+      const response = await request(app)
+        .post("/contact")
+        .send({
+          message: "private submitted message",
+          email: "private@example.fr",
+        })
+        .expect(503)
+
+      expect(response.body).toEqual({
+        statusCode: 503,
+        message: CONTACT_UNAVAILABLE_MESSAGE,
+        error: "Service Unavailable",
+      })
+      expect(JSON.stringify(response.body)).not.toMatch(
+        /invalid_data|private|example\.fr|session/i,
+      )
+      expect(crispClient.createConversation).toHaveBeenCalledTimes(1)
     })
   })
 })
