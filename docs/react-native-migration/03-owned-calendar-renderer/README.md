@@ -56,10 +56,10 @@ them from those broad decisions.
 ## Readiness after Round 2
 
 The blocking first-pass owner decisions are recorded, but the project is not yet ready to
-call `03-functional-specification.md` complete. The questionnaire still contains 217
-`UNANSWERED` rows. Many can be resolved by repository research or recommendation-led
-specification work; the remainder must return to the owner in short, ordered batches rather
-than as a 217-question form.
+call `03-functional-specification.md` complete. After propagating every accepted compound
+decision to its directly answered questionnaire rows, 187 rows remain `UNANSWERED`. Many can
+be resolved by repository research or recommendation-led specification work; the remainder
+must return to the owner in short, ordered batches rather than as a 187-question form.
 
 Five factual items already have bounded research actions: `P-004`, `PL-003`, `PF-006`,
 `PF-007`, and `PF-008`. The next discovery step is to classify the remaining keys into

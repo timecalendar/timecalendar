@@ -556,8 +556,9 @@ dependencies rather than product questions.
 ### Functional-specification readiness after Round 2
 
 Round 2 completed the blocking first-pass owner decisions; it did not answer the complete
-question backlog. The questionnaire still has 217 `UNANSWERED` rows and five bounded
-`NEEDS_RESEARCH` facts (`P-004`, `PL-003`, and `PF-006` through `PF-008`). A complete
+question backlog. An exact-row audit propagated the accepted compound decisions to every
+directly answered dependent row. The questionnaire still has 187 `UNANSWERED` rows and five
+bounded `NEEDS_RESEARCH` facts (`P-004`, `PL-003`, and `PF-006` through `PF-008`). A complete
 functional specification would therefore overstate certainty if created now.
 
 The next step is a specification-triage round: resolve repository and standards facts without
