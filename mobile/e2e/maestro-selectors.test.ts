@@ -48,7 +48,6 @@ import { join } from "node:path"
 const SAMPLE_INTERPOLATION: Record<string, string> = {
   time: "14:00 – 16:00",
   location: "Room E2E Lecture",
-  date: "28 August",
 }
 
 const mobileRoot = join(__dirname, "..")
@@ -165,11 +164,14 @@ function renderings(title: string): string[] {
   ]
 }
 
-const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
-  name: file.slice(flowsDir.length + 1),
-  selectors: flowSelectors(readFileSync(file, "utf8")),
-  textSelectors: flowTextSelectors(readFileSync(file, "utf8")),
-}))
+const flows = filesUnder(flowsDir, [".yaml"]).map((file) => {
+  const yaml = readFileSync(file, "utf8")
+  return {
+    name: file.slice(flowsDir.length + 1),
+    selectors: flowSelectors(yaml),
+    textSelectors: flowTextSelectors(yaml),
+  }
+})
 
 /** Maestro compiles a text selector as a fully anchored regex — so does this. */
 function matches(selector: string, candidate: string): boolean {
@@ -187,15 +189,13 @@ function unreachableRenderings(selector: string): string[] {
   return renderings(title).filter((rendering) => !matches(selector, rendering))
 }
 
+/**
+ * Whether a flow `id:` selector matches any testID the app declares. An
+ * uncompilable selector matches nothing here because it selects nothing on a
+ * device either — `matches` already fails closed on it.
+ */
 function resolves(selector: string): boolean {
-  let pattern: RegExp
-  try {
-    pattern = new RegExp(`^(?:${selector})$`)
-  } catch {
-    // Maestro could not compile it either, so it selects nothing on a device.
-    return false
-  }
-  return declaredIds.some((id) => pattern.test(id))
+  return declaredIds.some((id) => matches(selector, id))
 }
 
 describe("Maestro flow selectors", () => {

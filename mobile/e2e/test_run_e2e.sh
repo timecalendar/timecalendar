@@ -319,6 +319,22 @@ assert_terminal() {
     fail "$what was not classified as terminal"
 }
 
+# One scenario, end to end. `fixture` is deliberately left global: a few cases
+# assert more about their own fixture afterwards.
+retryable_case() {
+  local scenario="$1" what="$2"
+  fixture="$(make_fixture "$scenario")"
+  run_fixture "$fixture" "$scenario" 0 --startup-attempts 2
+  assert_retried_then_passed "$fixture" "$what"
+}
+
+terminal_case() {
+  local scenario="$1" status="$2" what="$3"
+  fixture="$(make_fixture "$scenario")"
+  run_fixture "$fixture" "$scenario" "$status" --startup-attempts 4
+  assert_terminal "$fixture" "$what"
+}
+
 # --- Baseline: lifecycle, ordering, enumeration -------------------------------
 fixture="$(make_fixture pass)"
 run_fixture "$fixture" pass 0
@@ -328,15 +344,11 @@ assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
 # --- Retryable: the attempt evaluated no assertion and died in startup --------
-fixture="$(make_fixture session_never_opened_flow)"
-run_fixture "$fixture" session_never_opened_flow 0 --startup-attempts 2
-assert_retried_then_passed "$fixture" 'a session that never opened the flow'
+retryable_case session_never_opened_flow 'a session that never opened the flow'
 grep -q 'no command record' "$fixture/output" || \
   fail 'the missing per-flow command record was not reported'
 
-fixture="$(make_fixture launch_never_completed)"
-run_fixture "$fixture" launch_never_completed 0 --startup-attempts 2
-assert_retried_then_passed "$fixture" 'the captured launchApp-never-completed shape'
+retryable_case launch_never_completed 'the captured launchApp-never-completed shape'
 grep -Fq 'last=launchAppCommand status=RUNNING' "$fixture/output" || \
   fail 'the classifier did not report the structural evidence it decided on'
 # The decisive property: nothing in the output identified the failure. Only the
@@ -344,13 +356,9 @@ grep -Fq 'last=launchAppCommand status=RUNNING' "$fixture/output" || \
 ! grep -Eiq 'exception|NSPOSIXErrorDomain|code=60|driver not ready' "$fixture/output" || \
   fail 'the launch-never-completed fixture leaked a stack-trace signature'
 
-fixture="$(make_fixture open_link_never_completed)"
-run_fixture "$fixture" open_link_never_completed 0 --startup-attempts 2
-assert_retried_then_passed "$fixture" 'the deep-link reopen shape'
+retryable_case open_link_never_completed 'the deep-link reopen shape'
 
-fixture="$(make_fixture completed_assertion_before_restart)"
-run_fixture "$fixture" completed_assertion_before_restart 0 --startup-attempts 2
-assert_retried_then_passed "$fixture" 'the captured phase-local restart shape'
+retryable_case completed_assertion_before_restart 'the captured phase-local restart shape'
 captured_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
 grep -Fq '12 command(s) recorded, last=openLinkCommand status=FAILED' "$fixture/output" || \
   fail 'the captured 12-command shape was not classified directly'
@@ -366,44 +374,20 @@ assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
 # --- Terminal: any assertion evidence, and anything past startup --------------
-fixture="$(make_fixture failed_assertion_before_restart)"
+terminal_case failed_assertion_before_restart 47 'a FAILED assertion before the latest restart boundary'
 failed_before_restart_fixture="$fixture"
-run_fixture "$fixture" failed_assertion_before_restart 47 --startup-attempts 4
-assert_terminal "$fixture" 'a FAILED assertion before the latest restart boundary'
 
-fixture="$(make_fixture failed_interaction_before_restart)"
-run_fixture "$fixture" failed_interaction_before_restart 55 --startup-attempts 4
-assert_terminal "$fixture" 'a FAILED interaction before the latest restart boundary'
-
-fixture="$(make_fixture evaluated_assertion_in_restart_epoch)"
-run_fixture "$fixture" evaluated_assertion_in_restart_epoch 56 --startup-attempts 4
-assert_terminal "$fixture" 'an evaluated assertion in the current restart epoch'
-
-fixture="$(make_fixture interaction_in_restart_epoch)"
-run_fixture "$fixture" interaction_in_restart_epoch 57 --startup-attempts 4
-assert_terminal "$fixture" 'a non-startup interaction in the current restart epoch'
-
-fixture="$(make_fixture failed_assertion)"
-run_fixture "$fixture" failed_assertion 47 --startup-attempts 4
-assert_terminal "$fixture" 'a FAILED assertion'
-
-fixture="$(make_fixture assertion_evidence_in_output)"
-run_fixture "$fixture" assertion_evidence_in_output 48 --startup-attempts 4
-assert_terminal "$fixture" 'assertion evidence in the harness output'
-
-fixture="$(make_fixture interaction_failure)"
-run_fixture "$fixture" interaction_failure 49 --startup-attempts 4
-assert_terminal "$fixture" 'a failure past startup with no assertion'
-
-fixture="$(make_fixture skipped_assertion_past_startup)"
-run_fixture "$fixture" skipped_assertion_past_startup 50 --startup-attempts 4
-assert_terminal "$fixture" 'a skipped assertion followed by a non-startup command'
+terminal_case failed_interaction_before_restart 55 'a FAILED interaction before the latest restart boundary'
+terminal_case evaluated_assertion_in_restart_epoch 56 'an evaluated assertion in the current restart epoch'
+terminal_case interaction_in_restart_epoch 57 'a non-startup interaction in the current restart epoch'
+terminal_case failed_assertion 47 'a FAILED assertion'
+terminal_case assertion_evidence_in_output 48 'assertion evidence in the harness output'
+terminal_case interaction_failure 49 'a failure past startup with no assertion'
+terminal_case skipped_assertion_past_startup 50 'a skipped assertion followed by a non-startup command'
 
 # SKIPPED is not an evaluated status: the same declined assertion inside startup
 # stays retryable.
-fixture="$(make_fixture skipped_assertion_in_startup)"
-run_fixture "$fixture" skipped_assertion_in_startup 0 --startup-attempts 2
-assert_retried_then_passed "$fixture" 'a declined assertion inside startup'
+retryable_case skipped_assertion_in_startup 'a declined assertion inside startup'
 
 # The classifier reads the record of the attempt that just ran, not the
 # retryable one its predecessor left behind.
@@ -414,15 +398,11 @@ assert_count 0 '^beta:' "$fixture/calls"
 grep -q 'terminal non-startup failure' "$fixture/output" || \
   fail 'a failing assertion on the retry attempt was not terminal'
 
-fixture="$(make_fixture malformed_record)"
-run_fixture "$fixture" malformed_record 51 --startup-attempts 4
-assert_terminal "$fixture" 'a malformed command record'
+terminal_case malformed_record 51 'a malformed command record'
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
-fixture="$(make_fixture malformed_command_entry)"
-run_fixture "$fixture" malformed_command_entry 58 --startup-attempts 4
-assert_terminal "$fixture" 'a malformed command entry'
+terminal_case malformed_command_entry 58 'a malformed command entry'
 
 # --- Mutation proof: the boundary and global-failure guards are load-bearing --
 boundary_mutant="$TEST_ROOT/classifier-without-restart-boundary.mjs"
