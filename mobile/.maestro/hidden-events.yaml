@@ -16,7 +16,11 @@
 # Selector notes: the hide action is the details header button (localized "Hide")
 # opening a native Alert chooser whose "Hide this event" option hides by uid. The
 # management-screen un-hide row renders the event title + a "Un-hide" control (a11y
-# label "Un-hide <title>"). The e2e device runs in EN (the established convention —
+# label "Un-hide <title>"). The agenda switch goes through ONE control shared by
+# both platforms: `calendar-view` is the iOS `@expo/ui` `Picker`
+# (`appearance="menu"`) and the Android `@react-native-menu/menu` trigger
+# (calendar-view-menu.tsx); "Agenda" is picked from its native menu and is the
+# same label in EN + FR. The e2e device runs in EN (the established convention —
 # settings.yaml asserts "Settings", the old hidden-events flow asserted "Hidden
 # events" / "No hidden events."), so the localized taps use the EN strings.
 #
@@ -72,7 +76,9 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn:
+    text: "Agenda"
 - extendedWaitUntil:
     visible: "E2E Today Lecture"
     timeout: 60000
@@ -107,7 +113,9 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Calendar"
     timeout: 60000
 - tapOn:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn:
+    text: "Agenda"
 - extendedWaitUntil:
     visible: "E2E Today Seminar"
     timeout: 60000

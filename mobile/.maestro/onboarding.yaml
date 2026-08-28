@@ -15,8 +15,8 @@
 # accent-matching fragility across platforms.
 #
 # Phase-3 ship 2 (completed picker) adds a STABLE school-search step (type a
-# matching / non-matching needle into the fixed onboarding-school-filter testID,
-# assert the seeded ASCII school shows / hides). The completed group step
+# matching / non-matching needle into the school search field, assert the seeded
+# ASCII school shows / hides — see the selector note below). The completed group step
 # (multi-select toggle + confirm + dismissTo) is Jest-proven, NOT e2e-driven: the
 # group tree's leaf selectors vary by school/fixture and a tap-into-nested-step
 # assertion would be brittle across both platforms (D5). The school→group
@@ -77,11 +77,17 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 # Stable accent-free school-search step (Phase-3 ship 2): typing a matching needle
 # keeps the seeded ASCII school visible; a non-matching needle hides it; clearing
-# brings it back. Cross-platform stable — the seeded name + the filter testID are
+# brings it back. Cross-platform stable — the seeded name + the EN placeholder are
 # fixed, no fixture-dependent selectors (unlike the group leaves — those stay
 # Jest-proven, D5). Proves the search filter end to end against the live list.
+#
+# The search field is now the native-header search bar (`headerSearchBarOptions`
+# in school-picker-screen.tsx), which react-native-screens' SearchBarProps cannot
+# carry a testID through — so it is addressed by its placeholder, exactly as
+# locale-stable as this file's existing "Select your school" assertion (the e2e
+# device runs in EN). The former `onboarding-school-filter` testID is gone.
 - tapOn:
-    id: "onboarding-school-filter"
+    text: "Search schools"
 - inputText: "Gaming"
 - extendedWaitUntil:
     visible: "My Gaming Academia"

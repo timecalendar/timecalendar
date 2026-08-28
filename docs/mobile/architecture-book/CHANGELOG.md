@@ -6,6 +6,12 @@
   development app variant, independent development backend capability, and platform-local URL
   in every Android/iOS prebuild and release-compilation step, with step-scoped workflow proof
   (testing.md).
+- Required Maestro flow `id:` selectors to resolve against real `mobile/src` testIDs, enforced by
+  `mobile/e2e/maestro-selectors.test.ts` in the baseline (not the on-demand native) gate.
+  Selectors match as regexes, testIDs count as JSX attributes and object properties, and
+  template-literal testIDs stand for their family — a literal-only matcher would allowlist
+  working ids and disarm the guard. Recorded the calendar-family `calendar-view` agenda switch
+  and the EN-label fallback for controls that cannot carry a testID (testing.md).
 - Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
   before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
   persisted with expiring dates, while existing sync cadence and school-specific exceptions

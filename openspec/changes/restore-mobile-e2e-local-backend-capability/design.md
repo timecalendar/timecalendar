@@ -8,7 +8,9 @@ The workflow is a sensitive CI surface. The change must recover the local seeded
 
 A second, independent defect sits immediately behind the first. Exact-head run 33162979890 proved the routing repair — both platforms reach `TEST ENVIRONMENT · Local`, complete `import-seed.yaml`, and render the real seeded events — then fail terminally on `tapOn: id: "calendar-view-agenda"`. That id belonged to a segmented control removed in `a45b9a5`, when the calendar header moved to native chrome. The view control is now a single header element with `testID="calendar-view"` — an `@expo/ui` `Picker` with `appearance="menu"` on iOS, a `@react-native-menu/menu` trigger `Pressable` on Android — and the view is chosen from its menu. `calendar.yaml` and `hidden-events.yaml` still carry four references to the dead id, so the seeded round trip they exist to prove can never complete.
 
-The same class of drift is not unique to this id. `run_e2e.sh` iterates top-level flows lexically and stops at the first failure, so `calendar.yaml` (third alphabetically) has been masking every later flow. Two further selectors removed by unrelated UI reworks are still referenced downstream: `onboarding-welcome-url-cta` (`ical-import.yaml`, removed in `482f134`) and `onboarding-school-filter` (`onboarding.yaml`, removed in `f2e47ee`). Repairing those is not authorized here and is tracked in `TIM-265`; this change must not silently claim the full flow set is green.
+The same class of drift is not unique to this id. `run_e2e.sh` iterates top-level flows lexically and stops at the first failure, so `calendar.yaml` (third alphabetically) has been masking every later flow. Two further selectors removed by unrelated UI reworks are still referenced downstream: `onboarding-welcome-url-cta` (`ical-import.yaml`, removed in `482f134`) and `onboarding-school-filter` (`onboarding.yaml`, removed in `f2e47ee`). Triage amendment #2 folds both into this change (Decision 3b): deferring them would leave the gate terminating at flow 9 of 14, and a red job is not a gate — B10 would close having produced no green exact head for `TIM-263`.
+
+A static enumeration of every literal `id:` in the flows against every `testID` in `mobile/src` returns ten candidates, of which **seven are false positives**: Maestro matches ids by regex, and testIDs are declared as object properties and template literals as well as JSX attributes. Exactly three are genuinely stale — the three above. That asymmetry is what shapes Decision 4.
 
 ## Goals / Non-Goals
 
@@ -17,6 +19,7 @@ The same class of drift is not unique to this id. `run_e2e.sh` iterates top-leve
 - Make each Android and iOS native E2E prebuild and release-compilation step resolve development identity, development backend capability, and the platform-correct local API URL.
 - Add a focused, locally runnable structure proof that fails if any of those four build steps loses or misstates one member of the contract.
 - Reach the agenda surface in both shared calendar-family flows through the control the app actually ships, with one cross-platform, locale-stable interaction and no per-platform branch.
+- Repair every stale selector in `mobile/.maestro/**`, so the complete flow set can run to green on one exact head.
 - Catch selector drift at the commit that causes it, in the baseline gate, instead of at an on-demand native run.
 - Keep the Architecture Book, E2E operator README, and agent handbook aligned with the executable contract.
 - Require baseline checks and both native jobs to pass on the recovery PR's exact head, with direct run/job links recorded in the handoff.
@@ -24,7 +27,7 @@ The same class of drift is not unique to this id. `run_e2e.sh` iterates top-leve
 **Non-Goals:**
 
 - Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, application UI/behaviour, retry classification, Maestro flow order, seeded-data assertions, or server lifecycle.
-- Repair the `ical-import.yaml` / `onboarding.yaml` stale selectors (`TIM-265`) or add per-platform branches to any flow.
+- Touch anything under `mobile/src` — including adding a `testID` to a control that lacks one — or add per-platform branches to any flow. A repair that genuinely needs an application change is the `TIM-265` boundary and escalates.
 - Change OpenAPI/generated clients, server schema or migrations, native/store configuration, EAS profiles, Firebase files, deployments, infrastructure, or legacy Flutter.
 - Re-run a terminal native failure without a material workflow fix, add a separate QA gate, or modify the parent feature PR.
 
@@ -82,23 +85,64 @@ Alternatives rejected:
 - Add a `view` deep-link parameter to reach agenda without the menu: that is an application change, explicitly out of scope, and it would stop exercising the control a user actually taps.
 - Drop the agenda step and assert seeded titles on the timeline grid: the flow headers already record why that is not viable — calendar-kit grid tiles live inside a Reanimated worklet grid and carry no per-event `testID`.
 
+## Decision 3b: Repair the two onboarding selectors in the same change
+
+Triage amendment #2 widened this change from `calendar-view-agenda` alone to the full stale
+set. The reason is arithmetic, not preference: `run_e2e.sh` runs top-level flows lexically and
+stops at the first failure, so repairing only the calendar family leaves the gate terminating
+at `ical-import.yaml` — flow 9 of 14. A red job is not a gate, so acceptance criterion 6 could
+not be met and `TIM-263` would still have no green exact head. All three repairs live in
+`mobile/.maestro/**`: identical surface, identical risk class, identical reviewer, and no
+separable review boundary — while splitting them costs one full native CI cycle each.
+
+**`ical-import.yaml` — `onboarding-welcome-url-cta`.** The "Add by URL" entry did not
+disappear; it moved (482f134). The welcome screen is now a three-page carousel and the URL
+entry lives on the school step as `onboarding-school-missing` ("I can't find my school",
+`school-picker-screen.tsx`), which pushes `/onboarding/ical-url`. The flow therefore advances
+the carousel (`onboarding-next` ×2), takes `onboarding-welcome-cta` into the school step, waits
+on `"Select your school"`, then taps `onboarding-school-missing`. The wait is load-bearing
+rather than cosmetic: that title renders as the list header, which mounts only in the
+_browsing_ state, so it also proves the list finished loading and the footer action carrying
+`onboarding-school-missing` is on screen. Two seeded fixtures (`school.fixtures.yml`) keep the
+footer above the fold.
+
+**`onboarding.yaml` — `onboarding-school-filter`.** The school search moved into the native
+header (`headerSearchBarOptions`, f2e47ee). `react-native-screens`' `SearchBarProps` carries no
+`testID`, so no id can address it without an application change. It does not need one: the flow
+taps `text: "Search schools"` (`onboarding.school.search`). That is not a new locale dependency
+— this same file already asserts `"Select your school"`, and `ical-import.yaml` asserts
+`"Add a calendar by URL"` and `"Enter a calendar URL."`. The e2e device runs in EN by
+established convention, so the placeholder is exactly as stable as the assertions around it.
+
+Alternatives rejected:
+
+- Deep-link straight to `/onboarding/ical-url` and skip the entry point: it would stop proving
+  the entry is reachable at all, which is the only thing this flow's first half tests.
+- Add a `testID` to the header search bar: `SearchBarProps` has no such field, so it would take
+  a `mobile/src` change to swap the control — the `TIM-265` boundary, and out of scope.
+- Defer both to `TIM-265`: rejected above; it cannot satisfy acceptance criterion 6.
+
 ## Decision 4: Guard selector drift in the baseline gate, not the native gate
 
-A new `mobile/e2e/maestro-selectors.test.ts` (Jest, so it runs in the existing `test-mobile` baseline job with no new CI surface) will:
+A new `mobile/e2e/maestro-selectors.test.ts` (Jest, so it runs in the existing `test-mobile` baseline job with no new CI surface) reads every `mobile/.maestro/*.yaml`, collects each `id:` selector, reads every non-test file under `mobile/src`, collects each declared `testID`, and fails on any selector that resolves to none — naming the flow file, the line, and the id.
 
-1. read every `mobile/.maestro/*.yaml` and collect each literal selector id — any `id:` value matching `^[a-z0-9-]+$`, which skips the two deliberately regex-shaped ids (`checklist-check-.*`, `checklist-remove-.*`);
-2. read every non-test file under `mobile/src` and collect literal `testID="…"` values;
-3. fail on any flow id with no matching `testID`.
+The baseline gate is the correct home. All three stale selectors were introduced by UI-rework PRs that ran the baseline gate and did not run the on-demand native gate; a proof living only in `test_ci_mobile_e2e.sh` would have caught none of them at the commit that caused them. The workflow-contract proof stays where it is — it asserts workflow structure, which is a different concern.
 
-The baseline gate is the correct home. All three known stale selectors were introduced by UI-rework PRs that ran the baseline gate and did not run the on-demand native gate; a proof living only in `test_ci_mobile_e2e.sh` would have caught none of them at the commit that caused them. The workflow-contract proof stays where it is — it asserts workflow structure, which is a different concern.
+**The matching rules are the load-bearing part.** A naive literal comparison reports ten candidates on this repo, of which **seven are false positives**. Writing the naive version and allowlisting its output would admit real, working ids — including `settings-feedback`, the exact id `TIM-263` exists to prove — after which the guard could never catch a real break again. So:
 
-The test carries a `KNOWN_STALE` map for the two `TIM-265` ids, each with its ticket reference. The map is bidirectional: the test also fails if a `KNOWN_STALE` id **is** present in `mobile/src`, so the allowlist cannot silently rot once `TIM-265` lands.
+1. **A flow `id:` value is a regex, not a literal.** Maestro matches ids by regex; `checklist-check-.*` and `checklist-remove-.*` (`event-checklists.yaml`) are deliberately written that way. Each selector is compiled anchored, `^(?:…)$`.
+2. **A `testID` is declared two ways.** `testID="x"` as a JSX attribute, and `testID: "x"` as an object property on a data-driven descriptor — `about-screen.tsx` and `settings-screen.tsx` declare `about-changelog`, `settings-about`, `settings-appearance` and `settings-feedback` the second way, forwarded through `testID={props.testID}`. Both forms are collected; the pass-through itself declares nothing and is skipped.
+3. **A template-literal `testID` stands for a family.** ``testID={`checklist-check-${item.uuid}`}`` is expanded by substituting a sample for each `${…}`, so the regex in rule 1 has a concrete member of the family to match.
+
+`KNOWN_STALE` ships **empty**: every stale id is repaired here, so nothing is deferred. It is kept (rather than deleted) as the documented shape for a future deferral, and the check stays bidirectional — an allowlisted id that _is_ present in `mobile/src` fails, so the allowlist cannot silently rot.
+
+The suite also self-checks against going vacuous: non-zero flow/selector/testID counts, and both directions of each rule (`calendar-view` resolves while `calendar-view-agenda` does not; `checklist-check-.*` resolves while the bare prefix `checklist-check-` does not).
 
 Alternatives rejected:
 
 - Extend `test_ci_mobile_e2e.sh` instead: that script runs only inside the two on-demand native jobs, which is precisely the gate that was not protecting us.
-- Fail on the two `TIM-265` ids now: that would either red the baseline gate on an unauthorized surface or force this change to absorb a repair that needs its own scope decision.
-- Resolve templated `testID={\`prefix-${x}\`}` selectors too: no current flow uses a literal id that resolves through a template, so the matching stays literal-only and simple.
+- Literal-only matching with the false positives allowlisted: rejected above — it disarms the guard permanently, which is worse than not having one.
+- Also resolve `text:` assertions against the locale files: the suite asserts seeded server data and native OS chrome as well as app copy, so it would be mostly false positives. The unreached-flow risk it would partly cover is instead handled by taking the native gate and repairing what it surfaces.
 
 ## Decision 5: Update the existing testing rule without a new ADR
 
@@ -120,13 +164,14 @@ No separate QA stage is added because the issue explicitly assigns the exact-hea
 - [Static proof passes while native routing still fails] → Require both native jobs on the recovery PR's exact head, including the real seeded import flow.
 - [CI retry masks the import regression] → Preserve ADR 038 unchanged: assertion/application/unknown failures are terminal and only classified XCTest startup transport failures may retry.
 - [The menu popup is not addressable on one platform] → This is the residual risk of Decision 3 and only a device settles it. `appearance-settings.yaml` records design D5: `@expo/ui` picker **popup internals** were judged unreliable for a toggle round trip. This case differs — the trigger carries a `testID` that `appearance-settings.yaml` already asserts visible on both platforms, and the menu entries are plain OS menu items with fixed labels, the same shape `environment-switch.yaml` and `hidden-events.yaml` already drive through native `Alert` choosers. If the exact-head run shows one platform cannot address the entry, that is a material finding for the Founding Engineer, not a retry: the fallback would be an application change (a testID-addressable view control or a deep-link parameter) that this change is not authorized to make.
-- [The gate still ends red at `ical-import.yaml`] → Expected and stated up front: `TIM-265` owns the two remaining stale selectors. This change's own evidence is that the calendar family completes; do not report the full flow set as green until `TIM-265` lands.
+- [A flow not reached since the UI rework carries a stale **text** assertion] → The guard covers `id:` selectors only, and six flows (`environment-switch`, `event-checklists`, `home`, `personal-events`, `settings`, `user-calendars`) have not been reached by a native run since the rework, because `run_e2e.sh` stops at the first failure. This is why triage amendment #2 authorizes repairing whatever the gate surfaces inside this ticket rather than filing a new one per selector: the first green run is not promised in one shot, but each iteration is a material fix on the same surface.
+- [The Android native-stack `SearchView` renders collapsed to an icon] → Then the `"Search schools"` placeholder is not matchable until it is expanded, and no flow-only repair exists. That is the `TIM-265` boundary — escalate to the Founding Engineer rather than reaching into `mobile/src`.
 
 ## Migration Plan
 
 1. Add the three explicit build inputs to the four named workflow steps and extend the focused step-scoped shell proof.
-2. Replace the four `calendar-view-agenda` references in the two shared calendar-family flows with the current control interaction, and update each flow's header comment to describe the contract it now relies on.
-3. Add the baseline-gate selector guard with its documented `KNOWN_STALE` allowlist.
+2. Replace all six stale selector references — four `calendar-view-agenda` in the calendar family, `onboarding-welcome-url-cta` in `ical-import.yaml`, `onboarding-school-filter` in `onboarding.yaml` — with the shipped interactions, and update each flow's header comment to describe the contract it now relies on.
+3. Add the baseline-gate selector guard with its three matching rules and an empty `KNOWN_STALE`.
 4. Update testing/operator guidance and the Architecture Book changelog; no human-only inbox note is needed.
 5. Run shell syntax/proof, workflow/config/YAML formatting, resolved Expo config checks for both platform contracts, the mobile Jest suite, OpenSpec validation, and the applicable baseline checks.
 6. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
@@ -134,4 +179,4 @@ No separate QA stage is added because the issue explicitly assigns the exact-hea
 
 ## Open Questions
 
-None. The `TIM-265` scope decision is tracked on its own ticket and does not gate this change.
+None. `TIM-265` now covers only the escalation case — a selector repair that would require a `mobile/src` change — and does not gate this change.

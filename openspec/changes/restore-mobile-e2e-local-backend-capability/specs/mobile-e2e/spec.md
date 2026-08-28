@@ -28,12 +28,24 @@ The `development` app variant SHALL be able to reach a server on the host machin
 
 ### Requirement: Flow selectors resolve against the shipped app
 
-Every literal selector id used by a Maestro flow SHALL correspond to a `testID` that exists in
+Every selector id used by a Maestro flow SHALL resolve to a `testID` that exists in
 `mobile/src`. A repository proof running in the **baseline** gate SHALL enforce this, so a UI
 rework that removes a `testID` fails at the commit that causes it rather than at an on-demand
-native run. Selectors deliberately written as regexes SHALL be exempt. Ids knowingly left
-unresolved SHALL be enumerated in a documented allowlist carrying their follow-up ticket, and
-the proof SHALL also fail when an allowlisted id becomes present, so the allowlist cannot rot.
+native run.
+
+Resolution SHALL account for how both sides are actually written, because a literal
+string comparison misclassifies working selectors as broken: a flow `id:` value SHALL be
+matched as an anchored **regular expression**, a `testID` SHALL be collected whether it is
+written as a JSX attribute or as an object property, and a template-literal `testID` SHALL
+stand for the family of ids sharing its static parts.
+
+No flow selector SHALL be left unresolved. If one ever must be deferred it SHALL be
+enumerated in a documented allowlist carrying its follow-up ticket, and the proof SHALL also
+fail when an allowlisted id becomes present, so the allowlist cannot rot.
+
+Where a shipped control carries no `testID` at all — a native-header search bar, whose
+`react-native-screens` options object exposes none — the flow SHALL address it by its
+English label, the same locale assumption the suite's existing text assertions already make.
 
 The shared calendar-family flows SHALL reach the agenda surface through the calendar-view
 header control (`calendar-view`) and the locale-stable "Agenda" entry of its menu — one
@@ -41,9 +53,15 @@ interaction shared by both platforms, with no per-platform selector or branch.
 
 #### Scenario: A UI rework removes a testID a flow depends on
 
-- **WHEN** a change deletes or renames a `testID` that a Maestro flow selects by literal id
+- **WHEN** a change deletes or renames a `testID` that a Maestro flow selects by id
 - **THEN** the baseline gate fails on that change
-- **AND** the failure names the flow file and the unresolved id
+- **AND** the failure names the flow file, the line, and the unresolved id
+
+#### Scenario: A selector or testID is not a plain literal
+
+- **WHEN** a flow selects by a regex id, or the app declares a `testID` as an object property or a template literal
+- **THEN** the proof resolves it rather than reporting it as drift
+- **AND** no working id is admitted to the allowlist to silence a false positive
 
 #### Scenario: The calendar-family flows switch to the agenda view
 
@@ -51,6 +69,13 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **THEN** it taps the `calendar-view` control and selects "Agenda", the same steps on Android and iOS
 - **AND** `calendar.yaml` asserts the agenda list (`agenda-section-list`) mounted, which happens only in the agenda view
 - **AND** the seeded-title round-trip assertions that follow are unchanged
+
+#### Scenario: The onboarding flows reach a moved entry point
+
+- **WHEN** `ical-import.yaml` needs the "Add by URL" entry, which moved off the welcome screen onto the school step
+- **THEN** it advances the welcome carousel, takes the final CTA into the school step, and taps the "I can't find my school" action there
+- **AND** `onboarding.yaml` addresses the native-header search bar by its placeholder, since that control can carry no `testID`
+- **AND** both flows' existing assertions are unchanged
 
 #### Scenario: A known-stale selector is repaired
 

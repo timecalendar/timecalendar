@@ -2,9 +2,15 @@
 # 4 / add-mobile-ical-import).
 #
 # Cold-launches the development-variant app, deep-links to the onboarding welcome
-# surface, taps the "Add by URL" CTA, asserts the URL-entry screen renders (a
+# surface, reaches the "Add by URL" entry, asserts the URL-entry screen renders (a
 # stable title assertion), and submits with an EMPTY field to assert the inline
 # validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
+#
+# The entry point MOVED (482f134 / f2e47ee): the welcome screen is now a
+# three-page carousel whose final CTA opens the school step, and the "I can't
+# find my school" action on that step (`onboarding-school-missing`,
+# school-picker-screen.tsx) is what pushes /onboarding/ical-url. The former
+# `onboarding-welcome-url-cta` testID no longer exists.
 #
 # The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
 # seeds no parseable .ics import endpoint and a live external .ics would be flaky
@@ -34,9 +40,22 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "TimeCalendar"
     timeout: 60000
-# Tap the "Add by URL" CTA → pushes /onboarding/ical-url.
+# Advance the welcome carousel and take the final CTA → pushes /onboarding/school.
 - tapOn:
-    id: "onboarding-welcome-url-cta"
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-welcome-cta"
+# The school step renders. Its header/footer only mount in the browsing state, so
+# waiting on the title also guarantees the list finished loading and the
+# "I can't find my school" footer action is on screen.
+- extendedWaitUntil:
+    visible: "Select your school"
+    timeout: 60000
+# "I can't find my school" → pushes /onboarding/ical-url.
+- tapOn:
+    id: "onboarding-school-missing"
 # The URL-entry screen renders.
 - extendedWaitUntil:
     visible: "Add a calendar by URL"
