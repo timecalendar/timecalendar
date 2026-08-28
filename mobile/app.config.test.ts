@@ -139,7 +139,7 @@ describe("Expo distribution configuration", () => {
     },
   )
 
-  it("keeps eas.json profile guarantees with no second channel authority", () => {
+  it("keeps lane-specific eas.json profile guarantees with no second channel authority", () => {
     expect(containsKey(easConfig, "channel")).toBe(false)
     expect(easConfig.build.development).toEqual({
       developmentClient: true,
@@ -162,18 +162,32 @@ describe("Expo distribution configuration", () => {
         },
         android: { buildType: "app-bundle" },
       })
-      expect(easConfig.submit[channel]).toEqual({
-        ios: {
-          appleId: "$EXPO_APPLE_ID",
-          ascAppId: "$EXPO_ASC_APP_ID",
-          appleTeamId: "$EXPO_APPLE_TEAM_ID",
-        },
-        android: {
-          serviceAccountKeyPath: "../ci/keys/eas-android-sa-key.json",
-          track: "internal",
-        },
-      })
     }
+
+    expect(easConfig.submit.preview).toEqual({
+      ios: {
+        appleId: "$EXPO_APPLE_ID",
+        ascAppId: "1479613630",
+        appleTeamId: "$EXPO_APPLE_TEAM_ID",
+      },
+      android: {
+        serviceAccountKeyPath: "../ci/keys/eas-android-sa-key.json",
+        track: "internal",
+      },
+    })
+    expect(easConfig.submit.preview.ios.ascAppId).not.toBe("$EXPO_ASC_APP_ID")
+
+    expect(easConfig.submit.production).toEqual({
+      ios: {
+        appleId: "$EXPO_APPLE_ID",
+        ascAppId: "$EXPO_ASC_APP_ID",
+        appleTeamId: "$EXPO_APPLE_TEAM_ID",
+      },
+      android: {
+        serviceAccountKeyPath: "../ci/keys/eas-android-sa-key.json",
+        track: "internal",
+      },
+    })
   })
 
   it.each([undefined, "", "beta", "PREVIEW"])(

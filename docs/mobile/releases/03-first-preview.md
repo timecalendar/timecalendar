@@ -16,7 +16,8 @@ ID/package and cannot coexist.
 `mobile/eas.json` has:
 
 - `preview`: `distribution: "store"`, store `.ipa` + Android `.aab`, `autoIncrement`, OTA
-  channel `preview`, with a matching `submit.preview` targeting Play's internal track;
+  channel `preview`, with a matching `submit.preview` targeting public App Store Connect app
+  `1479613630` and Play's internal track;
 - `production`: `distribution: "store"`, store `.ipa`/`.aab`, OTA channel `production`.
 
 TestFlight accepts only a store-distribution build and Play internal testing needs an `.aab`, so
@@ -27,6 +28,11 @@ An earlier design kept `preview` as a direct-install profile and added a separat
 profile beside it. That was dropped: there is no audience for a direct-install `.apk` or ad hoc
 `.ipa`, so a second profile was pure bookkeeping. `development` remains the only non-store
 profile, and it is a dev-client artifact rather than a release.
+
+The committed iOS app identifier is public destination metadata, not a credential. Preview's Apple
+account/team inputs and all signing material remain outside git. Binding the destination neither
+authorizes nor performs a build, signing operation, upload, or submission; those remain explicit
+operator acts using the exact approved artifact.
 
 ## 3.3 One-time owner bootstrap
 

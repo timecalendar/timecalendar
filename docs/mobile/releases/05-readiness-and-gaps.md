@@ -2,30 +2,36 @@
 
 ## 5.1 Current facts
 
-| Area                        | Status on 2026-08-26                      | Evidence / consequence                                                                                                    |
-| --------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| v4 store identity           | **Ready in source**                       | iOS and Android use `fr.samuelprak.timecalendar` outside the dev variant                                                  |
-| User-facing version         | **Ready in source**                       | `4.0.0`; live store build counters still need synchronization                                                             |
-| EAS project link            | **Ready**                                 | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b`                                             |
-| EAS ownership               | **Decision made**                         | personal Expo account for now; recovery inventory still needs recording                                                   |
-| `preview` build profile     | **Ready in source**                       | store-distributed (`.aab` + store `.ipa`), `preview` channel, remote auto-increment (ADR 040)                             |
-| Production build profile    | **Configured, unproved**                  | store IPA/AAB, production OTA channel, remote auto-increment                                                              |
-| Submission config           | **Skeleton only**                         | `submit.preview` + `submit.production`; iOS IDs are environment references; Android points to an absent local service-account path |
-| Apple access                | **Owner confirmed**                       | Apple Developer + App Store Connect access available                                                                      |
-| Legacy iOS custody          | **Located**                               | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                     |
-| Android Play App Signing    | **Owner confirmed enabled**               | Play signs releases; the app-signing key is in use and an upload-key certificate exists                                   |
-| Android upload key          | **Owner confirmed held**                  | backed up in three separate locations; import into EAS-managed credentials — **no upload-key reset needed**               |
-| EAS-managed credentials     | **Unverified**                            | no live credential mutation or inspection was performed for this docs task                                                |
-| Store tester groups         | **Unverified**                            | create/confirm **The team** in TestFlight and Play                                                                        |
-| Signed build/install        | **Not done in this task**                 | first store-internal preview remains a controlled rollout action                                                          |
-| Build host                  | **Ready**                                 | store binaries build with `eas build --local` on the owner's macOS host; no EAS build quota, free plan sufficient (ADR 040) |
-| OTA infrastructure          | **Separate programme**                    | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready         |
+| Area                     | Status on 2026-08-26                    | Evidence / consequence                                                                                                                                                                                |
+| ------------------------ | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v4 store identity        | **Ready in source**                     | iOS and Android use `fr.samuelprak.timecalendar` outside the dev variant                                                                                                                              |
+| User-facing version      | **Ready in source**                     | `4.0.0`; live store build counters still need synchronization                                                                                                                                         |
+| EAS project link         | **Ready**                               | `@samuelprak/timecalendar`, project ID `3b427ef6-1aae-4175-8217-ea447ee6df6b`                                                                                                                         |
+| EAS ownership            | **Decision made**                       | personal Expo account for now; recovery inventory still needs recording                                                                                                                               |
+| `preview` build profile  | **Ready in source**                     | store-distributed (`.aab` + store `.ipa`), `preview` channel, remote auto-increment (ADR 040)                                                                                                         |
+| Production build profile | **Configured, unproved**                | store IPA/AAB, production OTA channel, remote auto-increment                                                                                                                                          |
+| Submission config        | **Preview destination ready in source** | `submit.preview.ios.ascAppId` commits public app ID `1479613630`; Apple account/team credentials and production IDs remain environment-backed; Android points to an absent local service-account path |
+| Apple access             | **Owner confirmed**                     | Apple Developer + App Store Connect access available                                                                                                                                                  |
+| Legacy iOS custody       | **Located**                             | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                                                                                                 |
+| Android Play App Signing | **Owner confirmed enabled**             | Play signs releases; the app-signing key is in use and an upload-key certificate exists                                                                                                               |
+| Android upload key       | **Owner confirmed held**                | backed up in three separate locations; import into EAS-managed credentials — **no upload-key reset needed**                                                                                           |
+| EAS-managed credentials  | **Unverified**                          | no live credential mutation or inspection was performed for this docs task                                                                                                                            |
+| Store tester groups      | **Unverified**                          | create/confirm **The team** in TestFlight and Play                                                                                                                                                    |
+| Signed build/install     | **Not done in this task**               | first store-internal preview remains a controlled rollout action                                                                                                                                      |
+| Build host               | **Ready**                               | store binaries build with `eas build --local` on the owner's macOS host; no EAS build quota, free plan sufficient (ADR 040)                                                                           |
+| OTA infrastructure       | **Separate programme**                  | first native preview can proceed before publishing automation; OTA verification follows when its runtime is ready                                                                                     |
 
 ## 5.2 Gates to the first preview
 
 ~~Engineering — implement the store-distributed `preview` profile.~~ **Done**: `preview` is
 `distribution: "store"` with `app-bundle`/store `.ipa`, `autoIncrement` and a `submit.preview`
 profile (ADR 040). No repository implementation now blocks the first preview.
+
+The iOS preview profile deterministically targets existing App Store Connect app `1479613630`.
+That public destination metadata is not a credential: Apple account/team authentication, signing,
+and submission access remain operator-managed outside git. This source correction did not build,
+sign, upload, or submit anything; the exact-artifact and explicit-authorization gates below still
+apply.
 
 Everything remaining is an operator act, in order:
 

@@ -16,6 +16,10 @@
   selector, persistent non-production marker and journaled destructive cross-store reset. ADR 043
   records fail-closed production behavior, state classification and the future-auth participant
   invariant; all four release fingerprints changed and require fresh native builds.
+- Bound the iOS `preview` submit profile to public App Store Connect app `1479613630` while keeping
+  production and Apple account/team credentials environment-backed. Focused Jest and direct `jq`
+  checks guard the destination; no build, signing, upload, or submission occurred (eas.md,
+  `mobile/EAS.md`).
 - Restored the iPhone+iPad App Store continuity contract while retaining portrait-only,
   full-screen behavior and intentionally disabling iPad multitasking. Source-config tests and a
   disposable generated-native assertion enforce device families `1,2`, full-screen presentation,
