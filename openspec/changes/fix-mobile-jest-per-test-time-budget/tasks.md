@@ -114,7 +114,7 @@ it clearly labelled as such in the commit message and the handoff.
       `calendar-sources/data/user-calendars/add-calendar.test.tsx`. Each is a latent
       intra-file order dependence of the same class as task 3. Out of scope for TIM-273 —
       do not fix them here.
-- [ ] 5.4 Update the PR body's stage line to `apply ✅` and hand to the Simplifier.
+- [x] 5.4 Update the PR body's stage line to `apply ✅` and hand to the Simplifier.
 
 ## Applier notes
 
