@@ -17,6 +17,7 @@ import {
   EventType,
   FetcherCalendarEvent,
 } from "modules/fetch/models/event.model"
+import adeExportWindowRenamer from "modules/fetch/renamers/ade-export-window-renamer"
 import { ReplaceUrlRenamer } from "modules/fetch/renamers/replace-url-renamer"
 import schoolStrategies from "modules/fetch/schools/schools"
 import { FetchService } from "modules/fetch/services/fetch.service"
@@ -143,7 +144,11 @@ describe("FetchService", () => {
       it("uses only the generic and school strategy if one exists", async () => {
         initService([fetcherCalendarEventFactory.build()])
 
-        const url = "https://google.com/search?export=json&crazy=true&nbWeeks=4"
+        jest.useFakeTimers({
+          now: new Date("2026-08-25T12:00:00.000Z"),
+        })
+        const url =
+          "https://google.com/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&crazy=true&nbWeeks=4"
         const school = "rouen"
 
         const events = await fetchService.fetchEvents(
@@ -153,10 +158,11 @@ describe("FetchService", () => {
 
         expect(events.length).toBe(1)
         expect(icalFetcher.fetch).toHaveBeenCalledWith(
-          "https://bing.com/search?export=json&crazy=true&firstDate=2000-01-01&lastDate=2038-01-01",
+          "https://bing.com/jsp/custom/modules/plannings/anonymous_cal.jsp?calType=ical&crazy=true&firstDate=2025-08-25&lastDate=2027-08-25",
           {},
           {},
         )
+        jest.useRealTimers()
       })
 
       it("uses only the school strategy if inheritGenericUrlRenamers is false", async () => {
@@ -178,6 +184,15 @@ describe("FetchService", () => {
           {},
           {},
         )
+      })
+
+      it("applies only the generic strategy when it is selected explicitly", async () => {
+        initService([fetcherCalendarEventFactory.build()])
+        const url = "https://google.com/search?crazy=true"
+
+        await fetchService.fetchEvents({ url, customData: null }, "generic")
+
+        expect(icalFetcher.fetch).toHaveBeenCalledWith(url, {}, {})
       })
 
       it("uses all strategies if no school is provided", async () => {
@@ -269,18 +284,23 @@ describe("FetchService", () => {
     // left as the user's export url carries it, instead of being rewritten to
     // univstetienne's id 3.
     const service = new FetchService(schoolStrategies)
-    const adeUrl = (host: string) =>
-      `https://adelb.${host}/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=-1&calType=ical&nbWeeks=4`
+    const adeUrl = (host: string, dateWindow = "nbWeeks=4") =>
+      `https://adelb.${host}/jsp/custom/modules/plannings/anonymous_cal.jsp?resources=12345&projectId=-1&calType=ical&${dateWindow}`
 
-    const fetchWith = async (host: string) => {
+    const fetchWith = async (
+      url: string,
+      school: string | null = null,
+    ): Promise<string> => {
       icalFetcher.fetch.mockImplementationOnce(() =>
         Promise.resolve([fetcherCalendarEventFactory.build()]),
       )
-      await service.fetchEvents({ url: adeUrl(host), customData: null }, null)
+      await service.fetchEvents({ url, customData: null }, school)
+      const calls = icalFetcher.fetch.mock.calls as unknown as [string][]
+      return calls[calls.length - 1][0]
     }
 
     it("keeps a Lyon 1 url's own projectId", async () => {
-      await fetchWith("univ-lyon1.fr")
+      await fetchWith(adeUrl("univ-lyon1.fr"))
 
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=-1&"),
@@ -292,13 +312,83 @@ describe("FetchService", () => {
     it("still rewrites projectId for a url matching no strategy", async () => {
       // The pre-existing fallback, unchanged by this strategy — kept here so
       // whoever adds the next strategy sees what registering one turns off.
-      await fetchWith("unknown-school.example.com")
+      await fetchWith(adeUrl("unknown-school.example.com"))
 
       expect(icalFetcher.fetch).toHaveBeenLastCalledWith(
         expect.stringContaining("&projectId=3&"),
         {},
         {},
       )
+    })
+
+    describe("bounded ADE export windows", () => {
+      beforeEach(() => {
+        jest.useFakeTimers({
+          now: new Date("2026-08-25T12:00:00.000Z"),
+        })
+      })
+
+      afterEach(() => {
+        jest.useRealTimers()
+      })
+
+      const expectBoundedWindow = (url: string) => {
+        const parsedUrl = new URL(url)
+        expect(parsedUrl.searchParams.get("firstDate")).toBe("2025-08-25")
+        expect(parsedUrl.searchParams.get("lastDate")).toBe("2027-08-25")
+        expect(parsedUrl.searchParams.has("nbWeeks")).toBe(false)
+      }
+
+      it("normalizes an unmatched ADE url and applies generic only once", async () => {
+        const rename = jest.spyOn(adeExportWindowRenamer, "rename")
+
+        const transformedUrl = await fetchWith(
+          adeUrl("unknown-school.example.com"),
+        )
+
+        expectBoundedWindow(transformedUrl)
+        expect(rename).toHaveBeenCalledTimes(1)
+      })
+
+      it("preserves Bourgogne's generic-renamer opt-out", async () => {
+        const originalUrl = adeUrl(
+          "u-bourgogne.fr",
+          "firstDate=2020-01-01&lastDate=2020-01-02",
+        )
+
+        expect(await fetchWith(originalUrl)).toBe(originalUrl)
+      })
+
+      it("leaves Savoie Mont Blanc's half-pair repair authoritative", async () => {
+        const transformedUrl = await fetchWith(
+          "https://ade6-usmb-ro.grenet.fr/jsp/custom/modules/plannings/direct_cal.jsp?resources=5934&projectId=1&calType=ical&login=iCalExport&password=secret&lastDate=2040-08-14",
+        )
+        const parsedUrl = new URL(transformedUrl)
+
+        expect(parsedUrl.searchParams.get("firstDate")).toBe("2019-08-26")
+        expect(parsedUrl.searchParams.get("lastDate")).toBe("2040-08-14")
+      })
+
+      it("normalizes St-Etienne dates before its project rewrite", async () => {
+        const transformedUrl = await fetchWith(
+          adeUrl(
+            "univ-st-etienne.fr",
+            "firstDate=2020-01-01&lastDate=2020-01-02",
+          ),
+        )
+
+        expectBoundedWindow(transformedUrl)
+        expect(new URL(transformedUrl).searchParams.get("projectId")).toBe("3")
+      })
+
+      it("normalizes Lyon 1 dates while retaining its exported project", async () => {
+        const transformedUrl = await fetchWith(
+          adeUrl("univ-lyon1.fr", "firstDate=2020-01-01&lastDate=2020-01-02"),
+        )
+
+        expectBoundedWindow(transformedUrl)
+        expect(new URL(transformedUrl).searchParams.get("projectId")).toBe("-1")
+      })
     })
   })
 })
