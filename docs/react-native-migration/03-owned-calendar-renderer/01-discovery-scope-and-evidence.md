@@ -573,8 +573,8 @@ questionnaire completion gate.
 The [Round 3 triage and owner questions](./round-3-triage-and-owner-questions.md) audits every
 one of the 187 rows that was `UNANSWERED` after Round 2. Twelve rows are directly supported by
 accepted owner decisions and now carry row-level answers. The other 175 remain `UNANSWERED`,
-classified as 20 repository/standards research rows, 29 recommendation-led specification rows,
-50 genuine owner choices, 55 later-choice dependencies, and 21 explicit out-of-scope
+classified as 17 repository/standards research rows, 29 recommendation-led specification rows,
+51 genuine owner choices, 57 later-choice dependencies, and 21 explicit out-of-scope
 candidates. The 12 proposed owner questions group only high-leverage choices and recommendations;
 they do not ask the owner to invent workload percentiles, device traces, or architecture.
 

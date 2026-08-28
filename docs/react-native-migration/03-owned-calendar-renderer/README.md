@@ -59,8 +59,8 @@ them from those broad decisions.
 The blocking first-pass owner decisions are recorded, but the project is not yet ready to
 call `03-functional-specification.md` complete. Round 3 audited all 187 rows that were unanswered
 after Round 2. Twelve directly supported transitions are now recorded, leaving 175
-`UNANSWERED`: 20 repository/standards research, 29 recommendation-led specification, 50 genuine
-owner choices, 55 later-choice dependencies, and 21 explicit out-of-scope candidates.
+`UNANSWERED`: 17 repository/standards research, 29 recommendation-led specification, 51 genuine
+owner choices, 57 later-choice dependencies, and 21 explicit out-of-scope candidates.
 
 Five factual items already have bounded research actions: `P-004`, `PL-003`, `PF-006`,
 `PF-007`, and `PF-008`. The production aggregate was re-attempted without reading raw data and

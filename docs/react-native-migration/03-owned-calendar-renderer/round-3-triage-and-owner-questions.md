@@ -41,30 +41,27 @@ multi-day all-day events are covered by the accepted fixture contract; one tap o
 DST correctness and property tests are required; and the accepted fresh-position rule requires
 a current-time indicator.
 
-### `REPOSITORY_OR_STANDARDS_RESEARCH` — 20
+### `REPOSITORY_OR_STANDARDS_RESEARCH` — 17
 
 `U-002`, `U-005`, `U-006`, `U-008`, `U-009`, `U-010`, `T-009`, `D-009`, `D-010`,
-`D-011`, `PF-009`, `PF-010`, `PF-011`, `PF-025`, `B-002`, `B-003`, `B-009`, `B-010`,
-`M-011`, `M-012`.
+`PF-009`, `PF-010`, `PF-011`, `PF-025`, `B-009`, `B-010`, `M-011`, `M-012`.
 
 - Usage frequency, source-count, user-group, and primary-input claims have no production React
   Native evidence. Source-count is client-local, so server aggregation cannot answer it.
   Resolve these through a privacy-safe opt-in dogfood/usability study, not owner recollection.
 - Spring gaps and autumn repeats are real instants projected into the selected display zone;
   local labels must distinguish repeated times and invalid wall-clock input must not be silently
-  normalized. Non-Gregorian system display is a separate product choice because the accepted
-  Calendar week/date engine is Gregorian and Monday-based. The authoritative implementation
-  references are ECMA-402 and the IANA timezone data consumed by the chosen date engine.
+  normalized. The authoritative implementation references are ECMA-402 and the IANA timezone
+  data consumed by the chosen date engine.
 - `PF-009`–`PF-011` remain blocked on aggregate workload shapes. `PF-025` should use release
   traces from platform tools plus both React Native UI and JS timing; an in-app average FPS
   display cannot be acceptance evidence.
-- Current repository facts are now explicit: `CalendarEvent`, `useCalendarEvents(range)`, and
-  the renderer facade are existing seams, not immutable future APIs; Hermes and New Architecture
-  are the binding SDK 56 runtime; app-owned day/time/overlap/format utilities need revalidation;
-  and the calendar-kit adapter, patch, page-buffer workaround, hard-coded seven-day input, fixed
-  07:00–21:00 adapter window, and current callback timing must not be copied accidentally.
-  ADRs 019, 020, 032, and 033 plus the archived calendar-kit OpenSpecs need an explicit
-  supersede/retire pass after the owned architecture is accepted.
+- Current repository facts are now explicit: Hermes and New Architecture are the binding SDK 56
+  runtime; app-owned day/time/overlap/format utilities need revalidation; and the calendar-kit
+  adapter, patch, page-buffer workaround, hard-coded seven-day input, fixed 07:00–21:00 adapter
+  window, and current callback timing must not be copied accidentally. ADRs 019, 020, 032, and
+  033 plus the archived calendar-kit OpenSpecs need an explicit supersede/retire pass after the
+  owned architecture is accepted.
 
 ### `RECOMMENDATION_LED_SPECIFICATION` — 29
 
@@ -77,11 +74,11 @@ These rows have strong defaults from the accepted date, accessibility, privacy, 
 principles. They appear in Round 3 questions 5–12 where needed. Numeric density and performance
 limits remain evidence dependencies rather than defaults.
 
-### `GENUINE_OWNER_CHOICE` — 50
+### `GENUINE_OWNER_CHOICE` — 51
 
 `P-010`, `P-011`, `U-007`, `PL-005`, `PL-006`, `PL-007`, `PL-008`, `S-012`, `S-017`,
 `N-003`, `N-004`, `N-005`, `N-008`, `N-009`, `N-014`, `N-016`, `T-002`, `T-004`,
-`T-014`, `E-003`, `E-018`, `E-026`, `I-004`, `I-011`, `I-012`, `D-013`, `D-014`,
+`T-014`, `E-003`, `E-018`, `E-026`, `I-004`, `I-011`, `I-012`, `D-011`, `D-013`, `D-014`,
 `V-001`, `V-002`, `V-003`, `V-004`, `V-005`, `V-007`, `V-011`, `V-016`, `A-006`,
 `A-007`, `A-017`, `A-019`, `A-021`, `A-023`, `PF-017`, `R-001`, `R-002`, `R-003`,
 `Q-019`, `Q-020`, `M-007`, `M-008`, `M-009`.
@@ -89,21 +86,24 @@ limits remain evidence dependencies rather than defaults.
 These choices are grouped into the 12 dependency-ordered questions below. The owner is not
 asked to supply a device measurement, workload percentile, or undocumented architecture choice.
 
-### `LATER_CHOICE_DEPENDENCY` — 55
+### `LATER_CHOICE_DEPENDENCY` — 57
 
 `PL-010`, `N-011`, `N-012`, `N-015`, `N-017`, `N-018`, `T-015`, `T-017`, `E-014`,
 `E-020`, `E-021`, `E-022`, `E-023`, `E-024`, `I-010`, `I-013`, `I-014`, `D-015`,
 `V-012`, `V-013`, `V-014`, `V-015`, `A-008`, `A-011`, `A-012`, `A-013`, `A-014`,
 `A-015`, `A-016`, `A-018`, `A-020`, `PF-014`, `PF-015`, `PF-018`, `PF-019`, `PF-020`,
 `PF-021`, `PF-022`, `PF-023`, `PF-024`, `PF-026`, `PF-027`, `PF-028`, `R-008`,
-`R-009`, `R-012`, `B-005`, `B-006`, `B-011`, `B-012`, `B-013`, `B-014`, `Q-016`,
-`Q-017`, `Q-018`.
+`R-009`, `R-012`, `B-002`, `B-003`, `B-005`, `B-006`, `B-011`, `B-012`, `B-013`,
+`B-014`, `Q-016`, `Q-017`, `Q-018`.
 
 Interaction-state details follow the selected interaction/accessibility model; overflow and
 density limits follow privacy-safe workload research; exact performance budgets follow the
 release baseline; public API/version/license artifacts follow the publication decision; and
 facade, dependency, native-config, runtime, and OTA constraints belong to the later measured
-architecture decision. None should be silently fixed during functional discovery.
+architecture decision. In particular, repository inspection can describe the current
+`CalendarEvent` and `useCalendarEvents(range)` seams, but only the later architecture decision can
+make them authoritative or replace them through a coordinated migration. None should be silently
+fixed during functional discovery.
 
 ### `EXPLICIT_OUT_OF_SCOPE_CANDIDATE` — 21
 
@@ -239,22 +239,25 @@ needed. The questions are ordered so each answer settles or deliberately defers 
 
 5. **How should date paging feel?** (`S-012`, `N-001`, `N-003`–`N-005`, `N-008`, `N-014`,
    `N-016`, `N-017`) **Recommend** one day per day page and one whole Monday-based week per week
-   page; one page per swipe/fling; the title changes only when a page settles; a partially visible
-   week retains its prior selected day until settle; Today and deep-link jumps animate unless
-   reduced motion requests a direct settle; a deep link preserves mode/zoom and selects its date;
-   and launch navigation is limited to the locally synchronized twelve-month past/future window
-   with an accessible boundary message. Multi-page flings feel fast but make date, title, loading,
-   and screen-reader state easier to lose.
+   page; one page per swipe/fling; platform-default gesture physics on each operating system while
+   keeping those paging outcomes identical; the title changes only when a page settles; a
+   partially visible week retains its prior selected day until settle; Today and deep-link jumps
+   animate unless reduced motion requests a direct settle; a deep link preserves mode/zoom and
+   selects its date; and launch navigation is limited to the locally synchronized twelve-month
+   past/future window with an accessible boundary message. Multi-page flings feel fast but make
+   date, title, loading, and screen-reader state easier to lose.
 
 6. **How should the time grid and zoom controls behave?** (`N-009`, `T-002`–`T-007`,
-   `T-011`–`T-015`, `T-017`, `D-013`, `D-014`) **Recommend** keeping the full 24-hour day
+   `T-011`–`T-015`, `T-017`, `D-011`, `D-013`, `D-014`) **Recommend** keeping the full 24-hour day
    vertically scrollable; pinned hour labels and day headers; major hour lines plus zoom-dependent
    smaller divisions; continuous pinch within measured min/max sizes; visible zoom-in, zoom-out,
    and reset actions in the Calendar menu; French and English as the complete launch locales with
-   the device's 12/24-hour preference honored; and preservation of the same visible clock time
-   across day/week switches and while the mounted tab is retained. Process restart uses the already
-   accepted fresh-now rule. This preserves context and makes zoom fully operable without hiding
-   controls over a dense grid.
+   the device's 12/24-hour preference honored; Gregorian dates at launch even when the device uses
+   a non-Gregorian system calendar, with that limitation stated rather than silently displaying a
+   different calendar; and preservation of the same visible clock time across day/week switches
+   and while the mounted tab is retained. Process restart uses the already accepted fresh-now
+   rule. This preserves context and makes zoom fully operable without hiding controls over a dense
+   grid; adding another calendar system later requires its own date-model and localization work.
 
 7. **What happens to unusual or crowded events?** (`E-003`, `E-010`–`E-012`, `E-015`–`E-021`,
    `E-025`, `PF-017`) **Recommend** visibly marking canceled events; rendering a zero-duration
@@ -275,23 +278,30 @@ needed. The questions are ordered so each answer settles or deliberately defers 
 
 9. **How should people operate and understand a dense timeline without relying on perfect touch?**
    (`I-009`–`I-014`, `N-011`, `A-004`–`A-021`, `A-023`, `A-024`) **Recommend** no persistent
-   selected-event state because one tap opens details; paging/Today/zoom buttons alongside
-   gestures; a chronological accessible representation grouped by date, while the visual grid
-   remains available; settled-date announcements only, never gesture chatter; focus retained by
-   stable event identity or moved predictably to the date heading; full largest OS text settings
-   with the chronological representation when the grid cannot remain legible; and 44-point iOS /
-   48-dp Android targets through hit-area expansion and deterministic overlap choices. The Applier
-   records physical-device evidence and the Reviewer verifies it; there is no separate QA gate.
+   selected-event state because one tap opens details; no pull-to-refresh gesture on the timeline
+   because refresh remains automatic, with manual pull-to-refresh kept in agenda; no required
+   calendar haptics at launch; paging/Today/zoom buttons alongside gestures; screen readers operate
+   a chronological representation grouped by date rather than a duplicate focus tree over the
+   visual grid; settled-date announcements only, never gesture chatter; focus retained by stable
+   event identity or moved predictably to the date heading; full largest OS text settings with the
+   chronological representation when the grid cannot remain legible; nonessential animation
+   removed under reduced motion; 44-point iOS / 48-dp Android targets through hit-area expansion
+   and deterministic overlap choices; and physical-device checks for bold text, button shapes,
+   increased contrast, and color filters where the platform provides them. Physical-device
+   evidence must show that these alternatives work; passing automated checks alone is not enough.
 
 10. **What visual direction and loading/error presentation should we specify?** (`S-017`,
     `V-001`–`V-005`, `V-007`, `V-011`–`V-016`, `R-001`–`R-003`, `PF-016`) **Recommend** refining rather than
     copying the current calendar, with the Architecture Book tokens and an owner-approved reference
-    screenshot as the source; equivalent platform meaning rather than identical pixels; today,
-    current time, cancellation, selection/focus, and errors never conveyed by color alone; an empty
-    grid that still shows time; a quiet grid/skeleton on first load; last-known events plus a stale
-    status during refresh; and an accessible retry while cached events remain after failure. A
-    transition never shows the wrong date, an unexplained blank, unlabelled stale events, or a
-    theme flash. This gives design a clear contract without freezing calendar-kit visuals.
+    screenshot as the source and owner design sign-off as the acceptance artifact; recognizable
+    TimeCalendar typography, spacing, and source-color identity without copying calendar-kit;
+    equivalent platform meaning rather than identical pixels; localized weekday plus date in day
+    headers; today, current time, cancellation, selection/focus, and errors never conveyed by color
+    alone; an empty grid that still shows time; a quiet grid/skeleton on first load; last-known
+    events plus a stale status during refresh; and an accessible retry while cached events remain
+    after failure. A transition never shows the wrong date, an unexplained blank, unlabelled stale
+    events, or a theme flash. This gives design a clear contract without freezing calendar-kit
+    visuals.
 
 11. **How should live changes and bad input recover?** (`I-010`, `D-015`, `R-004`, `R-005`,
     `R-008`, `R-009`, `R-012`) **Recommend** applying locale, timezone, theme, and text-size changes
@@ -306,9 +316,10 @@ needed. The questions are ordered so each answer settles or deliberately defers 
     paging, Today, zoom plus non-pinch controls, event open, live refresh, and failure recovery;
     privacy-safe internal dogfood telemetry for latency/error counts only; no external audit beyond
     the already accepted accessibility/performance evidence unless law or a named risk requires it;
-    product-owner acceptance for behavior/design and Reviewer acceptance for repository quality;
-    and a staged store rollout whose rollback restores the prior complete app binary or compatible
-    OTA, never calendar-kit or a hidden dual renderer. This separates repository merge from the
+    product-owner acceptance for behavior and design, plus engineering review of architecture,
+    accessibility evidence, performance evidence, and repository quality; and a staged store
+    rollout whose rollback restores the prior complete app binary or compatible OTA, never
+    calendar-kit or a hidden dual renderer. This separates repository merge from the
     human-authorized release act and keeps rollback compatible with the one-renderer rule.
 
 ## After the owner answers
