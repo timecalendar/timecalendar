@@ -118,7 +118,7 @@ const declaredIds = [
 function flowTextSelectors(yaml: string): { text: string; line: number }[] {
   return yaml.split("\n").flatMap((rawLine, index) => {
     const match =
-      /^\s*(?:-\s+)?(?:text|visible|notVisible|assertVisible|assertNotVisible):\s*"([^"]*)"\s*$/.exec(
+      /^\s*(?:-\s+)?(?:tapOn|text|visible|notVisible|assertVisible|assertNotVisible):\s*"([^"]*)"\s*$/.exec(
         rawLine,
       )
     if (match?.[1] === undefined) return []
