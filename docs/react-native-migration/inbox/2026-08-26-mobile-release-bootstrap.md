@@ -11,8 +11,12 @@ React Native preview through TestFlight and Play internal testing.
 
 - [x] Confirm Play App Signing is enabled: Play signs releases, the app-signing key is in use and
       an upload-key certificate exists.
-- [ ] Record the public app-signing and upload-certificate SHA-256 fingerprints.
-- [ ] Recover the accepted Android upload key or complete Google's upload-key reset.
+- [ ] Record the public app-signing and upload-certificate SHA-256 fingerprints. *(Upload
+      certificate done — recorded in [release document 3](../../mobile/releases/03-first-preview.md)
+      §3.7. The app-signing certificate is still a Play Console read.)*
+- [x] Recover the accepted Android upload key or complete Google's upload-key reset. *(Nothing was
+      lost and no reset was requested: the held upload key is imported into EAS-managed
+      credentials, §3.7.)*
 - [ ] In Vaultwarden, record Expo account recovery/custody, EAS project ownership, Apple team/app
       IDs, Play account/package, public fingerprints and credential rotation owners. Never paste a
       private key or service-account JSON into this note.
@@ -20,9 +24,13 @@ React Native preview through TestFlight and Play internal testing.
       versions from those values.
 - [ ] Confirm the reviewed store-distributed preview profile described in
       [release document 3](../../mobile/releases/03-first-preview.md) has landed.
-- [ ] Configure EAS-managed iOS signing on the correct Apple team and Android signing with the
-      accepted upload key.
+- [x] Configure EAS-managed iOS signing on the correct Apple team and Android signing with the
+      accepted upload key. *(iOS via the shipped preview, §3.6; Android via the upload-key import,
+      §3.7.)*
 - [ ] Configure least-privilege App Store Connect / Play submission authorization outside git.
+      *(App Store Connect done — EAS holds the API key and it submitted build 142. The Play service
+      account is still missing and is the item that gates the whole Android half; see
+      [`2026-08-28-android-preview-play-access.md`](./2026-08-28-android-preview-play-access.md).)*
 - [ ] Create or confirm **The team** internal tester group/list in both stores.
 - [ ] While authenticated to the public EAS project, validate both release profiles on both
       platforms with `npx eas-cli@20.1.0 config --platform <ios|android> --profile

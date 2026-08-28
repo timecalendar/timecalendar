@@ -14,8 +14,9 @@
 | Apple access             | **Owner confirmed**                     | Apple Developer + App Store Connect access available                                                                                                                                                  |
 | Legacy iOS custody       | **Located**                             | private Fastlane Match repository exists and is accessible; keep for rollback, do not bridge into EAS                                                                                                 |
 | Android Play App Signing | **Owner confirmed enabled**             | Play signs releases; the app-signing key is in use and an upload-key certificate exists                                                                                                               |
-| Android upload key       | **Owner confirmed held**                | backed up in three separate locations; import into EAS-managed credentials — **no upload-key reset needed**                                                                                           |
-| EAS-managed credentials  | **Unverified**                          | no live credential mutation or inspection was performed for this docs task                                                                                                                            |
+| Android upload key       | **Imported into EAS**                   | held key (alias `upload`, SHA-1 `99f82ae8…`) imported and set as default build credentials, 2026-08-28; **no upload-key reset requested** — see [document 3](./03-first-preview.md) §3.7               |
+| EAS-managed credentials  | **iOS + Android signing live**          | iOS proved by shipped build 142 (§3.6); Android upload keystore imported and read back (§3.7). **No Play service account** — `eas submit --platform android` cannot authenticate                        |
+| EAS remote versions      | **iOS initialized, Android not**        | iOS `buildNumber` is `142`; Android `versionCode` is still `1` against a live Play counter far above it — must be set from the live console before any Android build                                    |
 | Store tester groups      | **Unverified**                          | create/confirm **The team** in TestFlight and Play                                                                                                                                                    |
 | Signed build/install     | **Not done in this task**               | first store-internal preview remains a controlled rollout action                                                                                                                                      |
 | Build host               | **Ready**                               | store binaries build with `eas build --local` on the owner's macOS host; no EAS build quota, free plan sufficient (ADR 040)                                                                           |
@@ -35,13 +36,15 @@ apply.
 
 Everything remaining is an operator act, in order:
 
-1. **Owner — record the public Play app-signing and upload-certificate fingerprints.**
-2. **Owner — import the held Android upload key** into EAS-managed credentials and confirm its
-   fingerprint matches what Play expects. Do **not** request a reset.
-3. **Owner — configure EAS-managed Apple signing** against the correct Apple team, and
-   least-privilege store submission access (App Store Connect API key, Play service account).
-4. **Owner — initialize EAS remote version counters** from the live consoles, not the historical
-   Flutter `+134` alone.
+1. **Owner — record the public Play app-signing fingerprint.** The upload-certificate fingerprint is
+   already recorded in [document 3](./03-first-preview.md) §3.7.
+2. ~~Owner — import the held Android upload key.~~ **Done** 2026-08-28 (§3.7); no reset was
+   requested. Confirming it against Play's expected upload certificate still needs gate 3.
+3. **Owner — configure least-privilege Play submission access** (a Play service account for EAS
+   Submit). Apple signing and the App Store Connect API key are done and proved by build 142.
+   This is the single item gating the entire Android half.
+4. **Owner — initialize the EAS remote Android version counter** from the live console; it is still
+   `1`. iOS is initialized at `142`. The historical Flutter `+134` is not authoritative.
 5. **Owner — inventory Apple/EAS identifiers and recovery** in Vaultwarden and add the trusted
    account recovery owner.
 6. **Owner — create/confirm The team tester groups** in both stores.
