@@ -1,7 +1,7 @@
 # Owned calendar renderer discovery
 
-Status: Rounds 1 and 2 are recorded. Discovery continues; no renderer implementation is
-authorized by these documents.
+Status: Rounds 1 and 2 are recorded; Round 3 triage and proposed owner questions are published.
+Discovery continues; no renderer implementation or architecture is authorized by these documents.
 
 This directory is the working home for the owned React Native calendar renderer project. Its first job is to establish the product contract with the product owner before architecture or implementation begins.
 
@@ -9,7 +9,8 @@ This directory is the working home for the owned React Native calendar renderer 
 
 1. [Discovery scope and evidence](./01-discovery-scope-and-evidence.md) records what is confirmed, what was merely observed, where existing sources disagree, and what this discovery may and may not decide.
 2. [Functional specification questionnaire](./02-functional-specification-questionnaire.md) is the decision backlog for future product-owner sessions.
-3. [The original implementation prompt](../01-roadmap/owned-calendar-renderer-prompt.md) is retained as historical input. Its proposed requirements and solutions are not approved scope.
+3. [Round 3 triage and owner questions](./round-3-triage-and-owner-questions.md) maps all 187 rows that were unanswered after Round 2 to a triage disposition and publishes the short ELI5 Round 3 set.
+4. [The original implementation prompt](../01-roadmap/owned-calendar-renderer-prompt.md) is retained as historical input. Its proposed requirements and solutions are not approved scope.
 
 Future numbered documents should follow this naming scheme:
 
@@ -53,20 +54,23 @@ responsibility split, quality/debt gates, and bounded fixture catalog. The quest
 continues to make the remaining product and acceptance details explicit instead of inferring
 them from those broad decisions.
 
-## Readiness after Round 2
+## Readiness after Round 3 triage
 
 The blocking first-pass owner decisions are recorded, but the project is not yet ready to
-call `03-functional-specification.md` complete. After propagating every accepted compound
-decision to its directly answered questionnaire rows, 187 rows remain `UNANSWERED`. Many can
-be resolved by repository research or recommendation-led specification work; the remainder
-must return to the owner in short, ordered batches rather than as a 187-question form.
+call `03-functional-specification.md` complete. Round 3 audited all 187 rows that were unanswered
+after Round 2. Twelve directly supported transitions are now recorded, leaving 175
+`UNANSWERED`: 20 repository/standards research, 29 recommendation-led specification, 50 genuine
+owner choices, 55 later-choice dependencies, and 21 explicit out-of-scope candidates.
 
 Five factual items already have bounded research actions: `P-004`, `PL-003`, `PF-006`,
-`PF-007`, and `PF-008`. The next discovery step is to classify the remaining keys into
-research, specification recommendations, and genuine owner decisions, then prepare the next
-manageable owner round. Architecture and implementation remain unauthorized until that
-triage removes material product ambiguity and the owner explicitly authorizes the functional
-specification.
+`PF-007`, and `PF-008`. The production aggregate was re-attempted without reading raw data and
+is blocked by database network reachability plus denied pod exec/port-forward. The host also has
+no physical/emulated mobile runtime, and the owned renderer does not yet exist for an honest
+release baseline. These are named measurement blockers, not owner decisions.
+
+The next owner step is the 12-question dependency-ordered Round 3 set. Architecture and
+implementation remain unauthorized until the resulting row answers remove material product
+ambiguity and the owner explicitly authorizes the functional specification.
 
 ## Explicitly outside this discovery session
 
@@ -79,12 +83,13 @@ specification.
 - writing a delivery estimate or implementation task breakdown;
 - changing the current application behavior.
 
-## How to run the next session
+## How to run the owner-response session
 
 1. Read this README and `01-discovery-scope-and-evidence.md` completely.
-2. Work through `02-functional-specification-questionnaire.md` with the product owner, starting with the blocking questions.
-3. Record the owner's exact answer, decision status, and any examples. Do not silently normalize ambiguity.
-4. If an answer depends on facts rather than preference, mark it `NEEDS_RESEARCH` and create a bounded research action. Do not guess.
-5. Restate each completed topic as candidate requirements and non-requirements for owner confirmation.
-6. Create the functional specification only after the owner confirms that the questionnaire is sufficiently resolved.
-7. Keep architecture and implementation proposals out of the functional specification unless the product owner explicitly states a technical constraint as a requirement.
+2. Verify that merged `main` contains the exact 12 questions in `round-3-triage-and-owner-questions.md`; do not move an owner-response ticket to review before that check passes.
+3. Ask only those 12 Round 3 questions, in order. Do not send the 175-row backlog to the owner or ask for researchable facts.
+4. Record the owner's exact answer, decision status, and any examples. Do not silently normalize ambiguity.
+5. If an answer depends on facts rather than preference, mark it `NEEDS_RESEARCH` and create a bounded agent-owned action. Do not guess or hand agent work to the owner.
+6. Restate each completed topic as candidate requirements and non-requirements for owner confirmation.
+7. Create the functional specification only after the owner confirms that the questionnaire is sufficiently resolved.
+8. Keep architecture and implementation proposals out of the functional specification unless the product owner explicitly states a technical constraint as a requirement.

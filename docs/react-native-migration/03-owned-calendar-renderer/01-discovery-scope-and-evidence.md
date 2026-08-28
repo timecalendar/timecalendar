@@ -567,3 +567,58 @@ a safe default, and return only the remaining genuine product choices in short o
 No renderer architecture or implementation starts from this document, and creation of
 `03-functional-specification.md` still requires the explicit authorization defined by the
 questionnaire completion gate.
+
+## Round 3 triage and bounded research (2026-08-28)
+
+The [Round 3 triage and owner questions](./round-3-triage-and-owner-questions.md) audits every
+one of the 187 rows that was `UNANSWERED` after Round 2. Twelve rows are directly supported by
+accepted owner decisions and now carry row-level answers. The other 175 remain `UNANSWERED`,
+classified as 20 repository/standards research rows, 29 recommendation-led specification rows,
+50 genuine owner choices, 55 later-choice dependencies, and 21 explicit out-of-scope
+candidates. The 12 proposed owner questions group only high-leverage choices and recommendations;
+they do not ask the owner to invent workload percentiles, device traces, or architecture.
+
+### Repository and authoritative-source observations
+
+- Before the Round 3 edits, the accepted PR #294 content at `fc8f162` was verified byte-identical
+  for the three discovery files in this execution branch even though the branch history applied
+  the mapping as `631fc03` rather than containing `fc8f162` as an ancestor.
+- Current binding mobile rules are iOS and Android only, Expo SDK 56 / React Native 0.85, Hermes
+  and New Architecture, no Expo Go project runtime, and iPhone+iPad portrait/full-screen with
+  iPad multitasking disabled. These are constraints/evidence, not silent first-class-layout
+  product decisions.
+- Current code exposes a renderer-neutral `goToDate` handle, fixed 07:00–21:00 adapter inputs,
+  a hard-coded seven-day input, one-tap details, cached-data refresh status, and a separate agenda
+  list. The app-owned overlap helper treats end-equals-start as non-overlap and sorts by start,
+  end, then stable input order. Each remains an observation unless a questionnaire answer binds it.
+- Expo's current SDK 56 reference still lists Android 7+ and iOS 16.4+. Expo's development-build
+  guidance distinguishes the fixed-native Expo Go playground from project-owned development
+  builds. React Native still requires performance measurement in release builds, and Android's
+  current render guidance still ties deadlines to 60/90/120 Hz. Apple, Android, WCAG2Mobile, and
+  WCAG2ICT still require/describe real assistive-technology and native-software evaluation.
+
+The exact primary links and observation/inference split are recorded in the Round 3 artifact.
+
+### Privacy-safe production aggregation attempt
+
+The current identity can list `timecalendar-production` pods/services and read the deployment's
+secret reference, but Kubernetes denies both `pods/exec` and `pods/portforward`. The database URL
+was used only in process memory and never printed or persisted. A direct PostgreSQL connection
+from this workspace timed out before a session began, so the aggregate SQL did not run and no
+event content, raw row, identifier, or personal field was read.
+
+The exact blocker is network reachability plus the two denied in-cluster access paths. The next
+agent-owned action is the existing aggregate-only query plan from an authorized network execution
+context, inside a read-only transaction with a 60-second timeout and cohort suppression. No owner
+work is requested. `PF-006`–`PF-008`, and their dependent `PF-009`–`PF-011` shapes, remain
+research-blocked.
+
+### Device and release-profile checks
+
+This Linux host has no `adb`, attached device, iOS toolchain, or `/dev/kvm`; emulator/simulator
+E2E is CI-only on `main`. More importantly, the owned renderer is not implemented, so no honest
+release-profile baseline for it exists yet. `P-004` remains a named current-renderer reproduction
+and trace task; `PL-003` remains physical Galaxy A16 5G validation; and the owned baseline becomes
+executable only after a traceable spike can run as a release binary on the accepted device and
+fixture matrix. Missing measurement is not a product decision and does not relax the accepted
+performance contract.
