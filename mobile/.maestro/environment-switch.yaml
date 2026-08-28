@@ -1,17 +1,23 @@
 # Development-build happy path for the visible environment switch. The flow is
 # committed for the device-capable CI/host; this no-KVM agent host does not run it.
 #
-# `settings-environment` is the LAST row of the Settings ScrollView — its own
-# section, below every destination section. Maestro's assertions match only
-# what is on screen, so this must be reached with scrollUntilVisible; run
-# 33167661438 timed out 60s on a plain wait for a row that renders correctly
-# and simply sits below the fold.
+# The effective environment is read from the Settings environment entry, which is the
+# app's only environment indicator — there is no banner. Two consequences shape the
+# selectors below:
+#   - iOS collapses the row into a single accessibility element, so the value is only
+#     readable from the composed accessible name ("Environment, Local"), while Android
+#     exposes the secondary text node ("Local"). Maestro matches a text selector as a
+#     regex against the whole string, so ".*Local" full-matches on both platforms and no
+#     single literal would.
+#   - The environment entry is Settings' last section and may sit below the fold, where
+#     it fails exactly like a deleted element. scrollUntilVisible brings it into view and
+#     is a no-op when it is already on screen.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
 - extendedWaitUntil:
-    visible: "TEST ENVIRONMENT · Local"
+    visible: "Settings"
     timeout: 60000
 - tapOn: "Settings"
 - scrollUntilVisible:
@@ -19,11 +25,21 @@ appId: fr.samuelprak.timecalendar.dev
       id: "settings-environment"
     direction: DOWN
     timeout: 60000
+- assertVisible: ".*Local"
 - tapOn:
     id: "settings-environment"
 - tapOn: "Preproduction"
 - assertVisible: "Clear data and switch?"
 - tapOn: "Clear and switch"
+# The reset reloads the app onto the initial route, so the entry has to be navigated to
+# again rather than asserted in place.
 - extendedWaitUntil:
-    visible: "TEST ENVIRONMENT · Preproduction"
+    visible: "Settings"
     timeout: 60000
+- tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings-environment"
+    direction: DOWN
+    timeout: 60000
+- assertVisible: ".*Preproduction"

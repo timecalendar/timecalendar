@@ -2,6 +2,12 @@
 
 ## 2026-08-28
 
+- Removed the persistent non-production environment marker. The Settings environment entry is now
+  the single non-production indicator and must expose the effective environment in its accessible
+  name on both platforms; no environment surface may consume layout insets or otherwise change
+  screen composition relative to a production build, so headers can be integration-tested and
+  screenshotted at their shipped position. Supersedes the marker consequence of ADR 043
+  (043-backend-environment-reset.md, features.md).
 - Replaced ADR 038's three stack-trace signatures with a single **structural** retry rule.
   `mobile/e2e/classify-maestro-attempt.mjs` reads Maestro's own per-flow `commands.json`:
   an attempt is retryable only when no assertion command reached `COMPLETED`/`FAILED` and
@@ -68,6 +74,10 @@
   selector, persistent non-production marker and journaled destructive cross-store reset. ADR 043
   records fail-closed production behavior, state classification and the future-auth participant
   invariant; all four release fingerprints changed and require fresh native builds.
+- Bound the iOS `preview` submit profile to public App Store Connect app `1479613630` while keeping
+  production and Apple account/team credentials environment-backed. Focused Jest and direct `jq`
+  checks guard the destination; no build, signing, upload, or submission occurred (eas.md,
+  `mobile/EAS.md`).
 - Restored the iPhone+iPad App Store continuity contract while retaining portrait-only,
   full-screen behavior and intentionally disabling iPad multitasking. Source-config tests and a
   disposable generated-native assertion enforce device families `1,2`, full-screen presentation,
@@ -83,6 +93,13 @@
 - Made contact-service 503 failures explicitly retryable in Feedback while retaining
   form values, added equivalent accessible FR/EN guidance, and redacted `/contact`
   request/response bodies from development API diagnostics (data.md, features.md).
+- Made iOS submit profiles target the existing App Store Connect record with the committed public
+  `ascAppId`; EAS-managed API-key authentication remains off-repo. Removed literal `$EXPO_*`
+  strings because `eas.json` does not shell-expand field values (eas.md, `mobile/EAS.md`,
+  `mobile/eas.json`).
+- Confirmed from the signed local iOS preview artifact that `eas build --local` stamps the selected
+  profile's `expo-channel-name` into `Expo.plist`; removed the incorrect deferred
+  `updates.requestHeaders` work (eas.md, `mobile/EAS.md`).
 - Wired preview and production native builds to signed xprem delivery: one validated
   `OTA_CHANNEL` source, exact endpoint/app/branch headers, embedded public certificate metadata,
   development OTA disablement, and retained independent EAS linkage. SDK 56 fingerprint evidence
