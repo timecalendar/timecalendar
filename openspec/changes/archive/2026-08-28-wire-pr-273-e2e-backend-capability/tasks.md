@@ -46,12 +46,12 @@
       `openspec archive wire-pr-273-e2e-backend-capability --skip-specs -y`, then run
       `openspec validate --all --strict`. Confirm no canonical
       `openspec/specs/same-pr-native-e2e-capability-remediation/` directory remains.
-- [x] 4.2 Commit and push without force to the existing PR branch, update PR #273's body to
+- [ ] 4.2 Commit and push without force to the existing PR branch, update PR #273's body to
       disclose the newly authorized sensitive workflow surface, preserve `run-e2e`, and record the
       final exact head. Require fresh baseline checks plus `Run mobile E2E (Android)` and
       `Run mobile E2E (iOS)` on that exact head; both native jobs must pass the unchanged import and
       source-recovery assertions before handoff.
-- [x] 4.3 Hand the same issue and branch to Simplifier only after exact-head CI is green. Require
+- [ ] 4.3 Hand the same issue and branch to Simplifier only after exact-head CI is green. Require
       fresh Simplifier and Reviewer passes after any head-changing commit; Reviewer may autonomously
       squash-merge the same PR only after a clean exact-head verdict. No separate QA gate or deploy
       act applies.
