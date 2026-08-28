@@ -8,6 +8,11 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "TEST ENVIRONMENT · Local"
     timeout: 60000
 - tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings-environment"
+    direction: DOWN
+    timeout: 60000
 - extendedWaitUntil:
     visible:
       id: "settings-environment"
