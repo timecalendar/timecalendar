@@ -1,4 +1,4 @@
-import { act, fireEvent, render } from "@testing-library/react-native"
+import { fireEvent, render } from "@testing-library/react-native"
 
 import { CURATED_TIMEZONES, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { getString, remove } from "@/storage"
@@ -16,7 +16,7 @@ jest.mock("expo-router", () => ({
 // mocked suite-wide at the native seam (jest/setup-expo-ui.ts), so the
 // screen → chrome wrapper → hook → @/storage path is genuinely exercised.
 
-beforeEach(() => {
+afterEach(() => {
   remove(SETTINGS_KEYS.timezone)
 })
 
@@ -43,28 +43,28 @@ describe("TimezoneSettingsScreen", () => {
     ).toBe(true)
   })
 
+  it("selecting Automatic restores the system preference", async () => {
+    const { getByTestId } = await render(<TimezoneSettingsScreen />)
+
+    await fireEvent.press(
+      getByTestId("settings-timezone-picker-item-Indian/Reunion"),
+    )
+    await fireEvent.press(getByTestId("settings-timezone-picker-item-system"))
+
+    expect(getString(SETTINGS_KEYS.timezone)).toBe("system")
+  })
+
   it("persists a selected zone immediately through the preference hook", async () => {
     const { getByTestId } = await render(<TimezoneSettingsScreen />)
 
-    await act(async () => {
-      fireEvent.press(
-        getByTestId("settings-timezone-picker-item-Pacific/Noumea"),
-      )
-    })
+    await fireEvent.press(
+      getByTestId("settings-timezone-picker-item-Pacific/Noumea"),
+    )
 
     expect(getString(SETTINGS_KEYS.timezone)).toBe("Pacific/Noumea")
     expect(
       getByTestId("settings-timezone-picker-item-Pacific/Noumea").props
         .accessibilityState.selected,
     ).toBe(true)
-  })
-
-  it("selecting Automatic restores the system preference", async () => {
-    const { getByTestId } = await render(<TimezoneSettingsScreen />)
-
-    fireEvent.press(getByTestId("settings-timezone-picker-item-Indian/Reunion"))
-    fireEvent.press(getByTestId("settings-timezone-picker-item-system"))
-
-    expect(getString(SETTINGS_KEYS.timezone)).toBe("system")
   })
 })
