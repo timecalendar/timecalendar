@@ -113,6 +113,12 @@ Production identity fails config resolution when `OTA_CHANNEL` is missing or not
 `production`. `eas.json` supplies the value for its two release profiles. Local release commands
 must supply the same input explicitly; there is no silent production fallback.
 
+`eas build --local` reads the selected profile and stamps its channel into the native updates
+configuration. The signed iOS preview artifact must contain
+`EXUpdatesRequestHeaders.expo-channel-name = preview` in `Expo.plist`; this is part of artifact
+verification. Raw Xcode or Gradle builds are not a supported release path and provide no equivalent
+channel guarantee.
+
 ## Fingerprint evidence (SDK 56)
 
 Run from `mobile/`, substituting both platforms and both channels:
@@ -142,14 +148,14 @@ fresh iOS and Android native builds before receiving this code. No `.fingerprint
 or broadened: excluding `app.config.ts` would weaken protection for plugins, signing and other
 native config. No build, submission, publish, promotion or rollout was performed.
 
-## Submit profiles, no secrets
+## Submit configuration, no secrets
 
-`submit.preview.ios.ascAppId` commits the public App Store Connect destination `1479613630`, so
-preview submissions deterministically target the existing TimeCalendar app. Its credential-bearing
-`appleId` and `appleTeamId` inputs remain environment-backed. `submit.production` remains structure
-only: iOS `appleId`/`ascAppId`/`appleTeamId` read from `$EXPO_APPLE_ID`/`$EXPO_ASC_APP_ID`/
-`$EXPO_APPLE_TEAM_ID`. Both Android profiles point outside git at
-`../ci/keys/eas-android-sa-key.json`, on `track: internal`. **No Apple/Google credential value is
+`submit.preview` and `submit.production` commit the existing iOS App Store Connect app ID
+(`ascAppId`). EAS holds the project-scoped App Store Connect API key used to authenticate the
+upload. `eas.json` is not a shell template, so literal `$EXPO_*` strings are invalid field values;
+an Apple ID is only supplied through the supported `EXPO_APPLE_ID` process environment when an
+app-specific password flow actually needs it. Android `serviceAccountKeyPath` points outside git
+(`../ci/keys/eas-android-sa-key.json`), `track: internal`. **No Apple/Google credential value is
 committed.**
 
 **EAS owns signing** (managed credentials — the iOS distribution cert + provisioning profile, and the Android upload key). The Flutter Fastlane `match` repo is **not** bridged into EAS; it stays with the Flutter app as a rollback asset (R-5 bounded maintenance). Same production bundle id → EAS targets the existing App Store record and Play listing (RN ships as an update, not a new app). Two signing mechanisms coexist during migration; no shared state to corrupt.

@@ -55,7 +55,7 @@ describe("Expo distribution configuration", () => {
       supportsTablet: true,
       requireFullScreen: true,
       infoPlist: {
-        NSAppTransportSecurity: { NSAllowsLocalNetworking: true },
+        NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
       },
     })
     expect(config.orientation).toBe("portrait")
@@ -166,9 +166,7 @@ describe("Expo distribution configuration", () => {
 
     expect(easConfig.submit.preview).toEqual({
       ios: {
-        appleId: "$EXPO_APPLE_ID",
         ascAppId: "1479613630",
-        appleTeamId: "$EXPO_APPLE_TEAM_ID",
       },
       android: {
         serviceAccountKeyPath: "../ci/keys/eas-android-sa-key.json",
@@ -179,15 +177,14 @@ describe("Expo distribution configuration", () => {
 
     expect(easConfig.submit.production).toEqual({
       ios: {
-        appleId: "$EXPO_APPLE_ID",
-        ascAppId: "$EXPO_ASC_APP_ID",
-        appleTeamId: "$EXPO_APPLE_TEAM_ID",
+        ascAppId: "1479613630",
       },
       android: {
         serviceAccountKeyPath: "../ci/keys/eas-android-sa-key.json",
         track: "internal",
       },
     })
+    expect(JSON.stringify(easConfig.submit)).not.toContain("$EXPO_")
   })
 
   it.each([undefined, "", "beta", "PREVIEW"])(

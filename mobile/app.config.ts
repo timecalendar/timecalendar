@@ -92,11 +92,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         // FCM background receive (ADR 026): remote-notification wakes the app for
         // background data messages so the top-level background handler can run.
         UIBackgroundModes: ["remote-notification"],
-        // Dev variant only: let release-config e2e builds reach the harness server
-        // on http://localhost:3005. ATS already exempts loopback, so this is
-        // belt-and-braces; the production identity carries no exception (D6).
+        // React Native's development runtime requires HTTP and ws:// for remote
+        // Metro servers, and iOS does not classify Tailscale addresses as local.
+        // The production identity carries no ATS exception (D6).
         ...(isDev
-          ? { NSAppTransportSecurity: { NSAllowsLocalNetworking: true } }
+          ? { NSAppTransportSecurity: { NSAllowsArbitraryLoads: true } }
           : {}),
       },
     },
