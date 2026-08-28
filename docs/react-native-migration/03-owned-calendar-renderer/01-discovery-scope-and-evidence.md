@@ -551,3 +551,17 @@ planning may rely on the confirmed date anchor, fresh vertical-time rule, Today 
 zoom continuity while leaving the explicitly named non-blocking interaction details open. The
 release-profile baseline and privacy-safe production workload percentiles remain bounded
 technical research dependencies rather than product questions.
+
+### Functional-specification readiness after Round 2
+
+Round 2 completed the blocking first-pass owner decisions; it did not answer the complete
+question backlog. The questionnaire still has 217 `UNANSWERED` rows and five bounded
+`NEEDS_RESEARCH` facts (`P-004`, `PL-003`, and `PF-006` through `PF-008`). A complete
+functional specification would therefore overstate certainty if created now.
+
+The next step is a specification-triage round: resolve repository and standards facts without
+asking the owner, draft recommendation-led answers where the confirmed principles determine
+a safe default, and return only the remaining genuine product choices in short owner batches.
+No renderer architecture or implementation starts from this document, and creation of
+`03-functional-specification.md` still requires the explicit authorization defined by the
+questionnaire completion gate.

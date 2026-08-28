@@ -1,6 +1,7 @@
 # Owned calendar renderer discovery
 
-Status: discovery only. No renderer implementation is authorized by these documents.
+Status: Rounds 1 and 2 are recorded. Discovery continues; no renderer implementation is
+authorized by these documents.
 
 This directory is the working home for the owned React Native calendar renderer project. Its first job is to establish the product contract with the product owner before architecture or implementation begins.
 
@@ -46,7 +47,26 @@ Silence, existing behavior, an old test, and an unanswered question never mean a
 - The desired engineering posture is to avoid deliberate compromises and known technical debt from the start.
 - This session produces documentation and an extensive question backlog, not product code.
 
-The meaning and measurable acceptance criteria behind broad terms such as “performance,” “perfect code quality,” “no compromise,” and “proud to open source” remain unanswered. The questionnaire exists to make those values testable instead of interpreting them loosely.
+Round 2 confirmed the priority order, persistence and navigation rules, week model, all-day
+and cross-midnight semantics, accessibility target, initial performance matrix and budgets,
+responsibility split, quality/debt gates, and bounded fixture catalog. The questionnaire
+continues to make the remaining product and acceptance details explicit instead of inferring
+them from those broad decisions.
+
+## Readiness after Round 2
+
+The blocking first-pass owner decisions are recorded, but the project is not yet ready to
+call `03-functional-specification.md` complete. The questionnaire still contains 217
+`UNANSWERED` rows. Many can be resolved by repository research or recommendation-led
+specification work; the remainder must return to the owner in short, ordered batches rather
+than as a 217-question form.
+
+Five factual items already have bounded research actions: `P-004`, `PL-003`, `PF-006`,
+`PF-007`, and `PF-008`. The next discovery step is to classify the remaining keys into
+research, specification recommendations, and genuine owner decisions, then prepare the next
+manageable owner round. Architecture and implementation remain unauthorized until that
+triage removes material product ambiguity and the owner explicitly authorizes the functional
+specification.
 
 ## Explicitly outside this discovery session
 

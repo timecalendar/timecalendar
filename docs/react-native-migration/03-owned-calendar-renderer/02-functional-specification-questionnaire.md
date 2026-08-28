@@ -3,6 +3,26 @@
 Status: Rounds 1 and 2 recorded; bounded workload/performance research remains. This is
 not a specification.
 
+Round 2 completed the blocking first-pass owner decisions. It did not complete this backlog:
+217 rows remain `UNANSWERED`, and `P-004`, `PL-003`, plus `PF-006` through `PF-008` retain
+bounded `NEEDS_RESEARCH` actions. Before the next owner round, classify the unanswered rows
+into research, recommendation-led specification work, and genuine product decisions. Ask the
+owner only the last category, in manageable dependency-ordered batches.
+
+Remaining `UNANSWERED` keys after Round 2:
+
+- Product/users/platform: `P-006`, `P-007`, `P-009`–`P-012`; `U-002`, `U-004`–`U-010`;
+  `PL-002`, `PL-004`–`PL-010`.
+- Modes/navigation/time: `S-012`–`S-018`; `N-001`–`N-005`, `N-008`, `N-009`, `N-011`,
+  `N-012`, `N-014`–`N-018`; `T-002`–`T-007`, `T-009`, `T-011`–`T-015`, `T-017`.
+- Events/dates/visuals/interactions: `E-002`, `E-003`, `E-005`, `E-010`–`E-012`,
+  `E-014`–`E-026`; `D-002`–`D-005`, `D-008`–`D-016`; `V-001`–`V-016`;
+  `I-001`–`I-014`.
+- Accessibility/performance: `A-004`–`A-024`; `PF-009`–`PF-011`, `PF-014`–`PF-028`.
+- Boundaries/quality/migration: `B-002`, `B-003`, `B-005`–`B-014`; `Q-004`–`Q-020`;
+  `M-005`–`M-009`, `M-011`–`M-014`.
+- Risks/exclusions: `R-001`–`R-012`; `X-001`–`X-010`.
+
 The questions below exist because no implementation, historical behavior, or prior document may silently decide the new renderer's product contract. A future session should ask the product owner these questions in manageable groups, record the exact answers, and confirm the resulting requirements.
 
 ## Answering protocol
