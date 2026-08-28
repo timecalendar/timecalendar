@@ -336,12 +336,15 @@ cd mobile
   retries **structurally**, from Maestro's per-flow `commands.json` rather than
   from stack-trace text (ADR 038, `mobile/e2e/classify-maestro-attempt.mjs`): an
   attempt is retryable only when the output holds no assertion evidence, no
-  assertion command reached `COMPLETED`/`FAILED`, and the last recorded command
-  is a startup-phase one (or no record exists, i.e. the session died before
-  opening the flow). Anything past startup — including a failing assertion, a
-  failed tap, or a malformed record — stops immediately with its original
-  status. A deterministic launch failure matches the startup shape too and
-  simply exhausts the four attempts, still red.
+  earlier command reached `FAILED`, and the final restart epoch contains only
+  startup commands or non-evaluated assertions (or no record exists because the
+  session died before opening the flow). The latest explicit launch/stop/open
+  command at the failing command's depth begins that epoch: a completed assertion
+  in an earlier phase may be ignored, but an evaluated assertion or non-startup
+  interaction in the current epoch is terminal. Malformed records fail closed.
+  Every retry reruns the entire top-level flow in a fresh process. A deterministic
+  launch failure matches the startup shape too and simply exhausts the four
+  attempts, still red.
 - It does **not** build/install the app. A **release-config, `development`-variant**
   build with the independent `development` backend capability must already be
   installed on the connected simulator/emulator. Supply the complete build

@@ -23,9 +23,9 @@
 #                 CI): the caller provisions Postgres/Redis; see ci/e2e-server.sh.
 #     --startup-attempts N
 #                 Retry a startup failure up to N total attempts per flow (1-4,
-#                 default 1). An attempt is a startup failure only when it
-#                 evaluated no assertion and stopped in a startup-phase command;
-#                 every other failure is terminal. See ADR 038 and
+#                 default 1). A later explicit app restart starts a new
+#                 classification epoch; earlier FAILED commands and current-
+#                 epoch assertions/interactions remain terminal. See ADR 038 and
 #                 classify-maestro-attempt.mjs.
 #
 # Prerequisites and CI notes: see e2e/README.md.
@@ -170,7 +170,7 @@ run_flow() {
 
     if is_retryable_startup_failure "$flow_name" "$attempt_marker" "$attempt_log"; then
       if [ "$attempt" -lt "$STARTUP_ATTEMPTS" ]; then
-        log "flow ${flow_name}: retryable startup failure (no assertion evaluated); starting a fresh Maestro process"
+        log "flow ${flow_name}: retryable startup failure in the final restart epoch; starting a fresh Maestro process"
         attempt=$((attempt + 1))
         continue
       fi

@@ -3,8 +3,9 @@
 # Focused proof of run_e2e.sh's ADR 038 retry classifier.
 #
 # The classifier is structural: it reads Maestro's own per-flow commands.json and
-# retries only an attempt that evaluated no assertion and stopped inside a
-# startup-phase command. Every scenario below therefore drives the fake Maestro's
+# retries only when the final explicit app-restart epoch contains startup-phase
+# commands and no evaluated assertion, while any earlier FAILED command remains
+# globally terminal. Every scenario below therefore drives the fake Maestro's
 # *command record*, not its stack-trace text — the whole point of the rule is
 # that stack-trace text no longer decides anything.
 
@@ -12,6 +13,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HARNESS="$SCRIPT_DIR/run_e2e.sh"
+CLASSIFIER="$SCRIPT_DIR/classify-maestro-attempt.mjs"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/timecalendar-e2e-harness.XXXXXX")"
 trap 'rm -rf "$TEST_ROOT"' EXIT
 
@@ -51,19 +53,24 @@ echo "$count" > "$count_file"
 echo "$flow:$count" >> "$CALL_LOG"
 
 # Write the per-flow command record exactly where Maestro writes it:
-# <debug root>/<run dir>/<flow>/commands.json. Each argument is "kind:status".
+# <debug root>/<run dir>/<flow>/commands.json. Each argument is "kind:status"
+# or "kind:status:depth".
 emit_commands() {
   local dir="$MAESTRO_DEBUG_ROOT/run-$flow-$count/$flow"
   mkdir -p "$dir"
   {
     echo '['
-    local first=1 entry kind status
+    local first=1 entry kind remainder status depth
     for entry in "$@"; do
       kind="${entry%%:*}"
-      status="${entry##*:}"
+      remainder="${entry#*:}"
+      status="${remainder%%:*}"
+      depth=0
+      [ "$remainder" = "$status" ] || depth="${remainder##*:}"
       [ "$first" -eq 1 ] || echo ','
       first=0
-      printf '{"command":{"%s":{}},"metadata":{"status":"%s"}}' "$kind" "$status"
+      printf '{"command":{"%s":{}},"metadata":{"status":"%s","depth":%s}}' \
+        "$kind" "$status" "$depth"
     done
     echo ']'
   } > "$dir/commands.json"
@@ -119,15 +126,63 @@ case "$SCENARIO" in
     emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:RUNNING
     exit 45
     ;;
-  assertion_then_startup_shape)
-    # One assertion was evaluated, then the flow relaunched the app and died
-    # there — so the *last* command is a startup command. Assertion evidence
-    # must still win: this attempt proved something and is terminal.
+  completed_assertion_before_restart)
+    # The captured 12-command hidden-events shape from run 33200667041: the
+    # nested import assertion completed at depth 1, then a new depth-0
+    # stopApp/openLink lifecycle failed. The earlier completed phase must not
+    # veto retrying the whole top-level flow in a fresh Maestro process.
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands \
+        defineVariablesCommand:COMPLETED:0 \
+        applyConfigurationCommand:COMPLETED:0 \
+        runFlowCommand:COMPLETED:0 \
+        applyConfigurationCommand:COMPLETED:1 \
+        launchAppCommand:COMPLETED:1 \
+        stopAppCommand:COMPLETED:1 \
+        openLinkCommand:COMPLETED:1 \
+        runFlowCommand:COMPLETED:1 \
+        tapOnElement:WARNED:2 \
+        assertConditionCommand:COMPLETED:1 \
+        stopAppCommand:COMPLETED:0 \
+        openLinkCommand:FAILED:0
+      exit 46
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  failed_assertion_before_restart)
     if [ "$flow" = alpha ]; then
       emit_commands "${LAUNCH_PROLOGUE[@]}" \
-        launchAppCommand:COMPLETED assertConditionCommand:COMPLETED \
-        stopAppCommand:COMPLETED launchAppCommand:RUNNING
-      exit 46
+        launchAppCommand:COMPLETED:1 assertConditionCommand:FAILED:1 \
+        stopAppCommand:COMPLETED:0 openLinkCommand:FAILED:0
+      exit 47
+    fi
+    exit 0
+    ;;
+  failed_interaction_before_restart)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        launchAppCommand:COMPLETED tapOnElement:FAILED \
+        stopAppCommand:COMPLETED openLinkCommand:FAILED
+      exit 55
+    fi
+    exit 0
+    ;;
+  evaluated_assertion_in_restart_epoch)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        launchAppCommand:COMPLETED stopAppCommand:COMPLETED \
+        assertConditionCommand:COMPLETED runFlowCommand:RUNNING
+      exit 56
+    fi
+    exit 0
+    ;;
+  interaction_in_restart_epoch)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        launchAppCommand:COMPLETED stopAppCommand:COMPLETED \
+        tapOnElement:COMPLETED runFlowCommand:RUNNING
+      exit 57
     fi
     exit 0
     ;;
@@ -209,6 +264,16 @@ case "$SCENARIO" in
     fi
     exit 0
     ;;
+  malformed_command_entry)
+    # Parseable JSON with an incomplete Maestro entry is malformed too.
+    if [ "$flow" = alpha ]; then
+      dir="$MAESTRO_DEBUG_ROOT/run-$flow-$count/$flow"
+      mkdir -p "$dir"
+      echo '[{"command":{"launchAppCommand":{}},"metadata":{"status":"RUNNING"}}]' > "$dir/commands.json"
+      exit 58
+    fi
+    exit 0
+    ;;
 esac
 SH
   chmod +x "$fixture/bin/maestro"
@@ -283,6 +348,13 @@ fixture="$(make_fixture open_link_never_completed)"
 run_fixture "$fixture" open_link_never_completed 0 --startup-attempts 2
 assert_retried_then_passed "$fixture" 'the deep-link reopen shape'
 
+fixture="$(make_fixture completed_assertion_before_restart)"
+run_fixture "$fixture" completed_assertion_before_restart 0 --startup-attempts 2
+assert_retried_then_passed "$fixture" 'the captured phase-local restart shape'
+captured_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+grep -Fq '12 command(s) recorded, last=openLinkCommand status=FAILED' "$fixture/output" || \
+  fail 'the captured 12-command shape was not classified directly'
+
 # --- The bound: a deterministic launch failure exhausts the budget, still red --
 fixture="$(make_fixture deterministic_launch_failure)"
 run_fixture "$fixture" deterministic_launch_failure 45 --startup-attempts 4
@@ -294,9 +366,22 @@ assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
 # --- Terminal: any assertion evidence, and anything past startup --------------
-fixture="$(make_fixture assertion_then_startup_shape)"
-run_fixture "$fixture" assertion_then_startup_shape 46 --startup-attempts 4
-assert_terminal "$fixture" 'a completed assertion followed by a startup-shaped death'
+fixture="$(make_fixture failed_assertion_before_restart)"
+failed_before_restart_fixture="$fixture"
+run_fixture "$fixture" failed_assertion_before_restart 47 --startup-attempts 4
+assert_terminal "$fixture" 'a FAILED assertion before the latest restart boundary'
+
+fixture="$(make_fixture failed_interaction_before_restart)"
+run_fixture "$fixture" failed_interaction_before_restart 55 --startup-attempts 4
+assert_terminal "$fixture" 'a FAILED interaction before the latest restart boundary'
+
+fixture="$(make_fixture evaluated_assertion_in_restart_epoch)"
+run_fixture "$fixture" evaluated_assertion_in_restart_epoch 56 --startup-attempts 4
+assert_terminal "$fixture" 'an evaluated assertion in the current restart epoch'
+
+fixture="$(make_fixture interaction_in_restart_epoch)"
+run_fixture "$fixture" interaction_in_restart_epoch 57 --startup-attempts 4
+assert_terminal "$fixture" 'a non-startup interaction in the current restart epoch'
 
 fixture="$(make_fixture failed_assertion)"
 run_fixture "$fixture" failed_assertion 47 --startup-attempts 4
@@ -334,5 +419,25 @@ run_fixture "$fixture" malformed_record 51 --startup-attempts 4
 assert_terminal "$fixture" 'a malformed command record'
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+
+fixture="$(make_fixture malformed_command_entry)"
+run_fixture "$fixture" malformed_command_entry 58 --startup-attempts 4
+assert_terminal "$fixture" 'a malformed command entry'
+
+# --- Mutation proof: the boundary and global-failure guards are load-bearing --
+boundary_mutant="$TEST_ROOT/classifier-without-restart-boundary.mjs"
+sed 's/const currentEpoch = commands.slice(boundaryIndex)/const currentEpoch = commands/' \
+  "$CLASSIFIER" > "$boundary_mutant"
+if node "$boundary_mutant" "$captured_record" >/dev/null 2>&1; then
+  fail 'removing the restart boundary did not make the captured positive proof fail'
+fi
+
+failed_record="$(find "$failed_before_restart_fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+global_failure_mutant="$TEST_ROOT/classifier-without-global-failure-guard.mjs"
+sed 's/\.some((entry) => entry?.metadata?.status === "FAILED")/.some(() => false)/' \
+  "$CLASSIFIER" > "$global_failure_mutant"
+if ! node "$global_failure_mutant" "$failed_record" >/dev/null 2>&1; then
+  fail 'removing the global FAILED-command guard did not make the negative proof retryable'
+fi
 
 echo '[test_run_e2e] PASS'

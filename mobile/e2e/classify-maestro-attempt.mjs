@@ -8,18 +8,21 @@
 // Punctuation is not a contract. Maestro's own machine-readable per-flow
 // `commands.json` is.
 //
-// An attempt is a *retryable startup failure* when it proved nothing about the
-// app:
-//   - no assertion command reached a terminal evaluated state, AND
-//   - the last command Maestro recorded is one of the startup-phase commands
-//     that bring the app up (variables, config, launch, stop, deep-link reopen).
+// An attempt is a *retryable startup failure* when its final app-restart epoch
+// proved nothing about the app:
+//   - no command failed before the final startup failure, AND
+//   - no assertion command in the final epoch reached a terminal evaluated
+//     state, AND
+//   - every command in that epoch is a startup-phase command or a non-evaluated
+//     assertion.
 //
 // An attempt with no recorded commands at all is the same shape: Maestro aborted
 // during session creation, before it opened the flow. The caller handles that
 // case (there is no file to read) and never invokes this script for it.
 //
-// Everything else is terminal. In particular, an attempt that evaluated even one
-// assertion is terminal no matter what else its output says.
+// Everything else is terminal. A completed assertion in an earlier, completed
+// phase may precede an explicit restart boundary; a FAILED assertion or any
+// other earlier FAILED command remains globally terminal.
 //
 // The bound, stated plainly rather than glossed: an app that deterministically
 // fails to launch matches this shape too. It is still reported red — it exhausts
@@ -60,28 +63,79 @@ const STARTUP_PHASE_COMMANDS = new Set([
   "runFlowCommand",
 ])
 
+// These commands explicitly begin or advance an app lifecycle transition. The
+// latest one at the failing command's depth starts the final restart epoch.
+const RESTART_BOUNDARY_COMMANDS = new Set([
+  "launchAppCommand",
+  "stopAppCommand",
+  "openLinkCommand",
+])
+
 // Maestro shapes each entry as { command: { <kind>: {…} }, metadata: {…} }.
 // Nested `runFlow` commands are flattened into the same sequence-ordered list
 // with a `depth` marker, so the last element is the last command Maestro
 // reached at any depth.
-const commandKind = (entry) => Object.keys(entry?.command ?? {})[0]
+const commandKind = (entry) => {
+  const kinds = Object.keys(entry?.command ?? {})
+  return kinds.length === 1 ? kinds[0] : undefined
+}
+
+const commandDepth = (entry) => {
+  const depth = entry?.metadata?.depth
+  return Number.isInteger(depth) && depth >= 0 ? depth : undefined
+}
 
 export const isRetryableStartupFailure = (commands) => {
   if (!Array.isArray(commands)) return false
   if (commands.length === 0) return true
-
-  const evaluatedAssertion = commands.find((entry) => {
-    const kind = commandKind(entry)
-    return (
-      kind !== undefined &&
-      isAssertionCommand(kind) &&
-      EVALUATED_STATUSES.has(entry?.metadata?.status)
+  if (
+    commands.some(
+      (entry) =>
+        commandKind(entry) === undefined ||
+        commandDepth(entry) === undefined ||
+        typeof entry?.metadata?.status !== "string",
     )
-  })
-  if (evaluatedAssertion !== undefined) return false
+  ) {
+    return false
+  }
 
-  const lastKind = commandKind(commands[commands.length - 1])
-  return lastKind !== undefined && STARTUP_PHASE_COMMANDS.has(lastKind)
+  const last = commands[commands.length - 1]
+  const lastKind = commandKind(last)
+  if (lastKind === undefined || !STARTUP_PHASE_COMMANDS.has(lastKind))
+    return false
+
+  // A later restart never erases an earlier application or interaction
+  // failure. The final command is excluded because a FAILED startup command is
+  // precisely the retryable transport shape this classifier recognizes.
+  if (
+    commands.slice(0, -1).some((entry) => entry?.metadata?.status === "FAILED")
+  ) {
+    return false
+  }
+
+  const failingDepth = commandDepth(last)
+  let boundaryIndex = 0
+  for (let index = commands.length - 1; index >= 0; index -= 1) {
+    const entry = commands[index]
+    if (
+      commandDepth(entry) === failingDepth &&
+      RESTART_BOUNDARY_COMMANDS.has(commandKind(entry))
+    ) {
+      boundaryIndex = index
+      break
+    }
+  }
+
+  const currentEpoch = commands.slice(boundaryIndex)
+  const terminalEpochCommand = currentEpoch.find((entry) => {
+    const kind = commandKind(entry)
+    if (kind === undefined) return true
+    if (isAssertionCommand(kind)) {
+      return EVALUATED_STATUSES.has(entry?.metadata?.status)
+    }
+    return !STARTUP_PHASE_COMMANDS.has(kind)
+  })
+  return terminalEpochCommand === undefined
 }
 
 const describe = (commands) => {
@@ -116,7 +170,7 @@ const main = () => {
 
   if (isRetryableStartupFailure(commands)) {
     console.error(
-      `[classify-maestro-attempt] retryable startup failure: no assertion was evaluated (${describe(commands)})`,
+      `[classify-maestro-attempt] retryable startup failure: final restart epoch contains only startup commands (${describe(commands)})`,
     )
     return 0
   }

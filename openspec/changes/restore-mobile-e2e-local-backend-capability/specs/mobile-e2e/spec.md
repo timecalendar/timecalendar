@@ -82,19 +82,25 @@ reviewed head, and its handoff SHALL record that commit plus direct run/job link
 The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
 Whether a failed attempt may be retried SHALL be decided structurally, from Maestro's own
 machine-readable per-flow command record, and SHALL NOT depend on matching stack-trace text
-against a catalogue of signatures. A failed attempt SHALL be retried only when all of the
-following hold: its captured output contains no assertion-failure evidence; no assertion
-command in the record reached a terminal evaluated state; and the last recorded command is a
-startup-phase command, or no per-flow record exists at all. Assertion commands SHALL comprise
-Maestro's `assertConditionCommand` — into which `assertVisible`, `assertNotVisible` and
-`extendedWaitUntil` all collapse — and `scrollUntilVisible`. `COMPLETED` and `FAILED` SHALL
-count as evaluated; `RUNNING`, `PENDING` and `SKIPPED` SHALL NOT. Startup-phase commands SHALL
-comprise `defineVariablesCommand`, `applyConfigurationCommand`, `launchAppCommand`,
-`stopAppCommand`, `openLinkCommand` and `runFlowCommand`. The output assertion guard SHALL run
-first and SHALL win outright. Any other failure — including one past startup with no assertion,
-and an unreadable or malformed record — SHALL be terminal on its first occurrence, so the
-classifier fails closed. This rule SHALL subsume the previously enumerated session-creation,
-first-`launchApp` and deep-link-reopen signatures rather than being applied alongside them.
+against a catalogue of signatures. The output assertion guard SHALL run first and SHALL win
+outright. Any assertion command or other command with status `FAILED` before the final startup
+failure SHALL be globally terminal; a later restart SHALL NOT erase an earlier failure.
+
+Otherwise, the latest explicit `launchAppCommand`, `stopAppCommand` or `openLinkCommand` at the
+failing command's depth SHALL begin the final restart epoch. A `COMPLETED` assertion before that
+boundary MAY be ignored as evidence from an earlier successful phase. From the boundary through
+the final command, only startup-phase commands and non-evaluated assertions MAY occur; an
+evaluated assertion or non-startup interaction in the current epoch SHALL be terminal.
+Assertion commands SHALL comprise Maestro's `assertConditionCommand` — into which
+`assertVisible`, `assertNotVisible` and `extendedWaitUntil` all collapse — and
+`scrollUntilVisible`. `COMPLETED` and `FAILED` SHALL count as evaluated; `RUNNING`, `PENDING`
+and `SKIPPED` SHALL NOT. Startup-phase commands SHALL comprise `defineVariablesCommand`,
+`applyConfigurationCommand`, `launchAppCommand`, `stopAppCommand`, `openLinkCommand` and
+`runFlowCommand`. No per-flow record SHALL remain retryable as a pre-flow session abort. An
+unreadable or malformed record SHALL be terminal, so the classifier fails closed. This rule
+SHALL subsume the previously enumerated session-creation, first-`launchApp` and deep-link-reopen
+signatures rather than being applied alongside them. Every retry SHALL rerun the entire
+top-level flow in a fresh Maestro process and SHALL NOT resume within an epoch.
 
 #### Scenario: A session that never opened the flow is retried
 
@@ -117,11 +123,31 @@ first-`launchApp` and deep-link-reopen signatures rather than being applied alon
 - **THEN** the harness starts a fresh Maestro process for the same flow within the configured
   bound and may continue to later flows after that retry succeeds
 
-#### Scenario: An evaluated assertion makes the attempt terminal even inside startup
+#### Scenario: A later restart failure follows a completed earlier phase
 
-- **WHEN** the record contains an assertion command at `COMPLETED` or `FAILED` but the last
-  recorded command is a startup-phase command, because the flow relaunched the app and died
-  there
+- **WHEN** a nested import assertion completed in an earlier phase, then a new explicit
+  depth-zero `stopAppCommand` completed and its `openLinkCommand` failed with no assertion
+  evidence or earlier failed command
+- **THEN** the harness ignores the earlier completed assertion for retry classification,
+  reruns the entire top-level flow in a fresh Maestro process, and may continue to later flows
+  after that retry succeeds
+
+#### Scenario: A failed command before the final restart stays terminal
+
+- **WHEN** an assertion or any other interaction reached `FAILED` before the final startup
+  failure, even if a later restart boundary appears
+- **THEN** the harness returns the original non-zero result immediately and does not retry
+
+#### Scenario: An evaluated assertion in the current restart epoch is terminal
+
+- **WHEN** the record contains an assertion command at `COMPLETED` or `FAILED` after the latest
+  restart boundary but the last recorded command is a startup-phase command
+- **THEN** the harness returns the original non-zero result immediately and does not retry
+
+#### Scenario: A non-startup interaction in the current restart epoch is terminal
+
+- **WHEN** a tap or other non-startup interaction occurs after the latest restart boundary
+  before the final startup failure
 - **THEN** the harness returns the original non-zero result immediately and does not retry
 
 #### Scenario: Assertion evidence in the output wins over the record
@@ -213,13 +239,32 @@ interaction shared by both platforms, with no per-platform selector or branch.
 
 #### Scenario: A flow reaches a row below the fold
 
-- **WHEN** a flow selects a control that renders outside the first screenful, such as the
-  Settings hub's `settings-feedback` and `settings-environment` rows
+- **WHEN** a flow selects a control that renders outside the first screenful — the Settings
+  hub's `settings-feedback` and `settings-environment` rows, or a today-timeline tile whose
+  distance down the fixed-scale grid depends on the seeded event's time of day
 - **THEN** it reaches that control with `scrollUntilVisible` rather than a plain visibility
   wait, because the repository proof resolves ids in source and cannot observe the device
   viewport — an existing `testID` below the fold otherwise fails identically to a deleted one
+- **AND** unless the control is the last element on its screen, the reveal SHALL centre it
+  (`centerElement: true`), because a scroll stops the instant the target first peeks in at the
+  bottom edge — where iOS draws the floating tab bar over it — and the hierarchy still reports
+  it visible, so the scroll and the following `tapOn` both report `COMPLETED` while the tap
+  lands on the tab bar and silently navigates elsewhere
+- **AND** where the revealed content is painted by the startup sync rather than the first
+  render, the flow SHALL wait on an element the sync produces before scrolling, so the scroll
+  cannot race the render and exhaust an empty list
 
 #### Scenario: A known-stale selector is repaired
 
 - **WHEN** an id listed in the proof's known-stale allowlist is reintroduced as a real `testID`
 - **THEN** the proof fails until that id is removed from the allowlist
+
+#### Scenario: A native header exposes an accessibility label distinct from its visual text
+
+- **WHEN** a shared flow drives a native header action whose visual title differs from the
+  accessibility label exposed in the Maestro hierarchy, such as the event-details `Hide`
+  action exposed as `Hide this event`
+- **THEN** the flow selects the action by the complete accessibility label that both platforms
+  expose, rather than by visual text that exists in a screenshot but not in the hierarchy
+- **AND** the interaction remains shared across Android and iOS and retains the following
+  application assertion or round-trip proof

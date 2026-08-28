@@ -73,19 +73,29 @@ retryable only when it proved nothing about the app:
 
 - the harness output carries no assertion-failure evidence (this guard runs
   first and wins outright), **and**
-- no assertion command reached a terminal evaluated state — `assertConditionCommand`
-  (which `assertVisible`, `assertNotVisible` and `extendedWaitUntil` all collapse
-  into) or `scrollUntilVisible`, at status `COMPLETED` or `FAILED`; `RUNNING`,
-  `PENDING` and `SKIPPED` are not evidence — **and**
-- the last recorded command is a startup-phase one (`defineVariablesCommand`,
+- no command before the final startup failure has status `FAILED`; a later
+  restart never erases an earlier assertion/application/interaction failure,
+  **and**
+- from the latest explicit `launchAppCommand`, `stopAppCommand` or
+  `openLinkCommand` at the failing command's depth through the final command,
+  only startup-phase commands (`defineVariablesCommand`,
   `applyConfigurationCommand`, `launchAppCommand`, `stopAppCommand`,
-  `openLinkCommand`, `runFlowCommand`), or there is no per-flow record at all,
-  which is how a session that aborted before opening the flow appears.
+  `openLinkCommand`, `runFlowCommand`) and non-evaluated assertions occur.
+  Assertions are `assertConditionCommand` (which `assertVisible`,
+  `assertNotVisible` and `extendedWaitUntil` collapse into) or
+  `scrollUntilVisible`; `COMPLETED` and `FAILED` are evaluated, while `RUNNING`,
+  `PENDING` and `SKIPPED` are not.
 
-Everything else — a failing or passing assertion, a failed tap, a malformed
-record — stops immediately, retains its exit status, and prevents later flows
-from running. Note the bound: an app that *deterministically* fails to launch
-also matches the startup shape. It still ends red, having spent all four
+A `COMPLETED` assertion before the latest restart boundary may belong to a
+successful earlier phase and does not veto recovery from the later transport
+failure. An evaluated assertion or non-startup interaction in the current epoch
+is terminal. No record means the session aborted before opening the flow and is
+retryable; malformed records fail closed. A retry always reruns the **entire**
+top-level flow in a fresh Maestro process — it never resumes mid-flow.
+
+Everything else stops immediately, retains its exit status, and prevents later
+flows from running. Note the bound: an app that _deterministically_ fails to
+launch also matches the startup shape. It still ends red, having spent all four
 attempts; retry costs attempts, never correctness.
 
 ## Add a flow

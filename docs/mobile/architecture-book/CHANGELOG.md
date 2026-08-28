@@ -10,13 +10,18 @@
   (043-backend-environment-reset.md, features.md).
 - Replaced ADR 038's three stack-trace signatures with a single **structural** retry rule.
   `mobile/e2e/classify-maestro-attempt.mjs` reads Maestro's own per-flow `commands.json`:
-  an attempt is retryable only when no assertion command reached `COMPLETED`/`FAILED` and
-  the last recorded command is a startup-phase one (or no record exists at all). The
-  assertion guard still runs first and still wins outright. A fourth iOS startup shape had
-  arrived carrying **no exception text at all**, so no signature could ever have matched
-  it — the matching strategy was the defect, not any individual pattern. Documented bound:
-  a deterministic launch failure matches the same shape, exhausts the four attempts, and
-  still exits non-zero; retry costs attempts, never correctness (ADR 038, testing.md).
+  captured-output assertion evidence wins globally, as does any earlier command with status
+  `FAILED`; otherwise the latest explicit launch/stop/open command at the failing command's
+  depth begins the final restart epoch. A completed assertion in an earlier phase may be
+  ignored, while an evaluated assertion or non-startup interaction in the current epoch is
+  terminal. This phase-local correction was pinned against the captured 12-command
+  `hidden-events` record from run 33200667041: nested import passed, then a new depth-0
+  `stopApp` → failed `openLink` transport phase. A retry still reruns the entire top-level
+  flow in a fresh process. A fourth iOS startup shape had arrived carrying **no exception
+  text at all**, so no signature could ever have matched it — the matching strategy was the
+  defect, not any individual pattern. Documented bound: a deterministic launch failure
+  matches the same shape, exhausts the four attempts, and still exits non-zero; retry costs
+  attempts, never correctness (ADR 038, testing.md).
 - Moved the native-E2E harness and workflow-contract proofs into the baseline gate.
   `ci-mobile.yml` now watches `.github/workflows/ci-mobile-e2e.yml` and runs
   `test_run_e2e.sh` + `test_ci_mobile_e2e.sh`. Previously both ran only inside the

@@ -167,3 +167,46 @@ three signatures, plus the F1 gate-coverage fix.
 - [x] 14.6 TIM-268 ships **inside this PR**, not through `main`: its fix landed on this branch at `743f220`, so there is no `main` round-trip and no rebase, and TIM-268 closes from this PR's device evidence rather than from a separate gate. (Supersedes the original plan to land it on `main` first and let the `pull_request` merge ref pick it up.)
 - [ ] 14.7 Pin the echo-drain prefix semantics the `743f220` fix depends on: a second lagging echo after the first, so replacing `written.current.slice(echo + 1)` with `written.current = []` fails the suite. One echo alone cannot discriminate the two.
 - [ ] 14.8 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying both the TIM-268 fix and its pinning test. Do not rerun `dfc8c82f` or `1d0254b` unchanged, and keep the `run-e2e` label on.
+
+## 15. Merge `main`, and clear the last two below-the-fold reveals
+
+Diagnostic gate `33193527228` at `2871377c` reached flows 6 and 7 — `feedback` and `home` —
+that no earlier run had ever got to, and failed at both for the amendment-#3a reveal reason
+rather than any application defect: the debug screenshots show the app rendering correctly in
+each case. In the same window PR #293 went `CONFLICTING`, because `main` landed `#297`
+(removing the non-production environment banner) while this branch's `environment-switch.yaml`
+still asserted `TEST ENVIRONMENT · Local` — a string that no longer renders in the merged
+tree. Triage amendments #9 and #10 specify both repairs and make a fresh Android + iOS run at
+the merged head the acceptance gate, superseding any green measured at `2871377c`.
+
+- [x] 15.1 Resolve the `main` merge with `git merge origin/main` — no rebase, no force-push. Take `origin/main`'s `mobile/.maestro/environment-switch.yaml` verbatim: it is a strict superset of this branch's copy, already carrying the `settings-environment` reveal, the iOS-composed-label regex, and the re-navigation after the destructive reset. Keep both `CHANGELOG.md` entries with `#297`'s first. Leave no `TEST ENVIRONMENT · …` assertion anywhere in `mobile/.maestro/**`, revive no `backend-environment-marker`, and revert no part of `#297`.
+- [x] 15.2 Centre the `feedback.yaml` reveal (`centerElement: true`). `settings-feedback` is not the last row on Settings — the environment section renders below it — so the scroll stops as the row peeks in at the bottom edge under the iOS floating tab bar; the hierarchy reports it visible, the scroll and the `tapOn` both report `COMPLETED`, and the tap lands on the bar's middle button (Calendar at the row's centre X). Android's non-floating bar never overlapped, which is why only iOS failed. `environment-switch.yaml` stays untouched: `settings-environment` genuinely is the last element, so it bottoms out clear of the bar.
+- [x] 15.3 Reveal `E2E Today Lecture` in `home.yaml` with a bounded `scrollUntilVisible` + `centerElement`, keeping the `assertVisible` regex unweakened. The today timeline is a fixed-scale grid topped at the day's first timed event (`dynamicHourRange`, 10:00) and does not auto-scroll to now, so the 14:00 lecture sits four hours of pixels below a ~two-hour viewport. Wait on the 10:00 `E2E Overlap A` tile first so the scroll cannot race the startup sync and exhaust an empty grid. No `mobile/src` change, no platform fork.
+- [ ] 15.4 Acceptance gate: baseline plus Android and iOS native green on the merged head, with the complete per-flow result recorded — `feedback` and `home` named explicitly, per criterion 7. A gate green only at `2871377c` is not evidence for the merged tree and must not be reported as the exact-head signal.
+- [ ] 15.5 Before archive, define and record signal (c)'s closure check: baseline run `33194849747` @ `ac1aa586` is Android terminal at `calendar`/`import-seed` and iOS terminal at `about` on a no-command-record abort; the post-merge `main` run is expected to clear both. Record that the Reviewer owns the post-merge check and keeps TIM-264 open until its verdict. Still terminal at Android `calendar` ⇒ the capability fix did not survive the squash-merge; still terminal at iOS `about` ⇒ the structural classifier is not doing what section 14 claims. This task records the pre-merge baseline, expectations, and owner only; it does not claim the post-merge result before merge.
+
+## 16. Drive the event-details action through its native accessibility label
+
+Exact-head gate `33197588645` at `b882b86c` passed the first six flows on both platforms,
+including `feedback`, then reached `hidden-events`. The iOS artifact rendered the visual
+header title `Hide`, but its hierarchy exposed only `Hide this event`, matching the app's
+explicit accessibility label; the stale visual-text selector therefore failed before opening
+the chooser. Android independently displayed a system ANR dialog after the deep-link restart,
+caused by a timed-out Google measurement service bind rather than an application assertion or
+backend failure. The selector repair is material and cross-platform; the next labeled gate
+determines whether that unrelated Android platform flake clears without broadening retry policy.
+
+- [x] 16.1 In `hidden-events.yaml`, address the event-details header action by its shipped accessibility label, `Hide this event`, then select the identically labelled native Alert option. Preserve the shared flow, deep-link sequence, seeded-title assertions, and hide/un-hide round trip; touch no `mobile/src` or retry-classifier surface.
+- [ ] 16.2 Run the focused selector/YAML/OpenSpec proofs, push the material head with `run-e2e` retained, and require a fresh exact-head baseline plus Android/iOS gate through the complete flow set. Record `33197588645`'s Android system ANR and iOS stale accessibility-label selector as diagnostic evidence, not acceptance.
+
+## 17. Classify startup transport failures within the final restart epoch
+
+Run `33200667041` at `1c950751` proved the global completed-assertion veto was too broad:
+`hidden-events` completed its nested import assertion at depth 1, then began a new depth-0
+`stopApp` → `openLink` lifecycle whose final command failed with the known iOS simulator
+transport timeout. No command before that final startup failure had status `FAILED`.
+
+- [x] 17.1 Classify the final restart epoch from the latest explicit `launchAppCommand`, `stopAppCommand`, or `openLinkCommand` at the failing command's depth. Ignore a `COMPLETED` assertion before that boundary, but keep the captured-output assertion guard first and globally terminal; keep any earlier `FAILED` assertion or other command globally terminal; and keep an evaluated assertion or non-startup interaction in the current epoch terminal. Preserve fail-closed malformed records, four attempts maximum, one Maestro process per attempt/flow, one shared server lifecycle, lexical order, and the original non-zero status on exhaustion.
+- [x] 17.2 Add the captured 12-command shape and prove a fresh-process retry can pass and continue. Pin negatives for an earlier failed assertion, assertion evidence in output, an earlier failed interaction, an evaluated assertion or non-startup interaction in the current epoch, malformed records, and deterministic exhaustion. Mutation-test the restart-boundary and global-failure guards, and classify the downloaded run artifact directly.
+- [x] 17.3 Refine ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, the agent handbook, and this delta to the phase-local rule. This is a sensitive binding-document correction, not a new ADR.
+- [ ] 17.4 Commit the material repair, merge current `origin/main` without rebase or force-push while keeping every changelog entry with main's entries first, push both commits together with `run-e2e` retained, and require baseline plus complete Android and iOS green on that final exact head before archive.
