@@ -17,6 +17,9 @@
 
 ## 2026-08-26
 
+- Made contact-service 503 failures explicitly retryable in Feedback while retaining
+  form values, added equivalent accessible FR/EN guidance, and redacted `/contact`
+  request/response bodies from development API diagnostics (data.md, features.md).
 - Wired preview and production native builds to signed xprem delivery: one validated
   `OTA_CHANNEL` source, exact endpoint/app/branch headers, embedded public certificate metadata,
   development OTA disablement, and retained independent EAS linkage. SDK 56 fingerprint evidence
