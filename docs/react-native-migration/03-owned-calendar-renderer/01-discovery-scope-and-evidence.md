@@ -546,11 +546,12 @@ remains design tuning. The owner also expected zoom to remain preserved as it do
 Calendar and accepted the proposed Today rule: select the current day/week, scroll to now,
 and preserve mode and zoom.
 
-All Round 2 owner decisions and the focused clarification are now recorded. Architecture
-planning may rely on the confirmed date anchor, fresh vertical-time rule, Today behavior, and
-zoom continuity while leaving the explicitly named non-blocking interaction details open. The
-release-profile baseline and privacy-safe production workload percentiles remain bounded
-technical research dependencies rather than product questions.
+All Round 2 owner decisions and the focused clarification are now recorded. Future
+specification work—and architecture planning once separately authorized—may rely on the
+confirmed date anchor, fresh vertical-time rule, Today behavior, and zoom continuity while
+leaving the explicitly named non-blocking interaction details open. The release-profile
+baseline and privacy-safe production workload percentiles remain bounded technical research
+dependencies rather than product questions.
 
 ### Functional-specification readiness after Round 2
 
