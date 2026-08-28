@@ -4,13 +4,20 @@
 # Cold-launches the development-variant app, deep-links to the onboarding welcome
 # surface, reaches the "Add by URL" entry, asserts the URL-entry screen renders (a
 # stable title assertion), and submits with an EMPTY field to assert the inline
-# validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
+# validation error shows. The VALIDATION half is deterministic and offline;
+# cross-platform throughout.
 #
-# The entry point MOVED (482f134 / f2e47ee): the welcome screen is now a
-# three-page carousel whose final CTA opens the school step, and the "I can't
-# find my school" action on that step (`onboarding-school-missing`,
-# school-picker-screen.tsx) is what pushes /onboarding/ical-url. The former
-# `onboarding-welcome-url-cta` testID no longer exists.
+# The entry point MOVED (482f134): the welcome screen is now a three-page carousel
+# whose final CTA opens the school step, and the "I can't find my school" action
+# on that step (`onboarding-school-missing`, school-picker-screen.tsx) is what
+# pushes /onboarding/ical-url. The former `onboarding-welcome-url-cta` testID no
+# longer exists. Reaching the entry therefore now goes through the school step's
+# LIVE GET /schools read — that action renders in the list footer, which mounts
+# only in the browsing state — so this flow no longer reaches the URL screen
+# without the harness server. That is the same live read onboarding.yaml already
+# depends on and the same harness server this file already requires; the
+# alternative (deep-linking straight to /onboarding/ical-url) would stop proving
+# the entry is reachable at all, which is what the first half exists to test.
 #
 # The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
 # seeds no parseable .ics import endpoint and a live external .ics would be flaky

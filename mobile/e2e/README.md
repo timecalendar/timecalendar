@@ -88,7 +88,17 @@ and prevent later flows from running.
    needed — and gives each one a fresh Maestro process.
 3. Keep assertions on stable seeded text (ASCII-safe avoids accent-matching
    fragility across platforms).
-4. To assert **real synced calendar data**, start the flow with the shared import
+4. Every `id:` you select by must exist as a `testID` in `mobile/src`.
+   `maestro-selectors.test.ts` enforces this in the **baseline** gate (`npm test`),
+   because the native gate is on-demand: without it a UI rework that deletes a
+   `testID` merges green and the break costs a native run to find — and since
+   `run_e2e.sh` stops at the first failing flow, one stale id hides every later
+   one. Selectors match as regexes and testIDs may be object properties or
+   template literals, so the guard resolves all three shapes. If it flags an id
+   you believe works, fix the flow or the guard — never allowlist it. For a
+   control that can carry no testID at all (the native-header search bar), select
+   its EN label; the e2e device runs in EN.
+5. To assert **real synced calendar data**, start the flow with the shared import
    preamble so the app durably holds the seeded token and syncs it (ADR 030):
    ```yaml
    - runFlow: import-seed.yaml

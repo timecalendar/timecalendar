@@ -70,11 +70,13 @@ function declaredTestIds(source: string): string[] {
   return [...literals, ...templates]
 }
 
-const declaredIds = new Set(
-  filesUnder(srcDir, [".ts", ".tsx"])
-    .filter((file) => !/\.test\.tsx?$/.test(file))
-    .flatMap((file) => declaredTestIds(readFileSync(file, "utf8"))),
-)
+const declaredIds = [
+  ...new Set(
+    filesUnder(srcDir, [".ts", ".tsx"])
+      .filter((file) => !/\.test\.tsx?$/.test(file))
+      .flatMap((file) => declaredTestIds(readFileSync(file, "utf8"))),
+  ),
+]
 
 const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
   name: file.slice(flowsDir.length + 1),
@@ -82,8 +84,14 @@ const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
 }))
 
 function resolves(selector: string): boolean {
-  const pattern = new RegExp(`^(?:${selector})$`)
-  return [...declaredIds].some((id) => pattern.test(id))
+  let pattern: RegExp
+  try {
+    pattern = new RegExp(`^(?:${selector})$`)
+  } catch {
+    // Maestro could not compile it either, so it selects nothing on a device.
+    return false
+  }
+  return declaredIds.some((id) => pattern.test(id))
 }
 
 describe("Maestro flow selectors", () => {
@@ -91,7 +99,7 @@ describe("Maestro flow selectors", () => {
     // A parser that silently matched nothing would make every assertion below pass.
     expect(flows.length).toBeGreaterThan(0)
     expect(flows.flatMap((flow) => flow.selectors).length).toBeGreaterThan(0)
-    expect(declaredIds.size).toBeGreaterThan(0)
+    expect(declaredIds.length).toBeGreaterThan(0)
   })
 
   it.each(flows.filter((flow) => flow.selectors.length > 0))(

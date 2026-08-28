@@ -43,6 +43,7 @@ catch the next real break. The three matching rules below are load-bearing.
 - [x] 5.2 Update `mobile/e2e/README.md` and `docs/agent-dev-environment.md` build examples and CI contract to include `BACKEND_ENVIRONMENT_CAPABILITY=development` for Android and iOS.
 - [x] 5.3 Extend the `testing.md` Maestro bullet to record the selector rule: flow selectors resolve against real `mobile/src` `testID`s, enforced by `mobile/e2e/maestro-selectors.test.ts` in the baseline gate; note the calendar-family agenda switch goes through the `calendar-view` control. Append the corresponding line to `docs/mobile/architecture-book/CHANGELOG.md`. Treat both files as sensitive binding documentation and keep the edits to the existing contract — no new ADR.
 - [x] 5.4 Confirm the documentation adds no credential, device-install, or console-registration action; therefore no `(HUMAN: …)` migration inbox note is required.
+- [x] 5.5 Add the selector rule to `mobile/e2e/README.md`'s "Add a flow" checklist (the operator-facing home of the convention), and correct `ical-import.yaml`'s header: reaching the URL screen now goes through the school step's live `GET /schools` read, so the flow's "no network" claim applies only to its validation half.
 
 ## 6. Local-green verification
 
