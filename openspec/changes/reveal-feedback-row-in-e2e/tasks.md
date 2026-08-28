@@ -37,7 +37,7 @@
 
 - [x] 4.1 Run `openspec validate reveal-feedback-row-in-e2e` and confirm every modified
       `mobile-feedback` scenario is covered by the implementation and focused proof.
-- [ ] 4.2 Push the implementation to the existing recovery branch/PR, preserve its draft
+- [x] 4.2 Push the implementation to the existing recovery branch/PR, preserve its draft
       pipeline stage markers, and trigger the ticket-required native E2E jobs without editing
       `.github/workflows/ci-mobile-e2e.yml` or adding a QA gate.
 - [ ] 4.3 Record baseline, `e2e-mobile-android`, and `e2e-mobile-ios` results with the tested
