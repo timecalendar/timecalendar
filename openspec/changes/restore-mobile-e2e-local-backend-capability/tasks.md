@@ -210,3 +210,134 @@ transport timeout. No command before that final startup failure had status `FAIL
 - [x] 17.2 Add the captured 12-command shape and prove a fresh-process retry can pass and continue. Pin negatives for an earlier failed assertion, assertion evidence in output, an earlier failed interaction, an evaluated assertion or non-startup interaction in the current epoch, malformed records, and deterministic exhaustion. Mutation-test the restart-boundary and global-failure guards, and classify the downloaded run artifact directly.
 - [x] 17.3 Refine ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, the agent handbook, and this delta to the phase-local rule. This is a sensitive binding-document correction, not a new ADR.
 - [ ] 17.4 Commit the material repair, merge current `origin/main` without rebase or force-push while keeping every changelog entry with main's entries first, push both commits together with `run-e2e` retained, and require baseline plus complete Android and iOS green on that final exact head before archive.
+
+## 18. Disambiguate the collided hide-chooser selector
+
+Section 16 made the hide action address the header button by its real accessibility label,
+`Hide this event`. That repair was correct and it was also ambiguous: the native Alert
+chooser option carries the byte-identical string from a different i18n key
+(`eventDetails.hide.actionLabel` vs `eventDetails.hide.thisEvent`). Run `33206115891` at
+`7366f4bf` — Android 14/14, iOS terminal at flow 7 — captured both `tapOn`s resolving to the
+same element, the 48x44pt header button at `[334,62][382,106]`. The chooser was never tapped,
+the event was never hidden, and `assertNotVisible: "E2E Today Seminar(,.*)?"` failed
+correctly, three steps downstream of the tap that actually went wrong.
+
+- [ ] 18.1 In `hidden-events.yaml`, select the Alert chooser option by an anchor no header
+  element can satisfy: `below:` the Alert title `Hide event` (`eventDetails.hide.title`), a
+  full-match regex that cannot match `Hide this event` and which the header — drawn above the
+  alert on both platforms — can never sit under. Gate it on the chooser actually being
+  presented with an `extendedWaitUntil` on `Hide all events of the same name`, an element
+  unique to that surface, so an alert that never opens fails at a named step instead of
+  silently re-tapping the first match. One cross-platform selector, no platform fork, the
+  hide/un-hide round trip unchanged; `below:` confirmed parsed by `maestro check-syntax` at
+  the pinned 2.8.0, and the anchor confirmed present in the iOS hierarchy by that run's
+  simulator log walking `Checking 'Hide event'` 0.18s before the second tap resolved.
+- [ ] 18.2 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+  the anchor. Read a red `hidden-events` by naming the step: at the `extendedWaitUntil` the
+  alert did not present or iOS composed its options into one element; at the second `tapOn`
+  the `below:` candidate set was empty; at `assertNotVisible` with both taps resolving to
+  different elements the hide itself is broken — an application defect and the only one of
+  the three outside this ticket's flow-only scope.
+- [ ] 18.3 Record the collision class in the `mobile-e2e` delta: a selector that is correct can
+  still be ambiguous, and the disambiguating anchor plus its presence gate belong in the spec,
+  not only in the flow's comment header. Note that the repository proof cannot observe runtime
+  ambiguity and that the symptom surfaces at a downstream assertion naming an unrelated
+  element.
+
+## 19. Replace the platform-asymmetric back navigation in the settings flow
+
+Run `33211705313` at `be665c66` was the best gate yet — Android 14/14, iOS 12/14 including
+`hidden-events` (section 18's anchor proven on the platform it was failing on), `feedback`
+and `home`. It went terminal at flow 13 `settings`, on `back`. iOS has no hardware back key,
+so Maestro issues a left-edge swipe; on the native-stack `My calendars` screen it reported
+`COMPLETED` without popping, and the captured `step-016` hierarchy still showed
+`My calendars` 60s later. Android drives the same command through its hardware key, so the
+defect was structurally invisible on one platform for as long as the flow has existed.
+
+- [x] 19.1 Replace both `back` steps in `settings.yaml` with the `stopApp` + `launchApp` cold
+  restart `about.yaml` already uses to re-enter the hub, re-tapping the `Settings` tab. One
+  cross-platform idiom, no per-platform fork. The header back button is not a usable
+  alternative: iOS exposes it as id `BackButton` with the accessibility label `(tabs)`, and
+  Android's toolbar navigation icon exposes neither, so no shared selector exists.
+- [x] 19.2 Assert `settings-theme-picker` on the Appearance destination. `Appearance &
+  language` is also the hub's own row label, asserted earlier in the same flow, so it could
+  never have proven the push happened — the leg was passing vacuously. The picker testID
+  exists only on the destination and is where `appearance-settings.yaml` lands.
+- [x] 19.3 Guard the rule in `maestro-selectors.test.ts`: no flow may carry a bare `back`.
+  The existing proof reads selectors only and structurally could not see a command. Verified
+  by mutation — reintroducing `- back` fails the suite at the exact file and line — with a
+  parser test pinning that it is not matching vacuously. `maestro check-syntax` accepts the
+  repaired flow at the pinned 2.8.0.
+- [ ] 19.4 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+  the repair. Read a red `settings` by naming the step: at the post-restart `Settings` wait the
+  restart itself failed; at `settings-theme-picker` the Appearance row did not push — a real
+  navigation defect and the only one of the two outside this ticket's flow-only scope.
+- [ ] 19.5 Extend the per-flow handoff record of task 15.4 to name `settings` and
+  `user-calendars` alongside `feedback` and `home`. `settings` is the flow this section
+  repairs, so its iOS result is the repair's only device evidence. `user-calendars` is flow 14
+  and every prior gate went terminal before reaching it, so a green iOS job here is the
+  **first execution of that flow on iOS in the project's history** — a bare "14/14 both
+  platforms" does not record that. Its sole construct unproven on iOS is
+  `assertVisible: "No calendars imported."`; that string renders as a `ThemedText` sibling in
+  a plain `View` (`user-calendars-screen.tsx:126-132`), not inside a pressable, so the
+  iOS-collapses-a-pressable composition that section 18 fixed cannot apply and an empty state
+  has nothing below the fold. A red flow 14 is therefore new information to diagnose on its
+  own terms, not a recurrence of that class.
+- [ ] 19.6 Record the platform-asymmetric command class in the `mobile-e2e` delta: a command
+  can report `COMPLETED` while being a no-op on one platform, so the flow must re-enter a root
+  screen with the shared `stopApp` + `launchApp` restart idiom and the repository proof must
+  reject a bare `back`, naming the file and line. Note what distinguishes this class from the
+  below-the-fold class (section 9, recorded by the `A flow reaches a row below the fold`
+  scenario) and the collision class (18.3) — it is statically decidable, because the command is
+  a literal in the flow, and it must be caught statically, since the platform that passes hides
+  it and the platform that fails reports it as a timed-out assertion against the screen the
+  flow believed it had already left.
+
+## 20. Size the cold-launch readiness waits for a degraded runner
+
+Run `33216821519` at `8dba4521` was Android 14/14, every flow attempt 1/1, and iOS terminal at
+flow 4 `environment-switch` — at its own launch gate, with 4 recorded commands and no
+flow-specific step executed. `environment-switch.yaml` is byte-identical to the version that
+passed on iOS at both `7366f4bf` and `be665c66`, and the head's only diff from `be665c66` is
+`settings.yaml` (flow 13) plus a Jest guard, neither of which runs before flow 4. The runner
+was measurably degraded: `launchApp` alone took 75.8 s, and `about` burned two startup aborts
+before passing on attempt 3/4. The 60 s wait then elapsed in full — a genuine timeout, not an
+instant miss.
+
+The retry budget cannot absorb this. The same condition was classified both ways in that one
+job: `about` was caught while `launchApp` was still `RUNNING` (retryable startup), while
+`environment-switch` was caught one command later, after `launchApp` flipped to `COMPLETED`
+(terminal). One command's worth of timing decided it. Closing that gap would mean retrying an
+`assertConditionCommand FAILED`, which weakens the assertion guard — the invariant that makes
+a green gate mean anything. The gap is recorded as known and accepted; the wait is what moves.
+
+- [x] 20.1 Raise every `extendedWaitUntil: visible: "Settings"` that immediately follows a
+  `launchApp` from `60000` to `120000` — exactly seven sites in five flows: `about.yaml`,
+  `environment-switch.yaml`, `feedback.yaml`, `settings.yaml` (three), `user-calendars.yaml`.
+  Nothing else moves: no other timeout, selector, ordering, `mobile/src`, classifier, or retry
+  budget. Verified mechanically — seven waits raised and no other `timeout: 120000` anywhere in
+  `mobile/.maestro/**`.
+- [x] 20.2 Record the provenance at the `environment-switch.yaml` site: the measured 75.8 s
+  launch, run `33216821519`, and why the retry budget structurally cannot cover a launch-gate
+  timeout. A bound without its measurement reads as arbitrary and gets "cleaned up" later.
+- [x] 20.3 Confirm no repository proof asserts these blocks literally before editing them.
+  `test_run_e2e.sh`, `test_ci_mobile_e2e.sh`, and `maestro-selectors.test.ts` contain no
+  `extendedWaitUntil` or timeout literal, so the baseline cannot redden on the change — this is
+  exactly the literal-block coupling that makes PR #292 unmergeable, checked rather than assumed.
+- [ ] 20.4 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+  the raise. Read a red `environment-switch` by naming the step: still at the launch gate after
+  120 s means the app genuinely fails to boot on iOS and the diagnosis in this section is wrong;
+  anywhere past it is a different class diagnosed on its own terms. Android's 14/14 at
+  `8dba4521` is corroboration only, not the accepting signal.
+- [ ] 20.5 Record the cold-start readiness class in the `mobile-e2e` delta: a readiness wait is
+  a bound on the device, not a claim about the app, so it is sized for the slowest observed
+  runner and carries its provenance; widening it is sound only because it is one-directional
+  and cannot produce a false green; and the class is told apart from a true assertion failure
+  by its command record — a handful of commands ending at the launch gate, versus the collision
+  class's many commands against a genuinely-rendered element.
+- [ ] 20.6 Residual, deliberately not changed and recorded so it is diagnosed rather than
+  rediscovered: `environment-switch.yaml`'s **second** `Settings` wait (after `Clear and
+  switch`) stays at `60000`. It follows `Updates.reloadAsync()`
+  (`src/features/environment/data/switch.ts:30`), a JS-runtime restart with the native process
+  already warm — not a `launchApp`, so it is outside the enumerated class. If a future gate dies
+  there, this is the one-line fix and it needs no new diagnosis.

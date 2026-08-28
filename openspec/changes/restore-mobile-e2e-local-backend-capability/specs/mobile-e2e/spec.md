@@ -268,3 +268,61 @@ interaction shared by both platforms, with no per-platform selector or branch.
   expose, rather than by visual text that exists in a screenshot but not in the hierarchy
 - **AND** the interaction remains shared across Android and iOS and retains the following
   application assertion or round-trip proof
+- **AND** where that label is not unique in the hierarchy, the flow disambiguates it per the
+  collision scenario below rather than relying on match order
+
+#### Scenario: A selector matches a second live element
+
+- **WHEN** a flow's text or accessibility-label selector matches more than one element
+  present in the hierarchy at the same moment — as the event-details header action and the
+  native Alert chooser option do, both exposing the byte-identical `Hide this event` from
+  two different i18n keys
+- **THEN** the flow SHALL disambiguate with a relative anchor only the intended element can
+  satisfy: the chooser option is selected `below:` the Alert title `Hide event`, a
+  full-match regex no colliding string satisfies and which the header — drawn above the
+  alert on both platforms — can never sit under
+- **AND** the flow SHALL first wait on an element unique to the disambiguating surface (the
+  chooser's `Hide all events of the same name`), so an alert that never presents fails
+  explicitly at a named step instead of silently re-tapping the first match
+- **AND** the disambiguation SHALL stay cross-platform, with no per-platform selector or
+  branch, and SHALL NOT weaken the round trip the flow proves
+- **AND** the repository selector proof is not expected to catch this class: it resolves ids
+  in source and cannot observe runtime ambiguity, the same limit the below-the-fold scenario
+  records — a colliding selector fails only on a device, and it fails downstream of the tap,
+  at an assertion that names an unrelated element
+
+#### Scenario: A flow command succeeds on one platform and is a no-op on the other
+
+- **WHEN** a shared flow issues a command whose implementation differs per platform — as
+  Maestro's bare `back` does, driving Android's hardware back key but a left-edge swipe on
+  iOS, which reports `COMPLETED` without popping a native-stack screen
+- **THEN** the flow SHALL NOT use that command, and SHALL re-enter a root screen with the
+  shared `stopApp` + `launchApp` restart idiom instead
+- **AND** the repository selector proof SHALL reject a bare `back` in any flow, naming the
+  file and line
+- **AND** unlike the below-the-fold and collision classes, this one IS statically decidable:
+  the command is a literal in the flow, so the proof catches it without a device — and it
+  must, because the platform that passes hides it, and the platform that fails reports it as
+  a timed-out assertion on the screen the flow believed it had already left
+
+#### Scenario: A cold-launch readiness wait is outlasted by a degraded runner
+
+- **WHEN** a flow's first wait after a `launchApp` — a readiness bound on how long the device
+  may take to render, not a claim about application behaviour — expires because the
+  release-config launch was abnormally slow, as in run `33216821519` where `launchApp` alone
+  took 75.8 s and the following 60 s wait then elapsed in full
+- **THEN** the retry budget SHALL NOT be widened to cover it: the attempt is past `launchApp`
+  and its last record is a failed assertion, so classifying it retryable would weaken the
+  assertion guard that runs first — and a first-screen assertion is exactly where a genuine
+  boot regression also surfaces
+- **AND** the readiness wait itself SHALL instead be sized for the slowest observed runner
+  rather than the typical one, at every site where it immediately follows a `launchApp`, so
+  the same degraded session cannot terminate a different flow at the same gate
+- **AND** the site SHALL record the measured launch duration and the run it came from, so a
+  future reader can tell a provenance-backed bound from an arbitrary one
+- **AND** this widening is sound because it is one-directional: a longer wait converts only a
+  slow render into a pass, while an app that never renders the awaited element fails at the
+  raised bound exactly as it did at the original one — it cannot produce a false green
+- **AND** the class is distinguished from a true assertion failure by its command record: a
+  handful of commands ending at the launch gate, against the many recorded commands and
+  genuinely-rendered element of the collision class

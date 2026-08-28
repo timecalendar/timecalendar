@@ -16,9 +16,14 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
+# Cold-start readiness, not an app assertion: a release-config launch on a degraded
+# macOS runner can outlast a 60 s wait. In run 33216821519 this flow's launchApp alone
+# took 75.8 s and the 60 s wait then expired in full, failing here with 4 recorded
+# commands. A launch-gate timeout is classified terminal (it is past launchApp), so the
+# retry budget never applies to it — the wait itself has to cover the slow runner.
 - extendedWaitUntil:
     visible: "Settings"
-    timeout: 60000
+    timeout: 120000
 - tapOn: "Settings"
 - scrollUntilVisible:
     element:
