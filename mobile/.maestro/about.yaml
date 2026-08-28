@@ -10,6 +10,12 @@ appId: fr.samuelprak.timecalendar.dev
     when:
       platform: iOS
     commands:
+      # iOS 26 can re-present the first custom-scheme confirmation after the
+      # initial tap changes SpringBoard's hierarchy. A second optional tap is
+      # inert when the app already opened and dismisses that observed replay.
+      - tapOn:
+          text: "Open"
+          optional: true
       - tapOn:
           text: "Open"
           optional: true

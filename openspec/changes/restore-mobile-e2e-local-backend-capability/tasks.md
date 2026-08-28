@@ -92,3 +92,16 @@ static guard cannot cover this class.
 - [x] 9.1 In `mobile/.maestro/environment-switch.yaml`, replace the `extendedWaitUntil` on `id: "settings-environment"` with `scrollUntilVisible` (`direction: DOWN`, same 60000 ms). Leave the launch, the `TEST ENVIRONMENT · Local` wait, the tap, the `Preproduction` choice, the confirm dialog, and the final banner assertion untouched.
 - [x] 9.2 Apply the same repair to `mobile/.maestro/feedback.yaml`, which selects `settings-feedback` — one row below the `settings-about` that `about.yaml` finds on screen, so it is the next flow to hit this and would cost another full native cycle to discover. **Flag the [TIM-263](/TIM/issues/TIM-263) overlap explicitly in the handoff**: revealing that row is the parent's stated deliverable, and this is a two-line unblock taken here only because leaving it red makes acceptance criterion 6 unreachable on this ticket.
 - [x] 9.3 Confirm the guard still resolves both ids through the new `scrollUntilVisible.element.id` shape (`npx jest e2e/maestro-selectors`), and add the below-the-fold rule to `mobile/e2e/README.md`'s "Add a flow" checklist with the Settings hub as the worked example. It is a device-viewport property, so no repository proof can encode it — the checklist is the only place it can live.
+
+## 10. Dismiss a replayed first iOS deep-link confirmation
+
+Exact-head gate `33176410414` at `e13152ee` reached the first flow's custom-scheme
+confirmation, and Maestro's trace proves its optional `Open` tap hit the system button
+and observed a hierarchy change. The failure artifact then showed the same confirmation
+present again throughout the following 60-second app assertion. The preceding exact-head
+gate proves this interaction normally dismisses once and later deep links see no dialog,
+so this is a bounded iOS 26 replay of the suite's first system confirmation rather than a
+stale app assertion, below-the-fold row, or driver-startup failure.
+
+- [x] 10.1 In `mobile/.maestro/about.yaml`, repeat the iOS `Open` dismissal once as a second optional tap. Keep both taps inside the existing iOS-only system-dialog block; when the first dismissal holds, the second is inert, and no later flow or app assertion changes.
+- [x] 10.2 Run the Maestro selector guard and applicable YAML/format checks, record the terminal gate artifact and prior passing control in the handoff, then push a material exact head for a fresh labeled gate.
