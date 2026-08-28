@@ -35,10 +35,11 @@ NOT be used, and SHALL NOT be cited as precedent for using, a longer query wait
 
 ### Requirement: A platform override in a test is restored before the next test
 
-A test that overrides `Platform.OS` SHALL do so through the shared test-support helper,
-which installs the override before each test in its scope and restores it after, so no
-test observes a platform another test selected. Tests SHALL NOT call
-`jest.replaceProperty(Platform, "OS", …)` directly, and SHALL NOT rely on
+An override of `Platform.OS` SHALL be restored before the next test runs, including when
+the overriding test throws, so no test observes a platform another test selected.
+`usePlatform` is the mechanism for a `describe`-scoped override; a `try`/`finally` that
+restores the captured original is equally conforming. Tests SHALL NOT call
+`jest.replaceProperty(Platform, "OS", …)` inline in an `it`, and SHALL NOT rely on
 `jest.restoreAllMocks()` for the restore, because that would also discard the suite-wide
 native-module spies installed by the `jest/setup-*.ts` files.
 
