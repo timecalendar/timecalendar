@@ -22,6 +22,7 @@ import { NotificationPipelineModule } from "modules/notification-pipeline/notifi
 import { NotificationSubscriptionModule } from "modules/notification-subscription/notification-subscription.module"
 import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 import { ObservabilityLifecycleService } from "config/observability/observability-lifecycle.service"
+import { LivenessController } from "health/liveness.controller"
 
 @Module({
   imports: [
@@ -58,7 +59,7 @@ import { ObservabilityLifecycleService } from "config/observability/observabilit
     NotificationSubscriptionModule,
     FeatureFlagModule,
   ],
-  controllers: [],
+  controllers: [LivenessController],
   providers: [ObservabilityLifecycleService],
   exports: [],
 })

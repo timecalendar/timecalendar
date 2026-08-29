@@ -139,6 +139,9 @@ jobs:
     - name: Generate dummy Firebase service-account key
       run: ./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
 
+    - name: Verify server image runtime lifecycle
+      run: ./ci/test-server-runtime.sh ghcr.io/timecalendar/timecalendar:${{ github.sha }} /tmp/serviceAccountKey.json
+
     # The image's dist/ was built from this same commit (with the swagger CLI
     # plugin applied), so emitting from it reproduces `npm run generate:openapi`.
     - name: Check committed OpenAPI spec matches the server code

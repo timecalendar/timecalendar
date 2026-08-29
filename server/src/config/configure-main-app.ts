@@ -26,7 +26,6 @@ const configureMainApp = (
   // row). Replaces the custom ErrorsInterceptor; same status, richer message
   // (includes the entity name when extractable).
   app.useGlobalFilters(new TypeOrmExceptionFilter())
-  app.enableShutdownHooks()
 }
 
 export default configureMainApp
