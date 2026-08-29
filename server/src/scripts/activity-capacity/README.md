@@ -91,7 +91,7 @@ regressed. Sharing the module makes that a compile error instead.
 ## What the CI test is, and is not
 
 `plan.test.ts` is a **regression tripwire**, not the capacity gate. It seeds a
-bounded corpus (400 calendars / 20,000 logs), `ANALYZE`s, and asserts the planner
+bounded corpus (400 calendars / 12,000 logs), `ANALYZE`s, and asserts the planner
 does not sequentially scan `calendar_log` for a bounded token request. Its job is
 to fail when a later query rewrite loses the index.
 

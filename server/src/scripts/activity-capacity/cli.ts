@@ -49,6 +49,8 @@ const MAX_PAGE_SIZE = 100
 const DEFAULT_SAMPLES = 40
 const CONCURRENCY = 8
 const PAGE_SHAPES: readonly PageShape[] = ["specification", "lateral"]
+const RECENT_WATERMARK_MS = 30 * 86_400_000
+const YEAR_WATERMARK_MS = 365 * 86_400_000
 
 // ---------------------------------------------------------------------------
 // Connection safety
@@ -358,8 +360,8 @@ const measureCohort = async (
     }
   }
 
-  const recentWatermark = new Date(asOf.getTime() - 30 * 86_400_000)
-  const yearWatermark = new Date(asOf.getTime() - 365 * 86_400_000)
+  const recentWatermark = new Date(asOf.getTime() - RECENT_WATERMARK_MS)
+  const yearWatermark = new Date(asOf.getTime() - YEAR_WATERMARK_MS)
   const unreadRecentMs: number[] = []
   const unreadYearMs: number[] = []
 
@@ -513,7 +515,7 @@ const explainCohort = async (
       unreadCountSql,
       unreadCountParams({
         calendarIds,
-        unreadSince: new Date(asOf.getTime() - 30 * 86_400_000),
+        unreadSince: new Date(asOf.getTime() - RECENT_WATERMARK_MS),
         asOf,
       }),
     ),
@@ -522,7 +524,7 @@ const explainCohort = async (
       unreadCountSql,
       unreadCountParams({
         calendarIds,
-        unreadSince: new Date(asOf.getTime() - 365 * 86_400_000),
+        unreadSince: new Date(asOf.getTime() - YEAR_WATERMARK_MS),
         asOf,
       }),
     ),
@@ -635,6 +637,17 @@ const withClient = async <T>(
   }
 }
 
+const collectPlans = async (client: Client) => {
+  const plans: CohortPlans[] = []
+  for (const shape of PAGE_SHAPES) {
+    for (const cohort of ALL_COHORTS) {
+      log(`explaining ${cohort.key} (${shape})`)
+      plans.push(await explainCohort(client, cohort, shape, DEFAULT_PAGE_SIZE))
+    }
+  }
+  return plans
+}
+
 /**
  * One full pass: every cohort, both page shapes, both page sizes, then the
  * plans. Both shapes every time — the whole point of the comparison is that the
@@ -654,15 +667,7 @@ const runPass = async (client: Client, samples: number) => {
     }
   }
 
-  const plans: CohortPlans[] = []
-  for (const shape of PAGE_SHAPES) {
-    for (const cohort of ALL_COHORTS) {
-      log(`explaining ${cohort.key} (${shape})`)
-      plans.push(await explainCohort(client, cohort, shape, DEFAULT_PAGE_SIZE))
-    }
-  }
-
-  return { cohorts, plans }
+  return { cohorts, plans: await collectPlans(client) }
 }
 
 const main = async () => {
@@ -715,16 +720,7 @@ const main = async () => {
     const corpus = await corpusSize(client)
 
     if (options.command === "explain") {
-      const plans: CohortPlans[] = []
-      for (const shape of PAGE_SHAPES) {
-        for (const cohort of ALL_COHORTS) {
-          log(`explaining ${cohort.key} (${shape})`)
-          plans.push(
-            await explainCohort(client, cohort, shape, DEFAULT_PAGE_SIZE),
-          )
-        }
-      }
-      return { corpus, plans }
+      return { corpus, plans: await collectPlans(client) }
     }
 
     return { corpus, ...(await runPass(client, options.samples)) }

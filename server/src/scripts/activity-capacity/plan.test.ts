@@ -11,6 +11,7 @@ import {
   calendarLogPageParams,
   calendarLogPageSql,
   pageSqlForShape,
+  resolveCalendarsByTokenSql,
   unreadCountParams,
   unreadCountSql,
 } from "./queries"
@@ -195,8 +196,7 @@ describe("activity-capacity plan tripwire", () => {
 
   it("resolves tokens through the calendar token index", async () => {
     const { rows } = await runner.query<PlanRow>(
-      `EXPLAIN (ANALYZE, BUFFERS) SELECT "id", "name" FROM "calendar"
-       WHERE "token" = ANY($1) AND "deletedAt" IS NULL`,
+      `EXPLAIN (ANALYZE, BUFFERS) ${resolveCalendarsByTokenSql}`,
       [cohortTokens(CI_COHORT)],
     )
     const plan = rows.map((row) => row["QUERY PLAN"]).join("\n")
