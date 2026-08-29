@@ -287,6 +287,43 @@ describe("CalendarLogRepository search", () => {
       expect(count).toBe(1)
     })
 
+    // countSince uses COUNT(*), not COUNT(DISTINCT id). That is only correct
+    // because the calendar join is many-to-one; this asserts the join really
+    // cannot multiply a log row across several calendars and tokens.
+    it("counts each log once across many calendars and tokens", async () => {
+      const calendars = await Promise.all([
+        calendarFactory().create(),
+        calendarFactory().create(),
+        calendarFactory().create(),
+      ])
+      for (const calendar of calendars) {
+        await createLogAt(calendar, "2026-08-01 11:00:00")
+        await createLogAt(calendar, "2026-08-01 11:30:00")
+      }
+
+      const count = await repository.countSince({
+        tokens: calendars.map((c) => c.token),
+        unreadSince: new Date("2026-08-01T10:00:00.000Z"),
+        asOfText: "2026-08-01 12:00:00",
+      })
+
+      expect(count).toBe(6)
+    })
+
+    it("returns a number, not a bigint string", async () => {
+      const calendar = await calendarFactory().create()
+      await createLogAt(calendar, "2026-08-01 11:00:00")
+
+      const count = await repository.countSince({
+        tokens: [calendar.token],
+        unreadSince: new Date("2026-08-01T10:00:00.000Z"),
+        asOfText: "2026-08-01 12:00:00",
+      })
+
+      expect(typeof count).toBe("number")
+      expect(count).toBe(1)
+    })
+
     it("excludes soft-deleted calendars", async () => {
       const removed = await calendarFactory().create()
       await createLogAt(removed, "2026-08-01 11:00:00")
