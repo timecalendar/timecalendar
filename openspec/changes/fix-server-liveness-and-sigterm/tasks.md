@@ -7,6 +7,7 @@
 ## 2. Make the container signal-safe
 
 - [x] 2.1 Replace the shell-form command in `server/Dockerfile` with direct exec form `CMD ["node", "dist/main"]`; do not use an npm or shell wrapper, and verify `docker image inspect` reports that exact command array.
+- [x] 2.2 Configure Nest shutdown hooks to exit explicitly after lifecycle cleanup, because PID 1 ignores the default-action `SIGTERM` that Nest otherwise re-sends to itself.
 
 ## 3. Add built-image CI proof
 
@@ -22,5 +23,5 @@
 ## 5. Local green and scope audit
 
 - [x] 5.1 Run the focused liveness controller test, `npm run build`, formatting check, and server lint; record the exact commands and results in the PR and handoff.
-- [ ] 5.2 Build the server image locally and run the committed container-runtime proof against it, confirming the endpoint serves, image `Cmd` is exec form, PID 1 is Node, and `SIGTERM` does not become exit 137.
-- [ ] 5.3 Run `openspec validate fix-server-liveness-and-sigterm` and inspect the final diff; confirm there are no changes under `k8s/`, `terraform/`, `server/src/migrations/`, `mobile/`, or `app/`, and explicitly flag `server/Dockerfile`, `.github/workflows/ci-build-deploy.yml`, and the unchanged OpenAPI/generated-client surfaces in every downstream handoff. Human/device QA is N/A.
+- [x] 5.2 Build the server image locally and run the committed container-runtime proof against it, confirming the endpoint serves, image `Cmd` is exec form, PID 1 is Node, and `SIGTERM` does not become exit 137.
+- [x] 5.3 Run `openspec validate fix-server-liveness-and-sigterm` and inspect the final diff; confirm there are no changes under `k8s/`, `terraform/`, `server/src/migrations/`, `mobile/`, or `app/`, and explicitly flag `server/Dockerfile`, `.github/workflows/ci-build-deploy.yml`, and the unchanged OpenAPI/generated-client surfaces in every downstream handoff. Human/device QA is N/A.

@@ -44,11 +44,13 @@ Alternative: delete `/health/live` from the generated document beside `/health`.
 
 ## Decision 3 — Invoke Node directly in exec form
 
-Set the image command to `CMD ["node", "dist/main"]`. This is behaviorally equivalent to the existing `start:prod` script but avoids both the shell and `npm`, so Node is PID 1 and receives Docker/Kubernetes signals directly. The existing `app.enableShutdownHooks()` wiring remains unchanged.
+Set the image command to `CMD ["node", "dist/main"]`. This is behaviorally equivalent to the existing `start:prod` script but avoids both the shell and `npm`, so Node is PID 1 and receives Docker/Kubernetes signals directly. Configure the existing Nest shutdown-hook registration with `useProcessExit: true`: once its lifecycle hooks finish, Nest otherwise removes its signal listener and re-sends `SIGTERM`, whose default action Linux ignores for namespace PID 1.
 
 Alternative: `CMD ["npm", "run", "start:prod"]`. Rejected because it makes `npm`, not Node, PID 1 and therefore does not satisfy the signal-delivery contract.
 
 Alternative: add an init wrapper such as `tini`. Rejected because direct exec already meets the single-process image's needs and a new runtime dependency is unnecessary.
+
+Alternative: rely on Nest's default signal re-send after lifecycle hooks. Rejected because Linux gives PID 1 special signal semantics and ignores default-action `SIGTERM`; Nest must explicitly exit after its hooks complete.
 
 ## Decision 4 — CI validates the built artifact, not only Dockerfile text
 

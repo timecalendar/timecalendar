@@ -19,7 +19,7 @@ The server SHALL exclude `GET /health/live` from Swagger generation and SHALL co
 - **THEN** neither `/health` nor `/health/live` appears in the document and the committed `openapi/openapi.json` remains byte-identical
 
 ### Requirement: Node owns the container process lifecycle
-The production server image SHALL declare an exec-form command that invokes `node dist/main` directly, making Node PID 1 so Docker and Kubernetes termination signals reach the process and its registered Nest shutdown hooks.
+The production server image SHALL declare an exec-form command that invokes `node dist/main` directly, making Node PID 1 so Docker and Kubernetes termination signals reach the process and its registered Nest shutdown hooks. After the lifecycle hooks complete, Nest SHALL exit the process explicitly rather than relying on PID 1's ignored default `SIGTERM` disposition.
 
 #### Scenario: Image command is inspected
 - **WHEN** the built server image configuration is inspected
