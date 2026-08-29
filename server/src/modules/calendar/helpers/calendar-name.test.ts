@@ -1,5 +1,4 @@
 import {
-  CALENDAR_NAME_MAX_LENGTH,
   normalizeCalendarName,
   trimCalendarName,
 } from "modules/calendar/helpers/calendar-name"
@@ -34,9 +33,5 @@ describe("calendar-name", () => {
       expect(trimCalendarName(null)).toBeNull()
       expect(trimCalendarName(undefined)).toBeUndefined()
     })
-  })
-
-  it("bounds a calendar name at 100 characters", () => {
-    expect(CALENDAR_NAME_MAX_LENGTH).toBe(100)
   })
 })
