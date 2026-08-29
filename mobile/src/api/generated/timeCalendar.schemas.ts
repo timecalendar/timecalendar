@@ -52,6 +52,15 @@ export interface CalendarForPublic {
   createdAt: string
 }
 
+export interface UpdateCalendarDto {
+  /**
+   * The new calendar name. Required, but an empty result after trimming is a
+   * valid cleared name.
+   * @maxLength 100
+   */
+  name: string
+}
+
 export interface OrleansGetIcalUrlFromStudentNumberDto {
   studentNumber: string
 }
@@ -186,6 +195,7 @@ export interface CreateCalendarDto {
   url: string
   schoolId?: string
   schoolName?: string
+  /** @maxLength 100 */
   name?: string
   /** @nullable */
   customData: CalendarCustomData | null
@@ -279,6 +289,7 @@ export interface SendMessageDto {
   schoolId?: string
   schoolName?: string
   gradeName?: string
+  calendarName?: string
   deviceInfo?: string
   calendarUrl?: string
 }

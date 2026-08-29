@@ -88,27 +88,27 @@
 
 ## 5. Regenerate the contract and the mobile client
 
-- [ ] 5.1 Regenerate the committed spec from `server/`:
+- [x] 5.1 Regenerate the committed spec from `server/`:
       `DATABASE_URL=… REDIS_URL=… npm run generate:openapi` (it builds first — the swagger CLI
       plugin only injects schemas at compile time). **Never hand-edit `openapi/openapi.json`.**
-- [ ] 5.2 Inspect the spec diff: it must add the `/v1/calendars/{token}` `patch` operation, an
+- [x] 5.2 Inspect the spec diff: it must add the `/v1/calendars/{token}` `patch` operation, an
       `UpdateCalendarDto` schema with `maxLength: 100`, `calendarName` on `SendMessageDto`, and
       `maxLength` on `CreateCalendarDto.name` — and change nothing else. An unrelated diff hunk
       means the generator ran against the wrong build or environment; fix that, don't commit it.
-- [ ] 5.3 Regenerate the RN client from `mobile/`: `npm run generate`. Confirm the diff is confined
+- [x] 5.3 Regenerate the RN client from `mobile/`: `npm run generate`. Confirm the diff is confined
       to `mobile/src/api/generated/` (the new `Calendars` PATCH hook + the new/updated models) and
       that `mobile/src/api/mutator.ts` needs no change.
-- [ ] 5.4 `cd mobile && npx tsc --noEmit` — the regenerated client must typecheck with no consumer
+- [x] 5.4 `cd mobile && npx tsc --noEmit` — the regenerated client must typecheck with no consumer
       changes. Do **not** add a consumer: Tickets 2 and 3 own that and must not regenerate this
       output.
-- [ ] 5.5 Prove no Flutter file changed: `git status --porcelain app/` must be empty, and
+- [x] 5.5 Prove no Flutter file changed: `git status --porcelain app/` must be empty, and
       `git diff --name-only origin/main...HEAD -- app/` must print nothing.
 
 ## 6. Gates green locally
 
 - [ ] 6.1 `cd server && npm test` (or the targeted suites for calendar, calendar-sync and contact
       first, then the full run) — all green with the compose dependencies up.
-- [ ] 6.2 `cd server && npm run lint` and the repo's format check; `cd mobile && npm run lint`.
+- [x] 6.2 `cd server && npm run lint` and the repo's format check; `cd mobile && npm run lint`.
 - [ ] 6.3 Re-run `npm run generate:openapi` and `npm run generate` once more after all edits and
       confirm `git diff --exit-code openapi/openapi.json mobile/src/api/generated` is clean — this
       is the local reproduction of both CI drift gates (`ci-build-deploy.yml` for the spec,
@@ -116,14 +116,14 @@
 
 ## 7. Documentation
 
-- [ ] 7.1 Update `docs/mobile/architecture-book/data.md` "Committed-spec seam": record that the
+- [x] 7.1 Update `docs/mobile/architecture-book/data.md` "Committed-spec seam": record that the
       contract now carries exactly one path-level `/v1` route (`PATCH /v1/calendars/{token}`), that
       NestJS global versioning is deliberately not enabled, and that every other calendar route
       stays unversioned. Keep it to the contract fact — the token-shared-rename and
       name-convergence ADR belongs to the epic's Ticket 4, not here.
-- [ ] 7.2 Append a dated entry to `docs/mobile/architecture-book/architecture-changelog.md` for
+- [x] 7.2 Append a dated entry to `docs/mobile/architecture-book/architecture-changelog.md` for
       that seam note (migration-approach §7).
-- [ ] 7.3 Do **not** add an ADR in this change: Ticket 4 owns the architecture decisions record for
+- [x] 7.3 Do **not** add an ADR in this change: Ticket 4 owns the architecture decisions record for
       this epic, and a speculative ADR number here would collide with it.
 
 ## 8. Definition of Done

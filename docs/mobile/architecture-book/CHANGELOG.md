@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-08-29
+
+- Recorded that the committed spec now carries exactly one path-level `/v1` route,
+  `PATCH /v1/calendars/{token}` (token-authorized calendar rename), served by a second controller
+  rather than by NestJS global versioning, which stays disabled so the existing unversioned
+  calendar read, create and sync routes keep serving Flutter release builds. The epic's
+  architecture decisions record is owned by a later ticket; this entry states the contract fact
+  only (data.md).
+
 ## 2026-08-28
 
 - Isolated four mobile Jest suites from declaration order by awaiting RNTL 14 async helpers and

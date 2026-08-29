@@ -58,6 +58,55 @@
         ]
       }
     },
+    "/v1/calendars/{token}": {
+      "patch": {
+        "description": "Possession of the calendar token is the only authorization: there is no owner, the rename is visible to every holder of that token, and the last write wins.",
+        "operationId": "CalendarV1Controller_renameCalendar",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "The calendar token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarForPublic"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The name is missing, not a string, or too long once trimmed"
+          },
+          "404": {
+            "description": "No calendar matches this token"
+          }
+        },
+        "summary": "Rename a calendar",
+        "tags": [
+          "Calendars"
+        ]
+      }
+    },
     "/schools/univ-orleans/students": {
       "post": {
         "operationId": "UnivOrleansController_getIcalUrlFromStudentNumber",
@@ -541,6 +590,19 @@
           "createdAt"
         ]
       },
+      "UpdateCalendarDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The new calendar name. Required, but an empty result after trimming is a\nvalid cleared name.",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "OrleansGetIcalUrlFromStudentNumberDto": {
         "type": "object",
         "properties": {
@@ -970,7 +1032,8 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100
           },
           "customData": {
             "nullable": true,
@@ -1264,6 +1327,9 @@
             "type": "string"
           },
           "gradeName": {
+            "type": "string"
+          },
+          "calendarName": {
             "type": "string"
           },
           "deviceInfo": {
