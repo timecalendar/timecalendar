@@ -253,10 +253,19 @@ asserts no token, cursor, or event title appears in any emitted line.
   parameterized SQL, and a dedicated test that inserts rows sharing a millisecond and asserts every
   row is returned exactly once across the full page chain.
 - **The `timestamp without time zone` column assumes the DB session and the Node process share a
-  timezone.** They do today — the Compose Postgres reports `TimeZone = Etc/UTC` (probed above) and
-  the server container runs UTC — and the shipped prune job already relies on it. This change does
-  not widen the assumption, but a task records it so it is a known invariant rather than an
-  accident.
+  timezone.** This change does not widen the assumption — the shipped prune job already relies on
+  it — but it is now a recorded invariant rather than an accident. Verified during apply
+  (task 7.5) at all three layers:
+
+  | Layer | Setting | How verified |
+  | --- | --- | --- |
+  | Postgres session | `TimeZone = Etc/UTC`; `now()::timestamp` = `2026-08-29 19:13:06.604691`, `now()` = the same value at `+00` | `SHOW TimeZone` against the Compose container |
+  | Server container | `node:24` with no `TZ` override in `server/Dockerfile` and none in the chart env, so the image default UTC applies | Dockerfile + k8s env |
+  | Jest | `process.env.TZ = "UTC"` | `server/src/global-setup.ts` |
+
+  `CalendarLogRepository.getSnapshotTime` carries the same note at the call site. A future
+  deployment setting a non-UTC `TZ` on the server container is the one change that would break
+  this: `asOf` and `unreadSince` would then be compared against `createdAt` in the wrong frame.
 - **Cross-calendar merge-ordering at 100 tokens is the plan risk.** Postgres may prefer a bitmap
   scan plus a sort over merging 100 index scans. That is exactly what D7's `EXPLAIN` evidence
   measures, and it is the one finding that would justify a composite index.
