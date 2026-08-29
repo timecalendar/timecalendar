@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, lt, notInArray } from "drizzle-orm"
+import { asc, desc, eq, lt, notInArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { openDatabaseSync } from "expo-sqlite"
 
