@@ -52,7 +52,7 @@
   QA is N/A because this change is backend/infrastructure-only and has a deterministic
   rendered-manifest proof.
 
-## 6. Scope audit, merge, and production verification
+## 6. Scope audit
 
 - [x] 6.1 Inspect the implementation diff and confirm it changes only
   `k8s/timecalendar/templates/server-deployment.yaml` and
@@ -60,10 +60,16 @@
   `k8s/` as the deploy-sensitive surface and confirm there are no changes to server code,
   `server/Dockerfile`, OpenAPI/generated clients, migrations, chart values, probe timing,
   Terraform, workflows, mobile native/store config, secrets, or legacy Flutter.
-- [ ] 6.2 Immediately before autonomous merge, re-read the PR state/comments and the
+
+## Reviewer merge and rollout closeout
+
+These are issue-level Reviewer obligations tracked on [TIM-361](/TIM/issues/TIM-361), not
+OpenSpec implementation tasks or archive prerequisites:
+
+- Immediately before autonomous merge, re-read the PR state/comments and the
   [TIM-360](/TIM/issues/TIM-360) authorization evidence, then merge without performing a
   manual apply, ArgoCD sync, rollout restart, or other live write.
-- [ ] 6.3 After automated ArgoCD sync, collect read-only production evidence that the
+- After automated ArgoCD sync, collect read-only production evidence that the
   Deployment has liveness `/health/live` and readiness `/health`, all three replacement
   pods are Ready, both routes return HTTP 200, Node remains PID 1, and restart counts are
   zero; record the rollout result on [TIM-361](/TIM/issues/TIM-361) before closing it.
