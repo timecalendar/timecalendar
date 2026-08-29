@@ -28,7 +28,11 @@
     "db:init": "npm run app:tsnode ./src/scripts/seed-database.ts -- --drop",
     "db:migrate": "npm run typeorm migration:run",
     "db:generate": "npm run typeorm -- migration:generate ./src/migrations/migration && eslint src/migrations/* --fix",
-    "profile:calendar-sync": "npm run build && node --cpu-prof --cpu-prof-dir=\"${PROFILE_OUTPUT_DIR:-${TMPDIR:-/tmp}}\" dist/scripts/profile-calendar-sync.js verify"
+    "profile:calendar-sync": "npm run build && node --cpu-prof --cpu-prof-dir=\"${PROFILE_OUTPUT_DIR:-${TMPDIR:-/tmp}}\" dist/scripts/profile-calendar-sync.js verify",
+    "activity:capacity:seed": "npm run app:tsnode ./src/scripts/activity-capacity/cli.ts -- seed",
+    "activity:capacity:explain": "npm run app:tsnode ./src/scripts/activity-capacity/cli.ts -- explain",
+    "activity:capacity:measure": "npm run app:tsnode ./src/scripts/activity-capacity/cli.ts -- measure",
+    "activity:capacity:compare": "npm run app:tsnode ./src/scripts/activity-capacity/cli.ts -- compare"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

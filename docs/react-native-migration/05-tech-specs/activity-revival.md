@@ -439,6 +439,11 @@ Adding that control remains a follow-up only if production evidence shows a need
 
 ## Observability and capacity
 
+> The budgets below are the *initial* ones. They have since been measured and frozen in
+> [`activity-capacity-gate.md`](./activity-capacity-gate.md), which also records the production
+> volume buckets, the fixture definitions, the query-plan evidence, the index verdict, and the
+> default-page-size verdict. Where the two differ, the gate document wins and states why.
+
 Automatic HTTP server spans and request metrics provide route status and latency. The endpoint may
 add bounded measurements for page-row count, unread-count duration, and cursor/first-page outcome,
 but never labels derived from tokens, calendars, users, events, or cursors.
