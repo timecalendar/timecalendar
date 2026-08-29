@@ -106,8 +106,9 @@
 
 **Confirmations the plan asked for.**
 
-- **Task 3.4 — one reset list.** Confirmed: `src/db/switch.ts` calls `resetBackendDatabase()`,
-  which calls `resetBackendDatabaseWith`. There is exactly one table list, so the
+- **Task 3.4 — one reset list.** Confirmed: `src/features/environment/data/switch.ts` imports
+  `resetBackendDatabase` from `@/db` and wires it as its `resetDatabase` participant; that calls
+  `resetBackendDatabaseWith`. There is exactly one table list, so the
   environment-switch path needed no separate change. `reset.test.ts` now also asserts every
   seeded table reads back empty, so the Activity tables are proven cleared, not just proven
   passed to `delete`.
