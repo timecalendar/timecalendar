@@ -611,8 +611,15 @@ export const seedFixtures = async (
   // and a table carrying a million dead tuples costs a sequential scan far too
   // high, which flatters exactly the comparison this harness exists to make.
   // (`VACUUM` cannot run inside a transaction, so the CI tripwire turns it off.)
-  progress(withVacuum ? "VACUUM ANALYZE" : "ANALYZE")
-  const analyze = withVacuum ? "VACUUM ANALYZE" : "ANALYZE"
+  //
+  // `PARALLEL 0` is not a performance choice. Parallel index vacuuming allocates
+  // a dynamic shared-memory segment sized from `maintenance_work_mem`, and the
+  // repository's Compose Postgres runs with Docker's default 64 MB `/dev/shm`,
+  // so the parallel path dies with `could not resize shared memory segment …
+  // No space left on device`. Vacuuming single-threaded costs a fixture seeder
+  // nothing and means the harness runs on an unmodified dev machine.
+  const analyze = withVacuum ? "VACUUM (PARALLEL 0, ANALYZE)" : "ANALYZE"
+  progress(analyze)
   await client.query(`${analyze} "calendar_log"`)
   await client.query(`${analyze} "calendar"`)
 
