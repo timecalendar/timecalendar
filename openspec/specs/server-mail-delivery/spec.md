@@ -1,7 +1,10 @@
 # server-mail-delivery Specification
 
 ## Purpose
-TBD - created by archiving change boot-server-without-smtp-url. Update Purpose after archive.
+
+Defines mail delivery behavior so SMTP configuration is optional at boot, disabled mail is
+a safe logged no-op, and configured delivery retains its existing behavior.
+
 ## Requirements
 ### Requirement: Mail configuration never blocks application boot
 The server SHALL construct every module in its application graph without reading a usable
@@ -68,4 +71,3 @@ only where mail is genuinely expected to be delivered or captured.
 - **WHEN** the e2e compose overlay starts the server service
 - **THEN** its environment declares no `SMTP_URL`, and the service still reaches its
   healthy state through the `/health` healthcheck
-
