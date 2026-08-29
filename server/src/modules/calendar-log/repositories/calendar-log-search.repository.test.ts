@@ -1,8 +1,10 @@
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
-import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
-import { calendarLogFactory } from "modules/calendar-log/factories/calendar-log.factory"
+import {
+  calendarLogFactory,
+  createCalendarLogAt,
+} from "modules/calendar-log/factories/calendar-log.factory"
 import { CalendarLogCursor } from "modules/calendar-log/models/calendar-log-cursor"
 import {
   CalendarLogPageRow,
@@ -21,20 +23,6 @@ describe("CalendarLogRepository search", () => {
     repository = app.get(CalendarLogRepository)
     dataSource = app.get(DataSource)
   })
-
-  /**
-   * Writes an explicit `createdAt`. `DEFAULT now()` cannot reliably reproduce a
-   * timestamp collision — or a sub-millisecond gap — so the ordering and
-   * precision tests below set the column directly.
-   */
-  const createLogAt = async (calendar: Calendar, createdAt: string) => {
-    const log = await calendarLogFactory().calendar(calendar.id).create()
-    await dataSource.query(
-      `UPDATE "calendar_log" SET "createdAt" = CAST($1 AS timestamp) WHERE "id" = $2`,
-      [createdAt, log.id],
-    )
-    return log.id
-  }
 
   const snapshot = () => repository.getSnapshotTime()
 
@@ -94,11 +82,11 @@ describe("CalendarLogRepository search", () => {
       ])
 
       // Interleaved across three calendars.
-      const first = await createLogAt(a, "2026-08-01 10:00:05")
-      const second = await createLogAt(b, "2026-08-01 10:00:04")
-      const third = await createLogAt(c, "2026-08-01 10:00:03")
-      const fourth = await createLogAt(a, "2026-08-01 10:00:02")
-      const fifth = await createLogAt(b, "2026-08-01 10:00:01")
+      const first = await createCalendarLogAt(a, "2026-08-01 10:00:05")
+      const second = await createCalendarLogAt(b, "2026-08-01 10:00:04")
+      const third = await createCalendarLogAt(c, "2026-08-01 10:00:03")
+      const fourth = await createCalendarLogAt(a, "2026-08-01 10:00:02")
+      const fifth = await createCalendarLogAt(b, "2026-08-01 10:00:01")
 
       const { asOfText } = await snapshot()
       const rows = await repository.searchPage({
@@ -115,11 +103,11 @@ describe("CalendarLogRepository search", () => {
       const calendar = await calendarFactory().create()
       const shared = "2026-08-01 10:00:00.500000"
       const ids = [
-        await createLogAt(calendar, shared),
-        await createLogAt(calendar, shared),
-        await createLogAt(calendar, shared),
-        await createLogAt(calendar, shared),
-        await createLogAt(calendar, shared),
+        await createCalendarLogAt(calendar, shared),
+        await createCalendarLogAt(calendar, shared),
+        await createCalendarLogAt(calendar, shared),
+        await createCalendarLogAt(calendar, shared),
+        await createCalendarLogAt(calendar, shared),
       ]
 
       const { asOfText } = await snapshot()
@@ -137,10 +125,10 @@ describe("CalendarLogRepository search", () => {
     it("returns every row exactly once when timestamps differ only below millisecond precision", async () => {
       const calendar = await calendarFactory().create()
       const ids = [
-        await createLogAt(calendar, "2026-08-01 10:00:25.641000"),
-        await createLogAt(calendar, "2026-08-01 10:00:25.641234"),
-        await createLogAt(calendar, "2026-08-01 10:00:25.641567"),
-        await createLogAt(calendar, "2026-08-01 10:00:25.641999"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:25.641000"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:25.641234"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:25.641567"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:25.641999"),
       ]
 
       const { asOfText } = await snapshot()
@@ -153,7 +141,7 @@ describe("CalendarLogRepository search", () => {
 
     it("exposes the database's full-precision createdAt text", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 10:00:25.641234")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:25.641234")
 
       const { asOfText } = await snapshot()
       const [row] = await repository.searchPage({
@@ -171,9 +159,9 @@ describe("CalendarLogRepository search", () => {
     it("excludes rows written after the snapshot from every page", async () => {
       const calendar = await calendarFactory().create()
       const before = [
-        await createLogAt(calendar, "2026-08-01 10:00:03"),
-        await createLogAt(calendar, "2026-08-01 10:00:02"),
-        await createLogAt(calendar, "2026-08-01 10:00:01"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:03"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:02"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:01"),
       ]
 
       const { asOfText } = await snapshot()
@@ -190,8 +178,8 @@ describe("CalendarLogRepository search", () => {
     it("excludes logs belonging to a soft-deleted calendar", async () => {
       const live = await calendarFactory().create()
       const removed = await calendarFactory().create()
-      const liveLog = await createLogAt(live, "2026-08-01 10:00:02")
-      await createLogAt(removed, "2026-08-01 10:00:01")
+      const liveLog = await createCalendarLogAt(live, "2026-08-01 10:00:02")
+      await createCalendarLogAt(removed, "2026-08-01 10:00:01")
 
       await dataSource.query(
         `UPDATE "calendar" SET "deletedAt" = now() WHERE "id" = $1`,
@@ -224,7 +212,7 @@ describe("CalendarLogRepository search", () => {
 
     it("returns only the known tokens' rows when unknown ones are mixed in", async () => {
       const calendar = await calendarFactory().create()
-      const known = await createLogAt(calendar, "2026-08-01 10:00:01")
+      const known = await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const { asOfText } = await snapshot()
       const rows = await repository.searchPage({
@@ -239,7 +227,7 @@ describe("CalendarLogRepository search", () => {
 
     it("hydrates the calendar relation", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 10:00:01")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const { asOfText } = await snapshot()
       const [row] = await repository.searchPage({
@@ -257,9 +245,9 @@ describe("CalendarLogRepository search", () => {
   describe("countSince", () => {
     it("counts only rows after the watermark and at or before the snapshot", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 09:00:00")
-      await createLogAt(calendar, "2026-08-01 11:00:00")
-      await createLogAt(calendar, "2026-08-01 12:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 09:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 11:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 12:00:00")
 
       const asOfText = "2026-08-01 11:30:00"
       const count = await repository.countSince({
@@ -275,8 +263,8 @@ describe("CalendarLogRepository search", () => {
     it("respects token scope", async () => {
       const mine = await calendarFactory().create()
       const other = await calendarFactory().create()
-      await createLogAt(mine, "2026-08-01 11:00:00")
-      await createLogAt(other, "2026-08-01 11:00:00")
+      await createCalendarLogAt(mine, "2026-08-01 11:00:00")
+      await createCalendarLogAt(other, "2026-08-01 11:00:00")
 
       const count = await repository.countSince({
         tokens: [mine.token],
@@ -297,8 +285,8 @@ describe("CalendarLogRepository search", () => {
         calendarFactory().create(),
       ])
       for (const calendar of calendars) {
-        await createLogAt(calendar, "2026-08-01 11:00:00")
-        await createLogAt(calendar, "2026-08-01 11:30:00")
+        await createCalendarLogAt(calendar, "2026-08-01 11:00:00")
+        await createCalendarLogAt(calendar, "2026-08-01 11:30:00")
       }
 
       const count = await repository.countSince({
@@ -312,7 +300,7 @@ describe("CalendarLogRepository search", () => {
 
     it("returns a number, not a bigint string", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 11:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 11:00:00")
 
       const count = await repository.countSince({
         tokens: [calendar.token],
@@ -326,7 +314,7 @@ describe("CalendarLogRepository search", () => {
 
     it("excludes soft-deleted calendars", async () => {
       const removed = await calendarFactory().create()
-      await createLogAt(removed, "2026-08-01 11:00:00")
+      await createCalendarLogAt(removed, "2026-08-01 11:00:00")
       await dataSource.query(
         `UPDATE "calendar" SET "deletedAt" = now() WHERE "id" = $1`,
         [removed.id],

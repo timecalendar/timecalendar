@@ -77,6 +77,8 @@ export class CalendarLogService {
 
     const hasMore = rows.length > payload.limit
     const pageRows = hasMore ? rows.slice(0, payload.limit) : rows
+    // `hasMore` implies a full page, and `limit` is at least 1, so this is
+    // defined wherever it is read below.
     const last = pageRows[pageRows.length - 1]
 
     const unreadCount = await this.countUnread(payload, cursor, asOfText)
@@ -86,14 +88,13 @@ export class CalendarLogService {
 
     return {
       items: pageRows.map((row) => this.mapper.toCalendarLogV1(row.log)),
-      nextCursor:
-        hasMore && last
-          ? encodeCursor({
-              asOfText,
-              createdAtText: last.createdAtText,
-              id: last.log.id,
-            })
-          : null,
+      nextCursor: hasMore
+        ? encodeCursor({
+            asOfText,
+            createdAtText: last.createdAtText,
+            id: last.log.id,
+          })
+        : null,
       asOf: timestampTextToDate(asOfText),
       unreadCount,
     }

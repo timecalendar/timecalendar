@@ -2,11 +2,12 @@ import { Logger } from "@nestjs/common"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
-import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
-import { calendarLogFactory } from "modules/calendar-log/factories/calendar-log.factory"
+import {
+  calendarLogFactory,
+  createCalendarLogAt,
+} from "modules/calendar-log/factories/calendar-log.factory"
 import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
-import { DataSource } from "typeorm"
 import createTestApp from "test-utils/create-test-app"
 
 const SEARCH = "/v1/calendar-logs/search"
@@ -14,45 +15,34 @@ const SEARCH = "/v1/calendar-logs/search"
 const encodePayload = (payload: unknown) =>
   Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")
 
+/** The item ids of a search response body, in response order. */
+const itemIds = (body: { items: { id: string }[] }) =>
+  body.items.map((item) => item.id)
+
 describe("CalendarLogV1Controller", () => {
   let app: NestExpressApplication
   let repository: CalendarLogRepository
-  let dataSource: DataSource
 
   beforeAll(async () => {
     app = await createTestApp({ imports: [CalendarLogModule] })
     repository = app.get(CalendarLogRepository)
-    dataSource = app.get(DataSource)
   })
 
   const search = (body: object) => request(app).post(SEARCH).send(body)
 
-  /** Explicit `createdAt`, so ordering assertions do not race the clock. */
-  const createLogAt = async (calendar: Calendar, createdAt: string) => {
-    const log = await calendarLogFactory().calendar(calendar.id).create()
-    await dataSource.query(
-      `UPDATE "calendar_log" SET "createdAt" = CAST($1 AS timestamp) WHERE "id" = $2`,
-      [createdAt, log.id],
-    )
-    return log.id
-  }
-
   describe("paging", () => {
     it("returns the newest page with a cursor when more rows exist", async () => {
       const calendar = await calendarFactory().create()
-      const newest = await createLogAt(calendar, "2026-08-01 10:00:03")
-      const middle = await createLogAt(calendar, "2026-08-01 10:00:02")
-      await createLogAt(calendar, "2026-08-01 10:00:01")
+      const newest = await createCalendarLogAt(calendar, "2026-08-01 10:00:03")
+      const middle = await createCalendarLogAt(calendar, "2026-08-01 10:00:02")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const { body } = await search({
         tokens: [calendar.token],
         limit: 2,
       }).expect(200)
 
-      expect(body.items.map((item: { id: string }) => item.id)).toEqual([
-        newest,
-        middle,
-      ])
+      expect(itemIds(body)).toEqual([newest, middle])
       expect(body.nextCursor).toEqual(expect.any(String))
       expect(body.asOf).toEqual(expect.any(String))
     })
@@ -60,9 +50,9 @@ describe("CalendarLogV1Controller", () => {
     it("continues from a cursor and ends with a null cursor", async () => {
       const calendar = await calendarFactory().create()
       const ids = [
-        await createLogAt(calendar, "2026-08-01 10:00:03"),
-        await createLogAt(calendar, "2026-08-01 10:00:02"),
-        await createLogAt(calendar, "2026-08-01 10:00:01"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:03"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:02"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:01"),
       ]
 
       const first = await search({ tokens: [calendar.token], limit: 2 }).expect(
@@ -75,9 +65,7 @@ describe("CalendarLogV1Controller", () => {
         cursor: first.body.nextCursor,
       }).expect(200)
 
-      expect(second.body.items.map((i: { id: string }) => i.id)).toEqual([
-        ids[2],
-      ])
+      expect(itemIds(second.body)).toEqual([ids[2]])
       expect(second.body.nextCursor).toBeNull()
       // The following page stays inside the first page's snapshot.
       expect(second.body.asOf).toBe(first.body.asOf)
@@ -85,7 +73,7 @@ describe("CalendarLogV1Controller", () => {
 
     it("returns a null cursor when the whole result fits in one page", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 10:00:01")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const { body } = await search({
         tokens: [calendar.token],
@@ -99,17 +87,13 @@ describe("CalendarLogV1Controller", () => {
     it("orders strictly by createdAt DESC across calendars", async () => {
       const a = await calendarFactory().create()
       const b = await calendarFactory().create()
-      const first = await createLogAt(a, "2026-08-01 10:00:03")
-      const second = await createLogAt(b, "2026-08-01 10:00:02")
-      const third = await createLogAt(a, "2026-08-01 10:00:01")
+      const first = await createCalendarLogAt(a, "2026-08-01 10:00:03")
+      const second = await createCalendarLogAt(b, "2026-08-01 10:00:02")
+      const third = await createCalendarLogAt(a, "2026-08-01 10:00:01")
 
       const { body } = await search({ tokens: [a.token, b.token] }).expect(200)
 
-      expect(body.items.map((i: { id: string }) => i.id)).toEqual([
-        first,
-        second,
-        third,
-      ])
+      expect(itemIds(body)).toEqual([first, second, third])
     })
 
     it("defaults the page size to 50", async () => {
@@ -130,9 +114,9 @@ describe("CalendarLogV1Controller", () => {
     it("is stable when a log is inserted between page requests", async () => {
       const calendar = await calendarFactory().create()
       const ids = [
-        await createLogAt(calendar, "2026-08-01 10:00:03"),
-        await createLogAt(calendar, "2026-08-01 10:00:02"),
-        await createLogAt(calendar, "2026-08-01 10:00:01"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:03"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:02"),
+        await createCalendarLogAt(calendar, "2026-08-01 10:00:01"),
       ]
 
       const first = await search({ tokens: [calendar.token], limit: 2 }).expect(
@@ -148,8 +132,8 @@ describe("CalendarLogV1Controller", () => {
         cursor: first.body.nextCursor,
       }).expect(200)
 
-      const firstIds = first.body.items.map((i: { id: string }) => i.id)
-      const secondIds = second.body.items.map((i: { id: string }) => i.id)
+      const firstIds = itemIds(first.body)
+      const secondIds = itemIds(second.body)
 
       expect(firstIds).toEqual([ids[0], ids[1]])
       expect(secondIds).toEqual([ids[2]])
@@ -206,24 +190,24 @@ describe("CalendarLogV1Controller", () => {
 
     it("returns only known tokens' rows when mixed with unknown ones", async () => {
       const calendar = await calendarFactory().create()
-      const known = await createLogAt(calendar, "2026-08-01 10:00:01")
+      const known = await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const { body } = await search({
         tokens: [calendar.token, "nope"],
       }).expect(200)
 
-      expect(body.items.map((i: { id: string }) => i.id)).toEqual([known])
+      expect(itemIds(body)).toEqual([known])
     })
 
     it("collapses duplicate tokens instead of duplicating rows", async () => {
       const calendar = await calendarFactory().create()
-      const log = await createLogAt(calendar, "2026-08-01 10:00:01")
+      const log = await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const { body } = await search({
         tokens: [calendar.token, calendar.token, calendar.token],
       }).expect(200)
 
-      expect(body.items.map((i: { id: string }) => i.id)).toEqual([log])
+      expect(itemIds(body)).toEqual([log])
     })
 
     it("accepts 150 entries that collapse to 3 unique tokens", async () => {
@@ -289,7 +273,7 @@ describe("CalendarLogV1Controller", () => {
   describe("response shape", () => {
     it("omits calendarToken from every item and from the whole body", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 10:00:01")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const response = await search({ tokens: [calendar.token] }).expect(200)
 
@@ -311,9 +295,9 @@ describe("CalendarLogV1Controller", () => {
   describe("unread count", () => {
     it("counts rows after the watermark and at or before the snapshot", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 09:00:00")
-      await createLogAt(calendar, "2026-08-01 11:00:00")
-      await createLogAt(calendar, "2026-08-01 12:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 09:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 11:00:00")
+      await createCalendarLogAt(calendar, "2026-08-01 12:00:00")
 
       const { body } = await search({
         tokens: [calendar.token],
@@ -326,8 +310,8 @@ describe("CalendarLogV1Controller", () => {
     it("excludes rows belonging to calendars outside the requested tokens", async () => {
       const mine = await calendarFactory().create()
       const other = await calendarFactory().create()
-      await createLogAt(mine, "2026-08-01 11:00:00")
-      await createLogAt(other, "2026-08-01 11:00:00")
+      await createCalendarLogAt(mine, "2026-08-01 11:00:00")
+      await createCalendarLogAt(other, "2026-08-01 11:00:00")
 
       const { body } = await search({
         tokens: [mine.token],
@@ -339,8 +323,8 @@ describe("CalendarLogV1Controller", () => {
 
     it("omits the count on a following page and runs no count query", async () => {
       const calendar = await calendarFactory().create()
-      await createLogAt(calendar, "2026-08-01 10:00:02")
-      await createLogAt(calendar, "2026-08-01 10:00:01")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:02")
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:01")
 
       const first = await search({ tokens: [calendar.token], limit: 1 }).expect(
         200,
