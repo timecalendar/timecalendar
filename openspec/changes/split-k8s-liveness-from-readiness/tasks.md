@@ -48,7 +48,7 @@
   the existing `Test Helm chart` CI job.
 - [x] 5.3 Run `openspec validate split-k8s-liveness-from-readiness` and record the
   successful result.
-- [ ] 5.4 After pushing, confirm the PR-head `Test Helm chart` check passes. Human/device
+- [x] 5.4 After pushing, confirm the PR-head `Test Helm chart` check passes. Human/device
   QA is N/A because this change is backend/infrastructure-only and has a deterministic
   rendered-manifest proof.
 
