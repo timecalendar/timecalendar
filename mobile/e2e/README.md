@@ -149,11 +149,25 @@ attempts; retry costs attempts, never correctness.
    `import-seed.yaml` opens `timecalendar-dev://dev-import?token=e2e-smoke-calendar`,
    which resolves + upserts the token into `user_calendars`, triggers a sync, and
    lands on the calendar. The seeded today-anchored events (`E2E Today Lecture`,
-   `E2E Today Seminar`, the `E2E Overlap A/B` pair) then render as real synced
-   tiles. Caveat: "today" is computed in **UTC** on the server; on a local run
-   whose machine day differs from UTC near midnight the device's local-time
-   `isToday` can disagree — a known local edge, not a CI flake (CI is UTC
-   end to end).
+   the `E2E Overlap A/B` pair) then render as real synced tiles. Caveat: "today"
+   is computed in **UTC** on the server; on a local run whose machine day differs
+   from UTC near midnight the device's local-time `isToday` can disagree — a known
+   local edge, not a CI flake (CI is UTC end to end).
+7. A seeded event asserted through the **agenda** must not be anchored on the seed
+   day unless the flow needs it to be. The server seeds once, at the start of a job
+   that runs well over an hour; the agenda's window runs from the anchor day's
+   midnight to seven days later and is **forward-only**, recomputed from the device
+   clock each time a flow mounts it. A job that crosses UTC midnight drops every
+   seed-day event
+   out of the agenda, and the flow fails on a date defect that reads exactly like a
+   broken feature — in run 33220510226 the agenda showed `No events this period.`
+   and `hidden-events.yaml` looked like a broken hide. Anchor such fixtures on the
+   **next** UTC day (`E2E Hide Seminar` + `E2E Hide Control`), give them
+   date-neutral titles, and keep any non-hidden control on the same day as its
+   target — a control that outlives the crossing its target survives is the only
+   kind that still guards against an empty view. `home.yaml` is the exception that
+   keeps the seed-day anchor, because it asserts the _today_ timeline and no other
+   anchor satisfies it.
 
 ## CI
 

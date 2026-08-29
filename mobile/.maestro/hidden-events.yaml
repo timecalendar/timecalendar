@@ -9,9 +9,21 @@
 # This replaces the former reachability-only flow, which could only assert the
 # empty hidden-set state (the "SEEDED-DATA LIMITATION") because no real synced event
 # was reachable to hide. The dev-import deep link now makes the app hold the token;
-# `E2E Today Seminar` (seeded uid `e2e-today-seminar`, DISTINCT from the checklist
+# `E2E Hide Seminar` (seeded uid `e2e-hide-seminar`, DISTINCT from the checklist
 # flow's `E2E Today Lecture` so the two flows don't collide) is the event hidden and
 # un-hidden here.
+#
+# Seed-date contract: the hide pair is anchored on the UTC day AFTER the seed run,
+# not in the today cluster (`server/src/scripts/seed-e2e-calendar.ts`). The agenda's
+# window is `[today 00:00, today + 7 days)` and forward-only, computed from the
+# DEVICE clock when the flow mounts it — while the server seeds once, at the start
+# of a job that can run over an hour. In run 33220510226 the iOS job seeded on
+# Aug 28 and reached this flow on Aug 29: the hide target and its control were both
+# on the excluded previous day, the agenda rendered "No events this period.", and a
+# pure date defect failed here looking exactly like a broken hide. A next-day anchor
+# is inside the window from both days' anchors, so one midnight crossing cannot move
+# it out. The titles are date-neutral for the same reason — an `E2E Today …` name on
+# an event that is deliberately not today sends the next reader hunting an app bug.
 #
 # Selector notes: the hide action is the details header button (visually localized
 # "Hide", but exposed to Maestro by its accessibility label "Hide this event")
@@ -56,7 +68,7 @@ appId: fr.samuelprak.timecalendar.dev
 # Cold-restart into the seeded event's details by its stable uid. The held token
 # survives the restart (clearState ran only at the preamble's start).
 - stopApp
-- openLink: timecalendar-dev://event-details/e2e-today-seminar
+- openLink: timecalendar-dev://event-details/e2e-hide-seminar
 # iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
 # simulator — tap when present, skip otherwise.
 - runFlow:
@@ -68,7 +80,7 @@ appId: fr.samuelprak.timecalendar.dev
           optional: true
 # Real details render, proving the synced event resolved (NOT the not-found state).
 - extendedWaitUntil:
-    visible: "E2E Today Seminar(,.*)?"
+    visible: "E2E Hide Seminar(,.*)?"
     timeout: 60000
 # Hide it: the header's accessible "Hide this event" action opens the native Alert
 # chooser; the identically labelled chooser option hides by uid and pops back. The
@@ -85,9 +97,14 @@ appId: fr.samuelprak.timecalendar.dev
       text: "Hide event"
 # Prove it is GONE from the calendar view. Cold-restart into the agenda: the token
 # is still held (un-hide restores state; the hidden set is device-local), so the
-# synced events render — but `E2E Today Seminar` is filtered out while
-# `E2E Today Lecture` (NOT hidden) still renders (proving the filter hides ONLY the
+# synced events render — but `E2E Hide Seminar` is filtered out while
+# `E2E Hide Control` (NOT hidden) still renders (proving the filter hides ONLY the
 # target, not an empty-view false positive).
+#
+# The control is `E2E Hide Control`, seeded alongside the target on the next UTC
+# day, and NOT the seed-day `E2E Today Lecture` it used to be: a control has to
+# survive whatever the target survives, or it stops being a guard against an empty
+# agenda on exactly the midnight crossing that empties one.
 #
 # The `(,.*)?` suffix carries real weight on the assertNotVisible below: an agenda
 # tile is an iOS accessibility container exposing only its composed label (see
@@ -110,9 +127,9 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     text: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Lecture(,.*)?"
+    visible: "E2E Hide Control(,.*)?"
     timeout: 60000
-- assertNotVisible: "E2E Today Seminar(,.*)?"
+- assertNotVisible: "E2E Hide Seminar(,.*)?"
 # Open the hidden-events management screen and assert the hidden event is listed.
 - stopApp
 - openLink: timecalendar-dev://hidden-events
@@ -124,11 +141,11 @@ appId: fr.samuelprak.timecalendar.dev
           text: "Open"
           optional: true
 - extendedWaitUntil:
-    visible: "E2E Today Seminar(,.*)?"
+    visible: "E2E Hide Seminar(,.*)?"
     timeout: 60000
 # Un-hide it (a11y label "Un-hide <title>" — unambiguous with a single hidden event).
 - tapOn:
-    text: "Un-hide E2E Today Seminar"
+    text: "Un-hide E2E Hide Seminar"
 # Prove it REAPPEARS: back on the calendar agenda, the un-hidden event renders again.
 - stopApp
 - openLink: timecalendar-dev://calendar
@@ -147,5 +164,5 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     text: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Seminar(,.*)?"
+    visible: "E2E Hide Seminar(,.*)?"
     timeout: 60000

@@ -315,6 +315,6 @@ describe("Maestro seeded-title text selectors", () => {
     // Scoped by construction: the rule only fires on a selector that already matches
     // a seeded title, so ordinary UI-copy assertions are untouched.
     expect(unreachableRenderings("Privacy policy")).toEqual([])
-    expect(unreachableRenderings("Un-hide E2E Today Seminar")).toEqual([])
+    expect(unreachableRenderings("Un-hide E2E Hide Seminar")).toEqual([])
   })
 })

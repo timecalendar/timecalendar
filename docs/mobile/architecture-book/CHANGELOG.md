@@ -1,5 +1,23 @@
 # Architecture Book changelog
 
+## 2026-08-29
+
+- Added the E2E **seed-date contract**. The server seeds the smoke calendar once, at the start
+  of a native job that runs well over an hour, while the agenda's window is
+  `[today 00:00, today + 7 days)` and forward-only, recomputed from the device clock each time
+  a flow mounts it — so a job crossing UTC midnight drops every seed-day event out of the
+  agenda. Run 33220510226 hit exactly that: `hidden-events` reached the agenda on the day after
+  the seed, saw `No events this period.`, and a pure date defect failed looking like a broken
+  hide. A fixture asserted through the agenda is now anchored on the **next** UTC day with a
+  date-neutral title (`E2E Hide Seminar`), and a non-hidden control shares its target's day
+  (`E2E Hide Control`) — a control that does not outlive the crossing its target survives stops
+  guarding against an empty view on precisely the run that empties it. `home.yaml` keeps the
+  seed-day anchor because it asserts the _today_ timeline and no other anchor satisfies it;
+  that residual one-midnight exposure is recorded and pinned, not fixed. The event set moved
+  behind a pure `buildE2eCalendarEvents(now)` so the contract is provable without a database
+  (`server/src/scripts/seed-e2e-calendar.spec.ts`). No ADR: this applies the existing seeded-
+  round-trip contract to the seed's dates and reverses in one commit (testing.md).
+
 ## 2026-08-28
 
 - Isolated four mobile Jest suites from declaration order by awaiting RNTL 14 async helpers and

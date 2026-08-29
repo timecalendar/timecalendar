@@ -341,3 +341,74 @@ a green gate mean anything. The gap is recorded as known and accepted; the wait 
   (`src/features/environment/data/switch.ts:30`), a JS-runtime restart with the native process
   already warm — not a `launchApp`, so it is outside the enumerated class. If a future gate dies
   there, this is the one-line fix and it needs no new diagnosis.
+
+## 21. Make the hide fixture outlive a UTC midnight
+
+Exact-head gate [33220510226](https://github.com/timecalendar/timecalendar/actions/runs/33220510226)
+at `24af3e91` was baseline green and Android 14/14; iOS passed six flows including `feedback`
+and went terminal at flow 7 `hidden-events`. The Alert repair from section 18 is proven by that
+artifact — the header tap, the chooser-presence wait, and the anchored chooser tap all completed,
+and the reopened week showed every seeded event except the target. The Agenda then rendered
+`No events this period.`: the server seeded the today cluster on Aug 28, the long job crossed UTC
+midnight, and the newly mounted Agenda anchored its window on Aug 29. The agenda window is
+`[today 00:00, today + 7 days)` and **forward-only**
+(`mobile/src/features/calendar/ui/calendar-screen/use-calendar-screen-controller.ts:47-51`), so
+both the hidden target and its non-hidden control were on the excluded previous day. A pure
+date defect, failing where it reads exactly like a broken hide.
+
+- [x] 21.1 Seed contract. Split the hide fixture out of the today cluster in
+  `server/src/scripts/seed-e2e-calendar.ts`: `E2E Hide Seminar` / `e2e-hide-seminar` at
+  16:00–18:00 UTC on the UTC day **after** the seed run, plus `E2E Hide Control` /
+  `e2e-hide-control` at 14:00–16:00 on that same day. Titles are date-neutral on purpose. The
+  today cluster does not move: `E2E Today Lecture` and `E2E Overlap A`/`B` stay seed-day
+  anchored, because `home.yaml` asserts the *today* timeline and no other anchor satisfies it.
+  The event set moves behind a pure `buildE2eCalendarEvents(now)`; `seedE2eCalendar` keeps only
+  the database side.
+- [x] 21.2 Flow, docs and selector alignment. `mobile/.maestro/hidden-events.yaml` follows the
+  rename at every reference — the stable details deep link, the three title assertions, the
+  `Un-hide` label, and the header comment — with the command order, both Agenda switches, the
+  cross-platform Alert anchor, and the hide → absent → manage → un-hide → present round trip
+  unchanged and no assertion weakened. `mobile/e2e/maestro-selectors.test.ts` follows the
+  `Un-hide` label; it reads the seeded titles from the seed script itself, so the rest
+  re-checks itself. `mobile/e2e/README.md` gains the seed-date rule as checklist item 7 and
+  `docs/mobile/architecture-book/testing.md` + `CHANGELOG.md` record it as the binding contract.
+- [x] 21.3 A non-hidden control must share its target's day — the one place this section departs
+  from the triage brief, which said to keep `E2E Today Lecture` as the control. It cannot be
+  kept: the control is asserted **through the same Agenda**, so post-rollover it falls out of
+  the forward-only window exactly as the target did, and the flow would still fail — one
+  assertion earlier, at `extendedWaitUntil: "E2E Today Lecture(,.*)?"` instead of at
+  `assertNotVisible`. The control's *role* is what the brief protects (an empty Agenda must not
+  satisfy `assertNotVisible` vacuously) and that role is preserved in full by `E2E Hide Control`
+  on the target's own day. A control that does not outlive the crossing its target survives
+  stops guarding on precisely the run that needs it.
+- [x] 21.4 Focused rollover proof. `server/src/scripts/seed-e2e-calendar.spec.ts` pins
+  `now = 2026-08-28T23:30:00Z` and observation at `2026-08-29T00:30:00Z`, mirroring the agenda
+  window and `intersectsRange` from their real sources, and proves: `E2E Hide Seminar` is
+  Aug 29 16:00–18:00 UTC and intersects the window from **both** anchors; `E2E Hide Control`
+  shares that day and both intersections; `E2E Today Lecture` is still Aug 28; uids and titles
+  are unique; and the month boundary rolls (`2026-08-31` → `2026-09-01`). The control arm
+  mutates the target back to the seed day and asserts it is **excluded** after midnight, so a
+  window check that accepted everything cannot make the rest vacuous. No database is mocked —
+  the builder is pure, and a mocked repository would have exercised TypeORM rather than the
+  arithmetic that broke. 10/10 green locally.
+- [x] 21.5 Record the seed-date class in the `mobile-e2e` delta: a fixture seeded once is
+  observed by a device clock that keeps moving, so the failure is a date-contract defect and not
+  a defect in the feature under test; an agenda-asserted fixture is anchored on the next UTC day
+  with a date-neutral title; a control shares its target's day; the today-timeline exception
+  keeps its anchor with the residual exposure pinned; and the contract is proven by a pure
+  builder rather than a mocked repository.
+- [ ] 21.6 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+  this section. Read a red `hidden-events` by naming the step: at the first
+  `extendedWaitUntil: "E2E Hide Seminar(,.*)?"` on the details screen means the renamed uid did
+  not resolve; at `E2E Hide Control` means the next-day anchor is not in the Agenda window and
+  this section's diagnosis is wrong; at `assertNotVisible` after both taps completed means the
+  hide itself is broken — the only one of the three outside this ticket's fixture scope.
+  Android's 14/14 at `24af3e91` is corroboration only, not the accepting signal.
+- [ ] 21.7 Residual, deliberately not changed and recorded so it is diagnosed rather than
+  rediscovered: `calendar.yaml`, `event-checklists.yaml` and `home.yaml` still assert the
+  seed-day today cluster, so a job that crosses UTC midnight *before* those flows fails the same
+  way `hidden-events` just did — `home.yaml` structurally cannot be fixed by an anchor move,
+  since the today timeline is what it exists to assert. Pinned by the seed proof's
+  "carries the recorded one-midnight exposure" case, so the asymmetry is a visible contract
+  rather than a gap. The real fixes are a shorter job or a re-seed before the calendar-family
+  flows; both are outside this ticket, and neither is justified by a single observed crossing.

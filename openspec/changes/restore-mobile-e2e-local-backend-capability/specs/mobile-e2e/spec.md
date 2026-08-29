@@ -326,3 +326,29 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **AND** the class is distinguished from a true assertion failure by its command record: a
   handful of commands ending at the launch gate, against the many recorded commands and
   genuinely-rendered element of the collision class
+
+#### Scenario: A seeded fixture is outlived by the job that observes it
+
+- **WHEN** a native job seeds its fixture calendar once at start-up and then runs long enough
+  to cross a UTC midnight before a flow asserts that fixture through the agenda, whose window
+  is `[today 00:00, today + 7 days)` and forward-only, recomputed from the **device** clock at
+  the moment the flow mounts it — as in run `33220510226`, where the server seeded on Aug 28,
+  iOS reached `hidden-events` on Aug 29, and the agenda rendered `No events this period.`
+- **THEN** the failure SHALL be classified as a seed/date-contract defect and not as a defect
+  in the feature under test: every command up to the assertion completed, the hide chooser was
+  tapped, and only the observation window moved
+- **AND** a fixture asserted through the agenda SHALL be anchored on the UTC day **after** the
+  seed run, which lies inside the window from both the seed day's anchor and the next day's,
+  so one crossing cannot move it out; the flow's runtime is bounded far below a second crossing
+- **AND** its title SHALL be date-neutral, because a `Today`-named event that is deliberately
+  not today sends the next reader hunting an application bug
+- **AND** a non-hidden control asserted alongside a target SHALL share the target's day: a
+  control exists to keep an empty view from satisfying `assertNotVisible` vacuously, and one
+  that does not outlive the crossing its target survives stops doing that job on exactly the
+  run that needs it
+- **AND** a flow that can only be satisfied by the seed day — the _today_ timeline — SHALL keep
+  that anchor, with its residual one-crossing exposure recorded and pinned by the seed proof
+  rather than left to be re-derived from a red gate
+- **AND** the contract SHALL be proven without a database, by a pure builder taking the seed
+  instant, since what breaks here is date arithmetic and a mocked repository would exercise the
+  ORM instead
