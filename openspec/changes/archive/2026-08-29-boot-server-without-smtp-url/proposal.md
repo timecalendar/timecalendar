@@ -26,7 +26,9 @@ Two places in the repo already exist only to dodge that crash:
 and the `SMTP_URL: smtp://localhost:1025` entry in `server/docker-compose.e2e.yml`. The
 wave-1 platform rollout ([TIM-303]) is resealing production and preproduction to the inert
 literal `smtp://disabled.invalid:25` for the same reason. All three are workarounds for one
-defect in `MailerService`.
+defect in `MailerService`. OpenAPI generation is the standing CI boot gate; the compose
+stack provides locally executed `/health` evidence because mobile E2E is path/label gated
+and does not run for this PR or its merge push.
 
 ## What Changes
 
@@ -38,8 +40,9 @@ defect in `MailerService`.
 - Log transport/send failures at `warn` instead of swallowing them silently, so the new
   lazy-construction failure mode is observable.
 - Delete the two crash-dodging shims (`generate-openapi.ts:9` and the compose
-  `SMTP_URL` entry). Removing them is not diff-widening: it is what turns two existing CI
-  jobs into the acceptance proof that the app boots with `SMTP_URL` unset.
+  `SMTP_URL` entry). Removing them is not diff-widening: OpenAPI generation becomes the
+  standing no-SMTP `AppModule` boot gate, while the compose stack can directly prove the
+  `/health` half of the acceptance criterion when executed locally.
 - Add a unit test that compiles `MailerModule` with `SMTP_URL` forced empty and asserts
   no transport is created, plus the configured-path test that proves behaviour is
   unchanged when `SMTP_URL` is set.

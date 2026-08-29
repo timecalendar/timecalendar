@@ -52,7 +52,10 @@
 
 - [x] 4.1 `docker compose -f server/docker-compose.yml up -d` (the suite's Postgres/Redis
   prerequisite), then in `server/`: `npm run test -- mailer` for the focused run and
-  `npm run test` for the full suite. Both green.
+  `npm run test` for the full suite. The focused mailer run passed 5/5. The local full
+  suite recorded 23 database-hook timeout failures and 478 passes; an unmodified-base
+  control recorded 48 failures of the same timeout class. Exact-head CI supplied the green
+  full server suite.
 - [x] 4.2 `npm run lint` and `npm run build` in `server/`, both clean.
 - [x] 4.3 Prove the mutant: temporarily restore the eager `createTransport(SMTP_URL)`
   property and confirm the new test **fails**, then revert. A test that passes against the
@@ -78,12 +81,13 @@
 
 ## 6. CI proof
 
-- [x] 6.1 No new CI wiring is required — record why. The change makes two **existing** jobs
-  the standing proof: `ci-build-deploy.yml`'s "Check committed OpenAPI spec matches the
-  server code" step now boots `AppModule` with `SMTP_URL` unset (`ci/.env.test` sets only
-  `NODE_OPTIONS`), and `ci-mobile-e2e.yml` boots the real server image with no `SMTP_URL`
-  behind a `/health` healthcheck. State this explicitly in the PR body so the Reviewer can
-  check it against the workflow files rather than take it on trust.
+- [x] 6.1 No new CI wiring is required — record why. The standing proof is
+  `ci-build-deploy.yml`'s "Check committed OpenAPI spec matches the server code" step,
+  which boots `AppModule` with `SMTP_URL` unset (`ci/.env.test` sets only `NODE_OPTIONS`).
+  Native/compose `/health` boot is locally executed evidence: `ci-mobile-e2e.yml` is
+  label-gated on pull requests and path-gated on merge pushes, so it is skipped for this
+  change. State this explicitly in the PR body so the Reviewer can check it against the
+  workflow files rather than take it on trust.
 - [x] 6.2 The committed unit test from §3 is the module-level regression gate and runs in
   the `npm run test` CI step. Do not add a workflow edit — `.github/workflows/` is a
   sensitive surface and this change does not need one.

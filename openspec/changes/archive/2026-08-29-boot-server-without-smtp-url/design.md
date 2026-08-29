@@ -23,9 +23,10 @@ The blast radius of the current state is wider than the mailer:
   saying exactly why ("MailerService builds a transport at construction time").
 - The platform rollout on TIM-303 reseals both namespaces to `smtp://disabled.invalid:25`.
 
-Three placeholders, one defect. Fixing the defect retires all three, and the first two are
-executed by CI on every PR — which is what makes the acceptance criteria provable rather
-than argued.
+Three placeholders, one defect. Fixing the defect retires all three. OpenAPI generation is
+the standing CI proof that `AppModule` constructs without SMTP; the native/compose server
+boot and `/health` check are locally executed evidence because mobile E2E is path/label
+gated and is skipped for this PR and its merge push.
 
 ## Goals / Non-Goals
 
@@ -115,16 +116,15 @@ carrying the error. The current silent swallow would hide this new failure mode 
 This is the one deliberate behaviour change outside the missing-config path, and it is
 observability only: the return value and control flow are unchanged.
 
-## Decision 4 — Delete both shims; their CI jobs become the acceptance proof
+## Decision 4 — Delete both shims; execute the resulting boot proofs
 
 `generate-openapi.ts:9` and the compose `SMTP_URL` entry exist solely because of this
-defect. Removing them costs three lines and buys the two strongest available proofs, both
-already running in CI on every PR:
+defect. Removing them costs three lines and enables the two strongest available proofs:
 
 | Proof | Job | What it exercises |
 | --- | --- | --- |
 | `node dist/generate-openapi.js` | `ci-build-deploy.yml` "Check committed OpenAPI spec matches the server code" | Full `NestFactory.create(AppModule)` with `SMTP_URL` unset (`ci/.env.test` sets only `NODE_OPTIONS`) |
-| `ci/e2e-server.sh up` | `ci-mobile-e2e.yml` | The real server image boots with `SMTP_URL` unset and its compose healthcheck polls `/health` until it answers |
+| `ci/e2e-server.sh up` | Local execution for this change | The real server image boots with `SMTP_URL` unset and its compose healthcheck polls `/health` until it answers; `ci-mobile-e2e.yml` is skipped for this PR and merge push by its label/path filters |
 
 The second one *is* the acceptance criterion verbatim: "with `SMTP_URL` unset, the Nest app
 bootstraps and `/health` responds." Leaving the shims in place would mean shipping a fix
@@ -174,8 +174,9 @@ not fall back to reading the ambient env.
   production is heading toward no SMTP at all, and Decision 3's `warn` keeps it visible.
 - **Silent mail loss if a future caller appears while SMTP is unset.** Accepted and made
   visible by the warn log. A future SES change owns real delivery guarantees.
-- **Boot-path regression.** Mitigated by Decision 4: two independent CI jobs boot the full
-  app graph with `SMTP_URL` unset, so a regression here reddens the PR that causes it.
+- **Boot-path regression.** Mitigated by Decision 4: the standing OpenAPI CI job boots the
+  full app graph with `SMTP_URL` unset, while the native/compose `/health` path was executed
+  locally because its mobile E2E workflow is skipped for this PR and merge push.
 
 ## Migration / Rollout
 
