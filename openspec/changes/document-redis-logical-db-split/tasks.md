@@ -18,7 +18,7 @@
 ## 4. Local green and CI proof
 
 - [x] 4.1 Run `helm lint k8s/timecalendar` and `./ci/test-timecalendar-chart.sh`; both must pass locally. The latter is the exact focused proof run by the existing `Test Helm chart` CI job, so no new test or workflow edit is in scope.
-- [ ] 4.2 After pushing the implementation commit, confirm the PR-head `Test Helm chart` check succeeds and record its result with the production/preproduction hashes in the handoff.
+- [x] 4.2 After pushing the implementation commit, confirm the PR-head `Test Helm chart` check succeeds and record its result with the production/preproduction hashes in the handoff.
 - [x] 4.3 Run `openspec validate document-redis-logical-db-split` and record the exact result. Human/device QA is N/A because the parsed Kubernetes object is unchanged.
 
 ## 5. Architecture and sensitive-surface audit
