@@ -7,10 +7,10 @@ export const createOpenApiDocument = (app: NestExpressApplication) => {
     .setDescription("TimeCalendar API")
     .build()
   const document = SwaggerModule.createDocument(app, config)
-  // The health endpoint is an internal liveness probe, not part of the public
-  // contract. The custom HealthController excluded it via @ApiExcludeEndpoint;
-  // nest-shared's SharedHealthModule controller does not, so strip it here to
-  // keep the generated spec free of the probe (and byte-identical to before).
+  // The database-backed health endpoint is an internal dependency/readiness
+  // probe, not part of the public contract. The local liveness controller can
+  // exclude /health/live via @ApiExcludeEndpoint; nest-shared's controller
+  // cannot be annotated here, so strip /health explicitly.
   delete document.paths["/health"]
   // nest-shared's QueueController is a dev/admin surface, not part of the
   // public contract the mobile client is generated from.
