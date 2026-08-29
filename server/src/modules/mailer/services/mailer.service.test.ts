@@ -3,35 +3,32 @@ import { Logger } from "@nestjs/common"
 import { Test } from "@nestjs/testing"
 import { renderFile } from "ejs"
 import { createTransport } from "nodemailer"
+import { SMTP_FROM } from "config/constants"
 import { MailerModule } from "modules/mailer/mailer.module"
 import { MailerRecipient } from "modules/mailer/models/mailer-recipient.model"
 import { AppMailerTemplate } from "modules/mailer/models/mailer-template.model"
 import { MailerService } from "modules/mailer/services/mailer.service"
 
-// `SMTP_URL` and `SMTP_FROM` are module-level consts resolved at import time,
-// and `setup-tests.ts` loads `server/.env` through dotenv before anything else —
-// so the ambient values depend on whether the machine running the suite happens
-// to have SMTP entries in its `.env`. Every case below forces the state it means
-// to test instead, otherwise the disabled-path assertions would pass trivially
-// in CI and test the opposite path on a developer's box.
+// `SMTP_URL` is a module-level const resolved at import time, and
+// `setup-tests.ts` loads `server/.env` through dotenv before anything else — so
+// its ambient value depends on whether the machine running the suite happens to
+// have an SMTP entry in its `.env`. It is the condition every case below
+// branches on, so each one forces it; otherwise the disabled-path assertions
+// would pass trivially in CI and test the opposite path on a developer's box.
 //
-// The values are read through getters over `mock`-prefixed variables: the prefix
-// satisfies Jest's `jest.mock` hoisting guard, and the getters defer the read to
+// It is read through a getter over a `mock`-prefixed variable: the prefix
+// satisfies Jest's `jest.mock` hoisting guard, and the getter defers the read to
 // call time (a plain reference would be evaluated while the factory runs, before
-// these declarations are initialised). They are installed with
-// `defineProperties` rather than declared in the returned literal because a
-// getter spread alongside `requireActual` is downlevelled to `Object.assign`,
-// which reads it back as a value at factory time — the same TDZ crash.
+// the declaration is initialised). It is installed with `defineProperties`
+// rather than declared in the returned literal because a getter spread
+// alongside `requireActual` is downlevelled to `Object.assign`, which reads it
+// back as a value at factory time — the same TDZ crash.
 let mockSmtpUrl = ""
-const mockSmtpFrom = "TimeCalendar <hello@timecalendar.app>"
 
 jest.mock("config/constants", () =>
   Object.defineProperties(
     { ...jest.requireActual("config/constants") },
-    {
-      SMTP_URL: { enumerable: true, get: () => mockSmtpUrl },
-      SMTP_FROM: { enumerable: true, get: () => mockSmtpFrom },
-    },
+    { SMTP_URL: { enumerable: true, get: () => mockSmtpUrl } },
   ),
 )
 
@@ -57,7 +54,7 @@ jest.mock("fs", () => {
 })
 
 const createTransportMock = jest.mocked(createTransport)
-const renderFileMock = renderFile as unknown as jest.Mock
+const renderFileMock = jest.mocked(renderFile)
 
 const CONFIGURED_URL = "smtp://mail.example.test:587"
 const RECIPIENT: MailerRecipient = { email: "student@example.test" }
@@ -137,7 +134,7 @@ describe("MailerService", () => {
         {},
       )
       expect(mockSendMail).toHaveBeenCalledWith({
-        from: mockSmtpFrom,
+        from: SMTP_FROM,
         to: RECIPIENT.email,
         subject: "Welcome",
         html: RENDERED_HTML,

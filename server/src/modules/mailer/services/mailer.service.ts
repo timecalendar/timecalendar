@@ -21,8 +21,6 @@ export class MailerService {
    * crash. `createTransport("")` does throw, and `SMTP_URL` is `""` whenever the
    * environment variable is absent (`config/constants`) — that empty value is
    * the supported "mail is disabled" state, not a misconfiguration to fail on.
-   * Keep this lazy: turning it back into a property makes the server
-   * unbootable without SMTP.
    */
   private getTransporter() {
     this.transporter ??= createTransport(SMTP_URL)
@@ -68,8 +66,7 @@ export class MailerService {
     }
 
     try {
-      const rep = await this.getTransporter().sendMail(options)
-      return rep
+      return await this.getTransporter().sendMail(options)
     } catch (err) {
       // Also covers a malformed SMTP_URL: building the transport is lazy, so it
       // fails here rather than at boot. Contained, never propagated.

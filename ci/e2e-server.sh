@@ -150,8 +150,7 @@ up_native() {
   log "starting the NestJS backend on port ${BACKEND_PORT}…"
   # The subshell execs into node, so the recorded pid IS the server process —
   # `down` kills it directly (no setsid, no process tree).
-  ( cd "$SERVER_DIR" && exec env NODE_ENV=test PORT="$BACKEND_PORT" \
-      node dist/main ) \
+  ( cd "$SERVER_DIR" && exec env NODE_ENV=test PORT="$BACKEND_PORT" node dist/main ) \
       > "$NATIVE_LOG_FILE" 2>&1 &
   echo "$!" > "$NATIVE_PID_FILE"
   log "backend pid $(cat "$NATIVE_PID_FILE") — log: $NATIVE_LOG_FILE"
