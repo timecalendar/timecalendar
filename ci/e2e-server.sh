@@ -151,7 +151,7 @@ up_native() {
   # The subshell execs into node, so the recorded pid IS the server process —
   # `down` kills it directly (no setsid, no process tree).
   ( cd "$SERVER_DIR" && exec env NODE_ENV=test PORT="$BACKEND_PORT" \
-      SMTP_URL="smtp://localhost:1025" node dist/main ) \
+      node dist/main ) \
       > "$NATIVE_LOG_FILE" 2>&1 &
   echo "$!" > "$NATIVE_PID_FILE"
   log "backend pid $(cat "$NATIVE_PID_FILE") — log: $NATIVE_LOG_FILE"
