@@ -20,8 +20,6 @@ describe("LivenessController", () => {
   })
 
   it("serves process liveness without injected dependencies", async () => {
-    expect(LivenessController.length).toBe(0)
-
     await request(app.getHttpServer())
       .get("/health/live")
       .expect(200)

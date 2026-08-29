@@ -26,10 +26,6 @@ const configureMainApp = (
   // row). Replaces the custom ErrorsInterceptor; same status, richer message
   // (includes the entity name when extractable).
   app.useGlobalFilters(new TypeOrmExceptionFilter())
-  // PID 1 ignores default-action signals, so Nest cannot terminate the
-  // container by removing its SIGTERM listener and re-sending the signal.
-  // Exit explicitly after all shutdown lifecycle hooks have completed.
-  app.enableShutdownHooks([], { useProcessExit: true })
 }
 
 export default configureMainApp
