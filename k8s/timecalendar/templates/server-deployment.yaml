@@ -34,7 +34,7 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /health
+              path: /health/live
               port: http
             failureThreshold: 4
             periodSeconds: 30
