@@ -137,8 +137,9 @@ and the uuid tie-breaker behaves as the ordering requires.
 
 Decoding rejects with `400` — a fixed message that never echoes the cursor — when the value is not
 base64url, is not UTF-8 JSON, is not an object, has `v !== 1`, is missing a field, or when `a`/`c`
-fail a strict `^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?$` match or `i` fails a UUID
-match. Validation happens **before** any value reaches SQL.
+fail a strict `^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?$` match, contain an impossible
+calendar or clock value, or `i` fails a UUID match. Validation happens **before** any value reaches
+SQL, while the original timestamp text retains its full microsecond precision.
 
 **Why no HMAC:** the cursor holds no secret and grants no access. Every page re-authorizes against
 the `tokens` in the same request body, so a forged cursor can only move the window inside data the

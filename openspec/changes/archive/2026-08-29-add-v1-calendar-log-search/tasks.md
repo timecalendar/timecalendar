@@ -50,11 +50,14 @@ Sections 1–6 are the implementation. Section 7 is the evidence the close gate 
 - [x] 2.2 `decodeCursor` throws `BadRequestException` with a constant message — never echoing the
   input — when the value is not base64url, not UTF-8 JSON, not an object, has `v !== 1`, is
   missing a field, or when `a`/`c` fail `^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d{1,6})?$` or
-  `i` fails a uuid match. Validation runs before any value reaches SQL (design D4).
+  `i` fails a uuid match. Shape-valid but impossible calendar or clock values also return 400.
+  Validation runs before any value reaches SQL without converting the accepted text through a
+  millisecond-precision `Date` (design D4).
   - _Verify:_ `npx jest calendar-log-cursor` — round-trip including a `.641234` microsecond value;
     rejection cases for non-base64, valid base64 of non-JSON, JSON array, `v: 2`, missing `i`,
-    `a: "2026-13-45"`, `i: "not-a-uuid"`; and an assertion that the thrown message contains
-    neither the submitted cursor nor any of its decoded fields.
+    `a: "2026-13-45"`, shape-valid but impossible `a` and `c` timestamps,
+    `i: "not-a-uuid"`; and an assertion that the thrown message contains neither the submitted
+    cursor nor any of its decoded fields.
 - [x] 2.3 Privacy-negative test: encode a cursor from a fixture row and assert the decoded payload
   contains no calendar token and no event title, location, or UID.
 

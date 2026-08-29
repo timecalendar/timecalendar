@@ -1,5 +1,8 @@
-## ADDED Requirements
+# server-calendar-log-search Specification
 
+## Purpose
+TBD - created by archiving change add-v1-calendar-log-search. Update Purpose after archive.
+## Requirements
 ### Requirement: Versioned calendar-log search endpoint
 
 The server SHALL expose `POST /v1/calendar-logs/search` as a path-level controller route that
@@ -165,9 +168,11 @@ page. Ordering SHALL be stable across calendars.
 
 `nextCursor` SHALL be an opaque, versioned encoding of the `asOf` snapshot and the last returned
 row's `(createdAt, id)` pair. It SHALL preserve the database's full stored timestamp precision. The
-server SHALL fully validate a supplied cursor's structure, version, and field formats before using
-any of its values in a query, and SHALL return 400 for a cursor that is malformed, structurally
-invalid, or of an unsupported version. The 400 response SHALL NOT echo the submitted cursor.
+server SHALL fully validate a supplied cursor's structure, version, and timestamp values (including
+calendar and clock semantics, not only their text format) before using any of its values in a
+query, and SHALL return 400 for a cursor that is malformed, structurally invalid, contains an
+impossible timestamp, or is of an unsupported version. The 400 response SHALL NOT echo the
+submitted cursor.
 
 #### Scenario: Malformed cursor
 
@@ -180,6 +185,12 @@ invalid, or of an unsupported version. The 400 response SHALL NOT echo the submi
 - **WHEN** a client posts a well-formed cursor whose version field is not a version this server
   issues
 - **THEN** the response is 400
+
+#### Scenario: Impossible cursor timestamp
+
+- **WHEN** a cursor has the expected timestamp text shape but contains an impossible calendar or
+  clock value
+- **THEN** the response is 400 before any repository query runs
 
 #### Scenario: Cursor carries no sensitive data
 

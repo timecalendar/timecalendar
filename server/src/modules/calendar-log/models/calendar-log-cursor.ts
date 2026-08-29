@@ -48,6 +48,26 @@ export const encodeCursor = (cursor: CalendarLogCursor): string => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
 
+const isTimestampText = (value: string): boolean => {
+  if (!TIMESTAMP_TEXT.test(value)) return false
+
+  const [date, time] = value.split(/[ T]/)
+  const [year, month, day] = date.split("-").map(Number)
+  const [hour, minute, second] = time.split(/[.:]/).map(Number)
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+
+  return (
+    year >= 1 &&
+    month >= 1 &&
+    month <= 12 &&
+    day >= 1 &&
+    day <= daysInMonth &&
+    hour <= 23 &&
+    minute <= 59 &&
+    second <= 59
+  )
+}
+
 /**
  * Narrows one decoded field to a string matching `pattern`, or rejects the whole
  * cursor. Every anchor field goes through here, so none can reach SQL without
@@ -55,6 +75,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  */
 const anchorField = (value: unknown, pattern: RegExp): string => {
   if (typeof value !== "string" || !pattern.test(value)) {
+    throw new BadRequestException(INVALID_CURSOR)
+  }
+  return value
+}
+
+const timestampField = (value: unknown): string => {
+  if (typeof value !== "string" || !isTimestampText(value)) {
     throw new BadRequestException(INVALID_CURSOR)
   }
   return value
@@ -86,8 +113,8 @@ export const decodeCursor = (value: string): CalendarLogCursor => {
   }
 
   return {
-    asOfText: anchorField(payload.a, TIMESTAMP_TEXT),
-    createdAtText: anchorField(payload.c, TIMESTAMP_TEXT),
+    asOfText: timestampField(payload.a),
+    createdAtText: timestampField(payload.c),
     id: anchorField(payload.i, UUID),
   }
 }

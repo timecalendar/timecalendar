@@ -80,6 +80,26 @@ describe("calendar log cursor", () => {
         }),
       ))
 
+    it("rejects a shape-valid but impossible snapshot timestamp", () =>
+      expectRejected(
+        encodePayload({
+          v: 1,
+          a: "2026-99-99 99:99:99.999999",
+          c: cursor.createdAtText,
+          i: cursor.id,
+        }),
+      ))
+
+    it("rejects a shape-valid but impossible anchor timestamp", () =>
+      expectRejected(
+        encodePayload({
+          v: 1,
+          a: cursor.asOfText,
+          c: "2026-02-29 18:20:25.142981",
+          i: cursor.id,
+        }),
+      ))
+
     it("rejects a sub-microsecond fraction", () =>
       expectRejected(
         encodePayload({

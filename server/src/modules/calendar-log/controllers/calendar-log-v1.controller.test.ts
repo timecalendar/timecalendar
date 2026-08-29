@@ -262,6 +262,27 @@ describe("CalendarLogV1Controller", () => {
         }),
       }).expect(400))
 
+    it.each([
+      ["snapshot", "2026-99-99 99:99:99.999999", "2026-08-01 10:00:00"],
+      ["anchor", "2026-08-01 10:00:00", "2026-02-29 10:00:00.123456"],
+    ])("rejects an impossible %s timestamp in a cursor", async (_, a, c) => {
+      const calendar = await calendarFactory().create()
+      const invalidCursor = encodePayload({
+        v: 1,
+        a,
+        c,
+        i: "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d05",
+      })
+
+      const { body } = await search({
+        tokens: [calendar.token],
+        cursor: invalidCursor,
+      }).expect(400)
+
+      expect(body.message).toBe("Invalid cursor")
+      expect(JSON.stringify(body)).not.toContain(invalidCursor)
+    })
+
     it("does not echo the submitted cursor in the 400 body", async () => {
       const cursor = encodePayload({ v: 9, a: "x", c: "y", i: "z" })
       const { body } = await search({ tokens: [], cursor }).expect(400)
