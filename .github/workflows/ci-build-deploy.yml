@@ -134,6 +134,12 @@ jobs:
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
+    # The in-process Nest HTTP smoke (`server/test/*.e2e-spec.ts`). It has no
+    # backing-service dependency; `ci/e2e-server.sh` still owns the real
+    # Postgres/Redis/Nest lifecycle for the mobile and Flutter device E2E.
+    - name: Run server E2E tests
+      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test:e2e -- --runInBand
+
     # The Nest app cannot boot without a service-account-shaped key file; the
     # spec emit only needs the JSON shape, never a real credential.
     - name: Generate dummy Firebase service-account key
