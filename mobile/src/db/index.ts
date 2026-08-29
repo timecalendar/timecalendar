@@ -1,10 +1,12 @@
-import { asc, eq } from "drizzle-orm"
+import { and, asc, desc, eq, lt, notInArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { openDatabaseSync } from "expo-sqlite"
 
 import { useLiveQuery } from "./live-query"
 import { resetBackendDatabaseWith } from "./reset"
 import {
+  activityLogs,
+  activityState,
   calendarEvents,
   checklistItems,
   personalEvents,
@@ -32,6 +34,8 @@ export const db = drizzle(expoDb)
 export function resetBackendDatabase(): void {
   resetBackendDatabaseWith(db, {
     checklistItems,
+    activityLogs,
+    activityState,
     calendarEvents,
     userCalendars,
     personalEvents,
@@ -44,13 +48,23 @@ export function resetBackendDatabase(): void {
 // (./live-query — a drop-in for drizzle's useLiveQuery that collapses per-row
 // change bursts into a single re-query). Re-export ONLY what a consumer needs
 // (R-2), not all of drizzle-orm.
-export { asc, eq, useLiveQuery }
+//
+// Which operation needs each:
+//  - `eq`        by-uid reads/writes (personal events, calendar events, checklists)
+//                and the activity_state singleton read/write on the constant id.
+//  - `asc`       the event-checklists ordered read (ADR 024 — `ORDER BY order` asc).
+//  - `desc`      the Activity newest-first read (`ORDER BY created_at DESC, id DESC`).
+//  - `lt`        the Activity one-year age cutoff (`created_at < cutoff`).
+//  - `notInArray` the Activity ownership prune (rows whose calendar the device no
+//                longer holds).
+//  - `and`       composes the two Activity prune conditions into one delete.
+export { and, asc, desc, eq, lt, notInArray, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
-// drizzle-orm/sqlite-core import stays inside the seam dir. `eq` serves the by-uid
-// reads/writes (personal events, calendar events, checklists); the event-checklists
-// repository's ordered read adds `asc` (ADR 024 — `order BY order` asc).
+// drizzle-orm/sqlite-core import stays inside the seam dir.
 export {
+  activityLogs,
+  activityState,
   calendarEvents,
   checklistItems,
   personalEvents,

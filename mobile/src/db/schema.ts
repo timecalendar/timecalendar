@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core"
 
 // The first real feature schema — Personal events (TIM-132 / ADR 011).
 //
@@ -163,4 +163,88 @@ export const checklistItems = sqliteTable("checklist_items", {
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
   deletedAt: text("deleted_at"),
+})
+
+// The fifth real feature schema — Activity history (TIM-396, Ticket 3 of the
+// Activity revival). A device-local cache of the server's `calendar_log` rows so
+// a student can read what changed in their timetable while offline.
+//
+// UNLIKE the four tables above, this is NOT a Phase-09 importer target. Flutter's
+// `calendar_logs` store is rebuildable backend-bound data that the revival
+// deliberately does not import, so the importer-fidelity constraint that shaped
+// ADR 011/018/021/024 column-for-column DOES NOT apply here — do not read a
+// Flutter wire format into these columns. The shape comes from the server
+// CalendarLogGet DTO frozen by the Activity revival specification.
+//
+// It also does NOT inherit calendar_events' drop+replace: history is
+// cursor-paginated, so a newest-page refresh that replaced the table would delete
+// every older page the student had already backfilled. Rows are merged by log id.
+//  - `id` is the server calendar_log id and the upsert identity — the explicit
+//    primary key, not a surrogate (the server id IS the identity across pages,
+//    which is what makes a repeated or overlapping page idempotent).
+//  - `createdAt` / `updatedAt` hold UTC ISO-8601 strings (the ADR 011/D4 posture:
+//    TEXT because lexicographic order of canonical UTC ISO-8601 equals
+//    chronological order, so the newest-first read and the one-year age prune
+//    both work on a plain text column with no date functions). Canonicality is
+//    guaranteed by the mappers, which reject an unparseable timestamp rather than
+//    admit a row whose text does not sort.
+//  - `changeJson` is the CalendarChangeGet payload as plain TEXT holding JSON —
+//    NOT Drizzle `mode: "json"` (ADR 021 / D2). The pure mapper owns the decode so
+//    a corrupt row degrades to a skipped row rather than throwing the whole read.
+//    Stored verbatim and never expanded into calendar_events.
+//  - `calendarId` is the owning user_calendars.id. A SOFT reference, NO FK
+//    constraint — like calendar_events.userCalendarId. Ownership is reconciled by
+//    the repository's prune (rows for calendars the device no longer holds are
+//    deleted on the next page write), not by a cascade.
+//  - Two indexes: `created_at` serves the newest-first read and the age prune,
+//    `calendar_id` serves the ownership prune.
+export const activityLogs = sqliteTable(
+  "activity_logs",
+  {
+    id: text("id").primaryKey(),
+    calendarId: text("calendar_id").notNull(),
+    calendarName: text("calendar_name").notNull(),
+    changeJson: text("change_json").notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => [
+    index("activity_logs_created_at_idx").on(t.createdAt),
+    index("activity_logs_calendar_id_idx").on(t.calendarId),
+  ],
+)
+
+// The device-local read watermark and pagination state for Activity — a SINGLETON
+// row keyed `id = 1`. It is state about the cache, not a collection, so it is one
+// row rather than a key/value table.
+//
+// No row is seeded by the migration and there is no CHECK (id = 1): a MISSING row
+// reads as the documented defaults (lastReadAt null, unreadCount 0,
+// lastSuccessfulRefreshAt null, olderPageCursor null, olderPageComplete false),
+// matching the total-read posture @/storage already uses. A fresh install, a
+// reset device, and a device whose state row was somehow lost then behave
+// identically, with no migration-time seed to get wrong. The repository is the
+// only writer and every write is an upsert on the constant id.
+//  - `lastReadAt` is a SERVER-ISSUED time (the response `asOf`, or the newest
+//    cached server `created_at` when the screen opened offline) — NEVER the device
+//    clock. A device-clock watermark on a phone whose clock is set forward hides
+//    every subsequent change permanently; set backward, it re-marks read history
+//    as unread forever. Both failures are silent. See the Activity ADR.
+//  - `lastSuccessfulRefreshAt` is a DIFFERENT value with a DIFFERENT clock: it
+//    feeds the passive-freshness policy (Ticket 4), which compares elapsed LOCAL
+//    time, so it is device time. Do not "fix" the inconsistency by unifying them.
+//  - `olderPageCursor` / `olderPageComplete` are the backfill chain's position: a
+//    stored cursor is preserved by a newest-page refresh and overwritten only by a
+//    successful older-page write, so a partial backfill never restarts at page two.
+//  - `olderPageComplete` is a boolean (SQLite has no boolean — Drizzle
+//    `mode: "boolean"` stores 0/1, mirroring user_calendars.visible).
+export const activityState = sqliteTable("activity_state", {
+  id: integer("id").primaryKey(),
+  lastReadAt: text("last_read_at"),
+  unreadCount: integer("unread_count").notNull().default(0),
+  lastSuccessfulRefreshAt: text("last_successful_refresh_at"),
+  olderPageCursor: text("older_page_cursor"),
+  olderPageComplete: integer("older_page_complete", { mode: "boolean" })
+    .notNull()
+    .default(false),
 })
