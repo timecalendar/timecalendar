@@ -86,9 +86,10 @@ The resulting product meaning, applied row by row in the questionnaire, is:
     indicator instead of a skeleton, preserve stale data with status and retry, and never show a
     wrong date, unexplained blank, unlabeled stale events, or a theme flash. Exact all-day overflow
     and truncation rules remain unresolved.
-11. **Live changes/recovery:** settle gestures before environment changes, swap complete geometry
-    atomically, isolate malformed rows with privacy-safe reporting, handle disappearing events
-    accessibly, and retain an accessible failure representation.
+11. **Live changes/recovery:** settle gestures before locale, timezone, theme, or text-size changes,
+    while orientation and window-size behavior remain unanswered; swap complete geometry atomically,
+    isolate malformed rows with privacy-safe reporting, handle disappearing events accessibly, and
+    retain an accessible failure representation.
 12. **Evidence/acceptance/release:** accept two-platform testing, privacy-safe dogfood evidence,
     product-owner behavior/design acceptance, and engineering review. This pre-production delivery
     has no rollback, calendar-kit fallback, dual renderer, or staged production rollout. Eventual

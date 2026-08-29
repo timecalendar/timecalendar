@@ -115,8 +115,9 @@ only the first convenient row.
    of the accepted recommendation, including non-gesture controls and physical-device evidence.
 10. **Visual/loading/error:** use a normal loading indicator, not a skeleton; preserve the rest of
     the accepted visual, stale-data, retry, and no-wrong-date recommendation.
-11. **Live changes/recovery:** accept the recommendation to settle gestures before environment
-    changes, swap complete geometry atomically, isolate malformed rows, handle disappearing events
+11. **Live changes/recovery:** accept the recommendation to settle gestures before locale,
+    timezone, theme, or text-size changes. Orientation and window-size behavior remain unanswered.
+    Swap complete geometry atomically, isolate malformed rows, handle disappearing events
     accessibly, and retain an accessible failure representation.
 12. **Evidence/acceptance/release:** accept the testing, privacy-safe evidence, acceptance, and
     engineering-review recommendation. This pre-production delivery has no rollback,
