@@ -1,15 +1,16 @@
 # Round 3 triage and owner questions
 
-Status: proposed owner questions, not accepted product scope and not renderer architecture.
+Status: Round 3 owner answers recorded. This is product-discovery evidence, not a functional
+specification or renderer architecture.
 
 ## Why this document exists
 
-Round 2 left 187 questionnaire rows marked `UNANSWERED`. This audit assigns every one of
+Round 2 left 187 questionnaire rows marked `UNANSWERED`. This audit assigned every one of
 those rows exactly one disposition without treating current React Native behavior, Flutter,
-or an implementation preference as a product answer. Twelve rows are directly answered by
-already accepted owner decisions. The other 175 remain `UNANSWERED` until research finishes,
-a recommendation is accepted, a dependency is settled, or the owner explicitly confirms an
-in/out/deferred choice.
+or an implementation preference as a product answer. At triage publication, twelve rows were
+directly answered by already accepted owner decisions and the other 175 remained `UNANSWERED`.
+The Round 3 answer record below supersedes that historical readiness state while preserving the
+audit as evidence of what was asked.
 
 The six audit dispositions are deliberately separate from the questionnaire decision statuses:
 
@@ -23,6 +24,99 @@ The six audit dispositions are deliberately separate from the questionnaire deci
   choice; and
 - `EXPLICIT_OUT_OF_SCOPE_CANDIDATE`: omission is not exclusion, so the owner must explicitly
   confirm out or defer it.
+
+## Round 3 owner answer record (2026-08-29)
+
+The authoritative inputs are the owner's
+[free-form response](/TIM/issues/TIM-267#comment-266868c3-ff11-441e-8c13-32362aef1aa5), the
+[row-level interpretation](/TIM/issues/TIM-267#comment-bb1aca00-d72e-4fa8-9b0b-1a981d21928f),
+and answered interaction `ef6f4c48-a37f-442a-a376-ffe625c1c8c1`. The interaction records these
+eight exact choices:
+
+- `round3_05_mid_swipe=keep_until_settle`;
+- `round3_07_zero_timed=instant_marker`;
+- `round3_07_invalid_range=skip_bad_only`;
+- `round3_07_continuation=show_cue`;
+- `round3_07_back_to_back=not_overlap`;
+- `round3_07_overlap_columns=equal_columns`;
+- `round3_07_tie_order=stable_order`; and
+- `round3_07_relayout=keep_last_complete`.
+
+The resulting product meaning, applied row by row in the questionnaire, is:
+
+1. **Reuse/publication:** build a clean, reusable internal TimeCalendar Lego piece that the team
+   is proud of. A public npm package, standalone example, public compatibility promise, and
+   package-specific licensing are not part of the first delivery; later extraction remains
+   possible without becoming a current public-API commitment.
+2. **Devices and controls:** phone and tablet portrait layouts are first-class. Tablet landscape
+   may be allowed without bespoke landscape polish, but changing the current portrait-only native
+   contract is a separate sensitive native-config/ADR decision. Ordinary keyboard/computer control
+   is deferred; complete accessibility control remains first-class. Split-window detail was not
+   answered and remains explicit.
+3. **Surface boundary:** accept the recommendation for university and personal events in owned
+   day/week rendering. Month/custom-day modes, renderer-owned search/filtering, side-by-side
+   comparison, mini rendering, and Home reuse are outside this delivery. Agenda remains an
+   independent presentation.
+4. **Direct manipulation:** editing, empty-grid creation, long-press, drag, resize, rescheduling,
+   recurrence editing, and per-event/per-calendar timezone display are outside the first delivery,
+   not forbidden forever. Later editing must remain feasible without choosing its architecture now.
+5. **Paging:** accept whole day/week pages, one page per swipe, platform-native physics, settled
+   title changes, reduced-motion-aware Today/deep-link movement, and preservation of mode/zoom.
+   There is no resting partial week; while a finger holds the transition, the old title and selected
+   day remain until settle (`keep_until_settle`). The proposed twelve-month product limit is
+   rejected: synchronized dates years away remain navigable.
+6. **Grid and zoom:** accept the full-day grid, pinned labels/headers, zoom-dependent divisions,
+   continuous pinch, visible non-pinch controls, locale/time-format behavior, Gregorian launch
+   behavior, and visible-clock continuity. Measured default/minimum/maximum zoom values remain
+   technical research rather than owner-supplied numbers.
+7. **Unusual/crowded events:** cancelled events are hidden in this iteration, with future display
+   still possible. Use an instant marker, skip only an invalid event, show continuation cues, treat
+   back-to-back events as non-overlapping, use equal columns and stable ordering, and keep the last
+   complete layout until its replacement is ready. The numeric crowding threshold remains bounded
+   agent-owned research.
+8. **Tile content:** visually show event name and location; grid position conveys visual time and
+   timed-event accessibility labels always include time. Source colors may be adjusted for
+   acceptable active-theme contrast. Missing-field rules and exact color ranges/contrast algorithms
+   remain unresolved technical or product detail rather than invented answers.
+9. **Operation/accessibility:** Calendar has no refresh gesture or haptics. Home retains
+   pull-to-refresh for now, and Settings may gain a later action. Chronological accessibility order
+   is navigation on the same Calendar screen, not a separate destination. The accepted non-gesture,
+   focus, large-text, reduced-motion, target-size, and physical-device evidence requirements remain.
+10. **Visual/loading/error:** refine rather than copy the current calendar, use a normal loading
+    indicator instead of a skeleton, preserve stale data with status and retry, and never show a
+    wrong date, unexplained blank, unlabeled stale events, or a theme flash. Exact all-day overflow
+    and truncation rules remain unresolved.
+11. **Live changes/recovery:** settle gestures before environment changes, swap complete geometry
+    atomically, isolate malformed rows with privacy-safe reporting, handle disappearing events
+    accessibly, and retain an accessible failure representation.
+12. **Evidence/acceptance/release:** accept two-platform testing, privacy-safe dogfood evidence,
+    product-owner behavior/design acceptance, and engineering review. This pre-production delivery
+    has no rollback, calendar-kit fallback, dual renderer, or staged production rollout. Eventual
+    production rollout policy belongs to later release planning.
+
+The row table remains canonical. A grouped answer settles only the keys directly supported by the
+owner's words or an accepted recommendation; unanswered precision and bounded research remain
+visible rather than being filled by inference.
+
+### Readiness after recording Round 3
+
+The questionnaire's 280 unique rows now total 172 `CONFIRMED_IN`, 45 `CONFIRMED_OUT`, five
+`DEFERRED`, nine `NEEDS_RESEARCH`, and 49 `UNANSWERED`.
+
+Remaining `UNANSWERED` keys, in questionnaire order:
+
+- Users/platform: `U-002`, `U-005`, `U-006`, `U-008`, `U-009`, `U-010`; `PL-007`, `PL-010`.
+- Navigation/time: `N-012`, `N-015`, `N-018`; `T-009`.
+- Events/interactions/dates/visuals/accessibility: `E-014`, `E-025`; `I-013`; `D-009`,
+  `D-010`; `V-012`, `V-013`; `A-010`, `A-011`.
+- Performance: `PF-009`–`PF-011`, `PF-014`, `PF-015`, `PF-018`–`PF-028`.
+- Boundaries/migration: `B-002`, `B-003`, `B-005`, `B-006`, `B-009`–`B-014`; `M-011`,
+  `M-012`.
+
+The nine bounded research keys are `P-004`, `PL-003`, `T-011`, `T-012`, `E-020`, `V-009`,
+and `PF-006`–`PF-008`. No new owner question is created here: remaining factual work stays with
+agents, while unresolved product precision remains visible for later discovery. Functional
+specification, architecture, and implementation are still unauthorized.
 
 ## Exact 187-row audit
 
@@ -200,10 +294,13 @@ evidence document remains executable and does not require owner labor. Until it 
 Missing device access or an unimplemented renderer is a measurement blocker, not a product
 choice and not evidence for relaxing the accepted budget.
 
-## Round 3 — 12 owner questions
+## Historical Round 3 questions as asked
 
-Please answer by number. “Accept recommendation” is sufficient; add corrections only where
-needed. The questions are ordered so each answer settles or deliberately defers its dependants.
+The text below is preserved as the historical question set the owner answered. Every
+`Recommend` paragraph records the proposal at question time, not current accepted scope. Where a
+recommendation conflicts with the answer record above—especially the twelve-month horizon,
+cancelled-event display, Calendar refresh, haptics, skeleton loading, staged rollout, or rollback—
+the answer record and row table supersede it.
 
 1. **How reusable must the first delivery be?** (`P-010`, `P-011`, `B-007`, `B-008`,
    `Q-016`–`Q-018`, `X-010`) In ELI5 terms: are we building a very clean part of TimeCalendar,
@@ -322,9 +419,9 @@ needed. The questions are ordered so each answer settles or deliberately defers 
     calendar-kit or a hidden dual renderer. This separates repository merge from the
     human-authorized release act and keeps rollback compatible with the one-renderer rule.
 
-## After the owner answers
+## After recording the answers
 
-Record each answer in the row-level questionnaire, regenerate status counts and key lists, and
-confirm the exact merged `main` text before the owner-response issue moves to review. Do not create
-the functional specification, architecture options, ADR, implementation plan, renderer, or rollout
-act from these proposed questions alone.
+The answers are recorded in the row-level questionnaire with derived status counts and remaining
+key lists. This record does not create the functional specification, architecture options, ADR,
+implementation plan, renderer, or rollout act. Those remain unauthorized until their separate
+discovery and approval gates are satisfied.

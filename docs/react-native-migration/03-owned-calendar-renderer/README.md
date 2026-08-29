@@ -1,7 +1,7 @@
 # Owned calendar renderer discovery
 
-Status: Rounds 1 and 2 are recorded; Round 3 triage and proposed owner questions are published.
-Discovery continues; no renderer implementation or architecture is authorized by these documents.
+Status: Rounds 1–3 owner answers are recorded. Discovery continues; no functional specification,
+renderer implementation, or architecture is authorized by these documents.
 
 This directory is the working home for the owned React Native calendar renderer project. Its first job is to establish the product contract with the product owner before architecture or implementation begins.
 
@@ -9,7 +9,7 @@ This directory is the working home for the owned React Native calendar renderer 
 
 1. [Discovery scope and evidence](./01-discovery-scope-and-evidence.md) records what is confirmed, what was merely observed, where existing sources disagree, and what this discovery may and may not decide.
 2. [Functional specification questionnaire](./02-functional-specification-questionnaire.md) is the decision backlog for future product-owner sessions.
-3. [Round 3 triage and owner questions](./round-3-triage-and-owner-questions.md) maps all 187 rows that were unanswered after Round 2 to a triage disposition and publishes the short ELI5 Round 3 set.
+3. [Round 3 triage and answer record](./round-3-triage-and-owner-questions.md) maps all 187 rows that were unanswered after Round 2, preserves the short ELI5 question set, and records the owner's free-form and structured answers.
 4. [The original implementation prompt](../01-roadmap/owned-calendar-renderer-prompt.md) is retained as historical input. Its proposed requirements and solutions are not approved scope.
 
 Future numbered documents should follow this naming scheme:
@@ -54,23 +54,33 @@ responsibility split, quality/debt gates, and bounded fixture catalog. The quest
 continues to make the remaining product and acceptance details explicit instead of inferring
 them from those broad decisions.
 
-## Readiness after Round 3 triage
+## Readiness after Round 3 answers
 
 The blocking first-pass owner decisions are recorded, but the project is not yet ready to
-call `03-functional-specification.md` complete. Round 3 audited all 187 rows that were unanswered
-after Round 2. Twelve directly supported transitions are now recorded, leaving 175
-`UNANSWERED`: 17 repository/standards research, 29 recommendation-led specification, 51 genuine
-owner choices, 57 later-choice dependencies, and 21 explicit out-of-scope candidates.
+call `03-functional-specification.md` complete. The questionnaire's 280 unique rows now total 172
+`CONFIRMED_IN`, 45 `CONFIRMED_OUT`, five `DEFERRED`, nine `NEEDS_RESEARCH`, and 49
+`UNANSWERED` after the owner's Round 3 free-form response and eight structured follow-up choices
+were propagated row by row.
 
-Five factual items already have bounded research actions: `P-004`, `PL-003`, `PF-006`,
-`PF-007`, and `PF-008`. The production aggregate was re-attempted without reading raw data and
-is blocked by database network reachability plus denied pod exec/port-forward. The host also has
-no physical/emulated mobile runtime, and the owned renderer does not yet exist for an honest
-release baseline. These are named measurement blockers, not owner decisions.
+The nine bounded research keys are `P-004`, `PL-003`, `T-011`, `T-012`, `E-020`, `V-009`,
+and `PF-006`–`PF-008`. The production aggregate remains blocked by database network reachability
+plus denied pod exec/port-forward. The host also has no physical/emulated mobile runtime, and the
+owned renderer does not yet exist for an honest release baseline. Numeric zoom bounds, crowding
+thresholds, and contrast algorithms are agent-owned technical work, not owner decisions.
 
-The next owner step is the 12-question dependency-ordered Round 3 set. Architecture and
-implementation remain unauthorized until the resulting row answers remove material product
-ambiguity and the owner explicitly authorizes the functional specification.
+Remaining `UNANSWERED` keys, in questionnaire order:
+
+- Users/platform: `U-002`, `U-005`, `U-006`, `U-008`, `U-009`, `U-010`; `PL-007`, `PL-010`.
+- Navigation/time: `N-012`, `N-015`, `N-018`; `T-009`.
+- Events/interactions/dates/visuals/accessibility: `E-014`, `E-025`; `I-013`; `D-009`,
+  `D-010`; `V-012`, `V-013`; `A-010`, `A-011`.
+- Performance: `PF-009`–`PF-011`, `PF-014`, `PF-015`, `PF-018`–`PF-028`.
+- Boundaries/migration: `B-002`, `B-003`, `B-005`, `B-006`, `B-009`–`B-014`; `M-011`,
+  `M-012`.
+
+No new owner question is created by this answer-recording change. Architecture and implementation
+remain unauthorized until later discovery removes material product ambiguity and the owner
+explicitly authorizes the functional specification.
 
 ## Explicitly outside this discovery session
 
@@ -83,13 +93,16 @@ ambiguity and the owner explicitly authorizes the functional specification.
 - writing a delivery estimate or implementation task breakdown;
 - changing the current application behavior.
 
-## How to run the owner-response session
+## How to continue discovery
 
 1. Read this README and `01-discovery-scope-and-evidence.md` completely.
-2. Verify that merged `main` contains the exact 12 questions in `round-3-triage-and-owner-questions.md`; do not move an owner-response ticket to review before that check passes.
-3. Ask only those 12 Round 3 questions, in order. Do not send the 175-row backlog to the owner or ask for researchable facts.
-4. Record the owner's exact answer, decision status, and any examples. Do not silently normalize ambiguity.
-5. If an answer depends on facts rather than preference, mark it `NEEDS_RESEARCH` and create a bounded agent-owned action. Do not guess or hand agent work to the owner.
-6. Restate each completed topic as candidate requirements and non-requirements for owner confirmation.
-7. Create the functional specification only after the owner confirms that the questionnaire is sufficiently resolved.
-8. Keep architecture and implementation proposals out of the functional specification unless the product owner explicitly states a technical constraint as a requirement.
+2. Treat the questionnaire as the row-level source of truth and the Round 3 document as the
+   answer audit trail; never restore a historical recommendation that the owner corrected.
+3. Complete bounded factual or technical research with agents. Do not ask the owner to provide
+   measurements, algorithms, or repository facts.
+4. Preserve unresolved product precision explicitly. If another owner round becomes necessary,
+   prepare its exact short keyed set on merged `main` before starting the response issue.
+5. Create the functional specification only after the owner confirms that the questionnaire is
+   sufficiently resolved.
+6. Keep architecture and implementation proposals out of the functional specification unless the
+   product owner explicitly states a technical constraint as a requirement.
