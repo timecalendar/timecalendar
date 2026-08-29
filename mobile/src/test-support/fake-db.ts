@@ -1,9 +1,10 @@
 // A shared, stateful in-memory fake of the `@/db` seam for the repository +
 // restart tests (TIM-151 R-2 — collapses ~200 lines of near-identical hand-rolled
 // `jest.mock("@/db", …)` factories). It reproduces exactly the Drizzle slice the
-// repositories touch — `select().from().where().orderBy()` (thenable),
-// `insert().values().onConflictDoUpdate()`, `update().set().where()`,
-// `delete().where()`, `transaction(cb)`, plus the `eq`/`asc` operators and one
+// repositories touch — `select().from().where().orderBy().limit()` (thenable,
+// plus the synchronous `.all()` executor), `insert().values().onConflictDoUpdate()`,
+// `update().set().where()`, `delete().where()`, `transaction(cb)`, plus the
+// `eq`/`lt`/`notInArray`/`asc`/`desc` operators and one
 // column-token object per table — nothing more. Each table's rows live in a
 // per-table Map "disk" held inside the returned `FakeDb` closure, so
 // `jest.resetModules()` (a simulated process restart) never clears them; only
@@ -35,7 +36,7 @@ export interface TableSpec {
 
 export interface FakeDb {
   /** Object to return verbatim from `jest.mock("@/db", () => mockFake.module)`.
-   *  Carries `db`, `eq`, `asc`, and one column-token object per configured table. */
+   *  Carries `db`, the operators, and one column-token object per configured table. */
   module: Record<string, unknown>
   /** Shared jest.fn spies for query-shape assertions (one per builder step). */
   spies: {
@@ -46,12 +47,16 @@ export interface FakeDb {
     from: jest.Mock
     where: jest.Mock
     orderBy: jest.Mock
+    limit: jest.Mock
     values: jest.Mock
     set: jest.Mock
     onConflictDoUpdate: jest.Mock
     transaction: jest.Mock
     eq: jest.Mock
     asc: jest.Mock
+    desc: jest.Mock
+    lt: jest.Mock
+    notInArray: jest.Mock
   }
   /** Clear every table store and reset every spy. Call in `beforeEach`. */
   reset(): void
@@ -60,10 +65,17 @@ export interface FakeDb {
 }
 
 type Row = Record<string, unknown>
-// A resolved `eq()` condition, or null for a where-less read/write.
-type Condition = { field: string; val: unknown } | null
-// A resolved `asc()` order.
-type Order = { field: string }
+// A resolved condition — one operator applied to one column, or `null` for a
+// where-less read/write. This tagged union replaced the original single
+// `{field, val}` eq-only shape
+// when Activity landed; `eq` still resolves to a leaf, so the `spies.eq(col, val)`
+// contract every existing consumer asserts on is untouched.
+type Condition =
+  | { op: "eq" | "lt"; field: string; val: unknown }
+  | { op: "notInArray"; field: string; val: readonly unknown[] }
+  | null
+// A resolved `asc()` / `desc()` order. `orderBy` takes one or more.
+type Order = { field: string; dir: "asc" | "desc" }
 
 export function createFakeDb(config: {
   tables: Record<string, TableSpec>
@@ -94,8 +106,27 @@ export function createFakeDb(config: {
   const pkOf = (token: unknown): string =>
     pks.get(tokenToName.get(token as Record<string, string>) ?? names[0]!)!
 
-  const matches = (row: Row, cond: Condition): boolean =>
-    cond === null || row[cond.field] === cond.val
+  // Ordering/comparison mirrors SQLite closely enough for the columns the
+  // repositories use: numbers compare numerically, everything else compares as
+  // text. Canonical UTC ISO-8601 date TEXT (the schema's posture) sorts
+  // chronologically either way, which is what the Activity newest-first read and
+  // the one-year age cutoff rely on.
+  const compare = (x: unknown, y: unknown): number => {
+    if (typeof x === "number" && typeof y === "number") return x - y
+    return String(x).localeCompare(String(y))
+  }
+
+  const matches = (row: Row, cond: Condition): boolean => {
+    if (cond === null) return true
+    switch (cond.op) {
+      case "eq":
+        return row[cond.field] === cond.val
+      case "lt":
+        return compare(row[cond.field], cond.val) < 0
+      case "notInArray":
+        return !cond.val.includes(row[cond.field])
+    }
+  }
 
   const spies: FakeDb["spies"] = {
     select: jest.fn(),
@@ -105,12 +136,16 @@ export function createFakeDb(config: {
     from: jest.fn(),
     where: jest.fn(),
     orderBy: jest.fn(),
+    limit: jest.fn(),
     values: jest.fn(),
     set: jest.fn(),
     onConflictDoUpdate: jest.fn(),
     transaction: jest.fn(),
     eq: jest.fn(),
     asc: jest.fn(),
+    desc: jest.fn(),
+    lt: jest.fn(),
+    notInArray: jest.fn(),
   }
 
   // The segment after the "." in a "table.field" column token.
@@ -118,17 +153,47 @@ export function createFakeDb(config: {
 
   const eq = (col: string, val: unknown): Condition => {
     spies.eq(col, val)
-    return { field: fieldOf(col), val }
+    return { op: "eq", field: fieldOf(col), val }
+  }
+  const lt = (col: string, val: unknown): Condition => {
+    spies.lt(col, val)
+    return { op: "lt", field: fieldOf(col), val }
+  }
+  const notInArray = (col: string, val: readonly unknown[]): Condition => {
+    spies.notInArray(col, val)
+    return { op: "notInArray", field: fieldOf(col), val }
   }
   const asc = (col: string): Order => {
     spies.asc(col)
-    return { field: fieldOf(col) }
+    return { field: fieldOf(col), dir: "asc" }
+  }
+  const desc = (col: string): Order => {
+    spies.desc(col)
+    return { field: fieldOf(col), dir: "desc" }
   }
 
   const makeSelect = (): Record<string, unknown> => {
     let store = stores.get(names[0]!)!
     let cond: Condition = null
-    let order: Order | null = null
+    let orders: Order[] = []
+    let take: number | null = null
+    // Filter, then sort by each order key in turn (the Activity read is
+    // `orderBy(desc(created_at), desc(id))` — the second key breaks ties on the
+    // first), then apply the limit.
+    const rows = (): Row[] => {
+      const result = [...store.values()].filter((row) => matches(row, cond))
+      if (orders.length > 0) {
+        result.sort((a, b) => {
+          for (const order of orders) {
+            const sign = order.dir === "desc" ? -1 : 1
+            const delta = compare(a[order.field], b[order.field]) * sign
+            if (delta !== 0) return delta
+          }
+          return 0
+        })
+      }
+      return take === null ? result : result.slice(0, take)
+    }
     const builder: Record<string, unknown> = {
       from: (token: unknown) => {
         spies.from(token)
@@ -140,23 +205,22 @@ export function createFakeDb(config: {
         cond = c
         return builder
       },
-      orderBy: (o: Order) => {
-        spies.orderBy(o)
-        order = o
+      orderBy: (...o: Order[]) => {
+        spies.orderBy(...o)
+        orders = o
         return builder
       },
-      then: (resolve: (rows: Row[]) => unknown) => {
-        const rows = [...store.values()].filter((row) => matches(row, cond))
-        if (order !== null) {
-          const f = order.field
-          rows.sort((a, b) => {
-            const [x, y] = [a[f], b[f]]
-            if (typeof x === "number" && typeof y === "number") return x - y
-            return String(x).localeCompare(String(y))
-          })
-        }
-        return resolve(rows)
+      limit: (n: number) => {
+        spies.limit(n)
+        take = n
+        return builder
       },
+      then: (resolve: (result: Row[]) => unknown) => resolve(rows()),
+      // The SYNCHRONOUS read executor. drizzle-orm/expo-sqlite is a 'sync'
+      // session, so `.all()` returns rows without a promise — which is the only
+      // way to read inside a synchronous transaction callback (the Activity page
+      // write reads its state row and its newest cached timestamp there).
+      all: rows,
     }
     return builder
   }
@@ -278,7 +342,14 @@ export function createFakeDb(config: {
     },
   }
 
-  const module: Record<string, unknown> = { db, eq, asc }
+  const module: Record<string, unknown> = {
+    db,
+    eq,
+    asc,
+    desc,
+    lt,
+    notInArray,
+  }
   for (const name of names) module[name] = tokens.get(name)!
 
   return {

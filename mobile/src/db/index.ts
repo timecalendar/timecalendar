@@ -53,12 +53,18 @@ export function resetBackendDatabase(): void {
 //  - `eq`        by-uid reads/writes (personal events, calendar events, checklists)
 //                and the activity_state singleton read/write on the constant id.
 //  - `asc`       the event-checklists ordered read (ADR 024 — `ORDER BY order` asc).
-//  - `desc`      the Activity newest-first read (`ORDER BY created_at DESC, id DESC`).
+//  - `desc`      the Activity newest-first read (`ORDER BY created_at DESC, id DESC`)
+//                and its newest-cached-timestamp read.
 //  - `lt`        the Activity one-year age cutoff (`created_at < cutoff`).
 //  - `notInArray` the Activity ownership prune (rows whose calendar the device no
 //                longer holds).
-//  - `and`       composes the two Activity prune conditions into one delete.
-export { and, asc, desc, eq, lt, notInArray, useLiveQuery }
+//
+// The change proposal also listed `and`, for a composite prune condition. The
+// design's fixed statement order (upsert → prune by age → prune by ownership →
+// state) makes those two prunes SEPARATE deletes, so nothing composes conditions
+// and `and` would be an unused re-export — R-2 says re-export only what a
+// consumer needs. Add it back with its consumer if a later Activity ticket needs one.
+export { asc, desc, eq, lt, notInArray, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
 // drizzle-orm/sqlite-core import stays inside the seam dir.
