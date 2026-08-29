@@ -106,10 +106,10 @@
 
 ## 6. Gates green locally
 
-- [ ] 6.1 `cd server && npm test` (or the targeted suites for calendar, calendar-sync and contact
+- [x] 6.1 `cd server && npm test` (or the targeted suites for calendar, calendar-sync and contact
       first, then the full run) — all green with the compose dependencies up.
 - [x] 6.2 `cd server && npm run lint` and the repo's format check; `cd mobile && npm run lint`.
-- [ ] 6.3 Re-run `npm run generate:openapi` and `npm run generate` once more after all edits and
+- [x] 6.3 Re-run `npm run generate:openapi` and `npm run generate` once more after all edits and
       confirm `git diff --exit-code openapi/openapi.json mobile/src/api/generated` is clean — this
       is the local reproduction of both CI drift gates (`ci-build-deploy.yml` for the spec,
       `ci-mobile.yml` for the client).
@@ -128,14 +128,14 @@
 
 ## 8. Definition of Done
 
-- [ ] 8.1 Walk `docs/mobile/architecture-book/definition-of-done.md` and record why the client-side
+- [x] 8.1 Walk `docs/mobile/architecture-book/definition-of-done.md` and record why the client-side
       items do not apply: no user-facing text, no a11y surface, no Maestro flow and no device pass
       — this change ships server contracts and generated types only. Machine-checkable items
       (typecheck, lint, tests, no drift) must actually be green.
-- [ ] 8.2 Confirm the diff touches only: `server/src/modules/{calendar,calendar-sync,contact}/**`,
+- [x] 8.2 Confirm the diff touches only: `server/src/modules/{calendar,calendar-sync,contact}/**`,
       `openapi/openapi.json`, `mobile/src/api/generated/**`, the two docs files, and this OpenSpec
       change. In particular **no** `server/src/migrations/` file — if one appears necessary, stop
       and escalate to the Founding Engineer rather than adding it.
-- [ ] 8.3 Flag the sensitive surfaces in the PR body for the Reviewer: `openapi/openapi.json` and
+- [x] 8.3 Flag the sensitive surfaces in the PR body for the Reviewer: `openapi/openapi.json` and
       `mobile/src/api/generated/` (the server↔client contract, consumed by Flutter and web as well
       as React Native) and the calendar/contact server modules.
