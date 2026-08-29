@@ -7,6 +7,14 @@ environment: ""
 server:
   replicaCount: 1
   tag: ""
+  # Annotations stamped onto the server *pod template*. Setting or changing any
+  # key here mutates the pod spec, so ArgoCD rolls the server pods on its next
+  # sync. This is the supported way to apply a change to a Secret consumed
+  # through envFrom (timecalendar-env-secret) — Kubernetes injects those env
+  # vars once at container start and never restarts pods when the Secret
+  # changes. Empty renders nothing at all; the per-environment value is written
+  # in lyrolab/platform, never here.
+  podAnnotations: {}
 web:
   replicaCount: 1
   tag: ""
