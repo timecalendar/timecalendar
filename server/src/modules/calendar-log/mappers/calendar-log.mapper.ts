@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { CalendarLogGet } from "modules/calendar-log/models/dto/calendar-log-get.dto"
+import { CalendarLogV1 } from "modules/calendar-log/models/dto/calendar-log-v1.dto"
 import { CalendarChangeGet } from "modules/calendar-log/models/dto/calendar-change-get.dto"
 import { CalendarLogEventGet } from "modules/calendar-log/models/dto/calendar-log-event-get.dto"
 import { CalendarChangedItem } from "modules/calendar-log/models/dto/calendar-changed-item.dto"
@@ -14,6 +15,22 @@ export class CalendarLogMapper {
     dto.id = entity.id
     dto.calendarId = entity.calendar.id
     dto.calendarToken = entity.calendar.token
+    dto.calendarName = entity.calendar.name
+    dto.calendarChange = this.mapCalendarChange(entity.calendarChange)
+    dto.createdAt = entity.createdAt
+    dto.updatedAt = entity.updatedAt
+    return dto
+  }
+
+  /**
+   * The v1 shape. `calendarToken` is never assigned — not assigned-then-deleted,
+   * which would leave the token on an in-memory object for any future
+   * refactor, log line, or serializer to surface.
+   */
+  toCalendarLogV1(entity: CalendarLog): CalendarLogV1 {
+    const dto = new CalendarLogV1()
+    dto.id = entity.id
+    dto.calendarId = entity.calendar.id
     dto.calendarName = entity.calendar.name
     dto.calendarChange = this.mapCalendarChange(entity.calendarChange)
     dto.createdAt = entity.createdAt

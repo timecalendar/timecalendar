@@ -1,18 +1,9 @@
 /**
  * The Activity v1 read path's SQL, as a single source of truth.
  *
- * TIM-394 measures a query shape the endpoint does not yet run: `POST
- * /v1/calendar-logs/search` is Ticket 2's (TIM-395). A measurement of a query
- * shape is only worth anything if the shipped endpoint runs *that* shape, so
- * this module is written to be **relocated**, not copied.
- *
- * STANDING OBLIGATION ON TICKET 2 (design decision D1 of the
- * `measure-activity-capacity-budgets` change): move this file to
- * `server/src/modules/calendar-log/repositories/activity-search.queries.ts` and
- * import it from *both* the shipped repository and this harness. The harness
- * must never keep a private copy — if Ticket 2 changes the query, the harness
- * has to change with it or fail to compile. The alternative (two copies that
- * drift) is how a capacity gate silently stops describing production.
+ * The shipped Activity endpoint and its capacity harness import this module.
+ * Keeping one production-owned SQL source ensures that the frozen performance
+ * gate continues to measure the exact query shape serving requests.
  *
  * Every value is bound as a positional parameter. There is no string
  * interpolation anywhere in this file: the harness runs against fixtures today
@@ -149,7 +140,7 @@ export const calendarLogPageLateralSql = (hasCursor: boolean) => `
   SELECT p.*
   FROM unnest($1::uuid[]) AS c(id)
   CROSS JOIN LATERAL (
-    SELECT ${pageColumns("l")}
+    SELECT ${pageColumns("l")}, l."createdAt"::text AS "createdAtText"
     FROM "calendar_log" l
     WHERE l."calendarId" = c.id
       AND l."createdAt" <= $2

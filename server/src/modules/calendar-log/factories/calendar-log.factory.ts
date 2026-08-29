@@ -1,3 +1,4 @@
+import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarChange } from "modules/calendar-log/models/calendar-change"
@@ -57,3 +58,23 @@ export const calendarLogFactory = factoryBuilder(() => [
       }) as CalendarLog,
   ),
 ])
+
+/**
+ * Creates a log and forces its `createdAt`, returning the new log's id.
+ *
+ * `DEFAULT now()` cannot reliably reproduce a timestamp collision — or a
+ * sub-millisecond gap — so the ordering, cursor and snapshot specs set the
+ * column directly. Writes through the same worker DataSource `factoryBuilder`
+ * persists with, which is the database the Nest test app reads.
+ */
+export const createCalendarLogAt = async (
+  calendar: Calendar,
+  createdAt: string,
+): Promise<string> => {
+  const log = await calendarLogFactory().calendar(calendar.id).create()
+  await SharedDatabaseModule.getTestDataSource().query(
+    `UPDATE "calendar_log" SET "createdAt" = CAST($1 AS timestamp) WHERE "id" = $2`,
+    [createdAt, log.id],
+  )
+  return log.id
+}

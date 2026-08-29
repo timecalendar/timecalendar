@@ -188,5 +188,43 @@ describe("CalendarLogController", () => {
       // Act
       await request(app).post("/calendar-logs/search").send({}).expect(400)
     })
+
+    // Compatibility with the v1 change (TIM-395): the only caller whose
+    // behavior moves is the malformed one. A bare string used to pass
+    // `each: true`, spread to zero characters, and return a silent empty
+    // success indistinguishable from "no changes".
+    it("rejects a bare string where an array is required", async () => {
+      await request(app)
+        .post("/calendar-logs/search")
+        .send({ tokens: "some-token" })
+        .expect(400)
+    })
+
+    it("keeps the unchanged response shape for a valid array request", async () => {
+      // Arrange
+      const calendar = await calendarFactory().create()
+      const log = await calendarLogFactory().calendar(calendar.id).create()
+
+      // Act
+      const { body } = await request(app)
+        .post("/calendar-logs/search")
+        .send({ tokens: [calendar.token] })
+        .expect(200)
+
+      // Assert — still a bare array of CalendarLogGet, token included.
+      expect(Array.isArray(body)).toBe(true)
+      expect(body).toHaveLength(1)
+      expect(Object.keys(body[0]).sort()).toEqual([
+        "calendarChange",
+        "calendarId",
+        "calendarName",
+        "calendarToken",
+        "createdAt",
+        "id",
+        "updatedAt",
+      ])
+      expect(body[0].id).toBe(log.id)
+      expect(body[0].calendarToken).toBe(calendar.token)
+    })
   })
 })

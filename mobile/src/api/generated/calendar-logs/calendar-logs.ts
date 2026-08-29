@@ -15,7 +15,9 @@ import type {
 
 import type {
   CalendarLogGet,
+  CalendarLogSearchV1Response,
   GetCalendarLogsDto,
+  SearchCalendarLogsV1Dto,
 } from "../timeCalendar.schemas"
 
 import { customFetch } from "../../mutator"
@@ -116,6 +118,103 @@ export const useCalendarLogControllerGetCalendarLogs = <
 > => {
   return useMutation(
     getCalendarLogControllerGetCalendarLogsMutationOptions(options),
+    queryClient,
+  )
+}
+export const getCalendarLogV1ControllerSearchCalendarLogsUrl = () => {
+  return `/v1/calendar-logs/search`
+}
+
+/**
+ * @summary Search calendar logs for given tokens, newest first
+ */
+export const calendarLogV1ControllerSearchCalendarLogs = async (
+  searchCalendarLogsV1Dto: SearchCalendarLogsV1Dto,
+  options?: RequestInit,
+): Promise<CalendarLogSearchV1Response> => {
+  return customFetch<CalendarLogSearchV1Response>(
+    getCalendarLogV1ControllerSearchCalendarLogsUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(searchCalendarLogsV1Dto),
+    },
+  )
+}
+
+export const getCalendarLogV1ControllerSearchCalendarLogsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof calendarLogV1ControllerSearchCalendarLogs>>,
+    TError,
+    { data: SearchCalendarLogsV1Dto },
+    TContext
+  >
+  request?: SecondParameter<typeof customFetch>
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof calendarLogV1ControllerSearchCalendarLogs>>,
+  TError,
+  { data: SearchCalendarLogsV1Dto },
+  TContext
+> => {
+  const mutationKey = ["calendarLogV1ControllerSearchCalendarLogs"]
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined }
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof calendarLogV1ControllerSearchCalendarLogs>>,
+    { data: SearchCalendarLogsV1Dto }
+  > = (props) => {
+    const { data } = props ?? {}
+
+    return calendarLogV1ControllerSearchCalendarLogs(data, requestOptions)
+  }
+
+  return { mutationFn, ...mutationOptions }
+}
+
+export type CalendarLogV1ControllerSearchCalendarLogsMutationResult =
+  NonNullable<
+    Awaited<ReturnType<typeof calendarLogV1ControllerSearchCalendarLogs>>
+  >
+export type CalendarLogV1ControllerSearchCalendarLogsMutationBody =
+  SearchCalendarLogsV1Dto
+export type CalendarLogV1ControllerSearchCalendarLogsMutationError =
+  ErrorType<unknown>
+
+/**
+ * @summary Search calendar logs for given tokens, newest first
+ */
+export const useCalendarLogV1ControllerSearchCalendarLogs = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof calendarLogV1ControllerSearchCalendarLogs>>,
+      TError,
+      { data: SearchCalendarLogsV1Dto },
+      TContext
+    >
+    request?: SecondParameter<typeof customFetch>
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof calendarLogV1ControllerSearchCalendarLogs>>,
+  TError,
+  { data: SearchCalendarLogsV1Dto },
+  TContext
+> => {
+  return useMutation(
+    getCalendarLogV1ControllerSearchCalendarLogsMutationOptions(options),
     queryClient,
   )
 }

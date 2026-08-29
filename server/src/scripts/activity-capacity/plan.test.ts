@@ -1,12 +1,5 @@
 import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import {
-  CohortSpec,
-  SqlRunner,
-  cohortCalendarIds,
-  cohortTokens,
-  seedFixtures,
-} from "./fixtures"
-import {
   PageShape,
   calendarLogPageParams,
   calendarLogPageSql,
@@ -14,7 +7,14 @@ import {
   resolveCalendarsByTokenSql,
   unreadCountParams,
   unreadCountSql,
-} from "./queries"
+} from "modules/calendar-log/repositories/activity-search.queries"
+import {
+  CohortSpec,
+  SqlRunner,
+  cohortCalendarIds,
+  cohortTokens,
+  seedFixtures,
+} from "./fixtures"
 
 /**
  * The plan regression tripwire (design decision D6).
