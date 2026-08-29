@@ -35,8 +35,9 @@ import {
   seedFixtures,
 } from "./fixtures"
 import {
+  PageShape,
   calendarLogPageParams,
-  calendarLogPageSql,
+  pageSqlForShape,
   resolveCalendarsByTokenSql,
   unreadCountParams,
   unreadCountSql,
@@ -47,6 +48,7 @@ const DEFAULT_PAGE_SIZE = 50
 const MAX_PAGE_SIZE = 100
 const DEFAULT_SAMPLES = 40
 const CONCURRENCY = 8
+const PAGE_SHAPES: readonly PageShape[] = ["specification", "lateral"]
 
 // ---------------------------------------------------------------------------
 // Connection safety
@@ -240,6 +242,7 @@ type PageResult = {
 
 const readPage = async (
   client: Client,
+  shape: PageShape,
   input: {
     calendarIds: string[]
     asOf: Date
@@ -249,7 +252,7 @@ const readPage = async (
 ): Promise<PageResult> => {
   const startedAt = performance.now()
   const { rows } = await client.query<CalendarLogRow>(
-    calendarLogPageSql(Boolean(input.cursor)),
+    pageSqlForShape(shape, Boolean(input.cursor)),
     calendarLogPageParams(input),
   )
   const durationMs = performance.now() - startedAt
@@ -273,6 +276,7 @@ const readPage = async (
 
 type CohortMeasurement = {
   cohort: string
+  shape: PageShape
   calendars: number
   history: string
   pageSize: number
@@ -291,6 +295,7 @@ type CohortMeasurement = {
 const measureCohort = async (
   client: Client,
   cohort: CohortSpec,
+  shape: PageShape,
   pageSize: number,
   samples: number,
 ): Promise<CohortMeasurement> => {
@@ -305,10 +310,18 @@ const measureCohort = async (
   const storedChangeBytes: number[] = []
   const changeItems: number[] = []
 
-  const first = await readPage(client, { calendarIds, asOf, limit: pageSize })
+  const first = await readPage(client, shape, {
+    calendarIds,
+    asOf,
+    limit: pageSize,
+  })
 
   for (let sample = 0; sample < samples; sample++) {
-    const page = await readPage(client, { calendarIds, asOf, limit: pageSize })
+    const page = await readPage(client, shape, {
+      calendarIds,
+      asOf,
+      limit: pageSize,
+    })
     firstPageMs.push(page.durationMs)
 
     const v1 = page.rows.map((row) =>
@@ -335,7 +348,7 @@ const measureCohort = async (
     )
 
     if (first.nextCursor) {
-      const following = await readPage(client, {
+      const following = await readPage(client, shape, {
         calendarIds,
         asOf,
         limit: pageSize,
@@ -366,6 +379,7 @@ const measureCohort = async (
 
   return {
     cohort: cohort.key,
+    shape,
     calendars: cohort.calendars,
     history: cohort.variant,
     pageSize,
@@ -394,6 +408,7 @@ const measureCohort = async (
 const measureConcurrency = async (
   url: string,
   cohort: CohortSpec,
+  shape: PageShape,
   pageSize: number,
   rounds: number,
 ) => {
@@ -418,7 +433,7 @@ const measureConcurrency = async (
   for (let round = 0; round < rounds; round++) {
     await Promise.all(
       clients.map(async (client) => {
-        const page = await readPage(client, {
+        const page = await readPage(client, shape, {
           calendarIds,
           asOf,
           limit: pageSize,
@@ -440,6 +455,7 @@ const measureConcurrency = async (
 
   return {
     concurrency: CONCURRENCY,
+    shape,
     rounds,
     totalReads: CONCURRENCY * rounds,
     wallMs: round(wallMs),
@@ -463,6 +479,7 @@ const explainQuery = async (client: Client, sql: string, params: unknown[]) => {
 
 type CohortPlans = {
   cohort: string
+  shape: PageShape
   calendars: number
   pageSize: number
   plans: Record<string, string>
@@ -471,11 +488,16 @@ type CohortPlans = {
 const explainCohort = async (
   client: Client,
   cohort: CohortSpec,
+  shape: PageShape,
   pageSize: number,
 ): Promise<CohortPlans> => {
   const calendarIds = cohortCalendarIds(cohort)
   const asOf = new Date()
-  const first = await readPage(client, { calendarIds, asOf, limit: pageSize })
+  const first = await readPage(client, shape, {
+    calendarIds,
+    asOf,
+    limit: pageSize,
+  })
 
   const plans: Record<string, string> = {
     tokenResolution: await explainQuery(client, resolveCalendarsByTokenSql, [
@@ -483,7 +505,7 @@ const explainCohort = async (
     ]),
     firstPage: await explainQuery(
       client,
-      calendarLogPageSql(false),
+      pageSqlForShape(shape, false),
       calendarLogPageParams({ calendarIds, asOf, limit: pageSize }),
     ),
     unreadCountRecent: await explainQuery(
@@ -509,7 +531,7 @@ const explainCohort = async (
   if (first.nextCursor) {
     plans.followingPage = await explainQuery(
       client,
-      calendarLogPageSql(true),
+      pageSqlForShape(shape, true),
       calendarLogPageParams({
         calendarIds,
         asOf,
@@ -519,7 +541,13 @@ const explainCohort = async (
     )
   }
 
-  return { cohort: cohort.key, calendars: cohort.calendars, pageSize, plans }
+  return {
+    cohort: cohort.key,
+    shape,
+    calendars: cohort.calendars,
+    pageSize,
+    plans,
+  }
 }
 
 const corpusSize = async (client: Client) => {
@@ -607,20 +635,31 @@ const withClient = async <T>(
   }
 }
 
-/** One full pass: measure every cohort at both page sizes, then explain them. */
+/**
+ * One full pass: every cohort, both page shapes, both page sizes, then the
+ * plans. Both shapes every time — the whole point of the comparison is that the
+ * specification's shape and the lateral rewrite are measured under identical
+ * corpus, cache, and statistics conditions.
+ */
 const runPass = async (client: Client, samples: number) => {
   const cohorts: CohortMeasurement[] = []
-  for (const pageSize of [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE]) {
-    for (const cohort of ALL_COHORTS) {
-      log(`measuring ${cohort.key} @ page size ${pageSize}`)
-      cohorts.push(await measureCohort(client, cohort, pageSize, samples))
+  for (const shape of PAGE_SHAPES) {
+    for (const pageSize of [DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE]) {
+      for (const cohort of ALL_COHORTS) {
+        log(`measuring ${cohort.key} (${shape}) @ page size ${pageSize}`)
+        cohorts.push(
+          await measureCohort(client, cohort, shape, pageSize, samples),
+        )
+      }
     }
   }
 
   const plans: CohortPlans[] = []
-  for (const cohort of ALL_COHORTS) {
-    log(`explaining ${cohort.key}`)
-    plans.push(await explainCohort(client, cohort, DEFAULT_PAGE_SIZE))
+  for (const shape of PAGE_SHAPES) {
+    for (const cohort of ALL_COHORTS) {
+      log(`explaining ${cohort.key} (${shape})`)
+      plans.push(await explainCohort(client, cohort, shape, DEFAULT_PAGE_SIZE))
+    }
   }
 
   return { cohorts, plans }
@@ -677,9 +716,13 @@ const main = async () => {
 
     if (options.command === "explain") {
       const plans: CohortPlans[] = []
-      for (const cohort of ALL_COHORTS) {
-        log(`explaining ${cohort.key}`)
-        plans.push(await explainCohort(client, cohort, DEFAULT_PAGE_SIZE))
+      for (const shape of PAGE_SHAPES) {
+        for (const cohort of ALL_COHORTS) {
+          log(`explaining ${cohort.key} (${shape})`)
+          plans.push(
+            await explainCohort(client, cohort, shape, DEFAULT_PAGE_SIZE),
+          )
+        }
       }
       return { corpus, plans }
     }
@@ -691,6 +734,7 @@ const main = async () => {
   const concurrency = await measureConcurrency(
     options.url,
     COHORTS.find((c) => c.key === "c100-year") ?? MANY_CHANGES_COHORT,
+    "lateral",
     DEFAULT_PAGE_SIZE,
     10,
   )

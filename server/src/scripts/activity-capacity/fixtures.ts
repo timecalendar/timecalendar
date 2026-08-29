@@ -98,7 +98,7 @@ export const CHANGES_PER_LOG: Quantiles = [
  */
 const BACKGROUND_LOGGED_FRACTION = 0.25
 
-export type HistoryVariant = "recent" | "year"
+export type HistoryVariant = "recent" | "year" | "empty"
 
 export type CohortSpec = {
   /** Stable key — used for the deterministic ids and as the report label. */
@@ -107,7 +107,17 @@ export type CohortSpec = {
   readonly variant: HistoryVariant
 }
 
-/** The 1/10/100 × recent/year spine the specification fixes. */
+/**
+ * The 1/10/100 × recent/year spine the specification fixes, plus the empty case.
+ *
+ * `c100-empty` is not decoration. 332,542 of production's 444,072 calendars —
+ * 75% — carry no calendar log at all, so **an empty Activity screen is the
+ * majority request, not an edge case**. It is also the request whose plan is
+ * least intuitive: there is no `LIMIT` to stop early on, because there is
+ * nothing to find, so whatever access path the planner picks it has to exhaust.
+ * A gate measured only on calendars that *have* history would miss the case
+ * most students actually generate.
+ */
 export const COHORTS: readonly CohortSpec[] = [
   { key: "c1-recent", calendars: 1, variant: "recent" },
   { key: "c1-year", calendars: 1, variant: "year" },
@@ -115,6 +125,7 @@ export const COHORTS: readonly CohortSpec[] = [
   { key: "c10-year", calendars: 10, variant: "year" },
   { key: "c100-recent", calendars: 100, variant: "recent" },
   { key: "c100-year", calendars: 100, variant: "year" },
+  { key: "c100-empty", calendars: 100, variant: "empty" },
 ]
 
 /**
@@ -231,13 +242,15 @@ export const fromQuantiles = (points: Quantiles, quantile: number): number => {
  */
 const midpointQuantile = (index: number, count: number) => (index + 0.5) / count
 
-const logsForCalendar = (cohort: CohortSpec, index: number) =>
-  fromQuantiles(
+const logsForCalendar = (cohort: CohortSpec, index: number) => {
+  if (cohort.variant === "empty") return 0
+  return fromQuantiles(
     cohort.variant === "year"
       ? LOGS_PER_CALENDAR_YEAR
       : LOGS_PER_CALENDAR_RECENT,
     midpointQuantile(index, cohort.calendars),
   )
+}
 
 // ---------------------------------------------------------------------------
 // Synthetic payloads
@@ -465,7 +478,7 @@ const buildCohortRows = (cohort: CohortSpec) => {
     const logCount = isManyChanges
       ? MANY_CHANGES_PER_LOG.length
       : logsForCalendar(cohort, index)
-    const step = Math.max(1, Math.floor(windowSeconds / logCount))
+    const step = Math.max(1, Math.floor(windowSeconds / Math.max(1, logCount)))
 
     for (let j = 0; j < logCount; j++) {
       // Every seventh log shares its predecessor's timestamp. Ties are not an
@@ -555,6 +568,11 @@ export type SeedOptions = {
   scale?: SeedScale
   /** Skip the background corpus. Only for the CI tripwire, which seeds its own. */
   background?: boolean
+  /**
+   * `VACUUM ANALYZE` rather than plain `ANALYZE` after seeding. On by default;
+   * the CI tripwire turns it off because its runner holds a transaction.
+   */
+  vacuum?: boolean
   cohorts?: readonly CohortSpec[]
   onProgress?: (message: string) => void
 }
@@ -566,6 +584,7 @@ export const seedFixtures = async (
   const scale = options.scale ?? DEFAULT_SCALE
   const cohorts = options.cohorts ?? ALL_COHORTS
   const withBackground = options.background ?? true
+  const withVacuum = options.vacuum ?? true
   const progress = options.onProgress ?? (() => {})
   const startedAt = Date.now()
 
@@ -586,11 +605,16 @@ export const seedFixtures = async (
     cohortReports.push(await seedCohort(client, cohort))
   }
 
-  // Without fresh statistics every plan captured afterwards is meaningless:
-  // the planner would be costing a table it believes is empty.
-  progress("ANALYZE")
-  await client.query(`ANALYZE "calendar_log"`)
-  await client.query(`ANALYZE "calendar"`)
+  // Without fresh statistics every plan captured afterwards is meaningless: the
+  // planner would be costing a table it believes is empty. `VACUUM` matters as
+  // much as `ANALYZE` on a re-seed — `clearFixtures` deletes before inserting,
+  // and a table carrying a million dead tuples costs a sequential scan far too
+  // high, which flatters exactly the comparison this harness exists to make.
+  // (`VACUUM` cannot run inside a transaction, so the CI tripwire turns it off.)
+  progress(withVacuum ? "VACUUM ANALYZE" : "ANALYZE")
+  const analyze = withVacuum ? "VACUUM ANALYZE" : "ANALYZE"
+  await client.query(`${analyze} "calendar_log"`)
+  await client.query(`${analyze} "calendar"`)
 
   return {
     scale,

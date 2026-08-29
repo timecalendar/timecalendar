@@ -7,8 +7,10 @@ import {
   seedFixtures,
 } from "./fixtures"
 import {
+  PageShape,
   calendarLogPageParams,
   calendarLogPageSql,
+  pageSqlForShape,
   unreadCountParams,
   unreadCountSql,
 } from "./queries"
@@ -37,9 +39,17 @@ import {
 // Sized for the 30 s budget in the change's tasks.md, not for realism — realism
 // is the harness's job. Small enough to seed in a couple of seconds, large
 // enough that scanning it costs the planner far more than one index descent.
-const CI_SCALE = { backgroundCalendars: 400, backgroundLogs: 20_000 }
+const CI_SCALE = { backgroundCalendars: 400, backgroundLogs: 12_000 }
 const CI_COHORT: CohortSpec = { key: "c1-year", calendars: 1, variant: "year" }
+// The empty cohort is the one that exposed the planner cliff at full scale, and
+// it is the majority request in production: 75% of calendars carry no log.
+const CI_EMPTY_COHORT: CohortSpec = {
+  key: "c100-empty",
+  calendars: 100,
+  variant: "empty",
+}
 const PAGE_SIZE = 50
+const SHAPES: PageShape[] = ["specification", "lateral"]
 
 type PlanRow = { "QUERY PLAN": string }
 
@@ -57,7 +67,12 @@ describe("activity-capacity plan tripwire", () => {
         rows: await dataSource.query(text, values),
       }),
     }
-    await seedFixtures(runner, { scale: CI_SCALE, cohorts: [CI_COHORT] })
+    await seedFixtures(runner, {
+      scale: CI_SCALE,
+      cohorts: [CI_COHORT, CI_EMPTY_COHORT],
+      // `VACUUM` cannot run inside the suite's transaction.
+      vacuum: false,
+    })
   })
 
   const explain = async (sql: string, params: unknown[]) => {
@@ -76,26 +91,93 @@ describe("activity-capacity plan tripwire", () => {
       cursor,
     })
 
-  it("does not sequentially scan calendar_log for a bounded first page", async () => {
-    const plan = await explain(calendarLogPageSql(false), pageParams())
+  it.each(SHAPES)(
+    "does not sequentially scan calendar_log for a bounded first page (%s)",
+    async (shape) => {
+      const plan = await explain(pageSqlForShape(shape, false), pageParams())
 
-    expect(plan).not.toMatch(/Seq Scan on calendar_log/)
-    expect(plan).toMatch(/IDX_calendar_log_calendar_createdAt/)
+      expect(plan).not.toMatch(/Seq Scan on calendar_log/)
+      expect(plan).toMatch(/IDX_calendar_log_calendar_createdAt/)
+    },
+  )
+
+  it.each(SHAPES)(
+    "does not sequentially scan calendar_log for a bounded following page (%s)",
+    async (shape) => {
+      const { rows } = await runner.query<{ createdAt: Date; id: string }>(
+        pageSqlForShape(shape, false),
+        pageParams(),
+      )
+      const last = rows[rows.length - 1]
+
+      const plan = await explain(
+        pageSqlForShape(shape, true),
+        pageParams({ createdAt: last.createdAt, id: last.id }),
+      )
+
+      expect(plan).not.toMatch(/Seq Scan on calendar_log/)
+    },
+  )
+
+  /**
+   * The lateral rewrite is only usable if it is a *plan* change and nothing
+   * else. This is the assertion that makes it safe for TIM-395 to adopt: same
+   * rows, same order, page after page, including across a timestamp tie.
+   */
+  it("returns byte-identical pages for both query shapes", async () => {
+    const asOf = new Date()
+    const calendarIds = cohortCalendarIds(CI_COHORT)
+    const pageSize = 7
+    let cursor: { createdAt: Date; id: string } | undefined
+
+    for (let page = 0; page < 6; page++) {
+      const params = calendarLogPageParams({
+        calendarIds,
+        asOf,
+        limit: pageSize,
+        cursor,
+      })
+      const [specification, lateral] = await Promise.all(
+        SHAPES.map((shape) =>
+          runner.query<{ id: string; createdAt: Date }>(
+            pageSqlForShape(shape, Boolean(cursor)),
+            params,
+          ),
+        ),
+      )
+
+      expect(lateral.rows.map((row) => row.id)).toEqual(
+        specification.rows.map((row) => row.id),
+      )
+      if (specification.rows.length <= pageSize) break
+      const last = specification.rows[pageSize - 1]
+      cursor = { createdAt: last.createdAt, id: last.id }
+    }
   })
 
-  it("does not sequentially scan calendar_log for a bounded following page", async () => {
-    const { rows } = await runner.query<{ createdAt: Date; id: string }>(
-      calendarLogPageSql(false),
-      pageParams(),
-    )
-    const last = rows[rows.length - 1]
-
+  /**
+   * The failure this ticket found. A request whose calendars hold no logs has
+   * nothing to stop a `LIMIT` early, so the specification's shape can be talked
+   * into walking the whole global `createdAt` index. Asserting on buffers rather
+   * than on milliseconds keeps this a correctness test rather than a flaky
+   * benchmark: the number of pages touched is deterministic, the wall clock is
+   * not.
+   */
+  it("reads a bounded number of buffers for an all-empty cohort (lateral)", async () => {
     const plan = await explain(
-      calendarLogPageSql(true),
-      pageParams({ createdAt: last.createdAt, id: last.id }),
+      pageSqlForShape("lateral", false),
+      calendarLogPageParams({
+        calendarIds: cohortCalendarIds(CI_EMPTY_COHORT),
+        asOf: new Date(),
+        limit: PAGE_SIZE,
+      }),
     )
 
+    const buffers = Number(plan.match(/Buffers: shared hit=(\d+)/)?.[1] ?? 0)
     expect(plan).not.toMatch(/Seq Scan on calendar_log/)
+    // One index descent per calendar, a handful of pages each. The
+    // specification's shape reads the whole index here at production scale.
+    expect(buffers).toBeLessThan(CI_EMPTY_COHORT.calendars * 10)
   })
 
   it("does not sequentially scan calendar_log for a bounded unread count", async () => {
