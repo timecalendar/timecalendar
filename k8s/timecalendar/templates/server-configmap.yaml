@@ -15,6 +15,12 @@ data:
 
   # Redis
   REDIS_QUEUE: timecalendar
+  # BullMQ worker concurrency for the default queue. The default here MUST stay 100 and
+  # MUST NOT be "": server/src/config/constants.ts reads
+  # `+(env.QUEUE_CONCURRENCY ?? 100)`, and `+("")` is 0, not 100 -- an empty string here
+  # would set concurrency to 0 and stall the queue silently. `??` only catches null and
+  # undefined, and an empty ConfigMap value arrives as "".
+  QUEUE_CONCURRENCY: {{ .Values.timecalendar.queueConcurrency | default 100 | quote }}
   # NOTE: REDIS_KEY_PREFIX is retired as of the nest-shared migration (TIM-143).
   # nest-shared's SharedRedisModule/SharedBullModule connect by REDIS_URL only
   # and do not apply a per-environment Bull key prefix. Environments MUST be
