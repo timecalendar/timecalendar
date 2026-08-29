@@ -460,17 +460,17 @@ metrics such as universal 100% coverage of presentation glue.
 
 ## Contradictions and missing precision after Round 1
 
-| ID        | Finding                                                                                                                           | Round 2 or research disposition                                                                                                             |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| R1-GAP-01 | P-002 allows retention only if new evidence proves calendar-kit reliable, while M-001 says it must never ship.                    | Resolved: remove calendar-kit as early as practical; it must not ship, and there is no fallback path.                                       |
-| R1-GAP-02 | P-005 lists three outcomes but does not settle the order when correctness, accessibility, fluidity, and visual richness conflict. | Resolved by Round 2 question 1.                                                                                                             |
-| R1-GAP-03 | “Persist the last mode” does not define navigation, process restart, reinstall, or calendar-source boundaries.                    | Resolved by Round 2 question 2.                                                                                                             |
+| ID        | Finding                                                                                                                           | Round 2 or research disposition                                                                                                                                                                                                                      |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1-GAP-01 | P-002 allows retention only if new evidence proves calendar-kit reliable, while M-001 says it must never ship.                    | Resolved: remove calendar-kit as early as practical; it must not ship, and there is no fallback path.                                                                                                                                                |
+| R1-GAP-02 | P-005 lists three outcomes but does not settle the order when correctness, accessibility, fluidity, and visual richness conflict. | Resolved by Round 2 question 1.                                                                                                                                                                                                                      |
+| R1-GAP-03 | “Persist the last mode” does not define navigation, process restart, reinstall, or calendar-source boundaries.                    | Resolved by Round 2 question 2.                                                                                                                                                                                                                      |
 | R1-GAP-04 | The full-day grid is confirmed, but the initial viewport and Today behavior are not.                                              | Resolved by the Round 2 clarification: current day/week date anchors, current-time vertical positioning, Today mode/zoom preservation, and zoom continuity are confirmed. Event-selection and animation details remain later non-blocking questions. |
-| R1-GAP-05 | Monday whole-week paging is confirmed, but Sunday-first support and the React Native weekend-control location are not.            | Resolved by Round 2 question 4.                                                                                                             |
-| R1-GAP-06 | All-day storage facts are known but E-008 remains an owner decision.                                                              | Resolved by Round 2 question 5.                                                                                                             |
-| R1-GAP-07 | Cross-midnight timed events are required, but per-segment labels, continuation cues, and hit targets are not explicit.            | Resolved by Round 2 question 6.                                                                                                             |
-| R1-GAP-08 | “120 fps” cannot bind a 60 or 90 Hz panel, and the proposed budgets have no measured baseline yet.                                | Metrics and initial budgets are confirmed; a release-profile baseline remains `NEEDS_RESEARCH`.                                            |
-| R1-GAP-09 | The acceptance matrix names dimensions but not exact devices or a finite dataset catalog.                                        | Matrix and catalog are confirmed; numeric production percentiles remain `NEEDS_RESEARCH` behind authorized read-only DB access.            |
+| R1-GAP-05 | Monday whole-week paging is confirmed, but Sunday-first support and the React Native weekend-control location are not.            | Resolved by Round 2 question 4.                                                                                                                                                                                                                      |
+| R1-GAP-06 | All-day storage facts are known but E-008 remains an owner decision.                                                              | Resolved by Round 2 question 5.                                                                                                                                                                                                                      |
+| R1-GAP-07 | Cross-midnight timed events are required, but per-segment labels, continuation cues, and hit targets are not explicit.            | Resolved by Round 2 question 6.                                                                                                                                                                                                                      |
+| R1-GAP-08 | “120 fps” cannot bind a 60 or 90 Hz panel, and the proposed budgets have no measured baseline yet.                                | Metrics and initial budgets are confirmed; a release-profile baseline remains `NEEDS_RESEARCH`.                                                                                                                                                      |
+| R1-GAP-09 | The acceptance matrix names dimensions but not exact devices or a finite dataset catalog.                                         | Matrix and catalog are confirmed; numeric production percentiles remain `NEEDS_RESEARCH` behind authorized read-only DB access.                                                                                                                      |
 
 ## Round 2 — owner questions and recommendations
 
@@ -524,18 +524,18 @@ needed. These are ordered by how many later questions they unblock.
 The owner accepted questions 1, 2, and 4 through 10, including the all-day confirmation in
 question 5. The two free-text responses are split across the exact questions they answer:
 
-| Round 2 item | Recorded decision | Remaining precision |
-| ------------ | ----------------- | ------------------- |
-| 1 — Priority | `CONFIRMED_IN`: correct dates/content, privacy, and complete accessibility; then agreed performance budgets; then visual richness. | None for this ordering. |
-| 2 — Mode persistence | `CONFIRMED_IN`: persist per installation across navigation, backgrounding, and process restart; reinstall resets to week; calendar-source changes do not reset it. | None for the stated boundaries. |
+| Round 2 item                 | Recorded decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Remaining precision                                                                                                                                                                                                    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Priority                 | `CONFIRMED_IN`: correct dates/content, privacy, and complete accessibility; then agreed performance budgets; then visual richness.                                                                                                                                                                                                                                                                                                                                                                               | None for this ordering.                                                                                                                                                                                                |
+| 2 — Mode persistence         | `CONFIRMED_IN`: persist per installation across navigation, backgrounding, and process restart; reinstall resets to week; calendar-source changes do not reset it.                                                                                                                                                                                                                                                                                                                                               | None for the stated boundaries.                                                                                                                                                                                        |
 | 3 — Fresh position and Today | `CONFIRMED_IN`: a fresh day-mode open selects the current day and a fresh week-mode open selects the current Monday-based week. Event presence must never make a fresh open select another day or week. A fresh viewport scrolls to the current time without using event times, leaves previous-hour context, and aims to place now roughly 30% down from the top. Today selects the current day/week, scrolls to now, and preserves mode and zoom; zoom also persists across fresh opens and day/week switches. | Exact current-time placement is design tuning for side-by-side Google Calendar validation. Mounted-screen vertical-offset persistence, Today selection handling and Today animation remain unanswered later questions. |
-| 4 — Week rule | `CONFIRMED_IN`: Monday-first in French and English and every display timezone; no Sunday-first at launch; Settings → Calendar owns a default-on “Show weekends” switch. | None for launch. |
-| 5 — All-day dates | `CONFIRMED_IN`: imported all-day events are floating dates with an exclusive end. | None for this contract. |
-| 6 — Cross-midnight events | `CONFIRMED_IN`: render one clipped timed segment per covered local day; every segment exposes continuation, a complete accessible label and target, and opens the same event; 24-hour-or-longer timed events stay timed. | Exact visual styling remains design work, not an unanswered semantic. |
-| 7 — Accessibility | `CONFIRMED_IN`: accept the proposed native WCAG 2.2 A/AA, WCAG2ICT, EN 301 549, platform-guidance, assistive-technology, large-text, motion, contrast, focus, and non-pinch engineering bar. | Any legal declaration remains outside this engineering recommendation. |
-| 8 — Performance | `CONFIRMED_IN`: accept the proposed device matrix, refresh-relative metrics, initial 250/500 ms budgets, API 24 floor, and minimum-OS compatibility smoke tests. | `NEEDS_RESEARCH`: the release-profile baseline must validate capability and measurement; PF-006–PF-008 still need privacy-safe production aggregates. |
-| 9 — Boundaries and quality | `CONFIRMED_IN`: accept the four-owner split and objective quality/debt gates. Remove calendar-kit as early as practical; an incomplete calendar on `main` during development is acceptable because React Native is unshipped. | This does not relax the accepted launch gates or authorize dual-renderer fallback. |
-| 10 — Dataset catalog | `CONFIRMED_IN`: accept the finite fixture-family catalog. | `NEEDS_RESEARCH`: production aggregates supply the numeric p50/p95/p99 shapes. |
+| 4 — Week rule                | `CONFIRMED_IN`: Monday-first in French and English and every display timezone; no Sunday-first at launch; Settings → Calendar owns a default-on “Show weekends” switch.                                                                                                                                                                                                                                                                                                                                          | None for launch.                                                                                                                                                                                                       |
+| 5 — All-day dates            | `CONFIRMED_IN`: imported all-day events are floating dates with an exclusive end.                                                                                                                                                                                                                                                                                                                                                                                                                                | None for this contract.                                                                                                                                                                                                |
+| 6 — Cross-midnight events    | `CONFIRMED_IN`: render one clipped timed segment per covered local day; every segment exposes continuation, a complete accessible label and target, and opens the same event; 24-hour-or-longer timed events stay timed.                                                                                                                                                                                                                                                                                         | Exact visual styling remains design work, not an unanswered semantic.                                                                                                                                                  |
+| 7 — Accessibility            | `CONFIRMED_IN`: accept the proposed native WCAG 2.2 A/AA, WCAG2ICT, EN 301 549, platform-guidance, assistive-technology, large-text, motion, contrast, focus, and non-pinch engineering bar.                                                                                                                                                                                                                                                                                                                     | Any legal declaration remains outside this engineering recommendation.                                                                                                                                                 |
+| 8 — Performance              | `CONFIRMED_IN`: accept the proposed device matrix, refresh-relative metrics, initial 250/500 ms budgets, API 24 floor, and minimum-OS compatibility smoke tests.                                                                                                                                                                                                                                                                                                                                                 | `NEEDS_RESEARCH`: the release-profile baseline must validate capability and measurement; PF-006–PF-008 still need privacy-safe production aggregates.                                                                  |
+| 9 — Boundaries and quality   | `CONFIRMED_IN`: accept the four-owner split and objective quality/debt gates. Remove calendar-kit as early as practical; an incomplete calendar on `main` during development is acceptable because React Native is unshipped.                                                                                                                                                                                                                                                                                    | This does not relax the accepted launch gates or authorize dual-renderer fallback.                                                                                                                                     |
+| 10 — Dataset catalog         | `CONFIRMED_IN`: accept the finite fixture-family catalog.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `NEEDS_RESEARCH`: production aggregates supply the numeric p50/p95/p99 shapes.                                                                                                                                         |
 
 ### Focused Round 2 clarification (2026-08-28)
 
@@ -622,3 +622,71 @@ and trace task; `PL-003` remains physical Galaxy A16 5G validation; and the owne
 executable only after a traceable spike can run as a release binary on the accepted device and
 fixture matrix. Missing measurement is not a product decision and does not relax the accepted
 performance contract.
+
+## Round 3 owner response (2026-08-29)
+
+The owner's
+[free-form response](/TIM/issues/TIM-267#comment-266868c3-ff11-441e-8c13-32362aef1aa5), the
+[row-level interpretation](/TIM/issues/TIM-267#comment-bb1aca00-d72e-4fa8-9b0b-1a981d21928f),
+and answered interaction `ef6f4c48-a37f-442a-a376-ffe625c1c8c1` now replace the proposed-question
+posture with a row-level answer record. The structured interaction selected
+`keep_until_settle`, `instant_marker`, `skip_bad_only`, `show_cue`, `not_overlap`,
+`equal_columns`, `stable_order`, and `keep_last_complete`.
+
+The recorded meaning is deliberately narrower than blanket acceptance of every recommendation:
+
+- the first delivery is a clean, reusable internal TimeCalendar Lego piece, not a public npm
+  package or public compatibility/licensing promise;
+- phone and tablet portrait are first-class; tablet landscape may be allowed without bespoke
+  polish, but the binding portrait-only native contract stays unchanged until a separate sensitive
+  native-config/ADR decision; ordinary computer control is deferred while complete accessibility
+  control remains first-class;
+- owned day/week rendering covers ordinary university and personal events without adding month,
+  custom-day, Home reuse, mini-renderer, search/filtering, or comparison scope;
+- editing and direct manipulation are outside the first delivery without making later editing
+  infeasible;
+- pages settle one day or whole week at a time, preserve the old title and selected day during a
+  finger-held transition, and allow years-away navigation when synchronized data exists—the
+  proposed twelve-month limit is rejected;
+- the full-day grid, continuous zoom, visible non-pinch controls, pinned labels/headers,
+  locale/time-format behavior, and clock-position continuity are accepted, while measured zoom
+  bounds remain technical research;
+- cancelled events are hidden in this iteration; invalid events are isolated; continuation,
+  back-to-back, equal-column, stable-order, and last-complete-frame behavior follows the exact
+  structured choices; the numeric crowding threshold remains research;
+- tiles visibly show event name and location, timed accessibility labels always include time, and
+  source colors may change for acceptable active-theme contrast; exact fallback and contrast
+  algorithms are not invented;
+- Calendar has no refresh gesture or haptics; Home retains pull-to-refresh for now, a later
+  Settings action remains possible, and chronological accessibility navigation stays on the same
+  Calendar screen;
+- initial loading uses a normal indicator, not a skeleton, while accepted stale-data, retry,
+  no-wrong-date, live-change, malformed-row, disappearing-event, and accessible-failure behavior
+  remains;
+- testing, privacy-safe evidence, product-owner behavior/design acceptance, and engineering review
+  are accepted; this pre-production delivery has no rollback, calendar-kit fallback, dual renderer,
+  or staged production rollout, and eventual production policy belongs to later release planning.
+
+### Functional-specification readiness after Round 3
+
+The questionnaire's 280 unique rows now total 172 `CONFIRMED_IN`, 45 `CONFIRMED_OUT`, five
+`DEFERRED`, nine `NEEDS_RESEARCH`, and 49 `UNANSWERED`.
+
+Remaining `UNANSWERED` keys, in questionnaire order:
+
+- Users/platform: `U-002`, `U-005`, `U-006`, `U-008`, `U-009`, `U-010`; `PL-007`, `PL-010`.
+- Navigation/time: `N-012`, `N-015`, `N-018`; `T-009`.
+- Events/interactions/dates/visuals/accessibility: `E-014`, `E-025`; `I-013`; `D-009`,
+  `D-010`; `V-012`, `V-013`; `A-010`, `A-011`.
+- Performance: `PF-009`–`PF-011`, `PF-014`, `PF-015`, `PF-018`–`PF-028`.
+- Boundaries/migration: `B-002`, `B-003`, `B-005`, `B-006`, `B-009`–`B-014`; `M-011`,
+  `M-012`.
+
+The nine bounded research keys are `P-004`, `PL-003`, `T-011`, `T-012`, `E-020`, `V-009`, and
+`PF-006`–`PF-008`. Remaining technical research stays agent-owned. No new owner question,
+functional specification, architecture, or implementation is authorized by this answer record.
+
+Architecture Book/ADR update: **N/A**. This change records product-discovery evidence and does not
+change a reusable current rule or load-bearing technical decision. In particular, the accepted
+calendar-kit ADRs remain current until a later architecture decision supersedes them, and ADR 042's
+portrait-only/full-screen contract remains binding until a separately authorized native change.
