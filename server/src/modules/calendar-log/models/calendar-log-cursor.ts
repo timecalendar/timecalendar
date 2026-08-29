@@ -49,6 +49,18 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
 
 /**
+ * Narrows one decoded field to a string matching `pattern`, or rejects the whole
+ * cursor. Every anchor field goes through here, so none can reach SQL without
+ * having been format-checked.
+ */
+const anchorField = (value: unknown, pattern: RegExp): string => {
+  if (typeof value !== "string" || !pattern.test(value)) {
+    throw new BadRequestException(INVALID_CURSOR)
+  }
+  return value
+}
+
+/**
  * Decodes and *fully* validates a client-supplied cursor. Every field is
  * checked against a strict format before any of it can reach SQL, so a forged
  * cursor cannot smuggle a fragment into a query even though the values are
@@ -73,18 +85,11 @@ export const decodeCursor = (value: string): CalendarLogCursor => {
     throw new BadRequestException(INVALID_CURSOR)
   }
 
-  const { a, c, i } = payload
-  if (typeof a !== "string" || !TIMESTAMP_TEXT.test(a)) {
-    throw new BadRequestException(INVALID_CURSOR)
+  return {
+    asOfText: anchorField(payload.a, TIMESTAMP_TEXT),
+    createdAtText: anchorField(payload.c, TIMESTAMP_TEXT),
+    id: anchorField(payload.i, UUID),
   }
-  if (typeof c !== "string" || !TIMESTAMP_TEXT.test(c)) {
-    throw new BadRequestException(INVALID_CURSOR)
-  }
-  if (typeof i !== "string" || !UUID.test(i)) {
-    throw new BadRequestException(INVALID_CURSOR)
-  }
-
-  return { asOfText: a, createdAtText: c, id: i }
 }
 
 /**
