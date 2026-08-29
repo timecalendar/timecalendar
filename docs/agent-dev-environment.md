@@ -197,6 +197,25 @@ boot without it**. For real dev you supply a Firebase service-account key (see
 (`scripts/generate-dummy-firebase-key.sh`) — nothing in the E2E path calls Firebase.
 **Never commit real Firebase keys or certs** (GitHub Push Protection also blocks them).
 
+### Server health and process lifecycle
+
+The server exposes two operational health routes with distinct roles:
+
+- `GET /health` is the dependency/readiness signal owned by `SharedHealthModule`; it
+  includes the existing Postgres ping and can fail when the database is unavailable.
+- `GET /health/live` is the process-liveness signal; it returns
+  `{"status":"ok"}` without calling Postgres, Redis, Firebase, S3, or queues.
+
+The production server image starts with exec-form `node dist/main`, making Node PID 1
+so Docker and Kubernetes `SIGTERM` signals reach Nest's shutdown hooks directly. To
+prove the built image's command, PID 1, routes, and graceful shutdown against local
+Postgres and Redis, generate a dummy key and run:
+
+```bash
+./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
+./ci/test-server-runtime.sh <server-image> /tmp/serviceAccountKey.json
+```
+
 ---
 
 ## 5. Git worktree management
