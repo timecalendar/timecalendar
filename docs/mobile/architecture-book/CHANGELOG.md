@@ -1,5 +1,16 @@
 # Architecture Book changelog
 
+## 2026-08-29
+
+- Split the two meanings of "server E2E". `server/npm run test:e2e` is now a committed,
+  dependency-free in-process Nest HTTP smoke with its own discovery root
+  (`server/test/jest-e2e.json`, `test/**/*.e2e-spec.ts`) that cannot rediscover the
+  `server/src` unit suite, enforced as a named `Run server E2E tests` step in
+  `ci-build-deploy.yml`; `ci/e2e-server.sh` keeps sole ownership of the real-backend
+  lifecycle behind Maestro and legacy Flutter device E2E. `--passWithNoTests` is banned
+  so an empty E2E suite stays red. No ADR: this restores a documented gate and records
+  existing ownership rather than making a costly-to-reverse choice (testing.md).
+
 ## 2026-08-28
 
 - Isolated four mobile Jest suites from declaration order by awaiting RNTL 14 async helpers and
