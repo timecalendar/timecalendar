@@ -24,6 +24,14 @@
 import { monitorEventLoopDelay, performance } from "node:perf_hooks"
 import { Client } from "pg"
 import {
+  PageShape,
+  calendarLogPageParams,
+  pageSqlForShape,
+  resolveCalendarsByTokenSql,
+  unreadCountParams,
+  unreadCountSql,
+} from "modules/calendar-log/repositories/activity-search.queries"
+import {
   ALL_COHORTS,
   COHORTS,
   CohortSpec,
@@ -34,14 +42,6 @@ import {
   cohortTokens,
   seedFixtures,
 } from "./fixtures"
-import {
-  PageShape,
-  calendarLogPageParams,
-  pageSqlForShape,
-  resolveCalendarsByTokenSql,
-  unreadCountParams,
-  unreadCountSql,
-} from "./queries"
 import { redactPlan } from "./redact"
 
 const DEFAULT_PAGE_SIZE = 50

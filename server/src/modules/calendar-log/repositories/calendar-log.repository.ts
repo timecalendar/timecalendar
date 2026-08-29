@@ -3,6 +3,12 @@ import { InjectRepository } from "@nestjs/typeorm"
 import { DeepPartial, Repository, In } from "typeorm"
 import { CalendarLogCursor } from "modules/calendar-log/models/calendar-log-cursor"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
+import { Calendar } from "modules/calendar/models/calendar.entity"
+import {
+  calendarLogPageLateralSql,
+  resolveCalendarsByTokenSql,
+  unreadCountSql,
+} from "modules/calendar-log/repositories/activity-search.queries"
 
 /**
  * One page row: the hydrated entity plus the database's own full-precision
@@ -27,6 +33,20 @@ export interface CountSinceParams {
   tokens: string[]
   unreadSince: Date
   asOfText: string
+}
+
+interface ResolvedCalendar {
+  id: string
+  name: string
+}
+
+interface RawCalendarLogPageRow {
+  id: string
+  calendarId: string
+  calendarChange: CalendarLog["calendarChange"]
+  createdAt: Date
+  updatedAt: Date
+  createdAtText: string
 }
 
 @Injectable()
@@ -75,18 +95,18 @@ export class CalendarLogRepository {
     return row
   }
 
+  private async resolveCalendars(tokens: string[]) {
+    return this.repository.query<ResolvedCalendar[]>(
+      resolveCalendarsByTokenSql,
+      [tokens],
+    )
+  }
+
   /**
-   * One page of the snapshot-bound keyset scan, newest first.
-   *
-   * The `(createdAt, id)` row-tuple comparison is a single index-orderable
-   * predicate, and `id` makes rows sharing a `createdAt` paginate
-   * deterministically.
-   *
-   * `deletedAt IS NULL` is spelled out even though TypeORM also appends its own
-   * copy for this soft-deletable relation (the emitted SQL carries both, which
-   * is idempotent). Stating it keeps the guarantee visible at the call site and
-   * independent of TypeORM's soft-delete inference — dropping it would silently
-   * widen v1 beyond legacy behavior.
+   * One page of the snapshot-bound keyset scan, newest first. The shared SQL
+   * gathers a bounded branch per resolved calendar and merges those branches,
+   * preventing PostgreSQL from walking the global createdAt index when a large
+   * calendar cohort has no logs.
    */
   async searchPage({
     tokens,
@@ -94,38 +114,38 @@ export class CalendarLogRepository {
     cursor,
     limit,
   }: SearchPageParams): Promise<CalendarLogPageRow[]> {
-    const query = this.repository
-      .createQueryBuilder("cl")
-      .innerJoinAndSelect("cl.calendar", "c", `c."deletedAt" IS NULL`)
-      .addSelect(`cl."createdAt"::text`, "cl_created_at_text")
-      .where(`c."token" = ANY(:tokens)`, { tokens })
-      .andWhere(`cl."createdAt" <= CAST(:asOf AS timestamp)`, {
-        asOf: asOfText,
-      })
-      .orderBy(`cl."createdAt"`, "DESC")
-      .addOrderBy(`cl."id"`, "DESC")
-      // A many-to-one join cannot multiply rows, so a plain LIMIT is correct
-      // here and avoids the DISTINCT subquery `take()` would generate.
-      .limit(limit)
+    const calendars = await this.resolveCalendars(tokens)
+    if (calendars.length === 0) return []
 
-    if (cursor) {
-      query.andWhere(
-        `(cl."createdAt", cl."id") < (CAST(:cursorCreatedAt AS timestamp), CAST(:cursorId AS uuid))`,
-        { cursorCreatedAt: cursor.createdAtText, cursorId: cursor.id },
-      )
-    }
-
-    const { entities, raw } = await query.getRawAndEntities()
-
-    // Keyed by id rather than by position: raw/entity index alignment is not a
-    // contract TypeORM promises.
-    const createdAtTextById = new Map<string, string>(
-      raw.map((row) => [row.cl_id, row.cl_created_at_text]),
+    const calendarNames = new Map(
+      calendars.map((calendar) => [calendar.id, calendar.name]),
+    )
+    const parameters = cursor
+      ? [
+          calendars.map((calendar) => calendar.id),
+          asOfText,
+          cursor.createdAtText,
+          cursor.id,
+          limit,
+        ]
+      : [calendars.map((calendar) => calendar.id), asOfText, limit]
+    const rows = await this.repository.query<RawCalendarLogPageRow[]>(
+      calendarLogPageLateralSql(Boolean(cursor)),
+      parameters,
     )
 
-    return entities.map((log) => ({
-      log,
-      createdAtText: createdAtTextById.get(log.id) as string,
+    return rows.map((row) => ({
+      log: Object.assign(new CalendarLog(), {
+        id: row.id,
+        calendar: {
+          id: row.calendarId,
+          name: calendarNames.get(row.calendarId) as string,
+        } as Calendar,
+        calendarChange: row.calendarChange,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      }),
+      createdAtText: row.createdAtText,
     }))
   }
 
@@ -148,19 +168,15 @@ export class CalendarLogRepository {
     unreadSince,
     asOfText,
   }: CountSinceParams): Promise<number> {
-    const result = await this.repository
-      .createQueryBuilder("cl")
-      .innerJoin("cl.calendar", "c", `c."deletedAt" IS NULL`)
-      .select("COUNT(*)", "count")
-      .where(`c."token" = ANY(:tokens)`, { tokens })
-      .andWhere(`cl."createdAt" > :unreadSince`, { unreadSince })
-      .andWhere(`cl."createdAt" <= CAST(:asOf AS timestamp)`, {
-        asOf: asOfText,
-      })
-      .getRawOne<{ count: string }>()
+    const calendars = await this.resolveCalendars(tokens)
+    if (calendars.length === 0) return 0
 
-    // COUNT(*) comes back as a bigint, which the pg driver renders as a string.
-    return Number(result?.count ?? 0)
+    const [result] = await this.repository.query<{ unreadCount: number }[]>(
+      unreadCountSql,
+      [calendars.map((calendar) => calendar.id), unreadSince, asOfText],
+    )
+
+    return Number(result?.unreadCount ?? 0)
   }
 
   // Bounded batches keep each DELETE's lock footprint and WAL burst small.
