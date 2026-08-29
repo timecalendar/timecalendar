@@ -125,4 +125,65 @@ describe("CalendarLogMapper", () => {
       })
     })
   })
+
+  describe("toCalendarLogV1", () => {
+    const calendarLog = {
+      id: "log-789",
+      calendar: {
+        id: "calendar-123",
+        token: "token-456",
+        name: "Test Calendar",
+      },
+      calendarChange: {
+        oldItems: [],
+        newItems: [
+          {
+            uid: "new-event-1",
+            title: "New Event 1",
+            location: "New Location 1",
+            startsAt: new Date("2025-01-02T10:00:00Z"),
+            endsAt: new Date("2025-01-02T11:00:00Z"),
+          },
+        ],
+        changedItems: [],
+      },
+      createdAt: new Date("2025-01-01T12:00:00Z"),
+      updatedAt: new Date("2025-01-01T13:00:00Z"),
+    } as unknown as CalendarLog
+
+    it("maps every field except the calendar token", () => {
+      expect(mapper.toCalendarLogV1(calendarLog)).toEqual({
+        id: "log-789",
+        calendarId: "calendar-123",
+        calendarName: "Test Calendar",
+        calendarChange: {
+          oldItems: [],
+          newItems: [
+            {
+              uid: "new-event-1",
+              title: "New Event 1",
+              location: "New Location 1",
+              startsAt: new Date("2025-01-02T10:00:00Z"),
+              endsAt: new Date("2025-01-02T11:00:00Z"),
+            },
+          ],
+          changedItems: [],
+        },
+        createdAt: new Date("2025-01-01T12:00:00Z"),
+        updatedAt: new Date("2025-01-01T13:00:00Z"),
+      })
+    })
+
+    // The token is never assigned, rather than assigned and deleted: the key is
+    // absent from the object, not merely undefined.
+    it("omits calendarToken for v1 while legacy retains it", () => {
+      const v1 = mapper.toCalendarLogV1(calendarLog)
+      const legacy = mapper.toCalendarLogGet(calendarLog)
+
+      expect("calendarToken" in v1).toBe(false)
+      expect("calendarToken" in legacy).toBe(true)
+      expect(legacy.calendarToken).toBe("token-456")
+      expect(JSON.stringify(v1)).not.toContain("token-456")
+    })
+  })
 })
