@@ -1,10 +1,10 @@
 ## 0. Prerequisites
 
-- [ ] 0.1 Start the two dependencies the server test suite and the OpenAPI generator both need,
+- [x] 0.1 Start the two dependencies the server test suite and the OpenAPI generator both need,
       from the repository root: `bin/server-compose.sh up -d postgres redis`. If the default ports
       are taken, publish alternates and keep `DATABASE_URL`/`REDIS_URL` in sync on every server
       command (see `docs/agent-dev-environment.md` §4). Never rewrite the shared symlinked `.env`.
-- [ ] 0.2 Dry-run the archive validation early so a delta-header mistake surfaces now, not behind
+- [x] 0.2 Dry-run the archive validation early so a delta-header mistake surfaces now, not behind
       the merge gate: `openspec validate add-server-calendar-rename-contract --strict` (and
       `openspec status`). The change adds one new capability (`server-calendar-naming`, all
       `## ADDED Requirements`) and modifies one existing capability
@@ -12,29 +12,29 @@
 
 ## 1. Shared name normalization (server)
 
-- [ ] 1.1 Add `server/src/modules/calendar/helpers/calendar-name.ts` exporting
+- [x] 1.1 Add `server/src/modules/calendar/helpers/calendar-name.ts` exporting
       `CALENDAR_NAME_MAX_LENGTH = 100`, `normalizeCalendarName(value: unknown): string`
       (`typeof value === "string" ? value.trim() : ""`), and the class-transformer trim used by the
       DTOs (`typeof value === "string" ? value.trim() : value` — non-strings pass through so
       `@IsString()` can reject them; see design D2). Do not coerce non-strings in the DTO transform.
-- [ ] 1.2 Unit-test the helper (`calendar-name.test.ts`): undefined/null → `""`, whitespace-only →
+- [x] 1.2 Unit-test the helper (`calendar-name.test.ts`): undefined/null → `""`, whitespace-only →
       `""`, surrounding whitespace trimmed, a non-string passes through the DTO transform
       unchanged, and the exported constant is 100.
 
 ## 2. Create normalizes and bounds the name
 
-- [ ] 2.1 In `server/src/modules/calendar-sync/models/dto/create-calendar.dto.ts`, keep `name`
+- [x] 2.1 In `server/src/modules/calendar-sync/models/dto/create-calendar.dto.ts`, keep `name`
       optional and add the trim transform plus `@MaxLength(CALENDAR_NAME_MAX_LENGTH)`. Decorator
       order must leave transform-before-validate intact so the limit measures the trimmed value.
       Do not touch `url`, `schoolId`, `schoolName`, or `customData`.
-- [ ] 2.2 In `server/src/modules/calendar-sync/services/calendar-sync.service.ts`, persist
+- [x] 2.2 In `server/src/modules/calendar-sync/services/calendar-sync.service.ts`, persist
       `normalizeCalendarName(name)` instead of the raw `name` when building the calendar passed to
       `sync()`. This is the last line before a NOT NULL column — it must not be skipped because the
       DTO already trims.
-- [ ] 2.3 Extend `server/src/modules/calendar-sync/services/calendar-sync.service.test.ts`:
+- [x] 2.3 Extend `server/src/modules/calendar-sync/services/calendar-sync.service.test.ts`:
       creating **without** `name` persists `""` (this fails today against the not-null column, so
       it is the regression proof), and a name with surrounding whitespace is stored trimmed.
-- [ ] 2.4 Extend `server/src/modules/calendar-sync/controllers/calendar-sync.controller.test.ts`:
+- [x] 2.4 Extend `server/src/modules/calendar-sync/controllers/calendar-sync.controller.test.ts`:
       `POST /calendars` without `name` returns 201 and stores `""`; a 101-character trimmed name
       returns 400 and creates nothing; a 100-character name surrounded by whitespace returns 201
       and stores the trimmed value; the existing Flutter-shaped payload
@@ -42,31 +42,31 @@
 
 ## 3. `PATCH /v1/calendars/:token`
 
-- [ ] 3.1 Add `server/src/modules/calendar/models/dto/update-calendar.dto.ts` — `UpdateCalendarDto`
+- [x] 3.1 Add `server/src/modules/calendar/models/dto/update-calendar.dto.ts` — `UpdateCalendarDto`
       with a **required** `name: string`: `@IsString()`, the shared trim transform, and
       `@MaxLength(CALENDAR_NAME_MAX_LENGTH)`. No `@IsOptional()`.
-- [ ] 3.2 Add `renameCalendar(token, name)` to
+- [x] 3.2 Add `renameCalendar(token, name)` to
       `server/src/modules/calendar/services/calendar.service.ts` exactly as designed (D3):
       `findOneByToken` (its `findOneOrFail` produces the 404), then
       `this.repository.update(calendar.id, { name })`, then
       `this.calendarHelper.forPublic({ ...calendar, name })`. **Do not** add a new repository
       method, do not use `save()`, and do not re-read the calendar.
-- [ ] 3.3 Add `server/src/modules/calendar/controllers/calendar-v1.controller.ts`:
+- [x] 3.3 Add `server/src/modules/calendar/controllers/calendar-v1.controller.ts`:
       `@Controller("v1/calendars")` + `@ApiTags("Calendars")`, one `@Patch(":token")` handler
       taking `@Param("token")` and `@Body() UpdateCalendarDto`. Annotate for the contract:
       `@ApiOperation`, `@ApiParam({ name: "token" })`,
       `@ApiOkResponse({ type: CalendarForPublic })`, `@ApiBadRequestResponse`,
       `@ApiNotFoundResponse`. Add **no** logging, metric, or span (design D5).
-- [ ] 3.4 Register the new controller in `server/src/modules/calendar/calendar.module.ts` next to
+- [x] 3.4 Register the new controller in `server/src/modules/calendar/calendar.module.ts` next to
       the existing `CalendarController`. Leave `CalendarController` and its unversioned route alone.
-- [ ] 3.5 Add `server/src/modules/calendar/controllers/calendar-v1.controller.test.ts` (supertest,
+- [x] 3.5 Add `server/src/modules/calendar/controllers/calendar-v1.controller.test.ts` (supertest,
       `createTestApp({ imports: [CalendarModule] })`, `calendarFactory`) covering: rename returns
       200 with `CalendarForPublic` carrying the new name; the trimmed value is what is stored;
       renaming to `""` succeeds and clears; missing `name` → 400; non-string `name` → 400; a
       101-character trimmed name → 400 with the stored name unchanged; two calendars renamed to the
       same value both succeed; unknown token → 404 whose body contains no `id`, `token`, `name`,
       `schoolName`, `createdAt` **and** leaves the existing calendar untouched.
-- [ ] 3.6 Add the `lastUpdatedAt` invariant test (in the controller suite or
+- [x] 3.6 Add the `lastUpdatedAt` invariant test (in the controller suite or
       `calendar.service.test.ts`): capture `lastUpdatedAt` and `updatedAt` before the rename, and
       assert afterwards that `lastUpdatedAt` is identical while `updatedAt` advanced, and that the
       200 response's `lastUpdatedAt` is the pre-rename value. This is the guard against a future
@@ -74,13 +74,13 @@
 
 ## 4. Additive `calendarName` on contact
 
-- [ ] 4.1 Add `@IsString() @IsOptional() calendarName?: string` to
+- [x] 4.1 Add `@IsString() @IsOptional() calendarName?: string` to
       `server/src/modules/contact/models/dto/send-message.dto.ts`. Leave `gradeName` exactly as it
       is.
-- [ ] 4.2 Forward it in `server/src/modules/contact/services/contact.service.ts` as its own key in
+- [x] 4.2 Forward it in `server/src/modules/contact/services/contact.service.ts` as its own key in
       the `data` map passed to `removeUndefinedValues`. Add no trimming here —
       `buildContactMetas` already drops values that normalize to empty (design D6).
-- [ ] 4.3 Extend `server/src/modules/contact/controllers/contact.controller.test.ts`: a request
+- [x] 4.3 Extend `server/src/modules/contact/controllers/contact.controller.test.ts`: a request
       with **both** `gradeName` and `calendarName` forwards both as distinct keys; a request with
       only `gradeName` (the Flutter shape) is unchanged from today; a request omitting
       `calendarName` produces no `calendarName` key; a whitespace-only `calendarName` is dropped
