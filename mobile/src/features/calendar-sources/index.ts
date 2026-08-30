@@ -5,6 +5,7 @@
 export {
   addCalendarFromToken,
   type CreateCalendarResult,
+  effectiveCalendarName,
   parseScannedSource,
   type ScannedCalendarSource,
   type UseAddCalendar,
@@ -13,6 +14,8 @@ export {
   useCreateCalendar,
   type UserCalendar,
   type UserCalendarActions,
+  type UseRenameCalendar,
+  useRenameCalendar,
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,

@@ -331,7 +331,7 @@
   "userCalendars.title": "Mes calendriers",
   "userCalendars.emptyTitle": "Aucun calendrier",
   "userCalendars.empty": "Aucun calendrier importé.",
-  "userCalendars.namePlaceholder": "Calendrier",
+  "userCalendars.namePlaceholder": "Mon emploi du temps",
   "userCalendars.personalSubtitle": "Calendrier personnel",
   "userCalendars.rowLabel": "{{name}}, {{school}}",
   "userCalendars.visibilityDescription": "Choisissez les calendriers affichés dans l’accueil et le calendrier.",
@@ -347,5 +347,13 @@
   "userCalendars.delete.action": "Supprimer",
   "userCalendars.delete.title": "Confirmer la suppression",
   "userCalendars.delete.message": "Êtes-vous sûr de vouloir supprimer le calendrier {{name}} ?",
-  "userCalendars.delete.confirm": "Supprimer"
+  "userCalendars.delete.confirm": "Supprimer",
+  "userCalendars.rename.action": "Renommer",
+  "userCalendars.rename.title": "Renommer le calendrier",
+  "userCalendars.rename.label": "Nom du calendrier",
+  "userCalendars.rename.save": "Enregistrer",
+  "userCalendars.rename.tooLong": "Utilisez 100 caractères maximum.",
+  "userCalendars.rename.error": "Impossible de renommer ce calendrier. Veuillez réessayer.",
+  "userCalendars.rename.retry": "Réessayer",
+  "userCalendars.rename.renamed": "Calendrier renommé en {{name}}"
 }
