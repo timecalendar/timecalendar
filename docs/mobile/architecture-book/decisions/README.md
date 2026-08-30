@@ -41,6 +41,7 @@ decision changes; use Git for its history.
 | [046](./046-activity-cache-merge-and-server-read-watermark.md) | Merge the Activity cache by log id and read it against server time |
 | [047](./047-ephemeral-calendar-import-draft.md)       | Hold the calendar-import draft in an ephemeral, Stack-scoped context  |
 | [048](./048-activity-refresh-single-flight-and-token-precondition.md) | Deduplicate Activity refreshes in-module and never request with zero tokens |
+| [049](./049-activity-trigger-edges-and-failure-isolation.md) | Wire Activity's triggers as independent edges into one seam, and let none of them fail its caller |
 | [050](./050-token-authorized-shared-calendar-rename.md) | Authorize shared calendar rename by token possession                  |
 | [051](./051-path-level-v1-prefix-without-global-versioning.md) | Version individual controllers by path                        |
 | [052](./052-eventual-calendar-name-convergence-through-sync.md) | Converge calendar names through a name-only sync write         |
@@ -56,11 +57,16 @@ decision changes; use Git for its history.
 > exists to catch, caught by reading the index rather than by git. It has since
 > merged, so `047` is taken, not free. `048` skipped past both.
 >
-> `049` is claimed by open PR [#328](https://github.com/timecalendar/timecalendar/pull/328),
-> which was detected by the final open-PR census after this change initially claimed that number.
-> The calendar naming/import decisions therefore use `050`–`052`. The next author
-> should re-check open PRs with `gh pr diff <N> --name-only | grep decisions/`
-> rather than assuming the highest merged number plus one.
+> `049` belongs to [PR #328](https://github.com/timecalendar/timecalendar/pull/328).
+> Its open-PR reservation was detected before the calendar naming/import decisions
+> took `050`–`052`, so all four records remain distinct after the branches meet.
+>
+> A filename census finds TAKEN numbers, but only this prose finds RESERVED ones.
+> The reservation on `045` is invisible to `grep decisions/` because the PR holding
+> it still carries its pre-renumber filename `044-…`. Before choosing a number,
+> re-check open PRs with `gh pr diff <N> --name-only | grep decisions/` and read this
+> note; do not assume the highest merged number plus one or reuse `045` while its PR
+> remains open.
 
 ## Superseded or completed records
 

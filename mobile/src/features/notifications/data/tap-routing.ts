@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router"
 import { useEffect, useRef } from "react"
 
+import { refreshNewestPage } from "@/features/activity"
 import { useSyncCalendars } from "@/features/calendar/data"
 import {
   getInitialTap,
@@ -34,6 +35,20 @@ interface DecodedPayload {
 // and testable without constructing a full RemoteMessage.
 interface TapMessage {
   data?: { action?: string; payload?: string } | null
+}
+
+/**
+ * Whether this message is a calendar change at all — the relevance test, in one
+ * place, used by all three entrypoints (ADR 049 / D4).
+ *
+ * DELIBERATELY NOT `parseNotificationRoute(message) !== null`. A
+ * `calendar_changed` whose `payload` fails to decode parses to `null` but is
+ * still a real calendar change: routing correctly declines to navigate, and
+ * Activity must still refresh.
+ */
+function isCalendarChangeMessage(message: TapMessage): boolean {
+  const action = message.data?.action
+  return action === CALENDAR_CHANGED_ACTION || action === CALENDAR_DIGEST_ACTION
 }
 
 /**
@@ -84,6 +99,17 @@ export function parseNotificationRoute(message: TapMessage): TapRoute | null {
  *     so the <Stack> is mounted before navigation (Decision 3); refetch then
  *     navigate. A null initial notification is a safe no-op.
  * A failed sync is silent/last-good (ADR 021).
+ *
+ * ACTIVITY (ADR 049 / D4). Notification receipt now fans out to TWO independent
+ * cross-feature seams: the calendar sync above, and a forced Activity refresh
+ * beside it. `void refreshNewestPage({ force: true })` is deliberately never
+ * chained onto the sync's promise — architecture decision 7 requires the two
+ * independent so the push guarantee survives a sync that fails. Independence
+ * costs no extra request: when the sync also succeeds, its own post-storage
+ * refresh joins this one in the coordinator's single-flight slot. Forced,
+ * because a push IS the signal that something changed, so the five-minute
+ * freshness window must not suppress it. Failure is silent here too — an
+ * Activity refusal must not change what a notification does.
  */
 export function useNotificationTapRouting(): void {
   const { sync } = useSyncCalendars()
@@ -93,7 +119,14 @@ export function useNotificationTapRouting(): void {
   useEffect(() => {
     // A tap (background or cold-start): refetch, then navigate per the route.
     function routeTap(message: TapMessage): void {
+      // Unconditional, exactly as before. Narrowing it to the relevance test
+      // would be a routing-behavior change, which is out of scope.
       void sync()
+      // Beside the sync, never chained onto it (ADR 049 / D4), and gated on the
+      // ACTION rather than on the parse below.
+      if (isCalendarChangeMessage(message)) {
+        void refreshNewestPage({ force: true })
+      }
       const route = parseNotificationRoute(message)
       if (route == null) return
       if (route.kind === "event") {
@@ -104,13 +137,9 @@ export function useNotificationTapRouting(): void {
     }
 
     const unsubscribeForeground = onForegroundMessage((message) => {
-      const action = message.data?.action
-      if (
-        action === CALENDAR_CHANGED_ACTION ||
-        action === CALENDAR_DIGEST_ACTION
-      ) {
-        void sync()
-      }
+      if (!isCalendarChangeMessage(message)) return
+      void sync()
+      void refreshNewestPage({ force: true })
     })
 
     const unsubscribeTap = onNotificationTap(routeTap)

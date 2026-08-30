@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react-native"
 import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
+import { refreshNewestPage } from "@/features/activity"
 import {
   findAll as findAllUserCalendars,
   updateName as updateUserCalendarName,
@@ -30,6 +31,12 @@ jest.mock("@/features/calendar-sources/data/user-calendars", () => ({
   updateName: jest.fn(),
   upsert: jest.fn(),
 }))
+// The Activity trigger (TIM-399 / ADR 049 D3) is mocked at the FEATURE BARREL —
+// the seam sync.ts actually imports — so these tests assert the edge (fired,
+// forced, once, at the right point in the chain) without re-proving the
+// coordinator's own policy, which coordinator.test.ts owns. The wiring is proven
+// unmocked, end to end, in activity/data/triggers.test.tsx.
+jest.mock("@/features/activity", () => ({ refreshNewestPage: jest.fn() }))
 jest.spyOn(repository, "replaceAll").mockResolvedValue(undefined)
 
 const mockFetch = customFetch as jest.Mock
@@ -38,6 +45,16 @@ const mockUpdateName = updateUserCalendarName as jest.Mock
 const mockUpsert = upsertUserCalendar as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockReplaceAll = repository.replaceAll as jest.Mock
+const mockRefreshActivity = refreshNewestPage as jest.Mock
+
+/** A promise the test resolves by hand — never a timer. */
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((res) => {
+    resolve = res
+  })
+  return { promise, resolve }
+}
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({
@@ -86,6 +103,7 @@ beforeEach(() => {
   mockReplaceAll.mockResolvedValue(undefined)
   mockFindAll.mockResolvedValue([calendarToken])
   mockUpdateName.mockResolvedValue(undefined)
+  mockRefreshActivity.mockResolvedValue({ status: "updated" })
 })
 
 afterEach(() => {
@@ -274,6 +292,126 @@ describe("useSyncCalendars", () => {
       expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe(
         "calendar/sync-names",
       )
+    })
+  })
+
+  // TIM-399 / ADR 049 D3. Two separate claims live here: the trigger fires on
+  // exactly the success path and nowhere else, and an Activity failure cannot
+  // reach the sync's result. The second is the epic's acceptance criterion.
+  describe("Activity refresh trigger", () => {
+    it("fires exactly one FORCED refresh, after the event write committed", async () => {
+      mockFetch.mockResolvedValueOnce(syncResponse)
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+      // Forced: a completed sync IS new activity, so the coordinator's
+      // five-minute passive window must not suppress it.
+      expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
+      // Ordering is the decision, not an incidental: "after event storage
+      // succeeds". Asserted on the real call order rather than by reading the
+      // source, so moving the line into the try block fails here.
+      expect(mockRefreshActivity.mock.invocationCallOrder[0]).toBeGreaterThan(
+        mockReplaceAll.mock.invocationCallOrder[0]!,
+      )
+    })
+
+    it("fires nothing when replaceAll throws (the events were not stored)", async () => {
+      mockFetch.mockResolvedValueOnce(syncResponse)
+      mockReplaceAll.mockRejectedValueOnce(new Error("sqlite boom"))
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      await waitFor(() => expect(result.current.isError).toBe(true))
+      expect(mockRefreshActivity).not.toHaveBeenCalled()
+    })
+
+    it("fires nothing when the device holds no calendars (no request at all)", async () => {
+      mockFindAll.mockResolvedValue([])
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      expect(mockFetch).not.toHaveBeenCalled()
+      expect(mockRefreshActivity).not.toHaveBeenCalled()
+    })
+
+    it("still fires when the LATER name convergence throws", async () => {
+      // The two are separate failure domains and the Activity trigger sits
+      // between them. Hanging it behind name convergence would silently suppress
+      // Activity whenever a metadata write failed.
+      mockFetch.mockResolvedValueOnce([
+        {
+          calendar: { id: "cal-1", token: "tok_123", name: "L3 Informatique" },
+          events: [dtoEvent],
+        },
+      ])
+      mockUpdateName.mockRejectedValueOnce(new Error("sqlite boom"))
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      await waitFor(() => expect(result.current.isError).toBe(true))
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+    })
+
+    // THE EPIC ACCEPTANCE CRITERION: "a calendar-sync success must remain a
+    // success when the Activity refresh fails."
+    it("keeps the sync a success when the Activity refresh reports a failure", async () => {
+      mockFetch.mockResolvedValueOnce(syncResponse)
+      mockRefreshActivity.mockResolvedValue({
+        status: "failed",
+        reason: "network",
+      })
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      expect(result.current.isError).toBe(false)
+      // Not recorded under ANY calendar context: an Activity fault is the
+      // Activity coordinator's to report, and mis-attributing it here would bury
+      // real sync faults.
+      expect(mockRecordUnknownError).not.toHaveBeenCalled()
+      // The events the student came for are stored exactly once and untouched by
+      // the Activity outcome.
+      expect(mockReplaceAll).toHaveBeenCalledTimes(1)
+      expect(mockReplaceAll.mock.calls[0]?.[0]).toHaveLength(1)
+    })
+
+    it("does not hold isSyncing open while the Activity refresh is still running", async () => {
+      // Unawaited by design: the calendar's spinner must not stay up on an
+      // unrelated request. Driven by a deferred, never by a timer.
+      const pending = deferred<{ status: string }>()
+      mockFetch.mockResolvedValueOnce(syncResponse)
+      mockRefreshActivity.mockReturnValue(pending.promise)
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      // sync() has resolved and the spinner is down while the Activity request
+      // is still in flight.
+      expect(result.current.isSyncing).toBe(false)
+      expect(result.current.isError).toBe(false)
+
+      await act(async () => {
+        pending.resolve({ status: "updated" })
+        await pending.promise
+      })
+      expect(result.current.isError).toBe(false)
     })
   })
 

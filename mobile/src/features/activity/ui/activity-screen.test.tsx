@@ -15,7 +15,8 @@ import { ActivityScreen } from "./activity-screen"
 
 const mockUseActivityLogs = jest.fn()
 const mockUseActivityState = jest.fn()
-const mockRefreshNewestPage = jest.fn()
+const mockUseActivityScreenRefresh = jest.fn()
+const mockScreenRefresh = jest.fn()
 const mockLoadOlderPage = jest.fn()
 const mockMarkActivityReadFromCache = jest.fn()
 const mockMarkActivityRead = jest.fn()
@@ -26,7 +27,7 @@ jest.mock("@/features/activity/data", () => {
     ...actual,
     useActivityLogs: () => mockUseActivityLogs(),
     useActivityState: () => mockUseActivityState(),
-    refreshNewestPage: (...args: unknown[]) => mockRefreshNewestPage(...args),
+    useActivityScreenRefresh: () => mockUseActivityScreenRefresh(),
     loadOlderPage: (...args: unknown[]) => mockLoadOlderPage(...args),
     markActivityReadFromCache: (...args: unknown[]) =>
       mockMarkActivityReadFromCache(...args),
@@ -89,7 +90,11 @@ beforeEach(async () => {
   await i18n.changeLanguage("en")
   mockUseActivityLogs.mockReturnValue({ logs: [], loaded: true })
   mockUseActivityState.mockReturnValue(state())
-  mockRefreshNewestPage.mockResolvedValue({ status: "updated" })
+  mockUseActivityScreenRefresh.mockReturnValue({
+    outcome: null,
+    isRefreshing: false,
+    refresh: mockScreenRefresh,
+  })
   mockLoadOlderPage.mockResolvedValue({ status: "loaded" })
   mockMarkActivityReadFromCache.mockResolvedValue(undefined)
   mockPush.mockReset()
@@ -98,7 +103,8 @@ beforeEach(async () => {
 afterEach(() => {
   mockUseActivityLogs.mockReset()
   mockUseActivityState.mockReset()
-  mockRefreshNewestPage.mockReset()
+  mockUseActivityScreenRefresh.mockReset()
+  mockScreenRefresh.mockReset()
   mockLoadOlderPage.mockReset()
   mockMarkActivityReadFromCache.mockReset()
   mockMarkActivityRead.mockReset()
@@ -141,38 +147,43 @@ describe.each([
       logs: [populatedLog()],
       loaded: true,
     })
-    mockRefreshNewestPage.mockResolvedValue({
-      status: "failed",
-      reason: "network",
+    mockUseActivityScreenRefresh.mockReturnValue({
+      outcome: { status: "failed", reason: "network" },
+      isRefreshing: false,
+      refresh: mockScreenRefresh,
     })
     await render(<ActivityScreen />)
-    await triggerRefresh()
-    await waitFor(() => {
-      expect(screen.getByTestId("activity-cached-error")).toBeTruthy()
-    })
+    expect(screen.getByTestId("activity-cached-error")).toBeTruthy()
     expect(screen.getByText("Event new")).toBeTruthy()
   })
 
   it("renders a full empty failure without the empty sentence", async () => {
-    mockRefreshNewestPage.mockResolvedValue({
-      status: "failed",
-      reason: "network",
+    mockUseActivityScreenRefresh.mockReturnValue({
+      outcome: { status: "failed", reason: "network" },
+      isRefreshing: false,
+      refresh: mockScreenRefresh,
     })
     await render(<ActivityScreen />)
-    await triggerRefresh()
-    await waitFor(() => {
-      expect(screen.getByTestId("activity-empty-error")).toBeTruthy()
-    })
+    expect(screen.getByTestId("activity-empty-error")).toBeTruthy()
     expect(screen.queryByText(emptyCopy)).toBeNull()
   })
 })
 
 describe("ActivityScreen behavior", () => {
-  it("forces newest-page refresh exactly once", async () => {
+  it("composes the screen refresh hook into pull-to-refresh", async () => {
+    mockUseActivityScreenRefresh.mockReturnValue({
+      outcome: null,
+      isRefreshing: true,
+      refresh: mockScreenRefresh,
+    })
     await render(<ActivityScreen />)
+    expect(mockUseActivityScreenRefresh).toHaveBeenCalledTimes(1)
+    expect(
+      screen.getByTestId("activity-section-list").props.refreshControl.props
+        .refreshing,
+    ).toBe(true)
     await triggerRefresh()
-    expect(mockRefreshNewestPage).toHaveBeenCalledTimes(1)
-    expect(mockRefreshNewestPage).toHaveBeenCalledWith({ force: true })
+    expect(mockScreenRefresh).toHaveBeenCalledTimes(1)
   })
 
   it("loads older pages from end reached and the footer retry only", async () => {
@@ -191,7 +202,7 @@ describe("ActivityScreen behavior", () => {
     )
     await fireEvent.press(screen.getByTestId("activity-older-retry"))
     expect(mockLoadOlderPage).toHaveBeenCalledTimes(2)
-    expect(mockRefreshNewestPage).not.toHaveBeenCalled()
+    expect(mockScreenRefresh).not.toHaveBeenCalled()
   })
 
   it("does not load beyond a completed older-page chain", async () => {
@@ -224,9 +235,12 @@ describe("ActivityScreen behavior", () => {
     "%s does not surface an error",
     async (status) => {
       if (status === "no-calendars") {
-        mockRefreshNewestPage.mockResolvedValue({ status })
+        mockUseActivityScreenRefresh.mockReturnValue({
+          outcome: { status },
+          isRefreshing: false,
+          refresh: mockScreenRefresh,
+        })
         await render(<ActivityScreen />)
-        await triggerRefresh()
       } else {
         mockUseActivityLogs.mockReturnValue({
           logs: [populatedLog()],
@@ -263,19 +277,17 @@ describe("ActivityScreen behavior", () => {
       logs: [populatedLog()],
       loaded: true,
     })
-    mockRefreshNewestPage.mockResolvedValue({
-      status: "failed",
-      reason: "network",
+    mockUseActivityScreenRefresh.mockReturnValue({
+      outcome: { status: "failed", reason: "network" },
+      isRefreshing: false,
+      refresh: mockScreenRefresh,
     })
     await render(<ActivityScreen />)
     expect(
       screen.getByRole("header", { name: /Computer Science/ }),
     ).toBeTruthy()
-    await triggerRefresh()
-    await waitFor(() => {
-      const alert = screen.getByRole("alert")
-      expect(alert.props.accessibilityLiveRegion).toBe("polite")
-    })
+    const alert = screen.getByRole("alert")
+    expect(alert.props.accessibilityLiveRegion).toBe("polite")
   })
 
   it("keeps long content and hundreds of changed children flattened and unclipped", async () => {

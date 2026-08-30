@@ -133,6 +133,33 @@ const activityClientImportPattern = {
     "Use the @/features/activity/data seam — the generated calendar-log client is imported only inside src/features/activity/data/ (TIM-397 / ADR 048).",
 }
 
+// Route files are entrypoints, not modules. Named (rather than inlined in the
+// block that applies it) because two blocks now re-include it: any block that
+// re-sets `no-restricted-imports` for files under src/ has to carry it forward,
+// since flat-config options REPLACE rather than merge.
+const routeEntrypointImportPattern = {
+  regex: "^@/app(/|$)",
+  message:
+    "Route files under src/app/ are entrypoints — move shared code to a module and import that instead.",
+}
+
+// The DIRECTION of the Activity ↔ calendar-sources edge (TIM-399 / ADR 049 D7).
+// `activity/data/request.ts` imports @/features/calendar-sources/data, so an
+// import the other way closes a module require cycle. Its failure mode under
+// Metro is a binding that is `undefined` at module-init time — invisible to tsc,
+// invisible to the boundaries plugin (which governs sublayer shape, not cycles
+// between two named features), and dependent on import order, so it is exactly
+// the kind of edge that has to fail at lint time or not at all.
+//
+// The prune that would otherwise want this import is inverted instead:
+// `useActivityOwnershipPrune` lives in the Activity feature and OBSERVES the
+// held-calendar set.
+const activityFeatureImportPattern = {
+  regex: "^@/features/activity($|/)",
+  message:
+    "calendar-sources is a leaf: it must not import @/features/activity — the Activity data layer imports calendar-sources, so the reverse edge closes a module cycle whose failure mode is an `undefined` binding at Metro module init, invisible to tsc (TIM-399 / ADR 049). Observe the removal from the Activity side (useActivityOwnershipPrune).",
+}
+
 // False options belong only to the exact seam dirs/files that legitimately import
 // the backends or wrapped APIs kept out of the rest of the app.
 const restrictedImports = (
@@ -214,11 +241,7 @@ module.exports = defineConfig([
     ignores: ["src/app/**", generatedCode],
     rules: {
       "no-restricted-imports": restrictedImports([
-        {
-          regex: "^@/app(/|$)",
-          message:
-            "Route files under src/app/ are entrypoints — move shared code to a module and import that instead.",
-        },
+        routeEntrypointImportPattern,
       ]),
     },
   },
@@ -287,6 +310,33 @@ module.exports = defineConfig([
       "no-restricted-imports": restrictedImports([], {
         banActivitySeam: false,
       }),
+    },
+  },
+  {
+    // The other end of that edge (TIM-399 / ADR 049 D7): calendar-sources is a
+    // LEAF of the Activity graph and must never import back into it.
+    //
+    // Unlike every seam block above, this one ADDS a ban for one directory
+    // rather than dropping one — so it must re-call `restrictedImports([...])`
+    // with the extra patterns, never list its own pattern alone. Flat config
+    // REPLACES a rule's options rather than merging them, and
+    // `routes-not-importable` (files: ["src/**/*.{js,jsx,ts,tsx}"], which
+    // matches these files and does not ignore them) is otherwise the last block
+    // to set this rule here. A block listing only the Activity pattern would
+    // silently switch off every base seam ban — storage backends, chrome,
+    // calendar-kit, the generated calendar-log client, @/db's Activity tables —
+    // for the whole calendar-sources feature, with `npm run lint` still green.
+    // The route-entrypoint pattern is re-included for the same reason.
+    //
+    // Placed after the seam blocks above so it is the last word for these files;
+    // none of them matches src/features/calendar-sources/**.
+    name: "timecalendar/calendar-sources-is-a-leaf",
+    files: ["src/features/calendar-sources/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports([
+        routeEntrypointImportPattern,
+        activityFeatureImportPattern,
+      ]),
     },
   },
   {

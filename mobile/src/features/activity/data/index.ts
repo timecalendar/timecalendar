@@ -1,5 +1,11 @@
 export { loadOlderPage, refreshNewestPage } from "./coordinator"
 export { useActivityLogs, useActivityState } from "./hooks"
+export {
+  useActivityForegroundRefresh,
+  useActivityOwnershipPrune,
+  type UseActivityScreenRefresh,
+  useActivityScreenRefresh,
+} from "./lifecycle"
 export { canonicalIso, dtoToActivityRow, rowToActivityLog } from "./mappers"
 export {
   clearOlderPageCursor,
