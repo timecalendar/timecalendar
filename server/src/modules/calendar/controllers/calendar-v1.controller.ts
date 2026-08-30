@@ -12,8 +12,10 @@ import { UpdateCalendarDto } from "modules/calendar/models/dto/update-calendar.d
 import { CalendarService } from "modules/calendar/services/calendar.service"
 
 /**
- * The only path-level `/v1` route in the API. Global NestJS versioning is
- * deliberately not enabled — every other calendar route stays unversioned.
+ * A path-level `/v1` prefix on its own controller rather than
+ * `app.enableVersioning()`: versioning is global in Nest and would apply a
+ * default version to every controller, and Flutter release builds in the field
+ * call the unversioned calendar read, create and sync paths.
  */
 @Controller("v1/calendars")
 @ApiTags("Calendars")
