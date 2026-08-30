@@ -26,16 +26,24 @@ Implemented by TIM-399.
 
 ## Decision
 
-### A trigger fires the seam and reads nothing back
+### Silent host and runtime edges fire the seam and read nothing back
 
-Every edge is `void refreshNewestPage(...)` — unawaited, with no `try`, no
-`catch` and no inspection of the outcome. That is not carelessness; it is the
-mechanism behind the epic's hardest requirement, *a calendar-sync success is
-never converted into a failure by an Activity refresh failure*. `refreshNewestPage`
-never rejects (ADR 048), so a caller cannot propagate a rejection it forgot to
-catch, because there is none to propagate; and because it reads no outcome, a
-`{ status: "failed" }` cannot reach `setIsError`. A `catch` on these call sites
-would be dead code implying the opposite contract, so there is none.
+Calendar sync, push receipt and app foreground are silent host/runtime edges.
+They call `void refreshNewestPage(...)` — unawaited, with no `try`, no `catch`
+and no inspection of the outcome. That is not carelessness; on the sync path it
+is the mechanism behind the epic's hardest requirement, *a calendar-sync
+success is never converted into a failure by an Activity refresh failure*.
+`refreshNewestPage` never rejects (ADR 048), so a caller cannot propagate a
+rejection it forgot to catch, because there is none to propagate; and because
+the sync reads no outcome, a `{ status: "failed" }` cannot reach `setIsError`.
+A `catch` on these call sites would be dead code implying the opposite contract,
+so there is none.
+
+The Activity screen is the deliberate exception. Its screen-open refresh and
+forced pull-to-refresh await the shared operation and expose its outcome so the
+screen can show a failure while retaining cached content. Failure isolation is
+therefore a caller policy: silent edges ignore the outcome; screen-owned edges
+observe it.
 
 The sync trigger fires **after the event write commits and before name
 convergence** — the spec's trigger is "after event storage succeeds", and name
@@ -119,10 +127,11 @@ To make the direction enforceable rather than aspirational, `eslint.config.js`'s
   future trigger that bypasses the barrel reintroduces the risk; ADR 048's ban on
   the generated calendar-log client outside `activity/data/**` and the
   request-counting integration test are what hold that line.
-- **An Activity failure is invisible on five of six triggers.** That is the
-  design (failure visibility belongs to the trigger, not the fault), but it means
-  Crashlytics is the only signal for a persistently failing refresh outside the
-  Activity screen.
+- **An Activity failure is invisible on four of six triggers.** Push, sync,
+  foreground and the cold-launch sync path are silent; screen open and
+  pull-to-refresh expose the outcome. Failure visibility belongs to the trigger,
+  not the fault, so Crashlytics is the only signal for a persistently failing
+  refresh outside the Activity screen.
 - **The no-catch posture is safe only while `refreshNewestPage` never rejects.**
   If a later change makes it rejectable, the calendar-sync path is where the
   damage lands. The contract is asserted in ADR 048's tests and restated here.
@@ -141,8 +150,9 @@ To make the direction enforceable rather than aspirational, `eslint.config.js`'s
 
 ## Revisit if
 
-- `refreshNewestPage` ever needs to reject, or a caller ever needs its outcome —
-  the failure-isolation argument above is what would have to be rebuilt.
+- `refreshNewestPage` ever needs to reject, or a silent host/runtime caller ever
+  needs its outcome — the failure-isolation argument above is what would have to
+  be rebuilt.
 - A trigger needs Activity to be current when the calendar sync is *not* — the
   post-storage placement is what would move.
 - Background fetch or another OS-driven lifecycle arrives: it is a new row in the

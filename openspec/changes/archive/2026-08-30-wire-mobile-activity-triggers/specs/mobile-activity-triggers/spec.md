@@ -129,13 +129,13 @@ The freshness comparison SHALL remain the refresh seam's, against its persisted 
 
 ### Requirement: Overlapping triggers produce exactly one newest-page request
 
-Concurrent triggers SHALL result in exactly one newest-page request, and every triggering caller SHALL observe that request's outcome.
+Concurrent triggers SHALL result in exactly one newest-page request. Every invocation SHALL join the same in-flight refresh operation; screen-owned callers that await the operation SHALL receive its shared outcome, while silent host/runtime callers MAY deliberately ignore it.
 
 #### Scenario: Four triggers overlap
 
 - **WHEN** a push, a successful calendar sync, a screen open and a foreground return occur while one newest-page request is in flight
 - **THEN** exactly one calendar-log search request is sent
-- **AND** no trigger reports a failure that the single request did not produce
+- **AND** the screen-open caller receives that in-flight operation's outcome
 
 ### Requirement: Removing a calendar deletes its Activity history immediately
 

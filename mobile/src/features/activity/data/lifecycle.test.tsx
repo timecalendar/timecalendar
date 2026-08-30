@@ -317,10 +317,8 @@ describe("useActivityScreenRefresh", () => {
   it("fires the mount refresh exactly once across re-renders", async () => {
     const { rerender } = await renderHook(() => useActivityScreenRefresh())
     await flush()
-    await act(async () => {
-      rerender(undefined)
-      rerender(undefined)
-    })
+    await rerender(undefined)
+    await rerender(undefined)
     await flush()
 
     expect(mockFetch).toHaveBeenCalledTimes(1)

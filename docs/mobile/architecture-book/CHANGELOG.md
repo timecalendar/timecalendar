@@ -22,13 +22,14 @@
   nothing, by design rather than by omission. Foreground means `background → active` only:
   iOS raises `inactive → active` for a notification-shade pull or an incoming call, and
   neither is a return to the app (decisions/049, calendar.md, features.md).
-- Recorded the rule that makes **a calendar-sync success stay a success**: a trigger fires
-  the seam and reads nothing back. Every edge is an unawaited `void refreshNewestPage(...)`
-  with no `catch` and no outcome inspection, so an Activity failure structurally cannot reach
-  `isError` — `refreshNewestPage` never rejects (ADR 048), so there is no rejection to
-  propagate, and a `{ status: "failed" }` outcome is never read. The absence of a `catch` is
-  the load-bearing part and reads like an omission, which is why it is written down
-  (decisions/049, calendar.md).
+- Recorded the rule that makes **a calendar-sync success stay a success**: silent host/runtime
+  edges (sync, push and foreground) fire an unawaited `void refreshNewestPage(...)` with no
+  `catch` and no outcome inspection. An Activity failure therefore cannot reach sync's
+  `isError` — `refreshNewestPage` never rejects (ADR 048), and sync never reads its
+  `{ status: "failed" }` outcome. The Activity screen is the deliberate exception: screen open
+  and pull-to-refresh await and expose the shared outcome so failures can be shown over cached
+  content. The distinction reads like an omission at the silent edges, which is why it is
+  written down (decisions/049, calendar.md).
 - Amended **ADR 028**: notification receipt now fans out to **two independent** cross-feature
   seams — the calendar sync and the Activity refresh — with the Activity call deliberately not
   chained onto the sync's promise, so the push guarantee survives a sync that fails. It is
