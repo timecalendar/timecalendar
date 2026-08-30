@@ -27,6 +27,16 @@
 # stable group selector ever proves reliable on both platforms, a nested-step
 # assertion MAY be added as a bonus — only if reliable; do not ship a flaky step.
 #
+# KNOWN PRE-EXISTING RED (not introduced or fixed by TIM-391): the
+# `onboarding-school-filter` step below, and `onboarding-welcome-url-cta` in
+# ical-import.yaml, reference testIDs that no longer exist in the source — the
+# school search moved to the native `headerSearchBarOptions` header bar, which
+# carries no testID. Repairing those selectors is owned elsewhere (PR #293);
+# TIM-391 records the condition and does not depend on it. The programme-step
+# assertion added at the END of this flow is deliberately placed after the search
+# steps rather than before them, so the existing (soon-to-be-repaired) search
+# proof keeps its ordering.
+#
 # Requires the harness server up (ci/e2e-server.sh up) + a release-config
 # dev-variant build installed (mobile/e2e/run_e2e.sh). Shared across iOS and
 # Android: stable seeded-text assertions, no per-platform selectors. Mirrors
@@ -92,3 +102,16 @@ appId: fr.samuelprak.timecalendar.dev
     notVisible: "My Gaming Academia"
     timeout: 10000
 - eraseText
+# The import journey's first step (TIM-391): tapping a school seeds the listed
+# import draft and pushes /onboarding/programme — it no longer opens the group
+# picker, which persisted a selection and dismissed without creating anything.
+# Matched by the row's accessibility label (the school name verbatim), because
+# the row testID carries a server-generated UUID. Deliberately shallow: the
+# programme field, the native header Skip, Connect and the manual-import step are
+# Jest-proven, and the camera/live-import steps below them must never be driven
+# here (no camera on CI).
+- tapOn:
+    text: "My Gaming Academia"
+- extendedWaitUntil:
+    visible: "Your programme"
+    timeout: 60000

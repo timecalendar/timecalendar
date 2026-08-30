@@ -11,6 +11,7 @@ const eiffel: SchoolListItem = {
   code: "UPEM-77",
   imageUrl: "",
   imageUrlDark: null,
+  intranetUrl: null,
 }
 
 describe("normalize", () => {

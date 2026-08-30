@@ -69,20 +69,39 @@ jest.mock("expo-camera", () => {
   return { CameraView, useCameraPermissions }
 })
 
-jest.mock("expo-router", () => ({ router: { back: jest.fn() } }))
+jest.mock("expo-router", () => ({
+  router: {
+    back: jest.fn(),
+    canDismiss: jest.fn(() => true),
+    dismissAll: jest.fn(),
+  },
+}))
 jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({
   ...jest.requireActual("@/features/calendar-sources/data"),
   useAddCalendar: jest.fn(),
 }))
+// The onboarding draft seam. `mockImportFields` is what the derivation would
+// yield for the journey the screen was opened from; the no-draft direct route is
+// covered by its own case below.
+let mockImportFields: { name: string; schoolId?: string; schoolName?: string }
+const mockClearDraft = jest.fn()
+jest.mock("@/features/onboarding", () => ({
+  useImportCreateFields: () => mockImportFields,
+  useImportDraft: () => ({ clearDraft: mockClearDraft }),
+}))
 
 const mockBack = router.back as jest.Mock
+const mockCanDismiss = router.canDismiss as jest.Mock
+const mockDismissAll = router.dismissAll as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
-const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string]>()
+const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockImportFields = { name: "L3 Informatique", schoolId: "univeiffel" }
+  mockCanDismiss.mockReturnValue(true)
   mockAddCalendarFromUrl.mockResolvedValue(undefined)
   mockUseAddCalendar.mockReturnValue({
     addCalendarFromUrl: mockAddCalendarFromUrl,
@@ -150,12 +169,37 @@ describe("QrScanScreen", () => {
       fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
     })
 
-    // The pure parser normalizes webcal:// → https:// before the persist seam.
+    // The pure parser normalizes webcal:// → https:// before the persist seam,
+    // and the journey's institution/programme ride along (TIM-391).
     expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
       "https://example.com/cal.ics",
+      { name: "L3 Informatique", schoolId: "univeiffel" },
+    )
+    // Success leaves the whole journey rather than returning to the step that
+    // sent us here, and spends the draft.
+    await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
+    expect(mockClearDraft).toHaveBeenCalledTimes(1)
+    expect(mockBack).not.toHaveBeenCalled()
+    expect(mockRecordUnknownError).not.toHaveBeenCalled()
+  })
+
+  it("creates with empty metadata and falls back to back() on a direct route with no draft", async () => {
+    // The route opened by a dev link / external link / restored navigation: no
+    // provider, so no draft — a supported entry point, not an error.
+    mockImportFields = { name: "", schoolName: "" }
+    mockCanDismiss.mockReturnValue(false)
+    const { getByTestId } = await render(<QrScanScreen />)
+
+    await act(async () => {
+      fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
+    })
+
+    expect(mockAddCalendarFromUrl).toHaveBeenCalledWith(
+      "https://example.com/cal.ics",
+      { name: "", schoolName: "" },
     )
     await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
-    expect(mockRecordUnknownError).not.toHaveBeenCalled()
+    expect(mockDismissAll).not.toHaveBeenCalled()
   })
 
   it("shows a recoverable message for a non-calendar QR without recording", async () => {
@@ -171,6 +215,7 @@ describe("QrScanScreen", () => {
     ).toBeTruthy()
     expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
     expect(mockBack).not.toHaveBeenCalled()
+    expect(mockDismissAll).not.toHaveBeenCalled()
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
 

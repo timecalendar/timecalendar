@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
+import { useImportDraft } from "@/features/onboarding"
 import { type SchoolListItem } from "@/features/school-selection/data"
 import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
@@ -12,6 +13,7 @@ import { SchoolLogo } from "./school-logo"
 export function SchoolRow({ school }: { school: SchoolListItem }) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const { setListedInstitution } = useImportDraft()
 
   return (
     <Pressable
@@ -20,7 +22,14 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
       // Label = name verbatim: iOS merges children in, and Maestro matches rows by name.
       accessibilityLabel={school.name}
       accessibilityHint={t("onboarding.school.rowHint")}
-      onPress={() => router.push(`/onboarding/groups?schoolId=${school.id}`)}
+      // The import journey (TIM-391), not the group step: `groups` persists a
+      // selection and dismisses WITHOUT creating a calendar — a dead end. It
+      // keeps its route and stays deep-linkable; deleting it is a separate
+      // cleanup (design D10).
+      onPress={() => {
+        setListedInstitution(school)
+        router.push("/onboarding/programme")
+      }}
       // foreground ripple: the background lane regresses on New Arch (RN #52939/#54372).
       android_ripple={{ color: theme.ripple, foreground: true }}
       style={({ pressed }) => [

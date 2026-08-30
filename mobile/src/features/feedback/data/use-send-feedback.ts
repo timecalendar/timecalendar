@@ -6,10 +6,15 @@ import { useRecordedAction } from "@/hooks/use-recorded-action"
 
 import { getDeviceInfo } from "./device-info"
 
+// The bounded optional enrichment a failed import may forward. `calendarName` is
+// the normalized programme name (TIM-391); `gradeName` stays unsent — the DTO
+// has the field, but "formation" is a programme of study, not a grade (TIM-274),
+// and sending it under that name would mislabel every report.
 export interface FeedbackContext {
   calendarUrl?: string
   schoolId?: string
   schoolName?: string
+  calendarName?: string
 }
 
 export type SendFeedbackInput = ValidFeedbackForm & FeedbackContext
@@ -27,6 +32,7 @@ export function buildFeedbackDto(
   const calendarUrl = optional(input.calendarUrl)
   const schoolId = optional(input.schoolId)
   const schoolName = optional(input.schoolName)
+  const calendarName = optional(input.calendarName)
   return {
     email: input.email,
     message: input.message,
@@ -35,6 +41,7 @@ export function buildFeedbackDto(
     ...(calendarUrl ? { calendarUrl } : {}),
     ...(schoolId ? { schoolId } : {}),
     ...(schoolName ? { schoolName } : {}),
+    ...(calendarName ? { calendarName } : {}),
   }
 }
 

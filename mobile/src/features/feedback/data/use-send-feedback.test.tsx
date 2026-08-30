@@ -51,6 +51,7 @@ it("builds standard and optional-context DTOs without unsupported fields", () =>
         calendarUrl: " https://example.fr/a.ics ",
         schoolId: " school ",
         schoolName: " University ",
+        calendarName: "  L3 Informatique  ",
       },
       [],
       "device",
@@ -63,7 +64,27 @@ it("builds standard and optional-context DTOs without unsupported fields", () =>
     calendarUrl: "https://example.fr/a.ics",
     schoolId: "school",
     schoolName: "University",
+    calendarName: "L3 Informatique",
   })
+})
+
+// A skipped programme step must OMIT the key rather than send a blank value,
+// and gradeName stays unsent — "formation" is a programme of study, not a grade
+// (TIM-274), so reusing that field would mislabel every report.
+it("omits an empty or whitespace-only calendarName, and never sends gradeName", () => {
+  const dto = buildFeedbackDto(
+    {
+      email: "a@b.fr",
+      message: "hello",
+      schoolName: "École du Coin",
+      calendarName: "   ",
+    },
+    [],
+    "device",
+  )
+  expect(Object.keys(dto)).not.toContain("calendarName")
+  expect(Object.keys(dto)).not.toContain("gradeName")
+  expect(dto.schoolName).toBe("École du Coin")
 })
 
 it("POSTs every held calendar id through the real generated mutation", async () => {
