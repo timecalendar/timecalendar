@@ -76,7 +76,7 @@
 - [x] 6.1 Confirm the new server integration test is discovered by the existing server CI test job
       and the new mobile integration/static tests are discovered by `test-mobile`; no new workflow step
       or `--passWithNoTests` escape is allowed.
-- [ ] 6.2 Update the PR body and [TIM-400](/TIM/issues/TIM-400) handoff with the exact local commands
+- [x] 6.2 Update the PR body and [TIM-400](/TIM/issues/TIM-400) handoff with the exact local commands
       that passed and the native truth: Maestro was **not run on this no-KVM host** unless a real device
       run actually occurred. Do not add the `run-e2e` PR label; identify the post-merge `main` iOS and
       Android jobs as the definitive native simulator/emulator proof.
