@@ -333,7 +333,19 @@ ci/e2e-server.sh logs [--native]
   (`src/{features,hooks,storage,db,i18n,firebase,theme}/**`) and a **70% global**
   floor; presentational `src/components/**` is covered by behavior tests but exempt
   from the 90% gate. Tests mock at the `customFetch` mutator seam, never the network.
-- **`server/`:** `npm test` (Jest), `npm run test:e2e` (Nest E2E config).
+- **`server/`:** `npm test` (Jest, rooted at `server/src`, needs Postgres/Redis — it
+  provisions a worker-isolated database per Jest worker).
+- **`server/` E2E smoke:** `cd server && npm run test:e2e -- --runInBand`
+  (= `jest --config ./test/jest-e2e.json`). A committed, server-owned config with its
+  own discovery root: `server/test/**/*.e2e-spec.ts` only, so it and `npm test` can
+  never rediscover each other's specs. It is an **in-process Nest HTTP smoke** — it
+  boots a Nest testing module and asserts a real route over Supertest — and is
+  deliberately **dependency-free**: no Firebase key, Postgres, Redis, or queue worker,
+  so it runs from a clean checkout with no services up. It is enforced in CI as its own
+  `Run server E2E tests` step (§10). It does **not** replace `ci/e2e-server.sh`, which
+  still owns the real-backend lifecycle for the Maestro and Flutter device E2E; a spec
+  that needs a backing service belongs in the `server/src` suite or behind that script.
+  `--passWithNoTests` is banned — an empty E2E suite must stay red.
 - **`app/` (Flutter):** `flutter test` (mocktail + Riverpod conventions).
 
 ### Mobile E2E — Maestro (`mobile/e2e/run_e2e.sh`)
@@ -478,7 +490,7 @@ no daemon. iOS prints the Xcode path/version and available plus selected
 simulator name, UDID, and runtime. Local shell/static checks prove harness and
 workflow control flow; only the post-merge `main` run on GitHub-hosted runners
 provides definitive simulator/emulator proof on this non-virtualized host.
-| **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. |
+| **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. Its `test` job runs, against the image built from the same SHA: `Run tests` (`npm run test`), **`Run server E2E tests`** (`npm run test:e2e -- --runInBand` — the in-process Nest HTTP smoke of §7; a missing config, zero discovered specs, or a failed assertion fails at that named step), `Verify server image runtime lifecycle`, and the OpenAPI drift check. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
 | **`delete-old-images.yaml`** | scheduled | Image cleanup. |
 

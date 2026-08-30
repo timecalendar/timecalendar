@@ -67,8 +67,9 @@ containing the stored name. Possession of the token SHALL be the only authorizat
 owner, and a rename SHALL be visible to every holder of that token. Duplicate names across
 calendars SHALL be accepted and the last write SHALL win.
 
-This endpoint SHALL be the only path-level `/v1` route. Global API versioning SHALL NOT be enabled,
-and the existing unversioned calendar read, create, and sync routes SHALL remain unchanged.
+This endpoint SHALL be a path-level `/v1` controller route. Global API versioning SHALL NOT be
+enabled, and the existing unversioned calendar read, create, and sync routes SHALL remain
+unchanged.
 
 #### Scenario: A valid token renames the calendar
 
