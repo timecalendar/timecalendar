@@ -68,12 +68,23 @@ The single new true statement, to be used consistently:
       is still **true** (v9 also generates and gitignores `.husky/_/`) and stays. Only `:67`'s
       parenthetical *"(the pre-commit hook then skips its checks with a warning)"* is false. Do not
       delete the whole clause.
-- [x] 4.4 Sweep: `git grep -n -i 'skips its checks\|silently abort\|husky install'` returns nothing
-      outside `openspec/changes/` (this change's own files may quote the old wording).
+- [x] 4.4 Sweep: `git grep -n -i 'skips its checks\|silently abort\|husky install' --
+      ':!openspec/changes/' ':!ci/test-git-hooks.sh'` returns nothing. Both exclusions are
+      load-bearing and for the same reason as 5.6's: this change's own artifacts quote the old
+      wording, and `ci/test-git-hooks.sh:9` contains the words *"the last husky install wins"* —
+      English prose about installing husky, **not** the deprecated `husky install` command this
+      sweep is hunting. Excluded by **path**, per the rule 5.6 keeps re-teaching, rather than by
+      narrowing the needle to a command-shaped pattern.
+      *(Simplifier, 2026-08-30: this sweep was run and ticked during §4, before §6 added
+      `ci/test-git-hooks.sh` — so it was green against a tree that did not yet contain the file
+      that trips it. Identical in shape to 5.6's untracked-script trap and to the description's
+      `:117`: a check verified against an earlier tree than the one it ships against. Re-measured
+      after the exclusion: 0 hits.)*
 
 ### Do not touch
 
-- [x] 4.5 **Archives are history.** `git grep -ln husky` also matches five archived files — leave
+- [x] 4.5 **Archives are history.** `git grep -ln husky` also matches four archived files (6 hits;
+      `-ln` lists files, so the six line citations below are not six files) — leave
       every one byte-for-byte: `openspec/changes/archive/2026-06-12-add-mobile-lint-format/`
       (`proposal.md:17`, `design.md:5,19,56`, `specs/mobile-lint-format/spec.md:83`) and
       `openspec/changes/archive/2026-06-12-scaffold-mobile-expo/design.md:47`. Note that archived
@@ -114,7 +125,7 @@ worktrees, including the ones that are silently broken.
 - [x] 5.3 A **second, pre-existing** worktree, after re-running `bin/setup-worktree.sh`, also lints
       on commit. Record its slot value. This is the one that catches a fleet-wide regression, so it
       cannot be skipped or substituted with the upgrading worktree.
-      *Applier note:* run in a **second worktree created for the test** rather than in one of the 51
+      *Applier note:* run in a **second worktree created for the test** rather than in one of the
       live agent worktrees — running `setup-worktree.sh` inside another agent's checkout would
       `npm ci` under it mid-run. What it proves is unchanged (an independent worktree, its own
       `node_modules`, its own install, lints on commit); what it does **not** prove is the
@@ -136,13 +147,19 @@ worktrees, including the ones that are silently broken.
       `bin/setup-worktree.sh` — still caught, so the exclusion is narrow, not a blanket. **The path
       exclusion is required, not cosmetic** (FE, 2026-08-30, measured on `e9a32c5f`): the unscoped
       `git grep -n 'husky\.sh'` is *already* unpassable on this branch. Rewriting the hook clears
-      its 2 hits, but **9 hits remain in this change's own artifacts** — `proposal.md` (5),
-      `design.md` (2), `tasks.md` (2) — which quote the helper path precisely because they document
-      the mechanics being removed. They cannot be written away, and `openspec archive` carries them
-      into `openspec/changes/archive/…/` permanently. Excluding `openspec/changes/` covers the live
+      its 2 hits, but **10 hits remain across 4 files** (re-measured on `0961da19`) — `proposal.md`
+      (5), `design.md` (2), `tasks.md` (2), `ci/test-git-hooks.sh` (1) — which quote the helper path
+      precisely because they document the mechanics being removed. They cannot be written away, and
+      `openspec archive` carries the `openspec/changes/` ones into
+      `openspec/changes/archive/…/` permanently. Excluding `openspec/changes/` covers the live
       change and its future archived copy in one pattern, and leaves the criterion meaning what it
-      always meant: no *operative* file still references the helper. Measured: scoped = 0 hits,
-      unscoped = 9.
+      always meant: no *operative* file still references the helper. Measured on `0961da19`:
+      scoped = 0 hits, unscoped = 10.
+      The FE's original figure was **9**, measured on `e9a32c5f` — correct for that tree, where
+      `ci/test-git-hooks.sh` did not yet exist. Its 10th hit is the script's own failure message,
+      i.e. exactly the hit the second exclusion was added for, so the pre-script count is the one
+      number that cannot justify the post-script criterion. Re-anchored rather than deleted,
+      because the drift is the lesson.
       Note: `grep -rn --exclude-dir=node_modules` is **not** a substitute and can never pass —
       `index.js:23` rewrites `.husky/_/husky.sh`, and its content *contains* the literal string
       `/_/husky.sh` (it is the deprecation notice telling you to delete that line). `grep -rn` does
@@ -161,7 +178,7 @@ worktrees, including the ones that are silently broken.
       (c) `git grep -n 'husky\.sh' -- ':!openspec/changes/' ':!ci/test-git-hooks.sh'` finds nothing.
       **(c) must carry both exclusions** — see 5.6; the script's own text is the fourth instance
       of the same trap, and it is only visible once the script is tracked. Unscoped, this job is red
-      the moment it is added (9 hits in this change's own artifacts) and stays red on `main`
+      the moment it is added (10 hits on `0961da19`, including the script's own) and stays red on `main`
       forever once the change is archived. That failure mode is especially dangerous here because
       6.3 tells you to see the job red before trusting it: unscoped, you would see red, conclude
       the gate works, and ship a permanently-failing job. Confirm (c) passes on the tree *as it
