@@ -1,7 +1,6 @@
 // Feature barrel — the public surface of the Activity cluster. TIM-396 landed the
 // device-local half; TIM-397 adds the refresh coordinator, so `refreshNewestPage`,
-// `loadOlderPage` and `pruneToHeldCalendars` are now part of it. No `ui/` yet: the
-// screen and the Settings unread entry land with Ticket 5.
+// `loadOlderPage` and `pruneToHeldCalendars` are now part of it.
 //
 // This barrel is what the OUT-OF-FEATURE triggers consume (B-3: routes and shared
 // code reach a feature through its barrel, never through `@/db` or the generated
@@ -24,6 +23,7 @@ export {
   clearOlderPageCursor,
   DEFAULT_ACTIVITY_STATE,
   dtoToActivityRow,
+  formatUnreadBadge,
   listActivityLogs,
   loadOlderPage,
   markActivityRead,
@@ -34,4 +34,6 @@ export {
   rowToActivityLog,
   storeNewestPage,
   storeOlderPage,
+  useActivityLogs,
+  useActivityState,
 } from "./data"
