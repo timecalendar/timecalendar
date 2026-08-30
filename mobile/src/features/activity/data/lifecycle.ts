@@ -135,6 +135,14 @@ export function useActivityScreenRefresh(): UseActivityScreenRefresh {
   // Once across re-renders, not once per effect run: the screen re-renders as
   // rows arrive, and a second passive refresh per render would be a request per
   // render the moment the window expires.
+  //
+  // `run` is a `useCallback` with no dependencies, so today the deps array alone
+  // would do it and the ref below reads as belt-and-braces. It is deliberate,
+  // and it is the same guard `useStartupSync` and `useNotificationTapRouting`
+  // carry: it is what makes the hook safe when the effect IS re-invoked without
+  // a remount — StrictMode in development and Fast Refresh — where the cost is a
+  // duplicate request on every reload. That path is not reachable from the Jest
+  // renderer, so the early return below is the one uncovered line in this file.
   useEffect(() => {
     if (openedRef.current) {
       return

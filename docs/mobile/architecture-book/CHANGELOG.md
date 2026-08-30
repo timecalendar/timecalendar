@@ -13,6 +13,43 @@
   sync cannot overwrite the client-only `visible` flag. The binding rename and convergence rules in
   `features.md` now link to ADRs 050 and 052, and the path-level versioning rule in `data.md` links
   to ADR 051; the ephemeral import draft remains separately recorded in ADR 047.
+- Wired every Activity trigger into the ADR 048 seam and recorded the wiring as **ADR 049**
+  (TIM-399). The trigger table is now: pull-to-refresh and a relevant `calendar_changed` /
+  `calendar_digest` push and a successful calendar sync **force** a refresh; opening the
+  Activity screen and returning to the foreground refresh **passively**, which the seam
+  answers for free inside the persisted five-minute window; cold launch gets **no code** —
+  the startup sync's post-storage refresh is its trigger, so an offline cold launch issues
+  nothing, by design rather than by omission. Foreground means `background → active` only:
+  iOS raises `inactive → active` for a notification-shade pull or an incoming call, and
+  neither is a return to the app (decisions/049, calendar.md, features.md).
+- Recorded the rule that makes **a calendar-sync success stay a success**: a trigger fires
+  the seam and reads nothing back. Every edge is an unawaited `void refreshNewestPage(...)`
+  with no `catch` and no outcome inspection, so an Activity failure structurally cannot reach
+  `isError` — `refreshNewestPage` never rejects (ADR 048), so there is no rejection to
+  propagate, and a `{ status: "failed" }` outcome is never read. The absence of a `catch` is
+  the load-bearing part and reads like an omission, which is why it is written down
+  (decisions/049, calendar.md).
+- Amended **ADR 028**: notification receipt now fans out to **two independent** cross-feature
+  seams — the calendar sync and the Activity refresh — with the Activity call deliberately not
+  chained onto the sync's promise, so the push guarantee survives a sync that fails. It is
+  gated on the message **action**, not on `parseNotificationRoute(…) !== null`: a
+  `calendar_changed` with an undecodable `payload` is still a real calendar change, so routing
+  declines to navigate while Activity still refreshes. The routing decision itself is unchanged
+  (decisions/028, firebase.md).
+- Added lint boundary **B-6** (`timecalendar/calendar-sources-is-a-leaf`): calendar-sources may
+  not import `@/features/activity`, because the Activity data layer imports calendar-sources and
+  the reverse edge closes a module require cycle whose failure mode under Metro is an `undefined`
+  binding at module init — invisible to `tsc` and to `boundaries`. The removal prune is inverted
+  rather than banned outright: `useActivityOwnershipPrune` observes the held-calendar set from the
+  Activity side. Carried with it, the caveat the config cannot state: **a flat-config block that
+  ADDS a ban must re-call `restrictedImports([...])`**, because flat config replaces rule options
+  rather than merging them — a block listing only its own pattern would silently switch every
+  base seam ban off for that directory with lint still green, so a green lint run does not prove
+  such a block works (lint-format.md).
+- Corrected a false sentence in calendar.md rather than inheriting it: sync does **not** run at
+  foreground/resume. `AppState` is wired in exactly two places in `mobile/src`, and neither
+  triggers a calendar sync. TIM-399 added the second of them for Activity only (calendar.md).
+
 - Recorded the calendar rename surface and, load-bearing, the rule that the sync path
   converges calendar names through the narrow `updateName(id, name)` write and must never
   `upsert` a `user_calendars` row or route through `fromCalendarForPublic`, which hard-codes

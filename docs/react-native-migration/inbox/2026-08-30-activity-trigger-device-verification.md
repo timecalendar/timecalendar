@@ -2,8 +2,8 @@
 
 **Date:** 2026-08-30
 **Change:** `wire-mobile-activity-triggers`
-**ADR:** the Activity trigger ADR added by this change (number assigned when it is written — see
-[`decisions/README.md`](../../mobile/architecture-book/decisions/README.md))
+**ADR:** [049 — Wire Activity's triggers as independent edges into one seam, and let none of them
+fail its caller](../../mobile/architecture-book/decisions/049-activity-trigger-edges-and-failure-isolation.md)
 **For:** Samuel `(HUMAN: physical iOS and Android release-device pass for push, foreground and prune)`
 
 ## What I need
