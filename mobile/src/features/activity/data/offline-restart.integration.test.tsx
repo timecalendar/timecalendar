@@ -46,17 +46,14 @@ jest.mock("expo-router", () => ({
   Stack: { Screen: () => null },
 }))
 
-/* eslint-disable @typescript-eslint/no-require-imports */
-const loadRepository = () =>
-  require("./repository") as typeof import("./repository")
-/* eslint-enable @typescript-eslint/no-require-imports */
-
 beforeEach(() => {
   mockFake.reset()
 })
 
 it("renders cached Activity after a restart when the real refresh is offline", async () => {
-  await loadRepository().storeNewestPage({
+  /* eslint-disable-next-line @typescript-eslint/no-require-imports */
+  const repository = require("./repository") as typeof import("./repository")
+  await repository.storeNewestPage({
     rows: [
       {
         id: "cached-log",
