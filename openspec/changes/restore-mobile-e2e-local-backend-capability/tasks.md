@@ -412,3 +412,30 @@ date defect, failing where it reads exactly like a broken hide.
   "carries the recorded one-midnight exposure" case, so the asymmetry is a visible contract
   rather than a gap. The real fixes are a shorter job or a re-seed before the calendar-family
   flows; both are outside this ticket, and neither is justified by a single observed crossing.
+
+## 22. Size the measured row-50 Activity pagination traversal
+
+Exact-head run `33330342869` at `0ba41571` reached the same first pagination scroll on both
+platforms after proving the real-server Activity import, unread badge, first-page interactions,
+cancelled-row behavior, and refresh. The 60-second `tie-higher` traversal expired while both
+artifacts still showed forward progress: Android at fillers 40-42 and iOS at fillers 31-33.
+The target is row 50, so this is a bounded traversal deficit rather than a missing selector or
+stuck list.
+
+- [x] 22.1 Raise only the `activity-new-e2e-activity-tie-higher` `scrollUntilVisible` timeout
+  from 60000 to 120000 in `mobile/.maestro/activity.yaml`, with provenance naming the run,
+  row 50, and both observed progress ranges. Preserve selector, direction, command order,
+  assertions, and the `tie-lower` / `older-anchor` 60000 bounds.
+- [x] 22.2 Extend `mobile/e2e/activity-maestro-selectors.test.ts` with an ordered structural
+  proof that pins the three pagination selectors to `tie-higher` 120000, `tie-lower` 60000,
+  and `older-anchor` 60000. The proof must fail if the first bound is reverted, either later
+  bound is widened, or their order changes.
+- [x] 22.3 Record the measured long-pagination class in the `mobile-e2e` delta: only the
+  evidenced row-50 traversal receives the wider bound, while the later page assertions and
+  scroll bounds stay unchanged.
+- [x] 22.4 Run the focused Activity Jest proof, confirm its timeout mutations fail, run Maestro
+  YAML syntax, OpenSpec strict validation, formatting for the touched TypeScript/YAML, and
+  `git diff --check`, then push the material head with `run-e2e` retained.
+- [ ] 22.5 Require the fresh exact-head baseline plus Android and iOS native jobs to pass all
+  17 top-level flows. Record both complete per-flow lists and prove Activity continues through
+  `tie-higher`, `tie-lower`, and `older-anchor` over the real local server path before archive.

@@ -15,6 +15,20 @@ const settingsScreen = readFileSync(
   "utf8",
 )
 
+const paginationSelectorIds = new Set([
+  "activity-new-e2e-activity-tie-higher",
+  "activity-new-e2e-activity-tie-lower",
+  "activity-new-e2e-activity-older-anchor",
+])
+
+const paginationScrolls = [
+  ...flow.matchAll(
+    /- scrollUntilVisible:\n\s+element:\n\s+id: "([^"]+)"\n\s+direction: DOWN\n\s+timeout: (\d+)/g,
+  ),
+]
+  .map(([, id, timeout]) => ({ id, timeout: Number(timeout) }))
+  .filter(({ id }) => paginationSelectorIds.has(id))
+
 describe("Activity Maestro selectors", () => {
   it("uses the one shared flow without iOS-broken back navigation", () => {
     expect(flow).not.toMatch(/^\s*-\s*back\s*$/m)
@@ -39,5 +53,22 @@ describe("Activity Maestro selectors", () => {
     expect(flow).toMatch(
       /id: "activity-cancelled-e2e-activity-cancelled"[\s\S]*assertVisible:[\s\S]*id: "activity-section-list"[\s\S]*assertNotVisible: "Room Activity Cancelled Details"/,
     )
+  })
+
+  it("gives only the row-50 pagination traversal the measured wider bound", () => {
+    expect(paginationScrolls).toEqual([
+      {
+        id: "activity-new-e2e-activity-tie-higher",
+        timeout: 120000,
+      },
+      {
+        id: "activity-new-e2e-activity-tie-lower",
+        timeout: 60000,
+      },
+      {
+        id: "activity-new-e2e-activity-older-anchor",
+        timeout: 60000,
+      },
+    ])
   })
 })

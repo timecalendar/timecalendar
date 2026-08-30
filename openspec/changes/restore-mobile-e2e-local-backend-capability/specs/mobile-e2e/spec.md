@@ -352,3 +352,14 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **AND** the contract SHALL be proven without a database, by a pure builder taking the seed
   instant, since what breaks here is date arithmetic and a mocked repository would exercise the
   ORM instead
+
+#### Scenario: A measured first-page pagination traversal exceeds the default bound
+
+- **WHEN** a real-server Activity flow must traverse to the final row of its 50-row first page,
+  and a native gate shows both platforms still making forward progress when the default
+  60-second scroll bound expires
+- **THEN** only that row-50 `tie-higher` traversal SHALL receive the measured 120-second bound
+- **AND** the following `tie-lower` and `older-anchor` traversals SHALL remain at 60 seconds,
+  preserving their order and every assertion that proves cursor paging and tie ordering
+- **AND** a focused repository proof SHALL fail if the first bound returns to 60 seconds, either
+  later bound is widened, or the three pagination selectors are reordered
