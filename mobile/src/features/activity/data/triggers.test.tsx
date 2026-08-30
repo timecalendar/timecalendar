@@ -261,9 +261,8 @@ describe("overlapping Activity triggers", () => {
 describe("cold launch", () => {
   // D8: cold launch adds no code — the startup sync's post-storage refresh IS
   // the cold-launch trigger, so the claim is discharged by asserting it.
-  function useColdLaunch() {
+  function useColdLaunch(): void {
     useStartupSync()
-    return useSyncCalendars()
   }
 
   it("issues exactly one Activity request through the startup sync", async () => {
