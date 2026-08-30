@@ -5,6 +5,7 @@ import { Calendar } from "modules/calendar/models/calendar.entity"
 import { EventType } from "modules/fetch/models/event.model"
 import { School } from "modules/school/models/school.entity"
 import { DataSource } from "typeorm"
+import { seedE2eActivity } from "./seed-e2e-activity"
 
 /**
  * Token-addressable calendar the mobile E2E Maestro flows sync through `POST
@@ -293,4 +294,6 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
       },
     ],
   )
+
+  await seedE2eActivity(dataSource)
 }
