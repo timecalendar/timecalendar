@@ -119,9 +119,16 @@ worktrees, including the ones that are silently broken.
       directly when the slot is `.husky`, via the generated shim when it is `.husky/_`.
 - [ ] 5.5 `git ls-files -s .husky/pre-commit` reads `100755`. **Hard gate.** In `git show` a
       regression renders as `old mode 100755` / `new mode 100644`.
-- [ ] 5.6 `git grep -n 'husky\.sh'` returns nothing. (Two hits today, both in the file this change
-      rewrites: `.husky/pre-commit:4` the guard's `-f` test and `:9` the source line. Zero hits in
-      the archives, so this criterion is genuinely reachable.)
+- [ ] 5.6 `git grep -n 'husky\.sh' -- ':!openspec/changes/'` returns nothing. **The path exclusion
+      is required, not cosmetic** (FE, 2026-08-30, measured on `e9a32c5f`): the unscoped
+      `git grep -n 'husky\.sh'` is *already* unpassable on this branch. Rewriting the hook clears
+      its 2 hits, but **9 hits remain in this change's own artifacts** — `proposal.md` (5),
+      `design.md` (2), `tasks.md` (2) — which quote the helper path precisely because they document
+      the mechanics being removed. They cannot be written away, and `openspec archive` carries them
+      into `openspec/changes/archive/…/` permanently. Excluding `openspec/changes/` covers the live
+      change and its future archived copy in one pattern, and leaves the criterion meaning what it
+      always meant: no *operative* file still references the helper. Measured: scoped = 0 hits,
+      unscoped = 9.
       Note: `grep -rn --exclude-dir=node_modules` is **not** a substitute and can never pass —
       `index.js:23` rewrites `.husky/_/husky.sh`, and its content *contains* the literal string
       `/_/husky.sh` (it is the deprecation notice telling you to delete that line). `grep -rn` does
@@ -137,7 +144,13 @@ worktrees, including the ones that are silently broken.
       (a) `git ls-files -s .husky/pre-commit` begins with `100755`;
       (b) the hook invokes lint-staged via `npx`, i.e. it does **not** contain a bare
       `lint-staged` invocation at the start of a line;
-      (c) `git grep -n 'husky\.sh'` finds nothing.
+      (c) `git grep -n 'husky\.sh' -- ':!openspec/changes/'` finds nothing.
+      **(c) must carry the `:!openspec/changes/` exclusion** — see 5.6. Unscoped, this job is red
+      the moment it is added (9 hits in this change's own artifacts) and stays red on `main`
+      forever once the change is archived. That failure mode is especially dangerous here because
+      6.3 tells you to see the job red before trusting it: unscoped, you would see red, conclude
+      the gate works, and ship a permanently-failing job. Confirm (c) passes on the tree *as it
+      stands with the artifacts present* — that is the real test of the exclusion.
       Each assertion fails with a message naming *why* it matters — the mode and `npx` regressions
       are both invisible in the worktree that introduces them, so the failure text is the only place
       a future contributor learns the reason.
