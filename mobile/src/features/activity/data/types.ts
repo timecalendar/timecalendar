@@ -1,4 +1,7 @@
-import type { CalendarChangeGet } from "@/api/generated/timeCalendar.schemas"
+import type {
+  CalendarChangeGet,
+  CalendarLogV1,
+} from "@/api/generated/timeCalendar.schemas"
 import type { activityLogs, activityState } from "@/db"
 
 // The Activity domain types and the shapes the repository writes (TIM-396).
@@ -9,22 +12,12 @@ export type ActivityLogRow = typeof activityLogs.$inferSelect
 export type ActivityLogInsert = typeof activityLogs.$inferInsert
 export type ActivityStateRow = typeof activityState.$inferSelect
 
-// The v1 calendar-log DTO, FROZEN BY THE SPECIFICATION (Activity revival,
-// architecture decision 2) rather than imported from the generated client. That
-// is deliberate: this ticket ships in parallel with the server work (Ticket 2),
-// so the cache must not wait on the generated v1 operation. Ticket 4 owns the
-// request and maps its response onto this shape.
-//
-// `CalendarChangeGet` already exists in the generated schemas from the legacy
-// operation, so the decoded payload shape is real today.
-export interface ActivityLogDto {
-  id: string
-  calendarId: string
-  calendarName: string
-  calendarChange: CalendarChangeGet
-  createdAt: string
-  updatedAt: string
-}
+// The v1 calendar-log DTO. Aliased to the generated `CalendarLogV1` rather than
+// restated, so a server-side contract change breaks `tsc` here instead of
+// drifting silently into rows the defensive mapper quietly skips. The local name
+// is kept because the Activity data layer speaks its own vocabulary; Ticket 4
+// owns the request that produces one.
+export type ActivityLogDto = CalendarLogV1
 
 export interface ActivityLog {
   id: string

@@ -47,8 +47,9 @@ export function resetBackendDatabase(): void {
 // queries with (from drizzle-orm), and the seam-owned coalescing reactive read
 // (./live-query — a drop-in for drizzle's useLiveQuery that collapses per-row
 // change bursts into a single re-query). Re-export ONLY what a consumer needs
-// (R-2), not all of drizzle-orm — each operator below is here because a live
-// query uses it: `eq` for by-uid reads/writes and the activity_state singleton,
+// (R-2), not all of drizzle-orm — each operator below is here because a
+// repository read or write uses it: `eq` for by-uid reads/writes and the
+// activity_state singleton,
 // `asc` for the event-checklists ordered read (ADR 024), `desc` for the Activity
 // newest-first read, `lt` for its one-year age cutoff, `notInArray` for its
 // ownership prune.
