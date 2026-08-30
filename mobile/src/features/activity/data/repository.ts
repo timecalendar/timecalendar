@@ -147,6 +147,24 @@ function ageCutoffIn(tx: Reader, asOf: string): string | null {
   return cutoff.toISOString()
 }
 
+// The ownership prune — drop every row belonging to a calendar the device no
+// longer holds. ONE implementation, serving both the in-page-write step and the
+// standalone removal-driven operation, so the two can never disagree about what
+// "held" means.
+//
+// An empty held-id list genuinely means no Activity row is owned, and `NOT IN ()`
+// is not valid SQL, so that case clears the table outright. See
+// `pruneToHeldCalendars` for when an empty list may be believed at all.
+function pruneToHeldIn(tx: Transaction, heldCalendarIds: string[]): void {
+  if (heldCalendarIds.length === 0) {
+    tx.delete(activityLogs).run()
+  } else {
+    tx.delete(activityLogs)
+      .where(notInArray(activityLogs.calendarId, heldCalendarIds))
+      .run()
+  }
+}
+
 // The shared page-write transaction body, in the fixed order the design freezes:
 // upsert → prune by age → prune by ownership → advance state. State is written
 // LAST and INSIDE the same transaction, so a throw anywhere in the earlier steps
@@ -179,16 +197,8 @@ function writePageIn(
     tx.delete(activityLogs).where(lt(activityLogs.createdAt, cutoff)).run()
   }
 
-  // 3. Prune by ownership — rows for calendars the device no longer holds. An
-  // empty held-id list genuinely means no Activity row is owned, and `NOT IN ()`
-  // is not valid SQL, so that case clears the table outright.
-  if (write.heldCalendarIds.length === 0) {
-    tx.delete(activityLogs).run()
-  } else {
-    tx.delete(activityLogs)
-      .where(notInArray(activityLogs.calendarId, write.heldCalendarIds))
-      .run()
-  }
+  // 3. Prune by ownership — rows for calendars the device no longer holds.
+  pruneToHeldIn(tx, write.heldCalendarIds)
 
   // 4. Advance state.
   const current = readStateRowIn(tx)
@@ -266,6 +276,36 @@ export async function storeNewestPage(write: ActivityPageWrite): Promise<void> {
 /** Store an older-page response. Always advances the backfill position. */
 export async function storeOlderPage(write: ActivityPageWrite): Promise<void> {
   db.transaction((tx) => writePageIn(tx, write, "older"))
+}
+
+/**
+ * The ownership prune on its own: drop the cached Activity history of every
+ * calendar the device no longer holds. Writes NO state — not the watermark, not
+ * the unread count, not `lastSuccessfulRefreshAt`, not the cursor, not the
+ * completion flag — and needs no server `asOf`. That is the whole point: it must
+ * work when no request was issued at all.
+ *
+ * WHEN AN EMPTY LIST MAY BE BELIEVED (D7). The prune normally rides a page
+ * write, but no page is written when the device holds no calendars (D6) — so a
+ * student who removes their LAST calendar would otherwise keep its rows cached
+ * forever. This operation closes that gap, and it is safe only because of who
+ * calls it:
+ *
+ *  - A CALENDAR-REMOVAL EVENT supplies the authoritative post-removal set. Empty
+ *    there genuinely means "no calendar is held", and clearing is correct.
+ *  - A speculative `findAll()` before a refresh is NOT authoritative and must
+ *    never call this. `findAll` cannot distinguish an empty device from a read
+ *    that raced the sources table, and pruning on a spurious-empty read destroys
+ *    the entire cache — unrecoverable, and strictly worse than the badge wipe
+ *    D6 exists to prevent.
+ *
+ * Wiring calendar removal to it is TIM-399 (Ticket 6); the coordinator in this
+ * ticket deliberately does not call it.
+ */
+export async function pruneToHeldCalendars(
+  heldCalendarIds: string[],
+): Promise<void> {
+  db.transaction((tx) => pruneToHeldIn(tx, heldCalendarIds))
 }
 
 /**

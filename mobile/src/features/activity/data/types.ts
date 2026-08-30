@@ -73,3 +73,56 @@ export interface ActivityPageWrite {
   /** Device time of this successful refresh (Ticket 4's freshness policy). */
   lastSuccessfulRefreshAt?: Date
 }
+
+/**
+ * WHAT failed, never WHO sees it (D10). Passive vs. visible is a property of the
+ * TRIGGER, not of the error — the same network failure is silent after a
+ * calendar sync and visible on pull-to-refresh — so the coordinator classifies
+ * the fault and the call site decides visibility. Encoding visibility here would
+ * force the data layer to know which screen is mounted, which is precisely the
+ * dependency the seam exists to prevent.
+ */
+export type ActivityFailureReason =
+  /** Any throw that is not an `ApiError`: the RN `fetch` TypeError, the
+   * mutator's 15 s timeout abort, "Backend runtime is resetting". */
+  | "network"
+  /** An `ApiError` — the server answered, with a status we did not want. */
+  | "server"
+  /** A `200` whose body does not match the contract. Never a success. */
+  | "malformed"
+  /** The repository transaction threw. The write is all-or-nothing, so nothing
+   * partial was stored. */
+  | "storage"
+
+/**
+ * The result of a newest-page refresh. Every path resolves with one of these —
+ * the operation NEVER rejects (D11), which is the mechanism behind "a calendar
+ * sync success is never converted into a failure by an Activity refresh
+ * failure": a caller cannot propagate a rejection it forgot to catch, because
+ * there is none to propagate.
+ */
+export type ActivityRefreshOutcome =
+  /** A page was fetched and stored; `lastSuccessfulRefreshAt` moved. */
+  | { status: "updated" }
+  /** Passive trigger inside the five-minute window — no request was issued. */
+  | { status: "fresh" }
+  /** D6: the device holds no calendars. No request, no state moved. */
+  | { status: "no-calendars" }
+  /** D6: above the contract's 100-token ceiling. No request, no state moved. */
+  | { status: "too-many-calendars" }
+  | { status: "failed"; reason: ActivityFailureReason }
+
+/** The result of an older-page (backfill) load. Never rejects either (D11). */
+export type ActivityOlderPageOutcome =
+  /** An older page was fetched and stored; the backfill position advanced. */
+  | { status: "loaded" }
+  /** The chain is already fully backfilled — no request was issued. */
+  | { status: "complete" }
+  /** No backfill position is stored yet (no newest page has succeeded). */
+  | { status: "unavailable" }
+  /** D3: the server rejected the stored cursor (400). It was cleared, every
+   * cached row kept, and the chain restarts from the newest page. */
+  | { status: "cursor-reset" }
+  | { status: "no-calendars" }
+  | { status: "too-many-calendars" }
+  | { status: "failed"; reason: ActivityFailureReason }

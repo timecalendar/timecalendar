@@ -33,6 +33,33 @@
   programme name from a failed import, omitted when empty. `gradeName` stays unsent: "formation" is
   a programme of study, not a grade (navigation.md, features.md).
 
+- Added the Activity refresh coordinator — the single bounded fetch and pagination seam every
+  Activity trigger shares — and recorded two decisions in **ADR 048**. First, **single-flight is a
+  module-level promise, not TanStack Query**: the callers (calendar sync, the push handler, the
+  app-lifecycle listener) are plain modules where a hook is uncallable, `fetchQuery` dedup would
+  write to the query cache Activity must stay out of, and the five-minute freshness clock must
+  survive process death, which an in-memory `dataUpdatedAt` does not. The newest and older pages
+  hold independent slots, so a backfill can neither block nor be blocked by a forced refresh.
+  Second, **no Activity request is issued with a token count outside 1–100, on either path**: the
+  server short-circuits an empty token array before it distinguishes a first page from a following
+  page, so a zero-token request is a deliberate `200` that clears the unread badge on the newest
+  page and **permanently** sets `olderPageComplete` on the older page — neither recoverable by any
+  later refresh. The guard belongs on the request precondition and nowhere else; suppressing
+  `nextCursor: null` instead would restart pagination forever at the end of history (data.md,
+  features.md, ADR 048).
+- Added **B-5**, the Activity seam boundary: only `src/features/activity/data/**` may import
+  `@/api/generated/calendar-logs/**` or the `activityLogs` / `activityState` bindings from `@/db`.
+  B-1 does **not** already give this — B-1 is *sublayer*-scoped, so it permits any feature's
+  `data/` to issue calendar-log requests; a single-feature restriction is not expressible in
+  `eslint-plugin-boundaries` against a file inside one element. Implemented with the existing
+  `no-restricted-imports` seam-ban idiom (`banActivitySeam`, mirroring `banCalendarKit`), the table
+  half using `paths` + `importNames` because every feature legitimately imports `@/db` — just not
+  those two bindings (lint-format.md, ADR 048).
+- Noted in the ADR index that **`047` is claimed by an open PR** as well as the existing `045`
+  reservation, so this ADR took `048`. An ADR-number collision is invisible to git; the next author
+  must check open PRs (`gh pr diff <N> --name-only | grep decisions/`), not just the highest merged
+  number (decisions/README.md).
+
 ## 2026-08-29
 
 - Split the two meanings of "server E2E". `server/npm run test:e2e` is now a committed,
