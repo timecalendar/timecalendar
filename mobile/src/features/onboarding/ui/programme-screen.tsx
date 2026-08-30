@@ -11,7 +11,9 @@ import {
   normalizeImportName,
   useImportDraft,
 } from "@/features/onboarding/draft"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
+
+import { stepStyles } from "./step-styles"
 
 // The programme step (TIM-391 / design D4, D5) — "Nom de formation" (the
 // *formation*, i.e. programme of study, not a grade: TIM-274 established this is
@@ -56,7 +58,7 @@ export default function ProgrammeScreen() {
   const skip = () => advance("")
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={stepStyles.container}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -95,8 +97,11 @@ export default function ProgrammeScreen() {
           }),
         }}
       />
-      <SafeAreaView style={styles.safeArea} edges={["left", "right", "bottom"]}>
-        <View style={styles.intro}>
+      <SafeAreaView
+        style={stepStyles.safeArea}
+        edges={["left", "right", "bottom"]}
+      >
+        <View style={stepStyles.intro}>
           <ThemedText type="title">
             {t("onboarding.programme.title")}
           </ThemedText>
@@ -125,7 +130,7 @@ export default function ProgrammeScreen() {
           returnKeyType="next"
           onSubmitEditing={submit}
           style={[
-            styles.input,
+            stepStyles.input,
             { color: theme.text, borderColor: theme.backgroundSelected },
           ]}
         />
@@ -150,7 +155,7 @@ export default function ProgrammeScreen() {
           hitSlop={Spacing.two}
           onPress={submit}
           style={[
-            styles.cta,
+            stepStyles.cta,
             {
               backgroundColor: theme.primaryStrong,
               opacity: canContinue ? 1 : 0.5,
@@ -167,42 +172,14 @@ export default function ProgrammeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    justifyContent: "center",
-    gap: Spacing.three,
-  },
-  intro: {
-    gap: Spacing.three,
-  },
+  // Local: the Android header action, the only control this step adds to the
+  // shared step frame. 48dp minimum in both axes (the iOS branch is a native
+  // header item and is sized by the platform).
   headerSkip: {
     minWidth: 48,
     minHeight: 48,
     alignItems: "flex-end",
     justifyContent: "center",
     paddingHorizontal: Spacing.two,
-  },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    fontSize: 16,
-  },
-  cta: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
   },
 })

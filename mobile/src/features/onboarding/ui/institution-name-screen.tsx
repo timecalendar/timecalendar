@@ -1,7 +1,7 @@
 import { router } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, TextInput, View } from "react-native"
+import { Pressable, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
@@ -12,7 +12,9 @@ import {
   useImportDraft,
 } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
+
+import { stepStyles } from "./step-styles"
 
 // The unlisted-institution step (TIM-391) — reached from the school picker's
 // "I can't find my school" action, which used to jump straight to the iCal-URL
@@ -51,9 +53,9 @@ export default function InstitutionNameScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.intro}>
+    <ThemedView style={stepStyles.container}>
+      <SafeAreaView style={stepStyles.safeArea}>
+        <View style={stepStyles.intro}>
           <ThemedText type="title">
             {t("onboarding.institution.title")}
           </ThemedText>
@@ -81,7 +83,7 @@ export default function InstitutionNameScreen() {
           returnKeyType="next"
           onSubmitEditing={submit}
           style={[
-            styles.input,
+            stepStyles.input,
             { color: theme.text, borderColor: theme.backgroundSelected },
           ]}
         />
@@ -103,7 +105,7 @@ export default function InstitutionNameScreen() {
           accessibilityLabel={t("onboarding.institution.continueLabel")}
           hitSlop={Spacing.two}
           onPress={submit}
-          style={[styles.cta, { backgroundColor: theme.primaryStrong }]}
+          style={[stepStyles.cta, { backgroundColor: theme.primaryStrong }]}
         >
           <ThemedText type="smallBold" themeColor="onPrimary">
             {t("onboarding.institution.continue")}
@@ -113,37 +115,3 @@ export default function InstitutionNameScreen() {
     </ThemedView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    justifyContent: "center",
-    gap: Spacing.three,
-  },
-  intro: {
-    gap: Spacing.three,
-  },
-  input: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
-    borderWidth: 1,
-    borderRadius: Radii.medium,
-    fontSize: 16,
-  },
-  cta: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-  },
-})

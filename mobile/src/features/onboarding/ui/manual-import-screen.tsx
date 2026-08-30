@@ -6,7 +6,9 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
+
+import { stepStyles } from "./step-styles"
 
 // The manual-import step (TIM-391 / design D7) — behavioural parity with
 // Flutter's app/lib/modules/import_ical/screens/import_ical/import_ical_screen.dart
@@ -24,9 +26,9 @@ export default function ManualImportScreen() {
   const theme = useTheme()
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.intro}>
+    <ThemedView style={stepStyles.container}>
+      <SafeAreaView style={stepStyles.safeArea}>
+        <View style={[stepStyles.intro, styles.intro]}>
           <ThemedText type="title">{t("onboarding.import.title")}</ThemedText>
           <ThemedText themeColor="textSecondary">
             {t("onboarding.import.body")}
@@ -82,23 +84,13 @@ export default function ManualImportScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    justifyContent: "center",
-    gap: Spacing.three,
-  },
+  // Extra breathing room under the intro so the two offers below read as a pair
+  // rather than as a third paragraph.
   intro: {
-    gap: Spacing.three,
     marginBottom: Spacing.two,
   },
+  // The QR/link pair stays local and stays together: the filled-vs-outlined
+  // contrast is what tells the student QR is the recommended route.
   primary: {
     minHeight: 48,
     flexDirection: "row",

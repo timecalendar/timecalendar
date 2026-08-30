@@ -36,16 +36,15 @@ export function isImportNameWithinLimit(raw: string): boolean {
 // schools API must render NO link rather than be opened. Total: anything absent,
 // blank or unparseable yields null.
 export function safeIntranetUrl(raw: string | null | undefined): string | null {
-  if (!raw) return null
-  const candidate = raw.trim()
+  const candidate = raw?.trim() ?? ""
   if (candidate === "") return null
-  let parsed: URL
   try {
-    parsed = new URL(candidate)
+    // A bare hostname ("univ-eiffel.fr") has no scheme to trust, so it throws
+    // here and gets no link — same outcome as a rejected scheme.
+    const { protocol } = new URL(candidate)
+    if (protocol !== "http:" && protocol !== "https:") return null
   } catch {
-    // A bare hostname ("univ-eiffel.fr") has no scheme to trust — no link.
     return null
   }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null
   return candidate
 }

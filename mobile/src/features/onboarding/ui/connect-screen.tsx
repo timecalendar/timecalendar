@@ -8,7 +8,9 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { safeIntranetUrl, useImportDraft } from "@/features/onboarding/draft"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
+
+import { stepStyles } from "./step-styles"
 
 // The Connect step (TIM-391 / design D6) — behavioural parity with Flutter's
 // app/lib/modules/assistant/screens/connect_screen.dart (read-only reference):
@@ -33,42 +35,42 @@ export default function ConnectScreen() {
   const theme = useTheme()
   const { draft } = useImportDraft()
 
-  const institution = draft?.institution
-  const intranetUrl =
-    institution?.kind === "listed"
-      ? safeIntranetUrl(institution.school.intranetUrl)
-      : null
-  const institutionName =
-    institution?.kind === "listed" ? institution.school.name : null
+  // An unlisted institution has no school row and therefore no trusted URL, so
+  // both the link's label and its target come from the listed school or not at
+  // all. `safeIntranetUrl` is total on null/undefined, which is what lets the
+  // two live on one narrowing instead of two parallel ternaries.
+  const school =
+    draft?.institution.kind === "listed" ? draft.institution.school : null
+  const intranetUrl = safeIntranetUrl(school?.intranetUrl)
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.intro}>
+    <ThemedView style={stepStyles.container}>
+      <SafeAreaView style={[stepStyles.safeArea, styles.safeArea]}>
+        <View style={stepStyles.intro}>
           <ThemedText type="title">{t("onboarding.connect.title")}</ThemedText>
           <ThemedText themeColor="textSecondary">
             {t("onboarding.connect.body")}
           </ThemedText>
         </View>
 
-        {intranetUrl !== null && institutionName !== null && (
+        {school !== null && intranetUrl !== null && (
           <Pressable
             testID="onboarding-connect-intranet"
             accessibilityRole="link"
             accessibilityLabel={t("onboarding.connect.intranetLabel", {
-              institution: institutionName,
+              institution: school.name,
             })}
             hitSlop={Spacing.two}
             onPress={() => void WebBrowser.openBrowserAsync(intranetUrl)}
             style={[
-              styles.cta,
+              styles.intranetLink,
               {
                 backgroundColor: theme.backgroundElement,
                 borderColor: theme.primary,
               },
             ]}
           >
-            <ThemedText type="smallBold">{institutionName}</ThemedText>
+            <ThemedText type="smallBold">{school.name}</ThemedText>
             <SymbolView
               name={{
                 ios: "arrow.up.right",
@@ -114,23 +116,12 @@ export default function ConnectScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  // Wider than the shared step gap: this step's three blocks (intro, optional
+  // link, footer) read as separate offers rather than one form.
   safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    justifyContent: "center",
     gap: Spacing.four,
   },
-  intro: {
-    gap: Spacing.three,
-  },
-  cta: {
+  intranetLink: {
     minHeight: 48,
     flexDirection: "row",
     gap: Spacing.two,
@@ -141,6 +132,8 @@ const styles = StyleSheet.create({
     borderRadius: Radii.medium,
     borderWidth: 2,
   },
+  // The Back/Continue pair stays local and stays together: the outlined-vs-filled
+  // contrast between the two is the thing worth reading side by side.
   footer: {
     flexDirection: "row",
     alignItems: "center",
