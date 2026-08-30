@@ -43,14 +43,17 @@ export default function FeedbackScreen() {
     calendarUrl?: string | string[]
     schoolId?: string | string[]
     schoolName?: string | string[]
+    calendarName?: string | string[]
   }>()
   const calendarUrl = normalizeFeedbackParam(params.calendarUrl)
   const schoolId = normalizeFeedbackParam(params.schoolId)
   const schoolName = normalizeFeedbackParam(params.schoolName)
+  const calendarName = normalizeFeedbackParam(params.calendarName)
   const context = {
     ...(calendarUrl ? { calendarUrl } : {}),
     ...(schoolId ? { schoolId } : {}),
     ...(schoolName ? { schoolName } : {}),
+    ...(calendarName ? { calendarName } : {}),
   }
   const {
     sendFeedback,

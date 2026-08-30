@@ -9,8 +9,8 @@ code and product specifications.
 | `notifications`    | Subscription preferences, FCM registration, and notification routing                | `@/storage`, `@/firebase`, generated notification API                                                                                                        |
 | `personal-events`  | Local event CRUD, validation, and forms                                             | `@/db`; dates stored as ISO-8601 UTC text                                                                                                                    |
 | `school-selection` | School/group queries, search, theme-aware logos, and selected identities            | TanStack Query plus `@/storage`; nullable dark logo URLs fall back to the required default URL                                                               |
-| `onboarding`       | Localized welcome → agenda → notifications carousel and source-selection flow       | Presentation-only; native pager composes school and calendar-source features                                                                                 |
-| `calendar-sources` | QR/iCal import, user-calendar management, and calendar rename                       | `expo-camera`, generated API (incl. `PATCH /v1/calendars/{token}`), `user_calendars` table                                                                    |
+| `onboarding`       | Welcome carousel + the institution → programme → Connect → manual-import journey    | Native pager; owns the ephemeral import draft (ADR 047) the calendar-source screens read; composes school selection                                            |
+| `calendar-sources` | QR/iCal import, user-calendar management, and calendar rename                       | `expo-camera`, generated API (incl. `PATCH /v1/calendars/{token}`), `user_calendars` table; the create seam takes its institution/programme fields explicitly  |
 | `feedback`         | Validated suggestions and recorded iCal-failure reports                             | `@/storage` for the last valid e-mail, `@/firebase` for body-free failures, generated contact API                                                            |
 | `calendar`         | Day/week grid, agenda, sync, event details, and routing                             | Renderer-neutral timeline facade with an isolated calendar-kit adapter, generated sync API, `calendar_events` table                                          |
 | `hidden-events`    | Hide and restore synced events                                                      | One validated `@/storage` value; filtering occurs at the calendar event-source seam                                                                          |
@@ -49,10 +49,19 @@ code and product specifications.
 - Every calendar-name label goes through `effectiveCalendarName(stored, fallback)`:
   `trim(stored)` when non-empty, else the localized "My timetable" / "Mon emploi du temps".
   An empty or whitespace-only name is legal and is a display substitution only — the stored
-  value is never rewritten, and an over-long stored name still displays in full.
+  value is never rewritten, and an over-long stored name still displays in full. "Every" is
+  literal and includes the event-details calendar label, not only the user-calendar list and
+  the rename dialog.
 - Feedback sends every held calendar's server ID. Calendar sources may open Feedback
-  after a recorded iCal import failure with only the attempted URL and available
-  selected-school ID/name; local invalid-URL errors never offer reporting.
+  after a recorded iCal import failure with only the attempted URL, the draft's institution
+  ID **or** name, and the normalized programme name as `calendarName` — each omitted when
+  empty. `gradeName` is never sent. Local invalid-URL errors never offer reporting.
+- The import journey hands its institution and programme to calendar creation through one
+  pure derivation (`toCreateFields`), and the create seam receives those fields as a
+  parameter — it never reads the draft. Exactly one of `schoolId` / `schoolName` reaches
+  the server, because the server validates them as a mutually exclusive pair. A QR or
+  iCal-URL route opened with no draft creates with `name: ""` and `schoolName: ""` rather
+  than redirecting (ADR 047).
 - Feedback treats contact-service 503 responses as recoverable: the form retains the
   e-mail and message, re-enables explicit retry, announces equivalent FR/EN guidance,
   and records only the error plus the static `feedback/contact-submit` context. The

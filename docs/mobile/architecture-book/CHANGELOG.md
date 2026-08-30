@@ -12,6 +12,26 @@
   and the name write-back are deliberately two failure domains, and that every calendar-name
   label goes through `effectiveCalendarName` with the "My timetable" / "Mon emploi du temps"
   fallback — a display substitution that never rewrites the stored value (features.md).
+- Recorded the institution → programme → Connect → manual-import journey and its ephemeral,
+  Stack-scoped import draft as **ADR 047**. The draft is held in React state behind a provider
+  mounted once on `src/app/onboarding/_layout.tsx` — never MMKV, never SQLite, no new global
+  store — so "leaving the journey clears it" and "a restart clears it" are properties of where
+  the provider lives rather than code that can be forgotten. The read hook is total: outside the
+  provider it returns "no draft", which *is* the contract for the deep-linkable QR and iCal-URL
+  routes (`name: ""`, `schoolName: ""`), not an error (navigation.md, features.md, decisions/047).
+- Required calendar creation to send **exactly one** institution representation, by key absence:
+  a listed draft sends `schoolId` with no `schoolName` key, an unlisted draft the inverse. The
+  server validates the pair with mutually exclusive `@ValidateIf` conditions, so a body carrying
+  both keys is rejected even when one is `undefined`. The derivation is one pure function and the
+  create seam takes the fields as a parameter, so the wire shape is provable without React
+  (features.md).
+- Extended that same `effectiveCalendarName` rule to the event-details calendar label, the one
+  name surface the rename work did not reach — the measured reason it is a rule rather than a
+  preference is that 119 511 of 444 028 live calendars hold whitespace-only names and `" "` is
+  truthy, so `name || fallback` rendered a blank value under the "Calendar" label (features.md).
+- Extended the `/feedback` route's bounded optional parameters with `calendarName`, the normalized
+  programme name from a failed import, omitted when empty. `gradeName` stays unsent: "formation" is
+  a programme of study, not a grade (navigation.md, features.md).
 
 - Added the Activity refresh coordinator — the single bounded fetch and pagination seam every
   Activity trigger shares — and recorded two decisions in **ADR 048**. First, **single-flight is a

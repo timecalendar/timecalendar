@@ -21,7 +21,10 @@ jest.mock("@/features/calendar/data", () => {
   return { ...actual, useEventDetails: jest.fn() }
 })
 
+// Spread requireActual so the REAL effectiveCalendarName helper stays wired — the
+// whitespace-name case below must exercise it, not a stub.
 jest.mock("@/features/calendar-sources", () => ({
+  ...jest.requireActual("@/features/calendar-sources"),
   useUserCalendars: jest.fn(),
 }))
 
@@ -163,6 +166,15 @@ describe("EventDetailsScreen", () => {
     ])
     await render(<EventDetailsScreen />)
     expect(screen.getByText("ENSEEIHT")).toBeTruthy()
+  })
+
+  it("renders the fallback name for a whitespace-only calendar name", async () => {
+    mockUseUserCalendars.mockReturnValue([
+      { id: "cal-1", name: "   " },
+      { id: "cal-2", name: "Sport" },
+    ])
+    await render(<EventDetailsScreen />)
+    expect(screen.getByText("My timetable")).toBeTruthy()
   })
 
   it("hides the calendar-name line with a single calendar", async () => {

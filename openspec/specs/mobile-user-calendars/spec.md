@@ -8,10 +8,17 @@ TBD - created by archiving change add-mobile-user-calendars. Update Purpose afte
 The app SHALL provide a presentational user-calendars management screen (and a
 deep-linkable thin route, a `Stack` sibling of the tabs, reached from the Settings
 calendar summary) that reads the reactive `useUserCalendars()` list and renders one
-row per held calendar. Each row SHALL show the calendar's name (falling back to a
-"Calendrier" placeholder when empty) as the title and its `schoolName` (falling
-back to "Calendrier personnel" when absent) as the subtitle — Flutter
-`user_calendar_list_item.dart` parity. The row title SHALL render as body weight (a
+row per held calendar. Each row SHALL show the calendar's **effective display name** as the title
+and its `schoolName` (falling back to "Calendrier personnel" when absent) as the subtitle.
+
+The effective display name SHALL be derived by the pure `effectiveCalendarName(stored, fallback)`
+helper in the feature's `data/` sublayer defined under "Every calendar-name surface renders the
+effective display name" below. Stored values SHALL NEVER be rewritten — the fallback is
+display-only, so no backfill is required for the empty and whitespace-only names present in
+production data. Every surface that renders a calendar's name — including the delete-confirmation
+message — SHALL use this helper rather than reading `calendar.name` directly.
+
+The row title SHALL render as body weight (a
 `Platform.select` override), not the `ThemedText` default that reads as emphasis.
 The empty state SHALL be gated on the read resolving: because `useLiveQuery` starts
 with an empty array and resolves asynchronously, the screen SHALL track a `loaded`
@@ -25,11 +32,25 @@ its two controls (the row-level visibility toggle and the delete button) never n
 inside a parent touchable, and the container SHALL NOT declare `accessible={true}`
 (which would flatten the two-target design).
 
-#### Scenario: The screen lists held calendars with name + school
+#### Scenario: The screen lists held calendars with the effective name + school
 - **WHEN** the management screen renders with a non-empty `useUserCalendars()` list
-- **THEN** it lists one row per calendar, each showing the calendar name (or the
-  "Calendrier" placeholder when empty) and the school subtitle (or "Calendrier
-  personnel" when absent)
+- **THEN** it lists one row per calendar, each showing the effective display name and the
+  school subtitle (or "Calendrier personnel" when absent)
+
+#### Scenario: An empty or whitespace-only stored name renders the localized fallback
+- **WHEN** a held calendar's stored name is empty or contains only whitespace
+- **THEN** the row title renders the localized "Mon emploi du temps" / "My timetable"
+- **AND** the stored value is left untouched
+
+#### Scenario: A stored name is trimmed for display only
+- **WHEN** a held calendar's stored name has leading or trailing whitespace around real text
+- **THEN** the row title renders the trimmed text
+- **AND** the stored value is unchanged
+
+#### Scenario: An over-long legacy name still renders
+- **WHEN** a held calendar's stored name exceeds the 100-character input maximum
+- **THEN** it renders as stored
+- **AND** no validation error or truncation is applied to the existing row
 
 #### Scenario: The empty state waits for the read to resolve
 - **WHEN** the management screen mounts before `useUserCalendars()` has resolved
@@ -340,7 +361,8 @@ default `visible`, `token`, `createdAt`, `lastUpdatedAt`, `schoolName`, or `scho
 
 The app SHALL expose one pure helper, `effectiveCalendarName(stored, fallback)`, returning
 `trim(stored)` when non-empty and the localized fallback otherwise, and SHALL use it for every
-calendar-name label this capability renders — the list rows and the rename dialog. The localized
+calendar-name label the app renders — the list rows, the rename dialog, the delete-confirmation
+message, and the event-details calendar label. The localized
 fallback SHALL be **"My timetable" / "Mon emploi du temps"** (the value of
 `userCalendars.namePlaceholder`).
 

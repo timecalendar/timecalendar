@@ -4,7 +4,10 @@ import { calendarControllerFindCalendarByToken } from "@/api/generated/calendars
 // The sibling create seam, by its full @/ path (not "../create" — the parent-
 // relative ban; not the data/ sub-barrel — that would close a barrel cycle since
 // data/index re-exports this very sub-module).
-import { useCreateCalendar } from "@/features/calendar-sources/data/create"
+import {
+  type CalendarImportFields,
+  useCreateCalendar,
+} from "@/features/calendar-sources/data/create"
 
 import { upsert } from "./repository"
 import { fromCalendarForPublic } from "./types"
@@ -26,7 +29,10 @@ import { fromCalendarForPublic } from "./types"
 // rejects so the screen records via @/firebase + surfaces an accessible failure.
 
 export interface UseAddCalendar {
-  addCalendarFromUrl: (url: string) => Promise<void>
+  addCalendarFromUrl: (
+    url: string,
+    fields: CalendarImportFields,
+  ) => Promise<void>
   isPending: boolean
   isError: boolean
   reset: () => void
@@ -38,11 +44,13 @@ export function useAddCalendar(): UseAddCalendar {
   const [isError, setIsError] = useState(false)
 
   const addCalendarFromUrl = useCallback(
-    async (url: string): Promise<void> => {
+    async (url: string, fields: CalendarImportFields): Promise<void> => {
       setIsPending(true)
       setIsError(false)
       try {
-        const { token } = await createCalendar(url)
+        // The import fields are the caller's (the screen reads the draft); this
+        // seam only forwards them — design D3.
+        const { token } = await createCalendar(url, fields)
         const dto = await calendarControllerFindCalendarByToken(token)
         await upsert(fromCalendarForPublic(dto))
       } catch (error) {
