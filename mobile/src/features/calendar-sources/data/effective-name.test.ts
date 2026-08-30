@@ -1,37 +1,36 @@
 import { effectiveCalendarName } from "./effective-name"
 
-// The whitespace reality this helper exists for (TIM-274): 80 685 live calendars
-// have an empty name and 119 511 a whitespace-only one, and `" " || fallback`
-// returns `" "` — a blank row. Display-only: the stored value is never rewritten.
+// The pure display rule shared by the list row and the rename dialog. The cases
+// that matter are the ones the naive `stored || fallback` gets wrong (whitespace)
+// and the ones a length-capping "fix" would get wrong (an over-long stored name
+// must still display in full — the 100-char maximum bounds what a rename WRITES).
+
+const fallback = "My timetable"
 
 describe("effectiveCalendarName", () => {
-  it.each([
-    ["empty", ""],
-    ["a single space", " "],
-    ["tabs and newlines", "\t\n  \n"],
-    ["a non-breaking space", " "],
-  ])("returns null for %s", (_label, stored) => {
-    expect(effectiveCalendarName(stored)).toBeNull()
-  })
-
-  it("returns a real name unchanged", () => {
-    expect(effectiveCalendarName("L3 Informatique")).toBe("L3 Informatique")
-  })
-
-  it("trims padding around a real name", () => {
-    expect(effectiveCalendarName("  L3 Informatique \n")).toBe(
+  it("returns the stored name when it carries content", () => {
+    expect(effectiveCalendarName("L3 Informatique", fallback)).toBe(
       "L3 Informatique",
     )
   })
 
-  it("does not truncate a legacy name longer than the input maximum", () => {
-    const long = "x".repeat(140)
-    expect(effectiveCalendarName(long)).toBe(long)
+  it("trims a padded stored name for display", () => {
+    expect(effectiveCalendarName("  L3 Informatique  ", fallback)).toBe(
+      "L3 Informatique",
+    )
   })
 
-  it("does not mutate the value it is given", () => {
-    const stored = "  L3  "
-    effectiveCalendarName(stored)
-    expect(stored).toBe("  L3  ")
+  it("falls back for an empty stored name", () => {
+    expect(effectiveCalendarName("", fallback)).toBe(fallback)
+  })
+
+  it("falls back for a whitespace-only stored name (what `||` let through)", () => {
+    expect(effectiveCalendarName("   ", fallback)).toBe(fallback)
+    expect(effectiveCalendarName("\n\t ", fallback)).toBe(fallback)
+  })
+
+  it("displays an over-long stored name in full rather than truncating it", () => {
+    const long = "x".repeat(140)
+    expect(effectiveCalendarName(long, fallback)).toBe(long)
   })
 })

@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -7,6 +8,7 @@ import {
 import { AccessibilityInfo, Alert, StyleSheet } from "react-native"
 
 import {
+  useRenameCalendar,
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,
@@ -22,22 +24,35 @@ import { UserCalendarsScreen } from "./user-calendars-screen"
 // SQLite dependency. Native header items are asserted through Stack.Screen
 // options because the navigator chrome is outside the test tree.
 
-// Spread requireActual so the REAL effectiveCalendarName helper stays wired —
-// stubbing the whole sub-barrel would silently drop it and the fallback under
-// test would never run (its own edge cases live in effective-name.test.ts).
+// `effectiveCalendarName` is spread back in from the real module: it is the pure
+// display rule under test here, and stubbing it would destroy the fallback oracle.
 jest.mock("@/features/calendar-sources/data", () => ({
-  ...jest.requireActual("@/features/calendar-sources/data"),
+  ...jest.requireActual<object>(
+    "@/features/calendar-sources/data/effective-name",
+  ),
   useUserCalendars: jest.fn(),
   useUserCalendarsLoaded: jest.fn(),
   useUserCalendarActions: jest.fn(),
+  useRenameCalendar: jest.fn(),
 }))
 
+// The MenuView stub records the ref it is given and exposes `show()` on it, so
+// the Android trigger's imperative open (press and the `activate` accessibility
+// action) is assertable without a native menu.
+const mockShow = jest.fn()
 jest.mock("@/components/chrome", () => {
   const { View } = jest.requireActual("react-native")
   return {
-    MenuView: ({ children, ...props }: React.ComponentProps<typeof View>) => (
-      <View {...props}>{children}</View>
-    ),
+    MenuView: ({
+      children,
+      ref,
+      ...props
+    }: React.ComponentProps<typeof View> & {
+      ref?: { current: { show: () => void } | null }
+    }) => {
+      if (ref) ref.current = { show: mockShow }
+      return <View {...props}>{children}</View>
+    },
   }
 })
 
@@ -74,12 +89,15 @@ jest.mock("expo-router", () => ({
 const mockUseUserCalendars = useUserCalendars as jest.Mock
 const mockUseUserCalendarsLoaded = useUserCalendarsLoaded as jest.Mock
 const mockUseUserCalendarActions = useUserCalendarActions as jest.Mock
+const mockUseRenameCalendar = useRenameCalendar as jest.Mock
 
 const actions = {
   setVisible: jest.fn(),
   remove: jest.fn(),
   failed: false,
 }
+
+const renameActions = { rename: jest.fn(), isPending: false, isError: false }
 
 function calendar(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -102,6 +120,8 @@ beforeEach(() => {
   actions.setVisible.mockResolvedValue(true)
   actions.remove.mockResolvedValue(true)
   mockUseUserCalendarActions.mockReturnValue({ ...actions, failed: false })
+  renameActions.rename.mockResolvedValue(undefined)
+  mockUseRenameCalendar.mockReturnValue(renameActions)
   mockInsets = { top: 0, right: 0, bottom: 0, left: 0 }
 })
 
@@ -133,6 +153,7 @@ describe("UserCalendarsScreen", () => {
     expect(
       screen.getByTestId("user-calendar-actions-cal-1").props.actions,
     ).toEqual([
+      { id: "rename", title: "Rename" },
       {
         id: "delete",
         title: "Delete",
@@ -152,30 +173,25 @@ describe("UserCalendarsScreen", () => {
     expect(style.paddingRight).toBe(20)
   })
 
-  // Production holds 80 685 empty and 119 511 whitespace-only names (TIM-274),
-  // so both must reach the same localized fallback — `name || fallback` passed
-  // the first and rendered a blank row for the second.
-  it.each([
-    ["empty", ""],
-    ["whitespace-only", "   "],
-  ])(
-    "renders the timetable fallback for a %s name, and the personal subtitle with no school",
-    async (_label, name) => {
-      mockUseUserCalendars.mockReturnValue([
-        calendar({ id: "cal-2", name, schoolName: undefined }),
-      ])
-      await render(<UserCalendarsScreen />)
-      expect(screen.getByText("My timetable")).toBeTruthy()
-      expect(screen.getByText("Personal calendar")).toBeTruthy()
-    },
-  )
-
-  it("renders a padded stored name trimmed, without rewriting it", async () => {
-    const padded = calendar({ id: "cal-3", name: "  L3 Informatique  " })
-    mockUseUserCalendars.mockReturnValue([padded])
+  it("falls back to placeholders for an empty name and a personal (no-school) calendar", async () => {
+    mockUseUserCalendars.mockReturnValue([
+      calendar({ id: "cal-2", name: "", schoolName: undefined }),
+    ])
     await render(<UserCalendarsScreen />)
+    expect(screen.getByText("My timetable")).toBeTruthy()
+    expect(screen.getByText("Personal calendar")).toBeTruthy()
+  })
+
+  // The measured production case (TIM-274): the previous `name || placeholder`
+  // passed whitespace straight through and rendered a blank label.
+  it("falls back for a whitespace-only name and trims a padded one", async () => {
+    mockUseUserCalendars.mockReturnValue([
+      calendar({ id: "cal-3", name: "   " }),
+      calendar({ id: "cal-4", name: "  L3 Informatique  " }),
+    ])
+    await render(<UserCalendarsScreen />)
+    expect(screen.getByText("My timetable")).toBeTruthy()
     expect(screen.getByText("L3 Informatique")).toBeTruthy()
-    expect(padded.name).toBe("  L3 Informatique  ")
   })
 
   it("forwards the native switch value to setVisible", async () => {
@@ -348,21 +364,125 @@ describe("UserCalendarsScreen", () => {
     expect(announceSpy).not.toHaveBeenCalled()
   })
 
+  it("opens the rename dialog from the menu, seeded with the current name", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar()])
+    await render(<UserCalendarsScreen />)
+    expect(screen.queryByTestId("user-calendar-rename-dialog")).toBeNull()
+
+    await act(async () => {
+      fireEvent(
+        screen.getByTestId("user-calendar-actions-cal-1"),
+        "pressAction",
+        {
+          nativeEvent: { event: "rename" },
+        },
+      )
+    })
+
+    expect(screen.getByTestId("user-calendar-rename-dialog")).toBeTruthy()
+    expect(screen.getByTestId("user-calendar-rename-input").props.value).toBe(
+      "ENSEEIHT",
+    )
+    // Rename opens a dialog, never the delete confirm.
+    expect(actions.remove).not.toHaveBeenCalled()
+  })
+
+  it("closes the rename dialog on cancel without writing", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar()])
+    await render(<UserCalendarsScreen />)
+    await act(async () => {
+      fireEvent(
+        screen.getByTestId("user-calendar-actions-cal-1"),
+        "pressAction",
+        {
+          nativeEvent: { event: "rename" },
+        },
+      )
+    })
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("user-calendar-rename-cancel"))
+    })
+
+    expect(screen.queryByTestId("user-calendar-rename-dialog")).toBeNull()
+    expect(renameActions.rename).not.toHaveBeenCalled()
+  })
+
   describe("on Android", () => {
     usePlatform("android")
 
-    it("renders Android visibility, delete, and FAB controls", async () => {
+    it("renders the same overflow menu — no standalone trash affordance", async () => {
       mockUseUserCalendars.mockReturnValue([calendar()])
       await render(<UserCalendarsScreen />)
 
       expect(screen.getByLabelText("Show ENSEEIHT in the app")).toBeTruthy()
       expect(
-        screen.getByRole("button", { name: "Delete calendar ENSEEIHT" }),
+        screen.getByRole("button", { name: "Actions for ENSEEIHT" }),
       ).toBeTruthy()
+      // The standalone trash affordance is gone: the row header carries exactly
+      // one control, the overflow trigger, and Delete lives inside its menu.
+      expect(screen.getAllByRole("button", { name: /ENSEEIHT/ })).toHaveLength(
+        1,
+      )
+      expect(
+        screen.getByTestId("user-calendar-actions-cal-1").props.actions,
+      ).toEqual([
+        { id: "rename", title: "Rename" },
+        {
+          id: "delete",
+          title: "Delete",
+          image: "trash",
+          attributes: { destructive: true },
+        },
+      ])
       expect(
         screen.getByRole("button", { name: "Add a calendar" }),
       ).toBeTruthy()
     })
+
+    // MenuView does not self-open on Android: both the press and TalkBack's
+    // `activate` action must reach the same imperative show().
+    it("opens the menu imperatively on press and on the activate action", async () => {
+      mockUseUserCalendars.mockReturnValue([calendar()])
+      await render(<UserCalendarsScreen />)
+      const trigger = screen.getByRole("button", {
+        name: "Actions for ENSEEIHT",
+      })
+
+      expect(trigger.props.accessibilityActions).toEqual([{ name: "activate" }])
+
+      await act(async () => {
+        fireEvent.press(trigger)
+      })
+      expect(mockShow).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        fireEvent(trigger, "accessibilityAction", {
+          nativeEvent: { actionName: "activate" },
+        })
+      })
+      expect(mockShow).toHaveBeenCalledTimes(2)
+
+      // An unrelated action must not open it.
+      await act(async () => {
+        fireEvent(trigger, "accessibilityAction", {
+          nativeEvent: { actionName: "increment" },
+        })
+      })
+      expect(mockShow).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  it("does not wire the imperative open on iOS, where the menu opens natively", async () => {
+    mockUseUserCalendars.mockReturnValue([calendar()])
+    await render(<UserCalendarsScreen />)
+    const trigger = screen.getByRole("button", { name: "Actions for ENSEEIHT" })
+
+    expect(trigger.props.accessibilityActions).toBeUndefined()
+    await act(async () => {
+      fireEvent.press(trigger)
+    })
+    expect(mockShow).not.toHaveBeenCalled()
   })
 
   it("surfaces an accessible failure state when a write failed", async () => {

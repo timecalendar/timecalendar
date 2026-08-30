@@ -2,6 +2,16 @@
 
 ## 2026-08-30
 
+- Recorded the calendar rename surface and, load-bearing, the rule that the sync path
+  converges calendar names through the narrow `updateName(id, name)` write and must never
+  `upsert` a `user_calendars` row or route through `fromCalendarForPublic`, which hard-codes
+  the client-only `visible: true`. A full-row write there would silently unhide a hidden
+  calendar on every sync; no lint rule or type can express "this write must stay narrow", so
+  it is prose (R-1). Also recorded that rename persists the name the **server** returned
+  rather than the typed input (that is what makes two devices agree), that the event replace
+  and the name write-back are deliberately two failure domains, and that every calendar-name
+  label goes through `effectiveCalendarName` with the "My timetable" / "Mon emploi du temps"
+  fallback — a display substitution that never rewrites the stored value (features.md).
 - Recorded the institution → programme → Connect → manual-import journey and its ephemeral,
   Stack-scoped import draft as **ADR 047**. The draft is held in React state behind a provider
   mounted once on `src/app/onboarding/_layout.tsx` — never MMKV, never SQLite, no new global
@@ -15,10 +25,10 @@
   both keys is rejected even when one is `undefined`. The derivation is one pure function and the
   create seam takes the fields as a parameter, so the wire shape is provable without React
   (features.md).
-- Required every calendar-name surface to render through `effectiveCalendarName()` — trimmed when
-  non-empty, otherwise the localized timetable fallback. `name || fallback` was wrong against
-  production, where 119 511 live calendars hold whitespace-only names and `" "` is truthy. Stored
-  values are never rewritten, so no backfill or migration is implied (features.md).
+- Extended that same `effectiveCalendarName` rule to the event-details calendar label, the one
+  name surface the rename work did not reach — the measured reason it is a rule rather than a
+  preference is that 119 511 of 444 028 live calendars hold whitespace-only names and `" "` is
+  truthy, so `name || fallback` rendered a blank value under the "Calendar" label (features.md).
 - Extended the `/feedback` route's bounded optional parameters with `calendarName`, the normalized
   programme name from a failed import, omitted when empty. `gradeName` stays unsent: "formation" is
   a programme of study, not a grade (navigation.md, features.md).

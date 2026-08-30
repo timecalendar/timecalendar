@@ -134,6 +134,12 @@
 
 ## 8. Effective display name (design D8)
 
+> Superseded at merge by the sibling rename change (#321), which landed the same helper first —
+> see the note on Decision 8 in `design.md`. Tasks 8.1–8.4 are recorded as they were done; the
+> shipped signature is `effectiveCalendarName(stored, fallback)` and the shipped key is
+> `userCalendars.namePlaceholder`. What this change still contributes is the event-details
+> calendar label, the one name surface #321 did not reach.
+
 - [x] 8.1 `calendar-sources/data/effective-name.ts`: pure `effectiveCalendarName(stored): string | null`
       (trim, empty → `null`); export from the `data/` sub-barrel and the feature barrel
 - [x] 8.2 `user-calendars-screen.tsx`: replace `calendar.name || t("userCalendars.namePlaceholder")`

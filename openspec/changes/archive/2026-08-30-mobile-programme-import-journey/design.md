@@ -186,6 +186,13 @@ student can switch to the URL route and report from there.
 
 ## Decision 8 — Effective display name is a pure helper returning `null`, localized at the call site
 
+> **Superseded at merge (2026-08-30).** The sibling rename change (#321) landed the same helper
+> first with the signature `effectiveCalendarName(stored, fallback): string` and kept the existing
+> key name, whose value became “My timetable” / “Mon emploi du temps”. That version is the shipped
+> one; this branch adopted it and dropped its own. Only the shape below changed — the rule (trim,
+> localized fallback, never rewrite the stored value) and the surfaces it covers are unchanged.
+> The live contract is `openspec/specs/mobile-user-calendars/spec.md`.
+
 ```ts
 // mobile/src/features/calendar-sources/data/effective-name.ts
 export function effectiveCalendarName(stored: string): string | null   // trim() || null

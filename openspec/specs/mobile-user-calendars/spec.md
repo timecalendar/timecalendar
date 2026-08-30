@@ -11,13 +11,12 @@ calendar summary) that reads the reactive `useUserCalendars()` list and renders 
 row per held calendar. Each row SHALL show the calendar's **effective display name** as the title
 and its `schoolName` (falling back to "Calendrier personnel" when absent) as the subtitle.
 
-The effective display name SHALL be derived by a pure helper in the feature's `data/` sublayer that
-returns the stored name **trimmed** when the result is non-empty and a null/absent value otherwise;
-the UI SHALL render the localized fallback "Mon emploi du temps" / "My timetable" for that
-null result. Stored values SHALL NEVER be rewritten — the fallback is display-only, so no backfill
-is required for the empty and whitespace-only names present in production data. Every surface that
-renders a calendar's name — including the delete-confirmation label — SHALL use this helper rather
-than reading `calendar.name` directly.
+The effective display name SHALL be derived by the pure `effectiveCalendarName(stored, fallback)`
+helper in the feature's `data/` sublayer defined under "Every calendar-name surface renders the
+effective display name" below. Stored values SHALL NEVER be rewritten — the fallback is
+display-only, so no backfill is required for the empty and whitespace-only names present in
+production data. Every surface that renders a calendar's name — including the delete-confirmation
+message — SHALL use this helper rather than reading `calendar.name` directly.
 
 The row title SHALL render as body weight (a
 `Platform.select` override), not the `ThemedText` default that reads as emphasis.
@@ -113,60 +112,6 @@ toggle's label already carries the name and school.
   (the AA-verified 5.87:1 pair), not a background-colored dot that inverts to black-on-pink in
   dark mode
 
-### Requirement: Each row carries a confirm-gated delete reachable by button, iOS swipe, and an accessibility action, with no undo
-
-Each row SHALL carry a delete affordance driven by a single shared `confirmDelete(id, name)`
-handler that opens a native `Alert` (title + a "Êtes-vous sûr de vouloir supprimer le
-calendrier {name} ?" message; a `cancel`-style Annuler and a `destructive`-style Supprimer),
-and on the destructive confirm calls `remove(id)` through the observability-wrapped actions
-hook. On a successful delete the app SHALL announce it via
-`AccessibilityInfo.announceForAccessibility` (working on both platforms). Delete SHALL be
-reachable through THREE paths, all calling the one `confirmDelete`: (a) a visible trailing
-delete button on **both** platforms — a sibling `Pressable`, `accessibilityRole="button"`,
-`accessibilityLabel="Supprimer le calendrier {name}"` (never a bare "Supprimer"),
-`minHeight`/`minWidth` ≥44 + `hitSlop`, with a pressed-state affordance, rendering a trash
-affordance that is cross-platform (an iOS SF Symbol and a themed Android
-`userCalendars.delete.action` text label — a dedicated key decoupled from the Alert confirm
-string, no blank button); (b) an **iOS-only** swipe (the row wrapped in a swipeable with a
-trailing red trash action, gated on `Platform.OS === "ios"`, whose full-swipe/open OPENS the
-confirm rather than instant-committing — delete is non-undoable; Android gets no swipe); and
-(c) the **row-level toggle Pressable's** `accessibilityActions=[{ name: "delete", label }]` +
-`onAccessibilityAction` so VoiceOver/TalkBack reach delete without the gesture (WCAG 2.5.1).
-The accessibility action SHALL be declared on the toggle `Pressable` (a real accessibility
-element assistive tech can reach), NOT on the plain row container `View` (a non-accessible
-ancestor from which UIKit does not inherit custom actions — placing it there makes the action
-dead on iOS). There SHALL be NO undo (`remove()` is irreversible).
-
-#### Scenario: The visible delete button opens the confirm on both platforms
-
-- **WHEN** the user presses the trailing delete button on iOS or Android
-- **THEN** the native `Alert` confirm opens with the calendar name in the message and no
-  deletion has happened yet
-
-#### Scenario: Confirming the Alert deletes and announces
-
-- **WHEN** the user chooses the destructive Supprimer in the confirm and the write succeeds
-- **THEN** `remove(id)` runs and the deletion is announced via
-  `AccessibilityInfo.announceForAccessibility`
-
-#### Scenario: Cancelling the Alert deletes nothing
-
-- **WHEN** the user chooses Annuler in the confirm
-- **THEN** `remove(id)` is NOT called and the calendar remains
-
-#### Scenario: The accessibility action on the toggle element reaches delete without a gesture
-
-- **WHEN** a screen-reader user invokes the "delete" accessibility action on the row-level
-  toggle element
-- **THEN** the same `confirmDelete` opens the confirm (the action lives on a reachable
-  accessibility element, so the swipe path is non-exclusionary on iOS as well as Android)
-
-#### Scenario: Android has no swipe
-
-- **WHEN** the screen renders on Android
-- **THEN** no swipe-to-delete is wired (the visible button + accessibility action remain the
-  delete paths)
-
 ### Requirement: An add affordance routes to school selection
 
 The screen SHALL provide an accessible add affordance rendered as a **native header
@@ -218,46 +163,51 @@ NOT write.
 
 ### Requirement: The user-calendars UI is verified by automated tests under the coverage gate, and the existing data layer is reused unchanged
 
-The observability-wrapped actions hook SHALL be covered under the K-3 90% logic gate (both
-mutators' success and failure-record branches). The presentational management screen SHALL
-meet the 70% floor: the list render, the gated/empty state, the toggle wiring, the delete
-button → `Alert` confirm/cancel branches, the `onAccessibilityAction` → confirm path fired on
-the **reachable toggle element**, and the write-failure notice — every branch machine-coverable
-via `jest.spyOn(Alert, "alert")` + invoking the captured button `onPress` (NO gesture
-simulation). The cancel-path test SHALL assert the `Alert` opened, that the cancel button is
-`style: "cancel"`, and that it carries no `onPress`. A `Platform.OS === "android"` render test
-SHALL cover the Android row shape (the bare row + the text delete affordance — jest runs the
-iOS shape by default), and SHALL NOT lower screen coverage. The raw iOS swipe gesture SHALL
-NOT gate coverage (device-verified only). This change SHALL NOT add, modify, or re-implement
-anything in `data/user-calendars/` beyond memoizing the existing `useUserCalendars` reactive
-read — the `remove` / `setVisible` repository writes are reused as-is, with no new dependency,
-no new Drizzle table, and no new migration.
+The observability-wrapped actions hook SHALL be covered under the K-3 90% logic gate (both mutators'
+success and failure-record branches). The presentational management screen and the rename dialog
+SHALL meet the 70% floor: the list render, the gated/empty state, the toggle wiring, the **overflow
+menu's Rename and Delete actions on both platforms**, the delete → `Alert` confirm/cancel branches,
+and the write-failure notice — every branch machine-coverable by invoking the captured `MenuView`
+`onPressAction` and the captured `Alert` button `onPress` (NO gesture simulation). The cancel-path
+test SHALL assert the `Alert` opened, that the cancel button is `style: "cancel"`, and that it
+carries no `onPress`. A `Platform.OS === "android"` render test SHALL cover the Android row shape
+(the overflow trigger and its `MenuComponentRef` `show()` path — jest runs the iOS shape by default),
+and SHALL NOT lower screen coverage.
 
-#### Scenario: The actions hook and screen meet their coverage thresholds
+The rename dialog's validation, pending, failure, retry and cancel branches SHALL be covered, as
+SHALL the local-state-only-after-success rule. `useRenameCalendar`, `effectiveCalendarName` and
+`updateName` are logic and SHALL clear the 90% gate.
+
+This change SHALL add to `data/user-calendars/` only the narrow `updateName` write, the
+`useRenameCalendar` seam and the pure `effectiveCalendarName` helper; the `remove` / `setVisible` /
+`upsert` repository writes are reused as-is, with no new npm dependency, no new Drizzle table, and no
+new migration.
+
+#### Scenario: The actions hook, rename seam and screens meet their coverage thresholds
 
 - **WHEN** `npm test -- --coverage` runs in `mobile/`
-- **THEN** the actions hook clears the 90% gate, the screen meets the 70% floor, and the suite
-  is green
+- **THEN** the actions hook, `useRenameCalendar`, `effectiveCalendarName` and `updateName` clear the
+  90% gate, the screen and the rename dialog meet the 70% floor, and the suite is green
 
-#### Scenario: The delete branches are covered without simulating the swipe
+#### Scenario: The menu and delete branches are covered without simulating a gesture
 
-- **WHEN** the screen test spies on `Alert.alert`, invokes the captured confirm/cancel
-  `onPress`, and fires the row-level toggle element's `onAccessibilityAction`
-- **THEN** the confirm-deletes, cancel-does-nothing (with the cancel button asserted
-  `style: "cancel"` and no `onPress`), and accessibility-action-opens-confirm branches are all
-  asserted, and the raw swipe pan is not part of the coverage
+- **WHEN** the screen test invokes the captured `MenuView` `onPressAction` for `rename` and for
+  `delete`, spies on `Alert.alert`, and invokes the captured confirm/cancel `onPress`
+- **THEN** the rename-dialog-opens, confirm-deletes and cancel-does-nothing branches are all
+  asserted (with the cancel button asserted `style: "cancel"` and carrying no `onPress`), and no pan
+  or long-press gesture is part of the coverage
 
 #### Scenario: The Android row shape is covered
 
 - **WHEN** the screen test renders with `Platform.OS === "android"`
-- **THEN** the Android row shape (no swipe wrapper, the text delete affordance) renders and is
-  asserted
+- **THEN** the Android row shape renders with the overflow trigger (no standalone trash affordance),
+  its `onPress` calls the menu ref's `show()`, and its `activate` accessibility action does the same
 
 #### Scenario: No new schema, dependency, or migration is introduced
 
 - **WHEN** the change is applied
-- **THEN** `data/user-calendars/` gains only the `useMemo` on the existing read (+ no new
-  exports), and no new npm dependency, Drizzle table, or migration is added
+- **THEN** `data/user-calendars/` gains only `updateName`, `useRenameCalendar` and
+  `effectiveCalendarName`, and no new npm dependency, Drizzle table, or migration is added
 
 ### Requirement: The reactive user-calendars read returns a stable identity
 
@@ -274,4 +224,165 @@ downstream memo it exists to feed.
   unchanged
 - **THEN** it returns the same array identity, so the events-seam `useCalendarEvents` `useMemo`
   that depends on `calendars` does not recompute needlessly
+
+### Requirement: Each row carries one overflow menu exposing Rename and Delete on both platforms
+
+Each calendar row SHALL carry a single trailing overflow affordance, identical on iOS and Android,
+rendered through the `@/components/chrome` `MenuView` seam and exposing exactly two actions —
+**Rename** (`userCalendars.rename.action`) and **Delete** (`userCalendars.delete.action`, carrying
+the destructive attribute). Android SHALL NOT render a standalone trash button.
+
+The trigger SHALL be a `Pressable` with `accessibilityRole="button"`, an
+`accessibilityLabel` naming the calendar (`userCalendars.actions`, never a bare "Actions"), a target
+of at least 44×44, and `testID={`user-calendar-actions-${id}`}`.
+
+Because `MenuView` does not self-open on Android, the Android path SHALL use the idiom already proven
+in `calendar-view-menu.tsx`: a `MenuComponentRef` whose `show()` the trigger's `onPress` calls, plus
+`accessibilityActions={[{ name: "activate" }]}` and a matching `onAccessibilityAction`, so TalkBack
+opens the menu without a gesture. iOS SHALL open the menu natively on press.
+
+Choosing Delete SHALL open the existing confirm-gated native `Alert` (unchanged: a `cancel`-style
+Annuler carrying no `onPress`, a `destructive`-style Supprimer calling `remove(id)` through the
+observability-wrapped actions hook, an `AccessibilityInfo.announceForAccessibility` announce gated on
+the resolved write, and NO undo). Choosing Rename SHALL open the controlled rename dialog.
+
+#### Scenario: The menu exposes the same two actions on both platforms
+
+- **WHEN** the screen renders with `Platform.OS === "ios"` and again with `Platform.OS === "android"`
+- **THEN** each row renders one overflow trigger whose menu carries exactly Rename and Delete
+- **AND** no standalone trash affordance is rendered on either platform
+
+#### Scenario: Delete from the menu opens the existing confirm
+
+- **WHEN** the user selects Delete in the overflow menu
+- **THEN** the native `Alert` confirm opens with the calendar name in the message and nothing is
+  deleted yet
+- **AND** confirming calls `remove(id)` and announces, while cancelling calls nothing
+
+#### Scenario: TalkBack opens the menu without a gesture
+
+- **WHEN** a screen-reader user invokes the `activate` accessibility action on the Android trigger
+- **THEN** the menu is shown via the `MenuComponentRef`
+
+### Requirement: Rename opens one shared controlled dialog that survives pending and failure
+
+Selecting Rename SHALL open a single React Native `Modal` dialog used unchanged on both platforms —
+NOT iOS `Alert.prompt` plus a separate Android implementation. The dialog SHALL:
+
+- seed its controlled `TextInput` **once, from `trim(current name)`**, holding the value in local
+  component state (never bound to a `useLiveQuery` value, whose async round-trip drops characters
+  under fast typing);
+- expose the input with an `accessibilityLabel` (`userCalendars.rename.label`) and the localized
+  effective-name fallback as its placeholder;
+- reject a value whose trimmed length exceeds 100 characters with inline, screen-reader-announced
+  validation text, blocking Save while invalid;
+- accept an **empty or whitespace** value as valid — an empty name is legal and renders as the
+  fallback;
+- hold a `pending` state during the request in which Save is disabled and the entered text stays
+  visible;
+- on failure, remain open with the entered text intact, show a recoverable error, and offer **Retry**
+  and **Cancel**;
+- dismiss ONLY on a resolved success or an explicit cancel, never on a press alone;
+- carry `testID`s `user-calendar-rename-dialog`, `user-calendar-rename-input`,
+  `user-calendar-rename-save`, `user-calendar-rename-cancel`, a distinct dialog title string that no
+  menu action duplicates, and iOS modal isolation (`accessibilityViewIsModal`) plus an Android
+  `onRequestClose` mapped to cancel.
+
+#### Scenario: A name over the normalized maximum is rejected locally
+
+- **WHEN** the user enters a value whose trimmed length is 101 characters
+- **THEN** inline validation text is shown, Save is disabled, and no request is issued
+
+#### Scenario: A 100-character name and an empty name are both accepted
+
+- **WHEN** the user enters exactly 100 trimmed characters, or clears the field entirely
+- **THEN** Save is enabled and the request is issued
+
+#### Scenario: A failed rename keeps the dialog, the text, and the old local name
+
+- **WHEN** the rename request rejects (offline, server error, or an unknown token)
+- **THEN** the dialog stays open with the entered text still visible, shows the recoverable error
+  with Retry and Cancel, and the calendar's local name is unchanged
+- **AND** the calendar is NOT removed locally, whatever the failure
+
+#### Scenario: Retry after a failure reissues the same request
+
+- **WHEN** the user presses Retry after a failure
+- **THEN** the dialog returns to `pending` and reissues the rename with the entered value
+
+#### Scenario: Cancel discards the edit
+
+- **WHEN** the user cancels from any state
+- **THEN** the dialog closes and the calendar's local name is unchanged
+
+### Requirement: Rename calls the generated PATCH mutation from the data layer and persists the server's name
+
+The app SHALL provide a `useRenameCalendar()` seam in
+`features/calendar-sources/data/user-calendars/` that wraps the generated
+`useCalendarV1ControllerRenameCalendar` mutation (the ONLY site importing it — the `data/`-only-seam
+rule, B-1), sends the **trimmed** value as `{ token, data: { name } }`, and on success persists the
+name from the returned `CalendarForPublic` — NOT the string the user typed — through
+`updateName(id, name)`.
+
+Local state SHALL change only after a successful server response. A request rejection SHALL surface
+as a recoverable error and SHALL NOT be reported to Crashlytics (mirroring the fetch-path posture); a
+rejection of the local `updateName` write after a successful response SHALL be reported through the
+`@/firebase` `recordError` seam as a crash-worthy local-persistence failure.
+
+#### Scenario: A successful rename persists the server's normalized name
+
+- **WHEN** the user saves a name and the server responds with a `CalendarForPublic`
+- **THEN** `updateName(id, response.name)` is called with the **response's** name, and the row
+  re-renders with it
+
+#### Scenario: Nothing is written locally when the request fails
+
+- **WHEN** the rename request rejects
+- **THEN** no local write is issued and the failure is not sent to `recordError`
+
+### Requirement: A narrow name-only repository write exists and touches no other column
+
+The user-calendars repository SHALL expose `updateName(id: string, name: string): Promise<void>`
+issuing a single-column `UPDATE ... SET name WHERE id = ?` over the `@/db` seam, mirroring the
+existing `setVisible`. It SHALL NOT be implemented as an `upsert`, and SHALL NOT read, write, or
+default `visible`, `token`, `createdAt`, `lastUpdatedAt`, `schoolName`, or `schoolId`.
+
+#### Scenario: The name write updates one column
+
+- **WHEN** `updateName(id, name)` runs against the mocked `@/db` seam
+- **THEN** the query is an `update` on `user_calendars` setting only `name`, filtered by `id`
+
+#### Scenario: A name write for an unknown id is harmless
+
+- **WHEN** `updateName` runs for an id with no local row
+- **THEN** it resolves without throwing and inserts nothing
+
+### Requirement: Every calendar-name surface renders the effective display name
+
+The app SHALL expose one pure helper, `effectiveCalendarName(stored, fallback)`, returning
+`trim(stored)` when non-empty and the localized fallback otherwise, and SHALL use it for every
+calendar-name label the app renders — the list rows, the rename dialog, the delete-confirmation
+message, and the event-details calendar label. The localized
+fallback SHALL be **"My timetable" / "Mon emploi du temps"** (the value of
+`userCalendars.namePlaceholder`).
+
+A stored name SHALL NOT be silently replaced: the fallback is a display substitution only, and a
+stored name longer than 100 characters SHALL still be displayed in full.
+
+#### Scenario: A whitespace-only stored name displays the fallback
+
+- **WHEN** a calendar's stored name is `"   "` (or empty)
+- **THEN** the row and the rename dialog display the localized timetable fallback
+- **AND** the stored value is not rewritten
+
+#### Scenario: A stored name is trimmed for display
+
+- **WHEN** a calendar's stored name is `"  L3 Informatique  "`
+- **THEN** the displayed label is `"L3 Informatique"`
+
+#### Scenario: An over-long stored name still displays
+
+- **WHEN** a calendar's stored name exceeds 100 characters
+- **THEN** it is displayed as stored, and renaming it requires a value of at most 100 trimmed
+  characters
 

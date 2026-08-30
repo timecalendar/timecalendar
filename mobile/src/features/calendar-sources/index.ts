@@ -15,6 +15,8 @@ export {
   useCreateCalendar,
   type UserCalendar,
   type UserCalendarActions,
+  type UseRenameCalendar,
+  useRenameCalendar,
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,

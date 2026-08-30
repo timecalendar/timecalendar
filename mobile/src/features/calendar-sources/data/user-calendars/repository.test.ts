@@ -29,7 +29,7 @@ jest.mock("@/db", () => ({
 const { userCalendars } = mockFake.module as {
   userCalendars: { id: string; token: string }
 }
-const { findAll, getById, getByToken, remove, setVisible, upsert } =
+const { findAll, getById, getByToken, remove, setVisible, updateName, upsert } =
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   require("./repository") as typeof import("./repository")
 // Required lazily (not a top-level value import) for the same reason as the SUT:
@@ -117,5 +117,26 @@ describe("user-calendars repository", () => {
     expect(mockFake.spies.set).toHaveBeenCalledWith({ visible: false })
     expect(mockFake.spies.eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
     expect(mockFake.spies.where).toHaveBeenCalled()
+  })
+
+  // The narrowness is the point: the sync path writes names through this, and a
+  // full-row write there would carry fromCalendarForPublic's hard-coded
+  // `visible: true` and unhide a hidden calendar on every sync (design D1). So
+  // assert the exact `set` payload — one column — and that it is an UPDATE, not
+  // an insert/upsert.
+  it("updateName updates only the name column by id, never inserting", async () => {
+    mockFake.seed("userCalendars", [calendarToRow(calendar)])
+    await updateName("cal-1", "L3 Informatique")
+    expect(mockFake.spies.update).toHaveBeenCalledWith(userCalendars)
+    expect(mockFake.spies.set).toHaveBeenCalledWith({ name: "L3 Informatique" })
+    expect(mockFake.spies.eq).toHaveBeenCalledWith(userCalendars.id, "cal-1")
+    expect(mockFake.spies.where).toHaveBeenCalled()
+    expect(mockFake.spies.insert).not.toHaveBeenCalled()
+    expect(mockFake.spies.onConflictDoUpdate).not.toHaveBeenCalled()
+  })
+
+  it("updateName for an unknown id resolves without throwing or inserting", async () => {
+    await expect(updateName("missing", "Anything")).resolves.toBeUndefined()
+    expect(mockFake.spies.insert).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,11 @@
 #!/bin/sh
+# .husky/_/ is gitignored, so a fresh worktree has no helper to source. Skipping
+# beats aborting: lint-staged needs node_modules, and CI is the real gate anyway.
+if [ ! -f "$(dirname "$0")/_/husky.sh" ]; then
+  echo "husky is not installed in this worktree - skipping pre-commit checks." >&2
+  echo "Run 'npm run setup:worktree' (bin/setup-worktree.sh) to enable them." >&2
+  exit 0
+fi
 . "$(dirname "$0")/_/husky.sh"
 
 npx lint-staged
