@@ -2,8 +2,9 @@
 #
 # Makes a fresh git worktree workable. Worktrees check out only *tracked* files,
 # so every gitignored-but-required file is missing: env files, the Firebase key,
-# .husky/_/ (hooks then silently abort), and node_modules. Run this once per new
-# worktree. Safe to run repeatedly. No-op when run from the main checkout.
+# .husky/_/ (the pre-commit hook then skips its checks with a warning), and
+# node_modules. Run this once per new worktree — it is the first thing to do in a
+# fresh one. Safe to run repeatedly. No-op when run from the main checkout.
 #
 # Does, in order:
 #   1. resolve the main checkout (works for sibling and nested worktrees)
