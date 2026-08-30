@@ -46,11 +46,14 @@ import {
 // change later than a constant.
 const ACTIVITY_STATE_ID = 1
 
-const YEAR_IN_MONTHS = 12
-
 // The transaction handle the seam hands the callback. Derived from `db` so it
 // tracks the driver rather than being hand-declared.
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+// What a synchronous read helper needs. Both `db` and the transaction handle
+// satisfy it, so each read below has ONE implementation serving the awaited
+// public reader and the in-transaction caller alike.
+type Reader = Pick<Transaction, "select">
 
 const DEFAULT_STATE_ROW: ActivityStateRow = {
   id: ACTIVITY_STATE_ID,
@@ -77,7 +80,7 @@ function rowToState(row: ActivityStateRow): ActivityState {
 // The SYNCHRONOUS state read. drizzle-orm/expo-sqlite is a 'sync' session, so
 // `.all()` returns rows without a promise — the only way to read inside a
 // synchronous transaction callback. A missing row reads as the defaults.
-function readStateRowIn(tx: Transaction): ActivityStateRow {
+function readStateRowIn(tx: Reader): ActivityStateRow {
   const rows = tx
     .select()
     .from(activityState)
@@ -103,7 +106,7 @@ function writeStateIn(tx: Transaction, patch: Partial<ActivityStateRow>): void {
 
 // The newest server timestamp cached on the device. `ORDER BY created_at DESC
 // LIMIT 1` rides the created_at index the migration adds.
-function newestCachedCreatedAtIn(tx: Transaction): string | null {
+function newestCachedCreatedAtIn(tx: Reader): string | null {
   const rows = tx
     .select()
     .from(activityLogs)
@@ -127,7 +130,7 @@ function newestCachedCreatedAtIn(tx: Transaction): string | null {
 // Comparison is lexicographic on canonical UTC ISO-8601 text, which the mappers
 // guarantee. Returns `null` when no trusted timestamp exists at all, in which
 // case the caller skips the prune rather than deleting against a garbage cutoff.
-function ageCutoffIn(tx: Transaction, asOf: string): string | null {
+function ageCutoffIn(tx: Reader, asOf: string): string | null {
   // Canonicalize BOTH candidates. The write mapper guarantees canonical text for
   // every row it produces, but the cached value is read back from the table and
   // the page-write input is a raw insert shape — a single unorderable timestamp
@@ -140,7 +143,7 @@ function ageCutoffIn(tx: Transaction, asOf: string): string | null {
 
   const latestKnown = candidates.reduce((a, b) => (a > b ? a : b))
   const cutoff = isoToDate(latestKnown)
-  cutoff.setUTCMonth(cutoff.getUTCMonth() - YEAR_IN_MONTHS)
+  cutoff.setUTCFullYear(cutoff.getUTCFullYear() - 1)
   return cutoff.toISOString()
 }
 
@@ -213,13 +216,16 @@ function writePageIn(
   })
 }
 
+/**
+ * The state row as domain state. Goes through the same `readStateRowIn` the
+ * transactions use, so "a missing row reads as the defaults" has exactly one
+ * implementation and cannot drift between the public read and the writers.
+ *
+ * Stays `async` because it is the public reader every caller awaits; the read
+ * itself is synchronous (the seam's 'sync' session).
+ */
 export async function readActivityState(): Promise<ActivityState> {
-  const rows = await db
-    .select()
-    .from(activityState)
-    .where(eq(activityState.id, ACTIVITY_STATE_ID))
-  const row = rows[0]
-  return row ? rowToState(row) : DEFAULT_ACTIVITY_STATE
+  return rowToState(readStateRowIn(db))
 }
 
 /**

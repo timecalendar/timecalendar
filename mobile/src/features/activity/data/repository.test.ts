@@ -189,19 +189,17 @@ describe("page upsert", () => {
 })
 
 describe("transaction shape", () => {
-  it("writes each page in exactly one synchronous transaction", async () => {
-    await storeNewestPage(
-      page({ rows: [logRow("log-a", "2026-06-16T09:00:00.000Z")] }),
-    )
-
-    expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
-    const callback = mockFake.spies.transaction.mock.calls[0]?.[0] as Function
-    // The expo driver never awaits, so an async callback would let BEGIN/COMMIT
-    // bracket only the first statement — the atomicity would be a lie.
-    expect(callback.constructor.name).not.toBe("AsyncFunction")
-  })
-
+  // Every writer, one shape: exactly one transaction, and a SYNCHRONOUS
+  // callback. The expo driver never awaits, so an async callback would let
+  // BEGIN/COMMIT bracket only the first statement — the atomicity would be a lie.
   it.each([
+    [
+      "storeNewestPage",
+      () =>
+        storeNewestPage(
+          page({ rows: [logRow("log-a", "2026-06-16T09:00:00.000Z")] }),
+        ),
+    ],
     ["clearOlderPageCursor", () => clearOlderPageCursor()],
     ["markActivityRead", () => markActivityRead("2026-06-16T12:00:00.000Z")],
     ["markActivityReadFromCache", () => markActivityReadFromCache()],

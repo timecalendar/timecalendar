@@ -66,10 +66,8 @@ export interface FakeDb {
 
 type Row = Record<string, unknown>
 // A resolved condition — one operator applied to one column, or `null` for a
-// where-less read/write. This tagged union replaced the original single
-// `{field, val}` eq-only shape
-// when Activity landed; `eq` still resolves to a leaf, so the `spies.eq(col, val)`
-// contract every existing consumer asserts on is untouched.
+// where-less read/write. Each operator resolves to its own leaf, so the
+// `spies.<op>(col, val)` contract consumers assert on is per-operator.
 type Condition =
   | { op: "eq" | "lt"; field: string; val: unknown }
   | { op: "notInArray"; field: string; val: readonly unknown[] }
@@ -342,14 +340,7 @@ export function createFakeDb(config: {
     },
   }
 
-  const module: Record<string, unknown> = {
-    db,
-    eq,
-    asc,
-    desc,
-    lt,
-    notInArray,
-  }
+  const module: Record<string, unknown> = { db, eq, asc, desc, lt, notInArray }
   for (const name of names) module[name] = tokens.get(name)!
 
   return {
