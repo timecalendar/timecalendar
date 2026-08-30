@@ -92,7 +92,7 @@ docs/        this handbook, react-native-migration/, multi-calendars.md
 k8s/, terraform/   deployment infra
 .claude/     agent config: rules/ (Architecture Book), agents/, commands/, skills/, settings.json
 .github/workflows/  CI pipelines
-.husky/      git hooks (pre-commit)
+.husky/      git hooks (pre-commit; skips when `.husky/_/` is missing)
 ```
 
 ---
@@ -238,16 +238,20 @@ squad also has long-lived per-agent worktrees (`planner`, `applier`, `simplifier
 ### The worktree gotcha and the fix
 
 A `git worktree` checks out only **tracked** files. Everything gitignored-but-required
-is therefore **missing** in a fresh worktree, and commits **silently abort** because
-the husky pre-commit hook can't find its helper. The missing set:
+is therefore **missing** in a fresh worktree. The missing set:
 
 - env files: `server/.env`, `web/.env.local`, `mobile/.env`, `mobile/.env.local`
 - the Firebase key `server/config/serviceAccountKey.json`
 - `mobile/expo-env.d.ts` (Expo-generated; `tsc` fails without it)
-- the generated husky hooks (`.husky/_/`)
+- the generated husky helper (`.husky/_/`)
 - all `node_modules`
 
-**Always run this once per new worktree** (idempotent; no-op in main):
+Without `.husky/_/` the pre-commit hook has no helper to source. It used to fail hard
+with an opaque `.husky/_/husky.sh: No such file` and `exit=2`, which aborted the commit;
+it now **skips its checks and prints how to fix it**, so the commit still succeeds — but
+nothing is linted or formatted until you run the setup below.
+
+**The first thing you do in a new worktree is run this** (idempotent; no-op in main):
 
 ```bash
 npm run setup:worktree     # → bin/setup-worktree.sh
@@ -281,9 +285,11 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
     commit carries an attributable co-author footer**.
 - **Pre-commit hook** (`.husky/`, via root `prepare`/`husky install`): `lint-staged`
   runs `dart format` + `bin/flutter-analyze.sh` on staged `*.dart` (the `app/`
-  surface) and `eslint --cache --fix` on staged `mobile/` sources. Do **not** bypass
-  hooks/signing/CI unless a task explicitly requires it and the reason is in the
-  commit message.
+  surface) and `eslint --cache --fix` on staged `mobile/` sources. In a worktree
+  without `.husky/_/` the hook skips with a message pointing at
+  `npm run setup:worktree` rather than blocking the commit — so run that setup
+  before you rely on the hook. Do **not** bypass hooks/signing/CI unless a task
+  explicitly requires it and the reason is in the commit message.
 - **Logical commits.** Decompose work into reviewable commits as you go, on a
   feature branch, not on `main` (except the explicit "commit docs to main" kind of
   task like this one).
@@ -568,7 +574,7 @@ npm run db:migrate && npm run db:seed     # from server/
 npm run dev                               # NestJS on :3005
 bash bin/setup-dev.sh                     # /etc/hosts, web/.env.local, cert, reachability
 
-# 2. Per worktree (every fresh worktree!)
+# 2. Per worktree (the FIRST thing you run in a fresh worktree)
 npm run setup:worktree                    # symlink secrets + npm ci + husky
 
 # 3. Build a feature (the pipeline)
