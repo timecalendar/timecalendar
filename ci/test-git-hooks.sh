@@ -10,7 +10,8 @@ readonly HOOK="${1:-.husky/pre-commit}"
 # a worktree provisioned off an older branch flips it back. The two values invoke the
 # hook by different routes, and each assertion below guards a property that only one
 # route needs — which is exactly why a regression is invisible on the machine that
-# introduces it. Details: openspec/changes/upgrade-husky-9/design.md.
+# introduces it. Details:
+# openspec/changes/archive/2026-08-30-upgrade-husky-9/design.md.
 
 assert_hook_is_executable() {
   local mode
