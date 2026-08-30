@@ -368,9 +368,11 @@ describe("CalendarLogV1Controller", () => {
     })
   })
 
-  // The privacy negatives the Reviewer checks. `sanitizeLog` redacts UUIDs and
-  // credentials, but a calendar token is an opaque string with no shape a regex
-  // recognises — so the guarantee is that nothing on this path logs at all.
+  // The privacy negatives the Reviewer checks. `sanitizeLog`'s id rule does
+  // target the opaque `nanoid()` run a calendar token is, but a redactor is a
+  // pattern match with edges — never emitting the token is a stronger guarantee
+  // than trusting one, so what these tests assert is that nothing on this path
+  // logs at all.
   describe("privacy", () => {
     const captureLogs = () => {
       const lines: unknown[][] = []
