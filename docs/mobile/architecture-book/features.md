@@ -10,7 +10,7 @@ code and product specifications.
 | `personal-events`  | Local event CRUD, validation, and forms                                             | `@/db`; dates stored as ISO-8601 UTC text                                                                                                                    |
 | `school-selection` | School/group queries, search, theme-aware logos, and selected identities            | TanStack Query plus `@/storage`; nullable dark logo URLs fall back to the required default URL                                                               |
 | `onboarding`       | Localized welcome → agenda → notifications carousel and source-selection flow       | Presentation-only; native pager composes school and calendar-source features                                                                                 |
-| `calendar-sources` | QR/iCal import and user-calendar management                                         | `expo-camera`, generated API, `user_calendars` table                                                                                                         |
+| `calendar-sources` | QR/iCal import, user-calendar management, and calendar rename                       | `expo-camera`, generated API (incl. `PATCH /v1/calendars/{token}`), `user_calendars` table                                                                    |
 | `feedback`         | Validated suggestions and recorded iCal-failure reports                             | `@/storage` for the last valid e-mail, `@/firebase` for body-free failures, generated contact API                                                            |
 | `calendar`         | Day/week grid, agenda, sync, event details, and routing                             | Renderer-neutral timeline facade with an isolated calendar-kit adapter, generated sync API, `calendar_events` table                                          |
 | `hidden-events`    | Hide and restore synced events                                                      | One validated `@/storage` value; filtering occurs at the calendar event-source seam                                                                          |
@@ -30,6 +30,25 @@ code and product specifications.
   continue to the edit form; synced events remain read-only.
 - User-calendar rows contain server calendar IDs and durable source tokens. Notification
   registration sends server IDs, not tokens.
+- Each user-calendar row exposes one overflow menu, identical on both platforms, carrying
+  Rename and Delete. Rename is a server write first: it PATCHes the token, then persists the
+  name the **server returned**, never the string the user typed, so the renaming device
+  converges through the same rule every other device reaches at its next sync. The token is
+  a capability — possession authorizes rename — so a rename is global to every installation
+  holding it.
+- Calendar names converge on the sync path: after the event replace, sync writes back the
+  returned names through the narrow `updateName(id, name)` write. It must never `upsert` a
+  `user_calendars` row and never route through `fromCalendarForPublic`, which hard-codes
+  `visible: true` — a full-row write would silently unhide a calendar the student hid, on
+  every sync, i.e. at every app start. Nothing in lint or types can catch that, which is why
+  it is written here.
+- The event replace and the name write-back are two failure domains, not one. A failed name
+  write keeps the replaced events committed and the last-good names in place, records under
+  its own context, and leaves convergence to the next sync.
+- Every calendar-name label goes through `effectiveCalendarName(stored, fallback)`:
+  `trim(stored)` when non-empty, else the localized "My timetable" / "Mon emploi du temps".
+  An empty or whitespace-only name is legal and is a display substitution only — the stored
+  value is never rewritten, and an over-long stored name still displays in full.
 - Feedback sends every held calendar's server ID. Calendar sources may open Feedback
   after a recorded iCal import failure with only the attempted URL and available
   selected-school ID/name; local invalid-URL errors never offer reporting.
