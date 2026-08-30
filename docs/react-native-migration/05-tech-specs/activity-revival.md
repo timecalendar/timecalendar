@@ -583,11 +583,10 @@ Rollback is a mobile release/OTA rollback where runtime compatibility permits, p
 image rollback. The additive v1 route and mobile SQLite tables need no destructive rollback.
 The unversioned endpoint remains available throughout.
 
-## Delivery plan and proposed Paperclip tickets
+## Delivery plan and final Paperclip tickets
 
-These are ticket candidates only. This document does not create or dispatch them. TIM-275 remains
-the completed research record; implementation should use a new parent epic that links TIM-275 and
-this specification.
+The delivery chain is [TIM-389](/TIM/issues/TIM-389), derived from the completed research record
+[TIM-275](/TIM/issues/TIM-275). The headings below link the final dispatched tickets.
 
 ### Parent epic — Ship paginated Activity history in React Native 4.0
 
@@ -597,7 +596,7 @@ the feature disabled.
 
 **Children:** Tickets 1–8 below, wired according to the delivery graph.
 
-### Ticket 1 — Measure Activity volume and freeze capacity budgets
+### [Ticket 1 — Measure Activity volume and freeze capacity budgets](/TIM/issues/TIM-394)
 
 **Outcome:** Implementation and rollout use real aggregate volume and explicit performance gates.
 
@@ -615,7 +614,7 @@ creation, or endpoint implementation.
 **Dependency:** none. It may run in parallel with the first server implementation, but its budgets
 gate server acceptance and production rollout.
 
-### Ticket 2 — Add the v1 paginated calendar-log API
+### [Ticket 2 — Add the v1 paginated calendar-log API](/TIM/issues/TIM-395)
 
 **Outcome:** The server exposes a privacy-safe, stable, cursor-paginated Activity read contract and
 preserves legacy consumers.
@@ -638,7 +637,7 @@ this specification pass.
 
 **Dependency:** Ticket 1 supplies final performance gates; contract work can begin before it ends.
 
-### Ticket 3 — Add the React Native Activity SQLite model
+### [Ticket 3 — Add the React Native Activity SQLite model](/TIM/issues/TIM-396)
 
 **Outcome:** React Native has a tested incremental cache and device-local read/pagination state.
 
@@ -656,7 +655,7 @@ this specification pass.
 **Dependency:** none; it uses the DTO shape frozen in this specification and may proceed alongside
 Ticket 2.
 
-### Ticket 4 — Generate the v1 client and build the Activity refresh coordinator
+### [Ticket 4 — Generate the v1 client and build the Activity refresh coordinator](/TIM/issues/TIM-397)
 
 **Outcome:** Every trigger shares one bounded, offline-safe Activity fetch/pagination seam.
 
@@ -674,7 +673,7 @@ Ticket 2.
 
 **Dependencies:** Tickets 2 and 3.
 
-### Ticket 5 — Build the Activity screen and Settings unread entry
+### [Ticket 5 — Build the Activity screen and Settings unread entry](/TIM/issues/TIM-398)
 
 **Outcome:** Students can discover, read, refresh, paginate, and navigate Activity with accessible
 native React Native presentation.
@@ -693,7 +692,7 @@ notification preferences, or a hidden feature gate.
 
 **Dependencies:** Tickets 3 and 4.
 
-### Ticket 6 — Wire Activity refresh into sync, push, open, and foreground lifecycle
+### [Ticket 6 — Wire Activity refresh into sync, push, open, and foreground lifecycle](/TIM/issues/TIM-399)
 
 **Outcome:** Activity becomes current through every accepted trigger without duplicate requests or
 cross-feature cycles.
@@ -713,7 +712,7 @@ or new app lifecycle infrastructure beyond the Activity runtime.
 
 **Dependency:** Ticket 4. It may run in parallel with Ticket 5 once the data API is stable.
 
-### Ticket 7 — Add real-server Activity E2E fixtures and flows
+### [Ticket 7 — Add real-server Activity E2E fixtures and flows](/TIM/issues/TIM-400)
 
 **Outcome:** CI and device checks prove unread, pagination, cache, navigation, and removal against
 the actual server contract.
@@ -732,7 +731,7 @@ university feeds.
 
 **Dependencies:** Tickets 2, 5, and 6.
 
-### Ticket 8 — Run Activity capacity gate and release readiness review
+### [Ticket 8 — Run Activity capacity gate and release readiness review](/TIM/issues/TIM-401)
 
 **Outcome:** Activity is approved for production only with measured server capacity, complete
 compatibility evidence, and an executable rollback plan.

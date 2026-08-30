@@ -7,7 +7,11 @@
 ## Rough steps
 
 1. **Grades** (`add_grade`) — grade entry/display (check current server vs. local-only nature when reached).
-2. **Activity** — sync/calendar activity log view.
+2. **Activity** — ✅ **implemented** ([TIM-394](/TIM/issues/TIM-394)–[TIM-400](/TIM/issues/TIM-400)):
+   bounded `/v1` cursor pages, an incremental SQLite cache and exact unread watermark, grouped
+   accessible UI, six single-flight refresh triggers, and real-server fixtures. Production release
+   remains governed by the measured [release-readiness record](../05-tech-specs/activity-release-readiness.md)
+   and the separate server-first rollout ticket created only after `GO`.
 3. **Suggestions** — ✅ **shipped** (#269): root Feedback form with validated remembered
    e-mail, existing `/contact` enrichment, Settings entry, and a context-bounded report
    action for recorded iCal import failures. Automated DoD and mail-safe Maestro

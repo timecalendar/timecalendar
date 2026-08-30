@@ -2,6 +2,10 @@
 
 ## 2026-08-30
 
+- Reconciled the shipped Activity feature with its release gate: the committed readiness record
+  binds capacity, privacy, compatibility, native-CI, and server-first rollback evidence to one
+  immutable candidate. This is verification of ADRs 046, 048, and 049, not a new load-bearing
+  contract, so no ADR was added or superseded (`features.md`, testing.md).
 - Added the two-calendar real-server Activity fixture rule: establish a server read watermark, then add exactly 52 unread rows across the fixed 50-row page boundary. Recorded positive-first selectors and the no-KVM split between local integration/syntax evidence and post-merge native CI.
 - Added the AA-verified `positive` and `informational` semantic status tokens, the thin root
   `/activity` route and grouped cached timeline, and the Settings Activity entry with a reactive
