@@ -40,12 +40,13 @@ DATABASE_URL=postgres://postgres@localhost:37491/timecalendar npm run activity:c
 
 ## Commands
 
-| Command | What it does |
-| --- | --- |
-| `npm run activity:capacity:seed` | Clears previous fixture rows, seeds the background corpus and every cohort, `ANALYZE`s. |
-| `npm run activity:capacity:explain` | `EXPLAIN (ANALYZE, BUFFERS)` for the token resolution, first page, following page, and both unread counts, per cohort. Redacted. |
-| `npm run activity:capacity:measure` | Latency, v1 page bytes, plans, and concurrent event-loop health. |
-| `npm run activity:capacity:compare` | Runs the whole measurement twice — once on the shipped indexes, once with the candidate composite index — then drops the candidate. This is what produces the index verdict's evidence. |
+| Command                                                              | What it does                                                                                                                                                                            |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run activity:capacity:seed`                                     | Clears previous fixture rows, seeds the background corpus and every cohort, `ANALYZE`s.                                                                                                 |
+| `npm run activity:capacity:explain`                                  | `EXPLAIN (ANALYZE, BUFFERS)` for the token resolution, first page, following page, and both unread counts, per cohort. Redacted.                                                        |
+| `npm run activity:capacity:measure`                                  | Latency, v1 page bytes, plans, and concurrent event-loop health.                                                                                                                        |
+| `npm run activity:capacity:compare`                                  | Runs the whole measurement twice — once on the shipped indexes, once with the candidate composite index — then drops the candidate. This is what produces the index verdict's evidence. |
+| `npm run activity:capacity:http -- --base-url http://127.0.0.1:3006` | Measures the shipped HTTP route against the same local deterministic tokens, including serialized response bytes and 8 × 10 concurrent reads. The target is loopback-only.              |
 
 Flags go after `--`:
 
@@ -56,7 +57,7 @@ npm run activity:capacity:measure -- --samples 100
 
 `seed` defaults to 100,000 background calendars and 1,000,000 background logs.
 That is below production's 444,072 / 3,893,928 on purpose — see `DEFAULT_SCALE`
-in `fixtures.ts` for why the *ratio* is what matters and why a smaller table is
+in `fixtures.ts` for why the _ratio_ is what matters and why a smaller table is
 the conservative direction for a plan assertion. Raise it when the machine has
 the disk; the gate document records the scale every number was measured at.
 
@@ -69,14 +70,14 @@ npm run activity:capacity:compare --silent > /tmp/compare.json
 
 ## What is in here
 
-| File | Role |
-| --- | --- |
-| `queries.ts` | The v1 keyset and unread-count SQL. **Single source of truth** — see below. |
-| `fixtures.ts` | Deterministic two-layer corpus: background volume plus the 1/10/100 cohorts and the many-changes case. |
-| `redact.ts` | Strips UUIDs and quoted literals from anything printed. Tested. |
-| `cli.ts` | `seed` / `explain` / `measure` / `compare` / `all`. |
-| `plan.test.ts` | CI tripwire — a bounded token request must not sequentially scan `calendar_log`. |
-| `production-aggregates.sql` | The Founding-Engineer-executed production read. Not run by this harness. |
+| File                        | Role                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `queries.ts`                | The v1 keyset and unread-count SQL. **Single source of truth** — see below.                            |
+| `fixtures.ts`               | Deterministic two-layer corpus: background volume plus the 1/10/100 cohorts and the many-changes case. |
+| `redact.ts`                 | Strips UUIDs and quoted literals from anything printed. Tested.                                        |
+| `cli.ts`                    | `seed` / `explain` / `measure` / `compare` / `all`.                                                    |
+| `plan.test.ts`              | CI tripwire — a bounded token request must not sequentially scan `calendar_log`.                       |
+| `production-aggregates.sql` | The Founding-Engineer-executed production read. Not run by this harness.                               |
 
 ## The obligation on TIM-395
 
