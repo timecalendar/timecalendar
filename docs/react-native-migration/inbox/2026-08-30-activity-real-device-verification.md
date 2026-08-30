@@ -52,22 +52,32 @@ the populated timeline must remain visible.
 
 Send through the development Firebase project only, targeted to the device's
 registration token. Exercise the production-supported calendar-sync and
-calendar-log notification shapes; for example:
+calendar-log notification shapes. FCM v2 data values are strings: a detail
+message carries a lowercase change type and event inside the JSON-string
+`payload`, while a digest carries a string count. For example:
 
 ```json
 {
+  "notification": {
+    "title": "New class",
+    "body": "E2E Activity New Lecture"
+  },
   "data": {
-    "type": "calendar_sync",
-    "calendarId": "e2e0e2e0-0000-4000-8000-000000000004"
+    "action": "calendar_changed",
+    "payload": "{\"type\":\"new\",\"event\":{\"uid\":\"e2e-activity-new\",\"title\":\"E2E Activity New Lecture\",\"location\":\"Room Activity New\",\"startsAt\":\"2026-08-29T10:00:00.000Z\",\"endsAt\":\"2026-08-29T11:00:00.000Z\"}}"
   }
 }
 ```
 
 ```json
 {
+  "notification": {
+    "title": "Schedule updated",
+    "body": "3 changes in your schedule"
+  },
   "data": {
-    "type": "calendar_log",
-    "calendarId": "e2e0e2e0-0000-4000-8000-000000000004"
+    "action": "calendar_digest",
+    "count": "3"
   }
 }
 ```

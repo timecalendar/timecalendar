@@ -25,6 +25,7 @@ const E2E_ACTIVITY_CANCELLED_UID = "e2e-activity-cancelled"
 const E2E_ACTIVITY_TIE_HIGHER_UID = "e2e-activity-tie-higher"
 const E2E_ACTIVITY_TIE_LOWER_UID = "e2e-activity-tie-lower"
 const E2E_ACTIVITY_OLDER_ANCHOR_UID = "e2e-activity-older-anchor"
+const E2E_ACTIVITY_EXPORTED_AT = new Date("2020-01-01T00:00:00.000Z")
 
 const atUtcDay = (daysAgo: number, minute: number): Date => {
   const value = new Date()
@@ -59,7 +60,7 @@ const calendarEvent = (
   tags: [],
   type: EventType.CM,
   fields: null,
-  exportedAt: new Date(),
+  exportedAt: E2E_ACTIVITY_EXPORTED_AT,
 })
 
 const oneNew = (event: EventForChangeDetection): CalendarChange => ({
