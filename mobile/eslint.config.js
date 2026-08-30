@@ -53,7 +53,7 @@ const restrictedImportPaths = [
   },
 ]
 
-// The other half of the Activity seam (TIM-397 / ADR 045): SQLite is the
+// The other half of the Activity seam (TIM-397 / ADR 048): SQLite is the
 // authoritative source for rendered Activity history and unread metadata, so the
 // tables have exactly one writer. B-1 lets any feature's data/ import @/db, so
 // only a NAMED-import ban confines these two tables to the Activity data layer.
@@ -63,7 +63,7 @@ const dbActivityTablesImportPath = {
   name: "@/db",
   importNames: ["activityLogs", "activityState"],
   message:
-    "Use the @/features/activity/data seam — the Activity tables are read and written only inside src/features/activity/data/ (TIM-397 / ADR 045).",
+    "Use the @/features/activity/data seam — the Activity tables are read and written only inside src/features/activity/data/ (TIM-397 / ADR 048).",
 }
 
 // Storage backends are reachable only through their seams (src/storage/, src/db/).
@@ -117,7 +117,7 @@ const calendarKitImportPattern = {
 }
 
 // The Activity refresh seam is the SINGLE issuer of calendar-log requests
-// (TIM-397 / ADR 045): every trigger — calendar sync, push, screen open,
+// (TIM-397 / ADR 048): every trigger — calendar sync, push, screen open,
 // foreground — goes through @/features/activity/data so four triggers can never
 // become four requests. That duplication is the capacity risk that got Activity
 // switched off in the first place.
@@ -130,7 +130,7 @@ const calendarKitImportPattern = {
 const activityClientImportPattern = {
   regex: "^@/api/generated/calendar-logs($|/)",
   message:
-    "Use the @/features/activity/data seam — the generated calendar-log client is imported only inside src/features/activity/data/ (TIM-397 / ADR 045).",
+    "Use the @/features/activity/data seam — the generated calendar-log client is imported only inside src/features/activity/data/ (TIM-397 / ADR 048).",
 }
 
 // False options belong only to the exact seam dirs/files that legitimately import
@@ -279,7 +279,7 @@ module.exports = defineConfig([
   },
   {
     // The Activity data sublayer IS the seam — the single issuer of calendar-log
-    // requests (TIM-397 / ADR 045), so it is the one place that may import the
+    // requests (TIM-397 / ADR 048), so it is the one place that may import the
     // generated client the ban keeps out of every other module.
     name: "timecalendar/activity-seam",
     files: ["src/features/activity/data/**"],
