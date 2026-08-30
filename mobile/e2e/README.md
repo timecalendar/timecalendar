@@ -118,10 +118,10 @@ calendar is already renamed. That covers two cases:
 
 - a **local re-run without re-running `ci/e2e-server.sh`** — re-seed and run again;
 - a **CI retry of this flow**. `run_e2e.sh` seeds once per job (`ci/e2e-server.sh
-  up`), *outside* `run_flow`, but `run_flow` retries a flow up to
+up`), _outside_ `run_flow`, but `run_flow` retries a flow up to
   `--startup-attempts` — 4 on iOS, 1 on Android — and a retry re-runs the flow
   from step 1 **without re-seeding**. Step 5 is a mid-flow `launchApp:
-  clearState: true`; an XCTest transport death there is classified retryable
+clearState: true`; an XCTest transport death there is classified retryable
   (steps 1–4 left no assertion-failure text in the log), so the flow restarts and
   step 2 burns its 60 s timeout against a calendar this job already renamed. Rare,
   but when it happens the red is a stale-state artifact, not a rename regression —
@@ -130,6 +130,35 @@ calendar is already renamed. That covers two cases:
 Dropping the baseline assertion to make re-runs idempotent would make the final
 convergence assertion vacuous on a re-run, which is a silent false green rather
 than a visible, diagnosable failure.
+
+## Activity's staged unread and pagination fixture
+
+`activity.yaml` uses two dedicated tokens because a fresh Activity store has no
+read watermark and therefore cannot ask the server for an unread count:
+
+- `e2e-activity-baseline` has one older row. Its nested import clears device
+  state; opening Activity persists that row's server timestamp as read.
+- `e2e-activity-calendar` has exactly 52 newer rows. Its nested import preserves
+  device state, so the sync refresh sends the baseline watermark and Settings
+  renders exactly `52` unread changes.
+
+Rows 50 and 51 share one timestamp and have fixed UUIDs ordered descending. The
+higher UUID ends page one; the lower UUID and `E2E Activity Older Page` anchor
+can only render after `onEndReached` loads the following page. `db:init --drop`
+restores both calendars, their names/content, and all fixed log rows.
+
+To debug only this flow from `mobile/` against an installed development build:
+
+```bash
+../../ci/e2e-server.sh up
+maestro test .maestro/activity.yaml
+../../ci/e2e-server.sh logs
+../../ci/e2e-server.sh down
+```
+
+The normal `./e2e/run_e2e.sh` remains the preferred all-flow lifecycle. Nested
+files under `.maestro/activity/` are setup fragments and are intentionally not
+discovered as top-level flows.
 
 ## CI
 
