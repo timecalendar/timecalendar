@@ -9,8 +9,10 @@
   lookaround pair; that form reopens the leak on hyphen-edged digit runs (Decision 1 table).
   - Verification: `cd server && npx jest src/config/observability/sanitize-log --maxWorkers=2`.
 - [x] 1.2 In the same chain, add `["']?` before `\s*[:=]` in the sensitive-key rule **and**
-  widen its replacement callback's split from `/[:=]/` to `/["']?\s*[:=]/` so the emitted
-  label is `token=[redacted]`, not `token"=[redacted]` (Decision 2). Both edits land together.
+  promote its key alternation from `(?:…)` to a capture group, so the replacement callback
+  reads the matched key from its second argument — `(_match, key) => \`${key}=[redacted]\`` —
+  and the emitted label is `token=[redacted]`, not `token"=[redacted]` (Decision 2). Both
+  edits land together: widening the regex without the callback reintroduces the stray quote.
   - Verification: the JSON-key test from 2.3 passes and prints no stray quote.
 - [x] 1.3 Leave rule order, `[^\r\n]*` greediness, `MAX_SCALAR_LENGTH`, `MAX_LOG_BODY_LENGTH`,
   `ALLOWED_STRUCTURED_KEYS`, and every other rule in the chain untouched. No log-level gate on

@@ -47,9 +47,9 @@ ok     V1StGX_8Z5jdHi6BmyTaa   (underscore)
   alternative still accepts a `-` at its edges. (See `design.md` Decision 1: the single
   lookaround pair suggested in the ticket brief closes the token leak but silently *opens* a
   new one on hyphen-edged digit runs.)
-- Allow an optional closing quote before the separator in the sensitive-key rule, and widen
-  the replacement callback's split to match, so a JSON-quoted `"token"`/`"password"`/
-  `"secret"` key is redacted and the emitted label stays clean.
+- Allow an optional closing quote before the separator in the sensitive-key rule, and read the
+  replacement callback's label from a capture group on the key alternation, so a JSON-quoted
+  `"token"`/`"password"`/`"secret"` key is redacted and the emitted label stays clean.
 - Add regression tests in both directions: every affected token shape is redacted, and the
   values that must survive today still survive unchanged.
 
