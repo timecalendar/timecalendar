@@ -31,9 +31,20 @@ all statements finish.
 | `user_calendars`  | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text |
 | `calendar_events` | Replaceable offline cache of synced events        | Server fields remain verbatim; structured fields are validated JSON text           |
 | `checklist_items` | Event checklist items and order                   | Soft reference by event UID; deletion is hard; reordering is transactional         |
+| `activity_logs`   | Incremental offline cache of calendar-log history | Keyed by the server log ID and merged, never replaced; the change payload is validated JSON text; indexed on `created_at` and `calendar_id` |
+| `activity_state`  | Activity read watermark and pagination position   | Singleton row `id = 1`, unseeded; a missing row reads as documented defaults; the read watermark is server time, the refresh stamp is device time |
 
 Repository mappers own database encoding and defensive decoding. UI and forms work with
 domain values, not rows.
+
+Activity is the one server-backed cache that is **not** drop+replaced. Its history is
+cursor-paginated, so a newest-page refresh that replaced the table would delete every
+older page a student had already backfilled. Pages merge by server log ID inside one
+transaction that also prunes rows beyond one year and rows whose calendar the device no
+longer holds, then advances the cursor — so a failed write leaves both the rows and the
+pagination position untouched. The one-year cutoff and the read watermark both derive
+from server-issued time; no Activity code path may write a device-clock value into
+`last_read_at`. See ADR [046](./decisions/046-activity-cache-merge-and-server-read-watermark.md).
 
 ## MMKV values
 
@@ -53,9 +64,17 @@ They are filtered at the calendar event-source seam, not deleted from the synced
 ## Durability
 
 `user_calendars`, `personal_events`, checklists, and hidden-event state are durable user
-data. `calendar_events` and the TanStack Query cache are rebuildable caches. Schema changes
-require a committed migration and mapper tests; destructive cache replacement must remain
-transactional.
+data. `calendar_events`, `activity_logs`, `activity_state` and the TanStack Query cache are
+rebuildable caches — backend-bound, refetched after a reset or a reinstall, and explicitly
+**not** Phase-09 importer targets (Flutter's `calendar_logs` store is not imported), so the
+importer-fidelity constraint that shaped the four earlier table schemas does not apply to
+the Activity tables. Schema changes require a committed migration and mapper tests;
+destructive cache replacement must remain transactional.
+
+A migration is proven against real SQLite, not only against the mocked runner: the
+committed SQL is applied to an in-memory `node:sqlite` database both on a fresh install and
+on top of a database already holding rows in every earlier table. A migration that fails on
+an installed database is a data incident, and the mocked seam cannot catch one.
 
 ## Backend environment reset
 
@@ -64,8 +83,12 @@ transactional.
   reset journal are controls; school/group selection, hidden events, notification values,
   remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
   backend-bound and are removed. Type coverage fails when a centralized known key is unclassified.
-- `@/db.resetBackendDatabase()` synchronously deletes `checklist_items`, `calendar_events`,
-  `user_calendars` and `personal_events` in that order inside one transaction.
+- `@/db.resetBackendDatabase()` synchronously deletes `checklist_items`, `activity_logs`,
+  `activity_state`, `calendar_events`, `user_calendars` and `personal_events` in that order
+  inside one transaction. That list is the only one: the environment switch calls
+  `resetBackendDatabase()`, so a table added there is covered by the switch with nothing
+  else to update — and a table missing from it leaves another environment's private
+  schedule data on the device.
 - The version-1 current/target journal bridges stores that cannot share a transaction. It is written
   before clearing and removed only after the selected target commits. Valid or malformed journals
   block startup; valid recovery retries the idempotent participants. See ADR
