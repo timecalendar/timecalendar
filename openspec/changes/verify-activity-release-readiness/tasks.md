@@ -102,7 +102,7 @@
 
 ## 8. Decide and hand off safely
 
-- [ ] 8.1 Run `openspec validate verify-activity-release-readiness`, inspect the final diff/history for
+- [x] 8.1 Run `openspec validate verify-activity-release-readiness`, inspect the final diff/history for
       secrets and customer data, and confirm `openapi/openapi.json`, `mobile/src/api/generated/`,
       `server/src/migrations/`, `app/`, `mobile/app.config.ts`, `mobile/eas.json`, `mobile/firebase/`,
       `terraform/`, `k8s/`, and `.github/workflows/` are unchanged unless an already-approved task above
