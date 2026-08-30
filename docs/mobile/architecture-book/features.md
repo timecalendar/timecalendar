@@ -36,14 +36,14 @@ code and product specifications.
   name the **server returned**, never the string the user typed, so the renaming device
   converges through the same rule every other device reaches at its next sync. The token is
   a capability — possession authorizes rename — so a rename is global to every installation
-  holding it (ADR [049](./decisions/049-token-authorized-shared-calendar-rename.md)).
+  holding it (ADR [050](./decisions/050-token-authorized-shared-calendar-rename.md)).
 - Calendar names converge on the sync path: after the event replace, sync writes back the
   returned names through the narrow `updateName(id, name)` write. It must never `upsert` a
   `user_calendars` row and never route through `fromCalendarForPublic`, which hard-codes
   `visible: true` — a full-row write would silently unhide a calendar the student hid, on
   every sync, i.e. at every app start. Nothing in lint or types can catch that, which is why
   it is written here (ADR
-  [051](./decisions/051-eventual-calendar-name-convergence-through-sync.md)).
+  [052](./decisions/052-eventual-calendar-name-convergence-through-sync.md)).
 - The event replace and the name write-back are two failure domains, not one. A failed name
   write keeps the replaced events committed and the last-good names in place, records under
   its own context, and leaves convergence to the next sync.

@@ -77,14 +77,19 @@ knowingly, with per-device aliases and ownership as the rejected alternatives. T
 future contributor needs and cannot reconstruct from the rule. R-1 keeps the rule in the topical
 file; the ADRs add the reasoning and the trigger, and the topical files link out to them.
 
-## Decision D3 — ADR numbers 049, 050, 051, re-checked at PR time
+## Decision D3 — ADR numbers 050, 051, 052 after the final open-PR census
 
-**Decision.** Claim `049`, `050`, `051`, and re-verify immediately before the PR merges.
+**Decision.** Claim `050`, `051`, `052`, and re-verify immediately before the PR merges.
 
 Census against `main` at `ed4fbf22`: highest merged is `048`; `045` is a standing reservation held by
 open PR [#273](https://github.com/timecalendar/timecalendar/pull/273), whose ADR is still filed under
 its pre-renumber name `044-preserve-content-and-advise-source-recovery.md`. Every other open PR was
 checked with `gh pr diff <N> --name-only | grep decisions/`; none touches `decisions/`.
+
+The final census on 2026-08-30 found that open PR
+[#328](https://github.com/timecalendar/timecalendar/pull/328) had since claimed `049` for
+`049-activity-trigger-edges-and-failure-isolation.md`. This change therefore moved to the next three
+free numbers, `050`–`052`, before handoff.
 
 **Why this needs a task and not a footnote.** Two ADRs with the same number are two differently-named
 files, so they merge with no conflict and no CI failure — the collision only surfaces when a human

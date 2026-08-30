@@ -41,9 +41,9 @@ decision changes; use Git for its history.
 | [046](./046-activity-cache-merge-and-server-read-watermark.md) | Merge the Activity cache by log id and read it against server time |
 | [047](./047-ephemeral-calendar-import-draft.md)       | Hold the calendar-import draft in an ephemeral, Stack-scoped context  |
 | [048](./048-activity-refresh-single-flight-and-token-precondition.md) | Deduplicate Activity refreshes in-module and never request with zero tokens |
-| [049](./049-token-authorized-shared-calendar-rename.md) | Authorize shared calendar rename by token possession                  |
-| [050](./050-path-level-v1-prefix-without-global-versioning.md) | Version individual controllers by path                        |
-| [051](./051-eventual-calendar-name-convergence-through-sync.md) | Converge calendar names through a name-only sync write         |
+| [050](./050-token-authorized-shared-calendar-rename.md) | Authorize shared calendar rename by token possession                  |
+| [051](./051-path-level-v1-prefix-without-global-versioning.md) | Version individual controllers by path                        |
+| [052](./052-eventual-calendar-name-convergence-through-sync.md) | Converge calendar names through a name-only sync write         |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`
@@ -54,8 +54,11 @@ decision changes; use Git for its history.
 > The import-draft ADR was authored as `045` and renumbered to `047` when its
 > branch merged `main` and found the reservation above — the collision this note
 > exists to catch, caught by reading the index rather than by git. It has since
-> merged, so `047` is taken, not free. `048` skipped past both, and `049`–`051`
-> record the calendar naming/import decisions — the next author
+> merged, so `047` is taken, not free. `048` skipped past both.
+>
+> `049` is claimed by open PR [#328](https://github.com/timecalendar/timecalendar/pull/328),
+> which was detected by the final open-PR census after this change initially claimed that number.
+> The calendar naming/import decisions therefore use `050`–`052`. The next author
 > should re-check open PRs with `gh pr diff <N> --name-only | grep decisions/`
 > rather than assuming the highest merged number plus one.
 

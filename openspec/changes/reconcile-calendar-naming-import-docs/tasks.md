@@ -44,13 +44,14 @@
       `ls docs/mobile/architecture-book/decisions/` for the highest merged number, and
       `for n in $(gh pr list --state open --json number --jq '.[].number'); do gh pr diff $n --name-only | grep -q decisions/ && echo "PR #$n takes an ADR"; done`
       for open claims. Record what you found in the PR body.
-- [x] 2.2 Expected result at authoring time (`ed4fbf22`): highest merged `048`; `045` reserved by open
+- [x] 2.2 At authoring time (`ed4fbf22`) the highest merged number was `048`, with `045` reserved by open
       PR [#273](https://github.com/timecalendar/timecalendar/pull/273) (filed under its pre-renumber
       name `044-preserve-content-and-advise-source-recovery.md`); no other open PR touches
-      `decisions/`. Therefore this change takes **049, 050, 051**. If 2.1 disagrees, use the next
+      `decisions/`. The final census found open PR [#328](https://github.com/timecalendar/timecalendar/pull/328)
+      claiming `049`, so this change takes the next free numbers: **050, 051, 052**. If 2.1 disagrees, use the next
       three free numbers and update every reference in this file, the ADRs, the index, the topical
       files, the `CHANGELOG.md` entry and the `mobile-architecture-book` delta together.
-- [ ] 2.3 Repeat 2.1 immediately before the PR merges. A duplicate ADR number is invisible to git —
+- [x] 2.3 Repeat 2.1 immediately before the PR merges. A duplicate ADR number is invisible to git —
       two differently-named files merge cleanly — so nothing but this re-check catches it.
 
 ## 3. Write the three ADRs
@@ -61,7 +62,7 @@ canonical spec `docs/react-native-migration/05-tech-specs/calendar-naming-and-ma
 (§"Architecture decisions" 3, 5 and the `/v1` risk row), the shipped code named in `design.md`, and
 the existing rule paragraphs in `features.md` / `data.md`.
 
-- [x] 3.1 `049-token-authorized-shared-calendar-rename.md` — *Authorize calendar rename by token
+- [x] 3.1 `050-token-authorized-shared-calendar-rename.md` — *Authorize calendar rename by token
       possession and accept last-write-wins*.
       **Context:** calendars are reached only by a bearer token in the URL path; there is no account,
       owner or per-device identity, and a token is routinely shared inside a cohort.
@@ -75,7 +76,7 @@ the existing rule paragraphs in `features.md` / `data.md`.
       empty names stay legal and are handled by the display fallback, not by a backfill.
       **Revisit if:** accounts or per-calendar ownership arrive; a support case turns "who renamed
       this" into a real question; per-device aliases are requested.
-- [x] 3.2 `050-path-level-v1-prefix-without-global-versioning.md` — *Version individual controllers by
+- [x] 3.2 `051-path-level-v1-prefix-without-global-versioning.md` — *Version individual controllers by
       path, never globally*.
       **Context:** the rename endpoint is a new contract, while Flutter release builds in the field
       call the existing unversioned calendar routes and cannot be updated.
@@ -90,7 +91,7 @@ the existing rule paragraphs in `features.md` / `data.md`.
       **Revisit if:** a third or fourth `/v1` route makes per-controller prefixes more expensive than
       one global migration; a breaking change is needed on a route Flutter still calls; Flutter is
       retired.
-- [x] 3.3 `051-eventual-calendar-name-convergence-through-sync.md` — *Converge names on sync with a
+- [x] 3.3 `052-eventual-calendar-name-convergence-through-sync.md` — *Converge names on sync with a
       name-only write, in its own failure domain*.
       **Context:** a rename is global to every holder of the token, but only the renaming device
       learns immediately. Every other installation has to find out somehow, and the obvious
@@ -122,10 +123,10 @@ the existing rule paragraphs in `features.md` / `data.md`.
       `045` is still reserved for [#273](https://github.com/timecalendar/timecalendar/pull/273), and
       the numbers this change consumed are now taken. Keep the existing instruction to check open PRs
       with `gh pr diff <N> --name-only | grep decisions/`.
-- [x] 4.3 `features.md`: link the rename paragraph (the "token is a capability" sentence) to ADR 049
-      and the name-convergence paragraph to ADR 051. Add the links only — the rule text is already
+- [x] 4.3 `features.md`: link the rename paragraph (the "token is a capability" sentence) to ADR 050
+      and the name-convergence paragraph to ADR 052. Add the links only — the rule text is already
       correct and must not be reworded.
-- [x] 4.4 `data.md`: link the `/v1` bullet to ADR 050. Same constraint — link only.
+- [x] 4.4 `data.md`: link the `/v1` bullet to ADR 051. Same constraint — link only.
 - [x] 4.5 `navigation.md`: no change needed (its import-journey and dormant-group paragraphs already
       match `main` and already link ADR 047). Confirm by reading, and tick this box to record the
       audit.
@@ -190,11 +191,11 @@ rewrite the history of what shipped.
 
 ## 7. Verify, then hand off
 
-- [ ] 7.1 **Report, do not fix:** `mobile/.maestro/onboarding.yaml`'s header comment still says the
+- [x] 7.1 **Report, do not fix:** `mobile/.maestro/onboarding.yaml`'s header comment still says the
       Jest tests prove "school→group navigation". That is stale, but the file is source, outside this
       change's file ownership. Confirm it is still stale on the current `main` and report it on
       [TIM-393](/TIM/issues/TIM-393) for a follow-up ticket. **Do not edit the file.**
-- [ ] 7.2 Prove no stale claim survives in the touched documents, scoped **by path, never by wording**:
+- [x] 7.2 Prove no stale claim survives in the touched documents, scoped **by path, never by wording**:
       ```bash
       git grep -nE "navigat|group step|group-picker|group picker" -- \
         openspec/specs/mobile-school-selection openspec/specs/mobile-onboarding-flow
@@ -203,12 +204,12 @@ rewrite the history of what shipped.
       Every surviving hit must be either the dormancy requirement, an explicit "reached by nothing"
       statement, or a dated historical record. `git grep` sees only **tracked** files — `git add`
       your work before measuring, or you measure the wrong tree.
-- [ ] 7.3 Confirm the diff touches nothing outside the three allowed trees:
+- [x] 7.3 Confirm the diff touches nothing outside the three allowed trees:
       `git diff --name-only $(git merge-base origin/main HEAD) | grep -vE '^(openspec/|docs/react-native-migration/01-roadmap/|docs/mobile/architecture-book/)'`
       must print nothing.
-- [ ] 7.4 Re-run `openspec validate reconcile-calendar-naming-import-docs --strict` and
+- [x] 7.4 Re-run `openspec validate reconcile-calendar-naming-import-docs --strict` and
       `openspec list` to confirm the change is listed and clean.
-- [ ] 7.5 No source, test, fixture, generated, contract, migration, native/store-config or
+- [x] 7.5 No source, test, fixture, generated, contract, migration, native/store-config or
       infrastructure file changed. No `app/` file changed.
 - [ ] 7.6 Update the PR body (stage marker, the ADR-number census result from §2.1, and any scope
       change), then hand off per `pipeline-core`.
