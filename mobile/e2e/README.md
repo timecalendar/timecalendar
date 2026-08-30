@@ -98,6 +98,27 @@ and prevent later flows from running.
    `isToday` can disagree — a known local edge, not a CI flake (CI is UTC
    end to end).
 
+## The rename round trip and its re-run caveat
+
+`user-calendar-rename.yaml` (TIM-392) renames a calendar through the UI and then
+proves the new name came back **from the server on a device that never performed
+the rename**: it renames, then runs `rename-seed.yaml` a second time, whose
+leading `launchApp: clearState: true` wipes the device so the re-import resolves
+the token from the server.
+
+It uses its **own** seeded calendar, `e2e-rename-calendar`, never
+`e2e-smoke-calendar`. A rename is a durable server mutation and `run_e2e.sh` runs
+the whole folder in one device session, so renaming the shared smoke calendar
+would change state under every other flow in the run.
+
+**Re-run caveat.** Step 2 asserts the seeded **baseline** name (`E2E Rename
+Baseline`), which only holds against a freshly seeded server. CI re-seeds on
+every run, so it is deterministic there; a **local re-run without re-running
+`ci/e2e-server.sh`** fails at that step because the calendar is already renamed —
+re-seed and run again. Dropping the baseline assertion to make local re-runs
+idempotent would make the final convergence assertion vacuous on a re-run, which
+is a silent false green rather than a visible inconvenience.
+
 ## CI
 
 `e2e-mobile-android` (Linux + KVM emulator) and `e2e-mobile-ios` (macOS runner,
