@@ -89,11 +89,20 @@ assert_pod_annotations_default_inert() {
 # own metadata (indent 2). Wrong placement still passes a presence grep while
 # never rolling a pod.
 assert_pod_annotations_placement() {
-  local added
+  local render_diff
   # shellcheck disable=SC2086 # STAMP is deliberately word-split into flags
-  added="$(diff <(render_deployment server-deployment.yaml) \
-                <(render_deployment server-deployment.yaml $STAMP) \
-             | grep '^> ' || true)"
+  render_diff="$(diff <(render_deployment server-deployment.yaml) \
+                       <(render_deployment server-deployment.yaml $STAMP) \
+                    || true)"
+
+  if grep -q '^< ' <<<"$render_diff"; then
+    echo "Expected the stamped server render to remove no lines:" >&2
+    echo "$render_diff" >&2
+    return 1
+  fi
+
+  local added
+  added="$(grep '^> ' <<<"$render_diff" || true)"
 
   local expected
   expected='>       annotations:
