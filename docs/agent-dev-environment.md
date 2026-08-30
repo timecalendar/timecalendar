@@ -92,7 +92,7 @@ docs/        this handbook, react-native-migration/, multi-calendars.md
 k8s/, terraform/   deployment infra
 .claude/     agent config: rules/ (Architecture Book), agents/, commands/, skills/, settings.json
 .github/workflows/  CI pipelines
-.husky/      git hooks (pre-commit; skips when `.husky/_/` is missing)
+.husky/      git hooks (pre-commit; inert until `.husky/_/` is generated)
 ```
 
 ---
@@ -246,9 +246,10 @@ is therefore **missing** in a fresh worktree. The missing set:
 - the generated husky helper (`.husky/_/`)
 - all `node_modules`
 
-Without `.husky/_/` the pre-commit hook has no helper to source, so it **skips its
-checks and prints how to fix it** rather than blocking the commit — nothing is linted
-or formatted until you run the setup below.
+Git's `core.hooksPath` points at `.husky/_`, so a worktree that has not run the setup
+below runs **no hooks at all, silently** — no warning, nothing linted or formatted.
+The commit simply succeeds. There is no hook-side place to print an advisory, because
+nothing of ours runs; the countermeasure is running the setup first, below.
 
 **The first thing you do in a new worktree is run this** (idempotent; no-op in main):
 
@@ -258,9 +259,19 @@ npm run setup:worktree     # → bin/setup-worktree.sh
 
 It (1) resolves the main checkout, (2) **symlinks** the branch-independent secrets
 from main (single source of truth), and (3) runs `npm ci` (falling back to
-`npm install`) in root + `server/` + `mobile/`, then `npx husky install` to restore
+`npm install`) in root + `server/` + `mobile/`, then `npx husky` to restore
 the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
 `setup-dev.sh`) is shared across worktrees and does **not** need re-running.
+
+> **`core.hooksPath` is host-wide, and the last install wins.** It is a single value
+> in the *shared* `.git/config`, so it is the same for every worktree on this host.
+> Installing husky anywhere rewrites it everywhere: husky 9 sets `.husky/_`, husky 7
+> set `.husky`. A worktree on an older, husky-7-pinned branch therefore flips it back
+> whenever it provisions. The symptom is a **worktree that silently stops linting**;
+> the fix is to re-run `npm run setup:worktree` in the affected worktree. Note that
+> `git config --get core.hooksPath` is **not** a readiness check — it reads that one
+> shared slot, so it returns the reassuring answer even in a worktree that is not
+> linting. Check `test -x .husky/_/pre-commit` instead.
 
 > When dispatching pipeline sub-agents in `isolation: "worktree"`, the fresh
 > worktree needs `npm run setup:worktree` before any build/test/commit. If a squad
@@ -282,13 +293,13 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
     `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
     A future system should standardize on one footer; the point is that **every
     commit carries an attributable co-author footer**.
-- **Pre-commit hook** (`.husky/`, via root `prepare`/`husky install`): `lint-staged`
+- **Pre-commit hook** (`.husky/`, via root `prepare`/`husky`): `lint-staged`
   runs `dart format` + `bin/flutter-analyze.sh` on staged `*.dart` (the `app/`
   surface) and `eslint --cache --fix` on staged `mobile/` sources. In a worktree
-  without `.husky/_/` the hook skips with a message pointing at
-  `npm run setup:worktree` rather than blocking the commit — so run that setup
-  before you rely on the hook. Do **not** bypass hooks/signing/CI unless a task
-  explicitly requires it and the reason is in the commit message.
+  without `.husky/_/` **no hook runs at all and the commit succeeds silently** —
+  there is no warning, so run `npm run setup:worktree` before you rely on the
+  hook. Do **not** bypass hooks/signing/CI unless a task explicitly requires it
+  and the reason is in the commit message.
 - **Logical commits.** Decompose work into reviewable commits as you go, on a
   feature branch, not on `main` (except the explicit "commit docs to main" kind of
   task like this one).

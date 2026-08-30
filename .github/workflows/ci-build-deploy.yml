@@ -23,6 +23,20 @@ jobs:
     - name: Test chart renders
       run: ./ci/test-timecalendar-chart.sh
 
+  test-hooks:
+    name: Test git hooks
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    # Pure git + shell, so no Node setup. The properties it asserts (the hook's
+    # file mode, and its npx invocation) are each invisible under one of the two
+    # core.hooksPath values, so they cannot be caught reliably by local testing.
+    - name: Test pre-commit hook wiring
+      run: ./ci/test-git-hooks.sh
+
   build-server:
     name: Build server image
     runs-on: ubuntu-latest
