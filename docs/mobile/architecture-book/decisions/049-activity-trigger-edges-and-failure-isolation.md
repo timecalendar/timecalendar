@@ -128,20 +128,20 @@ To make the direction enforceable rather than aspirational, `eslint.config.js`'s
   the generated calendar-log client outside `activity/data/**` and the
   request-counting integration test are what hold that line.
 - **An Activity failure is invisible on four of six triggers.** Push, sync,
-  foreground and the cold-launch sync path are silent; screen open and
-  pull-to-refresh expose the outcome. Failure visibility belongs to the trigger,
-  not the fault, so Crashlytics is the only signal for a persistently failing
-  refresh outside the Activity screen.
+  foreground and the cold-launch sync path expose no outcome; screen open and
+  pull-to-refresh expose every outcome. Expected network and ordinary server
+  failures are intentionally not recorded, so a persistently failing silent
+  refresh can have no Crashlytics signal. Only unexpected malformed-response,
+  storage and contract faults reach Crashlytics.
 - **The no-catch posture is safe only while `refreshNewestPage` never rejects.**
   If a later change makes it rejectable, the calendar-sync path is where the
   damage lands. The contract is asserted in ADR 048's tests and restated here.
 - **The prune is only as live as the root layout.** It observes a live query
-  mounted for the whole app lifetime; a removal that happens while the tree is
-  unmounted is caught at the next mount, not missed — the transition is
-  recomputed from the first loaded observation after remount, so a removal
-  spanning a process restart is **not** pruned by this path. It is corrected by
-  the next successful page write, which prunes by ownership inside its own
-  transaction.
+  while mounted. A removal that happens while the tree is unmounted is **not**
+  detected at the next mount: the first loaded observation becomes the new
+  baseline, so there is no previous held set from which to reconstruct the
+  removal. The next successful page write corrects the cache by pruning by
+  ownership inside its own transaction.
 - **One new lint block, and a trap it documents.** The block re-calls
   `restrictedImports([...])` rather than listing its single pattern: flat config
   *replaces* a rule's options rather than merging them, so a block naming only
