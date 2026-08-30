@@ -35,8 +35,10 @@ export class CalendarLogService {
    * cursor's `BadRequestException` with its constant message; anything else
    * propagates to Nest's default exception layer as the standard sanitized 5xx.
    * A hand-written catch on this path would be a chance to interpolate the
-   * payload into a message, and a calendar token has no shape `sanitizeLog`'s
-   * redactor can recognise — so not logging is the guarantee.
+   * payload into a message. `sanitizeLog`'s id rule does target the opaque
+   * `nanoid()` run a calendar token is, but a redactor is a pattern match with
+   * edges — never emitting the token is a stronger guarantee than trusting
+   * one, so not logging is what this path relies on.
    */
   async searchV1(
     payload: SearchCalendarLogsV1Dto,
