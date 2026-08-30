@@ -127,8 +127,8 @@ Mock at the **`customFetch` mutator** (`testing.md`), never at `fetch` and never
       *Done ahead of the 0.1 gate — this task consumes no #324 symbol.* Its `**ADR:**` line is
       deliberately unnumbered: **task 9.1 must come back and replace it** with the numbered link once
       the number is picked. Leaving it unnumbered at merge is a defect, not a style choice.
-- [x] 10.2 Walk `docs/mobile/architecture-book/definition-of-done.md`. Applicable: gates green with coverage, ADR + Book updated, unexpected failures reach Crashlytics with no personal data (pinned by 6.11). Record the reason for each non-applicable item — this ticket ships **no rendered surface**, so no Maestro flow, no FR/EN strings, no VoiceOver/TalkBack or touch-target pass, no device-form-factor check; the screen-open hook's visible failure surface lands with Ticket 5.
-- [x] 10.3 Confirm the diff touches only: `mobile/src/features/activity/data/`, `mobile/src/features/activity/index.ts`, `mobile/src/features/calendar/data/sync/sync.ts`, `mobile/src/features/notifications/data/tap-routing.ts`, `mobile/src/app/_layout.tsx`, `mobile/eslint.config.js`, this OpenSpec change, the Book files, and the inbox note. **No** server change, no `openapi/openapi.json` or `mobile/src/api/generated/` change, no migration, no `mobile/firebase/` / `app.config.ts` / `eas.json` / native change, no new runtime dependency, no new route.
+- [x] 10.2 Walk `docs/mobile/architecture-book/definition-of-done.md`. Applicable: gates green with coverage, ADR + Book updated, unexpected failures reach Crashlytics with no personal data (pinned by 6.11). After Ticket 5 merged and this branch rebased, its rendered screen became part of the integration surface: mount `useActivityScreenRefresh` there, retain the existing typed FR/EN failure copy and accessibility treatment, and cover the composition in the screen test. Real-device checks remain in 10.1 and Ticket 7.
+- [x] 10.3 Confirm the diff touches only: `mobile/src/features/activity/data/`, `mobile/src/features/activity/ui/activity-screen.tsx` and its test, `mobile/src/features/activity/index.ts`, `mobile/src/features/calendar/data/sync/sync.ts`, `mobile/src/features/notifications/data/tap-routing.ts`, `mobile/src/app/_layout.tsx`, `mobile/eslint.config.js`, this OpenSpec change, the Book files, and the inbox note. **No** server change, no `openapi/openapi.json` or `mobile/src/api/generated/` change, no migration, no `mobile/firebase/` / `app.config.ts` / `eas.json` / native change, no new runtime dependency, no new route.
 - [x] 10.4 If `mobile/firebase/` or `mobile/app.config.ts` turns out to need a change, **stop and raise it on [TIM-399](/TIM/issues/TIM-399)** before making it — the brief names that as a hard stop.
 - [x] 10.5 `openspec validate wire-mobile-activity-triggers --strict` passes. Run it **early**, not at merge time — the delta-header check is what `openspec archive` gates on, and it aborts behind the long CI gate.
 - [x] 10.6 Flag the sensitive surfaces in the PR body: notification/push routing (with a pointer to the unedited routing tests, 6.4) and the cross-feature dependency direction (with a pointer to the lint rule, 7.1).
@@ -177,19 +177,30 @@ next author reads.
 **10.2 — Definition of Done walk.** Applicable and met: gates green with coverage; ADR 049
 written and indexed; ADR 028, `calendar.md`, `firebase.md`, `features.md`, `lint-format.md` and
 `CHANGELOG.md` updated; unexpected failures reach Crashlytics under static contexts with no
-payload, asserted (6.11) over every argument of every recorded call. Not applicable, with the
-reason: this change ships **no rendered surface**, so no Maestro flow, no FR/EN strings, no
-VoiceOver/TalkBack pass, no touch-target check and no device-form-factor check — the screen-open
-hook's visible failure surface lands with Ticket 5, which mounts it. Real-device push and
-foreground verification is the `(HUMAN: …)` inbox note (10.1) and Ticket 7's job; it does not
-block this PR.
+payload, asserted (6.11) over every argument of every recorded call. After Ticket 5 merged and
+this branch rebased, the Activity screen became an integration surface: it now mounts
+`useActivityScreenRefresh`, drives its existing accessible cached/empty failure UI from the hook
+outcome, and delegates `RefreshControl` state and action to the hook. The existing typed FR/EN
+copy, live-region assertions, minimum targets, pagination and cached read-marking remain covered.
+Real-device push and foreground verification is the `(HUMAN: …)` inbox note (10.1) and Ticket 7's
+job; it does not block this PR.
 
-**10.3 — diff scope confirmed** by `git diff --name-only origin/main...HEAD`: only the six
-`mobile/src` files named, `mobile/eslint.config.js`, this OpenSpec change, six Book files, the
-new ADR and the inbox note. No server change, no `openapi/openapi.json`, no
+**10.3 — diff scope confirmed** by `git diff --name-only origin/main...HEAD`: only the lifecycle
+wiring files named, the Activity screen and its composition test, `mobile/eslint.config.js`, this
+OpenSpec change, six Book files, the new ADR and the inbox note. No server change, no `openapi/openapi.json`, no
 `mobile/src/api/generated/`, no migration, no `mobile/firebase/`, no `app.config.ts`, no
 `eas.json`, no native change, no new dependency, no new route. **10.4 never fired** — neither
 `mobile/firebase/` nor `app.config.ts` needed a change.
+
+**Post-archive rework — screen composition.** Review at exact head `99d59771` found that Ticket 5's
+screen had landed after the original apply and still called `refreshNewestPage` directly, so the
+screen-open passive trigger was never mounted. The rework replaces that second screen-owned path
+with `useActivityScreenRefresh`'s `outcome`, `isRefreshing`, and `refresh` contract. The screen-level
+regression proves the hook is mounted, its refreshing flag reaches `RefreshControl`, its callback
+owns pull-to-refresh, and a passive failure outcome drives both cached and empty failure states.
+Rework verification: `npx tsc --noEmit` and `npm run lint` green; `npm test -- --coverage
+--maxWorkers=4` green (**142 suites, 1171 tests, 0 failures**, coverage thresholds met); and
+`openspec validate --all --strict` green (**86/86**).
 
 **One deliberate uncovered line, flagged rather than hidden.** `lifecycle.ts`'s once-only
 mount guard (the `openedRef` early return) is unreachable from the Jest renderer: `run` is a

@@ -16,8 +16,8 @@ import { ThemedView } from "@/components/themed-view"
 import {
   loadOlderPage,
   markActivityReadFromCache,
-  refreshNewestPage,
   useActivityLogs,
+  useActivityScreenRefresh,
   useActivityState,
 } from "@/features/activity/data"
 import {
@@ -42,14 +42,20 @@ export function ActivityScreen() {
   const displayZone = useDisplayZone()
   const { logs, loaded } = useActivityLogs()
   const { unreadCount, olderPageComplete } = useActivityState()
-  const [refreshing, setRefreshing] = useState(false)
-  const [refreshFailed, setRefreshFailed] = useState(false)
+  const {
+    outcome: refreshOutcome,
+    isRefreshing: refreshing,
+    refresh,
+  } = useActivityScreenRefresh()
   const [loadingOlder, setLoadingOlder] = useState(false)
   const [olderFailed, setOlderFailed] = useState(false)
   const olderInFlight = useRef(false)
   const markedOnMount = useRef(false)
 
   const sections = useMemo(() => buildActivitySections(logs), [logs])
+  const refreshFailed =
+    refreshOutcome?.status === "failed" ||
+    refreshOutcome?.status === "too-many-calendars"
 
   useEffect(() => {
     if (markedOnMount.current && unreadCount === 0) return
@@ -58,19 +64,6 @@ export function ActivityScreen() {
     // code: Ticket 6 first owns a visible refresh's server-issued `asOf` (D2).
     void markActivityReadFromCache()
   }, [unreadCount])
-
-  const refresh = useCallback(async () => {
-    if (refreshing) return
-    setRefreshing(true)
-    try {
-      const outcome = await refreshNewestPage({ force: true })
-      setRefreshFailed(
-        outcome.status === "failed" || outcome.status === "too-many-calendars",
-      )
-    } finally {
-      setRefreshing(false)
-    }
-  }, [refreshing])
 
   const loadOlder = useCallback(async () => {
     if (olderPageComplete || olderInFlight.current || sections.length === 0) {
