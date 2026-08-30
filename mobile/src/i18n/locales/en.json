@@ -342,7 +342,6 @@
   "userCalendars.add.short": "Add",
   "userCalendars.error": "We couldn't update your calendars. Please try again.",
   "userCalendars.deleted": "{{name}} deleted",
-  "userCalendars.delete.label": "Delete calendar {{name}}",
   "userCalendars.actions": "Actions for {{name}}",
   "userCalendars.delete.action": "Delete",
   "userCalendars.delete.title": "Confirm deletion",

@@ -57,6 +57,14 @@ export function RenameCalendarDialog({
   // renders as the fallback. Only an over-long one blocks the save.
   const tooLong = value.trim().length > MaxNameLength
   const fallback = t("userCalendars.namePlaceholder")
+  // One primary control across all three states: after a failure it relabels to
+  // Retry and reissues the SAME request, so the Maestro flow's
+  // `id: user-calendar-rename-save` selector stays stable. The label is resolved
+  // once — the accessible name and the visible text must never disagree.
+  const saveLabel = isError
+    ? t("userCalendars.rename.retry")
+    : t("userCalendars.rename.save")
+  const saveDisabled = tooLong || isPending
   const inlineMessage = tooLong
     ? t("userCalendars.rename.tooLong")
     : isError
@@ -73,7 +81,9 @@ export function RenameCalendarDialog({
   }, [inlineMessage])
 
   const save = async () => {
-    if (tooLong || isPending) return
+    // The same predicate that disables the control — a queued press must not
+    // slip past it.
+    if (saveDisabled) return
     try {
       await rename({ id: calendar.id, token: calendar.token, name: value })
     } catch {
@@ -150,30 +160,19 @@ export function RenameCalendarDialog({
             >
               <ThemedText type="smallBold">{t("common.cancel")}</ThemedText>
             </Pressable>
-            {/* One primary control across all three states: after a failure it
-                relabels to Retry and reissues the SAME request, so the Maestro
-                flow's `id: user-calendar-rename-save` selector stays stable. */}
             <Pressable
               testID="user-calendar-rename-save"
               accessibilityRole="button"
-              accessibilityLabel={
-                isError
-                  ? t("userCalendars.rename.retry")
-                  : t("userCalendars.rename.save")
-              }
-              accessibilityState={{ disabled: tooLong || isPending }}
-              disabled={tooLong || isPending}
+              accessibilityLabel={saveLabel}
+              accessibilityState={{ disabled: saveDisabled }}
+              disabled={saveDisabled}
               hitSlop={Spacing.two}
               onPress={() => {
                 void save()
               }}
               style={[styles.action, { borderColor: theme.primary }]}
             >
-              <ThemedText type="smallBold">
-                {isError
-                  ? t("userCalendars.rename.retry")
-                  : t("userCalendars.rename.save")}
-              </ThemedText>
+              <ThemedText type="smallBold">{saveLabel}</ThemedText>
             </Pressable>
           </View>
         </View>

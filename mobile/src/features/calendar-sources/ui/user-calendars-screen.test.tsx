@@ -419,9 +419,11 @@ describe("UserCalendarsScreen", () => {
       expect(
         screen.getByRole("button", { name: "Actions for ENSEEIHT" }),
       ).toBeTruthy()
-      expect(
-        screen.queryByRole("button", { name: "Delete calendar ENSEEIHT" }),
-      ).toBeNull()
+      // The standalone trash affordance is gone: the row header carries exactly
+      // one control, the overflow trigger, and Delete lives inside its menu.
+      expect(screen.getAllByRole("button", { name: /ENSEEIHT/ })).toHaveLength(
+        1,
+      )
       expect(
         screen.getByTestId("user-calendar-actions-cal-1").props.actions,
       ).toEqual([

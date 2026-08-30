@@ -228,56 +228,55 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
 
   // `Calendar.content` is a non-cascading OneToOne (the `CalendarContent` side
   // owns the join column), so the two rows are saved separately — the same
-  // split `CalendarSyncService.saveCalendar` uses in production.
-  const calendar = await calendarRepository.save({
-    id: E2E_CALENDAR_ID,
-    token: E2E_CALENDAR_TOKEN,
-    name: "Calendrier E2E Test",
-    schoolName: school ? null : "My Gaming Academia",
-    url: "https://e2e.timecalendar.test/calendar.ics",
-    customData: null,
-    school: school ?? undefined,
-    lastUpdatedAt: now,
-    syncPlannedAt: addDays(now, 1),
-    lastAccessedAt: now,
-  })
+  // split `CalendarSyncService.saveCalendar` uses in production. Saving by the
+  // FIXED id is what makes every `up` idempotent, and for the rename calendar it
+  // is also what RESETS the name a previous run's rename left behind.
+  const seedCalendar = async (
+    calendarFields: { id: string; token: string; name: string; url: string },
+    calendarEvents: CalendarEvent[],
+  ) => {
+    const calendar = await calendarRepository.save({
+      ...calendarFields,
+      schoolName: school ? null : "My Gaming Academia",
+      customData: null,
+      school: school ?? undefined,
+      lastUpdatedAt: now,
+      syncPlannedAt: addDays(now, 1),
+      lastAccessedAt: now,
+    })
 
-  const existingContent = await calendarContentRepository.findOneBy({
-    calendar: { id: calendar.id },
-  })
+    const existingContent = await calendarContentRepository.findOneBy({
+      calendar: { id: calendar.id },
+    })
 
-  await calendarContentRepository.save({
-    id: existingContent?.id,
+    await calendarContentRepository.save({
+      id: existingContent?.id,
+      events: calendarEvents,
+      calendar: { id: calendar.id },
+    })
+  }
+
+  await seedCalendar(
+    {
+      id: E2E_CALENDAR_ID,
+      token: E2E_CALENDAR_TOKEN,
+      name: "Calendrier E2E Test",
+      url: "https://e2e.timecalendar.test/calendar.ics",
+    },
     events,
-    calendar: { id: calendar.id },
-  })
+  )
 
-  // The rename flow's own calendar. Saving by the fixed id RESETS the name a
-  // previous run's rename left behind — the reproducibility guarantee this
-  // calendar exists to keep out of the smoke calendar.
-  const renameCalendar = await calendarRepository.save({
-    id: E2E_RENAME_CALENDAR_ID,
-    token: E2E_RENAME_CALENDAR_TOKEN,
-    name: E2E_RENAME_CALENDAR_NAME,
-    schoolName: school ? null : "My Gaming Academia",
-    url: "https://e2e.timecalendar.test/rename.ics",
-    customData: null,
-    school: school ?? undefined,
-    lastUpdatedAt: now,
-    syncPlannedAt: addDays(now, 1),
-    lastAccessedAt: now,
-  })
-
-  const existingRenameContent = await calendarContentRepository.findOneBy({
-    calendar: { id: renameCalendar.id },
-  })
-
-  await calendarContentRepository.save({
-    id: existingRenameContent?.id,
-    // Minimal on purpose: no flow asserts this calendar's events, and keeping
-    // them off "today" avoids colliding with the smoke calendar's assertions
-    // once both tokens are held in the same session.
-    events: [
+  // The rename flow's own calendar. Its events are minimal on purpose: no flow
+  // asserts them, and keeping them off "today" avoids colliding with the smoke
+  // calendar's assertions once both tokens are held in the same session.
+  await seedCalendar(
+    {
+      id: E2E_RENAME_CALENDAR_ID,
+      token: E2E_RENAME_CALENDAR_TOKEN,
+      name: E2E_RENAME_CALENDAR_NAME,
+      url: "https://e2e.timecalendar.test/rename.ics",
+    },
+    [
       {
         uid: "e2e-rename-event-1",
         title: "E2E Rename Filler",
@@ -293,6 +292,5 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
         exportedAt: now,
       },
     ],
-    calendar: { id: renameCalendar.id },
-  })
+  )
 }

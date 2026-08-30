@@ -342,7 +342,6 @@
   "userCalendars.add.short": "Ajouter",
   "userCalendars.error": "Impossible de mettre à jour vos calendriers. Veuillez réessayer.",
   "userCalendars.deleted": "{{name}} supprimé",
-  "userCalendars.delete.label": "Supprimer le calendrier {{name}}",
   "userCalendars.actions": "Actions pour {{name}}",
   "userCalendars.delete.action": "Supprimer",
   "userCalendars.delete.title": "Confirmer la suppression",

@@ -222,10 +222,6 @@ function CalendarRow({
   )
   const school = calendar.schoolName ?? t("userCalendars.personalSubtitle")
 
-  const requestDelete = useCallback(() => {
-    onDelete(calendar.id, name)
-  }, [onDelete, calendar.id, name])
-
   // Android-only trigger wiring: MenuView needs an explicit show(), reachable
   // both by press and by TalkBack's `activate` action (which delivers no press).
   // iOS opens the menu natively on press, so it must NOT also call show().
@@ -273,7 +269,7 @@ function CalendarRow({
           ]}
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === "rename") onRename(calendar)
-            if (nativeEvent.event === "delete") requestDelete()
+            if (nativeEvent.event === "delete") onDelete(calendar.id, name)
           }}
         >
           <Pressable
