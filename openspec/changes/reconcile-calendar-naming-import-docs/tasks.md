@@ -17,10 +17,10 @@
 
 ## 1. Validate the authored deltas before writing anything else
 
-- [ ] 1.1 `openspec validate reconcile-calendar-naming-import-docs --strict` passes.
+- [x] 1.1 `openspec validate reconcile-calendar-naming-import-docs --strict` passes.
       If a requirement fails on a missing modal verb, check the **first line** of its body — the
       `SHALL`/`MUST` must be on line 1, not on a wrapped continuation line.
-- [ ] 1.2 **Rehearsal archive.** On a clean tree, run
+- [x] 1.2 **Rehearsal archive.** On a clean tree, run
       `openspec archive reconcile-calendar-naming-import-docs -y`, then inspect
       `git diff openspec/specs/` and confirm:
       - every `MODIFIED` header matched an existing requirement (the diff shows a body replacement,
@@ -34,17 +34,17 @@
       Note: `openspec archive` **prepends the date itself**, producing
       `archive/2026-08-30-reconcile-calendar-naming-import-docs`. That is why the change folder is
       not named with a date — a dated folder archives as `2026-08-30-2026-08-30-…`.
-- [ ] 1.3 Fix any header mismatch found in 1.2 in
+- [x] 1.3 Fix any header mismatch found in 1.2 in
       `openspec/changes/reconcile-calendar-naming-import-docs/specs/**` and re-run 1.1–1.2
       until both are clean.
 
 ## 2. ADR numbering — claim and prove the numbers
 
-- [ ] 2.1 Re-run the census against the current `main`:
+- [x] 2.1 Re-run the census against the current `main`:
       `ls docs/mobile/architecture-book/decisions/` for the highest merged number, and
       `for n in $(gh pr list --state open --json number --jq '.[].number'); do gh pr diff $n --name-only | grep -q decisions/ && echo "PR #$n takes an ADR"; done`
       for open claims. Record what you found in the PR body.
-- [ ] 2.2 Expected result at authoring time (`ed4fbf22`): highest merged `048`; `045` reserved by open
+- [x] 2.2 Expected result at authoring time (`ed4fbf22`): highest merged `048`; `045` reserved by open
       PR [#273](https://github.com/timecalendar/timecalendar/pull/273) (filed under its pre-renumber
       name `044-preserve-content-and-advise-source-recovery.md`); no other open PR touches
       `decisions/`. Therefore this change takes **049, 050, 051**. If 2.1 disagrees, use the next
@@ -61,7 +61,7 @@ canonical spec `docs/react-native-migration/05-tech-specs/calendar-naming-and-ma
 (§"Architecture decisions" 3, 5 and the `/v1` risk row), the shipped code named in `design.md`, and
 the existing rule paragraphs in `features.md` / `data.md`.
 
-- [ ] 3.1 `049-token-authorized-shared-calendar-rename.md` — *Authorize calendar rename by token
+- [x] 3.1 `049-token-authorized-shared-calendar-rename.md` — *Authorize calendar rename by token
       possession and accept last-write-wins*.
       **Context:** calendars are reached only by a bearer token in the URL path; there is no account,
       owner or per-device identity, and a token is routinely shared inside a cohort.
@@ -75,7 +75,7 @@ the existing rule paragraphs in `features.md` / `data.md`.
       empty names stay legal and are handled by the display fallback, not by a backfill.
       **Revisit if:** accounts or per-calendar ownership arrive; a support case turns "who renamed
       this" into a real question; per-device aliases are requested.
-- [ ] 3.2 `050-path-level-v1-prefix-without-global-versioning.md` — *Version individual controllers by
+- [x] 3.2 `050-path-level-v1-prefix-without-global-versioning.md` — *Version individual controllers by
       path, never globally*.
       **Context:** the rename endpoint is a new contract, while Flutter release builds in the field
       call the existing unversioned calendar routes and cannot be updated.
@@ -90,7 +90,7 @@ the existing rule paragraphs in `features.md` / `data.md`.
       **Revisit if:** a third or fourth `/v1` route makes per-controller prefixes more expensive than
       one global migration; a breaking change is needed on a route Flutter still calls; Flutter is
       retired.
-- [ ] 3.3 `051-eventual-calendar-name-convergence-through-sync.md` — *Converge names on sync with a
+- [x] 3.3 `051-eventual-calendar-name-convergence-through-sync.md` — *Converge names on sync with a
       name-only write, in its own failure domain*.
       **Context:** a rename is global to every holder of the token, but only the renaming device
       learns immediately. Every other installation has to find out somehow, and the obvious
@@ -109,27 +109,27 @@ the existing rule paragraphs in `features.md` / `data.md`.
       must stay narrow" (R-1), which is why the rule is in `features.md` and the reasoning is here.
       **Revisit if:** a second server-owned field has to converge; `visible` (or another local-only
       column) stops being client-only; the two writes have to become one transaction.
-- [ ] 3.4 Each ADR cites ADR
+- [x] 3.4 Each ADR cites ADR
       [047](../../../docs/mobile/architecture-book/decisions/047-ephemeral-calendar-import-draft.md)
       where the import draft is relevant, and does **not** restate it.
 
 ## 4. Wire the ADRs into the book
 
-- [ ] 4.1 `decisions/README.md`: add one index row per new ADR to the **Active decisions** table, in
+- [x] 4.1 `decisions/README.md`: add one index row per new ADR to the **Active decisions** table, in
       numeric order after `048`. Keep the one-line summary in the table's voice (imperative,
       no trailing period).
-- [ ] 4.2 `decisions/README.md`: update the reservation note under the table so it stays accurate —
+- [x] 4.2 `decisions/README.md`: update the reservation note under the table so it stays accurate —
       `045` is still reserved for [#273](https://github.com/timecalendar/timecalendar/pull/273), and
       the numbers this change consumed are now taken. Keep the existing instruction to check open PRs
       with `gh pr diff <N> --name-only | grep decisions/`.
-- [ ] 4.3 `features.md`: link the rename paragraph (the "token is a capability" sentence) to ADR 049
+- [x] 4.3 `features.md`: link the rename paragraph (the "token is a capability" sentence) to ADR 049
       and the name-convergence paragraph to ADR 051. Add the links only — the rule text is already
       correct and must not be reworded.
-- [ ] 4.4 `data.md`: link the `/v1` bullet to ADR 050. Same constraint — link only.
-- [ ] 4.5 `navigation.md`: no change needed (its import-journey and dormant-group paragraphs already
+- [x] 4.4 `data.md`: link the `/v1` bullet to ADR 050. Same constraint — link only.
+- [x] 4.5 `navigation.md`: no change needed (its import-journey and dormant-group paragraphs already
       match `main` and already link ADR 047). Confirm by reading, and tick this box to record the
       audit.
-- [ ] 4.6 `CHANGELOG.md`: append one dated `## 2026-08-30` entry — under the existing heading, since
+- [x] 4.6 `CHANGELOG.md`: append one dated `## 2026-08-30` entry — under the existing heading, since
       the epic's other entries are already there — recording that the three decisions were promoted
       from topical rules to indexed ADRs, what each one commits us to, and which topical file links
       to which record. Follow the file's existing voice: state the load-bearing reason, not the
@@ -140,41 +140,41 @@ the existing rule paragraphs in `features.md` / `data.md`.
 Target: `docs/react-native-migration/01-roadmap/`. Correct in place with evidence (design D5); do not
 rewrite the history of what shipped.
 
-- [ ] 5.1 `03-onboarding-and-sources.md` step 2 (**School / school-group selection**): keep the record
+- [x] 5.1 `03-onboarding-and-sources.md` step 2 (**School / school-group selection**): keep the record
       that the picker landed, and append a dated correction — as of 2026-08-30
       ([TIM-391](/TIM/issues/TIM-391), [#323](https://github.com/timecalendar/timecalendar/pull/323),
       `a10ab396`) a school row opens the import journey's programme step, the group step is retained
       but reached by nothing and creates no calendar, and school groups are explicitly not
       implemented or enabled. Point at
       `docs/mobile/architecture-book/navigation.md` and ADR 047.
-- [ ] 5.2 Same file, step 3 (**QR scan**): record that QR gained its first real entry point — the
+- [x] 5.2 Same file, step 3 (**QR scan**): record that QR gained its first real entry point — the
       manual-import step — in #323, replacing "deep link only".
-- [ ] 5.3 Same file, step 4 (**iCal import**): the "a welcome CTA" claim is stale — the carousel's QR
+- [x] 5.3 Same file, step 4 (**iCal import**): the "a welcome CTA" claim is stale — the carousel's QR
       and URL actions were removed (ADR 036) and the iCal-URL route is now reached from the
       manual-import step. Correct it, and add the naming/rename outcome
       ([TIM-390](/TIM/issues/TIM-390) #313, [TIM-392](/TIM/issues/TIM-392) #321): created calendars
       now carry real institution and programme metadata instead of the `Dev import` literals.
-- [ ] 5.4 Same file, step 5 (**Identity persistence**): add that names now converge across
+- [x] 5.4 Same file, step 5 (**Identity persistence**): add that names now converge across
       installations on the sync path through a name-only write (#321, `3bba3364`), and that the local
       `visible` flag survives it.
-- [ ] 5.5 Same file, **Exit criteria**: the "add a calendar via **school pick** (steps 1–2)" bullet is
+- [x] 5.5 Same file, **Exit criteria**: the "add a calendar via **school pick** (steps 1–2)" bullet is
       false — the group step persisted a selection and dismissed without creating a calendar.
       Correct it to the shipped path: school → programme → Connect → QR or iCal URL.
-- [ ] 5.6 Same file, **Phase 03 status**: leave the original completion record intact and append the
+- [x] 5.6 Same file, **Phase 03 status**: leave the original completion record intact and append the
       2026-08-30 amendment with the three PR numbers and merge commits.
-- [ ] 5.7 `03-ship-loop-prompt.md` line "**Full school / school-group picker**": mark it superseded by
+- [x] 5.7 `03-ship-loop-prompt.md` line "**Full school / school-group picker**": mark it superseded by
       the import journey; the ship-loop prompt is a historical dispatch document, so annotate rather
       than rewrite.
-- [ ] 5.8 `08-assistant.md`: add one line under **Rough steps** naming the **Connect → manual-import
+- [x] 5.8 `08-assistant.md`: add one line under **Rough steps** naming the **Connect → manual-import
       edge** as the assistant's insertion point, kept deliberately explicit by this epic so the
       assistant can be inserted without touching the preceding screens (ADR 047,
       `navigation.md`). One line — Phase 08's plan is otherwise out of scope.
 
 ## 6. Evidence links
 
-- [ ] 6.1 Every roadmap correction from §5 cites its merged PR number **and** merge commit
+- [x] 6.1 Every roadmap correction from §5 cites its merged PR number **and** merge commit
       (`#313`/`5f14a146`, `#323`/`a10ab396`, `#321`/`3bba3364`).
-- [ ] 6.2 Cite named, in-repo verification evidence rather than "tests pass":
+- [x] 6.2 Cite named, in-repo verification evidence rather than "tests pass":
       - server — `server/src/modules/calendar/controllers/calendar-v1.controller.test.ts`,
         `helpers/calendar-name.test.ts`, `modules/contact/controllers/contact.controller.test.ts`;
       - journey — `mobile/src/features/onboarding/**` colocated tests (draft, programme, Connect,
@@ -185,7 +185,7 @@ rewrite the history of what shipped.
         `mobile/.maestro/user-calendar-rename.yaml` + `rename-seed.yaml`;
       - device passes — `docs/react-native-migration/inbox/2026-08-30-import-journey-device-pass.md`
         and `inbox/2026-08-30-calendar-rename-device-pass.md`.
-- [ ] 6.3 Open every link added in §4 and §5 and confirm it resolves (relative ADR paths from the
+- [x] 6.3 Open every link added in §4 and §5 and confirm it resolves (relative ADR paths from the
       file that contains them, and the three PR URLs).
 
 ## 7. Verify, then hand off

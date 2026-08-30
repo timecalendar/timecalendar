@@ -6,6 +6,13 @@
   `/activity` route and grouped cached timeline, and the Settings Activity entry with a reactive
   unread badge. Ticket 5 owns user-driven refresh/pagination and cache-bounded read marking;
   screen-open, foreground, push, and post-sync triggers remain Ticket 6's boundary.
+- Promoted three load-bearing calendar naming/import rules to indexed records: ADR 049 makes token
+  possession the complete shared rename capability and accepts last-write-wins; ADR 050 preserves
+  Flutter compatibility by keeping `/v1` controller-local rather than enabling global NestJS
+  versioning; ADR 051 keeps eventual name convergence narrow and separate from event replacement so
+  sync cannot overwrite the client-only `visible` flag. The binding rename and convergence rules in
+  `features.md` now link to ADRs 049 and 051, and the path-level versioning rule in `data.md` links
+  to ADR 050; the ephemeral import draft remains separately recorded in ADR 047.
 - Recorded the calendar rename surface and, load-bearing, the rule that the sync path
   converges calendar names through the narrow `updateName(id, name)` write and must never
   `upsert` a `user_calendars` row or route through `fromCalendarForPublic`, which hard-codes
