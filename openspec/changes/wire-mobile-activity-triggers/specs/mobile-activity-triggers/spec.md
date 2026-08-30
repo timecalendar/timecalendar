@@ -1,8 +1,10 @@
 ## ADDED Requirements
 
-### Requirement: Every Activity trigger routes through the shared refresh seam
+### Requirement: The accepted trigger set is exactly five, each reaching Activity through its public barrel
 
 Every event that makes Activity current SHALL call the Activity feature's public refresh operation, and no trigger SHALL issue a calendar-log request by any other path.
+
+This requirement governs *which callers fire and by what import path*. The seam they call — its single-flight collapse, token bounds and failure classification — is governed by the `mobile-activity-refresh` capability and its coordinator ADR, not restated here.
 
 The accepted triggers are exactly: the Activity screen's pull-to-refresh, a relevant push message, a successful calendar sync, opening the Activity screen, and the app returning to the foreground. Cold launch is served by the startup calendar sync's post-sync refresh and SHALL NOT add an independent request.
 

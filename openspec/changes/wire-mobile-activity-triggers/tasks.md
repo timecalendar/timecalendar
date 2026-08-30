@@ -5,7 +5,9 @@
 ## 0. Preconditions (do these before writing code)
 
 - [ ] 0.1 Confirm PR #324 (TIM-397) is **merged into `main`**, then rebase this branch onto `main`. Nothing below compiles before that. Verification: `git log --oneline origin/main | grep -i "activity refresh coordinator"` finds the merge, and `mobile/src/features/activity/data/coordinator.ts` exists on `origin/main`.
-- [ ] 0.2 Expect rebase conflicts in exactly three shared files — `docs/mobile/architecture-book/decisions/README.md`, `docs/mobile/architecture-book/CHANGELOG.md`, `docs/mobile/architecture-book/features.md` — because #324 edits all three. Resolve by keeping both entries, never by dropping #324's.
+- [ ] 0.2 **Expect the rebase to be clean — zero conflicts — and do not read that as a failed rebase.** (Corrected 2026-08-30; the earlier text told you to expect conflicts in three files, which was wrong about *when*.) At 0.1 this branch has touched only `openspec/changes/wire-mobile-activity-triggers/` and one `docs/react-native-migration/inbox/` note; #324 touches neither, so the two file sets are disjoint. Verification that the rebase really took is **0.1's**, not a conflict count.
+
+      The shared-file hazard is real but it lands in **§9**, not here: #324 adds entries to five Book files this change also edits — `decisions/README.md`, `CHANGELOG.md`, `features.md`, `lint-format.md`, `data.md` (note: five, not the three previously listed). Because the rebase is clean, git will **not** show you #324's entries as a conflict to reconcile. So in §9 you must open each file and append **beside** #324's freshly-landed rows — never overwrite them, and never assume a section is empty because this branch never saw it change.
 - [ ] 0.3 Re-read `mobile/src/features/activity/index.ts` after the rebase and confirm the barrel exports `refreshNewestPage` and `pruneToHeldCalendars`. If it does not, stop and raise it on [TIM-399](/TIM/issues/TIM-399) — do not import from `data/` to work around it (D2).
 
 ## 1. The Activity lifecycle module (`mobile/src/features/activity/data/lifecycle.ts`, new)
@@ -21,7 +23,7 @@
 ## 2. Barrels
 
 - [ ] 2.1 Add the three hooks to `mobile/src/features/activity/data/index.ts`, keeping the file's alphabetical export convention. B-2: the sublayer must not import its own feature barrel.
-- [ ] 2.2 Re-export them (and the screen-refresh return type) from `mobile/src/features/activity/index.ts`, and update that barrel's header comment — it currently says "No `ui/` yet: … Ticket 6 wires calendar sync, push, app open and foreground", which this change makes past tense.
+- [ ] 2.2 Re-export them (and the screen-refresh return type) from `mobile/src/features/activity/index.ts`, and update that barrel's header comment. **The header quoted here is #324's, so you will only see it after the 0.1 rebase** — on `main` today the file still reads "…the refresh coordinator with Ticket 4", so do not treat the mismatch as a rotted premise if you look before rebasing. Post-rebase it reads "Ticket 6 wires calendar sync, push, app open and foreground to `refreshNewestPage`, and calendar removal to `pruneToHeldCalendars`." **Both** clauses become past tense — the prune half is task 1.4's wiring, and it is the one an edit to the first half alone leaves stale.
 
 ## 3. Calendar sync trigger (`mobile/src/features/calendar/data/sync/sync.ts`)
 
