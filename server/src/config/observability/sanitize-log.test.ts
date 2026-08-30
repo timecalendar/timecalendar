@@ -33,6 +33,91 @@ describe("sanitizeLog", () => {
     expect(error.body).not.toContain(calendarToken)
   })
 
+  const tokenShapes = [
+    ["plain", "V1StGXR8Z5jdHi6BmyTaa"],
+    ["leading hyphen", "-1StGXR8Z5jdHi6BmyTaa"],
+    ["trailing hyphen", "V1StGXR8Z5jdHi6BmyTa-"],
+    ["hyphen at both ends", "-1StGXR8Z5jdHi6BmyTa-"],
+    ["internal hyphen", "V1StGX-8Z5jdHi6BmyTaa"],
+    ["underscore", "V1StGX_8Z5jdHi6BmyTaa"],
+  ] as const
+
+  it.each(tokenShapes)(
+    "redacts a calendar token with a %s by delimiter, not word boundary",
+    (_shape, token) => {
+      const result = sanitizeLog(`calendar ${token} failed`)
+
+      expect(result.body).toBe("calendar [id:redacted] failed")
+      expect(result.body).not.toContain(token)
+    },
+  )
+
+  it.each(tokenShapes)(
+    "redacts a calendar token with a %s from an entity-not-found message",
+    (_shape, token) => {
+      const result = sanitizeLog(
+        `Could not find any entity of type "Calendar" matching: {\n    "token": "${token}"\n}`,
+      )
+
+      expect(result.body).toMatch(/\[(?:id:)?redacted\]/)
+      expect(result.body).not.toContain(token)
+    },
+  )
+
+  it.each(["token", "password", "secret"])(
+    "redacts a JSON-serialized %s key without a stray quote",
+    (key) => {
+      const result = sanitizeLog(`{\n    "${key}": "abc"\n}`)
+
+      expect(result.body).toBe(`{\n    "${key}=[redacted]\n}`)
+      expect(result.body).not.toContain(`${key}"=[redacted]`)
+    },
+  )
+
+  it.each([
+    [
+      "a short identifier",
+      "user 12345 order ab12cd34",
+      "user 12345 order ab12cd34",
+    ],
+    ["a digit run opened by a hyphen", "v=-1111111111;", "v=-[id:redacted];"],
+    ["a digit run closed by a hyphen", "v=1111111111-;", "v=[id:redacted]-;"],
+    [
+      "an ISO-8601 timestamp",
+      "at 2026-08-30T02:32:21.429Z ok",
+      "at 2026-08-30T02:32:21.429Z ok",
+    ],
+    [
+      "a 16-hex span identifier",
+      "span 00f067aa0ba902b7 ok",
+      "span 00f067aa0ba902b7 ok",
+    ],
+  ])("does not widen redaction over %s", (_case, input, expected) => {
+    expect(sanitizeLog(input).body).toBe(expected)
+  })
+
+  it("keeps allow-listed structured values, redacting only the long trace id", () => {
+    const result = sanitizeLog({
+      school: "ENSEA",
+      queue: "calendar-sync",
+      action: "sync",
+      "service.name": "timecalendar-server",
+      "service.instance.id": "pod-1",
+      span_id: "00f067aa0ba902b7",
+      trace_id: "4bf92f3577b34da6a3ce929d0e0e4736",
+    })
+
+    expect(JSON.parse(result.body)).toEqual({
+      school: "ENSEA",
+      queue: "calendar-sync",
+      action: "sync",
+      "service.name": "timecalendar-server",
+      "service.instance.id": "pod-1",
+      span_id: "00f067aa0ba902b7",
+      trace_id: "[id:redacted]",
+    })
+  })
+
   it.each([
     ["FCM token no longer registered (token suffix=…deadbeef)", "deadbeef"],
     [
