@@ -35,9 +35,11 @@ commit after — die in the same move.
   actually depends on.
 - **New CI hygiene job** (`ci/test-git-hooks.sh` + a `test-hooks` job in `ci-build-deploy.yml`)
   asserting the hook's file mode, its `npx` invocation, and the absence of any `husky.sh`
-  reference **outside `openspec/changes/`**. This makes the two silent-regression gates permanent
-  instead of review-time-only. The path exclusion is load-bearing: this change's own artifacts
-  quote the helper path, and archiving carries them onto `main` for good (tasks 5.6, 6.1).
+  reference **outside `openspec/changes/` and the check script itself**. This makes the two
+  silent-regression gates permanent instead of review-time-only. Both path exclusions are
+  load-bearing: this change's own artifacts quote the helper path (and archiving carries them onto
+  `main` for good), and so does the check script, which has to name the string it bans in its
+  failure message (tasks 5.6, 6.1).
 - **NOT changed:** no Architecture Book edit and no `architecture-changelog.md` entry — the Book's
   only husky sentence (`lint-format.md:19`, "picked up by the root husky hook") is version-agnostic
   and stays true. No archived OpenSpec change is touched. No attempt to re-create TIM-423's

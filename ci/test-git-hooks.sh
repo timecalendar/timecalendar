@@ -53,15 +53,24 @@ assert_lint_staged_runs_through_npx() {
 }
 
 assert_no_husky_helper_references() {
-  # `:!openspec/changes/` is load-bearing, not cosmetic. A proposal that documents
-  # the removal of husky 7's `. "$(dirname "$0")/_/husky.sh"` preamble must quote
-  # that path to explain itself, and `openspec archive` carries those artifacts to
-  # openspec/changes/archive/ permanently. Unscoped, this assertion is red the day
-  # it is added and red on main forever after. The criterion has always meant "no
-  # *operative* file still sources the helper", and scoping by path is the only
-  # spelling of it that stays stable as people write about the change.
+  # Both exclusions are load-bearing, not cosmetic, and for the same reason: any
+  # file whose *job* is to explain why the v7 helper is gone has to name it. The
+  # OpenSpec proposal does (and `openspec archive` carries it to
+  # openspec/changes/archive/ permanently); so does this script, in the comment
+  # above and in the failure message below. Unscoped, this assertion is red the day
+  # it is added and red on main forever after.
+  #
+  # Note the self-reference: excluding this file was NOT in the original design,
+  # because the gate was first verified while it was still untracked and `git grep`
+  # searches tracked files only. That made it look green against the very tree it
+  # would fail on once committed.
+  #
+  # The rule this keeps re-teaching: scope a grep gate by PATH, never by wording,
+  # and measure it against the committed tree including the documents that describe
+  # the change. The criterion means "no *operative* file still sources the helper" —
+  # a description of the removal is not an instance of it.
   local hits
-  hits="$(git grep -n 'husky\.sh' -- ':!openspec/changes/' || true)"
+  hits="$(git grep -n 'husky\.sh' -- ':!openspec/changes/' ':!ci/test-git-hooks.sh' || true)"
 
   if [[ -n "$hits" ]]; then
     echo "FAIL: operative files still reference husky 7's generated helper:" >&2
