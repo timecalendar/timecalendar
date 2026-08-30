@@ -10,14 +10,19 @@ import {
   useAddCalendar,
   validateIcalUrl,
 } from "@/features/calendar-sources/data"
-import { useSchools, useSelectedSchool } from "@/features/school-selection"
+import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
+import { leaveImportJourney } from "./leave-import-journey"
+
+// The support-report context for a failed attempt. Every field is optional and
+// omitted when empty — the /feedback DTO carries only what is actually known.
 interface FailedIcalAttempt {
   calendarUrl: string
   schoolId?: string
   schoolName?: string
+  calendarName?: string
 }
 
 // The iCal-URL entry screen (Phase-3 ship 4, rewired by ship 5 / ADR 018) —
@@ -45,16 +50,17 @@ export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const { addCalendarFromUrl, isPending, isError, reset } = useAddCalendar()
-  const selection = useSelectedSchool()
-  const { schools } = useSchools()
+  // Institution + programme come from the ephemeral journey draft, NOT from the
+  // persisted school selection: a durable selection would attribute an import
+  // made weeks later to a school the student is no longer importing from
+  // (TIM-391 / design D3, D10). Total — no draft ⇒ { name: "", schoolName: "" }.
+  const importFields = useImportCreateFields()
+  const { clearDraft } = useImportDraft()
   const [url, setUrl] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const [failedAttempt, setFailedAttempt] = useState<FailedIcalAttempt | null>(
     null,
   )
-  const selectedSchoolName = schools.find(
-    (school) => school.id === selection?.schoolId,
-  )?.name
 
   const report = () => {
     if (!failedAttempt) return
@@ -76,16 +82,22 @@ export default function IcalUrlScreen() {
     setFailedAttempt(null)
     const attempt: FailedIcalAttempt = {
       calendarUrl: url.trim(),
-      ...(selection?.schoolId ? { schoolId: selection.schoolId } : {}),
-      ...(selectedSchoolName ? { schoolName: selectedSchoolName } : {}),
+      ...(importFields.schoolId ? { schoolId: importFields.schoolId } : {}),
+      ...(importFields.schoolName
+        ? { schoolName: importFields.schoolName }
+        : {}),
+      ...(importFields.name ? { calendarName: importFields.name } : {}),
     }
-    void addCalendarFromUrl(url)
+    void addCalendarFromUrl(url, importFields)
       .then(() => {
-        router.back()
+        clearDraft()
+        leaveImportJourney()
       })
       .catch((error: unknown) => {
         // Genuine create / resolve / persist failure — record through the seam,
-        // surface the a11y error + Retry.
+        // surface the a11y error + Retry. The draft and the typed URL are left
+        // untouched so the student can retry or switch to the QR route without
+        // re-entering their institution and programme (design D9).
         recordUnknownError(error, "calendar-sources/ical-import")
         setFailedAttempt(attempt)
       })

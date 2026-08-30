@@ -26,6 +26,14 @@ jest.mock("@/hooks/use-color-scheme", () => ({
   useColorScheme: jest.fn(() => "light"),
 }))
 
+// The row writes the import draft before navigating; mock the onboarding seam so
+// the picker test stays about the picker (the draft's own behaviour is proven in
+// onboarding/draft).
+const mockSetListedInstitution = jest.fn()
+jest.mock("@/features/onboarding", () => ({
+  useImportDraft: () => ({ setListedInstitution: mockSetListedInstitution }),
+}))
+
 jest.mock("expo-router", () => ({
   router: { dismiss: jest.fn(), push: jest.fn() },
   Stack: { Screen: jest.fn(() => null) },
@@ -153,10 +161,10 @@ describe("SchoolPickerScreen", () => {
     ).toEqual(["Alpha University", "I can't find my school"])
     const action = getByTestId("onboarding-school-missing")
     expect(action.props.accessibilityHint).toBe(
-      "Add your timetable using a calendar URL",
+      "Enter your institution's name and import your timetable",
     )
     fireEvent.press(action)
-    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/institution-name")
   })
 
   it("shows the loading state", async () => {
@@ -192,16 +200,24 @@ describe("SchoolPickerScreen", () => {
     expect(refetch).toHaveBeenCalledTimes(1)
   })
 
-  it("navigates to the group step with the school id on select", async () => {
-    mockUseSchools.mockReturnValue(
-      ready([{ id: "univeiffel", name: "Eiffel", imageUrl: "" }]),
-    )
+  // The group step is off the normal path (TIM-391 / design D10): it persisted a
+  // selection and dismissed WITHOUT creating a calendar. The row now seeds the
+  // import draft and opens the programme step.
+  it("seeds the listed draft and opens the programme step on select", async () => {
+    const school = {
+      id: "univeiffel",
+      name: "Eiffel",
+      imageUrl: "",
+      intranetUrl: null,
+    }
+    mockUseSchools.mockReturnValue(ready([school]))
     const { getByTestId } = await render(<SchoolPickerScreen />)
 
     fireEvent.press(getByTestId("onboarding-school-row-univeiffel"))
-    expect(mockPush).toHaveBeenCalledWith(
-      "/onboarding/groups?schoolId=univeiffel",
+    expect(mockSetListedInstitution).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "univeiffel" }),
     )
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/programme")
   })
 
   it("filters the list from the header search bar", async () => {
@@ -263,7 +279,7 @@ describe("SchoolPickerScreen", () => {
     expect(getByText("I can't find my school")).toBeTruthy()
     expect(queryByText("Your timetable comes from your school.")).toBeNull()
     fireEvent.press(getByText("I can't find my school"))
-    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/institution-name")
   })
 
   it("restores the full list when the iOS search is cancelled", async () => {

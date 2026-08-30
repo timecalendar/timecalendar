@@ -3,7 +3,6 @@ import {
   CameraView,
   useCameraPermissions,
 } from "expo-camera"
-import { router } from "expo-router"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Linking, Pressable, StyleSheet, View } from "react-native"
@@ -16,8 +15,11 @@ import {
   parseScannedSource,
   useAddCalendar,
 } from "@/features/calendar-sources/data"
+import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+
+import { leaveImportJourney } from "./leave-import-journey"
 
 // The QR scanner screen (Phase-3 ship 3, rewired by ship 5 / ADR 018) —
 // PRESENTATIONAL (70% floor): drives the full camera-permission lifecycle
@@ -41,6 +43,12 @@ export default function QrScanScreen() {
   const theme = useTheme()
   const [permission, requestPermission] = useCameraPermissions()
   const { addCalendarFromUrl } = useAddCalendar()
+  // The import journey's institution/programme, derived from the draft. Total by
+  // design: opened directly (dev link, external link, restored navigation) there
+  // is no draft and this is { name: "", schoolName: "" } — a supported route,
+  // not an error (design D3).
+  const importFields = useImportCreateFields()
+  const { clearDraft } = useImportDraft()
   // Single-scan debounce: once a result is handled, the ref stops further
   // onBarcodeScanned firings until the screen re-arms (a recoverable miss).
   const scannedRef = useRef(false)
@@ -59,13 +67,16 @@ export default function QrScanScreen() {
       scannedRef.current = false
       return
     }
-    void addCalendarFromUrl(source.url)
+    void addCalendarFromUrl(source.url, importFields)
       .then(() => {
-        router.back()
+        clearDraft()
+        leaveImportJourney()
       })
       .catch((error: unknown) => {
         // Create / resolve / upsert failure — record through the seam, surface an
-        // a11y failure.
+        // a11y failure. The draft is deliberately LEFT INTACT so the student can
+        // re-arm here or switch to the URL route without re-entering their
+        // institution and programme (design D9).
         recordUnknownError(error, "calendar-sources/qr-scan")
         setFailed(true)
       })

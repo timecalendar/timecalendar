@@ -70,6 +70,7 @@ it("prefills remembered e-mail and submits normalized values with route context"
     calendarUrl: [" https://example.fr/a.ics "],
     schoolId: "school",
     schoolName: "University",
+    calendarName: "  L3 Informatique  ",
   })
   sendFeedback.mockResolvedValue(true)
   const alert = jest.spyOn(Alert, "alert").mockImplementation()
@@ -88,6 +89,7 @@ it("prefills remembered e-mail and submits normalized values with route context"
       calendarUrl: "https://example.fr/a.ics",
       schoolId: "school",
       schoolName: "University",
+      calendarName: "L3 Informatique",
     }),
   )
   expect(setRememberedEmail).toHaveBeenCalledWith("remembered@example.fr")

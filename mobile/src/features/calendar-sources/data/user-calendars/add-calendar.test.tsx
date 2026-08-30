@@ -56,20 +56,30 @@ describe("useAddCalendar", () => {
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
 
     await act(async () => {
-      await result.current.addCalendarFromUrl("  https://example.com/cal.ics  ")
+      await result.current.addCalendarFromUrl(
+        "  https://example.com/cal.ics  ",
+        {
+          name: "L3 Informatique",
+          schoolId: "school-1",
+        },
+      )
     })
 
-    // POST with the trimmed body the create seam assembles, including the TEMP
-    // "Dev import" schoolName/name the seam injects until the school-name-first
-    // flow lands (see create.ts).
+    // POST with the trimmed body the create seam assembles from the caller's
+    // import fields (TIM-391): the listed institution's id and the normalized
+    // programme name, and NO schoolName key at all — the server validates each
+    // institution field with @ValidateIf(other === undefined).
     expect(mockFetch.mock.calls[0]?.[1].body).toBe(
       JSON.stringify({
         url: "https://example.com/cal.ics",
-        schoolName: "Dev import",
-        name: "Dev import",
+        name: "L3 Informatique",
         customData: null,
+        schoolId: "school-1",
       }),
     )
+    expect(
+      Object.keys(JSON.parse(mockFetch.mock.calls[0]?.[1].body as string)),
+    ).not.toContain("schoolName")
     // GET resolves the token.
     expect(mockFetch.mock.calls[1]?.[0]).toBe("/calendars/by-token/tok_123")
     // The durable row is upserted, carrying the irreplaceable token + metadata.
@@ -91,7 +101,10 @@ describe("useAddCalendar", () => {
 
     await expect(
       act(async () => {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics")
+        await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+          name: "",
+          schoolName: "",
+        })
       }),
     ).rejects.toThrow("resolve boom")
 
@@ -108,7 +121,10 @@ describe("useAddCalendar", () => {
 
     await expect(
       act(async () => {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics")
+        await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+          name: "",
+          schoolName: "",
+        })
       }),
     ).rejects.toThrow("boom")
     await waitFor(() => expect(result.current.isError).toBe(true))
@@ -132,10 +148,74 @@ describe("useAddCalendar", () => {
 
     await expect(
       act(async () => {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics")
+        await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+          name: "",
+          schoolName: "",
+        })
       }),
     ).rejects.toThrow("upsert boom")
 
     await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+  // The "exactly one institution representation" contract (TIM-391 / design D3),
+  // asserted on the captured body at the mutator seam — key ABSENCE, not
+  // `undefined`, because the server DTO validates each field with
+  // @ValidateIf(other === undefined) and rejects a body carrying both keys.
+  it.each([
+    {
+      label: "an unlisted institution sends schoolName and no schoolId",
+      fields: { name: "L3 Informatique", schoolName: "École du Coin" },
+      present: "schoolName",
+      absent: "schoolId",
+    },
+    {
+      label: "a direct route with no draft sends empty metadata",
+      fields: { name: "", schoolName: "" },
+      present: "schoolName",
+      absent: "schoolId",
+    },
+  ])("$label", async ({ fields, present, absent }) => {
+    mockFetch
+      .mockResolvedValueOnce({ token: "tok_123" })
+      .mockResolvedValueOnce(dto)
+
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+
+    await act(async () => {
+      await result.current.addCalendarFromUrl(
+        "https://example.com/cal.ics",
+        fields,
+      )
+    })
+
+    const body = JSON.parse(
+      mockFetch.mock.calls[0]?.[1].body as string,
+    ) as Record<string, unknown>
+    expect(Object.keys(body)).toContain(present)
+    expect(Object.keys(body)).not.toContain(absent)
+    expect(body.name).toBe(fields.name)
+    expect(body.schoolName).toBe(fields.schoolName)
+  })
+
+  it('sends name: "" when the programme step was skipped', async () => {
+    mockFetch
+      .mockResolvedValueOnce({ token: "tok_123" })
+      .mockResolvedValueOnce(dto)
+
+    const { result } = await renderHook(() => useAddCalendar(), { wrapper })
+
+    await act(async () => {
+      await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+        name: "",
+        schoolId: "school-1",
+      })
+    })
+
+    const body = JSON.parse(
+      mockFetch.mock.calls[0]?.[1].body as string,
+    ) as Record<string, unknown>
+    expect(body.name).toBe("")
+    expect(body.schoolId).toBe("school-1")
+    expect(Object.keys(body)).not.toContain("schoolName")
   })
 })

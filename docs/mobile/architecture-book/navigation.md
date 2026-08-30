@@ -34,7 +34,8 @@ the feature owns the content and consumes Settings' exported grouped-list primit
 
 Root `/feedback` is a header-capable Stack sibling reached from Settings or a recorded
 iCal import failure. Its optional route parameters are limited to `calendarUrl`,
-`schoolId`, and `schoolName`; the route is a thin re-export from the feedback feature.
+`schoolId`, `schoolName`, and `calendarName` (the normalized programme name from the
+import draft, omitted when empty); the route is a thin re-export from the feedback feature.
 
 `/changelog` is a visible-header regular root Stack destination reached from About and
 renders every bundled release. `/changelog-sheet` is a visible-header root modal: an iOS
@@ -43,4 +44,10 @@ exports over `features/changelog/ui`. The automatic `ChangelogGate` mounts only 
 `(tabs)` layout, never the root or onboarding Stack, so tabs arrival is the first eligible
 presentation point and cold onboarding cannot be covered.
 
-The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`), `onboarding/groups` = the group picker (`…/onboarding/groups?schoolId=<id>`). Its index is the first-run deep-link surface, not the bare list; adding calendars from Settings continues through calendar management's native header action.
+The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`). Its index is the first-run deep-link surface, not the bare list; adding calendars from Settings continues through calendar management's native header action.
+
+From the school step the group carries the **import journey** (ADR [047](./decisions/047-ephemeral-calendar-import-draft.md)): a school row opens `onboarding/programme`, "I can't find my school" opens `onboarding/institution-name` → `onboarding/programme`, then `onboarding/connect` → `onboarding/import`, which offers the existing `onboarding/qr-scan` and `onboarding/ical-url` Stack siblings. The Connect → import edge is the explicit insertion point for a future assistant step. Every new route is a one-line re-export from `@/features/onboarding/ui`.
+
+`onboarding/groups` (`…/onboarding/groups?schoolId=<id>`) is **off the normal path** — it persists a selection and dismisses without creating a calendar. It keeps its route and stays deep-linkable; deleting it is a separate cleanup.
+
+`src/app/onboarding/_layout.tsx` mounts `ImportDraftProvider` around the nested `Stack`, so the draft wraps every route in the group — including the QR and iCal-URL siblings, which is what lets a failed import switch between them. Those two routes stay usable with **no** draft (dev links, external links, restored navigation): they create with `name: ""` and `schoolName: ""` rather than redirecting.

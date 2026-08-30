@@ -32,7 +32,10 @@ function MissingSchoolAction() {
       accessibilityRole="button"
       accessibilityLabel={t("onboarding.school.missing")}
       accessibilityHint={t("onboarding.school.missingHint")}
-      onPress={() => router.push("/onboarding/ical-url")}
+      // The unlisted-institution step (TIM-391): jumping straight to the URL
+      // route used to drop the institution entirely, so an unlisted import
+      // reached support with no way to place it.
+      onPress={() => router.push("/onboarding/institution-name")}
       android_ripple={{ color: theme.ripple }}
       style={({ pressed }) => [
         styles.missingSchool,

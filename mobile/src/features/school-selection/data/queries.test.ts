@@ -27,6 +27,7 @@ const schoolsResponse: FindSchoolsRepDto = {
       code: "MGA",
       imageUrl: "a.png",
       imageUrlDark: "a-dark.png",
+      intranetUrl: "https://intranet.mga.example/",
     },
     {
       id: "univeiffel",
@@ -34,6 +35,7 @@ const schoolsResponse: FindSchoolsRepDto = {
       code: "UPEM",
       imageUrl: "b.png",
       imageUrlDark: null,
+      intranetUrl: null,
     },
   ] as SchoolForList[],
 }
@@ -77,7 +79,11 @@ describe("useSchools", () => {
       code: "MGA",
       imageUrl: "a.png",
       imageUrlDark: "a-dark.png",
+      intranetUrl: "https://intranet.mga.example/",
     })
+    // The Connect step reads intranetUrl off the draft's SchoolListItem, so the
+    // nullable case must survive the projection as null, not be dropped.
+    expect(result.current.schools[1]?.intranetUrl).toBeNull()
     expect(result.current.isError).toBe(false)
     expect(typeof result.current.refetch).toBe("function")
     expect(mockedFetch).toHaveBeenCalledWith(
