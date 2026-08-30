@@ -68,7 +68,7 @@
 - [x] 5.2 Run all React Native automated gates: Orval drift, Expo type generation if required by CI,
       TypeScript, lint/format, Jest with coverage, real-server Activity integration, and Maestro syntax/
       wrapper proofs. Record exact commands and pass counts.
-- [ ] 5.3 Ensure the draft PR carries the `run-e2e` label, obtain Android-emulator and iOS-simulator
+- [x] 5.3 Ensure the draft PR carries the `run-e2e` label, obtain Android-emulator and iOS-simulator
       Activity results for the exact candidate head, and record the workflow/check URLs and verdicts.
       Do not call local no-KVM/no-simulator checks a native pass.
 - [x] 5.4 Add `docs/react-native-migration/inbox/<date>-activity-release-device-passes.md`, tagged
