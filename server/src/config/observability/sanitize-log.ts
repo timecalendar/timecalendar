@@ -34,8 +34,8 @@ const sanitizeText = (input: string) =>
     })
     .replace(/\b(?:bearer|basic)\s+[a-z\d._~+/-]+=*/gi, "[credential:redacted]")
     .replace(
-      /\b(?:authorization|set-cookie|cookie|token(?:\s+suffix)?|password|secret)["']?\s*[:=][^\r\n]*/gi,
-      (match) => `${match.split(/["']?\s*[:=]/, 1)[0]}=[redacted]`,
+      /\b(authorization|set-cookie|cookie|token(?:\s+suffix)?|password|secret)["']?\s*[:=][^\r\n]*/gi,
+      (_match, key) => `${key}=[redacted]`,
     )
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[email:redacted]")
     .replace(
