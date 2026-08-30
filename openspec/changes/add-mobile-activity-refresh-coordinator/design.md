@@ -257,6 +257,27 @@ A joined caller receives the same outcome as the caller that issued the request,
 failure classification. Forced-ness is not re-evaluated on join: the request that is already in
 flight is the request everyone gets.
 
+**Amended at the simplify stage (TIM-397).** The two hand-rolled slots above were unified into a
+single `createSlot<T>()` closure factory, mirroring the `singleFlight` closure that already exists in
+`features/environment/data/orchestrator.ts`. Every property this section argues for is unchanged —
+two independent module-level slots, the freshness read outside and before the slot, and the
+check-then-assign adjacency, which now lives in one synchronous arrow instead of being restated at
+two call sites. Two details of step 3 did move:
+
+- The slot is cleared in `.finally()` on the stored promise rather than in the issuing caller's
+  `try/finally`.
+- The "only if it is still the promise this call assigned" identity guard is **dropped**. It was
+  unreachable: joiners return at the check and never reach the clear, so only the issuing call ever
+  clears, and the handler is attached at assignment time, so nothing can reassign the slot between
+  the underlying promise settling and the clear. Removing it took `features/activity/data` from
+  98.4% to **100%** branch coverage.
+
+Re-verified by mutation, not by a green suite: inserting `await Promise.resolve()` before the
+assignment inside `createSlot` fails three tests — `collapses overlapping forced and passive
+triggers into exactly one request` (1 call expected, 3 received), `gives every joined caller the
+issuing request's failure classification`, and `collapses overlapping older-page triggers into one
+request` (1 expected, 2 received). One helper, and both slots are covered by that proof.
+
 ### D9 — Read tokens through `findAll()`, take every calendar, hidden ones included
 
 The coordinator reads `findAll()` from `@/features/calendar-sources/data` — the sibling feature's

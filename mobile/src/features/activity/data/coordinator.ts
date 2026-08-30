@@ -12,7 +12,6 @@ import {
   ACTIVITY_PAGE_LIMIT,
   checkTokenPrecondition,
   fetchActivityPage,
-  type HeldCalendars,
   readHeldCalendars,
 } from "./request"
 import type {
@@ -48,11 +47,37 @@ const FRESHNESS_WINDOW_MS = 5 * 60 * 1000
 const REFRESH_CONTEXT = "activity/refresh"
 const OLDER_PAGE_CONTEXT = "activity/older-page"
 
-// The two in-flight slots — module-level promises, NOT TanStack Query (D8). Two
+/**
+ * One in-flight slot: concurrent triggers join the request already running
+ * instead of issuing a second one.
+ *
+ * THE CHECK AND THE ASSIGNMENT MUST STAY ADJACENT, and this arrow must stay
+ * SYNCHRONOUS. JavaScript is single-threaded, so no second trigger can interleave
+ * between them; that adjacency is the whole of the single-flight guarantee.
+ * Inserting an `await` before the assignment silently reintroduces duplicate
+ * requests and still passes tsc, ESLint and every other test in this repo — the
+ * concurrency tests in coordinator.test.ts are the only thing that catches it.
+ *
+ * One helper rather than a hand-rolled slot per operation, so that hazard lives
+ * in exactly one place. Same shape as the `singleFlight` closure in
+ * `features/environment/data/orchestrator.ts`.
+ */
+function createSlot<T>(): (operation: () => Promise<T>) => Promise<T> {
+  let active: Promise<T> | null = null
+  return (operation) => {
+    if (active) return active
+    active = operation().finally(() => {
+      active = null
+    })
+    return active
+  }
+}
+
+// The two in-flight slots — module-level, NOT TanStack Query (D8). Two
 // INDEPENDENT slots is the point: older-page loading can neither block nor be
 // blocked by a forced newest-page refresh (architecture decision 7).
-let inFlightNewest: Promise<ActivityRefreshOutcome> | null = null
-let inFlightOlder: Promise<ActivityOlderPageOutcome> | null = null
+const newestPageSlot = createSlot<ActivityRefreshOutcome>()
+const olderPageSlot = createSlot<ActivityOlderPageOutcome>()
 
 /**
  * Tags a repository throw at the throw site.
@@ -154,28 +179,15 @@ export async function refreshNewestPage({
     }
   }
 
-  // (b) + (c) — THESE TWO STATEMENTS MUST STAY ADJACENT. JavaScript is
-  // single-threaded, so no second trigger can interleave between the check and
-  // the assignment; that adjacency is the whole of the single-flight guarantee.
-  // Inserting an `await` between them silently reintroduces duplicate requests
-  // and passes tsc, ESLint and every other test in this repo — the concurrency
-  // test in coordinator.test.ts is the only thing that catches it.
-  if (inFlightNewest) return inFlightNewest
-  inFlightNewest = runNewestPage()
-
-  const pending = inFlightNewest
-  try {
-    return await pending
-  } finally {
-    // Only clear the slot if it is still the promise this call assigned.
-    if (inFlightNewest === pending) inFlightNewest = null
-  }
+  // (b) + (c) — join the request in flight, or issue one. The adjacency that
+  // makes this safe lives in `createSlot`.
+  return newestPageSlot(runNewestPage)
 }
 
 async function runNewestPage(): Promise<ActivityRefreshOutcome> {
   try {
     const state = await storage(readActivityState)
-    const held: HeldCalendars = await storage(readHeldCalendars)
+    const held = await storage(readHeldCalendars)
 
     const precondition = checkTokenPrecondition(held.tokens)
     if (!precondition.ok) return { status: precondition.outcome }
@@ -233,16 +245,7 @@ async function runNewestPage(): Promise<ActivityRefreshOutcome> {
  * newest-page refresh. Never rejects (D11).
  */
 export async function loadOlderPage(): Promise<ActivityOlderPageOutcome> {
-  // Same adjacency rule as `refreshNewestPage` (D8) — see the comment there.
-  if (inFlightOlder) return inFlightOlder
-  inFlightOlder = runOlderPage()
-
-  const pending = inFlightOlder
-  try {
-    return await pending
-  } finally {
-    if (inFlightOlder === pending) inFlightOlder = null
-  }
+  return olderPageSlot(runOlderPage)
 }
 
 async function runOlderPage(): Promise<ActivityOlderPageOutcome> {
@@ -254,7 +257,7 @@ async function runOlderPage(): Promise<ActivityOlderPageOutcome> {
     if (state.olderPageComplete) return { status: "complete" }
     if (state.olderPageCursor === null) return { status: "unavailable" }
 
-    const held: HeldCalendars = await storage(readHeldCalendars)
+    const held = await storage(readHeldCalendars)
     const precondition = checkTokenPrecondition(held.tokens)
     if (!precondition.ok) return { status: precondition.outcome }
 
@@ -295,7 +298,10 @@ async function runOlderPage(): Promise<ActivityOlderPageOutcome> {
       try {
         // Deletes NO rows: the cached history stays readable offline, and the
         // repository's upsert identity makes the repeated pages harmless.
-        await storage(clearOlderPageCursor)
+        // No `storage()` tag here — the catch is adjacent, so there is no
+        // distant catch site that would have to tell a storage throw from a
+        // network one.
+        await clearOlderPageCursor()
       } catch {
         return fail("storage", OLDER_PAGE_CONTEXT)
       }
