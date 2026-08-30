@@ -7,18 +7,35 @@ import { useCalendarSyncControllerCreateCalendar } from "@/api/generated/calenda
 // seam rule; mirrors school-selection/data/queries.ts). It wraps the generated
 // `useCalendarSyncControllerCreateCalendar` mutation over the single customFetch
 // mutator, builds the CreateCalendarDto here (so the screen never touches a
-// generated type — B-1), posts { url, customData: null } to POST /calendars, and
-// resolves CreateCalendarRepDto.token. schoolId/schoolName/name are omitted (the
-// DTO requires only customData; enrichment is deferred to the durable state —
-// design Non-Goals). This is a write mutation, NOT added to the offline-persist
-// shouldDehydrateQuery set (ADR 013 — only schools/groups reads persist).
+// generated type — B-1), posts to POST /calendars, and resolves
+// CreateCalendarRepDto.token. This is a write mutation, NOT added to the
+// offline-persist shouldDehydrateQuery set (ADR 013 — only schools/groups reads
+// persist).
+//
+// The institution and programme fields arrive EXPLICITLY from the caller
+// (TIM-391 / design D3). The seam does not read the import draft: keeping it a
+// parameter leaves data/ pure and provable without a React provider, and makes
+// the no-draft direct route a value rather than a branch on context.
+
+// Exactly one of schoolId / schoolName, plus the normalized programme name.
+// Declared here (not in onboarding) so the seam owns its own input type and the
+// cross-feature edge points onboarding → calendar-sources/data, never the
+// reverse through ui/.
+export interface CalendarImportFields {
+  name: string
+  schoolId?: string
+  schoolName?: string
+}
 
 export interface CreateCalendarResult {
   token: string
 }
 
 export interface UseCreateCalendar {
-  createCalendar: (url: string) => Promise<CreateCalendarResult>
+  createCalendar: (
+    url: string,
+    fields: CalendarImportFields,
+  ) => Promise<CreateCalendarResult>
   isPending: boolean
   isError: boolean
   reset: () => void
@@ -28,17 +45,24 @@ export function useCreateCalendar(): UseCreateCalendar {
   const mutation = useCalendarSyncControllerCreateCalendar()
 
   const createCalendar = useCallback(
-    async (url: string): Promise<CreateCalendarResult> => {
-      // TEMP: the server requires one of schoolId / schoolName, and the
-      // calendar.name column is NOT-NULL. The real school-name-first flow
-      // (Flutter school_selection → importIcal) isn't wired yet, so dummy
-      // schoolName + name unblock import until that screen lands.
+    async (
+      url: string,
+      fields: CalendarImportFields,
+    ): Promise<CreateCalendarResult> => {
       const { token } = await mutation.mutateAsync({
         data: {
           url: url.trim(),
-          schoolName: "Dev import",
-          name: "Dev import",
+          name: fields.name,
           customData: null,
+          // Spread-conditional, not `schoolId: fields.schoolId`: the server
+          // validates each with @ValidateIf(other === undefined), so the unused
+          // key must be ABSENT from the body, not present-and-undefined.
+          ...(fields.schoolId !== undefined
+            ? { schoolId: fields.schoolId }
+            : {}),
+          ...(fields.schoolName !== undefined
+            ? { schoolName: fields.schoolName }
+            : {}),
         },
       })
       return { token }

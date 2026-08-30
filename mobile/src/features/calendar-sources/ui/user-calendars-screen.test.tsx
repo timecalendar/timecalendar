@@ -22,7 +22,11 @@ import { UserCalendarsScreen } from "./user-calendars-screen"
 // SQLite dependency. Native header items are asserted through Stack.Screen
 // options because the navigator chrome is outside the test tree.
 
+// Spread requireActual so the REAL effectiveCalendarName helper stays wired —
+// stubbing the whole sub-barrel would silently drop it and the fallback under
+// test would never run (its own edge cases live in effective-name.test.ts).
 jest.mock("@/features/calendar-sources/data", () => ({
+  ...jest.requireActual("@/features/calendar-sources/data"),
   useUserCalendars: jest.fn(),
   useUserCalendarsLoaded: jest.fn(),
   useUserCalendarActions: jest.fn(),
@@ -148,13 +152,30 @@ describe("UserCalendarsScreen", () => {
     expect(style.paddingRight).toBe(20)
   })
 
-  it("falls back to placeholders for an empty name and a personal (no-school) calendar", async () => {
-    mockUseUserCalendars.mockReturnValue([
-      calendar({ id: "cal-2", name: "", schoolName: undefined }),
-    ])
+  // Production holds 80 685 empty and 119 511 whitespace-only names (TIM-274),
+  // so both must reach the same localized fallback — `name || fallback` passed
+  // the first and rendered a blank row for the second.
+  it.each([
+    ["empty", ""],
+    ["whitespace-only", "   "],
+  ])(
+    "renders the timetable fallback for a %s name, and the personal subtitle with no school",
+    async (_label, name) => {
+      mockUseUserCalendars.mockReturnValue([
+        calendar({ id: "cal-2", name, schoolName: undefined }),
+      ])
+      await render(<UserCalendarsScreen />)
+      expect(screen.getByText("My timetable")).toBeTruthy()
+      expect(screen.getByText("Personal calendar")).toBeTruthy()
+    },
+  )
+
+  it("renders a padded stored name trimmed, without rewriting it", async () => {
+    const padded = calendar({ id: "cal-3", name: "  L3 Informatique  " })
+    mockUseUserCalendars.mockReturnValue([padded])
     await render(<UserCalendarsScreen />)
-    expect(screen.getByText("Calendar")).toBeTruthy()
-    expect(screen.getByText("Personal calendar")).toBeTruthy()
+    expect(screen.getByText("L3 Informatique")).toBeTruthy()
+    expect(padded.name).toBe("  L3 Informatique  ")
   })
 
   it("forwards the native switch value to setVisible", async () => {

@@ -20,6 +20,7 @@ import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
+  effectiveCalendarName,
   type UserCalendar,
   useUserCalendarActions,
   useUserCalendars,
@@ -193,7 +194,12 @@ function CalendarRow({
   const { t } = useTranslation()
   const theme = useTheme()
 
-  const name = calendar.name || t("userCalendars.namePlaceholder")
+  // `calendar.name || fallback` was wrong against production: 119 511 live
+  // calendars have whitespace-only names (TIM-274), and `" "` is truthy — those
+  // rows rendered blank. The helper trims first and the fallback is display-only;
+  // the stored value is never rewritten (TIM-391 / design D8).
+  const name =
+    effectiveCalendarName(calendar.name) ?? t("userCalendars.nameFallback")
   const school = calendar.schoolName ?? t("userCalendars.personalSubtitle")
   const deleteLabel = t("userCalendars.delete.label", { name })
 

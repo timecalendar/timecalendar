@@ -38,6 +38,7 @@ decision changes; use Git for its history.
 | [042](./042-iphone-ipad-portrait-contract.md)         | Support iPhone and iPad in portrait-only full-screen mode             |
 | [043](./043-backend-environment-reset.md)             | Authorize backend choices explicitly and switch via journaled reset   |
 | [044](./044-jest-per-test-time-budget.md)             | Set an explicit per-test time budget for the Jest harness             |
+| [045](./045-ephemeral-calendar-import-draft.md)       | Hold the calendar-import draft in an ephemeral, Stack-scoped context  |
 
 ## Superseded or completed records
 

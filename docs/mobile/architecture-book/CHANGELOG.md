@@ -1,5 +1,28 @@
 # Architecture Book changelog
 
+## 2026-08-30
+
+- Recorded the institution → programme → Connect → manual-import journey and its ephemeral,
+  Stack-scoped import draft as **ADR 045**. The draft is held in React state behind a provider
+  mounted once on `src/app/onboarding/_layout.tsx` — never MMKV, never SQLite, no new global
+  store — so "leaving the journey clears it" and "a restart clears it" are properties of where
+  the provider lives rather than code that can be forgotten. The read hook is total: outside the
+  provider it returns "no draft", which *is* the contract for the deep-linkable QR and iCal-URL
+  routes (`name: ""`, `schoolName: ""`), not an error (navigation.md, features.md, decisions/045).
+- Required calendar creation to send **exactly one** institution representation, by key absence:
+  a listed draft sends `schoolId` with no `schoolName` key, an unlisted draft the inverse. The
+  server validates the pair with mutually exclusive `@ValidateIf` conditions, so a body carrying
+  both keys is rejected even when one is `undefined`. The derivation is one pure function and the
+  create seam takes the fields as a parameter, so the wire shape is provable without React
+  (features.md).
+- Required every calendar-name surface to render through `effectiveCalendarName()` — trimmed when
+  non-empty, otherwise the localized timetable fallback. `name || fallback` was wrong against
+  production, where 119 511 live calendars hold whitespace-only names and `" "` is truthy. Stored
+  values are never rewritten, so no backfill or migration is implied (features.md).
+- Extended the `/feedback` route's bounded optional parameters with `calendarName`, the normalized
+  programme name from a failed import, omitted when empty. `gradeName` stays unsent: "formation" is
+  a programme of study, not a grade (navigation.md, features.md).
+
 ## 2026-08-29
 
 - Split the two meanings of "server E2E". `server/npm run test:e2e` is now a committed,
