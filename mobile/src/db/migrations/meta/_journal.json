@@ -29,6 +29,13 @@
       "when": 1781624154777,
       "tag": "0003_soft_iron_fist",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788032232937,
+      "tag": "0004_chubby_shard",
+      "breakpoints": true
     }
   ]
 }

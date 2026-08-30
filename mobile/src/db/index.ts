@@ -1,10 +1,12 @@
-import { asc, eq } from "drizzle-orm"
+import { asc, desc, eq, lt, notInArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { openDatabaseSync } from "expo-sqlite"
 
 import { useLiveQuery } from "./live-query"
 import { resetBackendDatabaseWith } from "./reset"
 import {
+  activityLogs,
+  activityState,
   calendarEvents,
   checklistItems,
   personalEvents,
@@ -32,6 +34,8 @@ export const db = drizzle(expoDb)
 export function resetBackendDatabase(): void {
   resetBackendDatabaseWith(db, {
     checklistItems,
+    activityLogs,
+    activityState,
     calendarEvents,
     userCalendars,
     personalEvents,
@@ -43,14 +47,19 @@ export function resetBackendDatabase(): void {
 // queries with (from drizzle-orm), and the seam-owned coalescing reactive read
 // (./live-query — a drop-in for drizzle's useLiveQuery that collapses per-row
 // change bursts into a single re-query). Re-export ONLY what a consumer needs
-// (R-2), not all of drizzle-orm.
-export { asc, eq, useLiveQuery }
+// (R-2), not all of drizzle-orm — each operator below is here because a
+// repository read or write uses it: `eq` for by-uid reads/writes and the
+// activity_state singleton,
+// `asc` for the event-checklists ordered read (ADR 024), `desc` for the Activity
+// newest-first read, `lt` for its one-year age cutoff, `notInArray` for its
+// ownership prune.
+export { asc, desc, eq, lt, notInArray, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
-// drizzle-orm/sqlite-core import stays inside the seam dir. `eq` serves the by-uid
-// reads/writes (personal events, calendar events, checklists); the event-checklists
-// repository's ordered read adds `asc` (ADR 024 — `order BY order` asc).
+// drizzle-orm/sqlite-core import stays inside the seam dir.
 export {
+  activityLogs,
+  activityState,
   calendarEvents,
   checklistItems,
   personalEvents,

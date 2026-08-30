@@ -38,6 +38,13 @@ decision changes; use Git for its history.
 | [042](./042-iphone-ipad-portrait-contract.md)         | Support iPhone and iPad in portrait-only full-screen mode             |
 | [043](./043-backend-environment-reset.md)             | Authorize backend choices explicitly and switch via journaled reset   |
 | [044](./044-jest-per-test-time-budget.md)             | Set an explicit per-test time budget for the Jest harness             |
+| [046](./046-activity-cache-merge-and-server-read-watermark.md) | Merge the Activity cache by log id and read it against server time |
+
+> `045` is intentionally left free: the open source-recovery PR carries an ADR
+> numbered `044` that collides with the merged one above and renumbers to `045`
+> when it rebases. An ADR-number collision is invisible to git — two different
+> filenames merge as two clean adds — so it only surfaces when someone reads this
+> index. If that PR is closed unmerged, `045` is free to reuse.
 
 ## Superseded or completed records
 
