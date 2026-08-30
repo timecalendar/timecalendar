@@ -15,6 +15,10 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { queryClient } from "@/api/query-client"
 import { runMigrations } from "@/db/migrate"
+import {
+  useActivityForegroundRefresh,
+  useActivityOwnershipPrune,
+} from "@/features/activity"
 import { useStartupSync } from "@/features/calendar"
 import { EnvironmentRuntimeGate } from "@/features/environment"
 import {
@@ -77,6 +81,26 @@ function NotificationTapRouting() {
   return null
 }
 
+// The two app-lifetime Activity triggers (TIM-399 / ADR 049), mounted once
+// alongside StartupSync and for the same reason its siblings are components: a
+// hook needs a mounted tree, and this one renders nothing.
+//   - useActivityForegroundRefresh: a background → active return refreshes
+//     Activity passively (the five-minute window lives in the coordinator).
+//   - useActivityOwnershipPrune: watches the held-calendar set and deletes the
+//     Activity history of a calendar that disappeared from it. The edge points
+//     Activity → calendar-sources deliberately; the reverse would close a module
+//     require cycle (ADR 049 / D7).
+// Unlike its siblings it needs no QueryClient — the coordinator issues its
+// request through the mutator with no TanStack Query in between (TIM-397 D8) —
+// but it is mounted here anyway so the startup wiring stays in one place. It
+// reaches Activity through the feature barrel only, never @/db or the generated
+// client (B-3).
+function ActivityRuntime() {
+  useActivityForegroundRefresh()
+  useActivityOwnershipPrune()
+  return null
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
@@ -97,6 +121,7 @@ export default function RootLayout() {
         >
           <OtaUpdateRuntime />
           <StartupSync />
+          <ActivityRuntime />
           <NotificationRegistration />
           <NotificationTapRouting />
           <ThemeProvider value={navTheme}>
