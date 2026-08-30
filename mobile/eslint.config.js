@@ -53,6 +53,19 @@ const restrictedImportPaths = [
   },
 ]
 
+// The other half of the Activity seam (TIM-397 / ADR 045): SQLite is the
+// authoritative source for rendered Activity history and unread metadata, so the
+// tables have exactly one writer. B-1 lets any feature's data/ import @/db, so
+// only a NAMED-import ban confines these two tables to the Activity data layer.
+// `importNames` is why this is a `paths` entry and not a `patterns` regex —
+// every feature legitimately imports @/db, just not these bindings.
+const dbActivityTablesImportPath = {
+  name: "@/db",
+  importNames: ["activityLogs", "activityState"],
+  message:
+    "Use the @/features/activity/data seam — the Activity tables are read and written only inside src/features/activity/data/ (TIM-397 / ADR 045).",
+}
+
 // Storage backends are reachable only through their seams (src/storage/, src/db/).
 // Applied below to every file EXCEPT the seam dirs (they are the wrappers), so
 // feature code imports @/storage / @/db, never the backend directly (D6).
@@ -103,6 +116,23 @@ const calendarKitImportPattern = {
     "Use the @/features/calendar/renderer seam — @howljs/calendar-kit is imported only by renderer/calendar-kit/vendor.ts (ADR 033).",
 }
 
+// The Activity refresh seam is the SINGLE issuer of calendar-log requests
+// (TIM-397 / ADR 045): every trigger — calendar sync, push, screen open,
+// foreground — goes through @/features/activity/data so four triggers can never
+// become four requests. That duplication is the capacity risk that got Activity
+// switched off in the first place.
+//
+// B-1 does NOT already cover this. B-1 is SUBLAYER-scoped ("only a feature's
+// data/ sublayer may import @/api/generated/**"), so it permits ANY feature's
+// data/ to reach the calendar-log client. The restriction wanted here is to ONE
+// feature's data/, which the `boundaries` plugin cannot express against a file
+// inside a single element — hence the seam-ban idiom, like calendar-kit above.
+const activityClientImportPattern = {
+  regex: "^@/api/generated/calendar-logs($|/)",
+  message:
+    "Use the @/features/activity/data seam — the generated calendar-log client is imported only inside src/features/activity/data/ (TIM-397 / ADR 045).",
+}
+
 // False options belong only to the exact seam dirs/files that legitimately import
 // the backends or wrapped APIs kept out of the rest of the app.
 const restrictedImports = (
@@ -111,6 +141,7 @@ const restrictedImports = (
     banStorageBackends = true,
     banChromeSeam = true,
     banCalendarKit = true,
+    banActivitySeam = true,
   } = {},
 ) => [
   "error",
@@ -120,9 +151,13 @@ const restrictedImports = (
       ...(banStorageBackends ? storageBackendImportPatterns : []),
       ...(banChromeSeam ? chromeSeamImportPatterns : []),
       ...(banCalendarKit ? [calendarKitImportPattern] : []),
+      ...(banActivitySeam ? [activityClientImportPattern] : []),
       ...extraPatterns,
     ],
-    paths: restrictedImportPaths,
+    paths: [
+      ...restrictedImportPaths,
+      ...(banActivitySeam ? [dbActivityTablesImportPath] : []),
+    ],
   },
 ]
 
@@ -239,6 +274,18 @@ module.exports = defineConfig([
     rules: {
       "no-restricted-imports": restrictedImports([], {
         banCalendarKit: false,
+      }),
+    },
+  },
+  {
+    // The Activity data sublayer IS the seam — the single issuer of calendar-log
+    // requests (TIM-397 / ADR 045), so it is the one place that may import the
+    // generated client the ban keeps out of every other module.
+    name: "timecalendar/activity-seam",
+    files: ["src/features/activity/data/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports([], {
+        banActivitySeam: false,
       }),
     },
   },
