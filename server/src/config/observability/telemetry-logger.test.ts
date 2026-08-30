@@ -7,6 +7,7 @@ import {
   LoggerProvider,
   SimpleLogRecordProcessor,
 } from "@opentelemetry/sdk-logs"
+import { EntityNotFoundError } from "typeorm"
 import { TelemetryLogger } from "./telemetry-logger"
 
 describe("TelemetryLogger", () => {
@@ -61,6 +62,18 @@ describe("TelemetryLogger", () => {
     expect(consoleBody).toBe(exportedBody)
     expect(exportedBody).not.toContain(secret)
     expect(otelLogger.emit).toHaveBeenCalledTimes(1)
+  })
+
+  it("never exports a calendar token from an entity-not-found debug log", () => {
+    const { otelLogger, logger } = createLogger()
+    const token = "-1StGXR8Z5jdHi6BmyTa-"
+    logger.debug(
+      new EntityNotFoundError("Calendar", { token }),
+      "CalendarService",
+    )
+
+    expect(otelLogger.emit).toHaveBeenCalledTimes(1)
+    expect(otelLogger.emit.mock.calls[0][0].body).not.toContain(token)
   })
 
   it("keeps logging when the OTel API has no exporter provider", () => {
