@@ -24,6 +24,7 @@ export {
   clearOlderPageCursor,
   DEFAULT_ACTIVITY_STATE,
   dtoToActivityRow,
+  formatUnreadBadge,
   listActivityLogs,
   loadOlderPage,
   markActivityRead,
@@ -34,4 +35,6 @@ export {
   rowToActivityLog,
   storeNewestPage,
   storeOlderPage,
+  useActivityLogs,
+  useActivityState,
 } from "./data"

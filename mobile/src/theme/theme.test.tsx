@@ -54,6 +54,18 @@ describe("theme", () => {
     const dark = await renderHook(() => useTheme())
     expect(dark.result.current.primary).toBe(Colors.dark.primary)
   })
+
+  it("resolves the semantic status tokens per scheme", async () => {
+    mockUseColorScheme.mockReturnValue("light")
+    const light = await renderHook(() => useTheme())
+    expect(light.result.current.positive).toBe("#146C43")
+    expect(light.result.current.informational).toBe("#0B57D0")
+
+    mockUseColorScheme.mockReturnValue("dark")
+    const dark = await renderHook(() => useTheme())
+    expect(dark.result.current.positive).toBe("#7EE2A8")
+    expect(dark.result.current.informational).toBe("#A8C7FA")
+  })
 })
 
 // The nav↔token contract (design D4): the React Navigation theme the layout

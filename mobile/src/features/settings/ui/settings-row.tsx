@@ -19,6 +19,7 @@ interface SettingsRouterRowProps extends SettingsRowBaseProps {
   href: Href
   hint: string
   secondary?: string
+  badge?: string
   onPress?: never
   value?: never
 }
@@ -29,6 +30,7 @@ interface SettingsActionRowProps extends SettingsRowBaseProps {
   hint: string
   accessibilityRole?: "button" | "link"
   secondary?: string
+  badge?: string
   href?: never
   value?: never
 }
@@ -83,6 +85,17 @@ export function SettingsRow(props: SettingsRowProps) {
           </ThemedText>
         ) : null}
       </View>
+      {!isValue && props.badge !== undefined ? (
+        <View
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={[styles.badge, { backgroundColor: theme.primaryStrong }]}
+        >
+          <ThemedText type="smallBold" style={{ color: theme.onPrimary }}>
+            {props.badge}
+          </ThemedText>
+        </View>
+      ) : null}
       {!isValue ? (
         <View
           accessible={false}
@@ -179,6 +192,15 @@ const styles = StyleSheet.create({
   chevron: { width: 16, height: 16 },
   text: { flex: 1, minWidth: 0, gap: Spacing.one },
   label: { flexShrink: 1 },
+  badge: {
+    flexShrink: 1,
+    minWidth: 28,
+    minHeight: 24,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Radii.pill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   chevronContainer: { flexShrink: 0 },
   separator: {
     position: "absolute",
