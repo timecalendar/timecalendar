@@ -1,4 +1,5 @@
 export { loadOlderPage, refreshNewestPage } from "./coordinator"
+export { useActivityLogs, useActivityState } from "./hooks"
 export { canonicalIso, dtoToActivityRow, rowToActivityLog } from "./mappers"
 export {
   clearOlderPageCursor,
@@ -22,3 +23,4 @@ export {
   type ActivityState,
   DEFAULT_ACTIVITY_STATE,
 } from "./types"
+export { formatUnreadBadge } from "./unread-badge"

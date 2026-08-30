@@ -13,6 +13,8 @@ export const Colors = {
     actionText: "#C2185B",
     onPrimary: "#ffffff",
     primarySoft: "#E91E631F",
+    positive: "#146C43",
+    informational: "#0B57D0",
     destructive: "#B3261E",
     homeHero: "#FCE4EC",
     homeHeroDate: "#AD1457",
@@ -32,6 +34,8 @@ export const Colors = {
     actionText: "#FF4081",
     onPrimary: "#ffffff",
     primarySoft: "#FF40811F",
+    positive: "#7EE2A8",
+    informational: "#A8C7FA",
     destructive: "#FFB4AB",
     homeHero: "#321824",
     homeHeroDate: "#FF80AB",
@@ -94,6 +98,16 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark
  *   DESTRUCTIVE
  *   - destructive light #B3261E on backgroundElement #F0F0F3 → 5.3:1 (UI ✅)
  *   - destructive dark #FFB4AB on backgroundElement #212225 → 9.1:1 (UI ✅)
+ *
+ *   STATUS
+ *   - positive light #146C43 on background #fff → 6.45:1 (body ✅)
+ *   - positive light #146C43 on backgroundElement #F0F0F3 → 5.67:1 (body ✅)
+ *   - positive dark #7EE2A8 on background #000 → 13.33:1 (body ✅)
+ *   - positive dark #7EE2A8 on backgroundElement #212225 → 10.10:1 (body ✅)
+ *   - informational light #0B57D0 on background #fff → 6.39:1 (body ✅)
+ *   - informational light #0B57D0 on backgroundElement #F0F0F3 → 5.61:1 (body ✅)
+ *   - informational dark #A8C7FA on background #000 → 12.21:1 (body ✅)
+ *   - informational dark #A8C7FA on backgroundElement #212225 → 9.25:1 (body ✅)
  *
  * THE RULE (Settings inherits it): white text on brand rides `primaryStrong`
  * #C2185B (the filled-button pair `onPrimary` on `primaryStrong` = 5.87:1, AA body,

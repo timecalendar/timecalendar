@@ -2,6 +2,10 @@
 
 ## 2026-08-30
 
+- Added the AA-verified `positive` and `informational` semantic status tokens, the thin root
+  `/activity` route and grouped cached timeline, and the Settings Activity entry with a reactive
+  unread badge. Ticket 5 owns user-driven refresh/pagination and cache-bounded read marking;
+  screen-open, foreground, push, and post-sync triggers remain Ticket 6's boundary.
 - Recorded the calendar rename surface and, load-bearing, the rule that the sync path
   converges calendar names through the narrow `updateName(id, name)` write and must never
   `upsert` a `user_calendars` row or route through `fromCalendarForPublic`, which hard-codes

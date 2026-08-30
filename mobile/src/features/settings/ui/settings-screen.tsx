@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { formatUnreadBadge, useActivityState } from "@/features/activity"
 import {
   useUserCalendars,
   useUserCalendarsLoaded,
@@ -17,6 +18,19 @@ import { SettingsRow } from "./settings-row"
 import { SettingsSection } from "./settings-section"
 
 const destinations = [
+  {
+    section: "events" as const,
+    href: "/activity" as const,
+    icon: {
+      ios: "clock.arrow.circlepath",
+      android: "history",
+      web: "history",
+    } as const,
+    label: "settingsHub.activity.label" as const,
+    hint: "settingsHub.activity.hint" as const,
+    testID: "settings-activity",
+    unreadBadge: true,
+  },
   {
     section: "events" as const,
     href: "/personal-events" as const,
@@ -110,6 +124,7 @@ export function SettingsScreen() {
   const theme = useTheme()
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
+  const { unreadCount } = useActivityState()
   const summary = deriveCalendarSummary(calendars, loaded)
   const showEnvironmentControl =
     getBackendEnvironmentCapability() !== "production"
@@ -177,17 +192,37 @@ export function SettingsScreen() {
             >
               {destinations
                 .filter((destination) => destination.section === section)
-                .map((destination, index) => (
-                  <SettingsRow
-                    first={index === 0}
-                    key={destination.href}
-                    href={destination.href}
-                    icon={destination.icon}
-                    label={t(destination.label)}
-                    hint={t(destination.hint)}
-                    testID={destination.testID}
-                  />
-                ))}
+                .map((destination, index) => {
+                  const hasUnreadBadge = "unreadBadge" in destination
+                  const label = t(destination.label)
+                  const badge = hasUnreadBadge
+                    ? formatUnreadBadge(unreadCount)
+                    : null
+                  const accessibilityLabel =
+                    hasUnreadBadge && unreadCount > 0
+                      ? t("settingsHub.activity.accessibilityLabel", {
+                          primary: label,
+                          secondary: t("settingsHub.activity.unread", {
+                            count: unreadCount,
+                          }),
+                        })
+                      : null
+                  return (
+                    <SettingsRow
+                      first={index === 0}
+                      key={destination.href}
+                      href={destination.href}
+                      icon={destination.icon}
+                      label={label}
+                      hint={t(destination.hint)}
+                      testID={destination.testID}
+                      {...(accessibilityLabel !== null
+                        ? { accessibilityLabel }
+                        : {})}
+                      {...(badge !== null ? { badge } : {})}
+                    />
+                  )
+                })}
             </SettingsSection>
           ))}
           {showEnvironmentControl ? (

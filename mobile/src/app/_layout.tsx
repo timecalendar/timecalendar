@@ -151,6 +151,9 @@ export default function RootLayout() {
                 name="hidden-events"
                 options={{ headerShown: true }}
               />
+              {/* The Activity timeline — a Stack sibling of (tabs), reached from
+                Settings. Deep-linkable: timecalendar-dev://activity. */}
+              <Stack.Screen name="activity" options={{ headerShown: true }} />
               {/* The notification subscription preferences screen (Phase 06 Ship
                 B) — a Stack sibling of (tabs), reached from Settings,
                 mirroring appearance settings / hidden-events. Header shown for the

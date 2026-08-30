@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react-native"
 import { router } from "expo-router"
 
+import { useActivityState } from "@/features/activity"
 import {
   useUserCalendars,
   useUserCalendarsLoaded,
@@ -11,6 +12,12 @@ import { SettingsScreen } from "./settings-screen"
 jest.mock("@/features/calendar-sources", () => ({
   useUserCalendars: jest.fn(),
   useUserCalendarsLoaded: jest.fn(),
+}))
+
+jest.mock("@/features/activity", () => ({
+  formatUnreadBadge: jest.requireActual("@/features/activity/data/unread-badge")
+    .formatUnreadBadge,
+  useActivityState: jest.fn(),
 }))
 
 jest.mock("expo-router", () => {
@@ -42,12 +49,14 @@ jest.mock("@/features/environment", () => ({
 
 const mockCalendars = useUserCalendars as jest.Mock
 const mockLoaded = useUserCalendarsLoaded as jest.Mock
+const mockActivityState = useActivityState as jest.Mock
 const mockPush = router.push as jest.Mock
 
 beforeEach(() => {
   mockCalendars.mockReturnValue([])
   mockLoaded.mockReturnValue(true)
   mockCapability = "production"
+  mockActivityState.mockReturnValue({ unreadCount: 0 })
   mockPush.mockReset()
 })
 
@@ -78,7 +87,7 @@ describe("SettingsScreen", () => {
     expect(screen.getByText("Time zone")).toBeTruthy()
     expect(screen.getByText("Notifications")).toBeTruthy()
     expect(screen.getByText("About")).toBeTruthy()
-    expect(screen.queryByText("Activity")).toBeNull()
+    expect(screen.getByText("Activity")).toBeTruthy()
     expect(screen.getByText("Feedback")).toBeTruthy()
     expect(screen.queryByText("Add calendar")).toBeNull()
     expect(screen.queryByText("TIMECALENDAR")).toBeNull()
@@ -144,6 +153,7 @@ describe("SettingsScreen", () => {
     await render(<SettingsScreen />)
     const routes = [
       ["settings-calendar-summary", "/user-calendars"],
+      ["settings-activity", "/activity"],
       ["settings-personal-events", "/personal-events"],
       ["settings-hidden-events", "/hidden-events"],
       ["settings-appearance", "/appearance-settings"],
@@ -163,5 +173,47 @@ describe("SettingsScreen", () => {
       await fireEvent.press(row)
       expect(mockPush).toHaveBeenLastCalledWith(route)
     }
+  })
+
+  it("renders Activity first in Events and announces its uncapped unread count", async () => {
+    mockActivityState.mockReturnValue({ unreadCount: 100 })
+    await render(<SettingsScreen />)
+    const eventRows = screen
+      .getAllByTestId(/^settings-/)
+      .filter((node) => node.props.accessibilityRole === "link")
+    expect(eventRows[1]?.props.testID).toBe("settings-activity")
+    const row = screen.getByTestId("settings-activity")
+    expect(row.props.accessibilityLabel).toBe("Activity, 100 unread changes")
+    expect(
+      screen.getByText("99+", { includeHiddenElements: true }),
+    ).toBeTruthy()
+    expect(screen.queryByLabelText("99+")).toBeNull()
+  })
+
+  it.each([
+    [0, null],
+    [1, "1"],
+    [99, "99"],
+    [100, "99+"],
+  ] as const)("renders unread badge %s as %s", async (count, badge) => {
+    mockActivityState.mockReturnValue({ unreadCount: count })
+    await render(<SettingsScreen />)
+    if (badge === null) {
+      expect(screen.queryByText("99+")).toBeNull()
+      expect(
+        screen.getByTestId("settings-activity").props.accessibilityLabel,
+      ).toBe("Activity")
+    } else {
+      expect(
+        screen.getByText(badge, { includeHiddenElements: true }),
+      ).toBeTruthy()
+    }
+  })
+
+  it("keeps Activity visible and routable with zero calendars", async () => {
+    mockCalendars.mockReturnValue([])
+    await render(<SettingsScreen />)
+    await fireEvent.press(screen.getByTestId("settings-activity"))
+    expect(mockPush).toHaveBeenCalledWith("/activity")
   })
 })

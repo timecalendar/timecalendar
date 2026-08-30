@@ -39,6 +39,15 @@ describe("Settings route structure", () => {
     expect(rootLayout).toContain('initialRouteName: "(tabs)"')
   })
 
+  it("keeps Activity as a thin feature route registered in the root Stack", () => {
+    expect(route("activity.tsx").trim()).toBe(
+      'export { ActivityScreen as default } from "@/features/activity/ui"',
+    )
+    expect(route("_layout.tsx")).toContain(
+      '<Stack.Screen name="activity" options={{ headerShown: true }} />',
+    )
+  })
+
   it("keeps both Changelog routes thin with tabs-only gate ownership", () => {
     expect(route("changelog.tsx").trim()).toBe(
       'export { ChangelogHistoryScreen as default } from "@/features/changelog/ui"',

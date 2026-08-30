@@ -37,6 +37,10 @@ iCal import failure. Its optional route parameters are limited to `calendarUrl`,
 `schoolId`, `schoolName`, and `calendarName` (the normalized programme name from the
 import draft, omitted when empty); the route is a thin re-export from the feedback feature.
 
+`/activity` is a visible-header root Stack sibling reached from the Settings Events section and
+deep-linkable as `timecalendar-dev://activity`. `src/app/activity.tsx` is a one-line re-export
+from `@/features/activity/ui`; grouping, pagination, errors, and accessibility remain feature-owned.
+
 `/changelog` is a visible-header regular root Stack destination reached from About and
 renders every bundled release. `/changelog-sheet` is a visible-header root modal: an iOS
 form sheet with a large detent/grabber and an Android full-screen modal. Both are thin route
