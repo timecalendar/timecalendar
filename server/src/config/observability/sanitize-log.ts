@@ -34,15 +34,21 @@ const sanitizeText = (input: string) =>
     })
     .replace(/\b(?:bearer|basic)\s+[a-z\d._~+/-]+=*/gi, "[credential:redacted]")
     .replace(
-      /\b(?:authorization|set-cookie|cookie|token(?:\s+suffix)?|password|secret)\s*[:=][^\r\n]*/gi,
-      (match) => `${match.split(/[:=]/, 1)[0]}=[redacted]`,
+      /\b(?:authorization|set-cookie|cookie|token(?:\s+suffix)?|password|secret)["']?\s*[:=][^\r\n]*/gi,
+      (match) => `${match.split(/["']?\s*[:=]/, 1)[0]}=[redacted]`,
     )
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[email:redacted]")
     .replace(
       /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
       "[id:redacted]",
     )
-    .replace(/\b(?:[A-Za-z\d_-]{21,}|\d{10,})\b/g, "[id:redacted]")
+    // The two alternatives bound themselves with deliberately different classes: `-`
+    // belongs to the opaque-token alphabet (so it cannot end one), but may sit at the
+    // edge of a digit run. Sharing one lookaround pair leaks whichever it excludes.
+    .replace(
+      /(?<![A-Za-z\d_-])[A-Za-z\d_-]{21,}(?![A-Za-z\d_-])|(?<![A-Za-z\d_])\d{10,}(?![A-Za-z\d_])/g,
+      "[id:redacted]",
+    )
     .slice(0, MAX_SCALAR_LENGTH)
 
 const sanitizeContext = (input: string) =>
