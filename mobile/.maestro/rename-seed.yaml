@@ -1,0 +1,42 @@
+# Shared import preamble for the RENAME round trip — the same mechanism as
+# import-seed.yaml, pointed at the rename flow's OWN seeded token.
+#
+# Why a second seed rather than reusing import-seed.yaml: a rename is a durable
+# SERVER mutation, and `maestro test .maestro/` runs the whole folder in one
+# device session. Renaming `e2e-smoke-calendar` would change the name eleven
+# other flows read, and they would start failing for a reason nobody would
+# attribute to the rename flow. `e2e-rename-calendar`
+# (server/src/scripts/seed-e2e-calendar.ts) exists so exactly one calendar is
+# mutable and every `up` resets it to its baseline name.
+#
+# It is run TWICE by user-calendar-rename.yaml. That is the point: the leading
+# `launchApp: clearState: true` wipes the device, so the second run re-imports
+# the token from the SERVER — the renamed name that comes back then cannot have
+# come from a local row this device wrote.
+#
+# Cold-start idiom (see settings.yaml header): a warm openLink does not navigate
+# on Android release builds — Expo Router resolves the link through
+# getInitialURL on a cold launch, so stopApp first, then openLink relaunches.
+appId: fr.samuelprak.timecalendar.dev
+---
+# Wipe durable app state: this is both the cross-flow isolation the suite
+# requires AND, on the second run, the thing that makes the convergence claim.
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar-dev://dev-import?token=e2e-rename-calendar
+# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
+# simulator — tap when present, skip otherwise.
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+# The dev-import screen imports the token, syncs, then router.replace("/calendar").
+# Generous timeout: a release-config cold start + JS bundle load + the resolve +
+# upsert + sync round-trip can land well past Maestro's ~17s default.
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000

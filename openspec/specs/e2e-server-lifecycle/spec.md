@@ -66,6 +66,17 @@ today-anchored event whose details+checklist are reachable, and at least one sta
 today-anchored event that can be hidden then un-hidden. The token/id SHALL remain constant so
 the mobile import deep link resolves the same calendar.
 
+The seed SHALL ALSO include a **second, dedicated** token-addressable calendar under the constants
+`E2E_RENAME_CALENDAR_TOKEN = "e2e-rename-calendar"` / `E2E_RENAME_CALENDAR_ID`, carrying a
+deterministic ASCII-safe baseline **name** that no other seeded calendar uses. It exists so the
+rename round-trip flow can perform a durable server rename without mutating `e2e-smoke-calendar`,
+whose name and events the other flows depend on within the same device session.
+
+Because that flow renames it, this calendar's name is the one piece of seeded state a run mutates:
+every `up` SHALL reset it to the baseline name, so repeat runs remain reproducible. Its id and token
+SHALL remain constant so the dev-import deep link and the flow's row selector resolve the same
+calendar. Its events are not asserted by any flow and SHALL be kept minimal.
+
 #### Scenario: Repeat runs are reproducible
 
 - **WHEN** `up` is run twice in a row
@@ -80,17 +91,10 @@ the mobile import deep link resolves the same calendar.
   `now`'s UTC day, plus stable uniquely-titled today events for the details/checklist and the
   hide/un-hide flows, all with ASCII-safe titles/locations
 
-#### Scenario: The token and id stay constant for the import deep link
+#### Scenario: The rename calendar is reset to its baseline name on every up
 
-- **WHEN** the mobile dev-import deep link resolves `e2e-smoke-calendar`
-- **THEN** the token and `E2E_CALENDAR_ID` match the seeded calendar so the imported
-  `user_calendars` row and the synced `calendar_events` correspond to the seeded events
-
-#### Scenario: Sync returns the seeded events without an external fetch
-
-- **WHEN** `POST /calendars/sync { tokens: ["e2e-smoke-calendar"] }` is called after the seed
-- **THEN** the seeded `CalendarContent` events are returned directly (the future
-  `syncPlannedAt` keeps the server from making an external iCal call)
+- **WHEN** a previous run renamed `e2e-rename-calendar` and `up` is run again
+- **THEN** the calendar is seeded back to its baseline name under the same constant id and token
 
 ### Requirement: Boots without a real Firebase credential
 

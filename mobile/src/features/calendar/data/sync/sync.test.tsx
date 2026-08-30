@@ -3,7 +3,11 @@ import { act, renderHook, waitFor } from "@testing-library/react-native"
 import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
-import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
+import {
+  findAll as findAllUserCalendars,
+  updateName as updateUserCalendarName,
+  upsert as upsertUserCalendar,
+} from "@/features/calendar-sources/data/user-calendars"
 import { recordUnknownError } from "@/firebase"
 
 import * as repository from "./repository"
@@ -18,13 +22,20 @@ import { useSyncCalendars } from "./sync"
 // verbatim insert ROWS now (dtoToRow's output), not domain events.
 jest.mock("@/api/mutator")
 jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
+// `upsert` is mocked purely so the tests can PROVE it is never reached on this
+// path: a full-row write would carry fromCalendarForPublic's hard-coded
+// `visible: true` and unhide a hidden calendar on every sync (design D1).
 jest.mock("@/features/calendar-sources/data/user-calendars", () => ({
   findAll: jest.fn(),
+  updateName: jest.fn(),
+  upsert: jest.fn(),
 }))
 jest.spyOn(repository, "replaceAll").mockResolvedValue(undefined)
 
 const mockFetch = customFetch as jest.Mock
 const mockFindAll = findAllUserCalendars as jest.Mock
+const mockUpdateName = updateUserCalendarName as jest.Mock
+const mockUpsert = upsertUserCalendar as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockReplaceAll = repository.replaceAll as jest.Mock
 
@@ -74,6 +85,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockReplaceAll.mockResolvedValue(undefined)
   mockFindAll.mockResolvedValue([calendarToken])
+  mockUpdateName.mockResolvedValue(undefined)
 })
 
 afterEach(() => {
@@ -190,6 +202,79 @@ describe("useSyncCalendars", () => {
 
     mockFetch.mockRejectedValueOnce(new Error("must not leak"))
     mockReplaceAll.mockRejectedValueOnce(new Error("must not leak"))
+  })
+
+  describe("name convergence", () => {
+    const renamed = [
+      {
+        calendar: { id: "cal-1", token: "tok_123", name: "L3 Informatique" },
+        events: [dtoEvent],
+      },
+    ]
+
+    it("writes the server name through the narrow updateName when it changed", async () => {
+      mockFetch.mockResolvedValueOnce(renamed)
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      expect(mockUpdateName).toHaveBeenCalledWith("cal-1", "L3 Informatique")
+      expect(result.current.isError).toBe(false)
+    })
+
+    it("issues no write when every returned name already matches", async () => {
+      // syncResponse carries the same "ENSEEIHT" the local snapshot holds.
+      mockFetch.mockResolvedValueOnce(syncResponse)
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      expect(mockUpdateName).not.toHaveBeenCalled()
+    })
+
+    // The correctness crux (design D1): a hidden calendar must converge on the
+    // server name and STAY hidden. `visible` is a client-only field absent from
+    // the DTO, so any full-row write would resurrect it on every sync.
+    it("converges a hidden calendar's name without ever upserting a full row", async () => {
+      mockFindAll.mockResolvedValue([{ ...calendarToken, visible: false }])
+      mockFetch.mockResolvedValueOnce(renamed)
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      expect(mockUpdateName).toHaveBeenCalledWith("cal-1", "L3 Informatique")
+      // The only write reaching user_calendars is the one-column UPDATE: no
+      // upsert anywhere on the sync path, so `visible: false` survives.
+      expect(mockUpsert).not.toHaveBeenCalled()
+      expect(mockUpdateName.mock.calls[0]).toHaveLength(2)
+    })
+
+    it("keeps the replaced events and the last-good name when the name write fails", async () => {
+      mockFetch.mockResolvedValueOnce(renamed)
+      mockUpdateName.mockRejectedValueOnce(new Error("sqlite boom"))
+
+      const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      await act(async () => {
+        await result.current.sync()
+      })
+
+      // The events the user came for stayed committed — the replace ran and was
+      // not rolled back (two failure domains, design D3).
+      expect(mockReplaceAll).toHaveBeenCalledTimes(1)
+      await waitFor(() => expect(result.current.isError).toBe(true))
+      expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
+      // A context distinct from the replace's, so a permanently failing metadata
+      // write is not mis-attributed to the event transaction.
+      expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe(
+        "calendar/sync-names",
+      )
+    })
   })
 
   it("forwards a non-Error replaceAll rejection to the seam under its tag", async () => {

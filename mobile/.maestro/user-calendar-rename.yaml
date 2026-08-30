@@ -1,0 +1,103 @@
+# Calendar rename round trip (TIM-392) — the flow proves the SERVER converged,
+# not merely that the device re-read a row it had just written itself.
+#
+# Shape:
+#   1. rename-seed.yaml imports `e2e-rename-calendar` on a wiped device
+#   2. assert the seeded baseline name on the management screen
+#   3. rename it through the overflow menu + the controlled dialog
+#   4. assert the new name (the LOCAL write)
+#   5. rename-seed.yaml AGAIN — its `clearState: true` wipes the device and the
+#      re-import resolves the token from the server
+#   6. assert the renamed name — this row's name can only have come from the
+#      server, on a device that never performed the rename. That is the claim.
+#
+# RE-RUN CAVEAT (mobile/e2e/README.md): step 2 asserts the BASELINE name, so it
+# only holds against a server seeded since the last rename. ANY second pass over
+# this flow against the same server fails there — a local re-run without
+# re-running `ci/e2e-server.sh`, and equally a CI retry: run_e2e.sh seeds once
+# per job, outside run_flow, while run_flow retries a flow up to
+# --startup-attempts (4 on iOS) from step 1 without re-seeding. Dropping that
+# assertion would make step 6 vacuous on a re-run — a silent false green traded
+# for a visible, diagnosable failure.
+#
+# Selector rules this flow follows (maestro-selector-drift guidance):
+#  - the overflow trigger is tapped by `id:`, never by text: it is a Pressable
+#    with a composed accessibilityLabel, and iOS collapses such a container into
+#    one element exposing only that label.
+#  - the dialog's Save is tapped by `id:` too, and the dialog TITLE ("Rename
+#    calendar") is deliberately a different string from the menu action
+#    ("Rename") so no two live elements share one anchored selector.
+#  - NO `- back`: iOS reports it COMPLETED without popping. Re-entry uses the
+#    suite's stopApp → openLink → extendedWaitUntil idiom.
+#  - every extendedWaitUntil whose preceding top-level command is launchApp or
+#    openLink carries `timeout: 60000` (release-config cold start).
+#
+# Requires the release-config dev-variant build + the e2e server. Shared across
+# iOS and Android. NOT labelled run-e2e — native E2E runs on main.
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: rename-seed.yaml
+
+# Into the management screen, cold (see the cold-start idiom in settings.yaml).
+- stopApp
+- openLink: timecalendar-dev://user-calendars
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "My calendars"
+    timeout: 60000
+
+# 2. The seeded baseline name, straight from the server through the import.
+- extendedWaitUntil:
+    visible: "E2E Rename Baseline"
+    timeout: 60000
+
+# 3. Rename through the overflow menu. The trigger's id carries the calendar id,
+# which is the constant E2E_RENAME_CALENDAR_ID from the server seed.
+- tapOn:
+    id: "user-calendar-actions-e2e0e2e0-0000-4000-8000-000000000002"
+- tapOn: "Rename"
+- extendedWaitUntil:
+    visible:
+      id: "user-calendar-rename-input"
+    timeout: 15000
+- tapOn:
+    id: "user-calendar-rename-input"
+- eraseText
+- inputText: "E2E Renamed Timetable"
+- tapOn:
+    id: "user-calendar-rename-save"
+
+# 4. The local write: the dialog closed on the resolved success and the row
+# re-rendered with the name the SERVER returned.
+- extendedWaitUntil:
+    visible: "E2E Renamed Timetable"
+    timeout: 30000
+
+# 5. Wipe the device and re-import the token — the second run's clearState is
+# what makes the next assertion a server claim rather than a local one.
+- runFlow: rename-seed.yaml
+- stopApp
+- openLink: timecalendar-dev://user-calendars
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "My calendars"
+    timeout: 60000
+
+# 6. The convergence proof: a freshly imported row, on a wiped device, carrying
+# the renamed name. The baseline must be gone.
+- extendedWaitUntil:
+    visible: "E2E Renamed Timetable"
+    timeout: 60000
+- assertNotVisible: "E2E Rename Baseline"
