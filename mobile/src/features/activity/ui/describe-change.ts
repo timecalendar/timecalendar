@@ -2,9 +2,9 @@ import type { ActivityLog } from "@/features/activity/data"
 
 type CalendarLogEvent = ActivityLog["change"]["newItems"][number]
 
-export type ChangedField = "time" | "location" | "title"
+type ChangedField = "time" | "location" | "title"
 
-export interface ChangedDifference {
+interface ChangedDifference {
   field: ChangedField
   from: string
   to: string
@@ -12,7 +12,7 @@ export interface ChangedDifference {
 
 type TimeFormatter = (start: Date, end: Date) => string
 
-function parseRange(event: CalendarLogEvent): [Date, Date] | null {
+export function parseRange(event: CalendarLogEvent): [Date, Date] | null {
   const start = new Date(event.startsAt)
   const end = new Date(event.endsAt)
   return Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())

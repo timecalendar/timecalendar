@@ -194,17 +194,17 @@ export function SettingsScreen() {
                 .filter((destination) => destination.section === section)
                 .map((destination, index) => {
                   const hasUnreadBadge = "unreadBadge" in destination
-                  const unread = hasUnreadBadge
-                    ? t("settingsHub.activity.unread", { count: unreadCount })
-                    : undefined
+                  const label = t(destination.label)
                   const badge = hasUnreadBadge
                     ? formatUnreadBadge(unreadCount)
                     : null
                   const accessibilityLabel =
                     hasUnreadBadge && unreadCount > 0
                       ? t("settingsHub.activity.accessibilityLabel", {
-                          primary: t(destination.label),
-                          secondary: unread,
+                          primary: label,
+                          secondary: t("settingsHub.activity.unread", {
+                            count: unreadCount,
+                          }),
                         })
                       : null
                   return (
@@ -213,7 +213,7 @@ export function SettingsScreen() {
                       key={destination.href}
                       href={destination.href}
                       icon={destination.icon}
-                      label={t(destination.label)}
+                      label={label}
                       hint={t(destination.hint)}
                       testID={destination.testID}
                       {...(accessibilityLabel !== null

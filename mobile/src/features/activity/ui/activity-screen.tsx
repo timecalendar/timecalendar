@@ -33,7 +33,7 @@ import {
   type ActivitySection,
   buildActivitySections,
 } from "./activity-items"
-import { describeChangedItem } from "./describe-change"
+import { describeChangedItem, parseRange } from "./describe-change"
 
 export function ActivityScreen() {
   const { t, i18n } = useTranslation()
@@ -91,7 +91,6 @@ export function ActivityScreen() {
     }
   }, [olderPageComplete, sections.length])
 
-  const empty = sections.length === 0
   const refreshControl = (
     <RefreshControl
       testID="activity-refresh-control"
@@ -114,7 +113,7 @@ export function ActivityScreen() {
               accessibilityLabel={t("activity.loading")}
             />
           </View>
-        ) : empty && refreshFailed ? (
+        ) : sections.length === 0 && refreshFailed ? (
           <FullError onRetry={refresh} />
         ) : (
           <SectionList<ActivityItem, ActivitySection>
@@ -187,14 +186,6 @@ function ActivityGroupHeader({
   )
 }
 
-function validRange(startsAt: string, endsAt: string): [Date, Date] | null {
-  const start = new Date(startsAt)
-  const end = new Date(endsAt)
-  return Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())
-    ? null
-    : [start, end]
-}
-
 function ActivityItemRow({
   item,
   formatTime,
@@ -205,7 +196,7 @@ function ActivityItemRow({
   const { t } = useTranslation()
   const theme = useTheme()
   const event = item.kind === "changed" ? item.change.newItem : item.event
-  const range = validRange(event.startsAt, event.endsAt)
+  const range = parseRange(event)
   const time = range === null ? null : formatTime(...range)
   const kindColor =
     item.kind === "new"
