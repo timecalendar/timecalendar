@@ -42,6 +42,7 @@ const {
   listActivityLogs,
   markActivityRead,
   markActivityReadFromCache,
+  pruneToHeldCalendars,
   readActivityState,
   storeNewestPage,
   storeOlderPage,
@@ -368,6 +369,76 @@ describe("calendar removal", () => {
     await storeNewestPage(page({ heldCalendarIds: [] }))
 
     expect(await storedIds()).toEqual([])
+  })
+})
+
+// The removal-driven ownership prune (TIM-397 / D7). It exists because the prune
+// normally rides a page write, and no page is written when the device holds no
+// calendars — so a student who removes their LAST calendar would otherwise keep
+// that calendar's history cached forever.
+describe("standalone ownership prune", () => {
+  const seedTwoCalendars = async (): Promise<void> => {
+    await storeNewestPage(
+      page({
+        heldCalendarIds: ["cal-1", "cal-2"],
+        rows: [
+          logRow("keep", "2026-06-16T09:00:00.000Z"),
+          logRow("drop", "2026-06-15T09:00:00.000Z", { calendarId: "cal-2" }),
+        ],
+        nextCursor: "cursor-2",
+        unreadCount: 4,
+        lastSuccessfulRefreshAt: new Date("2026-06-16T12:00:05.000Z"),
+      }),
+    )
+  }
+
+  it("deletes only the removed calendar's rows", async () => {
+    await seedTwoCalendars()
+
+    await pruneToHeldCalendars(["cal-1"])
+
+    expect(await storedIds()).toEqual(["keep"])
+  })
+
+  it("empties the table when the last calendar is removed", async () => {
+    await seedTwoCalendars()
+
+    await pruneToHeldCalendars([])
+
+    expect(await storedIds()).toEqual([])
+  })
+
+  it("keeps every row when nothing was removed", async () => {
+    await seedTwoCalendars()
+
+    await pruneToHeldCalendars(["cal-1", "cal-2"])
+
+    expect(await storedIds()).toEqual(["keep", "drop"])
+  })
+
+  // It is the ownership prune ALONE: no watermark, no unread count, no refresh
+  // timestamp, no cursor, no completion flag. It needs no server `asOf`, which
+  // is the whole point — it must work when no request was issued at all.
+  it("writes no state at all", async () => {
+    await seedTwoCalendars()
+    await markActivityRead("2026-06-16T08:00:00.000Z")
+    await storeNewestPage(page({ unreadCount: 6, nextCursor: "cursor-2" }))
+    const before = await readActivityState()
+
+    await pruneToHeldCalendars([])
+
+    await expect(readActivityState()).resolves.toEqual(before)
+  })
+
+  it("prunes in exactly one synchronous transaction", async () => {
+    await seedTwoCalendars()
+    mockFake.spies.transaction.mockClear()
+
+    await pruneToHeldCalendars(["cal-1"])
+
+    expect(mockFake.spies.transaction).toHaveBeenCalledTimes(1)
+    const callback = mockFake.spies.transaction.mock.calls[0]?.[0] as Function
+    expect(callback.constructor.name).not.toBe("AsyncFunction")
   })
 })
 

@@ -3,8 +3,8 @@
 The exact rules and their options live in `mobile/eslint.config.js` (named blocks:
 `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`,
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
-`timecalendar/calendar-kit-vendor-seam`, `timecalendar/storage-seams`,
-`timecalendar/tests`). The config is the source of
+`timecalendar/calendar-kit-vendor-seam`, `timecalendar/activity-seam`,
+`timecalendar/storage-seams`, `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
 ## Toolchain
@@ -67,6 +67,20 @@ truth; this file carries the caveats the config can't (R-1).
     **no new element type or rule** — it matches the existing `feature-sublayer` pattern
     (`src/features/*/*`, layer `ui`), so B-1/B-2 cover it automatically (comments-only
     `eslint.config.js` change).
+  - **B-5 — the Activity seam** (`timecalendar/activity-seam`, ADR
+    [048](./decisions/048-activity-refresh-single-flight-and-token-precondition.md)):
+    only `src/features/activity/data/**` may import `@/api/generated/calendar-logs/**`
+    or the `activityLogs` / `activityState` bindings from `@/db`. Activity's refresh
+    coordinator is the single issuer of calendar-log requests, because four triggers
+    each issuing their own request is the capacity risk that got the feature switched
+    off. **B-1 does not cover this**: B-1 is *sublayer*-scoped, so it permits *any*
+    feature's `data/` to reach the calendar-log client — the restriction wanted here is
+    to **one** feature's `data/`, which `boundaries` cannot express against a file
+    inside a single element. So B-5 is a `no-restricted-imports` seam ban with a
+    per-directory opt-out (the `banActivitySeam` flag, mirroring `banCalendarKit`), not
+    a `boundaries` rule. The table half uses `paths` + `importNames` rather than a
+    pattern, because every feature legitimately imports `@/db` — just not those two
+    bindings.
   - Caveat lint can't carry: boundaries must **resolve** the `@/` alias to classify a
     target — otherwise an `@/db` specifier resolves to nothing and the boundary
     silently never fires (a false-negative). `eslint-config-expo/flat` already ships
@@ -95,6 +109,12 @@ truth; this file carries the caveats the config can't (R-1).
   Calendar UI and the neutral renderer facade cannot import the package. Same
   static-import-only caveat as raw-fetch. See [theming.md](./theming.md) for native
   chrome and [calendar.md](./calendar.md) for the renderer boundary.
+- **The Activity seam owns calendar-log requests and the Activity tables** (B-5 above,
+  `banActivitySeam`, re-set without the ban for `timecalendar/activity-seam`):
+  `@/api/generated/calendar-logs/**` is banned by pattern and `activityLogs` /
+  `activityState` are banned as **named imports** from `@/db`, everywhere except
+  `src/features/activity/data/**`. `@/db` itself stays freely importable. Same
+  static-import-only caveat as raw-fetch. See [data.md](./data.md).
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

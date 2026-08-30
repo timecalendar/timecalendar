@@ -40,6 +40,7 @@ decision changes; use Git for its history.
 | [044](./044-jest-per-test-time-budget.md)             | Set an explicit per-test time budget for the Jest harness             |
 | [046](./046-activity-cache-merge-and-server-read-watermark.md) | Merge the Activity cache by log id and read it against server time |
 | [047](./047-ephemeral-calendar-import-draft.md)       | Hold the calendar-import draft in an ephemeral, Stack-scoped context  |
+| [048](./048-activity-refresh-single-flight-and-token-precondition.md) | Deduplicate Activity refreshes in-module and never request with zero tokens |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`
@@ -47,9 +48,12 @@ decision changes; use Git for its history.
 > filenames merge as two clean adds — so it only surfaces when someone reads this
 > index. If that PR is closed unmerged, `045` is free to reuse.
 >
-> The import-draft ADR was authored as `045` and renumbered to `047` when this
-> branch merged `main` and found the reservation above — the collision the note
-> exists to catch, caught by reading the index rather than by git.
+> The import-draft ADR was authored as `045` and renumbered to `047` when its
+> branch merged `main` and found the reservation above — the collision this note
+> exists to catch, caught by reading the index rather than by git. It has since
+> merged, so `047` is taken, not free. `048` skipped past both — the next author
+> should re-check open PRs with `gh pr diff <N> --name-only | grep decisions/`
+> rather than assuming the highest merged number plus one.
 
 ## Superseded or completed records
 
