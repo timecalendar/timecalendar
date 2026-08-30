@@ -26,7 +26,14 @@ const paginationScrolls = [
     /- scrollUntilVisible:\n\s+element:\n\s+id: "([^"]+)"\n\s+direction: DOWN\n\s+timeout: (\d+)/g,
   ),
 ]
-  .map(([, id, timeout]) => ({ id, timeout: Number(timeout) }))
+  .flatMap((match) => {
+    const id = match[1]
+    const timeout = match[2]
+
+    return id === undefined || timeout === undefined
+      ? []
+      : [{ id, timeout: Number(timeout) }]
+  })
   .filter(({ id }) => paginationSelectorIds.has(id))
 
 describe("Activity Maestro selectors", () => {
