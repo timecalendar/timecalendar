@@ -157,12 +157,15 @@
 - [x] 9.3 `docs/mobile/architecture-book/features.md`: update the `onboarding` and `calendar-sources`
       rows, and the cross-feature contracts bullets for the draft handoff, the effective display
       name, and the feedback context
-- [x] 9.4 Write `docs/mobile/architecture-book/decisions/045-ephemeral-calendar-import-draft.md`
+- [x] 9.4 Write `docs/mobile/architecture-book/decisions/047-ephemeral-calendar-import-draft.md`
       (context, decision, consequences, revisit condition) and add it to `decisions/README.md`.
       **Before committing, re-check the highest ADR number on `origin/main` and across open PRs** —
       044 is the current maximum on `main` and #317 claims 046; a rebase can move this
-      — **re-checked during apply (2026-08-30): 044 is still the maximum on `main`, #317 claims
-      046 and #273 claims 038/044, so 045 is free. Re-check again at rebase.**
+      — **re-checked during apply (2026-08-30): 044 was still the maximum on `main`, so this was
+      authored as 045. RENUMBERED TO 047 during simplify, after merging `origin/main` at
+      `b378adb8`: #317 landed and brought a `decisions/README.md` note reserving 045 for the
+      open source-recovery PR (#273), which renumbers its own 044 to 045 on rebase. 046 is
+      #317's, so 047 is the first free number. Re-check again at rebase.**
 - [x] 9.5 Append a dated entry to `docs/mobile/architecture-book/CHANGELOG.md`
 - [x] 9.6 Add `docs/react-native-migration/inbox/2026-08-30-import-journey-device-pass.md` tagged
       `(HUMAN: …)`: QR camera permission on both platforms, external intranet link behaviour,

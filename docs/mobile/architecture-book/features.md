@@ -9,12 +9,13 @@ code and product specifications.
 | `notifications`    | Subscription preferences, FCM registration, and notification routing                | `@/storage`, `@/firebase`, generated notification API                                                                                                        |
 | `personal-events`  | Local event CRUD, validation, and forms                                             | `@/db`; dates stored as ISO-8601 UTC text                                                                                                                    |
 | `school-selection` | School/group queries, search, theme-aware logos, and selected identities            | TanStack Query plus `@/storage`; nullable dark logo URLs fall back to the required default URL                                                               |
-| `onboarding`       | Welcome carousel + the institution → programme → Connect → manual-import journey    | Native pager; owns the ephemeral import draft (ADR 045) the calendar-source screens read; composes school selection                                            |
+| `onboarding`       | Welcome carousel + the institution → programme → Connect → manual-import journey    | Native pager; owns the ephemeral import draft (ADR 047) the calendar-source screens read; composes school selection                                            |
 | `calendar-sources` | QR/iCal import and user-calendar management                                         | `expo-camera`, generated API, `user_calendars` table; the create seam takes its institution/programme fields explicitly                                        |
 | `feedback`         | Validated suggestions and recorded iCal-failure reports                             | `@/storage` for the last valid e-mail, `@/firebase` for body-free failures, generated contact API                                                            |
 | `calendar`         | Day/week grid, agenda, sync, event details, and routing                             | Renderer-neutral timeline facade with an isolated calendar-kit adapter, generated sync API, `calendar_events` table                                          |
 | `hidden-events`    | Hide and restore synced events                                                      | One validated `@/storage` value; filtering occurs at the calendar event-source seam                                                                          |
 | `event-checklist`  | Checklist CRUD and ordering for either event kind                                   | `checklist_items` table                                                                                                                                      |
+| `activity`         | Device-local calendar-log history cache, the read watermark, and the pagination position | `@/db`; `activity_logs` / `activity_state` tables, merged by server log ID rather than replaced; held calendar IDs are supplied by the caller, so there is no calendar-feature dependency; `@/firebase` records a skipped undecodable row as a count only |
 | `home`             | Today-only dashboard and next-active-day summary                                    | Reads the unified calendar event source                                                                                                                      |
 | `settings`         | Third-tab grouped navigation and held-calendar summary                              | Reads the public calendar-sources hooks; persists no state                                                                                                   |
 | `splash`           | Startup presentation                                                                | Presentation-only                                                                                                                                            |
@@ -39,7 +40,7 @@ code and product specifications.
   parameter — it never reads the draft. Exactly one of `schoolId` / `schoolName` is sent,
   by key absence, because the server validates them as a mutually exclusive pair. A QR or
   iCal-URL route opened with no draft creates with `name: ""` and `schoolName: ""` rather
-  than redirecting (ADR 045).
+  than redirecting (ADR 047).
 - Every surface that renders a calendar's name uses `effectiveCalendarName()` — trimmed
   when non-empty, otherwise the localized "Mon emploi du temps" / "My timetable". Stored
   values are never rewritten; the fallback is display-only.

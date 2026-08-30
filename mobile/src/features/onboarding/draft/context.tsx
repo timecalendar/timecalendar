@@ -11,7 +11,7 @@ import type { SchoolListItem } from "@/features/school-selection/data"
 
 import { type CalendarImportDraft, normalizeImportName } from "./types"
 
-// The ephemeral import draft (TIM-391 / ADR 045, design D1) — ONE in-memory
+// The ephemeral import draft (TIM-391 / ADR 047, design D1) — ONE in-memory
 // draft for the institution → programme → Connect → import journey, held in
 // React state behind a context mounted once on the onboarding Stack layout.
 //

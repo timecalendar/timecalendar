@@ -3,12 +3,12 @@
 ## 2026-08-30
 
 - Recorded the institution → programme → Connect → manual-import journey and its ephemeral,
-  Stack-scoped import draft as **ADR 045**. The draft is held in React state behind a provider
+  Stack-scoped import draft as **ADR 047**. The draft is held in React state behind a provider
   mounted once on `src/app/onboarding/_layout.tsx` — never MMKV, never SQLite, no new global
   store — so "leaving the journey clears it" and "a restart clears it" are properties of where
   the provider lives rather than code that can be forgotten. The read hook is total: outside the
   provider it returns "no draft", which *is* the contract for the deep-linkable QR and iCal-URL
-  routes (`name: ""`, `schoolName: ""`), not an error (navigation.md, features.md, decisions/045).
+  routes (`name: ""`, `schoolName: ""`), not an error (navigation.md, features.md, decisions/047).
 - Required calendar creation to send **exactly one** institution representation, by key absence:
   a listed draft sends `schoolId` with no `schoolName` key, an unlisted draft the inverse. The
   server validates the pair with mutually exclusive `@ValidateIf` conditions, so a body carrying
@@ -40,6 +40,30 @@
   route" to "a path-level prefix per controller" now that `POST /v1/calendar-logs/search` is a
   second instance of the same pattern. The epic's architecture decisions record is owned by a later
   ticket; this entry states the contract fact only (data.md).
+- Added the device-local Activity model: the `activity_logs` and `activity_state` tables, an
+  additive migration, and the `activity` feature's data layer. Two decisions are recorded in
+  ADR 046. First, the cache is **merged by server log id, never drop+replaced** — history is
+  cursor-paginated, so a replacing newest-page refresh would delete every older page a student
+  had backfilled and shrink the offline timeline to one page; upsert identity is also what makes
+  a repeated page, an overlapping page and a restarted pagination chain idempotent. Second, the
+  **read watermark is server-issued time**: a device-clock watermark on a phone whose clock is
+  set forward hides every subsequent change permanently, and set backward re-marks read history
+  as unread forever. The one-year prune cutoff derives from server time for the same reason, and
+  `lastSuccessfulRefreshAt` stays device time by design — the two clocks in one row are the point
+  of the record, not an inconsistency to unify (storage.md, features.md, ADR 046).
+- Grew the single backend-bound reset list from four tables to six. `switch.ts` calls
+  `resetBackendDatabase()`, so there remains exactly one list and the environment switch needs no
+  separate change; a table missing from it would leave another environment's private schedule data
+  on the device (storage.md).
+- Required a migration's upgrade path to be proven against **real SQLite**, not only against the
+  suite-wide expo-sqlite mock: the committed SQL is applied to an in-memory `node:sqlite` database
+  on a fresh install *and* on top of a database already holding rows in every earlier table. The
+  mocked seam can only prove runner wiring, and a migration that fails on an installed database is
+  a data incident. No ADR: this tightens the existing testing contract for a surface the Book
+  already calls sensitive (storage.md, testing.md).
+- Left ADR `045` free. The open source-recovery PR carries an ADR numbered `044` that collides
+  with the merged `044` and renumbers to `045` on rebase; an ADR-number collision is invisible to
+  git because two different filenames merge as two clean adds (decisions/README.md).
 
 ## 2026-08-28
 

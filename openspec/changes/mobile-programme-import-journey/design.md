@@ -61,7 +61,7 @@ code the Applier has to remember to write. No new global store, no persistence, 
 must therefore be total: it returns `null` for "no draft" rather than throwing on a missing
 provider, which is also exactly the direct-route contract.
 
-This is recorded as **ADR 045** because reversing it means re-plumbing every import path.
+This is recorded as **ADR 047** because reversing it means re-plumbing every import path.
 
 ## Decision 2 — The draft carries the domain `SchoolListItem`, extended with `intranetUrl`
 
@@ -275,5 +275,5 @@ The load-bearing assertions are the ones a reviewer cannot get from reading the 
 | A listed create sends both `schoolId` and `schoolName` | The derivation is one pure function with an exhaustive table test asserting key **absence** |
 | The draft leaks across journeys | Provider lifetime is the Stack's; success clears explicitly; no persistence exists to leak through |
 | Ticket 3 also edits `user-calendars-screen.tsx` | This change touches only the row's name derivation and its i18n key; the overflow menu and rename dialog stay untouched |
-| ADR number collides with a long-lived PR | 045 is free on `main` and unclaimed by open PRs today (#317 takes 046); re-check the highest number at rebase before merge |
+| ADR number collides with a long-lived PR | This fired: authored as 045, renumbered to **047** during simplify when merging `origin/main` (`b378adb8`) surfaced #317's `decisions/README.md` note reserving 045 for #273. 046 is #317's. Re-check the highest number at rebase before merge |
 | The native E2E gate is already red on `main` | Maestro is extended only where cheap; the PR is not gated on an emulator run (no `run-e2e` label). Pre-existing stale selectors in `onboarding.yaml` / `ical-import.yaml` are recorded, not fixed here |

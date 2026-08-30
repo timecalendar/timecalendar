@@ -91,7 +91,7 @@ Canonical specification: `docs/react-native-migration/05-tech-specs/calendar-nam
   the iCal report adds `calendarName`; the user-calendars row uses the effective name.
 - `mobile/src/features/feedback/` — `calendarName` route parameter and DTO field.
 - `mobile/src/i18n/locales/{en,fr}.json` — new keys, FR/EN parity enforced by `tsc`.
-- `docs/mobile/architecture-book/` — `navigation.md`, `features.md`, `CHANGELOG.md`, ADR 045.
+- `docs/mobile/architecture-book/` — `navigation.md`, `features.md`, `CHANGELOG.md`, ADR 047.
 - `docs/react-native-migration/inbox/` — one `(HUMAN: …)` device-pass note.
 
 **Not in scope:** the assistant; school groups (selection, discovery, group iCal generation) and the

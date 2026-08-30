@@ -11,7 +11,7 @@ import { ImportDraftProvider } from "@/features/onboarding"
 // the Stack — including the qr-scan and ical-url siblings, which is what lets a
 // failed import switch between them without losing the institution/programme the
 // student entered. Mounting it on the layout is also what gives the draft its
-// lifetime for free (ADR 045): the provider unmounts with the Stack, so leaving
+// lifetime for free (ADR 047): the provider unmounts with the Stack, so leaving
 // the journey clears the draft and a restart cannot restore it.
 export default function OnboardingLayout() {
   return (
