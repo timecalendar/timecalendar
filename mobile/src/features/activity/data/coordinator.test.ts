@@ -432,7 +432,10 @@ describe("unread count (D4)", () => {
   // The rule that D6 makes unreachable for the zero-token case but which is
   // load-bearing on its own: branch on the REQUEST, never on field presence.
   it("ignores an unreadCount the request never asked for", async () => {
-    mockFetch.mockResolvedValue(pageResponse({ unreadCount: 0 }))
+    // The count must differ from the stored default, or the assertion below
+    // holds whether the code ignored it or wrote it — branching on field
+    // presence instead of on the request has to make this test fail.
+    mockFetch.mockResolvedValue(pageResponse({ unreadCount: 7 }))
 
     await coordinator.refreshNewestPage({ force: true })
 

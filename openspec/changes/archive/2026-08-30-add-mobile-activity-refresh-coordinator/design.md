@@ -229,7 +229,10 @@ it, for four reasons that are properties of the callers, not preferences:
    rule intact with no query layer in between.
 
 Shape — two independent slots, so older-page loading can never block a forced newest-page request
-(architecture decision 7):
+(architecture decision 7). The `inFlightNewest` / `inFlightOlder` variables named below are the
+as-proposed shape; the shipped code holds the same two slots behind a `createSlot<T>()` factory —
+see **Amended at the simplify stage** at the end of this section before reading the names as
+current:
 
 ```ts
 let inFlightNewest: Promise<ActivityRefreshOutcome> | null = null
