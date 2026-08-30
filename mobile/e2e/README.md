@@ -112,12 +112,24 @@ the whole folder in one device session, so renaming the shared smoke calendar
 would change state under every other flow in the run.
 
 **Re-run caveat.** Step 2 asserts the seeded **baseline** name (`E2E Rename
-Baseline`), which only holds against a freshly seeded server. CI re-seeds on
-every run, so it is deterministic there; a **local re-run without re-running
-`ci/e2e-server.sh`** fails at that step because the calendar is already renamed —
-re-seed and run again. Dropping the baseline assertion to make local re-runs
-idempotent would make the final convergence assertion vacuous on a re-run, which
-is a silent false green rather than a visible inconvenience.
+Baseline`), which only holds against a server seeded since the last rename. Any
+second pass over the flow against the same server fails there, because the
+calendar is already renamed. That covers two cases:
+
+- a **local re-run without re-running `ci/e2e-server.sh`** — re-seed and run again;
+- a **CI retry of this flow**. `run_e2e.sh` seeds once per job (`ci/e2e-server.sh
+  up`), *outside* `run_flow`, but `run_flow` retries a flow up to
+  `--startup-attempts` — 4 on iOS, 1 on Android — and a retry re-runs the flow
+  from step 1 **without re-seeding**. Step 5 is a mid-flow `launchApp:
+  clearState: true`; an XCTest transport death there is classified retryable
+  (steps 1–4 left no assertion-failure text in the log), so the flow restarts and
+  step 2 burns its 60 s timeout against a calendar this job already renamed. Rare,
+  but when it happens the red is a stale-state artifact, not a rename regression —
+  check the attempt number in the flow log before attributing it to the feature.
+
+Dropping the baseline assertion to make re-runs idempotent would make the final
+convergence assertion vacuous on a re-run, which is a silent false green rather
+than a visible, diagnosable failure.
 
 ## CI
 
