@@ -62,13 +62,35 @@ Mock at the **`customFetch` mutator** (`testing.md`), never at `fetch` and never
 
 ## 7. Boundaries
 
-- [ ] 7.1 Add one `no-restricted-imports` entry in `mobile/eslint.config.js` banning `@/features/activity` (and any deeper path) inside `src/features/calendar-sources/**` (D7). Use the existing `{ regex, message }` seam-ban idiom — the same shape as `activityClientImportPattern`, which #324 added. Message: the Activity data layer imports calendar-sources, so the reverse edge closes a module cycle whose failure mode is an `undefined` binding at Metro module init, invisible to `tsc`.
+- [ ] 7.1 Add one `no-restricted-imports` entry in `mobile/eslint.config.js` banning `@/features/activity` (and any deeper path) inside `src/features/calendar-sources/**` (D7). Use the existing `{ regex, message }` seam-ban idiom — the same shape as `activityClientImportPattern`, which #324 added (verified on that branch: a `{ regex, message }` const, plus a `banActivitySeam` toggle on `restrictedImports`). Message: the Activity data layer imports calendar-sources, so the reverse edge closes a module cycle whose failure mode is an `undefined` binding at Metro module init, invisible to `tsc`.
+
+      **This one is directory-scoped, so it is not shaped like the bans above it.** `activityClientImportPattern` is global-with-exceptions and rides the `restrictedImports()` defaults; this ban applies to *one* feature, so it needs its own config block — and that is where the trap is. In ESLint flat config, a later block that sets `no-restricted-imports` with options **replaces** the earlier options wholesale; they do not merge. `src/features/calendar-sources/**` is already matched by the `timecalendar/routes-not-importable` block (`files: ["src/**/*.{js,jsx,ts,tsx}"]`, and calendar-sources is not in its `ignores`), which is the last block setting this rule for those files. A new block that lists only the Activity pattern therefore **silently switches off every base seam ban** — storage backends, chrome, calendar-kit, the generated client, and the `@/app` route-entrypoint ban — for the whole calendar-sources feature, with lint still green. The repo already shows the correct idiom: `routes-not-importable` re-calls `restrictedImports([...])` rather than listing its one pattern alone.
+
+      So: extract that block's inline `^@/app(/|$)` pattern into a named const, and add the new block **after** it, re-including both patterns:
+
+      ```js
+      {
+        name: "timecalendar/calendar-sources-is-a-leaf",
+        files: ["src/features/calendar-sources/**"],
+        rules: {
+          "no-restricted-imports": restrictedImports([
+            routeEntrypointImportPattern,
+            activityFeatureImportPattern,
+          ]),
+        },
+      }
+      ```
+- [ ] 7.1b **Prove the 7.1 block both ways — inject and revert.** A green `npm run lint` is compatible with the new rule doing nothing *and* with it having disabled the base bans, so assert each direction by temporarily editing a calendar-sources file and confirming lint **fails**, then reverting:
+      1. `import { refreshNewestPage } from "@/features/activity"` → must fail with the new message (the ban fires).
+      2. `import { storage } from "react-native-mmkv"` (or any banned backend) → must still fail (the base patterns survived the override).
+      3. `import { something } from "@/app/_layout"` → must still fail (the `@/app` ban survived).
+      Same inject-and-revert discipline the `boundaries` typescript-resolver check uses in `eslint.config.js`'s own comment (D5 there) — and for the same reason: the failure mode is a silent pass.
 - [ ] 7.2 Confirm the file-level graph is what the ADR draws: `calendar sync → activity data`, `notifications → activity data`, `root runtime → activity data`, `activity data → calendar-sources data`. No Activity module imports `@/features/calendar/**`. Verification: `npm run lint` and `grep -rn "@/features/calendar" mobile/src/features/activity/`.
 
 ## 8. Gates
 
 - [ ] 8.1 `npx tsc --noEmit` — green.
-- [ ] 8.2 `npm run lint` — green, including the new 7.1 rule.
+- [ ] 8.2 `npm run lint` — green. Green alone does not prove the 7.1 rule; 7.1b is what proves it.
 - [ ] 8.3 `npm test -- --coverage` — green, with `src/features/activity/!(ui)/**` still meeting the **90% lines and branches** gate now that `lifecycle.ts` is in it. Run the **coverage** form; plain `npm test` passes blind past it. Do not reach the number with `istanbul ignore`.
 - [ ] 8.4 Confirm the whole suite is green with **no edits to any pre-existing test file** other than the two extensions in 6.1–6.3. Any other required edit means this change regressed a consumer.
 - [ ] 8.5 Run the Jest command scoped to a path, not to a bare module name — this worktree's directory is named after the ticket, so `jest activity` matches the worktree path and runs the entire suite. Use `--maxWorkers=4`, never `--runInBand`.
