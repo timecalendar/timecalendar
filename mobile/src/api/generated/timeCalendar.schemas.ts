@@ -52,6 +52,15 @@ export interface CalendarForPublic {
   createdAt: string
 }
 
+export interface UpdateCalendarDto {
+  /**
+   * The new calendar name. Required, but an empty result after trimming is a
+   * valid cleared name.
+   * @maxLength 100
+   */
+  name: string
+}
+
 export interface OrleansGetIcalUrlFromStudentNumberDto {
   studentNumber: string
 }
@@ -178,6 +187,46 @@ export interface CalendarLogGet {
   updatedAt: string
 }
 
+export interface SearchCalendarLogsV1Dto {
+  /**
+   * Page size, 1–100. Defaults to 50.
+   * @minimum 1
+   * @maximum 100
+   */
+  limit?: number
+  /** Calendar tokens to read. Duplicates are collapsed; at most 100 unique. */
+  tokens: string[]
+  /** Opaque cursor from a previous page's `nextCursor`. Omit for the newest page. */
+  cursor?: string
+  /**
+   * ISO-8601 read watermark. When supplied without a `cursor`, the response
+   * carries `unreadCount`.
+   */
+  unreadSince?: string
+}
+
+export interface CalendarLogV1 {
+  id: string
+  calendarId: string
+  calendarName: string
+  calendarChange: CalendarChangeGet
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CalendarLogSearchV1Response {
+  items: CalendarLogV1[]
+  /**
+   * Opaque cursor for the next page, or `null` on the final page.
+   * @nullable
+   */
+  nextCursor: string | null
+  /** Snapshot watermark every page of this chain is bound to. */
+  asOf: string
+  /** Present only on a request that carries `unreadSince` and no `cursor`. */
+  unreadCount?: number
+}
+
 export interface CalendarCustomData {
   [key: string]: unknown
 }
@@ -186,6 +235,7 @@ export interface CreateCalendarDto {
   url: string
   schoolId?: string
   schoolName?: string
+  /** @maxLength 100 */
   name?: string
   /** @nullable */
   customData: CalendarCustomData | null
@@ -279,6 +329,7 @@ export interface SendMessageDto {
   schoolId?: string
   schoolName?: string
   gradeName?: string
+  calendarName?: string
   deviceInfo?: string
   calendarUrl?: string
 }

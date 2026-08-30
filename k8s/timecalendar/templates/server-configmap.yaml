@@ -15,13 +15,22 @@ data:
 
   # Redis
   REDIS_QUEUE: timecalendar
+  # BullMQ worker concurrency for the default queue. The default here MUST stay 100 and
+  # MUST NOT be "": server/src/config/constants.ts reads
+  # `+(env.QUEUE_CONCURRENCY ?? 100)`, and `+("")` is 0, not 100 -- an empty string here
+  # would set concurrency to 0 and stall the queue silently. `??` only catches null and
+  # undefined, and an empty ConfigMap value arrives as "".
+  QUEUE_CONCURRENCY: {{ .Values.timecalendar.queueConcurrency | default 100 | quote }}
   # NOTE: REDIS_KEY_PREFIX is retired as of the nest-shared migration (TIM-143).
   # nest-shared's SharedRedisModule/SharedBullModule connect by REDIS_URL only
-  # and do not apply a per-environment Bull key prefix. Environments MUST be
-  # isolated by a distinct REDIS_URL (separate Redis instance or logical DB) in
-  # the timecalendar-env-secret — NOT by this prefix. Confirm that isolation
-  # holds before deploying this image (a shared, un-prefixed Redis would let
-  # environments collide on the "default" queue).
+  # and do not apply a per-environment Bull key prefix. Isolation is owned by the
+  # logical DB index (or separate instance) in the sealed REDIS_URL, NOT by this
+  # prefix: production uses DB 0 and preproduction uses DB 1 (TIM-294). Sources:
+  # lyrolab/platform/kubernetes/clusters/do-fra1-cluster01/20-apps/
+  # timecalendar-production/env-sealed-secret.yaml and the corresponding
+  # timecalendar-preprod path. Before deploying a new environment, give it a
+  # distinct DB index or instance, then verify the effective value inside the pod
+  # with `printenv REDIS_URL` rather than inferring it from the encrypted manifest.
 
   # Postgres
   # DATABASE_URL (full connection string, incl. the password) is provided by the

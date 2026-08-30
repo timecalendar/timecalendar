@@ -6,7 +6,6 @@
 // ts-node run would emit a spec missing everything the runtime serves.
 // No dotenv here: a developer's .env would override the test env profile and
 // point the script at the dev database.
-process.env.SMTP_URL ??= "smtp://localhost:1025"
 
 import { writeFileSync } from "fs"
 import { join } from "path"

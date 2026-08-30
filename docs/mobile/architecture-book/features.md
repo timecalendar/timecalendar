@@ -9,12 +9,13 @@ code and product specifications.
 | `notifications`    | Subscription preferences, FCM registration, and notification routing                | `@/storage`, `@/firebase`, generated notification API                                                                                                        |
 | `personal-events`  | Local event CRUD, validation, and forms                                             | `@/db`; dates stored as ISO-8601 UTC text                                                                                                                    |
 | `school-selection` | School/group queries, search, theme-aware logos, and selected identities            | TanStack Query plus `@/storage`; nullable dark logo URLs fall back to the required default URL                                                               |
-| `onboarding`       | Localized welcome → agenda → notifications carousel and source-selection flow       | Presentation-only; native pager composes school and calendar-source features                                                                                 |
-| `calendar-sources` | QR/iCal import and user-calendar management                                         | `expo-camera`, generated API, `user_calendars` table                                                                                                         |
+| `onboarding`       | Welcome carousel + the institution → programme → Connect → manual-import journey    | Native pager; owns the ephemeral import draft (ADR 047) the calendar-source screens read; composes school selection                                            |
+| `calendar-sources` | QR/iCal import, user-calendar management, and calendar rename                       | `expo-camera`, generated API (incl. `PATCH /v1/calendars/{token}`), `user_calendars` table; the create seam takes its institution/programme fields explicitly  |
 | `feedback`         | Validated suggestions and recorded iCal-failure reports                             | `@/storage` for the last valid e-mail, `@/firebase` for body-free failures, generated contact API                                                            |
 | `calendar`         | Day/week grid, agenda, sync, event details, and routing                             | Renderer-neutral timeline facade with an isolated calendar-kit adapter, generated sync API, `calendar_events` table                                          |
 | `hidden-events`    | Hide and restore synced events                                                      | One validated `@/storage` value; filtering occurs at the calendar event-source seam                                                                          |
 | `event-checklist`  | Checklist CRUD and ordering for either event kind                                   | `checklist_items` table                                                                                                                                      |
+| `activity`         | Device-local calendar-log cache, watermark, pagination seam, `/activity` grouped timeline, Settings unread badge, **and the single refresh/pagination seam every Activity trigger shares** | `@/db`; reactive `useActivityLogs` / `useActivityState`; `activity_logs` / `activity_state`, merged by server log ID; `@/api/generated/calendar-logs` (`POST /v1/calendar-logs/search`, plain function, no TanStack Query, ADR 048); `findAll` from `@/features/calendar-sources/data` for held tokens + IDs — the feature's only cross-feature dependency, pointing outward so the graph stays acyclic (hidden calendars count as held); `@/firebase` records failures with static contexts and no payload. The screen calls forced newest refresh, older-page load, and cache-bounded read marking. **Activity also owns three app-lifecycle hooks (TIM-399, ADR 049):** `useActivityForegroundRefresh` (passive, only on `background → active`), `useActivityScreenRefresh` (passive on open and forced on pull-to-refresh; mounted by the screen), and `useActivityOwnershipPrune` (prunes only after an observed removal, never on the first held-calendar observation). The first and third are mounted once in `_layout.tsx` as `ActivityRuntime`. Calendar sync triggers Activity after the event write commits, and notification receipt triggers it independently beside sync; calendar-sources may not import back into it (lint B-6) |
 | `home`             | Today-only dashboard and next-active-day summary                                    | Reads the unified calendar event source                                                                                                                      |
 | `settings`         | Third-tab grouped navigation and held-calendar summary                              | Reads the public calendar-sources hooks; persists no state                                                                                                   |
 | `splash`           | Startup presentation                                                                | Presentation-only                                                                                                                                            |
@@ -30,9 +31,38 @@ code and product specifications.
   continue to the edit form; synced events remain read-only.
 - User-calendar rows contain server calendar IDs and durable source tokens. Notification
   registration sends server IDs, not tokens.
+- Each user-calendar row exposes one overflow menu, identical on both platforms, carrying
+  Rename and Delete. Rename is a server write first: it PATCHes the token, then persists the
+  name the **server returned**, never the string the user typed, so the renaming device
+  converges through the same rule every other device reaches at its next sync. The token is
+  a capability — possession authorizes rename — so a rename is global to every installation
+  holding it (ADR [050](./decisions/050-token-authorized-shared-calendar-rename.md)).
+- Calendar names converge on the sync path: after the event replace, sync writes back the
+  returned names through the narrow `updateName(id, name)` write. It must never `upsert` a
+  `user_calendars` row and never route through `fromCalendarForPublic`, which hard-codes
+  `visible: true` — a full-row write would silently unhide a calendar the student hid, on
+  every sync, i.e. at every app start. Nothing in lint or types can catch that, which is why
+  it is written here (ADR
+  [052](./decisions/052-eventual-calendar-name-convergence-through-sync.md)).
+- The event replace and the name write-back are two failure domains, not one. A failed name
+  write keeps the replaced events committed and the last-good names in place, records under
+  its own context, and leaves convergence to the next sync.
+- Every calendar-name label goes through `effectiveCalendarName(stored, fallback)`:
+  `trim(stored)` when non-empty, else the localized "My timetable" / "Mon emploi du temps".
+  An empty or whitespace-only name is legal and is a display substitution only — the stored
+  value is never rewritten, and an over-long stored name still displays in full. "Every" is
+  literal and includes the event-details calendar label, not only the user-calendar list and
+  the rename dialog.
 - Feedback sends every held calendar's server ID. Calendar sources may open Feedback
-  after a recorded iCal import failure with only the attempted URL and available
-  selected-school ID/name; local invalid-URL errors never offer reporting.
+  after a recorded iCal import failure with only the attempted URL, the draft's institution
+  ID **or** name, and the normalized programme name as `calendarName` — each omitted when
+  empty. `gradeName` is never sent. Local invalid-URL errors never offer reporting.
+- The import journey hands its institution and programme to calendar creation through one
+  pure derivation (`toCreateFields`), and the create seam receives those fields as a
+  parameter — it never reads the draft. Exactly one of `schoolId` / `schoolName` reaches
+  the server, because the server validates them as a mutually exclusive pair. A QR or
+  iCal-URL route opened with no draft creates with `name: ""` and `schoolName: ""` rather
+  than redirecting (ADR 047).
 - Feedback treats contact-service 503 responses as recoverable: the form retains the
   e-mail and message, re-enables explicit retry, announces equivalent FR/EN guidance,
   and records only the error plus the static `feedback/contact-submit` context. The

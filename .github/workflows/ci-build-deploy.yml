@@ -7,6 +7,36 @@ on:
   push:
 
 jobs:
+  test-chart:
+    name: Test Helm chart
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4.3.1
+      with:
+        version: v3.16.4
+
+    - name: Test chart renders
+      run: ./ci/test-timecalendar-chart.sh
+
+  test-hooks:
+    name: Test git hooks
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    # Pure git + shell, so no Node setup. The properties it asserts (the hook's
+    # file mode, and its npx invocation) are each invisible under one of the two
+    # core.hooksPath values, so they cannot be caught reliably by local testing.
+    - name: Test pre-commit hook wiring
+      run: ./ci/test-git-hooks.sh
+
   build-server:
     name: Build server image
     runs-on: ubuntu-latest
@@ -118,10 +148,19 @@ jobs:
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test
 
+    # The in-process Nest HTTP smoke (`server/test/*.e2e-spec.ts`). It has no
+    # backing-service dependency; `ci/e2e-server.sh` still owns the real
+    # Postgres/Redis/Nest lifecycle for the mobile and Flutter device E2E.
+    - name: Run server E2E tests
+      run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test:e2e -- --runInBand
+
     # The Nest app cannot boot without a service-account-shaped key file; the
     # spec emit only needs the JSON shape, never a real credential.
     - name: Generate dummy Firebase service-account key
       run: ./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
+
+    - name: Verify server image runtime lifecycle
+      run: ./ci/test-server-runtime.sh ghcr.io/timecalendar/timecalendar:${{ github.sha }} /tmp/serviceAccountKey.json
 
     # The image's dist/ was built from this same commit (with the swagger CLI
     # plugin applied), so emitting from it reproduces `npm run generate:openapi`.

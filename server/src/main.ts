@@ -33,7 +33,10 @@ async function bootstrap() {
 
   setupSwagger(app)
   app.enableCors({ origin: "*" })
-  app.enableShutdownHooks()
+  // PID 1 ignores default-action signals, so Nest cannot terminate the
+  // container by removing its SIGTERM listener and re-sending the signal.
+  // Exit explicitly after all shutdown lifecycle hooks have completed.
+  app.enableShutdownHooks([], { useProcessExit: true })
   bullBoardAdapter(app)
 
   // SharedQueueModule mounts an unauthenticated POST /queue/add controller;

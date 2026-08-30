@@ -38,6 +38,35 @@ decision changes; use Git for its history.
 | [042](./042-iphone-ipad-portrait-contract.md)         | Support iPhone and iPad in portrait-only full-screen mode             |
 | [043](./043-backend-environment-reset.md)             | Authorize backend choices explicitly and switch via journaled reset   |
 | [044](./044-jest-per-test-time-budget.md)             | Set an explicit per-test time budget for the Jest harness             |
+| [046](./046-activity-cache-merge-and-server-read-watermark.md) | Merge the Activity cache by log id and read it against server time |
+| [047](./047-ephemeral-calendar-import-draft.md)       | Hold the calendar-import draft in an ephemeral, Stack-scoped context  |
+| [048](./048-activity-refresh-single-flight-and-token-precondition.md) | Deduplicate Activity refreshes in-module and never request with zero tokens |
+| [049](./049-activity-trigger-edges-and-failure-isolation.md) | Wire Activity's triggers as independent edges into one seam, and let none of them fail its caller |
+| [050](./050-token-authorized-shared-calendar-rename.md) | Authorize shared calendar rename by token possession                  |
+| [051](./051-path-level-v1-prefix-without-global-versioning.md) | Version individual controllers by path                        |
+| [052](./052-eventual-calendar-name-convergence-through-sync.md) | Converge calendar names through a name-only sync write         |
+
+> `045` is intentionally left free: the open source-recovery PR carries an ADR
+> numbered `044` that collides with the merged one above and renumbers to `045`
+> when it rebases. An ADR-number collision is invisible to git — two different
+> filenames merge as two clean adds — so it only surfaces when someone reads this
+> index. If that PR is closed unmerged, `045` is free to reuse.
+>
+> The import-draft ADR was authored as `045` and renumbered to `047` when its
+> branch merged `main` and found the reservation above — the collision this note
+> exists to catch, caught by reading the index rather than by git. It has since
+> merged, so `047` is taken, not free. `048` skipped past both.
+>
+> `049` belongs to [PR #328](https://github.com/timecalendar/timecalendar/pull/328).
+> Its open-PR reservation was detected before the calendar naming/import decisions
+> took `050`–`052`, so all four records remain distinct after the branches meet.
+>
+> A filename census finds TAKEN numbers, but only this prose finds RESERVED ones.
+> The reservation on `045` is invisible to `grep decisions/` because the PR holding
+> it still carries its pre-renumber filename `044-…`. Before choosing a number,
+> re-check open PRs with `gh pr diff <N> --name-only | grep decisions/` and read this
+> note; do not assume the highest merged number plus one or reuse `045` while its PR
+> remains open.
 
 ## Superseded or completed records
 

@@ -28,6 +28,7 @@ export class ContactService {
           schoolId: message.schoolId,
           schoolName: message.schoolName,
           gradeName: message.gradeName,
+          calendarName: message.calendarName,
           deviceInfo: message.deviceInfo,
           calendarUrl: message.calendarUrl,
           calendarIds: message.calendarIds?.join(","),

@@ -2,8 +2,10 @@
 #
 # Makes a fresh git worktree workable. Worktrees check out only *tracked* files,
 # so every gitignored-but-required file is missing: env files, the Firebase key,
-# .husky/_/ (hooks then silently abort), and node_modules. Run this once per new
-# worktree. Safe to run repeatedly. No-op when run from the main checkout.
+# .husky/_/ (git's core.hooksPath points there, so a worktree that has not run this
+# script runs no hooks at all, silently), and node_modules. Run this once per new
+# worktree — it is the first thing to do in a fresh one. Safe to run repeatedly.
+# No-op when run from the main checkout.
 #
 # Does, in order:
 #   1. resolve the main checkout (works for sibling and nested worktrees)
@@ -91,8 +93,12 @@ install_deps "$HERE/mobile" "mobile"
 # The root install's `prepare` already regenerates the gitignored .husky/_/, but
 # fixing the broken hooks is the whole point of this script — so install them
 # explicitly too rather than leaning on a side effect. Idempotent.
+#
+# Note: this also writes core.hooksPath, which lives in the *shared* git config and
+# is therefore one host-wide value for every worktree. See docs/agent-dev-environment.md
+# §5 if a sibling worktree suddenly stops linting.
 step "3/3  Git hooks (husky)"
-(cd "$HERE" && npx husky install) && green "✓ pre-commit hook installed"
+(cd "$HERE" && npx husky) && green "✓ pre-commit hook installed"
 
 echo
 green "Worktree ready."

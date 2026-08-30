@@ -58,6 +58,55 @@
         ]
       }
     },
+    "/v1/calendars/{token}": {
+      "patch": {
+        "description": "Possession of the calendar token is the only authorization: there is no owner, the rename is visible to every holder of that token, and the last write wins.",
+        "operationId": "CalendarV1Controller_renameCalendar",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "description": "The calendar token",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCalendarDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarForPublic"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The name is missing, not a string, or too long once trimmed"
+          },
+          "404": {
+            "description": "No calendar matches this token"
+          }
+        },
+        "summary": "Rename a calendar",
+        "tags": [
+          "Calendars"
+        ]
+      }
+    },
     "/schools/univ-orleans/students": {
       "post": {
         "operationId": "UnivOrleansController_getIcalUrlFromStudentNumber",
@@ -202,6 +251,38 @@
           }
         },
         "summary": "Get calendar logs for given tokens",
+        "tags": [
+          "Calendar Logs"
+        ]
+      }
+    },
+    "/v1/calendar-logs/search": {
+      "post": {
+        "operationId": "CalendarLogV1Controller_searchCalendarLogs",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchCalendarLogsV1Dto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarLogSearchV1Response"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Search calendar logs for given tokens, newest first",
         "tags": [
           "Calendar Logs"
         ]
@@ -539,6 +620,19 @@
           "schoolName",
           "lastUpdatedAt",
           "createdAt"
+        ]
+      },
+      "UpdateCalendarDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The new calendar name. Required, but an empty result after trimming is a\nvalid cleared name.",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "name"
         ]
       },
       "OrleansGetIcalUrlFromStudentNumberDto": {
@@ -952,6 +1046,99 @@
           "updatedAt"
         ]
       },
+      "SearchCalendarLogsV1Dto": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Page size, 1–100. Defaults to 50.",
+            "default": 50,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "tokens": {
+            "description": "Calendar tokens to read. Duplicates are collapsed; at most 100 unique.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque cursor from a previous page's `nextCursor`. Omit for the newest page."
+          },
+          "unreadSince": {
+            "type": "string",
+            "description": "ISO-8601 read watermark. When supplied without a `cursor`, the response\ncarries `unreadCount`."
+          }
+        },
+        "required": [
+          "tokens"
+        ]
+      },
+      "CalendarLogV1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "calendarId": {
+            "type": "string"
+          },
+          "calendarName": {
+            "type": "string"
+          },
+          "calendarChange": {
+            "$ref": "#/components/schemas/CalendarChangeGet"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "calendarId",
+          "calendarName",
+          "calendarChange",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CalendarLogSearchV1Response": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarLogV1"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page, or `null` on the final page."
+          },
+          "asOf": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Snapshot watermark every page of this chain is bound to."
+          },
+          "unreadCount": {
+            "type": "number",
+            "description": "Present only on a request that carries `unreadSince` and no `cursor`."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "asOf"
+        ]
+      },
       "CalendarCustomData": {
         "type": "object",
         "properties": {}
@@ -970,7 +1157,8 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 100
           },
           "customData": {
             "nullable": true,
@@ -1264,6 +1452,9 @@
             "type": "string"
           },
           "gradeName": {
+            "type": "string"
+          },
+          "calendarName": {
             "type": "string"
           },
           "deviceInfo": {

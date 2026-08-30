@@ -37,13 +37,22 @@ The carousel SHALL use the scheme-appropriate `background` as its screen surface
 ### Requirement: The onboarding Stack is welcome-first, with the school step at its own route
 The nested onboarding Stack SHALL be ordered so the welcome surface is its entry: the entry route
 (`mobile/src/app/onboarding/index.tsx`) SHALL re-export the welcome screen, the school-picker step
-SHALL move to its own route (`mobile/src/app/onboarding/school.tsx`), and the group-picker step
-(`mobile/src/app/onboarding/groups.tsx`) SHALL be unchanged. Each route SHALL remain a thin
-entrypoint that only re-exports a feature `ui/` sub-barrel (the route-structure rule). The
-`onboarding` group SHALL remain a `Stack` sibling of the `(tabs)` group in the root layout. The
-development deep links SHALL be: `timecalendar-dev://onboarding` (welcome),
-`timecalendar-dev://onboarding/school` (school step), and
-`timecalendar-dev://onboarding/groups?schoolId=<id>` (group step).
+SHALL live at its own route (`mobile/src/app/onboarding/school.tsx`), and the group-picker step
+(`mobile/src/app/onboarding/groups.tsx`) SHALL remain registered and deep-linkable even though it is
+no longer on the normal import path (its removal is a separate cleanup). The Stack SHALL additionally
+register the import-journey steps as routes: `institution-name`, `programme`, `connect`, and
+`import`. Each route SHALL remain a thin entrypoint that only re-exports a feature `ui/` sub-barrel
+(the route-structure rule). The onboarding Stack layout SHALL mount the ephemeral import-draft
+provider around the nested `Stack`, so every route in the group — including the `qr-scan` and
+`ical-url` siblings — can read the draft, and the draft's lifetime is the Stack's. The `onboarding`
+group SHALL remain a `Stack` sibling of the `(tabs)` group in the root layout. The development deep
+links SHALL be: `timecalendar-dev://onboarding` (welcome),
+`timecalendar-dev://onboarding/school` (school step),
+`timecalendar-dev://onboarding/institution-name` (unlisted institution step),
+`timecalendar-dev://onboarding/programme` (programme step),
+`timecalendar-dev://onboarding/connect` (Connect step),
+`timecalendar-dev://onboarding/import` (manual import step), and
+`timecalendar-dev://onboarding/groups?schoolId=<id>` (the retained group step).
 
 #### Scenario: The welcome surface is the entry route
 - **WHEN** `mobile/src/app/onboarding/index.tsx` is located
@@ -53,15 +62,28 @@ development deep links SHALL be: `timecalendar-dev://onboarding` (welcome),
 #### Scenario: The school step has its own route
 - **WHEN** `mobile/src/app/onboarding/school.tsx` is located
 - **THEN** it re-exports `SchoolPickerScreen` from `@/features/school-selection/ui`
-- **AND** the school-picker screen implementation itself is unchanged
+
+#### Scenario: The journey steps are thin routes over the onboarding feature
+- **WHEN** the `institution-name`, `programme`, `connect` and `import` routes are located
+- **THEN** each is a one-line re-export from `@/features/onboarding/ui`
+- **AND** each screen's colocated test lives beside the screen, outside `src/app/`
+
+#### Scenario: The layout mounts the import-draft provider
+- **WHEN** `mobile/src/app/onboarding/_layout.tsx` is inspected
+- **THEN** it wraps the nested `Stack` in the import-draft provider
+- **AND** the draft is discarded when the Stack is dismissed
 
 #### Scenario: The onboarding group remains a Stack sibling of the tabs
 - **WHEN** the root layout declares its routes
 - **THEN** `onboarding` is a `Stack` screen sibling of the `(tabs)` group
-- **AND** its nested stack layout is unchanged
+
+#### Scenario: The group step remains registered but off the normal path
+- **WHEN** the school step is used normally
+- **THEN** no navigation reaches the group step
+- **AND** `timecalendar-dev://onboarding/groups?schoolId=<id>` still resolves to it
 
 ### Requirement: The welcome call-to-action navigates into the existing school step
-The carousel SHALL expose Skip as a trailing top-bar text button on pages 1–2, Next as a trailing footer text button on pages 1–2, and a full-width filled final CTA on page 3. Skip and the final CTA SHALL push `/onboarding/school`. Next SHALL page forward through the native pager and SHALL use the non-animated pager method when reduced motion is enabled. Skip and Next SHALL be absent on the final page. The prior welcome QR and URL actions SHALL be removed from this screen without removing their routes or the school picker's iCal fallback.
+The carousel SHALL expose Skip as a trailing top-bar text button on pages 1–2, Next as a trailing footer text button on pages 1–2, and a full-width filled final CTA on page 3. Skip and the final CTA SHALL push `/onboarding/school`. Next SHALL page forward through the native pager and SHALL use the non-animated pager method when reduced motion is enabled. Skip and Next SHALL be absent on the final page. The prior welcome QR and URL actions SHALL be removed from this screen without removing their routes or the school picker's iCal fallback. The QR and iCal-URL routes SHALL remain deep-linkable Stack siblings, now reached on the normal path from the manual-import step rather than from this screen. The group route SHALL remain registered and dev-deep-linkable but SHALL be reached by no navigation.
 
 #### Scenario: Skip opens the school step
 - **WHEN** the user activates Skip on page 1 or 2
@@ -79,7 +101,8 @@ The carousel SHALL expose Skip as a trailing top-bar text button on pages 1–2,
 #### Scenario: Downstream routes remain available
 - **WHEN** the carousel entry controls are inspected
 - **THEN** QR and URL controls are absent from the carousel
-- **AND** `/onboarding/qr-scan`, the URL path, and school-to-group navigation remain unchanged and deep-linkable
+- **AND** `/onboarding/qr-scan` and the iCal-URL route stay deep-linkable and are reached on the normal path from the manual-import step
+- **AND** the group route stays registered and dev-deep-linkable while no navigation reaches it
 
 ### Requirement: Onboarding is reachable but not a hard startup gate
 The onboarding flow SHALL be reachable from the Profile tab via an accessible entry control whose
@@ -152,7 +175,7 @@ The colocated welcome-screen test SHALL render through the real theme and i18n s
 - **AND** the repository's configured coverage thresholds are not weakened
 
 ### Requirement: The Maestro onboarding flow proves welcome → call-to-action → live school read
-`mobile/.maestro/onboarding.yaml` SHALL cold-launch the development variant, deep-link to `timecalendar-dev://onboarding`, assert a visible title containing `TimeCalendar`, activate `onboarding-next` twice, assert the localized notifications title, activate `onboarding-welcome-cta`, and retain the existing school-step, seeded live-read, and search assertions. The same flow SHALL run on iOS and Android without platform-specific page selectors.
+`mobile/.maestro/onboarding.yaml` SHALL cold-launch the development variant, deep-link to `timecalendar-dev://onboarding`, assert a visible title containing `TimeCalendar`, activate `onboarding-next` twice, assert the localized notifications title, activate `onboarding-welcome-cta`, and retain the existing school-step, seeded live-read, and search assertions. It SHALL then tap the seeded school row and assert the programme step opens, so the corrected school → import-journey navigation is proven on device and not only in Jest. The flow SHALL stop there: the steps below the programme step stay Jest-proven, and the camera and live-import steps SHALL NOT be driven. The same flow SHALL run on iOS and Android without platform-specific page selectors.
 
 #### Scenario: Maestro traverses all carousel pages before the live read
 - **WHEN** the onboarding flow runs on iOS or Android
@@ -163,6 +186,11 @@ The colocated welcome-screen test SHALL render through the real theme and i18n s
 - **WHEN** the final CTA completes navigation
 - **THEN** the flow retains the seeded school visibility and search assertions from the live `GET /schools` round trip
 - **AND** it remains shared across both platforms
+
+#### Scenario: The flow proves the school row enters the import journey
+- **WHEN** the flow taps the seeded school row after the search assertions
+- **THEN** it asserts the programme step is visible
+- **AND** it drives nothing below the programme step
 
 ### Requirement: The onboarding carousel uses the platform-native pager with an off-device test seam
 The onboarding screen SHALL use the Expo-compatible `react-native-pager-view` native dependency, backed by `UIPageViewController` on iOS and `ViewPager2` on Android. The dependency SHALL autolink without an `app.config.ts` plugin or new permission and SHALL be represented in the committed mobile package manifest and lockfile. Jest SHALL provide a manual mock that renders pager children in a React Native `View`, forwards a ref, exposes `setPage` and `setPageWithoutAnimation`, and emits page-selection events that exercise the production state path.

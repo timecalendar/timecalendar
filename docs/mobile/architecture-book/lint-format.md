@@ -3,7 +3,8 @@
 The exact rules and their options live in `mobile/eslint.config.js` (named blocks:
 `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`,
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
-`timecalendar/calendar-kit-vendor-seam`, `timecalendar/storage-seams`,
+`timecalendar/calendar-kit-vendor-seam`, `timecalendar/activity-seam`,
+`timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
 `timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
@@ -67,6 +68,49 @@ truth; this file carries the caveats the config can't (R-1).
     **no new element type or rule** — it matches the existing `feature-sublayer` pattern
     (`src/features/*/*`, layer `ui`), so B-1/B-2 cover it automatically (comments-only
     `eslint.config.js` change).
+  - **B-5 — the Activity seam** (`timecalendar/activity-seam`, ADR
+    [048](./decisions/048-activity-refresh-single-flight-and-token-precondition.md)):
+    only `src/features/activity/data/**` may import `@/api/generated/calendar-logs/**`
+    or the `activityLogs` / `activityState` bindings from `@/db`. Activity's refresh
+    coordinator is the single issuer of calendar-log requests, because four triggers
+    each issuing their own request is the capacity risk that got the feature switched
+    off. **B-1 does not cover this**: B-1 is *sublayer*-scoped, so it permits *any*
+    feature's `data/` to reach the calendar-log client — the restriction wanted here is
+    to **one** feature's `data/`, which `boundaries` cannot express against a file
+    inside a single element. So B-5 is a `no-restricted-imports` seam ban with a
+    per-directory opt-out (the `banActivitySeam` flag, mirroring `banCalendarKit`), not
+    a `boundaries` rule. The table half uses `paths` + `importNames` rather than a
+    pattern, because every feature legitimately imports `@/db` — just not those two
+    bindings.
+  - **B-6 — calendar-sources is a leaf** (`timecalendar/calendar-sources-is-a-leaf`,
+    ADR [049](./decisions/049-activity-trigger-edges-and-failure-isolation.md)):
+    `src/features/calendar-sources/**` may not import `@/features/activity` or any
+    deeper path. B-5 above guards *what* may issue an Activity request; this guards the
+    **direction** of the Activity ↔ calendar-sources edge. `activity/data/request.ts`
+    imports `@/features/calendar-sources/data`, so the reverse import closes a module
+    require cycle whose failure mode under Metro is a binding that is `undefined` at
+    module-init time — invisible to `tsc`, and invisible to `boundaries`, which governs
+    sublayer shape rather than cycles between two named features. The removal prune that
+    would otherwise want that import is inverted instead: `useActivityOwnershipPrune`
+    lives in the Activity feature and *observes* the held-calendar set.
+  - **Caveat this block exists to carry (R-1): a flat-config block that adds a ban must
+    re-call `restrictedImports([...])`, never list its one pattern alone.** Flat config
+    **replaces** a rule's options rather than merging them, and
+    `routes-not-importable` (`files: ["src/**/*.{js,jsx,ts,tsx}"]`) is otherwise the
+    last block setting `no-restricted-imports` for these files. A block naming only the
+    new Activity pattern would therefore have silently switched **every base seam ban
+    off** — storage backends, chrome, calendar-kit, the generated calendar-log client,
+    the `@/db` Activity tables, and the `@/app` route-entrypoint ban — for the whole
+    calendar-sources feature, **with `npm run lint` still green**. Note the asymmetry
+    with the seam blocks above: `storage-seams`, `chrome-seams`,
+    `calendar-kit-vendor-seam` and `activity-seam` use `restrictedImports([], { banX:
+    false })` because each *drops* one ban for the directory that **is** that seam; B-6
+    *adds* one, which is the opposite shape. Because the replacement is silent, a green
+    lint run does not prove a block like this works — it is verified by injecting a
+    banned import into a calendar-sources file and confirming lint fails for **each**
+    pattern, new and inherited, then reverting (the same inject-and-revert discipline
+    the boundaries typescript-resolver caveat below demands, and for the same reason:
+    the failure mode is a silent pass).
   - Caveat lint can't carry: boundaries must **resolve** the `@/` alias to classify a
     target — otherwise an `@/db` specifier resolves to nothing and the boundary
     silently never fires (a false-negative). `eslint-config-expo/flat` already ships
@@ -95,6 +139,12 @@ truth; this file carries the caveats the config can't (R-1).
   Calendar UI and the neutral renderer facade cannot import the package. Same
   static-import-only caveat as raw-fetch. See [theming.md](./theming.md) for native
   chrome and [calendar.md](./calendar.md) for the renderer boundary.
+- **The Activity seam owns calendar-log requests and the Activity tables** (B-5 above,
+  `banActivitySeam`, re-set without the ban for `timecalendar/activity-seam`):
+  `@/api/generated/calendar-logs/**` is banned by pattern and `activityLogs` /
+  `activityState` are banned as **named imports** from `@/db`, everywhere except
+  `src/features/activity/data/**`. `@/db` itself stays freely importable. Same
+  static-import-only caveat as raw-fetch. See [data.md](./data.md).
 - **Generated code** (`src/api/generated/`) is exempt from hand-written-code rules but
   still Prettier-formatted; Orval's `afterAllFilesWrite: prettier --write` keeps regen
   output aligned with the committed format.

@@ -92,7 +92,7 @@ docs/        this handbook, react-native-migration/, multi-calendars.md
 k8s/, terraform/   deployment infra
 .claude/     agent config: rules/ (Architecture Book), agents/, commands/, skills/, settings.json
 .github/workflows/  CI pipelines
-.husky/      git hooks (pre-commit)
+.husky/      git hooks (pre-commit; inert until `.husky/_/` is generated)
 ```
 
 ---
@@ -197,6 +197,25 @@ boot without it**. For real dev you supply a Firebase service-account key (see
 (`scripts/generate-dummy-firebase-key.sh`) — nothing in the E2E path calls Firebase.
 **Never commit real Firebase keys or certs** (GitHub Push Protection also blocks them).
 
+### Server health and process lifecycle
+
+The server exposes two operational health routes with distinct roles:
+
+- `GET /health` is the dependency/readiness signal owned by `SharedHealthModule`; it
+  includes the existing Postgres ping and can fail when the database is unavailable.
+- `GET /health/live` is the process-liveness signal; it returns
+  `{"status":"ok"}` without calling Postgres, Redis, Firebase, S3, or queues.
+
+The production server image starts with exec-form `node dist/main`, making Node PID 1
+so Docker and Kubernetes `SIGTERM` signals reach Nest's shutdown hooks directly. To
+prove the built image's command, PID 1, routes, and graceful shutdown against local
+Postgres and Redis, generate a dummy key and run:
+
+```bash
+./ci/generate-dummy-firebase-key.sh /tmp/serviceAccountKey.json
+./ci/test-server-runtime.sh <server-image> /tmp/serviceAccountKey.json
+```
+
 ---
 
 ## 5. Git worktree management
@@ -219,16 +238,20 @@ squad also has long-lived per-agent worktrees (`planner`, `applier`, `simplifier
 ### The worktree gotcha and the fix
 
 A `git worktree` checks out only **tracked** files. Everything gitignored-but-required
-is therefore **missing** in a fresh worktree, and commits **silently abort** because
-the husky pre-commit hook can't find its helper. The missing set:
+is therefore **missing** in a fresh worktree. The missing set:
 
 - env files: `server/.env`, `web/.env.local`, `mobile/.env`, `mobile/.env.local`
 - the Firebase key `server/config/serviceAccountKey.json`
 - `mobile/expo-env.d.ts` (Expo-generated; `tsc` fails without it)
-- the generated husky hooks (`.husky/_/`)
+- the generated husky helper (`.husky/_/`)
 - all `node_modules`
 
-**Always run this once per new worktree** (idempotent; no-op in main):
+Git's `core.hooksPath` points at `.husky/_`, so a worktree that has not run the setup
+below runs **no hooks at all, silently** — no warning, nothing linted or formatted.
+The commit simply succeeds. There is no hook-side place to print an advisory, because
+nothing of ours runs; the countermeasure is running the setup first, below.
+
+**The first thing you do in a new worktree is run this** (idempotent; no-op in main):
 
 ```bash
 npm run setup:worktree     # → bin/setup-worktree.sh
@@ -236,9 +259,19 @@ npm run setup:worktree     # → bin/setup-worktree.sh
 
 It (1) resolves the main checkout, (2) **symlinks** the branch-independent secrets
 from main (single source of truth), and (3) runs `npm ci` (falling back to
-`npm install`) in root + `server/` + `mobile/`, then `npx husky install` to restore
+`npm install`) in root + `server/` + `mobile/`, then `npx husky` to restore
 the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
 `setup-dev.sh`) is shared across worktrees and does **not** need re-running.
+
+> **`core.hooksPath` is host-wide, and the last install wins.** It is a single value
+> in the _shared_ `.git/config`, so it is the same for every worktree on this host.
+> Installing husky anywhere rewrites it everywhere: husky 9 sets `.husky/_`, husky 7
+> set `.husky`. A worktree on an older, husky-7-pinned branch therefore flips it back
+> whenever it provisions. The symptom is a **worktree that silently stops linting**;
+> the fix is to re-run `npm run setup:worktree` in the affected worktree. Note that
+> `git config --get core.hooksPath` is **not** a readiness check — it reads that one
+> shared slot, so it returns the reassuring answer even in a worktree that is not
+> linting. Check `test -x .husky/_/pre-commit` instead.
 
 > When dispatching pipeline sub-agents in `isolation: "worktree"`, the fresh
 > worktree needs `npm run setup:worktree` before any build/test/commit. If a squad
@@ -260,11 +293,13 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
     `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
     A future system should standardize on one footer; the point is that **every
     commit carries an attributable co-author footer**.
-- **Pre-commit hook** (`.husky/`, via root `prepare`/`husky install`): `lint-staged`
+- **Pre-commit hook** (`.husky/`, via root `prepare`/`husky`): `lint-staged`
   runs `dart format` + `bin/flutter-analyze.sh` on staged `*.dart` (the `app/`
-  surface) and `eslint --cache --fix` on staged `mobile/` sources. Do **not** bypass
-  hooks/signing/CI unless a task explicitly requires it and the reason is in the
-  commit message.
+  surface) and `eslint --cache --fix` on staged `mobile/` sources. In a worktree
+  without `.husky/_/` **no hook runs at all and the commit succeeds silently** —
+  there is no warning, so run `npm run setup:worktree` before you rely on the
+  hook. Do **not** bypass hooks/signing/CI unless a task explicitly requires it
+  and the reason is in the commit message.
 - **Logical commits.** Decompose work into reviewable commits as you go, on a
   feature branch, not on `main` (except the explicit "commit docs to main" kind of
   task like this one).
@@ -314,7 +349,19 @@ ci/e2e-server.sh logs [--native]
   (`src/{features,hooks,storage,db,i18n,firebase,theme}/**`) and a **70% global**
   floor; presentational `src/components/**` is covered by behavior tests but exempt
   from the 90% gate. Tests mock at the `customFetch` mutator seam, never the network.
-- **`server/`:** `npm test` (Jest), `npm run test:e2e` (Nest E2E config).
+- **`server/`:** `npm test` (Jest, rooted at `server/src`, needs Postgres/Redis — it
+  provisions a worker-isolated database per Jest worker).
+- **`server/` E2E smoke:** `cd server && npm run test:e2e -- --runInBand`
+  (= `jest --config ./test/jest-e2e.json`). A committed, server-owned config with its
+  own discovery root: `server/test/**/*.e2e-spec.ts` only, so it and `npm test` can
+  never rediscover each other's specs. It is an **in-process Nest HTTP smoke** — it
+  boots a Nest testing module and asserts a real route over Supertest — and is
+  deliberately **dependency-free**: no Firebase key, Postgres, Redis, or queue worker,
+  so it runs from a clean checkout with no services up. It is enforced in CI as its own
+  `Run server E2E tests` step (§10). It does **not** replace `ci/e2e-server.sh`, which
+  still owns the real-backend lifecycle for the Maestro and Flutter device E2E; a spec
+  that needs a backing service belongs in the `server/src` suite or behind that script.
+  `--passWithNoTests` is banned — an empty E2E suite must stay red.
 - **`app/` (Flutter):** `flutter test` (mocktail + Riverpod conventions).
 
 ### Mobile E2E — Maestro (`mobile/e2e/run_e2e.sh`)
@@ -473,8 +520,10 @@ workflow control flow, including the complete `APP_VARIANT=development`,
 `BACKEND_ENVIRONMENT_CAPABILITY=development`, and platform-local URL contract in
 every prebuild and release-compilation step. A labeled PR run with baseline,
 Android, and iOS checks passing on the same exact head provides definitive
-simulator/emulator proof on this non-virtualized host.
-| **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. |
+simulator/emulator proof for that PR head on this non-virtualized host; when a PR
+does not carry the label, only the path-triggered post-merge `main` run provides
+that native proof.
+| **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. Its `test` job runs, against the image built from the same SHA: `Run tests` (`npm run test`), **`Run server E2E tests`** (`npm run test:e2e -- --runInBand` — the in-process Nest HTTP smoke of §7; a missing config, zero discovered specs, or a failed assertion fails at that named step), `Verify server image runtime lifecycle`, and the OpenAPI drift check. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
 | **`delete-old-images.yaml`** | scheduled | Image cleanup. |
 
@@ -552,7 +601,7 @@ npm run db:migrate && npm run db:seed     # from server/
 npm run dev                               # NestJS on :3005
 bash bin/setup-dev.sh                     # /etc/hosts, web/.env.local, cert, reachability
 
-# 2. Per worktree (every fresh worktree!)
+# 2. Per worktree (the FIRST thing you run in a fresh worktree)
 npm run setup:worktree                    # symlink secrets + npm ci + husky
 
 # 3. Build a feature (the pipeline)

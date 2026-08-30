@@ -1,10 +1,18 @@
 import { useCallback, useState } from "react"
 
 import { useCalendarSyncControllerSyncCalendars } from "@/api/generated/calendars/calendars"
+// The Activity refresh seam, through the FEATURE barrel (ADR 049 / D2) — that is
+// what `@/features/activity` re-exports it for. The deep calendar-sources import
+// just below is not a competing convention: it is deep only because that
+// feature's barrel does not re-export `findAll`.
+import { refreshNewestPage } from "@/features/activity"
 // The durable token store, by its full @/ path (a cross-feature data→data read
 // of the user_calendars identity store — the calendar feature is the legitimate
 // consumer of the held subscription tokens). Not a relative import (the ../ ban).
-import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
+import {
+  findAll as findAllUserCalendars,
+  updateName as updateUserCalendarName,
+} from "@/features/calendar-sources/data/user-calendars"
 import { recordUnknownError } from "@/firebase"
 
 import { replaceAll } from "./repository"
@@ -71,6 +79,56 @@ export function useSyncCalendars(): UseSyncCalendars {
         recordUnknownError(error, "calendar/sync")
         setIsError(true)
         return
+      }
+
+      // Activity (TIM-399 / ADR 049 D3): the events are committed, so the
+      // calendar-log history behind them is stale — refresh it, forced.
+      //
+      // Placed HERE, not elsewhere, and all three properties are load-bearing:
+      //  - AFTER the event write, BEFORE name convergence. The spec's trigger is
+      //    "after event storage succeeds"; name convergence is a deliberately
+      //    separate failure domain below, and hanging Activity behind it would
+      //    suppress the refresh whenever a name write throws.
+      //  - UNAWAITED. `sync()` holds `isSyncing` for its whole body, so awaiting
+      //    would keep the calendar's spinner open on an unrelated request.
+      //  - NO `try`/`catch` and NO `.catch()`. `refreshNewestPage` never rejects
+      //    (TIM-397 D11), so there is nothing to swallow and a catch would be
+      //    dead code implying otherwise. This is the mechanism behind "a
+      //    calendar-sync success is never turned into a failure by an Activity
+      //    failure": a `{ status: "failed" }` outcome is not a sync failure, and
+      //    the caller neither reads it nor can propagate a rejection there is
+      //    none of — so it structurally cannot reach `setIsError`.
+      //
+      // Unreachable on the two non-success paths above, which is the whole
+      // point: the zero-token branch returns before this line, and a `replaceAll`
+      // throw returns from its own catch.
+      void refreshNewestPage({ force: true })
+
+      // Name convergence (TIM-392) — a SEPARATE failure domain, deliberately not
+      // folded into the replace above: the events are the payload the user came
+      // for and must stay committed even if this metadata write fails, and a
+      // failure here must not be mis-bucketed under "calendar/sync".
+      //
+      // The write is the NARROW updateName, never an upsert and never through
+      // fromCalendarForPublic — that mapper hard-codes `visible: true` (a
+      // client-only field absent from the DTO), so a full-row write would
+      // silently unhide every calendar the student hid, on every sync, i.e. at
+      // every app start. Only names that actually differ from the snapshot read
+      // at the top of sync() are written, so a steady-state sync writes nothing.
+      try {
+        const localNames = new Map(
+          calendars.map((calendar) => [calendar.id, calendar.name]),
+        )
+        for (const { calendar } of result) {
+          if (localNames.get(calendar.id) !== calendar.name) {
+            await updateUserCalendarName(calendar.id, calendar.name)
+          }
+        }
+      } catch (error) {
+        // The replaced events stay committed and the last-good local names
+        // stand; the next successful sync retries the convergence.
+        recordUnknownError(error, "calendar/sync-names")
+        setIsError(true)
       }
     } catch {
       // A read-tokens or fetch failure: recoverable, NOT recorded.

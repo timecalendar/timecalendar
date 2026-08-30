@@ -63,9 +63,9 @@ development most values already have sensible defaults (see
 
 A `git worktree` only checks out tracked files, so the gitignored files a working
 checkout needs — `server/.env`, `web/.env.local`, the Firebase key, the generated
-husky hooks, and `node_modules` — are all absent in a fresh worktree (commits even
-silently abort because the pre-commit hook can't find its helper). Run this once
-per new worktree to symlink the shared secrets from your main checkout and install
+husky helper `.husky/_/`, and `node_modules` — are all absent in a fresh worktree
+(no pre-commit hook runs there at all, silently). Run this first in every
+new worktree to symlink the shared secrets from your main checkout and install
 dependencies:
 
 ```bash

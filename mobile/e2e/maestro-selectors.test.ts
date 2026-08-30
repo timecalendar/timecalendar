@@ -106,6 +106,26 @@ function declaredTestIds(source: string): string[] {
   return [...literals, ...templates]
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+/**
+ * Template-literal testIDs also declare a family for concrete flow ids. The
+ * sampled expansion above proves regex selectors such as `checklist-check-.*`;
+ * this pattern proves fixed fixture ids such as
+ * `activity-new-e2e-activity-new` and `user-calendar-actions-<uuid>`.
+ */
+function declaredTestIdFamilies(source: string): RegExp[] {
+  return [...source.matchAll(/testID=\{`([^`]+)`\}/g)].map((match) => {
+    const family = (match[1] as string)
+      .split(/\$\{[^}]*\}/g)
+      .map(escapeRegExp)
+      .join(".+")
+    return new RegExp(`^(?:${family})$`)
+  })
+}
+
 const declaredIds = [
   ...new Set(
     filesUnder(srcDir, [".ts", ".tsx"])
@@ -113,6 +133,10 @@ const declaredIds = [
       .flatMap((file) => declaredTestIds(readFileSync(file, "utf8"))),
   ),
 ]
+
+const declaredIdFamilies = filesUnder(srcDir, [".ts", ".tsx"])
+  .filter((file) => !/\.test\.tsx?$/.test(file))
+  .flatMap((file) => declaredTestIdFamilies(readFileSync(file, "utf8")))
 
 /** Every text-matching selector in a flow, with its 1-based line number. */
 function flowTextSelectors(yaml: string): { text: string; line: number }[] {
@@ -209,7 +233,10 @@ function resolves(selector: string): boolean {
     // Maestro could not compile it either, so it selects nothing on a device.
     return false
   }
-  return declaredIds.some((id) => pattern.test(id))
+  return (
+    declaredIds.some((id) => pattern.test(id)) ||
+    declaredIdFamilies.some((family) => family.test(selector))
+  )
 }
 
 describe("Maestro flow selectors", () => {
@@ -249,6 +276,10 @@ describe("Maestro flow selectors", () => {
   it("treats a selector as a regex and a template testID as a family", () => {
     expect(resolves("checklist-check-.*")).toBe(true)
     expect(resolves("checklist-check-")).toBe(false)
+    expect(resolves("activity-new-e2e-activity-new")).toBe(true)
+    expect(
+      resolves("user-calendar-actions-e2e0e2e0-0000-4000-8000-000000000002"),
+    ).toBe(true)
   })
 
   it("resolves a testID declared as an object property", () => {

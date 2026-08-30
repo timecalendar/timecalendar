@@ -94,6 +94,15 @@ reading SHALL parse it back to a `Date`. Nullable `schoolName`/`schoolId` SHALL 
 including absent values. The data layer SHALL also expose a pure mapper from the server
 `CalendarForPublic` DTO to the domain type (mirroring the Flutter `fromCalendarForPublic`).
 
+That DTO mapper SHALL default `visible` to `true`, because the server holds no local visibility
+state, and it SHALL therefore be used **only** where a calendar row is being created from scratch —
+create, add-by-URL, and add-by-token. It SHALL NOT be used to refresh an existing row: a full-row
+write on the sync path would replace a locally hidden calendar's `visible: false` with the mapper's
+default at every sync, i.e. at every app start. Refreshing server-owned fields on an existing row
+SHALL go through a narrow column-scoped write instead (the sync path's `updateName(id, name)`; see
+`mobile-calendar-sync`). No type or lint rule can express this, so it is stated here, at the mapper
+that causes it, as well as at the path that must avoid it.
+
 #### Scenario: A domain calendar round-trips through the mappers
 - **WHEN** a domain calendar is mapped to a row and back to a domain calendar
 - **THEN** all fields are preserved, the timestamps are equal, the row's date strings are
@@ -104,6 +113,11 @@ including absent values. The data layer SHALL also expose a pure mapper from the
 - **WHEN** the `CalendarForPublic` → domain mapper is given a server DTO
 - **THEN** it returns a domain calendar carrying the DTO's id, token, name, schoolName, schoolId,
   dates (parsed to `Date`), and `visible` defaulting to true
+
+#### Scenario: The DTO mapper is not used to refresh an existing row
+- **WHEN** a code path updates a `user_calendars` row that already exists locally
+- **THEN** it writes only the columns the server owns for that path, through a narrow write
+- **AND** it does not map the server DTO into a full-row upsert, so a local `visible: false` survives
 
 ### Requirement: Reactive read hook over the database seam
 The feature SHALL expose a reactive read hook returning the current list of persisted calendars

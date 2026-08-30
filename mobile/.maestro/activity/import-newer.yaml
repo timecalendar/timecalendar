@@ -1,0 +1,14 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- stopApp
+- openLink: timecalendar-dev://dev-import?token=e2e-activity-calendar
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000

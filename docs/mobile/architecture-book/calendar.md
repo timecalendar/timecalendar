@@ -58,9 +58,26 @@ SQLite live reads are coalesced to one whole-table read per macrotask. Repositor
 use synchronous Drizzle transaction callbacks with `.run()` executors because the Expo
 SQLite synchronous driver does not await async callbacks.
 
-Sync runs at startup, foreground/resume, manual refresh, source changes, and notification
-receipt. `calendar_events` is disposable cache and is rebuilt from durable source tokens;
-it is not a migration/import target.
+Sync runs at startup, manual refresh, source changes, and notification receipt.
+`calendar_events` is disposable cache and is rebuilt from durable source tokens; it is not a
+migration/import target.
+
+> **Correction (TIM-399).** This sentence also listed *foreground/resume*. It is not true and
+> was not made true here: `AppState` is wired in exactly two places in `mobile/src` —
+> `src/updates/ota-update-runtime.tsx` and `src/features/activity/data/lifecycle.ts` — and
+> neither triggers a calendar sync. TIM-399 added the second of those for **Activity only**;
+> read nothing into it about the calendar. A calendar foreground sync remains unimplemented.
+
+**A successful sync fires a forced Activity refresh (TIM-399, ADR
+[049](./decisions/049-activity-trigger-edges-and-failure-isolation.md)).** It is placed
+immediately after the event write commits — the spec's trigger is "after event storage
+succeeds" — and **before** the name-convergence block, which is a separate failure domain
+whose throw must not suppress it. The call is unawaited, so `isSyncing` is not held open on an
+unrelated request, and it is neither `catch`-wrapped nor inspected: `refreshNewestPage` never
+rejects, so **an Activity failure structurally cannot change the sync's result**. A
+`{ status: "failed" }` outcome is not a sync failure and never reaches `isError`. Neither
+non-success path reaches the call: the zero-token branch returns before it, and a `replaceAll`
+throw returns from its own catch.
 
 The server normalizes recognized ADE iCal export URLs immediately before each upstream
 fetch. Explicit `firstDate`/`lastDate` pairs and `nbWeeks` links use a rolling UTC window

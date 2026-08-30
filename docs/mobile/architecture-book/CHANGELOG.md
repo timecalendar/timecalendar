@@ -1,7 +1,156 @@
 # Architecture Book changelog
 
+## 2026-08-30
+
+- Added the two-calendar real-server Activity fixture rule: establish a server read watermark, then add exactly 52 unread rows across the fixed 50-row page boundary. Recorded positive-first selectors and the no-KVM split between local integration/syntax evidence and post-merge native CI.
+- Added the AA-verified `positive` and `informational` semantic status tokens, the thin root
+  `/activity` route and grouped cached timeline, and the Settings Activity entry with a reactive
+  unread badge. Ticket 5 owns user-driven refresh/pagination and cache-bounded read marking;
+  screen-open, foreground, push, and post-sync triggers remain Ticket 6's boundary.
+- Promoted three load-bearing calendar naming/import rules to indexed records: ADR 050 makes token
+  possession the complete shared rename capability and accepts last-write-wins; ADR 051 preserves
+  Flutter compatibility by keeping `/v1` controller-local rather than enabling global NestJS
+  versioning; ADR 052 keeps eventual name convergence narrow and separate from event replacement so
+  sync cannot overwrite the client-only `visible` flag. The binding rename and convergence rules in
+  `features.md` now link to ADRs 050 and 052, and the path-level versioning rule in `data.md` links
+  to ADR 051; the ephemeral import draft remains separately recorded in ADR 047.
+- Wired every Activity trigger into the ADR 048 seam and recorded the wiring as **ADR 049**
+  (TIM-399). The trigger table is now: pull-to-refresh and a relevant `calendar_changed` /
+  `calendar_digest` push and a successful calendar sync **force** a refresh; opening the
+  Activity screen and returning to the foreground refresh **passively**, which the seam
+  answers for free inside the persisted five-minute window; cold launch gets **no code** —
+  the startup sync's post-storage refresh is its trigger, so an offline cold launch issues
+  nothing, by design rather than by omission. Foreground means `background → active` only:
+  iOS raises `inactive → active` for a notification-shade pull or an incoming call, and
+  neither is a return to the app (decisions/049, calendar.md, features.md).
+- Recorded the rule that makes **a calendar-sync success stay a success**: silent host/runtime
+  edges (sync, push and foreground) fire an unawaited `void refreshNewestPage(...)` with no
+  `catch` and no outcome inspection. An Activity failure therefore cannot reach sync's
+  `isError` — `refreshNewestPage` never rejects (ADR 048), and sync never reads its
+  `{ status: "failed" }` outcome. The Activity screen is the deliberate exception: screen open
+  and pull-to-refresh await and expose the shared outcome so failures can be shown over cached
+  content. The distinction reads like an omission at the silent edges, which is why it is
+  written down (decisions/049, calendar.md).
+- Amended **ADR 028**: notification receipt now fans out to **two independent** cross-feature
+  seams — the calendar sync and the Activity refresh — with the Activity call deliberately not
+  chained onto the sync's promise, so the push guarantee survives a sync that fails. It is
+  gated on the message **action**, not on `parseNotificationRoute(…) !== null`: a
+  `calendar_changed` with an undecodable `payload` is still a real calendar change, so routing
+  declines to navigate while Activity still refreshes. The routing decision itself is unchanged
+  (decisions/028, firebase.md).
+- Added lint boundary **B-6** (`timecalendar/calendar-sources-is-a-leaf`): calendar-sources may
+  not import `@/features/activity`, because the Activity data layer imports calendar-sources and
+  the reverse edge closes a module require cycle whose failure mode under Metro is an `undefined`
+  binding at module init — invisible to `tsc` and to `boundaries`. The removal prune is inverted
+  rather than banned outright: `useActivityOwnershipPrune` observes the held-calendar set from the
+  Activity side. Carried with it, the caveat the config cannot state: **a flat-config block that
+  ADDS a ban must re-call `restrictedImports([...])`**, because flat config replaces rule options
+  rather than merging them — a block listing only its own pattern would silently switch every
+  base seam ban off for that directory with lint still green, so a green lint run does not prove
+  such a block works (lint-format.md).
+- Corrected a false sentence in calendar.md rather than inheriting it: sync does **not** run at
+  foreground/resume. `AppState` is wired in exactly two places in `mobile/src`, and neither
+  triggers a calendar sync. TIM-399 added the second of them for Activity only (calendar.md).
+
+- Recorded the calendar rename surface and, load-bearing, the rule that the sync path
+  converges calendar names through the narrow `updateName(id, name)` write and must never
+  `upsert` a `user_calendars` row or route through `fromCalendarForPublic`, which hard-codes
+  the client-only `visible: true`. A full-row write there would silently unhide a hidden
+  calendar on every sync; no lint rule or type can express "this write must stay narrow", so
+  it is prose (R-1). Also recorded that rename persists the name the **server** returned
+  rather than the typed input (that is what makes two devices agree), that the event replace
+  and the name write-back are deliberately two failure domains, and that every calendar-name
+  label goes through `effectiveCalendarName` with the "My timetable" / "Mon emploi du temps"
+  fallback — a display substitution that never rewrites the stored value (features.md).
+- Recorded the institution → programme → Connect → manual-import journey and its ephemeral,
+  Stack-scoped import draft as **ADR 047**. The draft is held in React state behind a provider
+  mounted once on `src/app/onboarding/_layout.tsx` — never MMKV, never SQLite, no new global
+  store — so "leaving the journey clears it" and "a restart clears it" are properties of where
+  the provider lives rather than code that can be forgotten. The read hook is total: outside the
+  provider it returns "no draft", which _is_ the contract for the deep-linkable QR and iCal-URL
+  routes (`name: ""`, `schoolName: ""`), not an error (navigation.md, features.md, decisions/047).
+- Required calendar creation to send **exactly one** institution representation, by key absence:
+  a listed draft sends `schoolId` with no `schoolName` key, an unlisted draft the inverse. The
+  server validates the pair with mutually exclusive `@ValidateIf` conditions, so a body carrying
+  both keys is rejected even when one is `undefined`. The derivation is one pure function and the
+  create seam takes the fields as a parameter, so the wire shape is provable without React
+  (features.md).
+- Extended that same `effectiveCalendarName` rule to the event-details calendar label, the one
+  name surface the rename work did not reach — the measured reason it is a rule rather than a
+  preference is that 119 511 of 444 028 live calendars hold whitespace-only names and `" "` is
+  truthy, so `name || fallback` rendered a blank value under the "Calendar" label (features.md).
+- Extended the `/feedback` route's bounded optional parameters with `calendarName`, the normalized
+  programme name from a failed import, omitted when empty. `gradeName` stays unsent: "formation" is
+  a programme of study, not a grade (navigation.md, features.md).
+
+- Added the Activity refresh coordinator — the single bounded fetch and pagination seam every
+  Activity trigger shares — and recorded two decisions in **ADR 048**. First, **single-flight is a
+  module-level promise, not TanStack Query**: the callers (calendar sync, the push handler, the
+  app-lifecycle listener) are plain modules where a hook is uncallable, `fetchQuery` dedup would
+  write to the query cache Activity must stay out of, and the five-minute freshness clock must
+  survive process death, which an in-memory `dataUpdatedAt` does not. The newest and older pages
+  hold independent slots, so a backfill can neither block nor be blocked by a forced refresh.
+  Second, **no Activity request is issued with a token count outside 1–100, on either path**: the
+  server short-circuits an empty token array before it distinguishes a first page from a following
+  page, so a zero-token request is a deliberate `200` that clears the unread badge on the newest
+  page and **permanently** sets `olderPageComplete` on the older page — neither recoverable by any
+  later refresh. The guard belongs on the request precondition and nowhere else; suppressing
+  `nextCursor: null` instead would restart pagination forever at the end of history (data.md,
+  features.md, ADR 048).
+- Added **B-5**, the Activity seam boundary: only `src/features/activity/data/**` may import
+  `@/api/generated/calendar-logs/**` or the `activityLogs` / `activityState` bindings from `@/db`.
+  B-1 does **not** already give this — B-1 is _sublayer_-scoped, so it permits any feature's
+  `data/` to issue calendar-log requests; a single-feature restriction is not expressible in
+  `eslint-plugin-boundaries` against a file inside one element. Implemented with the existing
+  `no-restricted-imports` seam-ban idiom (`banActivitySeam`, mirroring `banCalendarKit`), the table
+  half using `paths` + `importNames` because every feature legitimately imports `@/db` — just not
+  those two bindings (lint-format.md, ADR 048).
+- Noted in the ADR index that **`047` is claimed by an open PR** as well as the existing `045`
+  reservation, so this ADR took `048`. An ADR-number collision is invisible to git; the next author
+  must check open PRs (`gh pr diff <N> --name-only | grep decisions/`), not just the highest merged
+  number (decisions/README.md).
+
 ## 2026-08-29
 
+- Split the two meanings of "server E2E". `server/npm run test:e2e` is now a committed,
+  dependency-free in-process Nest HTTP smoke with its own discovery root
+  (`server/test/jest-e2e.json`, `test/**/*.e2e-spec.ts`) that cannot rediscover the
+  `server/src` unit suite, enforced as a named `Run server E2E tests` step in
+  `ci-build-deploy.yml`; `ci/e2e-server.sh` keeps sole ownership of the real-backend
+  lifecycle behind Maestro and legacy Flutter device E2E. `--passWithNoTests` is banned
+  so an empty E2E suite stays red. No ADR: this restores a documented gate and records
+  existing ownership rather than making a costly-to-reverse choice (testing.md).
+- Recorded that the committed spec now carries `PATCH /v1/calendars/{token}` (token-authorized
+  calendar rename), served by a second controller with a path-level `/v1` prefix rather than by
+  NestJS global versioning, which stays disabled so the existing unversioned calendar read, create
+  and sync routes keep serving Flutter release builds. Generalized the `/v1` rule from "exactly one
+  route" to "a path-level prefix per controller" now that `POST /v1/calendar-logs/search` is a
+  second instance of the same pattern. The epic's architecture decisions record is owned by a later
+  ticket; this entry states the contract fact only (data.md).
+- Added the device-local Activity model: the `activity_logs` and `activity_state` tables, an
+  additive migration, and the `activity` feature's data layer. Two decisions are recorded in
+  ADR 046. First, the cache is **merged by server log id, never drop+replaced** — history is
+  cursor-paginated, so a replacing newest-page refresh would delete every older page a student
+  had backfilled and shrink the offline timeline to one page; upsert identity is also what makes
+  a repeated page, an overlapping page and a restarted pagination chain idempotent. Second, the
+  **read watermark is server-issued time**: a device-clock watermark on a phone whose clock is
+  set forward hides every subsequent change permanently, and set backward re-marks read history
+  as unread forever. The one-year prune cutoff derives from server time for the same reason, and
+  `lastSuccessfulRefreshAt` stays device time by design — the two clocks in one row are the point
+  of the record, not an inconsistency to unify (storage.md, features.md, ADR 046).
+- Grew the single backend-bound reset list from four tables to six. `switch.ts` calls
+  `resetBackendDatabase()`, so there remains exactly one list and the environment switch needs no
+  separate change; a table missing from it would leave another environment's private schedule data
+  on the device (storage.md).
+- Required a migration's upgrade path to be proven against **real SQLite**, not only against the
+  suite-wide expo-sqlite mock: the committed SQL is applied to an in-memory `node:sqlite` database
+  on a fresh install _and_ on top of a database already holding rows in every earlier table. The
+  mocked seam can only prove runner wiring, and a migration that fails on an installed database is
+  a data incident. No ADR: this tightens the existing testing contract for a surface the Book
+  already calls sensitive (storage.md, testing.md).
+- Left ADR `045` free. The open source-recovery PR carries an ADR numbered `044` that collides
+  with the merged `044` and renumbers to `045` on rebase; an ADR-number collision is invisible to
+  git because two different filenames merge as two clean adds (decisions/README.md).
 - Added the E2E **seed-date contract**. The server seeds the smoke calendar once, at the start
   of a native job that runs well over an hour, while the agenda's window is
   `[today 00:00, today + 7 days)` and forward-only, recomputed from the device clock each time
@@ -42,63 +191,6 @@
   query wait, a retry, or a weakened matcher. Also added `usePlatform`
   (`src/test-support/platform.ts`) so a `Platform.OS` override always restores, a separate
   latent order dependence (testing.md, ADR 044).
-- Replaced ADR 038's three stack-trace signatures with a single **structural** retry rule.
-  `mobile/e2e/classify-maestro-attempt.mjs` reads Maestro's own per-flow `commands.json`:
-  captured-output assertion evidence wins globally, as does any earlier command with status
-  `FAILED`; otherwise the latest explicit launch/stop/open command at the failing command's
-  depth begins the final restart epoch. A completed assertion in an earlier phase may be
-  ignored, while an evaluated assertion or non-startup interaction in the current epoch is
-  terminal. This phase-local correction was pinned against the captured 12-command
-  `hidden-events` record from run 33200667041: nested import passed, then a new depth-0
-  `stopApp` → failed `openLink` transport phase. A retry still reruns the entire top-level
-  flow in a fresh process. A fourth iOS startup shape had arrived carrying **no exception
-  text at all**, so no signature could ever have matched it — the matching strategy was the
-  defect, not any individual pattern. Documented bound: a deterministic launch failure
-  matches the same shape, exhausts the four attempts, and still exits non-zero; retry costs
-  attempts, never correctness (ADR 038, testing.md).
-- Moved the native-E2E harness and workflow-contract proofs into the baseline gate.
-  `ci-mobile.yml` now watches `.github/workflows/ci-mobile-e2e.yml` and runs
-  `test_run_e2e.sh` + `test_ci_mobile_e2e.sh`. Previously both ran only inside the
-  label-gated native jobs, so a PR that edited `ci-mobile-e2e.yml` alone — exactly the
-  file whose build contract they enforce — ran neither gate and surfaced red on `main`
-  (testing.md).
-- Corrected the ADR 038 deep-link reopen signature to require `NSPOSIXErrorDomain` and
-  `code=60` as independent fragments instead of the literal `NSPOSIXErrorDomain code=60`,
-  which never matched: Maestro prints `(domain=NSPOSIXErrorDomain, code=60)`. The rule is
-  still the complete conjunction — now five fragments — and the assertion guard still runs
-  first (ADR 038, testing.md).
-- Refined ADR 038's bounded iOS startup-transport classifier from two to three positive
-  shapes. A deep-link reopen is retryable only when output contains the complete
-  `IOSDriver.openLink` + `NSPOSIXErrorDomain` + `code=60` + `Simulator device failed to open` +
-  `Operation timed out` conjunction after the assertion guard; partial signatures, generic
-  timeouts, assertion-bearing output, application failures, and unknown failures remain
-  terminal with their original result (ADR 038, testing.md).
-- Restored release-config native E2E routing to the seeded local backend by requiring the
-  development app variant, independent development backend capability, and platform-local URL
-  in every Android/iOS prebuild and release-compilation step, with step-scoped workflow proof
-  (testing.md).
-- Widened the ADR 038 iOS startup-retry class from "first-`launchApp` XCTest transport failure"
-  to the two shapes a driver-startup failure actually takes, the second being the driver never
-  binding its port (`IOSDriverTimeoutException`). Maestro raises that while creating the session,
-  before it opens the flow, so its output carries no flow command — anchoring the classifier on
-  `launchApp` made the most canonical startup flake terminal and spent none of the four-attempt
-  budget. Assertion, application, and unknown failures stay terminal on first occurrence
-  (ADR 038, testing.md).
-- Required a Maestro seeded-title text selector to match every surface that renders that title,
-  enforced by a second guard in `mobile/e2e/maestro-selectors.test.ts` in the baseline gate. An
-  agenda or today-timeline tile is an accessibility container whose label _extends_ the title
-  (`{{title}}, {{time}} {{location}}`); XCUITest collapses it and drops the child text, and a
-  Maestro text selector is a fully anchored regex — so a bare title matched nothing on iOS
-  against a screen that plainly showed the event, and one `assertNotVisible` passed vacuously.
-  Flows now use `"<title>(,.*)?"`, one cross-platform form with no loss of strength. Distinct
-  from a stale id and from a below-the-fold control: the id guard is correct to stay silent,
-  since only the iOS projection of a real string differs (testing.md).
-- Required Maestro flow `id:` selectors to resolve against real `mobile/src` testIDs, enforced by
-  `mobile/e2e/maestro-selectors.test.ts` in the baseline (not the on-demand native) gate.
-  Selectors match as regexes, testIDs count as JSX attributes and object properties, and
-  template-literal testIDs stand for their family — a literal-only matcher would allowlist
-  working ids and disarm the guard. Recorded the calendar-family `calendar-view` agenda switch
-  and the EN-label fallback for controls that cannot carry a testID (testing.md).
 - Added fetch-time ADE iCal normalization to a rolling UTC window from 12 calendar months
   before through 12 months after each fetch. Rewrites remain ephemeral so source URLs are not
   persisted with expiring dates, while existing sync cadence and school-specific exceptions

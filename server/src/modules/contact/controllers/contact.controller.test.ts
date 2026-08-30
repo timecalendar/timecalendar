@@ -61,6 +61,42 @@ describe("ContactController", () => {
       })
     })
 
+    it("forwards gradeName and calendarName as independent metadata", async () => {
+      await request(app)
+        .post("/contact")
+        .send({
+          message: "My message",
+          email: "martin.matin@email.com",
+          gradeName: "My Grade",
+          calendarName: "My Calendar",
+        })
+        .expect(201)
+
+      expect(crispClient.createConversation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: {
+            gradeName: "My Grade",
+            calendarName: "My Calendar",
+          },
+        }),
+      )
+    })
+
+    it("forwards a legacy gradeName-only payload with no calendarName key", async () => {
+      await request(app)
+        .post("/contact")
+        .send({
+          message: "My message",
+          email: "martin.matin@email.com",
+          gradeName: "My Grade",
+        })
+        .expect(201)
+
+      expect(crispClient.createConversation).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { gradeName: "My Grade" } }),
+      )
+    })
+
     it("keeps DTO validation failures at 400", async () => {
       await request(app).post("/contact").send({}).expect(400)
 

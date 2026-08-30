@@ -27,5 +27,9 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
   },
-  "include": ["src"]
+  // `test` holds the Jest E2E suite. It is in the type-check/lint project (the
+  // lint script globs `test/**/*.ts`, and typescript-eslint needs every linted
+  // file to belong to the project), but `tsconfig.build.json` excludes it, so
+  // `nest build` still emits `src` only.
+  "include": ["src", "test"]
 }
