@@ -246,10 +246,9 @@ is therefore **missing** in a fresh worktree. The missing set:
 - the generated husky helper (`.husky/_/`)
 - all `node_modules`
 
-Without `.husky/_/` the pre-commit hook has no helper to source. It used to fail hard
-with an opaque `.husky/_/husky.sh: No such file` and `exit=2`, which aborted the commit;
-it now **skips its checks and prints how to fix it**, so the commit still succeeds — but
-nothing is linted or formatted until you run the setup below.
+Without `.husky/_/` the pre-commit hook has no helper to source, so it **skips its
+checks and prints how to fix it** rather than blocking the commit — nothing is linted
+or formatted until you run the setup below.
 
 **The first thing you do in a new worktree is run this** (idempotent; no-op in main):
 
