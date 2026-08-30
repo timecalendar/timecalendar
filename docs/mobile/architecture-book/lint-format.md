@@ -4,7 +4,8 @@ The exact rules and their options live in `mobile/eslint.config.js` (named block
 `timecalendar/architecture`, `routes-not-importable`, `mutator-owns-fetch`,
 `generated-code`, `timecalendar/feature-boundaries`, `timecalendar/chrome-seams`,
 `timecalendar/calendar-kit-vendor-seam`, `timecalendar/activity-seam`,
-`timecalendar/storage-seams`, `timecalendar/tests`). The config is the source of
+`timecalendar/calendar-sources-is-a-leaf`, `timecalendar/storage-seams`,
+`timecalendar/tests`). The config is the source of
 truth; this file carries the caveats the config can't (R-1).
 
 ## Toolchain
@@ -81,6 +82,35 @@ truth; this file carries the caveats the config can't (R-1).
     a `boundaries` rule. The table half uses `paths` + `importNames` rather than a
     pattern, because every feature legitimately imports `@/db` — just not those two
     bindings.
+  - **B-6 — calendar-sources is a leaf** (`timecalendar/calendar-sources-is-a-leaf`,
+    ADR [049](./decisions/049-activity-trigger-edges-and-failure-isolation.md)):
+    `src/features/calendar-sources/**` may not import `@/features/activity` or any
+    deeper path. B-5 above guards *what* may issue an Activity request; this guards the
+    **direction** of the Activity ↔ calendar-sources edge. `activity/data/request.ts`
+    imports `@/features/calendar-sources/data`, so the reverse import closes a module
+    require cycle whose failure mode under Metro is a binding that is `undefined` at
+    module-init time — invisible to `tsc`, and invisible to `boundaries`, which governs
+    sublayer shape rather than cycles between two named features. The removal prune that
+    would otherwise want that import is inverted instead: `useActivityOwnershipPrune`
+    lives in the Activity feature and *observes* the held-calendar set.
+  - **Caveat this block exists to carry (R-1): a flat-config block that adds a ban must
+    re-call `restrictedImports([...])`, never list its one pattern alone.** Flat config
+    **replaces** a rule's options rather than merging them, and
+    `routes-not-importable` (`files: ["src/**/*.{js,jsx,ts,tsx}"]`) is otherwise the
+    last block setting `no-restricted-imports` for these files. A block naming only the
+    new Activity pattern would therefore have silently switched **every base seam ban
+    off** — storage backends, chrome, calendar-kit, the generated calendar-log client,
+    the `@/db` Activity tables, and the `@/app` route-entrypoint ban — for the whole
+    calendar-sources feature, **with `npm run lint` still green**. Note the asymmetry
+    with the seam blocks above: `storage-seams`, `chrome-seams`,
+    `calendar-kit-vendor-seam` and `activity-seam` use `restrictedImports([], { banX:
+    false })` because each *drops* one ban for the directory that **is** that seam; B-6
+    *adds* one, which is the opposite shape. Because the replacement is silent, a green
+    lint run does not prove a block like this works — it is verified by injecting a
+    banned import into a calendar-sources file and confirming lint fails for **each**
+    pattern, new and inherited, then reverting (the same inject-and-revert discipline
+    the boundaries typescript-resolver caveat below demands, and for the same reason:
+    the failure mode is a silent pass).
   - Caveat lint can't carry: boundaries must **resolve** the `@/` alias to classify a
     target — otherwise an `@/db` specifier resolves to nothing and the boundary
     silently never fires (a false-negative). `eslint-config-expo/flat` already ships

@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react-native"
 import { useRouter } from "expo-router"
 
+import { refreshNewestPage } from "@/features/activity"
 import { useSyncCalendars } from "@/features/calendar/data"
 import {
   getInitialTap,
@@ -21,8 +22,12 @@ import {
 // recordUnknownError is a spy and the entrypoints hand back driveable handlers.
 jest.mock("@/firebase")
 jest.mock("@/features/calendar/data")
+// The second, INDEPENDENT cross-feature seam notification receipt now drives
+// (TIM-399 / ADR 049 D4), mocked at the feature barrel like the sync above it.
+jest.mock("@/features/activity", () => ({ refreshNewestPage: jest.fn() }))
 jest.mock("expo-router", () => ({ useRouter: jest.fn() }))
 
+const mockRefreshActivity = refreshNewestPage as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseRouter = useRouter as jest.Mock
@@ -137,6 +142,7 @@ describe("useNotificationTapRouting", () => {
     mockOnForegroundMessage.mockReturnValue(jest.fn())
     mockOnNotificationTap.mockReturnValue(jest.fn())
     mockGetInitialTap.mockResolvedValue(null)
+    mockRefreshActivity.mockResolvedValue({ status: "updated" })
   })
 
   // The cold-start getInitialTap().then resolves in a trailing microtask after
@@ -281,5 +287,118 @@ describe("useNotificationTapRouting", () => {
     // effect's returned cleanup calls.
     expect(mockOnForegroundMessage).toHaveReturnedWith(unsubscribeForeground)
     expect(mockOnNotificationTap).toHaveReturnedWith(unsubscribeTap)
+  })
+
+  // TIM-399 / ADR 049 D4. Every case below is additive: not one assertion in a
+  // pre-existing test above changed, which is the routing-regression proof for
+  // this ticket's named sensitive surface — an edit up there would have meant
+  // routing behavior moved.
+  describe("Activity refresh (independent of the sync)", () => {
+    it("requests a forced refresh on a foreground calendar_changed", async () => {
+      await mount()
+      await act(async () => {
+        foregroundHandler()(
+          message("calendar_changed", { type: "new", event: { uid: "u-1" } }),
+        )
+      })
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
+    })
+
+    it("requests a forced refresh on a foreground calendar_digest", async () => {
+      await mount()
+      await act(async () => {
+        foregroundHandler()(message("calendar_digest"))
+      })
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
+    })
+
+    it("requests a forced refresh on a background tap", async () => {
+      await mount()
+      await act(async () => {
+        tapHandler()(
+          message("calendar_changed", { type: "new", event: { uid: "u-9" } }),
+        )
+      })
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
+    })
+
+    it("requests a forced refresh on a cold-start tap", async () => {
+      mockGetInitialTap.mockResolvedValue(message("calendar_digest", undefined))
+      await mount()
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
+    })
+
+    it("requests nothing for an unrecognized foreground action", async () => {
+      await mount()
+      await act(async () => {
+        foregroundHandler()(message("other"))
+      })
+      expect(mockRefreshActivity).not.toHaveBeenCalled()
+    })
+
+    it("requests nothing for an unrecognized tap action, while the sync still runs", async () => {
+      await mount()
+      await act(async () => {
+        tapHandler()(message("other"))
+      })
+      expect(mockRefreshActivity).not.toHaveBeenCalled()
+      // routeTap's sync stays UNCONDITIONAL — narrowing it to the Activity
+      // relevance test would be a routing-behavior change.
+      expect(sync).toHaveBeenCalledTimes(1)
+    })
+
+    // The reason the gate is the ACTION and not `parseNotificationRoute(…) !==
+    // null`: an undecodable payload is still a real calendar change.
+    it("refreshes a calendar_changed whose payload cannot be decoded, and still does not navigate", async () => {
+      const undecodable = {
+        data: { action: "calendar_changed", payload: "{not json" },
+      } as unknown as RemoteMessage
+
+      await mount()
+      await act(async () => {
+        tapHandler()(undecodable)
+      })
+
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
+      // Routing declines, exactly as before — the parse failed.
+      expect(push).not.toHaveBeenCalled()
+    })
+
+    // THE INDEPENDENCE PROOF (architecture decision 7): the push guarantee has
+    // to survive a sync that fails, so the refresh must not be chained onto the
+    // sync's promise.
+    it("still refreshes when the sync rejects", async () => {
+      const rejected = Promise.reject(new Error("sync offline"))
+      // Handled HERE so the rejection is not unhandled process-wide; production
+      // deliberately adds no handler (`void sync()`), which is what this asserts.
+      rejected.catch(() => undefined)
+      sync.mockReturnValue(rejected)
+
+      await mount()
+      await act(async () => {
+        tapHandler()(message("calendar_digest"))
+      })
+
+      expect(sync).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+    })
+
+    it("still refreshes while the sync is still pending (never chained onto it)", async () => {
+      // A sync that never settles: if the refresh were `sync().then(…)` it could
+      // not have been called yet.
+      sync.mockReturnValue(new Promise(() => undefined))
+
+      await mount()
+      await act(async () => {
+        foregroundHandler()(message("calendar_digest"))
+      })
+
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+    })
   })
 })
