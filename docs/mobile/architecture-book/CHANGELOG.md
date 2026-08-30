@@ -2,6 +2,7 @@
 
 ## 2026-08-30
 
+- Added the two-calendar real-server Activity fixture rule: establish a server read watermark, then add exactly 52 unread rows across the fixed 50-row page boundary. Recorded positive-first selectors and the no-KVM split between local integration/syntax evidence and post-merge native CI.
 - Added the AA-verified `positive` and `informational` semantic status tokens, the thin root
   `/activity` route and grouped cached timeline, and the Settings Activity entry with a reactive
   unread badge. Ticket 5 owns user-driven refresh/pagination and cache-bounded read marking;
@@ -66,7 +67,7 @@
   mounted once on `src/app/onboarding/_layout.tsx` — never MMKV, never SQLite, no new global
   store — so "leaving the journey clears it" and "a restart clears it" are properties of where
   the provider lives rather than code that can be forgotten. The read hook is total: outside the
-  provider it returns "no draft", which *is* the contract for the deep-linkable QR and iCal-URL
+  provider it returns "no draft", which _is_ the contract for the deep-linkable QR and iCal-URL
   routes (`name: ""`, `schoolName: ""`), not an error (navigation.md, features.md, decisions/047).
 - Required calendar creation to send **exactly one** institution representation, by key absence:
   a listed draft sends `schoolId` with no `schoolName` key, an unlisted draft the inverse. The
@@ -98,7 +99,7 @@
   features.md, ADR 048).
 - Added **B-5**, the Activity seam boundary: only `src/features/activity/data/**` may import
   `@/api/generated/calendar-logs/**` or the `activityLogs` / `activityState` bindings from `@/db`.
-  B-1 does **not** already give this — B-1 is *sublayer*-scoped, so it permits any feature's
+  B-1 does **not** already give this — B-1 is _sublayer_-scoped, so it permits any feature's
   `data/` to issue calendar-log requests; a single-feature restriction is not expressible in
   `eslint-plugin-boundaries` against a file inside one element. Implemented with the existing
   `no-restricted-imports` seam-ban idiom (`banActivitySeam`, mirroring `banCalendarKit`), the table
@@ -143,7 +144,7 @@
   on the device (storage.md).
 - Required a migration's upgrade path to be proven against **real SQLite**, not only against the
   suite-wide expo-sqlite mock: the committed SQL is applied to an in-memory `node:sqlite` database
-  on a fresh install *and* on top of a database already holding rows in every earlier table. The
+  on a fresh install _and_ on top of a database already holding rows in every earlier table. The
   mocked seam can only prove runner wiring, and a migration that fails on an installed database is
   a data incident. No ADR: this tightens the existing testing contract for a surface the Book
   already calls sensitive (storage.md, testing.md).

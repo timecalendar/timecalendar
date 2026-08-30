@@ -1,10 +1,9 @@
-import { addDays } from "date-fns"
-import { CalendarContent } from "modules/calendar/models/calendar-content.entity"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
-import { Calendar } from "modules/calendar/models/calendar.entity"
 import { EventType } from "modules/fetch/models/event.model"
 import { School } from "modules/school/models/school.entity"
 import { DataSource } from "typeorm"
+import { saveE2eCalendar } from "./save-e2e-calendar"
+import { seedE2eActivity } from "./seed-e2e-activity"
 
 /**
  * Token-addressable calendar the mobile E2E Maestro flows sync through `POST
@@ -84,8 +83,6 @@ export const E2E_RENAME_CALENDAR_NAME = "E2E Rename Baseline"
  * returns this seeded `CalendarContent`.
  */
 export const seedE2eCalendar = async (dataSource: DataSource) => {
-  const calendarRepository = dataSource.getRepository(Calendar)
-  const calendarContentRepository = dataSource.getRepository(CalendarContent)
   const schoolRepository = dataSource.getRepository(School)
 
   const school = await schoolRepository.findOneBy({ code: "mygamingacademia" })
@@ -231,52 +228,29 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
   // split `CalendarSyncService.saveCalendar` uses in production. Saving by the
   // FIXED id is what makes every `up` idempotent, and for the rename calendar it
   // is also what RESETS the name a previous run's rename left behind.
-  const seedCalendar = async (
-    calendarFields: { id: string; token: string; name: string; url: string },
-    calendarEvents: CalendarEvent[],
-  ) => {
-    const calendar = await calendarRepository.save({
-      ...calendarFields,
-      schoolName: school ? null : "My Gaming Academia",
-      customData: null,
-      school: school ?? undefined,
-      lastUpdatedAt: now,
-      syncPlannedAt: addDays(now, 1),
-      lastAccessedAt: now,
-    })
-
-    const existingContent = await calendarContentRepository.findOneBy({
-      calendar: { id: calendar.id },
-    })
-
-    await calendarContentRepository.save({
-      id: existingContent?.id,
-      events: calendarEvents,
-      calendar: { id: calendar.id },
-    })
-  }
-
-  await seedCalendar(
-    {
+  await saveE2eCalendar(dataSource, {
+    fields: {
       id: E2E_CALENDAR_ID,
       token: E2E_CALENDAR_TOKEN,
       name: "Calendrier E2E Test",
       url: "https://e2e.timecalendar.test/calendar.ics",
     },
     events,
-  )
+    now,
+    school,
+  })
 
   // The rename flow's own calendar. Its events are minimal on purpose: no flow
   // asserts them, and keeping them off "today" avoids colliding with the smoke
   // calendar's assertions once both tokens are held in the same session.
-  await seedCalendar(
-    {
+  await saveE2eCalendar(dataSource, {
+    fields: {
       id: E2E_RENAME_CALENDAR_ID,
       token: E2E_RENAME_CALENDAR_TOKEN,
       name: E2E_RENAME_CALENDAR_NAME,
       url: "https://e2e.timecalendar.test/rename.ics",
     },
-    [
+    events: [
       {
         uid: "e2e-rename-event-1",
         title: "E2E Rename Filler",
@@ -292,5 +266,9 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
         exportedAt: now,
       },
     ],
-  )
+    now,
+    school,
+  })
+
+  await seedE2eActivity(dataSource, school)
 }

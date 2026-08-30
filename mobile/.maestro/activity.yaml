@@ -1,0 +1,201 @@
+# Real-server Activity journey. The nested imports stage a server-issued read
+# watermark before adding exactly 52 newer logs; this file is the only top-level
+# Activity flow discovered by e2e/run_e2e.sh.
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: activity/import-baseline.yaml
+
+# Observe the baseline and let Activity's real read effect persist its timestamp.
+- stopApp
+- openLink: timecalendar-dev://settings
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "settings-activity"
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    id: "settings-activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity-new-e2e-activity-baseline-item"
+    timeout: 60000
+- stopApp
+- openLink: timecalendar-dev://settings
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "settings-activity"
+    direction: DOWN
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "Activity"
+    timeout: 60000
+
+# Preserve SQLite state while importing the 52-row calendar.
+- runFlow: activity/import-newer.yaml
+- stopApp
+- openLink: timecalendar-dev://settings
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "settings-activity"
+    direction: DOWN
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "Activity, 52 unread changes"
+    timeout: 60000
+- tapOn:
+    id: "settings-activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity-section-list"
+    timeout: 60000
+- assertVisible:
+    id: "activity-new-e2e-activity-new"
+
+# Opening Activity clears the exact unread accessible name previously observed.
+- stopApp
+- openLink: timecalendar-dev://settings
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "settings-activity"
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: "settings-activity"
+- assertNotVisible: "Activity, 52 unread changes"
+
+# New and changed rows route to current synced details.
+- tapOn:
+    id: "settings-activity"
+- extendedWaitUntil:
+    visible:
+      id: "activity-new-e2e-activity-new"
+    timeout: 60000
+- tapOn:
+    id: "activity-new-e2e-activity-new"
+- extendedWaitUntil:
+    visible: "Room Activity New"
+    timeout: 60000
+- stopApp
+- openLink: timecalendar-dev://activity
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "activity-section-list"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "activity-changed-e2e-activity-changed-current"
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    id: "activity-changed-e2e-activity-changed-current"
+- extendedWaitUntil:
+    visible: "Room Activity Changed Current"
+    timeout: 60000
+
+# A cancelled row is inert: the list remains the positive screen anchor, and
+# its details-only location never appears.
+- stopApp
+- openLink: timecalendar-dev://activity
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "activity-section-list"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "activity-cancelled-e2e-activity-cancelled"
+    direction: DOWN
+    timeout: 60000
+- tapOn:
+    id: "activity-cancelled-e2e-activity-cancelled"
+- assertVisible:
+    id: "activity-section-list"
+- assertNotVisible: "Room Activity Cancelled Details"
+
+# Pull from the populated list, then prove the first page remains rendered.
+- swipe:
+    start: 50%, 35%
+    end: 50%, 80%
+    duration: 800
+- extendedWaitUntil:
+    visible:
+      id: "activity-new-e2e-activity-new"
+    timeout: 60000
+
+# The higher UUID is row 50 (first response); the lower UUID and older anchor
+# exist only on the following response, so observing all three proves the tie
+# order and scroll-driven pagination through the real server.
+- scrollUntilVisible:
+    element:
+      id: "activity-new-e2e-activity-tie-higher"
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: "activity-new-e2e-activity-tie-higher"
+- scrollUntilVisible:
+    element:
+      id: "activity-new-e2e-activity-tie-lower"
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: "activity-new-e2e-activity-tie-lower"
+- scrollUntilVisible:
+    element:
+      id: "activity-new-e2e-activity-older-anchor"
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: "activity-new-e2e-activity-older-anchor"
