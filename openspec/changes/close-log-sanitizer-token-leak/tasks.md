@@ -61,10 +61,10 @@
   change: 6 suites, 59 tests passing.)
 - [x] 5.2 Run `cd server && npm run build` and `npm run lint`; confirm tsc and ESLint are clean
   on the touched files.
-- [ ] 5.3 Run the full server suite `cd server && npm test -- --runInBand` with the documented
+- [x] 5.3 Run the full server suite `cd server && npm test -- --runInBand` with the documented
   local Postgres/Redis prerequisites, and confirm no unrelated suite regressed — in particular
   any suite that asserts on log output.
-- [ ] 5.4 Run `openspec validate close-log-sanitizer-token-leak` and inspect
+- [x] 5.4 Run `openspec validate close-log-sanitizer-token-leak` and inspect
   `git diff --check`; confirm no TODO/debug artifact, no OpenAPI or generated-client drift, no
   secret, no migration, no native/store config, no deployment or legacy Flutter change, and
   that the diff touches only `sanitize-log.ts`, the two test files, and this change folder.
