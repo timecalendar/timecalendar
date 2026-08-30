@@ -27,6 +27,7 @@ import type {
   CreateCalendarDto,
   CreateCalendarRepDto,
   SyncCalendarsDto,
+  UpdateCalendarDto,
 } from "../timeCalendar.schemas"
 
 import { customFetch } from "../../mutator"
@@ -213,6 +214,102 @@ export function useCalendarControllerFindCalendarByToken<
   return { ...query, queryKey: queryOptions.queryKey }
 }
 
+export const getCalendarV1ControllerRenameCalendarUrl = (token: string) => {
+  return `/v1/calendars/${token}`
+}
+
+/**
+ * Possession of the calendar token is the only authorization: there is no owner, the rename is visible to every holder of that token, and the last write wins.
+ * @summary Rename a calendar
+ */
+export const calendarV1ControllerRenameCalendar = async (
+  token: string,
+  updateCalendarDto: UpdateCalendarDto,
+  options?: RequestInit,
+): Promise<CalendarForPublic> => {
+  return customFetch<CalendarForPublic>(
+    getCalendarV1ControllerRenameCalendarUrl(token),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateCalendarDto),
+    },
+  )
+}
+
+export const getCalendarV1ControllerRenameCalendarMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof calendarV1ControllerRenameCalendar>>,
+    TError,
+    { token: string; data: UpdateCalendarDto },
+    TContext
+  >
+  request?: SecondParameter<typeof customFetch>
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof calendarV1ControllerRenameCalendar>>,
+  TError,
+  { token: string; data: UpdateCalendarDto },
+  TContext
+> => {
+  const mutationKey = ["calendarV1ControllerRenameCalendar"]
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined }
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof calendarV1ControllerRenameCalendar>>,
+    { token: string; data: UpdateCalendarDto }
+  > = (props) => {
+    const { token, data } = props ?? {}
+
+    return calendarV1ControllerRenameCalendar(token, data, requestOptions)
+  }
+
+  return { mutationFn, ...mutationOptions }
+}
+
+export type CalendarV1ControllerRenameCalendarMutationResult = NonNullable<
+  Awaited<ReturnType<typeof calendarV1ControllerRenameCalendar>>
+>
+export type CalendarV1ControllerRenameCalendarMutationBody = UpdateCalendarDto
+export type CalendarV1ControllerRenameCalendarMutationError = ErrorType<void>
+
+/**
+ * @summary Rename a calendar
+ */
+export const useCalendarV1ControllerRenameCalendar = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof calendarV1ControllerRenameCalendar>>,
+      TError,
+      { token: string; data: UpdateCalendarDto },
+      TContext
+    >
+    request?: SecondParameter<typeof customFetch>
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof calendarV1ControllerRenameCalendar>>,
+  TError,
+  { token: string; data: UpdateCalendarDto },
+  TContext
+> => {
+  return useMutation(
+    getCalendarV1ControllerRenameCalendarMutationOptions(options),
+    queryClient,
+  )
+}
 export const getCalendarSyncControllerCreateCalendarUrl = () => {
   return `/calendars`
 }

@@ -122,6 +122,29 @@ describe("CalendarSyncService", () => {
       expect(content.events[0].uid).toBe(events[0].uid)
     })
 
+    it("stores an empty name when none is supplied", async () => {
+      await service.createCalendar({
+        url: "https://www.google.com/calendar/ical/",
+        schoolName: "My school",
+        customData: null,
+      })
+
+      const [calendar] = await dataSource.getRepository(Calendar).find()
+      expect(calendar.name).toBe("")
+    })
+
+    it("stores a supplied name trimmed", async () => {
+      await service.createCalendar({
+        url: "https://www.google.com/calendar/ical/",
+        schoolName: "My school",
+        name: "   My Calendar   ",
+        customData: null,
+      })
+
+      const [calendar] = await dataSource.getRepository(Calendar).find()
+      expect(calendar.name).toBe("My Calendar")
+    })
+
     it("recomputes a bounded ADE window without changing the stored source", async () => {
       jest.useFakeTimers({
         doNotFake: ["nextTick", "setImmediate"],

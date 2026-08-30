@@ -10,6 +10,13 @@
   lifecycle behind Maestro and legacy Flutter device E2E. `--passWithNoTests` is banned
   so an empty E2E suite stays red. No ADR: this restores a documented gate and records
   existing ownership rather than making a costly-to-reverse choice (testing.md).
+- Recorded that the committed spec now carries `PATCH /v1/calendars/{token}` (token-authorized
+  calendar rename), served by a second controller with a path-level `/v1` prefix rather than by
+  NestJS global versioning, which stays disabled so the existing unversioned calendar read, create
+  and sync routes keep serving Flutter release builds. Generalized the `/v1` rule from "exactly one
+  route" to "a path-level prefix per controller" now that `POST /v1/calendar-logs/search` is a
+  second instance of the same pattern. The epic's architecture decisions record is owned by a later
+  ticket; this entry states the contract fact only (data.md).
 
 ## 2026-08-28
 

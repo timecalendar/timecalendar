@@ -8,6 +8,7 @@ import { DEFAULT_MIN_SYNC_INTERVAL_MINUTES } from "modules/fetch/constants"
 import { fetcherCalendarEventFactory } from "modules/fetch/factories/fetcher-calendar-event.factory"
 import { FetcherCalendarEvent } from "modules/fetch/models/event.model"
 import { FetchService } from "modules/fetch/services/fetch.service"
+import { schoolFactory } from "modules/school/factories/school.factory"
 import createTestApp from "test-utils/create-test-app"
 import { assertChanges } from "test-utils/typeorm/assert-changes"
 import { DataSource } from "typeorm"
@@ -56,6 +57,65 @@ describe("CalendarSyncController", () => {
       expect(calendar.url).toBe("https://www.google.com/calendar/ical/")
       expect(calendar.schoolName).toBe("My school")
       expect(calendar.name).toBe("My Calendar")
+    })
+
+    it("creates a calendar with a school id", async () => {
+      const school = await schoolFactory().create()
+
+      await request(app)
+        .post("/calendars")
+        .send({
+          url: "https://www.google.com/calendar/ical/",
+          schoolId: school.id,
+          name: "My Calendar",
+        })
+        .expect(201)
+
+      const [calendar] = await dataSource.getRepository(Calendar).find()
+      expect(calendar.schoolId).toBe(school.id)
+      expect(calendar.name).toBe("My Calendar")
+    })
+
+    it("creates a calendar without a name and stores an empty one", async () => {
+      await request(app)
+        .post("/calendars")
+        .send({
+          url: "https://www.google.com/calendar/ical/",
+          schoolName: "My school",
+        })
+        .expect(201)
+
+      const [calendar] = await dataSource.getRepository(Calendar).find()
+      expect(calendar.name).toBe("")
+    })
+
+    it("stores a name of exactly 100 characters trimmed", async () => {
+      const name = "a".repeat(100)
+
+      await request(app)
+        .post("/calendars")
+        .send({
+          url: "https://www.google.com/calendar/ical/",
+          schoolName: "My school",
+          name: `  ${name}  `,
+        })
+        .expect(201)
+
+      const [calendar] = await dataSource.getRepository(Calendar).find()
+      expect(calendar.name).toBe(name)
+    })
+
+    it("rejects a name longer than 100 characters once trimmed", async () => {
+      await assertChanges(dataSource, [[Calendar, 0]], () =>
+        request(app)
+          .post("/calendars")
+          .send({
+            url: "https://www.google.com/calendar/ical/",
+            schoolName: "My school",
+            name: `  ${"a".repeat(101)}  `,
+          })
+          .expect(400),
+      )
     })
 
     it("fails when there is no school id or name", async () => {

@@ -44,7 +44,12 @@ describe("buildContactMetas", () => {
       buildContactMetas({
         email: "student@example.fr",
         name: "Student",
-        data: { calendarIds: "", schoolId: "   ", schoolName: "University" },
+        data: {
+          calendarIds: "",
+          schoolId: "   ",
+          calendarName: "   ",
+          schoolName: "University",
+        },
       }),
     ).toEqual({
       email: "student@example.fr",

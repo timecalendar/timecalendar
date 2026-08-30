@@ -32,6 +32,10 @@ export class SendMessageDto {
 
   @IsString()
   @IsOptional()
+  calendarName?: string
+
+  @IsString()
+  @IsOptional()
   deviceInfo?: string
 
   @IsString()

@@ -18,6 +18,21 @@ export class CalendarService {
     return this.calendarHelper.forPublic(calendar)
   }
 
+  /**
+   * `lastUpdatedAt` is preserved by construction: the partial carries only
+   * `name`, and `lastUpdatedAt` is written solely by the sync path. Spreading
+   * the new name onto the already-loaded entity is exactly what a re-read would
+   * return, so the response needs no second query.
+   */
+  async renameCalendar(
+    token: string,
+    name: string,
+  ): Promise<CalendarForPublic> {
+    const calendar = await this.repository.findOneByToken(token)
+    await this.repository.update(calendar.id, { name })
+    return this.calendarHelper.forPublic({ ...calendar, name })
+  }
+
   async findCalendarsForPublic(
     tokens: string[],
   ): Promise<CalendarWithContent[]> {
