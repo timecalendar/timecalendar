@@ -3,6 +3,7 @@ import { SymbolView } from "expo-symbols"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  type AccessibilityActionEvent,
   AccessibilityInfo,
   Alert,
   Platform,
@@ -15,26 +16,30 @@ import {
 } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
-import { MenuView } from "@/components/chrome"
+import { type MenuComponentRef, MenuView } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
+  effectiveCalendarName,
   type UserCalendar,
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
+import { RenameCalendarDialog } from "@/features/calendar-sources/ui/rename-calendar-dialog"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The user-calendars management screen ("Mes calendriers") — PRESENTATIONAL (70%
 // floor) over the existing durable token store (ADR 018). It lists every held
 // calendar with an explicit visibility switch (a render-only flag filtered at the
-// events-source seam — ADR 031), a confirm-gated delete, and a platform-native
-// add action routing to school selection. Writes go through
-// useUserCalendarActions() (the observability-
-// wrapped seam); failures surface via WriteErrorNotice. Themed from @/theme (R-3).
-// The route (src/app/user-calendars.tsx) is a thin re-export.
+// events-source seam — ADR 031), one overflow menu carrying Rename and a
+// confirm-gated Delete, and a platform-native add action routing to school
+// selection. Delete goes through useUserCalendarActions() (the observability-
+// wrapped seam); failures surface via WriteErrorNotice. Rename goes through the
+// dialog's own useRenameCalendar seam, since it is a server write first and a
+// local write only on success. Themed from @/theme (R-3). The route
+// (src/app/user-calendars.tsx) is a thin re-export.
 
 export function UserCalendarsScreen() {
   const { t } = useTranslation()
@@ -44,6 +49,9 @@ export function UserCalendarsScreen() {
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const { setVisible, remove, failed } = useUserCalendarActions()
+  // The dialog is MOUNTED only while a rename is open, so its controlled input is
+  // seeded once per open by its own mount (design D4) with no reset effect.
+  const [renameTarget, setRenameTarget] = useState<UserCalendar | null>(null)
 
   // A native Alert confirms the non-undoable delete. The success announce is
   // gated on the resolved write so a failed delete keeps the screen and its
@@ -147,6 +155,7 @@ export function UserCalendarsScreen() {
                 calendar={calendar}
                 onToggle={(visible) => setVisible(calendar.id, visible)}
                 onDelete={confirmDelete}
+                onRename={setRenameTarget}
               />
             ))}
           </ScrollView>
@@ -176,6 +185,12 @@ export function UserCalendarsScreen() {
             />
           </Pressable>
         )}
+        {renameTarget && (
+          <RenameCalendarDialog
+            calendar={renameTarget}
+            onClose={() => setRenameTarget(null)}
+          />
+        )}
       </SafeAreaView>
     </ThemedView>
   )
@@ -185,21 +200,48 @@ function CalendarRow({
   calendar,
   onToggle,
   onDelete,
+  onRename,
 }: {
   calendar: UserCalendar
   onToggle: (visible: boolean) => Promise<boolean>
   onDelete: (id: string, name: string) => void
+  onRename: (calendar: UserCalendar) => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
+  // MenuView does not open itself on Android; the trigger drives it through this
+  // ref (the idiom already proven in calendar-view-menu.tsx). iOS opens natively.
+  const menuRef = useRef<MenuComponentRef>(null)
 
-  const name = calendar.name || t("userCalendars.namePlaceholder")
+  // The effective display name: `trim(stored)` else the localized fallback. The
+  // previous `calendar.name || …` let a whitespace-only name through to a blank
+  // label — the exact production case TIM-274 measured.
+  const name = effectiveCalendarName(
+    calendar.name,
+    t("userCalendars.namePlaceholder"),
+  )
   const school = calendar.schoolName ?? t("userCalendars.personalSubtitle")
-  const deleteLabel = t("userCalendars.delete.label", { name })
 
-  const requestDelete = useCallback(() => {
-    onDelete(calendar.id, name)
-  }, [onDelete, calendar.id, name])
+  // Android-only trigger wiring: MenuView needs an explicit show(), reachable
+  // both by press and by TalkBack's `activate` action (which delivers no press).
+  // iOS opens the menu natively on press, so it must NOT also call show().
+  const androidTrigger =
+    Platform.OS === "android"
+      ? {
+          accessibilityActions: [{ name: "activate" }],
+          onPress: () => menuRef.current?.show(),
+          onAccessibilityAction: ({
+            nativeEvent,
+          }: AccessibilityActionEvent) => {
+            if (nativeEvent.actionName === "activate") menuRef.current?.show()
+          },
+          android_ripple: {
+            color: theme.ripple,
+            borderless: true,
+            radius: 24,
+          },
+        }
+      : null
 
   return (
     <View
@@ -213,49 +255,36 @@ function CalendarRow({
             {school}
           </ThemedText>
         </View>
-        {Platform.OS === "ios" ? (
-          <MenuView
-            testID={`user-calendar-actions-${calendar.id}`}
-            actions={[
-              {
-                id: "delete",
-                title: t("userCalendars.delete.action"),
-                image: "trash",
-                attributes: { destructive: true },
-              },
-            ]}
-            onPressAction={({ nativeEvent }) => {
-              if (nativeEvent.event === "delete") requestDelete()
-            }}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("userCalendars.actions", { name })}
-              style={styles.menuButton}
-            >
-              <SymbolView
-                name="ellipsis"
-                size={22}
-                tintColor={theme.textSecondary}
-              />
-            </Pressable>
-          </MenuView>
-        ) : (
+        <MenuView
+          ref={menuRef}
+          testID={`user-calendar-actions-${calendar.id}`}
+          actions={[
+            { id: "rename", title: t("userCalendars.rename.action") },
+            {
+              id: "delete",
+              title: t("userCalendars.delete.action"),
+              image: "trash",
+              attributes: { destructive: true },
+            },
+          ]}
+          onPressAction={({ nativeEvent }) => {
+            if (nativeEvent.event === "rename") onRename(calendar)
+            if (nativeEvent.event === "delete") onDelete(calendar.id, name)
+          }}
+        >
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={deleteLabel}
-            hitSlop={Spacing.two}
-            onPress={requestDelete}
-            android_ripple={{
-              color: theme.ripple,
-              borderless: true,
-              radius: 24,
-            }}
-            style={styles.delete}
+            accessibilityLabel={t("userCalendars.actions", { name })}
+            style={styles.menuButton}
+            {...androidTrigger}
           >
-            <TrashAffordance tint={theme.destructive} />
+            <SymbolView
+              name={{ ios: "ellipsis", android: "more_vert" }}
+              size={22}
+              tintColor={theme.textSecondary}
+            />
           </Pressable>
-        )}
+        </MenuView>
       </View>
 
       <View style={[styles.separator, { backgroundColor: theme.separator }]} />
@@ -360,16 +389,6 @@ function VisibilityControl({
   )
 }
 
-function TrashAffordance({ tint }: { tint: string }) {
-  return (
-    <SymbolView
-      name={{ ios: "trash", android: "delete" }}
-      size={22}
-      tintColor={tint}
-    />
-  )
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -420,14 +439,6 @@ const styles = StyleSheet.create({
       ios: { fontSize: 17, lineHeight: 22, fontWeight: "400" as const },
       default: { fontWeight: "400" as const },
     }),
-  },
-  delete: {
-    height: 48,
-    minWidth: 48,
-    borderRadius: Radii.pill,
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
   },
   menuButton: {
     width: 44,

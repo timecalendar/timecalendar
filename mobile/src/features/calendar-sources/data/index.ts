@@ -3,6 +3,7 @@ export {
   type UseCreateCalendar,
   useCreateCalendar,
 } from "./create"
+export { effectiveCalendarName } from "./effective-name"
 export { parseScannedSource } from "./parse-source"
 export type { ScannedCalendarSource } from "./types"
 // The durable token store (ship 5 / ADR 018) — replaces the removed ephemeral
@@ -17,11 +18,14 @@ export {
   remove,
   rowToCalendar,
   setVisible,
+  updateName,
   upsert,
   type UseAddCalendar,
   useAddCalendar,
   type UserCalendar,
   type UserCalendarActions,
+  type UseRenameCalendar,
+  useRenameCalendar,
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,

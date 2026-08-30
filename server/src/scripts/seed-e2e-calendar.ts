@@ -28,6 +28,30 @@ export const E2E_CALENDAR_TOKEN = "e2e-smoke-calendar"
 export const E2E_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000001"
 
 /**
+ * A SECOND, dedicated token-addressable calendar, for the rename round-trip flow
+ * only (`mobile/.maestro/user-calendar-rename.yaml`).
+ *
+ * A rename is a durable server mutation, and `run_e2e.sh` runs the whole flow
+ * folder in one device session — renaming `e2e-smoke-calendar` would change the
+ * name eleven other flows read, for reasons no one would attribute to the rename
+ * flow. So the rename flow gets its own calendar with its own token.
+ *
+ * Its name is the one piece of seeded state a run mutates, which is why the save
+ * below is keyed on the fixed id: every `up` writes the baseline name back over
+ * whatever a previous run renamed it to, keeping repeat runs reproducible. Its
+ * events are asserted by no flow and are deliberately minimal.
+ */
+export const E2E_RENAME_CALENDAR_TOKEN = "e2e-rename-calendar"
+
+export const E2E_RENAME_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000002"
+
+/**
+ * The baseline name the rename flow asserts before renaming. ASCII-safe and
+ * unique across the seeded set, so a `text:` selector cannot match another row.
+ */
+export const E2E_RENAME_CALENDAR_NAME = "E2E Rename Baseline"
+
+/**
  * Seeds the deterministic E2E smoke calendar (`Calendar` + `CalendarContent`).
  *
  * The events are dated **relative to the seed run** so they always land in the
@@ -204,27 +228,69 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
 
   // `Calendar.content` is a non-cascading OneToOne (the `CalendarContent` side
   // owns the join column), so the two rows are saved separately — the same
-  // split `CalendarSyncService.saveCalendar` uses in production.
-  const calendar = await calendarRepository.save({
-    id: E2E_CALENDAR_ID,
-    token: E2E_CALENDAR_TOKEN,
-    name: "Calendrier E2E Test",
-    schoolName: school ? null : "My Gaming Academia",
-    url: "https://e2e.timecalendar.test/calendar.ics",
-    customData: null,
-    school: school ?? undefined,
-    lastUpdatedAt: now,
-    syncPlannedAt: addDays(now, 1),
-    lastAccessedAt: now,
-  })
+  // split `CalendarSyncService.saveCalendar` uses in production. Saving by the
+  // FIXED id is what makes every `up` idempotent, and for the rename calendar it
+  // is also what RESETS the name a previous run's rename left behind.
+  const seedCalendar = async (
+    calendarFields: { id: string; token: string; name: string; url: string },
+    calendarEvents: CalendarEvent[],
+  ) => {
+    const calendar = await calendarRepository.save({
+      ...calendarFields,
+      schoolName: school ? null : "My Gaming Academia",
+      customData: null,
+      school: school ?? undefined,
+      lastUpdatedAt: now,
+      syncPlannedAt: addDays(now, 1),
+      lastAccessedAt: now,
+    })
 
-  const existingContent = await calendarContentRepository.findOneBy({
-    calendar: { id: calendar.id },
-  })
+    const existingContent = await calendarContentRepository.findOneBy({
+      calendar: { id: calendar.id },
+    })
 
-  await calendarContentRepository.save({
-    id: existingContent?.id,
+    await calendarContentRepository.save({
+      id: existingContent?.id,
+      events: calendarEvents,
+      calendar: { id: calendar.id },
+    })
+  }
+
+  await seedCalendar(
+    {
+      id: E2E_CALENDAR_ID,
+      token: E2E_CALENDAR_TOKEN,
+      name: "Calendrier E2E Test",
+      url: "https://e2e.timecalendar.test/calendar.ics",
+    },
     events,
-    calendar: { id: calendar.id },
-  })
+  )
+
+  // The rename flow's own calendar. Its events are minimal on purpose: no flow
+  // asserts them, and keeping them off "today" avoids colliding with the smoke
+  // calendar's assertions once both tokens are held in the same session.
+  await seedCalendar(
+    {
+      id: E2E_RENAME_CALENDAR_ID,
+      token: E2E_RENAME_CALENDAR_TOKEN,
+      name: E2E_RENAME_CALENDAR_NAME,
+      url: "https://e2e.timecalendar.test/rename.ics",
+    },
+    [
+      {
+        uid: "e2e-rename-event-1",
+        title: "E2E Rename Filler",
+        startsAt: at(0, 8),
+        endsAt: at(0, 9),
+        location: "Room E2E Rename",
+        allDay: false,
+        description: "Filler event; the rename flow asserts names, not events.",
+        teachers: ["E2E Teacher"],
+        tags: [],
+        type: EventType.CM,
+        fields: null,
+        exportedAt: now,
+      },
+    ],
+  )
 }

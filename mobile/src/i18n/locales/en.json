@@ -331,7 +331,7 @@
   "userCalendars.title": "My calendars",
   "userCalendars.emptyTitle": "No calendars yet",
   "userCalendars.empty": "No calendars imported.",
-  "userCalendars.namePlaceholder": "Calendar",
+  "userCalendars.namePlaceholder": "My timetable",
   "userCalendars.personalSubtitle": "Personal calendar",
   "userCalendars.rowLabel": "{{name}}, {{school}}",
   "userCalendars.visibilityDescription": "Choose which calendars appear in Home and Calendar.",
@@ -342,10 +342,17 @@
   "userCalendars.add.short": "Add",
   "userCalendars.error": "We couldn't update your calendars. Please try again.",
   "userCalendars.deleted": "{{name}} deleted",
-  "userCalendars.delete.label": "Delete calendar {{name}}",
   "userCalendars.actions": "Actions for {{name}}",
   "userCalendars.delete.action": "Delete",
   "userCalendars.delete.title": "Confirm deletion",
   "userCalendars.delete.message": "Are you sure you want to delete the calendar {{name}}?",
-  "userCalendars.delete.confirm": "Delete"
+  "userCalendars.delete.confirm": "Delete",
+  "userCalendars.rename.action": "Rename",
+  "userCalendars.rename.title": "Rename calendar",
+  "userCalendars.rename.label": "Calendar name",
+  "userCalendars.rename.save": "Save",
+  "userCalendars.rename.tooLong": "Use 100 characters or fewer.",
+  "userCalendars.rename.error": "We couldn't rename this calendar. Please try again.",
+  "userCalendars.rename.retry": "Retry",
+  "userCalendars.rename.renamed": "Calendar renamed to {{name}}"
 }

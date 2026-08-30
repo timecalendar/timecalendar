@@ -4,7 +4,10 @@ import { useCalendarSyncControllerSyncCalendars } from "@/api/generated/calendar
 // The durable token store, by its full @/ path (a cross-feature data→data read
 // of the user_calendars identity store — the calendar feature is the legitimate
 // consumer of the held subscription tokens). Not a relative import (the ../ ban).
-import { findAll as findAllUserCalendars } from "@/features/calendar-sources/data/user-calendars"
+import {
+  findAll as findAllUserCalendars,
+  updateName as updateUserCalendarName,
+} from "@/features/calendar-sources/data/user-calendars"
 import { recordUnknownError } from "@/firebase"
 
 import { replaceAll } from "./repository"
@@ -71,6 +74,33 @@ export function useSyncCalendars(): UseSyncCalendars {
         recordUnknownError(error, "calendar/sync")
         setIsError(true)
         return
+      }
+
+      // Name convergence (TIM-392) — a SEPARATE failure domain, deliberately not
+      // folded into the replace above: the events are the payload the user came
+      // for and must stay committed even if this metadata write fails, and a
+      // failure here must not be mis-bucketed under "calendar/sync".
+      //
+      // The write is the NARROW updateName, never an upsert and never through
+      // fromCalendarForPublic — that mapper hard-codes `visible: true` (a
+      // client-only field absent from the DTO), so a full-row write would
+      // silently unhide every calendar the student hid, on every sync, i.e. at
+      // every app start. Only names that actually differ from the snapshot read
+      // at the top of sync() are written, so a steady-state sync writes nothing.
+      try {
+        const localNames = new Map(
+          calendars.map((calendar) => [calendar.id, calendar.name]),
+        )
+        for (const { calendar } of result) {
+          if (localNames.get(calendar.id) !== calendar.name) {
+            await updateUserCalendarName(calendar.id, calendar.name)
+          }
+        }
+      } catch (error) {
+        // The replaced events stay committed and the last-good local names
+        // stand; the next successful sync retries the convergence.
+        recordUnknownError(error, "calendar/sync-names")
+        setIsError(true)
       }
     } catch {
       // A read-tokens or fetch failure: recoverable, NOT recorded.

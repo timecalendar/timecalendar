@@ -61,3 +61,16 @@ export async function setVisible(id: string, visible: boolean): Promise<void> {
     .set({ visible })
     .where(eq(userCalendars.id, id))
 }
+
+// The name write, deliberately NARROW — the same one-column UPDATE shape as
+// setVisible, never `upsert`. Both name writers (the rename seam and the sync
+// orchestrator's convergence pass) go through here, and the sync one is why the
+// narrowness is load-bearing: `fromCalendarForPublic` hard-codes `visible: true`
+// (a client-only field absent from the DTO), so a full-row write on the sync path
+// would silently unhide every calendar the student hid, at every app start. An
+// UPDATE ... SET name WHERE id = ? cannot reach `visible`, `token`, `createdAt`,
+// `lastUpdatedAt`, `schoolName` or `schoolId`; an unknown id matches no row and
+// is a harmless no-op rather than an insert.
+export async function updateName(id: string, name: string): Promise<void> {
+  await db.update(userCalendars).set({ name }).where(eq(userCalendars.id, id))
+}
