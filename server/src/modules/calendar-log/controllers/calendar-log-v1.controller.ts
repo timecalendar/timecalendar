@@ -10,8 +10,16 @@ import { CalendarLogService } from "modules/calendar-log/services/calendar-log.s
  * the app. Reusing `@ApiTags("Calendar Logs")` keeps Orval's tags-split output
  * in the existing generated calendar-logs module.
  *
- * POST, not GET: calendar tokens are bearer capabilities and must never appear
- * in a URL, where they would reach access logs, proxies, and browser history.
+ * POST, not GET, so the tokens travel in a body instead of a URL, where they
+ * would reach access logs, proxies, and browser history. That is this route's
+ * default, not an API-wide rule: this is a greenfield surface with no legacy
+ * caller, so keeping a bearer capability out of the URL costs nothing.
+ * `CalendarV1Controller` deliberately does the opposite — `PATCH
+ * /v1/calendars/:token` carries the token in the path, because the
+ * pre-existing, high-traffic `GET /calendars/by-token/:token` already exposes
+ * the same token the same way to the same logs. Unifying the two conventions
+ * is the deferred API-wide `/v1` migration: both routes move together, or
+ * neither does.
  */
 @Controller("v1/calendar-logs")
 @ApiTags("Calendar Logs")

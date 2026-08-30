@@ -16,6 +16,15 @@ import { CalendarService } from "modules/calendar/services/calendar.service"
  * `app.enableVersioning()`: versioning is global in Nest and would apply a
  * default version to every controller, and Flutter release builds in the field
  * call the unversioned calendar read, create and sync paths.
+ *
+ * The token stays in the path: the dominant, pre-existing
+ * `GET /calendars/by-token/:token` already exposes the same token to the same
+ * access logs, proxies and browser history, so moving one mutation off the URL
+ * while that read is unchanged reduces real exposure by approximately nothing
+ * and splits one calendar surface across two conventions.
+ * `CalendarLogV1Controller` takes tokens in a POST body instead — correctly,
+ * as a greenfield surface with no legacy caller. Unifying them is the deferred
+ * API-wide `/v1` migration.
  */
 @Controller("v1/calendars")
 @ApiTags("Calendars")
