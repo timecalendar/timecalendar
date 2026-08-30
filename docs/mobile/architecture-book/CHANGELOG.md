@@ -2,6 +2,17 @@
 
 ## 2026-08-30
 
+- Recorded the calendar rename surface and, load-bearing, the rule that the sync path
+  converges calendar names through the narrow `updateName(id, name)` write and must never
+  `upsert` a `user_calendars` row or route through `fromCalendarForPublic`, which hard-codes
+  the client-only `visible: true`. A full-row write there would silently unhide a hidden
+  calendar on every sync; no lint rule or type can express "this write must stay narrow", so
+  it is prose (R-1). Also recorded that rename persists the name the **server** returned
+  rather than the typed input (that is what makes two devices agree), that the event replace
+  and the name write-back are deliberately two failure domains, and that every calendar-name
+  label goes through `effectiveCalendarName` with the "My timetable" / "Mon emploi du temps"
+  fallback — a display substitution that never rewrites the stored value (features.md).
+
 - Added the Activity refresh coordinator — the single bounded fetch and pagination seam every
   Activity trigger shares — and recorded two decisions in **ADR 048**. First, **single-flight is a
   module-level promise, not TanStack Query**: the callers (calendar sync, the push handler, the
