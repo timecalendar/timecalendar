@@ -211,5 +211,5 @@ rewrite the history of what shipped.
       `openspec list` to confirm the change is listed and clean.
 - [x] 7.5 No source, test, fixture, generated, contract, migration, native/store-config or
       infrastructure file changed. No `app/` file changed.
-- [ ] 7.6 Update the PR body (stage marker, the ADR-number census result from §2.1, and any scope
+- [x] 7.6 Update the PR body (stage marker, the ADR-number census result from §2.1, and any scope
       change), then hand off per `pipeline-core`.
