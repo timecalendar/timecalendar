@@ -13,6 +13,7 @@ import {
   throwIfCalendarSyncAborted,
 } from "modules/calendar-sync/models/calendar-sync-context"
 import { CalendarEventHelper } from "modules/calendar/helpers/calendar-event.helper"
+import { normalizeCalendarName } from "modules/calendar/helpers/calendar-name"
 import { CalendarEvent } from "modules/calendar/models/calendar-event.model"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import { CalendarContentRepository } from "modules/calendar/repositories/calendar-content.repository"
@@ -60,7 +61,9 @@ export class CalendarSyncService {
       schoolName: schoolId ? null : schoolName,
       url,
       customData,
-      name,
+      // The DTO already trimmed a supplied name; this is the last line before a
+      // NOT NULL column, so an omitted one still has to become "".
+      name: normalizeCalendarName(name),
       lastUpdatedAt: now,
       syncPlannedAt: addMinutes(now, DEFAULT_MIN_SYNC_INTERVAL_MINUTES),
     })
