@@ -37,8 +37,8 @@ code and product specifications.
   empty. `gradeName` is never sent. Local invalid-URL errors never offer reporting.
 - The import journey hands its institution and programme to calendar creation through one
   pure derivation (`toCreateFields`), and the create seam receives those fields as a
-  parameter — it never reads the draft. Exactly one of `schoolId` / `schoolName` is sent,
-  by key absence, because the server validates them as a mutually exclusive pair. A QR or
+  parameter — it never reads the draft. Exactly one of `schoolId` / `schoolName` reaches
+  the server, because the server validates them as a mutually exclusive pair. A QR or
   iCal-URL route opened with no draft creates with `name: ""` and `schoolName: ""` rather
   than redirecting (ADR 047).
 - Every surface that renders a calendar's name uses `effectiveCalendarName()` — trimmed

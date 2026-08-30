@@ -23,7 +23,10 @@ import {
   resolveLocale,
   useEventDetails,
 } from "@/features/calendar/data"
-import { useUserCalendars } from "@/features/calendar-sources"
+import {
+  effectiveCalendarName,
+  useUserCalendars,
+} from "@/features/calendar-sources"
 import { EventChecklist } from "@/features/event-checklists"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
@@ -111,11 +114,16 @@ export function EventDetailsScreen() {
   }, [event, router])
 
   // The calendar name is shown ONLY when the user has 2+ calendars (Flutter
-  // parity) — with one calendar the name is redundant.
+  // parity) — with one calendar the name is redundant. Routed through
+  // effectiveCalendarName (TIM-391 / D8) like every other calendar-name surface:
+  // 119 511 of 444 028 live calendars carry a whitespace-only name (TIM-274), and
+  // rendering one raw would put a blank value under the "Calendar" label.
   const calendarName = useMemo(() => {
     if (event === null || calendars.length < 2) return undefined
-    return calendars.find((c) => c.id === event.userCalendarId)?.name
-  }, [event, calendars])
+    const held = calendars.find((c) => c.id === event.userCalendarId)
+    if (held === undefined) return undefined
+    return effectiveCalendarName(held.name) ?? t("userCalendars.nameFallback")
+  }, [event, calendars, t])
 
   const header = <Stack.Screen options={{ title: t("eventDetails.title") }} />
 

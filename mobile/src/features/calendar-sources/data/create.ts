@@ -54,9 +54,11 @@ export function useCreateCalendar(): UseCreateCalendar {
           url: url.trim(),
           name: fields.name,
           customData: null,
-          // Spread-conditional, not `schoolId: fields.schoolId`: the server
-          // validates each with @ValidateIf(other === undefined), so the unused
-          // key must be ABSENT from the body, not present-and-undefined.
+          // The server validates each with @ValidateIf(other === undefined), so
+          // the unused key must not carry a value. The spread-conditional keeps
+          // it out of this object; `JSON.stringify` would also drop a
+          // present-and-undefined key, so the two forms serialize identically —
+          // the spread is the self-documenting one, not the load-bearing one.
           ...(fields.schoolId !== undefined
             ? { schoolId: fields.schoolId }
             : {}),
