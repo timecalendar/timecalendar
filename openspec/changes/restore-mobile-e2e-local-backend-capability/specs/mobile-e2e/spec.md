@@ -367,3 +367,16 @@ interaction shared by both platforms, with no per-platform selector or branch.
   preserving their order and every assertion that proves cursor paging and tie ordering
 - **AND** a focused repository proof SHALL fail if the first bound returns to 60 seconds, either
   later bound is widened, or the three pagination selectors are reordered
+
+#### Scenario: A merged onboarding journey moves the URL-import entry deeper
+
+- **WHEN** the school step's unlisted-institution action no longer opens the iCal URL screen
+  directly, but instead begins the shipped institution → programme → connect → manual-import
+  journey
+- **THEN** `ical-import.yaml` SHALL follow that shared journey through stable shipped ids and
+  select the manual-import screen's URL option, rather than timing out on the institution step
+  or deep-linking around the user-visible entry
+- **AND** the existing URL-screen title and empty-submit validation assertions SHALL remain
+  unchanged, with no platform-specific selector or branch
+- **AND** a focused repository proof SHALL pin the inserted route edges in order, so a future
+  navigation change fails the baseline gate before another native cycle

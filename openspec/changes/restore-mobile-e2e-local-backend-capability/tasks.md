@@ -491,3 +491,29 @@ the following 16:00 seminar row was below the viewport, so the non-scrolling 60-
 - [ ] 24.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `hidden-events` must
   complete the unchanged non-vacuous hide/un-hide round trip, and Activity must again reach all
   three pagination assertions before Reviewer handoff; do not archive before that verdict.
+
+## 25. Follow the merged unlisted-institution journey to URL import
+
+Exact-head run `33351996623` at `eac37ec9` passed Activity pagination, the calendar family,
+`feedback`, `hidden-events`, and `home` on both platforms, then failed identically in
+`ical-import`. Both command traces completed the `onboarding-school-missing` tap and timed out
+at `Add a calendar by URL`; the Android artifact showed the new `Which institution?` screen.
+Merged commit `a10ab396` intentionally changed the action from a direct URL-screen jump to the
+institution → programme → connect → manual-import journey, leaving this flow's reachability
+assumption stale.
+
+- [x] 25.1 Extend only `ical-import.yaml`'s reachability half through the shipped unlisted-
+  institution journey using the existing cross-platform ids, then select `onboarding-import-url`.
+  Preserve the welcome/school entry proof, the URL-screen title, the empty-submit validation,
+  flow ordering, and the no-platform-fork contract.
+- [x] 25.2 Pin the ordered journey edges in `maestro-selectors.test.ts`, including the institution
+  and programme inputs, both Continue actions, the connect Continue action, the manual-import URL
+  choice, and the unchanged URL-screen title assertion. The proof must fail if the obsolete direct
+  jump is restored or the manual-import choice is bypassed.
+- [x] 25.3 Record the merged-journey drift class in the `mobile-e2e` delta and run the focused
+  selector proof, mutation-check its ordered route contract, parse the YAML with pinned Maestro
+  2.8.0 when available, run applicable formatting, strict OpenSpec validation, and
+  `git diff --check`; push with `run-e2e` retained.
+- [ ] 25.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
+  complete the new institution/programme/connect/manual-import reachability chain and retain its
+  empty-submit validation before Reviewer handoff; do not archive before that verdict.

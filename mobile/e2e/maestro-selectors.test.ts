@@ -67,6 +67,7 @@ const hiddenEventsFlow = readFileSync(
   join(flowsDir, "hidden-events.yaml"),
   "utf8",
 )
+const icalImportFlow = readFileSync(join(flowsDir, "ical-import.yaml"), "utf8")
 
 // Stale ids awaiting an app-side fix. MUST stay empty: TIM-264 authorizes repairing
 // every stale selector in the flows, so there is nothing left to defer. An entry here
@@ -319,6 +320,41 @@ describe("Maestro hidden-event restoration", () => {
     // remained below the viewport. A plain wait cannot move the list.
     expect(hiddenEventsFlow).toMatch(
       /- scrollUntilVisible:\n\s+element:\n\s+text: "E2E Hide Seminar\(,\.\*\)\?"\n\s+direction: DOWN\n\s+centerElement: true\n\s+timeout: 60000\n- assertVisible: "E2E Hide Seminar\(,\.\*\)\?"\s*$/,
+    )
+  })
+})
+
+describe("Maestro iCal import journey", () => {
+  it("follows the moved unlisted-institution journey to the URL option", () => {
+    // Run 33351996623: both platforms tapped onboarding-school-missing and then
+    // timed out waiting for Add a calendar by URL while the captured screen was
+    // the new Which institution? step introduced by merged commit a10ab396.
+    // Pin every inserted route edge so this proof fails if the flow restores the
+    // obsolete direct jump or bypasses the user-visible manual-import choice.
+    expect(flowSelectors(icalImportFlow).map(({ id }) => id)).toEqual([
+      "onboarding-next",
+      "onboarding-next",
+      "onboarding-welcome-cta",
+      "onboarding-school-missing",
+      "onboarding-institution-input",
+      "onboarding-institution-input",
+      "onboarding-institution-continue",
+      "onboarding-programme-input",
+      "onboarding-programme-input",
+      "onboarding-programme-continue",
+      "onboarding-connect-continue",
+      "onboarding-connect-continue",
+      "onboarding-import-url",
+      "onboarding-import-url",
+      "ical-url-submit",
+    ])
+    expect(
+      [...icalImportFlow.matchAll(/^\s*-\s*inputText:\s*"([^"]+)"\s*$/gm)].map(
+        (match) => match[1],
+      ),
+    ).toEqual(["E2E Institution", "E2E Programme"])
+    expect(flowTextSelectors(icalImportFlow).map(({ text }) => text)).toContain(
+      "Add a calendar by URL",
     )
   })
 })

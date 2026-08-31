@@ -7,17 +7,14 @@
 # validation error shows. The VALIDATION half is deterministic and offline;
 # cross-platform throughout.
 #
-# The entry point MOVED (482f134): the welcome screen is now a three-page carousel
-# whose final CTA opens the school step, and the "I can't find my school" action
-# on that step (`onboarding-school-missing`, school-picker-screen.tsx) is what
-# pushes /onboarding/ical-url. The former `onboarding-welcome-url-cta` testID no
-# longer exists. Reaching the entry therefore now goes through the school step's
-# LIVE GET /schools read — that action renders in the list footer, which mounts
-# only in the browsing state — so this flow no longer reaches the URL screen
-# without the harness server. That is the same live read onboarding.yaml already
-# depends on and the same harness server this file already requires; the
-# alternative (deep-linking straight to /onboarding/ical-url) would stop proving
-# the entry is reachable at all, which is what the first half exists to test.
+# The entry point MOVED twice. Commit 482f134 moved it from the welcome carousel
+# to `onboarding-school-missing`; merged commit a10ab396 then made that action open
+# the institution → programme → connect → manual-import journey instead of jumping
+# straight to /onboarding/ical-url. This flow follows the shipped journey and picks
+# its URL option, so it still proves the entry is reachable rather than deep-linking
+# around it. The school step still performs the LIVE GET /schools read before its
+# footer action mounts, so the reachability half requires the harness server; only
+# the empty-submit VALIDATION half below is offline.
 #
 # The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
 # seeds no parseable .ics import endpoint and a live external .ics would be flaky
@@ -64,9 +61,44 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "Select your school"
     timeout: 60000
-# "I can't find my school" → pushes /onboarding/ical-url.
+# "I can't find my school" → begins the unlisted-institution import journey.
 - tapOn:
     id: "onboarding-school-missing"
+# Name the unlisted institution, supply a programme, continue through the
+# connection guidance, then take the manual-import screen's URL option. These
+# stable ids are shared by Android and iOS; no platform branch is required.
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-institution-input"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-institution-input"
+- inputText: "E2E Institution"
+- hideKeyboard
+- tapOn:
+    id: "onboarding-institution-continue"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-input"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-programme-input"
+- inputText: "E2E Programme"
+- hideKeyboard
+- tapOn:
+    id: "onboarding-programme-continue"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-connect-continue"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-connect-continue"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-import-url"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-import-url"
 # The URL-entry screen renders.
 - extendedWaitUntil:
     visible: "Add a calendar by URL"
