@@ -1,16 +1,16 @@
 ## 1. Add the bounded CocoaPods fallback
 
-- [ ] 1.1 Add a Bash helper under `mobile/e2e/` that runs `pod install --repo-update --ansi`, preserves its complete output and exit status, returns immediately on success, and defaults every unclassified failure to terminal without retry.
-- [ ] 1.2 Implement the narrow fallback classifier: require at least one HTTP-400 podspec URL beneath exactly `https://cdn.jsdelivr.net/cocoa/Specs/`; reject mixed actionable errors, other statuses/hosts/paths, traversal, queries, fragments, and non-podspec candidates; deduplicate multiple eligible paths.
-- [ ] 1.3 For each eligible path, fetch the identical path from the official `CocoaPods/Specs` raw source into run-owned temporary storage, parse it as JSON, verify declared name/version against the path, and place it only beneath the configured trunk Specs cache root; add no podspec or generated native output to git.
-- [ ] 1.4 Retry exactly once with `pod install --ansi` (no repository refresh), propagate its status unchanged, clean temporary files on every exit, and print concise diagnostics that distinguish normal success, eligible recovery, rejected classification, fallback validation failure, and retry failure without exposing secrets.
+- [x] 1.1 Add a Bash helper under `mobile/e2e/` that runs `pod install --repo-update --ansi`, preserves its complete output and exit status, returns immediately on success, and defaults every unclassified failure to terminal without retry.
+- [x] 1.2 Implement the narrow fallback classifier: require at least one HTTP-400 podspec URL beneath exactly `https://cdn.jsdelivr.net/cocoa/Specs/`; reject mixed actionable errors, other statuses/hosts/paths, traversal, queries, fragments, and non-podspec candidates; deduplicate multiple eligible paths.
+- [x] 1.3 For each eligible path, fetch the identical path from the official `CocoaPods/Specs` raw source into run-owned temporary storage, parse it as JSON, verify declared name/version against the path, and place it only beneath the configured trunk Specs cache root; add no podspec or generated native output to git.
+- [x] 1.4 Retry exactly once with `pod install --ansi` (no repository refresh), propagate its status unchanged, clean temporary files on every exit, and print concise diagnostics that distinguish normal success, eligible recovery, rejected classification, fallback validation failure, and retry failure without exposing secrets.
 
 ## 2. Prove the fallback deterministically
 
-- [ ] 2.1 Add a focused shell regression using fake `pod`/`curl` executables and a fresh isolated CocoaPods home for every case; prove normal first-attempt success performs no fallback or retry.
-- [ ] 2.2 Prove one and multiple eligible alias HTTP-400 failures fetch and seed every distinct exact path, then invoke one retry without `--repo-update`; prove no test depends on the host or restored `~/.cocoapods` cache.
-- [ ] 2.3 Prove non-400, resolver, malformed, mixed, wrong-host/prefix/suffix, traversal/query/fragment, invalid JSON, name/version mismatch, fallback-fetch failure, and retry-failure cases remain non-zero, do not write outside the isolated cache, and never invoke a second retry.
-- [ ] 2.4 Validate the reported `Specs/e/3/b/GoogleAppMeasurement/12.9.0/GoogleAppMeasurement.podspec.json` path against the live CocoaPods alias and official GitHub-backed/raw representations: record the alias's current HTTP result, verify the official payload name/version, and compare the official representations byte-for-byte. Do not require the alias to remain HTTP 400; deterministic fakes own that negative path.
+- [x] 2.1 Add a focused shell regression using fake `pod`/`curl` executables and a fresh isolated CocoaPods home for every case; prove normal first-attempt success performs no fallback or retry.
+- [x] 2.2 Prove one and multiple eligible alias HTTP-400 failures fetch and seed every distinct exact path, then invoke one retry without `--repo-update`; prove no test depends on the host or restored `~/.cocoapods` cache.
+- [x] 2.3 Prove non-400, resolver, malformed, mixed, wrong-host/prefix/suffix, traversal/query/fragment, invalid JSON, name/version mismatch, fallback-fetch failure, and retry-failure cases remain non-zero, do not write outside the isolated cache, and never invoke a second retry.
+- [x] 2.4 Validate the reported `Specs/e/3/b/GoogleAppMeasurement/12.9.0/GoogleAppMeasurement.podspec.json` path against the live CocoaPods alias and official GitHub-backed/raw representations: record the alias's current HTTP result, verify the official payload name/version, and compare the official representations byte-for-byte. Do not require the alias to remain HTTP 400; deterministic fakes own that negative path.
 
 ## 3. Make iOS generation and installation fail fast in CI
 
