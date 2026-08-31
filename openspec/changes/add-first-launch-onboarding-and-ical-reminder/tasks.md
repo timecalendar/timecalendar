@@ -46,6 +46,6 @@
 
 ## 8. Local-green and CI proof
 
-- [ ] 8.1 From `mobile/`, run `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`; fix production/tests rather than weakening thresholds, timeouts, lint, or generated-code checks.
-- [ ] 8.2 Run `openspec validate add-first-launch-onboarding-and-ical-reminder`, inspect the final diff for accidental sensitive-surface changes, and confirm no OpenAPI/generated client, server migration, native/store/EAS config, deploy/CI workflow, secret, or legacy Flutter path changed.
+- [x] 8.1 From `mobile/`, run `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`; fix production/tests rather than weakening thresholds, timeouts, lint, or generated-code checks.
+- [x] 8.2 Run `openspec validate add-first-launch-onboarding-and-ical-reminder`, inspect the final diff for accidental sensitive-surface changes, and confirm no OpenAPI/generated client, server migration, native/store/EAS config, deploy/CI workflow, secret, or legacy Flutter path changed.
 - [ ] 8.3 Push the exact green head and verify PR checks plus the required Android/iOS native E2E evidence before Reviewer merge; record any non-applicable DoD item with a one-line reason.

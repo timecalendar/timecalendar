@@ -2,16 +2,19 @@ import { act, renderHook } from "@testing-library/react-native"
 
 import { READY_WATCHDOG_MS, useAppReady } from "./use-app-ready"
 
-// The readiness gate. Today every prerequisite resolves synchronously, so the
-// gate is satisfied on mount (default initializer) — the common case.
-//
-// The watchdog branch (the gate held not-ready, then the timeout releases it)
-// is the load-bearing safety net for a future stalled async prerequisite; it
-// never arms today. The injectable `isReady` lets us start the gate not-ready —
-// the shape a future async prerequisite would produce — to drive it.
-
 describe("useAppReady", () => {
-  afterEach(() => jest.useRealTimers())
+  afterEach(() => {
+    jest.restoreAllMocks()
+    jest.useRealTimers()
+  })
+
+  it("uses the production prerequisites by default", async () => {
+    const { result } = await renderHook(() => useAppReady())
+
+    await act(async () => {})
+
+    expect(result.current.status).toBe("ready")
+  })
 
   it("awaits migrations before the typed legacy-import prerequisite", async () => {
     const events: string[] = []
@@ -94,5 +97,70 @@ describe("useAppReady", () => {
       recoveryVisible: true,
     })
     expect(dependencies.runLegacyImport).not.toHaveBeenCalled()
+  })
+
+  it("ignores a failure from a superseded prerequisite sequence", async () => {
+    let resolveMigrations: (() => void) | undefined
+    let rejectLegacyImport: ((reason: Error) => void) | undefined
+    let dependencies = {
+      runMigrations: jest.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveMigrations = resolve
+          }),
+      ),
+      runLegacyImport: jest.fn(
+        () =>
+          new Promise<void>((_resolve, reject) => {
+            rejectLegacyImport = reject
+          }),
+      ),
+    }
+    const { rerender } = await renderHook(() => useAppReady(dependencies))
+    expect(dependencies.runMigrations).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      resolveMigrations?.()
+      await Promise.resolve()
+    })
+    expect(dependencies.runLegacyImport).toHaveBeenCalledTimes(1)
+
+    dependencies = {
+      runMigrations: jest.fn(() => new Promise<void>(() => {})),
+      runLegacyImport: jest.fn(async () => {}),
+    }
+    await act(async () => rerender(undefined))
+    await act(async () => {
+      rejectLegacyImport?.(new Error("late failure"))
+      await new Promise<void>((resolve) => setImmediate(resolve))
+    })
+
+    expect(dependencies.runMigrations).toHaveBeenCalledTimes(1)
+  })
+
+  it("ignores success from a superseded prerequisite sequence", async () => {
+    let resolveMigrations: (() => void) | undefined
+    const originalDependencies = {
+      runMigrations: jest.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveMigrations = resolve
+          }),
+      ),
+      runLegacyImport: jest.fn(async () => {}),
+    }
+    let dependencies = originalDependencies
+    const { rerender, result } = await renderHook(() =>
+      useAppReady(dependencies),
+    )
+
+    dependencies = {
+      runMigrations: jest.fn(() => new Promise<void>(() => {})),
+      runLegacyImport: jest.fn(async () => {}),
+    }
+    await act(async () => rerender(undefined))
+    await act(async () => resolveMigrations?.())
+
+    expect(originalDependencies.runLegacyImport).toHaveBeenCalledTimes(1)
+    expect(result.current.status).toBe("pending")
   })
 })
