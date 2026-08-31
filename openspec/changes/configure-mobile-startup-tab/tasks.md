@@ -7,10 +7,10 @@
 
 ## 2. Settings destination and localized native choice
 
-- [ ] 2.1 Add a thin `/startup-settings` root Stack route and a Settings `ui/` picker screen following the owned `@/components/chrome` Host/Picker pattern, with Home/Calendar selected state and immediate persistence through `useStartupTabPreference`.
-- [ ] 2.2 Add the working Startup screen row after Appearance & language in the Settings Preferences group, including platform icons, full-row navigation, stable testID, localized label/hint, large-text-safe layout, and 44pt iOS / 48dp Android target.
-- [ ] 2.3 Add complete flat FR/EN keys for the row, route title, control label, Home, Calendar, hints, and accessibility copy; run the typed catalog parity check through TypeScript.
-- [ ] 2.4 Extend Settings screen and route-structure tests to prove group order, `/startup-settings` registration/thin export, localized copy, current selection, both option callbacks, a11y semantics, and that selection calls only the setter with no router navigation.
+- [x] 2.1 Add a thin `/startup-settings` root Stack route and a Settings `ui/` picker screen following the owned `@/components/chrome` Host/Picker pattern, with Home/Calendar selected state and immediate persistence through `useStartupTabPreference`.
+- [x] 2.2 Add the working Startup screen row after Appearance & language in the Settings Preferences group, including platform icons, full-row navigation, stable testID, localized label/hint, large-text-safe layout, and 44pt iOS / 48dp Android target.
+- [x] 2.3 Add complete flat FR/EN keys for the row, route title, control label, Home, Calendar, hints, and accessibility copy; run the typed catalog parity check through TypeScript.
+- [x] 2.4 Extend Settings screen and route-structure tests to prove group order, `/startup-settings` registration/thin export, localized copy, current selection, both option callbacks, a11y semantics, and that selection calls only the setter with no router navigation.
 
 ## 3. Ordered launch prerequisite and decision seams
 

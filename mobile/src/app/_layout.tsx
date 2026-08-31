@@ -133,6 +133,10 @@ export default function RootLayout() {
                 name="appearance-settings"
                 options={{ headerShown: true }}
               />
+              <Stack.Screen
+                name="startup-settings"
+                options={{ headerShown: true }}
+              />
               <Stack.Screen name="about" options={{ headerShown: true }} />
               <Stack.Screen name="changelog" options={{ headerShown: true }} />
               <Stack.Screen

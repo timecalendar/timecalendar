@@ -69,6 +69,18 @@ const destinations = [
   },
   {
     section: "preferences" as const,
+    href: "/startup-settings" as const,
+    icon: {
+      ios: "rectangle.on.rectangle",
+      android: "start",
+      web: "start",
+    } as const,
+    label: "settingsHub.startup.label" as const,
+    hint: "settingsHub.startup.hint" as const,
+    testID: "settings-startup",
+  },
+  {
+    section: "preferences" as const,
     href: "/timezone-settings" as const,
     icon: {
       ios: "globe",
