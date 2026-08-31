@@ -98,6 +98,13 @@ and prevent later flows from running.
    `isToday` can disagree — a known local edge, not a CI flake (CI is UTC
    end to end).
 
+`startup-tab.yaml` deliberately keeps the durable state created by
+`import-seed.yaml`: it chooses each startup option through Settings, then uses
+`stopApp` → plain `launchApp` so the held identity and MMKV preference survive.
+The 60-second destination waits cover the native cold start and launch resolver;
+neither relaunch uses a deep link, because an explicit link must outrank the
+stored fallback.
+
 ## The rename round trip and its re-run caveat
 
 `user-calendar-rename.yaml` (TIM-392) renames a calendar through the UI and then
