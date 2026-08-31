@@ -88,4 +88,6 @@ if "$WORKSPACE_RESOLVER" "$TEST_ROOT/multiple" >/dev/null 2>&1; then
   fail 'multiple-workspace fixture did not fail'
 fi
 
+"$SCRIPT_DIR/test_install_ios_pods.sh"
+
 echo '[test_ci_mobile_e2e] PASS'

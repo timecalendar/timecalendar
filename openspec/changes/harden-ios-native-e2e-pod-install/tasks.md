@@ -27,9 +27,9 @@
 
 ## 5. Local-green verification and sensitive-surface audit
 
-- [ ] 5.1 Run `bash -n` on every touched shell file, the focused pod-fallback regression, and `./mobile/e2e/test_ci_mobile_e2e.sh`; run ShellCheck if installed and record an explicit N/A if it is unavailable.
-- [ ] 5.2 Parse/validate `.github/workflows/ci-mobile-e2e.yml` with the repository's established workflow check and run Prettier on touched YAML/Markdown; confirm the three development-backend inputs and all existing native proof/failure-evidence steps remain present.
-- [ ] 5.3 Run `openspec validate harden-ios-native-e2e-pod-install` and `git diff --check`, then inspect the complete diff for secrets, broad retry behavior, stale/vendor podspecs, dependency/lockfile changes, generated `mobile/ios`, product/API/schema/native-store/deploy/Flutter changes, and unrelated edits.
+- [x] 5.1 Run `bash -n` on every touched shell file, the focused pod-fallback regression, and `./mobile/e2e/test_ci_mobile_e2e.sh`; run ShellCheck if installed and record an explicit N/A if it is unavailable.
+- [x] 5.2 Parse/validate `.github/workflows/ci-mobile-e2e.yml` with the repository's established workflow check and run Prettier on touched YAML/Markdown; confirm the three development-backend inputs and all existing native proof/failure-evidence steps remain present.
+- [x] 5.3 Run `openspec validate harden-ios-native-e2e-pod-install` and `git diff --check`, then inspect the complete diff for secrets, broad retry behavior, stale/vendor podspecs, dependency/lockfile changes, generated `mobile/ios`, product/API/schema/native-store/deploy/Flutter changes, and unrelated edits.
 
 ## 6. CI proof on the exact implementation head
 

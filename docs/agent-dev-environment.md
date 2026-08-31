@@ -264,7 +264,7 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
 `setup-dev.sh`) is shared across worktrees and does **not** need re-running.
 
 > **`core.hooksPath` is host-wide, and the last install wins.** It is a single value
-> in the *shared* `.git/config`, so it is the same for every worktree on this host.
+> in the _shared_ `.git/config`, so it is the same for every worktree on this host.
 > Installing husky anywhere rewrites it everywhere: husky 9 sets `.husky/_`, husky 7
 > set `.husky`. A worktree on an older, husky-7-pinned branch therefore flips it back
 > whenever it provisions. The symptom is a **worktree that silently stops linting**;
