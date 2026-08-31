@@ -348,6 +348,7 @@
   "eventChecklist.item.moveUpLabel": "Move item up",
   "eventChecklist.item.moveDownLabel": "Move item down",
   "eventChecklist.error.writeFailed": "We couldn't save your checklist change. Please try again.",
+  "eventChecklist.progress.completed": "{{completed}} of {{total}} checklist items completed",
   "hiddenEvents.title": "Hidden events",
   "hiddenEvents.empty": "No hidden events.",
   "hiddenEvents.namedSection": "Hidden by name",

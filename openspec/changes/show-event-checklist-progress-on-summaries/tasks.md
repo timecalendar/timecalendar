@@ -6,8 +6,8 @@
 
 ## 2. Shared visual and accessibility contract
 
-- [ ] 2.1 Add a feature-owned `ChecklistProgressIndicator` with inline and compact variants: omit zero totals, show `completed/total`, distinguish all-complete with an explicit checked glyph/shape plus styling, clamp dense output, and hide the visual primitive from the accessibility tree so the owning summary announces it once.
-- [ ] 2.2 Add EN/FR parity keys for the localized completed-of-total phrase and any indicator semantics; add focused indicator tests for zero, partial, complete, inline, compact, light/dark theme tokens, and constrained geometry, then run the suite directly.
+- [x] 2.1 Add a feature-owned `ChecklistProgressIndicator` with inline and compact variants: omit zero totals, show `completed/total`, distinguish all-complete with an explicit checked glyph/shape plus styling, clamp dense output, and hide the visual primitive from the accessibility tree so the owning summary announces it once.
+- [x] 2.2 Add EN/FR parity keys for the localized completed-of-total phrase and any indicator semantics; add focused indicator tests for zero, partial, complete, inline, compact, light/dark theme tokens, and constrained geometry, then run the suite directly.
 
 ## 3. Home summary surfaces
 

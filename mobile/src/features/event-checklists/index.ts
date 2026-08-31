@@ -18,4 +18,9 @@ export {
   setContent,
   useChecklistProgress,
 } from "./data"
-export { EventChecklist } from "./ui"
+export {
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+  type ChecklistProgressVariant,
+  EventChecklist,
+} from "./ui"

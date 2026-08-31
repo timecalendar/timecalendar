@@ -348,6 +348,7 @@
   "eventChecklist.item.moveUpLabel": "Déplacer l'élément vers le haut",
   "eventChecklist.item.moveDownLabel": "Déplacer l'élément vers le bas",
   "eventChecklist.error.writeFailed": "Impossible d'enregistrer votre modification. Veuillez réessayer.",
+  "eventChecklist.progress.completed": "{{completed}} élément(s) terminé(s) sur {{total}} dans la liste",
   "hiddenEvents.title": "Événements masqués",
   "hiddenEvents.empty": "Aucun événement masqué.",
   "hiddenEvents.namedSection": "Masqués par nom",
