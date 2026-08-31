@@ -63,9 +63,10 @@ success and failure alike. On failure it dumps the backend log tail. With
 `--keep-up` it prints the commands to inspect logs and tear down manually.
 `--startup-attempts` accepts 1–4 and defaults to one. A retry is allowed only
 for a pinned 2.8.0 first-`launchApp`/`setPermissions` XCTest driver-not-listening
-or connection-refused signature with no assertion evidence. Assertion,
-application, and unknown failures stop immediately, retain their exit status,
-and prevent later flows from running.
+or connection-refused signature, or the explicit `iOS driver not ready in time` /
+`IOSDriverTimeoutException` bootstrap-timeout signature, with no assertion
+evidence. Assertion, application, content-timeout, and unknown failures stop
+immediately, retain their exit status, and prevent later flows from running.
 
 ## Add a flow
 
