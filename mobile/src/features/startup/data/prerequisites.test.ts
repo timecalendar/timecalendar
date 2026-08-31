@@ -66,6 +66,31 @@ describe("startup prerequisites", () => {
     expect(getStartupTabPreference).not.toHaveBeenCalled()
   })
 
+  it("commits a late deep link while the initial notification remains pending", async () => {
+    let commitExplicitPath: ((path: string) => void) | undefined
+    const explicitPathDidChange = new Promise<string>((resolve) => {
+      commitExplicitPath = resolve
+    })
+    jest
+      .mocked(resolveInitialNotificationIntent)
+      .mockImplementation(() => new Promise(() => {}))
+
+    const resolution = resolveLaunchPrerequisites(
+      "/",
+      jest.fn(),
+      () => "/",
+      explicitPathDidChange,
+    )
+    await Promise.resolve()
+    commitExplicitPath?.("/about")
+
+    await expect(resolution).resolves.toBe("/about")
+    expect(runMigrations).toHaveBeenCalledTimes(1)
+    expect(resolveInitialNotificationIntent).toHaveBeenCalledTimes(1)
+    expect(findAll).not.toHaveBeenCalled()
+    expect(getStartupTabPreference).not.toHaveBeenCalled()
+  })
+
   it("records failures with the static startup context", () => {
     const failure = new Error("boom")
     recordLaunchFailure(failure)
