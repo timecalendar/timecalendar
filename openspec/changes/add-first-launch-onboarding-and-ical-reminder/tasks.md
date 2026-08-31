@@ -2,10 +2,10 @@
 
 ## 1. Typed first-launch policy and persistence
 
-- [ ] 1.1 Create `mobile/src/features/first-launch/{data,store,ui}/` with sublayer and feature barrels; add the pure initial-route/reminder decision functions from design Decisions 3 and 7. Verify with table-driven unit tests for unresolved, fresh/empty, skipped/empty, dismissed-reminder/empty, imported, and one-or-more-calendar inputs.
-- [ ] 1.2 Add separate total-decoded stores for `OnboardingResolution` and `FirstIcalReminderState` using only `@/storage`, including imperative writes and reactive hooks. Verify valid round-trips, malformed/missing fallbacks, independent writes, and reactive relaunch simulations in focused Jest tests.
-- [ ] 1.3 Add both flat keys to `STORAGE_KEYS` and classify them `environment-independent`; extend the exhaustive classification/reset tests to prove backend-bound clearing preserves both decisions.
-- [ ] 1.4 Add and publicly export one calendar-sources `useUserCalendarsState()` hook whose `{ calendars, loaded }` fields derive from a single `useLiveQuery` result; verify the loaded/data snapshot cannot race while preserving existing hook behavior.
+- [x] 1.1 Create `mobile/src/features/first-launch/{data,store,ui}/` with sublayer and feature barrels; add the pure initial-route/reminder decision functions from design Decisions 3 and 7. Verify with table-driven unit tests for unresolved, fresh/empty, skipped/empty, dismissed-reminder/empty, imported, and one-or-more-calendar inputs.
+- [x] 1.2 Add separate total-decoded stores for `OnboardingResolution` and `FirstIcalReminderState` using only `@/storage`, including imperative writes and reactive hooks. Verify valid round-trips, malformed/missing fallbacks, independent writes, and reactive relaunch simulations in focused Jest tests.
+- [x] 1.3 Add both flat keys to `STORAGE_KEYS` and classify them `environment-independent`; extend the exhaustive classification/reset tests to prove backend-bound clearing preserves both decisions.
+- [x] 1.4 Add and publicly export one calendar-sources `useUserCalendarsState()` hook whose `{ calendars, loaded }` fields derive from a single `useLiveQuery` result; verify the loaded/data snapshot cannot race while preserving existing hook behavior.
 
 ## 2. Awaited startup and route eligibility
 

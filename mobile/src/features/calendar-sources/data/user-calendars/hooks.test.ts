@@ -3,9 +3,15 @@
 // without a real SQLite reactive query.
 import { renderHook } from "@testing-library/react-native"
 
-import { useUserCalendars, useUserCalendarsLoaded } from "./hooks"
+import {
+  useUserCalendars,
+  useUserCalendarsLoaded,
+  useUserCalendarsState,
+} from "./hooks"
 
 const mockUseLiveQuery = jest.fn()
+
+beforeEach(() => mockUseLiveQuery.mockReset())
 
 jest.mock("@/db", () => ({
   db: { select: () => ({ from: () => ({}) }) },
@@ -73,5 +79,32 @@ describe("useUserCalendarsLoaded", () => {
     mockUseLiveQuery.mockReturnValue({ data: [], updatedAt: new Date() })
     const { result } = await renderHook(() => useUserCalendarsLoaded())
     expect(result.current).toBe(true)
+  })
+})
+
+describe("useUserCalendarsState", () => {
+  it("derives calendars and loaded from one atomic live-query result", async () => {
+    mockUseLiveQuery.mockReturnValue({
+      data: [
+        {
+          id: "cal-1",
+          token: "tok-1",
+          name: "ENSEEIHT",
+          schoolName: null,
+          schoolId: null,
+          lastUpdatedAt: null,
+          createdAt: "2026-06-10T08:00:00.000Z",
+          visible: true,
+        },
+      ],
+      updatedAt: new Date(),
+    })
+
+    const { result } = await renderHook(() => useUserCalendarsState())
+
+    expect(mockUseLiveQuery).toHaveBeenCalledTimes(1)
+    expect(result.current.loaded).toBe(true)
+    expect(result.current.calendars).toHaveLength(1)
+    expect(result.current.calendars[0]?.id).toBe("cal-1")
   })
 })
