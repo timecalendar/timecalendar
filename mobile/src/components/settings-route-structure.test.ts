@@ -63,8 +63,8 @@ describe("Settings route structure", () => {
       'export { ChangelogSheetScreen as default } from "@/features/changelog/ui"',
     )
     const rootLayout = route("_layout.tsx")
-    expect(rootLayout).toContain(
-      '<Stack.Screen name="changelog" options={{ headerShown: true }} />',
+    expect(rootLayout).toMatch(
+      /<Stack\.Screen\s+name="changelog"\s+options=\{\{ headerShown: true \}\}\s+\/>/,
     )
     expect(rootLayout).toContain('name="changelog-sheet"')
     expect(rootLayout).toContain(
