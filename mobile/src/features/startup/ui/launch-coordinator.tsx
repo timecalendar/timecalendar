@@ -34,6 +34,7 @@ export function LaunchCoordinator() {
         const resolvedTarget = await resolveLaunchPrerequisites(
           initialPath,
           sync,
+          () => pathRef.current,
         )
         if (!active) return
 

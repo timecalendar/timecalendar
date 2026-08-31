@@ -56,6 +56,16 @@ describe("startup prerequisites", () => {
     expect(getStartupTabPreference).not.toHaveBeenCalled()
   })
 
+  it("commits a deep link that arrives during migration before lower priorities", async () => {
+    await expect(
+      resolveLaunchPrerequisites("/", jest.fn(), () => "/about"),
+    ).resolves.toBe("/about")
+    expect(runMigrations).toHaveBeenCalledTimes(1)
+    expect(resolveInitialNotificationIntent).not.toHaveBeenCalled()
+    expect(findAll).not.toHaveBeenCalled()
+    expect(getStartupTabPreference).not.toHaveBeenCalled()
+  })
+
   it("records failures with the static startup context", () => {
     const failure = new Error("boom")
     recordLaunchFailure(failure)
