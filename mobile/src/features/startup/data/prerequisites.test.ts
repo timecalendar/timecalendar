@@ -18,6 +18,8 @@ jest.mock("@/features/settings", () => ({ getStartupTabPreference: jest.fn() }))
 jest.mock("@/firebase")
 
 describe("startup prerequisites", () => {
+  beforeEach(() => jest.clearAllMocks())
+
   it("reads each prerequisite in order and resolves the fallback", async () => {
     const order: string[] = []
     jest.mocked(runMigrations).mockImplementation(async () => {
@@ -42,6 +44,16 @@ describe("startup prerequisites", () => {
       "/calendar",
     )
     expect(order).toEqual(["migration", "intent", "identity", "preference"])
+  })
+
+  it("commits an explicit route after migration without awaiting lower priorities", async () => {
+    await expect(resolveLaunchPrerequisites("/about", jest.fn())).resolves.toBe(
+      "/about",
+    )
+    expect(runMigrations).toHaveBeenCalledTimes(1)
+    expect(resolveInitialNotificationIntent).not.toHaveBeenCalled()
+    expect(findAll).not.toHaveBeenCalled()
+    expect(getStartupTabPreference).not.toHaveBeenCalled()
   })
 
   it("records failures with the static startup context", () => {
