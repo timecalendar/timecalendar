@@ -132,6 +132,7 @@ describe("storage seam", () => {
 
     it("preserves only global and reset-control values", () => {
       setString(STORAGE_KEYS.theme, "dark")
+      setString(STORAGE_KEYS.startupTab, "calendar")
       setString(STORAGE_KEYS.selectedBackendEnvironment, "preprod")
       setString(STORAGE_KEYS.backendResetJournal, "journal")
       setString(STORAGE_KEYS.schoolId, "school-1")
@@ -140,6 +141,7 @@ describe("storage seam", () => {
       clearBackendBoundStorage()
 
       expect(getString(STORAGE_KEYS.theme)).toBe("dark")
+      expect(getString(STORAGE_KEYS.startupTab)).toBe("calendar")
       expect(getString(STORAGE_KEYS.selectedBackendEnvironment)).toBe("preprod")
       expect(getString(STORAGE_KEYS.backendResetJournal)).toBe("journal")
       expect(getString(STORAGE_KEYS.schoolId)).toBeUndefined()
