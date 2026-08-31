@@ -41,11 +41,13 @@ to the host server on port 3005:
 
 ```bash
 # Android — 10.0.2.2 is the host loopback from the emulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
   npx expo run:android --variant release
 
 # iOS — localhost reaches the host from the simulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://localhost:3005 \
   npx expo run:ios --configuration Release
 ```
 
@@ -98,6 +100,13 @@ immediately, retain their exit status, and prevent later flows from running.
    whose machine day differs from UTC near midnight the device's local-time
    `isToday` can disagree — a known local edge, not a CI flake (CI is UTC
    end to end).
+
+`startup-tab.yaml` deliberately keeps the durable state created by
+`import-seed.yaml`: it chooses each startup option through Settings, then uses
+`stopApp` → plain `launchApp` so the held identity and MMKV preference survive.
+The 60-second destination waits cover the native cold start and launch resolver;
+neither relaunch uses a deep link, because an explicit link must outrank the
+stored fallback.
 
 ## The rename round trip and its re-run caveat
 

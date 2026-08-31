@@ -7,6 +7,7 @@ export {
   type CalendarImportFields,
   type CreateCalendarResult,
   effectiveCalendarName,
+  findAll,
   parseScannedSource,
   type ScannedCalendarSource,
   type UseAddCalendar,

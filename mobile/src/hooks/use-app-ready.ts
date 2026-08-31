@@ -1,53 +1,40 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 
-// Max time the splash may wait for the readiness gate before dismissing anyway.
-// A watchdog so a future slow/stalled gate can never brick launch: every branch
-// of the gate below already resolves immediately today, but the timeout is the
-// load-bearing safety net the design (D3 risk) requires — the native splash is
-// held by preventAutoHideAsync() and only hideAsync() releases it, so a gate
-// that never resolves would hang the app forever.
-const READY_WATCHDOG_MS = 5000
+import { failLaunch, useLaunchState } from "@/features/startup"
 
-// First-paint prerequisites. All resolve synchronously today, so the gate is
-// satisfied on mount and the hook exists to give a future async prerequisite
-// one place to gate (design D3):
+// Max time the splash may wait for the readiness gate. Native cold-start CI and
+// low-end devices can legitimately spend several seconds opening/migrating the
+// database and resolving identity, so this shares Maestro's 60-second launch
+// budget. The watchdog remains the load-bearing safety net the design requires:
+// it fails closed to a retry surface instead of exposing unverified app content.
+const READY_WATCHDOG_MS = 60_000
+
+// First-paint prerequisites are owned by the launch coordinator; this hook
+// converts its process-lifetime state into splash readiness:
 //  - i18n: synchronous via the `import "@/i18n"` side-effect in the root layout
 //    (initializes before render); a future async-catalog change gates here.
 //  - fonts: a no-op seam while the app uses system fonts; adding expo-font's
 //    `useFonts` later is a one-line `&& fontsLoaded` here.
-//  - migrations: the empty-bundle `runMigrations()` is instant and idempotent
-//    today. The first feature whose initial read must block on a table adopts
-//    the blocking `useMigrations()` hook and gates here — the app is not
-//    converted to it prematurely (R-2, storage change posture).
-function prerequisitesReady(): boolean {
-  const i18nReady = true
-  const fontsReady = true
-  const migrationsReady = true
-  return i18nReady && fontsReady && migrationsReady
-}
-
+//  - migrations and identity: asynchronous, idempotent, and awaited before the
+//    winning route is committed.
 /**
  * Readiness gate: returns true once first-paint prerequisites are satisfied.
  * The reusable "render only when prerequisites are satisfied" pattern features
- * inherit. The gate always resolves — synchronously today, and never later than
- * the watchdog deadline even if a future async prerequisite stalls.
- *
- * `isReady` is injectable (default `prerequisitesReady`) so the load-bearing
- * watchdog path — unreachable today because every prerequisite is synchronous —
- * is exercisable by a test that starts the gate not-ready, the shape a future
- * async prerequisite would produce.
+ * inherit. The gate resolves after launch commitment/failure, and never later
+ * than the watchdog deadline if an async prerequisite stalls.
  */
-export function useAppReady(
-  isReady: () => boolean = prerequisitesReady,
-): boolean {
-  const [ready, setReady] = useState(isReady)
+export function useAppReady(): boolean {
+  const launch = useLaunchState()
+  const ready = launch.kind === "committed" || launch.kind === "failure"
 
   useEffect(() => {
     if (ready) return
-    // Unreachable today (prerequisites are synchronous), but the load-bearing
-    // watchdog: dismiss regardless once the deadline passes so a stalled future
-    // gate cannot hang the splash.
-    const watchdog = setTimeout(() => setReady(true), READY_WATCHDOG_MS)
+    // A stalled prerequisite becomes a visible blocking failure rather than
+    // hanging the splash or revealing tabs whose schema/identity is unknown.
+    const watchdog = setTimeout(
+      () => failLaunch(new Error("Launch readiness timed out")),
+      READY_WATCHDOG_MS,
+    )
     return () => clearTimeout(watchdog)
   }, [ready])
 

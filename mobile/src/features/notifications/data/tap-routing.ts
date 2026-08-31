@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router"
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 
 import { refreshNewestPage } from "@/features/activity"
 import { useSyncCalendars } from "@/features/calendar/data"
@@ -35,6 +35,33 @@ interface DecodedPayload {
 // and testable without constructing a full RemoteMessage.
 interface TapMessage {
   data?: { action?: string; payload?: string } | null
+}
+
+let initialIntentPromise: Promise<TapRoute | null> | null = null
+
+export function resetInitialNotificationIntentForTests(): void {
+  initialIntentPromise = null
+}
+
+function refreshNotificationData(
+  message: TapMessage,
+  sync: () => Promise<unknown>,
+): void {
+  void sync()
+  if (isCalendarChangeMessage(message)) {
+    void refreshNewestPage({ force: true })
+  }
+}
+
+export async function resolveInitialNotificationIntent(
+  sync: () => Promise<unknown>,
+): Promise<TapRoute | null> {
+  initialIntentPromise ??= getInitialTap().then((message) => {
+    if (message == null) return null
+    refreshNotificationData(message, sync)
+    return parseNotificationRoute(message)
+  })
+  return initialIntentPromise
 }
 
 /**
@@ -95,9 +122,8 @@ export function parseNotificationRoute(message: TapMessage): TapRoute | null {
  *     `calendar_digest` message refetches the calendar and does NOT navigate
  *     (Flutter parity — never yank the user).
  *   - Background tap (`onNotificationTap`): refetch, then navigate per the route.
- *   - Killed/cold-start (`getInitialTap`): resolved in a ref-guarded mount effect
- *     so the <Stack> is mounted before navigation (Decision 3); refetch then
- *     navigate. A null initial notification is a safe no-op.
+ * Killed/cold-start ownership lives in `resolveInitialNotificationIntent`,
+ * consumed exactly once by the launch coordinator.
  * A failed sync is silent/last-good (ADR 021).
  *
  * ACTIVITY (ADR 049 / D4). Notification receipt now fans out to TWO independent
@@ -114,19 +140,13 @@ export function parseNotificationRoute(message: TapMessage): TapRoute | null {
 export function useNotificationTapRouting(): void {
   const { sync } = useSyncCalendars()
   const router = useRouter()
-  const coldStartHandled = useRef(false)
 
   useEffect(() => {
     // A tap (background or cold-start): refetch, then navigate per the route.
     function routeTap(message: TapMessage): void {
       // Unconditional, exactly as before. Narrowing it to the relevance test
       // would be a routing-behavior change, which is out of scope.
-      void sync()
-      // Beside the sync, never chained onto it (ADR 049 / D4), and gated on the
-      // ACTION rather than on the parse below.
-      if (isCalendarChangeMessage(message)) {
-        void refreshNewestPage({ force: true })
-      }
+      refreshNotificationData(message, sync)
       const route = parseNotificationRoute(message)
       if (route == null) return
       if (route.kind === "event") {
@@ -143,13 +163,6 @@ export function useNotificationTapRouting(): void {
     })
 
     const unsubscribeTap = onNotificationTap(routeTap)
-
-    if (!coldStartHandled.current) {
-      coldStartHandled.current = true
-      void getInitialTap().then((message) => {
-        if (message != null) routeTap(message)
-      })
-    }
 
     return () => {
       unsubscribeForeground()

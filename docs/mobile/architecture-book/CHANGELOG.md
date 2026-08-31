@@ -2,6 +2,12 @@
 
 ## 2026-08-31
 
+- Added ADR 053 and the binding single-owner cold-launch sequence: migrations,
+  Phase 09 import insertion point, explicit intent, held identity, then the
+  Home/Calendar fallback. `(tabs)` remains the static anchor, launch is one-shot,
+  and splash/tabs eligibility waits for route commitment or a blocking Retry
+  surface. Recorded the environment-independent preference/import target and
+  shared durable-relaunch native proof pattern.
 - Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
   reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
   action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.

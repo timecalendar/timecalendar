@@ -84,6 +84,7 @@ describe("SettingsScreen", () => {
     expect(screen.getByText("Personal events")).toBeTruthy()
     expect(screen.getByText("Hidden events")).toBeTruthy()
     expect(screen.getByText("Appearance & language")).toBeTruthy()
+    expect(screen.getByText("Startup screen")).toBeTruthy()
     expect(screen.getByText("Time zone")).toBeTruthy()
     expect(screen.getByText("Notifications")).toBeTruthy()
     expect(screen.getByText("About")).toBeTruthy()
@@ -157,6 +158,7 @@ describe("SettingsScreen", () => {
       ["settings-personal-events", "/personal-events"],
       ["settings-hidden-events", "/hidden-events"],
       ["settings-appearance", "/appearance-settings"],
+      ["settings-startup", "/startup-settings"],
       ["settings-timezone", "/timezone-settings"],
       ["settings-notifications", "/notification-settings"],
       ["settings-about", "/about"],

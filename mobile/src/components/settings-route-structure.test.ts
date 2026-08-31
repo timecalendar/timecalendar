@@ -48,6 +48,13 @@ describe("Settings route structure", () => {
     )
   })
 
+  it("keeps Startup settings as a thin feature route registered in the root Stack", () => {
+    expect(route("startup-settings.tsx").trim()).toBe(
+      'export { default } from "@/features/settings/ui/startup-settings-screen"',
+    )
+    expect(route("_layout.tsx")).toContain('name="startup-settings"')
+  })
+
   it("keeps both Changelog routes thin with tabs-only gate ownership", () => {
     expect(route("changelog.tsx").trim()).toBe(
       'export { ChangelogHistoryScreen as default } from "@/features/changelog/ui"',
@@ -56,8 +63,8 @@ describe("Settings route structure", () => {
       'export { ChangelogSheetScreen as default } from "@/features/changelog/ui"',
     )
     const rootLayout = route("_layout.tsx")
-    expect(rootLayout).toContain(
-      '<Stack.Screen name="changelog" options={{ headerShown: true }} />',
+    expect(rootLayout).toMatch(
+      /<Stack\.Screen\s+name="changelog"\s+options=\{\{ headerShown: true \}\}\s+\/>/,
     )
     expect(rootLayout).toContain('name="changelog-sheet"')
     expect(rootLayout).toContain(
@@ -67,7 +74,10 @@ describe("Settings route structure", () => {
     expect(rootLayout).toContain("sheetGrabberVisible: true")
     expect(rootLayout).not.toContain("ChangelogGate")
 
-    const tabsLayout = route("(tabs)/_layout.tsx")
+    expect(route("(tabs)/_layout.tsx").trim()).toBe(
+      'export { LaunchGatedTabs as default } from "@/features/startup/ui"',
+    )
+    const tabsLayout = route("../features/startup/ui/launch-gated-tabs.tsx")
     expect(tabsLayout).toContain("<ChangelogGate />")
     expect(route("onboarding/_layout.tsx")).not.toContain("ChangelogGate")
   })

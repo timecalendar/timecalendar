@@ -27,6 +27,11 @@ appId: fr.samuelprak.timecalendar.dev
 - assertVisible: "A fresh new design"
 - assertVisible: "A faster calendar"
 - assertVisible: "A truly native feel"
+# Establish a held identity before testing a plain cold relaunch. The first half
+# intentionally starts unresolved so the About deep link still proves that an
+# explicit launch intent wins over onboarding; a plain launch must now preserve
+# onboarding precedence unless the user has resolved an identity.
+- runFlow: import-seed.yaml
 - stopApp
 - launchApp
 - extendedWaitUntil:

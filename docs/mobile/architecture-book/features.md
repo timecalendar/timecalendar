@@ -99,3 +99,12 @@ and root `/profile` temporarily redirects to it.
 
 See [calendar.md](./calendar.md), [storage.md](./storage.md), and
 [golden-path.md](./golden-path.md) for shared implementation contracts.
+
+## Startup ownership
+
+`settings` owns the typed, environment-independent Home/Calendar preference and
+its dedicated picker destination. `startup` owns the one-shot ordered resolver,
+route commitment, splash/tabs eligibility, and blocking Retry (ADR 053).
+`notifications` supplies the single killed-state intent while retaining live
+foreground/background listeners. `splash` is the native-to-JS cover and may
+dismiss only after commitment or once the blocking failure surface is ready.

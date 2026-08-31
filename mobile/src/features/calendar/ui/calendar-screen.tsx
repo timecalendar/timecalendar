@@ -64,7 +64,7 @@ export function CalendarScreen() {
   )
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView testID="calendar-screen" style={styles.container}>
       <CalendarScreenHeader
         title={formatMonthYear(visibleDate, locale, displayZone)}
         view={view}

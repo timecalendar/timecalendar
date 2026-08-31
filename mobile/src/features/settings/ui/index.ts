@@ -2,4 +2,5 @@ export { default as AppearanceSettingsScreen } from "./appearance-settings-scree
 export { SettingsRow, type SettingsRowProps } from "./settings-row"
 export { SettingsScreen } from "./settings-screen"
 export { SettingsSection } from "./settings-section"
+export { default as StartupSettingsScreen } from "./startup-settings-screen"
 export { default as TimezoneSettingsScreen } from "./timezone-settings-screen"

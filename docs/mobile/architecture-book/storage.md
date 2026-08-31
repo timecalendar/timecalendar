@@ -99,3 +99,11 @@ an installed database is a data incident, and the mocked seam cannot catch one.
   before clearing and removed only after the selected target commits. Valid or malformed journals
   block startup; valid recovery retries the idempotent participants. See ADR
   [043](./decisions/043-backend-environment-reset.md).
+
+## Startup preference and import order
+
+`settings.startupTabPreference` stores exact `home` or `calendar`; its total
+parser defaults every other value to Home. The key is environment-independent.
+Phase 09 reads `flutter.startup_screen`, maps it with
+`mapFlutterStartupScreen`, and writes through `setStartupTabFromFlutter` after
+SQLite migrations and before startup preference or held-calendar reads.

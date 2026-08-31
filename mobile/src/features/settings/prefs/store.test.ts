@@ -5,10 +5,14 @@ import { remove, setString } from "@/storage"
 import {
   getInitialLocale,
   getLanguagePreference,
+  getStartupTabPreference,
   getThemePreference,
   getTimezonePreference,
+  mapFlutterStartupScreen,
   resolveTimezone,
   setLanguagePreference,
+  setStartupTabFromFlutter,
+  setStartupTabPreference,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
@@ -24,6 +28,7 @@ describe("settings prefs store", () => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
+    remove(SETTINGS_KEYS.startupTab)
   })
 
   describe("theme preference", () => {
@@ -78,6 +83,32 @@ describe("settings prefs store", () => {
       expect(getTimezonePreference()).toBe("system")
       setString(SETTINGS_KEYS.timezone, "garbage")
       expect(getTimezonePreference()).toBe("system")
+    })
+  })
+
+  describe("startup tab preference", () => {
+    it("round-trips both values and defaults invalid values to home", () => {
+      expect(getStartupTabPreference()).toBe("home")
+      setStartupTabPreference("calendar")
+      expect(getStartupTabPreference()).toBe("calendar")
+      setStartupTabPreference("home")
+      expect(getStartupTabPreference()).toBe("home")
+      setString(SETTINGS_KEYS.startupTab, "Calendar")
+      expect(getStartupTabPreference()).toBe("home")
+    })
+
+    it.each(["home", "calendar"] as const)("maps Flutter %s exactly", (raw) => {
+      expect(mapFlutterStartupScreen(raw)).toBe(raw)
+    })
+
+    it.each([undefined, null, "", "Calendar", "agenda", 1, {}])(
+      "maps unsupported Flutter input %p to home",
+      (raw) => expect(mapFlutterStartupScreen(raw)).toBe("home"),
+    )
+
+    it("persists through the Flutter import setter target", () => {
+      setStartupTabFromFlutter("calendar")
+      expect(getStartupTabPreference()).toBe("calendar")
     })
   })
 

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 import { isDevVariant } from "@/config/variant"
 import { useSyncCalendars } from "@/features/calendar/data"
 import { addCalendarFromToken } from "@/features/calendar-sources/data"
+import { useLaunchCommitted } from "@/features/startup/data"
 import { recordUnknownError } from "@/firebase"
 
 import { DevImportScreen } from "./dev-import-screen"
@@ -23,6 +24,9 @@ jest.mock("@/features/calendar-sources/data", () => ({
 jest.mock("@/features/calendar/data", () => ({
   useSyncCalendars: jest.fn(),
 }))
+jest.mock("@/features/startup/data", () => ({
+  useLaunchCommitted: jest.fn(),
+}))
 jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("expo-router", () => ({
   Stack: { Screen: () => null },
@@ -35,6 +39,7 @@ const mockAddCalendarFromToken = addCalendarFromToken as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockUseRouter = useRouter as jest.Mock
+const mockUseLaunchCommitted = useLaunchCommitted as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 
 const mockSync = jest.fn<Promise<void>, []>(() => Promise.resolve())
@@ -46,6 +51,7 @@ beforeEach(() => {
   mockSync.mockResolvedValue(undefined)
   mockUseSyncCalendars.mockReturnValue({ sync: mockSync })
   mockUseRouter.mockReturnValue({ replace: mockReplace })
+  mockUseLaunchCommitted.mockReturnValue(true)
   mockUseLocalSearchParams.mockReturnValue({ token: "e2e-smoke-calendar" })
 })
 
@@ -59,6 +65,20 @@ describe("DevImportScreen", () => {
     expect(mockAddCalendarFromToken).toHaveBeenCalledWith("e2e-smoke-calendar")
     expect(mockSync).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+  })
+
+  it("waits for launch commitment before touching migrated storage", async () => {
+    mockIsDevVariant.mockReturnValue(true)
+    mockUseLaunchCommitted.mockReturnValue(false)
+
+    const view = await render(<DevImportScreen />)
+    expect(mockAddCalendarFromToken).not.toHaveBeenCalled()
+
+    mockUseLaunchCommitted.mockReturnValue(true)
+    await view.rerender(<DevImportScreen />)
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
+    expect(mockAddCalendarFromToken).toHaveBeenCalledWith("e2e-smoke-calendar")
   })
 
   it("finishes the mounted import when the sync callback changes during its rerender", async () => {

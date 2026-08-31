@@ -9,6 +9,7 @@ import { ThemedView } from "@/components/themed-view"
 import { isDevVariant } from "@/config/variant"
 import { useSyncCalendars } from "@/features/calendar/data"
 import { addCalendarFromToken } from "@/features/calendar-sources/data"
+import { useLaunchCommitted } from "@/features/startup/data"
 import { recordUnknownError } from "@/firebase"
 import { Spacing } from "@/theme"
 
@@ -35,6 +36,7 @@ export function DevImportScreen() {
   const router = useRouter()
   const { token } = useLocalSearchParams<{ token?: string }>()
   const { sync } = useSyncCalendars()
+  const launchCommitted = useLaunchCommitted()
   const [error, setError] = useState(false)
   const isDev = isDevVariant()
 
@@ -52,7 +54,8 @@ export function DevImportScreen() {
   }, [])
 
   useEffect(() => {
-    if (!isDev || token === undefined || startedRef.current) return
+    if (!launchCommitted || !isDev || token === undefined || startedRef.current)
+      return
     startedRef.current = true
 
     const run = async () => {
@@ -66,7 +69,7 @@ export function DevImportScreen() {
       }
     }
     void run()
-  }, [isDev, token, sync, router])
+  }, [launchCommitted, isDev, token, sync, router])
 
   return (
     <ThemedView style={styles.container}>

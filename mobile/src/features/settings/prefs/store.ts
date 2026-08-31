@@ -6,9 +6,11 @@ import { getString, setString } from "@/storage"
 import {
   type LanguagePreference,
   parseLanguagePreference,
+  parseStartupTabPreference,
   parseThemePreference,
   parseTimezonePreference,
   SETTINGS_KEYS,
+  type StartupTabPreference,
   type ThemePreference,
   type TimezonePreference,
 } from "./types"
@@ -40,6 +42,24 @@ export function getTimezonePreference(): TimezonePreference {
 
 export function setTimezonePreference(preference: TimezonePreference): void {
   setString(SETTINGS_KEYS.timezone, preference)
+}
+
+export function getStartupTabPreference(): StartupTabPreference {
+  return parseStartupTabPreference(getString(SETTINGS_KEYS.startupTab))
+}
+
+export function setStartupTabPreference(
+  preference: StartupTabPreference,
+): void {
+  setString(SETTINGS_KEYS.startupTab, preference)
+}
+
+export function mapFlutterStartupScreen(raw: unknown): StartupTabPreference {
+  return typeof raw === "string" ? parseStartupTabPreference(raw) : "home"
+}
+
+export function setStartupTabFromFlutter(raw: unknown): void {
+  setStartupTabPreference(mapFlutterStartupScreen(raw))
 }
 
 // Resolve a timezone preference to the effective display zone: an explicit

@@ -14,7 +14,6 @@ import { Platform, StyleSheet } from "react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { queryClient } from "@/api/query-client"
-import { runMigrations } from "@/db/migrate"
 import {
   useActivityForegroundRefresh,
   useActivityOwnershipPrune,
@@ -27,6 +26,12 @@ import {
 } from "@/features/notifications"
 import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
+import {
+  LaunchCoordinator,
+  LaunchFailureScreen,
+  LaunchNavigationGate,
+  useLaunchCommitted,
+} from "@/features/startup"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
 import { OtaUpdateRuntime } from "@/updates"
@@ -39,11 +44,6 @@ import { OtaUpdateRuntime } from "@/updates"
 export const unstable_settings = {
   initialRouteName: "(tabs)",
 }
-
-// Apply the committed migration bundle at startup, before features read tables
-// (fire-and-forget, mirroring the i18n side-effect wiring). Failures are
-// recorded through @/firebase inside the runner.
-void runMigrations()
 
 // Fire the startup calendar sync once (fire-and-forget, mirroring the i18n /
 // runMigrations startup posture — D5). It is a component (not a top-level side
@@ -101,6 +101,18 @@ function ActivityRuntime() {
   return null
 }
 
+function PostLaunchRuntime() {
+  const committed = useLaunchCommitted()
+  if (!committed) return null
+  return (
+    <>
+      <StartupSync />
+      <ActivityRuntime />
+      <NotificationRegistration />
+    </>
+  )
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
@@ -120,99 +132,108 @@ export default function RootLayout() {
           persistOptions={persistOptions}
         >
           <OtaUpdateRuntime />
-          <StartupSync />
-          <ActivityRuntime />
-          <NotificationRegistration />
+          <PostLaunchRuntime />
           <NotificationTapRouting />
+          <LaunchCoordinator />
           <ThemeProvider value={navTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="profile" />
-              <Stack.Screen name="onboarding" />
-              <Stack.Screen
-                name="appearance-settings"
-                options={{ headerShown: true }}
-              />
-              <Stack.Screen name="about" options={{ headerShown: true }} />
-              <Stack.Screen name="changelog" options={{ headerShown: true }} />
-              <Stack.Screen
-                name="changelog-sheet"
-                options={{
-                  headerShown: true,
-                  presentation:
-                    Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
-                  sheetAllowedDetents: [1],
-                  sheetGrabberVisible: true,
-                }}
-              />
-              {/* The display-timezone picker screen — a Stack sibling of (tabs),
+            <LaunchNavigationGate>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="profile" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen
+                  name="appearance-settings"
+                  options={{ headerShown: true }}
+                />
+                <Stack.Screen
+                  name="startup-settings"
+                  options={{ headerShown: true }}
+                />
+                <Stack.Screen name="about" options={{ headerShown: true }} />
+                <Stack.Screen
+                  name="changelog"
+                  options={{ headerShown: true }}
+                />
+                <Stack.Screen
+                  name="changelog-sheet"
+                  options={{
+                    headerShown: true,
+                    presentation:
+                      Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
+                    sheetAllowedDetents: [1],
+                    sheetGrabberVisible: true,
+                  }}
+                />
+                {/* The display-timezone picker screen — a Stack sibling of (tabs),
                 reached from Settings, mirroring appearance settings. Header
                 shown for the accessible back affordance + the screen's own
                 title. Deep-linkable: timecalendar-dev://timezone-settings. */}
-              <Stack.Screen
-                name="timezone-settings"
-                options={{ headerShown: true }}
-              />
-              <Stack.Screen name="personal-event-form" />
-              {/* The standalone personal-events list, relocated off the Home tab
+                <Stack.Screen
+                  name="timezone-settings"
+                  options={{ headerShown: true }}
+                />
+                <Stack.Screen name="personal-event-form" />
+                {/* The standalone personal-events list, relocated off the Home tab
                 (ADR 022 — the Home tab is now the today view). A Stack sibling of
                 (tabs), reached from Settings, mirroring calendar management.
                 Deep-linkable: timecalendar-dev://personal-events. */}
-              <Stack.Screen name="personal-events" />
-              {/* Header shown so the read-only details screen has the default
+                <Stack.Screen name="personal-events" />
+                {/* Header shown so the read-only details screen has the default
                 accessible back affordance (the screen sets its localized title
                 via its own <Stack.Screen options>). Deep-linkable:
                 timecalendar-dev://event-details/<uid>. */}
-              <Stack.Screen
-                name="event-details/[uid]"
-                options={{ headerShown: true }}
-              />
-              {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
+                <Stack.Screen
+                  name="event-details/[uid]"
+                  options={{ headerShown: true }}
+                />
+                {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
                 sibling of (tabs), reached from Settings, where
                 hide-by-name (no per-event details surface) is un-hideable.
                 Header shown for the accessible back affordance + the screen's
                 own title. Deep-linkable: timecalendar-dev://hidden-events. */}
-              <Stack.Screen
-                name="hidden-events"
-                options={{ headerShown: true }}
-              />
-              {/* The Activity timeline — a Stack sibling of (tabs), reached from
+                <Stack.Screen
+                  name="hidden-events"
+                  options={{ headerShown: true }}
+                />
+                {/* The Activity timeline — a Stack sibling of (tabs), reached from
                 Settings. Deep-linkable: timecalendar-dev://activity. */}
-              <Stack.Screen name="activity" options={{ headerShown: true }} />
-              {/* The notification subscription preferences screen (Phase 06 Ship
+                <Stack.Screen name="activity" options={{ headerShown: true }} />
+                {/* The notification subscription preferences screen (Phase 06 Ship
                 B) — a Stack sibling of (tabs), reached from Settings,
                 mirroring appearance settings / hidden-events. Header shown for the
                 accessible back affordance + the screen's own title.
                 Deep-linkable: timecalendar-dev://notification-settings. */}
-              <Stack.Screen
-                name="notification-settings"
-                options={{ headerShown: true }}
-              />
-              <Stack.Screen name="feedback" options={{ headerShown: true }} />
-              {/* The user-calendars management screen ("Mes calendriers") — a
+                <Stack.Screen
+                  name="notification-settings"
+                  options={{ headerShown: true }}
+                />
+                <Stack.Screen name="feedback" options={{ headerShown: true }} />
+                {/* The user-calendars management screen ("Mes calendriers") — a
                 Stack sibling of (tabs), reached from the Settings summary, where
                 a held calendar's visibility is toggled and a calendar deleted.
                 Header shown for the accessible back affordance + the screen's own
                 title. Deep-linkable: timecalendar-dev://user-calendars. */}
-              <Stack.Screen
-                name="user-calendars"
-                options={{ headerShown: true }}
-              />
-              {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
+                <Stack.Screen
+                  name="user-calendars"
+                  options={{ headerShown: true }}
+                />
+                {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
                 of (tabs), the E2E seam that makes the app durably hold a seeded
                 calendar token so real synced data renders. Headerless (it self-
                 routes to /calendar on success). The import ACTION is runtime-gated
                 on the app variant (inert in production); the route file still
                 ships in the prod bundle. Deep-linkable:
                 timecalendar-dev://dev-import?token=<token>. */}
-              <Stack.Screen
-                name="dev-import"
-                options={{ headerShown: false }}
-              />
-            </Stack>
+                <Stack.Screen
+                  name="dev-import"
+                  options={{ headerShown: false }}
+                />
+              </Stack>
+            </LaunchNavigationGate>
             {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}
             <SplashScreen />
+            <LaunchFailureScreen />
           </ThemeProvider>
         </PersistQueryClientProvider>
       </EnvironmentRuntimeGate>
