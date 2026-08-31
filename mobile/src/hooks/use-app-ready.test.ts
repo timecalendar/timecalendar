@@ -22,7 +22,11 @@ describe("useAppReady", () => {
     jest.useFakeTimers()
     try {
       const { result } = await renderHook(() => useAppReady())
-      await act(async () => jest.runAllTimers())
+      await act(async () => jest.advanceTimersByTime(59_999))
+      expect(result.current).toBe(false)
+      expect(getLaunchState()).toMatchObject({ kind: "resolving" })
+
+      await act(async () => jest.advanceTimersByTime(1))
       expect(result.current).toBe(true)
       expect(getLaunchState()).toMatchObject({ kind: "failure" })
     } finally {
