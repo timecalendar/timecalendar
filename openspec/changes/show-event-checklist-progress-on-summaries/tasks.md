@@ -33,4 +33,4 @@
 
 - [x] 6.1 Check whether TIM-268 PR #293 has landed before final verification; if it has, rebase the feature branch and rerun the focused checklist suites. Keep this change out of `mobile/src/features/event-checklists/ui/event-checklist.tsx` unless a proven incompatibility is returned to the Founding Engineer.
 - [x] 6.2 Run Prettier/check formatting on changed files, then the smallest focused Jest suites, `npx tsc --noEmit`, `npm run lint`, and the normal coverage command in `mobile/`; record exact commands and results in the handoff.
-- [ ] 6.3 Push the exact implementation head and require the normal `ci-mobile` `test-mobile` job (generated-client drift, TypeScript, lint, Jest coverage) to pass as the CI proof. Confirm no OpenAPI/generated client, migration, native/store/EAS/Firebase, workflow/deploy, or legacy `app/` diff was introduced.
+- [x] 6.3 Push the exact implementation head and require the normal `ci-mobile` `test-mobile` job (generated-client drift, TypeScript, lint, Jest coverage) to pass as the CI proof. Confirm no OpenAPI/generated client, migration, native/store/EAS/Firebase, workflow/deploy, or legacy `app/` diff was introduced.
