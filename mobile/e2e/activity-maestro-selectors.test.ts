@@ -40,4 +40,35 @@ describe("Activity Maestro selectors", () => {
       /id: "activity-cancelled-e2e-activity-cancelled"[\s\S]*assertVisible:[\s\S]*id: "activity-section-list"[\s\S]*assertNotVisible: "Room Activity Cancelled Details"/,
     )
   })
+
+  it("keeps the pagination traversal ordered and non-optional", () => {
+    const traversalIds = [
+      "activity-new-e2e-activity-filler-025",
+      "activity-new-e2e-activity-tie-higher",
+      "activity-new-e2e-activity-tie-lower",
+      "activity-new-e2e-activity-older-anchor",
+    ]
+    const observations = traversalIds.map((id) => {
+      const scrollCommand = `- scrollUntilVisible:\n    element:\n      id: "${id}"`
+      const assertion = `- assertVisible:\n    id: "${id}"`
+      const scrollIndex = flow.indexOf(scrollCommand)
+      const assertionIndex = flow.indexOf(assertion, scrollIndex)
+
+      return { assertionIndex, scrollIndex }
+    })
+
+    observations.forEach(({ assertionIndex, scrollIndex }, index) => {
+      const previousAssertionIndex =
+        observations[index - 1]?.assertionIndex ?? -1
+      const nextScrollIndex =
+        observations[index + 1]?.scrollIndex ?? flow.length
+
+      expect(scrollIndex).toBeGreaterThan(previousAssertionIndex)
+      expect(assertionIndex).toBeGreaterThan(scrollIndex)
+      expect(assertionIndex).toBeLessThan(nextScrollIndex)
+      expect(flow.slice(scrollIndex, nextScrollIndex)).not.toContain(
+        "optional: true",
+      )
+    })
+  })
 })
