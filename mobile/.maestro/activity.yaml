@@ -175,6 +175,15 @@ appId: fr.samuelprak.timecalendar.dev
       id: "activity-new-e2e-activity-new"
     timeout: 60000
 
+# Bound the long virtualized first-page traversal at a stable seeded midpoint.
+- scrollUntilVisible:
+    element:
+      id: "activity-new-e2e-activity-filler-025"
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: "activity-new-e2e-activity-filler-025"
+
 # The higher UUID is row 50 (first response); the lower UUID and older anchor
 # exist only on the following response, so observing all three proves the tie
 # order and scroll-driven pagination through the real server.
