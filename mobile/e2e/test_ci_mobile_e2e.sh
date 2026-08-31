@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 WORKFLOW="$REPO_ROOT/.github/workflows/ci-mobile-e2e.yml"
+MOBILE_WORKFLOW="$REPO_ROOT/.github/workflows/ci-mobile.yml"
 
 fail() {
   echo "[test_ci_mobile_e2e] FAIL: $*" >&2
@@ -40,5 +41,7 @@ assert_present 'name: maestro-debug-android'
 assert_present 'name: maestro-debug-ios'
 assert_present 'name: e2e-server-logs-android'
 assert_present 'name: e2e-server-logs-ios'
+grep -Fq -- './mobile/e2e/test_run_e2e.sh' "$MOBILE_WORKFLOW" || \
+  fail 'standard mobile CI does not run the deterministic E2E harness regression'
 
 echo '[test_ci_mobile_e2e] PASS'
