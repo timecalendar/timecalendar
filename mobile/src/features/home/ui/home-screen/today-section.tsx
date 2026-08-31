@@ -5,10 +5,10 @@ import { ThemedText } from "@/components/themed-text"
 import { type CalendarEvent } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,
-  checklistProgressLabel,
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
+import { homeEventOpenLabel } from "@/features/home/ui/event-accessibility"
 import { eventSurfaceColor } from "@/features/home/ui/event-surface"
 import { TodayTimeline } from "@/features/home/ui/today-timeline"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -91,25 +91,16 @@ function AllDayEvents({
       <View style={styles.allDayItems}>
         {events.map((event) => {
           const progress = checklistProgress.get(event.id)
-          const progressLabel = checklistProgressLabel(t, progress)
           return (
             <Pressable
               key={event.id}
               accessibilityRole="button"
-              accessibilityLabel={
-                progressLabel === undefined
-                  ? t("home.event.openLabel", {
-                      title: event.title,
-                      time: t("home.today.allDay"),
-                      location: event.location ?? "",
-                    })
-                  : t("home.event.openLabelWithProgress", {
-                      title: event.title,
-                      time: t("home.today.allDay"),
-                      location: event.location ?? "",
-                      progress: progressLabel,
-                    })
-              }
+              accessibilityLabel={homeEventOpenLabel(
+                t,
+                event,
+                t("home.today.allDay"),
+                progress,
+              )}
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")

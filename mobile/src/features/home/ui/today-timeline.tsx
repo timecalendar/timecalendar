@@ -28,12 +28,12 @@ import {
 } from "@/features/calendar/data"
 import {
   ChecklistProgressIndicator,
-  checklistProgressLabel,
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
+import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
 
 // The home today mini-timeline (D5) — PRESENTATIONAL (70% floor) and the FIRST
@@ -165,26 +165,12 @@ export function TodayTimeline({
           )
           const location = event.location ?? ""
           const progress = checklistProgress.get(event.id)
-          const progressLabel = checklistProgressLabel(t, progress)
           return (
             <Pressable
               key={event.id}
               testID={`today-tile-${event.id}`}
               accessibilityRole="button"
-              accessibilityLabel={
-                progressLabel === undefined
-                  ? t("home.event.openLabel", {
-                      title: event.title,
-                      time,
-                      location,
-                    })
-                  : t("home.event.openLabelWithProgress", {
-                      title: event.title,
-                      time,
-                      location,
-                      progress: progressLabel,
-                    })
-              }
+              accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")
@@ -287,27 +273,13 @@ export function TodayTimeline({
           )
           const location = event.location ?? ""
           const progress = checklistProgress.get(event.id)
-          const progressLabel = checklistProgressLabel(t, progress)
 
           return (
             <Pressable
               key={event.id}
               testID={`today-tile-${event.id}`}
               accessibilityRole="button"
-              accessibilityLabel={
-                progressLabel === undefined
-                  ? t("home.event.openLabel", {
-                      title: event.title,
-                      time,
-                      location,
-                    })
-                  : t("home.event.openLabelWithProgress", {
-                      title: event.title,
-                      time,
-                      location,
-                      progress: progressLabel,
-                    })
-              }
+              accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")

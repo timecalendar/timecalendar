@@ -10,11 +10,11 @@ import {
 import {
   type ChecklistProgress,
   ChecklistProgressIndicator,
-  checklistProgressLabel,
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { Radii, Spacing, useTheme } from "@/theme"
 
+import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
 
 // The home upcoming scroller (D6) — PRESENTATIONAL (70% floor): a horizontal RN-core
@@ -81,22 +81,12 @@ function UpcomingCard({
     ? t("home.today.allDay")
     : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
-  const progressLabel = checklistProgressLabel(t, progress)
 
   return (
     <Pressable
       testID={`upcoming-card-${event.id}`}
       accessibilityRole="button"
-      accessibilityLabel={
-        progressLabel === undefined
-          ? t("home.event.openLabel", { title: event.title, time, location })
-          : t("home.event.openLabelWithProgress", {
-              title: event.title,
-              time,
-              location,
-              progress: progressLabel,
-            })
-      }
+      accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
       accessibilityHint={
         event.userCalendarId !== undefined
           ? t("home.event.hint.details")
