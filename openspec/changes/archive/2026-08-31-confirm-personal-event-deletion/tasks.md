@@ -1,7 +1,7 @@
 ## 1. Localized native confirmation
 
 - [x] 1.1 Add French and English keys for the confirmation title, permanence message, Cancel action, and destructive Delete action in `mobile/src/i18n/locales/en.json` and `fr.json`; verify typed bidirectional parity with `cd mobile && npx tsc --noEmit`.
-- [x] 1.2 In `mobile/src/features/personal-events/ui/personal-event-form-screen.tsx`, replace the immediate delete handler with `Alert.alert`: localized title/message, Cancel first with `style: "cancel"`, Delete second with `style: "destructive"`, and a supported native dismissal callback that performs no write.
+- [x] 1.2 In `mobile/src/features/personal-events/ui/personal-event-form-screen.tsx`, replace the immediate delete handler with `Alert.alert`: localized title/message, Cancel first with `style: "cancel"`, Delete second with `style: "destructive"`, Android's supported native dismissal callback, and an iOS presentation-edge release that does not rely on the unavailable `onDismiss` callback.
 - [x] 1.3 Add a synchronous `idle | prompting | deleting` ref guard plus render state: suppress duplicate prompts, admit only the first destructive callback, disable `personal-event-delete` with `accessibilityState={{ disabled: true }}` while removal is pending, and release the guard on cancel, dismissal, or failed completion.
 - [x] 1.4 Keep `useDeleteEvent().remove(uid)` as the only confirmed write; on `true` call `router.back()` exactly once, and on `false` keep the populated form and existing `WriteErrorNotice`/recorded-error behavior mounted for retry. Change `form/hooks.ts` only if a failing proof demonstrates that its current contract is insufficient.
 
@@ -9,7 +9,7 @@
 
 - [x] 2.1 Extend `mobile/src/features/personal-events/ui/personal-event-form-screen.test.tsx` with an exception-safe `Alert.alert` spy and explicit router reset so suite-owned mocks cannot leak between randomized tests.
 - [x] 2.2 Add a component test proving that pressing `personal-event-delete` opens the localized native alert but performs no repository write or navigation.
-- [x] 2.3 Add component tests invoking the captured Cancel and native `onDismiss` callbacks; prove both are inert, preserve the form, and allow the confirmation to reopen.
+- [x] 2.3 Add component tests invoking the captured Cancel and Android native `onDismiss` callbacks, plus an iOS proof that invokes no nonexistent dismissal callback; prove every path is inert, preserves the form, and allows the confirmation to reopen.
 - [x] 2.4 Add a deferred-promise component test that invokes the destructive callback repeatedly while pending and presses the underlying Delete control again; prove one `remove(uid)` call and disabled accessibility state.
 - [x] 2.5 Add component tests proving successful removal calls `router.back()` once, while failed removal shows the existing localized error, performs no navigation, preserves populated input values, releases the guard, and allows a later successful retry.
 - [x] 2.6 Run the focused CI proof tests: `cd mobile && npm test -- --runInBand src/features/personal-events/ui/personal-event-form-screen.test.tsx src/features/personal-events/form/hooks.test.ts`; keep the existing hook rejection/Crashlytics assertions green.

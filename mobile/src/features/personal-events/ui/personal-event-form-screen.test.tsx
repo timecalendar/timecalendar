@@ -8,6 +8,7 @@ import {
   useEventToEdit,
   useSaveEvent,
 } from "@/features/personal-events/form"
+import { usePlatform } from "@/test-support/platform"
 
 import PersonalEventFormScreen from "./personal-event-form-screen"
 
@@ -161,7 +162,7 @@ describe("PersonalEventFormScreen", () => {
       "Delete event?",
       "This event will be permanently deleted.",
       expect.any(Array),
-      expect.objectContaining({ cancelable: true }),
+      undefined,
     )
     const { buttons } = latestAlert()
     expect(buttons).toEqual([
@@ -172,9 +173,30 @@ describe("PersonalEventFormScreen", () => {
     expect(mockBack).not.toHaveBeenCalled()
   })
 
-  it.each(["cancel", "dismiss"] as const)(
-    "%s is inert, preserves the form, and allows the prompt to reopen",
-    async (exit) => {
+  it("cancel is inert, preserves the form, and allows the prompt to reopen", async () => {
+    useEditEvent()
+    const { getByDisplayValue, getByTestId } = await render(
+      <PersonalEventFormScreen />,
+    )
+    await waitFor(() => expect(getByDisplayValue("Old")).toBeTruthy())
+    await fireEvent.press(getByTestId("personal-event-delete"))
+
+    await act(async () => {
+      latestAlert().buttons[0]?.onPress?.()
+    })
+
+    expect(getByDisplayValue("Old")).toBeTruthy()
+    expect(getByDisplayValue("Library")).toBeTruthy()
+    expect(mockRemove).not.toHaveBeenCalled()
+    expect(mockBack).not.toHaveBeenCalled()
+    await fireEvent.press(getByTestId("personal-event-delete"))
+    expect(mockAlert).toHaveBeenCalledTimes(2)
+  })
+
+  describe("on Android", () => {
+    usePlatform("android")
+
+    it("native dismissal is inert and allows the prompt to reopen", async () => {
       useEditEvent()
       const { getByDisplayValue, getByTestId } = await render(
         <PersonalEventFormScreen />,
@@ -182,23 +204,59 @@ describe("PersonalEventFormScreen", () => {
       await waitFor(() => expect(getByDisplayValue("Old")).toBeTruthy())
       await fireEvent.press(getByTestId("personal-event-delete"))
 
-      const { buttons, options } = latestAlert()
       await act(async () => {
-        if (exit === "cancel") {
-          buttons[0]?.onPress?.()
-        } else {
-          options?.onDismiss?.()
-        }
+        latestAlert().options?.onDismiss?.()
       })
 
       expect(getByDisplayValue("Old")).toBeTruthy()
-      expect(getByDisplayValue("Library")).toBeTruthy()
       expect(mockRemove).not.toHaveBeenCalled()
       expect(mockBack).not.toHaveBeenCalled()
       await fireEvent.press(getByTestId("personal-event-delete"))
       expect(mockAlert).toHaveBeenCalledTimes(2)
-    },
-  )
+    })
+  })
+
+  describe("on iOS", () => {
+    usePlatform("ios")
+
+    beforeEach(() => jest.useFakeTimers())
+
+    afterEach(() => {
+      try {
+        jest.runOnlyPendingTimers()
+      } finally {
+        jest.useRealTimers()
+      }
+    })
+
+    it("reopens after accessibility escape without an onDismiss callback", async () => {
+      useEditEvent()
+      const { getByDisplayValue, getByTestId } = await render(
+        <PersonalEventFormScreen />,
+      )
+      await waitFor(() => expect(getByDisplayValue("Old")).toBeTruthy())
+      const deleteButton = getByTestId("personal-event-delete")
+
+      await fireEvent.press(deleteButton)
+      await fireEvent.press(deleteButton)
+      expect(mockAlert).toHaveBeenCalledTimes(1)
+      expect(latestAlert().options).toBeUndefined()
+
+      // React Native installs no iOS dismiss callback. Let the presentation
+      // microtask settle, representing the native alert having owned focus;
+      // after VoiceOver escape, the underlying Delete action can reopen it.
+      await act(async () => {
+        jest.runAllTicks()
+        await Promise.resolve()
+      })
+      await fireEvent.press(deleteButton)
+
+      expect(mockAlert).toHaveBeenCalledTimes(2)
+      expect(getByDisplayValue("Old")).toBeTruthy()
+      expect(mockRemove).not.toHaveBeenCalled()
+      expect(mockBack).not.toHaveBeenCalled()
+    })
+  })
 
   it("admits one removal while pending and exposes disabled accessibility state", async () => {
     let resolveRemoval: ((removed: boolean) => void) | undefined

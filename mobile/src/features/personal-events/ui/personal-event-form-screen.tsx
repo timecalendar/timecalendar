@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import {
   Alert,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -72,6 +73,7 @@ export default function PersonalEventFormScreen() {
   const [errors, setErrors] = useState<EventFormErrors>({})
   const [isDeleting, setIsDeleting] = useState(false)
   const deletePhase = useRef<"idle" | "prompting" | "deleting">("idle")
+  const deletePromptId = useRef(0)
   const save = useSaveEvent()
   const del = useDeleteEvent()
 
@@ -121,17 +123,23 @@ export default function PersonalEventFormScreen() {
     }
   }
 
-  function releaseDeletePrompt() {
-    if (deletePhase.current === "prompting") {
-      deletePhase.current = "idle"
-    }
-  }
-
   function onDelete() {
     if (uid === undefined || deletePhase.current !== "idle") {
       return
     }
     deletePhase.current = "prompting"
+    const promptId = ++deletePromptId.current
+
+    const releaseDeletePrompt = () => {
+      if (
+        deletePromptId.current === promptId &&
+        deletePhase.current !== "deleting"
+      ) {
+        deletePromptId.current += 1
+        deletePhase.current = "idle"
+      }
+    }
+
     Alert.alert(
       t("personalEvents.form.deleteConfirmation.title"),
       t("personalEvents.form.deleteConfirmation.message"),
@@ -145,9 +153,13 @@ export default function PersonalEventFormScreen() {
           text: t("personalEvents.form.deleteConfirmation.confirm"),
           style: "destructive",
           onPress: async () => {
-            if (deletePhase.current !== "prompting") {
+            if (
+              deletePromptId.current !== promptId ||
+              deletePhase.current === "deleting"
+            ) {
               return
             }
+            deletePromptId.current += 1
             deletePhase.current = "deleting"
             setIsDeleting(true)
             let removed = false
@@ -165,8 +177,27 @@ export default function PersonalEventFormScreen() {
           },
         },
       ],
-      { cancelable: true, onDismiss: releaseDeletePrompt },
+      Platform.OS === "android"
+        ? { cancelable: true, onDismiss: releaseDeletePrompt }
+        : undefined,
     )
+
+    if (Platform.OS === "ios") {
+      // React Native exposes no iOS Alert dismissal callback. Keep the guard
+      // through this synchronous presentation edge to suppress duplicate
+      // opens, then let the native modal own interaction exclusion. If
+      // VoiceOver escape dismisses it, the form is already able to reopen;
+      // opening a later alert advances deletePromptId and invalidates this
+      // alert's action closures.
+      queueMicrotask(() => {
+        if (
+          deletePromptId.current === promptId &&
+          deletePhase.current === "prompting"
+        ) {
+          deletePhase.current = "idle"
+        }
+      })
+    }
   }
 
   const inputStyle = [
