@@ -70,7 +70,7 @@ jobs:
     env:
       # Reuse the build-server artifact image — the shared lifecycle skips its
       # own build when E2E_SERVER_IMAGE is set (ci/e2e-server.sh).
-      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ env.E2E_SOURCE_SHA }}
+      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Checkout exact source SHA
         uses: actions/checkout@v6
