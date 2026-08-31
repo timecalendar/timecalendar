@@ -148,6 +148,11 @@ higher UUID ends page one; the lower UUID and `E2E Activity Older Page` anchor
 can only render after `onEndReached` loads the following page. `db:init --drop`
 restores both calendars, their names/content, and all fixed log rows.
 
+The shared flow positively observes stable filler row 025 before the boundary
+pair. That midpoint splits traversal of the long virtualized first page into
+bounded iOS scroll legs; the unchanged higher/lower tie pair and older anchor
+still prove server ordering and real following-page pagination.
+
 To debug only this flow from `mobile/` against an installed development build:
 
 ```bash
