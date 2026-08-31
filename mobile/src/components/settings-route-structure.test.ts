@@ -74,7 +74,10 @@ describe("Settings route structure", () => {
     expect(rootLayout).toContain("sheetGrabberVisible: true")
     expect(rootLayout).not.toContain("ChangelogGate")
 
-    const tabsLayout = route("(tabs)/_layout.tsx")
+    expect(route("(tabs)/_layout.tsx").trim()).toBe(
+      'export { LaunchGatedTabs as default } from "@/features/startup/ui"',
+    )
+    const tabsLayout = route("../features/startup/ui/launch-gated-tabs.tsx")
     expect(tabsLayout).toContain("<ChangelogGate />")
     expect(route("onboarding/_layout.tsx")).not.toContain("ChangelogGate")
   })
