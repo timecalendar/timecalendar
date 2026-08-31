@@ -17,6 +17,15 @@ erase boundaries, and the existing exact pre-Save gate correctly stopped the wri
 must distinguish only a live structural ancestor wrapper and must correct only that exact observed
 input residue before preserving the mandatory exact target gate.
 
+Exact-head run `33395764565` at `39998762` cleared both of those repairs and produced Android
+17/17. On iOS, `ical-import` entered exact `E2E Programme`, completed the full centred CTA reveal,
+the bounded CTA wait, the required tap, and the optional same-id fallback, but never reached
+Connect. The final hierarchy remained on programme with the focused keyboard physically covering
+the Continue action. That device evidence disproves the proposal's earlier assumption that keeping
+the CTA inside a keyboard-avoiding scroll is sufficient: the programme action must use the
+repository's proven sticky-footer placement, and the component proof must pin physical containment
+semantics rather than call a scroll descendant “lifted”.
+
 ## What Changes
 
 - Supply `BACKEND_ENVIRONMENT_CAPABILITY=development` to every Android and iOS native E2E prebuild and release-bundle compilation alongside `APP_VARIANT=development` and the platform-correct local `EXPO_PUBLIC_API_URL`.
@@ -32,7 +41,12 @@ input residue before preserving the mandatory exact target gate.
   retry policy.
 - Reopen Activity's older-page chain when the observed held-calendar set expands, then force the existing single-flight newest-page coordinator so the expanded set can establish a live cursor without deleting cached history or changing read state.
 - Remove the final shared-flow `hideKeyboard`, gate the typed checklist value exactly, cold re-enter Calendar without clearing state, and prove the persisted row before toggling, progress, hard-delete, and absence checks.
-- Make only the institution-name and programme onboarding forms keyboard-safe using the repository's existing `KeyboardAvoidingView` plus scroll/tap-handling layout, while preserving validation, draft writes, Skip, routes, labels, ids, and Android behavior. Gate each shared iCal CTA interaction behind the exact input value and its existing bounded CTA wait.
+- Keep the already device-proven institution-name form unchanged. In the programme form, move the
+  existing Continue action out of the `ScrollView` and place it immediately after the scroll as a
+  sticky sibling inside the existing `KeyboardAvoidingView`, following the personal-event form
+  pattern so iOS padding lifts it and Android resize keeps it reachable. Preserve validation,
+  draft writes, Skip, route, label, id, disabled state, handler, colors, entered value, and the
+  shared iCal sequence.
 - Refine the structural retry classifier so a failed `runFlowCommand` propagated from the final
   failed startup child is excluded from the global veto only while it remains that child's live
   lower-depth ancestor; same-depth, closed, assertion-bearing, interaction-bearing, and malformed
@@ -64,7 +78,9 @@ None.
 - Shared E2E flows: `mobile/.maestro/calendar.yaml`, `mobile/.maestro/hidden-events.yaml`,
   `mobile/.maestro/ical-import.yaml`, `mobile/.maestro/onboarding.yaml`, and
   `mobile/.maestro/user-calendar-rename.yaml`.
-- Bounded onboarding layout repair: `mobile/src/features/onboarding/ui/institution-name-screen.tsx`, `mobile/src/features/onboarding/ui/programme-screen.tsx`, and only their minimum shared/local styles and focused component tests.
+- Bounded onboarding layout repair: the already-landed institution-name form stays unchanged;
+  this amendment touches only `mobile/src/features/onboarding/ui/programme-screen.tsx`, its minimum
+  local/shared footer spacing, and its focused component test.
 - Checklist persistence flow: `mobile/.maestro/event-checklists.yaml`, plus focused mutation-sensitive coverage in `mobile/e2e/maestro-selectors.test.ts`.
 - Focused proof and operator documentation: `mobile/e2e/test_ci_mobile_e2e.sh`, `mobile/e2e/maestro-selectors.test.ts` (new), `mobile/e2e/README.md`, `docs/agent-dev-environment.md`.
 - Native retry harness and binding contract: `mobile/e2e/classify-maestro-attempt.mjs`,
@@ -76,8 +92,11 @@ None.
 - Activity ownership lifecycle and focused regression proof: `mobile/src/features/activity/data/lifecycle.ts` and its colocated tests, plus root/barrel wiring for the renamed reconciliation hook.
 - No OpenAPI contract/generated client, migration, server fixture, selector-id, native/store config,
   workflow/timeout, retry attempt budget, deployment, infrastructure, or Flutter changes.
-  Application UI changes are limited to the two keyboard-safe onboarding form layouts above;
-  user-visible behavior and navigation semantics remain unchanged. The existing structural retry
-  classifier plus binding ADR/Architecture Book contract are refined only for the live nested
-  wrapper provenance described above.
-- **Residual risk, accepted:** the guard covers `id:` selectors only. Six flows have not been reached by a native run since the UI rework, so a stale **text** assertion in one of them is possible and would surface only on the gate. Triage amendment #2 authorizes repairing whatever the gate surfaces inside this change; only a repair that genuinely needs a `mobile/src` change is out of scope, and that is `TIM-265`.
+  Application UI changes are limited to the bounded onboarding form repairs above, with this
+  amendment changing only the programme CTA's containment; user-visible behavior and navigation
+  semantics remain unchanged. The existing structural retry classifier plus binding ADR/Architecture
+  Book contract are refined only for the live nested wrapper provenance described above.
+- **Residual risk, accepted:** repository proof cannot simulate native keyboard geometry. It can
+  reject the known-bad containment by proving the programme CTA is the sole sticky sibling after
+  the scroll and still inside the avoiding view; the unchanged Maestro journey and fresh exact-head
+  device gate remain the physical tapability proof. No other application surface is authorized.

@@ -27,14 +27,17 @@ A static enumeration of every literal `id:` in the flows against every `testID` 
   `runFlowCommand` ancestor as an independent application failure.
 - Correct only the exact observed rename residue before the existing exact pre-Save gate, using a
   pinned element-relative Maestro interaction that cannot address outside the selected input.
+- Keep the programme Continue action physically above the keyboard by adopting the repository's
+  sticky-footer containment, while leaving the device-proven iCal journey and institution screen
+  unchanged.
 
 **Non-Goals:**
 
 - Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, retry attempt budget or assertion guard, Maestro flow order, seeded-data assertions, or server lifecycle.
 - Change application UI/behaviour outside the authorized Activity held-calendar lifecycle repair
-  and the bounded keyboard-safe layout of the institution-name and programme forms; add a `testID`
-  to a control that lacks one; change either form's validation/draft/navigation/Skip contract; or
-  introduce a new keyboard dependency or platform-specific Maestro flow.
+  and the bounded programme sticky-footer layout; change the device-proven institution-name screen;
+  add a `testID` to a control that lacks one; change either form's validation/draft/navigation/Skip
+  contract; or introduce a new keyboard dependency or platform-specific Maestro flow.
 - Change OpenAPI/generated clients, server schema or migrations, native/store configuration, EAS profiles, Firebase files, deployments, infrastructure, or legacy Flutter.
 - Re-run a terminal native failure without a material workflow fix, add a separate QA gate, or modify the parent feature PR.
 
@@ -218,20 +221,22 @@ Alternatives rejected:
 
 ## Decision 9: Keep onboarding body CTAs above the keyboard, then prove exact flow values
 
-`institution-name-screen.tsx` and `programme-screen.tsx` adopt the existing form layout used by
-Feedback and personal-event forms: a flex `KeyboardAvoidingView` with iOS padding behavior, a
-scrollable content region whose `keyboardShouldPersistTaps="handled"` permits CTA activation while
-the keyboard is present, and placement/styles that keep the body Continue control inside the
-keyboard-adjusted visible region. Android continues to rely on its existing resize behavior. No
-new dependency or keyboard primitive is introduced, and validation, draft writes, route targets,
-Skip behavior, labels, ids, and user-entered values are unchanged.
+The two screens retain a flex `KeyboardAvoidingView` with iOS padding behavior and a scrollable
+content region whose `keyboardShouldPersistTaps="handled"` permits activation while the keyboard is
+present. The institution screen's current scroll-contained CTA is device-proven and remains
+unchanged. The programme screen's earlier scroll-contained placement is superseded by Decision 12:
+its existing CTA becomes a sticky sibling after the scroll, inside the same avoiding view. Android
+continues to rely on its existing resize behavior. No new dependency or keyboard primitive is
+introduced, and validation, draft writes, route targets, Skip behavior, labels, ids, and
+user-entered values are unchanged.
 
 This is required because accessibility-hierarchy visibility is not physical tapability. In the
 iOS artifact from run `33365735943`, `onboarding-institution-continue` was exposed at y=581–629
 while the keyboard covered that region; Maestro selected the correct id but the tap hit the
-keyboard/prediction layer and changed `E2E Institution` to `E2E Institutiont`. The programme screen
-uses the same centered form frame and therefore receives the same bounded repair before it becomes
-the next terminus.
+keyboard/prediction layer and changed `E2E Institution` to `E2E Institutiont`. The initial repair
+proved the institution transition on-device, but run `33395764565` later showed that identical
+scroll containment did not protect the programme CTA. That measured distinction is why only the
+programme placement changes now.
 
 The shared `ical-import.yaml` remains platform-neutral. After each `inputText`, it first waits up
 to 15 seconds for one selector matching the existing input id and the complete exact value, then
@@ -333,6 +338,37 @@ Alternatives rejected:
 - Add another broad erase boundary: two 50-character erases already reproduced the residue; the
   measured state needs a one-character correction, not a third destructive sweep.
 
+## Decision 12: Make the programme CTA a sticky sibling inside the avoiding view
+
+Move the existing `onboarding-programme-continue` Pressable unchanged out of the `ScrollView` and
+place it immediately after the scroll, still inside the existing `KeyboardAvoidingView`. Add only
+the minimum local or shared footer spacing required. This is the personal-event form's proven
+containment: on iOS the avoiding view's `padding` behavior lifts the footer; on Android the resized
+window keeps the sibling reachable. The scroll retains `keyboardShouldPersistTaps="handled"` for
+the form content.
+
+The focused component proof treats containment as the contract. The programme scroll contains
+zero matching CTAs; the avoiding view contains exactly one; and that CTA follows the scroll while
+remaining inside the avoiding view. The same proof retains iOS `behavior="padding"` and the
+scroll's tap-handling contract, and covers Android's undefined behavior/resize path. Those
+assertions are mutation-sensitive: moving the CTA back into the scroll, outside the avoiding view,
+before the scroll, duplicating it, or dropping the iOS/tap-handling semantics must fail.
+
+The `ical-import.yaml` programme sequence is deliberately unchanged: exact input-id/value gate →
+100%-visible centred reveal → bounded CTA wait → required CTA tap → one optional same-id fallback →
+mandatory Connect wait. The fresh native gate therefore proves the real visible CTA transition;
+Return submission would exercise the already-wired `onSubmitEditing={submit}` path but bypass the
+user-facing control and conceal the defect.
+
+Alternatives rejected:
+
+- Keep the CTA inside the keyboard-avoiding scroll: run `33395764565` is direct counter-evidence;
+  the test that called that structure “lifted” asserted only ancestry, not non-occlusion.
+- Submit with Return, hide the keyboard, tap coordinates, fork by platform, or weaken the Connect
+  wait: each bypasses or obscures the visible CTA transition the gate must prove.
+- Change the institution screen or introduce a new keyboard abstraction: the former is already
+  device-proven and the latter is unnecessary for one local containment correction.
+
 ## Risks / Trade-offs
 
 - [One platform or phase drifts later] → Step-scoped assertions cover all four build steps and both exact URLs.
@@ -348,8 +384,9 @@ Alternatives rejected:
 - [The Android native-stack `SearchView` renders collapsed to an icon] → Then the `"Search schools"` placeholder is not matchable until it is expanded, and no flow-only repair exists. That is the `TIM-265` boundary — escalate to the Founding Engineer rather than reaching into `mobile/src`.
 - [A keyboard command reports success but changes route state] → Eliminate `hideKeyboard` from all
   shared flows and prove the checklist value on details before a state-preserving cold re-entry.
-- [A CTA is accessibility-visible but keyboard-occluded] → Keep both body CTAs inside the
-  keyboard-adjusted tappable layout and retain exact-value plus bounded CTA gates in the shared flow.
+- [A CTA is accessibility-visible but keyboard-occluded] → Keep the institution contract unchanged,
+  make the programme CTA the sole sticky sibling after the scroll inside the avoiding view, and
+  retain the exact-value, reveal, bounded tap, fallback, and mandatory route gates unchanged.
 - [A propagated nested wrapper is mistaken for an earlier application failure] → Ignore only a
   still-live, lower-depth failed `runFlowCommand` ancestor of the final failed startup command;
   mutation-pin same-depth, closed-ancestor, assertion, interaction, and final-epoch negatives.
@@ -365,7 +402,7 @@ Alternatives rejected:
 5. Run shell syntax/proof, workflow/config/YAML formatting, resolved Expo config checks for both platform contracts, the mobile Jest suite, OpenSpec validation, and the applicable baseline checks.
 6. Remove the last `hideKeyboard`, add the exact checklist value gate and pre-toggle cold re-entry,
    and mutation-pin the complete add → persist → toggle → progress → delete → absent sequence.
-7. Apply the established keyboard-safe form layout to the two onboarding name screens, add their
+7. Apply the initial keyboard-safe form layout to the two onboarding name screens, add their
    focused component proof, and pin both iCal exact-value → CTA-wait → CTA-tap sequences.
 8. Refine the structural classifier's global veto for only a live failed flow-wrapper ancestor,
    add the captured 29-entry fixture and negatives, and align ADR 038 plus its binding/operator
@@ -373,11 +410,15 @@ Alternatives rejected:
 9. Add the exact rename-residue conditional correction before the existing exact pre-Save gate,
    and mutation-pin its selector, element-relative point, one-character erase, ordering, and all
    convergence assertions.
-10. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
-11. Rollback is a normal revert of the workflow, flow, proof, documentation, classifier refinement,
+10. Move only the programme CTA to the sticky sibling position, replace the false scroll-descendant
+    proof with mutation-sensitive containment assertions, and keep the iCal flow byte-for-byte
+    unchanged.
+11. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
+12. Rollback is a normal revert of the workflow, flow, proof, documentation, classifier refinement,
     and bounded form-layout changes. It restores the known broken E2E routing/keyboard reachability
     and nested retry/rename termini but does not migrate data or alter production data.
 
 ## Open Questions
 
-None. `TIM-265` now covers only the escalation case — a selector repair that would require a `mobile/src` change — and does not gate this change.
+None. The measured programme-only `mobile/src` repair is explicitly authorized here; every other
+application surface remains out of scope.

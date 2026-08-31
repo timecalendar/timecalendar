@@ -765,3 +765,40 @@ bounds, so the interaction cannot become a screen-global coordinate.
       Android and iOS 17/17. Record both complete per-flow lists and explicitly name `activity`,
       `event-checklists`, `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and
       the first complete iOS `user-calendars` result before archive or Reviewer handoff.
+
+## 36. Keep the programme Continue action physically above the keyboard
+
+Exact-head run `33395764565` at `39998762` produced Android 17/17, while iOS passed nine flows and
+then failed terminally in `ical-import`. Exact `E2E Programme`, the 100%-visible centred reveal,
+the CTA-id wait, the required tap, and the optional same-id tap all completed, but the mandatory
+Connect wait expired. The final hierarchy remained on programme with the focused keyboard
+physically covering the CTA. The current component test's one-CTA-inside-ScrollView assertion
+therefore cannot support its claim that the action is “lifted”.
+
+- [x] 36.1 Align the proposal, Decision 9, new Decision 12, and the `mobile-e2e` delta with the
+      measured programme-only repair: the institution screen stays unchanged; the programme CTA
+      adopts the repository's proven sticky-footer containment; and the shared iCal sequence stays
+      unchanged so the device gate proves the explicit visible action rather than a bypass.
+- [ ] 36.2 In `mobile/src/features/onboarding/ui/programme-screen.tsx`, move the existing
+      `onboarding-programme-continue` Pressable unchanged out of the `ScrollView` and place it
+      immediately after the scroll as a sticky sibling inside the existing `KeyboardAvoidingView`.
+      Preserve its id, label, disabled state, hit slop, `submit` handler, colors, validation, draft
+      write, Skip action, route, input and entered value. Add only the minimum local/shared footer
+      spacing; no dependency or keyboard primitive. Do not change the institution screen.
+- [ ] 36.3 Replace the focused programme component's false scroll-descendant proof with
+      mutation-sensitive containment coverage: the scroll contains zero programme CTAs; the
+      avoiding view contains exactly one; and the CTA follows the scroll while remaining inside
+      the avoiding view. Reject moving it back inside the scroll, outside the avoiding view, before
+      the scroll, duplicating it, or losing iOS `padding` / `keyboardShouldPersistTaps="handled"`.
+      Preserve the existing Android resize-path assertion and the device-proven institution proof.
+- [ ] 36.4 Run the focused programme component proof and its containment mutations, the focused
+      Maestro journey proof, pinned Maestro 2.8.0 syntax for unchanged `ical-import.yaml`,
+      TypeScript/lint as applicable, Prettier, strict active OpenSpec validation, and
+      `git diff --check`. Confirm no Maestro command, selector, value, route, other `mobile/src`,
+      server, workflow, binding Architecture Book, native/store, deployment, or Flutter surface
+      changed.
+- [ ] 36.5 Keep `run-e2e` on and require the next material exact head to pass the baseline plus
+      Android and iOS 17/17. Record both complete lists and explicitly name `activity`,
+      `event-checklists`, `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and
+      the first complete iOS `user-calendars` result. Android's green at `39998762` is corroboration
+      only. Leave 35.4 and this task open until that gate is genuinely green; do not archive.

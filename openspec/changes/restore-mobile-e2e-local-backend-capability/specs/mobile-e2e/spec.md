@@ -473,11 +473,12 @@ interaction shared by both platforms, with no per-platform selector or branch.
 
 - **WHEN** iOS exposes an institution or programme Continue control in the accessibility hierarchy
   while native keyboard chrome physically covers its tappable bounds
-- **THEN** each onboarding form SHALL use the repository's keyboard-avoiding scroll/tap-handling
-  layout so its existing body Continue control remains visible and tappable after typing
+- **THEN** the institution form SHALL retain its device-proven keyboard-avoiding
+  scroll/tap-handling layout, while the programme form SHALL place its existing Continue control as
+  a sticky sibling after the scroll and inside the same keyboard-avoiding view
 - **AND** the shared flow SHALL gate each explicit CTA tap behind both an exact conjunctive
   input-id/value wait and the existing bounded CTA-id wait, with no keyboard-dismiss command,
-  Return-key submission, coordinate tap, optional CTA, deep-link bypass, or platform fork
+  Return-key submission, coordinate tap, optional route proof, deep-link bypass, or platform fork
 - **AND** focused component and flow mutation proofs SHALL fail if either CTA can return behind the
   iOS keyboard, either exact value gate is removed or widened, or either CTA tap is bypassed
 
@@ -510,6 +511,21 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **AND** focused mutation proof SHALL reject a missing, widened, reordered, uncentred,
   partially-visible, or unbounded reveal; a removed or required fallback; a missing required tap;
   or a bypassed downstream route wait
+
+#### Scenario: A scroll-contained programme CTA remains physically occluded
+
+- **WHEN** the exact programme value gate, full centred reveal, bounded CTA wait, required CTA tap,
+  and optional same-id fallback all complete, but the mandatory Connect wait expires with the
+  focused keyboard still physically covering the programme CTA
+- **THEN** the existing programme CTA SHALL move unchanged out of the `ScrollView` and become the
+  immediate sticky sibling after that scroll while remaining inside the existing
+  `KeyboardAvoidingView`
+- **AND** the scroll SHALL contain zero programme CTAs, the avoiding view SHALL contain exactly one,
+  and focused mutation proof SHALL reject moving it back inside the scroll, outside the avoiding
+  view, before the scroll, duplicating it, or losing iOS `padding` or scroll tap-handling semantics
+- **AND** the institution screen and the shared programme sequence SHALL remain unchanged, so the
+  next native gate still proves the explicit visible CTA transition rather than a Return-key,
+  keyboard-dismiss, coordinate, platform-fork, optional-route, or deep-link bypass
 
 #### Scenario: An exact controlled-input suffix survives both erase boundaries
 
