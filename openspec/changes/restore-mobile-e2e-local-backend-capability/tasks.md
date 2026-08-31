@@ -653,3 +653,27 @@ uses the same centered body-CTA layout and carries the same latent terminus.
       iOS 17/17. Record both complete lists and explicitly name `activity`, `event-checklists`,
       `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
       `user-calendars` result before archive.
+
+## 32. Reveal a focused checklist input covered by the keyboard
+
+Exact-head Android job `99432675919` in run `33374278029` typed `Buy notebook` and retained the
+focused checklist input with the exact value, but its bounds `[136,1596][628,1691]` sat below the
+keyboard beginning around y=1280. Maestro therefore marked the input not visible and the exact-value
+readiness gate expired. Persistence is intact; the flow must reveal the same exact input before
+applying its visibility gate.
+
+- [x] 32.1 Immediately after `inputText: "Buy notebook"`, add one shared downward
+      `scrollUntilVisible` selecting `checklist-input-.*` and exact `Buy notebook`, requiring 100%
+      visibility, centring, and a 30000 ms bound. Preserve the following exact 15000 ms readiness
+      gate and the complete cold re-entry → persisted row → toggle/progress → delete/absence order.
+- [x] 32.2 Extend `event-checklists-maestro-selectors.test.ts` with ordered structural and mutation
+      proof rejecting a removed, widened, late, uncentred, or partially-visible reveal and any
+      weakening of the existing exact gate or persistence round trip. Record the measured class in
+      the `mobile-e2e` delta.
+- [x] 32.3 Run the focused checklist proof and mutations, pinned Maestro 2.8.0 syntax, strict active
+      OpenSpec validation, applicable formatting/lint, and `git diff --check`; confirm no selector id,
+      application/layout, top-level flow order, workflow, binding-document, server, or fixture change.
+- [ ] 32.4 Require the fresh material exact head to pass the branch baseline plus Android and iOS
+      17/17. Record both complete lists and explicitly name `activity`, `event-checklists`, `feedback`,
+      `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
+      `user-calendars` result before archive.

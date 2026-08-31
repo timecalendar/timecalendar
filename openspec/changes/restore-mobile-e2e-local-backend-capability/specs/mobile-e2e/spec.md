@@ -454,3 +454,16 @@ interaction shared by both platforms, with no per-platform selector or branch.
   Return-key submission, coordinate tap, optional CTA, deep-link bypass, or platform fork
 - **AND** focused component and flow mutation proofs SHALL fail if either CTA can return behind the
   iOS keyboard, either exact value gate is removed or widened, or either CTA tap is bypassed
+
+#### Scenario: A focused exact-value input is covered by the keyboard
+
+- **WHEN** a shared checklist flow has entered the exact typed value and the focused input remains
+  in the hierarchy but its bounds sit behind the software keyboard, so Maestro marks it not visible
+- **THEN** the flow SHALL scroll the same conjunctive input-id and exact-value selector downward
+  until it is 100% visible and centred, within a bounded 30-second reveal
+- **AND** that reveal SHALL precede the existing bounded exact-value visibility gate and SHALL be
+  shared across platforms and inert when the input is already fully visible
+- **AND** the subsequent state-preserving cold re-entry, persisted-row assertion, toggle/progress,
+  hard-delete, and exact absence proof SHALL remain in order
+- **AND** focused mutation proof SHALL reject a removed, widened, reordered, uncentred, or
+  partially-visible reveal and any weakening of the readiness gate or persistence round trip

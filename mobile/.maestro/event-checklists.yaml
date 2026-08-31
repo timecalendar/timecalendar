@@ -61,6 +61,16 @@ appId: fr.samuelprak.timecalendar.dev
 # value before leaving details. One selector carries both the dynamic input-id
 # family and the value, so a stale/prefix/suffix value cannot pass.
 - inputText: "Buy notebook"
+# Run 33374278029 exposed the focused input at Android bounds
+# [136,1596][628,1691], behind the keyboard; reveal it before visibility-gating.
+- scrollUntilVisible:
+    element:
+      id: "checklist-input-.*"
+      text: "Buy notebook"
+    direction: DOWN
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: "checklist-input-.*"
