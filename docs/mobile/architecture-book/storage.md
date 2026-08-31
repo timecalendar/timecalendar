@@ -19,19 +19,25 @@ macrotask. They ignore an in-flight result after unmount. Whole-table reads are 
 for the current data size; introduce scoped SQL queries if measured volume makes them too
 expensive.
 
+Checklist summary progress is the scoped-query case: the event-checklists data layer
+normalizes the rendered UID set and selects only `event_uid` plus `is_checked` through
+one live query per Home or Calendar screen. It deliberately applies no `deleted_at`
+predicate; imported non-null values retain the existing Flutter-compatible counting
+semantics, while application deletes remain hard deletes.
+
 Use synchronous transaction callbacks and synchronous `.run()` executors. The Expo SQLite
 synchronous driver does not await an async transaction callback, which would commit before
 all statements finish.
 
 ## Tables
 
-| Table             | Purpose                                           | Important representation                                                           |
-| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `personal_events` | Durable local user-created events                 | Dates are ISO-8601 UTC text; colors are `#RRGGBB`; IDs come from `expo-crypto`     |
-| `user_calendars`  | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text |
-| `calendar_events` | Replaceable offline cache of synced events        | Server fields remain verbatim; structured fields are validated JSON text           |
-| `checklist_items` | Event checklist items and order                   | Soft reference by event UID; deletion is hard; reordering is transactional         |
-| `activity_logs`   | Incremental offline cache of calendar-log history | Keyed by the server log ID and merged, never replaced; the change payload is validated JSON text; indexed on `created_at` and `calendar_id` |
+| Table             | Purpose                                           | Important representation                                                                                                                          |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `personal_events` | Durable local user-created events                 | Dates are ISO-8601 UTC text; colors are `#RRGGBB`; IDs come from `expo-crypto`                                                                    |
+| `user_calendars`  | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text                                                                |
+| `calendar_events` | Replaceable offline cache of synced events        | Server fields remain verbatim; structured fields are validated JSON text                                                                          |
+| `checklist_items` | Event checklist items and order                   | Soft reference by event UID; deletion is hard; reordering is transactional                                                                        |
+| `activity_logs`   | Incremental offline cache of calendar-log history | Keyed by the server log ID and merged, never replaced; the change payload is validated JSON text; indexed on `created_at` and `calendar_id`       |
 | `activity_state`  | Activity read watermark and pagination position   | Singleton row `id = 1`, unseeded; a missing row reads as documented defaults; the read watermark is server time, the refresh stamp is device time |
 
 Repository mappers own database encoding and defensive decoding. UI and forms work with

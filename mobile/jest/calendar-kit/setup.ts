@@ -149,7 +149,11 @@ jest.mock("@howljs/calendar-kit", () => {
   function renderEventRow(
     events: { id?: string }[],
     onPressEvent: ((event: unknown) => void) | undefined,
-    renderEvent: (event: unknown, size: { width: number }) => unknown,
+    renderEvent: (
+      event: unknown,
+      size: { width: number; height: number },
+    ) => unknown,
+    height: number,
   ) {
     return events.map((event: { id?: string }, index: number) =>
       React.createElement(
@@ -159,7 +163,7 @@ jest.mock("@howljs/calendar-kit", () => {
           testID: `grid-event-${event.id ?? String(index)}`,
           onPress: onPressEvent ? () => onPressEvent(event) : undefined,
         },
-        renderEvent(event, { width: 100 }),
+        renderEvent(event, { width: 100, height }),
       ),
     )
   }
@@ -189,7 +193,10 @@ jest.mock("@howljs/calendar-kit", () => {
   // screen's all-day mapping + tile are provable.
   function CalendarHeader(props: {
     children?: unknown
-    renderEvent?: (event: unknown, size: { width: number }) => unknown
+    renderEvent?: (
+      event: unknown,
+      size: { width: number; height: number },
+    ) => unknown
   }) {
     const { events, onPressEvent } = React.useContext(GridContext)
     const allDay = events.filter(isAllDayLaned)
@@ -198,14 +205,17 @@ jest.mock("@howljs/calendar-kit", () => {
       null,
       props.children,
       props.renderEvent
-        ? renderEventRow(allDay, onPressEvent, props.renderEvent)
+        ? renderEventRow(allDay, onPressEvent, props.renderEvent, 20)
         : null,
     )
   }
 
   // The timed GRID: the events NOT laned into the all-day row above.
   function CalendarBody(props: {
-    renderEvent?: (event: unknown, size: { width: number }) => unknown
+    renderEvent?: (
+      event: unknown,
+      size: { width: number; height: number },
+    ) => unknown
   }) {
     const { events, onPressEvent } = React.useContext(GridContext)
     if (!props.renderEvent) {
@@ -217,7 +227,7 @@ jest.mock("@howljs/calendar-kit", () => {
     return React.createElement(
       View,
       null,
-      renderEventRow(timed, onPressEvent, props.renderEvent),
+      renderEventRow(timed, onPressEvent, props.renderEvent, 60),
     )
   }
 
