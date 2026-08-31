@@ -25,5 +25,5 @@
 
 ## 5. CI proof and handoff evidence
 
-- [ ] 5.1 Ensure standard PR CI runs the deterministic shell regression and is green; this is the CI proof test for the classifier/control-flow repair.
+- [x] 5.1 Ensure standard PR CI runs the deterministic shell regression and is green; this is the CI proof test for the classifier/control-flow repair.
 - [x] 5.2 Record that this host cannot run a simulator/emulator and do not claim local native proof; use the existing GitHub-hosted iOS E2E path for native verification without weakening assertions or changing the Phase 09 exact head.
