@@ -31,13 +31,13 @@ all statements finish.
 
 ## Tables
 
-| Table             | Purpose                                           | Important representation                                                           |
-| ----------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `personal_events` | Durable local user-created events                 | Dates are ISO-8601 UTC text; colors are `#RRGGBB`; IDs come from `expo-crypto`     |
-| `user_calendars`  | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text |
-| `calendar_events` | Replaceable offline cache of synced events        | Server fields remain verbatim; structured fields are validated JSON text           |
-| `checklist_items` | Event checklist items and order                   | Soft reference by event UID; deletion is hard; reordering is transactional         |
-| `activity_logs`   | Incremental offline cache of calendar-log history | Keyed by the server log ID and merged, never replaced; the change payload is validated JSON text; indexed on `created_at` and `calendar_id` |
+| Table             | Purpose                                           | Important representation                                                                                                                          |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `personal_events` | Durable local user-created events                 | Dates are ISO-8601 UTC text; colors are `#RRGGBB`; IDs come from `expo-crypto`                                                                    |
+| `user_calendars`  | Durable imported calendar identity and visibility | Server ID and irreplaceable source token are distinct; dates are ISO-8601 UTC text                                                                |
+| `calendar_events` | Replaceable offline cache of synced events        | Server fields remain verbatim; structured fields are validated JSON text                                                                          |
+| `checklist_items` | Event checklist items and order                   | Soft reference by event UID; deletion is hard; reordering is transactional                                                                        |
+| `activity_logs`   | Incremental offline cache of calendar-log history | Keyed by the server log ID and merged, never replaced; the change payload is validated JSON text; indexed on `created_at` and `calendar_id`       |
 | `activity_state`  | Activity read watermark and pagination position   | Singleton row `id = 1`, unseeded; a missing row reads as documented defaults; the read watermark is server time, the refresh stamp is device time |
 
 Repository mappers own database encoding and defensive decoding. UI and forms work with

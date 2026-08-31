@@ -68,7 +68,7 @@ Sync runs at startup, manual refresh, source changes, and notification receipt.
 `calendar_events` is disposable cache and is rebuilt from durable source tokens; it is not a
 migration/import target.
 
-> **Correction (TIM-399).** This sentence also listed *foreground/resume*. It is not true and
+> **Correction (TIM-399).** This sentence also listed _foreground/resume_. It is not true and
 > was not made true here: `AppState` is wired in exactly two places in `mobile/src` —
 > `src/updates/ota-update-runtime.tsx` and `src/features/activity/data/lifecycle.ts` — and
 > neither triggers a calendar sync. TIM-399 added the second of those for **Activity only**;
