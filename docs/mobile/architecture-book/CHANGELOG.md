@@ -2,6 +2,10 @@
 
 ## 2026-08-31
 
+- Split iOS native E2E CNG from explicit CocoaPods installation, with a cold-cache-tested,
+  single-retry fallback limited to exact CocoaPods Specs alias HTTP-400 podspec failures.
+  Added the exactly-one-workspace fail-fast guard and exact-head two-platform green proof rule;
+  this bounded reversible CI transport recovery adds no ADR.
 - Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
   reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
   action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.

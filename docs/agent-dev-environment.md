@@ -395,6 +395,39 @@ cd mobile
     npx expo run:ios --configuration Release
   ```
 
+#### iOS CI pod-install boundary
+
+Hosted iOS native E2E deliberately separates clean CNG from CocoaPods:
+`expo prebuild --platform ios --clean --no-install` generates the native tree,
+then `mobile/e2e/install_ios_pods.sh` runs from `mobile/ios`. It first performs
+normal repository-refresh resolution. Only an exact CocoaPods Specs jsDelivr
+alias podspec HTTP 400 can seed the validated same path from the official
+`CocoaPods/Specs` raw source and cause one retry without `--repo-update`.
+
+Run the deterministic local proof with no Ruby, CocoaPods, or host cache needed:
+
+```bash
+bash -n mobile/e2e/install_ios_pods.sh mobile/e2e/test_install_ios_pods.sh \
+  mobile/e2e/resolve_ios_workspace.sh mobile/e2e/test_ci_mobile_e2e.sh
+./mobile/e2e/test_install_ios_pods.sh
+./mobile/e2e/test_ci_mobile_e2e.sh
+```
+
+For the reported live path, record the alias status separately, validate the
+official raw JSON identity as `GoogleAppMeasurement` `12.9.0`, and compare it
+byte-for-byte with jsDelivr's GitHub-backed representation. The alias is allowed
+to be healthy; deterministic fakes own the HTTP-400 case. A rejected classifier
+means the original pod failure remains authoritative; a fallback validation or
+fetch failure remains terminal; a retry failure returns that retry status.
+
+The host cannot perform the definitive native execution. Proof is a
+GitHub-hosted `CI mobile E2E` run on the exact pushed implementation SHA where
+both `Run mobile E2E (Android)` and `Run mobile E2E (iOS)` are `SUCCESS`. The iOS
+log must show clean no-install generation, explicit pod installation, exactly
+one workspace, Release configuration, all development-backend inputs, simulator
+installation, and the complete Maestro invocation. No credential, console, or
+physical-device step is part of this mechanism.
+
 ### Flutter E2E — `app/integration_test/run_e2e.sh`
 
 Same shared server lifecycle; runs each `integration_test/*_flow_test.dart` as its
