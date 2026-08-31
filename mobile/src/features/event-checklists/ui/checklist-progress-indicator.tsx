@@ -22,14 +22,18 @@ export function checklistProgressLabel(
 export function ChecklistProgressIndicator({
   progress,
   variant = "inline",
+  bounds,
 }: {
   progress: ChecklistProgress | undefined
   variant?: ChecklistProgressVariant
+  bounds?: { width: number; height: number }
 }) {
   const theme = useTheme()
   if (progress === undefined || progress.total === 0) return null
 
   const compact = variant === "compact"
+  const dense =
+    compact && bounds !== undefined && (bounds.width < 48 || bounds.height < 24)
   const color = progress.isComplete ? theme.positive : theme.informational
 
   return (
@@ -40,6 +44,8 @@ export function ChecklistProgressIndicator({
       style={[
         styles.base,
         compact ? styles.compact : styles.inline,
+        dense && styles.dense,
+        bounds && { maxWidth: bounds.width, maxHeight: bounds.height },
         { borderColor: color },
       ]}
     >
@@ -56,14 +62,14 @@ export function ChecklistProgressIndicator({
                   : "check_box_outline_blank",
               }
         }
-        size={compact ? 11 : 16}
+        size={dense ? 7 : compact ? 11 : 16}
         tintColor={color}
         style={styles.glyph}
       />
       <ThemedText
         testID="checklist-progress-count"
         type={compact ? "captionSmall" : "small"}
-        style={[styles.count, { color }]}
+        style={[styles.count, dense && styles.denseCount, { color }]}
         numberOfLines={1}
         adjustsFontSizeToFit={compact}
         minimumFontScale={compact ? 0.75 : undefined}
@@ -92,6 +98,14 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
     maxWidth: 64,
     paddingHorizontal: Spacing.one,
+  },
+  dense: {
+    gap: 1,
+    paddingHorizontal: 0,
+  },
+  denseCount: {
+    fontSize: 8,
+    lineHeight: 9,
   },
   glyph: { flexShrink: 0 },
   count: { flexShrink: 1, fontVariant: ["tabular-nums"] },

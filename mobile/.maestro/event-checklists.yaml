@@ -63,13 +63,14 @@ appId: fr.samuelprak.timecalendar.dev
 # stays).
 - assertVisible: "Buy notebook"
 # Pop back through the existing details → Agenda stack. The still-mounted Calendar
-# screen's one UID-set live query must expose the all-complete visual count.
+# screen's one UID-set live query must expose all-complete progress on the owning
+# Agenda row. Its id is exposed by the accessible Pressable; the visual 1/1 child
+# is intentionally hidden from the accessibility tree to avoid a duplicate stop.
 - back
 - extendedWaitUntil:
     visible:
       id: "agenda-event-e2e-today-lecture-progress-1-1"
     timeout: 60000
-- assertVisible: "1/1"
 # Reopen the same real event so the original cleanup remains part of this flow.
 - tapOn:
     text: "E2E Today Lecture"

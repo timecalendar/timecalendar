@@ -16,21 +16,32 @@ import { Radii, Spacing } from "@/theme"
 
 import { type EventItem } from "./vendor"
 
+type TileDimension = { value: number } | number
+
+function resolveDimension(dimension: TileDimension): number {
+  return typeof dimension === "number" ? dimension : dimension.value
+}
+
 export function CalendarKitEventTile({
   event,
   progress,
   width,
+  height,
   locale,
   zone,
 }: {
   event: EventItem
   progress: ChecklistProgress | undefined
-  width: { value: number } | number
+  width: TileDimension
+  height: TileDimension
   locale: AppLocale
   zone: string
 }) {
   const { t } = useTranslation()
-  const resolvedWidth = typeof width === "number" ? width : width.value
+  const resolvedWidth = resolveDimension(width)
+  const resolvedHeight = resolveDimension(height)
+  const progressIsDense =
+    progress !== undefined && (resolvedWidth < 48 || resolvedHeight < 32)
   const title = event.title ?? ""
   const startsAt = event.startsAt as Date | undefined
   const endsAt = event.endsAt as Date | undefined
@@ -51,9 +62,18 @@ export function CalendarKitEventTile({
               progress: progressLabel,
             })
       }
-      style={[styles.tile, { backgroundColor: event.color }]}
+      testID="calendar-kit-event-tile"
+      style={[
+        styles.tile,
+        progressIsDense && styles.denseTile,
+        {
+          backgroundColor: event.color,
+          maxWidth: resolvedWidth,
+          maxHeight: resolvedHeight,
+        },
+      ]}
     >
-      {resolvedWidth >= MIN_TILE_WIDTH && (
+      {resolvedWidth >= MIN_TILE_WIDTH && !progressIsDense && (
         <>
           <ThemedText type="caption" themeColor="background" numberOfLines={5}>
             {title}
@@ -69,7 +89,11 @@ export function CalendarKitEventTile({
           )}
         </>
       )}
-      <ChecklistProgressIndicator progress={progress} variant="compact" />
+      <ChecklistProgressIndicator
+        progress={progress}
+        variant="compact"
+        bounds={{ width: resolvedWidth, height: resolvedHeight }}
+      />
     </View>
   )
 }
@@ -77,15 +101,22 @@ export function CalendarKitEventTile({
 export function CalendarKitAllDayTile({
   event,
   progress,
+  width,
+  height,
   locale,
   zone,
 }: {
   event: EventItem
   progress: ChecklistProgress | undefined
+  width: TileDimension
+  height: TileDimension
   locale: AppLocale
   zone: string
 }) {
   const { t } = useTranslation()
+  const resolvedWidth = resolveDimension(width)
+  const resolvedHeight = resolveDimension(height)
+  const showTitle = progress === undefined || resolvedWidth >= 64
   const title = event.title ?? ""
   const location = (event.location as string | undefined) ?? ""
   const startsAt = event.startsAt as Date | undefined
@@ -108,18 +139,46 @@ export function CalendarKitAllDayTile({
               progress: progressLabel,
             })
       }
-      style={styles.allDayTile}
+      testID="calendar-kit-all-day-tile"
+      style={[
+        styles.allDayTile,
+        { maxWidth: resolvedWidth, maxHeight: resolvedHeight },
+      ]}
     >
-      <ThemedText type="captionSmall" themeColor="background" numberOfLines={1}>
-        {title}
-      </ThemedText>
-      <ChecklistProgressIndicator progress={progress} variant="compact" />
+      {showTitle && (
+        <ThemedText
+          type="captionSmall"
+          themeColor="background"
+          numberOfLines={1}
+          style={styles.allDayTitle}
+        >
+          {title}
+        </ThemedText>
+      )}
+      <ChecklistProgressIndicator
+        progress={progress}
+        variant="compact"
+        bounds={{ width: resolvedWidth, height: resolvedHeight }}
+      />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  allDayTile: { paddingHorizontal: Spacing.half },
+  allDayTile: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+    gap: Spacing.half,
+    overflow: "hidden",
+    paddingHorizontal: Spacing.half,
+  },
+  allDayTitle: { flex: 1 },
+  denseTile: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+  },
   tile: {
     flex: 1,
     padding: Spacing.one,

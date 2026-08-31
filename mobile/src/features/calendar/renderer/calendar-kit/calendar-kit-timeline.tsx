@@ -76,10 +76,12 @@ export const CalendarKitTimeline = forwardRef<
       }
     >
       <CalendarHeader
-        renderEvent={(event) => (
+        renderEvent={(event, size) => (
           <CalendarKitAllDayTile
             event={event}
             progress={checklistProgress.get(String(event.id))}
+            width={size.width}
+            height={size.height}
             locale={locale}
             zone={displayZone}
           />
@@ -92,6 +94,7 @@ export const CalendarKitTimeline = forwardRef<
             event={event}
             progress={checklistProgress.get(String(event.id))}
             width={size.width}
+            height={size.height}
             locale={locale}
             zone={displayZone}
           />

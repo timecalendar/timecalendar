@@ -22,14 +22,17 @@ jest.mock("./vendor", () => {
   const CalendarBody = ({
     renderEvent,
   }: {
-    renderEvent: (event: unknown, size: { width: number }) => React.ReactNode
+    renderEvent: (
+      event: unknown,
+      size: { width: number; height: number },
+    ) => React.ReactNode
   }) => {
     const events = React.useContext(Context)
     return (
       <>
         {events.map((event, index) => (
           <React.Fragment key={index}>
-            {renderEvent(event, { width: 100 })}
+            {renderEvent(event, { width: 100, height: 60 })}
           </React.Fragment>
         ))}
       </>

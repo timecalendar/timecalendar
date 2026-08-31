@@ -22,8 +22,9 @@ describe("event-checklists Maestro summary-progress contract", () => {
 
   it("observes all-complete progress after toggle and before retained cleanup", () => {
     expect(flow).toMatch(
-      /id: "checklist-check-\.\*"[\s\S]*- back[\s\S]*agenda-event-e2e-today-lecture-progress-1-1[\s\S]*assertVisible: "1\/1"[\s\S]*id: "checklist-remove-\.\*"/,
+      /id: "checklist-check-\.\*"[\s\S]*- back[\s\S]*visible:[\s\S]*id: "agenda-event-e2e-today-lecture-progress-1-1"[\s\S]*id: "checklist-remove-\.\*"/,
     )
+    expect(flow).not.toContain('assertVisible: "1/1"')
   })
 
   it("keeps real add, content, toggle, and hard-delete assertions", () => {

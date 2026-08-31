@@ -21,11 +21,12 @@ function event(overrides: Partial<EventItem> = {}): EventItem {
 const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 describe("CalendarKit checklist progress tiles", () => {
-  it("keeps compact partial progress meaningful at the minimum dense width", async () => {
+  it("bounds dense progress inside a short minimum-width timed tile", async () => {
     await render(
       <CalendarKitEventTile
         event={event()}
-        width={1}
+        width={20}
+        height={20}
         locale="en"
         zone={ZONE}
         progress={{ completed: 1, total: 4, isComplete: false }}
@@ -39,12 +40,42 @@ describe("CalendarKit checklist progress tiles", () => {
     expect(
       screen.getByLabelText(/1 of 4 checklist items completed/),
     ).toBeTruthy()
+    expect(screen.getByTestId("calendar-kit-event-tile")).toHaveStyle({
+      maxWidth: 20,
+      maxHeight: 20,
+      padding: 0,
+      overflow: "hidden",
+    })
+    expect(
+      screen.getByTestId("checklist-progress-compact", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveStyle({
+      maxWidth: 20,
+      maxHeight: 20,
+      paddingHorizontal: 0,
+    })
+    expect(
+      screen.getByTestId("checklist-progress-glyph", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveProp("size", 7)
+    expect(
+      screen.getByTestId("checklist-progress-count", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveStyle({
+      fontSize: 8,
+      lineHeight: 9,
+    })
   })
 
   it("shows explicit complete progress on an all-day tile", async () => {
     await render(
       <CalendarKitAllDayTile
         event={event({ allDay: true })}
+        width={100}
+        height={20}
         locale="en"
         zone={ZONE}
         progress={{ completed: 2, total: 2, isComplete: true }}
@@ -57,6 +88,19 @@ describe("CalendarKit checklist progress tiles", () => {
     expect(
       screen.getByLabelText(/2 of 2 checklist items completed/),
     ).toBeTruthy()
+    expect(screen.getByTestId("calendar-kit-all-day-tile")).toHaveStyle({
+      maxWidth: 100,
+      maxHeight: 20,
+      flexDirection: "row",
+      overflow: "hidden",
+    })
+    expect(
+      screen.getByTestId("checklist-progress-compact", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveStyle({
+      maxHeight: 20,
+    })
   })
 
   it("renders no progress or progress phrase for zero rows", async () => {
@@ -64,6 +108,7 @@ describe("CalendarKit checklist progress tiles", () => {
       <CalendarKitEventTile
         event={event()}
         width={100}
+        height={60}
         locale="en"
         zone={ZONE}
         progress={undefined}
