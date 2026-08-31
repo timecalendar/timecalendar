@@ -48,6 +48,13 @@ describe("Settings route structure", () => {
     )
   })
 
+  it("keeps Startup settings as a thin feature route registered in the root Stack", () => {
+    expect(route("startup-settings.tsx").trim()).toBe(
+      'export { default } from "@/features/settings/ui/startup-settings-screen"',
+    )
+    expect(route("_layout.tsx")).toContain('name="startup-settings"')
+  })
+
   it("keeps both Changelog routes thin with tabs-only gate ownership", () => {
     expect(route("changelog.tsx").trim()).toBe(
       'export { ChangelogHistoryScreen as default } from "@/features/changelog/ui"',
