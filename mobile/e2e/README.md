@@ -41,11 +41,13 @@ to the host server on port 3005:
 
 ```bash
 # Android — 10.0.2.2 is the host loopback from the emulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
   npx expo run:android --variant release
 
 # iOS — localhost reaches the host from the simulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://localhost:3005 \
   npx expo run:ios --configuration Release
 ```
 

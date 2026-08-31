@@ -29,6 +29,7 @@ assert_absent() {
 
 assert_count 2 'export MAESTRO_VERSION=2.8.0'
 assert_count 2 'maestro --version'
+assert_count 4 'BACKEND_ENVIRONMENT_CAPABILITY: development'
 assert_present 'Xcode developer directory: $(xcode-select -p)'
 assert_present 'xcrun simctl list runtimes available'
 assert_present 'Selected simulator: name=$DEVICE_NAME udid=$DEVICE_UDID runtime=$DEVICE_RUNTIME'
