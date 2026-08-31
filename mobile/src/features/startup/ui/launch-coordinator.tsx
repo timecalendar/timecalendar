@@ -6,6 +6,7 @@ import {
   beginLaunchNavigation,
   commitLaunch,
   failLaunch,
+  type LaunchDestination,
   recordLaunchFailure,
   resolveLaunchPrerequisites,
   useLaunchState,
@@ -17,9 +18,13 @@ export function LaunchCoordinator() {
   const { sync } = useSyncCalendars()
   const launch = useLaunchState()
   const pathRef = useRef(pathname)
+  const notifyExplicitPath = useRef<((path: LaunchDestination) => void) | null>(
+    null,
+  )
   const handledAttempt = useRef<number | null>(null)
   useEffect(() => {
     pathRef.current = pathname
+    notifyExplicitPath.current?.(pathname)
   }, [pathname])
 
   useEffect(() => {
@@ -28,6 +33,22 @@ export function LaunchCoordinator() {
     handledAttempt.current = launch.attempt
     let active = true
     const initialPath = pathRef.current
+    let onExplicitPath: ((path: LaunchDestination) => void) | null = null
+    const explicitPathDidChange = new Promise<LaunchDestination>((resolve) => {
+      onExplicitPath = (path) => {
+        if (path === initialPath) return
+        if (notifyExplicitPath.current === onExplicitPath) {
+          notifyExplicitPath.current = null
+        }
+        resolve(path)
+      }
+      notifyExplicitPath.current = onExplicitPath
+    })
+    const releaseExplicitPathListener = () => {
+      if (notifyExplicitPath.current === onExplicitPath) {
+        notifyExplicitPath.current = null
+      }
+    }
 
     void (async () => {
       try {
@@ -35,6 +56,7 @@ export function LaunchCoordinator() {
           initialPath,
           sync,
           () => pathRef.current,
+          explicitPathDidChange,
         )
         if (!active) return
 
@@ -52,11 +74,14 @@ export function LaunchCoordinator() {
         if (!active) return
         recordLaunchFailure(error)
         failLaunch(error)
+      } finally {
+        releaseExplicitPathListener()
       }
     })()
 
     return () => {
       active = false
+      releaseExplicitPathListener()
     }
   }, [launch, router, sync])
 

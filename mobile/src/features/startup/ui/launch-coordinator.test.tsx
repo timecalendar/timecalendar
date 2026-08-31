@@ -95,21 +95,18 @@ describe("LaunchCoordinator", () => {
     expect(replace).toHaveBeenCalledTimes(1)
   })
 
-  it("preserves explicit navigation that arrives while resolution is pending", async () => {
-    let releaseMigration: (() => void) | undefined
-    mockRunMigrations.mockImplementation(
-      () => new Promise<void>((resolve) => (releaseMigration = resolve)),
-    )
+  it("preserves explicit navigation while initial notification stays pending", async () => {
     mockResolveNotification.mockImplementation(() => new Promise(() => {}))
     mockGetPreference.mockReturnValue("calendar")
     const view = await render(<LaunchCoordinator />)
+    await flush()
 
     path = "/onboarding/import"
     await view.rerender(<LaunchCoordinator />)
-    await act(async () => releaseMigration?.())
     await flush()
 
     expect(replace).not.toHaveBeenCalled()
+    expect(mockResolveNotification).toHaveBeenCalledTimes(1)
     expect(getLaunchState()).toMatchObject({
       kind: "committed",
       target: "/onboarding/import",

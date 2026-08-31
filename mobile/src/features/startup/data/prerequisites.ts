@@ -10,6 +10,7 @@ export async function resolveLaunchPrerequisites(
   initialPath: string,
   sync: () => Promise<unknown>,
   getCurrentPath: () => string = () => initialPath,
+  explicitPathDidChange?: Promise<LaunchDestination>,
 ): Promise<LaunchDestination> {
   await runMigrations()
   // Phase 09 insertion point: import Flutter-owned data here, before any RN
@@ -21,15 +22,48 @@ export async function resolveLaunchPrerequisites(
   // launches that contain no notification response.
   const currentPath = getCurrentPath()
   if (currentPath !== "/" && currentPath !== "") return currentPath
-  const notificationIntent = await resolveInitialNotificationIntent(sync)
-  const calendars = await findAll()
+  const notificationResult = await waitForValueOrExplicitPath(
+    resolveInitialNotificationIntent(sync),
+    explicitPathDidChange,
+  )
+  if (notificationResult.kind === "explicit") return notificationResult.path
+
+  const calendarsResult = await waitForValueOrExplicitPath(
+    findAll(),
+    explicitPathDidChange,
+  )
+  if (calendarsResult.kind === "explicit") return calendarsResult.path
+
   const preference = getStartupTabPreference()
   return resolveLaunchDestination({
     initialPath,
-    notificationIntent,
-    hasHeldCalendar: calendars.length > 0,
+    notificationIntent: notificationResult.value,
+    hasHeldCalendar: calendarsResult.value.length > 0,
     preference,
   })
+}
+
+async function waitForValueOrExplicitPath<T>(
+  value: Promise<T>,
+  explicitPathDidChange?: Promise<LaunchDestination>,
+): Promise<
+  { kind: "value"; value: T } | { kind: "explicit"; path: LaunchDestination }
+> {
+  const valueResult = value.then((resolved): { kind: "value"; value: T } => ({
+    kind: "value",
+    value: resolved,
+  }))
+  if (explicitPathDidChange == null) return valueResult
+
+  return Promise.race([
+    valueResult,
+    explicitPathDidChange.then(
+      (path): { kind: "explicit"; path: LaunchDestination } => ({
+        kind: "explicit",
+        path,
+      }),
+    ),
+  ])
 }
 
 export function recordLaunchFailure(error: unknown): void {
