@@ -1,7 +1,7 @@
 import { runMigrations } from "@/db/migrate"
-import { findAll } from "@/features/calendar-sources"
-import { resolveInitialNotificationIntent } from "@/features/notifications"
-import { getStartupTabPreference } from "@/features/settings"
+import { findAll } from "@/features/calendar-sources/data"
+import { resolveInitialNotificationIntent } from "@/features/notifications/data"
+import { getStartupTabPreference } from "@/features/settings/prefs"
 import { recordUnknownError } from "@/firebase"
 
 import {
@@ -10,11 +10,13 @@ import {
 } from "./prerequisites"
 
 jest.mock("@/db/migrate")
-jest.mock("@/features/calendar-sources", () => ({ findAll: jest.fn() }))
-jest.mock("@/features/notifications", () => ({
+jest.mock("@/features/calendar-sources/data", () => ({ findAll: jest.fn() }))
+jest.mock("@/features/notifications/data", () => ({
   resolveInitialNotificationIntent: jest.fn(),
 }))
-jest.mock("@/features/settings", () => ({ getStartupTabPreference: jest.fn() }))
+jest.mock("@/features/settings/prefs", () => ({
+  getStartupTabPreference: jest.fn(),
+}))
 jest.mock("@/firebase")
 
 describe("startup prerequisites", () => {

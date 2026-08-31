@@ -17,21 +17,35 @@ export function LaunchCoordinator() {
   const router = useRouter()
   const { sync } = useSyncCalendars()
   const launch = useLaunchState()
+  const mountedRef = useRef(false)
   const pathRef = useRef(pathname)
+  const routerRef = useRef(router)
+  const syncRef = useRef(sync)
   const notifyExplicitPath = useRef<((path: LaunchDestination) => void) | null>(
     null,
   )
   const handledAttempt = useRef<number | null>(null)
   useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+  useEffect(() => {
     pathRef.current = pathname
     notifyExplicitPath.current?.(pathname)
   }, [pathname])
+  useEffect(() => {
+    routerRef.current = router
+  }, [router])
+  useEffect(() => {
+    syncRef.current = sync
+  }, [sync])
 
   useEffect(() => {
     if (launch.kind !== "resolving") return
     if (handledAttempt.current === launch.attempt) return
     handledAttempt.current = launch.attempt
-    let active = true
     const initialPath = pathRef.current
     let onExplicitPath: ((path: LaunchDestination) => void) | null = null
     const explicitPathDidChange = new Promise<LaunchDestination>((resolve) => {
@@ -54,11 +68,11 @@ export function LaunchCoordinator() {
       try {
         const resolvedTarget = await resolveLaunchPrerequisites(
           initialPath,
-          sync,
+          syncRef.current,
           () => pathRef.current,
           explicitPathDidChange,
         )
-        if (!active) return
+        if (!mountedRef.current) return
 
         const currentPath = pathRef.current
         const explicitNavigationArrived = currentPath !== initialPath
@@ -68,10 +82,10 @@ export function LaunchCoordinator() {
         if (currentPath === target) {
           commitLaunch(target)
         } else {
-          router.replace(target as never)
+          routerRef.current.replace(target as never)
         }
       } catch (error) {
-        if (!active) return
+        if (!mountedRef.current) return
         recordLaunchFailure(error)
         failLaunch(error)
       } finally {
@@ -79,11 +93,11 @@ export function LaunchCoordinator() {
       }
     })()
 
-    return () => {
-      active = false
-      releaseExplicitPathListener()
-    }
-  }, [launch, router, sync])
+    // The attempt intentionally survives ordinary rerenders. Expo Router and
+    // mutation-hook identities can change while migrations or a killed-state
+    // intent is pending; cancelling here would strand the one-shot attempt
+    // behind handledAttempt until the readiness watchdog failed.
+  }, [launch.attempt, launch.kind])
 
   useEffect(() => {
     if (launch.kind === "navigating" && pathname === launch.target) {
