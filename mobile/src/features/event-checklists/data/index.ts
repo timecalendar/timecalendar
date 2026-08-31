@@ -9,6 +9,12 @@ export {
   useChecklistActions,
 } from "./hooks"
 export {
+  aggregateChecklistProgress,
+  type ChecklistProgress,
+  type ChecklistProgressMap,
+  useChecklistProgress,
+} from "./progress"
+export {
   add,
   findByEvent,
   remove,
