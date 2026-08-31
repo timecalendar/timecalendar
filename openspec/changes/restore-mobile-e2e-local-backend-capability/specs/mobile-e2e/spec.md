@@ -84,7 +84,10 @@ Whether a failed attempt may be retried SHALL be decided structurally, from Maes
 machine-readable per-flow command record, and SHALL NOT depend on matching stack-trace text
 against a catalogue of signatures. The output assertion guard SHALL run first and SHALL win
 outright. Any assertion command or other command with status `FAILED` before the final startup
-failure SHALL be globally terminal; a later restart SHALL NOT erase an earlier failure.
+failure SHALL be globally terminal, except that a failed `runFlowCommand` MAY be removed from the
+veto set only while it is a live structural ancestor of that final failed startup command: it
+precedes the final command, has strictly lower depth, and no intervening later entry returns to its
+depth or shallower. A later restart SHALL NOT erase any other earlier failure.
 
 Otherwise, the latest explicit `launchAppCommand`, `stopAppCommand` or `openLinkCommand` at the
 failing command's depth SHALL begin the final restart epoch. A `COMPLETED` assertion before that
@@ -137,6 +140,29 @@ top-level flow in a fresh Maestro process and SHALL NOT resume within an epoch.
 - **WHEN** an assertion or any other interaction reached `FAILED` before the final startup
   failure, even if a later restart boundary appears
 - **THEN** the harness returns the original non-zero result immediately and does not retry
+
+#### Scenario: A failed flow wrapper propagates its still-open startup child's failure
+
+- **WHEN** a captured 29-entry record ends with a failed depth-zero `runFlowCommand` followed only
+  by its still-open depth-one configuration, stop-app, and final failed open-link child commands,
+  with no return to depth zero and no assertion-failure evidence
+- **THEN** the classifier SHALL remove only that propagated ancestor wrapper from the global veto
+  set and SHALL apply the existing final-restart-epoch rule to the failed startup child
+- **AND** a retry SHALL rerun the complete top-level flow in a fresh Maestro process within the
+  unchanged four-attempt maximum
+
+#### Scenario: A failed flow wrapper is not a live ancestor
+
+- **WHEN** a failed `runFlowCommand` is at the final command's depth, or a later entry returns to
+  the wrapper's depth or shallower before the final startup failure
+- **THEN** the wrapper SHALL remain an independent globally terminal failure and the harness SHALL
+  return the original non-zero result without retrying
+
+#### Scenario: A live wrapper cannot hide a failed child verdict
+
+- **WHEN** any nested child assertion or non-startup interaction reaches `FAILED` at any depth,
+  even while a failed lower-depth `runFlowCommand` remains structurally open
+- **THEN** that child failure SHALL remain globally terminal and the harness SHALL NOT retry
 
 #### Scenario: An evaluated assertion in the current restart epoch is terminal
 
@@ -484,3 +510,19 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **AND** focused mutation proof SHALL reject a missing, widened, reordered, uncentred,
   partially-visible, or unbounded reveal; a removed or required fallback; a missing required tap;
   or a bypassed downstream route wait
+
+#### Scenario: An exact controlled-input suffix survives both erase boundaries
+
+- **WHEN** the rename input is focused and exposes the conjunctive exact state
+  `id: user-calendar-rename-input` plus `text: E2E Renamed Timetablee` after both broad erase
+  commands and target input have completed
+- **THEN** one conditional shared subflow SHALL select only that exact wrong state, tap at
+  `99%,50%` relative to the same input element, and erase exactly one character
+- **AND** once the condition matches, neither the element-relative tap nor the one-character erase
+  SHALL be optional; if the input was already exact, the whole correction SHALL be skipped
+- **AND** the existing bounded gate SHALL still require the conjunctive exact target
+  `user-calendar-rename-input` plus `E2E Renamed Timetable` before Save, so any other corruption
+  remains terminal before a server write
+- **AND** focused mutation proof SHALL reject a missing or widened wrong-value condition, a
+  screen-global or non-input coordinate, an erase count other than one, Save before the exact
+  target gate, or any weakened baseline/local-write/wipe/re-import/server-convergence assertion

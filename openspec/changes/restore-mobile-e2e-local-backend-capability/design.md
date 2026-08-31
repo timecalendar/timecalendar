@@ -23,10 +23,14 @@ A static enumeration of every literal `id:` in the flows against every `testID` 
 - Catch selector drift at the commit that causes it, in the baseline gate, instead of at an on-demand native run.
 - Keep the Architecture Book, E2E operator README, and agent handbook aligned with the executable contract.
 - Require baseline checks and both native jobs to pass on the recovery PR's exact head, with direct run/job links recorded in the handoff.
+- Classify a nested startup failure from command structure without treating its still-open failed
+  `runFlowCommand` ancestor as an independent application failure.
+- Correct only the exact observed rename residue before the existing exact pre-Save gate, using a
+  pinned element-relative Maestro interaction that cannot address outside the selected input.
 
 **Non-Goals:**
 
-- Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, retry classification, Maestro flow order, seeded-data assertions, or server lifecycle.
+- Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, retry attempt budget or assertion guard, Maestro flow order, seeded-data assertions, or server lifecycle.
 - Change application UI/behaviour outside the authorized Activity held-calendar lifecycle repair
   and the bounded keyboard-safe layout of the institution-name and programme forms; add a `testID`
   to a control that lacks one; change either form's validation/draft/navigation/Skip contract; or
@@ -151,7 +155,10 @@ Alternatives rejected:
 
 `docs/mobile/architecture-book/testing.md`, its changelog, `mobile/e2e/README.md`, and `docs/agent-dev-environment.md` will state that release-config native E2E builds require the explicit capability in addition to the variant and platform URL. Local build examples will include all three inputs. `testing.md` additionally records that flow selectors must resolve against real app `testID`s and names the baseline guard that enforces it.
 
-Both files are binding documentation and are flagged as a sensitive surface. They are corrections to an existing CI/E2E wiring contract, not costly-to-reverse architectural decisions, so no new ADR is warranted. ADR 038's process-per-flow lifecycle and terminal-failure rule remain unchanged.
+Both files are binding documentation and are flagged as a sensitive surface. The build/selector
+corrections are not costly-to-reverse architectural decisions, so no new ADR is warranted.
+Decision 10 later refines ADR 038 in place for nested command provenance while preserving its
+process-per-flow lifecycle, assertion-first guard, bounded attempts, and terminal application rule.
 
 ## Decision 6: Treat exact-head native CI as required recovery evidence
 
@@ -242,13 +249,100 @@ Alternatives rejected:
 - Add a new shared keyboard component immediately: only two adjacent screens need the bounded
   repair, and the existing repository pattern is sufficient without expanding the abstraction.
 
+## Decision 10: Exclude only a live failed flow wrapper from the global retry veto
+
+The global `FAILED`-command guard remains the classifier's fail-closed default. Before applying
+that guard, the classifier may exclude a failed command from the veto set only when all of these
+conditions hold:
+
+1. its command name is exactly `runFlowCommand`;
+2. it precedes the final failed startup command and has a strictly lower depth;
+3. every entry after that wrapper and through the final command remains deeper than the wrapper —
+   no intervening entry returns to the wrapper's depth or shallower and thereby closes it.
+
+Those conditions identify a still-live structural ancestor whose child failure Maestro has
+propagated onto the enclosing flow before serializing the child commands. They match the captured
+29-entry Activity record from job `99468944392`: entry 25 is a failed depth-zero wrapper and entries
+26–28 are its depth-one configuration, stop, and failed open-link child sequence, with no return to
+depth zero. Removing that wrapper alone from the veto set leaves the existing final-restart-epoch
+classifier in charge. The final failed startup command itself remains the failure being classified;
+every other earlier failed command remains globally terminal.
+
+A same-depth wrapper is not an ancestor. A lower-depth wrapper followed by any entry at its depth
+or shallower is already closed. A failed child assertion or interaction at any depth is never
+excluded. The output assertion guard still runs first; evaluated assertions and non-startup
+interactions in the final epoch, unreadable/malformed records, and deterministic exhaustion remain
+terminal. Every retry still reruns the whole top-level flow in a fresh Maestro process, with one
+shared server lifecycle and the existing four-attempt maximum.
+
+Alternatives rejected:
+
+- Ignore every failed `runFlowCommand`: a completed subflow can fail independently and a later
+  startup command must not erase that application verdict.
+- Ignore every lower-depth failed command: depth alone does not establish that the command remains
+  open; a later same-depth entry closes the ancestor and makes its failure independent history.
+- Add the captured `IOSDriver.openLink` text as another signature: ADR 038 deliberately replaced
+  punctuation-sensitive signatures with the machine-readable command structure.
+
+## Decision 11: Correct only the exact observed rename suffix inside the selected input
+
+The existing exact pre-Save gate remains mandatory. Immediately before it, the shared rename flow
+adds one conditional subflow whose `when.visible` selector conjunctively matches both
+`id: user-calendar-rename-input` and exact `text: "E2E Renamed Timetablee"`. Only when that exact
+observed state is live does the subflow:
+
+```yaml
+- runFlow:
+    when:
+      visible:
+        id: "user-calendar-rename-input"
+        text: "E2E Renamed Timetablee"
+    commands:
+      - tapOn:
+          id: "user-calendar-rename-input"
+          point: "99%,50%"
+      - eraseText: 1
+- extendedWaitUntil:
+    visible:
+      id: "user-calendar-rename-input"
+      text: "E2E Renamed Timetable"
+    timeout: 15000
+```
+
+This exact shape parses under the repository-pinned Maestro 2.8.0. In that version,
+`TapOnElementCommand.relativePoint` is resolved only after the id selector finds its element, and
+`calculateElementRelativePoint` computes the coordinate from that element's bounds. `99%,50%`
+therefore means `bounds.x + 99% of bounds.width`, `bounds.y + 50% of bounds.height`: strictly
+inside the selected input and near its trailing edge, not a screen-global coordinate that could
+target another control. Tapping there places the caret after the trailing residue; `eraseText: 1`
+removes exactly one character. The tap and erase are required once the exact condition matches.
+
+If the field is already exact, the conditional subflow is skipped and the mandatory exact gate
+passes. Any other prefix, suffix, or corruption matches neither correction condition nor target
+gate and remains terminal before Save. The baseline, local-write, wipe/re-import,
+server-convergence, and baseline-absence assertions remain unchanged.
+
+Alternatives rejected:
+
+- Widen the wrong-value selector or accept the corrupted title: either can hide a new controlled-
+  input defect or write known-bad server state.
+- Use a screen-global point: it is sensitive to device dimensions and can target outside the
+  input; the element-relative point is computed from the selected input's own bounds.
+- Make the inner tap or erase optional: once the exact residue is detected, a partial correction
+  must fail explicitly rather than fall through ambiguously to the write gate.
+- Add another broad erase boundary: two 50-character erases already reproduced the residue; the
+  measured state needs a one-character correction, not a third destructive sweep.
+
 ## Risks / Trade-offs
 
 - [One platform or phase drifts later] → Step-scoped assertions cover all four build steps and both exact URLs.
 - [Duplicated environment declarations require maintenance] → The duplication is intentionally bounded to four sensitive steps and makes each config evaluation self-contained; the proof keeps them synchronized.
 - [A malformed production build becomes development-capable] → Leave all parser/runtime defaults untouched and change only the development-only E2E workflow.
 - [Static proof passes while native routing still fails] → Require both native jobs on the recovery PR's exact head, including the real seeded import flow.
-- [CI retry masks the import regression] → Preserve ADR 038 unchanged: assertion/application/unknown failures are terminal and only classified XCTest startup transport failures may retry.
+- [CI retry masks the import regression] → Preserve ADR 038's assertion-first and bounded-failure
+  invariants: assertion/application/unknown failures are terminal and only structurally classified
+  XCTest startup transport failures may retry; Decision 10 narrows only propagated-wrapper
+  provenance.
 - [The menu popup is not addressable on one platform] → This is the residual risk of Decision 3 and only a device settles it. `appearance-settings.yaml` records design D5: `@expo/ui` picker **popup internals** were judged unreliable for a toggle round trip. This case differs — the trigger carries a `testID` that `appearance-settings.yaml` already asserts visible on both platforms, and the menu entries are plain OS menu items with fixed labels, the same shape `environment-switch.yaml` and `hidden-events.yaml` already drive through native `Alert` choosers. If the exact-head run shows one platform cannot address the entry, that is a material finding for the Founding Engineer, not a retry: the fallback would be an application change (a testID-addressable view control or a deep-link parameter) that this change is not authorized to make.
 - [A flow not reached since the UI rework carries a stale **text** assertion] → The guard covers `id:` selectors only, and six flows (`environment-switch`, `event-checklists`, `home`, `personal-events`, `settings`, `user-calendars`) have not been reached by a native run since the rework, because `run_e2e.sh` stops at the first failure. This is why triage amendment #2 authorizes repairing whatever the gate surfaces inside this ticket rather than filing a new one per selector: the first green run is not promised in one shot, but each iteration is a material fix on the same surface.
 - [The Android native-stack `SearchView` renders collapsed to an icon] → Then the `"Search schools"` placeholder is not matchable until it is expanded, and no flow-only repair exists. That is the `TIM-265` boundary — escalate to the Founding Engineer rather than reaching into `mobile/src`.
@@ -256,6 +350,11 @@ Alternatives rejected:
   shared flows and prove the checklist value on details before a state-preserving cold re-entry.
 - [A CTA is accessibility-visible but keyboard-occluded] → Keep both body CTAs inside the
   keyboard-adjusted tappable layout and retain exact-value plus bounded CTA gates in the shared flow.
+- [A propagated nested wrapper is mistaken for an earlier application failure] → Ignore only a
+  still-live, lower-depth failed `runFlowCommand` ancestor of the final failed startup command;
+  mutation-pin same-depth, closed-ancestor, assertion, interaction, and final-epoch negatives.
+- [The exact rename residue changes shape] → The correction does not run; the unchanged exact
+  target gate fails before Save, preserving the server from an unrecognized corruption.
 
 ## Migration Plan
 
@@ -268,8 +367,16 @@ Alternatives rejected:
    and mutation-pin the complete add → persist → toggle → progress → delete → absent sequence.
 7. Apply the established keyboard-safe form layout to the two onboarding name screens, add their
    focused component proof, and pin both iCal exact-value → CTA-wait → CTA-tap sequences.
-8. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
-9. Rollback is a normal revert of the workflow, flow, proof, documentation, and bounded form-layout changes. It restores the known broken E2E routing/keyboard reachability but does not migrate data or alter production data.
+8. Refine the structural classifier's global veto for only a live failed flow-wrapper ancestor,
+   add the captured 29-entry fixture and negatives, and align ADR 038 plus its binding/operator
+   documentation.
+9. Add the exact rename-residue conditional correction before the existing exact pre-Save gate,
+   and mutation-pin its selector, element-relative point, one-character erase, ordering, and all
+   convergence assertions.
+10. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
+11. Rollback is a normal revert of the workflow, flow, proof, documentation, classifier refinement,
+    and bounded form-layout changes. It restores the known broken E2E routing/keyboard reachability
+    and nested retry/rename termini but does not migrate data or alter production data.
 
 ## Open Questions
 
