@@ -21,9 +21,9 @@
 
 ## 4. Update the reusable testing contract
 
-- [ ] 4.1 Update `docs/mobile/architecture-book/testing.md` with the explicit iOS CNG/pod-install boundary, normal-first and narrow HTTP-400 fallback, cold-cache requirement, single retry, exact workspace guard, and exact-head two-platform proof rule.
-- [ ] 4.2 Record the Architecture Book rule change in `docs/mobile/architecture-book/CHANGELOG.md`; do not add an ADR because this bounded, reversible CI transport recovery does not meet the costly-to-reverse threshold.
-- [ ] 4.3 Update `docs/agent-dev-environment.md` with the helper/test commands, live-path diagnostic, hosted-runner proof boundary, and failure interpretation; confirm no credential, console, or physical-device step exists, so no `(HUMAN: …)` inbox note is needed.
+- [x] 4.1 Update `docs/mobile/architecture-book/testing.md` with the explicit iOS CNG/pod-install boundary, normal-first and narrow HTTP-400 fallback, cold-cache requirement, single retry, exact workspace guard, and exact-head two-platform proof rule.
+- [x] 4.2 Record the Architecture Book rule change in `docs/mobile/architecture-book/CHANGELOG.md`; do not add an ADR because this bounded, reversible CI transport recovery does not meet the costly-to-reverse threshold.
+- [x] 4.3 Update `docs/agent-dev-environment.md` with the helper/test commands, live-path diagnostic, hosted-runner proof boundary, and failure interpretation; confirm no credential, console, or physical-device step exists, so no `(HUMAN: …)` inbox note is needed.
 
 ## 5. Local-green verification and sensitive-surface audit
 
