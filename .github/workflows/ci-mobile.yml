@@ -33,6 +33,9 @@ jobs:
       working-directory: ./mobile
       run: npm ci
 
+    - name: Test mobile E2E harness
+      run: ./mobile/e2e/test_run_e2e.sh
+
     - name: Check generated API client matches the committed spec
       working-directory: ./mobile
       run: |
