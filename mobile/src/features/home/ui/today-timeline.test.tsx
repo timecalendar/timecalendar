@@ -6,9 +6,15 @@ import { type HourRange } from "@/features/home/data"
 
 import { TodayTimeline } from "./today-timeline"
 
+let mockFontScale = 1
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
-  default: () => ({ width: 400, height: 800, scale: 2, fontScale: 1 }),
+  default: () => ({
+    width: 400,
+    height: 800,
+    scale: 2,
+    fontScale: mockFontScale,
+  }),
 }))
 
 // Presentational (70% floor): the today mini-timeline. The salvaged overlap/grid
@@ -37,6 +43,7 @@ function event(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
 }
 
 const range: HourRange = { startHour: 7, endHour: 21 }
+const noChecklistProgress = new Map()
 
 // Fixtures above are device-local Dates; the machine zone preserves their
 // intent on any CI host. The now-indicator zone proof pins Nouméa below.
@@ -57,6 +64,10 @@ async function reportTileAreaWidth(width: number) {
 }
 
 describe("TodayTimeline", () => {
+  afterEach(() => {
+    mockFontScale = 1
+  })
+
   it("scales a full-width tile to the measured tile-area width", async () => {
     await render(
       <TodayTimeline
@@ -66,6 +77,7 @@ describe("TodayTimeline", () => {
         displayZone={ZONE}
         isToday={false}
         now={new Date(2026, 5, 15, 9, 30, 0, 0)}
+        checklistProgress={noChecklistProgress}
         onPressEvent={jest.fn()}
       />,
     )
@@ -91,6 +103,7 @@ describe("TodayTimeline", () => {
         displayZone={ZONE}
         isToday={false}
         now={new Date(2026, 5, 15, 9, 30, 0, 0)}
+        checklistProgress={noChecklistProgress}
         onPressEvent={onPress}
       />,
     )
@@ -112,6 +125,9 @@ describe("TodayTimeline", () => {
         displayZone={ZONE}
         isToday={false}
         now={new Date(2026, 5, 15, 8)}
+        checklistProgress={
+          new Map([["ev-1", { completed: 1, total: 2, isComplete: false }]])
+        }
         onPressEvent={jest.fn()}
       />,
     )
@@ -120,6 +136,38 @@ describe("TodayTimeline", () => {
       screen.getByTestId("today-tile-ev-1").props.style,
     )
     expect(style.minHeight).toBeGreaterThanOrEqual(44)
+    expect(
+      screen.getByText("1/2", { includeHiddenElements: true }),
+    ).toBeTruthy()
+    expect(
+      screen.getByLabelText(/1 of 2 checklist items completed/),
+    ).toBeTruthy()
+  })
+
+  it("keeps checklist progress in the forced Dynamic Type reflow", async () => {
+    mockFontScale = 1.4
+    await render(
+      <TodayTimeline
+        events={[event()]}
+        range={range}
+        locale="en"
+        displayZone={ZONE}
+        isToday={false}
+        now={new Date(2026, 5, 15, 9, 30)}
+        checklistProgress={
+          new Map([["ev-1", { completed: 2, total: 2, isComplete: true }]])
+        }
+        onPressEvent={jest.fn()}
+      />,
+    )
+
+    expect(screen.getByTestId("today-timeline-list")).toBeTruthy()
+    expect(
+      screen.getByText("2/2", { includeHiddenElements: true }),
+    ).toBeTruthy()
+    expect(
+      screen.getByLabelText(/2 of 2 checklist items completed/),
+    ).toBeTruthy()
   })
 
   it("places the now indicator at the DISPLAY zone's minute-of-day", async () => {
@@ -139,6 +187,7 @@ describe("TodayTimeline", () => {
         displayZone="Pacific/Noumea"
         isToday
         now={noumeaNow}
+        checklistProgress={noChecklistProgress}
         onPressEvent={jest.fn()}
       />,
     )
@@ -162,6 +211,7 @@ describe("TodayTimeline", () => {
         displayZone={ZONE}
         isToday={false}
         now={new Date(2026, 5, 15, 20)}
+        checklistProgress={noChecklistProgress}
         onPressEvent={jest.fn()}
       />,
     )
