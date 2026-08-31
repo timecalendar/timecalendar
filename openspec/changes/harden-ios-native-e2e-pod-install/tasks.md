@@ -14,10 +14,10 @@
 
 ## 3. Make iOS generation and installation fail fast in CI
 
-- [ ] 3.1 Update only the iOS job in `.github/workflows/ci-mobile-e2e.yml` to run clean Expo generation with `--no-install`, then invoke the tested helper from generated `mobile/ios`; preserve the CocoaPods cache action as an optimization while ensuring correctness starts from an empty cache.
-- [ ] 3.2 Preserve and statically assert `APP_VARIANT=development` and `BACKEND_ENVIRONMENT_CAPABILITY=development` across iOS native generation/install/build, plus `EXPO_PUBLIC_API_URL=http://localhost:3005` at the Release bundle/build step; do not infer or weaken these values.
-- [ ] 3.3 Add an immediate guard requiring exactly one `mobile/ios/*.xcworkspace`, pass that verified workspace/scheme to the existing Release simulator `xcodebuild`, and prove zero or multiple workspaces stop before Xcode, simulator installation, or Maestro.
-- [ ] 3.4 Extend `mobile/e2e/test_ci_mobile_e2e.sh` (and the focused helper test where behavioral proof belongs) to retain workflow triggers, job dependencies, Release configuration, simulator install, complete Maestro invocation, server lifecycle, and failure artifact uploads while asserting the explicit pod boundary and workspace guard.
+- [x] 3.1 Update only the iOS job in `.github/workflows/ci-mobile-e2e.yml` to run clean Expo generation with `--no-install`, then invoke the tested helper from generated `mobile/ios`; preserve the CocoaPods cache action as an optimization while ensuring correctness starts from an empty cache.
+- [x] 3.2 Preserve and statically assert `APP_VARIANT=development` and `BACKEND_ENVIRONMENT_CAPABILITY=development` across iOS native generation/install/build, plus `EXPO_PUBLIC_API_URL=http://localhost:3005` at the Release bundle/build step; do not infer or weaken these values.
+- [x] 3.3 Add an immediate guard requiring exactly one `mobile/ios/*.xcworkspace`, pass that verified workspace/scheme to the existing Release simulator `xcodebuild`, and prove zero or multiple workspaces stop before Xcode, simulator installation, or Maestro.
+- [x] 3.4 Extend `mobile/e2e/test_ci_mobile_e2e.sh` (and the focused helper test where behavioral proof belongs) to retain workflow triggers, job dependencies, Release configuration, simulator install, complete Maestro invocation, server lifecycle, and failure artifact uploads while asserting the explicit pod boundary and workspace guard.
 
 ## 4. Update the reusable testing contract
 
