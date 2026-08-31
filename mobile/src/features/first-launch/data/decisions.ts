@@ -21,6 +21,15 @@ export function decideInitialRoute({
   return "onboarding"
 }
 
+export function onboardingResolutionToSeed(
+  calendarCount: number,
+  resolution: OnboardingResolution,
+): "calendarImported" | undefined {
+  return calendarCount > 0 && resolution === undefined
+    ? "calendarImported"
+    : undefined
+}
+
 export interface FirstIcalReminderDecisionInput {
   calendarsLoaded: boolean
   calendarCount: number

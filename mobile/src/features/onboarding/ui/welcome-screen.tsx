@@ -19,6 +19,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
+import { setOnboardingResolution } from "@/features/first-launch/store"
+import { ImportLaterConfirmation } from "@/features/first-launch/ui"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 const FADE_IN_MS = 300
@@ -58,6 +60,7 @@ export default function WelcomeScreen() {
   const { height: windowHeight } = useWindowDimensions()
   const pagerRef = useRef<PagerView>(null)
   const [currentPage, setCurrentPage] = useState(0)
+  const [skipConfirmationVisible, setSkipConfirmationVisible] = useState(false)
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null)
   const [opacity] = useState(() => new Animated.Value(0))
   const [indicatorWidths] = useState(() =>
@@ -149,6 +152,11 @@ export default function WelcomeScreen() {
   }
 
   const openSchoolSelection = () => router.push("/onboarding/school")
+  const confirmSkip = () => {
+    setOnboardingResolution("skipped")
+    setSkipConfirmationVisible(false)
+    router.replace("/")
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -160,7 +168,7 @@ export default function WelcomeScreen() {
                 testID="onboarding-skip"
                 accessibilityRole="button"
                 accessibilityLabel={t("onboarding.skipLabel")}
-                onPress={openSchoolSelection}
+                onPress={() => setSkipConfirmationVisible(true)}
                 style={styles.textButton}
               >
                 <ThemedText type="smallBold" themeColor="primary">
@@ -283,6 +291,12 @@ export default function WelcomeScreen() {
           </View>
         </Animated.View>
       </SafeAreaView>
+      <ImportLaterConfirmation
+        visible={skipConfirmationVisible}
+        cancelLabelKey="firstLaunch.importLater.continueOnboarding"
+        onCancel={() => setSkipConfirmationVisible(false)}
+        onConfirm={confirmSkip}
+      />
     </ThemedView>
   )
 }

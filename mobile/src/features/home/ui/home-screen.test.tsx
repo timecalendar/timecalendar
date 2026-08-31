@@ -28,6 +28,17 @@ jest.mock("@/features/calendar/data", () => {
   }
 })
 
+jest.mock("@/features/first-launch/ui", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { View } = require("react-native")
+  return {
+    FirstIcalReminder: () =>
+      React.createElement(View, { testID: "shared-first-ical-reminder" }),
+  }
+})
+
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
   useFocusEffect: (callback: () => void) => {
@@ -92,6 +103,10 @@ beforeEach(() => {
 })
 
 describe("HomeScreen", () => {
+  it("composes the shared reminder after the flexible Home content", async () => {
+    await render(<HomeScreen />)
+    expect(screen.getByTestId("shared-first-ical-reminder")).toBeTruthy()
+  })
   it("renders the app-name heading and the empty-day state when there are no events", async () => {
     await render(<HomeScreen />)
     expect(screen.getByText("TimeCalendar")).toBeTruthy()
