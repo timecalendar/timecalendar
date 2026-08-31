@@ -249,7 +249,18 @@ jobs:
         working-directory: ./mobile
         env:
           APP_VARIANT: development
-        run: npx expo prebuild --platform ios --clean
+          BACKEND_ENVIRONMENT_CAPABILITY: development
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      # Keep CocoaPods explicit so its real exit status owns this boundary.
+      # The helper's cold-cache regression proves restored caches are only an
+      # optimization, never a correctness precondition.
+      - name: Install CocoaPods explicitly
+        working-directory: ./mobile/ios
+        env:
+          APP_VARIANT: development
+          BACKEND_ENVIRONMENT_CAPABILITY: development
+        run: ../e2e/install_ios_pods.sh
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
       # here: localhost reaches the host server from the iOS simulator.
@@ -257,9 +268,10 @@ jobs:
         working-directory: ./mobile/ios
         env:
           APP_VARIANT: development
+          BACKEND_ENVIRONMENT_CAPABILITY: development
           EXPO_PUBLIC_API_URL: http://localhost:3005
         run: |
-          WORKSPACE="$(ls -d *.xcworkspace | head -n1)"
+          WORKSPACE="$(../e2e/resolve_ios_workspace.sh)"
           # The app scheme matches the workspace basename for Expo apps
           # (TimeCalendarDev.xcworkspace -> scheme TimeCalendarDev). Do NOT use
           # `-list` schemes[0] — that picks an alphabetically-first CocoaPods
