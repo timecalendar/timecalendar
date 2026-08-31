@@ -68,6 +68,10 @@ const hiddenEventsFlow = readFileSync(
   "utf8",
 )
 const icalImportFlow = readFileSync(join(flowsDir, "ical-import.yaml"), "utf8")
+const userCalendarRenameFlow = readFileSync(
+  join(flowsDir, "user-calendar-rename.yaml"),
+  "utf8",
+)
 
 // Stale ids awaiting an app-side fix. MUST stay empty: TIM-264 authorizes repairing
 // every stale selector in the flows, so there is nothing left to defer. An entry here
@@ -339,8 +343,10 @@ describe("Maestro iCal import journey", () => {
       "onboarding-institution-input",
       "onboarding-institution-input",
       "onboarding-institution-continue",
+      "onboarding-institution-continue",
       "onboarding-programme-input",
       "onboarding-programme-input",
+      "onboarding-programme-continue",
       "onboarding-programme-continue",
       "onboarding-connect-continue",
       "onboarding-connect-continue",
@@ -355,6 +361,30 @@ describe("Maestro iCal import journey", () => {
     ).toEqual(["E2E Institution", "E2E Programme"])
     expect(flowTextSelectors(icalImportFlow).map(({ text }) => text)).toContain(
       "Add a calendar by URL",
+    )
+  })
+
+  it("waits for each Continue control instead of dismissing the keyboard", () => {
+    expect(icalImportFlow).not.toMatch(/^\s*-\s*hideKeyboard\s*$/m)
+    expect(icalImportFlow).toMatch(
+      /- inputText: "E2E Institution"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "onboarding-institution-continue"\n\s+timeout: 15000\n- tapOn:\n\s+id: "onboarding-institution-continue"/,
+    )
+    expect(icalImportFlow).toMatch(
+      /- inputText: "E2E Programme"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "onboarding-programme-continue"\n\s+timeout: 15000\n- tapOn:\n\s+id: "onboarding-programme-continue"/,
+    )
+  })
+})
+
+describe("Maestro user-calendar rename synchronization", () => {
+  it("gates Save on the exact target after two erase boundaries", () => {
+    expect(userCalendarRenameFlow).toMatch(
+      /- tapOn:\n\s+id: "user-calendar-rename-input"\n- eraseText\n- eraseText\n- inputText: "E2E Renamed Timetable"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "user-calendar-rename-input"\n\s+text: "E2E Renamed Timetable"\n\s+timeout: 15000\n- tapOn:\n\s+id: "user-calendar-rename-save"/,
+    )
+  })
+
+  it("retains the baseline, local-write, and server-convergence assertions", () => {
+    expect(userCalendarRenameFlow).toMatch(
+      /visible: "E2E Rename Baseline"[\s\S]*visible: "E2E Renamed Timetable"[\s\S]*- runFlow: rename-seed\.yaml[\s\S]*visible: "E2E Renamed Timetable"[\s\S]*- assertNotVisible: "E2E Rename Baseline"\s*$/,
     )
   })
 })

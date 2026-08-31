@@ -517,3 +517,40 @@ assumption stale.
 - [ ] 25.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
   complete the new institution/programme/connect/manual-import reachability chain and retain its
   empty-submit validation before Reviewer handoff; do not archive before that verdict.
+
+## 26. Synchronize the controlled rename input before Save
+
+Exact-head Android job `99378208040` in run `33355905670` completed the rename dialog's first
+erase, input, and Save commands, but persisted `E2E Renamed Timetablee`: the final seeded `e`
+crossed the controlled-input erase/echo boundary at the same command timestamp. The exact-title
+assertion failed correctly, so the flow must settle the local field before permitting the server
+write rather than accepting the corrupted value.
+
+- [x] 26.1 In `user-calendar-rename.yaml`, retain the focused input tap and first `eraseText`, add
+      a second consecutive `eraseText`, enter `E2E Renamed Timetable`, and wait up to 15 seconds for
+      one selector that conjunctively matches `id: user-calendar-rename-input` and the exact target
+      text before tapping Save. Preserve the baseline, local-write, wipe/re-import,
+      server-convergence, and baseline-absence assertions.
+- [x] 26.2 Extend `maestro-selectors.test.ts` with a focused structural proof that pins the input
+      tap, two erase boundaries, target input, exact conjunctive value wait, Save ordering, and the
+      existing local/server assertions. The proof must fail if the second erase or exact wait is
+      removed, the wait is widened, or Save moves before it.
+- [ ] 26.3 Require a fresh exact-head baseline plus Android and iOS 17/17. The rename flow must
+      persist exactly `E2E Renamed Timetable` locally and after a wiped-device server re-import.
+
+## 27. Wait for actionable iCal Continue controls
+
+Exact-head iOS job `99377897981` in run `33355905670` entered `E2E Institution`, then Maestro's
+`hideKeyboard` failed even though the captured hierarchy showed the input unfocused and
+`onboarding-institution-continue` visible and enabled. The dismiss command established no useful
+precondition and prevented an already-actionable CTA from running.
+
+- [x] 27.1 Remove exactly the two terminal `hideKeyboard` commands from `ical-import.yaml`. After
+      each institution/programme `inputText`, wait up to 15 seconds for its existing Continue id and
+      retain the matching tap immediately after the wait. Preserve every route edge, entered value,
+      CTA interaction, manual-import URL choice, URL-screen assertion, and empty-submit validation.
+- [x] 27.2 Extend the focused iCal journey proof to pin each input → matching Continue wait →
+      matching Continue tap sequence and reject any `hideKeyboard`. The proof must fail when a
+      terminal command returns, a bounded wait disappears, or a CTA is bypassed or reordered.
+- [ ] 27.3 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
+      traverse both Continue controls and complete the existing manual-import validation journey.

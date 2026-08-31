@@ -74,7 +74,10 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "onboarding-institution-input"
 - inputText: "E2E Institution"
-- hideKeyboard
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-institution-continue"
+    timeout: 15000
 - tapOn:
     id: "onboarding-institution-continue"
 - extendedWaitUntil:
@@ -84,7 +87,10 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "onboarding-programme-input"
 - inputText: "E2E Programme"
-- hideKeyboard
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-continue"
+    timeout: 15000
 - tapOn:
     id: "onboarding-programme-continue"
 - extendedWaitUntil:

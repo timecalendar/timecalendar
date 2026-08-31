@@ -380,3 +380,28 @@ interaction shared by both platforms, with no per-platform selector or branch.
   unchanged, with no platform-specific selector or branch
 - **AND** a focused repository proof SHALL pin the inserted route edges in order, so a future
   navigation change fails the baseline gate before another native cycle
+
+#### Scenario: A controlled input echoes a stale value across an erase boundary
+
+- **WHEN** a native flow clears a controlled input immediately before typing a value that will be
+  sent by an irreversible Save action, and a late controlled-state echo can restore a suffix from
+  the seeded value
+- **THEN** the flow SHALL cross a second consecutive erase boundary before entering the target
+  value
+- **AND** Save SHALL remain gated behind a bounded selector that conjunctively matches the input
+  id and the complete exact target value, so any remaining prefix or suffix fails before the
+  server mutation
+- **AND** a focused repository proof SHALL pin the two erases, exact in-field gate, Save order,
+  and the existing local-write plus wiped-device server-convergence assertions
+
+#### Scenario: Keyboard dismissal fails after the next control is actionable
+
+- **WHEN** a shared flow has entered its value and the captured hierarchy already exposes the
+  next Continue control as visible and enabled, but a keyboard-dismiss command fails because the
+  input is already unfocused while native keyboard chrome remains in the hierarchy
+- **THEN** the flow SHALL remove that terminal dismiss command and wait for the existing Continue
+  control with a bounded id selector before tapping it
+- **AND** the flow SHALL retain the explicit Continue interaction rather than substituting a
+  return-key submission, optional command, platform branch, or deep link around the route
+- **AND** a focused repository proof SHALL reject any keyboard-dismiss command and pin each
+  input → matching Continue wait → matching Continue tap sequence
