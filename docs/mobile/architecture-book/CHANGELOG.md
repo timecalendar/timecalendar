@@ -2,6 +2,11 @@
 
 ## 2026-08-31
 
+- Corrected the native release-config E2E build tuple: both platform jobs now combine the
+  development app identity, an independent explicit development backend capability, and the
+  platform-local compiled API URL. The deterministic workflow gate checks each job scope, while
+  the existing Expo-config suite keeps missing or malformed capability production-locked. This
+  restores ADR 043 and adds no new ADR (testing.md).
 - Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
   reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
   action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.
