@@ -23,6 +23,61 @@ describe("runMigrations", () => {
     expect(mockMigrate).toHaveBeenCalledWith(expect.anything(), migrations)
   })
 
+  it("shares one active migration and permits a later idempotent run", async () => {
+    let finishMigration: () => void = () => undefined
+    mockMigrate.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishMigration = resolve
+        }),
+    )
+
+    const first = runMigrations()
+    const second = runMigrations()
+    let firstSettled = false
+    let secondSettled = false
+    void first.then(() => {
+      firstSettled = true
+    })
+    void second.then(() => {
+      secondSettled = true
+    })
+
+    expect(first).toBe(second)
+    expect(mockMigrate).toHaveBeenCalledTimes(1)
+    expect(firstSettled).toBe(false)
+    expect(secondSettled).toBe(false)
+
+    finishMigration()
+    await Promise.all([first, second])
+
+    expect(firstSettled).toBe(true)
+    expect(secondSettled).toBe(true)
+
+    await runMigrations()
+    expect(mockMigrate).toHaveBeenCalledTimes(2)
+  })
+
+  it("records one failure for callers sharing an active migration", async () => {
+    const failure = new Error("migration boom")
+    let failMigration: (error: Error) => void = () => undefined
+    mockMigrate.mockImplementationOnce(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          failMigration = reject
+        }),
+    )
+
+    const first = runMigrations()
+    const second = runMigrations()
+    failMigration(failure)
+    await Promise.all([first, second])
+
+    expect(mockMigrate).toHaveBeenCalledTimes(1)
+    expect(mockRecordError).toHaveBeenCalledTimes(1)
+    expect(mockRecordError).toHaveBeenCalledWith(expect.anything(), failure)
+  })
+
   it("records a migration failure through the @/firebase seam", async () => {
     const failure = new Error("migration boom")
     mockMigrate.mockRejectedValueOnce(failure)
