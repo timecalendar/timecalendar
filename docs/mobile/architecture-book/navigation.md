@@ -50,6 +50,14 @@ presentation point and cold onboarding cannot be covered.
 
 The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-onboarding-flow-shape.md)): `onboarding/index` = the welcome surface (`timecalendar-dev://onboarding`), `onboarding/school` = the school picker (`…/onboarding/school`). Its index is the first-run deep-link surface, not the bare list; adding calendars from Settings continues through calendar management's native header action.
 
+First launch is protected by ADR [054](./decisions/054-ordered-startup-and-first-launch-protected-routes.md).
+After ordered startup prerequisites, one atomic `{ calendars, loaded }` calendar-sources snapshot
+keeps the splash mounted until eligibility is known. Zero calendars with no durable resolution leave
+onboarding as the first available route; `(tabs)` and every post-onboarding root sibling live inside
+one `Stack.Protected` guard and therefore cannot mount or paint underneath a redirect. Onboarding
+remains reachable after resolution. The development-only token-import route is the sole direct
+exception and retains its runtime app-variant action gate.
+
 From the school step the group carries the **import journey** (ADR [047](./decisions/047-ephemeral-calendar-import-draft.md)): a school row opens `onboarding/programme`, "I can't find my school" opens `onboarding/institution-name` → `onboarding/programme`, then `onboarding/connect` → `onboarding/import`, which offers the existing `onboarding/qr-scan` and `onboarding/ical-url` Stack siblings. The Connect → import edge is the explicit insertion point for a future assistant step. Every new route is a one-line re-export from `@/features/onboarding/ui`.
 
 `onboarding/groups` (`…/onboarding/groups?schoolId=<id>`) is **off the normal path** — it persists a selection and dismisses without creating a calendar. It keeps its route and stays deep-linkable; deleting it is a separate cleanup.

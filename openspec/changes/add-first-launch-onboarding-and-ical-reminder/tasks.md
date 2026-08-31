@@ -30,19 +30,19 @@
 
 - [x] 5.1 Add typed English and French keys for startup recovery, shared dialog, contextual cancel labels, reminder heading/body/actions, labels, and hints; update any changed onboarding copy and verify bidirectional catalog parity with `npx tsc --noEmit` plus the no-literal lint rule.
 - [x] 5.2 Expand root/splash/first-launch/onboarding/import/Home/Calendar tests to cover the acceptance matrix: no-tabs mount, prerequisite failure/retry, skip cancel/confirm, personal-event route at zero calendars, reminder on both tabs, CTA routing, dismissal durability, successful-import resolution, and deletion-to-zero behavior. Run the focused suites and confirm all `first-launch/{data,store}` logic remains above the 90% line/branch gate.
-- [ ] 5.3 Audit new controls for translated roles/labels/hints, modal focus order, decorative exclusions, 44pt iOS/48dp Android targets, font scaling, reduced motion, safe areas, contrast, and small screens. Record irreducibly on-device VoiceOver/TalkBack/Dynamic Type checks in `docs/react-native-migration/inbox/` tagged `(HUMAN: …)` without making them a repository-merge blocker.
+- [x] 5.3 Audit new controls for translated roles/labels/hints, modal focus order, decorative exclusions, 44pt iOS/48dp Android targets, font scaling, reduced motion, safe areas, contrast, and small screens. Record irreducibly on-device VoiceOver/TalkBack/Dynamic Type checks in `docs/react-native-migration/inbox/` tagged `(HUMAN: …)` without making them a repository-merge blocker.
 
 ## 6. Native fresh-install proof
 
-- [ ] 6.1 Replace/update the fresh-install Maestro flow so `launchApp: clearState: true` with no deep link first sees onboarding, confirms Skip, creates and observes a personal event with zero calendars, and sees the first-iCal reminder on Home and Calendar using stable cross-platform selectors.
-- [ ] 6.2 Add one nested reusable Maestro setup that resolves first launch by confirming Skip, then apply it to every existing zero-calendar flow whose `clearState`/direct deep link would now be protected (including Settings, environment switch, user calendars, About, Feedback, and personal-events paths as applicable). Preserve the welcome → school/import-success and seeded dev-import/calendar flows, and run committed Maestro/static selector tests to prove no stale selector or accidental top-level helper is introduced.
+- [x] 6.1 Replace/update the fresh-install Maestro flow so `launchApp: clearState: true` with no deep link first sees onboarding, confirms Skip, creates and observes a personal event with zero calendars, and sees the first-iCal reminder on Home and Calendar using stable cross-platform selectors.
+- [x] 6.2 Add one nested reusable Maestro setup that resolves first launch by confirming Skip, then apply it to every existing zero-calendar flow whose `clearState`/direct deep link would now be protected (including Settings, environment switch, user calendars, About, Feedback, and personal-events paths as applicable). Preserve the welcome → school/import-success and seeded dev-import/calendar flows, and run committed Maestro/static selector tests to prove no stale selector or accidental top-level helper is introduced.
 - [ ] 6.3 Apply the PR's `run-e2e` label after implementation is pushed and obtain green Android and iOS `ci-mobile-e2e` jobs on the exact review head. Treat absent/red native evidence as Applier rework; do not create a separate QA or human gate.
 
 ## 7. Architecture Book and roadmap
 
-- [ ] 7.1 Add ADR 053 for ordered startup prerequisites plus `Stack.Protected` first-launch eligibility, including the dev-import exception and revisit conditions; update the decisions index after rechecking open-PR reservations.
-- [ ] 7.2 Update `docs/mobile/architecture-book/navigation.md` (protected first-launch graph/no-paint rule), `storage.md` (awaited migration and independent environment-independent flags), and `CHANGELOG.md`; ensure source, tests, and binding prose agree.
-- [ ] 7.3 Amend `docs/react-native-migration/01-roadmap/03-onboarding-and-sources.md` from optional/reachable onboarding to the skippable first-launch gate plus durable reminder, and record Phase 09 only as an ordered prerequisite seam.
+- [x] 7.1 Add ADR 054 (053 was reserved by open PR #336 at the required recheck) for ordered startup prerequisites plus `Stack.Protected` first-launch eligibility, including the dev-import exception and revisit conditions; update the decisions index after rechecking open-PR reservations.
+- [x] 7.2 Update `docs/mobile/architecture-book/navigation.md` (protected first-launch graph/no-paint rule), `storage.md` (awaited migration and independent environment-independent flags), and `CHANGELOG.md`; ensure source, tests, and binding prose agree.
+- [x] 7.3 Amend `docs/react-native-migration/01-roadmap/03-onboarding-and-sources.md` from optional/reachable onboarding to the skippable first-launch gate plus durable reminder, and record Phase 09 only as an ordered prerequisite seam.
 
 ## 8. Local-green and CI proof
 

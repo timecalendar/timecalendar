@@ -1,5 +1,13 @@
 # Architecture Book changelog
 
+## 2026-08-31
+
+- Added ADR 054: migrations and the typed Phase 09 prerequisite complete before the first atomic
+  calendar read; one protected root graph prevents Home/Calendar paint for unresolved fresh users,
+  with only the development token-import route excepted.
+- Recorded the independent environment-independent onboarding-resolution and first-iCal-reminder
+  values, the skippable personal-calendar path, and the shared Home/Calendar reminder composition.
+
 ## 2026-08-30
 
 - Added the two-calendar real-server Activity fixture rule: establish a server read watermark, then add exactly 52 unread rows across the fixed 50-row page boundary. Recorded positive-first selectors and the no-KVM split between local integration/syntax evidence and post-merge native CI.

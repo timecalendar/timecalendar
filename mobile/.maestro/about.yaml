@@ -4,6 +4,7 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
+- runFlow: setup/resolve-first-launch.yaml
 - stopApp
 - openLink: timecalendar-dev://about
 - runFlow:

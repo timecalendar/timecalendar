@@ -1,0 +1,20 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+# Nested reusable setup: top-level discovery intentionally excludes this file.
+- runFlow:
+    when:
+      visible:
+        id: "onboarding-skip"
+    commands:
+      - tapOn:
+          id: "onboarding-skip"
+      - extendedWaitUntil:
+          visible:
+            id: "import-later-confirm"
+          timeout: 60000
+      - tapOn:
+          id: "import-later-confirm"
+      - extendedWaitUntil:
+          visible:
+            id: "home-scroll"
+          timeout: 60000
