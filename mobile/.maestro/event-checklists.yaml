@@ -24,10 +24,12 @@
 # so they don't disturb the seeded server rows; the flow deletes the item it added,
 # leaving device state as it found it.
 #
-# Checklist progress is observed after a cold calendar re-entry. A bare Maestro
-# `back` is an Android hardware action but an iOS edge swipe that can report
-# success without popping native-stack details. `stopApp` + the calendar deep
-# link preserves the local SQLite row while giving both platforms the same root.
+# Checklist persistence and progress are observed after cold calendar re-entry.
+# A bare Maestro `back` is an Android hardware action but an iOS edge swipe that
+# can report success without popping native-stack details. `stopApp` + the
+# calendar deep link preserves the local SQLite row while giving both platforms
+# the same root. A keyboard-dismiss command is also forbidden: after the input
+# unfocuses Android can interpret it as Back while still reporting COMPLETED.
 #
 # Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
 # seeding the token. Shared across iOS and Android: stable localized text / testID
@@ -55,13 +57,43 @@ appId: fr.samuelprak.timecalendar.dev
 # Add a checklist item — the add button auto-focuses the new row's input.
 - tapOn:
     id: "checklist-add"
-# Type a stable ASCII item into the focused input, then dismiss the keyboard so the
-# content-text assertion is unobstructed.
+# Type a stable ASCII item into the focused input and require its exact in-field
+# value before leaving details. One selector carries both the dynamic input-id
+# family and the value, so a stale/prefix/suffix value cannot pass.
 - inputText: "Buy notebook"
-- hideKeyboard
-# The typed content round-trips into the live `checklist_items` read and renders.
-- assertVisible: "Buy notebook"
-# Toggle the item checked (single row → the uuid-suffixed check id via `.*` regex).
+- extendedWaitUntil:
+    visible:
+      id: "checklist-input-.*"
+      text: "Buy notebook"
+    timeout: 15000
+# Cold re-enter Calendar without clearing device state, reopen the real event,
+# and prove the typed row survived the route lifecycle before toggling it.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn:
+    text: "Agenda"
+- extendedWaitUntil:
+    visible: "E2E Today Lecture(,.*)?"
+    timeout: 60000
+- tapOn:
+    text: "E2E Today Lecture(,.*)?"
+- extendedWaitUntil:
+    visible: "Buy notebook"
+    timeout: 60000
+# Toggle the persisted item checked (single row → the uuid-suffixed check id
+# via `.*` regex).
 - tapOn:
     id: "checklist-check-.*"
 # The item is still present after toggling (the check state is visual; the content

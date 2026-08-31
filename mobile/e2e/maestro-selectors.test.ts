@@ -68,6 +68,10 @@ const hiddenEventsFlow = readFileSync(
   join(flowsDir, "hidden-events.yaml"),
   "utf8",
 )
+const eventChecklistsFlow = readFileSync(
+  join(flowsDir, "event-checklists.yaml"),
+  "utf8",
+)
 const icalImportFlow = readFileSync(join(flowsDir, "ical-import.yaml"), "utf8")
 const personalEventsFlow = readFileSync(
   join(flowsDir, "personal-events.yaml"),
@@ -254,6 +258,58 @@ function backCommands(yaml: string): number[] {
     .map(({ number }) => number)
 }
 
+function hideKeyboardCommands(yaml: string): number[] {
+  return yaml
+    .split("\n")
+    .map((line, index) => ({ line, number: index + 1 }))
+    .filter(({ line }) => /^\s*-\s*hideKeyboard\s*$/.test(line))
+    .map(({ number }) => number)
+}
+
+function flowCommands(yaml: string): string {
+  return yaml
+    .split("\n")
+    .filter((line) => !/^\s*(?:#|$)/.test(line))
+    .join("\n")
+}
+
+function containsOrdered(yaml: string, snippets: string[]): boolean {
+  const commands = flowCommands(yaml)
+  let cursor = 0
+  for (const snippet of snippets) {
+    const index = commands.indexOf(snippet, cursor)
+    if (index === -1) return false
+    cursor = index + snippet.length
+  }
+  return true
+}
+
+function preservesChecklistPersistence(yaml: string): boolean {
+  return (
+    hideKeyboardCommands(yaml).length === 0 &&
+    containsOrdered(yaml, [
+      '- tapOn:\n    id: "checklist-add"\n- inputText: "Buy notebook"',
+      '- extendedWaitUntil:\n    visible:\n      id: "checklist-input-.*"\n      text: "Buy notebook"\n    timeout: 15000',
+      "- stopApp\n- openLink: timecalendar-dev://calendar",
+      '- extendedWaitUntil:\n    visible: "E2E Today Lecture(,.*)?"\n    timeout: 60000\n- tapOn:\n    text: "E2E Today Lecture(,.*)?"\n- extendedWaitUntil:\n    visible: "Buy notebook"\n    timeout: 60000',
+      '- tapOn:\n    id: "checklist-check-.*"\n- assertVisible: "Buy notebook"',
+      "- stopApp\n- openLink: timecalendar-dev://calendar",
+      '- extendedWaitUntil:\n    visible:\n      id: "agenda-event-e2e-today-lecture-progress-1-1"\n    timeout: 60000',
+      '- tapOn:\n    text: "E2E Today Lecture(,.*)?"\n- extendedWaitUntil:\n    visible: "Buy notebook"\n    timeout: 60000\n- tapOn:\n    id: "checklist-remove-.*"\n- extendedWaitUntil:\n    notVisible: "Buy notebook"\n    timeout: 60000',
+    ])
+  )
+}
+
+function preservesIcalCtaSequence(
+  yaml: string,
+  stem: "institution" | "programme",
+  value: string,
+): boolean {
+  return flowCommands(yaml).includes(
+    `- inputText: "${value}"\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-${stem}-input"\n      text: "${value}"\n    timeout: 15000\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-${stem}-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-${stem}-continue"`,
+  )
+}
+
 function preservesPersonalEventCancellation(yaml: string): boolean {
   return /- tapOn: "Cancel"\n- assertVisible:\n\s+id: "personal-event-delete"\n(?:#[^\n]*\n)*- stopApp\n- openLink: timecalendar-dev:\/\/personal-events\n- runFlow:\n\s+when:\n\s+platform: iOS\n\s+commands:\n\s+- tapOn:\n\s+text: "Open"\n\s+optional: true\n- extendedWaitUntil:\n\s+visible: "Maestro CRUD event"\n\s+timeout: 60000\n(?:#[^\n]*\n)*- tapOn: "Maestro CRUD event"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "personal-event-delete"\n\s+timeout: 60000\n- tapOn:\n\s+id: "personal-event-delete"\n- tapOn: "Delete"\n(?:#[^\n]*\n)*- extendedWaitUntil:\n\s+notVisible: "Maestro CRUD event"\n\s+timeout: 60000\s*$/.test(
     yaml,
@@ -275,6 +331,7 @@ const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
   selectors: flowSelectors(readFileSync(file, "utf8")),
   textSelectors: flowTextSelectors(readFileSync(file, "utf8")),
   backCommands: backCommands(readFileSync(file, "utf8")),
+  hideKeyboardCommands: hideKeyboardCommands(readFileSync(file, "utf8")),
 }))
 
 /** Maestro compiles a text selector as a fully anchored regex — so does this. */
@@ -377,6 +434,76 @@ describe("Maestro back navigation", () => {
   })
 })
 
+describe("Maestro keyboard commands", () => {
+  it("uses no hideKeyboard command in any shared flow", () => {
+    const offenders = flows.flatMap((flow) =>
+      flow.hideKeyboardCommands.map((line) => `${flow.name}:${line}`),
+    )
+
+    expect(offenders).toEqual([])
+  })
+
+  it("detects a hideKeyboard command", () => {
+    expect(
+      hideKeyboardCommands("- inputText: value\n- hideKeyboard\n"),
+    ).toEqual([2])
+  })
+})
+
+describe("Maestro checklist persistence", () => {
+  it("cold re-enters before toggling the exact persisted row", () => {
+    expect(preservesChecklistPersistence(eventChecklistsFlow)).toBe(true)
+  })
+
+  it.each([
+    [
+      "hideKeyboard returns",
+      eventChecklistsFlow.replace(
+        '- inputText: "Buy notebook"',
+        '- inputText: "Buy notebook"\n- hideKeyboard',
+      ),
+    ],
+    [
+      "the exact input value gate is removed",
+      eventChecklistsFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "checklist-input-.*"\n      text: "Buy notebook"\n    timeout: 15000\n',
+        "",
+      ),
+    ],
+    [
+      "the input value is widened",
+      eventChecklistsFlow.replace(
+        'text: "Buy notebook"\n    timeout: 15000',
+        'text: "Buy notebook.*"\n    timeout: 15000',
+      ),
+    ],
+    [
+      "the pre-toggle re-entry is removed",
+      eventChecklistsFlow.replace(
+        "- stopApp\n- openLink: timecalendar-dev://calendar",
+        "- stopApp",
+      ),
+    ],
+    [
+      "the toggle moves before persistence proof",
+      eventChecklistsFlow.replace(
+        '- tapOn:\n    id: "checklist-check-.*"',
+        '- tapOn:\n    id: "checklist-check-.*"\n- stopApp',
+      ),
+    ],
+    [
+      "the hard-delete absence proof is lost",
+      eventChecklistsFlow.replace(
+        '- extendedWaitUntil:\n    notVisible: "Buy notebook"\n    timeout: 60000',
+        '- assertVisible: "Buy notebook"',
+      ),
+    ],
+  ])("rejects when %s", (_name, mutatedFlow) => {
+    expect(mutatedFlow).not.toBe(eventChecklistsFlow)
+    expect(preservesChecklistPersistence(mutatedFlow)).toBe(false)
+  })
+})
+
 describe("Maestro personal-event cancellation", () => {
   it("cold re-enters the list before proving preservation and confirmed deletion", () => {
     expect(preservesPersonalEventCancellation(personalEventsFlow)).toBe(true)
@@ -452,8 +579,10 @@ describe("Maestro iCal import journey", () => {
       "onboarding-school-missing",
       "onboarding-institution-input",
       "onboarding-institution-input",
+      "onboarding-institution-input",
       "onboarding-institution-continue",
       "onboarding-institution-continue",
+      "onboarding-programme-input",
       "onboarding-programme-input",
       "onboarding-programme-input",
       "onboarding-programme-continue",
@@ -474,14 +603,67 @@ describe("Maestro iCal import journey", () => {
     )
   })
 
-  it("waits for each Continue control instead of dismissing the keyboard", () => {
+  it("exact-gates each value before waiting for and tapping Continue", () => {
     expect(icalImportFlow).not.toMatch(/^\s*-\s*hideKeyboard\s*$/m)
-    expect(icalImportFlow).toMatch(
-      /- inputText: "E2E Institution"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "onboarding-institution-continue"\n\s+timeout: 15000\n- tapOn:\n\s+id: "onboarding-institution-continue"/,
-    )
-    expect(icalImportFlow).toMatch(
-      /- inputText: "E2E Programme"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "onboarding-programme-continue"\n\s+timeout: 15000\n- tapOn:\n\s+id: "onboarding-programme-continue"/,
-    )
+    expect(
+      preservesIcalCtaSequence(
+        icalImportFlow,
+        "institution",
+        "E2E Institution",
+      ),
+    ).toBe(true)
+    expect(
+      preservesIcalCtaSequence(icalImportFlow, "programme", "E2E Programme"),
+    ).toBe(true)
+  })
+
+  it.each([
+    [
+      "institution exact gate disappears",
+      icalImportFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-institution-input"\n      text: "E2E Institution"\n    timeout: 15000\n',
+        "",
+      ),
+    ],
+    [
+      "programme exact value widens",
+      icalImportFlow.replace(
+        'text: "E2E Programme"',
+        'text: "E2E Programme.*"',
+      ),
+    ],
+    [
+      "institution Continue bypasses its wait",
+      icalImportFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-institution-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-institution-continue"',
+        '- tapOn:\n    id: "onboarding-institution-continue"',
+      ),
+    ],
+    [
+      "programme Continue tap moves before its wait",
+      icalImportFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-programme-continue"',
+        '- tapOn:\n    id: "onboarding-programme-continue"\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-continue"\n    timeout: 15000',
+      ),
+    ],
+    [
+      "hideKeyboard returns",
+      icalImportFlow.replace(
+        '- inputText: "E2E Institution"',
+        '- inputText: "E2E Institution"\n- hideKeyboard',
+      ),
+    ],
+  ])("rejects when %s", (_name, mutatedFlow) => {
+    expect(mutatedFlow).not.toBe(icalImportFlow)
+    expect(
+      hideKeyboardCommands(mutatedFlow).length === 0 &&
+        preservesIcalCtaSequence(
+          mutatedFlow,
+          "institution",
+          "E2E Institution",
+        ) &&
+        preservesIcalCtaSequence(mutatedFlow, "programme", "E2E Programme"),
+    ).toBe(false)
   })
 })
 

@@ -1,6 +1,6 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router, Stack } from "expo-router"
-import type { ReactElement } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { useImportDraft } from "@/features/onboarding/draft"
 import { usePlatform } from "@/test-support/platform"
@@ -16,6 +16,32 @@ jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
   Stack: { Screen: jest.fn(() => null) },
 }))
+jest.mock("react-native", () => {
+  const React = jest.requireActual<typeof import("react")>("react")
+  const actual =
+    jest.requireActual<typeof import("react-native")>("react-native")
+  const transparent = (testID: string) =>
+    function TransparentLayout({
+      children,
+      ...props
+    }: {
+      children?: ReactNode
+      [key: string]: unknown
+    }) {
+      return React.createElement(actual.View, { ...props, testID }, children)
+    }
+
+  const descriptors = Object.getOwnPropertyDescriptors(actual)
+  Reflect.deleteProperty(descriptors, "KeyboardAvoidingView")
+  Reflect.deleteProperty(descriptors, "ScrollView")
+  return Object.defineProperties(
+    {
+      KeyboardAvoidingView: transparent("keyboard-avoiding-layout"),
+      ScrollView: transparent("keyboard-scroll-layout"),
+    },
+    descriptors,
+  )
+})
 
 const mockSetCalendarName = jest.fn()
 jest.mock("@/features/onboarding/draft", () => ({
@@ -125,6 +151,23 @@ describe("ProgrammeScreen", () => {
   describe("on iOS", () => {
     usePlatform("ios")
 
+    it("lifts the tappable Continue control above the keyboard", async () => {
+      const view = await render(<ProgrammeScreen />)
+      const avoiding = view.getByTestId("keyboard-avoiding-layout")
+      const scroll = view.getByTestId("keyboard-scroll-layout")
+
+      expect(avoiding.props.behavior).toBe("padding")
+      expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
+      expect(scroll.props.contentContainerStyle).toEqual(
+        expect.objectContaining({ flexGrow: 1, justifyContent: "center" }),
+      )
+      expect(
+        scroll.queryAll(
+          (node) => node.props.testID === "onboarding-programme-continue",
+        ),
+      ).toHaveLength(1)
+    })
+
     it("offers Skip as a trailing native header item that stores an empty name", async () => {
       await render(<ProgrammeScreen />)
       const options = screenOptions()
@@ -143,6 +186,20 @@ describe("ProgrammeScreen", () => {
 
   describe("on Android", () => {
     usePlatform("android")
+
+    it("keeps resize-driven behavior while allowing taps through the keyboard", async () => {
+      const view = await render(<ProgrammeScreen />)
+      const avoiding = view.getByTestId("keyboard-avoiding-layout")
+      const scroll = view.getByTestId("keyboard-scroll-layout")
+
+      expect(avoiding.props.behavior).toBeUndefined()
+      expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
+      expect(
+        scroll.queryAll(
+          (node) => node.props.testID === "onboarding-programme-continue",
+        ),
+      ).toHaveLength(1)
+    })
 
     it("offers Skip as a headerRight control meeting the 48dp target", async () => {
       await render(<ProgrammeScreen />)

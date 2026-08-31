@@ -607,16 +607,16 @@ was persisted, but the next assertion ran against the wrong screen. The repair m
 value in the live input, then prove the persisted row after state-preserving re-entry before any
 toggle.
 
-- [ ] 30.1 Remove the final `hideKeyboard` from `event-checklists.yaml`; require a 15-second
+- [x] 30.1 Remove the final `hideKeyboard` from `event-checklists.yaml`; require a 15-second
       selector conjunctively matching `id: checklist-input-.*` and exact `text: "Buy notebook"`, then
       cold re-enter Calendar without `clearState`, reopen `E2E Today Lecture(,.*)?`, assert the typed
       row, and only then toggle it. Preserve the later cold re-entry, exact `progress-1-1`, reopen,
       hard-delete, and exact absence proof.
-- [ ] 30.2 Extend the focused checklist/general Maestro proof and mutation cases to reject any
+- [x] 30.2 Extend the focused checklist/general Maestro proof and mutation cases to reject any
       returned `hideKeyboard`, removed or widened exact input-value gate, removed or reordered
       pre-toggle re-entry, or loss/reordering of add → type → persist → toggle → progress → delete →
       absent. Assert `mobile/.maestro/**` contains zero `hideKeyboard` commands.
-- [ ] 30.3 Run the focused selector/mutation suite, parse `event-checklists.yaml` with pinned
+- [x] 30.3 Run the focused selector/mutation suite, parse `event-checklists.yaml` with pinned
       Maestro 2.8.0, run applicable formatting and lint, strict OpenSpec validation, and
       `git diff --check`. Confirm no selector id, top-level flow order, Architecture Book rule, or
       production behavior changed.
@@ -631,21 +631,21 @@ region. Maestro selected the correct id, but its tap landed in keyboard/predicti
 `E2E Institution` to `E2E Institutiont`, and never left the institution route. The programme form
 uses the same centered body-CTA layout and carries the same latent terminus.
 
-- [ ] 31.1 Update only `institution-name-screen.tsx`, `programme-screen.tsx`, and the minimum
+- [x] 31.1 Update only `institution-name-screen.tsx`, `programme-screen.tsx`, and the minimum
       shared/local styles to apply the established `KeyboardAvoidingView` plus scroll/tap-handling form
       pattern. Keep both body Continue controls visibly above and tappable through the iOS keyboard;
       preserve Android behavior, validation, draft writes, route targets, Skip, labels, ids, and
       entered values, with no new dependency or keyboard primitive.
-- [ ] 31.2 In shared `ical-import.yaml`, retain both explicit CTA-id waits and taps, but precede
+- [x] 31.2 In shared `ical-import.yaml`, retain both explicit CTA-id waits and taps, but precede
       each with a 15-second selector conjunctively matching the exact input id/value pair:
       `onboarding-institution-input` + `E2E Institution`, then `onboarding-programme-input` +
       `E2E Programme`. Do not add `hideKeyboard`, Return submission, coordinates, optional commands,
       deep-link bypasses, or platform forks.
-- [ ] 31.3 Add focused component and Maestro structural/mutation coverage that pins keyboard-safe
+- [x] 31.3 Add focused component and Maestro structural/mutation coverage that pins keyboard-safe
       layout semantics on both screens and each input → exact-value gate → CTA wait → CTA tap sequence.
       The proof must fail if either iOS CTA can return behind the keyboard, either exact gate is
       removed/widened, either CTA is bypassed/reordered, or any `hideKeyboard` returns.
-- [ ] 31.4 Run the two focused component suites, focused Maestro selector/mutation proof, pinned
+- [x] 31.4 Run the two focused component suites, focused Maestro selector/mutation proof, pinned
       Maestro 2.8.0 syntax for `ical-import.yaml`, TypeScript/lint as applicable, formatting, strict
       OpenSpec validation, and `git diff --check`. Confirm the local layout repair does not change a
       binding Architecture Book contract; binding Architecture Book edits remain out of scope.
