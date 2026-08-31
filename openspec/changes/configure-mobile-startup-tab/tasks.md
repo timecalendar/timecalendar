@@ -49,5 +49,5 @@
 ## 8. Local green and handoff evidence
 
 - [x] 8.1 Run Prettier on changed files, then focused preference/resolver/Settings/notification/splash suites while iterating; ensure logic branches meet the 90% threshold.
-- [ ] 8.2 Run the complete mobile local gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`. Record exact commands/results; do not touch OpenAPI/generated, native/store/EAS, server migrations, deploy/CI workflows, or Flutter production files.
+- [x] 8.2 Run the complete mobile local gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`. Record exact commands/results; do not touch OpenAPI/generated, native/store/EAS, server migrations, deploy/CI workflows, or Flutter production files.
 - [ ] 8.3 Run `openspec validate configure-mobile-startup-tab` and confirm every task is checked with evidence or explicitly handed to the named non-blocking human inbox note before implementation-stage handoff.
