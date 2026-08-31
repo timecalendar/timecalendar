@@ -61,6 +61,7 @@ jobs:
     # emulator usable but the whole job is the long pole alongside the iOS one.
     timeout-minutes: 60
     env:
+      BACKEND_ENVIRONMENT_CAPABILITY: development
       # Reuse the build-server artifact image — the shared lifecycle skips its
       # own build when E2E_SERVER_IMAGE is set (ci/e2e-server.sh).
       E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
@@ -187,6 +188,7 @@ jobs:
     # so it can't be cached across runs. npm is cached by setup-node.
     timeout-minutes: 75
     env:
+      BACKEND_ENVIRONMENT_CAPABILITY: development
       # Maestro boots its XCTest driver with `xcodebuild test-without-building`,
       # then polls the driver's local HTTP port until it's listening. On the
       # macos-26 / Xcode 26 runner this cold start is intermittently flaky: when
