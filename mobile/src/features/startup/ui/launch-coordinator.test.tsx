@@ -100,6 +100,7 @@ describe("LaunchCoordinator", () => {
     mockRunMigrations.mockImplementation(
       () => new Promise<void>((resolve) => (releaseMigration = resolve)),
     )
+    mockResolveNotification.mockImplementation(() => new Promise(() => {}))
     mockGetPreference.mockReturnValue("calendar")
     const view = await render(<LaunchCoordinator />)
 

@@ -9,6 +9,7 @@ import { type LaunchDestination, resolveLaunchDestination } from "./resolver"
 export async function resolveLaunchPrerequisites(
   initialPath: string,
   sync: () => Promise<unknown>,
+  getCurrentPath: () => string = () => initialPath,
 ): Promise<LaunchDestination> {
   await runMigrations()
   // Phase 09 insertion point: import Flutter-owned data here, before any RN
@@ -18,7 +19,8 @@ export async function resolveLaunchPrerequisites(
   // priority native notification or identity reads; some native messaging
   // implementations do not settle getInitialNotification() for deep-link
   // launches that contain no notification response.
-  if (initialPath !== "/" && initialPath !== "") return initialPath
+  const currentPath = getCurrentPath()
+  if (currentPath !== "/" && currentPath !== "") return currentPath
   const notificationIntent = await resolveInitialNotificationIntent(sync)
   const calendars = await findAll()
   const preference = getStartupTabPreference()
