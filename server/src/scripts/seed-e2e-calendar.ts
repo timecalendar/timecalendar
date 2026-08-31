@@ -27,31 +27,24 @@ export const E2E_CALENDAR_TOKEN = "e2e-smoke-calendar"
 export const E2E_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000001"
 
 /**
- * A SECOND, dedicated token-addressable calendar, for the rename round-trip flow
- * only (`mobile/.maestro/user-calendar-rename.yaml`).
- *
- * A rename is a durable server mutation, and `run_e2e.sh` runs the whole flow
- * folder in one device session — renaming `e2e-smoke-calendar` would change the
- * name eleven other flows read, for reasons no one would attribute to the rename
- * flow. So the rename flow gets its own calendar with its own token.
- *
- * Its name is the one piece of seeded state a run mutates, which is why the save
- * below is keyed on the fixed id: every `up` writes the baseline name back over
- * whatever a previous run renamed it to, keeping repeat runs reproducible. Its
- * events are asserted by no flow and are deliberately minimal.
+ * A second token-addressable calendar reserved for the rename round trip.
+ * Renaming the shared smoke calendar would mutate state consumed by the other
+ * flows, so every seed restores this calendar's fixed baseline name instead.
  */
 export const E2E_RENAME_CALENDAR_TOKEN = "e2e-rename-calendar"
 
 export const E2E_RENAME_CALENDAR_ID = "e2e0e2e0-0000-4000-8000-000000000002"
 
-/**
- * The baseline name the rename flow asserts before renaming. ASCII-safe and
- * unique across the seeded set, so a `text:` selector cannot match another row.
- */
 export const E2E_RENAME_CALENDAR_NAME = "E2E Rename Baseline"
 
 /**
- * Seeds the deterministic E2E smoke calendar (`Calendar` + `CalendarContent`).
+ * Builds the deterministic E2E smoke calendar's events for a given seed instant.
+ *
+ * Split out of `seedE2eCalendar` as a **pure** function of `now` so the seed's
+ * date contract is provable without a database: the rollover proof in
+ * `seed-e2e-calendar.spec.ts` pins `now` on either side of a UTC midnight and
+ * asserts which agenda window each event lands in. Mocking the repositories would
+ * have tested TypeORM, not the arithmetic that actually broke.
  *
  * The events are dated **relative to the seed run** so they always land in the
  * calendar's current-week view. `typeorm-fixtures-cli` does not evaluate its
@@ -59,36 +52,46 @@ export const E2E_RENAME_CALENDAR_NAME = "E2E Rename Baseline"
  * expressed in a YAML fixture — this guarded seed step exists instead (see
  * `openspec/changes/nominal-e2e-flows/design.md`, Decision 3).
  *
- * Two anchors (all ASCII-safe titles/locations — `mobile/e2e/README.md` avoids
+ * Three anchors (all ASCII-safe titles/locations — `mobile/e2e/README.md` avoids
  * cross-platform accent-matching fragility):
  *
  * - The Mon/Tue/Wed **week** events populate the week grid (a weekday anchor is
  *   always inside the visible week even with weekends hidden).
  * - A **today**-anchored dense-overlap cluster (`E2E Overlap A`/`B` overlapping
  *   10:00–12:00 / 11:00–13:00, plus the stable `E2E Today Lecture` for the
- *   details/checklist round-trip and `E2E Today Seminar` for the hide/un-hide
- *   round-trip) populates the home today-timeline and exercises the grid's
- *   column-packing — the Mon/Tue/Wed anchor is usually not today, so home would
- *   otherwise be empty.
+ *   details/checklist round-trip) populates the home today-timeline and exercises
+ *   the grid's column-packing — the Mon/Tue/Wed anchor is usually not today, so
+ *   home would otherwise be empty.
+ * - A **next-UTC-day** hide pair (`E2E Hide Seminar` + its `E2E Hide Control`
+ *   companion) that `hidden-events.yaml` hides and un-hides. See the rollover
+ *   contract below for why it is deliberately NOT in the today cluster.
+ *
+ * UTC-rollover contract (run 33220510226): the seed runs once, at the start of a
+ * job that can last over an hour, and the app computes the agenda's window from
+ * the *device's* clock at the moment the flow mounts it. That window is
+ * `[today 00:00, today + 7 days)` — half-open and **forward-only**
+ * (`mobile/src/features/calendar/ui/calendar-screen/use-calendar-screen-controller.ts`).
+ * When a long job crosses UTC midnight, every seed-day event falls out of it: the
+ * iOS job seeded on Aug 28, reached `hidden-events` on Aug 29, and the agenda
+ * rendered `No events this period.` — so the hide target AND its non-hidden
+ * control both vanished, and the flow failed on a date defect that reads exactly
+ * like a broken hide. Anchoring the hide pair on the **next** UTC day puts it
+ * inside the window from both the seed day's and the following day's anchor, so
+ * one midnight crossing cannot move it out. The native job is bounded far below a
+ * second crossing.
+ *
+ * The today cluster deliberately keeps its seed-day anchor: `home.yaml` asserts
+ * the *today* timeline, which no other anchor can satisfy. It therefore carries
+ * the same one-midnight exposure, recorded rather than papered over — see
+ * `openspec/changes/restore-mobile-e2e-local-backend-capability/tasks.md` §21.
  *
  * UTC-"today" caveat: "today" is `now`'s **UTC** day (matching the existing UTC
  * week arithmetic). CI runs the server and device in UTC, so it is deterministic
  * there. On a developer machine whose local day differs from UTC near midnight,
  * the device's local-time `isToday` could disagree with this UTC "today" — a
  * known local-run edge, not a CI flake.
- *
- * `syncPlannedAt` is set well into the future on purpose: `CalendarSyncAllService`
- * only re-fetches a calendar whose planned sync date has passed, so a future
- * plan keeps `/calendars/sync` from making an external iCal call — it just
- * returns this seeded `CalendarContent`.
  */
-export const seedE2eCalendar = async (dataSource: DataSource) => {
-  const schoolRepository = dataSource.getRepository(School)
-
-  const school = await schoolRepository.findOneBy({ code: "mygamingacademia" })
-
-  const now = new Date()
-
+export const buildE2eCalendarEvents = (now: Date): CalendarEvent[] => {
   // Anchor the events on the Monday of the current week (always a weekday, so
   // they show even with weekends hidden, and always inside the visible week).
   // All arithmetic is in UTC: the seed host and the test emulator can be in
@@ -106,16 +109,24 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
     return date
   }
 
-  // `now`'s UTC day at a chosen hour — the today anchor (see the UTC-"today"
-  // caveat above). Home asserts the today timeline, so the cluster must be today,
-  // not Monday.
-  const today = (hour: number, minute = 0) => {
+  // `now`'s UTC day, offset by whole UTC days, at a chosen hour — the today
+  // anchor at `dayOffset = 0` (see the UTC-"today" caveat above). Home asserts the
+  // today timeline, so the cluster must be today, not Monday.
+  const fromToday = (dayOffset: number, hour: number, minute = 0) => {
     const date = new Date(now)
+    date.setUTCDate(date.getUTCDate() + dayOffset)
     date.setUTCHours(hour, minute, 0, 0)
     return date
   }
 
-  const events: CalendarEvent[] = [
+  const today = (hour: number, minute = 0) => fromToday(0, hour, minute)
+
+  // The UTC day immediately after the seed run — inside the agenda's forward-only
+  // seven-day window from both the seed day's anchor and the next day's, so one
+  // midnight crossing mid-job cannot move these events out of it.
+  const nextDay = (hour: number, minute = 0) => fromToday(1, hour, minute)
+
+  return [
     {
       uid: "e2e-event-1",
       title: "Cours E2E Test",
@@ -161,9 +172,9 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
     // Today-anchored dense-overlap cluster (ASCII-safe titles). The two overlap
     // events (10:00-12:00 / 11:00-13:00) exercise the grid + home mini-timeline
     // column-packing. `E2E Today Lecture` (stable, unique title) is the tile the
-    // calendar/details/checklist flows tap; `E2E Today Seminar` (stable, unique,
-    // distinct) is the tile the hide/un-hide flow uses so the two flows don't
-    // collide.
+    // calendar/details/checklist flows tap. The hide/un-hide pair used to live
+    // here too; it now sits on the next UTC day (see the rollover contract above)
+    // and stays titled distinctly so the flows still cannot collide.
     {
       uid: "e2e-today-overlap-a",
       title: "E2E Overlap A",
@@ -207,14 +218,39 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
       fields: null,
       exportedAt: now,
     },
+    // Next-UTC-day hide pair. Date-neutral titles on purpose: an `E2E Today …`
+    // name on an event that is deliberately NOT today is the kind of drift that
+    // sends the next reader looking for a bug in the app.
+    //
+    // `E2E Hide Control` is the non-hidden companion `hidden-events.yaml` waits
+    // for before `assertNotVisible`, so a silently empty agenda cannot pass that
+    // assertion vacuously. It has to share the target's day: the flow's previous
+    // control was the seed-day `E2E Today Lecture`, which falls out of the
+    // agenda's forward-only window on exactly the midnight crossing the target
+    // was moved to survive.
     {
-      uid: "e2e-today-seminar",
-      title: "E2E Today Seminar",
-      startsAt: today(16),
-      endsAt: today(18),
+      uid: "e2e-hide-control",
+      title: "E2E Hide Control",
+      startsAt: nextDay(14),
+      endsAt: nextDay(16),
+      location: "Room E2E Control",
+      allDay: false,
+      description:
+        "Non-hidden neighbour proving the E2E hide filter hides only its target.",
+      teachers: ["E2E Lecturer"],
+      tags: [],
+      type: EventType.CM,
+      fields: null,
+      exportedAt: now,
+    },
+    {
+      uid: "e2e-hide-seminar",
+      title: "E2E Hide Seminar",
+      startsAt: nextDay(16),
+      endsAt: nextDay(18),
       location: "Room E2E Seminar",
       allDay: false,
-      description: "Stable today event the E2E hide/un-hide flow toggles.",
+      description: "Stable event the E2E hide/un-hide flow toggles.",
       teachers: ["E2E Lecturer"],
       tags: [],
       type: EventType.TD,
@@ -222,12 +258,27 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
       exportedAt: now,
     },
   ]
+}
 
-  // `Calendar.content` is a non-cascading OneToOne (the `CalendarContent` side
-  // owns the join column), so the two rows are saved separately — the same
-  // split `CalendarSyncService.saveCalendar` uses in production. Saving by the
-  // FIXED id is what makes every `up` idempotent, and for the rename calendar it
-  // is also what RESETS the name a previous run's rename left behind.
+/**
+ * Seeds the deterministic E2E smoke calendar (`Calendar` + `CalendarContent`).
+ *
+ * The event set and its date contract live in the pure `buildE2eCalendarEvents`
+ * above; this function is the database side only.
+ *
+ * `syncPlannedAt` is set well into the future on purpose: `CalendarSyncAllService`
+ * only re-fetches a calendar whose planned sync date has passed, so a future
+ * plan keeps `/calendars/sync` from making an external iCal call — it just
+ * returns this seeded `CalendarContent`.
+ */
+export const seedE2eCalendar = async (dataSource: DataSource) => {
+  const schoolRepository = dataSource.getRepository(School)
+
+  const school = await schoolRepository.findOneBy({ code: "mygamingacademia" })
+
+  const now = new Date()
+  const events = buildE2eCalendarEvents(now)
+
   await saveE2eCalendar(dataSource, {
     fields: {
       id: E2E_CALENDAR_ID,
@@ -240,9 +291,6 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
     school,
   })
 
-  // The rename flow's own calendar. Its events are minimal on purpose: no flow
-  // asserts them, and keeping them off "today" avoids colliding with the smoke
-  // calendar's assertions once both tokens are held in the same session.
   await saveE2eCalendar(dataSource, {
     fields: {
       id: E2E_RENAME_CALENDAR_ID,
@@ -254,8 +302,8 @@ export const seedE2eCalendar = async (dataSource: DataSource) => {
       {
         uid: "e2e-rename-event-1",
         title: "E2E Rename Filler",
-        startsAt: at(0, 8),
-        endsAt: at(0, 9),
+        startsAt: events[0].startsAt,
+        endsAt: events[0].endsAt,
         location: "Room E2E Rename",
         allDay: false,
         description: "Filler event; the rename flow asserts names, not events.",

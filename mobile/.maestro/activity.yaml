@@ -178,11 +178,13 @@ appId: fr.samuelprak.timecalendar.dev
 # The higher UUID is row 50 (first response); the lower UUID and older anchor
 # exist only on the following response, so observing all three proves the tie
 # order and scroll-driven pagination through the real server.
+# Run 33330342869 reached row 50 while still advancing after 60s: Android was at
+# fillers 40-42 and iOS at 31-33, so only this bounded traversal gets 120s.
 - scrollUntilVisible:
     element:
       id: "activity-new-e2e-activity-tie-higher"
     direction: DOWN
-    timeout: 60000
+    timeout: 120000
 - assertVisible:
     id: "activity-new-e2e-activity-tie-higher"
 - scrollUntilVisible:

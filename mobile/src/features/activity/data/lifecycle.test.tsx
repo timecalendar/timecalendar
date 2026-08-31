@@ -65,9 +65,10 @@ jest.mock("@/api/mutator", () => ({
 /* eslint-disable @typescript-eslint/no-require-imports */
 const {
   useActivityForegroundRefresh,
-  useActivityOwnershipPrune,
+  useActivityOwnershipReconciliation,
   useActivityScreenRefresh,
 } = require("./lifecycle") as typeof import("./lifecycle")
+const coordinator = require("./coordinator") as typeof import("./coordinator")
 const repository = require("./repository") as typeof import("./repository")
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -383,14 +384,16 @@ describe("useActivityScreenRefresh", () => {
   })
 })
 
-describe("useActivityOwnershipPrune", () => {
+describe("useActivityOwnershipReconciliation", () => {
   async function mountPrune(
     calendars: Record<string, unknown>[],
     loaded: boolean,
   ) {
     mockUseUserCalendars.mockReturnValue(calendars)
     mockUseUserCalendarsLoaded.mockReturnValue(loaded)
-    const rendered = await renderHook(() => useActivityOwnershipPrune())
+    const rendered = await renderHook(() =>
+      useActivityOwnershipReconciliation(),
+    )
     await flush()
     return rendered
   }
@@ -469,11 +472,153 @@ describe("useActivityOwnershipPrune", () => {
     expect(mockPrune).not.toHaveBeenCalled()
   })
 
-  it("prunes nothing when a calendar is added", async () => {
+  it("joins a sync-triggered newest refresh while reopening the expanded chain", async () => {
+    await repository.storeNewestPage({
+      rows: [],
+      asOf: AS_OF,
+      heldCalendarIds: ["cal-1"],
+      nextCursor: null,
+    })
     const { rerender } = await mountPrune([calendar("cal-1")], true)
+    mockFindAll.mockResolvedValue([calendar("cal-1"), calendar("cal-2")])
+    const pending = deferred<unknown>()
+    mockFetch.mockReturnValueOnce(pending.promise)
+
+    const syncTriggered = coordinator.refreshNewestPage({ force: true })
+    await flush()
     await observe(rerender, [calendar("cal-1"), calendar("cal-2")])
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    pending.resolve({
+      items: [],
+      nextCursor: "cursor-expanded",
+      asOf: AS_OF,
+    })
+    await expect(syncTriggered).resolves.toEqual({ status: "updated" })
+    await flush()
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    await expect(repository.readActivityState()).resolves.toMatchObject({
+      olderPageComplete: false,
+      olderPageCursor: "cursor-expanded",
+    })
+  })
+
+  it("loads the expanded calendar's older page after the baseline chain was complete", async () => {
+    await repository.storeNewestPage({
+      rows: [
+        {
+          id: "baseline",
+          calendarId: "cal-1",
+          calendarName: CALENDAR_NAME,
+          changeJson: JSON.stringify({
+            oldItems: [],
+            newItems: [],
+            changedItems: [],
+          }),
+          createdAt: "2026-06-16T10:00:00.000Z",
+          updatedAt: "2026-06-16T10:00:00.000Z",
+        },
+      ],
+      asOf: AS_OF,
+      heldCalendarIds: ["cal-1"],
+      nextCursor: null,
+      unreadCount: 7,
+    })
+    await repository.markActivityRead("2026-06-16T10:30:00.000Z")
+    const { rerender } = await mountPrune([calendar("cal-1")], true)
+
+    mockFindAll.mockResolvedValue([calendar("cal-1"), calendar("cal-2")])
+    mockFetch
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: "tie-higher",
+            calendarId: "cal-2",
+            calendarName: CALENDAR_NAME,
+            calendarChange: {
+              oldItems: [],
+              newItems: [],
+              changedItems: [],
+            },
+            createdAt: "2026-06-16T11:00:00.000Z",
+            updatedAt: "2026-06-16T11:00:00.000Z",
+          },
+        ],
+        nextCursor: "cursor-expanded",
+        asOf: AS_OF,
+        unreadCount: 52,
+      })
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: "tie-lower",
+            calendarId: "cal-2",
+            calendarName: CALENDAR_NAME,
+            calendarChange: {
+              oldItems: [],
+              newItems: [],
+              changedItems: [],
+            },
+            createdAt: "2026-06-16T11:00:00.000Z",
+            updatedAt: "2026-06-16T11:00:00.000Z",
+          },
+          {
+            id: "older-page",
+            calendarId: "cal-2",
+            calendarName: CALENDAR_NAME,
+            calendarChange: {
+              oldItems: [],
+              newItems: [],
+              changedItems: [],
+            },
+            createdAt: "2026-06-15T11:00:00.000Z",
+            updatedAt: "2026-06-15T11:00:00.000Z",
+          },
+        ],
+        nextCursor: null,
+        asOf: AS_OF,
+      })
+
+    await observe(rerender, [calendar("cal-1"), calendar("cal-2")])
+    await expect(coordinator.loadOlderPage()).resolves.toEqual({
+      status: "loaded",
+    })
 
     expect(mockPrune).not.toHaveBeenCalled()
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    const olderRequest = JSON.parse(
+      (mockFetch.mock.calls[1]?.[1] as RequestInit).body as string,
+    ) as Record<string, unknown>
+    expect(olderRequest.cursor).toBe("cursor-expanded")
+    expect((await repository.listActivityLogs()).map(({ id }) => id)).toEqual([
+      "tie-lower",
+      "tie-higher",
+      "baseline",
+      "older-page",
+    ])
+    await expect(repository.readActivityState()).resolves.toMatchObject({
+      lastReadAt: new Date("2026-06-16T10:30:00.000Z"),
+      unreadCount: 52,
+      olderPageCursor: null,
+      olderPageComplete: true,
+    })
+  })
+
+  it("records a pagination-reopen failure without refreshing or exposing calendar data", async () => {
+    mockFake.spies.transaction.mockImplementationOnce(() => {
+      throw new Error("sqlite boom")
+    })
+    const { rerender } = await mountPrune([calendar("cal-1")], true)
+
+    await observe(rerender, [calendar("cal-1"), calendar("cal-2")])
+
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(mockRecord).toHaveBeenCalledWith(
+      expect.any(Error),
+      "activity/pagination-reopen",
+    )
+    expectNoPersonalDataRecorded()
   })
 
   it("prunes to the full current set on a simultaneous add and remove", async () => {

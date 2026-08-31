@@ -95,8 +95,19 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn: "Cancel"
 - assertVisible:
     id: "personal-event-delete"
-# Return to the list and prove cancellation preserved the durable row.
-- back
+# Return to the owning root route without clearing state, then prove cancellation
+# preserved the durable row. A bare `back` drives Android's hardware key but can
+# report a completed no-op left-edge swipe on an iOS native-stack screen (run
+# 33211705313), so use the same state-preserving cold deep-link idiom as entry.
+- stopApp
+- openLink: timecalendar-dev://personal-events
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
 - extendedWaitUntil:
     visible: "Maestro CRUD event"
     timeout: 60000

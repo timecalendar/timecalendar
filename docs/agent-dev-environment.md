@@ -264,7 +264,7 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
 `setup-dev.sh`) is shared across worktrees and does **not** need re-running.
 
 > **`core.hooksPath` is host-wide, and the last install wins.** It is a single value
-> in the *shared* `.git/config`, so it is the same for every worktree on this host.
+> in the _shared_ `.git/config`, so it is the same for every worktree on this host.
 > Installing husky anywhere rewrites it everywhere: husky 9 sets `.husky/_`, husky 7
 > set `.husky`. A worktree on an older, husky-7-pinned branch therefore flips it back
 > whenever it provisions. The symptom is a **worktree that silently stops linting**;
@@ -380,18 +380,34 @@ cd mobile
 - The wrapper owns only the Maestro half; the server half is `ci/e2e-server.sh`.
 - Each top-level YAML is discovered lexically and receives a fresh Maestro
   process. Attempts default to one. `--startup-attempts` is bounded to 1–4 and
-  retries only a proven first-`launchApp` XCTest driver transport failure with
-  no assertion evidence; assertion, application, and unknown failures stop
-  immediately with their original status.
+  retries **structurally**, from Maestro's per-flow `commands.json` rather than
+  from stack-trace text (ADR 038, `mobile/e2e/classify-maestro-attempt.mjs`): an
+  attempt is retryable only when the output holds no assertion evidence, no
+  independent earlier command reached `FAILED`, and the final restart epoch
+  contains only startup commands or non-evaluated assertions (or no record
+  exists because the session died before opening the flow). A failed
+  `runFlowCommand` is non-independent only while it remains the final startup
+  command's live lower-depth ancestor, with every intervening entry deeper;
+  same-depth or closed wrappers and failed child verdicts stay terminal. The
+  latest explicit launch/stop/open
+  command at the failing command's depth begins that epoch: a completed assertion
+  in an earlier phase may be ignored, but an evaluated assertion or non-startup
+  interaction in the current epoch is terminal. Malformed records fail closed.
+  Every retry reruns the entire top-level flow in a fresh process. A deterministic
+  launch failure matches the startup shape too and simply exhausts the four
+  attempts, still red.
 - It does **not** build/install the app. A **release-config, `development`-variant**
-  build must already be installed on the connected simulator/emulator, with
-  `EXPO_PUBLIC_API_URL` baked at build time to the platform's host path:
+  build with the independent `development` backend capability must already be
+  installed on the connected simulator/emulator. Supply the complete build
+  contract, with `EXPO_PUBLIC_API_URL` baked to the platform's host path:
   - Android emulator: `http://10.0.2.2:3005`
   - iOS simulator: `http://localhost:3005`
   ```bash
-  APP_VARIANT=development EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
+  APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+    EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
     npx expo run:android --variant release
-  APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
+  APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+    EXPO_PUBLIC_API_URL=http://localhost:3005 \
     npx expo run:ios --configuration Release
   ```
 
@@ -504,8 +520,13 @@ The native workflow pins and prints Maestro 2.8.0 in both jobs. Android bounds
 the Release Gradle build to 3072 MiB heap, 1024 MiB Metaspace, two workers, and
 no daemon. iOS prints the Xcode path/version and available plus selected
 simulator name, UDID, and runtime. Local shell/static checks prove harness and
-workflow control flow; only the post-merge `main` run on GitHub-hosted runners
-provides definitive simulator/emulator proof on this non-virtualized host.
+workflow control flow, including the complete `APP_VARIANT=development`,
+`BACKEND_ENVIRONMENT_CAPABILITY=development`, and platform-local URL contract in
+every prebuild and release-compilation step. A labeled PR run with baseline,
+Android, and iOS checks passing on the same exact head provides definitive
+simulator/emulator proof for that PR head on this non-virtualized host; when a PR
+does not carry the label, only the path-triggered post-merge `main` run provides
+that native proof.
 | **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. Its `test` job runs, against the image built from the same SHA: `Run tests` (`npm run test`), **`Run server E2E tests`** (`npm run test:e2e -- --runInBand` — the in-process Nest HTTP smoke of §7; a missing config, zero discovered specs, or a failed assertion fails at that named step), `Verify server image runtime lifecycle`, and the OpenAPI drift check. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
 | **`delete-old-images.yaml`** | scheduled | Image cleanup. |

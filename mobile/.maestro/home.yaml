@@ -44,7 +44,29 @@ appId: fr.samuelprak.timecalendar.dev
 # The real synced today event renders on the today timeline — `E2E Today Lecture`
 # is a today-anchored seeded event. Its presence (NOT "Nothing planned.") is the
 # round-trip proof (do NOT weaken this to the empty-day state — that reintroduces
-# the gap this flow closes).
+# the gap this flow closes). `(,.*)?` because a today-timeline tile is an
+# accessibility container labelled `{{title}}, {{time}} {{location}}`, so iOS
+# exposes only that composed label — see calendar.yaml for the full rationale.
+#
+# Wait for the sync to paint the timeline before scrolling: the app-name heading
+# renders before the events arrive, so scrolling immediately would race the render
+# and scroll an empty grid to its end. `E2E Overlap A` is the 10:00 tile, the first
+# one the timeline draws, so it is on screen as soon as there is anything to reveal.
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Overlap A(,.*)?"
     timeout: 60000
+# The tile is below the fold and its position is time-of-day dependent, so a plain
+# assert is only reliable for a run that happens to start early. The timeline is a
+# fixed-scale grid whose top is the day's first event (10:00, `E2E Overlap A`); the
+# lecture is at 14:00, four hours of pixels further down, and the viewport shows
+# roughly two. In run 33193527228 the Android screenshot showed the grid rendered
+# correctly from 10:00 to 12:00 with the lecture simply off-screen — the same
+# below-the-fold class as the Settings rows, not a sync or data failure. Centring
+# also keeps the revealed tile clear of the tab bar and the compose FAB.
+- scrollUntilVisible:
+    element:
+      text: "E2E Today Lecture(,.*)?"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- assertVisible: "E2E Today Lecture(,.*)?"

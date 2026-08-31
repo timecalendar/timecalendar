@@ -2,9 +2,19 @@
 # 4 / add-mobile-ical-import).
 #
 # Cold-launches the development-variant app, deep-links to the onboarding welcome
-# surface, taps the "Add by URL" CTA, asserts the URL-entry screen renders (a
+# surface, reaches the "Add by URL" entry, asserts the URL-entry screen renders (a
 # stable title assertion), and submits with an EMPTY field to assert the inline
-# validation error shows — DETERMINISTIC, NO NETWORK, cross-platform.
+# validation error shows. The VALIDATION half is deterministic and offline;
+# cross-platform throughout.
+#
+# The entry point MOVED twice. Commit 482f134 moved it from the welcome carousel
+# to `onboarding-school-missing`; merged commit a10ab396 then made that action open
+# the institution → programme → connect → manual-import journey instead of jumping
+# straight to /onboarding/ical-url. This flow follows the shipped journey and picks
+# its URL option, so it still proves the entry is reachable rather than deep-linking
+# around it. The school step still performs the LIVE GET /schools read before its
+# footer action mounts, so the reachability half requires the harness server; only
+# the empty-submit VALIDATION half below is offline.
 #
 # The actual import ROUND-TRIP is NOT e2e-driven: the dev harness (ci/e2e-server.sh)
 # seeds no parseable .ics import endpoint and a live external .ics would be flaky
@@ -31,12 +41,103 @@ appId: fr.samuelprak.timecalendar.dev
       - tapOn:
           text: "Open"
           optional: true
+# The carousel's first-page title, NOT the bare app name — `TimeCalendar` is
+# `app.name` verbatim and does render, but on the home screen, not here (see
+# onboarding.yaml for the full note). Android reached this flow first and failed
+# here against a screenshot showing the welcome page correctly rendered.
 - extendedWaitUntil:
-    visible: "TimeCalendar"
+    visible: "Welcome to TimeCalendar!"
     timeout: 60000
-# Tap the "Add by URL" CTA → pushes /onboarding/ical-url.
+# Advance the welcome carousel and take the final CTA → pushes /onboarding/school.
 - tapOn:
-    id: "onboarding-welcome-url-cta"
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-welcome-cta"
+# The school step renders. Its header/footer only mount in the browsing state, so
+# waiting on the title also guarantees the list finished loading and the
+# "I can't find my school" footer action is on screen.
+- extendedWaitUntil:
+    visible: "Select your school"
+    timeout: 60000
+# "I can't find my school" → begins the unlisted-institution import journey.
+- tapOn:
+    id: "onboarding-school-missing"
+# Name the unlisted institution, supply a programme, continue through the
+# connection guidance, then take the manual-import screen's URL option. These
+# stable ids are shared by Android and iOS; no platform branch is required.
+# Run 33379542987 proved that a focused field can cover its Continue control and
+# consume the first otherwise-successful tap as keyboard dismissal. Reveal each
+# CTA fully, then keep one optional same-id tap as that bounded fallback.
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-institution-input"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-institution-input"
+- inputText: "E2E Institution"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-institution-input"
+      text: "E2E Institution"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "onboarding-institution-continue"
+    direction: DOWN
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-institution-continue"
+    timeout: 15000
+- tapOn:
+    id: "onboarding-institution-continue"
+- tapOn:
+    id: "onboarding-institution-continue"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-input"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-programme-input"
+- inputText: "E2E Programme"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-input"
+      text: "E2E Programme"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "onboarding-programme-continue"
+    direction: DOWN
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-continue"
+    timeout: 15000
+- tapOn:
+    id: "onboarding-programme-continue"
+- tapOn:
+    id: "onboarding-programme-continue"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-connect-continue"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-connect-continue"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-import-url"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-import-url"
 # The URL-entry screen renders.
 - extendedWaitUntil:
     visible: "Add a calendar by URL"

@@ -15,8 +15,8 @@
 # accent-matching fragility across platforms.
 #
 # Phase-3 ship 2 (completed picker) adds a STABLE school-search step (type a
-# matching / non-matching needle into the fixed onboarding-school-filter testID,
-# assert the seeded ASCII school shows / hides). The completed group step
+# matching / non-matching needle into the school search field, assert the seeded
+# ASCII school shows / hides — see the selector note below). The completed group step
 # (multi-select toggle + confirm + dismissTo) is Jest-proven, NOT e2e-driven: the
 # group tree's leaf selectors vary by school/fixture and a tap-into-nested-step
 # assertion would be brittle across both platforms (D5). The school→group
@@ -63,8 +63,17 @@ appId: fr.samuelprak.timecalendar.dev
 # The welcome surface renders. Generous timeout: a release-config iOS cold start +
 # JS bundle load can land just past Maestro's ~17s default. extendedWaitUntil is
 # the assert-with-timeout.
+#
+# Assert the carousel's FIRST-PAGE title, not the bare app name. `TimeCalendar` is
+# `app.name` verbatim, so it looks valid and does render — but on the HOME screen,
+# not here: the carousel (482f134) renders `onboarding.page.welcome.title`, and a
+# Maestro text selector is a fully anchored regex, so the bare app name matched
+# nothing on the very screen this step exists to prove. The id guard cannot catch
+# this one — both strings are real, they just belong to different screens — so the
+# EN literal is asserted directly, as onboarding.pageIndicator's neighbours below
+# already do (the e2e device runs in EN).
 - extendedWaitUntil:
-    visible: "TimeCalendar"
+    visible: "Welcome to TimeCalendar!"
     timeout: 60000
 # Advance welcome → agenda → notifications through the stable, platform-neutral
 # control and prove the final page before entering the existing school picker.
@@ -87,11 +96,24 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 # Stable accent-free school-search step (Phase-3 ship 2): typing a matching needle
 # keeps the seeded ASCII school visible; a non-matching needle hides it; clearing
-# brings it back. Cross-platform stable — the seeded name + the filter testID are
+# brings it back. Cross-platform stable — the seeded name + the EN placeholder are
 # fixed, no fixture-dependent selectors (unlike the group leaves — those stay
 # Jest-proven, D5). Proves the search filter end to end against the live list.
+#
+# The search field is now the native-header search bar (`headerSearchBarOptions`
+# in school-picker-screen.tsx), which react-native-screens' SearchBarProps cannot
+# carry a testID through. Android initially collapses that control to a `Search`
+# accessibility action, while iOS exposes the field directly, so the shared flow
+# optionally expands it before addressing the `Search schools` placeholder.
+# Android's native SearchView exposes that placeholder with leading spaces in
+# its hierarchy, so the anchored Maestro regex accepts only that native prefix.
+# Both labels are locale-stable under the suite's EN-device convention. The
+# former `onboarding-school-filter` testID is gone.
 - tapOn:
-    id: "onboarding-school-filter"
+    text: "Search"
+    optional: true
+- tapOn:
+    text: ".*Search schools"
 - inputText: "Gaming"
 - extendedWaitUntil:
     visible: "My Gaming Academia"

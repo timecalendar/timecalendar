@@ -12,6 +12,12 @@ on:
       - 'mobile/**'
       - 'openapi/**'
       - '.github/workflows/ci-mobile.yml'
+      # ci-mobile-e2e.yml's own build contract is proved by a step in this job
+      # (see "Check the native E2E harness and workflow contract"). The native
+      # jobs that used to be its only home are label-gated, so a PR touching
+      # only that file would otherwise run no gate at all and surface red on
+      # main.
+      - '.github/workflows/ci-mobile-e2e.yml'
 
 jobs:
   test-mobile:
@@ -29,12 +35,19 @@ jobs:
         cache: npm
         cache-dependency-path: mobile/package-lock.json
 
+    # Both proofs are pure bash + node against files in the repo — no device, no
+    # emulator, no Maestro (test_run_e2e.sh drives a fake one on PATH). They live
+    # here, not only in the label-gated native jobs, so that a change to
+    # ci-mobile-e2e.yml or to the E2E harness is checked by a gate that actually
+    # runs on the pull request.
+    - name: Check the native E2E harness and workflow contract
+      run: |
+        ./mobile/e2e/test_run_e2e.sh
+        ./mobile/e2e/test_ci_mobile_e2e.sh
+
     - name: Install dependencies
       working-directory: ./mobile
       run: npm ci
-
-    - name: Test mobile E2E harness
-      run: ./mobile/e2e/test_run_e2e.sh
 
     - name: Check generated API client matches the committed spec
       working-directory: ./mobile
