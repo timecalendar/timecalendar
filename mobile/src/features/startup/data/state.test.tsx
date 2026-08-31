@@ -4,8 +4,10 @@ import {
   beginLaunchNavigation,
   commitLaunch,
   failLaunch,
+  getLaunchState,
   resetLaunchStateForTests,
   retryLaunch,
+  useLaunchCommitted,
   useLaunchState,
 } from "./state"
 
@@ -32,5 +34,20 @@ describe("launch state", () => {
     expect(result.current.kind).toBe("failure")
     await act(async () => retryLaunch())
     expect(result.current).toEqual({ kind: "resolving", attempt: 1 })
+  })
+
+  it("normalizes non-Error failures", () => {
+    failLaunch("broken")
+    expect(getLaunchState()).toMatchObject({
+      kind: "failure",
+      error: expect.objectContaining({ message: "broken" }),
+    })
+  })
+
+  it("reports commitment reactively", async () => {
+    const { result } = await renderHook(() => useLaunchCommitted())
+    expect(result.current).toBe(false)
+    await act(async () => commitLaunch("/"))
+    expect(result.current).toBe(true)
   })
 })
