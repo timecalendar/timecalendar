@@ -13,6 +13,10 @@ ESLint enforces both boundaries. Native configuration is generated through Expo 
 
 Bundled Drizzle migrations run before the application becomes ready. A migration failure
 blocks readiness and is recorded; the app must not continue against an unknown schema.
+The startup coordinator awaits migration commit, then the typed Phase 09 legacy-import prerequisite,
+before mounting any database reader or runtime side effect. Phase 09 is currently a named no-op seam;
+its future implementation preserves this order. Failure or watchdog expiry exposes Retry and never
+opens navigation (ADR [054](./decisions/054-ordered-startup-and-first-launch-protected-routes.md)).
 
 Live queries observe SQLite update notifications and coalesce bursts into one read per
 macrotask. They ignore an in-flight result after unmount. Whole-table reads are intentional
@@ -57,6 +61,12 @@ finite, non-negative safe integers; missing, malformed, negative, or fractional 
 as absent. The tabs gate silently seeds an absent value to the bundled current integer, while
 an older integer presents only newer bundled releases. Phase 09 validates Flutter's
 `current_version` and calls `setChangelogSeenVersion` before tabs eligibility runs.
+
+First launch owns two separate total-decoded flat values behind `@/storage`:
+`firstLaunch.onboardingResolution` is `skipped`, `calendarImported`, or absent, while
+`firstLaunch.firstIcalReminderState` is `pending` or `dismissed` and defaults to `pending` for
+missing/malformed values. Both are environment-independent acknowledgements and survive
+backend-bound clearing. Skip changes only resolution; reminder dismissal changes only reminder state.
 
 Hidden events use one validated value shaped as `{ uidHiddenEvents, namedHiddenEvents }`.
 They are filtered at the calendar event-source seam, not deleted from the synced cache.

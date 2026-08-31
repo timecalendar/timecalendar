@@ -45,6 +45,7 @@ decision changes; use Git for its history.
 | [050](./050-token-authorized-shared-calendar-rename.md) | Authorize shared calendar rename by token possession                  |
 | [051](./051-path-level-v1-prefix-without-global-versioning.md) | Version individual controllers by path                        |
 | [052](./052-eventual-calendar-name-convergence-through-sync.md) | Converge calendar names through a name-only sync write         |
+| [054](./054-ordered-startup-and-first-launch-protected-routes.md) | Order startup before first-launch protected routes             |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`
@@ -60,6 +61,9 @@ decision changes; use Git for its history.
 > `049` belongs to [PR #328](https://github.com/timecalendar/timecalendar/pull/328).
 > Its open-PR reservation was detected before the calendar naming/import decisions
 > took `050`–`052`, so all four records remain distinct after the branches meet.
+> `053` belongs to open [PR #336](https://github.com/timecalendar/timecalendar/pull/336);
+> the first-launch decision rechecked open PRs immediately before authoring and therefore uses
+> `054`.
 >
 > A filename census finds TAKEN numbers, but only this prose finds RESERVED ones.
 > The reservation on `045` is invisible to `grep decisions/` because the PR holding
