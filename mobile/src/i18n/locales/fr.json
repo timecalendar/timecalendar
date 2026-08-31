@@ -315,6 +315,7 @@
   "calendar.event.label": "{{title}}, {{time}} {{location}}",
   "calendar.event.labelWithProgress": "{{title}}, {{time}} {{location}}. {{progress}}",
   "calendar.agenda.event.openLabel": "{{title}}, {{time}} {{location}}. Voir les détails",
+  "calendar.agenda.event.openLabelWithProgress": "{{title}}, {{time}} {{location}}. {{progress}}. Voir les détails",
   "calendar.agenda.nowLabel": "À venir",
   "calendar.sync.refreshingLabel": "Actualisation de votre calendrier",
   "calendar.sync.error": "Impossible d'actualiser votre calendrier. Affichage de votre dernière mise à jour.",

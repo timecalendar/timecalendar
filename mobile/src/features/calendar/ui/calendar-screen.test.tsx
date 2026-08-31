@@ -14,6 +14,7 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { calendarTimelineEventWindow } from "@/features/calendar/renderer"
+import { useChecklistProgress } from "@/features/event-checklists"
 import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { remove } from "@/storage"
 
@@ -36,6 +37,11 @@ jest.mock("@/features/calendar/data", () => {
     useCalendarEvents: jest.fn(),
     useSyncCalendars: jest.fn(),
   }
+})
+
+jest.mock("@/features/event-checklists", () => {
+  const actual = jest.requireActual("@/features/event-checklists")
+  return { ...actual, useChecklistProgress: jest.fn() }
 })
 
 // The month title + the view-menu / Today / Add actions live in the native nav
@@ -101,6 +107,7 @@ const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
+const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockSync = jest.fn()
 const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
@@ -144,6 +151,7 @@ beforeEach(() => {
   mockSetParams.mockReset()
   mockUseLocalSearchParams.mockReturnValue({})
   mockUseSyncCalendars.mockReturnValue(syncState())
+  mockUseChecklistProgress.mockReturnValue(new Map())
 })
 
 describe("CalendarScreen", () => {
@@ -183,6 +191,45 @@ describe("CalendarScreen", () => {
     expect(
       screen.getByLabelText("Algorithms, 09:00 – 10:30 Room A1"),
     ).toBeTruthy()
+  })
+
+  it("shows synced and personal checklist progress in week and day timed tiles", async () => {
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({ id: "personal-1" }),
+      calendarEvent({
+        id: "synced-1",
+        title: "Databases",
+        userCalendarId: "calendar-1",
+      }),
+    ])
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([
+        ["personal-1", { completed: 1, total: 2, isComplete: false }],
+        ["synced-1", { completed: 2, total: 2, isComplete: true }],
+      ]),
+    )
+    await render(<CalendarScreen />)
+
+    expect(mockUseChecklistProgress).toHaveBeenCalledWith([
+      "personal-1",
+      "synced-1",
+    ])
+    expect(
+      screen.getByText("1/2", { includeHiddenElements: true }),
+    ).toBeTruthy()
+    expect(
+      screen.getByText("2/2", { includeHiddenElements: true }),
+    ).toBeTruthy()
+    expect(
+      screen.getByLabelText(/1 of 2 checklist items completed/),
+    ).toBeTruthy()
+
+    fireEvent.press(screen.getByTestId("calendar-view-item-day"))
+    await waitFor(() => {
+      expect(
+        screen.getByText("2/2", { includeHiddenElements: true }),
+      ).toBeTruthy()
+    })
   })
 
   it("defaults to the week view selected and toggles to day via the menu", async () => {
@@ -308,6 +355,55 @@ describe("CalendarScreen", () => {
     expect(screen.getByText("09:00 – 10:30")).toBeTruthy()
   })
 
+  it("shows zero, partial, and complete Agenda progress and updates the mounted row map", async () => {
+    const events = [
+      calendarEvent({ id: "zero-1" }),
+      calendarEvent({ id: "personal-1", title: "Databases" }),
+      calendarEvent({
+        id: "synced-1",
+        title: "Networks",
+        userCalendarId: "calendar-1",
+      }),
+    ]
+    mockUseCalendarEvents.mockReturnValue(events)
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([
+        ["personal-1", { completed: 1, total: 3, isComplete: false }],
+        ["synced-1", { completed: 2, total: 2, isComplete: true }],
+      ]),
+    )
+    const view = await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await waitFor(() => {
+      expect(
+        screen.getByText("1/3", { includeHiddenElements: true }),
+      ).toBeTruthy()
+    })
+    expect(
+      screen.getByText("2/2", { includeHiddenElements: true }),
+    ).toBeTruthy()
+    expect(
+      screen.queryByText("0/0", { includeHiddenElements: true }),
+    ).toBeNull()
+    expect(
+      screen.getByLabelText(/1 of 3 checklist items completed.*View details/),
+    ).toBeTruthy()
+    expect(
+      screen.getByLabelText(/2 of 2 checklist items completed.*View details/),
+    ).toBeTruthy()
+
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([
+        ["personal-1", { completed: 3, total: 3, isComplete: true }],
+        ["synced-1", { completed: 2, total: 2, isComplete: true }],
+      ]),
+    )
+    await view.rerender(<CalendarScreen />)
+    expect(
+      screen.getByText("3/3", { includeHiddenElements: true }),
+    ).toBeTruthy()
+  })
+
   it("shows the agenda empty state when no events intersect", async () => {
     mockUseCalendarEvents.mockReturnValue([])
     await render(<CalendarScreen />)
@@ -387,11 +483,21 @@ describe("CalendarScreen", () => {
         userCalendarId: "cal-1",
       }),
     ])
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([["allday-1", { completed: 1, total: 1, isComplete: true }]]),
+    )
     await render(<CalendarScreen />)
     expect(screen.getByText("Holiday")).toBeTruthy()
     // The all-day tile is title-only; the label still carries the "all day" time +
     // location (one screen-reader stop), never a "02:00 – 02:00" range.
-    expect(screen.getByLabelText("Holiday, All day Gym")).toBeTruthy()
+    expect(
+      screen.getByLabelText(
+        "Holiday, All day Gym. 1 of 1 checklist items completed",
+      ),
+    ).toBeTruthy()
+    expect(
+      screen.getByText("1/1", { includeHiddenElements: true }),
+    ).toBeTruthy()
     fireEvent.press(screen.getByTestId("grid-event-allday-1"))
     expect(mockPush).toHaveBeenCalledWith("/event-details/allday-1")
   })

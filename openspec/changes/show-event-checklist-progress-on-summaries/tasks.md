@@ -17,11 +17,11 @@
 
 ## 4. Calendar day/week renderer and Agenda
 
-- [ ] 4.1 Subscribe once in `CalendarScreen` for the rendered range's unique event UIDs and pass progress beside `CalendarEvent[]` through `AgendaList` and the renderer-neutral `CalendarTimelineProps`; do not add data hooks inside tiles or Agenda rows.
-- [ ] 4.2 Thread the sidecar progress map through `CalendarKitTimeline` into timed and all-day tile renderers while keeping `eventItems = useMemo(..., [events])`; render the compact indicator and compose the localized phrase into both tile labels.
-- [ ] 4.3 Render inline progress on Agenda rows and compose the localized phrase into the existing button label while preserving zero-item rows and the upcoming marker semantics.
-- [ ] 4.4 Add renderer tests for day/week timed and all-day tiles, synced and personal UIDs, partial/complete/zero states, dense overlaps and minimum widths, plus a progress-only rerender assertion that the CalendarKit vendor event array/projected objects retain identity; run the focused renderer suites.
-- [ ] 4.5 Extend Agenda component coverage for synced/personal zero, partial, complete, reactive-map updates, and accessible labels; run the Agenda suite directly.
+- [x] 4.1 Subscribe once in `CalendarScreen` for the rendered range's unique event UIDs and pass progress beside `CalendarEvent[]` through `AgendaList` and the renderer-neutral `CalendarTimelineProps`; do not add data hooks inside tiles or Agenda rows.
+- [x] 4.2 Thread the sidecar progress map through `CalendarKitTimeline` into timed and all-day tile renderers while keeping `eventItems = useMemo(..., [events])`; render the compact indicator and compose the localized phrase into both tile labels.
+- [x] 4.3 Render inline progress on Agenda rows and compose the localized phrase into the existing button label while preserving zero-item rows and the upcoming marker semantics.
+- [x] 4.4 Add renderer tests for day/week timed and all-day tiles, synced and personal UIDs, partial/complete/zero states, dense overlaps and minimum widths, plus a progress-only rerender assertion that the CalendarKit vendor event array/projected objects retain identity; run the focused renderer suites.
+- [x] 4.5 Extend Agenda component coverage for synced/personal zero, partial, complete, reactive-map updates, and accessible labels; run the Agenda suite directly.
 
 ## 5. Real journey, documentation, and device-only evidence
 

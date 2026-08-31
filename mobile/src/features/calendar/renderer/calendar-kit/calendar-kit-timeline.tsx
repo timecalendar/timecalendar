@@ -29,6 +29,7 @@ export const CalendarKitTimeline = forwardRef<
     anchorDate,
     displayZone,
     events,
+    checklistProgress,
     startMinute,
     endMinute,
     showWeekends,
@@ -78,6 +79,7 @@ export const CalendarKitTimeline = forwardRef<
         renderEvent={(event) => (
           <CalendarKitAllDayTile
             event={event}
+            progress={checklistProgress.get(String(event.id))}
             locale={locale}
             zone={displayZone}
           />
@@ -88,6 +90,7 @@ export const CalendarKitTimeline = forwardRef<
         renderEvent={(event, size) => (
           <CalendarKitEventTile
             event={event}
+            progress={checklistProgress.get(String(event.id))}
             width={size.width}
             locale={locale}
             zone={displayZone}

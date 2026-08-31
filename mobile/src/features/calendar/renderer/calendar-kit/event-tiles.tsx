@@ -7,17 +7,24 @@ import {
   formatTimeRange,
   MIN_TILE_WIDTH,
 } from "@/features/calendar/data"
+import {
+  type ChecklistProgress,
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+} from "@/features/event-checklists"
 import { Radii, Spacing } from "@/theme"
 
 import { type EventItem } from "./vendor"
 
 export function CalendarKitEventTile({
   event,
+  progress,
   width,
   locale,
   zone,
 }: {
   event: EventItem
+  progress: ChecklistProgress | undefined
   width: { value: number } | number
   locale: AppLocale
   zone: string
@@ -30,10 +37,20 @@ export function CalendarKitEventTile({
   const location = (event.location as string | undefined) ?? ""
   const time =
     startsAt && endsAt ? formatTimeRange(startsAt, endsAt, locale, zone) : ""
+  const progressLabel = checklistProgressLabel(t, progress)
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={t("calendar.event.label", { title, time, location })}
+      accessibilityLabel={
+        progressLabel === undefined
+          ? t("calendar.event.label", { title, time, location })
+          : t("calendar.event.labelWithProgress", {
+              title,
+              time,
+              location,
+              progress: progressLabel,
+            })
+      }
       style={[styles.tile, { backgroundColor: event.color }]}
     >
       {resolvedWidth >= MIN_TILE_WIDTH && (
@@ -52,16 +69,19 @@ export function CalendarKitEventTile({
           )}
         </>
       )}
+      <ChecklistProgressIndicator progress={progress} variant="compact" />
     </View>
   )
 }
 
 export function CalendarKitAllDayTile({
   event,
+  progress,
   locale,
   zone,
 }: {
   event: EventItem
+  progress: ChecklistProgress | undefined
   locale: AppLocale
   zone: string
 }) {
@@ -74,15 +94,26 @@ export function CalendarKitAllDayTile({
     event.allDay || !startsAt || !endsAt
       ? t("calendar.allDay")
       : formatTimeRange(startsAt, endsAt, locale, zone)
+  const progressLabel = checklistProgressLabel(t, progress)
   return (
     <View
       accessibilityRole="text"
-      accessibilityLabel={t("calendar.event.label", { title, time, location })}
+      accessibilityLabel={
+        progressLabel === undefined
+          ? t("calendar.event.label", { title, time, location })
+          : t("calendar.event.labelWithProgress", {
+              title,
+              time,
+              location,
+              progress: progressLabel,
+            })
+      }
       style={styles.allDayTile}
     >
       <ThemedText type="captionSmall" themeColor="background" numberOfLines={1}>
         {title}
       </ThemedText>
+      <ChecklistProgressIndicator progress={progress} variant="compact" />
     </View>
   )
 }
