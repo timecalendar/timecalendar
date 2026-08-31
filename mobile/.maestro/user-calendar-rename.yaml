@@ -71,6 +71,16 @@ appId: fr.samuelprak.timecalendar.dev
 - eraseText
 - eraseText
 - inputText: "E2E Renamed Timetable"
+- runFlow:
+    when:
+      visible:
+        id: "user-calendar-rename-input"
+        text: "E2E Renamed Timetablee"
+    commands:
+      - tapOn:
+          id: "user-calendar-rename-input"
+          point: "99%,50%"
+      - eraseText: 1
 - extendedWaitUntil:
     visible:
       id: "user-calendar-rename-input"

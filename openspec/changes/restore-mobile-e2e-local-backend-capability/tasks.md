@@ -714,7 +714,7 @@ child sequence. The complete simulator transport conjunction is already authoriz
 global-failure guard incorrectly treats the propagated parent status as an independent earlier
 failure.
 
-- [ ] 34.1 In `mobile/e2e/classify-maestro-attempt.mjs`, exclude a failed command from the global
+- [x] 34.1 In `mobile/e2e/classify-maestro-attempt.mjs`, exclude a failed command from the global
       veto only when it is exactly a `runFlowCommand` that precedes the final failed startup
       command, has strictly lower depth, and has no intervening later entry returning to its depth
       or shallower. Leave every other failed command globally terminal, then apply the existing
@@ -722,17 +722,17 @@ failure.
       current-epoch assertion and non-startup-interaction vetoes, malformed-record fail-closed
       behavior, four-attempt maximum, fresh process per whole top-level attempt, shared server
       lifecycle, lexical order, and original non-zero exhaustion result.
-- [ ] 34.2 Extend `mobile/e2e/test_run_e2e.sh` with the captured 29-entry nested fixture and prove
+- [x] 34.2 Extend `mobile/e2e/test_run_e2e.sh` with the captured 29-entry nested fixture and prove
       that a fresh-process retry can pass and continue. Add mutation-sensitive negatives for a
       same-depth failed wrapper, a lower-depth wrapper already closed by a return to its depth or
       shallower, a failed child assertion or interaction at any depth, and an evaluated assertion
       or non-startup interaction in the final epoch. Mutation-check removal/widening of each live-
       ancestor predicate and replay the captured artifact when available.
-- [ ] 34.3 Refine ADR 038, `docs/mobile/architecture-book/testing.md`, the Architecture Book
+- [x] 34.3 Refine ADR 038, `docs/mobile/architecture-book/testing.md`, the Architecture Book
       changelog, `mobile/e2e/README.md`, `docs/agent-dev-environment.md`, and this active delta to
       state the live-ancestor exception. Flag the ADR/Architecture Book and native harness as
       sensitive surfaces; do not add a new ADR or widen the assertion guard or attempt budget.
-- [ ] 34.4 Run `node --check mobile/e2e/classify-maestro-attempt.mjs`,
+- [x] 34.4 Run `node --check mobile/e2e/classify-maestro-attempt.mjs`,
       `bash -n mobile/e2e/test_run_e2e.sh`, the complete focused harness proof and its mutations,
       applicable formatting/lint, strict OpenSpec validation, and `git diff --check` before push.
 
@@ -745,19 +745,19 @@ accepts a conjunctive `runFlow.when.visible` selector, an id-scoped `tapOn` with
 `point: "99%,50%"`, and `eraseText: 1`; its runtime computes that point from the selected element's
 bounds, so the interaction cannot become a screen-global coordinate.
 
-- [ ] 35.1 In `mobile/.maestro/user-calendar-rename.yaml`, immediately before the existing exact
+- [x] 35.1 In `mobile/.maestro/user-calendar-rename.yaml`, immediately before the existing exact
       target gate, add one conditional subflow matching both `id: user-calendar-rename-input` and
       exact `text: "E2E Renamed Timetablee"`. Inside it, require an id-scoped tap at
       `point: "99%,50%"` followed by exactly `eraseText: 1`. Keep both inner commands non-optional;
       skip the complete correction only when the exact wrong state is absent. Preserve the
       existing exact `E2E Renamed Timetable` gate before Save and every baseline, local-write,
       wipe/re-import, server-convergence, and baseline-absence assertion.
-- [ ] 35.2 Extend `mobile/e2e/maestro-selectors.test.ts` with ordered structural and mutation proof
+- [x] 35.2 Extend `mobile/e2e/maestro-selectors.test.ts` with ordered structural and mutation proof
       rejecting a missing or widened wrong-value condition, a point not scoped to
       `user-calendar-rename-input`, a screen-global/non-element coordinate, a point other than the
       pinned `99%,50%`, an erase count other than one, optional inner correction commands, Save
       before the exact target gate, or any weakened local/server round-trip assertion.
-- [ ] 35.3 Parse `user-calendar-rename.yaml` with pinned Maestro 2.8.0, run the focused selector
+- [x] 35.3 Parse `user-calendar-rename.yaml` with pinned Maestro 2.8.0, run the focused selector
       proof and all mutations, applicable formatting/lint, strict OpenSpec validation, and
       `git diff --check`. Confirm the diff changes no selector id, target value, server fixture,
       application UI/behavior, top-level flow order, workflow timeout, or retry attempt budget.

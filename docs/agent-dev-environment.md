@@ -383,9 +383,13 @@ cd mobile
   retries **structurally**, from Maestro's per-flow `commands.json` rather than
   from stack-trace text (ADR 038, `mobile/e2e/classify-maestro-attempt.mjs`): an
   attempt is retryable only when the output holds no assertion evidence, no
-  earlier command reached `FAILED`, and the final restart epoch contains only
-  startup commands or non-evaluated assertions (or no record exists because the
-  session died before opening the flow). The latest explicit launch/stop/open
+  independent earlier command reached `FAILED`, and the final restart epoch
+  contains only startup commands or non-evaluated assertions (or no record
+  exists because the session died before opening the flow). A failed
+  `runFlowCommand` is non-independent only while it remains the final startup
+  command's live lower-depth ancestor, with every intervening entry deeper;
+  same-depth or closed wrappers and failed child verdicts stay terminal. The
+  latest explicit launch/stop/open
   command at the failing command's depth begins that epoch: a completed assertion
   in an earlier phase may be ignored, but an evaluated assertion or non-startup
   interaction in the current epoch is terminal. Malformed records fail closed.

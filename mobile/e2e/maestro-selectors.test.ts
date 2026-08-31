@@ -317,6 +317,22 @@ function preservesPersonalEventCancellation(yaml: string): boolean {
   )
 }
 
+function preservesUserCalendarRenameSynchronization(yaml: string): boolean {
+  return (
+    containsOrdered(yaml, [
+      '- tapOn:\n    id: "user-calendar-rename-input"\n- eraseText\n- eraseText\n- inputText: "E2E Renamed Timetable"',
+      '- runFlow:\n    when:\n      visible:\n        id: "user-calendar-rename-input"\n        text: "E2E Renamed Timetablee"\n    commands:\n      - tapOn:\n          id: "user-calendar-rename-input"\n          point: "99%,50%"\n      - eraseText: 1',
+      '- extendedWaitUntil:\n    visible:\n      id: "user-calendar-rename-input"\n      text: "E2E Renamed Timetable"\n    timeout: 15000\n- tapOn:\n    id: "user-calendar-rename-save"',
+      'visible: "E2E Renamed Timetable"\n    timeout: 30000',
+      "- runFlow: rename-seed.yaml",
+      'visible: "E2E Renamed Timetable"\n    timeout: 60000\n- assertNotVisible: "E2E Rename Baseline"',
+    ]) &&
+    /visible: "E2E Rename Baseline"[\s\S]*visible: "E2E Renamed Timetable"[\s\S]*- runFlow: rename-seed\.yaml[\s\S]*visible: "E2E Renamed Timetable"[\s\S]*- assertNotVisible: "E2E Rename Baseline"\s*$/.test(
+      yaml,
+    )
+  )
+}
+
 function replaceLast(
   source: string,
   target: string,
@@ -762,16 +778,87 @@ describe("Maestro iCal import journey", () => {
 })
 
 describe("Maestro user-calendar rename synchronization", () => {
-  it("gates Save on the exact target after two erase boundaries", () => {
-    expect(userCalendarRenameFlow).toMatch(
-      /- tapOn:\n\s+id: "user-calendar-rename-input"\n- eraseText\n- eraseText\n- inputText: "E2E Renamed Timetable"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "user-calendar-rename-input"\n\s+text: "E2E Renamed Timetable"\n\s+timeout: 15000\n- tapOn:\n\s+id: "user-calendar-rename-save"/,
-    )
+  it("corrects only the exact trailing residue before the exact Save gate", () => {
+    expect(
+      preservesUserCalendarRenameSynchronization(userCalendarRenameFlow),
+    ).toBe(true)
   })
 
-  it("retains the baseline, local-write, and server-convergence assertions", () => {
-    expect(userCalendarRenameFlow).toMatch(
-      /visible: "E2E Rename Baseline"[\s\S]*visible: "E2E Renamed Timetable"[\s\S]*- runFlow: rename-seed\.yaml[\s\S]*visible: "E2E Renamed Timetable"[\s\S]*- assertNotVisible: "E2E Rename Baseline"\s*$/,
-    )
+  it.each([
+    [
+      "the wrong-value condition is removed",
+      userCalendarRenameFlow.replace(
+        /- runFlow:\n    when:\n      visible:\n        id: "user-calendar-rename-input"\n        text: "E2E Renamed Timetablee"\n    commands:\n      - tapOn:\n          id: "user-calendar-rename-input"\n          point: "99%,50%"\n      - eraseText: 1\n/,
+        "",
+      ),
+    ],
+    [
+      "the wrong-value condition is widened",
+      userCalendarRenameFlow.replace(
+        'text: "E2E Renamed Timetablee"',
+        'text: "E2E Renamed Timetable.*"',
+      ),
+    ],
+    [
+      "the correction tap is not scoped to the input",
+      userCalendarRenameFlow.replace(
+        'id: "user-calendar-rename-input"\n          point: "99%,50%"',
+        'text: "E2E Renamed Timetablee"\n          point: "99%,50%"',
+      ),
+    ],
+    [
+      "the correction uses a screen-global point",
+      userCalendarRenameFlow.replace(
+        '- tapOn:\n          id: "user-calendar-rename-input"\n          point: "99%,50%"',
+        '- tapOn:\n          point: "99%,50%"',
+      ),
+    ],
+    [
+      "the element-relative point changes",
+      userCalendarRenameFlow.replace('point: "99%,50%"', 'point: "50%,50%"'),
+    ],
+    [
+      "the erase count changes",
+      userCalendarRenameFlow.replace("- eraseText: 1", "- eraseText: 2"),
+    ],
+    [
+      "an inner correction command becomes optional",
+      userCalendarRenameFlow.replace(
+        'point: "99%,50%"',
+        'point: "99%,50%"\n          optional: true',
+      ),
+    ],
+    [
+      "Save moves before the exact target gate",
+      userCalendarRenameFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "user-calendar-rename-input"\n      text: "E2E Renamed Timetable"\n    timeout: 15000\n- tapOn:\n    id: "user-calendar-rename-save"',
+        '- tapOn:\n    id: "user-calendar-rename-save"\n- extendedWaitUntil:\n    visible:\n      id: "user-calendar-rename-input"\n      text: "E2E Renamed Timetable"\n    timeout: 15000',
+      ),
+    ],
+    [
+      "the local-write assertion is widened",
+      userCalendarRenameFlow.replace(
+        'visible: "E2E Renamed Timetable"\n    timeout: 30000',
+        'visible: "E2E Renamed Timetable.*"\n    timeout: 30000',
+      ),
+    ],
+    [
+      "the server-convergence assertion is weakened",
+      userCalendarRenameFlow.replace(
+        'visible: "E2E Renamed Timetable"\n    timeout: 60000',
+        'visible: "E2E Renamed Timetable.*"\n    timeout: 60000',
+      ),
+    ],
+    [
+      "the baseline-absence assertion is lost",
+      userCalendarRenameFlow.replace(
+        '- assertNotVisible: "E2E Rename Baseline"',
+        '- assertVisible: "E2E Rename Baseline"',
+      ),
+    ],
+  ])("rejects when %s", (_name, mutatedFlow) => {
+    expect(mutatedFlow).not.toBe(userCalendarRenameFlow)
+    expect(preservesUserCalendarRenameSynchronization(mutatedFlow)).toBe(false)
   })
 })
 

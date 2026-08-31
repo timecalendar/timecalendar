@@ -10,7 +10,7 @@
 //
 // An attempt is a *retryable startup failure* when its final app-restart epoch
 // proved nothing about the app:
-//   - no command failed before the final startup failure, AND
+//   - no independent command failed before the final startup failure, AND
 //   - no assertion command in the final epoch reached a terminal evaluated
 //     state, AND
 //   - every command in that epoch is a startup-phase command or a non-evaluated
@@ -22,7 +22,9 @@
 //
 // Everything else is terminal. A completed assertion in an earlier, completed
 // phase may precede an explicit restart boundary; a FAILED assertion or any
-// other earlier FAILED command remains globally terminal.
+// other earlier FAILED command remains globally terminal. A FAILED
+// `runFlowCommand` is not independent only while it is the still-live,
+// lower-depth structural ancestor of the final startup command.
 //
 // The bound, stated plainly rather than glossed: an app that deterministically
 // fails to launch matches this shape too. It is still reported red — it exhausts
@@ -85,6 +87,29 @@ const commandDepth = (entry) => {
   return Number.isInteger(depth) && depth >= 0 ? depth : undefined
 }
 
+// Maestro propagates a nested child's failure onto its enclosing runFlow before
+// serializing the child commands. That wrapper is not an independent verdict
+// only while it remains structurally open around the final startup command.
+// Returning to the wrapper's depth (or shallower) closes it; same-depth wrappers
+// are siblings, not ancestors.
+const isLiveFailedRunFlowAncestor = (commands, wrapperIndex, finalIndex) => {
+  const wrapper = commands[wrapperIndex]
+  const wrapperDepth = commandDepth(wrapper)
+  const finalDepth = commandDepth(commands[finalIndex])
+
+  if (
+    commandKind(wrapper) !== "runFlowCommand" ||
+    wrapper?.metadata?.status !== "FAILED"
+  ) {
+    return false
+  }
+  if (wrapperIndex >= finalIndex || wrapperDepth >= finalDepth) return false
+
+  return commands
+    .slice(wrapperIndex + 1, finalIndex)
+    .every((entry) => commandDepth(entry) > wrapperDepth)
+}
+
 export const isRetryableStartupFailure = (commands) => {
   if (!Array.isArray(commands)) return false
   if (commands.length === 0) return true
@@ -106,9 +131,19 @@ export const isRetryableStartupFailure = (commands) => {
 
   // A later restart never erases an earlier application or interaction
   // failure. The final command is excluded because a FAILED startup command is
-  // precisely the retryable transport shape this classifier recognizes.
+  // precisely the retryable transport shape this classifier recognizes. The
+  // one structural exception is a FAILED runFlow wrapper that is still the
+  // live lower-depth ancestor of that final command; its status is the child's
+  // propagated failure, not an independent earlier verdict.
+  const finalIndex = commands.length - 1
   if (
-    commands.slice(0, -1).some((entry) => entry?.metadata?.status === "FAILED")
+    commands
+      .slice(0, -1)
+      .some(
+        (entry, index) =>
+          entry?.metadata?.status === "FAILED" &&
+          !isLiveFailedRunFlowAncestor(commands, index, finalIndex),
+      )
   ) {
     return false
   }

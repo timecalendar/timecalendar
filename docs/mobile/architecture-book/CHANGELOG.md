@@ -2,6 +2,11 @@
 
 ## 2026-08-31
 
+- Refined ADR 038's structural Maestro retry provenance for nested flows: only a failed
+  `runFlowCommand` that remains the live lower-depth ancestor of the final failed startup command
+  is a propagated child status rather than an independent veto. Same-depth or closed wrappers and
+  every failed child assertion/interaction remain terminal; assertion-first and four-attempt
+  bounds are unchanged.
 - Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
   reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
   action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.

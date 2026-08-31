@@ -150,6 +150,94 @@ case "$SCENARIO" in
     emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
     exit 0
     ;;
+  nested_live_failed_wrapper)
+    # The captured 29-entry Activity shape from job 99468944392. Entry 25 is
+    # Maestro's propagated FAILED wrapper; entries 26-28 remain inside it and
+    # the final depth-one openLink is the startup transport failure.
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands \
+        defineVariablesCommand:COMPLETED:0 \
+        applyConfigurationCommand:COMPLETED:0 \
+        runFlowCommand:COMPLETED:0 \
+        applyConfigurationCommand:COMPLETED:1 \
+        launchAppCommand:COMPLETED:1 \
+        stopAppCommand:COMPLETED:1 \
+        openLinkCommand:COMPLETED:1 \
+        runFlowCommand:COMPLETED:1 \
+        tapOnElement:WARNED:2 \
+        assertConditionCommand:COMPLETED:1 \
+        stopAppCommand:COMPLETED:0 \
+        openLinkCommand:COMPLETED:0 \
+        runFlowCommand:COMPLETED:0 \
+        tapOnElement:WARNED:1 \
+        assertConditionCommand:COMPLETED:0 \
+        scrollUntilVisible:COMPLETED:0 \
+        tapOnElement:COMPLETED:0 \
+        assertConditionCommand:COMPLETED:0 \
+        stopAppCommand:COMPLETED:0 \
+        openLinkCommand:COMPLETED:0 \
+        runFlowCommand:COMPLETED:0 \
+        tapOnElement:WARNED:1 \
+        assertConditionCommand:COMPLETED:0 \
+        scrollUntilVisible:COMPLETED:0 \
+        assertConditionCommand:COMPLETED:0 \
+        runFlowCommand:FAILED:0 \
+        applyConfigurationCommand:COMPLETED:1 \
+        stopAppCommand:COMPLETED:1 \
+        openLinkCommand:FAILED:1
+      exit 59
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  same_depth_failed_wrapper)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        runFlowCommand:FAILED:1 applyConfigurationCommand:COMPLETED:2 \
+        stopAppCommand:COMPLETED:2 openLinkCommand:FAILED:1
+      exit 60
+    fi
+    exit 0
+    ;;
+  closed_failed_wrapper)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        runFlowCommand:FAILED:0 applyConfigurationCommand:COMPLETED:1 \
+        runFlowCommand:COMPLETED:0 stopAppCommand:COMPLETED:1 \
+        openLinkCommand:FAILED:1
+      exit 61
+    fi
+    exit 0
+    ;;
+  failed_child_assertion_under_live_wrapper)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        runFlowCommand:FAILED:0 applyConfigurationCommand:COMPLETED:1 \
+        assertConditionCommand:FAILED:2 stopAppCommand:COMPLETED:1 \
+        openLinkCommand:FAILED:1
+      exit 62
+    fi
+    exit 0
+    ;;
+  failed_child_interaction_under_live_wrapper)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        runFlowCommand:FAILED:0 applyConfigurationCommand:COMPLETED:1 \
+        tapOnElement:FAILED:2 stopAppCommand:COMPLETED:1 \
+        openLinkCommand:FAILED:1
+      exit 63
+    fi
+    exit 0
+    ;;
+  failed_non_wrapper_ancestor)
+    if [ "$flow" = alpha ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        tapOnElement:FAILED:0 applyConfigurationCommand:COMPLETED:1 \
+        stopAppCommand:COMPLETED:1 openLinkCommand:FAILED:1
+      exit 64
+    fi
+    exit 0
+    ;;
   failed_assertion_before_restart)
     if [ "$flow" = alpha ]; then
       emit_commands "${LAUNCH_PROLOGUE[@]}" \
@@ -364,6 +452,15 @@ captured_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | 
 grep -Fq '12 command(s) recorded, last=openLinkCommand status=FAILED' "$fixture/output" || \
   fail 'the captured 12-command shape was not classified directly'
 
+fixture="$(make_fixture nested_live_failed_wrapper)"
+run_fixture "$fixture" nested_live_failed_wrapper 0 --startup-attempts 2
+assert_retried_then_passed "$fixture" 'the captured nested live-wrapper shape'
+nested_live_wrapper_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+[ "$(jq 'length' "$nested_live_wrapper_record")" -eq 29 ] || \
+  fail 'the captured nested fixture does not contain exactly 29 entries'
+grep -Fq '29 command(s) recorded, last=openLinkCommand status=FAILED' "$fixture/output" || \
+  fail 'the captured 29-entry shape was not classified directly'
+
 # --- The bound: a deterministic launch failure exhausts the budget, still red --
 fixture="$(make_fixture deterministic_launch_failure)"
 run_fixture "$fixture" deterministic_launch_failure 45 --startup-attempts 4
@@ -383,6 +480,29 @@ assert_terminal "$fixture" 'a FAILED assertion before the latest restart boundar
 fixture="$(make_fixture failed_interaction_before_restart)"
 run_fixture "$fixture" failed_interaction_before_restart 55 --startup-attempts 4
 assert_terminal "$fixture" 'a FAILED interaction before the latest restart boundary'
+
+fixture="$(make_fixture same_depth_failed_wrapper)"
+same_depth_wrapper_fixture="$fixture"
+run_fixture "$fixture" same_depth_failed_wrapper 60 --startup-attempts 4
+assert_terminal "$fixture" 'a same-depth FAILED runFlow wrapper'
+
+fixture="$(make_fixture closed_failed_wrapper)"
+closed_wrapper_fixture="$fixture"
+run_fixture "$fixture" closed_failed_wrapper 61 --startup-attempts 4
+assert_terminal "$fixture" 'a FAILED runFlow wrapper closed before the final command'
+
+fixture="$(make_fixture failed_child_assertion_under_live_wrapper)"
+run_fixture "$fixture" failed_child_assertion_under_live_wrapper 62 --startup-attempts 4
+assert_terminal "$fixture" 'a FAILED child assertion beneath a live wrapper'
+
+fixture="$(make_fixture failed_child_interaction_under_live_wrapper)"
+run_fixture "$fixture" failed_child_interaction_under_live_wrapper 63 --startup-attempts 4
+assert_terminal "$fixture" 'a FAILED child interaction beneath a live wrapper'
+
+fixture="$(make_fixture failed_non_wrapper_ancestor)"
+non_wrapper_fixture="$fixture"
+run_fixture "$fixture" failed_non_wrapper_ancestor 64 --startup-attempts 4
+assert_terminal "$fixture" 'a lower-depth FAILED command that is not runFlow'
 
 fixture="$(make_fixture evaluated_assertion_in_restart_epoch)"
 run_fixture "$fixture" evaluated_assertion_in_restart_epoch 56 --startup-attempts 4
@@ -443,10 +563,33 @@ fi
 
 failed_record="$(find "$failed_before_restart_fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
 global_failure_mutant="$TEST_ROOT/classifier-without-global-failure-guard.mjs"
-sed 's/\.some((entry) => entry?.metadata?.status === "FAILED")/.some(() => false)/' \
+sed 's/entry?.metadata?.status === "FAILED" &&/false \&\&/' \
   "$CLASSIFIER" > "$global_failure_mutant"
 if ! node "$global_failure_mutant" "$failed_record" >/dev/null 2>&1; then
   fail 'removing the global FAILED-command guard did not make the negative proof retryable'
+fi
+
+non_wrapper_record="$(find "$non_wrapper_fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+kind_mutant="$TEST_ROOT/classifier-without-wrapper-kind.mjs"
+sed 's/commandKind(wrapper) !== "runFlowCommand"/false/' \
+  "$CLASSIFIER" > "$kind_mutant"
+if ! node "$kind_mutant" "$non_wrapper_record" >/dev/null 2>&1; then
+  fail 'widening the live-ancestor command kind did not make the non-wrapper negative retryable'
+fi
+
+same_depth_record="$(find "$same_depth_wrapper_fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+depth_mutant="$TEST_ROOT/classifier-without-strict-depth.mjs"
+sed 's/wrapperDepth >= finalDepth/false/' "$CLASSIFIER" > "$depth_mutant"
+if ! node "$depth_mutant" "$same_depth_record" >/dev/null 2>&1; then
+  fail 'removing the strict lower-depth predicate did not make the same-depth negative retryable'
+fi
+
+closed_wrapper_record="$(find "$closed_wrapper_fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+closure_mutant="$TEST_ROOT/classifier-without-wrapper-closure.mjs"
+sed 's/\.every((entry) => commandDepth(entry) > wrapperDepth)/.every(() => true)/' \
+  "$CLASSIFIER" > "$closure_mutant"
+if ! node "$closure_mutant" "$closed_wrapper_record" >/dev/null 2>&1; then
+  fail 'removing the live-ancestor closure predicate did not make the closed-wrapper negative retryable'
 fi
 
 echo '[test_run_e2e] PASS'

@@ -73,8 +73,12 @@ retryable only when it proved nothing about the app:
 
 - the harness output carries no assertion-failure evidence (this guard runs
   first and wins outright), **and**
-- no command before the final startup failure has status `FAILED`; a later
-  restart never erases an earlier assertion/application/interaction failure,
+- no independent command before the final startup failure has status `FAILED`;
+  a later restart never erases an earlier assertion/application/interaction
+  failure. A failed `runFlowCommand` is non-independent only while it remains
+  the final startup command's live lower-depth ancestor: it precedes that
+  command, and every intervening entry stays deeper. A same-depth or already-
+  closed wrapper and every failed child assertion/interaction stay terminal,
   **and**
 - from the latest explicit `launchAppCommand`, `stopAppCommand` or
   `openLinkCommand` at the failing command's depth through the final command,
