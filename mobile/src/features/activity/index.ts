@@ -6,7 +6,7 @@
 // code reach a feature through its barrel, never through `@/db` or the generated
 // client). Ticket 6 wired calendar sync, push, app open and foreground to
 // `refreshNewestPage`, and calendar removal to `pruneToHeldCalendars` — the
-// latter through `useActivityOwnershipPrune`, which lives here and observes
+// latter through `useActivityOwnershipReconciliation`, which lives here and observes
 // calendar-sources rather than being called from it (ADR 049 / D7).
 //
 // No import cycle: the data/ sub-barrel imports its seams directly, never this
@@ -38,7 +38,7 @@ export {
   storeOlderPage,
   useActivityForegroundRefresh,
   useActivityLogs,
-  useActivityOwnershipPrune,
+  useActivityOwnershipReconciliation,
   type UseActivityScreenRefresh,
   useActivityScreenRefresh,
   useActivityState,

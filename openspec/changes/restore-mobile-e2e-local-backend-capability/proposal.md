@@ -15,6 +15,7 @@ That selector is not alone. `run_e2e.sh` runs top-level flows lexically and stop
 - Add a baseline-gate proof that every selector id used by a Maestro flow resolves to a `testID` in `mobile/src`, matching selectors as regexes and collecting object-property and template-literal `testID`s, so a UI rework can no longer strand a flow selector until an expensive native run discovers it.
 - Update native E2E testing guidance to name the capability as a required build input, name the selector-drift guard, and record exact-head Android and iOS CI as the terminal proof.
 - Preserve the production fail-closed default, current endpoint allowlist, native identities, application UI/behaviour, flow order/retry policy, seeded-data assertions, local server lifecycle, and failure artifacts.
+- Reopen Activity's older-page chain when the observed held-calendar set expands, then force the existing single-flight newest-page coordinator so the expanded set can establish a live cursor without deleting cached history or changing read state.
 - Exclude API/generated-client changes, server/schema changes, deploy or store configuration, legacy Flutter, and any rerun of an unchanged terminal failure.
 
 ## Capabilities
@@ -26,6 +27,7 @@ None.
 ### Modified Capabilities
 
 - `mobile-e2e`: Require both platform release-config development builds to compile an explicit development backend capability with their development identity and platform-local seeded-server URL; require the shared calendar-family flows to reach the agenda surface through the current calendar-view control; and require flow selectors to resolve against real app `testID`s, all backed by focused proof and exact-head native CI evidence.
+- `mobile-activity-triggers`: Treat an observed held-calendar addition as invalidating the previous set's completed pagination chain, while retaining removal pruning, read state, cached rows, and coordinator single-flight behavior.
 
 ## Impact
 
@@ -33,5 +35,6 @@ None.
 - Sensitive binding documentation: `docs/mobile/architecture-book/testing.md` and `docs/mobile/architecture-book/CHANGELOG.md`. Both record an existing CI/E2E wiring contract; neither introduces a costly-to-reverse decision, so no new ADR is required (ADR 038 is unchanged).
 - Shared E2E flows: `mobile/.maestro/calendar.yaml`, `mobile/.maestro/hidden-events.yaml`, `mobile/.maestro/ical-import.yaml`, `mobile/.maestro/onboarding.yaml`.
 - Focused proof and operator documentation: `mobile/e2e/test_ci_mobile_e2e.sh`, `mobile/e2e/maestro-selectors.test.ts` (new), `mobile/e2e/README.md`, `docs/agent-dev-environment.md`.
-- No OpenAPI contract/generated client, migration, application source, native/store config, deployment, infrastructure, or Flutter surface changes.
+- Activity ownership lifecycle and focused regression proof: `mobile/src/features/activity/data/lifecycle.ts` and its colocated tests, plus root/barrel wiring for the renamed reconciliation hook.
+- No OpenAPI contract/generated client, migration, application UI, native/store config, deployment, infrastructure, or Flutter surface changes.
 - **Residual risk, accepted:** the guard covers `id:` selectors only. Six flows have not been reached by a native run since the UI rework, so a stale **text** assertion in one of them is possible and would surface only on the gate. Triage amendment #2 authorizes repairing whatever the gate surfaces inside this change; only a repair that genuinely needs a `mobile/src` change is out of scope, and that is `TIM-265`.

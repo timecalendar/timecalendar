@@ -2,7 +2,7 @@ export { loadOlderPage, refreshNewestPage } from "./coordinator"
 export { useActivityLogs, useActivityState } from "./hooks"
 export {
   useActivityForegroundRefresh,
-  useActivityOwnershipPrune,
+  useActivityOwnershipReconciliation,
   type UseActivityScreenRefresh,
   useActivityScreenRefresh,
 } from "./lifecycle"

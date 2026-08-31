@@ -27,7 +27,8 @@ A static enumeration of every literal `id:` in the flows against every `testID` 
 **Non-Goals:**
 
 - Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, application UI/behaviour, retry classification, Maestro flow order, seeded-data assertions, or server lifecycle.
-- Touch anything under `mobile/src` — including adding a `testID` to a control that lacks one — or add per-platform branches to any flow. A repair that genuinely needs an application change is the `TIM-265` boundary and escalates.
+- Change application UI/behaviour outside the authorized Activity held-calendar lifecycle repair,
+  add a `testID` to a control that lacks one, or add per-platform branches to any flow.
 - Change OpenAPI/generated clients, server schema or migrations, native/store configuration, EAS profiles, Firebase files, deployments, infrastructure, or legacy Flutter.
 - Re-run a terminal native failure without a material workflow fix, add a separate QA gate, or modify the parent feature PR.
 
@@ -155,6 +156,32 @@ Both files are binding documentation and are flagged as a sensitive surface. The
 After the implementation is pushed, the recovery PR will receive its normal baseline gate plus the `run-e2e` native workflow. Both named Android and iOS jobs must pass on the same exact commit that is reviewed; seeded calendar import through the real local server is part of that unmodified flow set. The handoff records the commit SHA and direct run/job links. A native failure is terminal under ADR 038 unless a material new fix justifies another run.
 
 No separate QA stage is added because the issue explicitly assigns the exact-head CI evidence to the normal apply/review pipeline and the Reviewer owns autonomous merge after green preflight.
+
+## Decision 7: Reopen pagination at the held-calendar lifecycle edge
+
+A completed Activity backfill describes the held-calendar set that produced it. When the
+app-lifetime live query observes a later set containing a new calendar, the Activity ownership
+lifecycle resets only the persisted older-page cursor and completion flag, then forces the
+existing newest-page coordinator. Cached rows and read metadata remain intact.
+
+This ordering is safe on both sides of the calendar-sync race. If sync's Activity refresh is
+already in flight, the forced refresh joins the same module-level newest-page slot and its write
+adopts the cursor after the reset. If sync's refresh already finished against the stale completion
+flag, the lifecycle edge issues a new refresh that establishes the expanded set's cursor. The
+older-page slot stays independent. Removal pruning remains an independent action against the same
+authoritative observed set, and the first loaded observation remains a baseline rather than a
+transition.
+
+Alternatives rejected:
+
+- Preserve a completed chain when the held set expands: the completion describes only the old
+  token set and permanently suppresses the expanded set's cursored page.
+- Reset inside every newest-page write: ordinary newest refreshes would discard valid partial
+  backfill positions and repeat already-cached pages.
+- Wire the reset from calendar-sources: that reverses the enforced dependency and recreates the
+  module cycle ADR 049 prohibits.
+- Work around the missing page in Maestro: it would conceal a production state defect and weaken
+  the real-server pagination proof.
 
 ## Risks / Trade-offs
 

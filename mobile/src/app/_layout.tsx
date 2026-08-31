@@ -17,7 +17,7 @@ import { queryClient } from "@/api/query-client"
 import { runMigrations } from "@/db/migrate"
 import {
   useActivityForegroundRefresh,
-  useActivityOwnershipPrune,
+  useActivityOwnershipReconciliation,
 } from "@/features/activity"
 import { useStartupSync } from "@/features/calendar"
 import { EnvironmentRuntimeGate } from "@/features/environment"
@@ -86,10 +86,10 @@ function NotificationTapRouting() {
 // hook needs a mounted tree, and this one renders nothing.
 //   - useActivityForegroundRefresh: a background → active return refreshes
 //     Activity passively (the five-minute window lives in the coordinator).
-//   - useActivityOwnershipPrune: watches the held-calendar set and deletes the
-//     Activity history of a calendar that disappeared from it. The edge points
-//     Activity → calendar-sources deliberately; the reverse would close a module
-//     require cycle (ADR 049 / D7).
+//   - useActivityOwnershipReconciliation: watches the held-calendar set,
+//     deletes history for calendars that disappeared, and reopens the older-page
+//     chain when one appears. The edge points Activity → calendar-sources
+//     deliberately; the reverse would close a module require cycle (ADR 049 / D7).
 // Unlike its siblings it needs no QueryClient — the coordinator issues its
 // request through the mutator with no TanStack Query in between (TIM-397 D8) —
 // but it is mounted here anyway so the startup wiring stays in one place. It
@@ -97,7 +97,7 @@ function NotificationTapRouting() {
 // client (B-3).
 function ActivityRuntime() {
   useActivityForegroundRefresh()
-  useActivityOwnershipPrune()
+  useActivityOwnershipReconciliation()
   return null
 }
 

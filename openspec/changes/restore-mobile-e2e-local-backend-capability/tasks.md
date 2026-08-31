@@ -439,3 +439,31 @@ stuck list.
 - [ ] 22.5 Require the fresh exact-head baseline plus Android and iOS native jobs to pass all
   17 top-level flows. Record both complete per-flow lists and prove Activity continues through
   `tie-higher`, `tie-lower`, and `older-anchor` over the real local server path before archive.
+
+## 23. Reopen Activity pagination when the held-calendar set expands
+
+TIM-433's exact-head verdict at `699d8614` reached and asserted `tie-higher` on both platforms,
+then stopped at the bottom of the cached list without ever requesting the second page. The initial
+baseline-only refresh had stored `olderPageComplete=true`; after the second calendar was imported,
+the newest-page write correctly preserved that state for an unchanged held set but incorrectly
+treated it as complete for the expanded set. `loadOlderPage` therefore returned `complete` before
+reading a token or issuing a request.
+
+- [x] 23.1 Extend the app-lifetime held-calendar observer into ownership reconciliation. On an
+  observed addition after the first loaded baseline, clear only the older-page cursor/completion
+  state and force the existing newest-page coordinator. Preserve removal pruning, hidden-calendar
+  treatment, cached rows, read watermark, unread count semantics, cursor recovery, and the
+  independent newest/older single-flight slots; do not add a calendar-sources → Activity edge.
+- [x] 23.2 Add mutation-sensitive regression coverage for the exact sequence: a baseline calendar
+  completes its chain, a second held calendar appears, the expanded newest page adopts a cursor,
+  and `loadOlderPage` requests and stores the following page. Assert the baseline row and read
+  watermark survive, the server unread count remains authoritative, and an overlapping
+  sync-triggered newest refresh is joined rather than duplicated. Replacing the reset with a no-op
+  must fail at the older-page outcome.
+- [x] 23.3 Run the focused Activity repository/coordinator/lifecycle suites, mobile typecheck and
+  lint, strict OpenSpec validation, formatting, and `git diff --check`; inspect the complete diff
+  for no selector, timeout, flow-order, server/API/schema, credential, deployment, native/store,
+  or legacy Flutter change.
+- [ ] 23.4 Push the material head with `run-e2e` retained and require a fresh exact-head baseline
+  plus Android and iOS 17/17. Activity must reach `tie-higher`, `tie-lower`, and `older-anchor`
+  through the real local server before Reviewer handoff; do not archive before that verdict.
