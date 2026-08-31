@@ -1,7 +1,7 @@
 ## 1. Coordinate the migration runner
 
-- [ ] 1.1 Refactor `mobile/src/db/migrate.ts` so concurrent `runMigrations()` callers share the active promise, the slot clears only after settlement, and the existing idempotent later-call plus recorded non-throwing failure contracts remain intact.
-- [ ] 1.2 Extend `mobile/src/db/migrate.test.ts` with deferred, timer-free coverage proving two overlapping callers invoke Drizzle once, both settle together, a later call can run idempotently, and one shared failure is recorded once.
+- [x] 1.1 Refactor `mobile/src/db/migrate.ts` so concurrent `runMigrations()` callers share the active promise, the slot clears only after settlement, and the existing idempotent later-call plus recorded non-throwing failure contracts remain intact.
+- [x] 1.2 Extend `mobile/src/db/migrate.test.ts` with deferred, timer-free coverage proving two overlapping callers invoke Drizzle once, both settle together, a later call can run idempotently, and one shared failure is recorded once.
 
 ## 2. Gate the import-by-token data seam
 
