@@ -1,11 +1,11 @@
-import { act, render } from "@testing-library/react-native"
+import { act, render, waitFor } from "@testing-library/react-native"
 import { usePathname, useRouter } from "expo-router"
 
 import { runMigrations } from "@/db/migrate"
 import { useSyncCalendars } from "@/features/calendar"
-import { findAll } from "@/features/calendar-sources"
-import { resolveInitialNotificationIntent } from "@/features/notifications"
-import { getStartupTabPreference } from "@/features/settings"
+import { findAll } from "@/features/calendar-sources/data"
+import { resolveInitialNotificationIntent } from "@/features/notifications/data"
+import { getStartupTabPreference } from "@/features/settings/prefs"
 import {
   getLaunchState,
   resetLaunchStateForTests,
@@ -15,11 +15,13 @@ import { LaunchCoordinator } from "./launch-coordinator"
 
 jest.mock("@/db/migrate")
 jest.mock("@/features/calendar", () => ({ useSyncCalendars: jest.fn() }))
-jest.mock("@/features/calendar-sources", () => ({ findAll: jest.fn() }))
-jest.mock("@/features/notifications", () => ({
+jest.mock("@/features/calendar-sources/data", () => ({ findAll: jest.fn() }))
+jest.mock("@/features/notifications/data", () => ({
   resolveInitialNotificationIntent: jest.fn(),
 }))
-jest.mock("@/features/settings", () => ({ getStartupTabPreference: jest.fn() }))
+jest.mock("@/features/settings/prefs", () => ({
+  getStartupTabPreference: jest.fn(),
+}))
 jest.mock("expo-router", () => ({
   usePathname: jest.fn(),
   useRouter: jest.fn(),
@@ -111,5 +113,29 @@ describe("LaunchCoordinator", () => {
       kind: "committed",
       target: "/onboarding/import",
     })
+  })
+
+  it("keeps the launch attempt alive when runtime hook identities change", async () => {
+    let finishMigration: () => void = () => undefined
+    mockRunMigrations.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishMigration = resolve
+        }),
+    )
+    mockGetPreference.mockReturnValue("calendar")
+    const nextReplace = jest.fn()
+    const nextSync = jest.fn().mockResolvedValue(undefined)
+
+    const view = await render(<LaunchCoordinator />)
+    await waitFor(() => expect(mockRunMigrations).toHaveBeenCalledTimes(1))
+
+    mockUseRouter.mockReturnValue({ replace: nextReplace } as never)
+    mockUseSyncCalendars.mockReturnValue({ sync: nextSync } as never)
+    await view.rerender(<LaunchCoordinator />)
+    await act(async () => finishMigration())
+
+    await waitFor(() => expect(nextReplace).toHaveBeenCalledWith("/calendar"))
+    expect(mockRunMigrations).toHaveBeenCalledTimes(1)
   })
 })
