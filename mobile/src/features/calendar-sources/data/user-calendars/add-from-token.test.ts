@@ -1,4 +1,5 @@
 import { customFetch } from "@/api/mutator"
+import { runMigrations } from "@/db/migrate"
 
 import { addCalendarFromToken } from "./add-from-token"
 import * as repository from "./repository"
@@ -11,9 +12,11 @@ import * as repository from "./repository"
 // resolve or upsert failure rejects (so the route surfaces an accessible failure +
 // recordError on device).
 jest.mock("@/api/mutator")
+jest.mock("@/db/migrate")
 jest.spyOn(repository, "upsert").mockResolvedValue(undefined)
 
 const mockFetch = customFetch as jest.Mock
+const mockRunMigrations = runMigrations as jest.Mock
 const mockUpsert = repository.upsert as jest.Mock
 
 const dto = {
@@ -28,6 +31,7 @@ const dto = {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockRunMigrations.mockResolvedValue(undefined)
   mockUpsert.mockResolvedValue(undefined)
 })
 
@@ -52,6 +56,35 @@ describe("addCalendarFromToken", () => {
     expect(persisted.name).toBe("Calendrier E2E Test")
     expect(persisted.visible).toBe(true)
     expect(persisted.lastUpdatedAt).toBeInstanceOf(Date)
+  })
+
+  it("waits for migrations before resolving or persisting the token", async () => {
+    let finishMigration: () => void = () => undefined
+    mockRunMigrations.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishMigration = resolve
+        }),
+    )
+    mockFetch.mockResolvedValueOnce(dto)
+
+    const importCalendar = addCalendarFromToken("e2e-smoke-calendar")
+
+    expect(mockRunMigrations).toHaveBeenCalledTimes(1)
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(mockUpsert).not.toHaveBeenCalled()
+
+    finishMigration()
+    await importCalendar
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockUpsert).toHaveBeenCalledTimes(1)
+    expect(mockUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "srv-id",
+        token: "e2e-smoke-calendar",
+      }),
+    )
   })
 
   it("rejects and does not upsert when the token resolve fails", async () => {
