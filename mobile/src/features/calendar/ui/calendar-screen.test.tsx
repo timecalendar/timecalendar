@@ -38,6 +38,17 @@ jest.mock("@/features/calendar/data", () => {
   }
 })
 
+jest.mock("@/features/first-launch/ui", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const React = require("react")
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { View } = require("react-native")
+  return {
+    FirstIcalReminder: () =>
+      React.createElement(View, { testID: "shared-first-ical-reminder" }),
+  }
+})
+
 // The month title + the view-menu / Today / Add actions live in the native nav
 // bar (a nested Stack under the Calendar tab). Render the header slots so they are
 // in the test tree — the default stub drops the header entirely (mirrors the
@@ -147,6 +158,10 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen", () => {
+  it("composes the shared reminder after the flexible calendar region", async () => {
+    await render(<CalendarScreen />)
+    expect(screen.getByTestId("shared-first-ical-reminder")).toBeTruthy()
+  })
   it("consumes a one-shot Home focus date without changing the selected view", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-06" })
     await render(<CalendarScreen />)

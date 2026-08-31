@@ -69,8 +69,7 @@ export default function QrScanScreen() {
     }
     void addCalendarFromUrl(source.url, importFields)
       .then(() => {
-        clearDraft()
-        leaveImportJourney()
+        leaveImportJourney(clearDraft)
       })
       .catch((error: unknown) => {
         // Create / resolve / upsert failure — record through the seam, surface an

@@ -21,5 +21,6 @@ export async function runMigrations(): Promise<void> {
     await migrate(db, migrations)
   } catch (error) {
     recordUnknownError(error, "Database migration failed at startup")
+    throw error
   }
 }

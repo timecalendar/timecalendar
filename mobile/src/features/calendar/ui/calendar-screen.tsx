@@ -14,6 +14,7 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { CalendarTimeline } from "@/features/calendar/renderer"
+import { FirstIcalReminder } from "@/features/first-launch/ui"
 import { Spacing, useTheme } from "@/theme"
 
 import { AgendaList } from "./agenda-list"
@@ -101,6 +102,7 @@ export function CalendarScreen() {
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}
         </View>
+        <FirstIcalReminder />
       </SafeAreaView>
     </ThemedView>
   )

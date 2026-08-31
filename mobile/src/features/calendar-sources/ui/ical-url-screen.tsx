@@ -90,8 +90,7 @@ export default function IcalUrlScreen() {
     }
     void addCalendarFromUrl(url, importFields)
       .then(() => {
-        clearDraft()
-        leaveImportJourney()
+        leaveImportJourney(clearDraft)
       })
       .catch((error: unknown) => {
         // Genuine create / resolve / persist failure — record through the seam,

@@ -7,11 +7,18 @@ import {
   StyleSheet,
 } from "react-native"
 
+import {
+  getFirstIcalReminderState,
+  getOnboardingResolution,
+} from "@/features/first-launch/store"
+import { remove, STORAGE_KEYS } from "@/storage"
 import { Colors } from "@/theme"
 
 import WelcomeScreen from "./welcome-screen"
 
-jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
+jest.mock("expo-router", () => ({
+  router: { push: jest.fn(), replace: jest.fn() },
+}))
 
 type PagerMock = {
   setPage: jest.Mock
@@ -19,6 +26,7 @@ type PagerMock = {
 }
 
 const mockPush = router.push as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const pagerMock = (
   jest.requireMock("react-native-pager-view") as {
     __pagerMock: PagerMock
@@ -34,6 +42,9 @@ async function flushMicrotasks(turns = 3): Promise<void> {
 beforeEach(() => {
   jest.useFakeTimers()
   mockPush.mockClear()
+  mockReplace.mockClear()
+  remove(STORAGE_KEYS.onboardingResolution)
+  remove(STORAGE_KEYS.firstIcalReminderState)
   pagerMock.setPage.mockClear()
   pagerMock.setPageWithoutAnimation.mockClear()
   jest.mocked(AccessibilityInfo.isReduceMotionEnabled).mockResolvedValue(false)
@@ -102,18 +113,31 @@ describe("WelcomeScreen", () => {
     expect(queryByTestId("onboarding-skip")).toBeNull()
   })
 
-  it("pushes the school step from Skip and the final CTA", async () => {
+  it("confirms Skip without pushing school and keeps reminder independent", async () => {
     const { getByTestId } = await render(<WelcomeScreen />)
 
     await fireEvent.press(getByTestId("onboarding-skip"))
-    expect(mockPush).toHaveBeenLastCalledWith("/onboarding/school")
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(getByTestId("import-later-confirmation")).toBeTruthy()
+    await fireEvent.press(getByTestId("import-later-cancel"))
+    expect(getOnboardingResolution()).toBeUndefined()
+
+    await fireEvent.press(getByTestId("onboarding-skip"))
+    await fireEvent.press(getByTestId("import-later-confirm"))
+    expect(getOnboardingResolution()).toBe("skipped")
+    expect(getFirstIcalReminderState()).toBe("pending")
+    expect(mockReplace).toHaveBeenCalledWith("/")
+  })
+
+  it("pushes school only from the final CTA", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
 
     await fireEvent(getByTestId("onboarding-pager"), "pageSelected", {
       nativeEvent: { position: 2 },
     })
     await fireEvent.press(getByTestId("onboarding-welcome-cta"))
     expect(mockPush).toHaveBeenLastCalledWith("/onboarding/school")
-    expect(mockPush).toHaveBeenCalledTimes(2)
+    expect(mockPush).toHaveBeenCalledTimes(1)
 
     await act(flushMicrotasks)
   })
@@ -124,7 +148,7 @@ describe("WelcomeScreen", () => {
     expect(getByRole("button", { name: "Next page" })).toBeTruthy()
     expect(
       getByRole("button", {
-        name: "Skip the introduction and choose your school",
+        name: "Skip university calendar setup",
       }),
     ).toBeTruthy()
     expect(getByTestId("onboarding-page-indicator").props.accessible).toBe(true)
