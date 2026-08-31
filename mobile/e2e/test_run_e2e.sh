@@ -100,6 +100,16 @@ run_fixture() {
     fail "$scenario returned $status instead of $expected; output: $(cat "$fixture/output")"
 }
 
+assert_terminal_failure() {
+  local scenario="$1" expected="$2" fixture
+  fixture="$(make_fixture "$scenario")"
+  run_fixture "$fixture" "$scenario" "$expected" --startup-attempts 4
+  assert_count 1 '^alpha:' "$fixture/calls"
+  assert_count 0 '^beta:' "$fixture/calls"
+  assert_count 1 '^logs$' "$fixture/calls"
+  assert_count 1 '^down$' "$fixture/calls"
+}
+
 fixture="$(make_fixture pass)"
 run_fixture "$fixture" pass 0
 [ "$(sed -n '2p' "$fixture/calls")" = 'alpha:1' ] || fail 'flows were not lexically ordered'
@@ -128,25 +138,8 @@ assert_count 0 '^beta:' "$fixture/calls"
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
-fixture="$(make_fixture assertion)"
-run_fixture "$fixture" assertion 37 --startup-attempts 4
-assert_count 1 '^alpha:' "$fixture/calls"
-assert_count 0 '^beta:' "$fixture/calls"
-assert_count 1 '^logs$' "$fixture/calls"
-assert_count 1 '^down$' "$fixture/calls"
-
-fixture="$(make_fixture unknown_failure)"
-run_fixture "$fixture" unknown_failure 29 --startup-attempts 4
-assert_count 1 '^alpha:' "$fixture/calls"
-assert_count 0 '^beta:' "$fixture/calls"
-assert_count 1 '^logs$' "$fixture/calls"
-assert_count 1 '^down$' "$fixture/calls"
-
-fixture="$(make_fixture assertion_with_startup_marker)"
-run_fixture "$fixture" assertion_with_startup_marker 38 --startup-attempts 4
-assert_count 1 '^alpha:' "$fixture/calls"
-assert_count 0 '^beta:' "$fixture/calls"
-assert_count 1 '^logs$' "$fixture/calls"
-assert_count 1 '^down$' "$fixture/calls"
+assert_terminal_failure assertion 37
+assert_terminal_failure unknown_failure 29
+assert_terminal_failure assertion_with_startup_marker 38
 
 echo '[test_run_e2e] PASS'
