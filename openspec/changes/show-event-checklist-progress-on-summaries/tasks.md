@@ -25,9 +25,9 @@
 
 ## 5. Real journey, documentation, and device-only evidence
 
-- [ ] 5.1 Extend `mobile/.maestro/event-checklists.yaml` without removing or weakening its real add/toggle/delete assertions: after creating and toggling the seeded event's item, return through the existing screen stack and assert the event summary exposes all-complete `1/1`, then retain cleanup; validate the YAML/static selector contract locally.
-- [ ] 5.2 Update `docs/mobile/architecture-book/features.md`, `calendar.md`, `storage.md`, and `testing.md` with the current checklist-progress read/render/test contracts. If implementation changes an Architecture Book rule, stop and add the required ADR plus `CHANGELOG.md` entry before continuing; otherwise do not create an ADR or chronology entry.
-- [ ] 5.3 Add a non-blocking `docs/react-native-migration/inbox/` note tagged `(HUMAN: ...)` for physical-device light/dark, Dynamic Type, VoiceOver/TalkBack, dense-week, smallest-tile, and live-return observations. Do not add the normally-unused `run-e2e` PR label and do not treat this host's lack of KVM as a blocker.
+- [x] 5.1 Extend `mobile/.maestro/event-checklists.yaml` without removing or weakening its real add/toggle/delete assertions: after creating and toggling the seeded event's item, return through the existing screen stack and assert the event summary exposes all-complete `1/1`, then retain cleanup; validate the YAML/static selector contract locally.
+- [x] 5.2 Update `docs/mobile/architecture-book/features.md`, `calendar.md`, `storage.md`, and `testing.md` with the current checklist-progress read/render/test contracts. If implementation changes an Architecture Book rule, stop and add the required ADR plus `CHANGELOG.md` entry before continuing; otherwise do not create an ADR or chronology entry.
+- [x] 5.3 Add a non-blocking `docs/react-native-migration/inbox/` note tagged `(HUMAN: ...)` for physical-device light/dark, Dynamic Type, VoiceOver/TalkBack, dense-week, smallest-tile, and live-return observations. Do not add the normally-unused `run-e2e` PR label and do not treat this host's lack of KVM as a blocker.
 
 ## 6. Compatibility and completion proof
 

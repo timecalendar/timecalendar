@@ -182,6 +182,11 @@ function EventTile({
         ]}
       />
       <Pressable
+        testID={
+          progress === undefined
+            ? `agenda-event-${event.id}`
+            : `agenda-event-${event.id}-progress-${progress.completed}-${progress.total}`
+        }
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={onPress}

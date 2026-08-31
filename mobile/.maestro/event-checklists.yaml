@@ -1,7 +1,7 @@
 # Event-checklists real-round-trip e2e flow (ADR 024 / 030).
 #
 # Imports the seeded `e2e-smoke-calendar` token (the shared import-seed.yaml
-# preamble), opens a REAL synced event's details by its stable seeded uid, and
+# preamble), opens a REAL synced event from Agenda, and
 # round-trips a checklist item through the real device-local `checklist_items`
 # store: add → type → assert → toggle → delete → assert gone. This proves the
 # irreplaceable-data write path end to end on a real device.
@@ -31,20 +31,17 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 # Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
 - runFlow: import-seed.yaml
-# Cold-restart into the seeded event's details by its stable uid. The held token
-# survives the restart (clearState ran only at the preamble's start), so the synced
-# `calendar_events` row resolves and the details + checklist render.
-- stopApp
-- openLink: timecalendar-dev://event-details/e2e-today-lecture
-# iOS shows a system "Open in <app>?" confirmation on the FIRST deep link per
-# simulator — tap when present, skip otherwise.
-- runFlow:
-    when:
-      platform: iOS
-    commands:
-      - tapOn:
-          text: "Open"
-          optional: true
+# Enter Agenda so the details screen has a real summary surface beneath it in the
+# existing navigation stack.
+- tapOn:
+    id: "calendar-view-agenda"
+- assertVisible:
+    id: "calendar-view-agenda"
+- extendedWaitUntil:
+    visible: "E2E Today Lecture"
+    timeout: 60000
+- tapOn:
+    text: "E2E Today Lecture"
 # Real details render (the seeded title), proving the synced event resolved (NOT
 # the not-found state). Generous timeout for the cold start + JS bundle load.
 - extendedWaitUntil:
@@ -65,6 +62,20 @@ appId: fr.samuelprak.timecalendar.dev
 # The item is still present after toggling (the check state is visual; the content
 # stays).
 - assertVisible: "Buy notebook"
+# Pop back through the existing details → Agenda stack. The still-mounted Calendar
+# screen's one UID-set live query must expose the all-complete visual count.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "agenda-event-e2e-today-lecture-progress-1-1"
+    timeout: 60000
+- assertVisible: "1/1"
+# Reopen the same real event so the original cleanup remains part of this flow.
+- tapOn:
+    text: "E2E Today Lecture"
+- extendedWaitUntil:
+    visible: "Buy notebook"
+    timeout: 60000
 # Delete the item (single row → the uuid-suffixed remove id via `.*` regex).
 - tapOn:
     id: "checklist-remove-.*"
