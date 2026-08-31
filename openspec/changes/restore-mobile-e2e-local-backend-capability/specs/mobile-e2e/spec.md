@@ -431,3 +431,26 @@ interaction shared by both platforms, with no per-platform selector or branch.
   destructive action, and require the same exact row to become absent
 - **AND** a focused repository proof SHALL reject a bare `back`, missing or reordered cold
   re-entry, a weakened preserved-row assertion, or a weakened confirmed-deletion assertion
+
+#### Scenario: A successful keyboard command navigates away from the asserted screen
+
+- **WHEN** a shared checklist flow types a row and a keyboard-dismiss command reports success but
+  acts as Android Back because the input is already unfocused
+- **THEN** the flow SHALL contain no keyboard-dismiss command and SHALL first wait up to 15 seconds
+  for one selector that conjunctively matches the live checklist input id and exact typed value
+- **AND** it SHALL cold re-enter Calendar without clearing state, reopen the seeded event, and
+  require the persisted typed row before toggling it
+- **AND** the subsequent exact progress proof, reopen, hard-delete, and exact absence assertion
+  SHALL remain in order, with a focused mutation proof rejecting any lost or reordered stage
+
+#### Scenario: A hierarchy-visible onboarding CTA is covered by the keyboard
+
+- **WHEN** iOS exposes an institution or programme Continue control in the accessibility hierarchy
+  while native keyboard chrome physically covers its tappable bounds
+- **THEN** each onboarding form SHALL use the repository's keyboard-avoiding scroll/tap-handling
+  layout so its existing body Continue control remains visible and tappable after typing
+- **AND** the shared flow SHALL gate each explicit CTA tap behind both an exact conjunctive
+  input-id/value wait and the existing bounded CTA-id wait, with no keyboard-dismiss command,
+  Return-key submission, coordinate tap, optional CTA, deep-link bypass, or platform fork
+- **AND** focused component and flow mutation proofs SHALL fail if either CTA can return behind the
+  iOS keyboard, either exact value gate is removed or widened, or either CTA tap is bypassed

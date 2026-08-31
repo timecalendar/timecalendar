@@ -223,26 +223,26 @@ the event was never hidden, and `assertNotVisible: "E2E Today Seminar(,.*)?"` fa
 correctly, three steps downstream of the tap that actually went wrong.
 
 - [ ] 18.1 In `hidden-events.yaml`, select the Alert chooser option by an anchor no header
-  element can satisfy: `below:` the Alert title `Hide event` (`eventDetails.hide.title`), a
-  full-match regex that cannot match `Hide this event` and which the header — drawn above the
-  alert on both platforms — can never sit under. Gate it on the chooser actually being
-  presented with an `extendedWaitUntil` on `Hide all events of the same name`, an element
-  unique to that surface, so an alert that never opens fails at a named step instead of
-  silently re-tapping the first match. One cross-platform selector, no platform fork, the
-  hide/un-hide round trip unchanged; `below:` confirmed parsed by `maestro check-syntax` at
-  the pinned 2.8.0, and the anchor confirmed present in the iOS hierarchy by that run's
-  simulator log walking `Checking 'Hide event'` 0.18s before the second tap resolved.
+      element can satisfy: `below:` the Alert title `Hide event` (`eventDetails.hide.title`), a
+      full-match regex that cannot match `Hide this event` and which the header — drawn above the
+      alert on both platforms — can never sit under. Gate it on the chooser actually being
+      presented with an `extendedWaitUntil` on `Hide all events of the same name`, an element
+      unique to that surface, so an alert that never opens fails at a named step instead of
+      silently re-tapping the first match. One cross-platform selector, no platform fork, the
+      hide/un-hide round trip unchanged; `below:` confirmed parsed by `maestro check-syntax` at
+      the pinned 2.8.0, and the anchor confirmed present in the iOS hierarchy by that run's
+      simulator log walking `Checking 'Hide event'` 0.18s before the second tap resolved.
 - [ ] 18.2 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
-  the anchor. Read a red `hidden-events` by naming the step: at the `extendedWaitUntil` the
-  alert did not present or iOS composed its options into one element; at the second `tapOn`
-  the `below:` candidate set was empty; at `assertNotVisible` with both taps resolving to
-  different elements the hide itself is broken — an application defect and the only one of
-  the three outside this ticket's flow-only scope.
+      the anchor. Read a red `hidden-events` by naming the step: at the `extendedWaitUntil` the
+      alert did not present or iOS composed its options into one element; at the second `tapOn`
+      the `below:` candidate set was empty; at `assertNotVisible` with both taps resolving to
+      different elements the hide itself is broken — an application defect and the only one of
+      the three outside this ticket's flow-only scope.
 - [ ] 18.3 Record the collision class in the `mobile-e2e` delta: a selector that is correct can
-  still be ambiguous, and the disambiguating anchor plus its presence gate belong in the spec,
-  not only in the flow's comment header. Note that the repository proof cannot observe runtime
-  ambiguity and that the symptom surfaces at a downstream assertion naming an unrelated
-  element.
+      still be ambiguous, and the disambiguating anchor plus its presence gate belong in the spec,
+      not only in the flow's comment header. Note that the repository proof cannot observe runtime
+      ambiguity and that the symptom surfaces at a downstream assertion naming an unrelated
+      element.
 
 ## 19. Replace the platform-asymmetric back navigation in the settings flow
 
@@ -255,43 +255,43 @@ so Maestro issues a left-edge swipe; on the native-stack `My calendars` screen i
 defect was structurally invisible on one platform for as long as the flow has existed.
 
 - [x] 19.1 Replace both `back` steps in `settings.yaml` with the `stopApp` + `launchApp` cold
-  restart `about.yaml` already uses to re-enter the hub, re-tapping the `Settings` tab. One
-  cross-platform idiom, no per-platform fork. The header back button is not a usable
-  alternative: iOS exposes it as id `BackButton` with the accessibility label `(tabs)`, and
-  Android's toolbar navigation icon exposes neither, so no shared selector exists.
+      restart `about.yaml` already uses to re-enter the hub, re-tapping the `Settings` tab. One
+      cross-platform idiom, no per-platform fork. The header back button is not a usable
+      alternative: iOS exposes it as id `BackButton` with the accessibility label `(tabs)`, and
+      Android's toolbar navigation icon exposes neither, so no shared selector exists.
 - [x] 19.2 Assert `settings-theme-picker` on the Appearance destination. `Appearance &
-  language` is also the hub's own row label, asserted earlier in the same flow, so it could
-  never have proven the push happened — the leg was passing vacuously. The picker testID
-  exists only on the destination and is where `appearance-settings.yaml` lands.
+language` is also the hub's own row label, asserted earlier in the same flow, so it could
+      never have proven the push happened — the leg was passing vacuously. The picker testID
+      exists only on the destination and is where `appearance-settings.yaml` lands.
 - [x] 19.3 Guard the rule in `maestro-selectors.test.ts`: no flow may carry a bare `back`.
-  The existing proof reads selectors only and structurally could not see a command. Verified
-  by mutation — reintroducing `- back` fails the suite at the exact file and line — with a
-  parser test pinning that it is not matching vacuously. `maestro check-syntax` accepts the
-  repaired flow at the pinned 2.8.0.
+      The existing proof reads selectors only and structurally could not see a command. Verified
+      by mutation — reintroducing `- back` fails the suite at the exact file and line — with a
+      parser test pinning that it is not matching vacuously. `maestro check-syntax` accepts the
+      repaired flow at the pinned 2.8.0.
 - [ ] 19.4 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
-  the repair. Read a red `settings` by naming the step: at the post-restart `Settings` wait the
-  restart itself failed; at `settings-theme-picker` the Appearance row did not push — a real
-  navigation defect and the only one of the two outside this ticket's flow-only scope.
+      the repair. Read a red `settings` by naming the step: at the post-restart `Settings` wait the
+      restart itself failed; at `settings-theme-picker` the Appearance row did not push — a real
+      navigation defect and the only one of the two outside this ticket's flow-only scope.
 - [ ] 19.5 Extend the per-flow handoff record of task 15.4 to name `settings` and
-  `user-calendars` alongside `feedback` and `home`. `settings` is the flow this section
-  repairs, so its iOS result is the repair's only device evidence. `user-calendars` is flow 14
-  and every prior gate went terminal before reaching it, so a green iOS job here is the
-  **first execution of that flow on iOS in the project's history** — a bare "14/14 both
-  platforms" does not record that. Its sole construct unproven on iOS is
-  `assertVisible: "No calendars imported."`; that string renders as a `ThemedText` sibling in
-  a plain `View` (`user-calendars-screen.tsx:126-132`), not inside a pressable, so the
-  iOS-collapses-a-pressable composition that section 18 fixed cannot apply and an empty state
-  has nothing below the fold. A red flow 14 is therefore new information to diagnose on its
-  own terms, not a recurrence of that class.
+      `user-calendars` alongside `feedback` and `home`. `settings` is the flow this section
+      repairs, so its iOS result is the repair's only device evidence. `user-calendars` is flow 14
+      and every prior gate went terminal before reaching it, so a green iOS job here is the
+      **first execution of that flow on iOS in the project's history** — a bare "14/14 both
+      platforms" does not record that. Its sole construct unproven on iOS is
+      `assertVisible: "No calendars imported."`; that string renders as a `ThemedText` sibling in
+      a plain `View` (`user-calendars-screen.tsx:126-132`), not inside a pressable, so the
+      iOS-collapses-a-pressable composition that section 18 fixed cannot apply and an empty state
+      has nothing below the fold. A red flow 14 is therefore new information to diagnose on its
+      own terms, not a recurrence of that class.
 - [ ] 19.6 Record the platform-asymmetric command class in the `mobile-e2e` delta: a command
-  can report `COMPLETED` while being a no-op on one platform, so the flow must re-enter a root
-  screen with the shared `stopApp` + `launchApp` restart idiom and the repository proof must
-  reject a bare `back`, naming the file and line. Note what distinguishes this class from the
-  below-the-fold class (section 9, recorded by the `A flow reaches a row below the fold`
-  scenario) and the collision class (18.3) — it is statically decidable, because the command is
-  a literal in the flow, and it must be caught statically, since the platform that passes hides
-  it and the platform that fails reports it as a timed-out assertion against the screen the
-  flow believed it had already left.
+      can report `COMPLETED` while being a no-op on one platform, so the flow must re-enter a root
+      screen with the shared `stopApp` + `launchApp` restart idiom and the repository proof must
+      reject a bare `back`, naming the file and line. Note what distinguishes this class from the
+      below-the-fold class (section 9, recorded by the `A flow reaches a row below the fold`
+      scenario) and the collision class (18.3) — it is statically decidable, because the command is
+      a literal in the flow, and it must be caught statically, since the platform that passes hides
+      it and the platform that fails reports it as a timed-out assertion against the screen the
+      flow believed it had already left.
 
 ## 20. Size the cold-launch readiness waits for a degraded runner
 
@@ -312,35 +312,35 @@ job: `about` was caught while `launchApp` was still `RUNNING` (retryable startup
 a green gate mean anything. The gap is recorded as known and accepted; the wait is what moves.
 
 - [x] 20.1 Raise every `extendedWaitUntil: visible: "Settings"` that immediately follows a
-  `launchApp` from `60000` to `120000` — exactly seven sites in five flows: `about.yaml`,
-  `environment-switch.yaml`, `feedback.yaml`, `settings.yaml` (three), `user-calendars.yaml`.
-  Nothing else moves: no other timeout, selector, ordering, `mobile/src`, classifier, or retry
-  budget. Verified mechanically — seven waits raised and no other `timeout: 120000` anywhere in
-  `mobile/.maestro/**`.
+      `launchApp` from `60000` to `120000` — exactly seven sites in five flows: `about.yaml`,
+      `environment-switch.yaml`, `feedback.yaml`, `settings.yaml` (three), `user-calendars.yaml`.
+      Nothing else moves: no other timeout, selector, ordering, `mobile/src`, classifier, or retry
+      budget. Verified mechanically — seven waits raised and no other `timeout: 120000` anywhere in
+      `mobile/.maestro/**`.
 - [x] 20.2 Record the provenance at the `environment-switch.yaml` site: the measured 75.8 s
-  launch, run `33216821519`, and why the retry budget structurally cannot cover a launch-gate
-  timeout. A bound without its measurement reads as arbitrary and gets "cleaned up" later.
+      launch, run `33216821519`, and why the retry budget structurally cannot cover a launch-gate
+      timeout. A bound without its measurement reads as arbitrary and gets "cleaned up" later.
 - [x] 20.3 Confirm no repository proof asserts these blocks literally before editing them.
-  `test_run_e2e.sh`, `test_ci_mobile_e2e.sh`, and `maestro-selectors.test.ts` contain no
-  `extendedWaitUntil` or timeout literal, so the baseline cannot redden on the change — this is
-  exactly the literal-block coupling that makes PR #292 unmergeable, checked rather than assumed.
+      `test_run_e2e.sh`, `test_ci_mobile_e2e.sh`, and `maestro-selectors.test.ts` contain no
+      `extendedWaitUntil` or timeout literal, so the baseline cannot redden on the change — this is
+      exactly the literal-block coupling that makes PR #292 unmergeable, checked rather than assumed.
 - [ ] 20.4 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
-  the raise. Read a red `environment-switch` by naming the step: still at the launch gate after
-  120 s means the app genuinely fails to boot on iOS and the diagnosis in this section is wrong;
-  anywhere past it is a different class diagnosed on its own terms. Android's 14/14 at
-  `8dba4521` is corroboration only, not the accepting signal.
+      the raise. Read a red `environment-switch` by naming the step: still at the launch gate after
+      120 s means the app genuinely fails to boot on iOS and the diagnosis in this section is wrong;
+      anywhere past it is a different class diagnosed on its own terms. Android's 14/14 at
+      `8dba4521` is corroboration only, not the accepting signal.
 - [ ] 20.5 Record the cold-start readiness class in the `mobile-e2e` delta: a readiness wait is
-  a bound on the device, not a claim about the app, so it is sized for the slowest observed
-  runner and carries its provenance; widening it is sound only because it is one-directional
-  and cannot produce a false green; and the class is told apart from a true assertion failure
-  by its command record — a handful of commands ending at the launch gate, versus the collision
-  class's many commands against a genuinely-rendered element.
+      a bound on the device, not a claim about the app, so it is sized for the slowest observed
+      runner and carries its provenance; widening it is sound only because it is one-directional
+      and cannot produce a false green; and the class is told apart from a true assertion failure
+      by its command record — a handful of commands ending at the launch gate, versus the collision
+      class's many commands against a genuinely-rendered element.
 - [ ] 20.6 Residual, deliberately not changed and recorded so it is diagnosed rather than
-  rediscovered: `environment-switch.yaml`'s **second** `Settings` wait (after `Clear and
-  switch`) stays at `60000`. It follows `Updates.reloadAsync()`
-  (`src/features/environment/data/switch.ts:30`), a JS-runtime restart with the native process
-  already warm — not a `launchApp`, so it is outside the enumerated class. If a future gate dies
-  there, this is the one-line fix and it needs no new diagnosis.
+      rediscovered: `environment-switch.yaml`'s **second** `Settings` wait (after `Clear and
+switch`) stays at `60000`. It follows `Updates.reloadAsync()`
+      (`src/features/environment/data/switch.ts:30`), a JS-runtime restart with the native process
+      already warm — not a `launchApp`, so it is outside the enumerated class. If a future gate dies
+      there, this is the one-line fix and it needs no new diagnosis.
 
 ## 21. Make the hide fixture outlive a UTC midnight
 
@@ -357,61 +357,61 @@ both the hidden target and its non-hidden control were on the excluded previous 
 date defect, failing where it reads exactly like a broken hide.
 
 - [x] 21.1 Seed contract. Split the hide fixture out of the today cluster in
-  `server/src/scripts/seed-e2e-calendar.ts`: `E2E Hide Seminar` / `e2e-hide-seminar` at
-  16:00–18:00 UTC on the UTC day **after** the seed run, plus `E2E Hide Control` /
-  `e2e-hide-control` at 14:00–16:00 on that same day. Titles are date-neutral on purpose. The
-  today cluster does not move: `E2E Today Lecture` and `E2E Overlap A`/`B` stay seed-day
-  anchored, because `home.yaml` asserts the *today* timeline and no other anchor satisfies it.
-  The event set moves behind a pure `buildE2eCalendarEvents(now)`; `seedE2eCalendar` keeps only
-  the database side.
+      `server/src/scripts/seed-e2e-calendar.ts`: `E2E Hide Seminar` / `e2e-hide-seminar` at
+      16:00–18:00 UTC on the UTC day **after** the seed run, plus `E2E Hide Control` /
+      `e2e-hide-control` at 14:00–16:00 on that same day. Titles are date-neutral on purpose. The
+      today cluster does not move: `E2E Today Lecture` and `E2E Overlap A`/`B` stay seed-day
+      anchored, because `home.yaml` asserts the _today_ timeline and no other anchor satisfies it.
+      The event set moves behind a pure `buildE2eCalendarEvents(now)`; `seedE2eCalendar` keeps only
+      the database side.
 - [x] 21.2 Flow, docs and selector alignment. `mobile/.maestro/hidden-events.yaml` follows the
-  rename at every reference — the stable details deep link, the three title assertions, the
-  `Un-hide` label, and the header comment — with the command order, both Agenda switches, the
-  cross-platform Alert anchor, and the hide → absent → manage → un-hide → present round trip
-  unchanged and no assertion weakened. `mobile/e2e/maestro-selectors.test.ts` follows the
-  `Un-hide` label; it reads the seeded titles from the seed script itself, so the rest
-  re-checks itself. `mobile/e2e/README.md` gains the seed-date rule as checklist item 7 and
-  `docs/mobile/architecture-book/testing.md` + `CHANGELOG.md` record it as the binding contract.
+      rename at every reference — the stable details deep link, the three title assertions, the
+      `Un-hide` label, and the header comment — with the command order, both Agenda switches, the
+      cross-platform Alert anchor, and the hide → absent → manage → un-hide → present round trip
+      unchanged and no assertion weakened. `mobile/e2e/maestro-selectors.test.ts` follows the
+      `Un-hide` label; it reads the seeded titles from the seed script itself, so the rest
+      re-checks itself. `mobile/e2e/README.md` gains the seed-date rule as checklist item 7 and
+      `docs/mobile/architecture-book/testing.md` + `CHANGELOG.md` record it as the binding contract.
 - [x] 21.3 A non-hidden control must share its target's day — the one place this section departs
-  from the triage brief, which said to keep `E2E Today Lecture` as the control. It cannot be
-  kept: the control is asserted **through the same Agenda**, so post-rollover it falls out of
-  the forward-only window exactly as the target did, and the flow would still fail — one
-  assertion earlier, at `extendedWaitUntil: "E2E Today Lecture(,.*)?"` instead of at
-  `assertNotVisible`. The control's *role* is what the brief protects (an empty Agenda must not
-  satisfy `assertNotVisible` vacuously) and that role is preserved in full by `E2E Hide Control`
-  on the target's own day. A control that does not outlive the crossing its target survives
-  stops guarding on precisely the run that needs it.
+      from the triage brief, which said to keep `E2E Today Lecture` as the control. It cannot be
+      kept: the control is asserted **through the same Agenda**, so post-rollover it falls out of
+      the forward-only window exactly as the target did, and the flow would still fail — one
+      assertion earlier, at `extendedWaitUntil: "E2E Today Lecture(,.*)?"` instead of at
+      `assertNotVisible`. The control's _role_ is what the brief protects (an empty Agenda must not
+      satisfy `assertNotVisible` vacuously) and that role is preserved in full by `E2E Hide Control`
+      on the target's own day. A control that does not outlive the crossing its target survives
+      stops guarding on precisely the run that needs it.
 - [x] 21.4 Focused rollover proof. `server/src/scripts/seed-e2e-calendar.spec.ts` pins
-  `now = 2026-08-28T23:30:00Z` and observation at `2026-08-29T00:30:00Z`, mirroring the agenda
-  window and `intersectsRange` from their real sources, and proves: `E2E Hide Seminar` is
-  Aug 29 16:00–18:00 UTC and intersects the window from **both** anchors; `E2E Hide Control`
-  shares that day and both intersections; `E2E Today Lecture` is still Aug 28; uids and titles
-  are unique; and the month boundary rolls (`2026-08-31` → `2026-09-01`). The control arm
-  mutates the target back to the seed day and asserts it is **excluded** after midnight, so a
-  window check that accepted everything cannot make the rest vacuous. No database is mocked —
-  the builder is pure, and a mocked repository would have exercised TypeORM rather than the
-  arithmetic that broke. 10/10 green locally.
+      `now = 2026-08-28T23:30:00Z` and observation at `2026-08-29T00:30:00Z`, mirroring the agenda
+      window and `intersectsRange` from their real sources, and proves: `E2E Hide Seminar` is
+      Aug 29 16:00–18:00 UTC and intersects the window from **both** anchors; `E2E Hide Control`
+      shares that day and both intersections; `E2E Today Lecture` is still Aug 28; uids and titles
+      are unique; and the month boundary rolls (`2026-08-31` → `2026-09-01`). The control arm
+      mutates the target back to the seed day and asserts it is **excluded** after midnight, so a
+      window check that accepted everything cannot make the rest vacuous. No database is mocked —
+      the builder is pure, and a mocked repository would have exercised TypeORM rather than the
+      arithmetic that broke. 10/10 green locally.
 - [x] 21.5 Record the seed-date class in the `mobile-e2e` delta: a fixture seeded once is
-  observed by a device clock that keeps moving, so the failure is a date-contract defect and not
-  a defect in the feature under test; an agenda-asserted fixture is anchored on the next UTC day
-  with a date-neutral title; a control shares its target's day; the today-timeline exception
-  keeps its anchor with the residual exposure pinned; and the contract is proven by a pure
-  builder rather than a mocked repository.
+      observed by a device clock that keeps moving, so the failure is a date-contract defect and not
+      a defect in the feature under test; an agenda-asserted fixture is anchored on the next UTC day
+      with a date-neutral title; a control shares its target's day; the today-timeline exception
+      keeps its anchor with the residual exposure pinned; and the contract is proven by a pure
+      builder rather than a mocked repository.
 - [ ] 21.6 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
-  this section. Read a red `hidden-events` by naming the step: at the first
-  `extendedWaitUntil: "E2E Hide Seminar(,.*)?"` on the details screen means the renamed uid did
-  not resolve; at `E2E Hide Control` means the next-day anchor is not in the Agenda window and
-  this section's diagnosis is wrong; at `assertNotVisible` after both taps completed means the
-  hide itself is broken — the only one of the three outside this ticket's fixture scope.
-  Android's 14/14 at `24af3e91` is corroboration only, not the accepting signal.
+      this section. Read a red `hidden-events` by naming the step: at the first
+      `extendedWaitUntil: "E2E Hide Seminar(,.*)?"` on the details screen means the renamed uid did
+      not resolve; at `E2E Hide Control` means the next-day anchor is not in the Agenda window and
+      this section's diagnosis is wrong; at `assertNotVisible` after both taps completed means the
+      hide itself is broken — the only one of the three outside this ticket's fixture scope.
+      Android's 14/14 at `24af3e91` is corroboration only, not the accepting signal.
 - [ ] 21.7 Residual, deliberately not changed and recorded so it is diagnosed rather than
-  rediscovered: `calendar.yaml`, `event-checklists.yaml` and `home.yaml` still assert the
-  seed-day today cluster, so a job that crosses UTC midnight *before* those flows fails the same
-  way `hidden-events` just did — `home.yaml` structurally cannot be fixed by an anchor move,
-  since the today timeline is what it exists to assert. Pinned by the seed proof's
-  "carries the recorded one-midnight exposure" case, so the asymmetry is a visible contract
-  rather than a gap. The real fixes are a shorter job or a re-seed before the calendar-family
-  flows; both are outside this ticket, and neither is justified by a single observed crossing.
+      rediscovered: `calendar.yaml`, `event-checklists.yaml` and `home.yaml` still assert the
+      seed-day today cluster, so a job that crosses UTC midnight _before_ those flows fails the same
+      way `hidden-events` just did — `home.yaml` structurally cannot be fixed by an anchor move,
+      since the today timeline is what it exists to assert. Pinned by the seed proof's
+      "carries the recorded one-midnight exposure" case, so the asymmetry is a visible contract
+      rather than a gap. The real fixes are a shorter job or a re-seed before the calendar-family
+      flows; both are outside this ticket, and neither is justified by a single observed crossing.
 
 ## 22. Size the measured row-50 Activity pagination traversal
 
@@ -423,22 +423,22 @@ The target is row 50, so this is a bounded traversal deficit rather than a missi
 stuck list.
 
 - [x] 22.1 Raise only the `activity-new-e2e-activity-tie-higher` `scrollUntilVisible` timeout
-  from 60000 to 120000 in `mobile/.maestro/activity.yaml`, with provenance naming the run,
-  row 50, and both observed progress ranges. Preserve selector, direction, command order,
-  assertions, and the `tie-lower` / `older-anchor` 60000 bounds.
+      from 60000 to 120000 in `mobile/.maestro/activity.yaml`, with provenance naming the run,
+      row 50, and both observed progress ranges. Preserve selector, direction, command order,
+      assertions, and the `tie-lower` / `older-anchor` 60000 bounds.
 - [x] 22.2 Extend `mobile/e2e/activity-maestro-selectors.test.ts` with an ordered structural
-  proof that pins the three pagination selectors to `tie-higher` 120000, `tie-lower` 60000,
-  and `older-anchor` 60000. The proof must fail if the first bound is reverted, either later
-  bound is widened, or their order changes.
+      proof that pins the three pagination selectors to `tie-higher` 120000, `tie-lower` 60000,
+      and `older-anchor` 60000. The proof must fail if the first bound is reverted, either later
+      bound is widened, or their order changes.
 - [x] 22.3 Record the measured long-pagination class in the `mobile-e2e` delta: only the
-  evidenced row-50 traversal receives the wider bound, while the later page assertions and
-  scroll bounds stay unchanged.
+      evidenced row-50 traversal receives the wider bound, while the later page assertions and
+      scroll bounds stay unchanged.
 - [x] 22.4 Run the focused Activity Jest proof, confirm its timeout mutations fail, run Maestro
-  YAML syntax, OpenSpec strict validation, formatting for the touched TypeScript/YAML, and
-  `git diff --check`, then push the material head with `run-e2e` retained.
+      YAML syntax, OpenSpec strict validation, formatting for the touched TypeScript/YAML, and
+      `git diff --check`, then push the material head with `run-e2e` retained.
 - [ ] 22.5 Require the fresh exact-head baseline plus Android and iOS native jobs to pass all
-  17 top-level flows. Record both complete per-flow lists and prove Activity continues through
-  `tie-higher`, `tie-lower`, and `older-anchor` over the real local server path before archive.
+      17 top-level flows. Record both complete per-flow lists and prove Activity continues through
+      `tie-higher`, `tie-lower`, and `older-anchor` over the real local server path before archive.
 
 ## 23. Reopen Activity pagination when the held-calendar set expands
 
@@ -450,23 +450,23 @@ treated it as complete for the expanded set. `loadOlderPage` therefore returned 
 reading a token or issuing a request.
 
 - [x] 23.1 Extend the app-lifetime held-calendar observer into ownership reconciliation. On an
-  observed addition after the first loaded baseline, clear only the older-page cursor/completion
-  state and force the existing newest-page coordinator. Preserve removal pruning, hidden-calendar
-  treatment, cached rows, read watermark, unread count semantics, cursor recovery, and the
-  independent newest/older single-flight slots; do not add a calendar-sources → Activity edge.
+      observed addition after the first loaded baseline, clear only the older-page cursor/completion
+      state and force the existing newest-page coordinator. Preserve removal pruning, hidden-calendar
+      treatment, cached rows, read watermark, unread count semantics, cursor recovery, and the
+      independent newest/older single-flight slots; do not add a calendar-sources → Activity edge.
 - [x] 23.2 Add mutation-sensitive regression coverage for the exact sequence: a baseline calendar
-  completes its chain, a second held calendar appears, the expanded newest page adopts a cursor,
-  and `loadOlderPage` requests and stores the following page. Assert the baseline row and read
-  watermark survive, the server unread count remains authoritative, and an overlapping
-  sync-triggered newest refresh is joined rather than duplicated. Replacing the reset with a no-op
-  must fail at the older-page outcome.
+      completes its chain, a second held calendar appears, the expanded newest page adopts a cursor,
+      and `loadOlderPage` requests and stores the following page. Assert the baseline row and read
+      watermark survive, the server unread count remains authoritative, and an overlapping
+      sync-triggered newest refresh is joined rather than duplicated. Replacing the reset with a no-op
+      must fail at the older-page outcome.
 - [x] 23.3 Run the focused Activity repository/coordinator/lifecycle suites, mobile typecheck and
-  lint, strict OpenSpec validation, formatting, and `git diff --check`; inspect the complete diff
-  for no selector, timeout, flow-order, server/API/schema, credential, deployment, native/store,
-  or legacy Flutter change.
+      lint, strict OpenSpec validation, formatting, and `git diff --check`; inspect the complete diff
+      for no selector, timeout, flow-order, server/API/schema, credential, deployment, native/store,
+      or legacy Flutter change.
 - [ ] 23.4 Push the material head with `run-e2e` retained and require a fresh exact-head baseline
-  plus Android and iOS 17/17. Activity must reach `tie-higher`, `tie-lower`, and `older-anchor`
-  through the real local server before Reviewer handoff; do not archive before that verdict.
+      plus Android and iOS 17/17. Activity must reach `tie-higher`, `tie-lower`, and `older-anchor`
+      through the real local server before Reviewer handoff; do not archive before that verdict.
 
 ## 24. Reveal the restored hide target below the Agenda fold
 
@@ -478,19 +478,19 @@ the following 16:00 seminar row was below the viewport, so the non-scrolling 60-
 `extendedWaitUntil` expired. This is the section 9 below-the-fold class, not a failed un-hide.
 
 - [x] 24.1 Replace only the final restored-target wait in `hidden-events.yaml` with a downward,
-  centred `scrollUntilVisible` for `E2E Hide Seminar(,.*)?`, followed by the same positive
-  `assertVisible`. Preserve the hide/absence/manage/un-hide order, Alert anchor, non-hidden
-  control, selectors, and 60-second bound.
+      centred `scrollUntilVisible` for `E2E Hide Seminar(,.*)?`, followed by the same positive
+      `assertVisible`. Preserve the hide/absence/manage/un-hide order, Alert anchor, non-hidden
+      control, selectors, and 60-second bound.
 - [x] 24.2 Pin the final reveal structure in `maestro-selectors.test.ts`, and extend the existing
-  below-the-fold delta scenario to name the restored Agenda target and its following positive
-  assertion. The proof must fail if the scroll is replaced by a plain wait, centring is removed,
-  or the terminal assertion is removed.
+      below-the-fold delta scenario to name the restored Agenda target and its following positive
+      assertion. The proof must fail if the scroll is replaced by a plain wait, centring is removed,
+      or the terminal assertion is removed.
 - [x] 24.3 Run the focused selector proof, mutation-check the three protected properties, parse
-  the flow with pinned Maestro 2.8.0 when locally available, run applicable formatting, strict
-  OpenSpec validation, and `git diff --check`; push with `run-e2e` retained.
+      the flow with pinned Maestro 2.8.0 when locally available, run applicable formatting, strict
+      OpenSpec validation, and `git diff --check`; push with `run-e2e` retained.
 - [ ] 24.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `hidden-events` must
-  complete the unchanged non-vacuous hide/un-hide round trip, and Activity must again reach all
-  three pagination assertions before Reviewer handoff; do not archive before that verdict.
+      complete the unchanged non-vacuous hide/un-hide round trip, and Activity must again reach all
+      three pagination assertions before Reviewer handoff; do not archive before that verdict.
 
 ## 25. Follow the merged unlisted-institution journey to URL import
 
@@ -503,20 +503,20 @@ institution → programme → connect → manual-import journey, leaving this fl
 assumption stale.
 
 - [x] 25.1 Extend only `ical-import.yaml`'s reachability half through the shipped unlisted-
-  institution journey using the existing cross-platform ids, then select `onboarding-import-url`.
-  Preserve the welcome/school entry proof, the URL-screen title, the empty-submit validation,
-  flow ordering, and the no-platform-fork contract.
+      institution journey using the existing cross-platform ids, then select `onboarding-import-url`.
+      Preserve the welcome/school entry proof, the URL-screen title, the empty-submit validation,
+      flow ordering, and the no-platform-fork contract.
 - [x] 25.2 Pin the ordered journey edges in `maestro-selectors.test.ts`, including the institution
-  and programme inputs, both Continue actions, the connect Continue action, the manual-import URL
-  choice, and the unchanged URL-screen title assertion. The proof must fail if the obsolete direct
-  jump is restored or the manual-import choice is bypassed.
+      and programme inputs, both Continue actions, the connect Continue action, the manual-import URL
+      choice, and the unchanged URL-screen title assertion. The proof must fail if the obsolete direct
+      jump is restored or the manual-import choice is bypassed.
 - [x] 25.3 Record the merged-journey drift class in the `mobile-e2e` delta and run the focused
-  selector proof, mutation-check its ordered route contract, parse the YAML with pinned Maestro
-  2.8.0 when available, run applicable formatting, strict OpenSpec validation, and
-  `git diff --check`; push with `run-e2e` retained.
+      selector proof, mutation-check its ordered route contract, parse the YAML with pinned Maestro
+      2.8.0 when available, run applicable formatting, strict OpenSpec validation, and
+      `git diff --check`; push with `run-e2e` retained.
 - [ ] 25.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
-  complete the new institution/programme/connect/manual-import reachability chain and retain its
-  empty-submit validation before Reviewer handoff; do not archive before that verdict.
+      complete the new institution/programme/connect/manual-import reachability chain and retain its
+      empty-submit validation before Reviewer handoff; do not archive before that verdict.
 
 ## 26. Synchronize the controlled rename input before Save
 
@@ -564,18 +564,18 @@ a bare `back`, which can report success without leaving native-stack details on 
 seeded-title selectors that do not match iOS's composed accessible event container.
 
 - [x] 28.1 Merge current `origin/main` without rebase or force-push, then preserve the complete
-  add → type → toggle → Agenda `1/1` progress → reopen → hard-delete round trip while replacing
-  the stale agenda id and every bare `E2E Today Lecture` event-container selector.
+      add → type → toggle → Agenda `1/1` progress → reopen → hard-delete round trip while replacing
+      the stale agenda id and every bare `E2E Today Lecture` event-container selector.
 - [x] 28.2 Replace the post-toggle bare `back` with the shared state-preserving cold re-entry:
-  `stopApp` → calendar deep link → optional iOS `Open` → bounded Calendar wait → shared
-  `calendar-view` / `Agenda` navigation before the exact progress-id assertion.
+      `stopApp` → calendar deep link → optional iOS `Open` → bounded Calendar wait → shared
+      `calendar-view` / `Agenda` navigation before the exact progress-id assertion.
 - [x] 28.3 Extend the focused checklist-progress proof to pin that ordered re-entry and reject the
-  stale agenda id, bare seeded title, or bare `back`; retain production progress-id source proof
-  and the add/toggle/delete assertions. Record the measured merge-result drift and cross-platform
-  re-entry rule in the `mobile-e2e` delta.
+      stale agenda id, bare seeded title, or bare `back`; retain production progress-id source proof
+      and the add/toggle/delete assertions. Record the measured merge-result drift and cross-platform
+      re-entry rule in the `mobile-e2e` delta.
 - [ ] 28.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `event-checklists` must
-  prove the real local SQLite add/toggle/progress/reopen/delete round trip on both platforms, and
-  the handoff must record both complete per-flow lists before archive.
+      prove the real local SQLite add/toggle/progress/reopen/delete round trip on both platforms, and
+      the handoff must record both complete per-flow lists before archive.
 
 ## 29. Re-enter the personal-events root after cancelling deletion
 
@@ -585,16 +585,71 @@ left-edge swipe on iOS without leaving a native-stack screen. The cancellation p
 the durable row, so the repair re-enters the owning route without clearing application state.
 
 - [x] 29.1 Replace only the post-Cancel bare `back` with `stopApp` →
-  `openLink: timecalendar-dev://personal-events` → optional iOS `Open`, then wait up to 60 seconds
-  for the exact `Maestro CRUD event` row before reopening it. Preserve the create, Cancel,
-  form-still-open, confirmed Delete, and final exact-absence assertions; do not use `clearState`.
+      `openLink: timecalendar-dev://personal-events` → optional iOS `Open`, then wait up to 60 seconds
+      for the exact `Maestro CRUD event` row before reopening it. Preserve the create, Cancel,
+      form-still-open, confirmed Delete, and final exact-absence assertions; do not use `clearState`.
 - [x] 29.2 Extend `maestro-selectors.test.ts` with a focused ordered proof for Cancel → edit-form
-  assertion → state-preserving cold re-entry → exact preserved row → reopen → confirmed Delete →
-  exact absence. Mutation checks reject a returned bare `back`, removed or reordered re-entry,
-  and either weakened row assertion.
+      assertion → state-preserving cold re-entry → exact preserved row → reopen → confirmed Delete →
+      exact absence. Mutation checks reject a returned bare `back`, removed or reordered re-entry,
+      and either weakened row assertion.
 - [x] 29.3 Record the cancelled-destructive-prompt native-stack class in the `mobile-e2e` delta
-  and run the general selector suite, focused mutations, pinned Maestro 2.8.0 syntax, strict
-  OpenSpec validation, applicable formatting, zero-bare-back scan, and `git diff --check`.
+      and run the general selector suite, focused mutations, pinned Maestro 2.8.0 syntax, strict
+      OpenSpec validation, applicable formatting, zero-bare-back scan, and `git diff --check`.
 - [ ] 29.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `personal-events` must
-  prove the complete create → cancel-delete → preserved row → confirmed delete → absent journey
-  on both platforms before archive.
+      prove the complete create → cancel-delete → preserved row → confirmed delete → absent journey
+      on both platforms before archive.
+
+## 30. Prove checklist persistence without a keyboard navigation command
+
+Exact-head Android job `99406336168` in run `33365735943` typed `Buy notebook`, then the final
+`hideKeyboard` reported `COMPLETED` while acting as Android Back and returning to Agenda. The row
+was persisted, but the next assertion ran against the wrong screen. The repair must prove the
+value in the live input, then prove the persisted row after state-preserving re-entry before any
+toggle.
+
+- [ ] 30.1 Remove the final `hideKeyboard` from `event-checklists.yaml`; require a 15-second
+      selector conjunctively matching `id: checklist-input-.*` and exact `text: "Buy notebook"`, then
+      cold re-enter Calendar without `clearState`, reopen `E2E Today Lecture(,.*)?`, assert the typed
+      row, and only then toggle it. Preserve the later cold re-entry, exact `progress-1-1`, reopen,
+      hard-delete, and exact absence proof.
+- [ ] 30.2 Extend the focused checklist/general Maestro proof and mutation cases to reject any
+      returned `hideKeyboard`, removed or widened exact input-value gate, removed or reordered
+      pre-toggle re-entry, or loss/reordering of add → type → persist → toggle → progress → delete →
+      absent. Assert `mobile/.maestro/**` contains zero `hideKeyboard` commands.
+- [ ] 30.3 Run the focused selector/mutation suite, parse `event-checklists.yaml` with pinned
+      Maestro 2.8.0, run applicable formatting and lint, strict OpenSpec validation, and
+      `git diff --check`. Confirm no selector id, top-level flow order, Architecture Book rule, or
+      production behavior changed.
+- [ ] 30.4 Require the fresh material exact head to pass the branch baseline plus Android and iOS
+      17/17. Record both complete flow lists and explicitly name `event-checklists` before archive.
+
+## 31. Keep onboarding Continue controls tappable above the keyboard
+
+Exact-head iOS job `99405887796` in run `33365735943` exposed
+`onboarding-institution-continue` at bounds `[24,581][378,629]` while the keyboard covered that
+region. Maestro selected the correct id, but its tap landed in keyboard/prediction chrome, changed
+`E2E Institution` to `E2E Institutiont`, and never left the institution route. The programme form
+uses the same centered body-CTA layout and carries the same latent terminus.
+
+- [ ] 31.1 Update only `institution-name-screen.tsx`, `programme-screen.tsx`, and the minimum
+      shared/local styles to apply the established `KeyboardAvoidingView` plus scroll/tap-handling form
+      pattern. Keep both body Continue controls visibly above and tappable through the iOS keyboard;
+      preserve Android behavior, validation, draft writes, route targets, Skip, labels, ids, and
+      entered values, with no new dependency or keyboard primitive.
+- [ ] 31.2 In shared `ical-import.yaml`, retain both explicit CTA-id waits and taps, but precede
+      each with a 15-second selector conjunctively matching the exact input id/value pair:
+      `onboarding-institution-input` + `E2E Institution`, then `onboarding-programme-input` +
+      `E2E Programme`. Do not add `hideKeyboard`, Return submission, coordinates, optional commands,
+      deep-link bypasses, or platform forks.
+- [ ] 31.3 Add focused component and Maestro structural/mutation coverage that pins keyboard-safe
+      layout semantics on both screens and each input → exact-value gate → CTA wait → CTA tap sequence.
+      The proof must fail if either iOS CTA can return behind the keyboard, either exact gate is
+      removed/widened, either CTA is bypassed/reordered, or any `hideKeyboard` returns.
+- [ ] 31.4 Run the two focused component suites, focused Maestro selector/mutation proof, pinned
+      Maestro 2.8.0 syntax for `ical-import.yaml`, TypeScript/lint as applicable, formatting, strict
+      OpenSpec validation, and `git diff --check`. Confirm the local layout repair does not change a
+      binding Architecture Book contract; binding Architecture Book edits remain out of scope.
+- [ ] 31.5 Require the same fresh material exact head to pass the branch baseline plus Android and
+      iOS 17/17. Record both complete lists and explicitly name `activity`, `event-checklists`,
+      `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
+      `user-calendars` result before archive.

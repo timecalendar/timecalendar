@@ -26,9 +26,11 @@ A static enumeration of every literal `id:` in the flows against every `testID` 
 
 **Non-Goals:**
 
-- Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, application UI/behaviour, retry classification, Maestro flow order, seeded-data assertions, or server lifecycle.
-- Change application UI/behaviour outside the authorized Activity held-calendar lifecycle repair,
-  add a `testID` to a control that lacks one, or add per-platform branches to any flow.
+- Change `app.config.ts`, the backend-environment selector, endpoint allowlist, persisted environment behavior, retry classification, Maestro flow order, seeded-data assertions, or server lifecycle.
+- Change application UI/behaviour outside the authorized Activity held-calendar lifecycle repair
+  and the bounded keyboard-safe layout of the institution-name and programme forms; add a `testID`
+  to a control that lacks one; change either form's validation/draft/navigation/Skip contract; or
+  introduce a new keyboard dependency or platform-specific Maestro flow.
 - Change OpenAPI/generated clients, server schema or migrations, native/store configuration, EAS profiles, Firebase files, deployments, infrastructure, or legacy Flutter.
 - Re-run a terminal native failure without a material workflow fix, add a separate QA gate, or modify the parent feature PR.
 
@@ -183,6 +185,63 @@ Alternatives rejected:
 - Work around the missing page in Maestro: it would conceal a production state defect and weaken
   the real-server pagination proof.
 
+## Decision 8: Prove checklist persistence across a state-preserving cold re-entry
+
+The final `hideKeyboard` in `event-checklists.yaml` is removed. Run `33365735943` showed why a
+successful keyboard command is not a useful postcondition: after the input had already unfocused,
+Android treated the command as Back and returned to Agenda while Maestro reported `COMPLETED`.
+Before leaving details, the flow instead waits up to 15 seconds for one selector conjunctively
+matching `id: checklist-input-.*` and exact `text: "Buy notebook"`.
+
+The flow then uses the already-proven state-preserving Calendar cold re-entry (`stopApp` → calendar
+deep link → optional iOS confirmation, without `clearState`), reopens `E2E Today Lecture(,.*)?`,
+and requires the typed row before toggling it. The existing second cold re-entry, exact
+`progress-1-1` proof, reopen, hard-delete, and exact absence assertion remain in order. This turns
+the pre-toggle assertion into a persistence proof on the correct screen rather than an assertion
+against whichever route a keyboard command happened to leave active.
+
+Alternatives rejected:
+
+- Keep `hideKeyboard` and add another screen assertion: the command itself can navigate on Android,
+  so this preserves a platform-asymmetric side effect.
+- Toggle immediately after typing: that proves only the live details instance, not persistence
+  across a route lifecycle.
+- Use `back`, `clearState`, or a platform fork: `back` has the same cross-platform ambiguity,
+  `clearState` destroys the SQLite row being proved, and the shared flow already has a safe route.
+
+## Decision 9: Keep onboarding body CTAs above the keyboard, then prove exact flow values
+
+`institution-name-screen.tsx` and `programme-screen.tsx` adopt the existing form layout used by
+Feedback and personal-event forms: a flex `KeyboardAvoidingView` with iOS padding behavior, a
+scrollable content region whose `keyboardShouldPersistTaps="handled"` permits CTA activation while
+the keyboard is present, and placement/styles that keep the body Continue control inside the
+keyboard-adjusted visible region. Android continues to rely on its existing resize behavior. No
+new dependency or keyboard primitive is introduced, and validation, draft writes, route targets,
+Skip behavior, labels, ids, and user-entered values are unchanged.
+
+This is required because accessibility-hierarchy visibility is not physical tapability. In the
+iOS artifact from run `33365735943`, `onboarding-institution-continue` was exposed at y=581–629
+while the keyboard covered that region; Maestro selected the correct id but the tap hit the
+keyboard/prediction layer and changed `E2E Institution` to `E2E Institutiont`. The programme screen
+uses the same centered form frame and therefore receives the same bounded repair before it becomes
+the next terminus.
+
+The shared `ical-import.yaml` remains platform-neutral. After each `inputText`, it first waits up
+to 15 seconds for one selector matching the existing input id and the complete exact value, then
+retains the existing bounded Continue-id wait and explicit tap. Repository proof pins both
+input → exact-value gate → CTA wait → CTA tap sequences and rejects any `hideKeyboard` anywhere in
+the flow set. Component proof pins the keyboard-avoiding/scroll/tap-handling semantics for both
+screens, including the iOS behavior and unchanged Android contract.
+
+Alternatives rejected:
+
+- Treat hierarchy `visible` as sufficient: the captured tap proves an exposed element may still be
+  occluded by native keyboard chrome.
+- Dismiss the keyboard, submit with Return, tap coordinates, or make the CTA optional: each either
+  repeats the failing primitive or bypasses the shipped explicit control.
+- Add a new shared keyboard component immediately: only two adjacent screens need the bounded
+  repair, and the existing repository pattern is sufficient without expanding the abstraction.
+
 ## Risks / Trade-offs
 
 - [One platform or phase drifts later] → Step-scoped assertions cover all four build steps and both exact URLs.
@@ -193,6 +252,10 @@ Alternatives rejected:
 - [The menu popup is not addressable on one platform] → This is the residual risk of Decision 3 and only a device settles it. `appearance-settings.yaml` records design D5: `@expo/ui` picker **popup internals** were judged unreliable for a toggle round trip. This case differs — the trigger carries a `testID` that `appearance-settings.yaml` already asserts visible on both platforms, and the menu entries are plain OS menu items with fixed labels, the same shape `environment-switch.yaml` and `hidden-events.yaml` already drive through native `Alert` choosers. If the exact-head run shows one platform cannot address the entry, that is a material finding for the Founding Engineer, not a retry: the fallback would be an application change (a testID-addressable view control or a deep-link parameter) that this change is not authorized to make.
 - [A flow not reached since the UI rework carries a stale **text** assertion] → The guard covers `id:` selectors only, and six flows (`environment-switch`, `event-checklists`, `home`, `personal-events`, `settings`, `user-calendars`) have not been reached by a native run since the rework, because `run_e2e.sh` stops at the first failure. This is why triage amendment #2 authorizes repairing whatever the gate surfaces inside this ticket rather than filing a new one per selector: the first green run is not promised in one shot, but each iteration is a material fix on the same surface.
 - [The Android native-stack `SearchView` renders collapsed to an icon] → Then the `"Search schools"` placeholder is not matchable until it is expanded, and no flow-only repair exists. That is the `TIM-265` boundary — escalate to the Founding Engineer rather than reaching into `mobile/src`.
+- [A keyboard command reports success but changes route state] → Eliminate `hideKeyboard` from all
+  shared flows and prove the checklist value on details before a state-preserving cold re-entry.
+- [A CTA is accessibility-visible but keyboard-occluded] → Keep both body CTAs inside the
+  keyboard-adjusted tappable layout and retain exact-value plus bounded CTA gates in the shared flow.
 
 ## Migration Plan
 
@@ -201,8 +264,12 @@ Alternatives rejected:
 3. Add the baseline-gate selector guard with its three matching rules and an empty `KNOWN_STALE`.
 4. Update testing/operator guidance and the Architecture Book changelog; no human-only inbox note is needed.
 5. Run shell syntax/proof, workflow/config/YAML formatting, resolved Expo config checks for both platform contracts, the mobile Jest suite, OpenSpec validation, and the applicable baseline checks.
-6. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
-7. Rollback is a normal revert of the workflow, flow, proof, and documentation changes. It restores the known broken E2E routing but does not migrate data or alter production behavior.
+6. Remove the last `hideKeyboard`, add the exact checklist value gate and pre-toggle cold re-entry,
+   and mutation-pin the complete add → persist → toggle → progress → delete → absent sequence.
+7. Apply the established keyboard-safe form layout to the two onboarding name screens, add their
+   focused component proof, and pin both iCal exact-value → CTA-wait → CTA-tap sequences.
+8. Push the implementation and run baseline plus Android and iOS native jobs on one exact PR head. Record the SHA and direct run/job links before review handoff.
+9. Rollback is a normal revert of the workflow, flow, proof, documentation, and bounded form-layout changes. It restores the known broken E2E routing/keyboard reachability but does not migrate data or alter production data.
 
 ## Open Questions
 
