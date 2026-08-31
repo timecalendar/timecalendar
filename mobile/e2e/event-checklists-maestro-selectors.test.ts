@@ -40,7 +40,7 @@ describe("event-checklists Maestro summary-progress contract", () => {
     expect(flow).not.toContain("calendar-view-agenda")
     expect(flow).not.toMatch(bareBack)
     expect(flow).not.toMatch(bareTitle)
-    expect(flow.match(/"E2E Today Lecture\(,\.\*\)\?"/g)).toHaveLength(4)
+    expect(flow.match(/"E2E Today Lecture\(,\.\*\)\?"/g)).toHaveLength(6)
   })
 
   it("fails each forbidden navigation regression mutation", () => {

@@ -40,7 +40,7 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
 
 ## CI topology
 
-- `test-mobile` runs gen-drift, tsc, lint, then Jest. `e2e-mobile-android` (ubuntu, KVM emulator, reuses the `build-server` image artifact via `E2E_SERVER_IMAGE`) and `e2e-mobile-ios` (macOS runner, Postgres/Redis provisioned natively because GitHub macOS runners have no Docker — the `--native` seam). Both upload Maestro debug output + server logs on failure (R-1).
+- `test-mobile` runs the deterministic E2E harness regression, gen-drift, tsc, lint, then Jest. `e2e-mobile-android` (ubuntu, KVM emulator, reuses the `build-server` image artifact via `E2E_SERVER_IMAGE`) and `e2e-mobile-ios` (macOS runner, Postgres/Redis provisioned natively because GitHub macOS runners have no Docker — the `--native` seam). Both upload Maestro debug output + server logs on failure (R-1).
 - This development host has no KVM or iOS simulator, so Activity changes prove server/Jest integration, TypeScript, lint, coverage, wrapper behavior, and Maestro syntax locally but never claim a native execution. Without a PR `run-e2e` label, the definitive iOS/Android simulator execution is the path-triggered post-merge `main` workflow; physical-device push/foreground checks live as non-blocking migration-inbox evidence.
 
 ### Workflow split + on-demand E2E

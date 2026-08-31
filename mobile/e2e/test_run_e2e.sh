@@ -274,6 +274,15 @@ case "$SCENARIO" in
     fi
     exit 0
     ;;
+  unknown_failure)
+    echo 'Maestro exited for an unrecognized reason' >&2
+    exit 29
+    ;;
+  assertion_with_startup_marker)
+    echo 'iOS driver not ready in time' >&2
+    echo 'Assertion failed: assertVisible element not found' >&2
+    exit 38
+    ;;
 esac
 SH
   chmod +x "$fixture/bin/maestro"
