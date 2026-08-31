@@ -55,3 +55,14 @@ From the school step the group carries the **import journey** (ADR [047](./decis
 `onboarding/groups` (`…/onboarding/groups?schoolId=<id>`) is **off the normal path** — it persists a selection and dismisses without creating a calendar. It keeps its route and stays deep-linkable; deleting it is a separate cleanup.
 
 `src/app/onboarding/_layout.tsx` mounts `ImportDraftProvider` around the nested `Stack`, so the draft wraps every route in the group — including the QR and iCal-URL siblings, which is what lets a failed import switch between them. Those two routes stay usable with **no** draft (dev links, external links, restored navigation): they create with `name: ""` and `schoolName: ""` rather than redirecting.
+
+## Cold-launch resolution
+
+Cold launch has one owner (ADR [053](./decisions/053-single-owner-launch-resolution.md)).
+It awaits migrations and the future Phase 09 importer insertion point, resolves
+an initial deep link or killed-state notification, then reads held-calendar
+identity. An explicit intent wins; otherwise an empty identity opens onboarding;
+otherwise `settings.startupTabPreference` selects `/` or `/calendar`. The
+decision runs once per process and observes the winning pathname before splash
+dismissal. `unstable_settings.initialRouteName: "(tabs)"` remains static so
+deep-linked routes retain a tab back-stack anchor.

@@ -34,20 +34,20 @@
 
 ## 6. Maestro cold-launch parity and CI proof
 
-- [ ] 6.1 Add a shared `mobile/.maestro/startup-tab.yaml` flow using the existing dev-import seed to establish held identity, Settings to select Home then Calendar, and `stopApp` → plain `launchApp` cold relaunches that positively assert the chosen destination each time. Use shared stable testIDs/text and 60-second post-launch waits; do not create platform-specific flows.
-- [ ] 6.2 Validate Maestro YAML/static harness discovery locally and update `mobile/e2e/README.md` if the new durable-state ordering needs explanation; do not claim device execution on this no-KVM/no-iOS-simulator host.
+- [x] 6.1 Add a shared `mobile/.maestro/startup-tab.yaml` flow using the existing dev-import seed to establish held identity, Settings to select Home then Calendar, and `stopApp` → plain `launchApp` cold relaunches that positively assert the chosen destination each time. Use shared stable testIDs/text and 60-second post-launch waits; do not create platform-specific flows.
+- [x] 6.2 Validate Maestro YAML/static harness discovery locally and update `mobile/e2e/README.md` if the new durable-state ordering needs explanation; do not claim device execution on this no-KVM/no-iOS-simulator host.
 - [ ] 6.3 After implementation is pushed, add the PR `run-e2e` label and require both `e2e-mobile-android` and `e2e-mobile-ios` jobs to pass at the exact reviewed head. Record the workflow URLs/SHAs in the issue handoff; a stale or post-merge-only run is not this change's native proof.
 
 ## 7. Architecture Book, migration guidance, and device-only evidence
 
-- [ ] 7.1 Add a load-bearing ADR for single-owner launch resolution, precedence, one-shot lifecycle, `(tabs)` anchor preservation, Phase 09 insertion point, and splash commitment; include rejected competing-effects and dynamic-trigger-order alternatives.
-- [ ] 7.2 Update `docs/mobile/architecture-book/navigation.md` with the resolved launch sequence and intent precedence, `storage.md` with the environment-independent key/import target and blocking migration order, `features.md` with the Settings destination/startup owner, and `testing.md` with the cold-relaunch/first-paint proof pattern.
-- [ ] 7.3 Update `docs/react-native-migration/01-roadmap/09-data-migration.md` to name `mapFlutterStartupScreen`/the setter as the target after native `flutter.startup_screen` read, and Phase 10 parity guidance to record this gap as implemented once tasks are complete. Do not claim the Phase 09 importer exists.
-- [ ] 7.4 Add the Architecture Book `CHANGELOG.md` entry for the binding launch rule. Do not modify `app/`; cite Flutter provider/tabs/splash files only as behavior evidence.
-- [ ] 7.5 Create one non-blocking `docs/react-native-migration/inbox/` note tagged `(HUMAN: startup-tab device pass)` for physical-device first-paint recording, VoiceOver/TalkBack, large text, and platform-native picker review. Mark observability as covered by prerequisite failure recording and product analytics N/A with the reason that selecting a local launch default is not a funnel/server action.
+- [x] 7.1 Add a load-bearing ADR for single-owner launch resolution, precedence, one-shot lifecycle, `(tabs)` anchor preservation, Phase 09 insertion point, and splash commitment; include rejected competing-effects and dynamic-trigger-order alternatives.
+- [x] 7.2 Update `docs/mobile/architecture-book/navigation.md` with the resolved launch sequence and intent precedence, `storage.md` with the environment-independent key/import target and blocking migration order, `features.md` with the Settings destination/startup owner, and `testing.md` with the cold-relaunch/first-paint proof pattern.
+- [x] 7.3 Update `docs/react-native-migration/01-roadmap/09-data-migration.md` to name `mapFlutterStartupScreen`/the setter as the target after native `flutter.startup_screen` read, and Phase 10 parity guidance to record this gap as implemented once tasks are complete. Do not claim the Phase 09 importer exists.
+- [x] 7.4 Add the Architecture Book `CHANGELOG.md` entry for the binding launch rule. Do not modify `app/`; cite Flutter provider/tabs/splash files only as behavior evidence.
+- [x] 7.5 Create one non-blocking `docs/react-native-migration/inbox/` note tagged `(HUMAN: startup-tab device pass)` for physical-device first-paint recording, VoiceOver/TalkBack, large text, and platform-native picker review. Mark observability as covered by prerequisite failure recording and product analytics N/A with the reason that selecting a local launch default is not a funnel/server action.
 
 ## 8. Local green and handoff evidence
 
-- [ ] 8.1 Run Prettier on changed files, then focused preference/resolver/Settings/notification/splash suites while iterating; ensure logic branches meet the 90% threshold.
+- [x] 8.1 Run Prettier on changed files, then focused preference/resolver/Settings/notification/splash suites while iterating; ensure logic branches meet the 90% threshold.
 - [ ] 8.2 Run the complete mobile local gate from `mobile/`: `npx tsc --noEmit`, `npm run lint`, and `npm test -- --coverage`. Record exact commands/results; do not touch OpenAPI/generated, native/store/EAS, server migrations, deploy/CI workflows, or Flutter production files.
 - [ ] 8.3 Run `openspec validate configure-mobile-startup-tab` and confirm every task is checked with evidence or explicitly handed to the named non-blocking human inbox note before implementation-stage handoff.

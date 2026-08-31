@@ -7,6 +7,9 @@
 ## Rough steps
 
 1. **Parity sweep** — verify every Flutter feature has a DoD-complete RN equivalent. Close gaps.
+   The configurable Home/Calendar startup screen gap is implemented through the
+   typed Settings preference and ADR 053 launch coordinator; Phase 09 still owns
+   importing its Flutter value during an in-place upgrade.
 2. **Maestro parity suite** — e2e flows mirroring the Flutter `integration_test` regression set: onboarding (school/QR/iCal), calendar render/scroll, personal-event CRUD, hide-event, notification tap-through, assistant, **and the data migration**.
 3. **Internal hardening** — widen TestFlight internal + Play internal testing on the `preview` channel; run real upgrades from a Flutter install (exercises Phase 09 for real), following the [in-place upgrade QA playbook](../04-migration-qa/README.md). A public beta programme is deliberately **post-cutover**.
 4. **Cutover prep** — reuse the existing **bundle ID / package name** + Firebase config so stores treat it as an update; bump version over the current Flutter `3.1.0+134`. Signing: Play App Signing holds the Android app-signing key and the upload key is held with three backups; iOS uses EAS-managed credentials on the same Apple team, **not** the Flutter `match` repo. Store binaries build with `eas build --local` on the owner's macOS host (ADR [040](../../mobile/architecture-book/decisions/040-local-store-builds-and-store-preview.md)). Release candidates are annotated tags on `main`; the legacy `production` branch is not part of the mobile release path.

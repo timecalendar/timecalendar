@@ -15,6 +15,10 @@
      Changelog's exported `setChangelogSeenVersion` **before `(tabs)` can mount**. In
      particular, importing Flutter value 3 must allow the bundled version 4 sheet to show
      once and then persist 4. Implementing this native import remains Phase 09 scope.
+   - Read exact `flutter.startup_screen`, pass it to
+     `mapFlutterStartupScreen`, and persist through `setStartupTabFromFlutter`
+     after migrations and before startup identity/preference reads. The mapper
+     and RN target exist; the native Flutter-store read remains Phase 09 scope.
 2. **Recover the irreplaceable set only:** `user_calendars.token`, `personal_events`, `checklist_items`, `hidden_events` → write into the new RN schemas (Phases 03/05).
 3. **Re-sync everything else** from the server using the recovered token(s) — do **not** migrate `calendar_events` / `calendar_logs`.
 4. **Optionally** copy `flutter.`-prefixed settings (theme, view type) for UX continuity.

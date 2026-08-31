@@ -50,3 +50,12 @@ Workflows are split by concern; native E2E is **not** run on every push (cold na
 Native E2E runs cold every time in CI (local builds are fast only because Gradle/DerivedData/Pods caches persist on disk). Deferred speedups: ① **AVD snapshot caching** for the Android emulator (skip cold boot); ② **iOS DerivedData cache** keyed on the lockfile (point `xcodebuild -derivedDataPath` outside the `prebuild --clean` tree so it survives); ③ confirm the **Gradle build cache** (not just deps) is active. Realistic gain ~Android 28→18 min, iOS 18→10 min on warm caches. Orthogonal to the on-demand split above. **Trigger:** when E2E run time becomes a friction point. Roadmap mirror: `docs/react-native-migration/01-roadmap/01-foundation.md` step 5.
 
 Same class, the unit gate: **CI restores no Jest transform cache** — `ci-mobile.yml` caches npm only, so every `test-mobile` run pays the full cold transform, which is what put the harness's first-render cost against the per-test budget in the first place ([ADR 044](./decisions/044-jest-per-test-time-budget.md)). Caching Jest's `cacheDirectory` keyed on the lockfile would cut both the run time and the headroom problem at its source. Out of scope where it was found (TIM-273 excludes `.github/workflows/**`). **Trigger:** the next time the gate's wall clock or its timeout headroom becomes a problem.
+
+## Startup first-paint proof
+
+Seed a held identity, select Home/Calendar through Settings, then use `stopApp`
+→ plain `launchApp` and positively assert the destination with a 60-second wait.
+Do not use a deep link for the relaunch: that tests explicit-intent precedence,
+not the stored fallback. The shared flow runs on both native platforms. Jest
+separately holds the observed path on Home while Calendar wins and proves
+readiness only after `/calendar` is observed.

@@ -1,0 +1,38 @@
+# Cold-launch parity proof for the persisted startup screen preference.
+# Shared by iOS and Android; the import preamble establishes a durable held
+# calendar so onboarding cannot outrank the Home/Calendar fallback.
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: import-seed.yaml
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings-startup"
+    timeout: 60000
+- tapOn:
+    id: "settings-startup"
+- extendedWaitUntil:
+    visible:
+      id: "settings-startup-picker"
+    timeout: 60000
+- tapOn:
+    id: "settings-startup-picker"
+- tapOn: "Home"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-scroll"
+    timeout: 60000
+- tapOn: "Settings"
+- tapOn:
+    id: "settings-startup"
+- tapOn:
+    id: "settings-startup-picker"
+- tapOn: "Calendar"
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "calendar-screen"
+    timeout: 60000
