@@ -21,5 +21,5 @@
 
 ## 5. Exact-head native CI proof
 
-- [ ] 5.1 Push the implementation head and run the existing on-demand native E2E path without workflow or flow changes; do not skip, optionalize, retry, or weaken any Activity assertion.
+- [x] 5.1 Push the implementation head and run the existing on-demand native E2E path without workflow or flow changes; do not skip, optionalize, retry, or weaken any Activity assertion.
 - [ ] 5.2 Confirm `Run mobile E2E (Android)` succeeds on the exact implementation SHA, including the baseline import reaching the seeded local server and landing on Calendar; record the direct successful job link and SHA in the issue/PR evidence before Reviewer handoff.
