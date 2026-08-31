@@ -5,9 +5,9 @@
 
 ## 2. Gate the import-by-token data seam
 
-- [ ] 2.1 Make `addCalendarFromToken` await `runMigrations()` before the generated token resolve, mapper, or `user_calendars` upsert; retain the existing screen-owned runtime gate, once-per-mount effect, sync, navigation, and accessible failure behavior.
-- [ ] 2.2 Extend `add-from-token.test.ts` with a deferred migration proof that asserts no `customFetch` request or upsert occurs before migration settlement and exactly one existing resolve/map/upsert chain occurs afterward; retain resolve/upsert failure coverage.
-- [ ] 2.3 Run the focused Jest suites for `src/db/migrate.test.ts`, `src/features/calendar-sources/data/user-calendars/add-from-token.test.ts`, and `src/features/calendar-sources/ui/dev-import-screen.test.tsx`; confirm the production-inert and rerender/unmount contracts stay green.
+- [x] 2.1 Make `addCalendarFromToken` await `runMigrations()` before the generated token resolve, mapper, or `user_calendars` upsert; retain the existing screen-owned runtime gate, once-per-mount effect, sync, navigation, and accessible failure behavior.
+- [x] 2.2 Extend `add-from-token.test.ts` with a deferred migration proof that asserts no `customFetch` request or upsert occurs before migration settlement and exactly one existing resolve/map/upsert chain occurs afterward; retain resolve/upsert failure coverage.
+- [x] 2.3 Run the focused Jest suites for `src/db/migrate.test.ts`, `src/features/calendar-sources/data/user-calendars/add-from-token.test.ts`, and `src/features/calendar-sources/ui/dev-import-screen.test.tsx`; confirm the production-inert and rerender/unmount contracts stay green.
 
 ## 3. Reconcile scope and architecture guidance
 
