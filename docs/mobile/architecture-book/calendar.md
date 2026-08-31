@@ -31,6 +31,12 @@ side. Calendar-kit tracks the visible anchor during scrolling so fast flings do 
 an empty grid. Re-check this coupling and dense-calendar performance when changing the
 renderer, patch, buffer, or page count.
 
+Checklist progress is sidecar presentation state. `CalendarScreen` reads one reactive
+UID-set map for the rendered event collection and passes it separately through the
+renderer-neutral facade and Agenda. Calendar-kit's projected `events` array remains
+memoized only from `CalendarEvent[]`; a checklist-only update refreshes tile content
+without rebuilding projected event objects.
+
 All-day events use date-only renderer values derived from UTC day keys. Their stored end
 is exclusive while calendar-kit's displayed end is inclusive, so projection subtracts
 one millisecond before deriving the final day. Timed events retain date-time values.
@@ -62,7 +68,7 @@ Sync runs at startup, manual refresh, source changes, and notification receipt.
 `calendar_events` is disposable cache and is rebuilt from durable source tokens; it is not a
 migration/import target.
 
-> **Correction (TIM-399).** This sentence also listed *foreground/resume*. It is not true and
+> **Correction (TIM-399).** This sentence also listed _foreground/resume_. It is not true and
 > was not made true here: `AppState` is wired in exactly two places in `mobile/src` —
 > `src/updates/ota-update-runtime.tsx` and `src/features/activity/data/lifecycle.ts` — and
 > neither triggers a calendar sync. TIM-399 added the second of those for **Activity only**;
@@ -121,6 +127,10 @@ separate. The binding contract and regression scenarios live in the
 - Home shows today only, separating all-day and timed events. When today is empty it may
   summarize the next active day without substituting that day into today's timeline.
 - Event details are shared by personal and synced events and include the event checklist.
+- Home upcoming/all-day/timed summaries, Calendar timed/all-day tiles, and Agenda rows
+  hide zero-item progress and share the explicit completed/total indicator. The visual
+  primitive is excluded from accessibility; each owning event label announces the
+  localized completed-of-total phrase once.
 - Personal events expose edit/delete actions; synced events expose hide/unhide behavior.
 - A Home action may pass a one-shot `focusDate` to Calendar, which consumes it after use.
 

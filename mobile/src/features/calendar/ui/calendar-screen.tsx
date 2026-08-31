@@ -1,4 +1,5 @@
 import { router } from "expo-router"
+import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, RefreshControl, StyleSheet, View } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
@@ -14,6 +15,7 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { CalendarTimeline } from "@/features/calendar/renderer"
+import { useChecklistProgress } from "@/features/event-checklists"
 import { FirstIcalReminder } from "@/features/first-launch/ui"
 import { Spacing, useTheme } from "@/theme"
 
@@ -42,6 +44,8 @@ export function CalendarScreen() {
     onSettledDateChange,
   } = useCalendarScreenController()
   const events = useCalendarEvents(range)
+  const eventUids = useMemo(() => events.map((event) => event.id), [events])
+  const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
 
   const onPressEvent = (uid: string) => router.push(eventRoute(uid))
@@ -79,6 +83,7 @@ export function CalendarScreen() {
           {view === "agenda" ? (
             <AgendaList
               events={events}
+              checklistProgress={checklistProgress}
               locale={locale}
               displayZone={displayZone}
               refreshControl={refreshControl}
@@ -91,6 +96,7 @@ export function CalendarScreen() {
               anchorDate={anchorDate}
               displayZone={displayZone}
               events={events}
+              checklistProgress={checklistProgress}
               startMinute={GRID_START_MINUTE}
               endMinute={GRID_END_MINUTE}
               showWeekends

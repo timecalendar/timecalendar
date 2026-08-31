@@ -26,9 +26,14 @@ import {
   nowIndicatorPosition,
   startOfDayInZone,
 } from "@/features/calendar/data"
+import {
+  ChecklistProgressIndicator,
+  type ChecklistProgressMap,
+} from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
+import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
 
 // The home today mini-timeline (D5) — PRESENTATIONAL (70% floor) and the FIRST
@@ -88,6 +93,7 @@ export function TodayTimeline({
   displayZone,
   isToday,
   now,
+  checklistProgress,
   onPressEvent,
 }: {
   events: CalendarEvent[]
@@ -96,6 +102,7 @@ export function TodayTimeline({
   displayZone: string
   isToday: boolean
   now: Date
+  checklistProgress: ChecklistProgressMap
   onPressEvent: (event: CalendarEvent) => void
 }) {
   const { t } = useTranslation()
@@ -157,16 +164,13 @@ export function TodayTimeline({
             displayZone,
           )
           const location = event.location ?? ""
+          const progress = checklistProgress.get(event.id)
           return (
             <Pressable
               key={event.id}
               testID={`today-tile-${event.id}`}
               accessibilityRole="button"
-              accessibilityLabel={t("home.event.openLabel", {
-                title: event.title,
-                time,
-                location,
-              })}
+              accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")
@@ -191,6 +195,7 @@ export function TodayTimeline({
                   {location}
                 </ThemedText>
               )}
+              <ChecklistProgressIndicator progress={progress} />
             </Pressable>
           )
         })}
@@ -267,17 +272,14 @@ export function TodayTimeline({
             displayZone,
           )
           const location = event.location ?? ""
+          const progress = checklistProgress.get(event.id)
 
           return (
             <Pressable
               key={event.id}
               testID={`today-tile-${event.id}`}
               accessibilityRole="button"
-              accessibilityLabel={t("home.event.openLabel", {
-                title: event.title,
-                time,
-                location,
-              })}
+              accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")
@@ -313,6 +315,10 @@ export function TodayTimeline({
                   )}
                 </>
               )}
+              <ChecklistProgressIndicator
+                progress={progress}
+                variant="compact"
+              />
             </Pressable>
           )
         })}

@@ -7,6 +7,11 @@
   with only the development token-import route excepted.
 - Recorded the independent environment-independent onboarding-resolution and first-iCal-reminder
   values, the skippable personal-calendar path, and the shared Home/Calendar reminder composition.
+- Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
+  reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
+  action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.
+  Promise settlement after unmount is inert, and each rejected invocation is recorded once with
+  constant, private-data-free context. This remains inside ADR 017/047 and adds no new ADR.
 
 ## 2026-08-30
 

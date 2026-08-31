@@ -8,11 +8,19 @@ export {
   add,
   type ChecklistItem,
   checklistItemToRow,
+  type ChecklistProgress,
+  type ChecklistProgressMap,
   findByEvent,
   remove,
   reorder,
   rowToChecklistItem,
   setChecked,
   setContent,
+  useChecklistProgress,
 } from "./data"
-export { EventChecklist } from "./ui"
+export {
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+  type ChecklistProgressVariant,
+  EventChecklist,
+} from "./ui"

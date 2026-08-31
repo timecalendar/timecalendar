@@ -12,6 +12,7 @@ import {
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
+import { useChecklistProgress } from "@/features/event-checklists"
 import {
   dayCaption,
   dynamicHourRange,
@@ -52,6 +53,11 @@ export function useHomeScreenController() {
     () => eventsForDay(events, now, displayZone),
     [events, now, displayZone],
   )
+  const todayEventUids = useMemo(
+    () => todayEvents.map((event) => event.id),
+    [todayEvents],
+  )
+  const checklistProgress = useChecklistProgress(todayEventUids)
   const { allDay, timed } = useMemo(
     () => splitDayEvents(todayEvents),
     [todayEvents],
@@ -86,6 +92,7 @@ export function useHomeScreenController() {
     locale,
     displayZone,
     todayEvents,
+    checklistProgress,
     allDay,
     timed,
     upcoming,
