@@ -65,6 +65,12 @@ code and product specifications.
   the server, because the server validates them as a mutually exclusive pair. A QR or
   iCal-URL route opened with no draft creates with `name: ""` and `schoolName: ""` rather
   than redirecting (ADR 047).
+- A valid QR import stays synchronously excluded from later camera callbacks while its shared
+  create operation is pending or failed. Failure preserves the captured normalized URL and the
+  Stack-scoped draft for an explicit retry; only **Scan another QR** clears that attempt and
+  re-arms the camera. The alternate manual-iCal action pushes the existing sibling route without
+  putting the private QR URL in navigation parameters. Late promise settlement after unmount has
+  no navigation, draft, recording, or state effect.
 - Feedback treats contact-service 503 responses as recoverable: the form retains the
   e-mail and message, re-enables explicit retry, announces equivalent FR/EN guidance,
   and records only the error plus the static `feedback/contact-submit` context. The
