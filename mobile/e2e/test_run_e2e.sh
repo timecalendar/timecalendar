@@ -55,12 +55,26 @@ case "$SCENARIO" in
     echo 'launchApp setPermissions: java.net.ConnectException: Connection refused' >&2
     exit 42
     ;;
+  ios_driver_timeout)
+    echo 'iOS driver not ready in time' >&2
+    echo 'LocalXCTestInstaller$IOSDriverTimeoutException' >&2
+    exit 43
+    ;;
   assertion)
     if [ "$flow" = alpha ]; then
       echo 'launchApp completed; Assertion failed: assertVisible element not found' >&2
       exit 37
     fi
     exit 0
+    ;;
+  unknown_failure)
+    echo 'Maestro exited for an unrecognized reason' >&2
+    exit 29
+    ;;
+  assertion_with_startup_marker)
+    echo 'iOS driver not ready in time' >&2
+    echo 'Assertion failed: assertVisible element not found' >&2
+    exit 38
     ;;
 esac
 SH
@@ -107,8 +121,29 @@ assert_count 0 '^beta:' "$fixture/calls"
 assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
+fixture="$(make_fixture ios_driver_timeout)"
+run_fixture "$fixture" ios_driver_timeout 43 --startup-attempts 4
+assert_count 4 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+assert_count 1 '^logs$' "$fixture/calls"
+assert_count 1 '^down$' "$fixture/calls"
+
 fixture="$(make_fixture assertion)"
 run_fixture "$fixture" assertion 37 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+assert_count 1 '^logs$' "$fixture/calls"
+assert_count 1 '^down$' "$fixture/calls"
+
+fixture="$(make_fixture unknown_failure)"
+run_fixture "$fixture" unknown_failure 29 --startup-attempts 4
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 0 '^beta:' "$fixture/calls"
+assert_count 1 '^logs$' "$fixture/calls"
+assert_count 1 '^down$' "$fixture/calls"
+
+fixture="$(make_fixture assertion_with_startup_marker)"
+run_fixture "$fixture" assertion_with_startup_marker 38 --startup-attempts 4
 assert_count 1 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
 assert_count 1 '^logs$' "$fixture/calls"
