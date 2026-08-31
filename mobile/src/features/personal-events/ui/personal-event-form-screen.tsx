@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
@@ -69,6 +70,8 @@ export default function PersonalEventFormScreen() {
 
   const [values, setValues] = useState<EventFormValues>(defaultValues)
   const [errors, setErrors] = useState<EventFormErrors>({})
+  const [isDeleting, setIsDeleting] = useState(false)
+  const deletePhase = useRef<"idle" | "prompting" | "deleting">("idle")
   const save = useSaveEvent()
   const del = useDeleteEvent()
 
@@ -118,14 +121,52 @@ export default function PersonalEventFormScreen() {
     }
   }
 
-  async function onDelete() {
-    if (uid === undefined) {
+  function releaseDeletePrompt() {
+    if (deletePhase.current === "prompting") {
+      deletePhase.current = "idle"
+    }
+  }
+
+  function onDelete() {
+    if (uid === undefined || deletePhase.current !== "idle") {
       return
     }
-    const ok = await del.remove(uid)
-    if (ok) {
-      router.back()
-    }
+    deletePhase.current = "prompting"
+    Alert.alert(
+      t("personalEvents.form.deleteConfirmation.title"),
+      t("personalEvents.form.deleteConfirmation.message"),
+      [
+        {
+          text: t("personalEvents.form.deleteConfirmation.cancel"),
+          style: "cancel",
+          onPress: releaseDeletePrompt,
+        },
+        {
+          text: t("personalEvents.form.deleteConfirmation.confirm"),
+          style: "destructive",
+          onPress: async () => {
+            if (deletePhase.current !== "prompting") {
+              return
+            }
+            deletePhase.current = "deleting"
+            setIsDeleting(true)
+            let removed = false
+            try {
+              removed = await del.remove(uid)
+              if (removed) {
+                router.back()
+              }
+            } finally {
+              if (!removed) {
+                deletePhase.current = "idle"
+                setIsDeleting(false)
+              }
+            }
+          },
+        },
+      ],
+      { cancelable: true, onDismiss: releaseDeletePrompt },
+    )
   }
 
   const inputStyle = [
@@ -289,6 +330,8 @@ export default function PersonalEventFormScreen() {
                 testID="personal-event-delete"
                 accessibilityRole="button"
                 accessibilityLabel={t("personalEvents.form.delete")}
+                accessibilityState={{ disabled: isDeleting }}
+                disabled={isDeleting}
                 onPress={onDelete}
                 style={[
                   styles.action,

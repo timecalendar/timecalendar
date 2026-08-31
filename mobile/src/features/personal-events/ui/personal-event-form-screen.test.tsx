@@ -1,5 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
-import { useLocalSearchParams } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
+import { Alert } from "react-native"
 
 import type { PersonalEvent } from "@/features/personal-events/data"
 import {
@@ -52,14 +53,50 @@ const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockUseSaveEvent = useSaveEvent as jest.Mock
 const mockUseDeleteEvent = useDeleteEvent as jest.Mock
 const mockUseEventToEdit = useEventToEdit as jest.Mock
+const mockBack = router.back as jest.Mock
+let mockAlert: jest.SpiedFunction<typeof Alert.alert>
+
+const editEvent: PersonalEvent = {
+  uid: "u1",
+  title: "Old",
+  color: "#E91E63",
+  startsAt: new Date("2030-01-01T10:00:00.000Z"),
+  endsAt: new Date("2030-01-01T11:00:00.000Z"),
+  exportedAt: new Date("2030-01-01T09:00:00.000Z"),
+  location: "Library",
+  description: "Bring notes",
+}
+
+function useEditEvent() {
+  mockUseLocalSearchParams.mockReturnValue({ uid: editEvent.uid })
+  mockUseEventToEdit.mockReturnValue(editEvent)
+}
+
+function latestAlert() {
+  const call = mockAlert.mock.calls[mockAlert.mock.calls.length - 1]
+  if (call === undefined) {
+    throw new Error("Expected Alert.alert to have been called")
+  }
+  return { buttons: call[2] ?? [], options: call[3] }
+}
 
 beforeEach(() => {
+  mockAlert = jest.spyOn(Alert, "alert").mockImplementation(() => undefined)
+  mockBack.mockReset()
   mockSave.mockClear().mockResolvedValue(true)
   mockRemove.mockClear().mockResolvedValue(true)
   mockUseLocalSearchParams.mockReturnValue({})
   mockUseSaveEvent.mockReturnValue({ save: mockSave, failed: false })
   mockUseDeleteEvent.mockReturnValue({ remove: mockRemove, failed: false })
   mockUseEventToEdit.mockReturnValue(undefined)
+})
+
+afterEach(() => {
+  try {
+    mockAlert.mockRestore()
+  } finally {
+    mockBack.mockReset()
+  }
 })
 
 describe("PersonalEventFormScreen", () => {
@@ -113,24 +150,135 @@ describe("PersonalEventFormScreen", () => {
     )
   })
 
-  it("shows delete in edit mode and triggers the delete hook", async () => {
-    mockUseLocalSearchParams.mockReturnValue({ uid: "u1" })
-    mockUseEventToEdit.mockReturnValue({
-      uid: "u1",
-      title: "Old",
-      color: "#E91E63",
-      startsAt: new Date("2030-01-01T10:00:00.000Z"),
-      endsAt: new Date("2030-01-01T11:00:00.000Z"),
-      exportedAt: new Date("2030-01-01T09:00:00.000Z"),
-      location: undefined,
-      description: undefined,
-    })
+  it("opens a localized native confirmation without deleting or navigating", async () => {
+    useEditEvent()
     const { getByTestId, getByText } = await render(<PersonalEventFormScreen />)
 
     expect(getByText("Edit event")).toBeTruthy()
+    await fireEvent.press(getByTestId("personal-event-delete"))
+
+    expect(mockAlert).toHaveBeenCalledWith(
+      "Delete event?",
+      "This event will be permanently deleted.",
+      expect.any(Array),
+      expect.objectContaining({ cancelable: true }),
+    )
+    const { buttons } = latestAlert()
+    expect(buttons).toEqual([
+      expect.objectContaining({ text: "Cancel", style: "cancel" }),
+      expect.objectContaining({ text: "Delete", style: "destructive" }),
+    ])
+    expect(mockRemove).not.toHaveBeenCalled()
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+
+  it.each(["cancel", "dismiss"] as const)(
+    "%s is inert, preserves the form, and allows the prompt to reopen",
+    async (exit) => {
+      useEditEvent()
+      const { getByDisplayValue, getByTestId } = await render(
+        <PersonalEventFormScreen />,
+      )
+      await waitFor(() => expect(getByDisplayValue("Old")).toBeTruthy())
+      await fireEvent.press(getByTestId("personal-event-delete"))
+
+      const { buttons, options } = latestAlert()
+      await act(async () => {
+        if (exit === "cancel") {
+          buttons[0]?.onPress?.()
+        } else {
+          options?.onDismiss?.()
+        }
+      })
+
+      expect(getByDisplayValue("Old")).toBeTruthy()
+      expect(getByDisplayValue("Library")).toBeTruthy()
+      expect(mockRemove).not.toHaveBeenCalled()
+      expect(mockBack).not.toHaveBeenCalled()
+      await fireEvent.press(getByTestId("personal-event-delete"))
+      expect(mockAlert).toHaveBeenCalledTimes(2)
+    },
+  )
+
+  it("admits one removal while pending and exposes disabled accessibility state", async () => {
+    let resolveRemoval: ((removed: boolean) => void) | undefined
+    mockRemove.mockImplementationOnce(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveRemoval = resolve
+        }),
+    )
+    useEditEvent()
+    const { getByTestId } = await render(<PersonalEventFormScreen />)
+    const deleteButton = getByTestId("personal-event-delete")
+    await fireEvent.press(deleteButton)
+    const confirm = latestAlert().buttons[1]
+
     await act(async () => {
-      fireEvent.press(getByTestId("personal-event-delete"))
+      confirm?.onPress?.()
+      await Promise.resolve()
     })
+    expect(deleteButton).toBeDisabled()
+    expect(deleteButton).toHaveProp("accessibilityState", { disabled: true })
+
+    await act(async () => {
+      confirm?.onPress?.()
+      confirm?.onPress?.()
+    })
+    await fireEvent.press(deleteButton)
+    expect(mockRemove).toHaveBeenCalledTimes(1)
+    expect(mockAlert).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveRemoval?.(false)
+      await Promise.resolve()
+    })
+  })
+
+  it("removes the edited uid and navigates back exactly once on success", async () => {
+    useEditEvent()
+    const { getByTestId } = await render(<PersonalEventFormScreen />)
+    await fireEvent.press(getByTestId("personal-event-delete"))
+    const confirm = latestAlert().buttons[1]
+
+    await act(async () => {
+      confirm?.onPress?.()
+      confirm?.onPress?.()
+      await Promise.resolve()
+    })
+
     await waitFor(() => expect(mockRemove).toHaveBeenCalledWith("u1"))
+    expect(mockRemove).toHaveBeenCalledTimes(1)
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it("keeps populated values and the error visible after failure, then permits retry", async () => {
+    mockRemove.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+    useEditEvent()
+    const view = await render(<PersonalEventFormScreen />)
+    await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+    await fireEvent.press(view.getByTestId("personal-event-delete"))
+
+    await act(async () => {
+      latestAlert().buttons[1]?.onPress?.()
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(mockRemove).toHaveBeenCalledTimes(1))
+    expect(mockBack).not.toHaveBeenCalled()
+
+    mockUseDeleteEvent.mockReturnValue({ remove: mockRemove, failed: true })
+    await view.rerender(<PersonalEventFormScreen />)
+    expect(view.getByText("Could not delete the event.")).toBeTruthy()
+    expect(view.getByDisplayValue("Old")).toBeTruthy()
+    expect(view.getByDisplayValue("Library")).toBeTruthy()
+    expect(view.getByDisplayValue("Bring notes")).toBeTruthy()
+
+    await fireEvent.press(view.getByTestId("personal-event-delete"))
+    await act(async () => {
+      latestAlert().buttons[1]?.onPress?.()
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(mockRemove).toHaveBeenCalledTimes(2))
+    expect(mockBack).toHaveBeenCalledTimes(1)
   })
 })
