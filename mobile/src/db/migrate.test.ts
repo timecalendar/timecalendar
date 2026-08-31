@@ -1,7 +1,7 @@
 import { recordError } from "@react-native-firebase/crashlytics"
 import { migrate } from "drizzle-orm/expo-sqlite/migrator"
 
-import { runMigrations } from "./migrate"
+import { resetMigrationAttemptForTests, runMigrations } from "./migrate"
 import migrations from "./migrations/migrations"
 
 // expo-sqlite / drizzle are mocked suite-wide (jest/setup-db.ts), firebase's
@@ -13,12 +13,13 @@ const mockRecordError = recordError as jest.Mock
 
 describe("runMigrations", () => {
   beforeEach(() => {
+    resetMigrationAttemptForTests()
     mockMigrate.mockReset().mockResolvedValue(undefined)
     mockRecordError.mockClear()
   })
 
   it("drives migrate() with the committed bundle", async () => {
-    await runMigrations()
+    await Promise.all([runMigrations(), runMigrations()])
     expect(mockMigrate).toHaveBeenCalledTimes(1)
     expect(mockMigrate).toHaveBeenCalledWith(expect.anything(), migrations)
   })
@@ -26,16 +27,24 @@ describe("runMigrations", () => {
   it("records a migration failure through the @/firebase seam", async () => {
     const failure = new Error("migration boom")
     mockMigrate.mockRejectedValueOnce(failure)
-    await runMigrations()
+    await expect(runMigrations()).rejects.toBe(failure)
     expect(mockRecordError).toHaveBeenCalledWith(expect.anything(), failure)
   })
 
   it("wraps a non-Error rejection before recording it", async () => {
     mockMigrate.mockRejectedValueOnce("string failure")
-    await runMigrations()
+    await expect(runMigrations()).rejects.toBe("string failure")
     expect(mockRecordError).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ message: "string failure" }),
     )
+  })
+
+  it("allows a retry after a failed attempt", async () => {
+    const failure = new Error("temporary")
+    mockMigrate.mockRejectedValueOnce(failure).mockResolvedValueOnce(undefined)
+    await expect(runMigrations()).rejects.toBe(failure)
+    await expect(runMigrations()).resolves.toBeUndefined()
+    expect(mockMigrate).toHaveBeenCalledTimes(2)
   })
 })

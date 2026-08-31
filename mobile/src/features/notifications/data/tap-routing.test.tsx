@@ -13,6 +13,8 @@ import {
 
 import {
   parseNotificationRoute,
+  resetInitialNotificationIntentForTests,
+  resolveInitialNotificationIntent,
   useNotificationTapRouting,
 } from "./tap-routing"
 
@@ -48,6 +50,7 @@ function message(action: string | undefined, payload?: unknown): RemoteMessage {
 describe("parseNotificationRoute", () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    resetInitialNotificationIntentForTests()
   })
 
   it("maps new to the event route", () => {
@@ -135,6 +138,7 @@ describe("useNotificationTapRouting", () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    resetInitialNotificationIntentForTests()
     sync = jest.fn().mockResolvedValue(undefined)
     push = jest.fn()
     mockUseSyncCalendars.mockReturnValue({ sync })
@@ -238,41 +242,28 @@ describe("useNotificationTapRouting", () => {
     expect(push).not.toHaveBeenCalled()
   })
 
-  it("refetches then navigates on a cold-start initial notification", async () => {
+  it("returns the parsed cold-start intent through the launch seam", async () => {
     mockGetInitialTap.mockResolvedValue(
       message("calendar_changed", { type: "edit", event: { uid: "u-cold" } }),
     )
-    await mount()
+    await expect(resolveInitialNotificationIntent(sync)).resolves.toEqual({
+      kind: "event",
+      uid: "u-cold",
+    })
     expect(sync).toHaveBeenCalledTimes(1)
-    expect(push).toHaveBeenCalledWith("/event-details/u-cold")
   })
 
-  it("does nothing when there is no cold-start initial notification", async () => {
-    await mount()
+  it("returns null when there is no cold-start initial notification", async () => {
+    await expect(resolveInitialNotificationIntent(sync)).resolves.toBeNull()
     expect(mockGetInitialTap).toHaveBeenCalledTimes(1)
     expect(sync).not.toHaveBeenCalled()
-    expect(push).not.toHaveBeenCalled()
   })
 
-  it("subscribes both listeners on mount and reads the cold-start once", async () => {
+  it("subscribes live listeners without consuming the cold-start tap", async () => {
     await mount()
     expect(mockOnForegroundMessage).toHaveBeenCalledTimes(1)
     expect(mockOnNotificationTap).toHaveBeenCalledTimes(1)
-    expect(mockGetInitialTap).toHaveBeenCalledTimes(1)
-  })
-
-  it("does not re-read the cold-start notification across re-renders", async () => {
-    const { rerender } = await mount()
-    expect(mockGetInitialTap).toHaveBeenCalledTimes(1)
-    // A new sync identity re-runs the effect; the ref guard must block a second
-    // cold-start read (the one-shot at launch).
-    mockUseSyncCalendars.mockReturnValue({
-      sync: jest.fn().mockResolvedValue(undefined),
-    })
-    await act(async () => {
-      rerender(undefined)
-    })
-    expect(mockGetInitialTap).toHaveBeenCalledTimes(1)
+    expect(mockGetInitialTap).not.toHaveBeenCalled()
   })
 
   it("wires the listener unsubscribes as the effect cleanup", async () => {
@@ -327,7 +318,7 @@ describe("useNotificationTapRouting", () => {
 
     it("requests a forced refresh on a cold-start tap", async () => {
       mockGetInitialTap.mockResolvedValue(message("calendar_digest", undefined))
-      await mount()
+      await resolveInitialNotificationIntent(sync)
       expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
       expect(mockRefreshActivity).toHaveBeenCalledWith({ force: true })
     })

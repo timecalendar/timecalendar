@@ -5,6 +5,8 @@ export {
 export { useNotificationRegistration } from "./registration"
 export {
   parseNotificationRoute,
+  resetInitialNotificationIntentForTests,
+  resolveInitialNotificationIntent,
   type TapRoute,
   useNotificationTapRouting,
 } from "./tap-routing"
