@@ -9,6 +9,7 @@
 
 export type ThemePreference = "system" | "light" | "dark"
 export type LanguagePreference = "system" | "fr" | "en"
+export type StartupTabPreference = "home" | "calendar"
 
 // The curated display-timezone union (timezone design D1): Europe/Paris + the
 // French outre-mer zones. A closed union keeps the parser total and the picker
@@ -35,6 +36,7 @@ export const SETTINGS_KEYS = {
   theme: "settings.themePreference",
   language: "settings.languagePreference",
   timezone: "settings.timezonePreference",
+  startupTab: "settings.startupTabPreference",
 } as const
 
 // Build a total parser over a preference union: a raw string in the union is
@@ -59,3 +61,9 @@ export const parseLanguagePreference = makePreferenceParser<LanguagePreference>(
 export const parseTimezonePreference = makePreferenceParser<TimezonePreference>(
   ["system", ...CURATED_TIMEZONES],
 )
+
+export function parseStartupTabPreference(
+  raw: string | undefined,
+): StartupTabPreference {
+  return raw === "calendar" ? "calendar" : "home"
+}

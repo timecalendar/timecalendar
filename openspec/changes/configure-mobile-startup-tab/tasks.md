@@ -1,9 +1,9 @@
 ## 1. Typed startup preference and importer target
 
-- [ ] 1.1 Add `StartupTabPreference = "home" | "calendar"`, `settings.startupTabPreference`, and a total Home-defaulting parser to `mobile/src/features/settings/prefs/types.ts`; export through the prefs/feature barrels. Verify with parser tests for both valid values plus missing, empty, mixed-case, non-string-at-mapper, and unknown input.
-- [ ] 1.2 Add imperative get/set and reactive hook APIs in `settings/prefs`, with all writes going through `@/storage`. Verify Home and Calendar round-trip and hook updates under the real MMKV Jest seam.
-- [ ] 1.3 Enumerate the key in `mobile/src/storage/index.ts` and classify it environment-independent. Extend storage classification/reset tests to prove a backend-bound clear preserves it and type coverage remains exhaustive.
-- [ ] 1.4 Add the pure Flutter `startup_screen` mapper and imperative import setter target. Test exact `home`/`calendar` mapping, Home fallback for every unsupported shape, and delegation to the ordinary setter; do not read Flutter native prefs or add an importer/no-op importer hook.
+- [x] 1.1 Add `StartupTabPreference = "home" | "calendar"`, `settings.startupTabPreference`, and a total Home-defaulting parser to `mobile/src/features/settings/prefs/types.ts`; export through the prefs/feature barrels. Verify with parser tests for both valid values plus missing, empty, mixed-case, non-string-at-mapper, and unknown input.
+- [x] 1.2 Add imperative get/set and reactive hook APIs in `settings/prefs`, with all writes going through `@/storage`. Verify Home and Calendar round-trip and hook updates under the real MMKV Jest seam.
+- [x] 1.3 Enumerate the key in `mobile/src/storage/index.ts` and classify it environment-independent. Extend storage classification/reset tests to prove a backend-bound clear preserves it and type coverage remains exhaustive.
+- [x] 1.4 Add the pure Flutter `startup_screen` mapper and imperative import setter target. Test exact `home`/`calendar` mapping, Home fallback for every unsupported shape, and delegation to the ordinary setter; do not read Flutter native prefs or add an importer/no-op importer hook.
 
 ## 2. Settings destination and localized native choice
 

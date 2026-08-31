@@ -8,15 +8,18 @@ import {
   resolveLanguage,
   resolveTimezone,
   setLanguagePreference,
+  setStartupTabPreference,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
 import {
   type LanguagePreference,
   parseLanguagePreference,
+  parseStartupTabPreference,
   parseThemePreference,
   parseTimezonePreference,
   SETTINGS_KEYS,
+  type StartupTabPreference,
   type ThemePreference,
   type TimezonePreference,
 } from "./types"
@@ -72,6 +75,17 @@ export function useTimezonePreference(): {
   )
   // setTimezonePreference is a stable module-level function (see the theme hook).
   return { preference, setPreference: setTimezonePreference }
+}
+
+export function useStartupTabPreference(): {
+  preference: StartupTabPreference
+  setPreference: (preference: StartupTabPreference) => void
+} {
+  const preference = useParsedStoredString(
+    SETTINGS_KEYS.startupTab,
+    parseStartupTabPreference,
+  )
+  return { preference, setPreference: setStartupTabPreference }
 }
 
 // The reactive effective display zone: re-renders on a preference change (the

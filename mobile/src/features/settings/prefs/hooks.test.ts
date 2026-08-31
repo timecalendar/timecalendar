@@ -7,6 +7,7 @@ import { remove } from "@/storage"
 import {
   useDisplayZone,
   useLanguagePreference,
+  useStartupTabPreference,
   useThemePreference,
   useTimezonePreference,
 } from "./hooks"
@@ -22,6 +23,7 @@ describe("settings prefs hooks", () => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
+    remove(SETTINGS_KEYS.startupTab)
   })
 
   describe("useThemePreference", () => {
@@ -31,6 +33,18 @@ describe("settings prefs hooks", () => {
 
       await act(async () => result.current.setPreference("dark"))
       expect(result.current.preference).toBe("dark")
+    })
+  })
+
+  describe("useStartupTabPreference", () => {
+    it("defaults to home and reactively reflects both values", async () => {
+      const { result } = await renderHook(() => useStartupTabPreference())
+      expect(result.current.preference).toBe("home")
+
+      await act(async () => result.current.setPreference("calendar"))
+      expect(result.current.preference).toBe("calendar")
+      await act(async () => result.current.setPreference("home"))
+      expect(result.current.preference).toBe("home")
     })
   })
 

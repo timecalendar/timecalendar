@@ -1,17 +1,22 @@
 export {
   useDisplayZone,
   useLanguagePreference,
+  useStartupTabPreference,
   useThemePreference,
   useTimezonePreference,
 } from "./hooks"
 export {
   getInitialLocale,
   getLanguagePreference,
+  getStartupTabPreference,
   getThemePreference,
   getTimezonePreference,
+  mapFlutterStartupScreen,
   resolveLanguage,
   resolveTimezone,
   setLanguagePreference,
+  setStartupTabFromFlutter,
+  setStartupTabPreference,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
@@ -20,9 +25,11 @@ export {
   type CuratedTimezone,
   type LanguagePreference,
   parseLanguagePreference,
+  parseStartupTabPreference,
   parseThemePreference,
   parseTimezonePreference,
   SETTINGS_KEYS,
+  type StartupTabPreference,
   type ThemePreference,
   type TimezonePreference,
 } from "./types"
