@@ -18,13 +18,16 @@ five-second watchdog keep navigation closed and expose Retry; timeout never gran
 after both prerequisites resolve does one atomic calendar-sources live-query snapshot decide route
 eligibility.
 
-The root declares onboarding first and leaves it reachable. One `Stack.Protected` guard contains
-`(tabs)` and every post-onboarding sibling. Zero calendars with no durable onboarding resolution
-therefore fall back to onboarding without mounting tabs. A skip or imported-calendar resolution,
-or any held calendar, grants eligibility. A recovered calendar seeds `calendarImported` so later
-deletion cannot reopen onboarding. The development-only token-import route is the sole unprotected
-exception; its existing variant gate remains authoritative and a successful durable write makes the
-protected routes eligible.
+The root puts onboarding behind the inverse eligibility guard. One other `Stack.Protected` guard
+contains `(tabs)` and every post-onboarding sibling. Zero calendars with no durable onboarding
+resolution therefore fall back to onboarding without mounting tabs. A skip or imported-calendar
+resolution, or any held calendar, grants eligibility: the Stack removes onboarding and rebuilds from
+tabs as one route-graph change, with no screen-level redirect race. The eligible group is declared
+before the unprotected development-token-import exception because the navigator may fall back by
+route declaration order when its configured initial route was protected during initialization. A
+recovered calendar seeds `calendarImported` so later deletion cannot reopen onboarding. The token-
+import route remains the sole unprotected exception; its existing variant gate remains authoritative
+and a successful durable write makes the protected routes eligible.
 
 ## Consequences
 
