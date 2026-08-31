@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from "expo-image"
-import { router } from "expo-router"
+import { Redirect, router } from "expo-router"
 import { SymbolView } from "expo-symbols"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -158,16 +158,14 @@ export default function WelcomeScreen() {
 
   const openSchoolSelection = () => router.push("/onboarding/school")
 
-  useEffect(() => {
-    if (!skipNavigationPending || onboardingResolution !== "skipped") return
-
-    router.replace("/")
-  }, [onboardingResolution, skipNavigationPending])
-
   const confirmSkip = () => {
     setSkipNavigationPending(true)
     setOnboardingResolution("skipped")
     setSkipConfirmationVisible(false)
+  }
+
+  if (skipNavigationPending && onboardingResolution === "skipped") {
+    return <Redirect href="/(tabs)" />
   }
 
   return (
