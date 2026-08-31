@@ -11,13 +11,13 @@
 
 ## 3. Reconcile scope and architecture guidance
 
-- [ ] 3.1 Review the implemented diff against `architecture.md`, `storage.md`, `data.md`, `navigation.md`, `testing.md`, ADR 030, and the issue's sensitive-surface list; record that the repair applies existing migration/import rules and requires no Architecture Book or ADR update. If the implementation changes a documented contract or needs an out-of-scope surface, stop and return the scoped finding to the Founding Engineer before editing it.
-- [ ] 3.2 Confirm `.github/workflows/ci-mobile-e2e.yml`, `mobile/.maestro/activity.yaml`, `mobile/.maestro/activity/import-baseline.yaml`, backend lifecycle/fixtures, `mobile/app.config.ts`, `mobile/eas.json`, `mobile/firebase/`, API/OpenAPI/generated files, schema/migrations, infrastructure, and legacy Flutter are unchanged.
+- [x] 3.1 Review the implemented diff against `architecture.md`, `storage.md`, `data.md`, `navigation.md`, `testing.md`, ADR 030, and the issue's sensitive-surface list; record that the repair applies existing migration/import rules and requires no Architecture Book or ADR update. If the implementation changes a documented contract or needs an out-of-scope surface, stop and return the scoped finding to the Founding Engineer before editing it.
+- [x] 3.2 Confirm `.github/workflows/ci-mobile-e2e.yml`, `mobile/.maestro/activity.yaml`, `mobile/.maestro/activity/import-baseline.yaml`, backend lifecycle/fixtures, `mobile/app.config.ts`, `mobile/eas.json`, `mobile/firebase/`, API/OpenAPI/generated files, schema/migrations, infrastructure, and legacy Flutter are unchanged.
 
 ## 4. Local-green verification
 
-- [ ] 4.1 Run `cd mobile && npm run lint`, `npx tsc --noEmit`, and the proportionate mobile Jest command for the touched suites (expanding to the full mobile suite only if focused or coverage behavior requires it); fix the cause rather than weakening coverage or assertions.
-- [ ] 4.2 Run `openspec validate repair-android-dev-import-startup-race` and `git diff --check`; inspect the final diff for secrets, generated native output, debug artifacts, broad waits/retries, and unrelated changes.
+- [x] 4.1 Run `cd mobile && npm run lint`, `npx tsc --noEmit`, and the proportionate mobile Jest command for the touched suites (expanding to the full mobile suite only if focused or coverage behavior requires it); fix the cause rather than weakening coverage or assertions.
+- [x] 4.2 Run `openspec validate repair-android-dev-import-startup-race` and `git diff --check`; inspect the final diff for secrets, generated native output, debug artifacts, broad waits/retries, and unrelated changes.
 
 ## 5. Exact-head native CI proof
 
