@@ -34,7 +34,7 @@
 
 ## 4. Exact-head native CI proof and handoff evidence
 
-- [ ] 4.1 Add the existing `run-e2e` label to the draft PR so the unchanged
+- [x] 4.1 Add the existing `run-e2e` label to the draft PR so the unchanged
   `ci-mobile-e2e.yml` workflow runs against the implementation head; do not edit the workflow.
 - [ ] 4.2 Confirm `Run mobile E2E (iOS)` succeeds on the exact implementation SHA with the midpoint,
   tie-higher, tie-lower, and older-anchor observations intact; record the SHA and direct successful
