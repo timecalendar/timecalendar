@@ -7,6 +7,12 @@ import {
   type CalendarEvent,
   formatTimeRange,
 } from "@/features/calendar/data"
+import {
+  type ChecklistProgress,
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+  type ChecklistProgressMap,
+} from "@/features/event-checklists"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { eventSurfaceColor } from "./event-surface"
@@ -22,11 +28,13 @@ const CARD_WIDTH = 200
 
 export function UpcomingScroller({
   events,
+  checklistProgress,
   locale,
   displayZone,
   onPressEvent,
 }: {
   events: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   locale: AppLocale
   displayZone: string
   onPressEvent: (event: CalendarEvent) => void
@@ -44,6 +52,7 @@ export function UpcomingScroller({
         <UpcomingCard
           key={event.id}
           event={event}
+          progress={checklistProgress.get(event.id)}
           locale={locale}
           zone={displayZone}
           onPress={() => onPressEvent(event)}
@@ -55,11 +64,13 @@ export function UpcomingScroller({
 
 function UpcomingCard({
   event,
+  progress,
   locale,
   zone,
   onPress,
 }: {
   event: CalendarEvent
+  progress: ChecklistProgress | undefined
   locale: AppLocale
   zone: string
   onPress: () => void
@@ -70,16 +81,22 @@ function UpcomingCard({
     ? t("home.today.allDay")
     : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
+  const progressLabel = checklistProgressLabel(t, progress)
 
   return (
     <Pressable
       testID={`upcoming-card-${event.id}`}
       accessibilityRole="button"
-      accessibilityLabel={t("home.event.openLabel", {
-        title: event.title,
-        time,
-        location,
-      })}
+      accessibilityLabel={
+        progressLabel === undefined
+          ? t("home.event.openLabel", { title: event.title, time, location })
+          : t("home.event.openLabelWithProgress", {
+              title: event.title,
+              time,
+              location,
+              progress: progressLabel,
+            })
+      }
       accessibilityHint={
         event.userCalendarId !== undefined
           ? t("home.event.hint.details")
@@ -106,6 +123,7 @@ function UpcomingCard({
           {location}
         </ThemedText>
       )}
+      <ChecklistProgressIndicator progress={progress} />
     </Pressable>
   )
 }

@@ -3,6 +3,11 @@ import { Platform, Pressable, StyleSheet, View } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import { type CalendarEvent } from "@/features/calendar/data"
+import {
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+  type ChecklistProgressMap,
+} from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
 import { eventSurfaceColor } from "@/features/home/ui/event-surface"
 import { TodayTimeline } from "@/features/home/ui/today-timeline"
@@ -14,6 +19,7 @@ interface TodaySectionProps {
   displayZone: string
   allDayEvents: CalendarEvent[]
   timedEvents: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   hourRange: HourRange
   onPressEvent: (event: CalendarEvent) => void
 }
@@ -24,6 +30,7 @@ export function TodaySection({
   displayZone,
   allDayEvents,
   timedEvents,
+  checklistProgress,
   hourRange,
   onPressEvent,
 }: TodaySectionProps) {
@@ -34,7 +41,11 @@ export function TodaySection({
         {t("home.today.title")}
       </ThemedText>
       {allDayEvents.length > 0 && (
-        <AllDayEvents events={allDayEvents} onPressEvent={onPressEvent} />
+        <AllDayEvents
+          events={allDayEvents}
+          checklistProgress={checklistProgress}
+          onPressEvent={onPressEvent}
+        />
       )}
       {timedEvents.length > 0 ? (
         <TodayTimeline
@@ -44,6 +55,7 @@ export function TodaySection({
           displayZone={displayZone}
           isToday
           now={now}
+          checklistProgress={checklistProgress}
           onPressEvent={onPressEvent}
         />
       ) : allDayEvents.length === 0 ? (
@@ -57,9 +69,11 @@ export function TodaySection({
 
 function AllDayEvents({
   events,
+  checklistProgress,
   onPressEvent,
 }: {
   events: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   onPressEvent: (event: CalendarEvent) => void
 }) {
   const { t } = useTranslation()
@@ -75,33 +89,47 @@ function AllDayEvents({
         {t("home.today.allDay")}
       </ThemedText>
       <View style={styles.allDayItems}>
-        {events.map((event) => (
-          <Pressable
-            key={event.id}
-            accessibilityRole="button"
-            accessibilityLabel={t("home.event.openLabel", {
-              title: event.title,
-              time: t("home.today.allDay"),
-              location: event.location ?? "",
-            })}
-            accessibilityHint={
-              event.userCalendarId !== undefined
-                ? t("home.event.hint.details")
-                : t("home.event.hint.edit")
-            }
-            onPress={() => onPressEvent(event)}
-            android_ripple={{ color: theme.ripple, foreground: true }}
-            style={({ pressed }) => [
-              styles.allDayEvent,
-              { backgroundColor: eventSurfaceColor(event.color) },
-              Platform.OS === "ios" && pressed && styles.iosPressed,
-            ]}
-          >
-            <ThemedText type="smallBold" numberOfLines={2}>
-              {event.title}
-            </ThemedText>
-          </Pressable>
-        ))}
+        {events.map((event) => {
+          const progress = checklistProgress.get(event.id)
+          const progressLabel = checklistProgressLabel(t, progress)
+          return (
+            <Pressable
+              key={event.id}
+              accessibilityRole="button"
+              accessibilityLabel={
+                progressLabel === undefined
+                  ? t("home.event.openLabel", {
+                      title: event.title,
+                      time: t("home.today.allDay"),
+                      location: event.location ?? "",
+                    })
+                  : t("home.event.openLabelWithProgress", {
+                      title: event.title,
+                      time: t("home.today.allDay"),
+                      location: event.location ?? "",
+                      progress: progressLabel,
+                    })
+              }
+              accessibilityHint={
+                event.userCalendarId !== undefined
+                  ? t("home.event.hint.details")
+                  : t("home.event.hint.edit")
+              }
+              onPress={() => onPressEvent(event)}
+              android_ripple={{ color: theme.ripple, foreground: true }}
+              style={({ pressed }) => [
+                styles.allDayEvent,
+                { backgroundColor: eventSurfaceColor(event.color) },
+                Platform.OS === "ios" && pressed && styles.iosPressed,
+              ]}
+            >
+              <ThemedText type="smallBold" numberOfLines={2}>
+                {event.title}
+              </ThemedText>
+              <ChecklistProgressIndicator progress={progress} />
+            </Pressable>
+          )
+        })}
       </View>
     </View>
   )

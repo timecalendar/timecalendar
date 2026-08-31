@@ -26,6 +26,11 @@ import {
   nowIndicatorPosition,
   startOfDayInZone,
 } from "@/features/calendar/data"
+import {
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+  type ChecklistProgressMap,
+} from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
@@ -88,6 +93,7 @@ export function TodayTimeline({
   displayZone,
   isToday,
   now,
+  checklistProgress,
   onPressEvent,
 }: {
   events: CalendarEvent[]
@@ -96,6 +102,7 @@ export function TodayTimeline({
   displayZone: string
   isToday: boolean
   now: Date
+  checklistProgress: ChecklistProgressMap
   onPressEvent: (event: CalendarEvent) => void
 }) {
   const { t } = useTranslation()
@@ -157,16 +164,27 @@ export function TodayTimeline({
             displayZone,
           )
           const location = event.location ?? ""
+          const progress = checklistProgress.get(event.id)
+          const progressLabel = checklistProgressLabel(t, progress)
           return (
             <Pressable
               key={event.id}
               testID={`today-tile-${event.id}`}
               accessibilityRole="button"
-              accessibilityLabel={t("home.event.openLabel", {
-                title: event.title,
-                time,
-                location,
-              })}
+              accessibilityLabel={
+                progressLabel === undefined
+                  ? t("home.event.openLabel", {
+                      title: event.title,
+                      time,
+                      location,
+                    })
+                  : t("home.event.openLabelWithProgress", {
+                      title: event.title,
+                      time,
+                      location,
+                      progress: progressLabel,
+                    })
+              }
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")
@@ -191,6 +209,7 @@ export function TodayTimeline({
                   {location}
                 </ThemedText>
               )}
+              <ChecklistProgressIndicator progress={progress} />
             </Pressable>
           )
         })}
@@ -267,17 +286,28 @@ export function TodayTimeline({
             displayZone,
           )
           const location = event.location ?? ""
+          const progress = checklistProgress.get(event.id)
+          const progressLabel = checklistProgressLabel(t, progress)
 
           return (
             <Pressable
               key={event.id}
               testID={`today-tile-${event.id}`}
               accessibilityRole="button"
-              accessibilityLabel={t("home.event.openLabel", {
-                title: event.title,
-                time,
-                location,
-              })}
+              accessibilityLabel={
+                progressLabel === undefined
+                  ? t("home.event.openLabel", {
+                      title: event.title,
+                      time,
+                      location,
+                    })
+                  : t("home.event.openLabelWithProgress", {
+                      title: event.title,
+                      time,
+                      location,
+                      progress: progressLabel,
+                    })
+              }
               accessibilityHint={
                 event.userCalendarId !== undefined
                   ? t("home.event.hint.details")
@@ -313,6 +343,10 @@ export function TodayTimeline({
                   )}
                 </>
               )}
+              <ChecklistProgressIndicator
+                progress={progress}
+                variant="compact"
+              />
             </Pressable>
           )
         })}

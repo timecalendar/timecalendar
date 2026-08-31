@@ -11,9 +11,9 @@
 
 ## 3. Home summary surfaces
 
-- [ ] 3.1 Subscribe once at the Home screen/controller boundary for the unique `todayEvents` UID set and thread the sidecar progress map through `UpcomingSection`/`UpcomingScroller`, `TodaySection` all-day cards, and `TodayTimeline` without changing event-source behavior.
-- [ ] 3.2 Render progress and compose its localized phrase into the existing event label on upcoming cards, all-day cards, normal timed tiles, and Dynamic Type reflow rows; preserve zero hiding and the existing synced/personal routing hints.
-- [ ] 3.3 Extend Home component tests with synced and personal events covering zero, partial, complete, upcoming, all-day, normal timed, and forced Dynamic Type reflow layouts; assert visible counts and the complete accessible labels, then run only the affected Home suites.
+- [x] 3.1 Subscribe once at the Home screen/controller boundary for the unique `todayEvents` UID set and thread the sidecar progress map through `UpcomingSection`/`UpcomingScroller`, `TodaySection` all-day cards, and `TodayTimeline` without changing event-source behavior.
+- [x] 3.2 Render progress and compose its localized phrase into the existing event label on upcoming cards, all-day cards, normal timed tiles, and Dynamic Type reflow rows; preserve zero hiding and the existing synced/personal routing hints.
+- [x] 3.3 Extend Home component tests with synced and personal events covering zero, partial, complete, upcoming, all-day, normal timed, and forced Dynamic Type reflow layouts; assert visible counts and the complete accessible labels, then run only the affected Home suites.
 
 ## 4. Calendar day/week renderer and Agenda
 

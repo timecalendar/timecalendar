@@ -10,7 +10,9 @@ const mockSelect = jest.fn()
 const mockFrom = jest.fn()
 const mockWhere = jest.fn()
 const mockInArray = jest.fn((column, values) => ({ column, values }))
-const mockSql = jest.fn(() => ({ alwaysFalse: true }))
+const mockSql = jest.fn((_parts: TemplateStringsArray) => ({
+  alwaysFalse: true,
+}))
 const mockUseLiveQuery = jest.fn()
 
 jest.mock("@/db", () => {
@@ -46,7 +48,9 @@ jest.mock("@/db", () => {
       const [, setVersion] = React.useState(0)
       React.useEffect(() => {
         mockListeners.add(setVersion)
-        return () => mockListeners.delete(setVersion)
+        return () => {
+          mockListeners.delete(setVersion)
+        }
       }, [])
       return { data: mockRows }
     },
