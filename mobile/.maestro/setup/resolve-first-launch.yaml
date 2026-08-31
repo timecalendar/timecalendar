@@ -1,6 +1,18 @@
 appId: fr.samuelprak.timecalendar.dev
+env:
+  AWAIT_FIRST_LAUNCH: ${AWAIT_FIRST_LAUNCH || "false"}
 ---
 # Nested reusable setup: top-level discovery intentionally excludes this file.
+- runFlow:
+    when:
+      true: ${AWAIT_FIRST_LAUNCH == "true"}
+    commands:
+      # A clear-state launch can remain on native splash while migrations commit.
+      # Await the protected route before evaluating the optional Skip branch.
+      - extendedWaitUntil:
+          visible:
+            id: "onboarding-skip"
+          timeout: 60000
 - runFlow:
     when:
       visible:

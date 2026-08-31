@@ -13,15 +13,19 @@ describe("first-launch Maestro flows", () => {
       'id: "import-later-confirm"',
     )
 
-    for (const flow of [
+    const clearedFlows = [
       "about.yaml",
-      "appearance-settings.yaml",
       "environment-switch.yaml",
       "feedback.yaml",
-      "personal-events.yaml",
       "settings.yaml",
       "user-calendars.yaml",
-    ]) {
+    ]
+    for (const flow of clearedFlows) {
+      expect(readFlow(flow)).toContain("file: setup/resolve-first-launch.yaml")
+      expect(readFlow(flow)).toContain('AWAIT_FIRST_LAUNCH: "true"')
+    }
+
+    for (const flow of ["appearance-settings.yaml", "personal-events.yaml"]) {
       expect(readFlow(flow)).toContain(
         "runFlow: setup/resolve-first-launch.yaml",
       )
