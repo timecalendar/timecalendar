@@ -21,6 +21,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
 
+env:
+  # pull_request workflows default to the synthetic merge ref. Native proof must
+  # instead build the exact proposed head; push workflows already use github.sha.
+  E2E_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   build-server:
     name: Build server image
@@ -28,8 +33,10 @@ jobs:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout exact source SHA
         uses: actions/checkout@v6
+        with:
+          ref: ${{ env.E2E_SOURCE_SHA }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -38,13 +45,13 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ./server
-          tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+          tags: ghcr.io/timecalendar/timecalendar:${{ env.E2E_SOURCE_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
 
       - name: Save server image to tarball
-        run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
+        run: docker save ghcr.io/timecalendar/timecalendar:${{ env.E2E_SOURCE_SHA }} -o /tmp/server-image.tar
 
       - name: Upload server image artifact
         uses: actions/upload-artifact@v7
@@ -63,10 +70,12 @@ jobs:
     env:
       # Reuse the build-server artifact image — the shared lifecycle skips its
       # own build when E2E_SERVER_IMAGE is set (ci/e2e-server.sh).
-      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ env.E2E_SOURCE_SHA }}
     steps:
-      - name: Checkout main
+      - name: Checkout exact source SHA
         uses: actions/checkout@v6
+        with:
+          ref: ${{ env.E2E_SOURCE_SHA }}
 
       - name: Download server image artifact
         uses: actions/download-artifact@v8
@@ -198,8 +207,10 @@ jobs:
       # (generous vs the sub-minute happy path, fails fast on a crash). Value in ms.
       MAESTRO_DRIVER_STARTUP_TIMEOUT: "240000"
     steps:
-      - name: Checkout main
+      - name: Checkout exact source SHA
         uses: actions/checkout@v6
+        with:
+          ref: ${{ env.E2E_SOURCE_SHA }}
 
       # JDK for Maestro (JVM-based).
       - name: Set up Java
