@@ -13,6 +13,12 @@ export async function resolveLaunchPrerequisites(
   await runMigrations()
   // Phase 09 insertion point: import Flutter-owned data here, before any RN
   // preference or held-calendar read.
+  // An explicit initial route has already won the launch decision. Commit it
+  // after the mandatory migration/import boundary without waiting for lower-
+  // priority native notification or identity reads; some native messaging
+  // implementations do not settle getInitialNotification() for deep-link
+  // launches that contain no notification response.
+  if (initialPath !== "/" && initialPath !== "") return initialPath
   const notificationIntent = await resolveInitialNotificationIntent(sync)
   const calendars = await findAll()
   const preference = getStartupTabPreference()
