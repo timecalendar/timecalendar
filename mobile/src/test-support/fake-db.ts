@@ -4,7 +4,8 @@
 // repositories touch — `select().from().where().orderBy().limit()` (thenable,
 // plus the synchronous `.all()` executor), `insert().values().onConflictDoUpdate()`,
 // `update().set().where()`, `delete().where()`, `transaction(cb)`, plus the
-// `eq`/`lt`/`notInArray`/`asc`/`desc` operators and one
+// `eq`/`lt`/`inArray`/`notInArray`/`asc`/`desc` operators, projected selects,
+// reactive reads, and one
 // column-token object per table — nothing more. Each table's rows live in a
 // per-table Map "disk" held inside the returned `FakeDb` closure, so
 // `jest.resetModules()` (a simulated process restart) never clears them; only
@@ -56,12 +57,17 @@ export interface FakeDb {
     asc: jest.Mock
     desc: jest.Mock
     lt: jest.Mock
+    inArray: jest.Mock
     notInArray: jest.Mock
+    sql: jest.Mock
+    useLiveQuery: jest.Mock
   }
   /** Clear every table store and reset every spy. Call in `beforeEach`. */
   reset(): void
   /** Pre-populate a table's store with raw rows (for read-shape assertions). */
   seed(table: string, rows: Record<string, unknown>[]): void
+  /** Number of currently mounted reactive-query consumers. */
+  liveQueryListenerCount(): number
 }
 
 type Row = Record<string, unknown>
@@ -70,7 +76,9 @@ type Row = Record<string, unknown>
 // `spies.<op>(col, val)` contract consumers assert on is per-operator.
 type Condition =
   | { op: "eq" | "lt"; field: string; val: unknown }
+  | { op: "inArray"; field: string; val: readonly unknown[] }
   | { op: "notInArray"; field: string; val: readonly unknown[] }
+  | { op: "alwaysFalse" }
   | null
 // A resolved `asc()` / `desc()` order. `orderBy` takes one or more.
 type Order = { field: string; dir: "asc" | "desc" }
@@ -88,6 +96,8 @@ export function createFakeDb(config: {
   const tokens = new Map<string, Record<string, string>>()
   // token object → table name, so a builder can route by identity.
   const tokenToName = new Map<Record<string, string>, string>()
+  const listeners = new Set<() => void>()
+  let version = 0
 
   for (const name of names) {
     const spec = config.tables[name]!
@@ -121,8 +131,12 @@ export function createFakeDb(config: {
         return row[cond.field] === cond.val
       case "lt":
         return compare(row[cond.field], cond.val) < 0
+      case "inArray":
+        return cond.val.includes(row[cond.field])
       case "notInArray":
         return !cond.val.includes(row[cond.field])
+      case "alwaysFalse":
+        return false
     }
   }
 
@@ -143,7 +157,10 @@ export function createFakeDb(config: {
     asc: jest.fn(),
     desc: jest.fn(),
     lt: jest.fn(),
+    inArray: jest.fn(),
     notInArray: jest.fn(),
+    sql: jest.fn(),
+    useLiveQuery: jest.fn(),
   }
 
   // The segment after the "." in a "table.field" column token.
@@ -156,6 +173,10 @@ export function createFakeDb(config: {
   const lt = (col: string, val: unknown): Condition => {
     spies.lt(col, val)
     return { op: "lt", field: fieldOf(col), val }
+  }
+  const inArray = (col: string, val: readonly unknown[]): Condition => {
+    spies.inArray(col, val)
+    return { op: "inArray", field: fieldOf(col), val }
   }
   const notInArray = (col: string, val: readonly unknown[]): Condition => {
     spies.notInArray(col, val)
@@ -170,7 +191,14 @@ export function createFakeDb(config: {
     return { field: fieldOf(col), dir: "desc" }
   }
 
-  const makeSelect = (): Record<string, unknown> => {
+  const notify = (): void => {
+    version += 1
+    for (const listener of listeners) listener()
+  }
+
+  const makeSelect = (
+    projection?: Record<string, string>,
+  ): Record<string, unknown> => {
     let store = stores.get(names[0]!)!
     let cond: Condition = null
     let orders: Order[] = []
@@ -190,7 +218,16 @@ export function createFakeDb(config: {
           return 0
         })
       }
-      return take === null ? result : result.slice(0, take)
+      const selected = take === null ? result : result.slice(0, take)
+      if (projection === undefined) return selected
+      return selected.map((row) =>
+        Object.fromEntries(
+          Object.entries(projection).map(([key, token]) => [
+            key,
+            row[fieldOf(token)],
+          ]),
+        ),
+      )
     }
     const builder: Record<string, unknown> = {
       from: (token: unknown) => {
@@ -253,9 +290,13 @@ export function createFakeDb(config: {
       },
       then: (resolve: (v: unknown) => unknown) => {
         flush()
+        notify()
         return resolve(undefined)
       },
-      run: flush,
+      run: () => {
+        flush()
+        notify()
+      },
     }
     return builder
   }
@@ -277,8 +318,11 @@ export function createFakeDb(config: {
           if (matches(row, c)) store.set(key, { ...row, ...patch })
         }
         return {
-          then: (r: (v: unknown) => unknown) => r(undefined),
-          run: () => undefined,
+          then: (r: (v: unknown) => unknown) => {
+            notify()
+            return r(undefined)
+          },
+          run: notify,
         }
       },
     }
@@ -294,8 +338,11 @@ export function createFakeDb(config: {
           if (matches(row, c)) store.delete(key)
         }
         return {
-          then: (r: (v: unknown) => unknown) => r(undefined),
-          run: () => undefined,
+          then: (r: (v: unknown) => unknown) => {
+            notify()
+            return r(undefined)
+          },
+          run: notify,
         }
       },
       // delete(table) with NO where: clear the whole table (the sync drop /
@@ -303,19 +350,21 @@ export function createFakeDb(config: {
       // `then` the awaited one.
       then: (resolve: (v: unknown) => unknown) => {
         store.clear()
+        notify()
         return resolve(undefined)
       },
       run: () => {
         store.clear()
+        notify()
       },
     }
     return builder
   }
 
   const db: Record<string, unknown> = {
-    select: (...a: unknown[]) => {
-      spies.select(...a)
-      return makeSelect()
+    select: (projection?: Record<string, string>) => {
+      spies.select(projection)
+      return makeSelect(projection)
     },
     insert: (token: unknown) => {
       spies.insert(token)
@@ -340,7 +389,35 @@ export function createFakeDb(config: {
     },
   }
 
-  const module: Record<string, unknown> = { db, eq, asc, desc, lt, notInArray }
+  const sql = (parts: TemplateStringsArray): Condition => {
+    spies.sql(parts)
+    return { op: "alwaysFalse" }
+  }
+  const useLiveQuery = (query: { all: () => Row[] }, deps: unknown[]) => {
+    spies.useLiveQuery(query, deps)
+    const React = jest.requireActual<typeof import("react")>("react")
+    React.useSyncExternalStore(
+      (listener) => {
+        listeners.add(listener)
+        return () => listeners.delete(listener)
+      },
+      () => version,
+      () => version,
+    )
+    return { data: query.all() }
+  }
+
+  const module: Record<string, unknown> = {
+    db,
+    eq,
+    asc,
+    desc,
+    lt,
+    inArray,
+    notInArray,
+    sql,
+    useLiveQuery,
+  }
   for (const name of names) module[name] = tokens.get(name)!
 
   return {
@@ -348,12 +425,17 @@ export function createFakeDb(config: {
     spies,
     reset() {
       for (const store of stores.values()) store.clear()
+      listeners.clear()
+      version = 0
       for (const spy of Object.values(spies)) spy.mockClear()
     },
     seed(table: string, rows: Row[]) {
       const store = stores.get(table)!
       const pk = pks.get(table)!
       for (const row of rows) store.set(String(row[pk]), { ...row })
+    },
+    liveQueryListenerCount() {
+      return listeners.size
     },
   }
 }

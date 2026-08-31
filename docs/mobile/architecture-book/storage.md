@@ -19,6 +19,12 @@ macrotask. They ignore an in-flight result after unmount. Whole-table reads are 
 for the current data size; introduce scoped SQL queries if measured volume makes them too
 expensive.
 
+Checklist summary progress is the scoped-query case: the event-checklists data layer
+normalizes the rendered UID set and selects only `event_uid` plus `is_checked` through
+one live query per Home or Calendar screen. It deliberately applies no `deleted_at`
+predicate; imported non-null values retain the existing Flutter-compatible counting
+semantics, while application deletes remain hard deletes.
+
 Use synchronous transaction callbacks and synchronous `.run()` executors. The Expo SQLite
 synchronous driver does not await an async transaction callback, which would commit before
 all statements finish.
