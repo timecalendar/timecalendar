@@ -1,8 +1,8 @@
 ## 1. Batched checklist-progress data seam
 
-- [ ] 1.1 Add the minimal `@/db` operator exports needed for a UID-set select and always-false empty-set predicate, then implement `ChecklistProgress` plus the normalized, deduplicated `useChecklistProgress(eventUids)` read under `mobile/src/features/event-checklists/data/`; verify the query selects only `eventUid`/`isChecked`, uses one `useLiveQuery`, and applies no `deletedAt` predicate.
-- [ ] 1.2 Add focused data tests for empty and duplicate UID sets, one set-oriented query shape, synced/personal-style UID equivalence, zero/partial/complete aggregation, and an imported non-null-`deletedAt` row; run the new data suite directly.
-- [ ] 1.3 Add a reactive hook/fake-DB test that keeps one consumer mounted across add, check, uncheck, reorder, and hard-delete notifications; assert totals/completed update and reorder preserves both counts, then run that suite directly.
+- [x] 1.1 Add the minimal `@/db` operator exports needed for a UID-set select and always-false empty-set predicate, then implement `ChecklistProgress` plus the normalized, deduplicated `useChecklistProgress(eventUids)` read under `mobile/src/features/event-checklists/data/`; verify the query selects only `eventUid`/`isChecked`, uses one `useLiveQuery`, and applies no `deletedAt` predicate.
+- [x] 1.2 Add focused data tests for empty and duplicate UID sets, one set-oriented query shape, synced/personal-style UID equivalence, zero/partial/complete aggregation, and an imported non-null-`deletedAt` row; run the new data suite directly.
+- [x] 1.3 Add a reactive hook/fake-DB test that keeps one consumer mounted across add, check, uncheck, reorder, and hard-delete notifications; assert totals/completed update and reorder preserves both counts, then run that suite directly.
 
 ## 2. Shared visual and accessibility contract
 
