@@ -6,7 +6,7 @@ import { Platform, Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
-import { useUserCalendarsState } from "@/features/calendar-sources"
+import { useUserCalendarsState } from "@/features/calendar-sources/data"
 import { shouldShowFirstIcalReminder } from "@/features/first-launch/data"
 import {
   dismissFirstIcalReminder,
