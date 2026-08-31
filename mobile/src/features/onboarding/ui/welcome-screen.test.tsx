@@ -17,16 +17,8 @@ import { Colors } from "@/theme"
 import WelcomeScreen from "./welcome-screen"
 
 jest.mock("expo-router", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const React = require("react")
   const router = { push: jest.fn(), replace: jest.fn() }
-  return {
-    router,
-    Redirect: ({ href }: { href: string }) => {
-      React.useEffect(() => router.replace(href), [href])
-      return null
-    },
-  }
+  return { router }
 })
 
 type PagerMock = {
@@ -135,7 +127,7 @@ describe("WelcomeScreen", () => {
     await fireEvent.press(getByTestId("import-later-confirm"))
     expect(getOnboardingResolution()).toBe("skipped")
     expect(getFirstIcalReminderState()).toBe("pending")
-    expect(mockReplace).toHaveBeenCalledWith("/(tabs)")
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it("pushes school only from the final CTA", async () => {

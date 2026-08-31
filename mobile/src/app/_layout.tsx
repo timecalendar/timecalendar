@@ -143,7 +143,9 @@ function FirstLaunchGate({ onRoutesReady }: FirstLaunchGateProps) {
       <NotificationRegistration />
       <NotificationTapRouting />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="onboarding" />
+        <Stack.Protected guard={!eligible}>
+          <Stack.Screen name="onboarding" />
+        </Stack.Protected>
         <Stack.Screen name="dev-import" options={{ headerShown: false }} />
         <Stack.Protected guard={eligible}>
           <Stack.Screen name="(tabs)" />

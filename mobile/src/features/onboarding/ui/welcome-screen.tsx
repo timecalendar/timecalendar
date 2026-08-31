@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from "expo-image"
-import { Redirect, router } from "expo-router"
+import { router } from "expo-router"
 import { SymbolView } from "expo-symbols"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -19,10 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import {
-  setOnboardingResolution,
-  useOnboardingResolution,
-} from "@/features/first-launch/store"
+import { setOnboardingResolution } from "@/features/first-launch/store"
 import { ImportLaterConfirmation } from "@/features/first-launch/ui"
 import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
@@ -64,8 +61,6 @@ export default function WelcomeScreen() {
   const pagerRef = useRef<PagerView>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const [skipConfirmationVisible, setSkipConfirmationVisible] = useState(false)
-  const [skipNavigationPending, setSkipNavigationPending] = useState(false)
-  const onboardingResolution = useOnboardingResolution()
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null)
   const [opacity] = useState(() => new Animated.Value(0))
   const [indicatorWidths] = useState(() =>
@@ -159,13 +154,8 @@ export default function WelcomeScreen() {
   const openSchoolSelection = () => router.push("/onboarding/school")
 
   const confirmSkip = () => {
-    setSkipNavigationPending(true)
     setOnboardingResolution("skipped")
     setSkipConfirmationVisible(false)
-  }
-
-  if (skipNavigationPending && onboardingResolution === "skipped") {
-    return <Redirect href="/(tabs)" />
   }
 
   return (
