@@ -7,8 +7,14 @@ import {
   type CalendarEvent,
   formatTimeRange,
 } from "@/features/calendar/data"
+import {
+  type ChecklistProgress,
+  ChecklistProgressIndicator,
+  type ChecklistProgressMap,
+} from "@/features/event-checklists"
 import { Radii, Spacing, useTheme } from "@/theme"
 
+import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
 
 // The home upcoming scroller (D6) — PRESENTATIONAL (70% floor): a horizontal RN-core
@@ -22,11 +28,13 @@ const CARD_WIDTH = 200
 
 export function UpcomingScroller({
   events,
+  checklistProgress,
   locale,
   displayZone,
   onPressEvent,
 }: {
   events: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   locale: AppLocale
   displayZone: string
   onPressEvent: (event: CalendarEvent) => void
@@ -44,6 +52,7 @@ export function UpcomingScroller({
         <UpcomingCard
           key={event.id}
           event={event}
+          progress={checklistProgress.get(event.id)}
           locale={locale}
           zone={displayZone}
           onPress={() => onPressEvent(event)}
@@ -55,11 +64,13 @@ export function UpcomingScroller({
 
 function UpcomingCard({
   event,
+  progress,
   locale,
   zone,
   onPress,
 }: {
   event: CalendarEvent
+  progress: ChecklistProgress | undefined
   locale: AppLocale
   zone: string
   onPress: () => void
@@ -75,11 +86,7 @@ function UpcomingCard({
     <Pressable
       testID={`upcoming-card-${event.id}`}
       accessibilityRole="button"
-      accessibilityLabel={t("home.event.openLabel", {
-        title: event.title,
-        time,
-        location,
-      })}
+      accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
       accessibilityHint={
         event.userCalendarId !== undefined
           ? t("home.event.hint.details")
@@ -106,6 +113,7 @@ function UpcomingCard({
           {location}
         </ThemedText>
       )}
+      <ChecklistProgressIndicator progress={progress} />
     </Pressable>
   )
 }

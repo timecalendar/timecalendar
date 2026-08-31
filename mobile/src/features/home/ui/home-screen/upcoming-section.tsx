@@ -7,6 +7,7 @@ import {
   formatFullDay,
   formatTime,
 } from "@/features/calendar/data"
+import { type ChecklistProgressMap } from "@/features/event-checklists"
 import { type NextActiveDay } from "@/features/home/data"
 import { UpcomingScroller } from "@/features/home/ui/upcoming-scroller"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -16,6 +17,7 @@ interface UpcomingSectionProps {
   locale: "fr" | "en"
   displayZone: string
   events: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   todayEventCount: number
   nextDay: NextActiveDay | undefined
   onOpenCalendar: (day: Date) => void
@@ -27,6 +29,7 @@ export function UpcomingSection({
   locale,
   displayZone,
   events,
+  checklistProgress,
   todayEventCount,
   nextDay,
   onOpenCalendar,
@@ -53,6 +56,7 @@ export function UpcomingSection({
       {events.length > 0 ? (
         <UpcomingScroller
           events={events}
+          checklistProgress={checklistProgress}
           locale={locale}
           displayZone={displayZone}
           onPressEvent={onPressEvent}
