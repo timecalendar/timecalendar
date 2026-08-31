@@ -102,6 +102,12 @@ is_retryable_startup_failure() {
     return 1
   fi
 
+  if grep -Eiq \
+    'iOS driver not ready in time|IOSDriverTimeoutException' \
+    "$output_file"; then
+    return 0
+  fi
+
   grep -Eiq 'launchApp|setPermissions' "$output_file" && \
     grep -Eiq \
       'XCTest driver.*not listening|driver.*failed to listen|connection refused|connectexception.*refused|failed to connect.*(localhost|127\.0\.0\.1)' \
