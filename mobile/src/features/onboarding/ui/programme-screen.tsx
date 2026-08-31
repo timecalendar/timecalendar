@@ -161,28 +161,29 @@ export default function ProgrammeScreen() {
                 {t(errorKey)}
               </ThemedText>
             )}
-
-            <Pressable
-              testID="onboarding-programme-continue"
-              accessibilityRole="button"
-              accessibilityLabel={t("onboarding.programme.continueLabel")}
-              accessibilityState={{ disabled: !canContinue }}
-              disabled={!canContinue}
-              hitSlop={Spacing.two}
-              onPress={submit}
-              style={[
-                stepStyles.cta,
-                {
-                  backgroundColor: theme.primaryStrong,
-                  opacity: canContinue ? 1 : 0.5,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold" themeColor="onPrimary">
-                {t("onboarding.programme.continue")}
-              </ThemedText>
-            </Pressable>
           </ScrollView>
+
+          <Pressable
+            testID="onboarding-programme-continue"
+            accessibilityRole="button"
+            accessibilityLabel={t("onboarding.programme.continueLabel")}
+            accessibilityState={{ disabled: !canContinue }}
+            disabled={!canContinue}
+            hitSlop={Spacing.two}
+            onPress={submit}
+            style={[
+              stepStyles.cta,
+              styles.footerCta,
+              {
+                backgroundColor: theme.primaryStrong,
+                opacity: canContinue ? 1 : 0.5,
+              },
+            ]}
+          >
+            <ThemedText type="smallBold" themeColor="onPrimary">
+              {t("onboarding.programme.continue")}
+            </ThemedText>
+          </Pressable>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
@@ -190,6 +191,10 @@ export default function ProgrammeScreen() {
 }
 
 const styles = StyleSheet.create({
+  footerCta: {
+    marginTop: Spacing.three,
+    marginBottom: Spacing.four,
+  },
   // Local: the Android header action, the only control this step adds to the
   // shared step frame. 48dp minimum in both axes (the iOS branch is a native
   // header item and is sized by the platform).

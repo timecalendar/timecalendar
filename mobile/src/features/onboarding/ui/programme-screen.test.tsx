@@ -64,6 +64,29 @@ const screenOptions = () =>
     }[]
   }
 
+const expectStickyProgrammeCta = async () => {
+  const view = await render(<ProgrammeScreen />)
+  const avoiding = view.getByTestId("keyboard-avoiding-layout")
+  const scroll = view.getByTestId("keyboard-scroll-layout")
+  const cta = view.getByTestId("onboarding-programme-continue")
+
+  expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
+  expect(
+    scroll.queryAll(
+      (node) => node.props.testID === "onboarding-programme-continue",
+    ),
+  ).toHaveLength(0)
+  expect(
+    avoiding.queryAll(
+      (node) => node.props.testID === "onboarding-programme-continue",
+    ),
+  ).toHaveLength(1)
+  expect(view.getAllByTestId("onboarding-programme-continue")).toHaveLength(1)
+  expect(avoiding.children).toEqual([scroll, cta])
+
+  return { avoiding, scroll }
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   mockUseImportDraft.mockReturnValue({ setCalendarName: mockSetCalendarName })
@@ -151,21 +174,13 @@ describe("ProgrammeScreen", () => {
   describe("on iOS", () => {
     usePlatform("ios")
 
-    it("lifts the tappable Continue control above the keyboard", async () => {
-      const view = await render(<ProgrammeScreen />)
-      const avoiding = view.getByTestId("keyboard-avoiding-layout")
-      const scroll = view.getByTestId("keyboard-scroll-layout")
+    it("keeps Continue as the sole sticky sibling after the scroll", async () => {
+      const { avoiding, scroll } = await expectStickyProgrammeCta()
 
       expect(avoiding.props.behavior).toBe("padding")
-      expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
       expect(scroll.props.contentContainerStyle).toEqual(
         expect.objectContaining({ flexGrow: 1, justifyContent: "center" }),
       )
-      expect(
-        scroll.queryAll(
-          (node) => node.props.testID === "onboarding-programme-continue",
-        ),
-      ).toHaveLength(1)
     })
 
     it("offers Skip as a trailing native header item that stores an empty name", async () => {
@@ -187,18 +202,10 @@ describe("ProgrammeScreen", () => {
   describe("on Android", () => {
     usePlatform("android")
 
-    it("keeps resize-driven behavior while allowing taps through the keyboard", async () => {
-      const view = await render(<ProgrammeScreen />)
-      const avoiding = view.getByTestId("keyboard-avoiding-layout")
-      const scroll = view.getByTestId("keyboard-scroll-layout")
+    it("keeps the sticky CTA on the resize-driven path", async () => {
+      const { avoiding } = await expectStickyProgrammeCta()
 
       expect(avoiding.props.behavior).toBeUndefined()
-      expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
-      expect(
-        scroll.queryAll(
-          (node) => node.props.testID === "onboarding-programme-continue",
-        ),
-      ).toHaveLength(1)
     })
 
     it("offers Skip as a headerRight control meeting the 48dp target", async () => {

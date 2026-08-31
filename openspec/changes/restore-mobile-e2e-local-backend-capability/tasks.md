@@ -779,19 +779,19 @@ therefore cannot support its claim that the action is “lifted”.
       measured programme-only repair: the institution screen stays unchanged; the programme CTA
       adopts the repository's proven sticky-footer containment; and the shared iCal sequence stays
       unchanged so the device gate proves the explicit visible action rather than a bypass.
-- [ ] 36.2 In `mobile/src/features/onboarding/ui/programme-screen.tsx`, move the existing
+- [x] 36.2 In `mobile/src/features/onboarding/ui/programme-screen.tsx`, move the existing
       `onboarding-programme-continue` Pressable unchanged out of the `ScrollView` and place it
       immediately after the scroll as a sticky sibling inside the existing `KeyboardAvoidingView`.
       Preserve its id, label, disabled state, hit slop, `submit` handler, colors, validation, draft
       write, Skip action, route, input and entered value. Add only the minimum local/shared footer
       spacing; no dependency or keyboard primitive. Do not change the institution screen.
-- [ ] 36.3 Replace the focused programme component's false scroll-descendant proof with
+- [x] 36.3 Replace the focused programme component's false scroll-descendant proof with
       mutation-sensitive containment coverage: the scroll contains zero programme CTAs; the
       avoiding view contains exactly one; and the CTA follows the scroll while remaining inside
       the avoiding view. Reject moving it back inside the scroll, outside the avoiding view, before
       the scroll, duplicating it, or losing iOS `padding` / `keyboardShouldPersistTaps="handled"`.
       Preserve the existing Android resize-path assertion and the device-proven institution proof.
-- [ ] 36.4 Run the focused programme component proof and its containment mutations, the focused
+- [x] 36.4 Run the focused programme component proof and its containment mutations, the focused
       Maestro journey proof, pinned Maestro 2.8.0 syntax for unchanged `ical-import.yaml`,
       TypeScript/lint as applicable, Prettier, strict active OpenSpec validation, and
       `git diff --check`. Confirm no Maestro command, selector, value, route, other `mobile/src`,
