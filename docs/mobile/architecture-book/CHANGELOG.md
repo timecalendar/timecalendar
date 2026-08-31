@@ -1,5 +1,13 @@
 # Architecture Book changelog
 
+## 2026-08-31
+
+- Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
+  reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
+  action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.
+  Promise settlement after unmount is inert, and each rejected invocation is recorded once with
+  constant, private-data-free context. This remains inside ADR 017/047 and adds no new ADR.
+
 ## 2026-08-30
 
 - Added the two-calendar real-server Activity fixture rule: establish a server read watermark, then add exactly 52 unread rows across the fixed 50-row page boundary. Recorded positive-first selectors and the no-KVM split between local integration/syntax evidence and post-merge native CI.
