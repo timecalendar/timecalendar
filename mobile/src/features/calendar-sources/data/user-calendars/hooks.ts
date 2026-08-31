@@ -16,6 +16,22 @@ export function useUserCalendars(): UserCalendar[] {
   return useMemo(() => data.map(rowToCalendar), [data])
 }
 
+export interface UserCalendarsState {
+  calendars: UserCalendar[]
+  loaded: boolean
+}
+
+export function useUserCalendarsState(): UserCalendarsState {
+  const { data, updatedAt } = useLiveQuery(db.select().from(userCalendars))
+  return useMemo(
+    () => ({
+      calendars: data.map(rowToCalendar),
+      loaded: updatedAt !== undefined,
+    }),
+    [data, updatedAt],
+  )
+}
+
 // Whether the reactive read has resolved at least once: useLiveQuery's
 // `updatedAt` is undefined until the first query settles. Consumers gate a
 // load-sensitive empty state on this so it does not flash (and false-announce)
