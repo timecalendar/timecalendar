@@ -63,6 +63,10 @@ const seedScript = join(
   "seed-e2e-calendar.ts",
 )
 const enLocale = join(srcDir, "i18n", "locales", "en.json")
+const hiddenEventsFlow = readFileSync(
+  join(flowsDir, "hidden-events.yaml"),
+  "utf8",
+)
 
 // Stale ids awaiting an app-side fix. MUST stay empty: TIM-264 authorizes repairing
 // every stale selector in the flows, so there is nothing left to defer. An entry here
@@ -305,6 +309,17 @@ describe("Maestro back navigation", () => {
     // The guard's own failure mode: a parser matching nothing passes vacuously.
     expect(backCommands("- launchApp\n- back\n")).toEqual([2])
     expect(backCommands("- tapOn: back\n- assertVisible: back\n")).toEqual([])
+  })
+})
+
+describe("Maestro hidden-event restoration", () => {
+  it("scrolls the restored target into view before asserting it", () => {
+    // Run 33349187760: the final Agenda showed E2E Hide Control at the bottom
+    // edge after the un-hide completed, while the following 16:00 seminar row
+    // remained below the viewport. A plain wait cannot move the list.
+    expect(hiddenEventsFlow).toMatch(
+      /- scrollUntilVisible:\n\s+element:\n\s+text: "E2E Hide Seminar\(,\.\*\)\?"\n\s+direction: DOWN\n\s+centerElement: true\n\s+timeout: 60000\n- assertVisible: "E2E Hide Seminar\(,\.\*\)\?"\s*$/,
+    )
   })
 })
 

@@ -467,3 +467,27 @@ reading a token or issuing a request.
 - [ ] 23.4 Push the material head with `run-e2e` retained and require a fresh exact-head baseline
   plus Android and iOS 17/17. Activity must reach `tie-higher`, `tie-lower`, and `older-anchor`
   through the real local server before Reviewer handoff; do not archive before that verdict.
+
+## 24. Reveal the restored hide target below the Agenda fold
+
+Exact-head Android job `99359339017` in run `33349187760` proved the Activity repair through
+`tie-higher`, `tie-lower`, and `older-anchor`, then reached `hidden-events`. The hide chooser,
+absence check, management-screen row, and `Un-hide E2E Hide Seminar` tap all completed. On the
+final Agenda, the artifact showed `E2E Hide Control` only partially visible at the bottom edge;
+the following 16:00 seminar row was below the viewport, so the non-scrolling 60-second
+`extendedWaitUntil` expired. This is the section 9 below-the-fold class, not a failed un-hide.
+
+- [x] 24.1 Replace only the final restored-target wait in `hidden-events.yaml` with a downward,
+  centred `scrollUntilVisible` for `E2E Hide Seminar(,.*)?`, followed by the same positive
+  `assertVisible`. Preserve the hide/absence/manage/un-hide order, Alert anchor, non-hidden
+  control, selectors, and 60-second bound.
+- [x] 24.2 Pin the final reveal structure in `maestro-selectors.test.ts`, and extend the existing
+  below-the-fold delta scenario to name the restored Agenda target and its following positive
+  assertion. The proof must fail if the scroll is replaced by a plain wait, centring is removed,
+  or the terminal assertion is removed.
+- [x] 24.3 Run the focused selector proof, mutation-check the three protected properties, parse
+  the flow with pinned Maestro 2.8.0 when locally available, run applicable formatting, strict
+  OpenSpec validation, and `git diff --check`; push with `run-e2e` retained.
+- [ ] 24.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `hidden-events` must
+  complete the unchanged non-vacuous hide/un-hide round trip, and Activity must again reach all
+  three pagination assertions before Reviewer handoff; do not archive before that verdict.

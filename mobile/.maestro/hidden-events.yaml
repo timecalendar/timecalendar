@@ -58,6 +58,13 @@
 # later flow / re-run starts clean — belt-and-braces on top of the preamble's
 # clearState (each calendar-family flow wipes the slate first).
 #
+# The final Agenda reveal must scroll. Run 33349187760 proved the un-hide action,
+# reopened the Agenda, and rendered the next-day control at the bottom edge, while
+# `E2E Hide Seminar` (the following 16:00 row) remained below the viewport until a
+# non-scrolling 60-second wait expired. Centre the target before the final positive
+# assertion so the real hide -> absent -> un-hide -> present round trip stays
+# non-vacuous on both platforms.
+#
 # Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
 # seeding the token. Shared across iOS and Android: stable localized text
 # assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
@@ -163,6 +170,10 @@ appId: fr.samuelprak.timecalendar.dev
     id: "calendar-view"
 - tapOn:
     text: "Agenda"
-- extendedWaitUntil:
-    visible: "E2E Hide Seminar(,.*)?"
+- scrollUntilVisible:
+    element:
+      text: "E2E Hide Seminar(,.*)?"
+    direction: DOWN
+    centerElement: true
     timeout: 60000
+- assertVisible: "E2E Hide Seminar(,.*)?"

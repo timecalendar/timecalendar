@@ -241,7 +241,8 @@ interaction shared by both platforms, with no per-platform selector or branch.
 
 - **WHEN** a flow selects a control that renders outside the first screenful — the Settings
   hub's `settings-feedback` and `settings-environment` rows, or a today-timeline tile whose
-  distance down the fixed-scale grid depends on the seeded event's time of day
+  distance down the fixed-scale grid depends on the seeded event's time of day, or the restored
+  hide target that follows its visible non-hidden control in the Agenda
 - **THEN** it reaches that control with `scrollUntilVisible` rather than a plain visibility
   wait, because the repository proof resolves ids in source and cannot observe the device
   viewport — an existing `testID` below the fold otherwise fails identically to a deleted one
@@ -253,6 +254,9 @@ interaction shared by both platforms, with no per-platform selector or branch.
 - **AND** where the revealed content is painted by the startup sync rather than the first
   render, the flow SHALL wait on an element the sync produces before scrolling, so the scroll
   cannot race the render and exhaust an empty list
+- **AND** a final positive assertion SHALL follow the restored hide target's centred reveal,
+  preserving the hide → absent → un-hide → present round trip rather than treating the scroll
+  command alone as its terminal proof
 
 #### Scenario: A known-stale selector is repaired
 
