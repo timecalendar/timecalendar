@@ -24,6 +24,11 @@
 # so they don't disturb the seeded server rows; the flow deletes the item it added,
 # leaving device state as it found it.
 #
+# Checklist progress is observed after a cold calendar re-entry. A bare Maestro
+# `back` is an Android hardware action but an iOS edge swipe that can report
+# success without popping native-stack details. `stopApp` + the calendar deep
+# link preserves the local SQLite row while giving both platforms the same root.
+#
 # Requires a release-config dev-variant build + the e2e server (ci/e2e-server.sh)
 # seeding the token. Shared across iOS and Android: stable localized text / testID
 # assertions, no per-platform selectors. Run via mobile/e2e/run_e2e.sh.
@@ -34,14 +39,14 @@ appId: fr.samuelprak.timecalendar.dev
 # Enter Agenda so the details screen has a real summary surface beneath it in the
 # existing navigation stack.
 - tapOn:
-    id: "calendar-view-agenda"
-- assertVisible:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn:
+    text: "Agenda"
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
 - tapOn:
-    text: "E2E Today Lecture"
+    text: "E2E Today Lecture(,.*)?"
 # Real details render (the seeded title), proving the synced event resolved (NOT
 # the not-found state). Generous timeout for the cold start + JS bundle load.
 - extendedWaitUntil:
@@ -62,18 +67,35 @@ appId: fr.samuelprak.timecalendar.dev
 # The item is still present after toggling (the check state is visual; the content
 # stays).
 - assertVisible: "Buy notebook"
-# Pop back through the existing details → Agenda stack. The still-mounted Calendar
-# screen's one UID-set live query must expose all-complete progress on the owning
-# Agenda row. Its id is exposed by the accessible Pressable; the visual 1/1 child
-# is intentionally hidden from the accessibility tree to avoid a duplicate stop.
-- back
+# Cold re-enter Calendar without clearing device state. This preserves the local
+# checklist row while avoiding Maestro's iOS no-op `back` primitive.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn:
+    text: "Agenda"
+# The freshly mounted Calendar screen's UID-set live query must expose
+# all-complete progress on the owning Agenda row. Its id is exposed by the
+# accessible Pressable; the visual 1/1 child is intentionally hidden from the
+# accessibility tree to avoid a duplicate stop.
 - extendedWaitUntil:
     visible:
       id: "agenda-event-e2e-today-lecture-progress-1-1"
     timeout: 60000
 # Reopen the same real event so the original cleanup remains part of this flow.
 - tapOn:
-    text: "E2E Today Lecture"
+    text: "E2E Today Lecture(,.*)?"
 - extendedWaitUntil:
     visible: "Buy notebook"
     timeout: 60000

@@ -554,3 +554,25 @@ precondition and prevented an already-actionable CTA from running.
       terminal command returns, a bounded wait disappears, or a CTA is bypassed or reordered.
 - [ ] 27.3 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
       traverse both Continue controls and complete the existing manual-import validation journey.
+
+## 28. Repair checklist-progress navigation after merging the shipped summary journey
+
+Exact-head native run `33359726956` checked out the pull-request merge result and reached the
+checklist-summary journey added by `main`, while the push baseline checked the older branch head.
+Both platforms then failed on the removed `calendar-view-agenda` id. The merged flow also carried
+a bare `back`, which can report success without leaving native-stack details on iOS, and bare
+seeded-title selectors that do not match iOS's composed accessible event container.
+
+- [x] 28.1 Merge current `origin/main` without rebase or force-push, then preserve the complete
+  add → type → toggle → Agenda `1/1` progress → reopen → hard-delete round trip while replacing
+  the stale agenda id and every bare `E2E Today Lecture` event-container selector.
+- [x] 28.2 Replace the post-toggle bare `back` with the shared state-preserving cold re-entry:
+  `stopApp` → calendar deep link → optional iOS `Open` → bounded Calendar wait → shared
+  `calendar-view` / `Agenda` navigation before the exact progress-id assertion.
+- [x] 28.3 Extend the focused checklist-progress proof to pin that ordered re-entry and reject the
+  stale agenda id, bare seeded title, or bare `back`; retain production progress-id source proof
+  and the add/toggle/delete assertions. Record the measured merge-result drift and cross-platform
+  re-entry rule in the `mobile-e2e` delta.
+- [ ] 28.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `event-checklists` must
+  prove the real local SQLite add/toggle/progress/reopen/delete round trip on both platforms, and
+  the handoff must record both complete per-flow lists before archive.

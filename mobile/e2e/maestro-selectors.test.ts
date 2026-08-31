@@ -4,6 +4,7 @@
 /// <reference types="node" />
 import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import ts from "typescript"
 
 // Maestro selector-drift guard (TIM-264).
 //
@@ -21,8 +22,8 @@ import { join } from "node:path"
 //  1. A Maestro `id:` value is a REGEX, not a literal (`checklist-check-.*`).
 //  2. A testID is declared as a JSX attribute (`testID="x"`) OR as an object property
 //     (`testID: "x"`) on a data-driven row/destination descriptor.
-//  3. A testID may be a template literal (`` testID={`checklist-check-${uuid}`} ``),
-//     which stands for the whole family of ids sharing its static parts.
+//  3. A testID may contain one or more template literals, directly or behind a
+//     conditional expression, and each stands for the family sharing its static parts.
 
 // Second guard, same file: seeded-title TEXT selectors (TIM-264).
 //
@@ -105,12 +106,53 @@ function flowSelectors(yaml: string): { id: string; line: number }[] {
  * Pass-throughs (`testID={testID}`) carry no id of their own — the value they receive
  * is declared as an object property elsewhere, which rule 2 already collects.
  */
+function testIdTemplateParts(source: string): string[][] {
+  const sourceFile = ts.createSourceFile(
+    "source.tsx",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  const templates: string[][] = []
+
+  function collectTemplates(node: ts.Node): void {
+    if (ts.isNoSubstitutionTemplateLiteral(node)) {
+      templates.push([node.text])
+      return
+    }
+    if (ts.isTemplateExpression(node)) {
+      templates.push([
+        node.head.text,
+        ...node.templateSpans.map(({ literal }) => literal.text),
+      ])
+      return
+    }
+    ts.forEachChild(node, collectTemplates)
+  }
+
+  function visit(node: ts.Node): void {
+    if (
+      ts.isJsxAttribute(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === "testID" &&
+      node.initializer !== undefined
+    ) {
+      collectTemplates(node.initializer)
+    }
+    ts.forEachChild(node, visit)
+  }
+
+  visit(sourceFile)
+  return templates
+}
+
 function declaredTestIds(source: string): string[] {
   const literals = [...source.matchAll(/testID(?:=\{?|:\s*)"([^"]+)"/g)].map(
     (match) => match[1] as string,
   )
-  const templates = [...source.matchAll(/testID=\{`([^`]+)`\}/g)].map((match) =>
-    (match[1] as string).replace(/\$\{[^}]*\}/g, INTERPOLATION_SAMPLE),
+  const templates = testIdTemplateParts(source).map((parts) =>
+    parts.join(INTERPOLATION_SAMPLE),
   )
   return [...literals, ...templates]
 }
@@ -126,11 +168,8 @@ function escapeRegExp(value: string): string {
  * `activity-new-e2e-activity-new` and `user-calendar-actions-<uuid>`.
  */
 function declaredTestIdFamilies(source: string): RegExp[] {
-  return [...source.matchAll(/testID=\{`([^`]+)`\}/g)].map((match) => {
-    const family = (match[1] as string)
-      .split(/\$\{[^}]*\}/g)
-      .map(escapeRegExp)
-      .join(".+")
+  return testIdTemplateParts(source).map((parts) => {
+    const family = parts.map(escapeRegExp).join(".+")
     return new RegExp(`^(?:${family})$`)
   })
 }
@@ -289,6 +328,7 @@ describe("Maestro flow selectors", () => {
     expect(
       resolves("user-calendar-actions-e2e0e2e0-0000-4000-8000-000000000002"),
     ).toBe(true)
+    expect(resolves("agenda-event-e2e-today-lecture-progress-1-1")).toBe(true)
   })
 
   it("resolves a testID declared as an object property", () => {
@@ -418,7 +458,9 @@ describe("Maestro seeded-title text selectors", () => {
     // the assertion above vacuous. This is the exact selector that shipped broken.
     expect(unreachableRenderings("E2E Today Lecture")).toEqual([
       "E2E Today Lecture, 14:00 – 16:00 Room E2E Lecture",
+      "E2E Today Lecture, 14:00 – 16:00 Room E2E Lecture. progress",
       "E2E Today Lecture, 14:00 – 16:00 Room E2E Lecture. View details",
+      "E2E Today Lecture, 14:00 – 16:00 Room E2E Lecture. progress. View details",
     ])
     expect(unreachableRenderings("E2E Today Lecture(,.*)?")).toEqual([])
   })

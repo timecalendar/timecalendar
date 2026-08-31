@@ -405,3 +405,18 @@ interaction shared by both platforms, with no per-platform selector or branch.
   return-key submission, optional command, platform branch, or deep link around the route
 - **AND** a focused repository proof SHALL reject any keyboard-dismiss command and pin each
   input → matching Continue wait → matching Continue tap sequence
+
+#### Scenario: A merged checklist-summary journey retains obsolete navigation
+
+- **WHEN** the pull-request merge result adds checklist progress assertions to a shared flow but
+  carries an agenda selector removed from the shipped calendar header, a bare seeded-title
+  selector, or a platform-asymmetric `back` command
+- **THEN** the flow SHALL enter Agenda through the shared `calendar-view` menu and use the
+  cross-platform composed-label regex for every event-container interaction
+- **AND** after toggling the local checklist row it SHALL cold re-enter Calendar without clearing
+  state, dismiss the optional iOS system confirmation, wait for Calendar readiness, and navigate
+  through the same shared Agenda control before requiring the exact `1/1` progress id
+- **AND** it SHALL reopen the real seeded event and retain the hard-delete cleanup, so the local
+  SQLite add → type → toggle → progress → reopen → delete round trip is not weakened
+- **AND** a focused repository proof SHALL pin the ordered re-entry and fail if the stale agenda
+  id, a bare seeded title, or a bare `back` command returns
