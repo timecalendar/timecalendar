@@ -677,3 +677,29 @@ applying its visibility gate.
       17/17. Record both complete lists and explicitly name `activity`, `event-checklists`, `feedback`,
       `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
       `user-calendars` result before archive.
+
+## 33. Make typed Continue transitions keyboard-consumable
+
+Exact-head native run `33379542987` at `0cfd470e` reached `ical-import` after nine shared flows
+passed on both platforms. Android's focused institution input remained behind the software keyboard
+with its Continue control outside the visible hierarchy. iOS tapped the programme Continue control,
+but that first tap changed only keyboard/focus state and left the same route and CTA mounted. The
+flow therefore needs both a full reveal and one bounded same-control fallback before its mandatory
+next-screen proof.
+
+- [x] 33.1 After each existing exact institution/programme value gate, reveal the matching Continue
+      id downward until it is 100% visible and centred within 30000 ms, retain the existing 15000 ms
+      CTA wait and required tap, then add exactly one optional same-id tap. Preserve every value,
+      route edge, manual-import choice, URL-screen and empty-submit assertion, and the repository-wide
+      zero-`hideKeyboard` rule.
+- [x] 33.2 Extend the focused iCal structural and mutation proof to pin, for both forms, exact value
+      → full centred bounded reveal → CTA wait → required tap → optional same-id fallback → mandatory
+      next-screen wait. Reject removed, widened, reordered, uncentred, partially-visible, or unbounded
+      reveals; removed/required fallbacks; missing required taps; and bypassed downstream route waits.
+      Record the measured class in the `mobile-e2e` delta and run focused proof/mutations, pinned
+      Maestro 2.8.0 syntax, strict OpenSpec validation, applicable formatting/lint, and
+      `git diff --check`.
+- [ ] 33.3 Require the fresh material exact head to pass the branch baseline plus Android and iOS
+      17/17. Record both complete lists and explicitly name `activity`, `event-checklists`, `feedback`,
+      `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
+      `user-calendars` result before archive.

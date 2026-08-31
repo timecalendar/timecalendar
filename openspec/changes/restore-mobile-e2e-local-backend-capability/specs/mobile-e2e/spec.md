@@ -467,3 +467,20 @@ interaction shared by both platforms, with no per-platform selector or branch.
   hard-delete, and exact absence proof SHALL remain in order
 - **AND** focused mutation proof SHALL reject a removed, widened, reordered, uncentred, or
   partially-visible reveal and any weakening of the readiness gate or persistence round trip
+
+#### Scenario: A focused field covers and consumes its Continue transition
+
+- **WHEN** a focused institution or programme field leaves its body Continue control behind the
+  software keyboard, and the first otherwise-successful CTA tap can be consumed only to dismiss or
+  defocus that keyboard
+- **THEN** the flow SHALL reveal the matching Continue id downward until it is 100% visible and
+  centred within 30 seconds before retaining the existing bounded CTA visibility wait
+- **AND** it SHALL keep the required CTA tap followed by exactly one optional same-id tap, so the
+  fallback is inert after navigation but performs the transition when the first tap only changes
+  keyboard state
+- **AND** the next-screen wait SHALL remain mandatory and SHALL prove the route transition
+  non-vacuously, with no platform fork, keyboard-dismiss command, Return submission, coordinate tap,
+  selector widening, or route bypass
+- **AND** focused mutation proof SHALL reject a missing, widened, reordered, uncentred,
+  partially-visible, or unbounded reveal; a removed or required fallback; a missing required tap;
+  or a bypassed downstream route wait

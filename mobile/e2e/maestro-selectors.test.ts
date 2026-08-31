@@ -304,9 +304,10 @@ function preservesIcalCtaSequence(
   yaml: string,
   stem: "institution" | "programme",
   value: string,
+  nextScreenId: string,
 ): boolean {
   return flowCommands(yaml).includes(
-    `- inputText: "${value}"\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-${stem}-input"\n      text: "${value}"\n    timeout: 15000\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-${stem}-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-${stem}-continue"`,
+    `- inputText: "${value}"\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-${stem}-input"\n      text: "${value}"\n    timeout: 15000\n- scrollUntilVisible:\n    element:\n      id: "onboarding-${stem}-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-${stem}-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-${stem}-continue"\n- tapOn:\n    id: "onboarding-${stem}-continue"\n    optional: true\n- extendedWaitUntil:\n    visible:\n      id: "${nextScreenId}"\n    timeout: 60000`,
   )
 }
 
@@ -582,9 +583,13 @@ describe("Maestro iCal import journey", () => {
       "onboarding-institution-input",
       "onboarding-institution-continue",
       "onboarding-institution-continue",
+      "onboarding-institution-continue",
+      "onboarding-institution-continue",
       "onboarding-programme-input",
       "onboarding-programme-input",
       "onboarding-programme-input",
+      "onboarding-programme-continue",
+      "onboarding-programme-continue",
       "onboarding-programme-continue",
       "onboarding-programme-continue",
       "onboarding-connect-continue",
@@ -610,10 +615,16 @@ describe("Maestro iCal import journey", () => {
         icalImportFlow,
         "institution",
         "E2E Institution",
+        "onboarding-programme-input",
       ),
     ).toBe(true)
     expect(
-      preservesIcalCtaSequence(icalImportFlow, "programme", "E2E Programme"),
+      preservesIcalCtaSequence(
+        icalImportFlow,
+        "programme",
+        "E2E Programme",
+        "onboarding-connect-continue",
+      ),
     ).toBe(true)
   })
 
@@ -633,17 +644,94 @@ describe("Maestro iCal import journey", () => {
       ),
     ],
     [
-      "institution Continue bypasses its wait",
+      "institution reveal disappears",
       icalImportFlow.replace(
-        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-institution-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-institution-continue"',
+        '- scrollUntilVisible:\n    element:\n      id: "onboarding-institution-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000\n',
+        "",
+      ),
+    ],
+    [
+      "programme reveal disappears",
+      icalImportFlow.replace(
+        '- scrollUntilVisible:\n    element:\n      id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000\n',
+        "",
+      ),
+    ],
+    [
+      "institution reveal selector widens",
+      icalImportFlow.replace(
+        'id: "onboarding-institution-continue"\n    direction: DOWN',
+        'id: "onboarding-institution-.*"\n    direction: DOWN',
+      ),
+    ],
+    [
+      "programme reveal loses full visibility",
+      icalImportFlow.replace(
+        'id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 100',
+        'id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 50',
+      ),
+    ],
+    [
+      "institution reveal loses centring",
+      icalImportFlow.replace(
+        'id: "onboarding-institution-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true',
+        'id: "onboarding-institution-continue"\n    direction: DOWN\n    visibilityPercentage: 100',
+      ),
+    ],
+    [
+      "programme reveal loses its bound",
+      icalImportFlow.replace(
+        'id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000',
+        'id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true',
+      ),
+    ],
+    [
+      "institution reveal moves after its wait",
+      icalImportFlow.replace(
+        '- scrollUntilVisible:\n    element:\n      id: "onboarding-institution-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-institution-continue"\n    timeout: 15000',
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-institution-continue"\n    timeout: 15000\n- scrollUntilVisible:\n    element:\n      id: "onboarding-institution-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000',
+      ),
+    ],
+    [
+      "programme optional fallback disappears",
+      icalImportFlow.replace(
+        '- tapOn:\n    id: "onboarding-programme-continue"\n    optional: true\n',
+        "",
+      ),
+    ],
+    [
+      "programme reveal moves after its wait",
+      icalImportFlow.replace(
+        '- scrollUntilVisible:\n    element:\n      id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-continue"\n    timeout: 15000',
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-continue"\n    timeout: 15000\n- scrollUntilVisible:\n    element:\n      id: "onboarding-programme-continue"\n    direction: DOWN\n    visibilityPercentage: 100\n    centerElement: true\n    timeout: 30000',
+      ),
+    ],
+    [
+      "institution optional fallback becomes required",
+      icalImportFlow.replace(
+        '- tapOn:\n    id: "onboarding-institution-continue"\n    optional: true',
         '- tapOn:\n    id: "onboarding-institution-continue"',
       ),
     ],
     [
-      "programme Continue tap moves before its wait",
+      "programme required tap disappears",
       icalImportFlow.replace(
-        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-continue"\n    timeout: 15000\n- tapOn:\n    id: "onboarding-programme-continue"',
-        '- tapOn:\n    id: "onboarding-programme-continue"\n- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-continue"\n    timeout: 15000',
+        '- tapOn:\n    id: "onboarding-programme-continue"\n- tapOn:\n    id: "onboarding-programme-continue"\n    optional: true',
+        '- tapOn:\n    id: "onboarding-programme-continue"\n    optional: true',
+      ),
+    ],
+    [
+      "institution downstream route wait is bypassed",
+      icalImportFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-programme-input"\n    timeout: 60000\n',
+        "",
+      ),
+    ],
+    [
+      "programme downstream route wait is bypassed",
+      icalImportFlow.replace(
+        '- extendedWaitUntil:\n    visible:\n      id: "onboarding-connect-continue"\n    timeout: 60000\n',
+        "",
       ),
     ],
     [
@@ -661,8 +749,14 @@ describe("Maestro iCal import journey", () => {
           mutatedFlow,
           "institution",
           "E2E Institution",
+          "onboarding-programme-input",
         ) &&
-        preservesIcalCtaSequence(mutatedFlow, "programme", "E2E Programme"),
+        preservesIcalCtaSequence(
+          mutatedFlow,
+          "programme",
+          "E2E Programme",
+          "onboarding-connect-continue",
+        ),
     ).toBe(false)
   })
 })

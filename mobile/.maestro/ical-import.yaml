@@ -67,6 +67,9 @@ appId: fr.samuelprak.timecalendar.dev
 # Name the unlisted institution, supply a programme, continue through the
 # connection guidance, then take the manual-import screen's URL option. These
 # stable ids are shared by Android and iOS; no platform branch is required.
+# Run 33379542987 proved that a focused field can cover its Continue control and
+# consume the first otherwise-successful tap as keyboard dismissal. Reveal each
+# CTA fully, then keep one optional same-id tap as that bounded fallback.
 - extendedWaitUntil:
     visible:
       id: "onboarding-institution-input"
@@ -79,12 +82,22 @@ appId: fr.samuelprak.timecalendar.dev
       id: "onboarding-institution-input"
       text: "E2E Institution"
     timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "onboarding-institution-continue"
+    direction: DOWN
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: "onboarding-institution-continue"
     timeout: 15000
 - tapOn:
     id: "onboarding-institution-continue"
+- tapOn:
+    id: "onboarding-institution-continue"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "onboarding-programme-input"
@@ -97,12 +110,22 @@ appId: fr.samuelprak.timecalendar.dev
       id: "onboarding-programme-input"
       text: "E2E Programme"
     timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "onboarding-programme-continue"
+    direction: DOWN
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
 - extendedWaitUntil:
     visible:
       id: "onboarding-programme-continue"
     timeout: 15000
 - tapOn:
     id: "onboarding-programme-continue"
+- tapOn:
+    id: "onboarding-programme-continue"
+    optional: true
 - extendedWaitUntil:
     visible:
       id: "onboarding-connect-continue"
