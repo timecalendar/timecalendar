@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+
+import { failLaunch, useLaunchState } from "@/features/startup"
 
 // Max time the splash may wait for the readiness gate before dismissing anyway.
 // A watchdog so a future slow/stalled gate can never brick launch: every branch
@@ -19,13 +21,6 @@ const READY_WATCHDOG_MS = 5000
 //    today. The first feature whose initial read must block on a table adopts
 //    the blocking `useMigrations()` hook and gates here — the app is not
 //    converted to it prematurely (R-2, storage change posture).
-function prerequisitesReady(): boolean {
-  const i18nReady = true
-  const fontsReady = true
-  const migrationsReady = true
-  return i18nReady && fontsReady && migrationsReady
-}
-
 /**
  * Readiness gate: returns true once first-paint prerequisites are satisfied.
  * The reusable "render only when prerequisites are satisfied" pattern features
@@ -37,17 +32,19 @@ function prerequisitesReady(): boolean {
  * is exercisable by a test that starts the gate not-ready, the shape a future
  * async prerequisite would produce.
  */
-export function useAppReady(
-  isReady: () => boolean = prerequisitesReady,
-): boolean {
-  const [ready, setReady] = useState(isReady)
+export function useAppReady(): boolean {
+  const launch = useLaunchState()
+  const ready = launch.kind === "committed" || launch.kind === "failure"
 
   useEffect(() => {
     if (ready) return
     // Unreachable today (prerequisites are synchronous), but the load-bearing
     // watchdog: dismiss regardless once the deadline passes so a stalled future
     // gate cannot hang the splash.
-    const watchdog = setTimeout(() => setReady(true), READY_WATCHDOG_MS)
+    const watchdog = setTimeout(
+      () => failLaunch(new Error("Launch readiness timed out")),
+      READY_WATCHDOG_MS,
+    )
     return () => clearTimeout(watchdog)
   }, [ready])
 

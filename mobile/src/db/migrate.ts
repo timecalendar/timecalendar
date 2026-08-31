@@ -5,6 +5,12 @@ import { recordUnknownError } from "@/firebase"
 import { db } from "./index"
 import migrations from "./migrations/migrations"
 
+let migrationAttempt: Promise<void> | null = null
+
+export function resetMigrationAttemptForTests(): void {
+  migrationAttempt = null
+}
+
 // Startup migration runner. Non-hook (plain async): migrations are
 // infrastructure, not UI — testable in isolation and invokable from the
 // _layout side-effect, decoupled from any React render. migrate() creates and
@@ -17,9 +23,10 @@ import migrations from "./migrations/migrations"
 // The first feature whose initial read must wait on its tables can adopt
 // useMigrations() (the hook form) to gate a loading screen instead.
 export async function runMigrations(): Promise<void> {
-  try {
-    await migrate(db, migrations)
-  } catch (error) {
+  migrationAttempt ??= migrate(db, migrations).catch((error: unknown) => {
+    migrationAttempt = null
     recordUnknownError(error, "Database migration failed at startup")
-  }
+    throw error
+  })
+  return migrationAttempt
 }

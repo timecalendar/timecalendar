@@ -14,7 +14,6 @@ import { Platform, StyleSheet } from "react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { queryClient } from "@/api/query-client"
-import { runMigrations } from "@/db/migrate"
 import {
   useActivityForegroundRefresh,
   useActivityOwnershipPrune,
@@ -27,6 +26,11 @@ import {
 } from "@/features/notifications"
 import { persistOptions } from "@/features/school-selection"
 import { SplashScreen } from "@/features/splash/ui"
+import {
+  LaunchCoordinator,
+  LaunchFailureScreen,
+  useLaunchCommitted,
+} from "@/features/startup"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
 import { OtaUpdateRuntime } from "@/updates"
@@ -39,11 +43,6 @@ import { OtaUpdateRuntime } from "@/updates"
 export const unstable_settings = {
   initialRouteName: "(tabs)",
 }
-
-// Apply the committed migration bundle at startup, before features read tables
-// (fire-and-forget, mirroring the i18n side-effect wiring). Failures are
-// recorded through @/firebase inside the runner.
-void runMigrations()
 
 // Fire the startup calendar sync once (fire-and-forget, mirroring the i18n /
 // runMigrations startup posture — D5). It is a component (not a top-level side
@@ -101,6 +100,18 @@ function ActivityRuntime() {
   return null
 }
 
+function PostLaunchRuntime() {
+  const committed = useLaunchCommitted()
+  if (!committed) return null
+  return (
+    <>
+      <StartupSync />
+      <ActivityRuntime />
+      <NotificationRegistration />
+    </>
+  )
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
@@ -120,10 +131,9 @@ export default function RootLayout() {
           persistOptions={persistOptions}
         >
           <OtaUpdateRuntime />
-          <StartupSync />
-          <ActivityRuntime />
-          <NotificationRegistration />
+          <PostLaunchRuntime />
           <NotificationTapRouting />
+          <LaunchCoordinator />
           <ThemeProvider value={navTheme}>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
@@ -217,6 +227,7 @@ export default function RootLayout() {
             {/* Above the Stack: covers the whole app during startup, fades out (or
               cuts under reduced motion) once useAppReady() resolves. */}
             <SplashScreen />
+            <LaunchFailureScreen />
           </ThemeProvider>
         </PersistQueryClientProvider>
       </EnvironmentRuntimeGate>

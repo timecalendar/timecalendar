@@ -14,23 +14,23 @@
 
 ## 3. Ordered launch prerequisite and decision seams
 
-- [ ] 3.1 Refactor database startup migration into one memoized/idempotent promise that the launch runtime can await, preserving `@/firebase` recording and propagating failure to the blocking launch state. Update migration tests for single-flight success, retry-safe failure, and no storage consumer before resolution.
-- [ ] 3.2 Add a startup feature with a pure resolver over initial path, killed-state notification intent, held-calendar identity, and parsed preference. Unit-test the full precedence matrix: explicit deep link, notification event/Calendar, empty identity onboarding, Home/default, Calendar, invalid preference, and no later rerun.
-- [ ] 3.3 Add one root-mounted launch coordinator inside the environment/query providers and beside the Stack. Order migration → documented Phase 09 insertion point → initial intent → held-calendar read → fallback, snapshot the preference once, re-check current navigation before fallback replace, and retain `unstable_settings.initialRouteName = "(tabs)"` unchanged.
-- [ ] 3.4 Add a process-lifetime launch state seam consumed by readiness and tabs-only secondary gates; prevent Changelog or any other automatic tabs presentation until the winning launch route is committed. Add component/route tests that later Settings changes, onboarding/import completion, and explicit navigation never reapply the fallback.
-- [ ] 3.5 Add a localized accessible blocking launch-failure surface with idempotent Retry for migration/identity-read failure. Test error recording, no tabs mount/eligibility, retry recovery, and watchdog fail-closed behavior.
+- [x] 3.1 Refactor database startup migration into one memoized/idempotent promise that the launch runtime can await, preserving `@/firebase` recording and propagating failure to the blocking launch state. Update migration tests for single-flight success, retry-safe failure, and no storage consumer before resolution.
+- [x] 3.2 Add a startup feature with a pure resolver over initial path, killed-state notification intent, held-calendar identity, and parsed preference. Unit-test the full precedence matrix: explicit deep link, notification event/Calendar, empty identity onboarding, Home/default, Calendar, invalid preference, and no later rerun.
+- [x] 3.3 Add one root-mounted launch coordinator inside the environment/query providers and beside the Stack. Order migration → documented Phase 09 insertion point → initial intent → held-calendar read → fallback, snapshot the preference once, re-check current navigation before fallback replace, and retain `unstable_settings.initialRouteName = "(tabs)"` unchanged.
+- [x] 3.4 Add a process-lifetime launch state seam consumed by readiness and tabs-only secondary gates; prevent Changelog or any other automatic tabs presentation until the winning launch route is committed. Add component/route tests that later Settings changes, onboarding/import completion, and explicit navigation never reapply the fallback.
+- [x] 3.5 Add a localized accessible blocking launch-failure surface with idempotent Retry for migration/identity-read failure. Test error recording, no tabs mount/eligibility, retry recovery, and watchdog fail-closed behavior.
 
 ## 4. Notification cold-start integration
 
-- [ ] 4.1 Refactor `features/notifications/data/tap-routing` so exactly one initial-notification seam supplies a parsed killed-state intent to launch resolution; retain the existing pure parser, sync, Activity refresh, and observability behavior.
-- [ ] 4.2 Keep foreground messages as sync/refresh with no navigation and background taps as sync/refresh then navigation, with listener cleanup unchanged. Extend notification tests to cover those non-launch states after the refactor.
-- [ ] 4.3 Add killed-state tests proving `getInitialTap()` is consumed once, a valid event/Calendar target beats Home/Calendar/onboarding, null/invalid input allows normal resolution, and sync/Activity fan-out retains its existing success/failure isolation.
+- [x] 4.1 Refactor `features/notifications/data/tap-routing` so exactly one initial-notification seam supplies a parsed killed-state intent to launch resolution; retain the existing pure parser, sync, Activity refresh, and observability behavior.
+- [x] 4.2 Keep foreground messages as sync/refresh with no navigation and background taps as sync/refresh then navigation, with listener cleanup unchanged. Extend notification tests to cover those non-launch states after the refactor.
+- [x] 4.3 Add killed-state tests proving `getInitialTap()` is consumed once, a valid event/Calendar target beats Home/Calendar/onboarding, null/invalid input allows normal resolution, and sync/Activity fan-out retains its existing success/failure isolation.
 
 ## 5. Splash and first-paint commitment
 
-- [ ] 5.1 Replace `useAppReady()`'s migration placeholder with the launch state: normal readiness only after the observed pathname matches the winning destination; blocking failure readiness only after its error surface is ready. Preserve native-to-JS handoff, reduced motion, and accessible loading status.
-- [ ] 5.2 Extend splash/coordinator component tests for Home, Calendar, onboarding, deep-link, notification, and failure paths. Include a focused assertion that Calendar-winning launch cannot call native hide/remove the JS overlay while Home is observed and becomes eligible only after `/calendar` is observed.
-- [ ] 5.3 Verify the initial Home mount stays visually covered and tabs-only effects stay inert until commitment, without dynamically reordering Home · Calendar · Settings or changing their canonical URLs/back behavior.
+- [x] 5.1 Replace `useAppReady()`'s migration placeholder with the launch state: normal readiness only after the observed pathname matches the winning destination; blocking failure readiness only after its error surface is ready. Preserve native-to-JS handoff, reduced motion, and accessible loading status.
+- [x] 5.2 Extend splash/coordinator component tests for Home, Calendar, onboarding, deep-link, notification, and failure paths. Include a focused assertion that Calendar-winning launch cannot call native hide/remove the JS overlay while Home is observed and becomes eligible only after `/calendar` is observed.
+- [x] 5.3 Verify the initial Home mount stays visually covered and tabs-only effects stay inert until commitment, without dynamically reordering Home · Calendar · Settings or changing their canonical URLs/back behavior.
 
 ## 6. Maestro cold-launch parity and CI proof
 
