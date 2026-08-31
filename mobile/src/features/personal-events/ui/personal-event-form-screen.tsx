@@ -1,8 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  Alert,
   KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -69,6 +71,9 @@ export default function PersonalEventFormScreen() {
 
   const [values, setValues] = useState<EventFormValues>(defaultValues)
   const [errors, setErrors] = useState<EventFormErrors>({})
+  const [isDeleting, setIsDeleting] = useState(false)
+  const deletePhase = useRef<"idle" | "prompting" | "deleting">("idle")
+  const deletePromptId = useRef(0)
   const save = useSaveEvent()
   const del = useDeleteEvent()
 
@@ -118,13 +123,80 @@ export default function PersonalEventFormScreen() {
     }
   }
 
-  async function onDelete() {
-    if (uid === undefined) {
+  function onDelete() {
+    if (uid === undefined || deletePhase.current !== "idle") {
       return
     }
-    const ok = await del.remove(uid)
-    if (ok) {
-      router.back()
+    deletePhase.current = "prompting"
+    const promptId = ++deletePromptId.current
+
+    const releaseDeletePrompt = () => {
+      if (
+        deletePromptId.current === promptId &&
+        deletePhase.current !== "deleting"
+      ) {
+        deletePromptId.current += 1
+        deletePhase.current = "idle"
+      }
+    }
+
+    Alert.alert(
+      t("personalEvents.form.deleteConfirmation.title"),
+      t("personalEvents.form.deleteConfirmation.message"),
+      [
+        {
+          text: t("personalEvents.form.deleteConfirmation.cancel"),
+          style: "cancel",
+          onPress: releaseDeletePrompt,
+        },
+        {
+          text: t("personalEvents.form.deleteConfirmation.confirm"),
+          style: "destructive",
+          onPress: async () => {
+            if (
+              deletePromptId.current !== promptId ||
+              deletePhase.current === "deleting"
+            ) {
+              return
+            }
+            deletePromptId.current += 1
+            deletePhase.current = "deleting"
+            setIsDeleting(true)
+            let removed = false
+            try {
+              removed = await del.remove(uid)
+              if (removed) {
+                router.back()
+              }
+            } finally {
+              if (!removed) {
+                deletePhase.current = "idle"
+                setIsDeleting(false)
+              }
+            }
+          },
+        },
+      ],
+      Platform.OS === "android"
+        ? { cancelable: true, onDismiss: releaseDeletePrompt }
+        : undefined,
+    )
+
+    if (Platform.OS === "ios") {
+      // React Native exposes no iOS Alert dismissal callback. Keep the guard
+      // through this synchronous presentation edge to suppress duplicate
+      // opens, then let the native modal own interaction exclusion. If
+      // VoiceOver escape dismisses it, the form is already able to reopen;
+      // opening a later alert advances deletePromptId and invalidates this
+      // alert's action closures.
+      queueMicrotask(() => {
+        if (
+          deletePromptId.current === promptId &&
+          deletePhase.current === "prompting"
+        ) {
+          deletePhase.current = "idle"
+        }
+      })
     }
   }
 
@@ -289,6 +361,8 @@ export default function PersonalEventFormScreen() {
                 testID="personal-event-delete"
                 accessibilityRole="button"
                 accessibilityLabel={t("personalEvents.form.delete")}
+                accessibilityState={{ disabled: isDeleting }}
+                disabled={isDeleting}
                 onPress={onDelete}
                 style={[
                   styles.action,

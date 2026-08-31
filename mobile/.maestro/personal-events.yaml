@@ -82,7 +82,9 @@ appId: fr.samuelprak.timecalendar.dev
 - extendedWaitUntil:
     visible: "Maestro CRUD event"
     timeout: 60000
-# Open the row to edit (the row is the edit entrypoint), then delete it.
+# Open the row to edit (the row is the edit entrypoint), request deletion, and
+# cancel the native confirmation. The edit form must remain open and the local
+# repository must remain untouched.
 - tapOn: "Maestro CRUD event"
 - extendedWaitUntil:
     visible:
@@ -90,7 +92,25 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 - tapOn:
     id: "personal-event-delete"
-# Back on the list: the delete removed the row and the live query re-rendered.
+- tapOn: "Cancel"
+- assertVisible:
+    id: "personal-event-delete"
+# Return to the list and prove cancellation preserved the durable row.
+- back
+- extendedWaitUntil:
+    visible: "Maestro CRUD event"
+    timeout: 60000
+# Reopen the preserved event and explicitly confirm the destructive action.
+- tapOn: "Maestro CRUD event"
+- extendedWaitUntil:
+    visible:
+      id: "personal-event-delete"
+    timeout: 60000
+- tapOn:
+    id: "personal-event-delete"
+- tapOn: "Delete"
+# Back on the list: the confirmed delete removed the row and the live query
+# re-rendered.
 - extendedWaitUntil:
     notVisible: "Maestro CRUD event"
     timeout: 60000
