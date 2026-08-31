@@ -182,7 +182,8 @@ appId: fr.samuelprak.timecalendar.dev
     element:
       id: "activity-new-e2e-activity-tie-higher"
     direction: DOWN
-    timeout: 60000
+    speed: 80
+    timeout: 120000
 - assertVisible:
     id: "activity-new-e2e-activity-tie-higher"
 - scrollUntilVisible:

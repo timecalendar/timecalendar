@@ -40,4 +40,17 @@ describe("Activity Maestro selectors", () => {
       /id: "activity-cancelled-e2e-activity-cancelled"[\s\S]*assertVisible:[\s\S]*id: "activity-section-list"[\s\S]*assertNotVisible: "Room Activity Cancelled Details"/,
     )
   })
+
+  it("gives the row-50 pagination boundary a deterministic scroll budget", () => {
+    const boundarySelector = 'id: "activity-new-e2e-activity-tie-higher"'
+    const boundaryStart = flow.indexOf(boundarySelector)
+    const boundaryEnd = flow.indexOf("- assertVisible:", boundaryStart)
+    const boundaryScroll = flow.slice(boundaryStart, boundaryEnd)
+
+    expect(boundaryStart).toBeGreaterThan(-1)
+    expect(boundaryEnd).toBeGreaterThan(boundaryStart)
+    expect(boundaryScroll).toContain("direction: DOWN")
+    expect(boundaryScroll).toContain("speed: 80")
+    expect(boundaryScroll).toContain("timeout: 120000")
+  })
 })
