@@ -146,7 +146,6 @@ function FirstLaunchGate({ onRoutesReady }: FirstLaunchGateProps) {
         <Stack.Protected guard={!eligible}>
           <Stack.Screen name="onboarding" />
         </Stack.Protected>
-        <Stack.Screen name="dev-import" options={{ headerShown: false }} />
         <Stack.Protected guard={eligible}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="profile" />
@@ -185,6 +184,7 @@ function FirstLaunchGate({ onRoutesReady }: FirstLaunchGateProps) {
           <Stack.Screen name="feedback" options={{ headerShown: true }} />
           <Stack.Screen name="user-calendars" options={{ headerShown: true }} />
         </Stack.Protected>
+        <Stack.Screen name="dev-import" options={{ headerShown: false }} />
       </Stack>
     </>
   )

@@ -73,8 +73,11 @@ describe("first-launch root structure", () => {
     expect(rootLayout.slice(0, protectedStart)).toContain(
       '<Stack.Screen name="onboarding" />',
     )
-    expect(rootLayout.slice(0, protectedStart)).toContain(
+    expect(rootLayout.slice(protectedEnd)).toContain(
       '<Stack.Screen name="dev-import" options={{ headerShown: false }} />',
+    )
+    expect(rootLayout.indexOf('name="(tabs)"')).toBeLessThan(
+      rootLayout.indexOf('name="dev-import"'),
     )
   })
 })

@@ -55,8 +55,11 @@ After ordered startup prerequisites, one atomic `{ calendars, loaded }` calendar
 keeps the splash mounted until eligibility is known. Zero calendars with no durable resolution leave
 onboarding as the first available route; `(tabs)` and every post-onboarding root sibling live inside
 one `Stack.Protected` guard and therefore cannot mount or paint underneath a redirect. Onboarding
-remains reachable after resolution. The development-only token-import route is the sole direct
-exception and retains its runtime app-variant action gate.
+lives behind the inverse guard: resolving it removes that active route and lets the root Stack select
+tabs atomically. The eligible group is declared before the development-only token-import exception,
+so route-name fallback cannot select the exception after Skip; direct deep links still can. Later
+imports use the Settings journey. The token-import route is the sole direct exception and retains its
+runtime app-variant action gate.
 
 From the school step the group carries the **import journey** (ADR [047](./decisions/047-ephemeral-calendar-import-draft.md)): a school row opens `onboarding/programme`, "I can't find my school" opens `onboarding/institution-name` → `onboarding/programme`, then `onboarding/connect` → `onboarding/import`, which offers the existing `onboarding/qr-scan` and `onboarding/ical-url` Stack siblings. The Connect → import edge is the explicit insertion point for a future assistant step. Every new route is a one-line re-export from `@/features/onboarding/ui`.
 

@@ -56,11 +56,11 @@ The new `first-launch/data` layer owns a pure decision:
 | zero calendars | `skipped` or `calendarImported` | eligible tabs |
 | one or more calendars | any | eligible tabs and seed `calendarImported` if absent |
 
-When onboarding is required, the root Stack leaves the onboarding group and the dev-only token-import route available and wraps `(tabs)` plus every other post-onboarding route in `Stack.Protected guard={false}`. The declared onboarding screen is the first available fallback, so normal cold launch and attempts to enter Home/Calendar resolve there without either tab mounting. The dev-import exception preserves the existing seeded native E2E/import recovery seam; after its durable upsert the guard becomes eligible and its existing calendar replacement succeeds. Once eligible, all existing routes are available and onboarding remains manually reachable.
+The root Stack puts onboarding behind the inverse eligibility guard and wraps `(tabs)` plus every other post-onboarding route behind the eligibility guard. The dev-only token-import route remains unprotected but is declared after the eligible group. When onboarding is required, its declared screen is the first available fallback, so normal cold launch and attempts to enter Home/Calendar resolve there without either tab mounting. When Skip or import changes the durable resolution, Expo Router removes the now-ineligible onboarding route and the root Stack rebuilds from `(tabs)` in the same route-graph transition. The ordering is load-bearing: because `(tabs)` was absent when the navigator initialized, route-name fallback may use declaration order rather than the initial-route setting, so the exception must not precede tabs. The dev-import exception remains directly addressable and preserves the existing seeded native E2E/import recovery seam; after its durable upsert the eligible graph becomes available and its existing calendar replacement succeeds. Later imports use the supported Settings journey instead of reopening first-launch onboarding.
 
 This is the load-bearing navigation rule recorded in a new ADR (reserved number 053 after checking merged and open-PR reservations).
 
-*Alternative rejected*: `router.replace()` in an effect mounts the anchored tabs first and can flash/run them; moving the filesystem into duplicate route groups would churn every route and create ambiguous deep-link ownership.
+*Alternative rejected*: a screen-level `router.replace()` races the same render that adds the eligible graph and can leave the native Stack without a rendered route; an effect redirect can also mount the anchored tabs before eligibility and flash/run them. Moving the filesystem into duplicate route groups would churn every route and create ambiguous deep-link ownership.
 
 ### Decision 4 — Two feature-owned MMKV stores encode two different decisions
 
@@ -85,7 +85,7 @@ The dev-only token import also becomes eligible from calendar presence and need 
 
 `first-launch/ui` owns one controlled React Native `Modal` confirmation component used by both welcome Skip and reminder dismissal. The title/body and confirm copy are identical: TimeCalendar remains usable for personal events, and an iCal can be imported later from Settings. The caller supplies the context-appropriate cancel label (`Continue onboarding` or `Keep reminder`) and the confirmed action.
 
-The modal has `accessibilityViewIsModal`, heading semantics, deterministic focus on show, `onRequestClose` wired to cancel/dismiss, translated labels, platform target sizes, and no transition animation (therefore no reduced-motion branch). Cancel never writes. Welcome Skip is changed from navigation-to-school to opening this modal; confirm writes `skipped` before replacing to the tabs.
+The modal has `accessibilityViewIsModal`, heading semantics, deterministic focus on show, `onRequestClose` wired to cancel/dismiss, translated labels, platform target sizes, and no transition animation (therefore no reduced-motion branch). Cancel never writes. Welcome Skip is changed from navigation-to-school to opening this modal; confirm writes `skipped`, then the root inverse guard removes onboarding and selects the tabs anchor.
 
 *Alternative rejected*: native `Alert` provides platform focus but cannot expose a reusable, behavior-tested component contract or consistent small-screen/Dynamic Type layout; two dialogs would let explanatory copy drift.
 

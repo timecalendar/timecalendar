@@ -17,7 +17,7 @@
 ## 3. Shared confirmation, Skip, and import success
 
 - [x] 3.1 Build one controlled import-later confirmation `Modal` in `first-launch/ui` with shared title/body/confirm copy, caller-specific cancel text, `accessibilityViewIsModal`, heading focus on show, platform back/backdrop cancellation, no animation, Dynamic Type-safe layout, and 44pt/48dp controls. Verify focus/semantics and every cancel/confirm edge in its component test.
-- [x] 3.2 Rewire welcome-screen Skip on pages 1–2 to open the shared confirmation; cancel stays on the current carousel page, while confirm persists only `skipped` before replacing to tabs. Update the welcome test to prove school selection is not pushed by Skip, reminder state is untouched, and the final CTA still opens `/onboarding/school`.
+- [x] 3.2 Rewire welcome-screen Skip on pages 1–2 to open the shared confirmation; cancel stays on the current carousel page, while confirm persists only `skipped` and lets the root inverse guard select the tabs anchor. Update the welcome test to prove school selection is not pushed by Skip, reminder state is untouched, and the final CTA still opens `/onboarding/school`.
 - [x] 3.3 Extend the existing shared `leaveImportJourney()` success seam so QR and iCal URL success records `calendarImported` after durable upsert and before clearing/leaving; make the single-entry deep-link fallback replace deterministically to `/calendar`. Verify QR, URL, failed-import, normal-stack, and direct-entry branches without duplicating completion writes in the screens.
 
 ## 4. Shared first-iCal reminder on both tabs
