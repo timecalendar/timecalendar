@@ -1,5 +1,7 @@
 import { router } from "expo-router"
 
+import { setOnboardingResolution } from "@/features/first-launch"
+
 // What a SUCCESSFUL import does with the navigation stack (TIM-391 / design D9),
 // shared by the QR and iCal-URL screens.
 //
@@ -12,10 +14,12 @@ import { router } from "expo-router"
 // journey in front of them (dev links, external links, restored navigation), and
 // `dismissAll()` on a stack with a single entry throws. `canDismiss()` false ⇒
 // there is no journey to leave ⇒ fall back to the pre-journey behaviour.
-export function leaveImportJourney(): void {
+export function leaveImportJourney(clearDraft: () => void): void {
+  setOnboardingResolution("calendarImported")
+  clearDraft()
   if (router.canDismiss()) {
     router.dismissAll()
     return
   }
-  router.back()
+  router.replace("/calendar")
 }

@@ -5,6 +5,10 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
+- runFlow:
+    file: setup/resolve-first-launch.yaml
+    env:
+      AWAIT_FIRST_LAUNCH: "true"
 - extendedWaitUntil:
     visible: "Settings"
     timeout: 60000

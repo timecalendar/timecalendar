@@ -1,4 +1,4 @@
-import { act, render } from "@testing-library/react-native"
+import { act, fireEvent, render } from "@testing-library/react-native"
 import { AccessibilityInfo, Animated } from "react-native"
 
 import { SplashScreen } from "./splash-screen"
@@ -19,11 +19,7 @@ import { SplashScreen } from "./splash-screen"
 //    explicit `act`, so dismissal is observed at a controlled point, never by
 //    real-time ordering.
 
-// Controllable readiness: false keeps the overlay mounted for render assertions.
-const mockUseAppReady = jest.fn<boolean, []>()
-jest.mock("@/hooks/use-app-ready", () => ({
-  useAppReady: () => mockUseAppReady(),
-}))
+const onRetry = jest.fn()
 
 // Drain the microtask chain the dismissal walks (promise read → effect re-run →
 // queued dismissal commit). The reduced-motion branch defers via
@@ -38,10 +34,14 @@ async function flushMicrotasks(turns = 4): Promise<void> {
 
 describe("SplashScreen", () => {
   describe("while held mounted (readiness pinned false)", () => {
-    beforeEach(() => mockUseAppReady.mockReturnValue(false))
-
     it("renders the localized brand string through the real theme + i18n tree", async () => {
-      const { getByText } = await render(<SplashScreen />)
+      const { getByText } = await render(
+        <SplashScreen
+          ready={false}
+          recoveryVisible={false}
+          onRetry={onRetry}
+        />,
+      )
 
       // EN catalog value (jest-expo device locale resolves to en), not the key.
       expect(getByText("TimeCalendar")).toBeTruthy()
@@ -50,14 +50,26 @@ describe("SplashScreen", () => {
     it("exposes an accessible loading status that resolves in the tree", async () => {
       // Resolved semantic (role + label), not merely a prop passed — like the
       // themed-text header proof.
-      const { getByRole } = await render(<SplashScreen />)
+      const { getByRole } = await render(
+        <SplashScreen
+          ready={false}
+          recoveryVisible={false}
+          onRetry={onRetry}
+        />,
+      )
 
       const status = getByRole("progressbar", { name: "Loading…" })
       expect(status).toBeTruthy()
     })
 
     it("does not disable font scaling on its brand text", async () => {
-      const { getByText } = await render(<SplashScreen />)
+      const { getByText } = await render(
+        <SplashScreen
+          ready={false}
+          recoveryVisible={false}
+          onRetry={onRetry}
+        />,
+      )
 
       expect(getByText("TimeCalendar").props.allowFontScaling).not.toBe(false)
     })
@@ -71,7 +83,6 @@ describe("SplashScreen", () => {
     const timing = jest.spyOn(Animated, "timing")
 
     beforeEach(() => {
-      mockUseAppReady.mockReturnValue(true)
       jest.useFakeTimers()
     })
 
@@ -88,7 +99,9 @@ describe("SplashScreen", () => {
     it("dismisses with no animation scheduled under reduced motion", async () => {
       isReduceMotionEnabled.mockResolvedValueOnce(true)
 
-      const { queryByRole } = await render(<SplashScreen />)
+      const { queryByRole } = await render(
+        <SplashScreen ready recoveryVisible={false} onRetry={onRetry} />,
+      )
 
       // Flush the async reduced-motion read and the dismissal microtask it
       // unblocks (the branch the layer lint can't see): the read resolves, the
@@ -106,7 +119,9 @@ describe("SplashScreen", () => {
     it("schedules the fade and dismisses once ready when motion is allowed", async () => {
       isReduceMotionEnabled.mockResolvedValueOnce(false)
 
-      const { queryByRole } = await render(<SplashScreen />)
+      const { queryByRole } = await render(
+        <SplashScreen ready recoveryVisible={false} onRetry={onRetry} />,
+      )
 
       // Flush the reduced-motion read so the fade is scheduled, then run the
       // fade duration so its completion callback unmounts the overlay.
@@ -122,5 +137,16 @@ describe("SplashScreen", () => {
 
       expect(queryByRole("progressbar")).toBeNull()
     })
+  })
+
+  it("shows an accessible recovery action without dismissing", async () => {
+    const { getByRole } = await render(
+      <SplashScreen ready={false} recoveryVisible onRetry={onRetry} />,
+    )
+
+    expect(getByRole("alert", { name: "Startup needs attention" })).toBeTruthy()
+    const retry = getByRole("button", { name: "Retry" })
+    await fireEvent.press(retry)
+    expect(onRetry).toHaveBeenCalledTimes(1)
   })
 })

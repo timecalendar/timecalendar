@@ -3,6 +3,7 @@ import { Platform, RefreshControl, ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedView } from "@/components/themed-view"
+import { FirstIcalReminder } from "@/features/first-launch/ui"
 import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 import { HomeAddFab, HomeScreenHeader } from "./home-screen/home-screen-header"
@@ -72,6 +73,7 @@ export function HomeScreen() {
           />
         </ScrollView>
         {Platform.OS === "android" && <HomeAddFab onPress={home.addEvent} />}
+        <FirstIcalReminder />
       </SafeAreaView>
     </ThemedView>
   )

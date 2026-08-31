@@ -88,8 +88,7 @@ export default function QrScanScreen() {
         if (!activeRef.current || completedRef.current) return
 
         completedRef.current = true
-        clearDraft()
-        leaveImportJourney()
+        leaveImportJourney(clearDraft)
       })
       .catch((error: unknown) => {
         if (!activeRef.current || completedRef.current) return

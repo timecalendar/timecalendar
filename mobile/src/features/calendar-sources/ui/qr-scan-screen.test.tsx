@@ -3,7 +3,9 @@ import { router } from "expo-router"
 import { Linking } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
+import { getOnboardingResolution } from "@/features/first-launch"
 import { recordUnknownError } from "@/firebase"
+import { remove, STORAGE_KEYS } from "@/storage"
 
 import QrScanScreen from "./qr-scan-screen"
 
@@ -72,6 +74,7 @@ jest.mock("expo-camera", () => {
 jest.mock("expo-router", () => ({
   router: {
     back: jest.fn(),
+    replace: jest.fn(),
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
     push: jest.fn(),
@@ -93,6 +96,7 @@ jest.mock("@/features/onboarding", () => ({
 }))
 
 const mockBack = router.back as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const mockCanDismiss = router.canDismiss as jest.Mock
 const mockDismissAll = router.dismissAll as jest.Mock
 const mockPush = router.push as jest.Mock
@@ -112,6 +116,7 @@ function deferred<T>() {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  remove(STORAGE_KEYS.onboardingResolution)
   mockImportFields = { name: "L3 Informatique", schoolId: "univeiffel" }
   mockCanDismiss.mockReturnValue(true)
   mockAddCalendarFromUrl.mockResolvedValue(undefined)
@@ -191,6 +196,7 @@ describe("QrScanScreen", () => {
     // sent us here, and spends the draft.
     await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
     expect(mockClearDraft).toHaveBeenCalledTimes(1)
+    expect(getOnboardingResolution()).toBe("calendarImported")
     expect(mockBack).not.toHaveBeenCalled()
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
 
@@ -200,7 +206,7 @@ describe("QrScanScreen", () => {
     expect(mockDismissAll).toHaveBeenCalledTimes(1)
   })
 
-  it("creates with empty metadata and falls back to back() on a direct route with no draft", async () => {
+  it("creates with empty metadata and replaces to Calendar on a direct route with no draft", async () => {
     // The route opened by a dev link / external link / restored navigation: no
     // provider, so no draft — a supported entry point, not an error.
     mockImportFields = { name: "", schoolName: "" }
@@ -215,7 +221,8 @@ describe("QrScanScreen", () => {
       "https://example.com/cal.ics",
       { name: "", schoolName: "" },
     )
-    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
+    expect(mockBack).not.toHaveBeenCalled()
     expect(mockDismissAll).not.toHaveBeenCalled()
   })
 

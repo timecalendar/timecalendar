@@ -2,6 +2,11 @@
 
 ## 2026-08-31
 
+- Added ADR 054: migrations and the typed Phase 09 prerequisite complete before the first atomic
+  calendar read; one protected root graph prevents Home/Calendar paint for unresolved fresh users,
+  with only the development token-import route excepted.
+- Recorded the independent environment-independent onboarding-resolution and first-iCal-reminder
+  values, the skippable personal-calendar path, and the shared Home/Calendar reminder composition.
 - Recorded explicit QR import failure recovery: a rejected valid scan stays debounced, Retry
   reuses its captured normalized URL and draft-derived create fields, Scan another QR is the only
   action that re-arms the camera, and the manual-iCal escape preserves the Stack-scoped draft.
