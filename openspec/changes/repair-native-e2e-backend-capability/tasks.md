@@ -22,6 +22,6 @@
 
 ## 5. CI proof on the exact implementation head
 
-- [ ] 5.1 Push the implementation head and add the PR's `run-e2e` label so the exceptional native repair executes `Run mobile E2E (Android)` and `Run mobile E2E (iOS)` against that exact SHA.
+- [x] 5.1 Push the implementation head and add the PR's `run-e2e` label so the exceptional native repair executes `Run mobile E2E (Android)` and `Run mobile E2E (iOS)` against that exact SHA.
 - [ ] 5.2 Confirm both native jobs are green and their release-config binaries complete the fresh-storage seeded dev-import through `http://10.0.2.2:3005` on Android and `http://localhost:3005` on iOS; if either reports `dev-import-error`, retain the real-server assertion and repair the capability/config wiring rather than adding retries or weakening Maestro checks.
 - [ ] 5.3 Record the exact head SHA and both green job links in the handoff/review evidence. QA remains not required because this is build/CI configuration with the two native integration jobs as its required proof.
