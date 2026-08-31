@@ -16,6 +16,12 @@ import {
   formatTimeRange,
   groupEventsByDay,
 } from "@/features/calendar/data"
+import {
+  type ChecklistProgress,
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+  type ChecklistProgressMap,
+} from "@/features/event-checklists"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 // The agenda / planning view (presentational, 70% floor): a React Native core
@@ -37,12 +43,14 @@ interface AgendaSection {
 
 export function AgendaList({
   events,
+  checklistProgress,
   locale,
   displayZone,
   refreshControl,
   onPressEvent,
 }: {
   events: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   locale: AppLocale
   displayZone: string
   refreshControl?: ReactElement<RefreshControlProps>
@@ -87,6 +95,7 @@ export function AgendaList({
       renderItem={({ item }) => (
         <EventTile
           event={item}
+          progress={checklistProgress.get(item.id)}
           locale={locale}
           zone={displayZone}
           upcoming={item.id === upcomingId}
@@ -123,12 +132,14 @@ function DayHeader({
 
 function EventTile({
   event,
+  progress,
   locale,
   zone,
   upcoming,
   onPress,
 }: {
   event: CalendarEvent
+  progress: ChecklistProgress | undefined
   locale: AppLocale
   zone: string
   upcoming: boolean
@@ -143,11 +154,20 @@ function EventTile({
     : formatTimeRange(event.startsAt, event.endsAt, locale, zone)
   const location = event.location ?? ""
 
-  const label = t("calendar.agenda.event.openLabel", {
-    title: event.title,
-    time,
-    location,
-  })
+  const progressLabel = checklistProgressLabel(t, progress)
+  const label =
+    progressLabel === undefined
+      ? t("calendar.agenda.event.openLabel", {
+          title: event.title,
+          time,
+          location,
+        })
+      : t("calendar.agenda.event.openLabelWithProgress", {
+          title: event.title,
+          time,
+          location,
+          progress: progressLabel,
+        })
 
   return (
     <View style={styles.row}>
@@ -162,6 +182,11 @@ function EventTile({
         ]}
       />
       <Pressable
+        testID={
+          progress === undefined
+            ? `agenda-event-${event.id}`
+            : `agenda-event-${event.id}-progress-${progress.completed}-${progress.total}`
+        }
         accessibilityRole="button"
         accessibilityLabel={label}
         onPress={onPress}
@@ -185,6 +210,7 @@ function EventTile({
             {location}
           </ThemedText>
         )}
+        <ChecklistProgressIndicator progress={progress} />
       </Pressable>
     </View>
   )

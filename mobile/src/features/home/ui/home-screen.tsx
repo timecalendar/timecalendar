@@ -54,6 +54,7 @@ export function HomeScreen() {
             locale={home.locale}
             displayZone={home.displayZone}
             events={home.upcoming}
+            checklistProgress={home.checklistProgress}
             todayEventCount={home.todayEvents.length}
             nextDay={home.nextDay}
             onOpenCalendar={home.openCalendar}
@@ -65,6 +66,7 @@ export function HomeScreen() {
             displayZone={home.displayZone}
             allDayEvents={home.allDay}
             timedEvents={home.timed}
+            checklistProgress={home.checklistProgress}
             hourRange={home.hourRange}
             onPressEvent={home.openEvent}
           />

@@ -9,6 +9,7 @@ import { router } from "expo-router"
 import { Platform } from "react-native"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
+import { useChecklistProgress } from "@/features/event-checklists"
 
 import { HomeScreen } from "./home-screen"
 
@@ -28,6 +29,11 @@ jest.mock("@/features/calendar/data", () => {
   }
 })
 
+jest.mock("@/features/event-checklists", () => {
+  const actual = jest.requireActual("@/features/event-checklists")
+  return { ...actual, useChecklistProgress: jest.fn() }
+})
+
 jest.mock("expo-router", () => ({
   router: { push: jest.fn() },
   useFocusEffect: (callback: () => void) => {
@@ -39,6 +45,7 @@ jest.mock("expo-router", () => ({
 
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
+const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockSync = jest.fn()
 const mockPush = router.push as jest.Mock
 
@@ -89,6 +96,7 @@ beforeEach(() => {
   mockPush.mockReset()
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseCalendarEvents.mockReturnValue([])
+  mockUseChecklistProgress.mockReturnValue(new Map())
 })
 
 describe("HomeScreen", () => {
@@ -114,6 +122,43 @@ describe("HomeScreen", () => {
     expect(screen.getByText("1 event today")).toBeTruthy()
     // The card + tile both render the title.
     expect(screen.getAllByText("Algorithms").length).toBeGreaterThan(0)
+  })
+
+  it("shows partial and complete progress for personal and synced upcoming/timed events", async () => {
+    const personal = todayEvent({ id: "personal-1" })
+    const synced = todayEvent({
+      id: "synced-1",
+      title: "Databases",
+      userCalendarId: "calendar-1",
+      startsAt: new Date(personal.startsAt.getTime() + 2 * 60 * 60 * 1000),
+      endsAt: new Date(personal.endsAt.getTime() + 2 * 60 * 60 * 1000),
+    })
+    mockUseCalendarEvents.mockReturnValue([personal, synced])
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([
+        ["personal-1", { completed: 1, total: 3, isComplete: false }],
+        ["synced-1", { completed: 2, total: 2, isComplete: true }],
+      ]),
+    )
+
+    await render(<HomeScreen />)
+
+    expect(mockUseChecklistProgress).toHaveBeenCalledWith([
+      "personal-1",
+      "synced-1",
+    ])
+    expect(
+      screen.getAllByText("1/3", { includeHiddenElements: true }).length,
+    ).toBeGreaterThanOrEqual(2)
+    expect(
+      screen.getAllByText("2/2", { includeHiddenElements: true }).length,
+    ).toBeGreaterThanOrEqual(2)
+    expect(
+      screen.getAllByLabelText(/1 of 3 checklist items completed/)[0],
+    ).toBeTruthy()
+    expect(
+      screen.getAllByLabelText(/2 of 2 checklist items completed/)[0],
+    ).toBeTruthy()
   })
 
   it("routes a personal-event card to the unified event-details screen (ADR 024)", async () => {
@@ -192,14 +237,22 @@ describe("HomeScreen", () => {
       ),
     })
     mockUseCalendarEvents.mockReturnValue([allDay])
+    mockUseChecklistProgress.mockReturnValue(
+      new Map([["ev-1", { completed: 1, total: 1, isComplete: true }]]),
+    )
     await render(<HomeScreen />)
     expect(screen.getByTestId("home-all-day")).toBeTruthy()
     expect(screen.queryByTestId("today-timeline")).toBeNull()
     expect(screen.queryByText("Enjoy the open day.")).toBeNull()
     expect(screen.getAllByText("All day").length).toBeGreaterThan(0)
     expect(
-      screen.getAllByLabelText("Algorithms, All day Room A1"),
+      screen.getAllByLabelText(
+        "Algorithms, All day Room A1. 1 of 1 checklist items completed",
+      ),
     ).toHaveLength(1)
+    expect(
+      screen.getByText("1/1", { includeHiddenElements: true }),
+    ).toBeTruthy()
     expect(screen.queryByTestId("upcoming-scroller")).toBeNull()
   })
 

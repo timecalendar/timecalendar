@@ -1,4 +1,5 @@
 import { type CalendarEvent } from "@/features/calendar/data"
+import { type ChecklistProgressMap } from "@/features/event-checklists"
 
 export type CalendarTimelineMode = "day" | "week"
 
@@ -17,6 +18,7 @@ export type CalendarTimelineProps = {
   /** The effective display zone (IANA) every rendered time projects into. */
   displayZone: string
   events: CalendarEvent[]
+  checklistProgress: ChecklistProgressMap
   startMinute: number
   endMinute: number
   showWeekends: boolean
