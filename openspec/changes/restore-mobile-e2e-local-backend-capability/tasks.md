@@ -576,3 +576,25 @@ seeded-title selectors that do not match iOS's composed accessible event contain
 - [ ] 28.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `event-checklists` must
   prove the real local SQLite add/toggle/progress/reopen/delete round trip on both platforms, and
   the handoff must record both complete per-flow lists before archive.
+
+## 29. Re-enter the personal-events root after cancelling deletion
+
+Merged `personal-events.yaml` carried the same platform-asymmetric bare `back` forbidden by
+section 19. Android's hardware key pops the edit screen, while Maestro can report a completed
+left-edge swipe on iOS without leaving a native-stack screen. The cancellation proof must retain
+the durable row, so the repair re-enters the owning route without clearing application state.
+
+- [x] 29.1 Replace only the post-Cancel bare `back` with `stopApp` →
+  `openLink: timecalendar-dev://personal-events` → optional iOS `Open`, then wait up to 60 seconds
+  for the exact `Maestro CRUD event` row before reopening it. Preserve the create, Cancel,
+  form-still-open, confirmed Delete, and final exact-absence assertions; do not use `clearState`.
+- [x] 29.2 Extend `maestro-selectors.test.ts` with a focused ordered proof for Cancel → edit-form
+  assertion → state-preserving cold re-entry → exact preserved row → reopen → confirmed Delete →
+  exact absence. Mutation checks reject a returned bare `back`, removed or reordered re-entry,
+  and either weakened row assertion.
+- [x] 29.3 Record the cancelled-destructive-prompt native-stack class in the `mobile-e2e` delta
+  and run the general selector suite, focused mutations, pinned Maestro 2.8.0 syntax, strict
+  OpenSpec validation, applicable formatting, zero-bare-back scan, and `git diff --check`.
+- [ ] 29.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `personal-events` must
+  prove the complete create → cancel-delete → preserved row → confirmed delete → absent journey
+  on both platforms before archive.

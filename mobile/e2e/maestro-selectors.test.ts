@@ -69,6 +69,10 @@ const hiddenEventsFlow = readFileSync(
   "utf8",
 )
 const icalImportFlow = readFileSync(join(flowsDir, "ical-import.yaml"), "utf8")
+const personalEventsFlow = readFileSync(
+  join(flowsDir, "personal-events.yaml"),
+  "utf8",
+)
 const userCalendarRenameFlow = readFileSync(
   join(flowsDir, "user-calendar-rename.yaml"),
   "utf8",
@@ -250,6 +254,22 @@ function backCommands(yaml: string): number[] {
     .map(({ number }) => number)
 }
 
+function preservesPersonalEventCancellation(yaml: string): boolean {
+  return /- tapOn: "Cancel"\n- assertVisible:\n\s+id: "personal-event-delete"\n(?:#[^\n]*\n)*- stopApp\n- openLink: timecalendar-dev:\/\/personal-events\n- runFlow:\n\s+when:\n\s+platform: iOS\n\s+commands:\n\s+- tapOn:\n\s+text: "Open"\n\s+optional: true\n- extendedWaitUntil:\n\s+visible: "Maestro CRUD event"\n\s+timeout: 60000\n(?:#[^\n]*\n)*- tapOn: "Maestro CRUD event"\n- extendedWaitUntil:\n\s+visible:\n\s+id: "personal-event-delete"\n\s+timeout: 60000\n- tapOn:\n\s+id: "personal-event-delete"\n- tapOn: "Delete"\n(?:#[^\n]*\n)*- extendedWaitUntil:\n\s+notVisible: "Maestro CRUD event"\n\s+timeout: 60000\s*$/.test(
+    yaml,
+  )
+}
+
+function replaceLast(
+  source: string,
+  target: string,
+  replacement: string,
+): string {
+  const index = source.lastIndexOf(target)
+  if (index === -1) return source
+  return `${source.slice(0, index)}${replacement}${source.slice(index + target.length)}`
+}
+
 const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
   name: file.slice(flowsDir.length + 1),
   selectors: flowSelectors(readFileSync(file, "utf8")),
@@ -354,6 +374,56 @@ describe("Maestro back navigation", () => {
     // The guard's own failure mode: a parser matching nothing passes vacuously.
     expect(backCommands("- launchApp\n- back\n")).toEqual([2])
     expect(backCommands("- tapOn: back\n- assertVisible: back\n")).toEqual([])
+  })
+})
+
+describe("Maestro personal-event cancellation", () => {
+  it("cold re-enters the list before proving preservation and confirmed deletion", () => {
+    expect(preservesPersonalEventCancellation(personalEventsFlow)).toBe(true)
+  })
+
+  it.each([
+    [
+      "a bare back returns",
+      replaceLast(
+        personalEventsFlow,
+        "- stopApp\n- openLink: timecalendar-dev://personal-events",
+        "- back",
+      ),
+    ],
+    [
+      "cold re-entry is reordered",
+      replaceLast(
+        personalEventsFlow,
+        "- stopApp\n- openLink: timecalendar-dev://personal-events",
+        "- openLink: timecalendar-dev://personal-events\n- stopApp",
+      ),
+    ],
+    [
+      "cold re-entry is removed",
+      replaceLast(
+        personalEventsFlow,
+        "- stopApp\n- openLink: timecalendar-dev://personal-events\n",
+        "",
+      ),
+    ],
+    [
+      "the cancellation-preserved row wait is widened",
+      personalEventsFlow.replace(
+        'visible: "Maestro CRUD event"\n    timeout: 60000\n# Reopen',
+        'visible: "Maestro CRUD event.*"\n    timeout: 60000\n# Reopen',
+      ),
+    ],
+    [
+      "the confirmed-deletion assertion is widened",
+      personalEventsFlow.replace(
+        'notVisible: "Maestro CRUD event"',
+        'notVisible: "Maestro CRUD event.*"',
+      ),
+    ],
+  ])("rejects when %s", (_name, mutatedFlow) => {
+    expect(mutatedFlow).not.toBe(personalEventsFlow)
+    expect(preservesPersonalEventCancellation(mutatedFlow)).toBe(false)
   })
 })
 

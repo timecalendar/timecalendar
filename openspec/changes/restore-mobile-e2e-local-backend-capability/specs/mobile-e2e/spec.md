@@ -420,3 +420,14 @@ interaction shared by both platforms, with no per-platform selector or branch.
   SQLite add → type → toggle → progress → reopen → delete round trip is not weakened
 - **AND** a focused repository proof SHALL pin the ordered re-entry and fail if the stale agenda
   id, a bare seeded title, or a bare `back` command returns
+
+#### Scenario: A cancelled destructive prompt must preserve a row across native-stack exit
+
+- **WHEN** a shared flow cancels a destructive native prompt on a pushed edit screen and must
+  leave that screen before proving the persisted row remains
+- **THEN** it SHALL re-enter the owning root route with `stopApp` → deep link → optional iOS
+  confirmation, without clearing application state
+- **AND** it SHALL wait for the exact preserved row before reopening it, explicitly confirm the
+  destructive action, and require the same exact row to become absent
+- **AND** a focused repository proof SHALL reject a bare `back`, missing or reordered cold
+  re-entry, a weakened preserved-row assertion, or a weakened confirmed-deletion assertion
