@@ -9,6 +9,11 @@ appId: fr.samuelprak.timecalendar.dev
     visible: "Settings"
     timeout: 60000
 - tapOn: "Settings"
+- scrollUntilVisible:
+    element:
+      id: "settings-feedback"
+    direction: DOWN
+    timeout: 60000
 - extendedWaitUntil:
     visible:
       id: "settings-feedback"
