@@ -44,7 +44,7 @@
     "fuse.js": "^7.1.0",
     "lint-staged": "^17.0.7",
     "lucide-react": "^0.542.0",
-    "next": "^16.2.6",
+    "next": "^16.2.11",
     "next-runtime-env": "^3.3.0",
     "prettier": "^3.6.2",
     "react": "^19.1.1",
