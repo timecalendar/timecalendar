@@ -13,10 +13,10 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set up Helm
-      uses: azure/setup-helm@v4.3.1
+      uses: azure/setup-helm@v5.0.1
       with:
         version: v3.16.4
 
@@ -29,7 +29,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     # Pure git + shell, so no Node setup. The properties it asserts (the hook's
     # file mode, and its npx invocation) are each invisible under one of the two
@@ -45,7 +45,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
@@ -98,7 +98,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set target environment
       run: ./ci/set-target-env.sh
@@ -131,7 +131,7 @@ jobs:
     steps:
 
     - name: Checkout main
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Download server image artifact
       uses: actions/download-artifact@v8

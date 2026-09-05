@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -66,7 +66,7 @@ jobs:
       E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download server image artifact
         uses: actions/download-artifact@v8
@@ -79,13 +79,13 @@ jobs:
 
       # JDK 17 for both the Gradle build and Maestro (Maestro is JVM-based).
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -199,17 +199,17 @@ jobs:
       MAESTRO_DRIVER_STARTUP_TIMEOUT: "240000"
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # JDK for Maestro (JVM-based).
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -221,7 +221,7 @@ jobs:
 
       # Survives `prebuild --clean` (lives outside the repo); speeds pod install.
       - name: Cache CocoaPods downloads
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/Library/Caches/CocoaPods
