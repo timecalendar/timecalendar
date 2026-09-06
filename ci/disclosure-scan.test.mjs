@@ -20,13 +20,17 @@ import {
   compileConfiguredPattern,
   compileConfiguredPatterns,
   compileLiteralPattern,
+  compareCiBaseline,
   deriveIdentityPatterns,
+  generateCiEntries,
   loadAllowlist,
   main,
   matchesAny,
   parseAddedLines,
+  parseBaseline,
   parseConfiguredPatterns,
   scanRecords,
+  scanWholeFiles,
   selfTestConfigured,
   structuralClasses,
   structuralCounts,
@@ -46,6 +50,16 @@ const coAuthor = (name, address) => `${"Co-authored-by:"} ${name} <${address}>`;
 // The configured layer takes compiled expressions, not strings: compiling one
 // can fail, and that failure belongs to the exit code, not to a scan loop.
 const configuredPatterns = (...sources) => sources.map(compileConfiguredPattern);
+
+const createGitRepo = (t, prefix) => {
+  const repo = mkdtempSync(join(tmpdir(), prefix));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const runGit = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  runGit("init", "--quiet");
+  runGit("config", "user.name", "Fixture Bot");
+  runGit("config", "user.email", "noreply@example.com");
+  return { repo, runGit };
+};
 
 const record = (text, location = "fixture.md:1") => ({
   source: "diff",
@@ -673,24 +687,19 @@ test("a configured pattern that does not compile fails the job without printing 
 });
 
 test("a matched path is redacted everywhere in end-to-end output", (t) => {
-  const repo = mkdtempSync(join(tmpdir(), "disclosure-path-"));
-  t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const git = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  const { repo, runGit } = createGitRepo(t, "disclosure-path-");
   const token = ["fixture", "path", "token"].join("-");
 
-  git("init", "--quiet");
-  git("config", "user.name", "Fixture Bot");
-  git("config", "user.email", "noreply@example.com");
   writeFileSync(join(repo, "README.md"), "base\n");
-  git("add", "README.md");
-  git("commit", "--quiet", "-m", "base");
-  const base = git("rev-parse", "HEAD").trim();
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
 
   const directory = join(repo, "docs", token);
   mkdirSync(directory, { recursive: true });
   writeFileSync(join(directory, "notes.md"), "safe fixture\n");
-  git("add", ".");
-  git("commit", "--quiet", "-m", "add fixture path");
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "add fixture path");
 
   const { code, output } = runMain(
     { DISCLOSURE_PATTERNS: token },
@@ -701,6 +710,30 @@ test("a matched path is redacted everywhere in end-to-end output", (t) => {
   assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md/);
   assert.match(output, /docs\/\[REDACTED\]\/notes\.md/);
   assert.match(output, /configured-pattern/);
+});
+
+test("a matched whole-file finding path is redacted everywhere in end-to-end output", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-whole-file-path-");
+  const token = ["fixture", "whole", "path"].join("-");
+  const directory = join(repo, "docs", token);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "notes.md"), `${token}\n`);
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+
+  writeFileSync(join(directory, "notes.md"), `${token}\nsafe fixture\n`);
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "touch fixture");
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.ok(!output.includes(token));
+  assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md,line=1/);
+  assert.match(output, /docs\/\[REDACTED\]\/notes\.md:1/);
 });
 
 test("CI invokes the scan and checks out enough history to derive from", () => {
@@ -811,15 +844,13 @@ const creditRecord = (text) => ({
   text,
 });
 
-test("an identity on the credit surface is the product, not a leak", () => {
-  assert.deepEqual(
-    scanRecords([creditRecord("built by Aline Fixture")], {
-      derived: ["Aline Fixture"],
-      configured: [],
-      allowlist,
-    }),
-    [],
-  );
+test("an added identity on the former credit surface is still a finding", () => {
+  const findings = scanRecords([creditRecord("built by Aline Fixture")], {
+    derived: ["Aline Fixture"],
+    configured: [],
+    allowlist,
+  });
+  assert.deepEqual(classesOf(findings), [FINDING_CLASSES.DERIVED]);
 });
 
 test("structural rules still apply on the credit surface", () => {
@@ -838,4 +869,277 @@ test("the same identity outside the credit surface is still flagged", () => {
     allowlist,
   });
   assert.deepEqual(classesOf(findings), [FINDING_CLASSES.DERIVED]);
+});
+
+test("the path lane narrows an existing path but not one created or renamed", () => {
+  const path = "app/android/app/src/main/kotlin/fr/fixture/app/MainActivity.kt";
+  const pathRecord = (introduced) => ({
+    source: "path",
+    file: path,
+    line: null,
+    location: path,
+    text: path,
+    introduced,
+  });
+  assert.deepEqual(
+    scanRecords([pathRecord(false)], {
+      derived: ["fixture"],
+      configured: [],
+      allowlist,
+    }),
+    [],
+  );
+  assert.deepEqual(
+    classesOf(
+      scanRecords([pathRecord(true)], {
+        derived: ["fixture"],
+        configured: [],
+        allowlist,
+      }),
+    ),
+    [FINDING_CLASSES.DERIVED],
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Count-keyed whole-file baseline
+// ---------------------------------------------------------------------------
+
+const baseline = (ciEntries = [], entries = []) => ({ version: 1, entries, ciEntries });
+
+test("baseline lanes require exact fields, positive counts and independent keys", () => {
+  assert.deepEqual(parseBaseline(baseline()).ciEntries, []);
+  for (const entry of [
+    { path: "/absolute", id: "derived-identity", count: 1 },
+    { path: "../outside", id: "derived-identity", count: 1 },
+    { path: "fixture.md", id: "derived-identity", count: 0 },
+    { path: "fixture.md", id: "derived-identity", count: 1, extra: true },
+  ]) {
+    assert.throws(() => parseBaseline(baseline([entry])));
+  }
+  const duplicate = { path: "fixture.md", id: "derived-identity", count: 1 };
+  assert.throws(() => parseBaseline(baseline([duplicate, duplicate])));
+  assert.doesNotThrow(() => parseBaseline(baseline([duplicate], [duplicate])));
+});
+
+test("whole-file layer passes at pin and reports over-pin and unpinned classes", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-");
+  writeFileSync(
+    join(repo, "fixture.md"),
+    `Aline Fixture and Aline Fixture again\n${homePath("aline")}\n`,
+  );
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const scan = (ciEntries) =>
+    scanWholeFiles({
+      files: ["fixture.md"],
+      head: "HEAD",
+      baseline: baseline(ciEntries),
+      derived: ["Aline Fixture"],
+      configured: [],
+      allowlist,
+      cwd: repo,
+    });
+  const derivedPin = {
+    path: "fixture.md",
+    id: FINDING_CLASSES.DERIVED,
+    count: 2,
+  };
+  const homePin = {
+    path: "fixture.md",
+    id: FINDING_CLASSES.HOME_PATH,
+    count: 1,
+  };
+  assert.deepEqual(scan([derivedPin, homePin]), []);
+  assert.deepEqual(
+    classesOf(scan([{ ...derivedPin, count: 1 }, homePin])).sort(),
+    [FINDING_CLASSES.DERIVED],
+  );
+  assert.deepEqual(classesOf(scan([derivedPin])), [FINDING_CLASSES.HOME_PATH]);
+  assert.deepEqual(classesOf(scan([{ ...homePin, count: 1 }])), [FINDING_CLASSES.DERIVED]);
+  assert.deepEqual(classesOf(scan([])).sort(), [
+    FINDING_CLASSES.DERIVED,
+    FINDING_CLASSES.HOME_PATH,
+  ].sort());
+});
+
+test("an unchanged count cannot hide an occurrence on an added line", () => {
+  const layerA = [];
+  const layerB = scanRecords([creditRecord("Aline Fixture moved here")], {
+    derived: ["Aline Fixture"],
+    configured: [],
+    allowlist,
+  });
+  assert.deepEqual(layerA, [], "the whole-file count can remain at its pin");
+  assert.deepEqual(classesOf(layerB), [FINDING_CLASSES.DERIVED]);
+});
+
+test("a deleted-only file contributes no whole-file finding", () => {
+  assert.deepEqual(
+    scanWholeFiles({
+      files: [],
+      head: "HEAD",
+      baseline: baseline(),
+      derived: ["fixtureowner"],
+      configured: [],
+      allowlist,
+      cwd: REPO,
+    }),
+    [],
+  );
+});
+
+test("baseline invariant reports stale pins and a newly configured class", () => {
+  const stale = { path: "fixture.md", id: FINDING_CLASSES.DERIVED, count: 2 };
+  const configured = { path: "other.md", id: FINDING_CLASSES.CONFIGURED, count: 1 };
+  assert.deepEqual(
+    compareCiBaseline(baseline([stale]), [{ ...stale, count: 1 }, configured]).map(
+      ({ kind, path, id }) => ({ kind, path, id }),
+    ),
+    [
+      { kind: "stale-pin", path: "fixture.md", id: FINDING_CLASSES.DERIVED },
+      { kind: "unpinned-configured", path: "other.md", id: FINDING_CLASSES.CONFIGURED },
+    ],
+  );
+});
+
+test("baseline invariant degrades cleanly when configured pins cannot be remeasured", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-invariant-configured-absent-");
+  const token = ["configured", "fixture", "value"].join("-");
+  writeFileSync(join(repo, "fixture.md"), `${token}\n`);
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([{ path: "fixture.md", id: FINDING_CLASSES.CONFIGURED, count: 1 }]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const { code, output } = runMain({}, ["--check-baseline", "--cwd", repo]);
+  assert.equal(code, 0);
+  assert.match(output, /holds for 0 reproducible CI entry\/entries/);
+  assert.match(output, /configured source absent; invariant coverage is degraded/);
+});
+
+test("baseline invariant redacts detector-matching paths in public annotations", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-invariant-path-");
+  const token = ["fixture", "invariant", "path"].join("-");
+  const directory = join(repo, "docs", token);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "notes.md"), "safe fixture\n");
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([
+        {
+          path: `docs/${token}/notes.md`,
+          id: FINDING_CLASSES.DERIVED,
+          count: 1,
+        },
+      ]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--check-baseline", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.ok(!output.includes(token));
+  assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md/);
+  assert.match(output, /stale-pin/);
+});
+
+test("CI baseline generation applies the scanner's excluded path scope", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-scope-");
+
+  for (const path of ["included.md", "nested/package-lock.json", "nested/tool.lock"]) {
+    mkdirSync(dirname(join(repo, path)), { recursive: true });
+    writeFileSync(join(repo, path), "Aline Fixture\n");
+  }
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  assert.deepEqual(
+    generateCiEntries({
+      derived: ["Aline Fixture"],
+      configured: [],
+      allowlist,
+      cwd: repo,
+    }),
+    [{ path: "included.md", id: FINDING_CLASSES.DERIVED, count: 1 }],
+  );
+});
+
+test("CI baseline generation counts line-anchored structural detectors", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-structural-anchor-");
+  writeFileSync(
+    join(repo, "fixture.md"),
+    `heading\n${coAuthor("Aline Fixture", addr("aline", "example.com"))}\n`,
+  );
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const entries = generateCiEntries({
+    derived: [],
+    configured: [],
+    allowlist,
+    cwd: repo,
+  });
+  assert.deepEqual(
+    entries.filter((entry) => entry.id === FINDING_CLASSES.CO_AUTHOR),
+    [{ path: "fixture.md", id: FINDING_CLASSES.CO_AUTHOR, count: 1 }],
+  );
+  assert.deepEqual(
+    scanWholeFiles({
+      files: ["fixture.md"],
+      head: "HEAD",
+      baseline: baseline(entries),
+      derived: [],
+      configured: [],
+      allowlist,
+      cwd: repo,
+    }),
+    [],
+  );
+});
+
+test("CI baseline generation counts line-anchored configured detectors", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-configured-anchor-");
+  writeFileSync(join(repo, "fixture.md"), "heading\nanchored-fixture\n");
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const entries = generateCiEntries({
+    derived: [],
+    configured: configuredPatterns("^anchored[-]fixture$"),
+    allowlist,
+    cwd: repo,
+  });
+  assert.deepEqual(
+    entries.filter((entry) => entry.id === FINDING_CLASSES.CONFIGURED),
+    [{ path: "fixture.md", id: FINDING_CLASSES.CONFIGURED, count: 1 }],
+  );
+  assert.deepEqual(
+    scanWholeFiles({
+      files: ["fixture.md"],
+      head: "HEAD",
+      baseline: baseline(entries),
+      derived: [],
+      configured: configuredPatterns("^anchored[-]fixture$"),
+      allowlist,
+      cwd: repo,
+    }),
+    [],
+  );
 });

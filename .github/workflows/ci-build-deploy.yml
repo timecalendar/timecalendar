@@ -59,6 +59,11 @@ jobs:
     - name: Test the scan
       run: node --test ci/disclosure-scan.test.mjs
 
+    - name: Verify disclosure baseline is current
+      env:
+        DISCLOSURE_PATTERNS: ${{ secrets.DISCLOSURE_PATTERNS }}
+      run: node ci/disclosure-scan.mjs --check-baseline
+
     # DISCLOSURE_PATTERNS is an optional overlay for strings this repository's
     # history does not contain. It is absent on forks and until an owner sets
     # it; the derived and structural layers run either way, and the job logs

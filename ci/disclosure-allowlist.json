@@ -17,16 +17,10 @@
     ":(exclude)app/ios/Pods/**"
   ],
 
-  "_creditPaths": "The product's own credit surface. The About screen names the people who built the app and links to their sites, on purpose, as user-facing content — so a derived identity there is intended publication, not a leak. Only paths are listed; no name is named. Structural rules still apply here.",
+  "_creditPaths": "Path-only exceptions for published application entry points that cannot be count-baselined because the path is the match. Wildcards keep the identifying segment out of this file. Existing paths are narrowed; paths a branch creates or renames are not.",
   "creditPaths": [
-    "mobile/src/features/about/",
-    "mobile/src/app/about.tsx",
-    "mobile/.maestro/about.yaml",
-    "app/lib/modules/about/",
-    "web/app/about/",
-    "openspec/specs/mobile-about-screen/",
-    "openspec/changes/archive/2026-08-25-add-mobile-about-screen/",
-    "openspec/changes/archive/2026-08-26-add-mobile-changelog/specs/mobile-about-screen/"
+    "app/android/app/src/main/java/*/*/*/MainActivity.java",
+    "app/android/app/src/main/kotlin/*/*/*/MainActivity.kt"
   ],
 
   "_platformIdentityEmailDomains": "Author identities on these domains are the forge/CI itself, not people. Dropping [bot] names alone is not enough: the Actions identity has a human-shaped name that occurs legitimately in workflows and docs.",

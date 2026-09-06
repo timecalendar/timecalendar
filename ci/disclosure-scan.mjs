@@ -37,15 +37,23 @@
 //     the author republishes the string it just caught, somewhere nobody thinks
 //     to scrub. Findings carry a location and a class, and nothing else.
 //
+// Two verdict layers use the same detectors. The whole contents of each
+// touched file are compared with a count-keyed pin; every added line, added or
+// renamed path, and commit message is checked without a pin. That second layer
+// prevents a delete-and-replace change from passing on an unchanged count.
+//
 // Usage: node ci/disclosure-scan.mjs [--base <ref>] [--head <ref>]
+//        node ci/disclosure-scan.mjs --generate-baseline [--head <ref>]
+//        node ci/disclosure-scan.mjs --check-baseline [--head <ref>]
 
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ALLOWLIST_PATH = resolve(HERE, "disclosure-allowlist.json");
+const BASELINE_RELATIVE_PATH = "ci/disclosure-baseline.json";
 
 // A derived token shorter than this is a word before it is an identity, and
 // would match prose everywhere.
@@ -420,15 +428,19 @@ export function structuralClasses(text, allowlist) {
   return [...structuralCounts(text, allowlist).keys()];
 }
 
-// The About screen names the people who built the app and links to their sites
-// deliberately, as user-facing product content. Listing those paths is benign —
-// it names a location, never a person — and is far safer than the alternative,
-// which would be putting the names themselves in an allowlist in a public
-// repository. An entry matches a file or a directory prefix.
+// A path that carries a load-bearing published identifier cannot be pinned: a
+// baseline item is keyed by path and would copy the match into the baseline.
+// This lane uses safe wildcard or prefix shapes and applies only to existing
+// path records, never to file content or a path introduced by the branch.
 export function isCreditPath(file, allowlist) {
-  return allowlist.creditPaths.some(
-    (prefix) => file === prefix || file.startsWith(prefix),
-  );
+  return allowlist.creditPaths.some((pattern) => {
+    if (!pattern.includes("*")) return file === pattern || file.startsWith(pattern);
+    const expression = pattern
+      .split("*")
+      .map(escapeRegExp)
+      .join("[^/]+");
+    return new RegExp(`^${expression}$`, "u").test(file);
+  });
 }
 
 function redactPathLocation(text, derivedPatterns, configured, allowlist) {
@@ -496,9 +508,13 @@ export function scanRecords(records, { derived, configured, allowlist }) {
   };
 
   for (const record of records) {
-    // On the credit surface an identity is the product, not a leak; the
-    // structural rules still run there.
-    const credited = record.file !== null && isCreditPath(record.file, allowlist);
+    // The path lane narrows only a pre-existing path. Added lines, commit
+    // messages, and paths created or renamed by this branch are never narrowed.
+    const credited =
+      record.source === "path" &&
+      !record.introduced &&
+      record.file !== null &&
+      isCreditPath(record.file, allowlist);
     if (!credited) {
       add(
         record,
@@ -616,6 +632,7 @@ export function collectRecords({ base, head, allowlist, cwd }) {
       line: null,
       location: path,
       text: path,
+      introduced: /^(?:A|C|R)/.test(parts[0]),
     });
   }
 
@@ -639,6 +656,244 @@ export function collectRecords({ base, head, allowlist, cwd }) {
 }
 
 // ---------------------------------------------------------------------------
+// Count-keyed baseline and whole-file layer
+// ---------------------------------------------------------------------------
+
+const baselineKey = (path, id) => `${path}\0${id}`;
+
+function validateLane(raw, lane) {
+  if (!Array.isArray(raw)) throw new Error(`${lane} must be an array`);
+  const seen = new Set();
+  return raw.map((entry, index) => {
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      Array.isArray(entry) ||
+      Object.keys(entry).sort().join(",") !== "count,id,path" ||
+      typeof entry.path !== "string" ||
+      !entry.path ||
+      entry.path.startsWith("/") ||
+      entry.path.split("/").includes("..") ||
+      typeof entry.id !== "string" ||
+      !entry.id ||
+      !Number.isInteger(entry.count) ||
+      entry.count < 1
+    ) {
+      throw new Error(`${lane}[${index}] must contain exactly path, id and a positive integer count`);
+    }
+    const key = baselineKey(entry.path, entry.id);
+    if (seen.has(key)) throw new Error(`${lane} contains duplicate path/id key at index ${index}`);
+    seen.add(key);
+    return entry;
+  });
+}
+
+export function parseBaseline(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw) || raw.version !== 1) {
+    throw new Error("baseline must be a version-1 object");
+  }
+  return {
+    ...raw,
+    entries: validateLane(raw.entries, "entries"),
+    ciEntries: validateLane(raw.ciEntries ?? [], "ciEntries"),
+  };
+}
+
+export function loadBaseline(path) {
+  if (!existsSync(path)) return null;
+  return parseBaseline(JSON.parse(readFileSync(path, "utf8")));
+}
+
+function classCounts(text, { derivedPatterns, configured, allowlist }) {
+  const counts = structuralCounts(text, allowlist);
+  const derivedCount = countUnexemptMatches(text, derivedPatterns, allowlist);
+  const configuredCount = countUnexemptMatches(text, configured, allowlist);
+  if (derivedCount) counts.set(FINDING_CLASSES.DERIVED, derivedCount);
+  if (configuredCount) counts.set(FINDING_CLASSES.CONFIGURED, configuredCount);
+  return counts;
+}
+
+function contentFindingsByClass(content, detectorOptions) {
+  const byClass = new Map();
+  content.split("\n").forEach((text, index) => {
+    for (const [className, count] of classCounts(text, detectorOptions)) {
+      if (!byClass.has(className)) byClass.set(className, []);
+      byClass.get(className).push({ line: index + 1, count });
+    }
+  });
+  return byClass;
+}
+
+function contentAt(head, path, cwd) {
+  const content = git(["show", `${head}:${path}`], cwd);
+  return content.includes("\0") ? null : content;
+}
+
+function trackedPaths(head, allowlist, cwd) {
+  const pathspec = [
+    "--",
+    ".",
+    ...allowlist.excludedPaths,
+    ":(exclude)ci/certificates/**",
+  ];
+  // `ls-tree` cannot evaluate exclude pathspecs. Let `ls-files` evaluate the
+  // scanner's pathspec, then intersect it with the exact tree so staged paths
+  // outside `head` cannot enter a generated baseline.
+  const included = new Set(
+    git(["ls-files", "-z", `--with-tree=${head}`, ...pathspec], cwd)
+      .split("\0")
+      .filter(Boolean),
+  );
+  return git(["ls-tree", "-r", "-z", "--name-only", head], cwd)
+    .split("\0")
+    .filter((path) => path && included.has(path));
+}
+
+function contentsAt(head, paths, cwd) {
+  const input = `${paths.map((path) => `${head}:${path}`).join("\n")}\n`;
+  const output = execFileSync("git", ["cat-file", "--batch"], {
+    cwd,
+    input,
+    maxBuffer: 256 * 1024 * 1024,
+  });
+  const contents = new Map();
+  let cursor = 0;
+  for (const path of paths) {
+    const headerEnd = output.indexOf(10, cursor);
+    if (headerEnd < 0) throw new Error(`cannot read git object header for ${path}`);
+    const header = output.subarray(cursor, headerEnd).toString("utf8");
+    const size = Number(header.split(" ").at(-1));
+    if (!Number.isInteger(size)) throw new Error(`cannot read git object for ${path}`);
+    const start = headerEnd + 1;
+    const content = output.subarray(start, start + size);
+    contents.set(path, content.includes(0) ? null : content.toString("utf8"));
+    cursor = start + size + 1;
+  }
+  return contents;
+}
+
+export function generateCiEntries({ head = "HEAD", derived, configured, allowlist, cwd }) {
+  const derivedPatterns = derived.map(compileLiteralPattern);
+  const entries = [];
+  const paths = trackedPaths(head, allowlist, cwd);
+  const contents = contentsAt(head, paths, cwd);
+  for (const path of paths) {
+    // A pin is keyed by path, so a path that is itself a finding cannot be
+    // represented without copying the disclosure into the baseline.
+    if (classCounts(path, { derivedPatterns, configured, allowlist }).size) continue;
+    const content = contents.get(path);
+    if (content === null) continue;
+    for (const [id, findings] of contentFindingsByClass(content, {
+      derivedPatterns,
+      configured,
+      allowlist,
+    })) {
+      const count = findings.reduce((sum, finding) => sum + finding.count, 0);
+      if (count > 0) entries.push({ path, id, count });
+    }
+  }
+  return entries.sort((a, b) => a.path.localeCompare(b.path) || a.id.localeCompare(b.id));
+}
+
+function changedFiles({ base, head, allowlist, cwd }) {
+  const pathspec = ["--", ".", ...allowlist.excludedPaths];
+  const output = git(
+    ["diff", "--no-color", "--name-status", "-M", `${base}..${head}`, ...pathspec],
+    cwd,
+  );
+  return output
+    .split("\n")
+    .filter(Boolean)
+    .filter((line) => !line.startsWith("D\t"))
+    .map((line) => line.split("\t").at(-1));
+}
+
+export function scanWholeFiles({ files, head, baseline, derived, configured, allowlist, cwd }) {
+  const pins = new Map(
+    (baseline?.ciEntries ?? []).map((entry) => [baselineKey(entry.path, entry.id), entry.count]),
+  );
+  const derivedPatterns = derived.map(compileLiteralPattern);
+  const findings = [];
+
+  for (const file of files) {
+    let content;
+    try {
+      content = contentAt(head, file, cwd);
+    } catch {
+      continue;
+    }
+    if (content === null) continue;
+    const byClass = contentFindingsByClass(content, {
+      derivedPatterns,
+      configured,
+      allowlist,
+    });
+    for (const [className, classFindings] of byClass) {
+      const total = classFindings.reduce((sum, finding) => sum + finding.count, 0);
+      if (total > (pins.get(baselineKey(file, className)) ?? 0)) {
+        const safePath = redactPathLocation(file, derivedPatterns, configured, allowlist);
+        findings.push(
+          ...classFindings.map(({ line, count }) => ({
+            source: "file",
+            location: `${safePath}:${line}`,
+            file: safePath,
+            line,
+            class: className,
+            count,
+          })),
+        );
+      }
+    }
+  }
+  return findings;
+}
+
+export function compareCiBaseline(committed, measured, { configuredAvailable = true } = {}) {
+  const actual = new Map(measured.map((entry) => [baselineKey(entry.path, entry.id), entry.count]));
+  const committedKeys = new Set(
+    committed.ciEntries.map((entry) => baselineKey(entry.path, entry.id)),
+  );
+  const findings = [];
+  for (const entry of committed.ciEntries) {
+    if (entry.id === FINDING_CLASSES.CONFIGURED && !configuredAvailable) continue;
+    const count = actual.get(baselineKey(entry.path, entry.id)) ?? 0;
+    if (entry.count > count) findings.push({ ...entry, measured: count, kind: "stale-pin" });
+  }
+  for (const entry of measured) {
+    if (
+      configuredAvailable &&
+      entry.id === FINDING_CLASSES.CONFIGURED &&
+      !committedKeys.has(baselineKey(entry.path, entry.id))
+    ) {
+      findings.push({ ...entry, measured: entry.count, kind: "unpinned-configured" });
+    }
+  }
+  return findings;
+}
+
+function formatBaseline(baseline) {
+  const formatLane = (entries) =>
+    entries
+      .map(
+        ({ path, id, count }) =>
+          `    { "path": ${JSON.stringify(path)}, "id": ${JSON.stringify(id)}, "count": ${count} }`,
+      )
+      .join(",\n");
+  return [
+    "{",
+    '  "version": 1,',
+    '  "entries": [',
+    formatLane(baseline.entries),
+    "  ],",
+    '  "ciEntries": [',
+    formatLane(baseline.ciEntries),
+    "  ]",
+    "}",
+    "",
+  ].join("\n");
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
@@ -648,6 +903,9 @@ function parseArgs(argv) {
     if (argv[i] === "--base") options.base = argv[++i];
     else if (argv[i] === "--head") options.head = argv[++i];
     else if (argv[i] === "--cwd") options.cwd = argv[++i];
+    else if (argv[i] === "--baseline") options.baseline = argv[++i];
+    else if (argv[i] === "--generate-baseline") options.generateBaseline = true;
+    else if (argv[i] === "--check-baseline") options.checkBaseline = true;
     else throw new Error(`unknown argument: ${argv[i]}`);
   }
   return options;
@@ -659,6 +917,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   const head = options.head ?? env.DISCLOSURE_HEAD ?? "HEAD";
   const baseRef = options.base ?? env.DISCLOSURE_BASE ?? "origin/main";
   const allowlist = loadAllowlist();
+  const baselinePath = resolve(cwd, options.baseline ?? BASELINE_RELATIVE_PATH);
 
   // Compiled before anything else: a half-loaded pattern list is the failure
   // that looks green, so it must not be able to reach the scan at all.
@@ -680,6 +939,62 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   const selfTest = selfTestConfigured(compiled);
   const configured = compiled.map((entry) => entry.regex);
 
+  const derived = deriveIdentityPatterns(readIdentities(head, cwd), allowlist);
+  let baseline;
+  try {
+    baseline = loadBaseline(baselinePath);
+  } catch (error) {
+    console.error(`::error::disclosure-scan: invalid baseline: ${error.message}`);
+    return 2;
+  }
+
+  if (options.generateBaseline) {
+    if (!baseline) {
+      console.error("::error::disclosure-scan: cannot generate ciEntries without an existing preflight baseline.");
+      return 2;
+    }
+    const ciEntries = generateCiEntries({ head, derived, configured, allowlist, cwd });
+    process.stdout.write(formatBaseline({ ...baseline, ciEntries }));
+    return 0;
+  }
+
+  if (options.checkBaseline) {
+    if (!baseline) {
+      console.error("::error::disclosure-scan: the baseline invariant requires a committed baseline.");
+      return 2;
+    }
+    const measured = generateCiEntries({ head, derived, configured, allowlist, cwd });
+    const configuredAvailable = configuredEntries.length > 0;
+    const drift = compareCiBaseline(baseline, measured, { configuredAvailable });
+    if (drift.length) {
+      const derivedPatterns = derived.map(compileLiteralPattern);
+      for (const finding of drift) {
+        const safePath = redactPathLocation(
+          finding.path,
+          derivedPatterns,
+          configured,
+          allowlist,
+        );
+        console.error(
+          `::error file=${safePath}::disclosure-scan: baseline invariant — ${finding.kind}, id=${finding.id}, committed=${finding.count}, measured=${finding.measured}`,
+        );
+      }
+      return 1;
+    }
+    const checkedEntries = baseline.ciEntries.filter(
+      (entry) => configuredAvailable || entry.id !== FINDING_CLASSES.CONFIGURED,
+    ).length;
+    console.log(
+      `disclosure-scan: baseline invariant holds for ${checkedEntries} reproducible CI entry/entries; preflight entries require out-of-repository pattern input.`,
+    );
+    if (!configuredEntries.length) {
+      console.log(
+        "disclosure-scan: configured source absent; invariant coverage is degraded to derived and structural classes.",
+      );
+    }
+    return 0;
+  }
+
   let base;
   try {
     base = git(["merge-base", baseRef, head], cwd).trim();
@@ -692,8 +1007,6 @@ export function main(argv = process.argv.slice(2), env = process.env) {
     );
     return 2;
   }
-
-  const derived = deriveIdentityPatterns(readIdentities(head, cwd), allowlist);
 
   // Counts only — a census that printed values would be the leak. This line is
   // also how the secret is verified: nobody can read it back through the API
@@ -744,6 +1057,16 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   );
 
   const findings = scanRecords(records, { derived, configured, allowlist });
+  const wholeFileFindings = scanWholeFiles({
+    files: changedFiles({ base, head, allowlist, cwd }),
+    head,
+    baseline,
+    derived,
+    configured,
+    allowlist,
+    cwd,
+  });
+  findings.push(...wholeFileFindings);
   if (!findings.length) {
     console.log("disclosure-scan: no findings.");
     return 0;
