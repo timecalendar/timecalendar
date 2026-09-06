@@ -1,7 +1,7 @@
 # Calendar naming and manual import epic
 
 **Date:** 2026-08-30  
-**Paperclip:** [TIM-274](https://paperclip.lyrolab.fr/TIM/issues/TIM-274)  
+**Paperclip:** `TIM-274`  
 **Status:** Ready to split into implementation tickets  
 **Products:** React Native mobile app and server
 

@@ -73,11 +73,12 @@ nothing else to commit there.)
 
 The bucket-scoped R2 keys are sealed into `timecalendar-ota-env-secret`. To rotate: create a
 new key in the dashboard (**R2 → API → Manage API tokens** — Object Read & Write, scoped to
-`timecalendar-ota`), re-seal, merge, delete the old key. Sealing runs on `devlt` — it has
-`kubectl` + `kubeseal` (in `~/.local/bin`) and the `paperclip-agent` kubeconfig, whose
-`paperclip-agent-kubeseal` Role allows online sealing (fetching the public sealing cert —
-never decryption, which only the in-cluster controller can do). Hand values to an agent via a
-file (e.g. `devlt:~/.config/timecalendar-ota/r2.env`), never chat. The sealing command:
+`timecalendar-ota`), re-seal, merge, delete the old key. Sealing runs on the **sealing host** —
+the workstation that has `kubectl` + `kubeseal` (in `~/.local/bin`) and the `paperclip-agent`
+kubeconfig, whose `paperclip-agent-kubeseal` Role allows online sealing (fetching the public
+sealing cert — never decryption, which only the in-cluster controller can do). Hand values to an
+agent via a file on that host (e.g. `~/.config/timecalendar-ota/r2.env`), never chat. The sealing
+command:
 
 ```bash
 printf '%s' '<value>' | kubeseal --raw \
@@ -149,10 +150,10 @@ build does **not** pick up the update ([doc 4 §4.7](./04-recommendation.md) tas
 | Postgres database        | `timecalendarota` created on the existing DO cluster `db-postgresql-fra1` (`f8f25297-bcbe-4caa-899a-2acef599c13c`)                                                                                                                                                                                                                                                                                                                                                    |
 | Postgres user            | `timecalendarota`, owner of the database; verified it can connect and create tables (PG 14). Password refetchable anytime with `doctl databases user get f8f25297-bcbe-4caa-899a-2acef599c13c timecalendarota`                                                                                                                                                                                                                                                        |
 | SealedSecret             | `timecalendar-ota-env-secret` pre-sealed with `DATABASE_URL` (private host `private-db-postgresql-fra1-…:25060`, `sslmode=require`) and a generated `ADMIN_PASSWORD`; committed to the platform repo by PR; R2 keys join it via §2.1. The admin password exists only in ciphertext until the app deploys — read it then, on this machine, with `kubectl get secret -n timecalendar-ota timecalendar-ota-env-secret -o jsonpath='{.data.ADMIN_PASSWORD}' \| base64 -d` |
-| devlt sealing capability | `kubectl` v1.33.4 + `kubeseal` 0.18.1 installed in `devlt:~/.local/bin`; `paperclip-agent-kubeseal` Role (kube-system, `services/proxy` scoped to the controller Service) applied and committed; verified end-to-end from devlt: cert fetch + seal both work                                                                                                                                                                                                          |
+| Sealing-host capability  | `kubectl` v1.33.4 + `kubeseal` 0.18.1 installed in `~/.local/bin` on the sealing host; `paperclip-agent-kubeseal` Role (kube-system, `services/proxy` scoped to the controller Service) applied and committed; verified end-to-end from that host: cert fetch + seal both work                                                                                                                                                                                        |
 | R2 bucket                | `timecalendar-ota` (WEUR), Terraform-managed via the `cloudflare/r2` module (platform PR #68, applied by CI); `CLOUDFLARE_API_TOKEN` wired into the plan/apply infra workflows and the README credentials table                                                                                                                                                                                                                                                       |
 | R2 access keys           | Hand-minted in the dashboard, bucket-scoped, sealed into `timecalendar-ota-env-secret` (platform PR #69). The secret is complete: `DATABASE_URL`, `ADMIN_PASSWORD`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`                                                                                                                                                                                                                                                        |
-| Machine audit            | `kubectl`, `doctl`, `gh` (samuelprak), Expo login, `kubeseal`, `terraform` (HCP login present) all working on this machine; `platform/.env` holds `DIGITALOCEAN_TOKEN`, `SPACES_*`, `HCLOUD_TOKEN`, `TF_VAR_grafana_auth`                                                                                                                                                                                                                                             |
+| Machine audit            | `kubectl`, `doctl`, `gh` (authenticated as the repository-owner account), Expo login, `kubeseal`, `terraform` (HCP login present) all working on the sealing host; `platform/.env` holds `DIGITALOCEAN_TOKEN`, `SPACES_*`, `HCLOUD_TOKEN`, `TF_VAR_grafana_auth`                                                                                                                                                                                                      |
 
 ## 5. Decisions locked at handover (agents: do not re-litigate)
 

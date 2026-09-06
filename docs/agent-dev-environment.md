@@ -309,14 +309,15 @@ Postgres and Redis, generate a dummy key and run:
 
 ## 5. Git worktree management
 
-Feature work is done in **git worktrees**, one per Paperclip issue, kept as siblings
-under `/home/dev/projects/perso/timecalendar-worktrees/`. The autonomous dev-cycle
-squad also has long-lived per-agent worktrees (`planner`, `applier`, `simplifier`,
-`reviewer`, `foundingengineer`). Example live layout:
+Feature work is done in **git worktrees**, one per Paperclip issue, kept together in a
+`<checkout>-worktrees/` directory that is a **sibling of the main checkout** — where
+`<checkout>` is wherever this repository is cloned on the machine. The autonomous
+dev-cycle squad also has long-lived per-agent worktrees (`planner`, `applier`,
+`simplifier`, `reviewer`, `foundingengineer`) in the same directory. Example live layout:
 
 ```
-/home/dev/projects/perso/timecalendar                  [main]   ← main checkout
-/home/dev/projects/perso/timecalendar-worktrees/
+<checkout>/                        [main]   ← main checkout
+<checkout>-worktrees/
   ├── foundingengineer   [agent/foundingengineer]
   ├── planner            [agent/planner]
   ├── reviewer           [agent/reviewer]

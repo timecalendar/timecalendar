@@ -4,7 +4,7 @@
 **Change:** `wire-mobile-activity-triggers`
 **ADR:** [049 — Wire Activity's triggers as independent edges into one seam, and let none of them
 fail its caller](../../mobile/architecture-book/decisions/049-activity-trigger-edges-and-failure-isolation.md)
-**For:** Samuel `(HUMAN: physical iOS and Android release-device pass for push, foreground and prune)`
+**For:** whoever runs the device passes `(HUMAN: physical iOS and Android release-device pass for push, foreground and prune)`
 
 ## What I need
 

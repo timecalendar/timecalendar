@@ -122,7 +122,7 @@ function HomeScreen({ platform, theme }: { platform: Platform; theme: Theme }) {
             <i className={styles.mosaicYellow} />
           </div>
           <p className={styles.eyebrow}>JEUDI 6 AOÛT</p>
-          <h2>Bonjour Samuel</h2>
+          <h2>Bonjour Camille</h2>
           <p>Une journée bien remplie, mais tout est sous contrôle.</p>
           <div className={styles.daySummary}>
             <span className={styles.eventDots} aria-hidden="true">

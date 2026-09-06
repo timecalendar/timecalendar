@@ -6,7 +6,7 @@ The historical prompt is reproduced below for audit. Do not execute it.
 
 ## Prompt
 
-You are working in `/Users/samuelprak/Projects/Perso/timecalendar`.
+You are working in `<checkout>`, this repository's checkout.
 
 Design, implement, benchmark, and integrate an owned React Native calendar timeline renderer that replaces `@howljs/calendar-kit`. This is not a visual-only rewrite. The current dependency has produced incorrect dates during mode changes, blank intermediate screens, multi-second rebuilds, excessive mounting work, and profiler crashes. Preserve the product behavior and renderer-independent domain logic, but do not port library-specific workarounds.
 

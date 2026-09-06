@@ -4,7 +4,7 @@
 **Roadmap:** Phase 06 Ship B (FCM-token-to-backend registration + subscription preferences)
 **Change:** `add-mobile-fcm-subscription`
 **ADR:** [027](../../../docs/mobile/architecture-book/decisions/027-fcm-subscription-registration.md)
-**For:** Samuel (needs a real device + the live server — the autonomous loop and CI cannot do either)
+**For:** whoever runs the device passes (needs a real device + the live server — the autonomous loop and CI cannot do either)
 
 This is the **device-only half** of Ship B's Definition of Done. CI proves the **write
 wiring** — `data/subscription.test.tsx` drives the REAL generated PUT mutation through the

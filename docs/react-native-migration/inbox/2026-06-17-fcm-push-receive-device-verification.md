@@ -4,7 +4,7 @@
 **Roadmap:** Phase 06 Ship A (FCM push receive + the messaging seam)
 **Change:** `add-mobile-fcm-messaging`
 **ADR:** [026](../../../docs/mobile/architecture-book/decisions/026-fcm-messaging-seam.md)
-**For:** Samuel (needs a real device + the Firebase console — the autonomous loop and CI cannot do this)
+**For:** whoever runs the device passes (needs a real device + the Firebase console — the autonomous loop and CI cannot do this)
 
 This is the **device-only delivery axis** for the push-receive ship. CI proves the seam
 **WIRING ONLY** — `src/firebase/firebase.test.ts` drives the mocked native messaging and
