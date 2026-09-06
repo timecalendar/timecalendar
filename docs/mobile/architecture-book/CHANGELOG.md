@@ -15,6 +15,12 @@
 - Updated the reduced-motion guidance to name Splash and onboarding as current feature owners,
   including onboarding's live feature-local hook; shared accessibility infrastructure remains
   deferred until another feature demonstrates the need.
+- Recorded the user-calendar management structure: bounded screen, row/menu, and native-switch
+  modules; one calendar-ID-keyed virtualized list; and a screen-owned optimistic visibility
+  controller that preserves single-flight writes across row unmounts, holds successful targets
+  until reactive acknowledgement, rolls failures back to the latest canonical value, and yields
+  immediately to later canonical changes. The existing event-source visibility seam is unchanged,
+  and the reversible source-only refactor adds no ADR.
 
 ## 2026-08-31
 

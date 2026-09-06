@@ -67,50 +67,46 @@ inside a parent touchable, and the container SHALL NOT declare `accessible={true
 - **THEN** the app navigates to the user-calendars management screen
 - **AND** the screen remains directly deep-linkable as a Stack sibling of the tabs
 
-### Requirement: Each row carries a visibility checkbox that toggles the calendar's `visible` flag
+### Requirement: Each row carries a native visibility switch that toggles the calendar's `visible` flag
 
-Each calendar row SHALL carry its visibility control as a single **row-level toggle**
-`Pressable` (merging the checked indicator and the name/school text into one accessibility
-element that spans the row, clearing the 48dp Android target floor) with
-`accessibilityRole="checkbox"` and `accessibilityState={{ checked: visible }}`, whose
-`accessibilityLabel` is the calendar's name and school built from the i18n template
-`userCalendars.rowLabel` ("{{name}}, {{school}}"), and whose `accessibilityHint` states that
-the control shows or hides the calendar (`userCalendars.visibilityHint`). The visible/hidden
-**state** SHALL live in `accessibilityState`, never in the label or the hint. Pressing the
-control SHALL call `setVisible(id, !visible)` through the observability-wrapped actions hook,
-and SHALL NOT announce the change explicitly (the `checked`-state change announces for free).
-The toggle SHALL give a pressed-state affordance (an Android foreground ripple and an iOS
-`pressed` background). The checked indicator SHALL be a checkmark (iOS
-`SymbolView name="checkmark"`, Android a `✓` glyph) tinted `onPrimary` on a `primaryStrong`
-fill — NOT a knockout dot whose fill resolves to the scheme background (which renders
-black-on-pink in dark mode). The redundant row text SHALL be hidden from assistive tech
-(`importantForAccessibility="no-hide-descendants"` / `accessibilityElementsHidden`) since the
-toggle's label already carries the name and school.
+Each calendar row SHALL carry a native React Native `Switch` whose value is derived from the
+screen-owned optimistic visibility operation for that calendar ID, falling back to the reactive
+canonical `visible` value when no operation remains. The switch SHALL expose the translated
+calendar-specific accessibility label and visibility hint, a calendar-ID testID, the existing
+theme track/thumb colors, a minimum 44-point target, and a large-font layout that places the
+control below the label without duplicating controller state locally. The redundant short label
+SHALL remain hidden from assistive technology.
 
-#### Scenario: Toggling a visible calendar hides it
+Activating the switch SHALL request `setVisible(id, nextValue)` through the existing
+observability-wrapped actions hook. The screen-owned controller SHALL render the target
+optimistically, ignore further events for that calendar while its write is unresolved, retain a
+successful target until the reactive read acknowledges it, and reveal the latest canonical value
+on failure. Acknowledgement SHALL retire the operation without a passive reset effect so a later
+external canonical change renders immediately. The switch SHALL NOT explicitly announce a
+successful change because its native checked-state change is announced by the platform.
 
-- **WHEN** the user presses the row toggle of a currently-visible calendar
-- **THEN** `setVisible(id, false)` runs and the reactive read re-renders the row as unchecked
+#### Scenario: Toggling a visible calendar hides it optimistically
 
-#### Scenario: Toggling a hidden calendar shows it
+- **WHEN** the native switch for a visible calendar emits `false`
+- **THEN** `setVisible(id, false)` runs once and the switch renders off immediately
+- **AND** the target remains rendered until acknowledgement or failure
 
-- **WHEN** the user presses the row toggle of a currently-hidden calendar
-- **THEN** `setVisible(id, true)` runs and the reactive read re-renders the row as checked
+#### Scenario: Toggling a hidden calendar shows it optimistically
 
-#### Scenario: The toggle carries state in accessibilityState, not the label or hint
+- **WHEN** the native switch for a hidden calendar emits `true`
+- **THEN** `setVisible(id, true)` runs once and the switch renders on immediately
 
-- **WHEN** assistive tech reads the row toggle
-- **THEN** the label conveys the calendar name and school (from `userCalendars.rowLabel`), the
-  hint conveys that it shows or hides the calendar (from `userCalendars.visibilityHint`), and
-  the checked/unchecked state is conveyed via `accessibilityState={{ checked }}` with no
-  "visible"/"hidden" wording baked into the label or hint
+#### Scenario: The native switch exposes accessible state and instructions
 
-#### Scenario: The checked indicator is legible in both color schemes
+- **WHEN** assistive technology reads the visibility control
+- **THEN** the native switch conveys its checked state
+- **AND** its translated label names the calendar and its hint explains the Home/Calendar effect
+- **AND** the redundant short visual label is hidden from assistive technology
 
-- **WHEN** a calendar is visible in either light or dark mode
-- **THEN** the checked indicator is a checkmark tinted `onPrimary` on a `primaryStrong` fill
-  (the AA-verified 5.87:1 pair), not a background-colored dot that inverts to black-on-pink in
-  dark mode
+#### Scenario: Large text preserves a usable switch target
+
+- **WHEN** the font scale reaches the existing large-text breakpoint
+- **THEN** the label and switch stack without shrinking the switch below its touch target
 
 ### Requirement: An add affordance routes to school selection
 
@@ -385,4 +381,107 @@ stored name longer than 100 characters SHALL still be displayed in full.
 - **WHEN** a calendar's stored name exceeds 100 characters
 - **THEN** it is displayed as stored, and renaming it requires a value of at most 100 trimmed
   characters
+
+### Requirement: The non-empty user-calendar collection is virtualized without changing surrounding states
+
+The management screen SHALL render a non-empty held-calendar collection through one React Native virtualized list keyed by `calendar.id`. The list SHALL own the existing visibility-description header, row rendering, inter-row spacing, ordinary bottom padding, and additional Android FAB clearance. The unresolved-read blank state, centered loaded-empty state, accessible write-error notice, safe-area width and horizontal insets, Android FAB, and rename dialog SHALL preserve their existing layout and lifecycle outside the virtualized collection.
+
+#### Scenario: A populated collection uses id-keyed virtualization
+
+- **WHEN** the loaded management screen receives one or more held calendars
+- **THEN** it renders them through a virtualized list whose item keys are their calendar ids
+- **AND** it does not wrap that list in another vertical scroll container
+
+#### Scenario: The list preserves its header and platform clearance
+
+- **WHEN** the populated list renders on either platform
+- **THEN** the visibility-description copy scrolls as the list header
+- **AND** the existing bottom padding is preserved
+- **AND** Android retains additional clearance so the final row does not sit beneath the FAB
+
+#### Scenario: Non-list states retain their composition
+
+- **WHEN** the read is unresolved, resolves empty, or a write failure is present
+- **THEN** the screen preserves the existing blank, centered empty, and accessible error behavior respectively
+- **AND** safe-area insets, the add affordance, and rename-dialog mounting are unchanged
+
+### Requirement: Calendar-management UI ownership remains bounded and internal
+
+The user-calendar management surface SHALL separate screen composition, calendar row/menu presentation, and visibility control/coordination into focused modules within `calendar-sources/ui`. No component in this surface SHALL be materially above 200 lines. The extraction SHALL preserve the existing public UI and feature barrels and SHALL obey the feature-sublayer and calendar-sources leaf boundaries.
+
+#### Scenario: Extracted modules preserve the public surface
+
+- **WHEN** the refactor is applied
+- **THEN** `UserCalendarsScreen` remains available from the existing public barrels
+- **AND** row/menu and visibility implementation details remain internal to `calendar-sources/ui`
+- **AND** no component in the surface is materially above 200 lines
+
+#### Scenario: The feature remains a dependency leaf
+
+- **WHEN** lint evaluates the extracted modules
+- **THEN** UI code reaches calendar-source data through its sibling data barrel
+- **AND** no calendar-sources module imports Activity or bypasses the owned native-chrome seam
+
+### Requirement: Optimistic visibility ordering is operation-keyed and survives row virtualization
+
+Visibility presentation SHALL be coordinated above virtualized rows by per-calendar operation records keyed by calendar id. An accepted toggle SHALL render its target immediately and start at most one persistence write for that calendar while the write is unresolved. Repeated input during that pending write SHALL be ignored. A failed write SHALL remove only its current operation and reveal the latest canonical value. A successful write SHALL retain its optimistic target while the live query still exposes the pre-write canonical value; when canonical state acknowledges that target, the operation SHALL retire without a passive effect-driven state reset. Any later external canonical change SHALL render immediately, and an old async completion SHALL NOT change a newer operation or canonical result.
+
+#### Scenario: Successful write remains optimistic before live-query echo
+
+- **WHEN** a visible calendar is toggled off and persistence resolves successfully before canonical state changes
+- **THEN** the switch renders off immediately and remains off while canonical state still reports on
+- **AND** only one persistence write is issued
+
+#### Scenario: Delayed canonical acknowledgement retires the operation
+
+- **WHEN** a successful optimistic target is later emitted by the live query
+- **THEN** the switch remains on that target without flashing the prior canonical value
+- **AND** the acknowledged operation is retired
+
+#### Scenario: Failed write rolls back to the latest canonical value
+
+- **WHEN** persistence for the current optimistic operation reports failure
+- **THEN** that operation is cleared
+- **AND** the switch renders the latest canonical value
+- **AND** the existing accessible write-failure notice remains available through the actions hook
+
+#### Scenario: Rapid repeated input is ignored while pending
+
+- **WHEN** the switch emits multiple repeated or opposing change events before the current write settles
+- **THEN** exactly one persistence write runs for that calendar
+- **AND** the displayed value remains the current operation's target
+
+#### Scenario: Later external canonical change replaces acknowledged state
+
+- **WHEN** canonical state acknowledges a successful target and later changes again externally
+- **THEN** the switch renders the later canonical value immediately
+- **AND** no retired optimistic value flashes or masks it
+
+#### Scenario: Stale completion cannot overwrite newer state
+
+- **WHEN** an async completion arrives for an operation id that is no longer current
+- **THEN** the completion is ignored
+- **AND** the current operation or canonical value remains displayed
+
+#### Scenario: Virtualized row remount preserves an active operation
+
+- **WHEN** a row unmounts and remounts while its write or canonical acknowledgement is outstanding
+- **THEN** its displayed target and one-write-at-a-time guard remain owned by the id-keyed controller
+- **AND** remounting does not start another write or reveal stale canonical state
+
+### Requirement: The refactor retains focused regression and compiler evidence
+
+Automated tests SHALL retain the existing behavior proofs for delete, rename, visibility, menu behavior on both platforms, accessibility, testIDs, translations, effective-name fallbacks, safe-area spacing, loading/empty/error states, and platform add affordances. New tests SHALL prove every optimistic ordering scenario above with controlled promises and canonical rerenders, without retries, extended query waits, or weakened matchers. React Doctor SHALL run against the changed files; its visibility-path try/finally finding SHALL be fixed only if single-flight release and explicit failure recovery remain clear and covered, and every remaining finding SHALL be classified rather than suppressed.
+
+#### Scenario: Focused tests prove preserved behavior and async ordering
+
+- **WHEN** focused Jest suites for the changed screen, row/menu, and visibility controller run
+- **THEN** all preserved management behavior remains green
+- **AND** successful acknowledgement, failed writes, rapid repeated input, delayed canonical echo, stale completion, remount, and later external canonical changes are covered
+
+#### Scenario: Compiler findings are handled with evidence
+
+- **WHEN** React Doctor runs on the changed files
+- **THEN** the former try/finally bailout is either removed by an explicit tested rewrite or retained with a documented classification
+- **AND** no finding is hidden by suppression without evidence
 

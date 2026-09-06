@@ -33,6 +33,16 @@ code and product specifications.
   Summary components receive the resulting map; they never query SQLite per event.
 - User-calendar rows contain server calendar IDs and durable source tokens. Notification
   registration sends server IDs, not tokens.
+- User-calendar management keeps screen composition, row/menu presentation, and the native
+  visibility `Switch` in separate `calendar-sources/ui` modules. A single `FlatList`, keyed by
+  calendar ID, owns the loaded non-empty collection and its introductory content; loading,
+  empty, write-error, add, and rename-dialog states remain screen-owned siblings.
+- Visibility writes are coordinated at screen/list scope by calendar-ID-keyed optimistic
+  operations, so virtualized row unmounts cannot discard them. Each calendar permits one
+  unresolved write at a time. A successful target remains visible until the reactive read
+  acknowledges it; failure reveals the latest canonical value, acknowledgement retires the
+  operation synchronously, and later canonical changes render without a stale optimistic mask.
+  This presentation state does not change the event-source visibility filter in `calendar`.
 - Each user-calendar row exposes one overflow menu, identical on both platforms, carrying
   Rename and Delete. Rename is a server write first: it PATCHes the token, then persists the
   name the **server returned**, never the string the user typed, so the renaming device
@@ -88,6 +98,10 @@ code and product specifications.
 - Environment switching owns all destructive coordination. Feature UI never clears SQLite/MMKV
   directly. Any future authentication/session feature must register its idempotent clear operation
   with the environment participant registry before shipping (ADR 043).
+
+The user-calendar module split, list virtualization, and optimistic controller are reversible
+implementation structure. They do not change storage, filtering, public interfaces, dependencies,
+or product behavior, so they require no additional ADR.
 
 ## Navigation
 
