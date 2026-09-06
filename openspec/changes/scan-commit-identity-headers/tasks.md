@@ -59,12 +59,12 @@
 
 ## 5. Local-green and CI proof
 
-- [ ] 5.1 Run `node --test ci/disclosure-scan.test.mjs` and confirm the black-box matching-header
+- [x] 5.1 Run `node --test ci/disclosure-scan.test.mjs` and confirm the black-box matching-header
   test is the CI proof: it fails without the lane, passes with it, and is executed by the existing
   scan job before the gate.
-- [ ] 5.2 Run `node ci/disclosure-scan.mjs --check-baseline` and a clean branch scan against the
+- [x] 5.2 Run `node ci/disclosure-scan.mjs --check-baseline` and a clean branch scan against the
   current merge base; confirm no baseline file or allowlist change was needed.
-- [ ] 5.3 Validate the OpenSpec change with `openspec validate scan-commit-identity-headers`, then
+- [x] 5.3 Validate the OpenSpec change with `openspec validate scan-commit-identity-headers`, then
   update task checkboxes and the operating documentation to match the implementation that actually
   landed.
 - [ ] 5.4 Run the contributor disclosure preflight over the finished branch and exact PR text using
