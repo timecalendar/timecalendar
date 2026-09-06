@@ -121,7 +121,7 @@ if [ "$code" = "000" ]; then
   # An nginx that starts and dies looks exactly like a stack that was never
   # started, so ask Compose what the container is actually doing. Empty means
   # no container (or no reachable daemon) — then the prompt below is right.
-  nginx_state="$("$ROOT/bin/server-compose.sh" ps --all --format '{{.State}} {{.Status}}' nginx 2>/dev/null || true)"
+  nginx_state="$(cd "$ROOT" && "$ROOT/bin/server-compose.sh" ps --all --format '{{.Status}}' nginx 2>/dev/null || true)"
   if [ -n "$nginx_state" ]; then
     echo "  nginx container: $nginx_state"
     echo "  Read its logs:   bin/server-compose.sh logs nginx"
