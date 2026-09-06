@@ -145,17 +145,17 @@ This is the only evidence that the change is done. Run it **after** every edit a
 - [x] 10.1 Build the tree scanner in the run's scratch directory. **Never write the pattern list,
       a pattern, or a finding's matched text into this repository** — a denylist is the list of
       strings that must not be published. Read the 16 patterns from the running agent's own
-      instructions and compile them case-insensitively, the way the scanner does. Honour each
-      pattern's `publishedIn` paths: a scan that ignores them reports the carved-out credit files
-      and reads as thirteen unfixed violations.
-- [x] 10.2 Walk every tracked file (`git ls-files`), matching each pattern against the file's whole
-      content **and** against its path. Report per-file occurrence counts.
-- [x] 10.3 The result is **exactly 5 paths carrying 7 occurrences**: the two archived About-screen
-      planning files at 2 each (D10), the two legacy Android package directories at 1 each (D6),
-      and the committed development TLS key at 1 (TIM-472). Zero occurrences in every other
-      tracked file. Check the **counts**, not just the path set — a path expected to carry 2 that
-      carries 1 has been half-scrubbed and a path-set diff calls that a pass. Any other path is a
-      regression introduced by a rewrite: fix it and re-run.
+      instructions and compile them case-insensitively, the way the scanner does.
+- [x] 10.2 Run both measurement modes and name them in the report. The raw baseline census scans
+      tracked-file content and deliberately ignores `publishedIn`; it records **17 files / 49
+      occurrences**. The current `publishedIn`-aware whole-tree scan matches both content and paths;
+      it reports **2 files / 2 occurrences**.
+- [x] 10.3 Compare per-file occurrence counts in both modes. The aware result contains only the
+      development TLS key and the mockup greeting, one occurrence each, and no file outside that
+      pair. The raw census includes the deliberate content that baseline generation must pin.
+      Check the **counts**, not just the path set — a path expected to carry 2 that carries 1 has
+      been half-scrubbed and a path-set diff calls that a pass. Any other path is a regression
+      introduced by a rewrite: fix it and re-run.
 - [x] 10.4 Confirm no protected string appears in the diff, in any commit message, or in the pull
       request body. The removals are removals — nothing quotes what it removed. Pattern ids and
       file paths are safe to write; matched text is not.
@@ -166,19 +166,19 @@ This is the only evidence that the change is done. Run it **after** every edit a
 
 Paths, occurrence counts and pattern ids only — never a matched string.
 
-- [x] 11.1 Tell TIM-473 the residue this change leaves for the committed baseline: **5 paths / 7
-      occurrences**, itemised as in 10.3. That is the complete standing footprint once this lands,
-      alongside the thirteen credit/legal files that `publishedIn` already silences.
-- [x] 11.2 Tell TIM-470 that the `mobile-about-screen` carve-out under-covers its own intent by one
-      path shape: it requires the capability name after a separator, so it covers the `specs/` file
-      and misses the sibling planning files in the same archived folder (D10). Widening it is that
-      ticket's call, not this one's.
-- [x] 11.3 Tell TIM-468 the gate consequence: a branch touching any of the 5 residual paths reports
-      occurrences no scrub can clear, and for the two path-only matches no `publishedIn` entry can
-      clear them either — `publishedIn` is keyed on the path and there the path *is* the match.
-- [x] 11.4 Confirm to the Founding Engineer that the carve-out on all-`added: false` reports can be
-      deleted once this merges, and name the 5 residual paths that will still fire afterwards so the
-      deletion is made with them in view.
+- [x] 11.1 Tell TIM-473 that the raw content census to regenerate from is **17 files / 49
+      occurrences before any configured exclusion**. The generator deliberately ignores
+      `publishedIn`; it must derive its own count-keyed entries rather than copy the aware result.
+- [x] 11.2 Tell TIM-470 that its current `mobile-about-screen` expression already covers the two
+      archived planning files. No wider content carve-out is required for them. Preserve only the
+      permanent path anchors once generated baseline entries replace content carve-outs.
+- [x] 11.3 Tell TIM-468 that the aware scan reports **2 files / 2 occurrences** after this scrub.
+      The two Android path-only matches are already handled by permanent `publishedIn` anchors;
+      they cannot be represented by a count-keyed baseline because each entry is keyed by path.
+- [x] 11.4 Confirm to the Founding Engineer that this scrub alone does not justify deleting the
+      temporary all-`added: false` disposition: the generated baseline and the two separately owned
+      residuals must be accounted for first. The mockup follow-up must use neutral sample copy, not
+      a new `publishedIn` entry.
 
 ## 12. Close out
 

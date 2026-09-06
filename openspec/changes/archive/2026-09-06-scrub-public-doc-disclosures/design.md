@@ -17,33 +17,20 @@ measurement is the acceptance evidence and it runs *after* the edits, never befo
 ### The measurement
 
 The scan compiles each pattern case-**in**sensitively (`gi`) unless an entry opts out, and none
-does. It matches a file's whole **content** and also its **path**, and a pattern may carry a
-`publishedIn` list of paths where that string is the project's own published identity rather
-than a leak — a copyright line, an author credit, a legal notice. `publishedIn` suppresses the
-finding entirely, so a carved-out file reports nothing at all rather than reporting and being
-excused.
+does. Two measurement modes answer different questions and must not share a result label:
 
-Run that way over all 2 583 tracked files at this branch's head, the tree reports **35 paths
-carrying 60 occurrences**, split four ways:
+- The **raw baseline census** checks tracked-file content and deliberately ignores `publishedIn`,
+  just as `disclosure-baseline` does. At this branch's head it records **17 files / 49
+  occurrences**. That is the input from which a count-keyed content baseline is generated.
+- The current **`publishedIn`-aware whole-tree scan** checks both content and paths. It suppresses
+  the project's published credit and legal-identity content plus the permanent Android package
+  path anchors (D6). At this branch's head it reports **2 files / 2 occurrences**: the committed
+  development TLS key and the mockup greeting.
 
-| Set | Paths | Occurrences | Disposition |
-| --- | --- | --- | --- |
-| A — genuine violations | 29 | 52 | scrubbed by this change |
-| B — spec text quoting the shipped author credit | 2 | 4 | untouched (D10) |
-| C — legacy Android package directories | 2 | 2 | untouched, path-only (D6) |
-| D — committed development TLS key | 1 | 1 | untouched, TIM-472's |
-| E — web mockup greeting | 1 | 1 | untouched, pending a ruling (D11) |
-
-**The expected post-change hit set is therefore 6 paths carrying 8 occurrences** — sets B, C,
-D and E — and zero in the other 2 577 files.
-
-An earlier pass of this design put the baseline at 48 paths / 103 occurrences and the expected
-set at 19 paths. That pass predates `publishedIn` reaching the deployed list. Thirteen of the
-seventeen files that pass called out — `LICENSE`, the privacy policy, the About screen and its
-test, both locale files, the Maestro flow, the web footer and layout, the legacy Flutter About
-screen, and the four archived/live `mobile-about-screen` and `mobile-changelog` **spec** files —
-are now carved out by path and report nothing. They are not in the expected set because they
-produce no finding to expect. The four that still fire are sets B and D.
+The scrub itself accounts for the difference from the corrected pre-change raw census: 29 files /
+52 occurrences were removed from 46 files / 101 occurrences, leaving 17 / 49. The path anchors
+are deliberately absent from that arithmetic because a baseline census cannot encode a matching
+path. The aware scan is a separate present-state result, not a smaller baseline census.
 
 ## Decisions
 
@@ -136,10 +123,11 @@ form. That is a fact about the pattern, not about these files, and the fix is **
 the pattern: the identical dotted-to-slash form appears in a repository url that this change is
 scrubbing on purpose, so relaxing the boundary would blind the scan to a real violation.
 
-**Consequence.** TIM-468 and TIM-473 need to know that a branch touching either file reports a
-path finding that no scrub can clear, and that no `publishedIn` entry can clear it either:
-`publishedIn` is keyed on the path, and here the path *is* the match. It has to be a baseline
-entry or nothing. That is a reporting obligation on this change, not a blocker for it.
+**Consequence.** These two paths are the permanent `publishedIn` case. A count-keyed baseline
+cannot represent either finding because each baseline entry is keyed by the matching path; trying
+to pin it would put the protected value into the baseline itself. The out-of-repository pattern
+list can safely carry the path expression and already does. TIM-468 and TIM-473 must therefore
+retain these path anchors when content carve-outs move to generated baseline entries.
 
 ### Decision D7 — no spec delta, and no ADR
 
@@ -182,11 +170,11 @@ given service. The alias is a name only someone with existing access can resolve
 nothing to anyone else while disclosing an internal host. Note that this document is exploration,
 not a rule file, so the rewrite is not constrained by anything in the Architecture Book.
 
-### Decision D10 — the two archived About-screen planning files are excluded, and go to the baseline
+### Decision D10 — the two archived About-screen planning files are excluded, and enter the raw census
 
 **Decision.** `openspec/changes/archive/2026-08-25-add-mobile-about-screen/design.md` (2
-occurrences, line 118) and `.../tasks.md` (2 occurrences, line 29) are **not** scrubbed. They are
-set B of the expected hit set, and they are reported to TIM-473 for a count-keyed baseline entry.
+occurrences, line 118) and `.../tasks.md` (2 occurrences, line 29) are **not** scrubbed. The raw
+baseline census records them, while the current `publishedIn`-aware scan suppresses them.
 
 **Why.** Both lines are describing the *content of the shipped credit row* — the design file
 records which developer names and destinations the About screen renders; the task file records
@@ -196,20 +184,10 @@ disagree with the UI it planned, which is the desynchronisation the credit exclu
 prevent. The signed-off ruling is explicit that the deliberate credit is a product decision and
 that nothing may be scrubbed to turn a gate green.
 
-**Why not `publishedIn`.** The deployed carve-out for this category is
-`^openspec/(?:specs|changes/archive/[^/]*)/.*mobile-(?:about-screen|changelog)`. It requires the
-capability name to appear *after* a path separator, so it covers
-`…/2026-08-25-add-mobile-about-screen/specs/mobile-about-screen/spec.md` and misses the sibling
-`design.md` and `tasks.md`, whose folder segment carries the same capability name. The carve-out
-under-covers its own stated intent by one path shape. Widening it is the pattern list's call
-(TIM-470) and not this change's, and the standing instruction is that a scrub ticket does not add
-`publishedIn` entries. So these two are recorded, not suppressed and not scrubbed.
-
-**Consequence to flag.** This is the one place where the corrected target list and the exclusion
-ruling disagree, and the disagreement is real rather than a stale measurement: the list is the
-scanner's output, the ruling is the product decision, and both are right. Until TIM-470 widens the
-carve-out or TIM-473 records these two, a branch touching either file reports two occurrences it
-must not fix.
+**Current scanner contract.** The deployed expression covers both archived planning files. They
+therefore do not appear in the current aware result. `disclosure-baseline` ignores `publishedIn`
+by design, so its raw census still records all four occurrences; that is what lets a generated
+count-keyed baseline replace the content carve-out later without changing layer A's verdict.
 
 ### Decision D11 — the mockup greeting is left untouched, and the argument is referred upward
 
@@ -225,18 +203,14 @@ identity. It reads differently from the About screen, the footer, `LICENSE` and 
 which name the author *as* the author: remove the name there and the document becomes false or the
 product loses a credit it deliberately ships.
 
-**Why the change does not act on it anyway.** The exclusion set is signed off in writing and names
-this page explicitly, and the ruling admits marginal cases in one direction only — a file may move
-*into* the exclusion set when inspection shows it is deliberate published content, never out of it.
-An argument that a signed-off exclusion was misclassified is exactly the case that has to go back
-to the person who signed it, because the alternative is a stage re-deciding a product question on
-its own reading. Being right about the merits does not convert into authority over the set.
+**Why the change does not act on it anyway.** The scrub stage referred the classification instead
+of overriding the signed-off exclusion set. The later ruling confirms that the value is sample
+data, not credit, and directs a bounded follow-up to replace it with neutral sample copy. This
+change still leaves the line untouched, and no permanent `publishedIn` entry is added for it.
 
-**Consequence to flag while it stands.** No `publishedIn` path covers this file, so unlike the rest
-of the exclusion set it is not carved out of the scan. Until it is either reclassified or given a
-`publishedIn` entry under TIM-470, a branch touching this page reports one occurrence it must not
-fix. That is the same shape as the two entries flagged above, and it is the concrete cost of
-leaving the question open.
+**Consequence while the follow-up is pending.** No `publishedIn` path covers this file, so the
+aware scan reports its one pre-existing occurrence. The follow-up removes it by changing the
+sample copy; a carve-out would preserve the wrong classification.
 
 ## Verification strategy
 
@@ -245,12 +219,14 @@ Acceptance is a single mechanical measurement, and it is the only evidence that 
 1. Build the tree scanner in the run's scratch directory — **never in the repository**. A denylist
    is the list of strings that must not be published, so a committed copy publishes them, in the
    repository it was meant to protect.
-2. Read the 16 patterns out of the running agent's own instructions, compile them the way the
-   scanner does (`gi`), honour each pattern's `publishedIn` paths, and walk every tracked file:
-   the file's whole content **and** its path.
-3. Diff the resulting hit set against the expected **6 paths / 8 occurrences** — sets B, C, D and E.
-   Zero occurrences anywhere else. Compare occurrence counts, not path counts: a path that should
-   carry 2 and carries 1 has been half-scrubbed, which a path-set diff reports as a pass.
+2. Read the 16 patterns out of the running agent's own instructions and compile them the way the
+   scanner does (`gi`). Run the raw content census with `publishedIn` ignored and compare its
+   per-file counts: **17 files / 49 occurrences**.
+3. Run the `publishedIn`-aware whole-tree scan over content and paths. Its separate result is
+   **2 files / 2 occurrences**, one in the development TLS key and one in the mockup. Zero
+   occurrences outside those two files. Compare occurrence counts, not only the path set: a path
+   expected to carry 2 that carries 1 has been half-scrubbed, which a path-set diff reports as a
+   pass.
 
 Two traps this design accounts for explicitly:
 
