@@ -97,6 +97,42 @@ case "$SCENARIO" in
     emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
     exit 0
     ;;
+  empty_command_record)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands
+      exit 59
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  pending_assertion_in_restart_epoch)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands \
+        launchAppCommand:COMPLETED assertConditionCommand:PENDING \
+        applyConfigurationCommand:RUNNING
+      exit 59
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  run_flow_never_completed)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands launchAppCommand:COMPLETED runFlowCommand:RUNNING
+      exit 59
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  evaluated_assertion_before_open_link)
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands \
+        launchAppCommand:COMPLETED assertConditionCommand:COMPLETED \
+        openLinkCommand:RUNNING
+      exit 59
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
   launch_never_completed)
     # The captured iOS attempt-2 shape (run 33187454002, flow `about`): the
     # process died mid-launch and printed NO exception text anywhere. Only the
@@ -447,6 +483,20 @@ retryable_case session_never_opened_flow 'a session that never opened the flow'
 grep -q 'no command record' "$fixture/output" || \
   fail 'the missing per-flow command record was not reported'
 
+retryable_case empty_command_record 'a parseable record with zero commands'
+grep -Fq '0 command(s) recorded, last=none status=none' "$fixture/output" || \
+  fail 'the empty command record never reached the classifier'
+empty_command_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+
+retryable_case pending_assertion_in_restart_epoch 'a pending assertion inside the restart epoch'
+pending_assertion_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+
+retryable_case run_flow_never_completed 'a startup-only record ending in runFlow'
+run_flow_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+
+retryable_case evaluated_assertion_before_open_link 'an evaluated assertion before an openLink restart boundary'
+open_link_boundary_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
+
 retryable_case launch_never_completed 'the captured launchApp-never-completed shape'
 grep -Fq 'last=launchAppCommand status=RUNNING' "$fixture/output" || \
   fail 'the classifier did not report the structural evidence it decided on'
@@ -523,6 +573,81 @@ assert_count 1 '^logs$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
 
 terminal_case malformed_command_entry 58 'a malformed command entry'
+
+# --- Mutation matrix: each new fixture isolates one classifier branch --------
+make_classifier_mutant() {
+  local mutation="$1" output="$2"
+  node - "$CLASSIFIER" "$output" "$mutation" <<'NODE'
+import fs from "node:fs"
+
+const [sourcePath, outputPath, mutation] = process.argv.slice(2)
+const replacements = {
+  assertion_family: ["isAssertionCommand(kind)", "false"],
+  run_flow_startup: [
+    '  "openLinkCommand",\n  "runFlowCommand",\n])',
+    '  "openLinkCommand",\n])',
+  ],
+  open_link_boundary: [
+    'const RESTART_BOUNDARY_COMMANDS = new Set([\n  "launchAppCommand",\n  "stopAppCommand",\n  "openLinkCommand",\n])',
+    'const RESTART_BOUNDARY_COMMANDS = new Set([\n  "launchAppCommand",\n  "stopAppCommand",\n])',
+  ],
+  empty_record: [
+    "if (commands.length === 0) return true",
+    "if (commands.length === 0) return false",
+  ],
+}
+
+const replacement = replacements[mutation]
+if (replacement === undefined) throw new Error(`unknown mutation: ${mutation}`)
+
+const source = fs.readFileSync(sourcePath, "utf8")
+const [before, after] = replacement
+const occurrences = source.split(before).length - 1
+if (occurrences !== 1) {
+  throw new Error(`${mutation} matched ${occurrences} classifier fragment(s), expected 1`)
+}
+fs.writeFileSync(outputPath, source.replace(before, after))
+NODE
+}
+
+assert_mutant_verdict() {
+  local fixture_name="$1" mutation="$2" expected="$3" classifier="$4" record="$5"
+  local actual=terminal
+  if node "$classifier" "$record" >/dev/null 2>&1; then
+    actual=retryable
+  fi
+  [ "$actual" = "$expected" ] || \
+    fail "$fixture_name was $actual under $mutation mutation, expected $expected"
+}
+
+assertion_mutant="$TEST_ROOT/classifier-without-assertion-family.mjs"
+run_flow_mutant="$TEST_ROOT/classifier-without-run-flow-startup.mjs"
+open_link_mutant="$TEST_ROOT/classifier-without-open-link-boundary.mjs"
+empty_record_mutant="$TEST_ROOT/classifier-without-empty-record-branch.mjs"
+make_classifier_mutant assertion_family "$assertion_mutant"
+make_classifier_mutant run_flow_startup "$run_flow_mutant"
+make_classifier_mutant open_link_boundary "$open_link_mutant"
+make_classifier_mutant empty_record "$empty_record_mutant"
+
+assert_mutant_verdict pending_assertion assertion_family terminal "$assertion_mutant" "$pending_assertion_record"
+assert_mutant_verdict pending_assertion run_flow_startup retryable "$run_flow_mutant" "$pending_assertion_record"
+assert_mutant_verdict pending_assertion open_link_boundary retryable "$open_link_mutant" "$pending_assertion_record"
+assert_mutant_verdict pending_assertion empty_record retryable "$empty_record_mutant" "$pending_assertion_record"
+
+assert_mutant_verdict run_flow assertion_family retryable "$assertion_mutant" "$run_flow_record"
+assert_mutant_verdict run_flow run_flow_startup terminal "$run_flow_mutant" "$run_flow_record"
+assert_mutant_verdict run_flow open_link_boundary retryable "$open_link_mutant" "$run_flow_record"
+assert_mutant_verdict run_flow empty_record retryable "$empty_record_mutant" "$run_flow_record"
+
+assert_mutant_verdict open_link_boundary assertion_family retryable "$assertion_mutant" "$open_link_boundary_record"
+assert_mutant_verdict open_link_boundary run_flow_startup retryable "$run_flow_mutant" "$open_link_boundary_record"
+assert_mutant_verdict open_link_boundary open_link_boundary terminal "$open_link_mutant" "$open_link_boundary_record"
+assert_mutant_verdict open_link_boundary empty_record retryable "$empty_record_mutant" "$open_link_boundary_record"
+
+assert_mutant_verdict empty_record assertion_family retryable "$assertion_mutant" "$empty_command_record"
+assert_mutant_verdict empty_record run_flow_startup retryable "$run_flow_mutant" "$empty_command_record"
+assert_mutant_verdict empty_record open_link_boundary retryable "$open_link_mutant" "$empty_command_record"
+assert_mutant_verdict empty_record empty_record terminal "$empty_record_mutant" "$empty_command_record"
 
 # --- Mutation proof: the boundary and global-failure guards are load-bearing --
 boundary_mutant="$TEST_ROOT/classifier-without-restart-boundary.mjs"
