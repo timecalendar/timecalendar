@@ -603,6 +603,73 @@ that native proof.
 locally instead (where the host supports it). Path-filtered jobs that are skipped do
 not report a status; none are _required_ checks today.
 
+### Disclosure scan — `ci/disclosure-scan.mjs`
+
+This repository is public. The `scan-disclosure` job in `ci-build-deploy.yml` fails a
+branch that would publish an identifying string — a personal name, login, address, or
+home directory — into it, over the added lines, the file paths, and the commit messages
+the branch would publish. It runs on every push and needs no configuration.
+
+Why a job and not a rule: the rule is already written down, and it is what failed. On a
+change about identity or authentication the accurate observation and the forbidden
+string are the same text, so the sentence reads as correct to every reviewer, because it
+is correct. A grep for _categories_ prescribes a mechanical act and supplies nothing
+mechanical to act with.
+
+Three layers, each independent:
+
+1. **Derived** — identities taken from this repository's own commit authors. They are
+   already public in the history, so reading them discloses nothing and configures
+   nothing. Platform and bot identities are dropped.
+2. **Structural** — shapes, not values: an address on a domain that is not allowlisted,
+   a bare profile URL, a home directory, a co-author trailer that is not a role address.
+3. **Configured** — the optional `DISCLOSURE_PATTERNS` repository secret, for strings the
+   history does not contain. It is absent on forks and until an owner sets it; its
+   absence degrades coverage and never disables layers 1–2. Every run logs which layers
+   were active, as counts only, so its presence is verifiable from the log alone.
+
+   Each nonblank line is a regular expression, optionally followed by ` :: ` and a probe
+   string that the expression must match. The scanner splits on the first delimiter, so
+   the probe may contain it; a pattern that needs to match the delimiter can express a
+   colon with a character class. Entries are separated only by newlines because commas
+   are regular-expression syntax. An expression that does not compile, or that does not
+   match its probe, fails closed by line number without printing either column.
+
+   The census reports `present, N entries, N compiled, self-test C/N`. A pattern-only
+   entry is active but has no positive control, so it contributes to the entry and
+   compiled counts while the scanner explicitly reports it as unverified. Full self-test
+   coverage proves each supplied probe matched; it does not prove that a pattern covers
+   every value the operator intended.
+
+Two properties are load-bearing:
+
+- **No denylist is committed.** A denylist is a list of the exact strings that must not
+  be published, so a copy inside the repository it guards publishes them. Patterns are
+  derived at run time or injected as a secret. `ci/disclosure-allowlist.json` is the
+  inverse — it may only ever hold strings that are already safe to publish.
+- **A finding never prints what it matched.** Actions logs on a public repository are
+  public, so a gate that echoed the offending line to help the author would republish
+  the string it just caught, somewhere nobody thinks to scrub. Findings carry a location
+  and a class, and nothing else — open the location locally to see the match.
+
+Clearing a failure: scrub the string, or, if it is benign, add the applicable public-safe
+domain, reserved route, role address, product identifier, credit path, or narrow home-path
+prefix to the allowlist. Home-path entries are prefixes, never arbitrary account names:
+allowlisting an account would hide every directory below it, including the host layout the
+rule exists to catch. Two published identifiers — the reverse-DNS application id and the
+mobile backend project id — embed a personal handle, are fixed at creation, and sit in
+committed native config; both are exempted by shape, never by naming them.
+
+The About screen credits the people who built the app and links to their sites, on
+purpose, as user-facing content. Those paths are listed in the allowlist as
+`creditPaths`, which names a location and never a person — the alternative, putting the
+names themselves in a list in a public repository, is the hazard this gate exists to
+prevent. The structural rules still run there.
+
+Tests: `node --test ci/disclosure-scan.test.mjs`. They run in the same job, ahead of the
+scan, and every fixture is synthetic and assembled at run time so that the test file
+itself is not a finding.
+
 ### OpenAPI contract drift
 
 `openapi/openapi.json` is the single server↔mobile contract. Regenerate it with
