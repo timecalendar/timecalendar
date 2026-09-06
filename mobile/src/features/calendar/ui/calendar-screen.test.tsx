@@ -1,4 +1,5 @@
 import {
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -693,19 +694,16 @@ describe("CalendarScreen — month title + Today action", () => {
 // receives the resolved zone as its timeZone prop and a zone day-key
 // initialDate, so calendar-kit's internal day division agrees with ours.
 describe("CalendarScreen — display zone threading", () => {
-  let mounted: Awaited<ReturnType<typeof render>> | undefined
-
   afterEach(async () => {
     try {
-      await mounted?.unmount()
+      await cleanup()
     } finally {
-      mounted = undefined
       remove(SETTINGS_KEYS.timezone)
     }
   })
 
   it("feeds the resolved display zone and its day-key to the grid", async () => {
-    mounted = await render(<CalendarScreen />)
+    await render(<CalendarScreen />)
     expect(screen.getByTestId("grid-time-zone").props.accessibilityLabel).toBe(
       ZONE,
     )
@@ -716,7 +714,7 @@ describe("CalendarScreen — display zone threading", () => {
 
   it("feeds an explicit preference zone to the grid", async () => {
     setTimezonePreference("Pacific/Noumea")
-    mounted = await render(<CalendarScreen />)
+    await render(<CalendarScreen />)
     expect(screen.getByTestId("grid-time-zone").props.accessibilityLabel).toBe(
       "Pacific/Noumea",
     )

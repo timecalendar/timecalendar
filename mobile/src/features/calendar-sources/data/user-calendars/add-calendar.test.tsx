@@ -32,6 +32,21 @@ const dto = {
   createdAt: "2026-06-10T08:00:00.000Z",
 }
 
+async function expectActRejection(
+  action: () => Promise<unknown>,
+  expected: Error,
+) {
+  let rejection: unknown
+  await act(async () => {
+    try {
+      await action()
+    } catch (error) {
+      rejection = error
+    }
+  })
+  expect(rejection).toEqual(expected)
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   mockUpsert.mockResolvedValue(undefined)
@@ -94,18 +109,14 @@ describe("useAddCalendar", () => {
       .mockRejectedValueOnce(new Error("resolve boom"))
 
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-    let rejection: unknown
-    await act(async () => {
-      try {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+    await expectActRejection(
+      () =>
+        result.current.addCalendarFromUrl("https://example.com/cal.ics", {
           name: "",
           schoolName: "",
-        })
-      } catch (error) {
-        rejection = error
-      }
-    })
-    expect(rejection).toEqual(new Error("resolve boom"))
+        }),
+      new Error("resolve boom"),
+    )
 
     expect(mockUpsert).not.toHaveBeenCalled()
     await waitFor(() => expect(result.current.isError).toBe(true))
@@ -117,18 +128,14 @@ describe("useAddCalendar", () => {
       .mockRejectedValueOnce(new Error("boom"))
 
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-    let rejection: unknown
-    await act(async () => {
-      try {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+    await expectActRejection(
+      () =>
+        result.current.addCalendarFromUrl("https://example.com/cal.ics", {
           name: "",
           schoolName: "",
-        })
-      } catch (error) {
-        rejection = error
-      }
-    })
-    expect(rejection).toEqual(new Error("boom"))
+        }),
+      new Error("boom"),
+    )
     await waitFor(() => expect(result.current.isError).toBe(true))
 
     await act(() => {
@@ -147,18 +154,14 @@ describe("useAddCalendar", () => {
     mockUpsert.mockRejectedValueOnce(new Error("upsert boom"))
 
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-    let rejection: unknown
-    await act(async () => {
-      try {
-        await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
+    await expectActRejection(
+      () =>
+        result.current.addCalendarFromUrl("https://example.com/cal.ics", {
           name: "",
           schoolName: "",
-        })
-      } catch (error) {
-        rejection = error
-      }
-    })
-    expect(rejection).toEqual(new Error("upsert boom"))
+        }),
+      new Error("upsert boom"),
+    )
 
     await waitFor(() => expect(result.current.isError).toBe(true))
   })

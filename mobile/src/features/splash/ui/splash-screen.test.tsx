@@ -1,4 +1,4 @@
-import { act, render } from "@testing-library/react-native"
+import { act, cleanup, render } from "@testing-library/react-native"
 import { AccessibilityInfo, Animated } from "react-native"
 
 import { SplashScreen } from "./splash-screen"
@@ -68,8 +68,6 @@ describe("SplashScreen", () => {
       "isReduceMotionEnabled",
     )
     const timing = jest.spyOn(Animated, "timing")
-    let mounted: Awaited<ReturnType<typeof render>> | undefined
-
     beforeEach(() => {
       mockUseAppReady.mockReturnValue(true)
       jest.useFakeTimers({ doNotFake: ["queueMicrotask"] })
@@ -77,13 +75,12 @@ describe("SplashScreen", () => {
 
     afterEach(async () => {
       try {
-        await mounted?.unmount()
+        await cleanup()
         await act(async () => {
           jest.runOnlyPendingTimers()
           await Promise.resolve()
         })
       } finally {
-        mounted = undefined
         timing.mockClear()
         isReduceMotionEnabled.mockReset().mockResolvedValue(false)
         jest.useRealTimers()
@@ -93,8 +90,7 @@ describe("SplashScreen", () => {
     it("dismisses with no animation scheduled under reduced motion", async () => {
       isReduceMotionEnabled.mockResolvedValueOnce(true)
 
-      mounted = await render(<SplashScreen />)
-      const { queryByRole } = mounted
+      const { queryByRole } = await render(<SplashScreen />)
 
       // Flush the async reduced-motion read and the dismissal microtask it
       // unblocks (the branch the layer lint can't see): the read resolves, the
@@ -112,8 +108,7 @@ describe("SplashScreen", () => {
     it("schedules the fade and dismisses once ready when motion is allowed", async () => {
       isReduceMotionEnabled.mockResolvedValueOnce(false)
 
-      mounted = await render(<SplashScreen />)
-      const { queryByRole } = mounted
+      const { queryByRole } = await render(<SplashScreen />)
 
       // Flush the reduced-motion read so the fade is scheduled, then run the
       // fade duration so its completion callback unmounts the overlay.

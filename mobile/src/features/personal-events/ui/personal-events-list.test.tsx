@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react-native"
+import { cleanup, render } from "@testing-library/react-native"
 import { fromZonedTime } from "date-fns-tz"
 
 import { usePersonalEvents } from "@/features/personal-events/data"
@@ -25,13 +25,10 @@ const mockUsePersonalEvents = usePersonalEvents as jest.MockedFunction<
 >
 
 describe("PersonalEventsList", () => {
-  let mounted: Awaited<ReturnType<typeof render>> | undefined
-
   afterEach(async () => {
     try {
-      await mounted?.unmount()
+      await cleanup()
     } finally {
-      mounted = undefined
       remove(SETTINGS_KEYS.timezone)
     }
   })
@@ -90,8 +87,7 @@ describe("PersonalEventsList", () => {
         description: undefined,
       },
     ])
-    mounted = await render(<PersonalEventsList />)
-    const { getByText } = mounted
+    const { getByText } = await render(<PersonalEventsList />)
 
     expect(getByText("1 Jan 14:00 – 1 Jan 15:00")).toBeTruthy()
   })
