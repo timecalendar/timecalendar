@@ -647,7 +647,7 @@ export function collectRecords({ base, head, allowlist, cwd }) {
   // then parse each raw commit object along boundaries Git does not permit in
   // an identity header: newline-delimited headers and the blank line before the
   // message.
-  const hashes = git(["rev-list", "--no-merges", range], cwd).split("\n").filter(Boolean);
+  const hashes = git(["rev-list", range], cwd).split("\n").filter(Boolean);
   for (const sha of hashes) {
     const commit = git(["cat-file", "commit", sha], cwd);
     const messageBoundary = commit.indexOf("\n\n");

@@ -39,12 +39,12 @@ Architecture Book rule or ADR is needed; the operational contract belongs in
 
 ### Decision 1 — Enumerate the branch range and structurally parse commit objects
 
-The repository scanner obtains the commit hashes with one `git rev-list --no-merges` over
-`mergeBase..head`, then reads and structurally parses each raw commit object. Identity headers are
-newline-delimited and the message begins after the header block's blank line; unlike arbitrary
-control-character framing, those boundaries cannot occur inside a Git identity header. The
-existing commit-message records and new header records are produced from those same commit objects
-and the single authoritative range.
+The repository scanner obtains every commit hash, including merge commits, with one `git rev-list`
+over `mergeBase..head`, then reads and structurally parses each raw commit object. Identity headers
+are newline-delimited and the message begins after the header block's blank line; unlike arbitrary
+control-character framing, those boundaries cannot occur inside a Git identity header. The existing
+commit-message records and new header records are produced from those same commit objects and the
+single authoritative range.
 
 For each commit, create four logical header records: `author-name`, `author-email`,
 `committer-name`, and `committer-email`. This keeps locations precise without constructing a
@@ -114,6 +114,7 @@ as protected literals.
 Both implementations need tests for:
 
 - each of the four header fields producing `source: "commit-header"` and a non-zero exit/verdict;
+- a matching header on a branch-added merge commit producing the same redacted failure;
 - serialized findings and command output omitting the matched value;
 - a base-only matching header producing no finding, proving the merge-base boundary;
 - the healthy automation set producing no header findings and no failure;

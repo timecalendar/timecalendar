@@ -686,8 +686,9 @@ Two properties are load-bearing:
 
 Commit headers are permanently a layer-B surface. They have no repository path, so neither the
 count-keyed baseline nor path-scoped `creditPaths` narrowing can apply. The gate obtains all four
-identity fields and the commit message from the same `merge-base..head` log stream; expanding that
-range to reachable history would turn accepted public authorship into recurring findings.
+identity fields and the commit message from raw commit objects enumerated over the same
+`merge-base..head` range; expanding that range to reachable history would turn accepted public
+authorship into recurring findings.
 
 #### Count-keyed baseline
 

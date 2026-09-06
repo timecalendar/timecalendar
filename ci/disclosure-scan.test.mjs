@@ -784,6 +784,45 @@ test("branch commit identity headers are scanned field by field without revealin
   }
 });
 
+test("a branch merge commit identity header is scanned without revealing the match", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-merge-");
+  const token = ["fixture", "merge", "identity"].join("-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+  const baseBranch = runGit("branch", "--show-current").trim();
+
+  runGit("switch", "--quiet", "-c", "fixture-side");
+  commitWithIdentity(repo, healthyIdentity, "side commit");
+  runGit("switch", "--quiet", baseBranch);
+  commitWithIdentity(repo, healthyIdentity, "mainline commit");
+  execFileSync(
+    "git",
+    ["merge", "--quiet", "--no-ff", "fixture-side", "-m", "merge fixture"],
+    {
+      cwd: repo,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        ...healthyIdentity,
+        GIT_AUTHOR_NAME: token,
+        GIT_COMMITTER_NAME: token,
+      },
+    },
+  );
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1, output);
+  assert.match(output, /commit-header/);
+  assert.match(output, /commit [0-9a-f]{12} author-name/);
+  assert.match(output, /commit [0-9a-f]{12} committer-name/);
+  assert.ok(!output.includes(token));
+});
+
 test("identity header control bytes cannot break commit framing", async (t) => {
   const token = ["fixture", "framing", "token"].join("-");
   const cases = [

@@ -19,9 +19,9 @@
 
 - [x] 2.1 Refactor the existing merge-base-to-head commit collection in
   `ci/disclosure-scan.mjs` to enumerate hashes from one authoritative range and structurally parse
-  the four identity fields and message body from each raw commit object; preserve empty fields and
-  existing commit-message behavior without delimiter framing that identity headers can collide
-  with.
+  the four identity fields and message body from each raw commit object, including merge commits;
+  preserve empty fields and existing commit-message behavior without delimiter framing that
+  identity headers can collide with.
 - [x] 2.2 Emit one baseline-free `commit-header` record per non-empty identity field with a location
   containing only the abbreviated hash and fixed field label, then pass it through the existing
   derived, structural, and configured matchers.
