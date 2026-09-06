@@ -204,4 +204,3 @@ re-filed later as a scanner-divergence or parity defect.
 - **WHEN** a branch commit carries a matching identity header and no contributor preflight caught it
 - **THEN** the repository CI gate fails the pull request before merge, and the absent preflight
   coverage is an accepted gap rather than a defect
-
