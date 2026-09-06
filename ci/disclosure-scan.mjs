@@ -641,25 +641,36 @@ export function collectRecords({ base, head, allowlist, cwd }) {
     });
   }
 
-  // Identity headers and messages are both published with the commits. Read
-  // them from one branch-scoped stream so their range can never drift apart.
-  // The separators are written once and rendered into the format, so the bytes
-  // the log emits and the bytes this parses can never drift apart.
-  const field = "\x1f";
-  const entrySeparator = "\x1e";
-  const asFormat = (byte) => `%x${byte.charCodeAt(0).toString(16).padStart(2, "0")}`;
-  const format =
-    ["%H", "%an", "%ae", "%cn", "%ce", "%B"].join(asFormat(field)) + asFormat(entrySeparator);
-  const log = git(["log", "--no-color", `--format=${format}`, range], cwd);
-  for (const entry of log.split(entrySeparator)) {
-    const [sha, authorName, authorEmail, committerName, committerEmail, ...bodyParts] = entry
-      .replace(/^\n+/, "")
-      .split(field);
-    if (!sha || bodyParts.length === 0) continue;
+  // Identity headers and messages are both published with the commits. Git
+  // permits control bytes in identity fields, so no formatted-log delimiter
+  // can safely frame them. Enumerate the authoritative branch range as hashes,
+  // then parse each raw commit object along boundaries Git does not permit in
+  // an identity header: newline-delimited headers and the blank line before the
+  // message.
+  const hashes = git(["rev-list", "--no-merges", range], cwd).split("\n").filter(Boolean);
+  for (const sha of hashes) {
+    const commit = git(["cat-file", "commit", sha], cwd);
+    const messageBoundary = commit.indexOf("\n\n");
+    if (messageBoundary < 0) continue;
+    const headerLines = commit.slice(0, messageBoundary).split("\n");
+    const body = commit.slice(messageBoundary + 2);
+    const parseIdentity = (kind) => {
+      const prefix = `${kind} `;
+      const header = headerLines.find((line) => line.startsWith(prefix));
+      if (!header) return { name: "", email: "" };
+      const match = header.slice(prefix.length).match(/^(.*) <([^<>]*)> \d+ [+-]\d{4}$/s);
+      // A malformed branch commit must not turn parsing failure into a clean
+      // verdict. Scan its complete identity payload as the name field instead.
+      return match
+        ? { name: match[1], email: match[2] }
+        : { name: header.slice(prefix.length), email: "" };
+    };
+    const author = parseIdentity("author");
+    const committer = parseIdentity("committer");
     const shortSha = sha.slice(0, 12);
     for (const identity of [
-      { kind: "author", name: authorName, email: authorEmail },
-      { kind: "committer", name: committerName, email: committerEmail },
+      { kind: "author", ...author },
+      { kind: "committer", ...committer },
     ]) {
       // Every lane reads every field. A personal forge push identity is
       // `NNNNN+login@users.noreply.github.com`, which the structural lane
@@ -677,7 +688,6 @@ export function collectRecords({ base, head, allowlist, cwd }) {
         });
       }
     }
-    const body = bodyParts.join(field);
     body.split("\n").forEach((text, index) => {
       records.push({
         source: "commit-message",

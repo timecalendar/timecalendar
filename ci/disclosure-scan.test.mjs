@@ -784,6 +784,41 @@ test("branch commit identity headers are scanned field by field without revealin
   }
 });
 
+test("identity header control bytes cannot break commit framing", async (t) => {
+  const token = ["fixture", "framing", "token"].join("-");
+  const cases = [
+    ["author-name", "\x1e", { GIT_AUTHOR_NAME: `Fixture\x1e${token}` }],
+    ["committer-name", "\x1f", { GIT_COMMITTER_NAME: `Fixture\x1f${token}` }],
+  ];
+
+  for (const [field, separator, identity] of cases) {
+    await t.test(field, () => {
+      const { repo, runGit } = createGitRepo(t, `disclosure-header-framing-${field}-`);
+      writeFileSync(join(repo, "README.md"), "base\n");
+      runGit("add", "README.md");
+      runGit("commit", "--quiet", "-m", "base");
+      const base = runGit("rev-parse", "HEAD").trim();
+      commitWithIdentity(repo, { ...healthyIdentity, ...identity });
+
+      const rawHeader = runGit(
+        "show",
+        "-s",
+        `--format=${field.startsWith("author") ? "%an" : "%cn"}`,
+      );
+      assert.ok(rawHeader.includes(separator));
+
+      const { code, output } = runMain(
+        { DISCLOSURE_PATTERNS: token },
+        ["--base", base, "--head", "HEAD", "--cwd", repo],
+      );
+      assert.equal(code, 1, output);
+      assert.match(output, /commit-header/);
+      assert.match(output, new RegExp(`commit [0-9a-f]{12} ${field}`));
+      assert.ok(!output.includes(token));
+    });
+  }
+});
+
 test("commit identity header scanning stays branch-only", (t) => {
   const { repo, runGit } = createGitRepo(t, "disclosure-header-base-");
   const token = ["fixture", "base", "identity"].join("-");

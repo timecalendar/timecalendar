@@ -37,12 +37,14 @@ Architecture Book rule or ADR is needed; the operational contract belongs in
 
 ## Decisions
 
-### Decision 1 — Extend the existing branch log walk with structured header fields
+### Decision 1 — Enumerate the branch range and structurally parse commit objects
 
-Each scanner will obtain the commit hash, author name, author email, committer name, committer
-email, and message body in one `git log` over `mergeBase..head`, using control-character field and
-record delimiters. The existing commit-message records and new header records will be produced
-from that single parsed stream.
+The repository scanner obtains the commit hashes with one `git rev-list --no-merges` over
+`mergeBase..head`, then reads and structurally parses each raw commit object. Identity headers are
+newline-delimited and the message begins after the header block's blank line; unlike arbitrary
+control-character framing, those boundaries cannot occur inside a Git identity header. The
+existing commit-message records and new header records are produced from those same commit objects
+and the single authoritative range.
 
 For each commit, create four logical header records: `author-name`, `author-email`,
 `committer-name`, and `committer-email`. This keeps locations precise without constructing a
@@ -50,8 +52,10 @@ synthetic identity line that could double-count matches spanning display and add
 
 Alternatives considered:
 
-- A second `git log` only for headers duplicates range resolution and can drift from the commit
-  message lane.
+- A formatted `git log` stream with control-character field or record delimiters is unsafe because
+  Git permits those bytes inside identity headers.
+- A second branch-range query only for headers duplicates range resolution and can drift from the
+  commit-message lane.
 - Parsing human-readable `Author:` output is locale- and formatting-dependent.
 - Combining name and email into one record makes the location less actionable and changes
   occurrence behavior through artificial punctuation.
