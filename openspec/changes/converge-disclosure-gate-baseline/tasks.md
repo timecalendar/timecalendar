@@ -119,10 +119,13 @@
       Report on TIM-473, mentioning the Founding Engineer, that the file has landed and the caller
       change is the remaining step — this is TIM-473 acceptance criterion 1 in production and it is
       not satisfied by the merge alone.
-- [ ] 7.2 Post to TIM-472 that its fix is **remove-and-generate**, not regenerate-and-recommit:
+- [x] 7.2 Post to TIM-472 that its fix is **remove-and-generate**, not regenerate-and-recommit:
       delete the committed pair and generate at test time (`ci/generate-dummy-firebase-key.sh` is
       the precedent). A branch that only deletes a file is skipped by the scanner, so that fix has a
-      clean path through the gate; replacing the key in place does not.
+      clean path through the gate; replacing the key in place does not. **Done early, on purpose:**
+      TIM-472 went `in_progress` while this change was still blocked, and the two approaches diverge
+      at its first commit. Noted there that TIM-476 states the same fix directly and is `blocked`;
+      the two want resolving against each other.
 
 ## 8. Verification before handoff
 
