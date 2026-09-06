@@ -835,6 +835,45 @@ test("healthy automation commit identities pass silently", (t) => {
   assert.doesNotMatch(output, /commit-header/);
 });
 
+test("a personal forge push identity in a header fails with no configured patterns", (t) => {
+  // The always-available layer, with no `DISCLOSURE_PATTERNS` overlay — the
+  // state every fork and every unconfigured repository runs in. The identity
+  // is a person the history already knows, re-pushed under the forge's own
+  // `NNNNN+login@users.noreply.github.com` address: the structural lane allows
+  // that domain, so the derived lane is the only thing standing between this
+  // shape and a merge.
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-derived-");
+  const login = ["fixture", "forge", "login"].join("-");
+  const name = ["Fixture", "Forge", "Person"].join(" ");
+  const contributor = {
+    GIT_AUTHOR_NAME: name,
+    GIT_AUTHOR_EMAIL: addr(login, "gmail.com"),
+    GIT_COMMITTER_NAME: name,
+    GIT_COMMITTER_EMAIL: addr(login, "gmail.com"),
+  };
+
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  commitWithIdentity(repo, contributor, "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+
+  const forgeAddress = addr(`12345+${login}`, "users.noreply.github.com");
+  commitWithIdentity(repo, {
+    GIT_AUTHOR_NAME: name,
+    GIT_AUTHOR_EMAIL: forgeAddress,
+    GIT_COMMITTER_NAME: name,
+    GIT_COMMITTER_EMAIL: forgeAddress,
+  });
+
+  const { code, output } = runMain({}, ["--base", base, "--head", "HEAD", "--cwd", repo]);
+  assert.equal(code, 1, output);
+  assert.match(output, /commit-header/);
+  assert.match(output, new RegExp(`commit [0-9a-f]{12} author-email — .* ${FINDING_CLASSES.DERIVED}`));
+  assert.match(output, new RegExp(`commit [0-9a-f]{12} committer-name — .* ${FINDING_CLASSES.DERIVED}`));
+  assert.ok(!output.includes(login));
+  assert.ok(!output.includes(name));
+});
+
 test("commit messages and identity headers retain distinct source values", (t) => {
   const { repo, runGit } = createGitRepo(t, "disclosure-header-source-");
   const token = ["fixture", "source", "token"].join("-");

@@ -127,7 +127,11 @@ export function deriveIdentityPatterns(identities, allowlist) {
 
     const [localPart, domain] = identity.email.split("@");
     // A `NNNNN+login@users.noreply.github.com` local part is the login itself.
-    if (localPart) tokens.add(localPart.replace(/^\d+\+/, ""));
+    // A role address identifies nobody, exactly as a consumer mail provider
+    // identifies nobody two lines below; deriving one as an identity token
+    // would flag every automated sender that shares it.
+    const login = localPart?.replace(/^\d+\+/, "");
+    if (login && !allowlist.emailLocalParts.has(login.toLowerCase())) tokens.add(login);
     if (!domain) continue;
 
     // A consumer mail provider identifies nobody. A domain outside that set is
@@ -516,14 +520,12 @@ export function scanRecords(records, { derived, configured, allowlist }) {
       !record.introduced &&
       record.file !== null &&
       isCreditPath(record.file, allowlist);
-    if (!credited && !record.skipDerived) {
+    if (!credited) {
       add(
         record,
         FINDING_CLASSES.DERIVED,
         countUnexemptMatches(record.text, derivedPatterns, allowlist),
       );
-    }
-    if (!credited) {
       add(
         record,
         FINDING_CLASSES.CONFIGURED,
@@ -641,12 +643,15 @@ export function collectRecords({ base, head, allowlist, cwd }) {
 
   // Identity headers and messages are both published with the commits. Read
   // them from one branch-scoped stream so their range can never drift apart.
+  // The separators are written once and rendered into the format, so the bytes
+  // the log emits and the bytes this parses can never drift apart.
   const field = "\x1f";
-  const log = git(
-    ["log", "--no-color", `--format=%H%x1f%an%x1f%ae%x1f%cn%x1f%ce%x1f%B%x1e`, range],
-    cwd,
-  );
-  for (const entry of log.split("\x1e")) {
+  const entrySeparator = "\x1e";
+  const asFormat = (byte) => `%x${byte.charCodeAt(0).toString(16).padStart(2, "0")}`;
+  const format =
+    ["%H", "%an", "%ae", "%cn", "%ce", "%B"].join(asFormat(field)) + asFormat(entrySeparator);
+  const log = git(["log", "--no-color", `--format=${format}`, range], cwd);
+  for (const entry of log.split(entrySeparator)) {
     const [sha, authorName, authorEmail, committerName, committerEmail, ...bodyParts] = entry
       .replace(/^\n+/, "")
       .split(field);
@@ -656,11 +661,11 @@ export function collectRecords({ base, head, allowlist, cwd }) {
       { kind: "author", name: authorName, email: authorEmail },
       { kind: "committer", name: committerName, email: committerEmail },
     ]) {
-      // Derived vocabulary deliberately excludes platform automation. Carry
-      // that classification to the derived matcher only, so a generic
-      // historical role token cannot make healthy automation noisy while a
-      // configured or structural detector can still inspect every field.
-      const skipDerived = isPlatformIdentity(identity, allowlist);
+      // Every lane reads every field. A personal forge push identity is
+      // `NNNNN+login@users.noreply.github.com`, which the structural lane
+      // allows by domain — so exempting headers from the derived lane too
+      // would leave exactly the regression this one exists to catch uncovered
+      // whenever no configured pattern list is supplied.
       for (const [fieldName, text] of [["name", identity.name], ["email", identity.email]]) {
         if (!text) continue;
         records.push({
@@ -669,7 +674,6 @@ export function collectRecords({ base, head, allowlist, cwd }) {
           line: null,
           location: `commit ${shortSha} ${identity.kind}-${fieldName}`,
           text,
-          skipDerived,
         });
       }
     }
