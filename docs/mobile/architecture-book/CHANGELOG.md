@@ -2,6 +2,10 @@
 
 ## 2026-09-06
 
+- Added the measured responsive layout contract: typed compact/tablet boundaries, readable,
+  standard, and full-bleed lanes, adaptive gutters, optional-column eligibility, and the shared
+  hook/container seam. Native chrome, environmental insets, presentation, and overlay anchoring
+  remain with their existing owners; ADR 042's portrait device contract is unchanged.
 - Recorded feature ownership for the decomposed personal-event editor controller, field/action
   sections, color picker/presets, and date/time field. The native picker remains behind the shared
   chrome seam. This applies ADR 014 unchanged; it introduces no new Architecture Book rule or ADR.

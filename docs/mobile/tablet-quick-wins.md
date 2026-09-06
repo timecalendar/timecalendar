@@ -1,8 +1,8 @@
 # Portrait-tablet quick-win audit
 
-This document is the implementation plan and ownership ledger for the portrait-tablet work in
-TIM-499 through TIM-503. It describes the current React Native UI on `main` and proposes bounded
-follow-up work; it does not describe responsive behavior as already implemented.
+This document is the implementation map and ownership ledger for the portrait-tablet work in
+TIM-499 through TIM-503. The shared responsive foundation described below is implemented; the
+screen matrix continues to describe bounded follow-up work for its owning tickets.
 
 The supported target remains phone plus full-screen portrait tablets. The representative layout
 classes are 390 points for a phone, 768 and 834 points for iPad portrait, 800 dp for an Android
@@ -27,10 +27,16 @@ business behavior, and native orientation/device-family changes are outside this
   non-stretching transient compositions. These surfaces need regression checks, not redesigns.
 
 The contract below follows the SDK 56 Expo Router Stack presentation model and the repository's
-existing chrome seam. It introduces no dependency and does not require an Architecture Book change
-in this audit PR; TIM-499 will document the durable current-state rule when its API exists.
+existing chrome seam. It introduces no dependency; its durable current-state rule lives in the
+Architecture Book's theming guidance.
 
-## Proposed responsive contract
+## Implemented responsive foundation
+
+`@/theme` exports `ResponsiveBreakpoints`, `ResponsiveContentWidths`, the responsive lane, size,
+and metrics types, and `resolveResponsiveLayout(ownerWidth, lane)`. Ordinary view composition uses
+`AdaptiveContent` from `@/components/adaptive-content`; list, scroll, and custom-geometry owners use
+`useAdaptiveLayout(lane)` from the same module and attach its `onLayout` handler to the actual width
+owner. Both component forms resolve the rules below through the same pure function.
 
 ### Measurement and breakpoint semantics
 
@@ -54,6 +60,9 @@ in this audit PR; TIM-499 will document the durable current-state rule when its 
 
 - Compact horizontal gutters use `Spacing.four`; tablet gutters use `Spacing.six`. The lane cap
   applies after subtracting both gutters.
+- `AdaptiveContent` remains a single ordered lane at every width. The resolver's
+  `isColumnEligible` value is permission for a feature owner to evaluate composition at 834 and
+  above, not an instruction to create columns.
 - The existing Stack, native-tab, safe-area, keyboard-avoidance, and list inset owners remain
   authoritative. A responsive lane must not add a second safe-area inset.
 - Forms remain one readable column at every supported portrait width.

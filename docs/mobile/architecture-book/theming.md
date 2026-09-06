@@ -97,6 +97,34 @@ surfaces and calendar content; native controls are tinted and composed rather th
 - `src/theme/index.ts` re-exports the public surface (`Colors` / `Spacing` / `Radii` / `Fonts` / `MaxContentWidth` / `ThemeColor` / `useTheme` / `buildNavTheme`) — **call sites import `@/theme`**, import-source-only. `Fonts.mono` resolves via `Platform.select` (`ios` → `ui-monospace`, `default` → `monospace`).
 - `Themed*` consumers import from `@/theme`. `ThemedText`'s heading-role contract (`type="title"|"subtitle"` → `accessibilityRole="header"`, caller override wins) lives in the component (a11y rule).
 
+## Responsive content lanes — measured owners, semantic caps
+
+- `src/theme/responsive.ts` owns the typed portrait responsive policy and re-exports it through
+  `@/theme`: `ResponsiveBreakpoints` (`tablet: 600`, `optionalColumns: 834`),
+  `ResponsiveContentWidths` (`readable: 640`, `standard: MaxContentWidth`), the lane/size/metrics
+  types, and pure `resolveResponsiveLayout(ownerWidth, lane)`. `MaxContentWidth` remains the
+  standard-cap compatibility alias while screens migrate.
+- The resolver accepts the finite positive width of the container that owns usable layout. A
+  missing, non-finite, or non-positive measurement stays compact and column-ineligible; it never
+  falls back to device identity or global window width. Compact capped lanes use `Spacing.four`,
+  tablet capped lanes use `Spacing.six`, and usable width is
+  `min(max(ownerWidth - 2 * gutter, 0), laneCap)`.
+- Semantic lanes state intent: `readable` caps usable prose/form content at 640, `standard` caps
+  usable lists/cards at 800, and `fullBleed` preserves the complete measured owner width without a
+  responsive gutter or cap. Caps apply after both gutters, and capped content is centered.
+- `useAdaptiveLayout(lane)` and `AdaptiveContent` live at
+  `@/components/adaptive-content`. The hook is the escape hatch for list, scroll, and custom
+  geometry owners; the component is the owner-plus-inner-view convenience form. Both use the same
+  resolver, render a visible compact-width fallback before measurement, and adopt only positive
+  widths reported by the attached owner.
+- `isColumnEligible` becomes true at 834, but the shared layer never creates columns or reorders
+  content. A feature owner must still prove independent scan groups, stable source/focus order,
+  and a one-column fallback under large-text or width stress.
+- Responsive content owns only measurement, centering, semantic maximum width, and horizontal
+  gutter. Place it inside the route's existing safe-area/presentation owner. Stack headers,
+  native tabs, safe-area and automatic list insets, keyboard avoidance, menus, alerts, pickers,
+  modal presentation, and full-window overlay anchoring remain with their current owners.
+
 ## Tokenized React Navigation theme — `buildNavTheme` (C2)
 
 - `src/theme/nav-theme.ts` exports a **pure** `buildNavTheme(scheme: "light" | "dark")` (re-exported from `@/theme`) that spreads the stock RN nav `DefaultTheme` (light) / `DarkTheme` (dark) and overrides `colors` from `@/theme` tokens, so nav chrome (header, card, hairline border, active tint) can't drift from the palette. The **nav↔token contract**: `background`→`Colors[scheme].background`, `card`→`backgroundElement`, `text`→`text`, `border`→`backgroundSelected`, `primary`→`primary` (brand). Spread-then-override supplies the full `colors` set + `fonts` the nav `Theme` type requires, so `tsc` enforces completeness.
