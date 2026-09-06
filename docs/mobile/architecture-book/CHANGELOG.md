@@ -1,5 +1,11 @@
 # Architecture Book changelog
 
+## 2026-09-06
+
+- Recorded feature ownership for the decomposed personal-event editor controller, field/action
+  sections, color picker/presets, and date/time field. The native picker remains behind the shared
+  chrome seam. This applies ADR 014 unchanged; it introduces no new Architecture Book rule or ADR.
+
 ## 2026-08-31
 
 - Refined ADR 038's structural Maestro retry provenance for nested flows: only a failed

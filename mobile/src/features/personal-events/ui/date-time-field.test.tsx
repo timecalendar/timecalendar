@@ -23,7 +23,7 @@ const NOUMEA = "Pacific/Noumea"
 // A blanket restore here would also discard the suite-wide AccessibilityInfo
 // spies from jest/setup-splash.ts (TIM-273 task 3).
 
-describe("DateTimeField", () => {
+describe("feature-owned DateTimeField", () => {
   it("renders the inline picker on iOS and reports its change (identity under the device zone)", async () => {
     const onChange = jest.fn()
     const { getByTestId } = await render(

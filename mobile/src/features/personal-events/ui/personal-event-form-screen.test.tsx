@@ -1,4 +1,10 @@
-import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  waitFor,
+  within,
+} from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { Alert } from "react-native"
 
@@ -68,6 +74,14 @@ const editEvent: PersonalEvent = {
   description: "Bring notes",
 }
 
+const secondEditEvent: PersonalEvent = {
+  ...editEvent,
+  uid: "u2",
+  title: "Second",
+  location: "Lab",
+  description: "Bring laptop",
+}
+
 function useEditEvent() {
   mockUseLocalSearchParams.mockReturnValue({ uid: editEvent.uid })
   mockUseEventToEdit.mockReturnValue(editEvent)
@@ -101,6 +115,100 @@ afterEach(() => {
 })
 
 describe("PersonalEventFormScreen", () => {
+  it("starts create mode with blank fields and a one-hour default range", async () => {
+    const { getByTestId, queryByTestId } = await render(
+      <PersonalEventFormScreen />,
+    )
+
+    expect(getByTestId("personal-event-title-input")).toHaveProp("value", "")
+    expect(getByTestId("personal-event-location-input")).toHaveProp("value", "")
+    expect(getByTestId("personal-event-description-input")).toHaveProp(
+      "value",
+      "",
+    )
+    expect(queryByTestId("personal-event-delete")).toBeNull()
+
+    await fireEvent.changeText(
+      getByTestId("personal-event-title-input"),
+      "Valid",
+    )
+    await fireEvent.press(getByTestId("personal-event-save"))
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1))
+    const saved = mockSave.mock.calls[0]?.[0]
+    expect(saved).toBeDefined()
+    expect(saved!.endsAt.getTime() - saved!.startsAt.getTime()).toBe(
+      60 * 60 * 1000,
+    )
+    expect(saved).toEqual(
+      expect.objectContaining({
+        color: "#E91E63",
+        location: undefined,
+        description: undefined,
+      }),
+    )
+  })
+
+  it("prefills edit mode when the event resolves after the first render", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ uid: editEvent.uid })
+    const view = await render(<PersonalEventFormScreen />)
+    expect(view.getByTestId("personal-event-title-input")).toHaveProp(
+      "value",
+      "",
+    )
+
+    mockUseEventToEdit.mockReturnValue(editEvent)
+    await view.rerender(<PersonalEventFormScreen />)
+
+    await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+    expect(view.getByDisplayValue("Library")).toBeTruthy()
+    expect(view.getByDisplayValue("Bring notes")).toBeTruthy()
+  })
+
+  it("preserves typed values across unrelated rerenders", async () => {
+    useEditEvent()
+    const view = await render(<PersonalEventFormScreen />)
+    await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+
+    await fireEvent.changeText(
+      view.getByTestId("personal-event-title-input"),
+      "Typed value",
+    )
+    await view.rerender(<PersonalEventFormScreen />)
+
+    expect(view.getByDisplayValue("Typed value")).toBeTruthy()
+  })
+
+  it("does not let a stale event overwrite a changed route uid", async () => {
+    useEditEvent()
+    const view = await render(<PersonalEventFormScreen />)
+    await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+
+    mockUseLocalSearchParams.mockReturnValue({ uid: secondEditEvent.uid })
+    mockUseEventToEdit.mockReturnValue(editEvent)
+    await view.rerender(<PersonalEventFormScreen />)
+    expect(view.queryByDisplayValue("Old")).toBeNull()
+
+    mockUseEventToEdit.mockReturnValue(secondEditEvent)
+    await view.rerender(<PersonalEventFormScreen />)
+    expect(view.getByDisplayValue("Second")).toBeTruthy()
+  })
+
+  it("returns to blank create defaults when the route drops uid", async () => {
+    useEditEvent()
+    const view = await render(<PersonalEventFormScreen />)
+    await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+
+    mockUseLocalSearchParams.mockReturnValue({})
+    mockUseEventToEdit.mockReturnValue(editEvent)
+    await view.rerender(<PersonalEventFormScreen />)
+
+    expect(view.getByTestId("personal-event-title-input")).toHaveProp(
+      "value",
+      "",
+    )
+    expect(view.queryByTestId("personal-event-delete")).toBeNull()
+  })
+
   it("renders the localized create title and field labels (no uid)", async () => {
     const { getByText, queryByTestId } = await render(
       <PersonalEventFormScreen />,
@@ -110,6 +218,44 @@ describe("PersonalEventFormScreen", () => {
     expect(getByText("Color")).toBeTruthy()
     // No delete control in create mode.
     expect(queryByTestId("personal-event-delete")).toBeNull()
+  })
+
+  it("retains editor selectors and keeps sticky actions outside field scrolling", async () => {
+    useEditEvent()
+    const view = await render(<PersonalEventFormScreen />)
+    await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+
+    expect(view.getByTestId("personal-event-title-input")).toHaveProp(
+      "accessibilityLabel",
+      "Title",
+    )
+    expect(view.getByTestId("personal-event-start-picker")).toBeTruthy()
+    expect(view.getByTestId("personal-event-end-picker")).toBeTruthy()
+    expect(view.getByTestId("personal-event-location-input")).toHaveProp(
+      "accessibilityLabel",
+      "Location",
+    )
+    expect(view.getByTestId("personal-event-description-input")).toHaveProp(
+      "accessibilityLabel",
+      "Description",
+    )
+    expect(view.getByTestId("personal-event-save")).toHaveProp(
+      "accessibilityLabel",
+      "Save",
+    )
+    expect(view.getByTestId("personal-event-delete")).toHaveProp(
+      "accessibilityLabel",
+      "Delete",
+    )
+
+    const scrollView = view.container.queryAll(
+      (instance) => instance.props.keyboardShouldPersistTaps === "handled",
+    )[0]
+    if (scrollView === undefined) {
+      throw new Error("Expected the editor fields to render in a ScrollView")
+    }
+    expect(within(scrollView).queryByTestId("personal-event-save")).toBeNull()
+    expect(within(scrollView).queryByTestId("personal-event-delete")).toBeNull()
   })
 
   it("saves a valid create through the save hook with a built event", async () => {
@@ -125,6 +271,38 @@ describe("PersonalEventFormScreen", () => {
     expect(mockSave).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Lunch" }),
     )
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it("saves the selected swatch value unchanged", async () => {
+    const { getByTestId } = await render(<PersonalEventFormScreen />)
+    await fireEvent.changeText(
+      getByTestId("personal-event-title-input"),
+      "Lunch",
+    )
+    await fireEvent.press(getByTestId("color-swatch-#3F51B5"))
+    await fireEvent.press(getByTestId("personal-event-save"))
+
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1))
+    expect(mockSave).toHaveBeenCalledWith(
+      expect.objectContaining({ color: "#3F51B5" }),
+    )
+  })
+
+  it("keeps the editor open and shows a visible save failure", async () => {
+    mockSave.mockResolvedValueOnce(false)
+    const view = await render(<PersonalEventFormScreen />)
+    await fireEvent.changeText(
+      view.getByTestId("personal-event-title-input"),
+      "Lunch",
+    )
+    await fireEvent.press(view.getByTestId("personal-event-save"))
+    expect(mockBack).not.toHaveBeenCalled()
+
+    mockUseSaveEvent.mockReturnValue({ save: mockSave, failed: true })
+    await view.rerender(<PersonalEventFormScreen />)
+    expect(view.getByText("Could not save the event.")).toBeTruthy()
+    expect(view.getByDisplayValue("Lunch")).toBeTruthy()
   })
 
   it("blocks save with an empty title and shows the localized validation error", async () => {

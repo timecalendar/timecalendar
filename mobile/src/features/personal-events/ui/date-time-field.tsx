@@ -11,7 +11,7 @@ import { Radii, Spacing, useTheme } from "@/theme"
 // (the @/components/chrome seam — ADR 012), used by the personal-event form.
 //
 // iOS: @expo/ui's DateTimePicker already renders SwiftUI's compact tap-to-reveal
-// field, so it is rendered inline as-is.
+// field, so the feature-owned field renders it inline as-is.
 //
 // Android: @expo/ui's inline picker (presentation="inline") renders a full
 // Material calendar that consumes the screen and pushes the form's other

@@ -3,9 +3,7 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-personal-events-ui. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: Personal events are listed on the Home tab over the reactive data hook
 
 The Home tab SHALL render the user's personal events using the data layer's reactive
@@ -37,20 +35,14 @@ presentational, it SHALL fall under the 70% global coverage floor and SHALL NOT 
 
 ### Requirement: A single form route handles both create and edit, with delete in edit mode
 
-The create/edit form SHALL be a presentational component at
-`mobile/src/components/personal-event-form-screen.tsx`, reachable through a thin route
-`mobile/src/app/personal-event-form.tsx` that only re-exports it. The route SHALL accept an optional
-`uid` parameter: with no `uid` it SHALL present a blank create form (with sensible default
-start/end times) and SHALL NOT show a delete control; with a `uid` it SHALL prefill the form from the
-existing event (loaded via the data layer) and SHALL show a delete control. The form SHALL be
-registered as a `Stack` sibling of the `(tabs)` group in the root layout so the non-tab route is
-navigable, and SHALL be reachable via the development deep link `timecalendar-dev://personal-event-form`.
+The create/edit form SHALL remain reachable through the thin route `mobile/src/app/personal-event-form.tsx`, which only re-exports `PersonalEventFormScreen` from the personal-events feature. The feature-owned UI SHALL separate route/edit resolution, mutable editor orchestration, ordinary fields, sticky actions, and destructive confirmation into cohesive private modules under `mobile/src/features/personal-events/ui/`; no React component in this editor composition SHALL be materially above 200 lines. The route SHALL accept an optional `uid` parameter: with no `uid` it SHALL present a blank create form with sensible default start/end times and SHALL NOT show a delete control; with a `uid` it SHALL prefill from the loaded event and SHALL show a delete control. Late event loading and route-parameter changes SHALL not allow a stale event to overwrite the active editor. The form SHALL remain a `Stack` sibling of the `(tabs)` group and remain reachable via the development deep link `timecalendar-dev://personal-event-form`. Existing accessibility labels and `personal-event-*` test IDs SHALL remain on their rendered controls.
 
-#### Scenario: The form lives in components with a thin route
+#### Scenario: The form is feature-owned behind a thin route
 
-- **WHEN** the form screen and its colocated test are located
-- **THEN** the screen is at `mobile/src/components/personal-event-form-screen.tsx` and its test beside it
-- **AND** `mobile/src/app/personal-event-form.tsx` only re-exports the screen
+- **WHEN** the form screen and its private editor modules are located
+- **THEN** they are under `mobile/src/features/personal-events/ui/`
+- **AND** `mobile/src/app/personal-event-form.tsx` only re-exports the public screen
+- **AND** the feature's UI and root barrels retain their existing public exports without an internal self-barrel import cycle
 
 #### Scenario: No uid presents a blank create form
 
@@ -60,11 +52,23 @@ navigable, and SHALL be reachable via the development deep link `timecalendar-de
 
 #### Scenario: A uid prefills the form for editing and shows delete
 
-- **WHEN** the form route is opened with the `uid` of an existing event
+- **WHEN** the form route is opened with the `uid` of an existing event and the event resolves
 - **THEN** the form is prefilled from that event
 - **AND** a delete control is shown
 
-#### Scenario: The form route is reachable as a Stack sibling and via the dev deep link
+#### Scenario: A stale edit load cannot overwrite a newer route
+
+- **WHEN** the route `uid` changes while an earlier event lookup is unresolved
+- **THEN** the editor ultimately displays values for the current `uid`
+- **AND** resolution of the stale lookup does not overwrite them
+
+#### Scenario: Form selectors and keyboard-reachable actions remain stable
+
+- **WHEN** the decomposed editor renders
+- **THEN** the existing accessibility labels and `personal-event-*` test IDs remain on the same user-facing controls
+- **AND** Save and Delete remain in the sticky footer outside the scrollable field content
+
+#### Scenario: The form route remains reachable
 
 - **WHEN** the root layout declares its routes
 - **THEN** `personal-event-form` is a `Stack` screen sibling of the `(tabs)` group
@@ -106,39 +110,41 @@ validation or assembly logic of its own.
 
 ### Requirement: Native date and time pickers are reached only through the @expo/ui chrome wrapper
 
-The form's native date and time controls SHALL be rendered through the chrome wrapper
-`mobile/src/components/chrome/expo-ui.tsx` (the single import site for `@expo/ui`, including its
-date/time control), exported from the chrome barrel. The form (and any other feature/route code)
-SHALL import the control from `@/components/chrome` and SHALL NOT import `@expo/ui` (or its subpaths)
-directly, keeping the alpha API's blast radius inside the chrome seam. The control SHALL present the
-platform-native date/time UI (it SHALL NOT be force-themed away from the platform appearance).
+The personal-events feature SHALL own its single-consumer `DateTimeField` under `mobile/src/features/personal-events/ui/`. The field's native date and time controls SHALL still be rendered through the chrome wrapper `mobile/src/components/chrome/expo-ui.tsx`, the single import site for `@expo/ui` and its date/time control. The field and all feature/route code SHALL NOT import `@expo/ui` or its subpaths directly. The control SHALL retain the platform-native date/time UI, compact Android dialog lifecycle, inline iOS behavior, and display-zone wall-clock conversion in both directions.
 
-#### Scenario: The form imports the date/time control from the chrome seam
+#### Scenario: The feature-owned field imports the native control from the chrome seam
 
-- **WHEN** the form renders a native date or time control
+- **WHEN** `DateTimeField` renders a native date or time control
 - **THEN** it imports the control from `@/components/chrome`
 - **AND** it does not import `@expo/ui` or its subpaths directly
 
-#### Scenario: @expo/ui is imported only inside the chrome wrapper
+#### Scenario: @expo/ui remains isolated to the chrome wrapper
 
-- **WHEN** `@expo/ui` (or a subpath) is imported anywhere in the app
+- **WHEN** `@expo/ui` or a subpath is imported anywhere in the app
 - **THEN** the only import site is `mobile/src/components/chrome/expo-ui.tsx`
 - **AND** the chrome barrel re-exports the wrapped control
 
+#### Scenario: Display-zone conversion survives the ownership move
+
+- **WHEN** a stored instant is shown and changed while the effective display zone differs from the device zone
+- **THEN** the picker receives the display zone's wall-clock value
+- **AND** the chosen wall-clock value is converted back to the correct stored instant
+
 ### Requirement: Color is chosen from a preset palette and stored as a hex string verbatim
 
-The form SHALL let the user choose an event color from a preset palette of selectable swatches, via a
-custom accessible component `mobile/src/components/color-swatch-picker.tsx` (no new native
-dependency). Each swatch SHALL be a single-select control declaring an accessibility role, its
-selected state, and a translated accessibility label, with a touch target of at least 44pt (iOS) /
-48dp (Android). The chosen color SHALL be a `#RRGGBB` hex string stored verbatim by the data layer
-(no re-encoding in the UI).
+The personal-events feature SHALL own its single-consumer `ColorSwatchPicker` and preset palette under `mobile/src/features/personal-events/ui/`, with palette data exported from a non-component module rather than from the React component module. The accessible picker SHALL offer selectable preset swatches without a new native dependency. Each swatch SHALL declare an accessibility role, selected state, translated accessibility label, and a touch target of at least 44pt on iOS and 48dp on Android. The chosen color SHALL remain a `#RRGGBB` string stored verbatim by the data layer, with no UI re-encoding.
 
 #### Scenario: Selecting a swatch reports its hex color
 
 - **WHEN** the user selects a color swatch
 - **THEN** the component reports the swatch's `#RRGGBB` value
 - **AND** the selected swatch is marked selected for assistive technology
+
+#### Scenario: Palette data is separate from the component export
+
+- **WHEN** React Doctor examines the color-picker component module
+- **THEN** preset palette data is imported from a separate non-component module
+- **AND** the component module has no non-component preset export requiring suppression
 
 #### Scenario: The chosen color is stored verbatim
 

@@ -3,27 +3,12 @@ import { Pressable, StyleSheet, View } from "react-native"
 
 import { Radii, Spacing, useTheme } from "@/theme"
 
+import { SWATCH_PRESETS } from "./color-swatch-presets"
+
 // A small preset-palette color picker (design D4): a row of single-select
 // swatches, custom RN (no new native dep). The chosen color is a #RRGGBB string
 // stored verbatim by the data layer (ADR 011) — the UI never re-encodes it.
 //
-// The PRESETS below are the one allowed cluster of #RRGGBB literals in the UI:
-// they are DATA (event colors stored verbatim per ADR 011), not chrome styling
-// — chrome (the selection ring, spacing) uses @/theme tokens. A brand-adjacent
-// palette; the default for a new event is the first entry (the brand pink).
-// Arbitrary custom color (a native ColorPicker / hex input) is the recorded
-// deferral (D4) — earned by a real user need (R-2).
-export const SWATCH_PRESETS = [
-  "#E91E63", // brand pink (default)
-  "#9C27B0",
-  "#3F51B5",
-  "#03A9F4",
-  "#009688",
-  "#4CAF50",
-  "#FF9800",
-  "#795548",
-] as const
-
 export interface ColorSwatchPickerProps {
   value: string
   onChange: (hex: string) => void
