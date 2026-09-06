@@ -102,3 +102,46 @@ Automated tests SHALL retain the existing behavior proofs for delete, rename, vi
 - **WHEN** React Doctor runs on the changed files
 - **THEN** the former try/finally bailout is either removed by an explicit tested rewrite or retained with a documented classification
 - **AND** no finding is hidden by suppression without evidence
+
+## MODIFIED Requirements
+
+### Requirement: Each row carries a native visibility switch that toggles the calendar's `visible` flag
+
+Each calendar row SHALL carry a native React Native `Switch` whose value is derived from the
+screen-owned optimistic visibility operation for that calendar ID, falling back to the reactive
+canonical `visible` value when no operation remains. The switch SHALL expose the translated
+calendar-specific accessibility label and visibility hint, a calendar-ID testID, the existing
+theme track/thumb colors, a minimum 44-point target, and a large-font layout that places the
+control below the label without duplicating controller state locally. The redundant short label
+SHALL remain hidden from assistive technology.
+
+Activating the switch SHALL request `setVisible(id, nextValue)` through the existing
+observability-wrapped actions hook. The screen-owned controller SHALL render the target
+optimistically, ignore further events for that calendar while its write is unresolved, retain a
+successful target until the reactive read acknowledges it, and reveal the latest canonical value
+on failure. Acknowledgement SHALL retire the operation without a passive reset effect so a later
+external canonical change renders immediately. The switch SHALL NOT explicitly announce a
+successful change because its native checked-state change is announced by the platform.
+
+#### Scenario: Toggling a visible calendar hides it optimistically
+
+- **WHEN** the native switch for a visible calendar emits `false`
+- **THEN** `setVisible(id, false)` runs once and the switch renders off immediately
+- **AND** the target remains rendered until acknowledgement or failure
+
+#### Scenario: Toggling a hidden calendar shows it optimistically
+
+- **WHEN** the native switch for a hidden calendar emits `true`
+- **THEN** `setVisible(id, true)` runs once and the switch renders on immediately
+
+#### Scenario: The native switch exposes accessible state and instructions
+
+- **WHEN** assistive technology reads the visibility control
+- **THEN** the native switch conveys its checked state
+- **AND** its translated label names the calendar and its hint explains the Home/Calendar effect
+- **AND** the redundant short visual label is hidden from assistive technology
+
+#### Scenario: Large text preserves a usable switch target
+
+- **WHEN** the font scale reaches the existing large-text breakpoint
+- **THEN** the label and switch stack without shrinking the switch below its touch target
