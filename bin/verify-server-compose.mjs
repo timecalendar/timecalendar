@@ -65,6 +65,15 @@ function publishedPort(model, service, target) {
   return Number(port.published);
 }
 
+// Compose renders extra_hosts either as "host=address" entries or as a map,
+// depending on its version. Normalize both to "host:address".
+function hostMappings(definition) {
+  const extraHosts = definition.extra_hosts ?? [];
+  return Array.isArray(extraHosts)
+    ? extraHosts.map((entry) => entry.replace("=", ":"))
+    : Object.entries(extraHosts).map(([host, address]) => `${host}:${address}`);
+}
+
 function assertScopedModel(model, project, ports) {
   assert.equal(model.name, project);
   assert.equal(model.networks.default.name, `${project}_default`);
@@ -89,6 +98,21 @@ function assertScopedModel(model, project, ports) {
   assert.ok(certificateMount, "nginx certificate mount must remain present");
   assert.equal(certificateMount.type, "bind");
   assert.equal(certificateMount.source, join(scriptRoot, "ci", "certificates"));
+
+  for (const [service, definition] of Object.entries(model.services)) {
+    const mapsHostGateway = hostMappings(definition).includes(
+      "host.docker.internal:host-gateway",
+    );
+    if (service === "nginx") {
+      assert.ok(mapsHostGateway, "nginx must map host.docker.internal to the host gateway");
+    } else {
+      assert.equal(
+        mapsHostGateway,
+        false,
+        `${service} must not map host.docker.internal — it reaches its peers by service name`,
+      );
+    }
+  }
 }
 
 const currentRoot = realpathSync(run("git", ["rev-parse", "--show-toplevel"], scriptRoot));

@@ -2,6 +2,10 @@ services:
   nginx:
     image: nginx
     restart: always
+    # Docker Desktop injects host.docker.internal; Docker Engine does not, and
+    # nginx.conf resolves its proxy_pass upstreams at startup.
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     ports:
       - '${TIMECALENDAR_TLS_PORT:-1443}:443'
     volumes:

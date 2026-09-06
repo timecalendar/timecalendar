@@ -118,7 +118,16 @@ step "4/4  API reachable through nginx with a valid cert"
 code="$(http_status --cacert "$CERT" "https://api.timecalendar.host:${TLS_PORT}/")"
 if [ "$code" = "000" ]; then
   red "✗ cannot reach https://api.timecalendar.host:${TLS_PORT} (DNS, nginx, or cert)."
-  echo "  Is the Docker stack up?  bin/server-compose.sh up -d"
+  # An nginx that starts and dies looks exactly like a stack that was never
+  # started, so ask Compose what the container is actually doing. Empty means
+  # no container (or no reachable daemon) — then the prompt below is right.
+  nginx_state="$("$ROOT/bin/server-compose.sh" ps --all --format '{{.State}} {{.Status}}' nginx 2>/dev/null || true)"
+  if [ -n "$nginx_state" ]; then
+    echo "  nginx container: $nginx_state"
+    echo "  Read its logs:   bin/server-compose.sh logs nginx"
+  else
+    echo "  Is the Docker stack up?  bin/server-compose.sh up -d"
+  fi
   echo "  Selected project: $COMPOSE_PROJECT (TLS=$TLS_PORT Postgres=$POSTGRES_PORT Redis=$REDIS_PORT)"
   fail=1
 else
