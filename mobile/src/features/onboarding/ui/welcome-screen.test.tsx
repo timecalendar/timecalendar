@@ -2,10 +2,10 @@ import { act, fireEvent, render } from "@testing-library/react-native"
 import { router } from "expo-router"
 import {
   AccessibilityInfo,
-  Animated,
   type EmitterSubscription,
   StyleSheet,
 } from "react-native"
+import { cancelAnimation, withTiming } from "react-native-reanimated"
 
 import { Colors } from "@/theme"
 
@@ -32,17 +32,15 @@ async function flushMicrotasks(turns = 3): Promise<void> {
 }
 
 beforeEach(() => {
-  jest.useFakeTimers()
   mockPush.mockClear()
   pagerMock.setPage.mockClear()
   pagerMock.setPageWithoutAnimation.mockClear()
   jest.mocked(AccessibilityInfo.isReduceMotionEnabled).mockResolvedValue(false)
+  jest.mocked(cancelAnimation).mockClear()
+  jest.mocked(withTiming).mockClear()
 })
 
-afterEach(async () => {
-  await act(async () => jest.runOnlyPendingTimers())
-  jest.useRealTimers()
-})
+afterEach(() => jest.useRealTimers())
 
 describe("WelcomeScreen", () => {
   it("renders the three localized pages in welcome-first order", async () => {
@@ -140,27 +138,35 @@ describe("WelcomeScreen", () => {
     await act(flushMicrotasks)
   })
 
-  it("uses 150ms indicator timing when motion is allowed", async () => {
-    const timing = jest.spyOn(Animated, "timing")
+  it("settles Reanimated entrance and indicator styles when motion is allowed", async () => {
+    jest.useFakeTimers()
     const { getByTestId } = await render(<WelcomeScreen />)
     await act(flushMicrotasks)
-    timing.mockClear()
+    await act(async () => jest.advanceTimersByTime(300))
 
+    expect(withTiming).toHaveBeenCalledWith(1, { duration: 300 })
+    jest.mocked(withTiming).mockClear()
     await fireEvent.press(getByTestId("onboarding-next"))
+    await act(async () => jest.advanceTimersByTime(150))
 
     expect(pagerMock.setPage).toHaveBeenCalledWith(1)
-    expect(timing).toHaveBeenCalledTimes(3)
-    expect(timing.mock.calls.map(([, config]) => config.duration)).toEqual([
-      150, 150, 150,
-    ])
-    timing.mockRestore()
+    const indicatorTimings = jest
+      .mocked(withTiming)
+      .mock.calls.filter(([, config]) => config?.duration === 150)
+    expect(indicatorTimings).toHaveLength(3)
+    expect(indicatorTimings.map(([value]) => value)).toEqual([16, 24, 16])
+    expect(
+      StyleSheet.flatten(getByTestId("onboarding-page-indicator-1").props.style)
+        .backgroundColor,
+    ).toBe(Colors.light.primary)
+    jest.runOnlyPendingTimers()
   })
 
-  it("snaps paging and indicators under reduced motion", async () => {
+  it("snaps paging and decorative styles without timers under reduced motion", async () => {
+    jest.useFakeTimers()
     jest
       .mocked(AccessibilityInfo.isReduceMotionEnabled)
       .mockResolvedValueOnce(true)
-    const timing = jest.spyOn(Animated, "timing")
     const { getByTestId } = await render(<WelcomeScreen />)
     await act(flushMicrotasks)
 
@@ -168,15 +174,19 @@ describe("WelcomeScreen", () => {
 
     expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
     expect(pagerMock.setPage).not.toHaveBeenCalled()
-    expect(timing).not.toHaveBeenCalled()
+    expect(
+      StyleSheet.flatten(getByTestId("onboarding-welcome-entrance").props.style)
+        .opacity,
+    ).toBe(1)
     expect(
       StyleSheet.flatten(getByTestId("onboarding-page-indicator-1").props.style)
         .width,
     ).toBe(24)
-    timing.mockRestore()
+    expect(withTiming).not.toHaveBeenCalled()
   })
 
   it("honors preference changes and cleans up animation subscriptions", async () => {
+    jest.useFakeTimers()
     let changeListener: ((enabled: boolean) => void) | undefined
     const remove = jest.fn()
     jest
@@ -185,22 +195,29 @@ describe("WelcomeScreen", () => {
         changeListener = listener as unknown as (enabled: boolean) => void
         return { remove } as unknown as EmitterSubscription
       })
-    const stop = jest.fn()
-    const parallel = jest.spyOn(Animated, "parallel").mockReturnValue({
-      start: jest.fn(),
-      stop,
-      reset: jest.fn(),
-    })
     const { getByTestId, unmount } = await render(<WelcomeScreen />)
     await act(flushMicrotasks)
+    const cancellationsBeforePreferenceChange =
+      jest.mocked(cancelAnimation).mock.calls.length
 
     await act(async () => changeListener?.(true))
+    jest.clearAllTimers()
     await fireEvent.press(getByTestId("onboarding-next"))
     expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
+    expect(
+      StyleSheet.flatten(getByTestId("onboarding-welcome-entrance").props.style)
+        .opacity,
+    ).toBe(1)
+    expect(jest.mocked(cancelAnimation).mock.calls.length).toBeGreaterThan(
+      cancellationsBeforePreferenceChange,
+    )
+    const cancellationsBeforeUnmount =
+      jest.mocked(cancelAnimation).mock.calls.length
 
     await unmount()
     expect(remove).toHaveBeenCalled()
-    expect(stop).toHaveBeenCalled()
-    parallel.mockRestore()
+    expect(jest.mocked(cancelAnimation).mock.calls.length).toBeGreaterThan(
+      cancellationsBeforeUnmount,
+    )
   })
 })
