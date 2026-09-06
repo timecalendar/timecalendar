@@ -38,11 +38,11 @@
 
 - [x] 4.1 Run `./ci/test-git-hooks.sh` from the worktree root; all assertions pass, including the three pre-existing ones.
 - [x] 4.2 **Prove the harness can fail.** Temporarily break the guard three separate ways and confirm the harness goes red each time, then revert: (a) change `|| exit 1` to a bare invocation in the hook — the propagation assertion fired; (b) make the guard `exit 0` unconditionally — the foreign-author refusal case fired; (c) add a second email address to the guard — the one-identity assertion reported two distinct addresses. All three temporary changes were reverted.
-- [ ] 4.3 Make one real commit in this worktree and confirm it is created with the bot identity and that the guard printed nothing (`git log -1 --format='%an|%cn'`).
-- [ ] 4.4 Confirm the hook still lints: stage a `mobile/` TypeScript file with an auto-fixable violation, commit, and confirm `eslint --fix` rewrote it — the guard must not have displaced `npx lint-staged`.
-- [ ] 4.5 Run `git commit` from a subdirectory (e.g. `mobile/`) and confirm the guard still resolves `./ci/check-commit-identity.sh` — git sets the hook's cwd to the worktree top level, and this is the assumption the invocation rests on.
-- [ ] 4.6 Run `openspec validate enforce-bot-commit-identity` and `git diff --check`. Confirm no secret, no generated-client or OpenAPI drift, no migration, no native/store config, no legacy Flutter file, and no workflow change is present.
-- [ ] 4.7 Grep the whole diff for a human name, address, or domain before committing — the guard's own file, the harness fixture, the docs, and the commit messages. The fabricated identity must be the `.invalid` one and nothing else.
+- [x] 4.3 Made real commit `8f5c90ab` and confirmed both author and committer are the bot. The passing guard emitted no output.
+- [x] 4.4 Staged a temporary `mobile/src/lint-guard-proof.ts` with an auto-fixable semicolon; the commit succeeded and `eslint --fix` removed it, proving the identity guard did not displace `npx lint-staged`. The proof file was then removed from the final tree.
+- [x] 4.5 Ran commit `8f5c90ab` from `mobile/`; the guard resolved `./ci/check-commit-identity.sh` from the worktree root and the commit succeeded.
+- [x] 4.6 Ran `openspec validate enforce-bot-commit-identity` and `git diff --check`. The merge-base diff contains no secret, generated-client or OpenAPI drift, migration, native/store config, legacy Flutter file, or workflow change.
+- [x] 4.7 Scanned the whole branch and working-tree diff for the disclosure patterns before committing. It contains no added finding; the fabricated non-bot identity is the reserved `.invalid` fixture only. The scan reported three pre-existing `host-home-directory` occurrences in `docs/agent-dev-environment.md` (`added: 0`, `preExisting: 3`), permitted by the dated pre-scrub disposition and recorded for handoff.
 
 ## 5. CI proof on the pushed head
 
