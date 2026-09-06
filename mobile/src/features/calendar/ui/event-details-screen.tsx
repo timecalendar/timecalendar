@@ -6,7 +6,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
-  type AppLocale,
   type EventDetails,
   resolveLocale,
   useEventDetails,
@@ -28,34 +27,19 @@ import {
 // the three read outcomes; resolved-event actions and presentation remain
 // feature-internal UI concerns.
 export function EventDetailsScreen() {
-  const { i18n } = useTranslation()
   const { uid } = useLocalSearchParams<{ uid?: string }>()
   const { event, loading } = useEventDetails(uid)
-  const locale = resolveLocale(i18n.language)
-  const displayZone = useDisplayZone()
 
   if (loading) return <EventDetailsLoading />
   if (event === null) return <EventDetailsNotFound />
 
-  return (
-    <ResolvedEventDetails
-      event={event}
-      locale={locale}
-      displayZone={displayZone}
-    />
-  )
+  return <ResolvedEventDetails event={event} />
 }
 
-function ResolvedEventDetails({
-  event,
-  locale,
-  displayZone,
-}: {
-  event: EventDetails
-  locale: AppLocale
-  displayZone: string
-}) {
-  const { t } = useTranslation()
+function ResolvedEventDetails({ event }: { event: EventDetails }) {
+  const { t, i18n } = useTranslation()
+  const locale = resolveLocale(i18n.language)
+  const displayZone = useDisplayZone()
   const { action, failed } = useEventDetailsAction(event)
 
   return (
