@@ -151,17 +151,31 @@ unchanged, gate green — and layer B fails that branch on the line it wrote. It
 regenerating the baseline cannot launder a disclosure, and therefore why this change needs no rule
 about who may regenerate it.
 
-## Decision 4 — `creditPaths` stops excusing added lines, and retires into baseline entries
+## Decision 4 — `creditPaths` stops excusing added lines; its **content** entries retire into pins, and the key survives as the CI side's path lane
+
+*(Amended after the ruling of 2026-09-06 — "`publishedIn` is retired for **content**, kept and
+**extended** for **paths**". The original decision retired `creditPaths` wholesale and deleted the
+key; that would have removed the only place on the CI side where a protected **path** can be
+exempted at all. The two mechanisms are disjoint by match source, so the key is split by source
+rather than deleted.)*
+
 
 Measured above: the CI gate currently returns **0 findings** for a fresh identity written into a
 `creditPaths` directory. Two changes, in this order:
 
 1. **`creditPaths` narrows the whole-file layer only.** A line the branch added is judged with no
    path narrowing at all, matching the preflight. This is the bug fix and it stands on its own.
-2. **The entries then retire into pinned counts.** Once layer A exists, a credit file's footprint is
-   pinned, so re-indenting or reordering the credit block keeps the count and passes, while adding a
-   *new* identity beside it raises the count and fails. A path amnesty cannot make that distinction;
-   a count can.
+2. **Its *content* entries then retire into pinned counts.** Once layer A exists, a credit file's
+   footprint is pinned, so re-indenting or reordering the credit block keeps the count and passes,
+   while adding a *new* identity beside it raises the count and fails. A path amnesty cannot make
+   that distinction; a count can. All 8 current entries are content prefixes, so all 8 retire.
+3. **The key itself stays, as the path lane.** With a baseline supplied it narrows `source: "path"`
+   findings only, and a content carve-out presented beside a baseline is an error rather than a
+   judgement call. Measured on `pr/357` with the gate's own `scanRecords`: the 8 current prefixes
+   produce **0** path-source findings with the lane and **0** without it — they do no path work
+   today — while the two paths that genuinely need one (Decision 5) report **1 `derived-identity`**
+   each both as shipped and with the key deleted. Deleting the key therefore costs nothing today and
+   forecloses the only remedy tomorrow, which is why it is split by source rather than removed.
 
 The structural rules already run on credit paths today and continue to.
 
@@ -181,14 +195,21 @@ preference and not something to engineer around — it is the reason the file is
 Two paths in this repository match on a directory segment while their contents are clean: the legacy
 Flutter Android entry points under `app/android/app/src/main/{java,kotlin}/…/MainActivity.{java,kt}`.
 That segment is the published Android `applicationId`, so renaming it renames the shipped app.
-Their permanent home is a `publishedIn` entry in the out-of-repo pattern list, which is TIM-475's
-scope, not this change's — this change must not try to pin them, and the generator will not emit
-them.
+Their permanent home is a path entry, not a pin, in **both** mechanisms — that is the ruling of
+2026-09-06: the baseline and the path list are not two answers to one question, they are disjoint by
+match source. This change must not try to pin them, and the generator will not emit them.
 
-On the CI side the same two paths are reachable through the gate's path records and are not covered
-by an `applicationIdLabels` shape exemption, because a slash-separated path is not a reverse-DNS
-identifier. `tasks.md` carries a measurement task for this rather than a fix, so the two mechanisms
-are at least *known* to agree on it.
+On the preflight side that entry landed out-of-repository on 2026-09-06, with wildcard package
+segments so the literal is never needed for the anchor. On the CI side it does not exist yet:
+measured on `pr/357` with the gate's own `scanRecords`, each of the two path records reports **1
+`derived-identity`** finding as shipped, `creditPaths` does not cover them, and no
+`applicationIdLabels` shape exemption reaches them because a slash-separated path is not a
+reverse-DNS identifier. So a branch touching either file hard-stops in CI with no remediation
+available to its author — the same shape of failure this change exists to end, one level up.
+
+Extending the CI path lane to those two directories is the only configuration that clears them (0
+findings, measured), and the amended §4 puts that fix in this change's scope rather than TIM-475's:
+`tasks.md` 3.5 does it and 5.3 verifies the two mechanisms then agree in both directions.
 
 ## Decision 6 — Make the non-increasing invariant mechanical
 

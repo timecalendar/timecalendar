@@ -55,12 +55,27 @@ A path allowlist that marks a location as the product's own published identity S
 - **THEN** the whole-file layer absorbs that footprint against the pin and the branch passes
 
 ### Requirement: A matching path is never baselined
-A path whose own text matches a pattern SHALL NOT be given a baseline entry, and its permanent exemption MUST live in the out-of-repository pattern configuration instead.
+A path whose own text matches a pattern SHALL NOT be given a baseline entry, and its permanent exemption MUST live in a path list instead — one in each mechanism, expressed with wildcard or prefix segments so the protected string is never written down.
 
 #### Scenario: Pinning a matching path is refused
 
 - **WHEN** a path matches a pattern on a directory or file-name segment
 - **THEN** the generator emits no entry for it, because an entry is keyed on the path and would write the protected string into the file whose property is that it holds none
+
+#### Scenario: The path lane survives the baseline
+
+- **WHEN** a baseline is supplied and the content carve-outs retire into pinned counts
+- **THEN** the path list is kept and narrows `source: "path"` findings only, because a pinned count cannot express a path exemption and the two mechanisms are disjoint by match source
+
+#### Scenario: A content carve-out beside a baseline is an error
+
+- **WHEN** a carve-out narrowing a content match is presented alongside a baseline
+- **THEN** that is an error the tooling raises, not a judgement call left to the reviewer
+
+#### Scenario: Both mechanisms agree on a protected path
+
+- **WHEN** a branch touches a file whose path segment carries the shipped application identifier
+- **THEN** the PR preflight and the CI gate both narrow it, and both fail a branch that creates or renames a path at that shape
 
 ### Requirement: Mechanical non-increasing invariant
 CI SHALL re-measure the census at the commit under test and fail when any committed baseline entry exceeds the measured occurrence count for that `(path, id)`.

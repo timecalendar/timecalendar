@@ -61,8 +61,11 @@ from a leak added beside it next month. Replacing those with pinned counts is st
 - Give `ci/disclosure-scan.mjs` the whole-file layer it lacks, so both mechanisms ask the same two
   questions of the same text: *is this file's footprint larger than its pin?* and *does any line
   this branch added carry an occurrence at all?*
-- Retire `creditPaths` into baseline entries, and stop it excusing added lines. This is a
-  behavioural fix, not a refactor: the probe above is the bug it closes.
+- Stop `creditPaths` excusing added lines, and retire its **content** narrowing into baseline
+  entries. This is a behavioural fix, not a refactor: the probe above is the bug it closes.
+- Keep the key itself as the CI side's **path lane**, narrowing `source: "path"` findings only, and
+  extend it to the two protected paths a count-keyed baseline cannot express. A pin and a path
+  exemption are disjoint by match source; the CI gate hard-stops those two paths today.
 - Add a CI invariant step that re-measures the census and fails when a committed entry **exceeds**
   what the tree actually carries, so "the baseline never grows" is mechanical rather than a review
   convention.

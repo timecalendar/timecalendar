@@ -52,11 +52,25 @@
 - [ ] 3.3 Keep the fail-closed behaviour on an unresolvable merge base, and keep a missing baseline
       meaning *every pin is zero* rather than *skip layer A* — the unbaselined behaviour is the same
       rule, not a special case.
-- [ ] 3.4 Retire `creditPaths` from `ci/disclosure-allowlist.json` into baseline entries, and delete
-      the key once 3.1 covers those paths. Leave `excludedPaths`, the domain lists and
-      `applicationIdLabels` alone — verified that no baseline path falls inside `excludedPaths`, so
-      the two scope filters need no reconciliation.
-- [ ] 3.5 Extend `ci/disclosure-scan.test.mjs` for layer A: at-pin passes, over-pin fails, unpinned
+- [ ] 3.4 Split `creditPaths` in `ci/disclosure-allowlist.json` **by match source**, per the amended
+      §4 (`publishedIn` retired for content, kept and extended for paths). Retire its **content**
+      narrowing into baseline entries once 3.1 covers those paths, and **keep the key as the CI
+      side's path lane**: with a baseline present it narrows `source: "path"` findings only, and a
+      content carve-out beside a baseline is an error rather than a judgement call. Do **not** delete
+      the key — measured on `pr/357` with the gate's own `scanRecords`, it is the only configuration
+      in which a protected path can be exempted at all, and a baseline entry cannot express one
+      (Decision 5). Leave `excludedPaths`, the domain lists and `applicationIdLabels` alone —
+      verified that no baseline path falls inside `excludedPaths`, so the two scope filters need no
+      reconciliation.
+- [ ] 3.5 Extend that path lane to the two legacy Flutter Android entry-point paths under
+      `app/android/app/src/main/{java,kotlin}/…/MainActivity.{java,kt}`, which the out-of-repository
+      list carved out on 2026-09-06 and `creditPaths` omits — amended §4 divergence (b). Measured on
+      `pr/357`: as shipped, those two path records each report **1 `derived-identity`** finding;
+      extending the lane to their directories is the **only** configuration that clears them (0
+      findings); retiring the key wholesale leaves them at 1 each with no expressible remedy. Use
+      wildcard or prefix segments so the protected literal is never written into the repository, and
+      keep task 2.1's rule intact — a path this branch *creates or renames* is judged unnarrowed.
+- [ ] 3.6 Extend `ci/disclosure-scan.test.mjs` for layer A: at-pin passes, over-pin fails, unpinned
       class at a pinned path fails, unpinned touched path fails, and a deleted-only file is skipped.
 
 ## 4. Make the invariant mechanical
@@ -79,9 +93,12 @@
 - [ ] 5.2 Calibrate whole-tree rather than by replaying commits: bucket every occurrence of a
       literal by the character either side of the match. That enumerates the published shapes
       exhaustively and proves an exemption holds by construction rather than by sampling.
-- [ ] 5.3 Measure whether the two mechanisms agree on the two path-only matches under
-      `app/android/app/src/main/{java,kotlin}/…/MainActivity.{java,kt}` (design Decision 5). This is
-      a **measurement, not a fix** — the preflight side is TIM-475's. Report the verdict of each.
+- [ ] 5.3 Confirm the two mechanisms now **agree** on the two path-only matches under
+      `app/android/app/src/main/{java,kotlin}/…/MainActivity.{java,kt}` (design Decision 5): both
+      narrow them where they already exist, and both fail a branch that creates or renames a path at
+      that shape. The preflight side landed out-of-repository on 2026-09-06; the CI side is task 3.5.
+      *(Amended: this was written as "a measurement, not a fix" before the ruling made the CI-side
+      path lane TIM-473's own scope. Measure both directions and report the verdict of each.)*
       Free head start already banked: on the owner-login class the two mechanisms produce an
       identical 4-line hit set at `489ede46`, differing only in how the credit is exempted.
 
