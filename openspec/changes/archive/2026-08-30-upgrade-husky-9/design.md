@@ -136,10 +136,10 @@ what makes them survive a future refactor.
 
 ## Migration hazard: the `core.hooksPath` slot is host-wide and last-install-wins
 
-`core.hooksPath` is a **single value** in the main checkout's `.git/config`
-(`git config --show-origin --get core.hooksPath` reports that file, not any worktree's). All 49
-worktrees on this host share it. Both versions write it on install — v7 `lib/index.js:24` → `.husky`,
-v9 `index.js:14` → `.husky/_`. **The last install anywhere on the host wins everywhere**, and it will
+`core.hooksPath` is a **single value** in the main checkout's `.git/config`, not in any worktree's
+— `git config --show-origin --get core.hooksPath` reports that file. All 49 worktrees on this host
+share it. Both versions write it on install — v7 `lib/index.js:24` → `.husky`, v9
+`index.js:14` → `.husky/_`. **The last install anywhere on the host wins everywhere**, and it will
 keep oscillating for as long as sibling worktrees provision off a v7-pinned `main`: every
 `bin/setup-worktree.sh` run on an unrebased branch flips it back to `.husky`.
 

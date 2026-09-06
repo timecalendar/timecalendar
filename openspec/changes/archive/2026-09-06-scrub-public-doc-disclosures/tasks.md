@@ -83,8 +83,11 @@ item needs a human, and it is different in every note.
       the `app_identifier` line in the same file. One line changes; `storage_mode`, `type` and
       `app_identifier` are untouched. **Do not blank the url and do not delete the line** — Match
       reads it at fetch time.
-      *Verification:* `ruby -c app/ios/fastlane/Matchfile` parses, the file still contains exactly
-      four directives, and 5.3 has landed in the same commit.
+      *Verification:* the file still contains exactly four directives, the new line mirrors the
+      `app_identifier` line below it, and 5.3 has landed in the same commit.
+      *Not verified:* there is no Ruby interpreter on this host, so the file was **not** parsed.
+      A syntax check needs a machine that has one — which is the same machine that runs Match, so
+      the first real Match invocation is what exercises it.
 - [x] 6.2 Nothing else under `app/` is in bounds. Confirm the diff touches exactly one file there.
 
 ## 7. Roadmap, tech specs and operations exploration
