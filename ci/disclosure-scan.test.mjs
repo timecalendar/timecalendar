@@ -61,6 +61,20 @@ const createGitRepo = (t, prefix) => {
   return { repo, runGit };
 };
 
+const commitWithIdentity = (repo, env, message = "fixture commit") =>
+  execFileSync("git", ["commit", "--allow-empty", "--quiet", "-m", message], {
+    cwd: repo,
+    encoding: "utf8",
+    env: { ...process.env, ...env },
+  });
+
+const healthyIdentity = {
+  GIT_AUTHOR_NAME: "Fixture App[bot]",
+  GIT_AUTHOR_EMAIL: addr("1+fixture-app[bot]", "users.noreply.github.com"),
+  GIT_COMMITTER_NAME: "Fixture App[bot]",
+  GIT_COMMITTER_EMAIL: addr("1+fixture-app[bot]", "users.noreply.github.com"),
+};
+
 const record = (text, location = "fixture.md:1") => ({
   source: "diff",
   file: "fixture.md",
@@ -734,6 +748,231 @@ test("a matched whole-file finding path is redacted everywhere in end-to-end out
   assert.ok(!output.includes(token));
   assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md,line=1/);
   assert.match(output, /docs\/\[REDACTED\]\/notes\.md:1/);
+});
+
+test("branch commit identity headers are scanned field by field without revealing matches", async (t) => {
+  const token = ["fixture", "header", "token"].join("-");
+  const fields = [
+    ["author-name", { GIT_AUTHOR_NAME: token }],
+    ["author-email", { GIT_AUTHOR_EMAIL: addr(token, "example.com") }],
+    ["committer-name", { GIT_COMMITTER_NAME: token }],
+    ["committer-email", { GIT_COMMITTER_EMAIL: addr(token, "example.com") }],
+  ];
+
+  for (const [field, identity] of fields) {
+    await t.test(field, () => {
+      const { repo, runGit } = createGitRepo(t, `disclosure-header-${field}-`);
+      writeFileSync(join(repo, "README.md"), "base\n");
+      runGit("add", "README.md");
+      runGit("commit", "--quiet", "-m", "base");
+      const base = runGit("rev-parse", "HEAD").trim();
+      commitWithIdentity(repo, { ...healthyIdentity, ...identity });
+
+      const { code, output } = runMain(
+        { DISCLOSURE_PATTERNS: token },
+        ["--base", base, "--head", "HEAD", "--cwd", repo],
+      );
+      assert.equal(code, 1);
+      assert.match(output, /commit-header/);
+      assert.match(output, new RegExp(`commit [0-9a-f]{12} ${field}`));
+      assert.match(
+        output,
+        new RegExp(`commit [0-9a-f]{12} ${field} — 1 occurrence\\(s\\) of configured-pattern`),
+      );
+      assert.ok(!output.includes(token));
+    });
+  }
+});
+
+test("a branch merge commit identity header is scanned without revealing the match", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-merge-");
+  const token = ["fixture", "merge", "identity"].join("-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+  const baseBranch = runGit("branch", "--show-current").trim();
+
+  runGit("switch", "--quiet", "-c", "fixture-side");
+  commitWithIdentity(repo, healthyIdentity, "side commit");
+  runGit("switch", "--quiet", baseBranch);
+  commitWithIdentity(repo, healthyIdentity, "mainline commit");
+  execFileSync(
+    "git",
+    ["merge", "--quiet", "--no-ff", "fixture-side", "-m", "merge fixture"],
+    {
+      cwd: repo,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        ...healthyIdentity,
+        GIT_AUTHOR_NAME: token,
+        GIT_COMMITTER_NAME: token,
+      },
+    },
+  );
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1, output);
+  assert.match(output, /commit-header/);
+  assert.match(output, /commit [0-9a-f]{12} author-name/);
+  assert.match(output, /commit [0-9a-f]{12} committer-name/);
+  assert.ok(!output.includes(token));
+});
+
+test("identity header control bytes cannot break commit framing", async (t) => {
+  const token = ["fixture", "framing", "token"].join("-");
+  const cases = [
+    ["author-name", "\x1e", { GIT_AUTHOR_NAME: `Fixture\x1e${token}` }],
+    ["committer-name", "\x1f", { GIT_COMMITTER_NAME: `Fixture\x1f${token}` }],
+  ];
+
+  for (const [field, separator, identity] of cases) {
+    await t.test(field, () => {
+      const { repo, runGit } = createGitRepo(t, `disclosure-header-framing-${field}-`);
+      writeFileSync(join(repo, "README.md"), "base\n");
+      runGit("add", "README.md");
+      runGit("commit", "--quiet", "-m", "base");
+      const base = runGit("rev-parse", "HEAD").trim();
+      commitWithIdentity(repo, { ...healthyIdentity, ...identity });
+
+      const rawHeader = runGit(
+        "show",
+        "-s",
+        `--format=${field.startsWith("author") ? "%an" : "%cn"}`,
+      );
+      assert.ok(rawHeader.includes(separator));
+
+      const { code, output } = runMain(
+        { DISCLOSURE_PATTERNS: token },
+        ["--base", base, "--head", "HEAD", "--cwd", repo],
+      );
+      assert.equal(code, 1, output);
+      assert.match(output, /commit-header/);
+      assert.match(output, new RegExp(`commit [0-9a-f]{12} ${field}`));
+      assert.ok(!output.includes(token));
+    });
+  }
+});
+
+test("commit identity header scanning stays branch-only", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-base-");
+  const token = ["fixture", "base", "identity"].join("-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  commitWithIdentity(repo, {
+    ...healthyIdentity,
+    GIT_AUTHOR_NAME: token,
+    GIT_AUTHOR_EMAIL: addr("author", "example.com"),
+  });
+  const base = runGit("rev-parse", "HEAD").trim();
+  commitWithIdentity(repo, healthyIdentity);
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 0);
+  assert.doesNotMatch(output, /commit-header/);
+  assert.ok(!output.includes(token));
+});
+
+test("healthy automation commit identities pass silently", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-healthy-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+  const identities = [
+    { name: "Fixture App[bot]", email: addr("1+fixture-app[bot]", "users.noreply.github.com") },
+    { name: "dependabot[bot]", email: addr("49699333+dependabot[bot]", "users.noreply.github.com") },
+    { name: "GitHub", email: addr("noreply", "github.com") },
+    { name: "GitHub Actions", email: addr("actions", "github.com") },
+  ];
+  for (const identity of identities) {
+    commitWithIdentity(repo, {
+      GIT_AUTHOR_NAME: identity.name,
+      GIT_AUTHOR_EMAIL: identity.email,
+      GIT_COMMITTER_NAME: identity.name,
+      GIT_COMMITTER_EMAIL: identity.email,
+    });
+  }
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: ["fixture", "protected", "token"].join("-") },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 0, output);
+  assert.doesNotMatch(output, /commit-header/);
+});
+
+test("a personal forge push identity in a header fails with no configured patterns", (t) => {
+  // The always-available layer, with no `DISCLOSURE_PATTERNS` overlay — the
+  // state every fork and every unconfigured repository runs in. The identity
+  // is a person the history already knows, re-pushed under the forge's own
+  // `NNNNN+login@users.noreply.github.com` address: the structural lane allows
+  // that domain, so the derived lane is the only thing standing between this
+  // shape and a merge.
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-derived-");
+  const login = ["fixture", "forge", "login"].join("-");
+  const name = ["Fixture", "Forge", "Person"].join(" ");
+  const contributor = {
+    GIT_AUTHOR_NAME: name,
+    GIT_AUTHOR_EMAIL: addr(login, "gmail.com"),
+    GIT_COMMITTER_NAME: name,
+    GIT_COMMITTER_EMAIL: addr(login, "gmail.com"),
+  };
+
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  commitWithIdentity(repo, contributor, "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+
+  const forgeAddress = addr(`12345+${login}`, "users.noreply.github.com");
+  commitWithIdentity(repo, {
+    GIT_AUTHOR_NAME: name,
+    GIT_AUTHOR_EMAIL: forgeAddress,
+    GIT_COMMITTER_NAME: name,
+    GIT_COMMITTER_EMAIL: forgeAddress,
+  });
+
+  const { code, output } = runMain({}, ["--base", base, "--head", "HEAD", "--cwd", repo]);
+  assert.equal(code, 1, output);
+  assert.match(output, /commit-header/);
+  assert.match(output, new RegExp(`commit [0-9a-f]{12} author-email — .* ${FINDING_CLASSES.DERIVED}`));
+  assert.match(output, new RegExp(`commit [0-9a-f]{12} committer-name — .* ${FINDING_CLASSES.DERIVED}`));
+  assert.ok(!output.includes(login));
+  assert.ok(!output.includes(name));
+});
+
+test("commit messages and identity headers retain distinct source values", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-source-");
+  const token = ["fixture", "source", "token"].join("-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+  commitWithIdentity(
+    repo,
+    {
+      ...healthyIdentity,
+      GIT_AUTHOR_NAME: token,
+      GIT_AUTHOR_EMAIL: addr("author", "example.com"),
+    },
+    `mentions ${token}`,
+  );
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.match(output, /commit-header/);
+  assert.match(output, /commit-message/);
+  assert.ok(!output.includes(token));
 });
 
 test("CI invokes the scan and checks out enough history to derive from", () => {

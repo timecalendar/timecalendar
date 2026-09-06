@@ -39,8 +39,9 @@
 //
 // Two verdict layers use the same detectors. The whole contents of each
 // touched file are compared with a count-keyed pin; every added line, added or
-// renamed path, and commit message is checked without a pin. That second layer
-// prevents a delete-and-replace change from passing on an unchanged count.
+// renamed path, commit identity header, and commit message is checked without
+// a pin. That second layer prevents a delete-and-replace change from passing on
+// an unchanged count.
 //
 // Usage: node ci/disclosure-scan.mjs [--base <ref>] [--head <ref>]
 //        node ci/disclosure-scan.mjs --generate-baseline [--head <ref>]
@@ -126,7 +127,11 @@ export function deriveIdentityPatterns(identities, allowlist) {
 
     const [localPart, domain] = identity.email.split("@");
     // A `NNNNN+login@users.noreply.github.com` local part is the login itself.
-    if (localPart) tokens.add(localPart.replace(/^\d+\+/, ""));
+    // A role address identifies nobody, exactly as a consumer mail provider
+    // identifies nobody two lines below; deriving one as an identity token
+    // would flag every automated sender that shares it.
+    const login = localPart?.replace(/^\d+\+/, "");
+    if (login && !allowlist.emailLocalParts.has(login.toLowerCase())) tokens.add(login);
     if (!domain) continue;
 
     // A consumer mail provider identifies nobody. A domain outside that set is
@@ -636,17 +641,59 @@ export function collectRecords({ base, head, allowlist, cwd }) {
     });
   }
 
-  // Commit messages are published with the commits.
-  const log = git(["log", "--no-color", "--format=%H%x00%B%x1e", range], cwd);
-  for (const entry of log.split("\x1e")) {
-    const [sha, body] = entry.replace(/^\n+/, "").split("\0");
-    if (!sha || body === undefined) continue;
+  // Identity headers and messages are both published with the commits. Git
+  // permits control bytes in identity fields, so no formatted-log delimiter
+  // can safely frame them. Enumerate the authoritative branch range as hashes,
+  // then parse each raw commit object along boundaries Git does not permit in
+  // an identity header: newline-delimited headers and the blank line before the
+  // message.
+  const hashes = git(["rev-list", range], cwd).split("\n").filter(Boolean);
+  for (const sha of hashes) {
+    const commit = git(["cat-file", "commit", sha], cwd);
+    const messageBoundary = commit.indexOf("\n\n");
+    if (messageBoundary < 0) continue;
+    const headerLines = commit.slice(0, messageBoundary).split("\n");
+    const body = commit.slice(messageBoundary + 2);
+    const parseIdentity = (kind) => {
+      const prefix = `${kind} `;
+      const header = headerLines.find((line) => line.startsWith(prefix));
+      if (!header) return { name: "", email: "" };
+      const match = header.slice(prefix.length).match(/^(.*) <([^<>]*)> \d+ [+-]\d{4}$/s);
+      // A malformed branch commit must not turn parsing failure into a clean
+      // verdict. Scan its complete identity payload as the name field instead.
+      return match
+        ? { name: match[1], email: match[2] }
+        : { name: header.slice(prefix.length), email: "" };
+    };
+    const author = parseIdentity("author");
+    const committer = parseIdentity("committer");
+    const shortSha = sha.slice(0, 12);
+    for (const identity of [
+      { kind: "author", ...author },
+      { kind: "committer", ...committer },
+    ]) {
+      // Every lane reads every field. A personal forge push identity is
+      // `NNNNN+login@users.noreply.github.com`, which the structural lane
+      // allows by domain — so exempting headers from the derived lane too
+      // would leave exactly the regression this one exists to catch uncovered
+      // whenever no configured pattern list is supplied.
+      for (const [fieldName, text] of [["name", identity.name], ["email", identity.email]]) {
+        if (!text) continue;
+        records.push({
+          source: "commit-header",
+          file: null,
+          line: null,
+          location: `commit ${shortSha} ${identity.kind}-${fieldName}`,
+          text,
+        });
+      }
+    }
     body.split("\n").forEach((text, index) => {
       records.push({
         source: "commit-message",
         file: null,
         line: null,
-        location: `commit ${sha.slice(0, 12)} message line ${index + 1}`,
+        location: `commit ${shortSha} message line ${index + 1}`,
         text,
       });
     });
@@ -1053,7 +1100,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
 
   const records = collectRecords({ base, head, allowlist, cwd });
   console.log(
-    `disclosure-scan: ${records.length} added line(s), path(s) and commit message line(s) since ${base.slice(0, 12)}`,
+    `disclosure-scan: ${records.length} added line(s), path(s), commit header(s) and commit message line(s) since ${base.slice(0, 12)}`,
   );
 
   const findings = scanRecords(records, { derived, configured, allowlist });
@@ -1077,7 +1124,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       ? `file=${finding.file}${finding.line ? `,line=${finding.line}` : ""}`
       : "";
     console.log(
-      `::error ${where}::disclosure-scan: ${finding.location} — ${finding.count} occurrence(s) of ${finding.class}`,
+      `::error ${where}::disclosure-scan: ${finding.source}: ${finding.location} — ${finding.count} occurrence(s) of ${finding.class}`,
     );
   }
   const occurrences = findings.reduce((total, f) => total + f.count, 0);
