@@ -51,6 +51,9 @@ module.exports = {
     // bridge. Its mock renders every page and exposes the imperative methods so
     // tests drive production onPageSelected state without a native runtime.
     "<rootDir>/jest/setup-pager-view.ts",
+    // Register Reanimated's supported Jest matchers/runtime before suites render
+    // feature-owned UI-thread styles.
+    "<rootDir>/jest/setup-reanimated.ts",
     // calendar-kit/setup mocks @howljs/calendar-kit (a Reanimated/worklet grid
     // with no off-device runtime) so the calendar screen renders through the
     // renderer adapter and its renderEvent→tile wiring is provable under Jest

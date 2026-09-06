@@ -5,6 +5,16 @@
 - Recorded feature ownership for the decomposed personal-event editor controller, field/action
   sections, color picker/presets, and date/time field. The native picker remains behind the shared
   chrome seam. This applies ADR 014 unchanged; it introduces no new Architecture Book rule or ADR.
+- Recorded the onboarding welcome screen's feature-owned page, direct native-pager,
+  control, grouped-indicator, and coordinator composition. Decorative entrance opacity and
+  indicator width now use Reanimated with live reduced-motion snapping and owned cleanup;
+  ADR 036's native page-selection contract is unchanged.
+- Added the supported Reanimated/Worklets Jest setup posture for feature-owned animation and
+  kept component proofs centered on rendered outcomes, user behavior, and focused lifecycle
+  ownership.
+- Updated the reduced-motion guidance to name Splash and onboarding as current feature owners,
+  including onboarding's live feature-local hook; shared accessibility infrastructure remains
+  deferred until another feature demonstrates the need.
 
 ## 2026-08-31
 
