@@ -1,0 +1,160 @@
+{
+  "_comment": [
+    "Allowlist for ci/disclosure-scan.mjs. This file is the INVERSE of a denylist:",
+    "it may only ever contain strings that are already safe to publish in a public",
+    "repository. Never add a personal name, login, or personal address here — the",
+    "scan patterns are derived at run time and are never committed.",
+    "Adding an entry is the intended, review-visible way to clear a false positive."
+  ],
+
+  "excludedPaths": [
+    ":(exclude)**/package-lock.json",
+    ":(exclude)**/node_modules/**",
+    ":(exclude)**/*.lock",
+    ":(exclude)mobile/src/api/generated/**",
+    ":(exclude)openapi/javascript/**",
+    ":(exclude)openapi/dart/**",
+    ":(exclude)app/ios/Pods/**"
+  ],
+
+  "_creditPaths": "The product's own credit surface. The About screen names the people who built the app and links to their sites, on purpose, as user-facing content — so a derived identity there is intended publication, not a leak. Only paths are listed; no name is named. Structural rules still apply here.",
+  "creditPaths": [
+    "mobile/src/features/about/",
+    "mobile/src/app/about.tsx",
+    "mobile/.maestro/about.yaml",
+    "app/lib/modules/about/",
+    "web/app/about/",
+    "openspec/specs/mobile-about-screen/",
+    "openspec/changes/archive/2026-08-25-add-mobile-about-screen/",
+    "openspec/changes/archive/2026-08-26-add-mobile-changelog/specs/mobile-about-screen/"
+  ],
+
+  "_platformIdentityEmailDomains": "Author identities on these domains are the forge/CI itself, not people. Dropping [bot] names alone is not enough: the Actions identity has a human-shaped name that occurs legitimately in workflows and docs.",
+  "platformIdentityEmailDomains": [
+    "github.com",
+    "noreply.github.com",
+    "users.noreply.github.com"
+  ],
+
+  "_nonIdentifyingMailDomains": "Consumer mail providers. An author address on one of these still yields name/address/local-part patterns, but the domain itself identifies nobody, so no domain pattern is derived from it.",
+  "nonIdentifyingMailDomains": [
+    "gmail.com",
+    "googlemail.com",
+    "hotmail.com",
+    "hotmail.fr",
+    "outlook.com",
+    "outlook.fr",
+    "yahoo.com",
+    "yahoo.fr",
+    "icloud.com",
+    "me.com",
+    "protonmail.com",
+    "proton.me",
+    "free.fr",
+    "orange.fr",
+    "sfr.fr",
+    "laposte.net",
+    "wanadoo.fr"
+  ],
+
+  "_emailDomains": "Domains an added line may carry: documentation placeholders, our own product, the forge, and the fixture domains already used by the server and mobile test suites.",
+  "emailDomains": [
+    "example.com",
+    "example.org",
+    "example.net",
+    "example.fr",
+    "example.test",
+    "test",
+    "invalid",
+    "localhost",
+    "local",
+    "github.com",
+    "noreply.github.com",
+    "users.noreply.github.com",
+    "timecalendar.app",
+    "timecalendar.fr",
+    "email.com",
+    "b.fr",
+    "ensea.fr"
+  ],
+
+  "_emailLocalParts": "Role addresses. Matching on the local part rather than the domain lets the automated commit trailers pass without this file naming the services that send them.",
+  "emailLocalParts": [
+    "noreply",
+    "no-reply",
+    "donotreply",
+    "do-not-reply"
+  ],
+
+  "_fileExtensionTlds": "Asset filenames such as logo@2x.png are email-shaped. Treat these trailing labels as file extensions, not domains.",
+  "fileExtensionTlds": [
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "svg",
+    "ico",
+    "pdf",
+    "zip",
+    "webm",
+    "mp4",
+    "ts",
+    "tsx",
+    "js",
+    "jsx",
+    "mjs",
+    "cjs",
+    "json",
+    "md",
+    "yml",
+    "yaml",
+    "css",
+    "scss",
+    "html",
+    "xml",
+    "txt",
+    "sh",
+    "dart",
+    "kt",
+    "java",
+    "swift",
+    "gradle",
+    "plist",
+    "pbxproj"
+  ],
+
+  "_githubLogins": "Only bare profile URLs are flagged (github.com/<login> with no repository segment), so organisations we link to by repository need no entry. These are the reserved GitHub paths and our own org, which are bare by nature.",
+  "githubLogins": [
+    "timecalendar",
+    "about",
+    "apps",
+    "collections",
+    "contact",
+    "enterprise",
+    "explore",
+    "features",
+    "join",
+    "login",
+    "marketplace",
+    "orgs",
+    "pricing",
+    "readme",
+    "security",
+    "settings",
+    "sponsors",
+    "topics",
+    "trending"
+  ],
+
+  "_applicationIdLabels": "Our own product label. A derived identity match is excused only inside a reverse-DNS application identifier carrying one of these — see isExemptPublishedIdentifier. The label being excused is never named here.",
+  "applicationIdLabels": [
+    "timecalendar"
+  ],
+
+  "_homePathPrefixes": "Home-directory prefixes that disclose no host layout. Entries are PREFIXES, not account names: allowlisting a whole account discards every path under it, and the account a fleet runs under is the exact spelling of every host path that fleet would realistically leak. Publishing the host's directory layout is itself the disclosure, whoever the account belongs to. Keep this list identical to the exclusions the agent-side preflight scanner already applies, so the two layers agree on what a disclosure is — the worst available state is two scanners disagreeing with the unskippable one weaker. Entries: the CI runner account, whose paths are identical on every fork and carry no local layout; and the documented toolchain install path, which the contributor handbook publishes on purpose.",
+  "homePathPrefixes": [
+    "runner",
+    "dev/flutter"
+  ]
+}

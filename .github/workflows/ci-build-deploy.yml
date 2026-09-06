@@ -37,6 +37,58 @@ jobs:
     - name: Test pre-commit hook wiring
       run: ./ci/test-git-hooks.sh
 
+  scan-disclosure:
+    name: Scan branch for disclosures
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+      with:
+        # The scan derives its identity patterns from this repository's own
+        # commit authors, and diffs against the merge base. A shallow clone has
+        # neither, and the scan fails closed rather than silently passing.
+        fetch-depth: 0
+
+    - name: Set up Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    # No dependencies: the scan is plain Node and git.
+    - name: Test the scan
+      run: node --test ci/disclosure-scan.test.mjs
+
+    # DISCLOSURE_PATTERNS is an optional overlay for strings this repository's
+    # history does not contain. It is absent on forks and until an owner sets
+    # it; the derived and structural layers run either way, and the job logs
+    # which layers were active as counts only. Never echo a match: this log is
+    # public, so printing the offending line would republish it.
+    #
+    # One entry per line, and only per line — a comma does not separate them,
+    # because a quantifier and every character class contain one. Each line is
+    # a regular expression, optionally followed by ` :: ` and a probe string
+    # that expression must match:
+    #
+    #     <regular expression> :: <string it must match>
+    #
+    # The line is split on the *first* delimiter, so the probe may contain it
+    # and the pattern may not; a pattern needing to match that text writes one
+    # colon as a bracketed class. An entry that does not compile, or that fails
+    # its own probe, fails this job rather than being skipped — reported by line
+    # number, never by value, and never by probe: a probe is by construction a
+    # string that matches a forbidden pattern.
+    #
+    # The probe is why the log is worth reading. Entries-parsed and
+    # entries-compiled both print identically whether an entry matches
+    # everything it should or nothing at all, so neither can fail; the self-test
+    # can. An entry with no probe is reported as unverified rather than counted
+    # as working.
+    - name: Scan for disclosures
+      env:
+        DISCLOSURE_PATTERNS: ${{ secrets.DISCLOSURE_PATTERNS }}
+      run: node ci/disclosure-scan.mjs --base origin/main
+
   build-server:
     name: Build server image
     runs-on: ubuntu-latest
