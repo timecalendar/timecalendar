@@ -49,6 +49,19 @@ None.
 - No new dependency and no committed pattern list. The existing runtime pattern sources continue
   to define what matches.
 
+## Amendment — the contributor-preflight half is declined
+
+Ratified after the proposal was written, so the bullets above still describe the original two-sided
+intent. What ships is the repository CI gate alone: publishing the matching preflight change is an
+act a standing board directive forbids, and the follow-up filed to do it was cancelled rather than
+executed (TIM-487). The safety property survives, because the CI gate is the unskippable half — a
+branch commit carrying a forbidden identity header fails before merge either way. The preflight
+would only have warned earlier.
+
+The resulting asymmetry is intentional and permanent until the board owner lifts the directive
+himself. It must not be re-filed as a scanner-divergence or parity defect; the delta spec's final
+requirement is the record.
+
 ## Non-Goals
 
 - Scanning or rewriting repository history.

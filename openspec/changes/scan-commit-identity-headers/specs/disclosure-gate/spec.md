@@ -2,10 +2,13 @@
 
 ### Requirement: Branch commit identity headers are scanned
 
-The contributor preflight and repository CI gate SHALL match their existing disclosure pattern
-sources against the author name, author email, committer name, and committer email of every commit
-added over the resolved merge base. A matching header MUST produce a finding with source
-`commit-header`.
+The repository CI gate SHALL match every one of its existing disclosure pattern sources — derived,
+structural, and configured — against the author name, author email, committer name, and committer
+email of every commit added over the resolved merge base. A matching header MUST produce a finding
+with source `commit-header`. No identity class is exempted from a lane. A personal push identity
+issued by the forge sits on a domain the structural lane's allowlist accepts, so skipping the
+derived lane for that class would leave the regression this requirement exists to catch uncovered
+wherever no configured pattern list is supplied.
 
 #### Scenario: A branch author header matches
 
@@ -27,9 +30,17 @@ added over the resolved merge base. A matching header MUST produce a finding wit
 
 #### Scenario: Healthy automation identities pass silently
 
-- **WHEN** every branch commit uses an identity already classified as platform automation,
-  dependency automation, or an allowed role address
-- **THEN** the header lane produces no finding and does not fail the scan
+- **WHEN** every branch commit uses a bot, dependency-automation, or role identity whose name and
+  address match no disclosure pattern in any lane
+- **THEN** every lane still reads all four fields, none matches, and the header lane produces no
+  finding and does not fail the scan
+
+#### Scenario: A derived identity is re-pushed under a forge address
+
+- **WHEN** a branch commit carries an identity the repository history already derives patterns from,
+  with the address rewritten to the forge's personal push form
+- **THEN** the derived lane still matches the header and the scan fails, with no configured pattern
+  list supplied
 
 ### Requirement: Commit identity headers use layer-B policy
 
@@ -64,13 +75,16 @@ in serialized findings or public command output.
 - **THEN** the message finding reports `commit-message` and the header finding reports
   `commit-header`
 
-### Requirement: Preflight and CI keep commit-header parity
+### Requirement: The commit-header lane is a repository CI capability only
 
-The contributor preflight and repository CI gate SHALL use the same merge-base-to-head scope,
-four-field coverage, `commit-header` source value, layer-B policy, and no-match-in-output guarantee.
+The commit-header lane SHALL live in the repository CI gate, which is the unskippable one. The
+matching change to the contributor preflight is declined: publishing it is an act a standing board
+directive forbids, recorded on TIM-487. The resulting asymmetry — the CI gate reads commit identity
+headers while the earlier, softer contributor preflight does not — is intentional and MUST NOT be
+re-filed later as a scanner-divergence or parity defect.
 
-#### Scenario: The same synthetic branch is scanned by both mechanisms
+#### Scenario: A matching header reaches a pull request
 
-- **WHEN** both mechanisms receive equivalent patterns and inspect the same branch commits
-- **THEN** both reach the same pass/fail verdict for commit headers and identify the same matching
-  header fields
+- **WHEN** a branch commit carries a matching identity header and no contributor preflight caught it
+- **THEN** the repository CI gate fails the pull request before merge, and the absent preflight
+  coverage is an accepted gap rather than a defect

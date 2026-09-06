@@ -40,9 +40,10 @@
 - [x] 3.3 Run the canonical preflight tests and a black-box `disclosure-scan` request against a
   synthetic branch, proving the same failing and healthy verdicts as CI and confirming the report
   redacts every assembled match.
-- [ ] 3.4 Materialize the updated canonical preflight package through its normal versioned delivery
-  path, verify the active executable carries the new behavior, and record the verified package
-  revision in the internal handoff without adding environment details to the public repository.
+- [ ] 3.4 **Declined, not deferred.** Materializing the canonical preflight package is an act a
+  standing board directive forbids; the follow-up filed to do it was cancelled rather than executed
+  (TIM-487). This box stays unticked on purpose — the shipped scope is the repository CI gate alone,
+  and the asymmetry is recorded in the delta spec's final requirement.
 
 ## 4. Documentation and architecture record
 

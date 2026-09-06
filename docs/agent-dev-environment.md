@@ -648,7 +648,11 @@ Three layers, each independent:
 
 1. **Derived** — identities taken from this repository's own commit authors. They are
    already public in the history, so reading them discloses nothing and configures
-   nothing. Platform and bot identities are dropped.
+   nothing. Platform and bot identities contribute no vocabulary, and neither does a
+   role local part such as `noreply`, which identifies nobody. That is a rule about what
+   the layer *derives*, never about what it *inspects*: every record, commit headers
+   included, is matched against all three layers, so a person re-pushing under a forge
+   address the structural layer allows is still caught by the derived one.
 2. **Structural** — shapes, not values: an address on a domain that is not allowlisted,
    a bare profile URL, a home directory, a co-author trailer that is not a role address.
 3. **Configured** — the optional `DISCLOSURE_PATTERNS` repository secret, for strings the
