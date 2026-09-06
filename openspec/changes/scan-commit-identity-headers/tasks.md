@@ -67,6 +67,6 @@
 - [x] 5.3 Validate the OpenSpec change with `openspec validate scan-commit-identity-headers`, then
   update task checkboxes and the operating documentation to match the implementation that actually
   landed.
-- [ ] 5.4 Run the contributor disclosure preflight over the finished branch and exact PR text using
+- [x] 5.4 Run the contributor disclosure preflight over the finished branch and exact PR text using
   the committed baseline and full runtime pattern list. Stop on every introduced finding; report
   only safe pattern ids, paths, and counts for any pre-existing finding.
