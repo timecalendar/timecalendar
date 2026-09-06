@@ -3,7 +3,7 @@
 **Date:** 2026-06-15
 **Roadmap:** Phase 03 step 6 (`docs/react-native-migration/01-roadmap/03-onboarding-and-sources.md`)
 **Research source:** [`data-persistence-migration.md §6`](../00-exploration/data-persistence-migration.md#6-device-verification-done)
-**For:** Samuel (needs physical Android hardware — the autonomous loop cannot do this)
+**For:** whoever runs the device passes (needs physical Android hardware — the autonomous loop cannot do this)
 
 This is **not a ship** — it's a one-shot on-device confirmation of two open items from the
 persistence research. iOS is already settled (§6, verified on the iOS simulator). The two open

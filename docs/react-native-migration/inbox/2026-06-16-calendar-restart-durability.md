@@ -4,7 +4,7 @@
 **Roadmap:** Phase 03 step 5 (`docs/react-native-migration/01-roadmap/03-onboarding-and-sources.md`)
 **Change:** `add-mobile-calendar-identity-persistence` (ship 5/5, the load-bearing ship)
 **ADR:** [018](../../../docs/mobile/architecture-book/decisions/018-user-calendar-storage.md)
-**For:** Samuel (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
+**For:** whoever runs the device passes (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
 
 This is the **E2E / on-device durability axis** for the calendar identity-persistence ship.
 Per the change's design (D9) and the DoD "no third state" rule, exactly one of {a Maestro

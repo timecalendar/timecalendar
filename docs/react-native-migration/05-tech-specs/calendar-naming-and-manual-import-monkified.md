@@ -1,6 +1,6 @@
 # Calendar naming, bedtime edition 🐵🌙
 
-**Paperclip:** [TIM-274](https://paperclip.lyrolab.fr/TIM/issues/TIM-274)  
+**Paperclip:** `TIM-274`  
 **Serious spec:** [calendar-naming-and-manual-import.md](./calendar-naming-and-manual-import.md)  
 **Status:** Decisions made. Tickets not created yet.
 

@@ -1,4 +1,4 @@
-git_url("https://github.com/samuelprak/app-certificates-and-profiles.git")
+git_url(ENV["MATCH_GIT_URL"])
 storage_mode("git")
 type("appstore") # The default type, can be: appstore, adhoc, enterprise or development
 

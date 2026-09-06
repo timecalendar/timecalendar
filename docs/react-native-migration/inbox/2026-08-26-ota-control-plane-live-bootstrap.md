@@ -49,13 +49,13 @@ The credential was prepared on the production-access machine with this no-stdout
 ```bash
 doctl kubernetes cluster kubeconfig save cluster01 --expiry-seconds 600
 
-install -d -m 700 -o dev -g dev /home/dev/.config/timecalendar-ota
+OTA_CONFIG_DIR="$HOME/.config/timecalendar-ota"
+install -d -m 700 "$OTA_CONFIG_DIR"
 umask 077
 kubectl get secret -n timecalendar-ota timecalendar-ota-env-secret \
   -o jsonpath='{.data.ADMIN_PASSWORD}' \
-  | base64 -d > /home/dev/.config/timecalendar-ota/admin-password
-chown dev:dev /home/dev/.config/timecalendar-ota/admin-password
-chmod 600 /home/dev/.config/timecalendar-ota/admin-password
+  | base64 -d > "$OTA_CONFIG_DIR/admin-password"
+chmod 600 "$OTA_CONFIG_DIR/admin-password"
 ```
 
 The file is a local credential handoff to the assigned agent. Do not print it. The agent will

@@ -191,8 +191,7 @@ Sections 1–6 are the implementation. Section 7 is the evidence the close gate 
 - [x] 7.7 Local green: `cd server && npx tsc --noEmit && npm run lint && npm test`, and
   `cd mobile && npx tsc --noEmit`.
 - [x] 7.8 Measure against the provisional budgets (default 50-log page p95 < 250 ms; maximum
-  100-log page p95 < 500 ms; no full-table sequential scan) and post the numbers on
-  [TIM-395](https://paperclip.lyrolab.fr/TIM/issues/TIM-395). These are the numbers the close gate
-  checks against [TIM-394](https://paperclip.lyrolab.fr/TIM/issues/TIM-394)'s frozen gates — the
-  Reviewer parks TIM-395 `blocked` on TIM-394 rather than merging on provisional budgets.
+  100-log page p95 < 500 ms; no full-table sequential scan) and post the numbers on `TIM-395`.
+  These are the numbers the close gate checks against `TIM-394`'s frozen gates — the Reviewer
+  parks TIM-395 `blocked` on TIM-394 rather than merging on provisional budgets.
 - [x] 7.9 `openspec validate add-v1-calendar-log-search --strict` passes.

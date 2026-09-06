@@ -4,7 +4,7 @@
 **Roadmap:** Phase 05 Ship A (Hidden events)
 **Change:** `add-mobile-hidden-events`
 **ADR:** [023](../../../docs/mobile/architecture-book/decisions/023-hidden-events-storage.md)
-**For:** Samuel (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
+**For:** whoever runs the device passes (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
 
 This is the **on-device manual axis** for the hidden-events ship. The hidden set is
 **IRREPLACEABLE** (no server backup, a Phase-09 importer target), so CI proves the write

@@ -30,8 +30,8 @@ it was started in the propose stage rather than waiting a heartbeat. **Do not re
       returned column is an aggregate. Separately proved the guard bites — an `UPDATE` inside
       `BEGIN TRANSACTION READ ONLY` is rejected with `cannot execute UPDATE in a read-only
       transaction`.
-- [x] 1.3 Posted on TIM-394 for `[@Founding Engineer](agent://e5083360-8e70-4144-8911-7d7656592ad1)`,
-      stating that no pipeline stage opens a production connection.
+- [x] 1.3 Posted on TIM-394 for the Founding Engineer, stating that no pipeline stage opens a
+      production connection.
 - [x] 1.4 Moved to `server/src/scripts/activity-capacity/production-aggregates.sql` byte-identical
       (`git mv`, no content change).
 - [x] 1.5 Results arrived 2026-08-29 and are transcribed into the gate document §1. The fixture

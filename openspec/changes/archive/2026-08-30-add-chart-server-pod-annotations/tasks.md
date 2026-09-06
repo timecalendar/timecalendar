@@ -2,14 +2,14 @@
 
 - [x] 1.1 Before editing anything, materialise the `origin/main` chart and the real
   per-environment values, and record the baseline digests. `lyrolab/platform` is checked
-  out locally at `/home/dev/projects/perso/platform`; fetch it so the values come from
-  `origin/main`, and record the platform commit alongside the digests.
+  out locally alongside this repository; point `$PLAT` at that checkout, fetch it so the
+  values come from `origin/main`, and record the platform commit alongside the digests.
 
   ```bash
   S="${PAPERCLIP_RUN_SCRATCH_DIR:-/tmp}/tim337-render"; mkdir -p "$S"
   git fetch origin
   git archive origin/main k8s/timecalendar | tar -x -C "$S"          # -> $S/k8s/timecalendar
-  PLAT=/home/dev/projects/perso/platform
+  PLAT="${PLATFORM_CHECKOUT:-../platform}"   # the lyrolab/platform checkout
   git -C "$PLAT" fetch origin && git -C "$PLAT" rev-parse --short origin/main
   for e in preprod production; do
     git -C "$PLAT" show "origin/main:kubernetes/clusters/do-fra1-cluster01/20-apps/timecalendar-$e/values.yaml" > "$S/$e.yaml"

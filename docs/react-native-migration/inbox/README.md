@@ -1,4 +1,4 @@
-# Inbox — handoffs from the autonomous pipeline to Samuel
+# Inbox — handoffs from the autonomous pipeline to the human owner
 
 The `/ship` pipeline runs unattended. When it hits something it **physically cannot do** — or a
 decision it shouldn't make alone — it drops a note here and keeps going on everything else.
@@ -6,6 +6,9 @@ decision it shouldn't make alone — it drops a note here and keeps going on eve
 ## Convention
 
 - One file per handoff: `YYYY-MM-DD-<slug>.md`.
+- Each note opens with a `**For:**` line naming the **role** that can clear it — "whoever runs
+  the device passes", "the human owner" — never a person, followed by a parenthetical saying
+  which constraint makes it human-only. This repository is public; a note names roles, not people.
 - Each note states, in this order:
   1. **What I need** — the concrete action only you can take.
   2. **Why** — the constraint that blocked the agent (credentials, real device, store/Firebase

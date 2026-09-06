@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-25
 **Change:** `normalize-ade-export-date-windows`
-**For:** Samuel `(HUMAN: physical-device import and later-refresh pass after deployment)`
+**For:** whoever runs the device passes `(HUMAN: physical-device import and later-refresh pass after deployment)`
 
 ## What I need
 
