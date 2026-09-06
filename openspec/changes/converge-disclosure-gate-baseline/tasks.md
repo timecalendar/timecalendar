@@ -1,13 +1,13 @@
 ## 0. Precondition
 
-- [ ] 0.1 Confirm PR #357 (TIM-468) has merged to `main`, then rebase this branch onto it. Do not
+- [x] 0.1 Confirm PR #357 (TIM-468) has merged to `main`, then rebase this branch onto it. Do not
       start section 2 before that: `ci/disclosure-scan.mjs` does not exist on `main` until it lands.
       No content merge conflict is expected — verified that the #357 tree measures the same 46 paths
       / 101 occurrences as `489ede46`, entry-for-entry.
 
 ## 1. Commit the generated baseline
 
-- [ ] 1.1 Regenerate the baseline **at this branch's merge base as it will land** (design Decision
+- [x] 1.1 Regenerate the baseline **at this branch's merge base as it will land** (design Decision
       2), never at a frozen SHA, with the pattern list from the out-of-repository configuration and
       `exclude: ["^ci/certificates/"]`:
 
@@ -20,10 +20,10 @@
       before the exclusion: 46 / 51 / 101). If TIM-471 (PR #359) has merged first, the numbers will
       be **smaller** — that is correct and expected; record what you actually measure, and never
       reconcile a smaller measurement upward.
-- [ ] 1.2 Verify the committed file end to end: it parses, every entry has exactly `path`, `id`,
+- [x] 1.2 Verify the committed file end to end: it parses, every entry has exactly `path`, `id`,
       `count`, and no entry names a path whose own text matches (design Decision 5 — the generator
       will not emit one; confirm none was added).
-- [ ] 1.3 Prove acceptance criterion 4 mechanically — feed the committed baseline back to the scan
+- [x] 1.3 Prove acceptance criterion 4 mechanically — feed the committed baseline back to the scan
       as `text` against the full pattern list and confirm **zero occurrences, exit 0**. Record the
       numbers in the PR body. This is the property that makes the file committable; do not take it
       on faith.
