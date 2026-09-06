@@ -23,10 +23,13 @@ inside a `creditPaths` entry produces **0 findings**, while the identical line o
 produces **1**. That is the substitution hole the preflight's layer B exists to close, still open
 in CI. A path allowlist excuses a file forever, including a leak added to it tomorrow.
 
-The fix for both is the artifact this change commits: a **count-keyed baseline**. It records, for
-each `(path, pattern id)`, *how many* occurrences that path already carries — an integer, never the
-string — so it is committable to the repository it protects, while a pattern list never is. A
-pinned count excuses only the footprint that was measured; the next occurrence fails.
+The fix for both is the artifact this change commits: a **count-keyed baseline file** with two
+generated content lanes. `entries` records the preflight's `(path, pattern id, count)` pins;
+`ciEntries` records CI's `(path, finding class, count)` pins. The lanes share file and verdict rules
+without pretending that independently derived detector vocabularies are interchangeable. Both hold
+integers and safe labels, never the matched string, so the file is committable to the repository it
+protects while a pattern list never is. A pinned count excuses only the footprint that was measured;
+the next occurrence fails.
 
 ### The live cost, measured rather than assumed
 
@@ -56,8 +59,9 @@ from a leak added beside it next month. Replacing those with pinned counts is st
 
 ## What Changes
 
-- Commit a generated `ci/disclosure-baseline.json` — `{path, id, count}` entries and nothing else —
-  and make it the single artifact both the preflight and the CI gate consult.
+- Commit one generated `ci/disclosure-baseline.json` with backward-compatible `entries` for the
+  preflight and separate `ciEntries` for CI. Every item in either lane is exactly
+  `{path, id, count}`; each lane independently rejects duplicate `(path, id)` keys.
 - Give `ci/disclosure-scan.mjs` the whole-file layer it lacks, so both mechanisms ask the same two
   questions of the same text: *is this file's footprint larger than its pin?* and *does any line
   this branch added carry an occurrence at all?*
@@ -66,9 +70,10 @@ from a leak added beside it next month. Replacing those with pinned counts is st
 - Keep the key itself as the CI side's **path lane**, narrowing `source: "path"` findings only, and
   extend it to the two protected paths a count-keyed baseline cannot express. A pin and a path
   exemption are disjoint by match source; the CI gate hard-stops those two paths today.
-- Add a CI invariant step that re-measures the census and fails when a committed entry **exceeds**
-  what the tree actually carries, so "the baseline never grows" is mechanical rather than a review
-  convention.
+- Add a CI invariant step that re-measures `ciEntries` with CI's available detector sources and
+  fails when a committed CI pin **exceeds** what the tree actually carries. The preflight continues
+  to enforce `entries` when its out-of-repository pattern input is present; CI does not claim it can
+  reconstruct that lane without the input.
 - Record the regeneration recipe, the non-increasing invariant, and the exclusion rationale in
   `docs/agent-dev-environment.md`.
 
@@ -95,7 +100,7 @@ None.
 - **Depends on PR #357 (TIM-468) merging first**, unchanged, as TIM-473 §4 requires. Verified: the
   #357 tree measures the same 46 paths / 101 occurrences as `main`, so it introduces no footprint of
   its own and the census is stable across that merge.
-- **The committed baseline is inert until its callers pass it.** The preflight reads it only when
+- **The committed preflight lane is inert until its callers pass it.** The preflight reads it only when
   the caller supplies `baseline`, and that caller configuration lives outside this repository. It is
   named as a task and routed, not assumed.
 

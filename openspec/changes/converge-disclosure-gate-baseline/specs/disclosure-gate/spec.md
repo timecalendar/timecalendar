@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Committed count-keyed disclosure baseline
-The repository SHALL commit a generated baseline at `ci/disclosure-baseline.json` whose every entry is exactly a repository-relative `path`, a safe pattern `id`, and an integer `count`, and which MUST contain no protected string.
+The repository SHALL commit one version-1 baseline at `ci/disclosure-baseline.json` with separate generated `entries` and `ciEntries` content lanes. The preflight SHALL read only `entries`, CI layer A SHALL read only `ciEntries`, and every item in either lane MUST contain exactly a repository-relative `path`, a safe `id`, and a positive integer `count`. Each lane MUST independently reject duplicate `(path, id)` keys, and the complete file MUST contain no protected string.
 
 #### Scenario: The baseline is itself clean
 
@@ -11,7 +11,12 @@ The repository SHALL commit a generated baseline at `ci/disclosure-baseline.json
 #### Scenario: The baseline is generated, not hand-written
 
 - **WHEN** the baseline is produced
-- **THEN** it is the output of the tool's baseline generator against the tracked tree at the commit the branch will land on, with `ci/certificates/` excluded, and no entry is added or amended by hand
+- **THEN** both lanes are generator output against the same tracked tree at the commit the branch will land on, with `ci/certificates/` excluded, and no entry is added or amended by hand
+
+#### Scenario: Detector vocabularies remain independent
+
+- **WHEN** the preflight and CI assign different safe ids to findings on the same path
+- **THEN** each mechanism compares only its own lane by `(path, id, count)` and no per-path aggregate is used
 
 #### Scenario: A raised count is visible in review
 
@@ -78,17 +83,22 @@ A path whose own text matches a pattern SHALL NOT be given a baseline entry, and
 - **THEN** the PR preflight and the CI gate both narrow it, and both fail a branch that creates or renames a path at that shape
 
 ### Requirement: Mechanical non-increasing invariant
-CI SHALL re-measure the census at the commit under test and fail when any committed baseline entry exceeds the measured occurrence count for that `(path, id)`.
+CI SHALL re-measure `ciEntries` at the commit under test and fail when any committed CI entry exceeds the measured occurrence count for that `(path, id)`. CI MUST NOT claim to remeasure `entries` without the out-of-repository preflight pattern input; when that input is present, the preflight SHALL enforce its own lane.
 
 #### Scenario: A stale pin fails
 
 - **WHEN** scrubbing removes occurrences from a baselined path and the committed entry is not regenerated
 - **THEN** the invariant step fails and names the path and id, without printing the match
 
-#### Scenario: The check needs no secret
+#### Scenario: Always-on classes remeasure without configured input
 
-- **WHEN** the invariant step runs on a fork or without any injected pattern secret
-- **THEN** it still completes against the committed baseline and the tracked tree
+- **WHEN** the invariant step runs without the optional configured source
+- **THEN** it records degraded coverage and remeasures the always-on CI classes against `ciEntries`
+
+#### Scenario: A configured source appears after generation
+
+- **WHEN** the configured source was absent during generation and later produces an unpinned `configured-pattern` finding
+- **THEN** CI fails closed until a deliberate regenerated `ciEntries` lane is reviewed
 
 ### Requirement: Findings never publish what they matched
 Every disclosure finding, log line, and report emitted by either mechanism SHALL carry a location, a pattern id or class, and an occurrence count, and MUST NOT reproduce the matched string.

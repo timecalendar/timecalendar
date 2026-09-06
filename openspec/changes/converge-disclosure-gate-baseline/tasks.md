@@ -5,7 +5,7 @@
       No content merge conflict is expected — verified that the #357 tree measures the same 46 paths
       / 101 occurrences as `489ede46`, entry-for-entry.
 
-## 1. Commit the generated baseline
+## 1. Commit the generated preflight lane
 
 - [x] 1.1 Regenerate the baseline **at this branch's merge base as it will land** (design Decision
       2), never at a frozen SHA, with the pattern list from the out-of-repository configuration and
@@ -20,7 +20,7 @@
       before the exclusion: 46 / 51 / 101). If TIM-471 (PR #359) has merged first, the numbers will
       be **smaller** — that is correct and expected; record what you actually measure, and never
       reconcile a smaller measurement upward.
-- [x] 1.2 Verify the committed file end to end: it parses, every entry has exactly `path`, `id`,
+- [x] 1.2 Verify the committed `entries` lane end to end: it parses, every entry has exactly `path`, `id`,
       `count`, and no entry names a path whose own text matches (design Decision 5 — the generator
       will not emit one; confirm none was added).
 - [x] 1.3 Prove acceptance criterion 4 mechanically — feed the committed baseline back to the scan
@@ -43,10 +43,15 @@
 
 ## 3. Give the CI gate the whole-file layer
 
-- [ ] 3.1 Teach `ci/disclosure-scan.mjs` to read `ci/disclosure-baseline.json` and add layer A: for
-      each file the branch touches, total each finding class's occurrences over the **whole file at
-      the head commit** and compare with the pin for that `(path, class)`. Over the pin, unpinned at
-      that path, or a touched path with no entry: report. Keep layer B exactly as it is after task 2.
+- [ ] 3.1 Teach `ci/disclosure-scan.mjs` to generate and read the `ciEntries` lane in
+      `ci/disclosure-baseline.json`, leaving the existing `entries` lane byte-for-byte compatible
+      with the deployed preflight loader. Generate both lanes from the same tracked tree and
+      exclusion. Every item in either lane has exactly `path`, `id`, and positive integer `count`;
+      reject duplicate `(path, id)` keys independently per lane. CI layer A reads only `ciEntries`:
+      for each file the branch touches, total each finding class's occurrences over the **whole file
+      at the head commit** and compare with the pin for that `(path, class)`. Over the pin, unpinned
+      at that path, or a touched path with no entry: report. Path-source matches enter neither
+      content lane. Keep layer B exactly as it is after task 2.
 - [ ] 3.2 Keep the two committed-artifact properties intact: no denylist is committed, and no
       finding prints its match. Layer A reports `file`, `line`, class and count only.
 - [ ] 3.3 Keep the fail-closed behaviour on an unresolvable merge base, and keep a missing baseline
@@ -71,18 +76,28 @@
       wildcard or prefix segments so the protected literal is never written into the repository, and
       keep task 2.1's rule intact — a path this branch *creates or renames* is judged unnarrowed.
 - [ ] 3.6 Extend `ci/disclosure-scan.test.mjs` for layer A: at-pin passes, over-pin fails, unpinned
-      class at a pinned path fails, unpinned touched path fails, and a deleted-only file is skipped.
+      class at a pinned path fails, unpinned touched path fails, a deleted-only file is skipped,
+      malformed lane objects fail, and duplicate `(path, id)` keys fail independently per lane.
+- [ ] 3.7 Regenerate `ciEntries` immediately before landing. At the current merge base, the
+      always-on sources measure **55 paths / 56 entries / 134 occurrences**:
+      `derived-identity` 47/111, `home-directory-path` 6/12, and `email-address` 3/11
+      (entries/occurrences). Smaller is valid; larger is a review finding. Confirm the complete JSON
+      scans clean.
 
 ## 4. Make the invariant mechanical
 
 - [ ] 4.1 Add a baseline-invariant mode (a flag on `ci/disclosure-scan.mjs`, or a sibling script) that
-      re-measures the census at the commit under test and exits non-zero when any committed entry
-      **exceeds** the measured count, naming path and id and printing no match.
+      re-measures `ciEntries` at the commit under test and exits non-zero when any committed CI
+      entry **exceeds** the measured count, naming path and id and printing no match. It MUST NOT
+      claim to remeasure `entries` without the out-of-repository preflight pattern input; when that
+      input is present, the preflight enforces its own lane.
 - [ ] 4.2 Wire it into the existing `Scan branch for disclosures` job in
       `.github/workflows/ci-build-deploy.yml` as one clearly named step. **Sensitive surface** —
       change no trigger, no deploy behaviour, no image build, and no unrelated step.
-- [ ] 4.3 Confirm it passes with no `DISCLOSURE_PATTERNS` secret and on a fork, so it degrades the
-      way the rest of the gate does.
+- [ ] 4.3 When the optional configured source is absent, record the documented degraded coverage and
+      remeasure the always-on classes. When it later appears, verify an unpinned
+      `configured-pattern` finding fails closed until a deliberate regenerated `ciEntries` lane is
+      reviewed.
 
 ## 5. Re-run the calibration the ticket asks for (§4)
 
@@ -135,7 +150,9 @@
       **once the content `publishedIn` carve-outs are retired** — with them in place it passes
       either way, which is why the row must state which list was used; (2) the substitution case
       fails on layer B with the count unchanged; (3) an unpinned dirty path fails, a raised count
-      fails, a new id at a pinned path fails; (4) the baseline scans clean.
+      fails, a new id at a pinned path fails; (4) the complete two-lane baseline scans clean; (5)
+      `entries` retains the accepted 45 / 50 / 100 census and `ciEntries` records the current
+      always-on 55 / 56 / 134 census or a reviewed smaller result after regeneration.
 - [ ] 8.3 Run the disclosure preflight on the exact PR title, body and every comment before
       publishing them. Report paths, ids and counts only — never a matched string, in the PR or on
       the ticket.
