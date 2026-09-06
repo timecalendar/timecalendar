@@ -6,8 +6,8 @@
 ## 2. Cover the diagnosed cause
 
 - [x] 2.1 Add `mobile/ci-e2e-build-env.test.ts`, driving each workflow step that bakes `EXPO_PUBLIC_API_URL` through the real `parseBackendEnvironmentCapability` → `parseBackendEnvironment` → `resolveBackendApiUrl` chain and asserting the resolved URL is the baked local URL.
-- [x] 2.2 Pin the extracted URL list so a workflow rename that matches no steps fails instead of passing vacuously.
-- [ ] 2.3 Confirm the test fails against the pre-fix workflow and passes after, so it is proven to discriminate rather than merely to pass.
+- [x] 2.2 Pin the extracted step **name and** URL list, so a workflow edit that matches no steps — or that shifts a step boundary and lets a release step inherit a prebuild step's capability — fails instead of passing vacuously.
+- [x] 2.3 Confirm the test fails against the pre-fix workflow and passes after, so it is proven to discriminate rather than merely to pass. Run as a five-mutation matrix (drop Android capability; wrong lane; boundary drift; drop capability *and* drift; drop iOS capability), each expected red, with a green baseline either side. The fourth mutation initially stayed **green** — the URL-only guard of 2.2 let the absorbed release step borrow the prebuild step's capability, hiding the precise regression this change exists for — which is what forced the name pinning above.
 
 ## 3. Keep the migration hardening on its own merits
 

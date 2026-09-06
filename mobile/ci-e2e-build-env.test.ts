@@ -59,12 +59,22 @@ const bakedBuildSteps = (): BakedBuildStep[] =>
     }))
 
 describe("native E2E build environment", () => {
-  it("bakes an API URL on both platform builds", () => {
-    // Guards the parser itself: a workflow rename that silently matched nothing
-    // would make every assertion below vacuously true.
-    expect(bakedBuildSteps().map((step) => step.apiUrl)).toEqual([
-      "http://10.0.2.2:3005",
-      "http://localhost:3005",
+  it("bakes an API URL on exactly the two release build steps", () => {
+    // Guards the parser itself, and it has to pin the step NAME, not just the URL.
+    // The chunks are split on `- name:` at a fixed indent, so a step whose
+    // indentation drifts is not split off — it is absorbed into the PRECEDING
+    // chunk. Both prebuild steps set BACKEND_ENVIRONMENT_CAPABILITY without an
+    // API URL, so an absorbed release step inherits its neighbour's capability
+    // and the pairing assertion below passes on a value the release build never
+    // had. Measured: with only the URLs pinned, deleting the capability from the
+    // release APK step — the precise TIM-456 regression — stayed green as soon as
+    // that step's indent shifted by one space. Asserting the name pins the
+    // boundary, so any drift renames a step and fails here instead.
+    expect(
+      bakedBuildSteps().map(({ name, apiUrl }) => ({ name, apiUrl })),
+    ).toEqual([
+      { name: "Build release APK", apiUrl: "http://10.0.2.2:3005" },
+      { name: "Build Release simulator app", apiUrl: "http://localhost:3005" },
     ])
   })
 
