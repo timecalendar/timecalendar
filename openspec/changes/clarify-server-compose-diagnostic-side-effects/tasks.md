@@ -73,7 +73,7 @@
   run-owned scratch copy, then run `openspec validate --specs --strict` there. Confirm the delta
   modifies exactly the two existing requirements and preserves their complete scenario sets; do not
   archive the live branch.
-- [ ] 6.2 Push the completed implementation head and confirm the standard `CI build & deploy` run's
+- [x] 6.2 Push the completed implementation head and confirm the standard `CI build & deploy` run's
   `head_sha` equals the PR head and every required job, including `Run tests`, is green. State
   accurately that `bin/verify-server-compose.mjs` remains a manual contract harness and cite the
   local non-mutation proof as its direct evidence; do not claim CI executes it.
