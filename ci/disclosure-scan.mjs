@@ -659,6 +659,8 @@ export function collectRecords({ base, head, allowlist, cwd }) {
 // Count-keyed baseline and whole-file layer
 // ---------------------------------------------------------------------------
 
+const baselineKey = (path, id) => `${path}\0${id}`;
+
 function validateLane(raw, lane) {
   if (!Array.isArray(raw)) throw new Error(`${lane} must be an array`);
   const seen = new Set();
@@ -679,7 +681,7 @@ function validateLane(raw, lane) {
     ) {
       throw new Error(`${lane}[${index}] must contain exactly path, id and a positive integer count`);
     }
-    const key = `${entry.path}\0${entry.id}`;
+    const key = baselineKey(entry.path, entry.id);
     if (seen.has(key)) throw new Error(`${lane} contains duplicate path/id key at index ${index}`);
     seen.add(key);
     return entry;
@@ -796,7 +798,7 @@ function changedFiles({ base, head, allowlist, cwd }) {
 
 export function scanWholeFiles({ files, head, baseline, derived, configured, allowlist, cwd }) {
   const pins = new Map(
-    (baseline?.ciEntries ?? []).map((entry) => [`${entry.path}\0${entry.id}`, entry.count]),
+    (baseline?.ciEntries ?? []).map((entry) => [baselineKey(entry.path, entry.id), entry.count]),
   );
   const derivedPatterns = derived.map(compileLiteralPattern);
   const findings = [];
@@ -830,26 +832,26 @@ export function scanWholeFiles({ files, head, baseline, derived, configured, all
     });
     for (const [className, classFindings] of byClass) {
       const total = classFindings.reduce((sum, finding) => sum + finding.count, 0);
-      if (total > (pins.get(`${file}\0${className}`) ?? 0)) findings.push(...classFindings);
+      if (total > (pins.get(baselineKey(file, className)) ?? 0)) findings.push(...classFindings);
     }
   }
   return findings;
 }
 
 export function compareCiBaseline(committed, measured) {
-  const actual = new Map(measured.map((entry) => [`${entry.path}\0${entry.id}`, entry.count]));
+  const actual = new Map(measured.map((entry) => [baselineKey(entry.path, entry.id), entry.count]));
   const committedKeys = new Set(
-    committed.ciEntries.map((entry) => `${entry.path}\0${entry.id}`),
+    committed.ciEntries.map((entry) => baselineKey(entry.path, entry.id)),
   );
   const findings = [];
   for (const entry of committed.ciEntries) {
-    const count = actual.get(`${entry.path}\0${entry.id}`) ?? 0;
+    const count = actual.get(baselineKey(entry.path, entry.id)) ?? 0;
     if (entry.count > count) findings.push({ ...entry, measured: count, kind: "stale-pin" });
   }
   for (const entry of measured) {
     if (
       entry.id === FINDING_CLASSES.CONFIGURED &&
-      !committedKeys.has(`${entry.path}\0${entry.id}`)
+      !committedKeys.has(baselineKey(entry.path, entry.id))
     ) {
       findings.push({ ...entry, measured: entry.count, kind: "unpinned-configured" });
     }

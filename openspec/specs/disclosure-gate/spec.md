@@ -115,4 +115,3 @@ Every disclosure finding, log line, and report emitted by either mechanism SHALL
 
 - **WHEN** either mechanism is configured
 - **THEN** its patterns come from run-time derivation, an injected secret, or out-of-repository configuration, and no file in this repository lists the strings that must not be published
-

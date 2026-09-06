@@ -51,6 +51,16 @@ const coAuthor = (name, address) => `${"Co-authored-by:"} ${name} <${address}>`;
 // can fail, and that failure belongs to the exit code, not to a scan loop.
 const configuredPatterns = (...sources) => sources.map(compileConfiguredPattern);
 
+const createGitRepo = (t, prefix) => {
+  const repo = mkdtempSync(join(tmpdir(), prefix));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const runGit = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  runGit("init", "--quiet");
+  runGit("config", "user.name", "Fixture Bot");
+  runGit("config", "user.email", "noreply@example.com");
+  return { repo, runGit };
+};
+
 const record = (text, location = "fixture.md:1") => ({
   source: "diff",
   file: "fixture.md",
@@ -677,24 +687,19 @@ test("a configured pattern that does not compile fails the job without printing 
 });
 
 test("a matched path is redacted everywhere in end-to-end output", (t) => {
-  const repo = mkdtempSync(join(tmpdir(), "disclosure-path-"));
-  t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const git = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  const { repo, runGit } = createGitRepo(t, "disclosure-path-");
   const token = ["fixture", "path", "token"].join("-");
 
-  git("init", "--quiet");
-  git("config", "user.name", "Fixture Bot");
-  git("config", "user.email", "noreply@example.com");
   writeFileSync(join(repo, "README.md"), "base\n");
-  git("add", "README.md");
-  git("commit", "--quiet", "-m", "base");
-  const base = git("rev-parse", "HEAD").trim();
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
 
   const directory = join(repo, "docs", token);
   mkdirSync(directory, { recursive: true });
   writeFileSync(join(directory, "notes.md"), "safe fixture\n");
-  git("add", ".");
-  git("commit", "--quiet", "-m", "add fixture path");
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "add fixture path");
 
   const { code, output } = runMain(
     { DISCLOSURE_PATTERNS: token },
@@ -894,12 +899,7 @@ test("baseline lanes require exact fields, positive counts and independent keys"
 });
 
 test("whole-file layer passes at pin and reports over-pin and unpinned classes", (t) => {
-  const repo = mkdtempSync(join(tmpdir(), "disclosure-baseline-"));
-  t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const runGit = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
-  runGit("init", "--quiet");
-  runGit("config", "user.name", "Fixture Bot");
-  runGit("config", "user.email", "noreply@example.com");
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-");
   writeFileSync(
     join(repo, "fixture.md"),
     `Aline Fixture and Aline Fixture again\n${homePath("aline")}\n`,
@@ -981,12 +981,7 @@ test("baseline invariant reports stale pins and a newly configured class", () =>
 });
 
 test("CI baseline generation applies the scanner's excluded path scope", (t) => {
-  const repo = mkdtempSync(join(tmpdir(), "disclosure-baseline-scope-"));
-  t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const runGit = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
-  runGit("init", "--quiet");
-  runGit("config", "user.name", "Fixture Bot");
-  runGit("config", "user.email", "noreply@example.com");
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-scope-");
 
   for (const path of ["included.md", "nested/package-lock.json", "nested/tool.lock"]) {
     mkdirSync(dirname(join(repo, path)), { recursive: true });
