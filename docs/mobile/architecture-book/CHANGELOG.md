@@ -12,6 +12,9 @@
 - Added the supported Reanimated/Worklets Jest setup posture for feature-owned animation and
   kept component proofs centered on rendered outcomes, user behavior, and focused lifecycle
   ownership.
+- Updated the reduced-motion guidance to name Splash and onboarding as current feature owners,
+  including onboarding's live feature-local hook; shared accessibility infrastructure remains
+  deferred until another feature demonstrates the need.
 
 ## 2026-08-31
 

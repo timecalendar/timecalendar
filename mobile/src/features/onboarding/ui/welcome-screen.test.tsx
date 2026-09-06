@@ -140,17 +140,31 @@ describe("WelcomeScreen", () => {
 
   it("settles Reanimated entrance and indicator styles when motion is allowed", async () => {
     jest.useFakeTimers()
-    const { getByTestId } = await render(<WelcomeScreen />)
+    const { getByTestId, rerender } = await render(<WelcomeScreen />)
     await act(flushMicrotasks)
     await act(async () => jest.advanceTimersByTime(300))
+    await rerender(<WelcomeScreen />)
 
     expect(withTiming).toHaveBeenCalledWith(1, { duration: 300 })
+    expect(
+      StyleSheet.flatten(getByTestId("onboarding-welcome-entrance").props.style)
+        .opacity,
+    ).toBe(1)
     jest.mocked(withTiming).mockClear()
     await fireEvent.press(getByTestId("onboarding-next"))
     await act(async () => jest.advanceTimersByTime(150))
+    await rerender(<WelcomeScreen />)
 
     expect(pagerMock.setPage).toHaveBeenCalledWith(1)
     expect(withTiming).toHaveBeenCalledWith(24, { duration: 150 })
+    expect(
+      [0, 1, 2].map(
+        (index) =>
+          StyleSheet.flatten(
+            getByTestId(`onboarding-page-indicator-${index}`).props.style,
+          ).width,
+      ),
+    ).toEqual([16, 24, 16])
     expect(
       StyleSheet.flatten(getByTestId("onboarding-page-indicator-1").props.style)
         .backgroundColor,
