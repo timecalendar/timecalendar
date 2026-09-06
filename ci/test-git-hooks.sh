@@ -3,6 +3,21 @@
 set -euo pipefail
 
 readonly HOOK="${1:-.husky/pre-commit}"
+readonly REPO_ROOT="$(git rev-parse --show-toplevel)"
+readonly EXPECTED_NAME='paperclip-timecalendar[bot]'
+readonly EXPECTED_EMAIL='325604666+paperclip-timecalendar[bot]@users.noreply.github.com'
+readonly FOREIGN_NAME='Not The Bot'
+readonly FOREIGN_EMAIL='not-the-bot@example.invalid'
+
+FIXTURE_ROOT=""
+
+cleanup() {
+  if [[ -n "$FIXTURE_ROOT" ]]; then
+    rm -rf -- "$FIXTURE_ROOT"
+  fi
+}
+
+trap cleanup EXIT
 
 # The tracked pre-commit hook has to run under *both* values git's core.hooksPath can
 # hold. That slot lives in the shared .git/config, so it is one host-wide value that
@@ -84,8 +99,158 @@ assert_no_husky_helper_references() {
   fi
 }
 
+assert_hook_invokes_identity_guard() {
+  if ! grep -Eq '^[[:space:]]*\./ci/check-commit-identity\.sh[[:space:]]*\|\|[[:space:]]*exit([[:space:]]+[0-9]+)?[[:space:]]*$' "$HOOK"; then
+    echo "FAIL: $HOOK must invoke the identity guard with explicit '|| exit' propagation." >&2
+    echo "  Under core.hooksPath=.husky/_ husky runs the tracked hook with sh -e," >&2
+    echo "  but under core.hooksPath=.husky git executes its plain sh script" >&2
+    echo "  directly. Without explicit propagation that route discards a guard" >&2
+    echo "  failure and continues to lint-staged." >&2
+    return 1
+  fi
+}
+
+assert_identity_guard_is_executable() {
+  local mode
+  mode="$(git ls-files -s -- ci/check-commit-identity.sh | awk '{print $1}')"
+
+  if [[ "$mode" != "100755" ]]; then
+    echo "FAIL: ci/check-commit-identity.sh is tracked with mode ${mode:-<untracked>}, expected 100755." >&2
+    echo "  The pre-commit hook executes the guard directly, so a missing executable" >&2
+    echo "  bit refuses every guarded commit instead of checking its identity." >&2
+    return 1
+  fi
+}
+
+assert_identity_guard_holds_one_identity() {
+  local identity_count
+  identity_count="$({ grep -oE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+' ci/check-commit-identity.sh || true; } | sort -u | wc -l | tr -d '[:space:]')"
+
+  if [[ "$identity_count" != "1" ]]; then
+    echo "FAIL: ci/check-commit-identity.sh contains $identity_count distinct addresses, expected exactly one." >&2
+    echo "  The guard is an allowlist of the delivery bot only; adding any second" >&2
+    echo "  identity or a denylist must fail this harness." >&2
+    return 1
+  fi
+}
+
+create_fixture_repo() {
+  local name=$1
+  local repo="$FIXTURE_ROOT/$name"
+
+  mkdir -p "$repo/hooks" "$repo/bin"
+  git -c init.defaultBranch=main init -q "$repo"
+  ln -s "$REPO_ROOT/.husky/pre-commit" "$repo/hooks/pre-commit"
+  ln -s "$REPO_ROOT/ci" "$repo/ci"
+  git -C "$repo" config core.hooksPath hooks
+  printf '#!/bin/sh\nexit 0\n' >"$repo/bin/npx"
+  chmod +x "$repo/bin/npx"
+  printf '%s\n' "$name" >"$repo/fixture.txt"
+  git -C "$repo" add fixture.txt
+
+  printf '%s\n' "$repo"
+}
+
+commit_count() {
+  git -C "$1" rev-list --count HEAD 2>/dev/null || printf '0\n'
+}
+
+assert_agent_foreign_author_is_refused() {
+  local repo stderr_file
+  repo="$(create_fixture_repo foreign-author)"
+  stderr_file="$repo/stderr"
+
+  if env PAPERCLIP_RUN_ID=test \
+    GIT_AUTHOR_NAME="$FOREIGN_NAME" GIT_AUTHOR_EMAIL="$FOREIGN_EMAIL" \
+    GIT_COMMITTER_NAME="$EXPECTED_NAME" GIT_COMMITTER_EMAIL="$EXPECTED_EMAIL" \
+    PATH="$repo/bin:$PATH" \
+    git -C "$repo" commit -qm fixture >"$repo/stdout" 2>"$stderr_file"; then
+    echo "FAIL: an agent commit with a foreign author was accepted." >&2
+    return 1
+  fi
+
+  if [[ "$(commit_count "$repo")" != "0" ]]; then
+    echo "FAIL: the refused foreign-author case created a commit." >&2
+    return 1
+  fi
+
+  if grep -Fq "$FOREIGN_NAME" "$stderr_file" || grep -Fq "$FOREIGN_EMAIL" "$stderr_file"; then
+    echo "FAIL: the identity guard echoed the rejected identity." >&2
+    return 1
+  fi
+}
+
+assert_agent_foreign_committer_is_refused() {
+  local repo
+  repo="$(create_fixture_repo foreign-committer)"
+
+  if env PAPERCLIP_RUN_ID=test \
+    GIT_AUTHOR_NAME="$EXPECTED_NAME" GIT_AUTHOR_EMAIL="$EXPECTED_EMAIL" \
+    GIT_COMMITTER_NAME="$FOREIGN_NAME" GIT_COMMITTER_EMAIL="$FOREIGN_EMAIL" \
+    PATH="$repo/bin:$PATH" \
+    git -C "$repo" commit -qm fixture >"$repo/stdout" 2>"$repo/stderr"; then
+    echo "FAIL: an agent commit with a foreign committer was accepted." >&2
+    return 1
+  fi
+
+  if [[ "$(commit_count "$repo")" != "0" ]]; then
+    echo "FAIL: the refused foreign-committer case created a commit." >&2
+    return 1
+  fi
+}
+
+assert_human_commit_is_unchanged() {
+  local repo
+  repo="$(create_fixture_repo human)"
+
+  if ! env -u PAPERCLIP_RUN_ID \
+    GIT_AUTHOR_NAME="$FOREIGN_NAME" GIT_AUTHOR_EMAIL="$FOREIGN_EMAIL" \
+    GIT_COMMITTER_NAME="$FOREIGN_NAME" GIT_COMMITTER_EMAIL="$FOREIGN_EMAIL" \
+    PATH="$repo/bin:$PATH" \
+    git -C "$repo" commit -qm fixture >"$repo/stdout" 2>"$repo/stderr"; then
+    echo "FAIL: a human commit with PAPERCLIP_RUN_ID removed was refused." >&2
+    return 1
+  fi
+
+  if [[ "$(commit_count "$repo")" != "1" ]]; then
+    echo "FAIL: the human case did not create exactly one commit." >&2
+    return 1
+  fi
+}
+
+assert_agent_bot_commit_succeeds() {
+  local repo
+  repo="$(create_fixture_repo bot)"
+
+  if ! env PAPERCLIP_RUN_ID=test \
+    GIT_AUTHOR_NAME="$EXPECTED_NAME" GIT_AUTHOR_EMAIL="$EXPECTED_EMAIL" \
+    GIT_COMMITTER_NAME="$EXPECTED_NAME" GIT_COMMITTER_EMAIL="$EXPECTED_EMAIL" \
+    PATH="$repo/bin:$PATH" \
+    git -C "$repo" commit -qm fixture >"$repo/stdout" 2>"$repo/stderr"; then
+    echo "FAIL: an agent commit with the delivery bot identity was refused." >&2
+    return 1
+  fi
+
+  if [[ "$(commit_count "$repo")" != "1" ]]; then
+    echo "FAIL: the delivery-bot case did not create exactly one commit." >&2
+    return 1
+  fi
+}
+
+assert_identity_guard_behaviour() {
+  FIXTURE_ROOT="$(mktemp -d)"
+  assert_agent_foreign_author_is_refused
+  assert_agent_foreign_committer_is_refused
+  assert_human_commit_is_unchanged
+  assert_agent_bot_commit_succeeds
+}
+
 assert_hook_is_executable
 assert_lint_staged_runs_through_npx
 assert_no_husky_helper_references
+assert_hook_invokes_identity_guard
+assert_identity_guard_is_executable
+assert_identity_guard_holds_one_identity
+assert_identity_guard_behaviour
 
-echo "Git hook mode, npx invocation and husky-helper references passed"
+echo "Git hook structure and commit-identity behaviour passed"

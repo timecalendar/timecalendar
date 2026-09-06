@@ -1,20 +1,20 @@
 ## 1. The guard script
 
-- [ ] 1.1 Add `ci/check-commit-identity.sh` as POSIX `sh` with `set -eu`, tracked mode `100755` (`chmod +x` **and** `git update-index --chmod=+x` — a delete-and-recreate rewrite is what drops the bit). It depends on `git` alone: no Node, no network, no `jq`.
-- [ ] 1.2 Make `[ -n "${PAPERCLIP_RUN_ID:-}" ] || exit 0` the first statement after the constants, so a human commit resolves nothing and can be broken by nothing below it.
-- [ ] 1.3 Declare the allowlist as exactly two constants — `EXPECTED_NAME='paperclip-timecalendar[bot]'` and `EXPECTED_EMAIL='325604666+paperclip-timecalendar[bot]@users.noreply.github.com'`. No second identity, address, or domain anywhere in the file, including comments (task 2.6 enforces this).
-- [ ] 1.4 Check author and committer by exact prefix match on `git var GIT_AUTHOR_IDENT` / `git var GIT_COMMITTER_IDENT` against `"$EXPECTED_NAME <$EXPECTED_EMAIL> "` (trailing space included — `git var` appends ` <unix-ts> <tz>`). Use a `case` statement, not `grep`, so the match cannot be loosened by an unanchored pattern.
-- [ ] 1.5 Treat a non-zero exit from `git var` as a refusal, not a pass: `ident=$(git var … 2>/dev/null) || refuse …`. Fail closed.
-- [ ] 1.6 Write the refusal message to **stderr**: the expected name and email in full, which field differs (author or committer), and an explicit line saying the resolved value is withheld because this repository's logs are public. Never interpolate the resolved ident into any output, including any debug or trace line.
-- [ ] 1.7 Verify: `sh -n ci/check-commit-identity.sh` parses, and `PAPERCLIP_RUN_ID=x sh ci/check-commit-identity.sh` from the worktree root exits 0 (this worktree's identity is the bot).
+- [x] 1.1 Add `ci/check-commit-identity.sh` as POSIX `sh` with `set -eu`, tracked mode `100755` (`chmod +x` **and** `git update-index --chmod=+x` — a delete-and-recreate rewrite is what drops the bit). It depends on `git` alone: no Node, no network, no `jq`.
+- [x] 1.2 Make `[ -n "${PAPERCLIP_RUN_ID:-}" ] || exit 0` the first statement after the constants, so a human commit resolves nothing and can be broken by nothing below it.
+- [x] 1.3 Declare the allowlist as exactly two constants — `EXPECTED_NAME='paperclip-timecalendar[bot]'` and `EXPECTED_EMAIL='325604666+paperclip-timecalendar[bot]@users.noreply.github.com'`. No second identity, address, or domain anywhere in the file, including comments (task 2.6 enforces this).
+- [x] 1.4 Check author and committer by exact prefix match on `git var GIT_AUTHOR_IDENT` / `git var GIT_COMMITTER_IDENT` against `"$EXPECTED_NAME <$EXPECTED_EMAIL> "` (trailing space included — `git var` appends ` <unix-ts> <tz>`). Use a `case` statement, not `grep`, so the match cannot be loosened by an unanchored pattern.
+- [x] 1.5 Treat a non-zero exit from `git var` as a refusal, not a pass: `ident=$(git var … 2>/dev/null) || refuse …`. Fail closed.
+- [x] 1.6 Write the refusal message to **stderr**: the expected name and email in full, which field differs (author or committer), and an explicit line saying the resolved value is withheld because this repository's logs are public. Never interpolate the resolved ident into any output, including any debug or trace line.
+- [x] 1.7 Verify: `sh -n ci/check-commit-identity.sh` parses, and `PAPERCLIP_RUN_ID=x sh ci/check-commit-identity.sh` from the worktree root exits 0 (this worktree's identity is the bot).
 
 ## 2. Hook wiring and harness
 
-- [ ] 2.1 Insert `./ci/check-commit-identity.sh || exit 1` into `.husky/pre-commit` **above** `npx lint-staged`. The `|| exit 1` is required, not stylistic — see design Decision 5. Confirm the hook keeps tracked mode `100755`.
-- [ ] 2.2 In `ci/test-git-hooks.sh`, add `assert_hook_invokes_identity_guard`: the hook contains a line invoking `ci/check-commit-identity.sh`, and that line carries an explicit `|| exit` propagation. The failure message must explain the two-`core.hooksPath` reason, matching the file's existing house style.
-- [ ] 2.3 Add `assert_identity_guard_is_executable`: `git ls-files -s ci/check-commit-identity.sh` reports `100755`.
-- [ ] 2.4 Add a fixture helper that builds a throwaway repo: `mktemp -d`, `git -c init.defaultBranch=main init -q`, a hooks directory holding a symlink to the repository's real `.husky/pre-commit`, a symlink to the real `ci/` directory, `core.hooksPath` set locally to that hooks directory, and a stub `npx` (`#!/bin/sh` / `exit 0`) first on `PATH`. Register a `trap` cleanup. Symlink rather than copy so the tests exercise the tracked files.
-- [ ] 2.5 Add the five behavioural cases, each supplying identity through `GIT_AUTHOR_*` / `GIT_COMMITTER_*` (which outrank every config layer, so the host's git config cannot perturb them):
+- [x] 2.1 Insert `./ci/check-commit-identity.sh || exit 1` into `.husky/pre-commit` **above** `npx lint-staged`. The `|| exit 1` is required, not stylistic — see design Decision 5. Confirm the hook keeps tracked mode `100755`.
+- [x] 2.2 In `ci/test-git-hooks.sh`, add `assert_hook_invokes_identity_guard`: the hook contains a line invoking `ci/check-commit-identity.sh`, and that line carries an explicit `|| exit` propagation. The failure message must explain the two-`core.hooksPath` reason, matching the file's existing house style.
+- [x] 2.3 Add `assert_identity_guard_is_executable`: `git ls-files -s ci/check-commit-identity.sh` reports `100755`.
+- [x] 2.4 Add a fixture helper that builds a throwaway repo: `mktemp -d`, `git -c init.defaultBranch=main init -q`, a hooks directory holding a symlink to the repository's real `.husky/pre-commit`, a symlink to the real `ci/` directory, `core.hooksPath` set locally to that hooks directory, and a stub `npx` (`#!/bin/sh` / `exit 0`) first on `PATH`. Register a `trap` cleanup. Symlink rather than copy so the tests exercise the tracked files.
+- [x] 2.5 Add the five behavioural cases, each supplying identity through `GIT_AUTHOR_*` / `GIT_COMMITTER_*` (which outrank every config layer, so the host's git config cannot perturb them):
   - refused — `PAPERCLIP_RUN_ID` set, author `Not The Bot <not-the-bot@example.invalid>`;
   - refused — `PAPERCLIP_RUN_ID` set, author the bot, committer `Not The Bot <…>`;
   - committed — `env -u PAPERCLIP_RUN_ID`, author `Not The Bot <…>` (the human path);
