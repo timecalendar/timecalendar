@@ -46,5 +46,5 @@
 
 ## 5. CI proof on the pushed head
 
-- [ ] 5.1 After pushing, confirm the `Test git hooks` job in `CI build & deploy` ran on the exact PR head and is green — including the new behavioural cases, which must work on a runner with no `node_modules` and no network access for `npx`.
-- [ ] 5.2 If the job fails on the fixture rather than on the guard, repair the fixture; do not weaken an assertion to make it pass, and do not delete a case.
+- [x] 5.1 After pushing, confirmed the `Test git hooks` job in `CI build & deploy` completed successfully on the exact pushed PR head, including the behavioral cases on its Node-less runner.
+- [x] 5.2 The fixture passed on the first pushed run; no assertion was weakened and no case was deleted.
