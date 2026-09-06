@@ -1,4 +1,9 @@
-import { render, screen, userEvent } from "@testing-library/react-native"
+import {
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+} from "@testing-library/react-native"
 
 import {
   type ChecklistItem,
@@ -108,6 +113,49 @@ describe("EventChecklist", () => {
     const user = userEvent.setup()
     await user.type(screen.getByTestId("checklist-input-u-1"), "X")
     expect(actions.setContent).toHaveBeenCalledWith("u-1", "X")
+  })
+
+  it("keeps every typed character while the live value lags behind the writes", async () => {
+    // TIM-268: `item.content` comes from an async live query over SQLite, so it
+    // trails the keystrokes. A stale re-emission must never clobber what the user
+    // has typed — that silently dropped characters AND persisted the truncation.
+    mockUseChecklist.mockReturnValue([item({ uuid: "u-1", content: "" })])
+    const { rerender } = await render(<EventChecklist eventUid="ev-1" />)
+    const input = screen.getByTestId("checklist-input-u-1")
+
+    // Three keystrokes, none of which the live read has echoed back yet.
+    for (const typed of ["B", "Bu", "Buy"]) {
+      await fireEvent.changeText(input, typed)
+    }
+    expect(actions.setContent).toHaveBeenLastCalledWith("u-1", "Buy")
+    expect(screen.getByDisplayValue("Buy")).toBeTruthy()
+
+    // The live read finally re-emits — still two writes behind.
+    mockUseChecklist.mockReturnValue([item({ uuid: "u-1", content: "B" })])
+    await rerender(<EventChecklist eventUid="ev-1" />)
+
+    expect(screen.getByDisplayValue("Buy")).toBeTruthy()
+
+    // ...and again, one write behind. Each echo must drop only itself and what
+    // preceded it: forgetting the *rest* of the writes makes this second echo
+    // look external, and the row adopts "Bu" over what the user typed. One echo
+    // per keystroke is the normal path, so this is the common case, not an edge.
+    mockUseChecklist.mockReturnValue([item({ uuid: "u-1", content: "Bu" })])
+    await rerender(<EventChecklist eventUid="ev-1" />)
+
+    expect(screen.getByDisplayValue("Buy")).toBeTruthy()
+  })
+
+  it("adopts a live value the row never wrote", async () => {
+    mockUseChecklist.mockReturnValue([
+      item({ uuid: "u-1", content: "Lab coat" }),
+    ])
+    const { rerender } = await render(<EventChecklist eventUid="ev-1" />)
+
+    mockUseChecklist.mockReturnValue([item({ uuid: "u-1", content: "Gloves" })])
+    await rerender(<EventChecklist eventUid="ev-1" />)
+
+    expect(screen.getByDisplayValue("Gloves")).toBeTruthy()
   })
 
   it("moves an item up / down via the reorder controls", async () => {

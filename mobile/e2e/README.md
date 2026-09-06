@@ -35,17 +35,21 @@ an Android emulator, locally and in CI.
 ## Build & install the e2e binary
 
 Release config so the JS bundle is embedded (no Metro), `development` variant so
-the `timecalendar-dev` scheme and local-server network exceptions apply.
+the `timecalendar-dev` scheme and local-server network exceptions apply, and the
+independent `development` backend capability so the runtime can select `local`.
 `EXPO_PUBLIC_API_URL` is baked at build time and must match the platform's path
-to the host server on port 3005:
+to the host server on port 3005. Supply all three inputs to both prebuild and
+release compilation:
 
 ```bash
 # Android — 10.0.2.2 is the host loopback from the emulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
   npx expo run:android --variant release
 
 # iOS — localhost reaches the host from the simulator
-APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
+APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
+  EXPO_PUBLIC_API_URL=http://localhost:3005 \
   npx expo run:ios --configuration Release
 ```
 
@@ -61,12 +65,42 @@ APP_VARIANT=development EXPO_PUBLIC_API_URL=http://localhost:3005 \
 The script exits with Maestro's pass/fail status and tears the stack down on
 success and failure alike. On failure it dumps the backend log tail. With
 `--keep-up` it prints the commands to inspect logs and tear down manually.
-`--startup-attempts` accepts 1–4 and defaults to one. A retry is allowed only
-for a pinned 2.8.0 first-`launchApp`/`setPermissions` XCTest driver-not-listening
-or connection-refused signature, or the explicit `iOS driver not ready in time` /
-`IOSDriverTimeoutException` bootstrap-timeout signature, with no assertion
-evidence. Assertion, application, content-timeout, and unknown failures stop
-immediately, retain their exit status, and prevent later flows from running.
+`--startup-attempts` accepts 1–4 and defaults to one. Whether a failure may be
+retried is decided **structurally**, from Maestro's own per-flow
+`~/.maestro/tests/<run>/<flow>/commands.json` — never from stack-trace text
+(ADR 038; the rule lives in `e2e/classify-maestro-attempt.mjs`). An attempt is
+retryable only when it proved nothing about the app:
+
+- the harness output carries no assertion-failure evidence (this guard runs
+  first and wins outright), **and**
+- no independent command before the final startup failure has status `FAILED`;
+  a later restart never erases an earlier assertion/application/interaction
+  failure. A failed `runFlowCommand` is non-independent only while it remains
+  the final startup command's live lower-depth ancestor: it precedes that
+  command, and every intervening entry stays deeper. A same-depth or already-
+  closed wrapper and every failed child assertion/interaction stay terminal,
+  **and**
+- from the latest explicit `launchAppCommand`, `stopAppCommand` or
+  `openLinkCommand` at the failing command's depth through the final command,
+  only startup-phase commands (`defineVariablesCommand`,
+  `applyConfigurationCommand`, `launchAppCommand`, `stopAppCommand`,
+  `openLinkCommand`, `runFlowCommand`) and non-evaluated assertions occur.
+  Assertions are `assertConditionCommand` (which `assertVisible`,
+  `assertNotVisible` and `extendedWaitUntil` collapse into) or
+  `scrollUntilVisible`; `COMPLETED` and `FAILED` are evaluated, while `RUNNING`,
+  `PENDING` and `SKIPPED` are not.
+
+A `COMPLETED` assertion before the latest restart boundary may belong to a
+successful earlier phase and does not veto recovery from the later transport
+failure. An evaluated assertion or non-startup interaction in the current epoch
+is terminal. No record means the session aborted before opening the flow and is
+retryable; malformed records fail closed. A retry always reruns the **entire**
+top-level flow in a fresh Maestro process — it never resumes mid-flow.
+
+Everything else stops immediately, retains its exit status, and prevents later
+flows from running. Note the bound: an app that _deterministically_ fails to
+launch also matches the startup shape. It still ends red, having spent all four
+attempts; retry costs attempts, never correctness.
 
 ## Add a flow
 
@@ -85,7 +119,33 @@ immediately, retain their exit status, and prevent later flows from running.
    needed — and gives each one a fresh Maestro process.
 3. Keep assertions on stable seeded text (ASCII-safe avoids accent-matching
    fragility across platforms).
-4. To assert **real synced calendar data**, start the flow with the shared import
+4. Every `id:` you select by must exist as a `testID` in `mobile/src`.
+   `maestro-selectors.test.ts` enforces this in the **baseline** gate (`npm test`),
+   because the native gate is on-demand: without it a UI rework that deletes a
+   `testID` merges green and the break costs a native run to find — and since
+   `run_e2e.sh` stops at the first failing flow, one stale id hides every later
+   one. Selectors match as regexes and testIDs may be object properties or
+   template literals, so the guard resolves all three shapes. If it flags an id
+   you believe works, fix the flow or the guard — never allowlist it. For a
+   control that can carry no testID at all (the native-header search bar), select
+   its EN label; the e2e device runs in EN.
+5. A `testID` that exists is not the same as one that is **on screen**. Maestro
+   matches only the visible hierarchy, so a row below the fold fails a plain
+   `assertVisible`/`extendedWaitUntil` after the full timeout, and the failure
+   reads exactly like a deleted `testID` — `maestro-selectors.test.ts` cannot
+   catch this, since the id resolves fine in source. Reach anything past the
+   first screenful with `scrollUntilVisible` instead:
+   ```yaml
+   - scrollUntilVisible:
+       element:
+         id: "settings-environment"
+       direction: DOWN
+       timeout: 60000
+   ```
+   The Settings hub is the live example: `settings-about` is on screen while
+   `settings-feedback` (one row lower) and `settings-environment` (its own
+   section, last on the page) are not.
+6. To assert **real synced calendar data**, start the flow with the shared import
    preamble so the app durably holds the seeded token and syncs it (ADR 030):
    ```yaml
    - runFlow: import-seed.yaml
@@ -93,11 +153,25 @@ immediately, retain their exit status, and prevent later flows from running.
    `import-seed.yaml` opens `timecalendar-dev://dev-import?token=e2e-smoke-calendar`,
    which resolves + upserts the token into `user_calendars`, triggers a sync, and
    lands on the calendar. The seeded today-anchored events (`E2E Today Lecture`,
-   `E2E Today Seminar`, the `E2E Overlap A/B` pair) then render as real synced
-   tiles. Caveat: "today" is computed in **UTC** on the server; on a local run
-   whose machine day differs from UTC near midnight the device's local-time
-   `isToday` can disagree — a known local edge, not a CI flake (CI is UTC
-   end to end).
+   the `E2E Overlap A/B` pair) then render as real synced tiles. Caveat: "today"
+   is computed in **UTC** on the server; on a local run whose machine day differs
+   from UTC near midnight the device's local-time `isToday` can disagree — a known
+   local edge, not a CI flake (CI is UTC end to end).
+7. A seeded event asserted through the **agenda** must not be anchored on the seed
+   day unless the flow needs it to be. The server seeds once, at the start of a job
+   that runs well over an hour; the agenda's window runs from the anchor day's
+   midnight to seven days later and is **forward-only**, recomputed from the device
+   clock each time a flow mounts it. A job that crosses UTC midnight drops every
+   seed-day event
+   out of the agenda, and the flow fails on a date defect that reads exactly like a
+   broken feature — in run 33220510226 the agenda showed `No events this period.`
+   and `hidden-events.yaml` looked like a broken hide. Anchor such fixtures on the
+   **next** UTC day (`E2E Hide Seminar` + `E2E Hide Control`), give them
+   date-neutral titles, and keep any non-hidden control on the same day as its
+   target — a control that outlives the crossing its target survives is the only
+   kind that still guards against an empty view. `home.yaml` is the exception that
+   keeps the seed-day anchor, because it asserts the _today_ timeline and no other
+   anchor satisfies it.
 
 ## The rename round trip and its re-run caveat
 
@@ -174,7 +248,8 @@ heap, 1024 MiB Metaspace, at most two Gradle workers, and no persistent daemon.
 iOS logs the selected Xcode path/version plus available and selected simulator
 runtime, name, and UDID before running the harness with four startup attempts.
 The shell proofs and workflow assertions run without a device; definitive native
-proof is the path-triggered post-merge `main` run on GitHub-hosted runners.
+proof is the labeled PR run on GitHub-hosted runners, with baseline, Android, and
+iOS checks passing on the same exact head.
 
 These jobs are **on-demand** (a cold native build + device boot is ~20–30 min
 each): add the **`run-e2e` label** to a PR to run them, and they always run on

@@ -8,12 +8,13 @@ import {
 import { recordUnknownError } from "@/firebase"
 
 import { refreshNewestPage } from "./coordinator"
-import { pruneToHeldCalendars } from "./repository"
+import { clearOlderPageCursor, pruneToHeldCalendars } from "./repository"
 import type { ActivityRefreshOutcome } from "./types"
 
-// The three triggers the Activity feature owns itself: returning to the app,
-// opening the screen, and losing a calendar. The other three rows of the trigger
-// table (calendar sync, push, cold launch) are edges OTHER features add — they
+// The triggers the Activity feature owns itself: returning to the app, opening
+// the screen, and reconciling held-calendar additions/removals. The other three
+// rows of the trigger table (calendar sync, push, cold launch) are edges OTHER
+// features add — they
 // call `refreshNewestPage` through the feature barrel, so no other feature needs
 // anything from this file.
 //
@@ -28,8 +29,9 @@ import type { ActivityRefreshOutcome } from "./types"
 // sublayer-scoped and keys off `layer: "!(data)"`, so a runtime/ sublayer would
 // be banned from @/db and would need eslint surgery to buy nothing.
 
-/** Crashlytics context for the one consumed operation that can reject. */
+/** Static Crashlytics contexts for the consumed operations that can reject. */
 const PRUNE_CONTEXT = "activity/prune"
+const PAGINATION_REOPEN_CONTEXT = "activity/pagination-reopen"
 
 /**
  * Refresh Activity when the app comes back to the foreground (trigger table:
@@ -159,8 +161,12 @@ export function useActivityScreenRefresh(): UseActivityScreenRefresh {
 }
 
 /**
- * Delete the Activity history of a calendar the device no longer holds
- * ("Calendar is removed → delete its Activity rows from SQLite immediately").
+ * Reconcile Activity with an observed held-calendar transition.
+ *
+ * A removal deletes history the device no longer owns. An addition invalidates
+ * a completed backfill chain: that completion described the smaller token set,
+ * so the chain is reopened before a forced newest-page refresh establishes the
+ * expanded set's cursor.
  *
  * The edge points THIS way — Activity observes calendar-sources — and not the
  * obvious way, a `pruneToHeldCalendars` call inside
@@ -171,8 +177,8 @@ export function useActivityScreenRefresh(): UseActivityScreenRefresh {
  * import order. `eslint.config.js`'s `calendar-sources-is-a-leaf` block is what
  * keeps that edge from being added later.
  *
- * THE FIRST-OBSERVATION GUARD IS THE SAFETY ARGUMENT, and it is what makes this
- * call legitimate where the speculative `findAll()` the coordinator refuses
+ * THE FIRST-OBSERVATION GUARD IS THE SAFETY ARGUMENT, and it is what makes these
+ * actions legitimate where the speculative `findAll()` the coordinator refuses
  * (coordinator.ts, NOTE D7) is not. The forbidden read is one that cannot tell
  * an empty device from a read that raced the sources table — and acting on the
  * latter deletes the entire cache. Here an empty set is only ever acted on as
@@ -180,7 +186,7 @@ export function useActivityScreenRefresh(): UseActivityScreenRefresh {
  * is a removal event observed rather than assumed. Remove the first-observation
  * guard below and this becomes precisely that cache-destroying read.
  */
-export function useActivityOwnershipPrune(): void {
+export function useActivityOwnershipReconciliation(): void {
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const previouslyHeldRef = useRef<Set<string> | null>(null)
@@ -207,17 +213,29 @@ export function useActivityOwnershipPrune(): void {
     }
 
     const removed = [...previouslyHeld].some((id) => !heldNow.has(id))
-    if (!removed) {
-      return
+    const added = [...heldNow].some((id) => !previouslyHeld.has(id))
+
+    if (removed) {
+      // A transaction throw arrives as a rejection; the `void …catch()` idiom
+      // (ota-update-runtime.tsx) keeps it inside the effect. Static context, NO
+      // payload: no calendar id, name or token reaches a crash report.
+      void pruneToHeldCalendars(heldIds).catch((error: unknown) => {
+        recordUnknownError(error, PRUNE_CONTEXT)
+      })
     }
 
-    // The one consumed operation that CAN reject. `pruneToHeldCalendars` is an
-    // async function, so a transaction throw arrives as a rejection; the
-    // `void …catch()` idiom (ota-update-runtime.tsx) keeps it inside the effect.
-    // Static context, NO payload: no calendar id, name or token reaches a crash
-    // report.
-    void pruneToHeldCalendars(heldIds).catch((error: unknown) => {
-      recordUnknownError(error, PRUNE_CONTEXT)
-    })
+    if (added) {
+      // A completed backfill describes the PREVIOUS held-calendar set. Reopen
+      // it before a newest-page response for the expanded set adopts its
+      // cursor, then force the shared coordinator. This ordering is safe on
+      // both sides of the sync-trigger race: it joins an in-flight refresh when
+      // one exists, or issues a new one if sync already stored against the stale
+      // completion flag. The reset changes only cursor state and deletes no row.
+      void clearOlderPageCursor()
+        .then(() => refreshNewestPage({ force: true }))
+        .catch((error: unknown) => {
+          recordUnknownError(error, PAGINATION_REOPEN_CONTEXT)
+        })
+    }
   }, [calendars, loaded])
 }

@@ -18,6 +18,13 @@
 # agenda list (a flat FlatList of title text) is the robust cross-platform surface
 # to assert + tap a synced title (design D5). "Agenda" is the same label in FR + EN.
 #
+# The view switch is ONE control shared by both platforms: `calendar-view` is the
+# iOS `@expo/ui` `Picker` (`appearance="menu"`) and the Android
+# `@react-native-menu/menu` trigger `Pressable` (calendar-view-menu.tsx), so the
+# flow taps the trigger and then picks "Agenda" from its native menu. The former
+# `calendar-view-agenda` segmented-control testID no longer exists — it was
+# removed when the calendar header moved to native chrome.
+#
 # What it deliberately does NOT do (design non-goals): assert dense-overlap COLUMN
 # PACKING or frame rate (the Reanimated grid's internal layout is the library's;
 # frame rate needs real hardware — the on-device manual pass). The screen wiring is
@@ -32,26 +39,45 @@ appId: fr.samuelprak.timecalendar.dev
 # Import the seeded token, sync it, and land on the calendar (see import-seed.yaml).
 - runFlow: import-seed.yaml
 # Switch to the agenda view — the robust surface to assert + tap a synced title.
+# Open the shared view menu, then pick "Agenda" (identical label in EN + FR).
 - tapOn:
-    id: "calendar-view-agenda"
-- assertVisible:
-    id: "calendar-view-agenda"
+    id: "calendar-view"
+- tapOn:
+    text: "Agenda"
+# The agenda list mounts ONLY while view === "agenda" (agenda-list.tsx), so this
+# proves the switch actually took — the old assertion re-asserted the control we
+# had just tapped and proved nothing about the view.
+- extendedWaitUntil:
+    visible:
+      id: "agenda-section-list"
+    timeout: 60000
 # The real synced tile renders: `E2E Today Lecture` is a today-anchored seeded
 # event returned by POST /calendars/sync. Generous timeout so the just-triggered
 # sync settles before the first synced-title assertion (do NOT weaken this to an
 # empty/reachability assertion — that reintroduces the gap this flow closes).
+#
+# The `(,.*)?` suffix is REQUIRED, not cosmetic. An agenda tile is a Pressable with
+# accessibilityRole="button" + accessibilityLabel (agenda-list.tsx), so XCUITest
+# collapses it into ONE element exposing only the composed label
+# `E2E Today Lecture, 14:00 – 16:00 Room E2E Lecture. View details` — the child
+# ThemedText title is not in the iOS hierarchy at all. A Maestro text selector is a
+# FULLY ANCHORED regex, so the bare title matched nothing and the assertion failed
+# against a screen that visibly showed the event. The optional `,`-anchored tail
+# matches the composed label on iOS AND the bare text node on Android, with no
+# platform fork, and still cannot match a different title that merely starts the
+# same way. Guarded by mobile/e2e/maestro-selectors.test.ts.
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
 # Tap the synced tile → its REAL event-details (a Stack sibling of (tabs)).
 - tapOn:
-    text: "E2E Today Lecture"
+    text: "E2E Today Lecture(,.*)?"
 # Event-details shows REAL content — the seeded title + location render. This is
 # the round-trip proof: the not-found screen has no title/location, so a visible
 # seeded title + location IS the resolved-details state (the old reachability flow
 # asserted the not-found message instead — locale-specific text we avoid here so
 # the assertion stays cross-platform + locale-stable).
 - extendedWaitUntil:
-    visible: "E2E Today Lecture"
+    visible: "E2E Today Lecture(,.*)?"
     timeout: 60000
 - assertVisible: "Room E2E Lecture"

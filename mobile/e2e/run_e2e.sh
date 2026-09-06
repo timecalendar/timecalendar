@@ -22,8 +22,11 @@
 #     --native    Pass through to the lifecycle (Docker-less hosts, e.g. macOS
 #                 CI): the caller provisions Postgres/Redis; see ci/e2e-server.sh.
 #     --startup-attempts N
-#                 Retry a proven XCTest startup transport failure up to N total
-#                 attempts per flow (1-4, default 1). Other failures are terminal.
+#                 Retry a startup failure up to N total attempts per flow (1-4,
+#                 default 1). A later explicit app restart starts a new
+#                 classification epoch; earlier FAILED commands and current-
+#                 epoch assertions/interactions remain terminal. See ADR 038 and
+#                 classify-maestro-attempt.mjs.
 #
 # Prerequisites and CI notes: see e2e/README.md.
 
@@ -63,6 +66,11 @@ REPO_ROOT="$(cd "$MOBILE_DIR/.." && pwd)"
 E2E_SERVER="${E2E_SERVER:-$REPO_ROOT/ci/e2e-server.sh}"
 MAESTRO_DIR="${MAESTRO_DIR:-$MOBILE_DIR/.maestro}"
 MAESTRO_LOG_ROOT="${MAESTRO_LOG_ROOT:-${HOME}/.maestro/tests/timecalendar-harness}"
+# Where Maestro writes its own debug output: one
+# <root>/<yyyy-MM-dd_HHmmss>/<flow>/commands.json per attempt that opened a
+# flow. This is what the retry classifier reads (see is_retryable_startup_failure).
+MAESTRO_DEBUG_ROOT="${MAESTRO_DEBUG_ROOT:-${HOME}/.maestro/tests}"
+CLASSIFIER="${CLASSIFIER:-$SCRIPT_DIR/classify-maestro-attempt.mjs}"
 
 log()  { echo "[run_e2e] $*"; }
 fail() { echo "[run_e2e] ERROR: $*" >&2; exit 1; }
@@ -89,40 +97,66 @@ command -v maestro >/dev/null 2>&1 || fail \
     curl -fsSL https://get.maestro.mobile.dev | bash
   (Maestro is JVM-based and needs a JDK on PATH.)"
 [ -d "$MAESTRO_DIR" ] || fail "Maestro flow directory does not exist: $MAESTRO_DIR"
+# The retry classifier reads Maestro's JSON command record; node is the runtime
+# every mobile CI job and every mobile dev machine already has (.nvmrc).
+command -v node >/dev/null 2>&1 || fail "node is not on PATH (see .nvmrc)"
+[ -f "$CLASSIFIER" ] || fail "retry classifier is missing: $CLASSIFIER"
 
+# The per-flow command record Maestro wrote for the attempt that just ran:
+# $MAESTRO_DEBUG_ROOT/<yyyy-MM-dd_HHmmss>/<flow>/commands.json. `marker` is a
+# file touched immediately before the attempt, so a stale record from an earlier
+# attempt of the same flow can never be picked up. Prints nothing when Maestro
+# never opened the flow.
+latest_commands_json() {
+  local flow_name="$1" marker="$2"
+  [ -d "$MAESTRO_DEBUG_ROOT" ] || return 0
+  find "$MAESTRO_DEBUG_ROOT" \
+    -mindepth 3 -maxdepth 3 \
+    -type f \
+    -path "*/${flow_name}/commands.json" \
+    -newer "$marker" 2>/dev/null | sort | tail -n 1
+}
+
+# ADR 038's retry rule, structural rather than signature-based. An attempt may be
+# retried only when it proved nothing about the application. Three stack-trace
+# signatures used to live here; each one bought one CI cycle before the next
+# punctuation variant appeared, so they are collapsed into the rule below rather
+# than stacked into a fourth.
 is_retryable_startup_failure() {
-  local output_file="$1"
+  local flow_name="$1" marker="$2" output_file="$3" commands_json
 
-  # Never retry when Maestro reached an application assertion. Unknown output
-  # also defaults to terminal; only the pinned 2.8.0 startup signatures below
-  # are eligible.
+  # The assertion guard runs first and wins outright. Assertion evidence in the
+  # harness output makes the attempt terminal whatever the command record says.
   if grep -Eiq \
     'assertion failed|failed to assert|element .*not found|timeout.*(assert|element)|assert(Visible|NotVisible).*failed' \
     "$output_file"; then
     return 1
   fi
 
-  if grep -Eiq \
-    'iOS driver not ready in time|IOSDriverTimeoutException' \
-    "$output_file"; then
+  commands_json="$(latest_commands_json "$flow_name" "$marker")"
+
+  # No per-flow record at all: Maestro aborted during session creation, before it
+  # opened the flow — the shape MAESTRO_DRIVER_STARTUP_TIMEOUT bounds, whose
+  # documented remedy is relaunching the driver in a fresh process.
+  if [ -z "$commands_json" ]; then
+    log "flow ${flow_name}: no command record — Maestro aborted before opening the flow"
     return 0
   fi
 
-  grep -Eiq 'launchApp|setPermissions' "$output_file" && \
-    grep -Eiq \
-      'XCTest driver.*not listening|driver.*failed to listen|connection refused|connectexception.*refused|failed to connect.*(localhost|127\.0\.0\.1)' \
-      "$output_file"
+  node "$CLASSIFIER" "$commands_json"
 }
 
 run_flow() {
   local flow="$1"
-  local flow_name attempt attempt_log flow_exit
+  local flow_name attempt attempt_log attempt_marker flow_exit
   flow_name="$(basename "$flow" .yaml)"
   attempt=1
 
   while [ "$attempt" -le "$STARTUP_ATTEMPTS" ]; do
     attempt_log="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.log"
+    attempt_marker="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.started"
     log "flow ${flow_name}: attempt ${attempt}/${STARTUP_ATTEMPTS}"
+    : > "$attempt_marker"
     if maestro test "$flow" 2>&1 | tee "$attempt_log"; then
       flow_exit=0
     else
@@ -134,9 +168,9 @@ run_flow() {
       return 0
     fi
 
-    if is_retryable_startup_failure "$attempt_log"; then
+    if is_retryable_startup_failure "$flow_name" "$attempt_marker" "$attempt_log"; then
       if [ "$attempt" -lt "$STARTUP_ATTEMPTS" ]; then
-        log "flow ${flow_name}: retryable XCTest startup transport failure; starting a fresh Maestro process"
+        log "flow ${flow_name}: retryable startup failure in the final restart epoch; starting a fresh Maestro process"
         attempt=$((attempt + 1))
         continue
       fi
