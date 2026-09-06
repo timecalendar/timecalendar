@@ -29,4 +29,4 @@
 
 ## 5. CI proof on the pushed head
 
-- [ ] 5.1 After pushing the implementation, confirm the existing mobile test job runs the standard `npm test` entrypoint on the exact PR head, completes successfully without a job timeout, and contains no Jest did-not-exit or act-related diagnostic; repair the owning seam rather than weakening the gate if it fails.
+- [x] 5.1 After pushing the implementation, confirm the existing mobile test job runs the standard `npm test` entrypoint on the exact PR head, completes successfully without a job timeout, and contains no Jest did-not-exit or act-related diagnostic; repair the owning seam rather than weakening the gate if it fails.
