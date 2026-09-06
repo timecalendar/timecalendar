@@ -77,7 +77,7 @@ OTA_CHANNEL=preview npx eas build --profile preview --platform android --local -
 Requires `eas login` (managed credentials are downloaded at build time, not stored here), plus
 Xcode, fastlane, CocoaPods and the Android SDK/NDK installed on the host.
 
-Install dependencies under the Node version pinned in `.nvmrc`. A host default `node` older than
+Install dependencies under the Node version pinned in the repo-root `.nvmrc` (Node 24). A host default `node` older than
 that pin fails `npm ci` in `mobile/` against the committed lockfile; the pinned version installs it
 unchanged.
 
