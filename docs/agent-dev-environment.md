@@ -632,8 +632,9 @@ not report a status; none are _required_ checks today.
 
 This repository is public. The `scan-disclosure` job in `ci-build-deploy.yml` fails a
 branch that would publish an identifying string — a personal name, login, address, or
-home directory — into it, over the added lines, the file paths, and the commit messages
-the branch would publish. It runs on every push and needs no configuration.
+home directory — into it. It checks the full contents of touched files against a
+count-keyed baseline, then checks added lines, added or renamed paths, and commit
+messages without that baseline. It runs on every push and needs no configuration.
 
 Why a job and not a rule: the rule is already written down, and it is what failed. On a
 change about identity or authentication the accurate observation and the forbidden
@@ -677,19 +678,51 @@ Two properties are load-bearing:
   the string it just caught, somewhere nobody thinks to scrub. Findings carry a location
   and a class, and nothing else — open the location locally to see the match.
 
+#### Count-keyed baseline
+
+`ci/disclosure-baseline.json` records the repository's existing content footprint as
+safe `{path, id, count}` entries. It has two independently generated lanes: `entries`
+for the contributor preflight and `ciEntries` for this CI gate. A count is safe to
+commit because it records how many occurrences exist without recording the string that
+matched. A denylist remains runtime-only.
+
+The baseline supplies the full-file layer. A touched file passes while each class stays
+at or below its pin; a larger count, an unpinned class, or an unpinned dirty path fails.
+The added-line layer is deliberately baseline-free, so deleting one old occurrence and
+adding a different occurrence cannot pass merely because the total stayed constant.
+
+Regenerate the CI lane at the branch's landing commit, after rebasing, and review every
+change to its counts:
+
+```bash
+node ci/disclosure-scan.mjs --generate-baseline > disclosure-baseline.next.json
+mv disclosure-baseline.next.json ci/disclosure-baseline.json
+node ci/disclosure-scan.mjs --check-baseline
+```
+
+The invariant is non-increasing: a pin that grows is a review finding, while a pin that
+shrinks records completed cleanup. CI remeasures `ciEntries`; it cannot claim to
+remeasure `entries` without the preflight's runtime-only pattern input. When the optional
+configured source is absent, the check reports that coverage is degraded and still
+remeasures all derived and structural classes.
+
+`ci/certificates/` is excluded from generation on purpose. Credential material must be
+removed and generated for tests, never normalised as accepted repository footprint.
+
 Clearing a failure: scrub the string, or, if it is benign, add the applicable public-safe
-domain, reserved route, role address, product identifier, credit path, or narrow home-path
+domain, reserved route, role address, product identifier, or narrow home-path
 prefix to the allowlist. Home-path entries are prefixes, never arbitrary account names:
 allowlisting an account would hide every directory below it, including the host layout the
 rule exists to catch. Two published identifiers — the reverse-DNS application id and the
 mobile backend project id — embed a personal handle, are fixed at creation, and sit in
 committed native config; both are exempted by shape, never by naming them.
 
-The About screen credits the people who built the app and links to their sites, on
-purpose, as user-facing content. Those paths are listed in the allowlist as
-`creditPaths`, which names a location and never a person — the alternative, putting the
-names themselves in a list in a public repository, is the hazard this gate exists to
-prevent. The structural rules still run there.
+`creditPaths` is now a path-only lane for load-bearing application entry-point paths
+whose own text matches. Wildcards keep the identifying segment out of the allowlist.
+It narrows an existing path only; a path the branch creates or renames still fails. The
+credit surface's content is represented by baseline counts instead of permanent path
+amnesty. Rewriting a credit line itself remains a hard stop in both mechanisms; any
+exception is a procedural decision, never a scanner flag.
 
 Tests: `node --test ci/disclosure-scan.test.mjs`. They run in the same job, ahead of the
 scan, and every fixture is synthetic and assembled at run time so that the test file

@@ -20,13 +20,16 @@ import {
   compileConfiguredPattern,
   compileConfiguredPatterns,
   compileLiteralPattern,
+  compareCiBaseline,
   deriveIdentityPatterns,
   loadAllowlist,
   main,
   matchesAny,
   parseAddedLines,
+  parseBaseline,
   parseConfiguredPatterns,
   scanRecords,
+  scanWholeFiles,
   selfTestConfigured,
   structuralClasses,
   structuralCounts,
@@ -811,15 +814,13 @@ const creditRecord = (text) => ({
   text,
 });
 
-test("an identity on the credit surface is the product, not a leak", () => {
-  assert.deepEqual(
-    scanRecords([creditRecord("built by Aline Fixture")], {
-      derived: ["Aline Fixture"],
-      configured: [],
-      allowlist,
-    }),
-    [],
-  );
+test("an added identity on the former credit surface is still a finding", () => {
+  const findings = scanRecords([creditRecord("built by Aline Fixture")], {
+    derived: ["Aline Fixture"],
+    configured: [],
+    allowlist,
+  });
+  assert.deepEqual(classesOf(findings), [FINDING_CLASSES.DERIVED]);
 });
 
 test("structural rules still apply on the credit surface", () => {
@@ -838,4 +839,146 @@ test("the same identity outside the credit surface is still flagged", () => {
     allowlist,
   });
   assert.deepEqual(classesOf(findings), [FINDING_CLASSES.DERIVED]);
+});
+
+test("the path lane narrows an existing path but not one created or renamed", () => {
+  const path = "app/android/app/src/main/kotlin/fr/fixture/app/MainActivity.kt";
+  const pathRecord = (introduced) => ({
+    source: "path",
+    file: path,
+    line: null,
+    location: path,
+    text: path,
+    introduced,
+  });
+  assert.deepEqual(
+    scanRecords([pathRecord(false)], {
+      derived: ["fixture"],
+      configured: [],
+      allowlist,
+    }),
+    [],
+  );
+  assert.deepEqual(
+    classesOf(
+      scanRecords([pathRecord(true)], {
+        derived: ["fixture"],
+        configured: [],
+        allowlist,
+      }),
+    ),
+    [FINDING_CLASSES.DERIVED],
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Count-keyed whole-file baseline
+// ---------------------------------------------------------------------------
+
+const baseline = (ciEntries = [], entries = []) => ({ version: 1, entries, ciEntries });
+
+test("baseline lanes require exact fields, positive counts and independent keys", () => {
+  assert.deepEqual(parseBaseline(baseline()).ciEntries, []);
+  for (const entry of [
+    { path: "/absolute", id: "derived-identity", count: 1 },
+    { path: "../outside", id: "derived-identity", count: 1 },
+    { path: "fixture.md", id: "derived-identity", count: 0 },
+    { path: "fixture.md", id: "derived-identity", count: 1, extra: true },
+  ]) {
+    assert.throws(() => parseBaseline(baseline([entry])));
+  }
+  const duplicate = { path: "fixture.md", id: "derived-identity", count: 1 };
+  assert.throws(() => parseBaseline(baseline([duplicate, duplicate])));
+  assert.doesNotThrow(() => parseBaseline(baseline([duplicate], [duplicate])));
+});
+
+test("whole-file layer passes at pin and reports over-pin and unpinned classes", (t) => {
+  const repo = mkdtempSync(join(tmpdir(), "disclosure-baseline-"));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const runGit = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  runGit("init", "--quiet");
+  runGit("config", "user.name", "Fixture Bot");
+  runGit("config", "user.email", "noreply@example.com");
+  writeFileSync(
+    join(repo, "fixture.md"),
+    `Aline Fixture and Aline Fixture again\n${homePath("aline")}\n`,
+  );
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const scan = (ciEntries) =>
+    scanWholeFiles({
+      files: ["fixture.md"],
+      head: "HEAD",
+      baseline: baseline(ciEntries),
+      derived: ["Aline Fixture"],
+      configured: [],
+      allowlist,
+      cwd: repo,
+    });
+  const derivedPin = {
+    path: "fixture.md",
+    id: FINDING_CLASSES.DERIVED,
+    count: 2,
+  };
+  const homePin = {
+    path: "fixture.md",
+    id: FINDING_CLASSES.HOME_PATH,
+    count: 1,
+  };
+  assert.deepEqual(scan([derivedPin, homePin]), []);
+  assert.deepEqual(
+    classesOf(scan([{ ...derivedPin, count: 1 }, homePin])).sort(),
+    [FINDING_CLASSES.DERIVED],
+  );
+  assert.deepEqual(classesOf(scan([derivedPin])), [FINDING_CLASSES.HOME_PATH]);
+  assert.deepEqual(classesOf(scan([{ ...homePin, count: 1 }])), [FINDING_CLASSES.DERIVED]);
+  assert.deepEqual(classesOf(scan([])).sort(), [
+    FINDING_CLASSES.DERIVED,
+    FINDING_CLASSES.HOME_PATH,
+  ].sort());
+  assert.deepEqual(
+    classesOf(scan([derivedPin, homePin])),
+    [],
+  );
+});
+
+test("an unchanged count cannot hide an occurrence on an added line", () => {
+  const layerA = [];
+  const layerB = scanRecords([creditRecord("Aline Fixture moved here")], {
+    derived: ["Aline Fixture"],
+    configured: [],
+    allowlist,
+  });
+  assert.deepEqual(layerA, [], "the whole-file count can remain at its pin");
+  assert.deepEqual(classesOf(layerB), [FINDING_CLASSES.DERIVED]);
+});
+
+test("a deleted-only file contributes no whole-file finding", () => {
+  assert.deepEqual(
+    scanWholeFiles({
+      files: [],
+      head: "HEAD",
+      baseline: baseline(),
+      derived: ["fixtureowner"],
+      configured: [],
+      allowlist,
+      cwd: REPO,
+    }),
+    [],
+  );
+});
+
+test("baseline invariant reports stale pins and a newly configured class", () => {
+  const stale = { path: "fixture.md", id: FINDING_CLASSES.DERIVED, count: 2 };
+  const configured = { path: "other.md", id: FINDING_CLASSES.CONFIGURED, count: 1 };
+  assert.deepEqual(
+    compareCiBaseline(baseline([stale]), [{ ...stale, count: 1 }, configured]).map(
+      ({ kind, path, id }) => ({ kind, path, id }),
+    ),
+    [
+      { kind: "stale-pin", path: "fixture.md", id: FINDING_CLASSES.DERIVED },
+      { kind: "unpinned-configured", path: "other.md", id: FINDING_CLASSES.CONFIGURED },
+    ],
+  );
 });
