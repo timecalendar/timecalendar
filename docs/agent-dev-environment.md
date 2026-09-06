@@ -64,8 +64,44 @@ This is what must exist on the machine for the dev env and the pipelines to run.
 | **Flutter SDK**  | `3.41.9` stable, installed at **`/home/dev/flutter`** (NOT on `PATH`)                                                                              | Invoke as `/home/dev/flutter/bin/flutter`. Only needed for `app/` (legacy) work and the Flutter E2E harness.                                                                                                                        |
 | **JDK**          | **JDK 21** available (`/usr/lib/jvm/java-21-openjdk-amd64`); native Android mobile builds historically needed **JDK 17** + `ANDROID_HOME` exported | `ANDROID_HOME` is **unset by default** — export it (and the right `JAVA_HOME`) before `expo run:android`/Gradle. Pure `mobile/` CI checks (tsc/lint/jest) do **not** need the native toolchain.                                     |
 | **Maestro**      | 2.8.0 on `PATH` for mobile E2E                                                                                                                     | Install with `export MAESTRO_VERSION=2.8.0`, then `curl -fsSL https://get.maestro.mobile.dev \| bash`; add `$HOME/.maestro/bin` to `PATH` and verify with `maestro --version`. JVM-based, needs a JDK.                              |
-| **gh CLI**       | authenticated as **`samuelprak`** (admin/push)                                                                                                     | Git protocol is **SSH**; the remote is `git@gh-perso:timecalendar/timecalendar.git` (a host alias in `~/.ssh/config`). A second account `vincefox1` is also logged in — ensure `samuelprak` is the _active_ one (`gh auth switch`). |
-| **Git identity** | `Samuel Prak <samuel.prak.p@gmail.com>`                                                                                                            |                                                                                                                                                                                                                                     |
+| **gh CLI**       | authenticated as **`paperclip-timecalendar[bot]`** via `GH_TOKEN`                                                                                  | The remote is HTTPS — `https://github.com/timecalendar/timecalendar.git`; no SSH, no host alias. The per-run token is a GitHub App installation token — see the delivery-identity subsection below.                                 |
+| **Git identity** | `paperclip-timecalendar[bot] <325604666+paperclip-timecalendar[bot]@users.noreply.github.com>`                                                     | Set **repo-locally** in `.git/config` and inherited by every worktree. The host's global git identity is a different, unrelated value that this overrides — never read the global config to confirm who you commit as.              |
+
+### GitHub delivery identity: the **Paperclip GitHub App**
+
+A Paperclip run reaches GitHub as a company-owned **GitHub App installation**. There
+is no human account anywhere in the path.
+
+Each run is issued its own short-lived (**~1 hour**) installation token, scoped to
+this repository alone. It arrives as `GH_TOKEN`, `GITHUB_TOKEN` and
+`PAPERCLIP_GIT_TOKEN` — one value under three names — together with a
+**process-scoped** git credential helper passed through `GIT_CONFIG_COUNT` /
+`GIT_CONFIG_KEY_*`. Nothing is written to `~/.gitconfig` or to `gh` config, and there
+is no setup step: ordinary `git push` and `gh` commands already use it.
+
+GitHub attributes every push, pull request, review and merge to
+**`paperclip-timecalendar[bot]`**.
+
+**Never** run `gh auth login`, **never** run `gh auth switch`, and never set a
+personal git identity in a worktree. Each of those moves the run off the token it was
+issued, and it cannot get it back.
+
+Two readouts look like faults and are not:
+
+- **`gh auth status` prints `Git operations protocol: ssh`** under the bot, and lists
+  `vincefox1` and `samuelprak` as further accounts stored in `~/.config/gh/hosts.yml`,
+  both marked `Active account: false`. The protocol line is read from `gh`'s own
+  config; it does not describe the remote (HTTPS) and does not affect how pushes
+  authenticate. The stored accounts are inactive and must stay that way.
+- **`gh api /user` returns `403 Resource not accessible by integration`.** An
+  installation token authenticates as an installation, not as a user, so there is no
+  authenticated user to return. The check that does work is
+  `gh api /installation/repositories --jq '.repositories[].full_name'`, which lists
+  the one repository the token is scoped to.
+
+A GitHub auth failure late in a long run means the **~1-hour token expired**. That is
+not a broken environment and needs no infra escalation — the next heartbeat is issued
+a fresh token.
 
 ### The dev host has **no KVM / nested virtualization**
 
@@ -573,7 +609,7 @@ system should carry equivalent durable cross-session memory.
 ## 12. Quick reference — "I'm a new agent, get me building"
 
 ```bash
-# 0. Toolchain: Node 24.13.0, Docker, gh as samuelprak (SSH), JDK, Flutter at /home/dev/flutter
+# 0. Toolchain: Node 24.13.0, Docker, gh as paperclip-timecalendar[bot] (GitHub App token, HTTPS), JDK, Flutter at /home/dev/flutter
 nvm use                                   # honors .nvmrc
 
 # 1. Dev env (once per machine)
