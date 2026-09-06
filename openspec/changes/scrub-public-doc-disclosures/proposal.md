@@ -5,7 +5,7 @@
 `timecalendar/timecalendar` is a public repository. Anything committed to it is visible to the
 whole internet, and our own contribution rule already forbids publishing a person's identity,
 an internal host, a host filesystem path outside this repository, or a control-plane
-identifier. Twenty-nine tracked files break that rule today. None of it was added by a single
+identifier. Thirty tracked files break that rule today. None of it was added by a single
 branch — it accreted, one accurate sentence at a time, in handover notes, release-ops runbooks,
 exploration specs and archived change folders.
 
@@ -15,10 +15,12 @@ text of every file a branch touches** rather than the diff. A file that already 
 fails a branch that never touched the offending line, so shipping that gate against today's
 tree hard-stops a large share of routine pull requests on day one.
 
-Seventeen further files carry the same categories deliberately — the author credit rendered in
-the app and on the website, the legal identity in `LICENSE` and the privacy policy, and an
-intentional self-signed development TLS key. Those are a product and legal decision, not a
-scrub, and they are explicitly out of scope here (TIM-469, TIM-472).
+Other files carry the same categories deliberately — the author credit rendered in the app and
+on the website, and the legal identity in `LICENSE` and the privacy policy. Those are a product
+and legal decision, not a scrub, and they are out of scope here (TIM-469). Thirteen of them are
+already carved out by path in the deployed pattern list and report nothing at all; two more —
+the archived planning files that specify the shipped credit — are not, and this change leaves
+them alone and reports them for the committed baseline instead (see `design.md`, D10).
 
 ## What Changes
 
@@ -49,6 +51,10 @@ a pattern stop matching is a regression, not a fix.
   roadmap file link issues through an internal control-plane host, or quote a host path inside a
   reproduced prompt. Bare `TIM-…` keys are the repository's established traceability anchor and
   stay; the host that resolves them does not.
+- **Web mockup (1 file).** `web/app/mockups/calendar-confetti/page.tsx` greets a fictional
+  student by a real first name in placeholder content. It was carried on the exclusion list as
+  rendered credit; on inspection it is sample data, not a credit, so it is scrubbed and the
+  mockup greets a differently-named fictional student (D11).
 - **Operations exploration (1 file).** `docs/mobile/ota/09-human-checklist.md` names an internal
   machine by its alias in three places and an account by login in a fourth. Each becomes the
   role that machine or account plays, which is the information the checklist is actually
@@ -66,7 +72,7 @@ full-file gate reads, and what a reader of the repository sees.
 
 - **Affected:** `docs/` (agent handbook, mobile releases, mobile OTA exploration, React Native
   migration inbox / roadmap / tech specs), `openspec/changes/archive/` (six files),
-  `app/ios/fastlane/Matchfile`.
+  `app/ios/fastlane/Matchfile`, `web/app/mockups/calendar-confetti/page.tsx`.
 - **No product code, no test, no API contract, and no database schema is touched.** There is no
   capability whose behaviour changes, so this change carries **no spec delta** — the same shape
   as the archived `refactor-mobile-shared-fake-db` change.
@@ -76,10 +82,13 @@ full-file gate reads, and what a reader of the repository sees.
   rather than a cosmetic one: Match resolves that url when it fetches certificates for the
   legacy Flutter iOS app. `app/` is under R-5 bounded maintenance; this one line is in bounds
   and nothing else under `app/` is.
-- **Out of scope:** the seventeen deliberate-credit, legal-identity and development-key files
-  (TIM-469 owns the decision, TIM-472 the key); the two legacy Flutter Android package
-  directories, whose *paths* embed the published application id (see `design.md`, D6); the gate
-  itself (TIM-468) and the pattern list it runs (TIM-470).
+- **Out of scope, and still reporting afterwards — 5 paths / 7 occurrences.** The two archived
+  About-screen planning files, which specify the shipped credit (D10); the two legacy Flutter
+  Android package directories, whose *paths* embed the published application id (D6); and the
+  committed development TLS key, which needs a rotation and not a text edit (TIM-472). That set
+  is this change's reported residue and TIM-473's baseline. Also out of scope: the deliberate
+  credit and legal identity generally (TIM-469), the gate itself (TIM-468), and the pattern list
+  it runs (TIM-470).
 
 ## Non-Goals
 

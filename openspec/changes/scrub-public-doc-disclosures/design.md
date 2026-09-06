@@ -17,16 +17,32 @@ measurement is the acceptance evidence and it runs *after* the edits, never befo
 ### The measurement
 
 The scan compiles each pattern case-**in**sensitively (`gi`) unless an entry opts out, and none
-does. Run that way across all 2 580 tracked files at branch point `489ede46`, the tree reports
-**48 paths carrying 103 occurrences**, split three ways:
+does. It matches a file's whole **content** and also its **path**, and a pattern may carry a
+`publishedIn` list of paths where that string is the project's own published identity rather
+than a leak — a copyright line, an author credit, a legal notice. `publishedIn` suppresses the
+finding entirely, so a carved-out file reports nothing at all rather than reporting and being
+excused.
 
-| Set | Paths | Disposition |
-| --- | --- | --- |
-| A — genuine violations | 29 | scrubbed by this change |
-| B — deliberate credit, legal identity, development key | 17 | untouched (TIM-469, TIM-472) |
-| C — legacy Android package directories | 2 | untouched, path-only (D6) |
+Run that way over all 2 583 tracked files at this branch's head, the tree reports **35 paths
+carrying 60 occurrences**, split four ways:
 
-Set C is why the expected post-change hit set is **19 paths, not 17**. See D6.
+| Set | Paths | Occurrences | Disposition |
+| --- | --- | --- | --- |
+| A — genuine violations | 30 | 53 | scrubbed by this change |
+| B — spec text quoting the shipped author credit | 2 | 4 | untouched (D10) |
+| C — legacy Android package directories | 2 | 2 | untouched, path-only (D6) |
+| D — committed development TLS key | 1 | 1 | untouched, TIM-472's |
+
+**The expected post-change hit set is therefore 5 paths carrying 7 occurrences** — sets B, C
+and D — and zero in the other 2 578 files.
+
+An earlier pass of this design put the baseline at 48 paths / 103 occurrences and the expected
+set at 19 paths. That pass predates `publishedIn` reaching the deployed list. Thirteen of the
+seventeen files that pass called out — `LICENSE`, the privacy policy, the About screen and its
+test, both locale files, the Maestro flow, the web footer and layout, the legacy Flutter About
+screen, and the four archived/live `mobile-about-screen` and `mobile-changelog` **spec** files —
+are now carved out by path and report nothing. They are not in the expected set because they
+produce no finding to expect. The four that still fire are sets B and D.
 
 ## Decisions
 
@@ -100,11 +116,11 @@ published on every clone exactly like `README.md`. The rule applies to the file 
 an archived folder has no live spec to desynchronise. Adding an "edited on…" note would only
 restate what `git log` already answers precisely.
 
-### Decision D6 — the two legacy Android package directories are excluded, and the expected set is 19
+### Decision D6 — the two legacy Android package directories are excluded
 
 **Decision.** `app/android/app/src/main/java/fr/…/MainActivity.java` and
-`app/android/app/src/main/kotlin/fr/…/MainActivity.kt` are **not** touched. Acceptance is measured
-against an expected set of **19 paths** — the 17 Scope B files plus these two.
+`app/android/app/src/main/kotlin/fr/…/MainActivity.kt` are **not** touched. They are set C of the
+expected post-change hit set.
 
 **Why.** Both are path-only matches: the *content* of both files is clean, and what matches is a
 directory segment of the legacy Flutter Android package. That package is the published
@@ -119,10 +135,10 @@ form. That is a fact about the pattern, not about these files, and the fix is **
 the pattern: the identical dotted-to-slash form appears in a repository url that this change is
 scrubbing on purpose, so relaxing the boundary would blind the scan to a real violation.
 
-**Consequence.** The exclusion surface TIM-469 owns is 19 paths, not 17 and not the 5 the ticket
-was originally filed with. TIM-469 needs to be told; that is a reporting obligation on this
-change, not a blocker for it. TIM-468 should also know that a branch touching either file will
-report a path finding that cannot be scrubbed away.
+**Consequence.** TIM-468 and TIM-473 need to know that a branch touching either file reports a
+path finding that no scrub can clear, and that no `publishedIn` entry can clear it either:
+`publishedIn` is keyed on the path, and here the path *is* the match. It has to be a baseline
+entry or nothing. That is a reporting obligation on this change, not a blocker for it.
 
 ### Decision D7 — no spec delta, and no ADR
 
@@ -165,6 +181,53 @@ given service. The alias is a name only someone with existing access can resolve
 nothing to anyone else while disclosing an internal host. Note that this document is exploration,
 not a rule file, so the rewrite is not constrained by anything in the Architecture Book.
 
+### Decision D10 — the two archived About-screen planning files are excluded, and go to the baseline
+
+**Decision.** `openspec/changes/archive/2026-08-25-add-mobile-about-screen/design.md` (2
+occurrences, line 118) and `.../tasks.md` (2 occurrences, line 29) are **not** scrubbed. They are
+set B of the expected hit set, and they are reported to TIM-473 for a count-keyed baseline entry.
+
+**Why.** Both lines are describing the *content of the shipped credit row* — the design file
+records which developer names and destinations the About screen renders; the task file records
+wiring those exact names to their exact URLs. The identifier is not incidental to the sentence,
+it is the specification of published product content. Scrubbing it would make the archived plan
+disagree with the UI it planned, which is the desynchronisation the credit exclusion exists to
+prevent. The signed-off ruling is explicit that the deliberate credit is a product decision and
+that nothing may be scrubbed to turn a gate green.
+
+**Why not `publishedIn`.** The deployed carve-out for this category is
+`^openspec/(?:specs|changes/archive/[^/]*)/.*mobile-(?:about-screen|changelog)`. It requires the
+capability name to appear *after* a path separator, so it covers
+`…/2026-08-25-add-mobile-about-screen/specs/mobile-about-screen/spec.md` and misses the sibling
+`design.md` and `tasks.md`, whose folder segment carries the same capability name. The carve-out
+under-covers its own stated intent by one path shape. Widening it is the pattern list's call
+(TIM-470) and not this change's, and the standing instruction is that a scrub ticket does not add
+`publishedIn` entries. So these two are recorded, not suppressed and not scrubbed.
+
+**Consequence to flag.** This is the one place where the corrected target list and the exclusion
+ruling disagree, and the disagreement is real rather than a stale measurement: the list is the
+scanner's output, the ruling is the product decision, and both are right. Until TIM-470 widens the
+carve-out or TIM-473 records these two, a branch touching either file reports two occurrences it
+must not fix.
+
+### Decision D11 — the mockup greeting is scrubbed; it is sample data, not a credit
+
+**Decision.** `web/app/mockups/calendar-confetti/page.tsx` (1 occurrence, line 125) **is** scrubbed.
+The greeting takes a generic sample first name. Nothing else on the page changes.
+
+**Why.** It was carried on the exclusion list under "rendered credit", and on inspection it is not
+one. The line is a mockup's greeting heading — a fake user being greeted by name in placeholder
+content, alongside a fake date and a fake day summary. A person's real first name used as dummy
+data is the ordinary case the disclosure rule is about, and replacing it costs the mockup nothing,
+because the mockup is demonstrating a layout and not an identity. This is the exclusion list's own
+test applied in the direction it is usually applied in reverse: a file is excluded because
+inspection shows it is deliberate published content, and inspection here shows it is not.
+
+**Distinguishing it from the real credit.** The About screen, the footer, `LICENSE` and the privacy
+policy name the author *as* the author — remove the name and the document becomes false or the
+product loses a credit it deliberately ships. Remove this one and a mockup greets a different
+fictional student. Nothing is asserted about anyone.
+
 ## Verification strategy
 
 Acceptance is a single mechanical measurement, and it is the only evidence that counts.
@@ -173,8 +236,11 @@ Acceptance is a single mechanical measurement, and it is the only evidence that 
    is the list of strings that must not be published, so a committed copy publishes them, in the
    repository it was meant to protect.
 2. Read the 16 patterns out of the running agent's own instructions, compile them the way the
-   scanner does (`gi`), and walk every tracked file: the file's whole content **and** its path.
-3. Diff the resulting hit set against the 19 expected paths. Zero occurrences anywhere else.
+   scanner does (`gi`), honour each pattern's `publishedIn` paths, and walk every tracked file:
+   the file's whole content **and** its path.
+3. Diff the resulting hit set against the expected **5 paths / 7 occurrences** — sets B, C and D.
+   Zero occurrences anywhere else. Compare occurrence counts, not path counts: a path that should
+   carry 2 and carries 1 has been half-scrubbed, which a path-set diff reports as a pass.
 
 Two traps this design accounts for explicitly:
 
@@ -183,7 +249,7 @@ Two traps this design accounts for explicitly:
   whether the work is done. The full-tree measurement is the acceptance evidence; the pre-publication
   scan only guards the text being published alongside it.
 - **A rewrite can introduce a match somewhere new.** Re-measuring before editing, or re-checking
-  only the 29 edited files, would miss it. The scan walks the whole tree, after the edits.
+  only the 30 edited files, would miss it. The scan walks the whole tree, after the edits.
 
 Beyond that: nothing to run. No code path changes, so no test, type-check or lint outcome can
 move, and the only CI gate a documentation change faces is the build-and-deploy workflow.
@@ -197,6 +263,6 @@ move, and the only CI gate a documentation change faces is the build-and-deploy 
 - **Losing meaning while removing an identifier.** Mitigated by making every task state what the
   document must still say afterwards, and by criteria 3 and 4, which exist precisely to catch a
   scrub that deleted rather than rewrote.
-- **Recurrence.** Twelve of the twenty-nine files are instances of one convention. D1 fixes the
+- **Recurrence.** Twelve of the thirty files are instances of one convention. D1 fixes the
   convention at its source, which is what makes the next handoff note compliant by default. This
   is a working-tree fix, not a gate; the gate is TIM-468's job.
