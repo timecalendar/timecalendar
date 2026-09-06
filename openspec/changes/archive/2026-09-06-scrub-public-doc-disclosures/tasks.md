@@ -178,8 +178,13 @@ Paths, occurrence counts and pattern ids only — never a matched string.
 
 ## 12. Close out
 
-- [ ] 12.1 `openspec archive scrub-public-doc-disclosures --skip-specs` after merge. Name the
-      folder without a date prefix — the command prepends it. `--skip-specs` is the documented
-      route for a doc-only change and is required here because the change proposes no delta
-      (D7); do **not** add `openspec validate --strict` as a gate, which fails a delta-free
+- [x] 12.1 `openspec archive scrub-public-doc-disclosures --skip-specs` **in this pull request,
+      before merge** — not after it. This repository archives inside the feature PR: the
+      archived folders for `upgrade-husky-9` (#329), `add-v1-calendar-log-search` (#315) and
+      `add-chart-server-pod-annotations` (#309) — three of the changes this scrub edits — were
+      each added by that change's own squash commit. Deferring it produces an orphan that the
+      follow-up PR never gets written for; `openspec/changes/` on `main` holds five of them.
+      Name the folder without a date prefix — the command prepends it. `--skip-specs` is the
+      documented route for a doc-only change and is required here because the change proposes no
+      delta (D7); do **not** add `openspec validate --strict` as a gate, which fails a delta-free
       change by design.
