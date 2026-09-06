@@ -1,5 +1,13 @@
 # Architecture Book changelog
 
+## 2026-09-06
+
+- Added the portrait-tablet responsive contract and screen ledger: container-owned measurement,
+  compact/tablet semantics at 600 points, readable/standard/full-bleed lanes, token gutters, and
+  optional accessible columns only from 834 points. Native Stack/tab presentation and safe-area
+  ownership remain unchanged; no new ADR was needed because this implements the accepted tablet
+  contract without changing native orientation or device-family decisions.
+
 ## 2026-08-31
 
 - Refined ADR 038's structural Maestro retry provenance for nested flows: only a failed

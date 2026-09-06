@@ -31,7 +31,7 @@ import {
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
@@ -49,9 +49,6 @@ import { eventSurfaceColor } from "./event-surface"
 // Flutter home zoom (`hourHeight = 70`) — a home concern passed as `pixelsPerHour`,
 // not a grid constant (the day/week DEFAULT_PIXELS_PER_HOUR = 60 stays).
 const HOME_PIXELS_PER_HOUR = 70
-// The home content padding (Spacing.four each side, src/features/home home-screen
-// styles.content) the screen-derived fallback subtracts before the first layout pass.
-const CONTENT_HORIZONTAL_PADDING = Spacing.four * 2
 const MIN_TARGET_SIZE = Platform.OS === "android" ? 48 : 44
 
 // Day bounds + minute positioning on the DISPLAY zone's wall clock (timezone
@@ -107,18 +104,14 @@ export function TodayTimeline({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { width: windowWidth, fontScale } = useWindowDimensions()
+  const { fontScale } = useWindowDimensions()
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
   // multiplier is dynamic. The tile area is flex:1, so its real width is measured
-  // via onLayout. Before the first layout pass, fall back to a screen-derived width
-  // (the bounded content width minus the hours column) so nothing renders 0-width.
-  const fallbackWidth =
-    Math.min(windowWidth, MaxContentWidth) -
-    CONTENT_HORIZONTAL_PADDING -
-    HOURS_COLUMN_WIDTH
+  // via onLayout. Before the first layout pass, use the minimum viable tile
+  // width; a global window cannot describe this nested standard lane.
   const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
-  const tileAreaWidth = measuredWidth ?? Math.max(fallbackWidth, MIN_TILE_WIDTH)
+  const tileAreaWidth = measuredWidth ?? MIN_TILE_WIDTH
 
   const onTileAreaLayout = (event: LayoutChangeEvent) => {
     const width = event.nativeEvent.layout.width

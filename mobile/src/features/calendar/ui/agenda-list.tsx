@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
@@ -59,6 +60,7 @@ export function AgendaList({
   // The clock is read once at mount (like the screen's visibleDate) so the render
   // stays pure — the "up next" marker is relative to when the agenda opened.
   const [now] = useState(() => Date.now())
+  const responsive = useResponsiveLayout("standard")
 
   const sections = useMemo<AgendaSection[]>(
     () =>
@@ -84,9 +86,18 @@ export function AgendaList({
   return (
     <SectionList
       testID="agenda-section-list"
+      onLayout={responsive.onLayout}
+      style={{
+        width: "100%",
+        maxWidth: responsive.layout.outerMaxWidth,
+        alignSelf: "center",
+      }}
       sections={sections}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        { paddingHorizontal: responsive.layout.gutter },
+      ]}
       stickySectionHeadersEnabled
       refreshControl={refreshControl}
       renderSectionHeader={({ section }) => (
@@ -218,7 +229,6 @@ function EventTile({
 
 const styles = StyleSheet.create({
   content: {
-    paddingHorizontal: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.two,
   },

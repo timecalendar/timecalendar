@@ -11,6 +11,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -39,6 +40,7 @@ import { stepStyles } from "./step-styles"
 export default function InstitutionNameScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("readable")
   const { setUnlistedInstitution } = useImportDraft()
   const [name, setName] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
@@ -61,7 +63,17 @@ export default function InstitutionNameScreen() {
 
   return (
     <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={stepStyles.safeArea}>
+      <SafeAreaView
+        testID="institution-name-responsive-lane"
+        onLayout={responsive.onLayout}
+        style={[
+          stepStyles.safeArea,
+          {
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingHorizontal: responsive.layout.gutter,
+          },
+        ]}
+      >
         <KeyboardAvoidingView
           style={stepStyles.keyboardAvoiding}
           behavior={Platform.OS === "ios" ? "padding" : undefined}

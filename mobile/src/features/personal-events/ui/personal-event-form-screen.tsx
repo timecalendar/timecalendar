@@ -18,6 +18,7 @@ import {
   SWATCH_PRESETS,
 } from "@/components/color-swatch-picker"
 import { DateTimeField } from "@/components/date-time-field"
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -32,7 +33,7 @@ import {
   validateEventForm,
 } from "@/features/personal-events/form"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The create/edit personal-event form (B2 / TIM-133) — PRESENTATIONAL (70%
 // floor, design D2): it owns NO validation/build/persist logic. It reads the
@@ -65,6 +66,7 @@ export default function PersonalEventFormScreen() {
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("readable")
   const params = useLocalSearchParams<{ uid?: string }>()
   const uid = params.uid
   const existing = useEventToEdit(uid)
@@ -210,10 +212,17 @@ export default function PersonalEventFormScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        testID="personal-event-form-responsive-lane"
+        onLayout={responsive.onLayout}
+        style={[styles.safeArea, { maxWidth: responsive.layout.outerMaxWidth }]}
+      >
         <KeyboardAvoidingView style={styles.flex} behavior="padding">
           <ScrollView
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[
+              styles.content,
+              { paddingHorizontal: responsive.layout.gutter },
+            ]}
             keyboardShouldPersistTaps="handled"
           >
             <ThemedText type="title">
@@ -330,7 +339,12 @@ export default function PersonalEventFormScreen() {
               adjustResizes (the footer rises with the layout); on iOS the
               KeyboardAvoidingView padding lifts it. Inside the ScrollView the
               Save button sat below the fold behind the keyboard. */}
-          <View style={styles.footer}>
+          <View
+            style={[
+              styles.footer,
+              { paddingHorizontal: responsive.layout.gutter },
+            ]}
+          >
             {(save.failed || del.failed) && (
               <WriteErrorNotice
                 message={
@@ -389,19 +403,16 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
   },
   flex: {
     flex: 1,
   },
   footer: {
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.three,
   },
   content: {
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.five,
     gap: Spacing.three,

@@ -88,6 +88,22 @@ surfaces and calendar content; native controls are tinted and composed rather th
 
 ## Token layer — typed TS constants under `src/theme/`
 
+### Responsive content lanes
+
+`src/components/responsive-layout.tsx` owns the small portrait-responsive contract. Its pure
+`resolveResponsiveLayout(width, lane)` and `useResponsiveLayout(lane)` derive layout from the
+positive width reported by the content owner's `onLayout`; an unknown width stays compact.
+Compact is below 600 points and tablet begins at 600. `ResponsiveLane` is the reusable wrapper
+when a screen does not need to attach measurement to an existing safe-area, list, or keyboard
+owner.
+
+Readable forms/prose cap at 640 points, standard lists/cards at `MaxContentWidth` (800), and
+full-bleed calendar/camera surfaces remain uncapped. Compact gutters are `Spacing.four`; tablet
+gutters are `Spacing.six`. Optional columns begin at 834 only for independent groups with stable
+source/focus order; forms remain one column. The pure resolver table-tests 390, 599, 600, 768,
+800, 834, and 1024 plus a narrow nested owner, so the breakpoint and container-not-window rules
+run in the normal Jest lane.
+
 - `src/theme/tokens.ts` holds the design tokens as plain `as const` TypeScript: `Colors` (light/dark records, including the brand **`primary`**), `Spacing`, the `Radii` scale (radius is a token, not a magic number), `Fonts`, and `MaxContentWidth`; `ThemeColor` is derived from `Colors`. **No styling runtime** (NativeWind / Tamagui / unistyles rejected, R-2 — `StyleSheet` + typed token constants is the pattern, and `tsc` is the only type gate). A missing/mistyped token key is a `tsc` error, not a silent fallback.
 - **Brand `primary` token (the pink hue, ADR [008](./decisions/008-brand-color.md)):** `light.primary = #E91E63` (the Flutter `Colors.pink` identity tone — used as an **accent/tint**, e.g. the nav active tint, _not_ a fill carrying white body text), `dark.primary = #FF4081` (reads on the dark background). **The load-bearing usage rule:** white text on a brand fill MUST ride the darker **`#C2185B`** (white-on-`#C2185B` = 5.87:1, AA body) — the bright `#E91E63` is white-on-fill 4.35:1, below the body floor; `#E91E63` is the accent/large/UI tone (meets the 3:1 bar). The **`primaryStrong` (#C2185B) + `onPrimary` (#ffffff) token pair LANDED** (2026-06-16, the onboarding welcome filled CTA — the first white-text-on-brand consumer, R-2: earned not speculative): a filled brand button is `primaryStrong` carrying `onPrimary` (5.87:1, AA body, scheme-independent — the fill owns its white label), clearing the 3:1 UI-component bar against `background` in both schemes. `tokens.ts`'s contrast block documents the pair.
 - **Semantic Activity status tokens:** `positive` (`#146C43` light / `#7EE2A8` dark) identifies added items and `informational` (`#0B57D0` light / `#A8C7FA` dark) identifies changed items; cancelled items reuse `destructive`. Each item also carries a translated kind label, so color is never the only signal. `tokens.ts` documents every new foreground against `background` and `backgroundElement` in both schemes; all clear the 4.5:1 body-text floor.

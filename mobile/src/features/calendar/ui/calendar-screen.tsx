@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Platform, RefreshControl, StyleSheet, View } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { ResponsiveLane } from "@/components/responsive-layout"
 import { ThemedView } from "@/components/themed-view"
 import {
   eventRoute,
@@ -73,11 +74,21 @@ export function CalendarScreen() {
         onAdd={onAdd}
       />
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <CalendarScreenStatus
-          isEmpty={events.length === 0}
-          isError={isError}
-          onRetry={onSync}
-        />
+        {view === "agenda" ? (
+          <ResponsiveLane lane="standard" testID="calendar-agenda-status-lane">
+            <CalendarScreenStatus
+              isEmpty={events.length === 0}
+              isError={isError}
+              onRetry={onSync}
+            />
+          </ResponsiveLane>
+        ) : (
+          <CalendarScreenStatus
+            isEmpty={events.length === 0}
+            isError={isError}
+            onRetry={onSync}
+          />
+        )}
         <View style={styles.calendar}>
           {view === "agenda" ? (
             <AgendaList

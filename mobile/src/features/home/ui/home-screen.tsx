@@ -2,8 +2,9 @@ import { useTranslation } from "react-i18next"
 import { Platform, RefreshControl, ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedView } from "@/components/themed-view"
-import { MaxContentWidth, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
 
 import { HomeAddFab, HomeScreenHeader } from "./home-screen/home-screen-header"
 import { HomeScreenStatus } from "./home-screen/home-screen-status"
@@ -16,15 +17,25 @@ export function HomeScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const home = useHomeScreenController()
+  const responsive = useResponsiveLayout("standard")
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <HomeScreenHeader onAdd={home.addEvent} />
+      <SafeAreaView
+        testID="home-responsive-lane"
+        style={[styles.safeArea, { maxWidth: responsive.layout.outerMaxWidth }]}
+        edges={["top", "left", "right"]}
+        onLayout={responsive.onLayout}
+      >
+        <HomeScreenHeader
+          horizontalPadding={responsive.layout.gutter}
+          onAdd={home.addEvent}
+        />
         <ScrollView
           testID="home-scroll"
           contentContainerStyle={[
             styles.content,
+            { paddingHorizontal: responsive.layout.gutter },
             Platform.OS === "android"
               ? styles.androidContent
               : styles.iosContent,
@@ -79,9 +90,8 @@ export function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, flexDirection: "row", justifyContent: "center" },
-  safeArea: { flex: 1, maxWidth: MaxContentWidth },
+  safeArea: { flex: 1 },
   content: {
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.four,
     gap: Spacing.three,

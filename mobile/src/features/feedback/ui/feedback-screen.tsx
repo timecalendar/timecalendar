@@ -13,6 +13,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { ResponsiveLane } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -24,7 +25,7 @@ import {
   type FeedbackFormErrors,
   validateFeedbackForm,
 } from "@/features/feedback/form"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 const MAX_CONTEXT_LENGTH = 2_048
 
@@ -108,7 +109,11 @@ export default function FeedbackScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}
           >
-            <View style={styles.content}>
+            <ResponsiveLane
+              lane="readable"
+              testID="feedback-responsive-lane"
+              contentStyle={styles.content}
+            >
               <View style={styles.intro}>
                 <ThemedText type="title">{t("feedback.title")}</ThemedText>
                 <ThemedText themeColor="textSecondary">
@@ -241,7 +246,7 @@ export default function FeedbackScreen() {
                   {t("feedback.sending")}
                 </ThemedText>
               ) : null}
-            </View>
+            </ResponsiveLane>
           </ScrollView>
         </SafeAreaView>
       </KeyboardAvoidingView>
@@ -253,10 +258,9 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
     alignItems: "center",
-    paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.four,
   },
-  content: { width: "100%", maxWidth: MaxContentWidth, gap: Spacing.four },
+  content: { gap: Spacing.four },
   intro: { gap: Spacing.two },
   field: { gap: Spacing.two },
   input: {

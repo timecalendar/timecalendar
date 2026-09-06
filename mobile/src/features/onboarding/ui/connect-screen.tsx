@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { safeIntranetUrl, useImportDraft } from "@/features/onboarding/draft"
@@ -33,6 +34,7 @@ import { stepStyles } from "./step-styles"
 export default function ConnectScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("readable")
   const { draft } = useImportDraft()
 
   // An unlisted institution has no school row and therefore no trusted URL, so
@@ -45,7 +47,18 @@ export default function ConnectScreen() {
 
   return (
     <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={[stepStyles.safeArea, styles.safeArea]}>
+      <SafeAreaView
+        testID="connect-responsive-lane"
+        onLayout={responsive.onLayout}
+        style={[
+          stepStyles.safeArea,
+          styles.safeArea,
+          {
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingHorizontal: responsive.layout.gutter,
+          },
+        ]}
+      >
         <View style={stepStyles.intro}>
           <ThemedText type="title">{t("onboarding.connect.title")}</ThemedText>
           <ThemedText themeColor="textSecondary">

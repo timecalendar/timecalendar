@@ -17,6 +17,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { type MenuComponentRef, MenuView } from "@/components/chrome"
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -28,7 +29,7 @@ import {
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
 import { RenameCalendarDialog } from "@/features/calendar-sources/ui/rename-calendar-dialog"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The user-calendars management screen ("Mes calendriers") — PRESENTATIONAL (70%
 // floor) over the existing durable token store (ADR 018). It lists every held
@@ -44,6 +45,7 @@ import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 export function UserCalendarsScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("standard")
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const calendars = useUserCalendars()
@@ -110,11 +112,13 @@ export function UserCalendarsScreen() {
         style={[
           styles.safeArea,
           {
-            paddingLeft: Math.max(insets.left, Spacing.three),
-            paddingRight: Math.max(insets.right, Spacing.three),
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingLeft: Math.max(insets.left, responsive.layout.gutter),
+            paddingRight: Math.max(insets.right, responsive.layout.gutter),
           },
         ]}
         edges={["bottom"]}
+        onLayout={responsive.onLayout}
       >
         {failed && (
           <WriteErrorNotice
@@ -397,7 +401,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
     paddingTop: Platform.OS === "ios" ? Spacing.five : Spacing.four,
     gap: Spacing.three,
   },

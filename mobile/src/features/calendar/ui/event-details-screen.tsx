@@ -11,6 +11,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -47,6 +48,7 @@ import { Radii, Spacing } from "@/theme"
 
 export function EventDetailsScreen() {
   const { t, i18n } = useTranslation()
+  const responsive = useResponsiveLayout("readable")
   const router = useRouter()
   const { uid } = useLocalSearchParams<{ uid?: string }>()
   const { event, loading } = useEventDetails(uid)
@@ -177,7 +179,17 @@ export function EventDetailsScreen() {
     return (
       <ThemedView style={styles.container}>
         {header}
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView
+          testID="event-details-responsive-lane"
+          onLayout={responsive.onLayout}
+          style={[
+            styles.safeArea,
+            {
+              maxWidth: responsive.layout.outerMaxWidth,
+              paddingHorizontal: responsive.layout.gutter,
+            },
+          ]}
+        >
           <View
             style={styles.loading}
             accessibilityLiveRegion="polite"
@@ -195,7 +207,17 @@ export function EventDetailsScreen() {
     return (
       <ThemedView style={styles.container}>
         {header}
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView
+          testID="event-details-responsive-lane"
+          onLayout={responsive.onLayout}
+          style={[
+            styles.safeArea,
+            {
+              maxWidth: responsive.layout.outerMaxWidth,
+              paddingHorizontal: responsive.layout.gutter,
+            },
+          ]}
+        >
           <ThemedText
             themeColor="textSecondary"
             accessibilityLiveRegion="polite"
@@ -211,7 +233,18 @@ export function EventDetailsScreen() {
   return (
     <ThemedView style={styles.container}>
       {headerAction}
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        testID="event-details-responsive-lane"
+        style={[
+          styles.safeArea,
+          {
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingHorizontal: responsive.layout.gutter,
+          },
+        ]}
+        edges={["bottom", "left", "right"]}
+        onLayout={responsive.onLayout}
+      >
         {hideFailed && (
           <WriteErrorNotice
             message={t("eventDetails.hide.error")}
@@ -340,6 +373,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    width: "100%",
+    alignSelf: "center",
   },
   loading: {
     flex: 1,
@@ -354,11 +389,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
   },
   hideError: {
-    paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
   },
   content: {
-    padding: Spacing.three,
+    paddingVertical: Spacing.three,
     gap: Spacing.four,
   },
   titleBlock: {

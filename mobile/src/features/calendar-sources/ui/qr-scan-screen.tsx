@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next"
 import { Linking, Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -19,7 +20,7 @@ import {
 } from "@/features/calendar-sources/data"
 import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, ResponsiveContentWidth, Spacing, useTheme } from "@/theme"
 
 import { leaveImportJourney } from "./leave-import-journey"
 
@@ -48,6 +49,7 @@ interface QrImportAttempt {
 export default function QrScanScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("readable")
   const [permission, requestPermission] = useCameraPermissions()
   const { addCalendarFromUrl } = useAddCalendar()
   // The import journey's institution/programme, derived from the draft. Total by
@@ -150,7 +152,16 @@ export default function QrScanScreen() {
   if (permission === null) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView
+          style={[
+            styles.safeArea,
+            {
+              maxWidth: responsive.layout.outerMaxWidth,
+              paddingHorizontal: responsive.layout.gutter,
+            },
+          ]}
+          onLayout={responsive.onLayout}
+        >
           <ThemedText
             themeColor="textSecondary"
             accessibilityLiveRegion="polite"
@@ -167,7 +178,16 @@ export default function QrScanScreen() {
   if (!permission.granted && !permission.canAskAgain) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView
+          style={[
+            styles.safeArea,
+            {
+              maxWidth: responsive.layout.outerMaxWidth,
+              paddingHorizontal: responsive.layout.gutter,
+            },
+          ]}
+          onLayout={responsive.onLayout}
+        >
           <ThemedText type="title">
             {t("calendarSources.qrScan.title")}
           </ThemedText>
@@ -205,7 +225,16 @@ export default function QrScanScreen() {
   if (!permission.granted) {
     return (
       <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView
+          style={[
+            styles.safeArea,
+            {
+              maxWidth: responsive.layout.outerMaxWidth,
+              paddingHorizontal: responsive.layout.gutter,
+            },
+          ]}
+          onLayout={responsive.onLayout}
+        >
           <ThemedText type="title">
             {t("calendarSources.qrScan.title")}
           </ThemedText>
@@ -248,7 +277,13 @@ export default function QrScanScreen() {
         barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
         onBarcodeScanned={handleBarcode}
       >
-        <SafeAreaView style={styles.overlay}>
+        <SafeAreaView
+          style={[
+            styles.overlay,
+            { paddingHorizontal: responsive.layout.gutter },
+          ]}
+          onLayout={responsive.onLayout}
+        >
           <View
             style={[styles.viewfinder, { borderColor: theme.primary }]}
             accessibilityElementsHidden
@@ -343,8 +378,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
@@ -357,7 +390,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.three,
-    paddingHorizontal: Spacing.four,
   },
   viewfinder: {
     width: 240,
@@ -366,6 +398,8 @@ const styles = StyleSheet.create({
     borderRadius: Radii.large,
   },
   recoveryActions: {
+    width: "100%",
+    maxWidth: ResponsiveContentWidth.readable,
     alignSelf: "stretch",
     gap: Spacing.three,
   },

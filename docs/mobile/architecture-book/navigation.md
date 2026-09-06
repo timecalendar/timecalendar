@@ -2,6 +2,12 @@
 
 Expo Router is the navigation backbone and the **only** navigation API: `@react-navigation/*` imports are banned (lint-enforced). Import `DefaultTheme` / `DarkTheme` / `ThemeProvider` etc. from `expo-router`, which re-exports them.
 
+Responsive content stays inside the existing navigation and safe-area owners. Feature screens
+measure the laid-out container below Stack/native-tab chrome and select a readable, standard, or
+full-bleed lane; they do not add a second safe-area inset or replace native headers. In particular,
+the changelog route remains an iOS `formSheet` and Android `fullScreenModal`, with only its inner
+content constrained. Native-tab inset behavior remains localized to `@/components/chrome`.
+
 The two route-structure rules below are recorded as prose because their load-bearing half can't be encoded as a lint rule (R-1).
 
 ## Route screens that need a test are thin entrypoints over a feature `ui/` module (or a shared `@/components` module for shell screens)

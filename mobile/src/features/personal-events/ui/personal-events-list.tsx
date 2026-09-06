@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
@@ -11,7 +12,7 @@ import {
   usePersonalEvents,
 } from "@/features/personal-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):
 // it reads B1's reactive usePersonalEvents() (useLiveQuery, so it re-renders on
@@ -23,10 +24,21 @@ export function PersonalEventsList() {
   const { t } = useTranslation()
   const theme = useTheme()
   const events = usePersonalEvents()
+  const responsive = useResponsiveLayout("standard")
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        testID="personal-events-responsive-lane"
+        onLayout={responsive.onLayout}
+        style={[
+          styles.safeArea,
+          {
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingHorizontal: responsive.layout.gutter,
+          },
+        ]}
+      >
         <View style={styles.header}>
           <ThemedText type="title">{t("personalEvents.list.title")}</ThemedText>
           <Link href="/personal-event-form" asChild>
@@ -120,8 +132,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     gap: Spacing.three,
   },

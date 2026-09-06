@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -14,7 +15,7 @@ import {
 } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The hidden-events management screen (D7) — PRESENTATIONAL (70% floor). Hide-by-
 // name has no per-event details surface, so un-hide MUST be reachable here. It
@@ -35,6 +36,7 @@ interface UidEntry {
 export function HiddenEventsScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("standard")
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
@@ -68,7 +70,18 @@ export function HiddenEventsScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("hiddenEvents.title") }} />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        testID="hidden-events-responsive-lane"
+        style={[
+          styles.safeArea,
+          {
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingHorizontal: responsive.layout.gutter,
+          },
+        ]}
+        edges={["bottom", "left", "right"]}
+        onLayout={responsive.onLayout}
+      >
         {failed && (
           <WriteErrorNotice
             message={t("hiddenEvents.error")}
@@ -176,8 +189,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
   },
   content: {

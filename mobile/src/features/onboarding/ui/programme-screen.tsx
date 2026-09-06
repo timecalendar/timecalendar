@@ -12,6 +12,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -41,6 +42,7 @@ import { stepStyles } from "./step-styles"
 export default function ProgrammeScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const responsive = useResponsiveLayout("readable")
   const { setCalendarName } = useImportDraft()
   const [name, setName] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
@@ -106,8 +108,16 @@ export default function ProgrammeScreen() {
         }}
       />
       <SafeAreaView
-        style={stepStyles.safeArea}
+        testID="programme-responsive-lane"
+        style={[
+          stepStyles.safeArea,
+          {
+            maxWidth: responsive.layout.outerMaxWidth,
+            paddingHorizontal: responsive.layout.gutter,
+          },
+        ]}
         edges={["left", "right", "bottom"]}
+        onLayout={responsive.onLayout}
       >
         <KeyboardAvoidingView
           style={stepStyles.keyboardAvoiding}
