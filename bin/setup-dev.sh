@@ -43,7 +43,7 @@ http_status() {
 # http_status collapses every curl failure to 000, so re-run the same request
 # for the exit status when we need to say *why* it failed.
 curl_exit_code() {
-  curl -s -o /dev/null "$@" >/dev/null 2>&1
+  curl -s -o /dev/null "$@" 2>/dev/null
   printf '%s\n' "$?"
 }
 
@@ -111,14 +111,13 @@ else
 fi
 
 # 3. dev cert in the iOS Simulator (macOS only) -------------------------------
+step "3/4  iOS Simulator trusts the dev cert"
 if [ "$("$ROOT/ci/certificates/ensure-certificates.sh")" = "generated" ]; then
   yellow "  → dev certificate generated for this checkout ($CERT)"
   yellow "    nginx keeps serving the previous one until you restart it:"
   echo "      bin/server-compose.sh restart nginx"
   yellow "    any previously trusted copy must be re-added below"
 fi
-
-step "3/4  iOS Simulator trusts the dev cert"
 if [ "$(uname)" != "Darwin" ]; then
   yellow "– not macOS, skipping (trust $CERT in your OS/browser cert store)"
 elif ! command -v xcrun >/dev/null 2>&1; then
@@ -134,10 +133,11 @@ fi
 
 # 4. end-to-end reachability --------------------------------------------------
 step "4/4  API reachable through nginx with a valid cert"
-code="$(http_status --cacert "$CERT" "https://api.timecalendar.host:${TLS_PORT}/")"
+api_url="https://api.timecalendar.host:${TLS_PORT}/"
+code="$(http_status --cacert "$CERT" "$api_url")"
 if [ "$code" = "000" ]; then
   # curl: 60 cert not verifiable, 51 cert rejected, 35 TLS handshake failed
-  case "$(curl_exit_code --cacert "$CERT" "https://api.timecalendar.host:${TLS_PORT}/")" in
+  case "$(curl_exit_code --cacert "$CERT" "$api_url")" in
     35 | 51 | 60)
       red "✗ nginx answered on :${TLS_PORT} but its certificate does not match $CERT."
       echo "  nginx reads the certificate at start, so after regenerating it:"
