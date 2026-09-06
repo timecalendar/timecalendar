@@ -69,8 +69,9 @@ This is what must exist on the machine for the dev env and the pipelines to run.
 
 ### GitHub delivery identity: the **Paperclip GitHub App**
 
-A Paperclip run reaches GitHub as a company-owned **GitHub App installation**. There
-is no human account anywhere in the path.
+A Paperclip run reaches GitHub as a company-owned **GitHub App installation**, and
+GitHub attributes every push, pull request, review and merge to
+**`paperclip-timecalendar[bot]`**. There is no human account anywhere in the path.
 
 Each run is issued its own short-lived (**~1 hour**) installation token, scoped to
 this repository alone. It arrives as `GH_TOKEN`, `GITHUB_TOKEN` and
@@ -79,12 +80,9 @@ this repository alone. It arrives as `GH_TOKEN`, `GITHUB_TOKEN` and
 `GIT_CONFIG_KEY_*`. Nothing is written to `~/.gitconfig` or to `gh` config, and there
 is no setup step: ordinary `git push` and `gh` commands already use it.
 
-GitHub attributes every push, pull request, review and merge to
-**`paperclip-timecalendar[bot]`**.
-
 **Never** run `gh auth login`, **never** run `gh auth switch`, and never set a
-personal git identity in a worktree. Each of those moves the run off the token it was
-issued, and it cannot get it back.
+personal git identity in a worktree. Each moves the run off the installation token it
+was issued, and there is no way back.
 
 Two readouts look like faults and are not:
 
