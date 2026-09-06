@@ -1,7 +1,5 @@
-import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
-  type LayoutChangeEvent,
   Platform,
   Pressable,
   StyleSheet,
@@ -9,6 +7,7 @@ import {
   View,
 } from "react-native"
 
+import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import {
   addDaysInZone,
@@ -105,18 +104,13 @@ export function TodayTimeline({
   const { t } = useTranslation()
   const theme = useTheme()
   const { fontScale } = useWindowDimensions()
+  const tileArea = useResponsiveLayout("fullBleed")
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
   // multiplier is dynamic. The tile area is flex:1, so its real width is measured
   // via onLayout. Before the first layout pass, use the minimum viable tile
   // width; a global window cannot describe this nested standard lane.
-  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
-  const tileAreaWidth = measuredWidth ?? MIN_TILE_WIDTH
-
-  const onTileAreaLayout = (event: LayoutChangeEvent) => {
-    const width = event.nativeEvent.layout.width
-    if (width > 0 && width !== measuredWidth) setMeasuredWidth(width)
-  }
+  const tileAreaWidth = tileArea.layout.width || MIN_TILE_WIDTH
 
   const startMinute = range.startHour * 60
   const endMinute = range.endHour * 60
@@ -134,7 +128,7 @@ export function TodayTimeline({
       const geometry = visibleGeometry(entry.item, now, range, displayZone)
       const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
       return (
-        (measuredWidth !== null && width < MIN_TARGET_SIZE) ||
+        (tileArea.layout.width > 0 && width < MIN_TARGET_SIZE) ||
         height < MIN_TARGET_SIZE
       )
     })
@@ -226,7 +220,7 @@ export function TodayTimeline({
       <View
         testID="today-tile-area"
         style={[styles.tileArea, { height: gridHeight }]}
-        onLayout={onTileAreaLayout}
+        onLayout={tileArea.onLayout}
       >
         {labels.map((hour) => (
           <View
