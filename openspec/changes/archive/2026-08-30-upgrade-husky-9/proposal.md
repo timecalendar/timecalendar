@@ -68,10 +68,10 @@ commit after — die in the same move.
   (surgical — only the parenthetical is false), and this change's spec delta for
   `openspec/specs/mobile-lint-format/spec.md:169`.
 - **Host-wide side effect:** the first v9 `prepare` flips `core.hooksPath` from `.husky` to
-  `.husky/_` in the **shared** `$HOME/projects/perso/timecalendar/.git/config`, for all 49
-  worktrees at once. Worktrees still holding a v7-era `.husky/_/` (33 of 49 — `husky.sh` only, no
-  per-hook shims) then resolve to a directory with no `pre-commit` shim and **stop running hooks
-  silently**. This is a one-time migration each worktree fixes by re-running
+  `.husky/_` in the main checkout's **shared** `.git/config`, for all 49 worktrees at once.
+  Worktrees still holding a v7-era `.husky/_/` (33 of 49 — `husky.sh` only, no per-hook shims)
+  then resolve to a directory with no `pre-commit` shim and **stop running hooks silently**.
+  This is a one-time migration each worktree fixes by re-running
   `bin/setup-worktree.sh`, not a blocker — but it is why validation must not happen only in the
   worktree that ran the upgrade, and why every commit test must record the slot value it ran under.
 - **Sensitive surfaces:** `package.json` is a dependency major bump and the change mutates

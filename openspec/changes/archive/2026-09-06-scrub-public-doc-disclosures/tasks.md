@@ -1,0 +1,191 @@
+# Tasks — scrub pre-existing disclosure-rule violations (TIM-471)
+
+Every task is a **rewrite**. If a task's edit leaves the document saying less than it did
+before, the task is not done — go back and say the same thing without the identifier.
+
+Read `design.md` first. D1–D11 decide the *form* each rewrite takes; the tasks below say only
+where and what must survive.
+
+Scope is **29 files carrying 52 occurrences**. Counts below are occurrences, not lines: several
+of these lines carry two or three, and treating a line as one hit half-scrubs it.
+
+## 1. Fix the convention before the instances
+
+- [x] 1.1 `docs/react-native-migration/inbox/README.md` — the heading names the human owner.
+      Rewrite it to the role, per D1. The heading must still say what the folder is: handoffs
+      from the autonomous pipeline to the human who can act on them.
+- [x] 1.2 In the same file, check the **Convention** and **Why it exists** sections for any
+      other phrasing that would regenerate the problem, and align the template with 1.1 so a
+      note written by copying this README is compliant by default.
+
+## 2. The eleven dated inbox notes
+
+Each carries the identifier once, on the `**For:**` line. Adopt the phrasing four sibling notes
+in the folder already use (D1) and **keep the parenthetical verbatim** — it is the reason the
+item needs a human, and it is different in every note.
+
+- [x] 2.1 `2026-06-15-android-storage-verification.md`
+- [x] 2.2 `2026-06-16-calendar-low-end-android-perf.md`
+- [x] 2.3 `2026-06-16-calendar-restart-durability.md`
+- [x] 2.4 `2026-06-16-calendar-visual-brand-review.md`
+- [x] 2.5 `2026-06-16-event-checklists-on-device.md`
+- [x] 2.6 `2026-06-16-hidden-events-on-device.md`
+- [x] 2.7 `2026-06-17-fcm-push-receive-device-verification.md`
+- [x] 2.8 `2026-06-17-notification-subscription-review.md`
+- [x] 2.9 `2026-08-25-ade-export-window-device-pass.md`
+- [x] 2.10 `2026-08-25-ota-runtime-device-verification.md`
+- [x] 2.11 `2026-08-30-activity-trigger-device-verification.md`
+- [x] 2.12 `grep` the `**For:**` line across the whole inbox folder afterwards and confirm every
+      note now reads the same way — including the four that were already compliant.
+
+## 3. The remaining inbox note: a host path in a shell recipe
+
+- [x] 3.1 `docs/react-native-migration/inbox/2026-08-26-ota-control-plane-live-bootstrap.md` —
+      four occurrences in one fenced recipe that writes a credential file. Re-root the recipe
+      so it still runs and still ends in the same file state — a `700` directory and a `600`
+      file readable only by the account that ran it — with the same no-stdout handling; the
+      operator must be able to follow it unchanged. Once the recipe is rooted at the running
+      account's home, the original's explicit `chown`/`-o`/`-g` to a *named* account can only
+      restate that account's own identity back to itself, so it is dropped rather than rewritten
+      into a self-assignment that reads like it does something. The surrounding prose about not
+      printing the value stays as it is.
+
+## 4. Developer environment handbook
+
+- [x] 4.1 `docs/agent-dev-environment.md` §5 — one prose occurrence and two in the example tree.
+      Re-root both against a placeholder per D4.
+      **Must still be true afterwards:** worktrees are siblings of the main checkout, one per
+      issue, alongside the long-lived per-agent worktrees, and the example layout still shows
+      that relationship and the branch each row is on.
+- [x] 4.2 Leave the two development-SDK rows elsewhere in the file alone — they are allowlisted
+      on purpose. Verify by scanning the whole file, not the section.
+
+## 5. Release operations
+
+- [x] 5.1 `docs/mobile/releases/03-first-preview.md` — the signing row (line 119) and the
+      certificate subject row (line 176), **six occurrences across those two lines**, not two.
+      Replace the identity with the role, per D8. **Keep every fingerprint, the
+      keystore identifier, the alias and the validity window**: they are the discriminator an
+      operator matches on, and this is the acceptance criterion that catches a delete-instead-of-
+      rewrite.
+- [x] 5.2 `docs/mobile/releases/02-signing-and-credentials.md` — the prose naming the legacy
+      Match certificates repository. Rewrite so the sentence still records what it records:
+      legacy Flutter iOS used Fastlane Match against a private certificates repository, the
+      current identity still has access to it, and it is legacy custody rather than the planned
+      React Native signing source.
+- [x] 5.3 In the same file, document the environment variable introduced in task 6.1 — where an
+      operator will look for it, in the section that already covers legacy iOS custody. Say what
+      happens when it is unset (D3).
+
+## 6. Legacy iOS signing configuration — **sensitive surface**
+
+- [x] 6.1 `app/ios/fastlane/Matchfile` — route `git_url` through the environment per D3, mirroring
+      the `app_identifier` line in the same file. One line changes; `storage_mode`, `type` and
+      `app_identifier` are untouched. **Do not blank the url and do not delete the line** — Match
+      reads it at fetch time.
+      *Verification:* the file still contains exactly four directives, the new line mirrors the
+      `app_identifier` line below it, and 5.3 has landed in the same commit.
+      *Not verified:* there is no Ruby interpreter on this host, so the file was **not** parsed.
+      A syntax check needs a machine that has one — which is the same machine that runs Match, so
+      the first real Match invocation is what exercises it.
+- [x] 6.2 Nothing else under `app/` is in bounds. Confirm the diff touches exactly one file there.
+
+## 7. Roadmap, tech specs and operations exploration
+
+- [x] 7.1 `docs/react-native-migration/01-roadmap/owned-calendar-renderer-prompt.md` line 9 — a
+      host path inside a reproduced historical prompt, carrying two categories on one line. The
+      file's own banner says the prompt is historical and must not be executed, so the path is
+      not operational; re-root it. The banner and the "reproduced below for audit" framing stay.
+- [x] 7.2 `docs/react-native-migration/05-tech-specs/activity-revival.md` and
+      `activity-revival-monkified.md` — one control-plane issue link each. Collapse to the bare
+      key per D2.
+- [x] 7.3 `docs/react-native-migration/05-tech-specs/calendar-naming-and-manual-import.md` and
+      `calendar-naming-and-manual-import-monkified.md` — same, one each.
+- [x] 7.4 `docs/mobile/ota/09-human-checklist.md` — the internal machine alias in three places
+      (two in prose, three occurrences in one table row) and one account login in the machine-audit
+      row. Replace each with the role it plays, per D9. **Must still be true afterwards:** the
+      reader can tell which step needs which kind of access — the host with the sealing toolchain
+      and scoped kubeconfig, and which tools were verified working.
+
+## 8. Archived change folders
+
+Edited in place; no re-archive and no `openspec validate` run (D5).
+
+- [x] 8.1 `archive/2026-08-29-add-v1-calendar-log-search/proposal.md` — five control-plane issue
+      links (D2). The blocking relationships those links describe must read identically afterwards.
+- [x] 8.2 `archive/2026-08-29-add-v1-calendar-log-search/tasks.md` — two more of the same.
+- [x] 8.3 `archive/2026-08-29-measure-activity-capacity-budgets/tasks.md` line 33 — an agent
+      mention carrying a raw actor identifier. Name the role in plain text and keep the bare
+      issue key. The task's claim — that no pipeline stage opens a production connection — is
+      unchanged.
+- [x] 8.4 `archive/2026-08-30-add-chart-server-pod-annotations/tasks.md` — two host paths naming
+      a sibling repository checkout, one in prose and one in a shell snippet. Re-root both; the
+      snippet must still run for someone who has that repository checked out, so express the
+      location as a variable with a sensible relative default rather than deleting it.
+- [x] 8.5 `archive/2026-08-30-upgrade-husky-9/design.md` and `proposal.md` — one host path each,
+      naming the shared main checkout's git config. Re-root per D4. **Must still be true
+      afterwards:** the hazard is that the setting is a single value in the *main checkout's*
+      config, shared by every worktree on the host, and last-install-wins.
+
+## 9. The web mockup greeting
+
+- [x] 9.1 Preserve `web/app/mockups/calendar-confetti/page.tsx` unchanged and refer its
+      reclassification to the exclusion set's owner, per D11. The greeting uses a real first name
+      as sample data, and the case for treating that as sample data rather than as a credit is
+      good. The scrub stage does not override the signed-off exclusion set: reverting the edit to
+      this file and referring the marginal classification upward completes this task.
+
+## 10. Acceptance — the full-tree measurement
+
+This is the only evidence that the change is done. Run it **after** every edit above, not before.
+
+- [x] 10.1 Build the tree scanner in the run's scratch directory. **Never write the pattern list,
+      a pattern, or a finding's matched text into this repository** — a denylist is the list of
+      strings that must not be published. Read the 16 patterns from the running agent's own
+      instructions and compile them case-insensitively, the way the scanner does.
+- [x] 10.2 Run both measurement modes and name them in the report. The raw baseline census scans
+      tracked-file content and deliberately ignores `publishedIn`; it records **16 files / 48
+      occurrences**. The current `publishedIn`-aware whole-tree scan matches both content and paths;
+      it reports **1 file / 1 occurrence**.
+- [x] 10.3 Compare per-file occurrence counts in both modes. The aware result contains only the
+      mockup greeting, with one occurrence, and no other file. The raw census includes the
+      deliberate content that baseline generation must pin.
+      Check the **counts**, not just the path set — a path expected to carry 2 that carries 1 has
+      been half-scrubbed and a path-set diff calls that a pass. Any other path is a regression
+      introduced by a rewrite: fix it and re-run.
+- [x] 10.4 Confirm no protected string appears in the diff, in any commit message, or in the pull
+      request body. The removals are removals — nothing quotes what it removed. Pattern ids and
+      file paths are safe to write; matched text is not.
+- [x] 10.5 Run the pre-publication scan before opening or editing the pull request, as usual. Note
+      that it will pass trivially on a diff of removals — that is not evidence for 10.3.
+
+## 11. Report what this change cannot clear
+
+Paths, occurrence counts and pattern ids only — never a matched string.
+
+- [x] 11.1 Tell TIM-473 that the raw content census to regenerate from is **16 files / 48
+      occurrences before any configured exclusion**. The generator deliberately ignores
+      `publishedIn`; it must derive its own count-keyed entries rather than copy the aware result.
+- [x] 11.2 Tell TIM-470 that its current `mobile-about-screen` expression already covers the two
+      archived planning files. No wider content carve-out is required for them. Preserve only the
+      permanent path anchors once generated baseline entries replace content carve-outs.
+- [x] 11.3 Tell TIM-468 that the aware scan reports **1 file / 1 occurrence** after this scrub.
+      The two Android path-only matches are already handled by permanent `publishedIn` anchors;
+      they cannot be represented by a count-keyed baseline because each entry is keyed by path.
+- [x] 11.4 Confirm to the Founding Engineer that this scrub alone does not justify deleting the
+      temporary all-`added: false` disposition: the generated baseline and the two separately owned
+      residuals must be accounted for first. The mockup follow-up must use neutral sample copy, not
+      a new `publishedIn` entry.
+
+## 12. Close out
+
+- [x] 12.1 `openspec archive scrub-public-doc-disclosures --skip-specs` **in this pull request,
+      before merge** — not after it. This repository archives inside the feature PR: the
+      archived folders for `upgrade-husky-9` (#329), `add-v1-calendar-log-search` (#315) and
+      `add-chart-server-pod-annotations` (#309) — three of the changes this scrub edits — were
+      each added by that change's own squash commit. Deferring it produces an orphan that the
+      follow-up PR never gets written for; `openspec/changes/` on `main` holds five of them.
+      Name the folder without a date prefix — the command prepends it. `--skip-specs` is the
+      documented route for a doc-only change and is required here because the change proposes no
+      delta (D7); do **not** add `openspec validate --strict` as a gate, which fails a delta-free
+      change by design.

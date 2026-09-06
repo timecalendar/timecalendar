@@ -1,7 +1,7 @@
 # Activity revival epic
 
 **Date:** 2026-08-30  
-**Paperclip research:** TIM-275  
+**Paperclip research:** `TIM-275`  
 **Status:** Ready to split into implementation tickets  
 **Products:** React Native mobile app and server
 

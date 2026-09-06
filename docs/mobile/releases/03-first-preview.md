@@ -116,7 +116,7 @@ The iOS half of the first preview shipped. Android has not.
 | Artifact SHA-256    | `b71bb9476721440705e9fda970f7b215cf199c3e2692f2b88c15f14e14e452d0` (26,733,857 bytes)              |
 | Bundle ID           | `fr.samuelprak.timecalendar`, `UIDeviceFamily` `[1, 2]`, `MinimumOSVersion` `16.4`                 |
 | OTA channel         | `expo-channel-name = preview`, `EXUpdatesRuntimeVersion = file:fingerprint`                        |
-| Signing             | `iPhone Distribution: Samuel Prak (9629G25NH7)`, App Store profile, `aps-environment` `production` |
+| Signing             | `iPhone Distribution: <owner> (9629G25NH7)`, App Store profile, `aps-environment` `production`     |
 | Host toolchain      | macOS 26.5.1, Xcode 26.6 (17F113), Node 24.13.0, eas-cli 22.5.0, CocoaPods 1.17.0                  |
 | Destination         | App Store Connect app `1479613630`, internal group **The Team**                                    |
 
@@ -173,7 +173,7 @@ nothing was lost.** Read back from the Expo API after the import:
 | Keystore             | `af4cc224-cc07-40ac-9907-3e8571f8eb73`, type `JKS`, alias `upload`                                 |
 | Upload cert SHA-1    | `99f82ae836448f35ed388a0f305bbea409839a9e`                                                        |
 | Upload cert SHA-256  | `1a04470a148208644775d1f09692fa75de7baddd20b5fbe32afbcca5a4e1491c`                                 |
-| Subject / validity   | `CN=Samuel Prak, O=Samuel Prak, L=Paris, C=FR`, 2023-09-01 → 2051-01-16                            |
+| Subject / validity   | `CN=<owner>, O=<owner>, L=Paris, C=FR`, 2023-09-01 → 2051-01-16                                    |
 | Attached to          | app credentials `b275bfa0` (`fr.samuelprak.timecalendar`), build credentials `6c76a474`, default   |
 
 Only public certificate metadata appears here. The keystore, its passwords and the owner's

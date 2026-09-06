@@ -20,9 +20,10 @@ That distinction decides whether the missing Flutter file is a nuisance or a blo
   irrelevant and must not be used.
 - the old Play service-account file is likewise not in this checkout; it is rotatable and is not
   an app-signing key.
-- Flutter iOS used Fastlane Match with the private repository
-  `samuelprak/app-certificates-and-profiles`; the current GitHub identity still has access to that
-  repository. It is legacy Flutter custody, not the planned React Native signing source.
+- Flutter iOS used Fastlane Match against a **private certificates-and-profiles repository**; the
+  current GitHub identity still has access to it. It is legacy Flutter custody, not the planned
+  React Native signing source. Its url is not committed — `app/ios/fastlane/Matchfile` resolves it
+  from the environment (see 2.4).
 
 No secret value was opened during this audit.
 
@@ -56,6 +57,18 @@ or another app.
 
 The Fastlane Match repository remains a useful legacy rollback asset. Do not copy its encrypted
 contents into this repository and do not turn it into EAS's live source of truth.
+
+**Running Match:** `app/ios/fastlane/Matchfile` reads the certificates repository url from
+`MATCH_GIT_URL` — Match's own documented variable — the same way it already reads the bundle
+identifier from `APP_BUNDLE_ID`. Export it before any `fastlane match` invocation:
+
+```bash
+export MATCH_GIT_URL="<the private certificates-and-profiles repository url>"
+```
+
+Unset, `git_url` resolves to nothing and Match fails at fetch time with its own error. That is the
+intended failure: this is an operator-run, credential-bearing path, and a hard-coded fallback url
+would be worse than a loud stop.
 
 ## 2.5 What Expo should manage
 

@@ -1,6 +1,6 @@
 # Activity revival, bedtime edition 🐵🌙
 
-- **Paperclip research:** TIM-275
+- **Paperclip research:** `TIM-275`
 - **Serious spec:** [activity-revival.md](./activity-revival.md)
 - **Status:** Decisions made. Tickets not created yet.
 

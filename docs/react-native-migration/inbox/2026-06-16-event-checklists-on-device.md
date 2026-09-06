@@ -4,7 +4,7 @@
 **Roadmap:** Phase 05 Ship B (Event checklists)
 **Change:** `add-mobile-event-checklists`
 **ADR:** [024](../../../docs/mobile/architecture-book/decisions/024-event-checklist-storage-and-surfacing.md)
-**For:** Samuel (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
+**For:** whoever runs the device passes (needs a real device / installed dev build — the autonomous loop and CI cannot do this)
 
 This is the **on-device manual axis** for the event-checklists ship. `checklist_items` is
 **IRREPLACEABLE** (no server backup, a Phase-09 importer target), so CI proves the write

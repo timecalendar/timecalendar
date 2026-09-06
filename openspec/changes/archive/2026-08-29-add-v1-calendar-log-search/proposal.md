@@ -1,11 +1,10 @@
 ## Why
 
 The Activity feature (timetable-change history) has been hard-disabled in Flutter since it
-shipped. TIM-275 established the reason was
-server capacity, not a product defect: the only read contract,
-`POST /calendar-logs/search`, returns **every** matching log inside the one-year retention
-window with no cursor, no limit, and no response bound. React Native 4.0 revives Activity, so
-the read path has to be bounded before anything consumes it.
+shipped. `TIM-275` established the reason was server capacity, not a product defect: the only
+read contract, `POST /calendar-logs/search`, returns **every** matching log inside the one-year
+retention window with no cursor, no limit, and no response bound. React Native 4.0 revives
+Activity, so the read path has to be bounded before anything consumes it.
 
 Three further defects make the existing contract unfit as-is:
 
@@ -22,8 +21,7 @@ Flutter client that still calls the unversioned route.
 Authoritative specification:
 `docs/react-native-migration/05-tech-specs/activity-revival.md` (architecture decisions 1–4
 and 10, API behavior, Security and privacy, Verification strategy → Server tests).
-Delivery ticket: TIM-395, ticket 2 of epic
-TIM-389.
+Delivery ticket: `TIM-395`, ticket 2 of epic `TIM-389`.
 
 ## What Changes
 
@@ -76,9 +74,9 @@ TIM-389.
   mobile code. Required because touching `openapi/**` triggers `ci-mobile.yml`, whose first step
   regenerates the client and fails on any diff. See design D8.
 - **`server/src/migrations/` (sensitive)** — **untouched by default.** An index migration is added
-  only if TIM-394's query-plan evidence proves
-  the existing `calendar.token`, `calendar_log(calendarId, createdAt)`, and
-  `calendar_log(createdAt)` indexes cannot meet the frozen budget. See design D7.
+  only if `TIM-394`'s query-plan evidence proves the existing `calendar.token`,
+  `calendar_log(calendarId, createdAt)`, and `calendar_log(createdAt)` indexes cannot meet the
+  frozen budget. See design D7.
 - **No production deploy act.** Deploying the server image is a separate Founding-Engineer-owned
   rollout ticket created after ticket 8.
 
@@ -96,7 +94,7 @@ TIM-389.
 ## Close gate
 
 This change may be implemented and reviewed against the specification's provisional budgets, but
-it **may not close** until TIM-394 freezes the
-performance gates and this change's measured numbers are checked against them. If the PR is
-otherwise green while TIM-394 is not `done`, the Reviewer parks TIM-395 `blocked` on TIM-394
-rather than merging on provisional budgets. This is a real dependency, not a human merge gate.
+it **may not close** until `TIM-394` freezes the performance gates and this change's measured
+numbers are checked against them. If the PR is otherwise green while TIM-394 is not `done`, the
+Reviewer parks TIM-395 `blocked` on TIM-394 rather than merging on provisional budgets. This is
+a real dependency, not a human merge gate.
