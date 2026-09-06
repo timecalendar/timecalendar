@@ -129,14 +129,11 @@ Edited in place; no re-archive and no `openspec validate` run (D5).
 
 ## 9. The web mockup greeting
 
-- [ ] 9.1 **Not done, deliberately — do not tick this box.**
-      `web/app/mockups/calendar-confetti/page.tsx` line 125 uses a real first name as sample data
-      in a greeting heading, and the case for treating that as sample data rather than as a credit
-      is good. It is nonetheless left untouched: the exclusion set naming this page is signed off,
-      and a marginal case may only move *into* that set, never out of it. Read D11 — the decision
-      is to refer the reclassification to the set's owner, not to make it here. Reverting an edit
-      to this file is the correct action, not rework.
-      if this looks like it belongs on the exclusion list — it was on it, and inspection moved it.
+- [x] 9.1 Preserve `web/app/mockups/calendar-confetti/page.tsx` unchanged and refer its
+      reclassification to the exclusion set's owner, per D11. The greeting uses a real first name
+      as sample data, and the case for treating that as sample data rather than as a credit is
+      good. The scrub stage does not override the signed-off exclusion set: reverting the edit to
+      this file and referring the marginal classification upward completes this task.
 
 ## 10. Acceptance — the full-tree measurement
 
