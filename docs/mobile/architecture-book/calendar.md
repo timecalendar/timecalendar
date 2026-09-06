@@ -127,6 +127,10 @@ separate. The binding contract and regression scenarios live in the
 - Home shows today only, separating all-day and timed events. When today is empty it may
   summarize the next active day without substituting that day into today's timeline.
 - Event details are shared by personal and synced events and include the event checklist.
+  The route-facing screen owns only route/read/locale inputs and explicit loading,
+  not-found, and resolved outcomes. Feature-internal calendar UI modules own status
+  presentation, the single resolved-event hide/unhide-or-edit action boundary, and rich
+  content/checklist composition; they do not widen the calendar feature barrel.
 - Home upcoming/all-day/timed summaries, Calendar timed/all-day tiles, and Agenda rows
   hide zero-item progress and share the explicit completed/total indicator. The visual
   primitive is excluded from accessibility; each owning event label announces the
