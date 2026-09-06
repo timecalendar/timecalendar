@@ -134,3 +134,10 @@ voice: second person, present tense, **bold** for the load-bearing term, backtic
       `ci-build-deploy` green on the head SHA; do not wait on checks that will never appear, and do
       not add the `run-e2e` label.
 - [x] 5.4 Hand off per `pipeline-core`: one combined PATCH carrying the comment, status and assignee.
+- [x] 5.5 **Archive the change before merge** — `npx openspec archive document-github-app-delivery-identity --yes`,
+      never with `--skip-specs`: this change carries a real spec delta and skipping it is what leaves
+      orphaned change dirs behind. Confirm afterwards that
+      `openspec/specs/agent-delivery-identity/spec.md` exists, that
+      `openspec/changes/document-github-app-delivery-identity/` is gone, and that
+      `npx openspec validate --strict` is clean. Commit the archive on this branch so the promoted
+      spec merges with the doc it pins.
