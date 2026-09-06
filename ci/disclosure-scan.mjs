@@ -17,12 +17,13 @@
 //   2. structural — shapes rather than values: an address, a bare profile URL,
 //                   a home directory, a co-author trailer. Always on.
 //   3. configured — the optional DISCLOSURE_PATTERNS secret, for strings this
-//                   repository's history does not contain. One regular
-//                   expression per line. Absent by design in forks and on the
-//                   first run; its absence degrades coverage and must never
-//                   fail the job, while an entry that does not compile fails it
-//                   closed — a pattern list that half-loads is the failure mode
-//                   that looks green.
+//                   repository's history does not contain. One line per entry:
+//                   a regular expression, optionally followed by ` :: ` and a
+//                   probe string it must match. Absent by design in forks and
+//                   on the first run; its absence degrades coverage and must
+//                   never fail the job, while an entry that does not compile,
+//                   or that fails its own probe, fails it closed — a pattern
+//                   list that half-loads is the failure mode that looks green.
 //
 // Two properties matter as much as the matching:
 //
@@ -151,26 +152,48 @@ function dedupeTokens(tokens, minLength) {
 // Layer 3 — the optional injected secret
 // ---------------------------------------------------------------------------
 
-// One entry per line, and *only* per line. A comma cannot separate entries:
-// a configured entry is a regular expression, and `{2,}`, `{4,}` and every
-// character class contain a comma, so a comma-splitting parser shreds a single
-// pasted pattern into fragments that no longer compile. Each entry keeps the
-// 1-based line it came from, because that number is the only thing a failure
-// may ever print about it.
+// Each line is `<pattern>` or `<pattern> :: <probe>`: an expression, and a
+// string that expression must match. The probe is a positive control — it is
+// what tells a run apart from one where the entry parsed, compiled, reported
+// itself loaded, and matches nothing. Every count-shaped signal reads the same
+// in both states, which is this gate's own founding defect.
+//
+// Space-two-colon-space, chosen by measuring collisions against the live
+// patterns and a corpus of regex idioms rather than by taste: a comma collides
+// with 5 of 16 live patterns, a bare two-colon once in the corpus, and the
+// padded form not at all. It is also typeable in a browser textarea, which a
+// tab is not.
+const PROBE_DELIMITER = " :: ";
+
+// Split on the FIRST delimiter, not the last. A pattern that matches
+// delimiter-bearing text necessarily carries a delimiter-bearing probe, so
+// splitting last cuts inside the probe and mis-assigns both columns. Splitting
+// first puts the constraint on the pattern column, which has an escape hatch
+// the probe does not: a pattern needing to match that text writes one colon as
+// a bracketed class, which is regex-equivalent and delimiter-free.
 export function parseConfiguredPatterns(raw) {
   if (!raw) return [];
   const entries = [];
   const seen = new Set();
   // One line per element, not one run of newlines: a blank line must not shift
   // the numbering, because that number is the only handle the operator gets on
-  // an entry nobody can read back.
+  // an entry nobody can read back. A comma cannot separate entries either —
+  // `{2,}`, `{4,}` and every character class contain one, so a comma-splitting
+  // parser shreds a single pasted expression into fragments.
   raw.split(/\r?\n/).forEach((value, index) => {
-    const source = value.trim();
-    if (source.length < MIN_CONFIGURED_LENGTH) return;
-    const key = source.toLowerCase();
+    const line = value.trim();
+    const at = line.indexOf(PROBE_DELIMITER);
+    const pattern = at === -1 ? line : line.slice(0, at);
+    const probe = at === -1 ? null : line.slice(at + PROBE_DELIMITER.length);
+    // The guard belongs to the pattern column: applied to the joined line, a
+    // two-character expression with a long probe slips past the check that
+    // exists to reject it.
+    if (pattern.length < MIN_CONFIGURED_LENGTH) return;
+    // Dedupe on the pattern too. One expression with two probes is one entry.
+    const key = pattern.toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
-    entries.push({ source, line: index + 1 });
+    entries.push({ pattern, probe, line: index + 1 });
   });
   return entries;
 }
@@ -182,20 +205,42 @@ export function compileConfiguredPattern(source) {
   return new RegExp(source, "giu");
 }
 
-// Returns the compiled patterns and the line numbers that failed. The caller
-// fails the job on a non-empty `invalid`; it must never print the entry itself,
-// because the entry is the secret and this log is public.
+// Returns each entry with its compiled expression, and the line numbers that
+// failed to compile. The caller fails the job on a non-empty `invalid`; it must
+// never print the entry itself, because the entry is the secret and this log is
+// public.
 export function compileConfiguredPatterns(entries) {
-  const patterns = [];
+  const compiled = [];
   const invalid = [];
   for (const entry of entries) {
     try {
-      patterns.push(compileConfiguredPattern(entry.source));
+      compiled.push({ ...entry, regex: compileConfiguredPattern(entry.pattern) });
     } catch {
       invalid.push(entry.line);
     }
   }
-  return { patterns, invalid };
+  return { compiled, invalid };
+}
+
+// Every entry carrying a probe must match it. Parsing, compiling and counting
+// all succeed on an entry that matches nothing — a mis-split column, a stale
+// value, a lookahead that is one character too greedy — and no log line, and no
+// reading of the parser, tells that state apart from a working one. This does.
+//
+// It is a positive control for one string per entry, not a completeness proof:
+// an entry with no probe is unverified, and the caller says so rather than
+// implying the layer is armed.
+export function selfTestConfigured(compiled) {
+  const failed = [];
+  let covered = 0;
+  for (const entry of compiled) {
+    if (entry.probe === null) continue;
+    covered += 1;
+    entry.regex.lastIndex = 0;
+    if (!entry.regex.test(entry.probe)) failed.push(entry.line);
+    entry.regex.lastIndex = 0;
+  }
+  return { covered, failed };
 }
 
 // ---------------------------------------------------------------------------
@@ -572,8 +617,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   // Compiled before anything else: a half-loaded pattern list is the failure
   // that looks green, so it must not be able to reach the scan at all.
   const configuredEntries = parseConfiguredPatterns(env.DISCLOSURE_PATTERNS);
-  const { patterns: configured, invalid } =
-    compileConfiguredPatterns(configuredEntries);
+  const { compiled, invalid } = compileConfiguredPatterns(configuredEntries);
   if (invalid.length) {
     for (const entryLine of invalid) {
       console.error(
@@ -586,6 +630,9 @@ export function main(argv = process.argv.slice(2), env = process.env) {
     );
     return 2;
   }
+
+  const selfTest = selfTestConfigured(compiled);
+  const configured = compiled.map((entry) => entry.regex);
 
   let base;
   try {
@@ -603,23 +650,46 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   const derived = deriveIdentityPatterns(readIdentities(head, cwd), allowlist);
 
   // Counts only — a census that printed values would be the leak. This line is
-  // also how the presence of the secret is verified: nobody can read it back
-  // through the API with a metadata-scoped token, but every run states it. It
-  // says *compiled*, not merely present: "present (N)" prints identically
-  // whether the entries became patterns or inert text, so it cannot fail, and a
-  // verification step that cannot fail is not a verification step.
+  // also how the secret is verified: nobody can read it back through the API
+  // with a metadata-scoped token, but every run states it. It reports entries
+  // parsed, entries compiled, and the self-test — because entries-parsed alone
+  // prints identically whether those entries match anything or nothing, and a
+  // check that cannot fail is not a check.
   console.log(
     `disclosure-scan: patterns — derived: ${derived.length} (literal), structural: on, ` +
       `configured secret: ${
-        configured.length
-          ? `present, ${configured.length} compiled as regular expression(s)`
+        configuredEntries.length
+          ? `present, ${configuredEntries.length} entries, ${compiled.length} compiled, ` +
+            `self-test ${selfTest.covered - selfTest.failed.length}/${compiled.length}`
           : "absent"
       }`,
   );
-  if (!configured.length) {
+  if (!configuredEntries.length) {
     console.log(
       "disclosure-scan: DISCLOSURE_PATTERNS is not set; derived and structural layers still apply.",
     );
+  } else if (selfTest.covered < compiled.length) {
+    // Say what is not covered rather than let the count imply it is. A
+    // probeless entry that matches nothing is invisible to every other signal
+    // this job emits.
+    console.log(
+      `disclosure-scan: ${compiled.length - selfTest.covered} configured entry/entries carry no probe and are unverified; ` +
+        "a shredded or uncompilable entry is detected, a live-looking dead one is not.",
+    );
+  }
+
+  if (selfTest.failed.length) {
+    for (const entryLine of selfTest.failed) {
+      console.error(
+        `::error::disclosure-scan: DISCLOSURE_PATTERNS entry ${entryLine} does not match its own probe. ` +
+          "Neither the entry nor its probe is ever printed — this log is public, and a probe is by construction " +
+          "a string that matches a forbidden pattern.",
+      );
+    }
+    console.error(
+      `disclosure-scan: failing closed on ${selfTest.failed.length} configured entry/entries that match nothing they claim to.`,
+    );
+    return 2;
   }
 
   const records = collectRecords({ base, head, allowlist, cwd });

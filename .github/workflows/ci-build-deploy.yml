@@ -65,13 +65,25 @@ jobs:
     # which layers were active as counts only. Never echo a match: this log is
     # public, so printing the offending line would republish it.
     #
-    # One regular expression per line, and only per line — a comma does not
-    # separate entries, because a quantifier and every character class contain
-    # one. An entry that does not compile fails this job rather than being
-    # skipped, reported by its line number and never by its value. The log says
-    # how many entries *compiled*, not merely that the secret is present: the
-    # latter prints identically whether the entries became patterns or inert
-    # text, so it cannot fail, and a check that cannot fail is not a check.
+    # One entry per line, and only per line — a comma does not separate them,
+    # because a quantifier and every character class contain one. Each line is
+    # a regular expression, optionally followed by ` :: ` and a probe string
+    # that expression must match:
+    #
+    #     <regular expression> :: <string it must match>
+    #
+    # The line is split on the *first* delimiter, so the probe may contain it
+    # and the pattern may not; a pattern needing to match that text writes one
+    # colon as a bracketed class. An entry that does not compile, or that fails
+    # its own probe, fails this job rather than being skipped — reported by line
+    # number, never by value, and never by probe: a probe is by construction a
+    # string that matches a forbidden pattern.
+    #
+    # The probe is why the log is worth reading. Entries-parsed and
+    # entries-compiled both print identically whether an entry matches
+    # everything it should or nothing at all, so neither can fail; the self-test
+    # can. An entry with no probe is reported as unverified rather than counted
+    # as working.
     - name: Scan for disclosures
       env:
         DISCLOSURE_PATTERNS: ${{ secrets.DISCLOSURE_PATTERNS }}

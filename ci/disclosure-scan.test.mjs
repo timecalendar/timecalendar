@@ -25,6 +25,7 @@ import {
   parseAddedLines,
   parseConfiguredPatterns,
   scanRecords,
+  selfTestConfigured,
   structuralClasses,
   structuralCounts,
 } from "./disclosure-scan.mjs";
@@ -235,7 +236,7 @@ test("flags a co-author trailer whose address is not a role address", () => {
 
 test("parses one configured entry per line, absent means empty", () => {
   assert.deepEqual(
-    parseConfiguredPatterns("alpha\nbeta\n\ngamma\n").map((e) => e.source),
+    parseConfiguredPatterns("alpha\nbeta\n\ngamma\n").map((e) => e.pattern),
     ["alpha", "beta", "gamma"],
   );
   assert.deepEqual(parseConfiguredPatterns(undefined), []);
@@ -250,7 +251,7 @@ test("a comma does not separate configured entries", () => {
   const commaQuantified = `fixture[a-z,]{2,}${"end"}`;
   const entries = parseConfiguredPatterns(commaQuantified);
   assert.equal(entries.length, 1);
-  assert.equal(entries[0].source, commaQuantified);
+  assert.equal(entries[0].pattern, commaQuantified);
   assert.deepEqual(compileConfiguredPatterns(entries).invalid, []);
 });
 
@@ -273,9 +274,99 @@ test("configured entries are compiled as regexes, not escaped into literals", ()
 
 test("an entry that does not compile is reported by line, never by value", () => {
   const entries = parseConfiguredPatterns("fixture(unclosed");
-  const { patterns, invalid } = compileConfiguredPatterns(entries);
-  assert.deepEqual(patterns, []);
+  const { compiled, invalid } = compileConfiguredPatterns(entries);
+  assert.deepEqual(compiled, []);
   assert.deepEqual(invalid, [1]);
+});
+
+// ---------------------------------------------------------------------------
+// The probe column, and the self-test that consumes it
+// ---------------------------------------------------------------------------
+
+// Space, two colons, space. Assembled rather than written, like every other
+// fixture here, so the delimiter is stated in exactly one place.
+const withProbe = (pattern, probe) => `${pattern}${" :: "}${probe}`;
+
+// Parse, compile, self-test — the whole layer as `main` runs it.
+const loadConfigured = (raw) => {
+  const entries = parseConfiguredPatterns(raw);
+  const { compiled, invalid } = compileConfiguredPatterns(entries);
+  return {
+    entries,
+    compiled,
+    invalid,
+    patterns: compiled.map((entry) => entry.regex),
+    selfTest: selfTestConfigured(compiled),
+  };
+};
+
+// These assert on MATCHING, not on parsing. A test that only counts entries
+// passes before the probe column exists — the whole line is already one entry —
+// so it would certify the state where the pattern is dead and every count is
+// right.
+test("a two-column entry yields a pattern that matches, not the whole line", () => {
+  const loaded = loadConfigured(withProbe("widget", "widget"));
+  assert.equal(loaded.entries.length, 1);
+  assert.deepEqual(loaded.invalid, []);
+  assert.deepEqual(loaded.selfTest, { covered: 1, failed: [] });
+
+  const findings = scanRecords([record("a widget here")], {
+    derived: [],
+    configured: loaded.patterns,
+    allowlist,
+  });
+  assert.deepEqual(classesOf(findings), [FINDING_CLASSES.CONFIGURED]);
+});
+
+test("a comma quantifier survives the probe column and still matches", () => {
+  const loaded = loadConfigured(withProbe("a{4,}b", "aaaab"));
+  assert.equal(loaded.entries.length, 1, "the comma does not shred the entry");
+  assert.deepEqual(loaded.selfTest, { covered: 1, failed: [] });
+});
+
+test("a delimiter-bearing pattern round-trips via a bracketed colon", () => {
+  // The pattern column may not contain the delimiter; the probe column may.
+  // Splitting on the FIRST delimiter is what makes that asymmetry work — split
+  // on the last and the cut lands inside the probe.
+  const loaded = loadConfigured(withProbe("ns [:][:] name", "ns :: name"));
+  assert.equal(loaded.entries.length, 1);
+  assert.equal(loaded.entries[0].pattern, "ns [:][:] name");
+  assert.equal(loaded.entries[0].probe, "ns :: name");
+  assert.deepEqual(loaded.selfTest, { covered: 1, failed: [] });
+});
+
+test("a pattern-only line parses, and is skipped by the self-test", () => {
+  const loaded = loadConfigured("widget");
+  assert.equal(loaded.entries.length, 1);
+  assert.equal(loaded.entries[0].probe, null);
+  assert.deepEqual(loaded.selfTest, { covered: 0, failed: [] });
+});
+
+test("three lines are three entries, mixed columns and all", () => {
+  const loaded = loadConfigured(
+    [withProbe("widget", "widget"), "gadget", withProbe("a{4,}b", "aaaab")].join("\n"),
+  );
+  assert.equal(loaded.entries.length, 3);
+  assert.deepEqual(loaded.selfTest, { covered: 2, failed: [] });
+});
+
+test("the minimum length applies to the pattern column, not the joined line", () => {
+  // A two-character expression with a long probe would otherwise slip past the
+  // guard that exists to reject it.
+  assert.deepEqual(parseConfiguredPatterns(withProbe("ab", "abababababab")), []);
+});
+
+test("an entry with two probes is one entry", () => {
+  const loaded = loadConfigured(
+    [withProbe("widget", "widget"), withProbe("widget", "a widget")].join("\n"),
+  );
+  assert.equal(loaded.entries.length, 1);
+});
+
+test("an entry that does not match its own probe is reported by line", () => {
+  const loaded = loadConfigured(withProbe("widget", "gadget"));
+  assert.deepEqual(loaded.invalid, [], "it compiles — nothing else catches this");
+  assert.deepEqual(loaded.selfTest, { covered: 1, failed: [1] });
 });
 
 test("a configured value of the shape an operator is asked to paste survives end to end", () => {
@@ -285,9 +376,8 @@ test("a configured value of the shape an operator is asked to paste survives end
   const login = "fixtureowner";
   const value = `(?<![\\w.@-])${login}(?=[/)\\s,]|$)|/(?:Users|home)/${login}`;
 
-  const entries = parseConfiguredPatterns(value);
+  const { entries, patterns, invalid } = loadConfigured(value);
   assert.equal(entries.length, 1, "a comma inside the value does not split it");
-  const { patterns, invalid } = compileConfiguredPatterns(entries);
   assert.deepEqual(invalid, []);
 
   const flagged = scanRecords([record(`shipped by ${login}, then ${login} again`)], {
@@ -323,7 +413,7 @@ test("a configured value of the shape an operator is asked to paste survives end
 test("an absent secret does not disable the derived or structural layers", () => {
   const findings = scanRecords([record("contact aline about it")], {
     derived: ["aline"],
-    configured: compileConfiguredPatterns(parseConfiguredPatterns(undefined)).patterns,
+    configured: loadConfigured(undefined).patterns,
     allowlist,
   });
   assert.deepEqual(classesOf(findings), [FINDING_CLASSES.DERIVED]);
@@ -543,10 +633,32 @@ test("an empty range with no secret passes, and the log says which layers ran", 
   assert.match(output, /derived and structural layers still apply/);
 });
 
-test("the log distinguishes compiled from merely present", () => {
+test("the log reports entries, compiles and self-test coverage separately", () => {
+  const { code, output } = runMain({
+    DISCLOSURE_PATTERNS: withProbe("fixture-token-[0-9]+", "fixture-token-42"),
+  });
+  assert.equal(code, 0);
+  assert.match(output, /1 entries, 1 compiled, self-test 1\/1/);
+});
+
+test("an unverified entry is named as unverified, not implied to be armed", () => {
   const { code, output } = runMain({ DISCLOSURE_PATTERNS: "fixture-token-[0-9]+" });
   assert.equal(code, 0);
-  assert.match(output, /1 compiled as regular expression/);
+  assert.match(output, /self-test 0\/1/);
+  assert.match(output, /carry no probe and are unverified/);
+});
+
+test("an entry that matches nothing it claims to fails the job, printing neither column", () => {
+  // The state nothing else detects: it parses, it compiles, the counts are all
+  // correct, and it matches nothing. Without this the improved census reads
+  // *more* convincing than the old one while the layer is dead.
+  const pattern = "fixture-token-[0-9]+";
+  const probe = "fixture-token-none";
+  const { code, output } = runMain({ DISCLOSURE_PATTERNS: withProbe(pattern, probe) });
+  assert.equal(code, 2);
+  assert.ok(!output.includes(pattern), "the entry is the secret");
+  assert.ok(!output.includes(probe), "a probe matches a forbidden pattern by construction");
+  assert.match(output, /entry 1 does not match its own probe/);
 });
 
 test("a configured pattern that does not compile fails the job without printing it", () => {
