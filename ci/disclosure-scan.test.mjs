@@ -22,6 +22,7 @@ import {
   compileLiteralPattern,
   compareCiBaseline,
   deriveIdentityPatterns,
+  generateCiEntries,
   loadAllowlist,
   main,
   matchesAny,
@@ -976,5 +977,31 @@ test("baseline invariant reports stale pins and a newly configured class", () =>
       { kind: "stale-pin", path: "fixture.md", id: FINDING_CLASSES.DERIVED },
       { kind: "unpinned-configured", path: "other.md", id: FINDING_CLASSES.CONFIGURED },
     ],
+  );
+});
+
+test("CI baseline generation applies the scanner's excluded path scope", (t) => {
+  const repo = mkdtempSync(join(tmpdir(), "disclosure-baseline-scope-"));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const runGit = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  runGit("init", "--quiet");
+  runGit("config", "user.name", "Fixture Bot");
+  runGit("config", "user.email", "noreply@example.com");
+
+  for (const path of ["included.md", "nested/package-lock.json", "nested/tool.lock"]) {
+    mkdirSync(dirname(join(repo, path)), { recursive: true });
+    writeFileSync(join(repo, path), "Aline Fixture\n");
+  }
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  assert.deepEqual(
+    generateCiEntries({
+      derived: ["Aline Fixture"],
+      configured: [],
+      allowlist,
+      cwd: repo,
+    }),
+    [{ path: "included.md", id: FINDING_CLASSES.DERIVED, count: 1 }],
   );
 });

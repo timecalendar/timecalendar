@@ -716,12 +716,24 @@ function contentAt(head, path, cwd) {
   return content.includes("\0") ? null : content;
 }
 
-function trackedPaths(head, cwd) {
-  const output = git(["ls-tree", "-r", "-z", "--name-only", head], cwd);
-  return output
+function trackedPaths(head, allowlist, cwd) {
+  const pathspec = [
+    "--",
+    ".",
+    ...allowlist.excludedPaths,
+    ":(exclude)ci/certificates/**",
+  ];
+  // `ls-tree` cannot evaluate exclude pathspecs. Let `ls-files` evaluate the
+  // scanner's pathspec, then intersect it with the exact tree so staged paths
+  // outside `head` cannot enter a generated baseline.
+  const included = new Set(
+    git(["ls-files", "-z", `--with-tree=${head}`, ...pathspec], cwd)
+      .split("\0")
+      .filter(Boolean),
+  );
+  return git(["ls-tree", "-r", "-z", "--name-only", head], cwd)
     .split("\0")
-    .filter(Boolean)
-    .filter((path) => !path.startsWith("ci/certificates/"));
+    .filter((path) => path && included.has(path));
 }
 
 function contentsAt(head, paths, cwd) {
@@ -750,7 +762,7 @@ function contentsAt(head, paths, cwd) {
 export function generateCiEntries({ head = "HEAD", derived, configured, allowlist, cwd }) {
   const derivedPatterns = derived.map(compileLiteralPattern);
   const entries = [];
-  const paths = trackedPaths(head, cwd);
+  const paths = trackedPaths(head, allowlist, cwd);
   const contents = contentsAt(head, paths, cwd);
   for (const path of paths) {
     // A pin is keyed by path, so a path that is itself a finding cannot be
