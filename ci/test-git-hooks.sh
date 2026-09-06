@@ -124,7 +124,7 @@ assert_identity_guard_is_executable() {
 
 assert_identity_guard_holds_one_identity() {
   local identity_count
-  identity_count="$({ grep -oE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+' ci/check-commit-identity.sh || true; } | sort -u | wc -l | tr -d '[:space:]')"
+  identity_count="$({ grep -oE '[][A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+' ci/check-commit-identity.sh || true; } | sort -u | wc -l | tr -d '[:space:]')"
 
   if [[ "$identity_count" != "1" ]]; then
     echo "FAIL: ci/check-commit-identity.sh contains $identity_count distinct addresses, expected exactly one." >&2
