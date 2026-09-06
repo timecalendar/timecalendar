@@ -25,6 +25,17 @@ const mockUsePersonalEvents = usePersonalEvents as jest.MockedFunction<
 >
 
 describe("PersonalEventsList", () => {
+  let mounted: Awaited<ReturnType<typeof render>> | undefined
+
+  afterEach(async () => {
+    try {
+      await mounted?.unmount()
+    } finally {
+      mounted = undefined
+      remove(SETTINGS_KEYS.timezone)
+    }
+  })
+
   it("shows the localized empty state and an accessible Add control when empty", async () => {
     mockUsePersonalEvents.mockReturnValue([])
     const { getByText, getByTestId } = await render(<PersonalEventsList />)
@@ -79,9 +90,9 @@ describe("PersonalEventsList", () => {
         description: undefined,
       },
     ])
-    const { getByText } = await render(<PersonalEventsList />)
+    mounted = await render(<PersonalEventsList />)
+    const { getByText } = mounted
 
     expect(getByText("1 Jan 14:00 – 1 Jan 15:00")).toBeTruthy()
-    remove(SETTINGS_KEYS.timezone)
   })
 })

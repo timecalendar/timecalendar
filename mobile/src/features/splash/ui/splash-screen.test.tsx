@@ -31,7 +31,6 @@ jest.mock("@/hooks/use-app-ready", () => ({
 // real awaited turns settle the promise hops. Deterministic, no real time.
 async function flushMicrotasks(turns = 4): Promise<void> {
   for (let i = 0; i < turns; i++) {
-    jest.runAllTicks()
     await Promise.resolve()
   }
 }
@@ -69,16 +68,22 @@ describe("SplashScreen", () => {
       "isReduceMotionEnabled",
     )
     const timing = jest.spyOn(Animated, "timing")
+    let mounted: Awaited<ReturnType<typeof render>> | undefined
 
     beforeEach(() => {
       mockUseAppReady.mockReturnValue(true)
-      jest.useFakeTimers()
+      jest.useFakeTimers({ doNotFake: ["queueMicrotask"] })
     })
 
-    afterEach(() => {
+    afterEach(async () => {
       try {
-        jest.runOnlyPendingTimers()
+        await mounted?.unmount()
+        await act(async () => {
+          jest.runOnlyPendingTimers()
+          await Promise.resolve()
+        })
       } finally {
+        mounted = undefined
         timing.mockClear()
         isReduceMotionEnabled.mockReset().mockResolvedValue(false)
         jest.useRealTimers()
@@ -88,7 +93,8 @@ describe("SplashScreen", () => {
     it("dismisses with no animation scheduled under reduced motion", async () => {
       isReduceMotionEnabled.mockResolvedValueOnce(true)
 
-      const { queryByRole } = await render(<SplashScreen />)
+      mounted = await render(<SplashScreen />)
+      const { queryByRole } = mounted
 
       // Flush the async reduced-motion read and the dismissal microtask it
       // unblocks (the branch the layer lint can't see): the read resolves, the
@@ -106,7 +112,8 @@ describe("SplashScreen", () => {
     it("schedules the fade and dismisses once ready when motion is allowed", async () => {
       isReduceMotionEnabled.mockResolvedValueOnce(false)
 
-      const { queryByRole } = await render(<SplashScreen />)
+      mounted = await render(<SplashScreen />)
+      const { queryByRole } = mounted
 
       // Flush the reduced-motion read so the fade is scheduled, then run the
       // fade duration so its completion callback unmounts the overlay.

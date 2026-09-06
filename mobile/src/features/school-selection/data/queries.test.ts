@@ -1,6 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { renderHook, waitFor } from "@testing-library/react-native"
-import { createElement, type ReactNode } from "react"
+import { act, renderHook, waitFor } from "@testing-library/react-native"
 
 import type {
   FindSchoolGroupsRepDto,
@@ -8,6 +6,7 @@ import type {
   SchoolForList,
 } from "@/api/generated/timeCalendar.schemas"
 import { customFetch } from "@/api/mutator"
+import { createTestQueryClient } from "@/test-support/query-client"
 
 import { useSchoolGroups, useSchools } from "./queries"
 
@@ -50,24 +49,17 @@ const groupsResponse: FindSchoolGroupsRepDto = {
   ],
 }
 
-// Retry disabled so the error case resolves immediately.
-const makeWrapper = () => {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  })
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return createElement(QueryClientProvider, { client }, children)
-  }
-}
+const queryHarness = createTestQueryClient()
 
 beforeEach(() => mockedFetch.mockReset())
+afterEach(() => queryHarness.clear())
 
 describe("useSchools", () => {
   it("maps the success response to SchoolListItem and exposes flags", async () => {
     mockedFetch.mockResolvedValueOnce(schoolsResponse)
 
     const { result } = await renderHook(() => useSchools(), {
-      wrapper: makeWrapper(),
+      wrapper: queryHarness.wrapper,
     })
 
     expect(result.current.isLoading).toBe(true)
@@ -96,12 +88,14 @@ describe("useSchools", () => {
     mockedFetch.mockRejectedValueOnce(new Error("boom"))
 
     const { result } = await renderHook(() => useSchools(), {
-      wrapper: makeWrapper(),
+      wrapper: queryHarness.wrapper,
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.schools).toEqual([])
-    result.current.refetch()
+    mockedFetch.mockResolvedValueOnce(schoolsResponse)
+    await act(() => result.current.refetch())
+    await waitFor(() => expect(result.current.schools).toHaveLength(2))
   })
 })
 
@@ -110,7 +104,7 @@ describe("useSchoolGroups", () => {
     mockedFetch.mockResolvedValueOnce(groupsResponse)
 
     const { result } = await renderHook(() => useSchoolGroups("univeiffel"), {
-      wrapper: makeWrapper(),
+      wrapper: queryHarness.wrapper,
     })
 
     await waitFor(() => expect(result.current.groups.length).toBe(1))
@@ -129,11 +123,13 @@ describe("useSchoolGroups", () => {
     mockedFetch.mockRejectedValueOnce(new Error("boom"))
 
     const { result } = await renderHook(() => useSchoolGroups("univeiffel"), {
-      wrapper: makeWrapper(),
+      wrapper: queryHarness.wrapper,
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.groups).toEqual([])
-    result.current.refetch()
+    mockedFetch.mockResolvedValueOnce(groupsResponse)
+    await act(() => result.current.refetch())
+    await waitFor(() => expect(result.current.groups).toHaveLength(1))
   })
 })

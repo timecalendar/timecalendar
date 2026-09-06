@@ -56,7 +56,7 @@ it("renders accessible fields and rejects an empty form locally", async () => {
   expect(getAllByRole("header").length).toBeGreaterThan(0)
   expect(getByTestId("feedback-email-input").props.returnKeyType).toBe("next")
   expect(getByTestId("feedback-message-input").props.multiline).toBe(true)
-  await act(async () => fireEvent.press(getByTestId("feedback-submit")))
+  await fireEvent.press(getByTestId("feedback-submit"))
   expect(
     getByText("Enter your e-mail address.").props.accessibilityLiveRegion,
   ).toBe("polite")
@@ -78,10 +78,8 @@ it("prefills remembered e-mail and submits normalized values with route context"
   expect(getByTestId("feedback-email-input").props.value).toBe(
     "remembered@example.fr",
   )
-  await act(async () =>
-    fireEvent.changeText(getByTestId("feedback-message-input"), "Hello"),
-  )
-  await act(async () => fireEvent.press(getByTestId("feedback-submit")))
+  await fireEvent.changeText(getByTestId("feedback-message-input"), "Hello")
+  await fireEvent.press(getByTestId("feedback-submit"))
   await waitFor(() =>
     expect(sendFeedback).toHaveBeenCalledWith({
       email: "remembered@example.fr",
@@ -120,19 +118,15 @@ it.each([
     sendFeedback.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
     const alert = jest.spyOn(Alert, "alert").mockImplementation()
     const { getByTestId, getByText } = await render(<FeedbackScreen />)
-    await act(async () =>
-      fireEvent.changeText(
-        getByTestId("feedback-email-input"),
-        "student@example.fr",
-      ),
+    await fireEvent.changeText(
+      getByTestId("feedback-email-input"),
+      "student@example.fr",
     )
-    await act(async () =>
-      fireEvent.changeText(
-        getByTestId("feedback-message-input"),
-        "Private message",
-      ),
+    await fireEvent.changeText(
+      getByTestId("feedback-message-input"),
+      "Private message",
     )
-    await act(async () => fireEvent.press(getByTestId("feedback-submit")))
+    await fireEvent.press(getByTestId("feedback-submit"))
 
     const error = getByText(guidance)
     expect(error.props.accessibilityRole).toBe("alert")
@@ -147,7 +141,7 @@ it.each([
       getByTestId("feedback-submit").props.accessibilityState.disabled,
     ).toBe(false)
 
-    await act(async () => fireEvent.press(getByTestId("feedback-submit")))
+    await fireEvent.press(getByTestId("feedback-submit"))
     expect(sendFeedback).toHaveBeenCalledTimes(2)
     await waitFor(() => expect(alert).toHaveBeenCalled())
     alert.mockRestore()
@@ -167,23 +161,35 @@ it("disables duplicate submit and exposes pending status", async () => {
     busy: true,
   })
   expect(getByText("Sending…").props.accessibilityLiveRegion).toBe("polite")
-  fireEvent.press(getByTestId("feedback-submit"))
+  await fireEvent.press(getByTestId("feedback-submit"))
   expect(sendFeedback).not.toHaveBeenCalled()
 })
 
 it("synchronously ignores a rapid second submit before pending renders", async () => {
   sendFeedback.mockResolvedValue(false)
   const { getByTestId } = await render(<FeedbackScreen />)
+  await fireEvent.changeText(
+    getByTestId("feedback-email-input"),
+    "student@example.fr",
+  )
+  await fireEvent.changeText(getByTestId("feedback-message-input"), "Hello")
+  const submit = getByTestId("feedback-submit")
+  type TestFiber = {
+    memoizedProps?: { onPress?: () => void }
+    return?: TestFiber | null
+  }
+  let fiber: TestFiber | undefined = (
+    submit as unknown as { unstable_fiber: TestFiber }
+  ).unstable_fiber
+  let press: (() => void) | undefined
+  while (fiber && !press) {
+    press = fiber.memoizedProps?.onPress
+    fiber = fiber.return ?? undefined
+  }
+  expect(press).toEqual(expect.any(Function))
   await act(async () => {
-    fireEvent.changeText(
-      getByTestId("feedback-email-input"),
-      "student@example.fr",
-    )
-    fireEvent.changeText(getByTestId("feedback-message-input"), "Hello")
-  })
-  await act(async () => {
-    fireEvent.press(getByTestId("feedback-submit"))
-    fireEvent.press(getByTestId("feedback-submit"))
+    press?.()
+    press?.()
     await Promise.resolve()
   })
 

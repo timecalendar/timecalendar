@@ -1,8 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react-native"
-import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
+import { createTestQueryClient } from "@/test-support/query-client"
 
 import { useAddCalendar } from "./add-calendar"
 import * as repository from "./repository"
@@ -20,12 +19,8 @@ jest.spyOn(repository, "upsert").mockResolvedValue(undefined)
 const mockFetch = customFetch as jest.Mock
 const mockUpsert = repository.upsert as jest.Mock
 
-function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
-  })
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-}
+const queryHarness = createTestQueryClient()
+const wrapper = queryHarness.wrapper
 
 const dto = {
   id: "srv-id",
@@ -43,6 +38,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  queryHarness.clear()
   mockFetch.mockReset()
   mockUpsert.mockReset()
 })
@@ -98,15 +94,18 @@ describe("useAddCalendar", () => {
       .mockRejectedValueOnce(new Error("resolve boom"))
 
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-
-    await expect(
-      act(async () => {
+    let rejection: unknown
+    await act(async () => {
+      try {
         await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
           name: "",
           schoolName: "",
         })
-      }),
-    ).rejects.toThrow("resolve boom")
+      } catch (error) {
+        rejection = error
+      }
+    })
+    expect(rejection).toEqual(new Error("resolve boom"))
 
     expect(mockUpsert).not.toHaveBeenCalled()
     await waitFor(() => expect(result.current.isError).toBe(true))
@@ -118,15 +117,18 @@ describe("useAddCalendar", () => {
       .mockRejectedValueOnce(new Error("boom"))
 
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-
-    await expect(
-      act(async () => {
+    let rejection: unknown
+    await act(async () => {
+      try {
         await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
           name: "",
           schoolName: "",
         })
-      }),
-    ).rejects.toThrow("boom")
+      } catch (error) {
+        rejection = error
+      }
+    })
+    expect(rejection).toEqual(new Error("boom"))
     await waitFor(() => expect(result.current.isError).toBe(true))
 
     await act(() => {
@@ -145,15 +147,18 @@ describe("useAddCalendar", () => {
     mockUpsert.mockRejectedValueOnce(new Error("upsert boom"))
 
     const { result } = await renderHook(() => useAddCalendar(), { wrapper })
-
-    await expect(
-      act(async () => {
+    let rejection: unknown
+    await act(async () => {
+      try {
         await result.current.addCalendarFromUrl("https://example.com/cal.ics", {
           name: "",
           schoolName: "",
         })
-      }),
-    ).rejects.toThrow("upsert boom")
+      } catch (error) {
+        rejection = error
+      }
+    })
+    expect(rejection).toEqual(new Error("upsert boom"))
 
     await waitFor(() => expect(result.current.isError).toBe(true))
   })

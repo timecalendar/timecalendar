@@ -1,9 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react-native"
-import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { recordUnknownError } from "@/firebase"
+import { createTestQueryClient } from "@/test-support/query-client"
 
 import { useRenameCalendar } from "./rename"
 import * as repository from "./repository"
@@ -23,12 +22,8 @@ const mockFetch = customFetch as jest.Mock
 const mockUpdateName = repository.updateName as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 
-function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
-  })
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-}
+const queryHarness = createTestQueryClient()
+const wrapper = queryHarness.wrapper
 
 const input = { id: "cal-1", token: "tok_123", name: "  L3 Informatique  " }
 
@@ -38,6 +33,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  queryHarness.clear()
   mockFetch.mockReset()
   mockUpdateName.mockReset()
 })

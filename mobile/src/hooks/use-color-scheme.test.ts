@@ -36,13 +36,13 @@ describe("useColorScheme (C1 override seam)", () => {
     setThemePreference("light")
     const light = await renderHook(() => useColorScheme())
     expect(light.result.current).toBe("light")
-    light.unmount()
+    await light.unmount()
 
     // Override wins over the device scheme: set the device light, the pref dark.
     setThemePreference("dark")
     mockDeviceScheme.mockReturnValue("light")
     const dark = await renderHook(() => useColorScheme())
     expect(dark.result.current).toBe("dark")
-    dark.unmount()
+    await dark.unmount()
   })
 })
