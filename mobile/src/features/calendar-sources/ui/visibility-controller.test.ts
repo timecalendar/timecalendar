@@ -9,7 +9,7 @@ const pending = {
   id: 1,
   target: false,
   status: "pending" as const,
-  canAcknowledge: true,
+  startedAtCanonicalVersion: 0,
 }
 
 describe("visibilityReducer", () => {
@@ -40,9 +40,11 @@ describe("visibilityReducer", () => {
       status: "awaitingCanonical",
     })
     expect(
-      reconcileVisibilityOperations(succeeded, [
-        { id: "cal-1", visible: false },
-      ]),
+      reconcileVisibilityOperations(
+        succeeded,
+        [{ id: "cal-1", visible: false }],
+        1,
+      ),
     ).toEqual({})
   })
 
@@ -66,7 +68,7 @@ describe("visibilityReducer", () => {
         id: 2,
         target: true,
         status: "pending",
-        canAcknowledge: true,
+        startedAtCanonicalVersion: 1,
       },
     }
 
@@ -93,21 +95,29 @@ describe("visibilityReducer", () => {
         id: 2,
         target: true,
         status: "awaitingCanonical",
-        canAcknowledge: true,
+        startedAtCanonicalVersion: 0,
       },
     }
 
     expect(
-      reconcileVisibilityOperations(state, [
-        { id: "cal-1", visible: true },
-        { id: "cal-2", visible: true },
-      ]),
+      reconcileVisibilityOperations(
+        state,
+        [
+          { id: "cal-1", visible: true },
+          { id: "cal-2", visible: true },
+        ],
+        1,
+      ),
     ).toEqual({ "cal-1": pending })
     expect(
-      reconcileVisibilityOperations(state, [
-        { id: "cal-1", visible: true },
-        { id: "cal-2", visible: false },
-      ]),
+      reconcileVisibilityOperations(
+        state,
+        [
+          { id: "cal-1", visible: true },
+          { id: "cal-2", visible: false },
+        ],
+        0,
+      ),
     ).toBe(state)
   })
 
@@ -117,24 +127,49 @@ describe("visibilityReducer", () => {
         id: 2,
         target: true,
         status: "pending",
-        canAcknowledge: false,
+        startedAtCanonicalVersion: 2,
       },
     }
 
-    const staleEquality = reconcileVisibilityOperations(started, [
-      { id: "cal-1", visible: true },
-    ])
+    const staleEquality = reconcileVisibilityOperations(
+      started,
+      [{ id: "cal-1", visible: true }],
+      2,
+    )
     expect(staleEquality).toBe(started)
 
-    const delayedPreviousEcho = reconcileVisibilityOperations(staleEquality, [
-      { id: "cal-1", visible: false },
-    ])
-    expect(delayedPreviousEcho["cal-1"]?.canAcknowledge).toBe(true)
+    const delayedPreviousEcho = reconcileVisibilityOperations(
+      staleEquality,
+      [{ id: "cal-1", visible: false }],
+      3,
+    )
+    expect(delayedPreviousEcho).toBe(started)
 
     expect(
-      reconcileVisibilityOperations(delayedPreviousEcho, [
-        { id: "cal-1", visible: true },
-      ]),
+      reconcileVisibilityOperations(
+        delayedPreviousEcho,
+        [{ id: "cal-1", visible: true }],
+        4,
+      ),
+    ).toEqual({})
+  })
+
+  it("acknowledges a coalesced target emission after the operation starts", () => {
+    const started: VisibilityOperations = {
+      "cal-1": {
+        id: 2,
+        target: true,
+        status: "awaitingCanonical",
+        startedAtCanonicalVersion: 2,
+      },
+    }
+
+    expect(
+      reconcileVisibilityOperations(
+        started,
+        [{ id: "cal-1", visible: true }],
+        3,
+      ),
     ).toEqual({})
   })
 })

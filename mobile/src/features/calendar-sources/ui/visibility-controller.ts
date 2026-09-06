@@ -1,4 +1,4 @@
-import { useReducer, useRef } from "react"
+import { useReducer, useRef, useState } from "react"
 
 import type { UserCalendar } from "@/features/calendar-sources/data"
 
@@ -6,7 +6,7 @@ export type VisibilityOperation = {
   id: number
   target: boolean
   status: "pending" | "awaitingCanonical"
-  canAcknowledge: boolean
+  startedAtCanonicalVersion: number
 }
 
 export type VisibilityOperations = Readonly<Record<string, VisibilityOperation>>
@@ -18,6 +18,7 @@ export type VisibilityAction =
   | {
       type: "reconcile"
       calendars: readonly Pick<UserCalendar, "id" | "visible">[]
+      canonicalVersion: number
     }
 
 function withoutOperation(state: VisibilityOperations, calendarId: string) {
@@ -41,16 +42,8 @@ export function visibilityReducer(
       if (!operation) continue
 
       if (operation.target === calendar.visible) {
-        if (operation.canAcknowledge) {
+        if (action.canonicalVersion > operation.startedAtCanonicalVersion) {
           next = withoutOperation(next, calendar.id)
-        }
-        continue
-      }
-
-      if (!operation.canAcknowledge) {
-        next = {
-          ...next,
-          [calendar.id]: { ...operation, canAcknowledge: true },
         }
       }
     }
@@ -74,8 +67,13 @@ export function visibilityReducer(
 export function reconcileVisibilityOperations(
   state: VisibilityOperations,
   calendars: readonly Pick<UserCalendar, "id" | "visible">[],
+  canonicalVersion: number,
 ) {
-  return visibilityReducer(state, { type: "reconcile", calendars })
+  return visibilityReducer(state, {
+    type: "reconcile",
+    calendars,
+    canonicalVersion,
+  })
 }
 
 export function visibleFromOperation(
@@ -92,20 +90,30 @@ export function useVisibilityController(
   const [operations, dispatch] = useReducer(visibilityReducer, {})
   const nextOperationId = useRef(0)
   const inFlight = useRef(new Set<string>())
+  const [canonicalSnapshot, setCanonicalSnapshot] = useState({
+    calendars,
+    version: 0,
+  })
+  const canonicalVersion =
+    canonicalSnapshot.calendars === calendars
+      ? canonicalSnapshot.version
+      : canonicalSnapshot.version + 1
+
+  if (canonicalSnapshot.calendars !== calendars) {
+    setCanonicalSnapshot({ calendars, version: canonicalVersion })
+  }
+
   const reconciledOperations = reconcileVisibilityOperations(
     operations,
     calendars,
+    canonicalVersion,
   )
 
   if (reconciledOperations !== operations) {
-    dispatch({ type: "reconcile", calendars })
+    dispatch({ type: "reconcile", calendars, canonicalVersion })
   }
 
-  const toggle = (
-    calendarId: string,
-    target: boolean,
-    canonicalVisible: boolean,
-  ) => {
+  const toggle = (calendarId: string, target: boolean) => {
     if (inFlight.current.has(calendarId)) return
 
     inFlight.current.add(calendarId)
@@ -117,7 +125,7 @@ export function useVisibilityController(
         id: operationId,
         target,
         status: "pending",
-        canAcknowledge: canonicalVisible !== target,
+        startedAtCanonicalVersion: canonicalVersion,
       },
     })
 

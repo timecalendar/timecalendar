@@ -351,6 +351,47 @@ describe("UserCalendarsScreen", () => {
     ).toBeTruthy()
   })
 
+  it("retires a newer operation after a coalesced final echo", async () => {
+    const hideWrite = deferred<boolean>()
+    const showWrite = deferred<boolean>()
+    actions.setVisible
+      .mockReturnValueOnce(hideWrite.promise)
+      .mockReturnValueOnce(showWrite.promise)
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    const view = await render(<UserCalendarsScreen />)
+    const switchName = "Show ENSEEIHT in the app"
+
+    await fireEvent(
+      screen.getByRole("switch", { name: switchName }),
+      "valueChange",
+      false,
+    )
+    await act(async () => {
+      hideWrite.resolve(true)
+      await hideWrite.promise
+    })
+
+    await fireEvent(
+      screen.getByRole("switch", { name: switchName }),
+      "valueChange",
+      true,
+    )
+    await act(async () => {
+      showWrite.resolve(true)
+      await showWrite.promise
+    })
+
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    await view.rerender(<UserCalendarsScreen />)
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: false })])
+    await view.rerender(<UserCalendarsScreen />)
+
+    expect(
+      screen.getByRole("switch", { name: switchName, checked: false }),
+    ).toBeTruthy()
+    expect(actions.setVisible).toHaveBeenCalledTimes(2)
+  })
+
   it("discards an old optimistic value after canonical visibility changes", async () => {
     mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
     const view = await render(<UserCalendarsScreen />)
