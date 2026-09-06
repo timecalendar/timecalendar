@@ -55,10 +55,10 @@ FCM push **receive** behind the same seam (Phase 06 Ship A, ADR [026](./decision
 - **CI proves the wiring; real delivery is device-only.** The proof test drives the mocked SDK (permission / APNS-first token order / `onMessage` / `onTokenRefresh` / `setBackgroundMessageHandler`). It **cannot** assert a real push _arrives_ — foreground/background/**killed**, both platforms, **release** build — that is the manual on-device step in `docs/react-native-migration/inbox/2026-06-17-fcm-push-receive-device-verification.md` (incl. the `timecalendar-dev` APNs-key prerequisite + the OEM-throttling / dev-client / simulator caveats).
 - **Expo Push stays rejected** (ADR 026 re-affirms): FCM direct + the server `firebase-admin` sender + `notification-subscription`, server unchanged. The seam decouples the app from the SDK, not so the transport is swappable to Expo Push.
 
-## Debug-build reporting + verification surface
+## Debug-build reporting
 
 - `mobile/firebase.json` sets `crashlytics_debug_enabled: true` so a local `npm run ios/android` (debug + Metro, dev variant) reports a forced crash; release/e2e builds report regardless.
-- `FirebaseDebugPanel` remains a development-only diagnostic component. It is not rendered in the Settings destination hub; Firebase verification uses the dedicated development workflow and DebugView.
+- There is no committed in-app Firebase diagnostic panel. The `@/firebase` helpers and their CI proof remain the supported application seam; console arrival is verified manually in a development build.
 
 ## What CI proves vs. what's manual
 

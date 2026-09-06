@@ -8,8 +8,9 @@ The app SHALL keep the native static splash (configured via the `expo-splash-scr
 plugin in `app.config.ts`) visible until the JavaScript layer is ready to render, by calling
 `SplashScreen.preventAutoHideAsync()` before first render, and SHALL render a JS splash overlay
 that visually continues the native splash so there is no flash of empty or unstyled content
-during the native→JS handoff. The JS overlay SHALL live in `src/components/splash-screen.tsx`
-(a `@/components` module, not a `src/app/` route), and SHALL be mounted by the existing root
+during the native→JS handoff. The JS overlay SHALL live in
+`src/features/splash/ui/splash-screen.tsx` (a feature `ui/` module, not a `src/app/` route), and
+SHALL be mounted by the existing root
 layout (`src/app/_layout.tsx`) above the navigation `Stack`.
 
 #### Scenario: No flash between native splash and first content
@@ -20,13 +21,14 @@ layout (`src/app/_layout.tsx`) above the navigation `Stack`.
 
 #### Scenario: Splash logic is testable outside the route tree
 - **WHEN** the splash needs an automated test
-- **THEN** its behavior lives in `src/components/splash-screen.tsx` and is tested there
+- **THEN** its behavior lives in `src/features/splash/ui/splash-screen.tsx` and is tested there
 - **AND** no `*.test.tsx` is placed under `src/app/` (the Metro route-bundling constraint)
 
 ### Requirement: Splash dismisses only when the app is ready
-The app SHALL expose a single readiness gate (`src/hooks/use-app-ready.ts`, `useAppReady()`)
-that resolves true once first-paint prerequisites are satisfied — i18n initialized, fonts
-loaded (no-op while the app uses system fonts), and the storage migration runner accounted for.
+The app SHALL expose a single splash-owned readiness gate
+(`src/features/splash/ui/use-app-ready.ts`, `useAppReady()`) that resolves true once first-paint
+prerequisites are satisfied — i18n initialized, fonts loaded (no-op while the app uses system
+fonts), and the storage migration runner accounted for.
 The splash overlay SHALL dismiss (hide the native splash and fade/remove itself) only after the
 readiness gate resolves, and the gate SHALL always resolve so the splash can never remain
 visible indefinitely.
@@ -91,7 +93,8 @@ grouping, announcement quality) are an explicit on-device step, not a CI gate.
 - **AND** the overlay does not set `allowFontScaling={false}`
 
 ### Requirement: Splash wiring is verified by an automated test
-The unit/component test suite SHALL include a test (`src/components/splash-screen.test.tsx`)
+The unit/component test suite SHALL include a test
+(`src/features/splash/ui/splash-screen.test.tsx`)
 that renders the overlay through the real theme, i18n, and accessibility tree and asserts: the
 localized brand string renders (not the raw key); the accessible status/label resolves; the
 reduced-motion branch is honored (mocking `AccessibilityInfo` for both true and false); and the
@@ -104,6 +107,10 @@ manual on-device steps, not CI gates.
 - **THEN** it asserts the localized brand text renders and the accessible status resolves
 - **AND** it asserts the reduced-motion branch is taken under mocked `AccessibilityInfo`
 - **AND** it asserts the overlay dismisses once ready
+
+#### Scenario: Readiness logic remains covered after relocation
+- **WHEN** the readiness hook is moved under the splash UI sublayer
+- **THEN** its focused test moves with it and continues to prove immediate readiness and watchdog release
 
 ### Requirement: Splash passes the full Definition of Done on both platforms
 As the Phase-0 capstone, the splash SHALL be walked through every axis of the Definition of
@@ -124,4 +131,3 @@ is left in a third "later/mostly" state.
 - **WHEN** an axis can only be verified on a real device or with a screen reader
 - **THEN** it is recorded in the inbox note with what/why/how-to-verify
 - **AND** the corresponding task is HUMAN-tagged so the implementer skips-and-continues
-

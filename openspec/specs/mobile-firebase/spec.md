@@ -5,8 +5,8 @@ Defines the React Native app's crash-reporting and analytics system: Crashlytics
 and Analytics via `@react-native-firebase` (modular API, native auto-init), the
 one-Firebase-project-per-environment mapping with variant-switched config files,
 the iOS static-frameworks build requirement, the single `src/firebase/` wrapper
-seam, the `__DEV__`-only verification surface, the debug-build crash-reporting
-flag, and the boundary between the CI proof (wrapper drives the SDK) and the
+seam, the debug-build crash-reporting flag, and the boundary between the CI proof
+(wrapper drives the SDK) and the
 manual on-device proof (an event and a crash actually arrive in the console).
 ## Requirements
 ### Requirement: Crashlytics and Analytics initialized on both platforms
@@ -61,24 +61,6 @@ is the only top-level native access permitted in the seam.
 - **WHEN** `@/firebase` is imported under Jest
 - **THEN** the import succeeds without resolving native Crashlytics/Analytics/Messaging instances
 - **AND** the only top-level native call is the messaging `setBackgroundMessageHandler` registration
-
-### Requirement: Dev-only verification surface
-The app SHALL provide a `__DEV__`-gated control surface that can log an Analytics event and
-trigger a Crashlytics crash on demand, for verifying the end-to-end pipeline. This surface
-SHALL NOT render in production builds, and its controls SHALL declare an accessibility role
-and a translated accessibility label.
-
-#### Scenario: Dev panel present only in development
-- **WHEN** the app runs a development build
-- **THEN** the Profile tab shows the Firebase debug controls
-- **WHEN** the app runs a production build
-- **THEN** the Firebase debug controls do not render
-
-#### Scenario: Triggering verification actions
-- **WHEN** the "log test event" control is activated
-- **THEN** an Analytics event is logged through the `@/firebase` wrapper
-- **WHEN** the "trigger test crash" control is activated
-- **THEN** a native crash is forced through the `@/firebase` wrapper
 
 ### Requirement: Firebase wiring is verified by an automated test
 The unit test suite SHALL include a test that drives the `@/firebase` wrapper and asserts it
@@ -150,4 +132,3 @@ The app SHALL set the effective backend environment enum as a Crashlytics attrib
 - **WHEN** a confirmed switch completes all reset participants and commits its target
 - **THEN** one Analytics event records the from/to enum values
 - **AND** cancellation or failure produces no successful-switch event
-

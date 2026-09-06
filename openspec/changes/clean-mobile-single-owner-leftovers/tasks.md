@@ -1,24 +1,24 @@
 ## 1. Reconfirm ownership evidence
 
-- [ ] 1.1 Search the whole repository for `FirebaseDebugPanel`, `firebase-debug-panel`, static imports, dynamic `import(...)`, `require(...)`, tests, barrels, routes, and documentation references; remove the component only if no live code consumer exists, and record which historical references are intentionally retained.
-- [ ] 1.2 Inventory every file directly under `mobile/src/components/` and `mobile/src/hooks/`; confirm with import searches that each survivor is shared across features or owns an infrastructure/application-shell seam, and re-home nothing beyond the readiness hook unless one unambiguous feature owner is proven.
+- [x] 1.1 Search the whole repository for `FirebaseDebugPanel`, `firebase-debug-panel`, static imports, dynamic `import(...)`, `require(...)`, tests, barrels, routes, and documentation references; remove the component only if no live code consumer exists, and record which historical references are intentionally retained.
+- [x] 1.2 Inventory every file directly under `mobile/src/components/` and `mobile/src/hooks/`; confirm with import searches that each survivor is shared across features or owns an infrastructure/application-shell seam, and re-home nothing beyond the readiness hook unless one unambiguous feature owner is proven.
 
 ## 2. Remove the orphaned Firebase UI
 
-- [ ] 2.1 Delete `mobile/src/components/firebase-debug-panel.tsx`; confirm no test or barrel export needs removal and that the `@/firebase` wrapper helpers and tests remain unchanged.
-- [ ] 2.2 Remove only the now-unused `debug.firebase.heading`, `debug.firebase.logEvent`, and `debug.firebase.crash` entries from both FR and EN catalogs; verify the locale JSON remains valid and the catalogs retain matching key sets.
+- [x] 2.1 Delete `mobile/src/components/firebase-debug-panel.tsx`; confirm no test or barrel export needs removal and that the `@/firebase` wrapper helpers and tests remain unchanged.
+- [x] 2.2 Remove only the now-unused `debug.firebase.heading`, `debug.firebase.logEvent`, and `debug.firebase.crash` entries from both FR and EN catalogs; verify the locale JSON remains valid and the catalogs retain matching key sets.
 
 ## 3. Move splash readiness to its owner
 
-- [ ] 3.1 Move `mobile/src/hooks/use-app-ready.ts` and `use-app-ready.test.ts` unchanged to `mobile/src/features/splash/ui/`; update `splash-screen.tsx` to a local sublayer import and keep the hook private rather than exporting it from `ui/index.ts`.
-- [ ] 3.2 Update `splash-screen.test.tsx` to mock the new feature-owned readiness module path without changing its assertions or timer/mutable-mock cleanup contract.
-- [ ] 3.3 Run the focused CI proof tests for both the moved readiness logic and its only consumer: `npm test -- --runInBand src/features/splash/ui/use-app-ready.test.ts src/features/splash/ui/splash-screen.test.tsx`; confirm immediate readiness, watchdog release, reduced-motion handling, accessible status, and dismissal remain green.
+- [x] 3.1 Move `mobile/src/hooks/use-app-ready.ts` and `use-app-ready.test.ts` unchanged to `mobile/src/features/splash/ui/`; update `splash-screen.tsx` to a local sublayer import and keep the hook private rather than exporting it from `ui/index.ts`.
+- [x] 3.2 Update `splash-screen.test.tsx` to mock the new feature-owned readiness module path without changing its assertions or timer/mutable-mock cleanup contract.
+- [x] 3.3 Run the focused CI proof tests for both the moved readiness logic and its only consumer: `npm test -- --runInBand src/features/splash/ui/use-app-ready.test.ts src/features/splash/ui/splash-screen.test.tsx`; confirm immediate readiness, watchdog release, reduced-motion handling, accessible status, and dismissal remain green.
 
 ## 4. Reconcile current specifications and documentation
 
-- [ ] 4.1 Apply the `mobile-splash` delta so the canonical spec names `src/features/splash/ui/splash-screen.tsx`, its colocated test, and the splash-owned `use-app-ready.ts` path while preserving every behavioral requirement.
-- [ ] 4.2 Apply the `mobile-firebase` delta by removing only the obsolete in-app dev-panel requirement; preserve the Firebase wrapper, SDK proof test, debug-build reporting, and manual console-arrival boundary.
-- [ ] 4.3 Correct the current-state Firebase Architecture Book paragraph and the still-actionable splash device-verification note so neither points to the deleted panel. Preserve roadmap and archived OpenSpec chronology; do not add an ADR or Architecture Book changelog entry because no reusable rule changes.
+- [x] 4.1 Apply the `mobile-splash` delta so the canonical spec names `src/features/splash/ui/splash-screen.tsx`, its colocated test, and the splash-owned `use-app-ready.ts` path while preserving every behavioral requirement.
+- [x] 4.2 Apply the `mobile-firebase` delta by removing only the obsolete in-app dev-panel requirement; preserve the Firebase wrapper, SDK proof test, debug-build reporting, and manual console-arrival boundary.
+- [x] 4.3 Correct the current-state Firebase Architecture Book paragraph and the still-actionable splash device-verification note so neither points to the deleted panel. Preserve roadmap and archived OpenSpec chronology; do not add an ADR or Architecture Book changelog entry because no reusable rule changes.
 
 ## 5. Structural and local-green verification
 
