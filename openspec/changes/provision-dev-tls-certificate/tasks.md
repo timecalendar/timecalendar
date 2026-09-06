@@ -1,6 +1,6 @@
 ## 1. Make the generator usable from anywhere
 
-- [ ] 1.1 Rewrite `ci/certificates/generate-certificates.sh` to resolve its own directory
+- [x] 1.1 Rewrite `ci/certificates/generate-certificates.sh` to resolve its own directory
   (`cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P`) and use absolute paths for `-config
   ssl.cnf`, `-keyout key.pem`, and `-out cert.pem`; add `set -euo pipefail`, take the lifetime
   from `TIMECALENDAR_CERT_DAYS` (default `3650`), and `chmod 600` the key. Keep `ssl.cnf`
@@ -9,7 +9,7 @@
     `ci/certificates/` and `openssl x509 -in ci/certificates/cert.pem -noout -subject -dates`
     shows `CN = TimeCalendar Dev` with a ~10-year window.
 
-- [ ] 1.2 Add `ci/certificates/ensure-certificates.sh` — the idempotent guard. Regenerate by
+- [x] 1.2 Add `ci/certificates/ensure-certificates.sh` — the idempotent guard. Regenerate by
   delegating to `generate-certificates.sh` when `cert.pem` or `key.pem` is missing or
   unreadable, or when `openssl x509 -in cert.pem -noout -checkend
   "${TIMECALENDAR_CERT_RENEW_SECONDS:-2592000}"` fails; otherwise do nothing. Print exactly
@@ -22,14 +22,14 @@
 
 ## 2. Wire provisioning into the commands people already run
 
-- [ ] 2.1 In `bin/server-compose.sh`, run `"$repo_root/ci/certificates/ensure-certificates.sh"`
+- [x] 2.1 In `bin/server-compose.sh`, run `"$repo_root/ci/certificates/ensure-certificates.sh"`
   immediately before `exec docker compose`, discarding its stdout marker. It must run *after*
   the `project-name` early exit so that subcommand stays a pure, non-mutating diagnostic.
   - Verify: `bin/server-compose.sh project-name` writes no file (check with `git status` and
     `ls ci/certificates` from a state with no `.pem`); `bin/server-compose.sh config >/dev/null`
     materializes the pair.
 
-- [ ] 2.2 In `bin/setup-dev.sh`, run the guard before step 3, capturing its stdout. When it
+- [x] 2.2 In `bin/setup-dev.sh`, run the guard before step 3, capturing its stdout. When it
   reports `generated`, print a yellow notice that the certificate was just created, that nginx
   serves the previous material until restarted (`bin/server-compose.sh restart nginx`), and that
   any previously trusted copy must be re-added. Leave `--http-status` and `--compose-config`
@@ -37,7 +37,7 @@
   - Verify: `bin/setup-dev.sh --compose-config` still prints only the project/port diagnostics
     and creates no `.pem`; a full run from a no-`.pem` state emits the notice once.
 
-- [ ] 2.3 In `bin/setup-dev.sh` step 4, when the reachability check returns `000`, re-run the
+- [x] 2.3 In `bin/setup-dev.sh` step 4, when the reachability check returns `000`, re-run the
   request capturing curl's exit status and, on a certificate verification failure (curl `60`,
   and `35`/`51` where applicable), report the certificate as the cause and name the nginx
   restart and re-trust steps instead of the current "DNS, nginx, or cert" message. Keep the
@@ -45,13 +45,13 @@
   - Verify: stop nginx → the connection-failure message; start nginx, regenerate the pair
     without restarting nginx → the certificate-fault message.
 
-- [ ] 2.4 Update the `bin/setup-dev.sh` header comment so its numbered list matches the script's
+- [x] 2.4 Update the `bin/setup-dev.sh` header comment so its numbered list matches the script's
   actual steps and points at `docs/agent-dev-environment.md` for the certificate mechanism
   rather than restating it.
 
 ## 3. Untrack the pair
 
-- [ ] 3.1 Add `ci/certificates/cert.pem` and `ci/certificates/key.pem` to the root `.gitignore`
+- [x] 3.1 Add `ci/certificates/cert.pem` and `ci/certificates/key.pem` to the root `.gitignore`
   beside the existing `ci/keys/` entry, then
   `git rm --cached ci/certificates/cert.pem ci/certificates/key.pem`. Keep `ssl.cnf` and both
   scripts tracked. Do not delete the working-tree files.
@@ -62,7 +62,7 @@
 
 ## 4. Stop CI from starting nginx
 
-- [ ] 4.1 In `.github/workflows/ci-build-deploy.yml`, change the `test` job's "Start Postgres and
+- [x] 4.1 In `.github/workflows/ci-build-deploy.yml`, change the `test` job's "Start Postgres and
   Redis" step to `docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d
   postgres redis`. Change nothing else in the workflow — no trigger, job, image tag, deploy step,
   or other command.
@@ -70,18 +70,18 @@
     --services` still lists all three services (the model is unchanged), and the diff for this
     file is exactly the two added service names.
 
-- [ ] 4.2 Confirm no other CI or scripted path starts nginx or reads the pair:
+- [x] 4.2 Confirm no other CI or scripted path starts nginx or reads the pair:
   `grep -rn "certificates\|nginx\|1443" .github/workflows/ ci/` and re-read
   `ci/e2e-server.sh`'s compose invocations and `server/docker-compose.e2e.yml`. Leave both
   unchanged; record the grep result in the PR body.
 
-- [ ] 4.3 Review the sensitive-surface diff: `git diff -- .github/workflows/ ci/certificates/`.
+- [x] 4.3 Review the sensitive-surface diff: `git diff -- .github/workflows/ ci/certificates/`.
   Confirm no certificate or key bytes appear in any added line, no secret is introduced, and
   `server/docker-compose.yml` and `server/nginx.conf` are untouched.
 
 ## 5. Document the mechanism in exactly one place
 
-- [ ] 5.1 In `docs/agent-dev-environment.md` §4, add the mechanism next to the existing
+- [x] 5.1 In `docs/agent-dev-environment.md` §4, add the mechanism next to the existing
   `bin/server-compose.sh`/`bin/setup-dev.sh` guidance: the pair is generated on demand and not
   tracked, `bin/server-compose.sh` provisions it before every Compose command, the guard is a
   no-op until the renewal window, `TIMECALENDAR_CERT_DAYS` and `TIMECALENDAR_CERT_RENEW_SECONDS`
@@ -90,20 +90,28 @@
   so the simulator/OS/browser trusts the right certificate. Update the `ci/` line in the §3
   repository-layout block and the §12 quick reference if either becomes inaccurate.
 
-- [ ] 5.2 In `README.md`, add one sentence to the Docker section saying the dev TLS certificate
+- [x] 5.2 In `README.md`, add one sentence to the Docker section saying the dev TLS certificate
   is generated on first use and is not committed, linking to the handbook section. Do not restate
   the mechanism. `app/README.md` and `mobile/README.md` keep their existing URLs and get no
   certificate prose — confirm neither claims the certificate is committed.
 
-- [ ] 5.3 Grep the **whole** of every document touched (not only the changed hunks) for
+- [x] 5.3 Grep the **whole** of every document touched (not only the changed hunks) for
   disclosure-pattern categories before committing — `docs/agent-dev-environment.md` in particular
   already carries identity and host content, and the scan reads every line of every file the
   branch touches, not only the added ones. A hit on a line you did not add still fails the gate,
   so read the report's per-finding split and scrub what this change introduces.
+  - Result: `added: 0`, `preExisting: 3`, all three in `docs/agent-dev-environment.md` on
+    §5 worktree-layout lines this change does not touch, all one pattern id
+    (`host-home-directory`). This branch introduces nothing, which is the dated
+    proceed-and-report shape; the pre-existing lines belong to the scrub ticket, not here.
 
-- [ ] 5.4 Confirm no Architecture Book change is required: `grep -rn "certificat" docs/mobile/`
+- [x] 5.4 Confirm no Architecture Book change is required: `grep -rn "certificat" docs/mobile/`
   should find nothing that this change contradicts. Nothing under `mobile/` moves, so no Book
   file and no changelog entry are in scope. Record the result rather than inventing an entry.
+  - Result: every hit is about **code signing** — EAS/Apple distribution certificates, the Play
+    upload certificate, and the OTA update-signing certificate embedded at build time. None
+    concerns the local nginx TLS proxy, so nothing under `docs/mobile/` is contradicted. No Book
+    file and no changelog entry.
 
 ## 6. Local-green verification — run it, do not assert it
 
@@ -112,34 +120,51 @@ on this host. `bin/setup-dev.sh` step 1 writes `/etc/hosts` via sudo, and step 3
 on Linux it skips by design. Say both explicitly in the PR body rather than leaving a reviewer to
 wonder why step 3 is a yellow line.
 
-- [ ] 6.1 From a clean state (`rm -f ci/certificates/*.pem`), run `bin/server-compose.sh up -d`.
+- [x] 6.1 From a clean state (`rm -f ci/certificates/*.pem`), run `bin/server-compose.sh up -d`.
   Confirm `bin/server-compose.sh ps` shows nginx `running` (not restarting) and
   `bin/server-compose.sh logs nginx` contains no certificate error. Paste the real output.
+  - **Deviation, pre-existing and unrelated to this change.** `bin/server-compose.sh up -d`
+    provisioned the pair as designed, but the nginx container then restart-loops on this Linux
+    host with `[emerg] host not found in upstream "host.docker.internal"` —
+    `server/nginx.conf:17`. That alias is supplied automatically by Docker Desktop (macOS) and
+    not by Docker Engine on Linux, which needs an `extra_hosts: host-gateway` entry that
+    `server/docker-compose.yml` does not declare. Both files are byte-identical to `origin/main`
+    (`git diff origin/main -- server/nginx.conf server/docker-compose.yml` is empty), so the
+    fault predates this branch, and fixing it means editing the Compose file, which this
+    change's non-goals exclude. Reported separately to the Founding Engineer.
+  - What was proved instead, isolating only that one variable: the same `server/nginx.conf` and
+    the same `ci/certificates` bind mount, in an `nginx` container given the host-gateway alias
+    Linux needs, starts cleanly with **no certificate error** in its logs — and 6.2 below then
+    verifies the chain through it.
 
-- [ ] 6.2 Prove the certificate actually verifies through nginx:
+- [x] 6.2 Prove the certificate actually verifies through nginx:
   `curl -sv --cacert ci/certificates/cert.pem --resolve api.timecalendar.host:1443:127.0.0.1
   https://api.timecalendar.host:1443/`. A `502` is a pass for this check — the backend is not
   running; what is being proven is that the TLS handshake verified. Paste the verification lines.
 
-- [ ] 6.3 Run `bash bin/setup-dev.sh` and confirm step 4 reports the API responded (any non-`000`
+- [x] 6.3 Run `bash bin/setup-dev.sh` and confirm step 4 reports the API responded (any non-`000`
   status) rather than the failure message. Note in the PR body that step 3 skipped as
   not-macOS and that step 1 used sudo.
+  - Ran against the proxy from 6.1's note (`TIMECALENDAR_TLS_PORT` pointed at it, since `:1443`
+    on this host belongs to another checkout). Step 4: `✓ API responded (HTTP 502)`. Step 1
+    wrote `/etc/hosts` via sudo; step 3 skipped as not-macOS; the `:3005` backend check fails
+    because the API server is not running, which is outside this change.
 
-- [ ] 6.4 Assert the acceptance criteria directly and paste the output:
+- [x] 6.4 Assert the acceptance criteria directly and paste the output:
   `git ls-files ci/certificates`;
   `openssl x509 -in ci/certificates/cert.pem -noout -checkend $((365*24*3600))` (must exit 0);
   two consecutive `ci/certificates/ensure-certificates.sh` runs printing `generated` then
   `unchanged` with identical `sha256sum` for both files across the second run.
 
-- [ ] 6.5 Tear down: `bin/server-compose.sh down`. Confirm `git status --short` shows only the
+- [x] 6.5 Tear down: `bin/server-compose.sh down`. Confirm `git status --short` shows only the
   intended changes and no `.pem` is tracked or untracked-and-visible.
 
-- [ ] 6.6 Run `npx openspec validate provision-dev-tls-certificate --strict` and, before merge,
+- [x] 6.6 Run `npx openspec validate provision-dev-tls-certificate --strict` and, before merge,
   dry-run the archive so the delta headers are actually validated — `openspec archive` is the
   only command that checks `## ADDED`/`## MODIFIED` headers against the existing capability.
   Do not archive on the branch; just prove it would pass.
 
-- [ ] 6.7 Run `bash -n` (or `shellcheck` where available) over
+- [x] 6.7 Run `bash -n` (or `shellcheck` where available) over
   `ci/certificates/generate-certificates.sh`, `ci/certificates/ensure-certificates.sh`,
   `bin/server-compose.sh`, and `bin/setup-dev.sh`.
 
@@ -156,8 +181,10 @@ wonder why step 3 is a yellow line.
   removing it is safe. Run the `disclosure-scan` preflight on the final title and body before
   every `gh pr create`/`gh pr edit`/`gh pr comment`.
 
-- [ ] 7.3 Run the `disclosure-scan` preflight once more on the finished branch with no text
+- [x] 7.3 Run the `disclosure-scan` preflight once more on the finished branch with no text
   payload, so it reads the diff itself, and confirm the report shows `added: 0`. The two `.pem`
   paths must appear nowhere in `findings` — a deleted file is not scanned, so a finding on either
   path means the deletion did not actually land in the index. This is the check that proves the
   committed key is gone, and it is stronger than reading `git ls-files` alone.
+  - Result: `added: 0`; neither `.pem` path appears in `findings` or in `scanned.files`. The
+    deletion landed. The 3 pre-existing findings are the ones recorded under 5.3.
