@@ -3,18 +3,22 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing } from "@/theme"
 
 import { type WelcomePageDescriptor } from "./welcome-page-catalog"
 
 type WelcomePageProps = {
+  illustrationBackgroundColor: string
   illustrationHeight: number
   page: WelcomePageDescriptor
 }
 
-export function WelcomePage({ illustrationHeight, page }: WelcomePageProps) {
+export function WelcomePage({
+  illustrationBackgroundColor,
+  illustrationHeight,
+  page,
+}: WelcomePageProps) {
   const { t } = useTranslation()
-  const theme = useTheme()
 
   return (
     <View collapsable={false} style={styles.page}>
@@ -25,7 +29,7 @@ export function WelcomePage({ illustrationHeight, page }: WelcomePageProps) {
           style={[
             styles.illustrationCard,
             {
-              backgroundColor: theme.backgroundElement,
+              backgroundColor: illustrationBackgroundColor,
               height: illustrationHeight,
             },
           ]}

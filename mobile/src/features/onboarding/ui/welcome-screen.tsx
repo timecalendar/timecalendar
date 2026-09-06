@@ -23,8 +23,7 @@ export default function WelcomeScreen() {
   const pagerRef = useRef<PagerView>(null)
   const [currentPage, setCurrentPage] = useState(0)
   const reduceMotion = useReducedMotion()
-  const pageCount = WELCOME_PAGES.length
-  const isLastPage = currentPage === pageCount - 1
+  const isLastPage = currentPage === WELCOME_PAGES.length - 1
   const illustrationHeight = Math.min(
     windowHeight * ILLUSTRATION_HEIGHT_RATIO,
     MAX_ILLUSTRATION_HEIGHT,
@@ -57,7 +56,6 @@ export default function WelcomeScreen() {
           />
           <WelcomePageIndicator
             currentPage={currentPage}
-            pageCount={pageCount}
             reduceMotion={reduceMotion}
           />
           <WelcomeFooter

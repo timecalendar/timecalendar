@@ -21,7 +21,6 @@ export function WelcomeEntrance({
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
 
   useEffect(() => {
-    cancelAnimation(opacity)
     if (reduceMotion === null) return
 
     opacity.set(reduceMotion ? 1 : withTiming(1, { duration: FADE_IN_MS }))

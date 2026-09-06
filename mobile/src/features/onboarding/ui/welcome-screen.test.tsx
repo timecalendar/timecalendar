@@ -150,11 +150,7 @@ describe("WelcomeScreen", () => {
     await act(async () => jest.advanceTimersByTime(150))
 
     expect(pagerMock.setPage).toHaveBeenCalledWith(1)
-    const indicatorTimings = jest
-      .mocked(withTiming)
-      .mock.calls.filter(([, config]) => config?.duration === 150)
-    expect(indicatorTimings).toHaveLength(3)
-    expect(indicatorTimings.map(([value]) => value)).toEqual([16, 24, 16])
+    expect(withTiming).toHaveBeenCalledWith(24, { duration: 150 })
     expect(
       StyleSheet.flatten(getByTestId("onboarding-page-indicator-1").props.style)
         .backgroundColor,

@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, StyleSheet, View } from "react-native"
 import Animated, {
@@ -10,6 +10,8 @@ import Animated, {
 
 import { Radii, Spacing, useTheme } from "@/theme"
 
+import { WELCOME_PAGES } from "./welcome-page-catalog"
+
 const INDICATOR_ANIMATION_MS = 150
 const ACTIVE_INDICATOR_WIDTH = 24
 const INACTIVE_INDICATOR_WIDTH = 16
@@ -17,25 +19,33 @@ const CONTROL_MIN_HEIGHT = Platform.OS === "ios" ? 44 : 48
 
 type IndicatorPillProps = {
   active: boolean
+  backgroundColor: string
   index: number
   reduceMotion: boolean | null
 }
 
-function IndicatorPill({ active, index, reduceMotion }: IndicatorPillProps) {
-  const theme = useTheme()
+function IndicatorPill({
+  active,
+  backgroundColor,
+  index,
+  reduceMotion,
+}: IndicatorPillProps) {
   const targetWidth = active ? ACTIVE_INDICATOR_WIDTH : INACTIVE_INDICATOR_WIDTH
   const width = useSharedValue(targetWidth)
+  const previousTarget = useRef(targetWidth)
   const animatedStyle = useAnimatedStyle(() => ({ width: width.value }))
 
   useEffect(() => {
-    cancelAnimation(width)
     if (reduceMotion === null) return
 
-    width.set(
-      reduceMotion
-        ? targetWidth
-        : withTiming(targetWidth, { duration: INDICATOR_ANIMATION_MS }),
-    )
+    const targetChanged = previousTarget.current !== targetWidth
+    previousTarget.current = targetWidth
+
+    if (reduceMotion) {
+      width.set(targetWidth)
+    } else if (targetChanged) {
+      width.set(withTiming(targetWidth, { duration: INDICATOR_ANIMATION_MS }))
+    }
 
     return () => cancelAnimation(width)
   }, [reduceMotion, targetWidth, width])
@@ -47,9 +57,7 @@ function IndicatorPill({ active, index, reduceMotion }: IndicatorPillProps) {
       testID={`onboarding-page-indicator-${index}`}
       style={[
         styles.indicatorPill,
-        {
-          backgroundColor: active ? theme.primary : theme.backgroundSelected,
-        },
+        { backgroundColor },
         animatedStyle,
         reduceMotion === true && { width: targetWidth },
       ]}
@@ -59,16 +67,15 @@ function IndicatorPill({ active, index, reduceMotion }: IndicatorPillProps) {
 
 type WelcomePageIndicatorProps = {
   currentPage: number
-  pageCount: number
   reduceMotion: boolean | null
 }
 
 export function WelcomePageIndicator({
   currentPage,
-  pageCount,
   reduceMotion,
 }: WelcomePageIndicatorProps) {
   const { t } = useTranslation()
+  const theme = useTheme()
 
   return (
     <View
@@ -76,14 +83,17 @@ export function WelcomePageIndicator({
       accessible
       accessibilityLabel={t("onboarding.pageIndicator", {
         current: currentPage + 1,
-        total: pageCount,
+        total: WELCOME_PAGES.length,
       })}
       style={styles.indicator}
     >
-      {Array.from({ length: pageCount }, (_, index) => (
+      {WELCOME_PAGES.map((page, index) => (
         <IndicatorPill
-          key={String(index)}
+          key={page.id}
           active={index === currentPage}
+          backgroundColor={
+            index === currentPage ? theme.primary : theme.backgroundSelected
+          }
           index={index}
           reduceMotion={reduceMotion}
         />
