@@ -49,7 +49,6 @@ import ts from "typescript"
 const SAMPLE_INTERPOLATION: Record<string, string> = {
   time: "14:00 – 16:00",
   location: "Room E2E Lecture",
-  date: "28 August",
 }
 
 const mobileRoot = join(__dirname, "..")
@@ -343,21 +342,28 @@ function replaceLast(
   return `${source.slice(0, index)}${replacement}${source.slice(index + target.length)}`
 }
 
-const flows = filesUnder(flowsDir, [".yaml"]).map((file) => ({
-  name: file.slice(flowsDir.length + 1),
-  selectors: flowSelectors(readFileSync(file, "utf8")),
-  textSelectors: flowTextSelectors(readFileSync(file, "utf8")),
-  backCommands: backCommands(readFileSync(file, "utf8")),
-  hideKeyboardCommands: hideKeyboardCommands(readFileSync(file, "utf8")),
-}))
+const flows = filesUnder(flowsDir, [".yaml"]).map((file) => {
+  const yaml = readFileSync(file, "utf8")
+  return {
+    name: file.slice(flowsDir.length + 1),
+    selectors: flowSelectors(yaml),
+    textSelectors: flowTextSelectors(yaml),
+    backCommands: backCommands(yaml),
+    hideKeyboardCommands: hideKeyboardCommands(yaml),
+  }
+})
 
 /** Maestro compiles a text selector as a fully anchored regex — so does this. */
-function matches(selector: string, candidate: string): boolean {
+function selectorPattern(selector: string): RegExp | undefined {
   try {
-    return new RegExp(`^(?:${selector})$`).test(candidate)
+    return new RegExp(`^(?:${selector})$`)
   } catch {
-    return false
+    return undefined
   }
+}
+
+function matches(selector: string, candidate: string): boolean {
+  return selectorPattern(selector)?.test(candidate) ?? false
 }
 
 /** The renderings a selector that already matches the bare title still misses. */
@@ -367,17 +373,17 @@ function unreachableRenderings(selector: string): string[] {
   return renderings(title).filter((rendering) => !matches(selector, rendering))
 }
 
+/**
+ * Whether a flow `id:` selector matches any testID the app declares. An
+ * uncompilable selector matches nothing here because it selects nothing on a
+ * device either — `matches` already fails closed on it.
+ */
 function resolves(selector: string): boolean {
-  let pattern: RegExp
-  try {
-    pattern = new RegExp(`^(?:${selector})$`)
-  } catch {
-    // Maestro could not compile it either, so it selects nothing on a device.
-    return false
-  }
+  const pattern = selectorPattern(selector)
   return (
-    declaredIds.some((id) => pattern.test(id)) ||
-    declaredIdFamilies.some((family) => family.test(selector))
+    pattern !== undefined &&
+    (declaredIds.some((id) => pattern.test(id)) ||
+      declaredIdFamilies.some((family) => family.test(selector)))
   )
 }
 

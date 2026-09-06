@@ -43,8 +43,10 @@ import fs from "node:fs"
 // `scrollUntilVisible`, which asserts visibility after scrolling. Matching the
 // family by prefix means a future `assert*` command counts as evidence by
 // default, which errs toward "terminal": the safe direction.
+// A missing kind is not an assertion, so it falls through to the non-startup
+// branch and counts as terminal evidence — the same safe direction.
 const isAssertionCommand = (kind) =>
-  kind.startsWith("assert") || kind.startsWith("scrollUntilVisible")
+  Boolean(kind?.startsWith("assert") || kind?.startsWith("scrollUntilVisible"))
 
 // A command has been *evaluated* once it reaches a terminal state. RUNNING and
 // PENDING mean Maestro died mid-command; SKIPPED means a `when:` guard declined
@@ -124,10 +126,9 @@ export const isRetryableStartupFailure = (commands) => {
     return false
   }
 
-  const last = commands[commands.length - 1]
-  const lastKind = commandKind(last)
-  if (lastKind === undefined || !STARTUP_PHASE_COMMANDS.has(lastKind))
-    return false
+  // Every entry validated above, so kind, depth and status are known-good here.
+  const last = commands.at(-1)
+  if (!STARTUP_PHASE_COMMANDS.has(commandKind(last))) return false
 
   // A later restart never erases an earlier application or interaction
   // failure. The final command is excluded because a FAILED startup command is
@@ -149,28 +150,22 @@ export const isRetryableStartupFailure = (commands) => {
   }
 
   const failingDepth = commandDepth(last)
-  let boundaryIndex = 0
-  for (let index = commands.length - 1; index >= 0; index -= 1) {
-    const entry = commands[index]
-    if (
-      commandDepth(entry) === failingDepth &&
-      RESTART_BOUNDARY_COMMANDS.has(commandKind(entry))
-    ) {
-      boundaryIndex = index
-      break
-    }
-  }
+  const boundaryIndex = Math.max(
+    0,
+    commands.findLastIndex(
+      (entry) =>
+        commandDepth(entry) === failingDepth &&
+        RESTART_BOUNDARY_COMMANDS.has(commandKind(entry)),
+    ),
+  )
 
   const currentEpoch = commands.slice(boundaryIndex)
-  const terminalEpochCommand = currentEpoch.find((entry) => {
+  return !currentEpoch.some((entry) => {
     const kind = commandKind(entry)
-    if (kind === undefined) return true
-    if (isAssertionCommand(kind)) {
-      return EVALUATED_STATUSES.has(entry?.metadata?.status)
-    }
-    return !STARTUP_PHASE_COMMANDS.has(kind)
+    return isAssertionCommand(kind)
+      ? EVALUATED_STATUSES.has(entry.metadata.status)
+      : !STARTUP_PHASE_COMMANDS.has(kind)
   })
-  return terminalEpochCommand === undefined
 }
 
 const describe = (commands) => {
