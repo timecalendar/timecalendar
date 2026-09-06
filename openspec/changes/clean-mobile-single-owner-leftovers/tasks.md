@@ -22,13 +22,13 @@
 
 ## 5. Structural and local-green verification
 
-- [ ] 5.1 Re-run repository reference searches and confirm the deleted component, old readiness import path, old canonical splash paths, and removed translation keys have no live source, current-spec, actionable-doc, test, or barrel references; classify historical references retained by design.
-- [ ] 5.2 Run the route-thinness proof `npm test -- --runInBand src/components/settings-route-structure.test.ts` and `npm run lint`; confirm ESLint feature boundaries, sublayer imports, and route entrypoints stay green.
-- [ ] 5.3 Run `npx tsc --noEmit` from `mobile/` and resolve every changed-area type failure without expanding the refactor.
-- [ ] 5.4 Run React Doctor from `mobile/` against branch changes with `npx --yes react-doctor@0.9.13 --scope changed --base origin/main --project . --no-score --verbose`; classify every finding as fixed, pre-existing/out of scope, or an evidenced false positive, and add no score-only suppression.
-- [ ] 5.5 Run the full mobile Jest suite with coverage (`npm test -- --coverage`) when practical; report whether the process exits naturally, and if an environment/resource limit prevents completion, record the exact limitation alongside the focused green proof.
+- [x] 5.1 Re-run repository reference searches and confirm the deleted component, old readiness import path, old canonical splash paths, and removed translation keys have no live source, current-spec, actionable-doc, test, or barrel references; classify historical references retained by design.
+- [x] 5.2 Run the route-thinness proof `npm test -- --runInBand src/components/settings-route-structure.test.ts` and `npm run lint`; confirm ESLint feature boundaries, sublayer imports, and route entrypoints stay green.
+- [x] 5.3 Run `npx tsc --noEmit` from `mobile/` and resolve every changed-area type failure without expanding the refactor.
+- [x] 5.4 Run React Doctor from `mobile/` against branch changes with `npx --yes react-doctor@0.9.13 --scope changed --base origin/main --project . --no-score --verbose`; classify every finding as fixed, pre-existing/out of scope, or an evidenced false positive, and add no score-only suppression.
+- [x] 5.5 Run the full mobile Jest suite with coverage (`npm test -- --coverage`) when practical; report whether the process exits naturally, and if an environment/resource limit prevents completion, record the exact limitation alongside the focused green proof.
 
 ## 6. Final scope and Architecture Book check
 
-- [ ] 6.1 Walk `docs/mobile/architecture-book/definition-of-done.md` for this behavior-preserving refactor: i18n key parity, accessibility/testID behavior, route thinness, feature barrels, tests, types, lint, coverage, and documentation are green or explicitly N/A with a reason.
-- [ ] 6.2 Confirm the implementation diff contains only the orphan deletion, readiness move/import updates, dead locale keys, applied spec deltas, and narrow current-document corrections; verify no OpenAPI/generated client, server migration, native/store/EAS/Firebase config, deployment/CI, dependency, or legacy Flutter path changed.
+- [x] 6.1 Walk `docs/mobile/architecture-book/definition-of-done.md` for this behavior-preserving refactor: i18n key parity, accessibility/testID behavior, route thinness, feature barrels, tests, types, lint, coverage, and documentation are green or explicitly N/A with a reason.
+- [x] 6.2 Confirm the implementation diff contains only the orphan deletion, readiness move/import updates, dead locale keys, applied spec deltas, narrow current-document corrections, and the authorized `mobile/app.config.ts` comment-path correction; verify the sensitive config diff is comment-only and no OpenAPI/generated client, server migration, native/store/EAS/Firebase value, deployment/CI, dependency, or legacy Flutter path changed.
