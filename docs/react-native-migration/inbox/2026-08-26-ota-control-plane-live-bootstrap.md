@@ -50,12 +50,11 @@ The credential was prepared on the production-access machine with this no-stdout
 doctl kubernetes cluster kubeconfig save cluster01 --expiry-seconds 600
 
 OTA_CONFIG_DIR="$HOME/.config/timecalendar-ota"
-install -d -m 700 -o "$(id -un)" -g "$(id -gn)" "$OTA_CONFIG_DIR"
+install -d -m 700 "$OTA_CONFIG_DIR"
 umask 077
 kubectl get secret -n timecalendar-ota timecalendar-ota-env-secret \
   -o jsonpath='{.data.ADMIN_PASSWORD}' \
   | base64 -d > "$OTA_CONFIG_DIR/admin-password"
-chown "$(id -un):$(id -gn)" "$OTA_CONFIG_DIR/admin-password"
 chmod 600 "$OTA_CONFIG_DIR/admin-password"
 ```
 

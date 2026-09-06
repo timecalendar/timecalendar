@@ -316,7 +316,7 @@ dev-cycle squad also has long-lived per-agent worktrees (`planner`, `applier`,
 `simplifier`, `reviewer`, `foundingengineer`) in the same directory. Example live layout:
 
 ```
-<checkout>/                        [main]   ← main checkout
+<checkout>/              [main]   ← main checkout
 <checkout>-worktrees/
   ├── foundingengineer   [agent/foundingengineer]
   ├── planner            [agent/planner]

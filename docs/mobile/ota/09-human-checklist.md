@@ -77,8 +77,8 @@ new key in the dashboard (**R2 → API → Manage API tokens** — Object Read &
 the workstation that has `kubectl` + `kubeseal` (in `~/.local/bin`) and the `paperclip-agent`
 kubeconfig, whose `paperclip-agent-kubeseal` Role allows online sealing (fetching the public
 sealing cert — never decryption, which only the in-cluster controller can do). Hand values to an
-agent via a file on that host (e.g. `~/.config/timecalendar-ota/r2.env`), never chat. The sealing
-command:
+agent via a file on that host (e.g. `~/.config/timecalendar-ota/r2.env`), never chat. The
+sealing command:
 
 ```bash
 printf '%s' '<value>' | kubeseal --raw \

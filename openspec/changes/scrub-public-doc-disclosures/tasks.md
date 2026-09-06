@@ -42,9 +42,13 @@ item needs a human, and it is different in every note.
 
 - [x] 3.1 `docs/react-native-migration/inbox/2026-08-26-ota-control-plane-live-bootstrap.md` —
       four occurrences in one fenced recipe that writes a credential file. Re-root the recipe
-      so it still runs and still shows the same permissions, ownership and no-stdout handling;
-      the operator must be able to follow it unchanged. The surrounding prose about not printing
-      the value stays as it is.
+      so it still runs and still ends in the same file state — a `700` directory and a `600`
+      file readable only by the account that ran it — with the same no-stdout handling; the
+      operator must be able to follow it unchanged. Once the recipe is rooted at the running
+      account's home, the original's explicit `chown`/`-o`/`-g` to a *named* account can only
+      restate that account's own identity back to itself, so it is dropped rather than rewritten
+      into a self-assignment that reads like it does something. The surrounding prose about not
+      printing the value stays as it is.
 
 ## 4. Developer environment handbook
 
