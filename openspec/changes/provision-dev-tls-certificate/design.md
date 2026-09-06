@@ -61,10 +61,16 @@ of why it was never automated.
 the root `.gitignore` next to the existing `ci/keys/` entry. `ssl.cnf` and both scripts stay
 tracked, so the *recipe* is reviewable and the *material* is local.
 
-Alternative: regenerate and re-commit with a longer `-days`. Rejected. It is the same defect
-with a later date — the mode that produced this ticket — and it keeps a private key in a public
-repository for no benefit. The key is worthless, but "worthless" is a judgement a reader has to
-make, and it makes `credential-material` a permanent match on the default branch.
+Alternative: regenerate and re-commit with a longer `-days`. Rejected, and no longer available.
+It is the same defect with a later date — the mode that produced this ticket — and it keeps a
+private key in a public repository for no benefit. The key is worthless, but "worthless" is a
+judgement a reader has to make, and it makes `credential-material` a permanent match on the
+default branch. That match is also a deliberate, standing refusal: this path is excluded from
+the tolerated-findings set on purpose, so a branch that commits *any* key here fails the content
+gate with no remediation open to the author. Untracking is the only shape of this fix that can
+merge. Measured on this branch: a diff that only deletes the two files scans clean (`added: 0`,
+`total: 0`), while the same file's contents supplied as text scans as one `credential-material`
+finding — so the deletion is what clears the gate, not luck.
 
 Alternative: keep the pair tracked and add a CI check that fails when it nears expiry.
 Rejected. It converts a silent breakage into a recurring chore on the whole team, and still

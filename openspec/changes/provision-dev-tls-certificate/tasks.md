@@ -97,7 +97,9 @@
 
 - [ ] 5.3 Grep the **whole** of every document touched (not only the changed hunks) for
   disclosure-pattern categories before committing — `docs/agent-dev-environment.md` in particular
-  already carries identity and host content, and the disclosure scan only reads added lines.
+  already carries identity and host content, and the scan reads every line of every file the
+  branch touches, not only the added ones. A hit on a line you did not add still fails the gate,
+  so read the report's per-finding split and scrub what this change introduces.
 
 - [ ] 5.4 Confirm no Architecture Book change is required: `grep -rn "certificat" docs/mobile/`
   should find nothing that this change contradicts. Nothing under `mobile/` moves, so no Book
@@ -153,3 +155,9 @@ wonder why step 3 is a yellow line.
   `127.0.0.1` via `/etc/hosts`, used by no CI path and unrelated to production TLS) and why
   removing it is safe. Run the `disclosure-scan` preflight on the final title and body before
   every `gh pr create`/`gh pr edit`/`gh pr comment`.
+
+- [ ] 7.3 Run the `disclosure-scan` preflight once more on the finished branch with no text
+  payload, so it reads the diff itself, and confirm the report shows `added: 0`. The two `.pem`
+  paths must appear nowhere in `findings` — a deleted file is not scanned, so a finding on either
+  path means the deletion did not actually land in the index. This is the check that proves the
+  committed key is gone, and it is stronger than reading `git ls-files` alone.
