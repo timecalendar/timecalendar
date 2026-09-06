@@ -50,7 +50,6 @@ const ALLOWLIST_PATH = resolve(HERE, "disclosure-allowlist.json");
 // A derived token shorter than this is a word before it is an identity, and
 // would match prose everywhere.
 const MIN_DERIVED_LENGTH = 4;
-const MIN_CONFIGURED_LENGTH = 3;
 
 export const FINDING_CLASSES = {
   DERIVED: "derived-identity",
@@ -185,10 +184,10 @@ export function parseConfiguredPatterns(raw) {
     const at = line.indexOf(PROBE_DELIMITER);
     const pattern = at === -1 ? line : line.slice(0, at);
     const probe = at === -1 ? null : line.slice(at + PROBE_DELIMITER.length);
-    // The guard belongs to the pattern column: applied to the joined line, a
-    // two-character expression with a long probe slips past the check that
-    // exists to reject it.
-    if (pattern.length < MIN_CONFIGURED_LENGTH) return;
+    // Only blank records are absent. Every nonblank expression must compile
+    // and activate; silently dropping a short one makes a present overlay look
+    // absent, which is indistinguishable from a half-loaded pattern list.
+    if (!pattern) return;
     // Dedupe on the pattern too. One expression with two probes is one entry.
     const key = pattern.toLowerCase();
     if (seen.has(key)) return;
@@ -323,17 +322,23 @@ export function isExemptPublishedIdentifier(text, index, allowlist) {
 // prose sentences, which routinely carry two identities on one line; counting
 // lines silently halves the true figure, and the remediation "scrub this line"
 // then scrubs one of two.
-function countUnexemptMatches(text, compiled, allowlist) {
-  let count = 0;
+function unexemptMatchRanges(text, compiled, allowlist) {
+  const ranges = [];
   for (const pattern of compiled) {
     pattern.lastIndex = 0;
     let match;
     while ((match = pattern.exec(text)) !== null) {
-      if (!isExemptPublishedIdentifier(text, match.index, allowlist)) count += 1;
+      if (!isExemptPublishedIdentifier(text, match.index, allowlist)) {
+        ranges.push([match.index, match.index + match[0].length]);
+      }
       if (match.index === pattern.lastIndex) pattern.lastIndex += 1;
     }
   }
-  return count;
+  return ranges;
+}
+
+function countUnexemptMatches(text, compiled, allowlist) {
+  return unexemptMatchRanges(text, compiled, allowlist).length;
 }
 
 const EMAIL_RE =
@@ -350,12 +355,13 @@ const CO_AUTHOR_RE = /^\s*co-?authored-by:\s*(.+)$/i;
 
 // Occurrence counts per class. `structuralClasses` is the same answer without
 // the counts, for callers that only ask whether a line is clean.
-export function structuralCounts(text, allowlist) {
-  const counts = new Map();
-  const bump = (className) =>
-    counts.set(className, (counts.get(className) ?? 0) + 1);
+function structuralMatches(text, allowlist) {
+  const matches = [];
+  const add = (className, match) =>
+    matches.push({ className, start: match.index, end: match.index + match[0].length });
 
-  for (const [, localPart, domain] of text.matchAll(EMAIL_RE)) {
+  for (const match of text.matchAll(EMAIL_RE)) {
+    const [, localPart, domain] = match;
     const tld = domain.split(".").pop().toLowerCase();
     // A pinned version — `setup-helm@v4.3.1`, `react-native@0.81.5` — is
     // email-shaped, and workflows and docs are full of them. A real top-level
@@ -365,7 +371,7 @@ export function structuralCounts(text, allowlist) {
     if (allowlist.fileExtensionTlds.has(tld)) continue;
     if (allowlist.emailLocalParts.has(localPart.toLowerCase())) continue;
     if (domainIsAllowed(domain, allowlist.emailDomains)) continue;
-    bump(FINDING_CLASSES.EMAIL);
+    add(FINDING_CLASSES.EMAIL, match);
   }
 
   for (const match of text.matchAll(PROFILE_RE)) {
@@ -375,18 +381,19 @@ export function structuralCounts(text, allowlist) {
     const after = text.slice(match.index + match[0].length);
     if (/^[/\w~-]/.test(after)) continue;
     if (allowlist.githubLogins.has(match[1].toLowerCase())) continue;
-    bump(FINDING_CLASSES.PROFILE_URL);
+    add(FINDING_CLASSES.PROFILE_URL, match);
   }
 
   // Exempt by *prefix*, never by account. Allowlisting the account a fleet runs
   // under discards every host path that fleet would realistically leak, which
   // is the whole category; a toolchain install path under a shared account is
   // the narrow, published thing that has to keep passing.
-  for (const [, account, sub] of text.matchAll(HOME_RE)) {
+  for (const match of text.matchAll(HOME_RE)) {
+    const [, account, sub] = match;
     const prefix = account.toLowerCase();
     if (allowlist.homePathPrefixes.has(prefix)) continue;
     if (sub && allowlist.homePathPrefixes.has(prefix + sub.toLowerCase())) continue;
-    bump(FINDING_CLASSES.HOME_PATH);
+    add(FINDING_CLASSES.HOME_PATH, match);
   }
 
   const trailer = text.match(CO_AUTHOR_RE);
@@ -394,10 +401,18 @@ export function structuralCounts(text, allowlist) {
     const address = trailer[1].match(/<([^>]+)>/)?.[1] ?? trailer[1];
     const localPart = address.split("@")[0].trim().toLowerCase();
     if (!allowlist.emailLocalParts.has(localPart)) {
-      bump(FINDING_CLASSES.CO_AUTHOR);
+      add(FINDING_CLASSES.CO_AUTHOR, trailer);
     }
   }
 
+  return matches;
+}
+
+export function structuralCounts(text, allowlist) {
+  const counts = new Map();
+  for (const { className } of structuralMatches(text, allowlist)) {
+    counts.set(className, (counts.get(className) ?? 0) + 1);
+  }
   return counts;
 }
 
@@ -414,6 +429,33 @@ export function isCreditPath(file, allowlist) {
   return allowlist.creditPaths.some(
     (prefix) => file === prefix || file.startsWith(prefix),
   );
+}
+
+function redactPathLocation(text, derivedPatterns, configured, allowlist) {
+  const ranges = [
+    ...unexemptMatchRanges(text, derivedPatterns, allowlist),
+    ...unexemptMatchRanges(text, configured, allowlist),
+    ...structuralMatches(text, allowlist).map(({ start, end }) => [start, end]),
+  ]
+    .filter(([start, end]) => end > start)
+    .sort(([a], [b]) => a - b);
+
+  if (!ranges.length) return text;
+
+  const merged = [];
+  for (const [start, end] of ranges) {
+    const previous = merged.at(-1);
+    if (previous && start <= previous[1]) previous[1] = Math.max(previous[1], end);
+    else merged.push([start, end]);
+  }
+
+  let redacted = "";
+  let cursor = 0;
+  for (const [start, end] of merged) {
+    redacted += `${text.slice(cursor, start)}[REDACTED]`;
+    cursor = end;
+  }
+  return redacted + text.slice(cursor);
 }
 
 // A record is `{ source, location, text }`. `derived` is a list of literal
@@ -437,10 +479,14 @@ export function scanRecords(records, { derived, configured, allowlist }) {
       existing.count += count;
       return;
     }
+    const safePath =
+      record.source === "path"
+        ? redactPathLocation(record.text, derivedPatterns, configured, allowlist)
+        : null;
     const finding = {
       source: record.source,
-      location: record.location,
-      file: record.file,
+      location: safePath ?? record.location,
+      file: safePath ?? record.file,
       line: record.line,
       class: className,
       count,

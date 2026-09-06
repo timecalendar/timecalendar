@@ -8,8 +8,10 @@
 // is exactly the hole someone would later hide a real disclosure in.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -350,12 +352,6 @@ test("three lines are three entries, mixed columns and all", () => {
   assert.deepEqual(loaded.selfTest, { covered: 2, failed: [] });
 });
 
-test("the minimum length applies to the pattern column, not the joined line", () => {
-  // A two-character expression with a long probe would otherwise slip past the
-  // guard that exists to reject it.
-  assert.deepEqual(parseConfiguredPatterns(withProbe("ab", "abababababab")), []);
-});
-
 test("an entry with two probes is one entry", () => {
   const loaded = loadConfigured(
     [withProbe("widget", "widget"), withProbe("widget", "a widget")].join("\n"),
@@ -608,7 +604,7 @@ const WORKFLOW = resolve(REPO, ".github/workflows/ci-build-deploy.yml");
 
 // An empty range: the entry point runs end to end over real git, and the only
 // thing under test is what it decides, not what the branch happens to contain.
-function runMain(env) {
+function runMain(env, argv = ["--base", "HEAD", "--head", "HEAD", "--cwd", REPO]) {
   const output = [];
   const capture = (...args) => output.push(args.join(" "));
   const [log, error] = [console.log, console.error];
@@ -616,7 +612,7 @@ function runMain(env) {
   console.error = capture;
   try {
     return {
-      code: main(["--base", "HEAD", "--head", "HEAD", "--cwd", REPO], env),
+      code: main(argv, env),
       output: output.join("\n"),
     };
   } finally {
@@ -631,6 +627,13 @@ test("an empty range with no secret passes, and the log says which layers ran", 
   assert.match(output, /structural: on/);
   assert.match(output, /configured secret: absent/);
   assert.match(output, /derived and structural layers still apply/);
+});
+
+test("a short nonblank configured expression activates instead of looking absent", () => {
+  const { code, output } = runMain({ DISCLOSURE_PATTERNS: "x" });
+  assert.equal(code, 0);
+  assert.match(output, /configured secret: present, 1 entries, 1 compiled/);
+  assert.doesNotMatch(output, /configured secret: absent/);
 });
 
 test("the log reports entries, compiles and self-test coverage separately", () => {
@@ -667,6 +670,37 @@ test("a configured pattern that does not compile fails the job without printing 
   assert.equal(code, 2, "fails closed rather than scanning without the pattern");
   assert.ok(!output.includes(broken), "the entry is the secret and is never printed");
   assert.match(output, /DISCLOSURE_PATTERNS entry 2 is not a valid regular expression/);
+});
+
+test("a matched path is redacted everywhere in end-to-end output", (t) => {
+  const repo = mkdtempSync(join(tmpdir(), "disclosure-path-"));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const git = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
+  const token = ["fixture", "path", "token"].join("-");
+
+  git("init", "--quiet");
+  git("config", "user.name", "Fixture Bot");
+  git("config", "user.email", "noreply@example.com");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  git("add", "README.md");
+  git("commit", "--quiet", "-m", "base");
+  const base = git("rev-parse", "HEAD").trim();
+
+  const directory = join(repo, "docs", token);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "notes.md"), "safe fixture\n");
+  git("add", ".");
+  git("commit", "--quiet", "-m", "add fixture path");
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.ok(!output.includes(token));
+  assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md/);
+  assert.match(output, /docs\/\[REDACTED\]\/notes\.md/);
+  assert.match(output, /configured-pattern/);
 });
 
 test("CI invokes the scan and checks out enough history to derive from", () => {
