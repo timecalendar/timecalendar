@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import { AccessibilityInfo, Alert, StyleSheet } from "react-native"
+import { AccessibilityInfo, Alert, FlatList, StyleSheet } from "react-native"
 
 import {
   useRenameCalendar,
@@ -176,11 +176,19 @@ describe("UserCalendarsScreen", () => {
 
   it("renders calendars through an id-keyed virtualized list", async () => {
     const calendars = [calendar(), calendar({ id: "cal-2", name: "L3" })]
+    const renderList = jest.spyOn(FlatList.prototype, "render")
     mockUseUserCalendars.mockReturnValue(calendars)
     await render(<UserCalendarsScreen />)
 
-    const list = screen.getByTestId("user-calendars-list")
-    expect(list.type).toBe("RCTScrollView")
+    const list = (
+      renderList.mock.contexts as FlatList<ReturnType<typeof calendar>>[]
+    ).find((instance) => instance.props.testID === "user-calendars-list")
+    if (!list)
+      throw new Error("Expected UserCalendarsScreen to render FlatList")
+    expect(list.props.data).toBe(calendars)
+    expect(list.props.keyExtractor?.(calendars[0]!, 0)).toBe("cal-1")
+    expect(list.props.keyExtractor?.(calendars[1]!, 1)).toBe("cal-2")
+    renderList.mockRestore()
     expect(
       StyleSheet.flatten(list.props.contentContainerStyle).paddingBottom,
     ).toBe(Spacing.four)
@@ -297,6 +305,50 @@ describe("UserCalendarsScreen", () => {
     )
     expect(actions.setVisible).toHaveBeenCalledTimes(2)
     expect(actions.setVisible).toHaveBeenLastCalledWith("cal-1", true)
+  })
+
+  it("does not let a delayed prior echo acknowledge a newer operation", async () => {
+    const hideWrite = deferred<boolean>()
+    const showWrite = deferred<boolean>()
+    actions.setVisible
+      .mockReturnValueOnce(hideWrite.promise)
+      .mockReturnValueOnce(showWrite.promise)
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    const view = await render(<UserCalendarsScreen />)
+    const switchName = "Show ENSEEIHT in the app"
+
+    await fireEvent(
+      screen.getByRole("switch", { name: switchName }),
+      "valueChange",
+      false,
+    )
+    await act(async () => {
+      hideWrite.resolve(true)
+      await hideWrite.promise
+    })
+
+    await fireEvent(
+      screen.getByRole("switch", { name: switchName }),
+      "valueChange",
+      true,
+    )
+    expect(actions.setVisible).toHaveBeenLastCalledWith("cal-1", true)
+
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: false })])
+    await view.rerender(<UserCalendarsScreen />)
+    expect(
+      screen.getByRole("switch", { name: switchName, checked: true }),
+    ).toBeTruthy()
+
+    await act(async () => {
+      showWrite.resolve(true)
+      await showWrite.promise
+    })
+    mockUseUserCalendars.mockReturnValue([calendar({ visible: true })])
+    await view.rerender(<UserCalendarsScreen />)
+    expect(
+      screen.getByRole("switch", { name: switchName, checked: true }),
+    ).toBeTruthy()
   })
 
   it("discards an old optimistic value after canonical visibility changes", async () => {

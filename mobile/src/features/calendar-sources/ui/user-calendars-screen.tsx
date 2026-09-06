@@ -162,7 +162,9 @@ export function UserCalendarsScreen() {
                   calendar.visible,
                   visibility.operationFor(calendar.id),
                 )}
-                onToggle={(visible) => visibility.toggle(calendar.id, visible)}
+                onToggle={(visible) =>
+                  visibility.toggle(calendar.id, visible, calendar.visible)
+                }
                 onDelete={confirmDelete}
                 onRename={setRenameTarget}
               />

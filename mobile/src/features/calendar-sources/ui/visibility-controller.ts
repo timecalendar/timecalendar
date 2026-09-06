@@ -6,6 +6,7 @@ export type VisibilityOperation = {
   id: number
   target: boolean
   status: "pending" | "awaitingCanonical"
+  canAcknowledge: boolean
 }
 
 export type VisibilityOperations = Readonly<Record<string, VisibilityOperation>>
@@ -37,8 +38,21 @@ export function visibilityReducer(
     let next = state
     for (const calendar of action.calendars) {
       const operation = next[calendar.id]
-      if (operation?.target !== calendar.visible) continue
-      next = withoutOperation(next, calendar.id)
+      if (!operation) continue
+
+      if (operation.target === calendar.visible) {
+        if (operation.canAcknowledge) {
+          next = withoutOperation(next, calendar.id)
+        }
+        continue
+      }
+
+      if (!operation.canAcknowledge) {
+        next = {
+          ...next,
+          [calendar.id]: { ...operation, canAcknowledge: true },
+        }
+      }
     }
     return next
   }
@@ -87,7 +101,11 @@ export function useVisibilityController(
     dispatch({ type: "reconcile", calendars })
   }
 
-  const toggle = (calendarId: string, target: boolean) => {
+  const toggle = (
+    calendarId: string,
+    target: boolean,
+    canonicalVisible: boolean,
+  ) => {
     if (inFlight.current.has(calendarId)) return
 
     inFlight.current.add(calendarId)
@@ -95,7 +113,12 @@ export function useVisibilityController(
     dispatch({
       type: "start",
       calendarId,
-      operation: { id: operationId, target, status: "pending" },
+      operation: {
+        id: operationId,
+        target,
+        status: "pending",
+        canAcknowledge: canonicalVisible !== target,
+      },
     })
 
     void setVisible(calendarId, target).then(

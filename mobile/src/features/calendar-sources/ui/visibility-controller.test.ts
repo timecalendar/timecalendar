@@ -5,7 +5,12 @@ import {
   visibleFromOperation,
 } from "./visibility-controller"
 
-const pending = { id: 1, target: false, status: "pending" as const }
+const pending = {
+  id: 1,
+  target: false,
+  status: "pending" as const,
+  canAcknowledge: true,
+}
 
 describe("visibilityReducer", () => {
   it("starts an id-keyed operation and exposes its target", () => {
@@ -57,7 +62,12 @@ describe("visibilityReducer", () => {
 
   it("ignores stale success and failure completions", () => {
     const newest: VisibilityOperations = {
-      "cal-1": { id: 2, target: true, status: "pending" },
+      "cal-1": {
+        id: 2,
+        target: true,
+        status: "pending",
+        canAcknowledge: true,
+      },
     }
 
     expect(
@@ -79,7 +89,12 @@ describe("visibilityReducer", () => {
   it("leaves unrelated operations intact during reconciliation", () => {
     const state: VisibilityOperations = {
       "cal-1": pending,
-      "cal-2": { id: 2, target: true, status: "awaitingCanonical" },
+      "cal-2": {
+        id: 2,
+        target: true,
+        status: "awaitingCanonical",
+        canAcknowledge: true,
+      },
     }
 
     expect(
@@ -94,5 +109,32 @@ describe("visibilityReducer", () => {
         { id: "cal-2", visible: false },
       ]),
     ).toBe(state)
+  })
+
+  it("does not acknowledge equality that predates an operation", () => {
+    const started: VisibilityOperations = {
+      "cal-1": {
+        id: 2,
+        target: true,
+        status: "pending",
+        canAcknowledge: false,
+      },
+    }
+
+    const staleEquality = reconcileVisibilityOperations(started, [
+      { id: "cal-1", visible: true },
+    ])
+    expect(staleEquality).toBe(started)
+
+    const delayedPreviousEcho = reconcileVisibilityOperations(staleEquality, [
+      { id: "cal-1", visible: false },
+    ])
+    expect(delayedPreviousEcho["cal-1"]?.canAcknowledge).toBe(true)
+
+    expect(
+      reconcileVisibilityOperations(delayedPreviousEcho, [
+        { id: "cal-1", visible: true },
+      ]),
+    ).toEqual({})
   })
 })
