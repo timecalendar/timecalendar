@@ -94,11 +94,19 @@ cd server && npm run dev
 
 ## Mobile app
 
-The Flutter mobile app lives in [`app/`](./app). To run it against this local
+The React Native (Expo) app lives in [`mobile/`](./mobile) — see the
+[mobile README](./mobile/README.md) for the toolchain (Node 24, JDK 17, Android
+SDK, Xcode), the dev-client build, and how to point a physical device at the
+server started above on `:3005`. It is a standalone npm project with its own
+`npm install`; the Architecture Book is at
+[`docs/mobile/architecture-book/`](./docs/mobile/architecture-book/).
+
+The legacy Flutter app lives in [`app/`](./app). To run it against this local
 dev env (e.g. on an iOS simulator), first run `npm run setup` to wire up the
-`/etc/hosts` entries, `web/.env.local`, and the simulator's trusted dev cert,
-then follow the [app README](./app/README.md). The app talks to the API server
-started above on `:3005`.
+`/etc/hosts` entries, `web/.env.local`, and the simulator's trusted dev cert
+(the cert step is macOS-only; the hosts step needs sudo — a physical Android
+device needs neither, it reaches the server over `adb reverse`), then follow the
+[app README](./app/README.md).
 
 ## Tests
 
