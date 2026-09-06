@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import {
   type LayoutChangeEvent,
   type StyleProp,
@@ -29,9 +29,7 @@ export function useAdaptiveLayout(lane: ResponsiveLane): AdaptiveLayout {
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const nextWidth = event.nativeEvent.layout.width
     if (Number.isFinite(nextWidth) && nextWidth > 0) {
-      setOwnerWidth((currentWidth) =>
-        currentWidth === nextWidth ? currentWidth : nextWidth,
-      )
+      setOwnerWidth(nextWidth)
     }
   }, [])
   const laneStyle = useMemo<ViewStyle>(() => {
@@ -50,9 +48,8 @@ export function useAdaptiveLayout(lane: ResponsiveLane): AdaptiveLayout {
   return { metrics, laneStyle, onLayout }
 }
 
-export type AdaptiveContentProps = Omit<ViewProps, "children"> & {
+export type AdaptiveContentProps = ViewProps & {
   lane: ResponsiveLane
-  children?: ReactNode
   contentContainerStyle?: StyleProp<ViewStyle>
 }
 
