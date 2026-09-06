@@ -21,6 +21,6 @@
 
 - [x] 4.1 Run `bash -n mobile/e2e/test_run_e2e.sh` and `./mobile/e2e/test_run_e2e.sh`; record the four-row mutation result as baseline PASS and each named mutation CAUGHT, with the existing malformed-command-entry proof still CAUGHT.
 - [x] 4.2 Run `./mobile/e2e/test_ci_mobile_e2e.sh` to confirm the existing baseline CI job still invokes the focused proof and the native workflow contract remains unchanged.
-- [ ] 4.3 Run the repository Prettier check covering the edited harness (`cd mobile && npx prettier --check e2e/test_run_e2e.sh`), `openspec validate cover-mobile-e2e-retry-classifier-discriminations`, and `git diff --check`.
-- [ ] 4.4 Use the standard PR CI run on the exact implementation head as the CI proof test; do not add the native `run-e2e` label or claim simulator/device execution for this shell-only coverage change.
-- [ ] 4.5 Post the final baseline/mutation matrix and verification commands on [TIM-284](/TIM/issues/TIM-284) as completion evidence for downstream review.
+- [x] 4.3 Run `bash -n mobile/e2e/test_run_e2e.sh`, `openspec validate cover-mobile-e2e-retry-classifier-discriminations`, and `git diff --check`. The shell harness is outside the repository Prettier configuration because no shell parser or plugin is installed; do not add a formatter dependency for this test-only change.
+- [x] 4.4 Use the standard PR CI run on the exact implementation head as the CI proof test; do not add the native `run-e2e` label or claim simulator/device execution for this shell-only coverage change.
+- [x] 4.5 Post the final baseline/mutation matrix and verification commands on [TIM-284](/TIM/issues/TIM-284) as completion evidence for downstream review.
