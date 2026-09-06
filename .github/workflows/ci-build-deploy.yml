@@ -37,6 +37,38 @@ jobs:
     - name: Test pre-commit hook wiring
       run: ./ci/test-git-hooks.sh
 
+  scan-disclosure:
+    name: Scan branch for disclosures
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+      with:
+        # The scan derives its identity patterns from this repository's own
+        # commit authors, and diffs against the merge base. A shallow clone has
+        # neither, and the scan fails closed rather than silently passing.
+        fetch-depth: 0
+
+    - name: Set up Node
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+
+    # No dependencies: the scan is plain Node and git.
+    - name: Test the scan
+      run: node --test ci/disclosure-scan.test.mjs
+
+    # DISCLOSURE_PATTERNS is an optional overlay for strings this repository's
+    # history does not contain. It is absent on forks and until an owner sets
+    # it; the derived and structural layers run either way, and the job logs
+    # which layers were active as counts only. Never echo a match: this log is
+    # public, so printing the offending line would republish it.
+    - name: Scan for disclosures
+      env:
+        DISCLOSURE_PATTERNS: ${{ secrets.DISCLOSURE_PATTERNS }}
+      run: node ci/disclosure-scan.mjs --base origin/main
+
   build-server:
     name: Build server image
     runs-on: ubuntu-latest
