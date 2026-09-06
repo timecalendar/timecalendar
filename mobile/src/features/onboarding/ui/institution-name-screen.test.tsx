@@ -1,8 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router } from "expo-router"
+import type { ReactNode } from "react"
 
 import { useImportDraft } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
+import { usePlatform } from "@/test-support/platform"
 
 import InstitutionNameScreen from "./institution-name-screen"
 
@@ -11,6 +13,32 @@ import InstitutionNameScreen from "./institution-name-screen"
 // suites) and asserts the three things only this screen decides: the name is
 // REQUIRED here, the 100-character boundary bites on the TRIMMED value, and
 // entering the unlisted path clears the legacy persisted selection.
+jest.mock("react-native", () => {
+  const React = jest.requireActual<typeof import("react")>("react")
+  const actual =
+    jest.requireActual<typeof import("react-native")>("react-native")
+  const transparent = (testID: string) =>
+    function TransparentLayout({
+      children,
+      ...props
+    }: {
+      children?: ReactNode
+      [key: string]: unknown
+    }) {
+      return React.createElement(actual.View, { ...props, testID }, children)
+    }
+
+  const descriptors = Object.getOwnPropertyDescriptors(actual)
+  Reflect.deleteProperty(descriptors, "KeyboardAvoidingView")
+  Reflect.deleteProperty(descriptors, "ScrollView")
+  return Object.defineProperties(
+    {
+      KeyboardAvoidingView: transparent("keyboard-avoiding-layout"),
+      ScrollView: transparent("keyboard-scroll-layout"),
+    },
+    descriptors,
+  )
+})
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
 jest.mock("@/features/school-selection", () => ({ clearSelection: jest.fn() }))
 
@@ -110,5 +138,51 @@ describe("InstitutionNameScreen", () => {
     expect(mockSetUnlistedInstitution).toHaveBeenCalledWith(
       "Université Gustave Eiffel 🎓",
     )
+  })
+
+  describe("keyboard-safe layout", () => {
+    describe("on iOS", () => {
+      usePlatform("ios")
+
+      it("lifts the tappable Continue control above the keyboard", async () => {
+        const view = await render(<InstitutionNameScreen />)
+        const avoiding = view.getByTestId("keyboard-avoiding-layout")
+        const scroll = view.getByTestId("keyboard-scroll-layout")
+
+        expect(avoiding.props.behavior).toBe("padding")
+        expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
+        expect(scroll.props.contentContainerStyle).toEqual(
+          expect.objectContaining({ flexGrow: 1, justifyContent: "center" }),
+        )
+        expect(
+          scroll.queryAll(
+            (node) => node.props.testID === "onboarding-institution-continue",
+          ),
+        ).toHaveLength(1)
+        expect(
+          avoiding.queryAll(
+            (node) => node.props.testID === "onboarding-institution-continue",
+          ),
+        ).toHaveLength(1)
+      })
+    })
+
+    describe("on Android", () => {
+      usePlatform("android")
+
+      it("keeps resize-driven behavior while allowing taps through the keyboard", async () => {
+        const view = await render(<InstitutionNameScreen />)
+        const avoiding = view.getByTestId("keyboard-avoiding-layout")
+        const scroll = view.getByTestId("keyboard-scroll-layout")
+
+        expect(avoiding.props.behavior).toBeUndefined()
+        expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
+        expect(
+          scroll.queryAll(
+            (node) => node.props.testID === "onboarding-institution-continue",
+          ),
+        ).toHaveLength(1)
+      })
+    })
   })
 })

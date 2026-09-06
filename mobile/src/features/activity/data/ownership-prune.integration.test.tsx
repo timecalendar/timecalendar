@@ -33,7 +33,7 @@ jest.mock("@/features/calendar-sources/data", () => ({
 }))
 
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { useActivityOwnershipPrune } =
+const { useActivityOwnershipReconciliation } =
   require("./lifecycle") as typeof import("./lifecycle")
 const repository = require("./repository") as typeof import("./repository")
 /* eslint-enable @typescript-eslint/no-require-imports */
@@ -75,7 +75,7 @@ it("removes only the departed calendar history and preserves Activity state", as
   const stateBefore = await repository.readActivityState()
 
   mockUseCalendars.mockReturnValue([{ id: "cal-kept" }, { id: "cal-removed" }])
-  const rendered = await renderHook(() => useActivityOwnershipPrune())
+  const rendered = await renderHook(() => useActivityOwnershipReconciliation())
 
   mockUseCalendars.mockReturnValue([{ id: "cal-kept" }])
   await act(async () => {

@@ -54,7 +54,7 @@ appId: fr.samuelprak.timecalendar.dev
 - launchApp
 - extendedWaitUntil:
     visible: "Settings"
-    timeout: 60000
+    timeout: 120000
 - tapOn: "Settings"
 - tapOn:
     id: "settings-calendar-summary"

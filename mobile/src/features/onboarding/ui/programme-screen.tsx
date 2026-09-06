@@ -1,7 +1,15 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet, TextInput, View } from "react-native"
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
@@ -101,77 +109,92 @@ export default function ProgrammeScreen() {
         style={stepStyles.safeArea}
         edges={["left", "right", "bottom"]}
       >
-        <View style={stepStyles.intro}>
-          <ThemedText type="title">
-            {t("onboarding.programme.title")}
-          </ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t("onboarding.programme.helper")}
-          </ThemedText>
-        </View>
-
-        <ThemedText nativeID="onboarding-programme-label" type="smallBold">
-          {t("onboarding.programme.fieldLabel")}
-        </ThemedText>
-        <TextInput
-          testID="onboarding-programme-input"
-          accessibilityLabel={t("onboarding.programme.fieldLabel")}
-          accessibilityLabelledBy="onboarding-programme-label"
-          // Example only — a `placeholder` prop can never reach the draft.
-          placeholder={t("onboarding.programme.placeholder")}
-          placeholderTextColor={theme.textSecondary}
-          value={name}
-          onChangeText={(next) => {
-            setName(next)
-            if (errorKey !== null) setErrorKey(null)
-          }}
-          autoCapitalize="sentences"
-          autoCorrect={false}
-          returnKeyType="next"
-          onSubmitEditing={submit}
-          style={[
-            stepStyles.input,
-            { color: theme.text, borderColor: theme.backgroundSelected },
-          ]}
-        />
-
-        {errorKey !== null && (
-          <ThemedText
-            testID="onboarding-programme-error"
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
-          >
-            {t(errorKey)}
-          </ThemedText>
-        )}
-
-        <Pressable
-          testID="onboarding-programme-continue"
-          accessibilityRole="button"
-          accessibilityLabel={t("onboarding.programme.continueLabel")}
-          accessibilityState={{ disabled: !canContinue }}
-          disabled={!canContinue}
-          hitSlop={Spacing.two}
-          onPress={submit}
-          style={[
-            stepStyles.cta,
-            {
-              backgroundColor: theme.primaryStrong,
-              opacity: canContinue ? 1 : 0.5,
-            },
-          ]}
+        <KeyboardAvoidingView
+          style={stepStyles.keyboardAvoiding}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <ThemedText type="smallBold" themeColor="onPrimary">
-            {t("onboarding.programme.continue")}
-          </ThemedText>
-        </Pressable>
+          <ScrollView
+            contentContainerStyle={stepStyles.formContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={stepStyles.intro}>
+              <ThemedText type="title">
+                {t("onboarding.programme.title")}
+              </ThemedText>
+              <ThemedText themeColor="textSecondary">
+                {t("onboarding.programme.helper")}
+              </ThemedText>
+            </View>
+
+            <ThemedText nativeID="onboarding-programme-label" type="smallBold">
+              {t("onboarding.programme.fieldLabel")}
+            </ThemedText>
+            <TextInput
+              testID="onboarding-programme-input"
+              accessibilityLabel={t("onboarding.programme.fieldLabel")}
+              accessibilityLabelledBy="onboarding-programme-label"
+              // Example only — a `placeholder` prop can never reach the draft.
+              placeholder={t("onboarding.programme.placeholder")}
+              placeholderTextColor={theme.textSecondary}
+              value={name}
+              onChangeText={(next) => {
+                setName(next)
+                if (errorKey !== null) setErrorKey(null)
+              }}
+              autoCapitalize="sentences"
+              autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={submit}
+              style={[
+                stepStyles.input,
+                { color: theme.text, borderColor: theme.backgroundSelected },
+              ]}
+            />
+
+            {errorKey !== null && (
+              <ThemedText
+                testID="onboarding-programme-error"
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+              >
+                {t(errorKey)}
+              </ThemedText>
+            )}
+          </ScrollView>
+
+          <Pressable
+            testID="onboarding-programme-continue"
+            accessibilityRole="button"
+            accessibilityLabel={t("onboarding.programme.continueLabel")}
+            accessibilityState={{ disabled: !canContinue }}
+            disabled={!canContinue}
+            hitSlop={Spacing.two}
+            onPress={submit}
+            style={[
+              stepStyles.cta,
+              styles.footerCta,
+              {
+                backgroundColor: theme.primaryStrong,
+                opacity: canContinue ? 1 : 0.5,
+              },
+            ]}
+          >
+            <ThemedText type="smallBold" themeColor="onPrimary">
+              {t("onboarding.programme.continue")}
+            </ThemedText>
+          </Pressable>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
+  footerCta: {
+    marginTop: Spacing.three,
+    marginBottom: Spacing.four,
+  },
   // Local: the Android header action, the only control this step adds to the
   // shared step frame. 48dp minimum in both axes (the iOS branch is a native
   // header item and is sized by the platform).

@@ -30,6 +30,14 @@ export const stepStyles = StyleSheet.create({
     justifyContent: "center",
     gap: Spacing.three,
   },
+  keyboardAvoiding: {
+    flex: 1,
+  },
+  formContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    gap: Spacing.three,
+  },
   intro: {
     gap: Spacing.three,
   },
