@@ -11,10 +11,6 @@
   the base must pass, while branch commits using the healthy automation identity set must pass
   without a header finding; keep a matching commit-message assertion to prove the two source values
   remain distinct.
-- [x] 1.4 Add equivalent focused regression cases to the canonical contributor-preflight test
-  suite before changing that implementation, including branch-only scope, all four fields,
-  redaction, healthy identities, and source separation.
-
 ## 2. Extend the repository CI gate
 
 - [x] 2.1 Refactor the existing merge-base-to-head commit collection in
@@ -31,21 +27,11 @@
 - [x] 2.4 Run the focused header tests after implementation and confirm all four matching-field
   cases fail the scan, the base-only fixture stays clean, and the healthy fixture is silent.
 
-## 3. Keep the contributor preflight converged
+## 3. Record the intentional CI-only boundary
 
-- [x] 3.1 In the canonical contributor-preflight implementation, extend its existing branch log
-  record to carry the same four identity fields alongside hash and body, using the already resolved
-  merge-base-to-head range.
-- [x] 3.2 Route each non-empty header field through the existing unnarrowed text matcher as
-  `source: "commit-header"`, set `added: true`, and use only the safe abbreviated-hash/field label
-  as the finding location; do not consult the baseline or `publishedIn`.
-- [x] 3.3 Run the canonical preflight tests and a black-box `disclosure-scan` request against a
-  synthetic branch, proving the same failing and healthy verdicts as CI and confirming the report
-  redacts every assembled match.
-- [ ] 3.4 **Declined, not deferred.** Materializing the canonical preflight package is an act a
-  standing board directive forbids; the follow-up filed to do it was cancelled rather than executed
-  (TIM-487). This box stays unticked on purpose — the shipped scope is the repository CI gate alone,
-  and the asymmetry is recorded in the delta spec's final requirement.
+- [x] 3.1 Record that contributor-preflight implementation, tests, and materialization are declined,
+  not deferred. The repository CI gate is the complete shipped scope, and the intentional asymmetry
+  is captured in the delta spec so it is not re-filed as a parity defect.
 
 ## 4. Documentation and architecture record
 

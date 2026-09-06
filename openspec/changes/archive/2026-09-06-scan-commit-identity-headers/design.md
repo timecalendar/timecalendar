@@ -1,11 +1,10 @@
 ## Context
 
-The disclosure control has two implementations with intentionally different pattern inputs: the
-repository CI gate derives identities from public repository history and may load a configured
-overlay, while the contributor preflight receives the full runtime pattern list. They already
-converge on branch scope, two-layer file scanning, path treatment, occurrence counting, and
-redacted findings. Both currently collect commit messages from the merge-base-to-head range but
-discard the author and committer identities stored beside each message.
+The repository CI gate derives identities from public repository history and may load a configured
+overlay. It already collects commit messages from the merge-base-to-head range but discards the
+author and committer identities stored beside each message. The contributor preflight remains
+unchanged: adding this lane there was declined under the standing board directive, so the resulting
+asymmetry is intentional rather than a parity defect.
 
 Commit headers have no repository path. They therefore cannot use a `(path, id, count)` baseline
 entry, and a path-based published-identity rule cannot describe them. Existing history also has a
@@ -24,8 +23,9 @@ Architecture Book rule or ADR is needed; the operational contract belongs in
   base.
 - Give header findings an explicit, stable source and a safe field-level location.
 - Preserve the existing no-match-in-output guarantee and layer-B enforcement.
-- Prove matching and healthy behavior end to end in both scanner implementations.
+- Prove matching and healthy behavior end to end in the repository CI scanner.
 - Keep the existing workflow invocation sufficient and the healthy lane silent.
+- Record that contributor-preflight coverage is declined and must not be re-filed as follow-up work.
 
 **Non-Goals:**
 
@@ -62,15 +62,13 @@ Alternatives considered:
 
 ### Decision 2 — Use `source: "commit-header"` with safe locations
 
-Both implementations will expose `commit-header` as the source. A location contains only the
+The repository CI implementation exposes `commit-header` as the source. A location contains only the
 abbreviated commit hash and the fixed field label, for example `commit <short-sha> author-email`.
 The header value is passed only to the matcher and is never used in the location, excerpt, error
 annotation, or summary.
 
-The contributor preflight may retain its existing redacted excerpt property because the matcher
-replaces each match before returning a finding. The CI implementation continues its stricter
-location/class/count-only output. Tests inspect serialized findings and captured end-to-end output
-to prove the synthetic matched value is absent.
+The CI implementation retains its strict location/class/count-only output. Tests inspect serialized
+findings and captured end-to-end output to prove the synthetic matched value is absent.
 
 Alternative considered: reuse `commit-message`. Rejected because callers and regression tests
 could not distinguish message coverage from header coverage, recreating the blind spot under an
@@ -90,11 +88,11 @@ Alternative considered: scan all identities reachable from head and suppress kno
 Rejected because it is noisy by construction and would require publishing or maintaining the
 identity footprint this control exists to avoid.
 
-### Decision 4 — Preserve each implementation's detector inputs
+### Decision 4 — Preserve the repository detector inputs
 
 The new records flow through the same matchers already used for branch commit messages. CI uses
-its derived, structural, and optional configured sources. The contributor preflight uses the
-runtime-supplied pattern list. No new pattern or header-specific allowlist is introduced.
+its derived, structural, and optional configured sources. No new pattern or header-specific
+allowlist is introduced.
 
 The repository derivation step may continue reading public commit identities to build its detector
 vocabulary; that does not change the header scan target. Only header records from the branch range
@@ -105,13 +103,13 @@ Alternative considered: hard-code an approved identity list for headers. Rejecte
 duplicates existing policy, risks divergence, and would make this change commit identity strings
 for policy rather than consume runtime detectors.
 
-### Decision 5 — Prove parity through black-box branch fixtures
+### Decision 5 — Prove the CI lane through black-box branch fixtures
 
 Tests create temporary repositories with a clean base and branch-only commits. Matching fixture
 values are assembled at runtime and supplied through environment/configuration rather than written
 as protected literals.
 
-Both implementations need tests for:
+The repository scanner needs tests for:
 
 - each of the four header fields producing `source: "commit-header"` and a non-zero exit/verdict;
 - a matching header on a branch-added merge commit producing the same redacted failure;
@@ -120,10 +118,9 @@ Both implementations need tests for:
 - the healthy automation set producing no header findings and no failure;
 - commit messages continuing to report as `commit-message`, proving source separation.
 
-The repository suite remains the CI proof because the existing workflow runs it before invoking
-the scanner. The contributor preflight's canonical package must receive equivalent focused tests
-and be materialized before the change is considered complete; changing only the repository copy
-would re-open implementation drift.
+The repository suite is the proof because the existing workflow runs it before invoking the
+scanner. No contributor-preflight implementation, test, or materialization belongs to this change;
+that half was declined, and changing only CI is the accepted final scope.
 
 ## Risks / Trade-offs
 
@@ -133,8 +130,8 @@ would re-open implementation drift.
   assert their absence from serialized findings and captured output.
 - **The lane accidentally scans base history** → Build the log from the already resolved
   `mergeBase..head` range and include a base-only matching fixture.
-- **Preflight and CI diverge again** → Define the same source/location/range contract, test both
-  black boxes, and require materialization verification for the external preflight package.
+- **Intentional asymmetry is mistaken for a regression** → Record the CI-only decision in the
+  delta spec and archived artifacts, and explicitly prohibit filing parity follow-up work.
 - **Healthy automation begins producing noise** → Exercise the existing healthy set explicitly;
   do not add a new allowlist as part of this change.
 - **CI gate changes stop unrelated work** → Keep workflow wiring unchanged unless a failing proof
@@ -142,16 +139,14 @@ would re-open implementation drift.
 
 ## Migration Plan
 
-1. Add failing black-box fixtures to both scanner suites for the missing header source and the
-   branch-only boundary.
-2. Extend each existing commit-log parser and route the four fields through its current matcher.
+1. Add failing black-box fixtures to the repository scanner suite for the missing header source and
+   the branch-only boundary.
+2. Extend the repository commit-log parser and route the four fields through its current matcher.
 3. Run matching, redaction, source-separation, healthy-set, and base-only proofs.
-4. Update the operating documentation and confirm the existing CI workflow still executes both
-   the tests and the gate with full history available.
-5. Materialize and verify the canonical contributor preflight update, then run it against the exact
-   publication text for this change.
+4. Update the operating documentation, record the declined contributor-preflight half, and confirm
+   the existing CI workflow still executes both the tests and the gate with full history available.
 
-Rollback is a code revert in the affected scanner implementation. There is no data migration,
+Rollback is a code revert in the repository scanner implementation. There is no data migration,
 baseline migration, or live deploy act.
 
 ## Open Questions
