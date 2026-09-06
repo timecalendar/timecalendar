@@ -2,7 +2,8 @@
 
 ## Purpose
 Define the local server Compose contract for worktree-isolated resources, overrideable host
-ports, dependency-only startup, and non-mutating configuration diagnostics.
+ports, dependency-only startup, non-mutating project and port diagnostics, and local TLS
+material that is provisioned rather than committed.
 ## Requirements
 ### Requirement: Worktree-scoped Compose identity
 
