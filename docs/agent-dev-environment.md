@@ -100,6 +100,26 @@ A GitHub auth failure late in a long run means the **~1-hour token expired**. Th
 not a broken environment and needs no infra escalation — the next heartbeat is issued
 a fresh token.
 
+The versioned `ci/check-commit-identity.sh` guard runs from `.husky/pre-commit` whenever
+`PAPERCLIP_RUN_ID` is present. It asks git for the author and committer identities it is
+about to record and requires both to match the single allowlisted delivery-bot identity.
+On refusal it names the expected identity and the field that differs, but deliberately
+withholds the resolved value because repository logs are public. With
+`PAPERCLIP_RUN_ID` absent, it exits before resolving either identity, so human commits
+are unaffected.
+
+This commit-time guard does not close the identity channel by itself:
+
+- `git commit --no-verify` skips it;
+- a worktree that never ran `bash bin/setup-worktree.sh` has no `.husky/_` and silently
+  runs no hook; and
+- git does not run `pre-commit` for commits created by `rebase`, `cherry-pick`, `merge`,
+  or `revert` (`git commit --amend` does run it).
+
+The separate, unskippable backstop is the CI lane that checks the real author and
+committer headers before merge. The guard also leaves host git configuration, host `gh`
+configuration, and the shared clone's `.git/config` unchanged.
+
 ### The dev host has **no KVM / nested virtualization**
 
 It is a cloud VPS. Android emulators cannot hardware-accelerate here, so
@@ -362,7 +382,9 @@ the pre-commit hook. Machine-global setup (`/etc/hosts`, cert trust from
     `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
     A future system should standardize on one footer; the point is that **every
     commit carries an attributable co-author footer**.
-- **Pre-commit hook** (`.husky/`, via root `prepare`/`husky`): `lint-staged`
+- **Pre-commit hook** (`.husky/`, via root `prepare`/`husky`): the
+  [delivery-identity guard](#github-delivery-identity-the-paperclip-github-app) runs
+  before `lint-staged`; `lint-staged`
   runs `dart format` + `bin/flutter-analyze.sh` on staged `*.dart` (the `app/`
   surface) and `eslint --cache --fix` on staged `mobile/` sources. In a worktree
   without `.husky/_/` **no hook runs at all and the commit succeeds silently** —

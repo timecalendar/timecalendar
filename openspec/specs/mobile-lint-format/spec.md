@@ -166,7 +166,7 @@ Lint SHALL report an error for use of the global `fetch` anywhere in hand-writte
 - **THEN** lint reports no violation
 
 ### Requirement: Pre-commit lints staged mobile files
-`mobile/package.json` SHALL declare a `lint-staged` configuration running `eslint --cache --fix` on staged JS/TS files, picked up by the root pre-commit hook through lint-staged's nested-config discovery. The root hook SHALL stay generic — a two-line `#!/bin/sh` script whose only action is `npx lint-staged` — carrying no mobile-specific knowledge and no husky-version-specific preamble. The hook SHALL invoke lint-staged through `npx` and SHALL be tracked with file mode `100755`, because those two properties are what make it run under either `core.hooksPath` value (git invokes it directly when the slot is `.husky`, and through husky's generated shim when the slot is `.husky/_`).
+`mobile/package.json` SHALL declare a `lint-staged` configuration running `eslint --cache --fix` on staged JS/TS files, picked up by the root pre-commit hook through lint-staged's nested-config discovery. The root hook SHALL carry no mobile-specific knowledge and no husky-version-specific preamble, and its contents SHALL be bounded to a `#!/bin/sh` shebang, `npx lint-staged`, and repository-wide guard invocations that each propagate their own failure explicitly (currently `./ci/check-commit-identity.sh || exit 1`, per the `agent-delivery-identity` capability). The hook SHALL invoke lint-staged through `npx` and SHALL be tracked with file mode `100755`, because those two properties are what make it run under either `core.hooksPath` value (git invokes it directly when the slot is `.husky`, and through husky's generated shim when the slot is `.husky/_`).
 
 #### Scenario: Staged mobile file with a violation blocks the commit
 - **WHEN** a mobile file containing an unfixable lint error is staged and `git commit` runs
@@ -183,6 +183,10 @@ Lint SHALL report an error for use of the global `fetch` anywhere in hand-writte
 #### Scenario: The tracked hook stays executable
 - **WHEN** the pre-commit hook is modified and `git ls-files -s .husky/pre-commit` is read
 - **THEN** the mode is `100755` — a hook recorded as `100644` is silently ignored by git under `core.hooksPath = .husky`, so the commit succeeds unlinted with only a suppressible `advice.ignoredHook` hint
+
+#### Scenario: The mobile lint gate still runs when a repository-wide guard passes
+- **WHEN** a guard line ahead of `npx lint-staged` exits 0 — the case for every human commit and every correctly-identified agent commit
+- **THEN** the hook continues to `npx lint-staged` unchanged, and mobile's nested lint-staged config is discovered exactly as before
 
 ### Requirement: CI gates mobile lint at zero warnings
 The `test-mobile` CI job SHALL run mobile lint with `--max-warnings 0` and fail on any error or warning.
