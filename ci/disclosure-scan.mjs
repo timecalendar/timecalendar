@@ -716,7 +716,7 @@ function contentAt(head, path, cwd) {
   return content.includes("\0") ? null : content;
 }
 
-function trackedPaths(head, allowlist, cwd) {
+function trackedPaths(head, cwd) {
   const output = git(["ls-tree", "-r", "-z", "--name-only", head], cwd);
   return output
     .split("\0")
@@ -750,7 +750,7 @@ function contentsAt(head, paths, cwd) {
 export function generateCiEntries({ head = "HEAD", derived, configured, allowlist, cwd }) {
   const derivedPatterns = derived.map(compileLiteralPattern);
   const entries = [];
-  const paths = trackedPaths(head, allowlist, cwd);
+  const paths = trackedPaths(head, cwd);
   const contents = contentsAt(head, paths, cwd);
   for (const path of paths) {
     // A pin is keyed by path, so a path that is itself a finding cannot be
@@ -826,6 +826,9 @@ export function scanWholeFiles({ files, head, baseline, derived, configured, all
 
 export function compareCiBaseline(committed, measured) {
   const actual = new Map(measured.map((entry) => [`${entry.path}\0${entry.id}`, entry.count]));
+  const committedKeys = new Set(
+    committed.ciEntries.map((entry) => `${entry.path}\0${entry.id}`),
+  );
   const findings = [];
   for (const entry of committed.ciEntries) {
     const count = actual.get(`${entry.path}\0${entry.id}`) ?? 0;
@@ -834,7 +837,7 @@ export function compareCiBaseline(committed, measured) {
   for (const entry of measured) {
     if (
       entry.id === FINDING_CLASSES.CONFIGURED &&
-      !committed.ciEntries.some((pin) => pin.path === entry.path && pin.id === entry.id)
+      !committedKeys.has(`${entry.path}\0${entry.id}`)
     ) {
       findings.push({ ...entry, measured: entry.count, kind: "unpinned-configured" });
     }

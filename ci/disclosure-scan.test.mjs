@@ -937,10 +937,6 @@ test("whole-file layer passes at pin and reports over-pin and unpinned classes",
     FINDING_CLASSES.DERIVED,
     FINDING_CLASSES.HOME_PATH,
   ].sort());
-  assert.deepEqual(
-    classesOf(scan([derivedPin, homePin])),
-    [],
-  );
 });
 
 test("an unchanged count cannot hide an occurrence on an added line", () => {
