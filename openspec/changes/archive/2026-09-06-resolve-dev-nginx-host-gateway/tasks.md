@@ -80,7 +80,7 @@
 
 ## 6. Archive and CI
 
-- [ ] 6.1 Rehearse the archive in a scratch copy before pushing the final head — never in the
+- [x] 6.1 Rehearse the archive in a scratch copy before pushing the final head — never in the
   worktree:
   `S="$PAPERCLIP_RUN_SCRATCH_DIR/archive-rehearsal"; rm -rf "$S"; mkdir -p "$S"; cp -r openspec "$S/openspec"; (cd "$S" && openspec archive resolve-dev-nginx-host-gateway -y && openspec validate --specs --strict)`.
   The delta is `## ADDED Requirements` only, so no header is reconciled against
@@ -89,11 +89,11 @@
   `+ 2 added, ~ 0, - 0, → 0`, then `openspec validate --specs --strict` 81/81. Appending inside
   an existing ADDED requirement keeps that pre-clear valid and must reproduce the same totals;
   introducing a MODIFIED or REMOVED block voids it and needs a fresh rehearsal.
-- [ ] 6.2 Run the real `openspec archive resolve-dev-nginx-host-gateway -y` and commit the merged
+- [x] 6.2 Run the real `openspec archive resolve-dev-nginx-host-gateway -y` and commit the merged
   spec inside this PR. The archive commit ships with the feature, never after it.
-- [ ] 6.3 Confirm CI is green on the final head. `.github/workflows/ci-build-deploy.yml`'s `test`
+- [x] 6.3 Confirm CI is green on the final head. `.github/workflows/ci-build-deploy.yml`'s `test`
   job consumes the base Compose file directly; it must pass unchanged, and the workflow must not
   be edited to obtain that proof.
-- [ ] 6.4 Run the disclosure scan against the exact PR title and body before every
+- [x] 6.4 Run the disclosure scan against the exact PR title and body before every
   `gh pr create` / `gh pr edit` / `gh pr comment`, and describe the repro with repo-relative
   paths only — no absolute host paths.
