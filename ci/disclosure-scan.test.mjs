@@ -712,6 +712,30 @@ test("a matched path is redacted everywhere in end-to-end output", (t) => {
   assert.match(output, /configured-pattern/);
 });
 
+test("a matched whole-file finding path is redacted everywhere in end-to-end output", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-whole-file-path-");
+  const token = ["fixture", "whole", "path"].join("-");
+  const directory = join(repo, "docs", token);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "notes.md"), `${token}\n`);
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+
+  writeFileSync(join(directory, "notes.md"), `${token}\nsafe fixture\n`);
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "touch fixture");
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.ok(!output.includes(token));
+  assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md,line=1/);
+  assert.match(output, /docs\/\[REDACTED\]\/notes\.md:1/);
+});
+
 test("CI invokes the scan and checks out enough history to derive from", () => {
   const workflow = readFileSync(WORKFLOW, "utf8");
   assert.match(workflow, /node ci\/disclosure-scan\.mjs/);
@@ -978,6 +1002,62 @@ test("baseline invariant reports stale pins and a newly configured class", () =>
       { kind: "unpinned-configured", path: "other.md", id: FINDING_CLASSES.CONFIGURED },
     ],
   );
+});
+
+test("baseline invariant degrades cleanly when configured pins cannot be remeasured", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-invariant-configured-absent-");
+  const token = ["configured", "fixture", "value"].join("-");
+  writeFileSync(join(repo, "fixture.md"), `${token}\n`);
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([{ path: "fixture.md", id: FINDING_CLASSES.CONFIGURED, count: 1 }]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const { code, output } = runMain({}, ["--check-baseline", "--cwd", repo]);
+  assert.equal(code, 0);
+  assert.match(output, /holds for 0 reproducible CI entry\/entries/);
+  assert.match(output, /configured source absent; invariant coverage is degraded/);
+});
+
+test("baseline invariant redacts detector-matching paths in public annotations", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-invariant-path-");
+  const token = ["fixture", "invariant", "path"].join("-");
+  const directory = join(repo, "docs", token);
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "notes.md"), "safe fixture\n");
+  mkdirSync(join(repo, "ci"));
+  writeFileSync(
+    join(repo, "ci", "disclosure-baseline.json"),
+    `${JSON.stringify(
+      baseline([
+        {
+          path: `docs/${token}/notes.md`,
+          id: FINDING_CLASSES.DERIVED,
+          count: 1,
+        },
+      ]),
+      null,
+      2,
+    )}\n`,
+  );
+  runGit("add", ".");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--check-baseline", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.ok(!output.includes(token));
+  assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md/);
+  assert.match(output, /stale-pin/);
 });
 
 test("CI baseline generation applies the scanner's excluded path scope", (t) => {

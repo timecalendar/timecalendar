@@ -831,11 +831,12 @@ export function scanWholeFiles({ files, head, baseline, derived, configured, all
     for (const [className, classFindings] of byClass) {
       const total = classFindings.reduce((sum, finding) => sum + finding.count, 0);
       if (total > (pins.get(baselineKey(file, className)) ?? 0)) {
+        const safePath = redactPathLocation(file, derivedPatterns, configured, allowlist);
         findings.push(
           ...classFindings.map(({ line, count }) => ({
             source: "file",
-            location: `${file}:${line}`,
-            file,
+            location: `${safePath}:${line}`,
+            file: safePath,
             line,
             class: className,
             count,
@@ -847,18 +848,20 @@ export function scanWholeFiles({ files, head, baseline, derived, configured, all
   return findings;
 }
 
-export function compareCiBaseline(committed, measured) {
+export function compareCiBaseline(committed, measured, { configuredAvailable = true } = {}) {
   const actual = new Map(measured.map((entry) => [baselineKey(entry.path, entry.id), entry.count]));
   const committedKeys = new Set(
     committed.ciEntries.map((entry) => baselineKey(entry.path, entry.id)),
   );
   const findings = [];
   for (const entry of committed.ciEntries) {
+    if (entry.id === FINDING_CLASSES.CONFIGURED && !configuredAvailable) continue;
     const count = actual.get(baselineKey(entry.path, entry.id)) ?? 0;
     if (entry.count > count) findings.push({ ...entry, measured: count, kind: "stale-pin" });
   }
   for (const entry of measured) {
     if (
+      configuredAvailable &&
       entry.id === FINDING_CLASSES.CONFIGURED &&
       !committedKeys.has(baselineKey(entry.path, entry.id))
     ) {
@@ -961,17 +964,28 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       return 2;
     }
     const measured = generateCiEntries({ head, derived, configured, allowlist, cwd });
-    const drift = compareCiBaseline(baseline, measured);
+    const configuredAvailable = configuredEntries.length > 0;
+    const drift = compareCiBaseline(baseline, measured, { configuredAvailable });
     if (drift.length) {
+      const derivedPatterns = derived.map(compileLiteralPattern);
       for (const finding of drift) {
+        const safePath = redactPathLocation(
+          finding.path,
+          derivedPatterns,
+          configured,
+          allowlist,
+        );
         console.error(
-          `::error file=${finding.path}::disclosure-scan: baseline invariant — ${finding.kind}, id=${finding.id}, committed=${finding.count}, measured=${finding.measured}`,
+          `::error file=${safePath}::disclosure-scan: baseline invariant — ${finding.kind}, id=${finding.id}, committed=${finding.count}, measured=${finding.measured}`,
         );
       }
       return 1;
     }
+    const checkedEntries = baseline.ciEntries.filter(
+      (entry) => configuredAvailable || entry.id !== FINDING_CLASSES.CONFIGURED,
+    ).length;
     console.log(
-      `disclosure-scan: baseline invariant holds for ${baseline.ciEntries.length} CI entry/entries; preflight entries require out-of-repository pattern input.`,
+      `disclosure-scan: baseline invariant holds for ${checkedEntries} reproducible CI entry/entries; preflight entries require out-of-repository pattern input.`,
     );
     if (!configuredEntries.length) {
       console.log(
