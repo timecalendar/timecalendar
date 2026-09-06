@@ -437,7 +437,12 @@ tokens with the baseline watermark.
 
 The flow SHALL observe the exact non-zero unread state on the Settings Activity row, open Activity,
 and then prove that the same unread state is absent while the Settings row remains present. It SHALL
-pull to refresh and scroll until an item that exists only beyond the first 50-row response renders.
+pull to refresh and then traverse to the page boundary at the foot of history, observing the
+same-timestamp pair and the older-page anchor and asserting their rendered order.
+
+That traversal SHALL be bounded by the distance each gesture covers, not by a widened clock:
+every page-boundary scroll SHALL carry an explicit fast scroll speed and SHALL keep the
+suite-standard 60 000 ms bound.
 
 The baseline and newer imports MAY be nested Activity-only subflows, but only `activity.yaml` SHALL
 be top-level so the harness does not execute setup fragments independently.
@@ -463,6 +468,15 @@ be top-level so the harness does not execute setup fragments independently.
   visible
 - **THEN** that item renders from a real following-page response
 - **AND** the first-page member of the timestamp pair was observed earlier in the journey
+
+#### Scenario: The boundary rows are asserted in order
+
+- **WHEN** the traversal reaches the foot of the list, where the first response's last row and
+  both second-response rows are on screen together
+- **THEN** the flow asserts `tie-higher` renders above `tie-lower`, and `tie-lower` above
+  `older-anchor`
+- **AND** those relative assertions are additive: every existing visibility assertion on the
+  three rows remains
 
 ### Requirement: The Activity flow proves current routing and cancelled inertness safely
 
@@ -686,16 +700,24 @@ interaction shared by both platforms, with no per-platform selector or branch.
   instant, since what breaks here is date arithmetic and a mocked repository would exercise the
   ORM instead
 
-#### Scenario: A measured first-page pagination traversal exceeds the default bound
+#### Scenario: A first-page pagination traversal outruns its scroll budget
 
 - **WHEN** a real-server Activity flow must traverse to the final row of its 50-row first page,
-  and a native gate shows both platforms still making forward progress when the default
-  60-second scroll bound expires
-- **THEN** only that row-50 `tie-higher` traversal SHALL receive the measured 120-second bound
-- **AND** the following `tie-lower` and `older-anchor` traversals SHALL remain at 60 seconds,
-  preserving their order and every assertion that proves cursor paging and tie ordering
-- **AND** a focused repository proof SHALL fail if the first bound returns to 60 seconds, either
-  later bound is widened, or the three pagination selectors are reordered
+  and a native gate shows both platforms still making forward progress when the scroll bound
+  expires — every gesture advancing, none stalling
+- **THEN** the diagnosis SHALL be the gesture, not the clock: at the default scroll speed the
+  swipe is a drag too slow to fling, so the list advances well under one screen per gesture
+  while the fixture is roughly thirteen screens tall
+- **AND** the traversal SHALL be repaired by setting an explicit fast scroll speed on each
+  page-boundary scroll, and the bound SHALL be the suite-standard 60 000 ms — a previously
+  widened bound SHALL be restored rather than widened again
+- **AND** a fast fling SHALL be admissible only where maximum overshoot lands on the target
+  rather than past it, which holds while the boundary rows are the last rows of history; the
+  flow SHALL record that dependency, since a fixture that adds rows below them voids it
+- **AND** a focused repository proof SHALL derive the boundary from its two real sources — the
+  seed script's log count and the client's page limit — and SHALL fail if any page-boundary
+  bound is widened, the fast speed is dropped, the three pagination selectors are reordered, or
+  the order assertions are removed
 
 #### Scenario: A merged onboarding journey moves the URL-import entry deeper
 

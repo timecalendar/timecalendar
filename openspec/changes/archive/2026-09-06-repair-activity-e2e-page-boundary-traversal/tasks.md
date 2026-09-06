@@ -69,15 +69,16 @@
 
 ## 5. Native proof on the exact head — last
 
-- [ ] 5.1 Only after simplify and review, add the `run-e2e` label and run the native gate
+- [x] 5.1 Only after simplify and review, add the `run-e2e` label and run the native gate
   on the exact head. It costs ~35 min per platform and **any** later commit voids it, so
   do not take it early.
-- [ ] 5.2 Attribute the result at **flow and attempt** level, not job level: read
+- [x] 5.2 Attribute the result at **flow and attempt** level, not job level: read
   `activity`'s own `commands.json` / `maestro.log` from the uploaded Maestro debug
   artifact and confirm the three page-boundary steps and both order assertions reached
   `COMPLETED` on Android **and** iOS.
-- [ ] 5.3 Record the direct job links and the exact SHA in the issue thread before the
+- [x] 5.3 Record the direct job links and the exact SHA in the issue thread before the
   Reviewer handoff.
-- [ ] 5.4 If a platform still runs out of clock, raise `speed` (the next stop is `95` →
+- [x] 5.4 Not applicable: neither platform ran out of clock. If a future platform run does,
+  raise `speed` (the next stop is `95` →
   a 51 ms swipe) or reduce the gesture count — never the assertions, never the bound.
   Re-derive from the artifact's per-gesture advance before changing anything.
