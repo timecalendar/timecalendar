@@ -30,7 +30,7 @@ Architecture Book rule or ADR is needed; the operational contract belongs in
 **Non-Goals:**
 
 - Inspecting, rewriting, or baselining historical commit headers.
-- Changing identity derivation, configured patterns, allowlists, or baseline files.
+- Changing configured patterns, allowlists, or baseline files.
 - Enforcing which identity Git uses when creating a commit.
 - Checking pull-request or comment actor metadata.
 - Changing any mobile, server, web, API, database, native, deploy, or legacy-app behavior.
@@ -88,16 +88,21 @@ Alternative considered: scan all identities reachable from head and suppress kno
 Rejected because it is noisy by construction and would require publishing or maintaining the
 identity footprint this control exists to avoid.
 
-### Decision 4 — Preserve the repository detector inputs
+### Decision 4 — Preserve detector inputs while excluding role-address local parts
 
 The new records flow through the same matchers already used for branch commit messages. CI uses
 its derived, structural, and optional configured sources. No new pattern or header-specific
-allowlist is introduced.
+allowlist is introduced. The derivation step now omits a local-part token when that token is already
+covered by the existing role-address allowlist. This bounded correction prevents a non-identifying
+role such as an automated sender from becoming a repository-derived identity merely because it
+appears in public commit history. Full addresses, names, domains, and non-role local parts retain
+their existing derivation behavior.
 
 The repository derivation step may continue reading public commit identities to build its detector
 vocabulary; that does not change the header scan target. Only header records from the branch range
-are judged. Platform and role identities already excluded by existing detector policy remain
-healthy.
+are judged. Platform identities remain excluded by the existing detector policy, while role-address
+local parts use the same existing allowlist that already keeps those addresses healthy in the
+structural lane.
 
 Alternative considered: hard-code an approved identity list for headers. Rejected because it
 duplicates existing policy, risks divergence, and would make this change commit identity strings
