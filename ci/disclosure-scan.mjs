@@ -39,8 +39,9 @@
 //
 // Two verdict layers use the same detectors. The whole contents of each
 // touched file are compared with a count-keyed pin; every added line, added or
-// renamed path, and commit message is checked without a pin. That second layer
-// prevents a delete-and-replace change from passing on an unchanged count.
+// renamed path, commit identity header, and commit message is checked without
+// a pin. That second layer prevents a delete-and-replace change from passing on
+// an unchanged count.
 //
 // Usage: node ci/disclosure-scan.mjs [--base <ref>] [--head <ref>]
 //        node ci/disclosure-scan.mjs --generate-baseline [--head <ref>]
@@ -515,12 +516,14 @@ export function scanRecords(records, { derived, configured, allowlist }) {
       !record.introduced &&
       record.file !== null &&
       isCreditPath(record.file, allowlist);
-    if (!credited) {
+    if (!credited && !record.skipDerived) {
       add(
         record,
         FINDING_CLASSES.DERIVED,
         countUnexemptMatches(record.text, derivedPatterns, allowlist),
       );
+    }
+    if (!credited) {
       add(
         record,
         FINDING_CLASSES.CONFIGURED,
@@ -636,17 +639,47 @@ export function collectRecords({ base, head, allowlist, cwd }) {
     });
   }
 
-  // Commit messages are published with the commits.
-  const log = git(["log", "--no-color", "--format=%H%x00%B%x1e", range], cwd);
+  // Identity headers and messages are both published with the commits. Read
+  // them from one branch-scoped stream so their range can never drift apart.
+  const field = "\x1f";
+  const log = git(
+    ["log", "--no-color", `--format=%H%x1f%an%x1f%ae%x1f%cn%x1f%ce%x1f%B%x1e`, range],
+    cwd,
+  );
   for (const entry of log.split("\x1e")) {
-    const [sha, body] = entry.replace(/^\n+/, "").split("\0");
-    if (!sha || body === undefined) continue;
+    const [sha, authorName, authorEmail, committerName, committerEmail, ...bodyParts] = entry
+      .replace(/^\n+/, "")
+      .split(field);
+    if (!sha || bodyParts.length === 0) continue;
+    const shortSha = sha.slice(0, 12);
+    for (const identity of [
+      { kind: "author", name: authorName, email: authorEmail },
+      { kind: "committer", name: committerName, email: committerEmail },
+    ]) {
+      // Derived vocabulary deliberately excludes platform automation. Carry
+      // that classification to the derived matcher only, so a generic
+      // historical role token cannot make healthy automation noisy while a
+      // configured or structural detector can still inspect every field.
+      const skipDerived = isPlatformIdentity(identity, allowlist);
+      for (const [fieldName, text] of [["name", identity.name], ["email", identity.email]]) {
+        if (!text) continue;
+        records.push({
+          source: "commit-header",
+          file: null,
+          line: null,
+          location: `commit ${shortSha} ${identity.kind}-${fieldName}`,
+          text,
+          skipDerived,
+        });
+      }
+    }
+    const body = bodyParts.join(field);
     body.split("\n").forEach((text, index) => {
       records.push({
         source: "commit-message",
         file: null,
         line: null,
-        location: `commit ${sha.slice(0, 12)} message line ${index + 1}`,
+        location: `commit ${shortSha} message line ${index + 1}`,
         text,
       });
     });
@@ -1053,7 +1086,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
 
   const records = collectRecords({ base, head, allowlist, cwd });
   console.log(
-    `disclosure-scan: ${records.length} added line(s), path(s) and commit message line(s) since ${base.slice(0, 12)}`,
+    `disclosure-scan: ${records.length} added line(s), path(s), commit header(s) and commit message line(s) since ${base.slice(0, 12)}`,
   );
 
   const findings = scanRecords(records, { derived, configured, allowlist });
@@ -1077,7 +1110,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       ? `file=${finding.file}${finding.line ? `,line=${finding.line}` : ""}`
       : "";
     console.log(
-      `::error ${where}::disclosure-scan: ${finding.location} — ${finding.count} occurrence(s) of ${finding.class}`,
+      `::error ${where}::disclosure-scan: ${finding.source}: ${finding.location} — ${finding.count} occurrence(s) of ${finding.class}`,
     );
   }
   const occurrences = findings.reduce((total, f) => total + f.count, 0);

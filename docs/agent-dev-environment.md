@@ -633,8 +633,10 @@ not report a status; none are _required_ checks today.
 This repository is public. The `scan-disclosure` job in `ci-build-deploy.yml` fails a
 branch that would publish an identifying string — a personal name, login, address, or
 home directory — into it. It checks the full contents of touched files against a
-count-keyed baseline, then checks added lines, added or renamed paths, and commit
-messages without that baseline. It runs on every push and needs no configuration.
+count-keyed baseline, then checks added lines, added or renamed paths, and the author name,
+author email, committer name, committer email, and message of each commit added over the merge
+base without that baseline. Header findings use `source: "commit-header"`; accepted base history
+is never scanned. It runs on every push and needs no configuration.
 
 Why a job and not a rule: the rule is already written down, and it is what failed. On a
 change about identity or authentication the accurate observation and the forbidden
@@ -677,6 +679,11 @@ Two properties are load-bearing:
   public, so a gate that echoed the offending line to help the author would republish
   the string it just caught, somewhere nobody thinks to scrub. Findings carry a location
   and a class, and nothing else — open the location locally to see the match.
+
+Commit headers are permanently a layer-B surface. They have no repository path, so neither the
+count-keyed baseline nor path-scoped `creditPaths` narrowing can apply. The gate obtains all four
+identity fields and the commit message from the same `merge-base..head` log stream; expanding that
+range to reachable history would turn accepted public authorship into recurring findings.
 
 #### Count-keyed baseline
 

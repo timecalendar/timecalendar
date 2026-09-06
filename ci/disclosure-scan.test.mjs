@@ -61,6 +61,20 @@ const createGitRepo = (t, prefix) => {
   return { repo, runGit };
 };
 
+const commitWithIdentity = (repo, env, message = "fixture commit") =>
+  execFileSync("git", ["commit", "--allow-empty", "--quiet", "-m", message], {
+    cwd: repo,
+    encoding: "utf8",
+    env: { ...process.env, ...env },
+  });
+
+const healthyIdentity = {
+  GIT_AUTHOR_NAME: "Fixture App[bot]",
+  GIT_AUTHOR_EMAIL: addr("1+fixture-app[bot]", "users.noreply.github.com"),
+  GIT_COMMITTER_NAME: "Fixture App[bot]",
+  GIT_COMMITTER_EMAIL: addr("1+fixture-app[bot]", "users.noreply.github.com"),
+};
+
 const record = (text, location = "fixture.md:1") => ({
   source: "diff",
   file: "fixture.md",
@@ -734,6 +748,118 @@ test("a matched whole-file finding path is redacted everywhere in end-to-end out
   assert.ok(!output.includes(token));
   assert.match(output, /file=docs\/\[REDACTED\]\/notes\.md,line=1/);
   assert.match(output, /docs\/\[REDACTED\]\/notes\.md:1/);
+});
+
+test("branch commit identity headers are scanned field by field without revealing matches", async (t) => {
+  const token = ["fixture", "header", "token"].join("-");
+  const fields = [
+    ["author-name", { GIT_AUTHOR_NAME: token }],
+    ["author-email", { GIT_AUTHOR_EMAIL: addr(token, "example.com") }],
+    ["committer-name", { GIT_COMMITTER_NAME: token }],
+    ["committer-email", { GIT_COMMITTER_EMAIL: addr(token, "example.com") }],
+  ];
+
+  for (const [field, identity] of fields) {
+    await t.test(field, () => {
+      const { repo, runGit } = createGitRepo(t, `disclosure-header-${field}-`);
+      writeFileSync(join(repo, "README.md"), "base\n");
+      runGit("add", "README.md");
+      runGit("commit", "--quiet", "-m", "base");
+      const base = runGit("rev-parse", "HEAD").trim();
+      commitWithIdentity(repo, { ...healthyIdentity, ...identity });
+
+      const { code, output } = runMain(
+        { DISCLOSURE_PATTERNS: token },
+        ["--base", base, "--head", "HEAD", "--cwd", repo],
+      );
+      assert.equal(code, 1);
+      assert.match(output, /commit-header/);
+      assert.match(output, new RegExp(`commit [0-9a-f]{12} ${field}`));
+      assert.match(
+        output,
+        new RegExp(`commit [0-9a-f]{12} ${field} — 1 occurrence\\(s\\) of configured-pattern`),
+      );
+      assert.ok(!output.includes(token));
+    });
+  }
+});
+
+test("commit identity header scanning stays branch-only", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-base-");
+  const token = ["fixture", "base", "identity"].join("-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  commitWithIdentity(repo, {
+    ...healthyIdentity,
+    GIT_AUTHOR_NAME: token,
+    GIT_AUTHOR_EMAIL: addr("author", "example.com"),
+  });
+  const base = runGit("rev-parse", "HEAD").trim();
+  commitWithIdentity(repo, healthyIdentity);
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 0);
+  assert.doesNotMatch(output, /commit-header/);
+  assert.ok(!output.includes(token));
+});
+
+test("healthy automation commit identities pass silently", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-healthy-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+  const identities = [
+    { name: "Fixture App[bot]", email: addr("1+fixture-app[bot]", "users.noreply.github.com") },
+    { name: "dependabot[bot]", email: addr("49699333+dependabot[bot]", "users.noreply.github.com") },
+    { name: "GitHub", email: addr("noreply", "github.com") },
+    { name: "GitHub Actions", email: addr("actions", "github.com") },
+  ];
+  for (const identity of identities) {
+    commitWithIdentity(repo, {
+      GIT_AUTHOR_NAME: identity.name,
+      GIT_AUTHOR_EMAIL: identity.email,
+      GIT_COMMITTER_NAME: identity.name,
+      GIT_COMMITTER_EMAIL: identity.email,
+    });
+  }
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: ["fixture", "protected", "token"].join("-") },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 0, output);
+  assert.doesNotMatch(output, /commit-header/);
+});
+
+test("commit messages and identity headers retain distinct source values", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-header-source-");
+  const token = ["fixture", "source", "token"].join("-");
+  writeFileSync(join(repo, "README.md"), "base\n");
+  runGit("add", "README.md");
+  runGit("commit", "--quiet", "-m", "base");
+  const base = runGit("rev-parse", "HEAD").trim();
+  commitWithIdentity(
+    repo,
+    {
+      ...healthyIdentity,
+      GIT_AUTHOR_NAME: token,
+      GIT_AUTHOR_EMAIL: addr("author", "example.com"),
+    },
+    `mentions ${token}`,
+  );
+
+  const { code, output } = runMain(
+    { DISCLOSURE_PATTERNS: token },
+    ["--base", base, "--head", "HEAD", "--cwd", repo],
+  );
+  assert.equal(code, 1);
+  assert.match(output, /commit-header/);
+  assert.match(output, /commit-message/);
+  assert.ok(!output.includes(token));
 });
 
 test("CI invokes the scan and checks out enough history to derive from", () => {
