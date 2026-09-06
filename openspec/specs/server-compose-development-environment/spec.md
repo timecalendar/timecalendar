@@ -66,18 +66,20 @@ selected.
 
 ### Requirement: Selected configuration is diagnosable
 
-The local Compose entrypoint and setup diagnostics SHALL identify the selected project name and effective host ports, and setup diagnostics SHALL distinguish a TLS certificate fault from an unreachable proxy rather than reporting one opaque failure for both. Setup reachability checks SHALL use the effective TLS port and SHALL keep the default URLs documented as `https://api.timecalendar.host:1443` and the backend on `http://localhost:3005` when no overrides are set.
+The local Compose entrypoint and setup diagnostics SHALL identify the selected project name and effective host ports, and setup diagnostics SHALL distinguish a TLS certificate fault from an unreachable proxy rather than reporting one opaque failure for both. Setup reachability checks SHALL use the effective TLS port and SHALL keep the default URLs documented as `https://api.timecalendar.host:1443` and the backend on `http://localhost:3005` when no overrides are set. A diagnostic that invokes Docker Compose SHALL NOT create, start, stop, restart, remove, or otherwise mutate any Docker resource, but the entrypoint MAY provision or renew the checkout-local, gitignored TLS pair before invoking Compose.
 
 #### Scenario: Contributor inspects ownership before startup
 
 - **WHEN** the contributor resolves the Compose config or runs setup diagnostics
-- **THEN** the output names the project and effective TLS, Postgres, and Redis host ports
-  without requiring any Docker service mutation
+- **THEN** the output names the project and effective TLS, Postgres, and Redis host ports without
+  creating, starting, stopping, restarting, removing, or otherwise mutating any Docker resource
+- **AND** a Compose-backed diagnostic may provision or renew
+  `ci/certificates/cert.pem` and `ci/certificates/key.pem` in the current checkout
 
 #### Scenario: Config-only diagnostics never provision or mutate
 
-- **WHEN** the contributor requests the Compose project name or the setup script's
-  configuration-only output
+- **WHEN** the contributor runs `bin/server-compose.sh project-name` or
+  `bin/setup-dev.sh --compose-config`
 - **THEN** the command prints the selected identity and ports and writes no file, generates no
   certificate material, and contacts no service
 
@@ -142,7 +144,9 @@ Setup diagnostics SHALL distinguish a stack that was never started from an nginx
 started and failed, whenever the TLS reachability check does not answer. When the nginx service
 has a container, the diagnostics SHALL report that container's state, so a restart loop is named
 as one. When it has no container, the diagnostics SHALL keep directing the reader to start the
-stack. The check MUST be non-mutating, MUST NOT require a tool the repository does not already
+stack. The check MUST NOT create, start, stop, restart, remove, or otherwise mutate any Docker
+resource; its Compose-backed state query MAY provision or renew the checkout-local, gitignored TLS
+pair before invoking Compose. The check MUST NOT require a tool the repository does not already
 depend on, and MUST NOT abort the remaining diagnostics when the Docker daemon is unavailable.
 
 #### Scenario: nginx is restarting
@@ -217,4 +221,3 @@ Provisioning SHALL regenerate the pair only when it is absent, unreadable, or wi
   validity
 - **THEN** the check passes, and the certificate covers the `timecalendar.host`,
   `api.timecalendar.host`, and `web.timecalendar.host` names
-

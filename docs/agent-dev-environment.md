@@ -184,11 +184,13 @@ The canonical quickstart is `README.md`; the agent-relevant essentials:
      bin/server-compose.sh config --format json | jq '{name, networks, volumes, services}'
      ```
 
-     The first two are pure diagnostics and write nothing. `config` takes the
-     wrapper's pass-through path, so on a fresh checkout it also provisions the
-     gitignored dev TLS pair (see "The dev TLS certificate" below) — a write
-     inside your own checkout, and nothing else. None of the three creates,
-     stops, or removes a container, network, or volume.
+     `project-name` and `--compose-config` are file- and service-pure: they write
+     nothing, generate no certificate material, and contact no service. A
+     Compose-backed diagnostic such as `config`, or setup's nginx `ps` state
+     query, takes the wrapper's pass-through path and may provision or renew the
+     checkout-local, gitignored and untracked `ci/certificates/cert.pem` and
+     `key.pem` pair. These diagnostics do not create, start, stop, restart,
+     remove, or otherwise change any Docker resource.
 
      Shared-host resources may belong to another checkout. Routine setup must
      never stop, remove, prune, or otherwise clean another Compose project.
