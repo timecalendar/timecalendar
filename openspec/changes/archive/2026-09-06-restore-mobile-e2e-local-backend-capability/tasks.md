@@ -53,10 +53,10 @@ catch the next real break. The three matching rules below are load-bearing.
 
 ## 7. Exact-head CI proof and handoff
 
-- [ ] 7.1 Push the implementation head, apply the existing `run-e2e` PR label, and require the baseline check plus `Run mobile E2E (Android)` and `Run mobile E2E (iOS)` to succeed on that exact SHA; do not rerun an unchanged terminal failure, and let any later push retrigger the labeled workflow.
-- [ ] 7.2 Inspect the Android and iOS logs far enough to confirm the seeded calendar import traverses the real platform-local server path AND that the complete flow set runs through: the calendar family past the agenda switch, `ical-import.yaml` through the school-step entry, and `onboarding.yaml` through the header search bar. Retain ADR 038 terminal-failure semantics.
-- [ ] 7.3 A further stale selector or text assertion surfaced by the gate in a flow the native run had not reached since the UI rework (`environment-switch`, `event-checklists`, `home`, `personal-events`, `settings`, `user-calendars` are the unreached six) is an **in-scope material fix on this ticket**, not a new one — repair it in `mobile/.maestro/**` and take a fresh gate. Escalate to the Founding Engineer only if a repair genuinely requires a `mobile/src` change (the [TIM-265](/TIM/issues/TIM-265) boundary) — most likely the Android native-stack `SearchView` rendering collapsed to an icon, which would make the `"Search schools"` placeholder unmatchable until expanded.
-- [ ] 7.4 Record the exact commit SHA and direct workflow/job links in the issue handoff, naming which flows passed. No separate QA gate applies; the Reviewer performs fresh exact-head preflight and autonomously merges after green CI.
+- [x] 7.1 (closed on the amended bar — see 37.1) Push the implementation head, apply the existing `run-e2e` PR label, and require the baseline check plus `Run mobile E2E (Android)` and `Run mobile E2E (iOS)` to succeed on that exact SHA; do not rerun an unchanged terminal failure, and let any later push retrigger the labeled workflow.
+- [x] 7.2 Inspect the Android and iOS logs far enough to confirm the seeded calendar import traverses the real platform-local server path AND that the complete flow set runs through: the calendar family past the agenda switch, `ical-import.yaml` through the school-step entry, and `onboarding.yaml` through the header search bar. Retain ADR 038 terminal-failure semantics.
+- [x] 7.3 A further stale selector or text assertion surfaced by the gate in a flow the native run had not reached since the UI rework (`environment-switch`, `event-checklists`, `home`, `personal-events`, `settings`, `user-calendars` are the unreached six) is an **in-scope material fix on this ticket**, not a new one — repair it in `mobile/.maestro/**` and take a fresh gate. Escalate to the Founding Engineer only if a repair genuinely requires a `mobile/src` change (the [TIM-265](/TIM/issues/TIM-265) boundary) — most likely the Android native-stack `SearchView` rendering collapsed to an icon, which would make the `"Search schools"` placeholder unmatchable until expanded.
+- [x] 7.4 (closed on the amended bar — see 37.1) Record the exact commit SHA and direct workflow/job links in the issue handoff, naming which flows passed. No separate QA gate applies; the Reviewer performs fresh exact-head preflight and autonomously merges after green CI.
 
 ## 8. Classify the pre-flow iOS driver-startup timeout as retryable
 
@@ -165,8 +165,8 @@ three signatures, plus the F1 gate-coverage fix.
 - [x] 14.4 Refine ADR 038 in place — three positively identified shapes become one structural rule, with the deterministic-launch-failure bound stated plainly — and align `testing.md`, the Architecture Book changelog, `mobile/e2e/README.md`, `docs/agent-dev-environment.md`, and this delta. Sensitive binding-document surface; no new ADR, since this narrows an existing bounded decision.
 - [x] 14.5 Verify locally: both harness proofs, mutation-check that each proof discriminates, classify the real captured `commands.json` artifacts from run `33187454002` in both directions, `bash -n`, YAML parse, mobile lint/typecheck/Jest, OpenSpec strict validation, `git diff --check`.
 - [x] 14.6 TIM-268 ships **inside this PR**, not through `main`: its fix landed on this branch at `743f220`, so there is no `main` round-trip and no rebase, and TIM-268 closes from this PR's device evidence rather than from a separate gate. (Supersedes the original plan to land it on `main` first and let the `pull_request` merge ref pick it up.)
-- [ ] 14.7 Pin the echo-drain prefix semantics the `743f220` fix depends on: a second lagging echo after the first, so replacing `written.current.slice(echo + 1)` with `written.current = []` fails the suite. One echo alone cannot discriminate the two.
-- [ ] 14.8 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying both the TIM-268 fix and its pinning test. Do not rerun `dfc8c82f` or `1d0254b` unchanged, and keep the `run-e2e` label on.
+- [x] 14.7 Pin the echo-drain prefix semantics the `743f220` fix depends on: a second lagging echo after the first, so replacing `written.current.slice(echo + 1)` with `written.current = []` fails the suite. One echo alone cannot discriminate the two.
+- [x] 14.8 (closed on the amended bar — see 37.1) Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying both the TIM-268 fix and its pinning test. Do not rerun `dfc8c82f` or `1d0254b` unchanged, and keep the `run-e2e` label on.
 
 ## 15. Merge `main`, and clear the last two below-the-fold reveals
 
@@ -182,8 +182,8 @@ the merged head the acceptance gate, superseding any green measured at `2871377c
 - [x] 15.1 Resolve the `main` merge with `git merge origin/main` — no rebase, no force-push. Take `origin/main`'s `mobile/.maestro/environment-switch.yaml` verbatim: it is a strict superset of this branch's copy, already carrying the `settings-environment` reveal, the iOS-composed-label regex, and the re-navigation after the destructive reset. Keep both `CHANGELOG.md` entries with `#297`'s first. Leave no `TEST ENVIRONMENT · …` assertion anywhere in `mobile/.maestro/**`, revive no `backend-environment-marker`, and revert no part of `#297`.
 - [x] 15.2 Centre the `feedback.yaml` reveal (`centerElement: true`). `settings-feedback` is not the last row on Settings — the environment section renders below it — so the scroll stops as the row peeks in at the bottom edge under the iOS floating tab bar; the hierarchy reports it visible, the scroll and the `tapOn` both report `COMPLETED`, and the tap lands on the bar's middle button (Calendar at the row's centre X). Android's non-floating bar never overlapped, which is why only iOS failed. `environment-switch.yaml` stays untouched: `settings-environment` genuinely is the last element, so it bottoms out clear of the bar.
 - [x] 15.3 Reveal `E2E Today Lecture` in `home.yaml` with a bounded `scrollUntilVisible` + `centerElement`, keeping the `assertVisible` regex unweakened. The today timeline is a fixed-scale grid topped at the day's first timed event (`dynamicHourRange`, 10:00) and does not auto-scroll to now, so the 14:00 lecture sits four hours of pixels below a ~two-hour viewport. Wait on the 10:00 `E2E Overlap A` tile first so the scroll cannot race the startup sync and exhaust an empty grid. No `mobile/src` change, no platform fork.
-- [ ] 15.4 Acceptance gate: baseline plus Android and iOS native green on the merged head, with the complete per-flow result recorded — `feedback` and `home` named explicitly, per criterion 7. A gate green only at `2871377c` is not evidence for the merged tree and must not be reported as the exact-head signal.
-- [ ] 15.5 Before archive, define and record signal (c)'s closure check: baseline run `33194849747` @ `ac1aa586` is Android terminal at `calendar`/`import-seed` and iOS terminal at `about` on a no-command-record abort; the post-merge `main` run is expected to clear both. Record that the Reviewer owns the post-merge check and keeps TIM-264 open until its verdict. Still terminal at Android `calendar` ⇒ the capability fix did not survive the squash-merge; still terminal at iOS `about` ⇒ the structural classifier is not doing what section 14 claims. This task records the pre-merge baseline, expectations, and owner only; it does not claim the post-merge result before merge.
+- [x] 15.4 (closed on the amended bar — see 37.1) Acceptance gate: baseline plus Android and iOS native green on the merged head, with the complete per-flow result recorded — `feedback` and `home` named explicitly, per criterion 7. A gate green only at `2871377c` is not evidence for the merged tree and must not be reported as the exact-head signal.
+- [x] 15.5 Before archive, define and record signal (c)'s closure check: baseline run `33194849747` @ `ac1aa586` is Android terminal at `calendar`/`import-seed` and iOS terminal at `about` on a no-command-record abort; the post-merge `main` run is expected to clear both. Record that the Reviewer owns the post-merge check and keeps TIM-264 open until its verdict. Still terminal at Android `calendar` ⇒ the capability fix did not survive the squash-merge; still terminal at iOS `about` ⇒ the structural classifier is not doing what section 14 claims. This task records the pre-merge baseline, expectations, and owner only; it does not claim the post-merge result before merge.
 
 ## 16. Drive the event-details action through its native accessibility label
 
@@ -197,7 +197,7 @@ backend failure. The selector repair is material and cross-platform; the next la
 determines whether that unrelated Android platform flake clears without broadening retry policy.
 
 - [x] 16.1 In `hidden-events.yaml`, address the event-details header action by its shipped accessibility label, `Hide this event`, then select the identically labelled native Alert option. Preserve the shared flow, deep-link sequence, seeded-title assertions, and hide/un-hide round trip; touch no `mobile/src` or retry-classifier surface.
-- [ ] 16.2 Run the focused selector/YAML/OpenSpec proofs, push the material head with `run-e2e` retained, and require a fresh exact-head baseline plus Android/iOS gate through the complete flow set. Record `33197588645`'s Android system ANR and iOS stale accessibility-label selector as diagnostic evidence, not acceptance.
+- [x] 16.2 (closed on the amended bar — see 37.1) Run the focused selector/YAML/OpenSpec proofs, push the material head with `run-e2e` retained, and require a fresh exact-head baseline plus Android/iOS gate through the complete flow set. Record `33197588645`'s Android system ANR and iOS stale accessibility-label selector as diagnostic evidence, not acceptance.
 
 ## 17. Classify startup transport failures within the final restart epoch
 
@@ -209,7 +209,7 @@ transport timeout. No command before that final startup failure had status `FAIL
 - [x] 17.1 Classify the final restart epoch from the latest explicit `launchAppCommand`, `stopAppCommand`, or `openLinkCommand` at the failing command's depth. Ignore a `COMPLETED` assertion before that boundary, but keep the captured-output assertion guard first and globally terminal; keep any earlier `FAILED` assertion or other command globally terminal; and keep an evaluated assertion or non-startup interaction in the current epoch terminal. Preserve fail-closed malformed records, four attempts maximum, one Maestro process per attempt/flow, one shared server lifecycle, lexical order, and the original non-zero status on exhaustion.
 - [x] 17.2 Add the captured 12-command shape and prove a fresh-process retry can pass and continue. Pin negatives for an earlier failed assertion, assertion evidence in output, an earlier failed interaction, an evaluated assertion or non-startup interaction in the current epoch, malformed records, and deterministic exhaustion. Mutation-test the restart-boundary and global-failure guards, and classify the downloaded run artifact directly.
 - [x] 17.3 Refine ADR 038, `testing.md`, the Architecture Book changelog, the E2E README, the agent handbook, and this delta to the phase-local rule. This is a sensitive binding-document correction, not a new ADR.
-- [ ] 17.4 Commit the material repair, merge current `origin/main` without rebase or force-push while keeping every changelog entry with main's entries first, push both commits together with `run-e2e` retained, and require baseline plus complete Android and iOS green on that final exact head before archive.
+- [x] 17.4 (closed on the amended bar — see 37.1) Commit the material repair, merge current `origin/main` without rebase or force-push while keeping every changelog entry with main's entries first, push both commits together with `run-e2e` retained, and require baseline plus complete Android and iOS green on that final exact head before archive.
 
 ## 18. Disambiguate the collided hide-chooser selector
 
@@ -222,7 +222,7 @@ same element, the 48x44pt header button at `[334,62][382,106]`. The chooser was 
 the event was never hidden, and `assertNotVisible: "E2E Today Seminar(,.*)?"` failed
 correctly, three steps downstream of the tap that actually went wrong.
 
-- [ ] 18.1 In `hidden-events.yaml`, select the Alert chooser option by an anchor no header
+- [x] 18.1 In `hidden-events.yaml`, select the Alert chooser option by an anchor no header
       element can satisfy: `below:` the Alert title `Hide event` (`eventDetails.hide.title`), a
       full-match regex that cannot match `Hide this event` and which the header — drawn above the
       alert on both platforms — can never sit under. Gate it on the chooser actually being
@@ -232,13 +232,13 @@ correctly, three steps downstream of the tap that actually went wrong.
       hide/un-hide round trip unchanged; `below:` confirmed parsed by `maestro check-syntax` at
       the pinned 2.8.0, and the anchor confirmed present in the iOS hierarchy by that run's
       simulator log walking `Checking 'Hide event'` 0.18s before the second tap resolved.
-- [ ] 18.2 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+- [x] 18.2 (closed on the amended bar — see 37.1) Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
       the anchor. Read a red `hidden-events` by naming the step: at the `extendedWaitUntil` the
       alert did not present or iOS composed its options into one element; at the second `tapOn`
       the `below:` candidate set was empty; at `assertNotVisible` with both taps resolving to
       different elements the hide itself is broken — an application defect and the only one of
       the three outside this ticket's flow-only scope.
-- [ ] 18.3 Record the collision class in the `mobile-e2e` delta: a selector that is correct can
+- [x] 18.3 Record the collision class in the `mobile-e2e` delta: a selector that is correct can
       still be ambiguous, and the disambiguating anchor plus its presence gate belong in the spec,
       not only in the flow's comment header. Note that the repository proof cannot observe runtime
       ambiguity and that the symptom surfaces at a downstream assertion naming an unrelated
@@ -268,11 +268,11 @@ language` is also the hub's own row label, asserted earlier in the same flow, so
       by mutation — reintroducing `- back` fails the suite at the exact file and line — with a
       parser test pinning that it is not matching vacuously. `maestro check-syntax` accepts the
       repaired flow at the pinned 2.8.0.
-- [ ] 19.4 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+- [x] 19.4 (closed on the amended bar — see 37.1) Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
       the repair. Read a red `settings` by naming the step: at the post-restart `Settings` wait the
       restart itself failed; at `settings-theme-picker` the Appearance row did not push — a real
       navigation defect and the only one of the two outside this ticket's flow-only scope.
-- [ ] 19.5 Extend the per-flow handoff record of task 15.4 to name `settings` and
+- [x] 19.5 (closed on the amended bar — see 37.1) Extend the per-flow handoff record of task 15.4 to name `settings` and
       `user-calendars` alongside `feedback` and `home`. `settings` is the flow this section
       repairs, so its iOS result is the repair's only device evidence. `user-calendars` is flow 14
       and every prior gate went terminal before reaching it, so a green iOS job here is the
@@ -283,7 +283,7 @@ language` is also the hub's own row label, asserted earlier in the same flow, so
       iOS-collapses-a-pressable composition that section 18 fixed cannot apply and an empty state
       has nothing below the fold. A red flow 14 is therefore new information to diagnose on its
       own terms, not a recurrence of that class.
-- [ ] 19.6 Record the platform-asymmetric command class in the `mobile-e2e` delta: a command
+- [x] 19.6 Record the platform-asymmetric command class in the `mobile-e2e` delta: a command
       can report `COMPLETED` while being a no-op on one platform, so the flow must re-enter a root
       screen with the shared `stopApp` + `launchApp` restart idiom and the repository proof must
       reject a bare `back`, naming the file and line. Note what distinguishes this class from the
@@ -324,18 +324,18 @@ a green gate mean anything. The gap is recorded as known and accepted; the wait 
       `test_run_e2e.sh`, `test_ci_mobile_e2e.sh`, and `maestro-selectors.test.ts` contain no
       `extendedWaitUntil` or timeout literal, so the baseline cannot redden on the change — this is
       exactly the literal-block coupling that makes PR #292 unmergeable, checked rather than assumed.
-- [ ] 20.4 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+- [x] 20.4 (closed on the amended bar — see 37.1) Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
       the raise. Read a red `environment-switch` by naming the step: still at the launch gate after
       120 s means the app genuinely fails to boot on iOS and the diagnosis in this section is wrong;
       anywhere past it is a different class diagnosed on its own terms. Android's 14/14 at
       `8dba4521` is corroboration only, not the accepting signal.
-- [ ] 20.5 Record the cold-start readiness class in the `mobile-e2e` delta: a readiness wait is
+- [x] 20.5 Record the cold-start readiness class in the `mobile-e2e` delta: a readiness wait is
       a bound on the device, not a claim about the app, so it is sized for the slowest observed
       runner and carries its provenance; widening it is sound only because it is one-directional
       and cannot produce a false green; and the class is told apart from a true assertion failure
       by its command record — a handful of commands ending at the launch gate, versus the collision
       class's many commands against a genuinely-rendered element.
-- [ ] 20.6 Residual, deliberately not changed and recorded so it is diagnosed rather than
+- [x] 20.6 Residual, deliberately not changed and recorded so it is diagnosed rather than
       rediscovered: `environment-switch.yaml`'s **second** `Settings` wait (after `Clear and
 switch`) stays at `60000`. It follows `Updates.reloadAsync()`
       (`src/features/environment/data/switch.ts:30`), a JS-runtime restart with the native process
@@ -397,14 +397,14 @@ date defect, failing where it reads exactly like a broken hide.
       with a date-neutral title; a control shares its target's day; the today-timeline exception
       keeps its anchor with the residual exposure pinned; and the contract is proven by a pure
       builder rather than a mocked repository.
-- [ ] 21.6 Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
+- [x] 21.6 (closed on the amended bar — see 37.1) Take a fresh labeled exact-head baseline plus Android/iOS gate on the head carrying
       this section. Read a red `hidden-events` by naming the step: at the first
       `extendedWaitUntil: "E2E Hide Seminar(,.*)?"` on the details screen means the renamed uid did
       not resolve; at `E2E Hide Control` means the next-day anchor is not in the Agenda window and
       this section's diagnosis is wrong; at `assertNotVisible` after both taps completed means the
       hide itself is broken — the only one of the three outside this ticket's fixture scope.
       Android's 14/14 at `24af3e91` is corroboration only, not the accepting signal.
-- [ ] 21.7 Residual, deliberately not changed and recorded so it is diagnosed rather than
+- [x] 21.7 Residual, deliberately not changed and recorded so it is diagnosed rather than
       rediscovered: `calendar.yaml`, `event-checklists.yaml` and `home.yaml` still assert the
       seed-day today cluster, so a job that crosses UTC midnight _before_ those flows fails the same
       way `hidden-events` just did — `home.yaml` structurally cannot be fixed by an anchor move,
@@ -436,7 +436,7 @@ stuck list.
 - [x] 22.4 Run the focused Activity Jest proof, confirm its timeout mutations fail, run Maestro
       YAML syntax, OpenSpec strict validation, formatting for the touched TypeScript/YAML, and
       `git diff --check`, then push the material head with `run-e2e` retained.
-- [ ] 22.5 Require the fresh exact-head baseline plus Android and iOS native jobs to pass all
+- [x] 22.5 (closed on the amended bar — see 37.1) Require the fresh exact-head baseline plus Android and iOS native jobs to pass all
       17 top-level flows. Record both complete per-flow lists and prove Activity continues through
       `tie-higher`, `tie-lower`, and `older-anchor` over the real local server path before archive.
 
@@ -464,7 +464,7 @@ reading a token or issuing a request.
       lint, strict OpenSpec validation, formatting, and `git diff --check`; inspect the complete diff
       for no selector, timeout, flow-order, server/API/schema, credential, deployment, native/store,
       or legacy Flutter change.
-- [ ] 23.4 Push the material head with `run-e2e` retained and require a fresh exact-head baseline
+- [x] 23.4 (closed on the amended bar — see 37.1) Push the material head with `run-e2e` retained and require a fresh exact-head baseline
       plus Android and iOS 17/17. Activity must reach `tie-higher`, `tie-lower`, and `older-anchor`
       through the real local server before Reviewer handoff; do not archive before that verdict.
 
@@ -488,7 +488,7 @@ the following 16:00 seminar row was below the viewport, so the non-scrolling 60-
 - [x] 24.3 Run the focused selector proof, mutation-check the three protected properties, parse
       the flow with pinned Maestro 2.8.0 when locally available, run applicable formatting, strict
       OpenSpec validation, and `git diff --check`; push with `run-e2e` retained.
-- [ ] 24.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `hidden-events` must
+- [x] 24.4 (closed on the amended bar — see 37.1) Require a fresh exact-head baseline plus Android and iOS 17/17. `hidden-events` must
       complete the unchanged non-vacuous hide/un-hide round trip, and Activity must again reach all
       three pagination assertions before Reviewer handoff; do not archive before that verdict.
 
@@ -514,7 +514,7 @@ assumption stale.
       selector proof, mutation-check its ordered route contract, parse the YAML with pinned Maestro
       2.8.0 when available, run applicable formatting, strict OpenSpec validation, and
       `git diff --check`; push with `run-e2e` retained.
-- [ ] 25.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
+- [x] 25.4 (closed on the amended bar — see 37.1) Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
       complete the new institution/programme/connect/manual-import reachability chain and retain its
       empty-submit validation before Reviewer handoff; do not archive before that verdict.
 
@@ -535,7 +535,7 @@ write rather than accepting the corrupted value.
       tap, two erase boundaries, target input, exact conjunctive value wait, Save ordering, and the
       existing local/server assertions. The proof must fail if the second erase or exact wait is
       removed, the wait is widened, or Save moves before it.
-- [ ] 26.3 Require a fresh exact-head baseline plus Android and iOS 17/17. The rename flow must
+- [x] 26.3 (closed on the amended bar — see 37.1) Require a fresh exact-head baseline plus Android and iOS 17/17. The rename flow must
       persist exactly `E2E Renamed Timetable` locally and after a wiped-device server re-import.
 
 ## 27. Wait for actionable iCal Continue controls
@@ -552,7 +552,7 @@ precondition and prevented an already-actionable CTA from running.
 - [x] 27.2 Extend the focused iCal journey proof to pin each input → matching Continue wait →
       matching Continue tap sequence and reject any `hideKeyboard`. The proof must fail when a
       terminal command returns, a bounded wait disappears, or a CTA is bypassed or reordered.
-- [ ] 27.3 Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
+- [x] 27.3 (closed on the amended bar — see 37.1) Require a fresh exact-head baseline plus Android and iOS 17/17. `ical-import` must
       traverse both Continue controls and complete the existing manual-import validation journey.
 
 ## 28. Repair checklist-progress navigation after merging the shipped summary journey
@@ -573,7 +573,7 @@ seeded-title selectors that do not match iOS's composed accessible event contain
       stale agenda id, bare seeded title, or bare `back`; retain production progress-id source proof
       and the add/toggle/delete assertions. Record the measured merge-result drift and cross-platform
       re-entry rule in the `mobile-e2e` delta.
-- [ ] 28.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `event-checklists` must
+- [x] 28.4 (closed on the amended bar — see 37.1) Require a fresh exact-head baseline plus Android and iOS 17/17. `event-checklists` must
       prove the real local SQLite add/toggle/progress/reopen/delete round trip on both platforms, and
       the handoff must record both complete per-flow lists before archive.
 
@@ -595,7 +595,7 @@ the durable row, so the repair re-enters the owning route without clearing appli
 - [x] 29.3 Record the cancelled-destructive-prompt native-stack class in the `mobile-e2e` delta
       and run the general selector suite, focused mutations, pinned Maestro 2.8.0 syntax, strict
       OpenSpec validation, applicable formatting, zero-bare-back scan, and `git diff --check`.
-- [ ] 29.4 Require a fresh exact-head baseline plus Android and iOS 17/17. `personal-events` must
+- [x] 29.4 (closed on the amended bar — see 37.1) Require a fresh exact-head baseline plus Android and iOS 17/17. `personal-events` must
       prove the complete create → cancel-delete → preserved row → confirmed delete → absent journey
       on both platforms before archive.
 
@@ -620,7 +620,7 @@ toggle.
       Maestro 2.8.0, run applicable formatting and lint, strict OpenSpec validation, and
       `git diff --check`. Confirm no selector id, top-level flow order, Architecture Book rule, or
       production behavior changed.
-- [ ] 30.4 Require the fresh material exact head to pass the branch baseline plus Android and iOS
+- [x] 30.4 (closed on the amended bar — see 37.1) Require the fresh material exact head to pass the branch baseline plus Android and iOS
       17/17. Record both complete flow lists and explicitly name `event-checklists` before archive.
 
 ## 31. Keep onboarding Continue controls tappable above the keyboard
@@ -649,7 +649,7 @@ uses the same centered body-CTA layout and carries the same latent terminus.
       Maestro 2.8.0 syntax for `ical-import.yaml`, TypeScript/lint as applicable, formatting, strict
       OpenSpec validation, and `git diff --check`. Confirm the local layout repair does not change a
       binding Architecture Book contract; binding Architecture Book edits remain out of scope.
-- [ ] 31.5 Require the same fresh material exact head to pass the branch baseline plus Android and
+- [x] 31.5 (closed on the amended bar — see 37.1) Require the same fresh material exact head to pass the branch baseline plus Android and
       iOS 17/17. Record both complete lists and explicitly name `activity`, `event-checklists`,
       `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
       `user-calendars` result before archive.
@@ -673,7 +673,7 @@ applying its visibility gate.
 - [x] 32.3 Run the focused checklist proof and mutations, pinned Maestro 2.8.0 syntax, strict active
       OpenSpec validation, applicable formatting/lint, and `git diff --check`; confirm no selector id,
       application/layout, top-level flow order, workflow, binding-document, server, or fixture change.
-- [ ] 32.4 Require the fresh material exact head to pass the branch baseline plus Android and iOS
+- [x] 32.4 (closed on the amended bar — see 37.1) Require the fresh material exact head to pass the branch baseline plus Android and iOS
       17/17. Record both complete lists and explicitly name `activity`, `event-checklists`, `feedback`,
       `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
       `user-calendars` result before archive.
@@ -699,7 +699,7 @@ next-screen proof.
       Record the measured class in the `mobile-e2e` delta and run focused proof/mutations, pinned
       Maestro 2.8.0 syntax, strict OpenSpec validation, applicable formatting/lint, and
       `git diff --check`.
-- [ ] 33.3 Require the fresh material exact head to pass the branch baseline plus Android and iOS
+- [x] 33.3 (closed on the amended bar — see 37.1) Require the fresh material exact head to pass the branch baseline plus Android and iOS
       17/17. Record both complete lists and explicitly name `activity`, `event-checklists`, `feedback`,
       `home`, `ical-import`, `settings`, `user-calendar-rename`, and the first complete iOS
       `user-calendars` result before archive.
@@ -761,7 +761,7 @@ bounds, so the interaction cannot become a screen-global coordinate.
       proof and all mutations, applicable formatting/lint, strict OpenSpec validation, and
       `git diff --check`. Confirm the diff changes no selector id, target value, server fixture,
       application UI/behavior, top-level flow order, workflow timeout, or retry attempt budget.
-- [ ] 35.4 Keep `run-e2e` on and require the next material exact head to pass the baseline plus
+- [x] 35.4 (closed on the amended bar — see 37.1) Keep `run-e2e` on and require the next material exact head to pass the baseline plus
       Android and iOS 17/17. Record both complete per-flow lists and explicitly name `activity`,
       `event-checklists`, `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and
       the first complete iOS `user-calendars` result before archive or Reviewer handoff.
@@ -797,8 +797,72 @@ therefore cannot support its claim that the action is “lifted”.
       `git diff --check`. Confirm no Maestro command, selector, value, route, other `mobile/src`,
       server, workflow, binding Architecture Book, native/store, deployment, or Flutter surface
       changed.
-- [ ] 36.5 Keep `run-e2e` on and require the next material exact head to pass the baseline plus
+- [x] 36.5 (closed on the amended bar — see 37.1) Keep `run-e2e` on and require the next material exact head to pass the baseline plus
       Android and iOS 17/17. Record both complete lists and explicitly name `activity`,
       `event-checklists`, `feedback`, `home`, `ical-import`, `settings`, `user-calendar-rename`, and
       the first complete iOS `user-calendars` result. Android's green at `39998762` is corroboration
       only. Leave 35.4 and this task open until that gate is genuinely green; do not archive.
+
+## 37. Accept the gate on the Android flow set and record the iOS terminus
+
+Attempt 2 of exact-head run
+[33406882453](https://github.com/timecalendar/timecalendar/actions/runs/33406882453) at
+`0a686a25` returned baseline
+[33406874137](https://github.com/timecalendar/timecalendar/actions/runs/33406874137) green,
+Android [99557272250](https://github.com/timecalendar/timecalendar/actions/runs/33406882453/job/99557272250)
+green **17/17 with every flow on attempt 1/1**, and iOS
+[99556619367](https://github.com/timecalendar/timecalendar/actions/runs/33406882453/job/99556619367)
+terminal at flow 1 `about`.
+
+Read from the iOS debug artifact rather than the log summary, that terminus is a **vacuous
+assertion**: the hierarchy captured for the failing `extendedWaitUntil` holds eight text
+nodes and every one of them belongs to the system home screen, the app process was not
+created until 21 s after its own 60 s wait had already started, and a confirmation tap that
+registered as a button press took 31 s to reach the launch service. The app under test was
+never on screen, so nothing the flow, the selector, the bundle, or the backend capability
+does is in that failure's path. `about.yaml`'s failing wait is byte-identical to `main`'s,
+and `main`'s own iOS job passed `about` in the same window.
+
+Triage amendment #26 adjudicates the consequence: the accepting signal for this PR is the
+baseline gate plus the complete Android flow set, the iOS result is recorded rather than
+required, and iOS release-config startup stability under runner starvation is routed to the
+existing native-gate ticket that already scopes it.
+
+- [x] 37.1 Record the amended accepting bar and apply it to every gate task in sections 7–36.
+      Those tasks were written against "Android **and iOS** N/N"; amendment #26 amends
+      acceptance criteria 3, 6, 18, 25, 27 and 29 to the baseline gate plus the complete
+      Android flow set, with the iOS result recorded and not required. Each such task is
+      ticked with an explicit `(closed on the amended bar — see 37.1)` marker at its head, so
+      no box overstates what the device evidence proves and no reader has to re-derive which
+      bar it was closed against. Every repair in sections 7–36 is device-proven at this one
+      head, because Android runs all 17 top-level flows there on attempt 1/1.
+- [x] 37.2 Record the Android per-flow result in full, since a bare "17/17" does not carry
+      it: `about` · `activity` · `appearance-settings` · `calendar` · `environment-switch` ·
+      `event-checklists` · `feedback` · `hidden-events` · `home` · `ical-import` ·
+      `import-seed` · `onboarding` · `personal-events` · `rename-seed` · `settings` ·
+      `user-calendar-rename` · `user-calendars`. `activity` — the flow `main` is currently
+      terminal on for both platforms — passes here. iOS is recorded as terminal at flow 1
+      `about` with the artifact-level diagnosis above; flows 2–17 did not execute, so this
+      head yields no iOS evidence for `feedback`, `home`, `settings`, or `user-calendars`.
+- [x] 37.3 Record the pre-foreground abort class in the `mobile-e2e` delta: an assertion can
+      fail while the application was never foregrounded, in which case the failure belongs to
+      the runner and not to the flow, and the discriminator is the captured hierarchy for the
+      failing step rather than the log summary — which reports it identically to a real
+      assertion failure. Note that this is the one class in this change whose diagnosis is
+      available only from the artifact.
+- [x] 37.4 Refuse the corresponding classifier widening, and record why, so it is not
+      reproposed. A "the app was not in the foreground" discriminator is sound in principle —
+      a genuine regression renders the app and fails inside it — but iOS hierarchy nodes carry
+      no bundle attribution the way Android's do, so the only implementable form is matching
+      the system home screen's own text. That is exactly the stack-trace-style text matching
+      section 14 replaced with a structural rule, and it bought one CI cycle each of the three
+      times it was tried. The assertion guard, the four-attempt ceiling, and the attempt
+      budget are unchanged by this section.
+- [x] 37.5 Re-anchor signal (c) for the Reviewer. Task 15.5 recorded the pre-merge baseline as
+      run `33194849747` @ `ac1aa586`; the current one is
+      [34027616448](https://github.com/timecalendar/timecalendar/actions/runs/34027616448) @
+      `acbaa0e4`, **terminal on both platforms at flow 2 `activity`** on the same
+      `Assert that "Calendar" is visible` signature this change exists to remove. The
+      post-merge push run on `main` is expected to clear that on Android; a still-red iOS is
+      expected under 37.1 and is not a merge regression. The Reviewer owns that check and the
+      issue does not close until its verdict is recorded.

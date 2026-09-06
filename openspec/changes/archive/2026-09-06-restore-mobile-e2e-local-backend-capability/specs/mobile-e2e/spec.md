@@ -77,6 +77,13 @@ reviewed head, and its handoff SHALL record that commit plus direct run/job link
 - **AND** the flow set completes seeded calendar import through the real local server and the full calendar-family round trip — agenda switch, seeded-title assertion, event details, hide/un-hide — before later B10 assertions
 - **AND** the issue handoff records the exact SHA and direct run/job links, and names any flow that remains blocked by a separately ticketed stale selector rather than reporting the full set green
 
+#### Scenario: An assertion fails while the application was never foregrounded
+
+- **WHEN** a native attempt reports a failed assertion command, and the screen hierarchy captured for that failing step contains only system-shell nodes, with the application's own process created after the wait had already started
+- **THEN** the failure SHALL be attributed to the runner rather than to the flow, the selector, the build contract, or the application, and that attribution SHALL be read from the captured hierarchy artifact — the job log reports this case identically to a real assertion failure
+- **AND** the retry classifier SHALL NOT be widened to cover it, because the platform exposes no bundle attribution on hierarchy nodes and the only implementable discriminator is matching the system shell's own text, which is the signature matching this capability's structural rule replaced
+- **AND** the residual platform instability SHALL be tracked on its own ticket rather than absorbed into whichever flow repair happened to surface it
+
 ### Requirement: XCTest startup retries cannot mask flow failures
 
 The harness SHALL support a fixed, bounded number of Maestro startup attempts for iOS CI.
