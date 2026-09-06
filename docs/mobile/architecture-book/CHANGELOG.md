@@ -22,6 +22,10 @@
 - Recorded feature ownership for the decomposed personal-event editor controller, field/action
   sections, color picker/presets, and date/time field. The native picker remains behind the shared
   chrome seam. This applies ADR 014 unchanged; it introduces no new Architecture Book rule or ADR.
+- Required long Maestro traversals to stay within the standard clock by increasing gesture
+  distance with an explicit fast `speed`, admissible only when the target remains in the terminal
+  viewport at maximum overshoot. The Activity boundary proof now derives the 50-row boundary from
+  the seed and client page limit instead of treating prose as a second source of truth.
 - Recorded the onboarding welcome screen's feature-owned page, direct native-pager,
   control, grouped-indicator, and coordinator composition. Decorative entrance opacity and
   indicator width now use Reanimated with live reduced-motion snapping and owned cleanup;

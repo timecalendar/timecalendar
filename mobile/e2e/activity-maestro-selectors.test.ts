@@ -3,9 +3,18 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
 const mobileRoot = join(__dirname, "..")
+const repositoryRoot = join(mobileRoot, "..")
 const flowPath = join(mobileRoot, ".maestro", "activity.yaml")
 const sourceRoot = join(mobileRoot, "src")
 const flow = readFileSync(flowPath, "utf8")
+const activitySeed = readFileSync(
+  join(repositoryRoot, "server", "src", "scripts", "seed-e2e-activity.ts"),
+  "utf8",
+)
+const activityRequest = readFileSync(
+  join(sourceRoot, "features", "activity", "data", "request.ts"),
+  "utf8",
+)
 const activityScreen = readFileSync(
   join(sourceRoot, "features", "activity", "ui", "activity-screen.tsx"),
   "utf8",
@@ -23,18 +32,51 @@ const paginationSelectorIds = new Set([
 
 const paginationScrolls = [
   ...flow.matchAll(
-    /- scrollUntilVisible:\n\s+element:\n\s+id: "([^"]+)"\n\s+direction: DOWN\n\s+timeout: (\d+)/g,
+    /- scrollUntilVisible:\n\s+element:\n\s+id: "([^"]+)"\n\s+direction: DOWN\n\s+speed: (\d+)\n\s+timeout: (\d+)/g,
   ),
 ]
   .flatMap((match) => {
     const id = match[1]
-    const timeout = match[2]
+    const speed = match[2]
+    const timeout = match[3]
 
-    return id === undefined || timeout === undefined
+    return id === undefined || speed === undefined || timeout === undefined
       ? []
-      : [{ id, timeout: Number(timeout) }]
+      : [{ id, speed: Number(speed), timeout: Number(timeout) }]
   })
   .filter(({ id }) => paginationSelectorIds.has(id))
+
+const boundaryOrderAssertions = [
+  ...flow.matchAll(
+    /- assertVisible:\n\s+id: "([^"]+)"\n\s+above:\n\s+id: "([^"]+)"/g,
+  ),
+].flatMap((match) => {
+  const upper = match[1]
+  const lower = match[2]
+
+  return upper === undefined || lower === undefined ? [] : [{ upper, lower }]
+})
+
+function requiredNumber(source: string, pattern: RegExp): number {
+  const match = pattern.exec(source)
+  expect(match?.[1]).toBeDefined()
+  return Number(match?.[1])
+}
+
+function requiredString(source: string, pattern: RegExp): string {
+  const match = pattern.exec(source)
+  expect(match?.[1]).toBeDefined()
+  return match?.[1] ?? ""
+}
+
+function seededMinute(idConstant: string): number {
+  return requiredNumber(
+    activitySeed,
+    new RegExp(
+      `id: ${idConstant},[\\s\\S]*?createdAt: atUtcDay\\(1, (\\d+)\\),`,
+    ),
+  )
+}
 
 describe("Activity Maestro selectors", () => {
   it("uses the one shared flow without iOS-broken back navigation", () => {
@@ -62,19 +104,60 @@ describe("Activity Maestro selectors", () => {
     )
   })
 
-  it("gives only the row-50 pagination traversal the measured wider bound", () => {
+  it("derives the cross-page tie boundary from the seed and client limit", () => {
+    const fillerCount = requiredNumber(
+      activitySeed,
+      /\.\.\.Array\.from\(\{ length: (\d+) \}/,
+    )
+    const pageLimit = requiredNumber(
+      activityRequest,
+      /export const ACTIVITY_PAGE_LIMIT = (\d+)/,
+    )
+    const tieHigherId = requiredString(
+      activitySeed,
+      /export const E2E_ACTIVITY_TIE_HIGHER_ID = "([^"]+)"/,
+    )
+    const tieLowerId = requiredString(
+      activitySeed,
+      /export const E2E_ACTIVITY_TIE_LOWER_ID = "([^"]+)"/,
+    )
+
+    expect(3 + fillerCount + 1).toBe(pageLimit)
+    expect(tieHigherId.localeCompare(tieLowerId)).toBeGreaterThan(0)
+    expect(seededMinute("E2E_ACTIVITY_TIE_HIGHER_ID")).toBe(
+      seededMinute("E2E_ACTIVITY_TIE_LOWER_ID"),
+    )
+  })
+
+  it("keeps every page-boundary traversal fast and standard-bounded", () => {
     expect(paginationScrolls).toEqual([
       {
         id: "activity-new-e2e-activity-tie-higher",
-        timeout: 120000,
+        speed: 90,
+        timeout: 60000,
       },
       {
         id: "activity-new-e2e-activity-tie-lower",
+        speed: 90,
         timeout: 60000,
       },
       {
         id: "activity-new-e2e-activity-older-anchor",
+        speed: 90,
         timeout: 60000,
+      },
+    ])
+  })
+
+  it("pins the boundary rows in descending timestamp and id order", () => {
+    expect(boundaryOrderAssertions).toEqual([
+      {
+        upper: "activity-new-e2e-activity-tie-higher",
+        lower: "activity-new-e2e-activity-tie-lower",
+      },
+      {
+        upper: "activity-new-e2e-activity-tie-lower",
+        lower: "activity-new-e2e-activity-older-anchor",
       },
     ])
   })

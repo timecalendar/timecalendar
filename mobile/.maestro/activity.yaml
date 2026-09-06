@@ -178,19 +178,22 @@ appId: fr.samuelprak.timecalendar.dev
 # The higher UUID is row 50 (first response); the lower UUID and older anchor
 # exist only on the following response, so observing all three proves the tie
 # order and scroll-driven pagination through the real server.
-# Run 33330342869 reached row 50 while still advancing after 60s: Android was at
-# fillers 40-42 and iOS at 31-33, so only this bounded traversal gets 120s.
+# At the default speed each gesture is a drag rather than a fling. These boundary
+# rows are last in history, so maximum overshoot clamps onto them instead of past
+# them; adding rows below older-anchor voids that safety property.
 - scrollUntilVisible:
     element:
       id: "activity-new-e2e-activity-tie-higher"
     direction: DOWN
-    timeout: 120000
+    speed: 90
+    timeout: 60000
 - assertVisible:
     id: "activity-new-e2e-activity-tie-higher"
 - scrollUntilVisible:
     element:
       id: "activity-new-e2e-activity-tie-lower"
     direction: DOWN
+    speed: 90
     timeout: 60000
 - assertVisible:
     id: "activity-new-e2e-activity-tie-lower"
@@ -198,6 +201,15 @@ appId: fr.samuelprak.timecalendar.dev
     element:
       id: "activity-new-e2e-activity-older-anchor"
     direction: DOWN
+    speed: 90
     timeout: 60000
 - assertVisible:
     id: "activity-new-e2e-activity-older-anchor"
+- assertVisible:
+    id: "activity-new-e2e-activity-tie-higher"
+    above:
+      id: "activity-new-e2e-activity-tie-lower"
+- assertVisible:
+    id: "activity-new-e2e-activity-tie-lower"
+    above:
+      id: "activity-new-e2e-activity-older-anchor"
