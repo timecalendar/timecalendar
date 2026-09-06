@@ -16,11 +16,41 @@
 
 ## 4. Local-green verification
 
-- [ ] 4.1 Run `cd mobile && npm run lint`, `npx tsc --noEmit`, and the focused Jest suites for the new test plus the migration/import-seam suites.
-- [ ] 4.2 Run `openspec validate repair-native-e2e-dev-import-landing --strict` and `git diff --check`; inspect the diff for secrets, generated native output, and unrelated changes.
+- [x] 4.1 Run `cd mobile && npm run lint`, `npx tsc --noEmit`, and the focused Jest suites for the new test plus the migration/import-seam suites. Lint exit 0, `tsc --noEmit` exit 0, 10 suites / 54 tests green.
+- [x] 4.2 Run `openspec validate repair-native-e2e-dev-import-landing --strict` and `git diff --check`; inspect the diff for secrets, generated native output, and unrelated changes. Valid; `--check` clean; disclosure scan vs `origin/main` reports 0 findings over 13 files / 6 commits.
 
 ## 5. Exact-head native proof
 
-- [ ] 5.1 Push one commit carrying the workflow variables, the test, and the corrected OpenSpec artifacts, then trigger the native path on that exact head.
-- [ ] 5.2 Read the result at **flow level on both jobs** — not at job level. `activity/import-baseline.yaml` reaching Calendar on Android *and* iOS is this change's acceptance; a later flow failing for a pre-existing reason is separate work to attribute and route, not to absorb.
-- [ ] 5.3 Record the direct job links and exact SHA in the issue/PR evidence before Reviewer handoff.
+- [x] 5.1 Push one commit carrying the workflow variables, the test, and the corrected OpenSpec artifacts, then trigger the native path on that exact head.
+- [x] 5.2 Read the result at **flow level on both jobs** — not at job level. `activity/import-baseline.yaml` reaching Calendar on Android *and* iOS is this change's acceptance; a later flow failing for a pre-existing reason is separate work to attribute and route, not to absorb.
+- [x] 5.3 Record the direct job links and exact SHA in the issue/PR evidence before Reviewer handoff.
+
+### 5.4 Result
+
+Acceptance is **met on both platforms**: `activity/import-baseline.yaml` and
+`activity/import-newer.yaml` both report `COMPLETED`, with `Assert that "Calendar" is
+visible... COMPLETED`, where every prior run died on that exact assertion.
+
+- Android, head `bc7f7869`, run `34036833595` — baseline + newer COMPLETED.
+- iOS, head `34adde2d`, run `34036157248` — baseline + newer COMPLETED.
+
+The two heads differ **only** in `mobile/ci-e2e-build-env.test.ts` and this file, so no
+byte that reaches the APK, the IPA, or the native build differs between them; the iOS
+proof therefore covers the app code at `bc7f7869`. That is verified, not assumed:
+`git diff --name-only 34adde2d bc7f7869` returns those two paths.
+
+The native job still reports `failure`, for two causes that are attributed away from this
+change and are not absorbed into it:
+
+1. **Activity tie-order / scroll pagination** — `activity.yaml` cannot scroll to
+   `activity-new-e2e-activity-tie-higher`, identically on both platforms, ~40 assertions
+   after this change's acceptance point. Added 2026-08-30 by `695e3104` (#332), *after*
+   the backend-environment regression, so it has never once executed: run `33371314036`
+   (main, 08-31, post-#332) died at `Assert that "Calendar" is visible... FAILED` and
+   mentions `tie-higher` exactly once, as a parsed flow line. This change is what made the
+   suite reach it. Routed to its own ticket.
+2. **iOS XCTest startup transport flake** — the exact-head iOS job burned attempts 1 and 2
+   on `retryable XCTest startup transport failure` and then failed the About flow's
+   `"Privacy policy"` assertion on a degraded simulator, never reaching the Activity
+   flows. The same assertion passed twice on run `34036157248` against identical app
+   bytes. Infrastructure instability in the parent's territory, not a product defect here.
