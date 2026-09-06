@@ -1,4 +1,4 @@
-import { act, render } from "@testing-library/react-native"
+import { act, cleanup, render } from "@testing-library/react-native"
 import { AccessibilityInfo, Animated } from "react-native"
 
 import { SplashScreen } from "./splash-screen"
@@ -31,7 +31,6 @@ jest.mock("@/hooks/use-app-ready", () => ({
 // real awaited turns settle the promise hops. Deterministic, no real time.
 async function flushMicrotasks(turns = 4): Promise<void> {
   for (let i = 0; i < turns; i++) {
-    jest.runAllTicks()
     await Promise.resolve()
   }
 }
@@ -69,15 +68,18 @@ describe("SplashScreen", () => {
       "isReduceMotionEnabled",
     )
     const timing = jest.spyOn(Animated, "timing")
-
     beforeEach(() => {
       mockUseAppReady.mockReturnValue(true)
-      jest.useFakeTimers()
+      jest.useFakeTimers({ doNotFake: ["queueMicrotask"] })
     })
 
-    afterEach(() => {
+    afterEach(async () => {
       try {
-        jest.runOnlyPendingTimers()
+        await cleanup()
+        await act(async () => {
+          jest.runOnlyPendingTimers()
+          await Promise.resolve()
+        })
       } finally {
         timing.mockClear()
         isReduceMotionEnabled.mockReset().mockResolvedValue(false)

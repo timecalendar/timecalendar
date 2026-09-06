@@ -1,10 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, renderHook, waitFor } from "@testing-library/react-native"
-import type { ReactNode } from "react"
 
 import { ApiError, customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { recordUnknownError } from "@/firebase"
+import { createTestQueryClient } from "@/test-support/query-client"
 
 import { buildFeedbackDto, useSendFeedback } from "./use-send-feedback"
 
@@ -18,12 +17,8 @@ jest.mock("./device-info", () => ({ getDeviceInfo: () => "device-info" }))
 const mockFetch = customFetch as jest.Mock
 const mockCalendars = useUserCalendars as jest.Mock
 
-function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({
-    defaultOptions: { mutations: { retry: false, gcTime: Infinity } },
-  })
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-}
+const queryHarness = createTestQueryClient()
+const wrapper = queryHarness.wrapper
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -33,6 +28,8 @@ beforeEach(() => {
     { id: "hidden", visible: false },
   ])
 })
+
+afterEach(() => queryHarness.clear())
 
 it("builds standard and optional-context DTOs without unsupported fields", () => {
   expect(

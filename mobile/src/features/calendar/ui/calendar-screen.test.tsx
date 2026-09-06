@@ -1,4 +1,5 @@
 import {
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -693,8 +694,12 @@ describe("CalendarScreen — month title + Today action", () => {
 // receives the resolved zone as its timeZone prop and a zone day-key
 // initialDate, so calendar-kit's internal day division agrees with ours.
 describe("CalendarScreen — display zone threading", () => {
-  afterEach(() => {
-    remove(SETTINGS_KEYS.timezone)
+  afterEach(async () => {
+    try {
+      await cleanup()
+    } finally {
+      remove(SETTINGS_KEYS.timezone)
+    }
   })
 
   it("feeds the resolved display zone and its day-key to the grid", async () => {

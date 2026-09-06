@@ -1,7 +1,10 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act, renderHook, waitFor } from "@testing-library/react-native"
+import {
+  act,
+  cleanup,
+  renderHook,
+  waitFor,
+} from "@testing-library/react-native"
 import * as Localization from "expo-localization"
-import type { ReactNode } from "react"
 
 import { customFetch } from "@/api/mutator"
 import { useUserCalendars } from "@/features/calendar-sources/data"
@@ -11,6 +14,7 @@ import {
   SETTINGS_KEYS,
 } from "@/features/settings/prefs"
 import { getFcmToken, recordUnknownError } from "@/firebase"
+import { createTestQueryClient } from "@/test-support/query-client"
 
 import { setFrequency, setIsActive, setNbDaysAhead } from "./prefs"
 import { useSubscriptionRegistration } from "./subscription"
@@ -39,12 +43,7 @@ const mockUseUserCalendars = useUserCalendars as jest.Mock
 
 const { remove } = jest.requireActual<typeof import("@/storage")>("@/storage")
 
-function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
-  })
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-}
+let queryHarness: ReturnType<typeof createTestQueryClient>
 
 function lastBody(): Record<string, unknown> {
   const call = mockFetch.mock.calls.at(-1)
@@ -59,7 +58,31 @@ function clearStoredPreferences() {
   remove(SETTINGS_KEYS.timezone)
 }
 
+async function settleRegistration(
+  register: () => Promise<void>,
+  isPending: () => boolean,
+) {
+  let pending: Promise<void> | undefined
+  let resolveRequest: (() => void) | undefined
+  mockFetch.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        resolveRequest = resolve
+      }),
+  )
+  await act(() => {
+    pending = register()
+  })
+  await waitFor(() => expect(isPending()).toBe(true))
+  await act(async () => {
+    resolveRequest?.()
+    await pending
+  })
+  await waitFor(() => expect(isPending()).toBe(false))
+}
+
 beforeEach(() => {
+  queryHarness = createTestQueryClient()
   jest.clearAllMocks()
   clearStoredPreferences()
   mockGetFcmToken.mockResolvedValue("fcm-token")
@@ -73,7 +96,9 @@ beforeEach(() => {
   ] as unknown as ReturnType<typeof Localization.getCalendars>)
 })
 
-afterEach(() => {
+afterEach(async () => {
+  await cleanup()
+  await act(async () => queryHarness.clear())
   mockFetch.mockReset()
   mockGetFcmToken.mockReset()
   mockUseUserCalendars.mockReset()
@@ -84,12 +109,13 @@ afterEach(() => {
 describe("useSubscriptionRegistration", () => {
   it("PUTs the assembled DTO with defaults + the user_calendars server ids", async () => {
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
 
-    await act(async () => {
-      await result.current.register()
-    })
+    await settleRegistration(
+      () => result.current.register(),
+      () => result.current.isPending,
+    )
 
     expect(mockFetch).toHaveBeenCalledTimes(1)
     const [url, init] = mockFetch.mock.calls[0] ?? []
@@ -112,11 +138,12 @@ describe("useSubscriptionRegistration", () => {
     setLanguagePreference("fr")
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
-    await act(async () => {
-      await result.current.register()
-    })
+    await settleRegistration(
+      () => result.current.register(),
+      () => result.current.isPending,
+    )
 
     expect(lastBody()).toMatchObject({ locale: "fr" })
   })
@@ -125,11 +152,12 @@ describe("useSubscriptionRegistration", () => {
     setTimezonePreference("Indian/Reunion")
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
-    await act(async () => {
-      await result.current.register()
-    })
+    await settleRegistration(
+      () => result.current.register(),
+      () => result.current.isPending,
+    )
 
     // The explicit preference wins over the (spied) device zone.
     expect(lastBody()).toMatchObject({ timezone: "Indian/Reunion" })
@@ -141,11 +169,12 @@ describe("useSubscriptionRegistration", () => {
     setIsActive(false)
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
-    await act(async () => {
-      await result.current.register()
-    })
+    await settleRegistration(
+      () => result.current.register(),
+      () => result.current.isPending,
+    )
 
     expect(lastBody()).toMatchObject({
       frequency: "daily",
@@ -156,11 +185,12 @@ describe("useSubscriptionRegistration", () => {
 
   it("re-PUTs with an explicit token (token-refresh) without reading getFcmToken", async () => {
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
-    await act(async () => {
-      await result.current.register("refreshed-token")
-    })
+    await settleRegistration(
+      () => result.current.register("refreshed-token"),
+      () => result.current.isPending,
+    )
 
     expect(mockGetFcmToken).not.toHaveBeenCalled()
     expect(lastBody()).toMatchObject({ fcmToken: "refreshed-token" })
@@ -170,7 +200,7 @@ describe("useSubscriptionRegistration", () => {
     mockGetFcmToken.mockResolvedValue(null)
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
     await act(async () => {
       await result.current.register()
@@ -183,11 +213,12 @@ describe("useSubscriptionRegistration", () => {
     mockUseUserCalendars.mockReturnValue([])
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
-    await act(async () => {
-      await result.current.register()
-    })
+    await settleRegistration(
+      () => result.current.register(),
+      () => result.current.isPending,
+    )
 
     expect(mockFetch).toHaveBeenCalledTimes(1)
     expect(lastBody()).toMatchObject({ calendarIds: [] })
@@ -198,7 +229,7 @@ describe("useSubscriptionRegistration", () => {
     mockFetch.mockRejectedValue(new Error("put boom"))
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
 
     await act(async () => {
@@ -218,13 +249,17 @@ describe("useSubscriptionRegistration", () => {
     mockFetch.mockRejectedValue(new Error("boom"))
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
-    await expect(
-      act(async () => {
+    let rejection: unknown
+    await act(async () => {
+      try {
         await result.current.register()
-      }),
-    ).rejects.toThrow("boom")
+      } catch (error) {
+        rejection = error
+      }
+    })
+    expect(rejection).toEqual(new Error("boom"))
     await waitFor(() => expect(result.current.isError).toBe(true))
 
     await act(() => {
@@ -245,7 +280,7 @@ describe("useSubscriptionRegistration", () => {
     mockFetch.mockRejectedValue("plain string boom")
 
     const { result } = await renderHook(() => useSubscriptionRegistration(), {
-      wrapper,
+      wrapper: queryHarness.wrapper,
     })
 
     await act(async () => {

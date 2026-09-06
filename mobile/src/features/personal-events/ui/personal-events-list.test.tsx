@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react-native"
+import { cleanup, render } from "@testing-library/react-native"
 import { fromZonedTime } from "date-fns-tz"
 
 import { usePersonalEvents } from "@/features/personal-events/data"
@@ -25,6 +25,14 @@ const mockUsePersonalEvents = usePersonalEvents as jest.MockedFunction<
 >
 
 describe("PersonalEventsList", () => {
+  afterEach(async () => {
+    try {
+      await cleanup()
+    } finally {
+      remove(SETTINGS_KEYS.timezone)
+    }
+  })
+
   it("shows the localized empty state and an accessible Add control when empty", async () => {
     mockUsePersonalEvents.mockReturnValue([])
     const { getByText, getByTestId } = await render(<PersonalEventsList />)
@@ -82,6 +90,5 @@ describe("PersonalEventsList", () => {
     const { getByText } = await render(<PersonalEventsList />)
 
     expect(getByText("1 Jan 14:00 – 1 Jan 15:00")).toBeTruthy()
-    remove(SETTINGS_KEYS.timezone)
   })
 })

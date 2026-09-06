@@ -1,6 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, renderHook } from "@testing-library/react-native"
-import type { ReactNode } from "react"
 import { AppState, type AppStateStatus } from "react-native"
 
 import { customFetch } from "@/api/mutator"
@@ -12,6 +10,7 @@ import {
   type RemoteMessage,
 } from "@/firebase"
 import { createFakeDb } from "@/test-support/fake-db"
+import { createTestQueryClient } from "@/test-support/query-client"
 
 // THE ACCEPTANCE CRITERION for TIM-399, proven where it actually lives: at the
 // WIRING. Every trigger runs for real — the real `useSyncCalendars`, the real
@@ -152,12 +151,8 @@ let activityResponder: () => Promise<unknown>
 /** Whatever `/calendars/sync` should answer with, per test. */
 let syncResponder: () => Promise<unknown>
 
-function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({
-    defaultOptions: { mutations: { retry: false } },
-  })
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-}
+const queryHarness = createTestQueryClient()
+const wrapper = queryHarness.wrapper
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -188,6 +183,7 @@ beforeEach(() => {
 })
 
 afterEach(async () => {
+  queryHarness.clear()
   for (const resolve of pendingDeferreds) resolve(activityResponse)
   pendingDeferreds.length = 0
   await new Promise((resolve) => setImmediate(resolve))

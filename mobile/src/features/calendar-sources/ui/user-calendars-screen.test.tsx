@@ -563,7 +563,7 @@ describe("UserCalendarsScreen", () => {
     )
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    fireEvent(
+    await fireEvent(
       screen.getByTestId("user-calendar-actions-cal-1"),
       "pressAction",
       {
@@ -584,7 +584,7 @@ describe("UserCalendarsScreen", () => {
     const alertSpy = jest.spyOn(Alert, "alert")
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    fireEvent(
+    await fireEvent(
       screen.getByTestId("user-calendar-actions-cal-1"),
       "pressAction",
       {
@@ -609,7 +609,7 @@ describe("UserCalendarsScreen", () => {
     actions.remove.mockResolvedValue(false)
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    fireEvent(
+    await fireEvent(
       screen.getByTestId("user-calendar-actions-cal-1"),
       "pressAction",
       {
@@ -629,15 +629,13 @@ describe("UserCalendarsScreen", () => {
     await render(<UserCalendarsScreen />)
     expect(screen.queryByTestId("user-calendar-rename-dialog")).toBeNull()
 
-    await act(async () => {
-      fireEvent(
-        screen.getByTestId("user-calendar-actions-cal-1"),
-        "pressAction",
-        {
-          nativeEvent: { event: "rename" },
-        },
-      )
-    })
+    await fireEvent(
+      screen.getByTestId("user-calendar-actions-cal-1"),
+      "pressAction",
+      {
+        nativeEvent: { event: "rename" },
+      },
+    )
 
     expect(screen.getByTestId("user-calendar-rename-dialog")).toBeTruthy()
     expect(screen.getByTestId("user-calendar-rename-input").props.value).toBe(
@@ -650,19 +648,15 @@ describe("UserCalendarsScreen", () => {
   it("closes the rename dialog on cancel without writing", async () => {
     mockUseUserCalendars.mockReturnValue([calendar()])
     await render(<UserCalendarsScreen />)
-    await act(async () => {
-      fireEvent(
-        screen.getByTestId("user-calendar-actions-cal-1"),
-        "pressAction",
-        {
-          nativeEvent: { event: "rename" },
-        },
-      )
-    })
+    await fireEvent(
+      screen.getByTestId("user-calendar-actions-cal-1"),
+      "pressAction",
+      {
+        nativeEvent: { event: "rename" },
+      },
+    )
 
-    await act(async () => {
-      fireEvent.press(screen.getByTestId("user-calendar-rename-cancel"))
-    })
+    await fireEvent.press(screen.getByTestId("user-calendar-rename-cancel"))
 
     expect(screen.queryByTestId("user-calendar-rename-dialog")).toBeNull()
     expect(renameActions.rename).not.toHaveBeenCalled()
@@ -716,23 +710,17 @@ describe("UserCalendarsScreen", () => {
 
       expect(trigger.props.accessibilityActions).toEqual([{ name: "activate" }])
 
-      await act(async () => {
-        fireEvent.press(trigger)
-      })
+      await fireEvent.press(trigger)
       expect(mockShow).toHaveBeenCalledTimes(1)
 
-      await act(async () => {
-        fireEvent(trigger, "accessibilityAction", {
-          nativeEvent: { actionName: "activate" },
-        })
+      await fireEvent(trigger, "accessibilityAction", {
+        nativeEvent: { actionName: "activate" },
       })
       expect(mockShow).toHaveBeenCalledTimes(2)
 
       // An unrelated action must not open it.
-      await act(async () => {
-        fireEvent(trigger, "accessibilityAction", {
-          nativeEvent: { actionName: "increment" },
-        })
+      await fireEvent(trigger, "accessibilityAction", {
+        nativeEvent: { actionName: "increment" },
       })
       expect(mockShow).toHaveBeenCalledTimes(2)
     })
@@ -744,9 +732,7 @@ describe("UserCalendarsScreen", () => {
     const trigger = screen.getByRole("button", { name: "Actions for ENSEEIHT" })
 
     expect(trigger.props.accessibilityActions).toBeUndefined()
-    await act(async () => {
-      fireEvent.press(trigger)
-    })
+    await fireEvent.press(trigger)
     expect(mockShow).not.toHaveBeenCalled()
   })
 
