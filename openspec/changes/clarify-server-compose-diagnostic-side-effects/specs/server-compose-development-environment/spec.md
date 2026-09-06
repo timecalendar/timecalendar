@@ -14,8 +14,8 @@ The local Compose entrypoint and setup diagnostics SHALL identify the selected p
 
 #### Scenario: Config-only diagnostics never provision or mutate
 
-- **WHEN** the contributor requests the Compose project name or the setup script's
-  configuration-only output
+- **WHEN** the contributor runs `bin/server-compose.sh project-name` or
+  `bin/setup-dev.sh --compose-config`
 - **THEN** the command prints the selected identity and ports and writes no file, generates no
   certificate material, and contacts no service
 

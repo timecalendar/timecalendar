@@ -4,11 +4,74 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 
 const scriptRoot = realpathSync(join(dirname(fileURLToPath(import.meta.url)), ".."));
 const wrapper = join(scriptRoot, "bin", "server-compose.sh");
 const setup = join(scriptRoot, "bin", "setup-dev.sh");
+const capabilitySpec = join(
+  scriptRoot,
+  "openspec",
+  "specs",
+  "server-compose-development-environment",
+  "spec.md",
+);
+const handbook = join(scriptRoot, "docs", "agent-dev-environment.md");
+
+function section(source, start, end) {
+  const startIndex = source.indexOf(start);
+  assert.notEqual(startIndex, -1, `missing contract section: ${start}`);
+  const endIndex = source.indexOf(end, startIndex + start.length);
+  assert.notEqual(endIndex, -1, `missing contract section boundary: ${end}`);
+  return source.slice(startIndex, endIndex);
+}
+
+function assertDiagnosticContract() {
+  const wrapperSource = readFileSync(wrapper, "utf8");
+  const specSource = readFileSync(capabilitySpec, "utf8");
+  const handbookSource = readFileSync(handbook, "utf8");
+
+  const selectedConfiguration = section(
+    specSource,
+    "### Requirement: Selected configuration is diagnosable",
+    "### Requirement: Static isolation verification",
+  );
+  const unreachableProxy = section(
+    specSource,
+    "### Requirement: Unreachable TLS proxy is attributed to the nginx container",
+    "### Requirement: Local TLS material is provisioned, never committed",
+  );
+  const devSetup = section(
+    handbookSource,
+    "## 4. Dev-environment setup",
+    "### Firebase",
+  );
+
+  for (const contract of [selectedConfiguration, unreachableProxy, devSetup]) {
+    assert.match(contract, /create, start, stop, restart,\s+remove/);
+    assert.match(contract, /Docker\s+resource/);
+    assert.match(contract, /provision or renew/);
+    assert.match(contract, /checkout-local/);
+  }
+  for (const contract of [selectedConfiguration, devSetup]) {
+    assert.match(contract, /project-name/);
+    assert.match(contract, /--compose-config|configuration-only output/);
+    assert.match(contract, /write(?:s)?\s+no(?:thing|\s+file)/);
+    assert.match(contract, /contact(?:s)? no service/);
+  }
+  assert.match(devSetup, /gitignored and untracked/);
+  assert.match(devSetup, /ci\/certificates\/cert\.pem/);
+  assert.match(devSetup, /key\.pem/);
+
+  const projectNameExit = wrapperSource.indexOf('if [ "${1:-}" = "project-name" ]');
+  const certificateGuard = wrapperSource.indexOf(
+    '"$repo_root/ci/certificates/ensure-certificates.sh"',
+  );
+  const composeExec = wrapperSource.indexOf("exec docker compose");
+  assert.ok(projectNameExit >= 0, "project-name must retain its early-exit branch");
+  assert.ok(certificateGuard > projectNameExit, "certificate guard must follow project-name");
+  assert.ok(composeExec > certificateGuard, "Compose exec must follow the certificate guard");
+}
 
 function run(command, args, cwd, env = {}) {
   return execFileSync(command, args, {
@@ -110,6 +173,8 @@ function assertScopedModel(model, project, ports) {
   assert.equal(certificateMount.type, "bind");
   assert.equal(certificateMount.source, join(scriptRoot, "ci", "certificates"));
 }
+
+assertDiagnosticContract();
 
 const currentRoot = realpathSync(run("git", ["rev-parse", "--show-toplevel"], scriptRoot));
 const commonDir = realpathSync(run("git", ["rev-parse", "--git-common-dir"], scriptRoot));
