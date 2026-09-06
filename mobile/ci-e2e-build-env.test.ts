@@ -59,21 +59,30 @@ const bakedBuildSteps = (): BakedBuildStep[] =>
     }))
 
 describe("native E2E build environment", () => {
-  it("bakes an API URL on exactly the two release build steps", () => {
+  it("bakes an API URL on exactly the four prebuild and release build steps", () => {
     // Guards the parser itself, and it has to pin the step NAME, not just the URL.
     // The chunks are split on `- name:` at a fixed indent, so a step whose
     // indentation drifts is not split off — it is absorbed into the PRECEDING
-    // chunk. Both prebuild steps set BACKEND_ENVIRONMENT_CAPABILITY without an
-    // API URL, so an absorbed release step inherits its neighbour's capability
-    // and the pairing assertion below passes on a value the release build never
-    // had. Measured: with only the URLs pinned, deleting the capability from the
-    // release APK step — the precise TIM-456 regression — stayed green as soon as
-    // that step's indent shifted by one space. Asserting the name pins the
-    // boundary, so any drift renames a step and fails here instead.
+    // chunk, and then inherits that neighbour's capability. The pairing assertion
+    // below would pass on a value the drifted step never had. Measured: with only
+    // the URLs pinned, deleting the capability from the release APK step — the
+    // precise TIM-456 regression — stayed green as soon as that step's indent
+    // shifted by one space. Asserting the name pins the boundary, so any drift
+    // renames a step and fails here instead.
+    //
+    // Pinning the exact set is also what tells us when the workflow starts baking
+    // the URL somewhere new: this list grew from two steps to four when the
+    // prebuild steps began baking it too, and this assertion is what caught that
+    // rather than the new steps going silently unchecked.
     expect(
       bakedBuildSteps().map(({ name, apiUrl }) => ({ name, apiUrl })),
     ).toEqual([
+      {
+        name: "Prebuild Android (dev variant)",
+        apiUrl: "http://10.0.2.2:3005",
+      },
       { name: "Build release APK", apiUrl: "http://10.0.2.2:3005" },
+      { name: "Prebuild iOS (dev variant)", apiUrl: "http://localhost:3005" },
       { name: "Build Release simulator app", apiUrl: "http://localhost:3005" },
     ])
   })

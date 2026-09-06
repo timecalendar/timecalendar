@@ -3,6 +3,16 @@
 - [x] 1.1 Add `BACKEND_ENVIRONMENT_CAPABILITY: development` beside `APP_VARIANT: development` on the Android prebuild, Android release-APK, iOS prebuild, and iOS release-simulator steps of `.github/workflows/ci-mobile-e2e.yml`; change no job, trigger, runner, permission, secret, or step.
 - [x] 1.2 Comment the Android build step with why the pairing is load-bearing — an unset capability parses to `production` and discards the baked URL — and cross-reference it from the iOS step.
 
+> **1.1 is now carried by `main`, not by this change.** `4e363d6c` (#293) landed the same
+> four variables on 2026-09-06 at 13:47Z, while this branch's native gate was still
+> running, and additionally bakes `EXPO_PUBLIC_API_URL` on the two prebuild steps. The
+> rebase therefore reduces this change's workflow diff to 1.2 — the comment alone — and
+> that is deliberate: the variables are not restated, because restating them would be a
+> conflict, not a fix. What this change still carries that `main` does not is the §2 guard
+> that keeps those four variables from silently regressing again, and the §3 hardening.
+
+
+
 ## 2. Cover the diagnosed cause
 
 - [x] 2.1 Add `mobile/ci-e2e-build-env.test.ts`, driving each workflow step that bakes `EXPO_PUBLIC_API_URL` through the real `parseBackendEnvironmentCapability` → `parseBackendEnvironment` → `resolveBackendApiUrl` chain and asserting the resolved URL is the baked local URL.
@@ -33,6 +43,12 @@ visible... COMPLETED`, where every prior run died on that exact assertion.
 
 - Android, head `bc7f7869`, run `34036833595` — baseline + newer COMPLETED.
 - iOS, head `34adde2d`, run `34036157248` — baseline + newer COMPLETED.
+
+Both heads predate the rebase onto `4e363d6c`. They are still the valid proof of the
+diagnosis, because they carried exactly the four variables that `main` now carries; the
+rebase removed this branch's copy of them precisely because `main` had landed the same
+fix. It does **not** re-prove `main`'s own combination, which bakes the URL on the
+prebuild steps as well — that is `main`'s to prove, and its gate runs on every push.
 
 The two heads differ **only** in `mobile/ci-e2e-build-env.test.ts` and this file, so no
 byte that reaches the APK, the IPA, or the native build differs between them; the iOS
