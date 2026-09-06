@@ -39,11 +39,19 @@ jest.mock("expo-camera", () => {
     testID?: string
     onBarcodeScanned?: (result: { data: string; type: string }) => void
     children?: unknown
+    accessibilityLabel?: string
+    accessibilityHint?: string
+    barcodeScannerSettings?: { barcodeTypes: string[] }
   }) {
     const { testID, onBarcodeScanned, children } = props
     return React.createElement(
       View,
-      { testID },
+      {
+        testID,
+        accessibilityLabel: props.accessibilityLabel,
+        accessibilityHint: props.accessibilityHint,
+        barcodeScannerSettings: props.barcodeScannerSettings,
+      },
       React.createElement(
         Pressable,
         {
@@ -130,6 +138,15 @@ beforeEach(() => {
 })
 
 describe("QrScanScreen", () => {
+  it("announces camera preparation while permission is loading", async () => {
+    cameraState.permission = null
+    const { getByText } = await render(<QrScanScreen />)
+
+    const loading = getByText("Preparing the camera…")
+    expect(loading.props.accessibilityLiveRegion).toBe("polite")
+    expect(loading.props.accessibilityRole).toBe("text")
+  })
+
   it("shows the explainer and grant control when undetermined", async () => {
     cameraState.permission = {
       granted: false,
@@ -170,7 +187,12 @@ describe("QrScanScreen", () => {
 
   it("renders the QR-only camera when granted", async () => {
     const { getByTestId } = await render(<QrScanScreen />)
-    expect(getByTestId("qr-scan-camera")).toBeTruthy()
+    const camera = getByTestId("qr-scan-camera")
+    expect(camera.props.accessibilityLabel).toBe("Camera viewfinder")
+    expect(camera.props.accessibilityHint).toBe("Point at a QR code to scan it")
+    expect(camera.props.barcodeScannerSettings).toEqual({
+      barcodeTypes: ["qr"],
+    })
   })
 
   it("persists a scanned URL through the durable seam and dismisses", async () => {

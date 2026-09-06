@@ -1,381 +1,68 @@
-import {
-  type BarcodeScanningResult,
-  CameraView,
-  useCameraPermissions,
-} from "expo-camera"
+import { useCameraPermissions } from "expo-camera"
 import { router } from "expo-router"
-import { useEffect, useRef, useState } from "react"
-import { useTranslation } from "react-i18next"
-import { Linking, Pressable, StyleSheet, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
-import { WriteErrorNotice } from "@/components/write-error-notice"
-import {
-  type CalendarImportFields,
-  parseScannedSource,
-  useAddCalendar,
-} from "@/features/calendar-sources/data"
+import { useAddCalendar } from "@/features/calendar-sources/data"
 import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 import { leaveImportJourney } from "./leave-import-journey"
+import {
+  QrImportCompletedView,
+  QrImportFailureView,
+  QrImportingView,
+  QrScannerView,
+} from "./qr-import-views"
+import {
+  QrPermissionLoadingView,
+  QrPermissionRequestView,
+  QrPermissionSettingsView,
+} from "./qr-permission-views"
+import { useQrImportController } from "./use-qr-import-controller"
 
-interface QrImportAttempt {
-  url: string
-  fields: CalendarImportFields
-}
-
-// The QR scanner screen (Phase-3 ship 3, rewired by ship 5 / ADR 018) —
-// PRESENTATIONAL (70% floor): drives the full camera-permission lifecycle
-// (undetermined → request → granted/denied) and renders a QR-only CameraView when
-// granted. It imports CameraView / useCameraPermissions DIRECTLY from expo-camera
-// (no chrome wrapper — expo-camera is a stable GA module, not an alpha API the
-// chrome seam exists to localize). On a single scan it runs the pure parser
-// (data/) and persists a DURABLE user_calendars row through the shared
-// addCalendarFromUrl seam (POST /calendars → resolve by token → upsert),
-// replacing the removed ephemeral scanned-source holder, then dismisses. A non-
-// calendar QR is a recoverable state (re-arm, no recordError — noise avoidance);
-// a persist failure is recorded through the @/firebase seam and surfaced as an
-// accessible failure (observability ✅ — the persist can genuinely fail).
-//
-// It consumes its sibling data sub-barrel (@/features/calendar-sources/data),
-// never its own feature barrel (B-2) and never the camera/firebase seams beyond
-// the allowed feature edges (B-1/B-4). Tested beside this file; the route
-// (src/app/onboarding/qr-scan.tsx) is a thin re-export (route-structure rule).
 export default function QrScanScreen() {
-  const { t } = useTranslation()
-  const theme = useTheme()
   const [permission, requestPermission] = useCameraPermissions()
   const { addCalendarFromUrl } = useAddCalendar()
-  // The import journey's institution/programme, derived from the draft. Total by
-  // design: opened directly (dev link, external link, restored navigation) there
-  // is no draft and this is { name: "", schoolName: "" } — a supported route,
-  // not an error (design D3).
-  const importFields = useImportCreateFields()
+  const fields = useImportCreateFields()
   const { clearDraft } = useImportDraft()
-  // Single-scan debounce: once a result is handled, the ref stops further
-  // onBarcodeScanned firings until the screen re-arms (a recoverable miss).
-  const scannedRef = useRef(false)
-  const inFlightRef = useRef(false)
-  const activeRef = useRef(true)
-  const completedRef = useRef(false)
-  const [notACalendar, setNotACalendar] = useState(false)
-  const [failed, setFailed] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [attempt, setAttempt] = useState<QrImportAttempt | null>(null)
+  const controller = useQrImportController({
+    fields,
+    addCalendarFromUrl,
+    clearDraft,
+    leaveJourney: leaveImportJourney,
+    openManualUrl: () => router.push("/onboarding/ical-url"),
+    recordError: recordUnknownError,
+  })
 
-  useEffect(() => {
-    activeRef.current = true
-    return () => {
-      activeRef.current = false
-    }
-  }, [])
-
-  const runAttempt = (nextAttempt: QrImportAttempt) => {
-    if (!activeRef.current || completedRef.current || inFlightRef.current) {
-      return
-    }
-
-    inFlightRef.current = true
-    setFailed(false)
-    setIsImporting(true)
-
-    void addCalendarFromUrl(nextAttempt.url, nextAttempt.fields)
-      .then(() => {
-        if (!activeRef.current || completedRef.current) return
-
-        completedRef.current = true
-        clearDraft()
-        leaveImportJourney()
-      })
-      .catch((error: unknown) => {
-        if (!activeRef.current || completedRef.current) return
-
-        recordUnknownError(error, "calendar-sources/qr-scan")
-        setFailed(true)
-      })
-      .finally(() => {
-        inFlightRef.current = false
-        if (activeRef.current && !completedRef.current) {
-          setIsImporting(false)
-        }
-      })
-  }
-
-  const handleBarcode = (result: BarcodeScanningResult) => {
-    if (
-      scannedRef.current ||
-      inFlightRef.current ||
-      completedRef.current ||
-      !activeRef.current
-    ) {
-      return
-    }
-    scannedRef.current = true
-    const source = parseScannedSource(result.data)
-    if (source === null) {
-      // Recoverable: not a calendar QR — re-arm, do NOT recordError.
-      setNotACalendar(true)
-      scannedRef.current = false
-      return
-    }
-    setNotACalendar(false)
-    const nextAttempt = { url: source.url, fields: importFields }
-    setAttempt(nextAttempt)
-    runAttempt(nextAttempt)
-  }
-
-  const retry = () => {
-    if (attempt === null) return
-    runAttempt(attempt)
-  }
-
-  const scanAnother = () => {
-    if (inFlightRef.current) return
-    setAttempt(null)
-    setFailed(false)
-    setNotACalendar(false)
-    scannedRef.current = false
-  }
-
-  const enterManualUrl = () => {
-    if (inFlightRef.current) return
-    router.push("/onboarding/ical-url")
-  }
-
-  // Permission not yet resolved by the hook on first render.
-  if (permission === null) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("calendarSources.qrScan.loading")}
-          </ThemedText>
-        </SafeAreaView>
-      </ThemedView>
-    )
-  }
-
-  // Denied and cannot ask again → point the user to system settings.
+  if (permission === null) return <QrPermissionLoadingView />
   if (!permission.granted && !permission.canAskAgain) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText type="title">
-            {t("calendarSources.qrScan.title")}
-          </ThemedText>
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("calendarSources.qrScan.settings")}
-          </ThemedText>
-          <Pressable
-            testID="qr-scan-open-settings"
-            accessibilityRole="button"
-            accessibilityLabel={t("calendarSources.qrScan.openSettingsLabel")}
-            hitSlop={Spacing.two}
-            onPress={() => void Linking.openSettings()}
-            style={[
-              styles.cta,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.primary,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold">
-              {t("calendarSources.qrScan.openSettings")}
-            </ThemedText>
-          </Pressable>
-        </SafeAreaView>
-      </ThemedView>
-    )
+    return <QrPermissionSettingsView />
   }
-
-  // Undetermined (or askable) → explainer + grant button.
   if (!permission.granted) {
-    return (
-      <ThemedView style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <ThemedText type="title">
-            {t("calendarSources.qrScan.title")}
-          </ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t("calendarSources.qrScan.explainer")}
-          </ThemedText>
-          <Pressable
-            testID="qr-scan-grant"
-            accessibilityRole="button"
-            accessibilityLabel={t("calendarSources.qrScan.grantLabel")}
-            hitSlop={Spacing.two}
-            onPress={() => void requestPermission()}
-            style={[
-              styles.cta,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.primary,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold">
-              {t("calendarSources.qrScan.grant")}
-            </ThemedText>
-          </Pressable>
-        </SafeAreaView>
-      </ThemedView>
-    )
+    return <QrPermissionRequestView requestPermission={requestPermission} />
   }
 
-  // Granted → the live QR-only camera surface with a viewfinder overlay.
-  return (
-    <ThemedView style={styles.container}>
-      <CameraView
-        testID="qr-scan-camera"
-        style={styles.camera}
-        // A screen-reader user can't aim a camera; the label states the purpose
-        // and the inbox/DoD note owns the manual on-device pass (D6).
-        accessibilityLabel={t("calendarSources.qrScan.viewfinderLabel")}
-        accessibilityHint={t("calendarSources.qrScan.viewfinderHint")}
-        barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-        onBarcodeScanned={handleBarcode}
-      >
-        <SafeAreaView style={styles.overlay}>
-          <View
-            style={[styles.viewfinder, { borderColor: theme.primary }]}
-            accessibilityElementsHidden
-          />
-          {notACalendar && (
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-            >
-              {t("calendarSources.qrScan.notACalendar")}
-            </ThemedText>
-          )}
-          {failed && (
-            <View style={styles.recoveryActions}>
-              <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
-              <Pressable
-                testID="qr-scan-retry"
-                accessibilityRole="button"
-                accessibilityLabel={t("calendarSources.qrScan.retryLabel")}
-                accessibilityState={{ disabled: isImporting }}
-                disabled={isImporting}
-                hitSlop={Spacing.two}
-                onPress={retry}
-                style={[
-                  styles.cta,
-                  {
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: theme.primary,
-                  },
-                ]}
-              >
-                <ThemedText type="smallBold">
-                  {t("calendarSources.qrScan.retry")}
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                testID="qr-scan-another"
-                accessibilityRole="button"
-                accessibilityLabel={t(
-                  "calendarSources.qrScan.scanAnotherLabel",
-                )}
-                accessibilityState={{ disabled: isImporting }}
-                disabled={isImporting}
-                hitSlop={Spacing.two}
-                onPress={scanAnother}
-                style={[
-                  styles.cta,
-                  {
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: theme.primary,
-                  },
-                ]}
-              >
-                <ThemedText type="smallBold">
-                  {t("calendarSources.qrScan.scanAnother")}
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                testID="qr-scan-manual-url"
-                accessibilityRole="button"
-                accessibilityLabel={t("calendarSources.qrScan.manualUrlLabel")}
-                accessibilityState={{ disabled: isImporting }}
-                disabled={isImporting}
-                hitSlop={Spacing.two}
-                onPress={enterManualUrl}
-                style={[
-                  styles.cta,
-                  {
-                    backgroundColor: theme.backgroundElement,
-                    borderColor: theme.primary,
-                  },
-                ]}
-              >
-                <ThemedText type="smallBold">
-                  {t("calendarSources.qrScan.manualUrl")}
-                </ThemedText>
-              </Pressable>
-            </View>
-          )}
-        </SafeAreaView>
-      </CameraView>
-    </ThemedView>
-  )
+  switch (controller.phase) {
+    case "scanning":
+      return (
+        <QrScannerView
+          onBarcodeScanned={controller.handleBarcode}
+          invalidPayload={controller.invalidPayload}
+        />
+      )
+    case "importing":
+      return <QrImportingView onBarcodeScanned={controller.handleBarcode} />
+    case "failed":
+      return (
+        <QrImportFailureView
+          onBarcodeScanned={controller.handleBarcode}
+          retry={controller.retry}
+          scanAnother={controller.scanAnother}
+          enterManualUrl={controller.enterManualUrl}
+        />
+      )
+    case "completed":
+      return (
+        <QrImportCompletedView onBarcodeScanned={controller.handleBarcode} />
+      )
+  }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    justifyContent: "center",
-    gap: Spacing.three,
-  },
-  camera: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.three,
-    paddingHorizontal: Spacing.four,
-  },
-  viewfinder: {
-    width: 240,
-    height: 240,
-    borderWidth: 2,
-    borderRadius: Radii.large,
-  },
-  recoveryActions: {
-    alignSelf: "stretch",
-    gap: Spacing.three,
-  },
-  cta: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
-  },
-})
