@@ -119,7 +119,7 @@ server/     NestJS backend (Postgres + Redis)
 web/        Next.js web surface
 openapi/    openapi.json contract + generated JS client (npm workspace)
 openspec/   spec-driven change artifacts (changes/, specs/, archive/)
-ci/         e2e-server.sh (shared E2E server lifecycle) + certificates/
+ci/         e2e-server.sh (shared E2E server lifecycle) + certificates/ (dev TLS recipe; the pair itself is generated, not tracked)
 bin/        setup-dev.sh, setup-worktree.sh, flutter-analyze.sh
 docs/        this handbook, react-native-migration/, multi-calendars.md
 k8s/, terraform/   deployment infra
@@ -143,7 +143,8 @@ The canonical quickstart is `README.md`; the agent-relevant essentials:
 
    - Postgres is published on host port **37291** (→ container 5432), Redis on
      **37292**, and an nginx TLS proxy on **1443** terminating
-     `https://api.timecalendar.host:1443` using `ci/certificates/`.
+     `https://api.timecalendar.host:1443` using `ci/certificates/` — which the
+     wrapper provisions for you (see "The dev TLS certificate" below).
    - The main checkout keeps Compose project `server`. A worktree derives
      `server-<lowercase-worktree-slug>-<8-char-path-hash>`, so its default
      network, containers, `postgres_data`, and `redis_data` volume names do not
@@ -174,14 +175,20 @@ The canonical quickstart is `README.md`; the agent-relevant essentials:
      alternate host ports; never rewrite the shared, symlinked `.env` to carry a
      worktree override.
 
-   - For non-mutating ownership/port troubleshooting, inspect the selected inputs
-     and resolved model before considering any cleanup:
+   - For ownership/port troubleshooting, inspect the selected inputs and resolved
+     model before considering any cleanup:
 
      ```bash
      bin/server-compose.sh project-name
      bin/setup-dev.sh --compose-config
      bin/server-compose.sh config --format json | jq '{name, networks, volumes, services}'
      ```
+
+     The first two are pure diagnostics and write nothing. `config` takes the
+     wrapper's pass-through path, so on a fresh checkout it also provisions the
+     gitignored dev TLS pair (see "The dev TLS certificate" below) — a write
+     inside your own checkout, and nothing else. None of the three creates,
+     stops, or removes a container, network, or volume.
 
      Shared-host resources may belong to another checkout. Routine setup must
      never stop, remove, prune, or otherwise clean another Compose project.
@@ -221,6 +228,33 @@ The script prints the selected Compose project and effective TLS/Postgres/Redis
 ports. `bin/setup-dev.sh --compose-config` prints only those diagnostics and does
 not change files or contact a service. Its nginx check uses the effective TLS
 port; its backend check remains `http://localhost:3005`.
+
+### The dev TLS certificate
+
+`ci/certificates/cert.pem` and `key.pem` are **generated on demand and not tracked**
+(both paths are in the root `.gitignore`). Only the recipe is committed: `ssl.cnf` and
+the two scripts.
+
+- `bin/server-compose.sh` runs `ci/certificates/ensure-certificates.sh` before every
+  Compose command, so bringing the stack up on a fresh checkout provisions the pair
+  with no extra step. `bin/setup-dev.sh` runs the same guard before its trust step.
+  (`bin/server-compose.sh project-name` and `bin/setup-dev.sh --compose-config` stay
+  pure diagnostics and provision nothing.)
+- The guard is a **no-op** until the renewal window: it regenerates only when the pair
+  is missing or unreadable, or when the certificate expires within
+  `TIMECALENDAR_CERT_RENEW_SECONDS` (default 30 days). It prints `generated` or
+  `unchanged`. This is what keeps the certificate valid without churning it — rotating
+  it invalidates every place you have trusted it.
+- `TIMECALENDAR_CERT_DAYS` (default 3650) sets the lifetime of a newly generated pair.
+- To rotate deliberately, run `ci/certificates/generate-certificates.sh`; it always
+  rewrites the pair. Then `bin/server-compose.sh restart nginx` (nginx reads the
+  certificate at start) and re-trust it.
+- **Each checkout has its own pair**, because each mounts its own `ci/certificates`.
+  Trusting the certificate in a simulator, keychain, or browser store is therefore
+  per-checkout: after switching worktrees, re-run `bin/setup-dev.sh` so the right
+  certificate is the trusted one.
+- No CI path reads the pair: the `test` job starts `postgres redis` explicitly, and
+  `ci/e2e-server.sh` names `server`, so neither starts nginx.
 
 ### Firebase
 
@@ -656,7 +690,7 @@ gh pr checks <pr> --watch --interval 30   # wait for green
 gh pr merge <pr> --squash --delete-branch # only after SUCCESS
 ```
 
-Before troubleshooting ownership or ports, use the non-mutating commands in §4.
+Before troubleshooting ownership or ports, use the inspection commands in §4.
 Do not routinely stop, remove, or clean Docker resources owned by another checkout;
 identify the owning project and coordinate an explicit cleanup instead.
 

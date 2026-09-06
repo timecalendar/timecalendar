@@ -143,7 +143,7 @@ jobs:
       run: docker load -i /tmp/server-image.tar
 
     - name: Start Postgres and Redis
-      run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d
+      run: docker compose --env-file ./ci/.env.test -f server/docker-compose.yml up -d postgres redis
 
     - name: Run tests
       run: docker run --env-file="./ci/.env.test" -e CI=true --network host ghcr.io/timecalendar/timecalendar:${{ github.sha }} npm run test

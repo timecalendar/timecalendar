@@ -6,8 +6,13 @@
 # Checks, in order:
 #   1. /etc/hosts maps the *.timecalendar.host names to 127.0.0.1
 #   2. web/.env.local exists (created from the sample if missing)
-#   3. the self-signed dev cert is trusted in the booted iOS Simulator (macOS)
-#   4. the API is actually reachable through nginx with a valid cert
+#   3. the self-signed dev cert is trusted in the booted iOS Simulator (macOS),
+#      provisioning the cert first if this checkout has none yet
+#   4. the API is actually reachable through nginx with a valid cert, and the
+#      backend answers on :3005
+#
+# The dev cert is generated on demand and is not committed — see
+# docs/agent-dev-environment.md §4 for the mechanism.
 #
 # Each of these, when missing, surfaces as the SAME opaque "Network Error" in
 # the app's import webview. This script tells you exactly which one is broken.
@@ -33,6 +38,13 @@ http_status() {
     status=000
   fi
   printf '%s\n' "$status"
+}
+
+# http_status collapses every curl failure to 000, so re-run the same request
+# for the exit status when we need to say *why* it failed.
+curl_exit_code() {
+  curl -s -o /dev/null "$@" 2>/dev/null
+  printf '%s\n' "$?"
 }
 
 print_compose_config() {
@@ -100,6 +112,12 @@ fi
 
 # 3. dev cert in the iOS Simulator (macOS only) -------------------------------
 step "3/4  iOS Simulator trusts the dev cert"
+if [ "$("$ROOT/ci/certificates/ensure-certificates.sh")" = "generated" ]; then
+  yellow "  → dev certificate generated for this checkout ($CERT)"
+  yellow "    nginx keeps serving the previous one until you restart it:"
+  echo "      bin/server-compose.sh restart nginx"
+  yellow "    any previously trusted copy must be re-added below"
+fi
 if [ "$(uname)" != "Darwin" ]; then
   yellow "– not macOS, skipping (trust $CERT in your OS/browser cert store)"
 elif ! command -v xcrun >/dev/null 2>&1; then
@@ -115,20 +133,32 @@ fi
 
 # 4. end-to-end reachability --------------------------------------------------
 step "4/4  API reachable through nginx with a valid cert"
-code="$(http_status --cacert "$CERT" "https://api.timecalendar.host:${TLS_PORT}/")"
+api_url="https://api.timecalendar.host:${TLS_PORT}/"
+code="$(http_status --cacert "$CERT" "$api_url")"
 if [ "$code" = "000" ]; then
-  red "✗ cannot reach https://api.timecalendar.host:${TLS_PORT} (DNS, nginx, or cert)."
-  # An nginx that starts and dies looks exactly like a stack that was never
-  # started, so ask Compose what the container is actually doing. Empty means
-  # no container (or no reachable daemon) — then the prompt below is right.
-  nginx_state="$(cd "$ROOT" && "$ROOT/bin/server-compose.sh" ps --all --format '{{.Status}}' nginx 2>/dev/null || true)"
-  if [ -n "$nginx_state" ]; then
-    echo "  nginx container: $nginx_state"
-    echo "  Read its logs:   bin/server-compose.sh logs nginx"
-  else
-    echo "  Is the Docker stack up?  bin/server-compose.sh up -d"
-  fi
-  echo "  Selected project: $COMPOSE_PROJECT (TLS=$TLS_PORT Postgres=$POSTGRES_PORT Redis=$REDIS_PORT)"
+  # curl: 60 cert not verifiable, 51 cert rejected, 35 TLS handshake failed
+  case "$(curl_exit_code --cacert "$CERT" "$api_url")" in
+    35 | 51 | 60)
+      red "✗ nginx answered on :${TLS_PORT} but its certificate does not match $CERT."
+      echo "  nginx reads the certificate at start, so after regenerating it:"
+      echo "    bin/server-compose.sh restart nginx"
+      echo "  then re-trust the new certificate (re-run this script on macOS)."
+      ;;
+    *)
+      red "✗ cannot reach https://api.timecalendar.host:${TLS_PORT} (DNS or nginx)."
+      # An nginx that starts and dies looks exactly like a stack that was never
+      # started, so ask Compose what the container is actually doing. Empty means
+      # no container (or no reachable daemon) — then the prompt below is right.
+      nginx_state="$(cd "$ROOT" && "$ROOT/bin/server-compose.sh" ps --all --format '{{.Status}}' nginx 2>/dev/null || true)"
+      if [ -n "$nginx_state" ]; then
+        echo "  nginx container: $nginx_state"
+        echo "  Read its logs:   bin/server-compose.sh logs nginx"
+      else
+        echo "  Is the Docker stack up?  bin/server-compose.sh up -d"
+      fi
+      echo "  Selected project: $COMPOSE_PROJECT (TLS=$TLS_PORT Postgres=$POSTGRES_PORT Redis=$REDIS_PORT)"
+      ;;
+  esac
   fail=1
 else
   green "✓ API responded (HTTP $code) — DNS + nginx + cert all good"

@@ -43,6 +43,10 @@ if [ "${1:-}" = "project-name" ]; then
   exit 0
 fi
 
+# nginx bind-mounts ci/certificates and fails to start without the pair, which
+# is generated on demand and not tracked. The guard is a no-op once it is valid.
+"$repo_root/ci/certificates/ensure-certificates.sh" >/dev/null
+
 exec docker compose \
   --project-name "$project_name" \
   --file "$repo_root/server/docker-compose.yml" \

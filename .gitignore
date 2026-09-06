@@ -2,3 +2,5 @@ node_modules/
 lerna-debug.log
 .DS_Store
 ci/keys/
+ci/certificates/cert.pem
+ci/certificates/key.pem
