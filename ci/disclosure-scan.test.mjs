@@ -15,14 +15,18 @@ import { fileURLToPath } from "node:url";
 
 import {
   FINDING_CLASSES,
+  compileConfiguredPattern,
+  compileConfiguredPatterns,
   compileLiteralPattern,
   deriveIdentityPatterns,
   loadAllowlist,
+  main,
   matchesAny,
   parseAddedLines,
   parseConfiguredPatterns,
   scanRecords,
   structuralClasses,
+  structuralCounts,
 } from "./disclosure-scan.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -32,8 +36,13 @@ const allowlist = loadAllowlist();
 // Assemble-at-run-time helpers — see the header.
 const addr = (local, domain) => `${local}@${domain}`;
 const homePath = (user) => `${"/home/"}${user}`;
+const macHomePath = (user) => `${"/Users/"}${user}`;
 const profileUrl = (login) => `${"https://github.com/"}${login}`;
 const coAuthor = (name, address) => `${"Co-authored-by:"} ${name} <${address}>`;
+
+// The configured layer takes compiled expressions, not strings: compiling one
+// can fail, and that failure belongs to the exit code, not to a scan loop.
+const configuredPatterns = (...sources) => sources.map(compileConfiguredPattern);
 
 const record = (text, location = "fixture.md:1") => ({
   source: "diff",
@@ -175,11 +184,29 @@ test("passes a generated placeholder and an allowlisted route", () => {
   assert.deepEqual(structuralClasses(profileUrl("sponsors"), allowlist), []);
 });
 
-test("flags a home directory named after a person, not the shared account", () => {
-  assert.deepEqual(structuralClasses(`cd ${homePath("aline")}/work`, allowlist), [
+test("flags a home directory, in either spelling", () => {
+  for (const path of [homePath("aline"), macHomePath("aline")]) {
+    assert.deepEqual(structuralClasses(`cd ${path}/work`, allowlist), [
+      FINDING_CLASSES.HOME_PATH,
+    ]);
+  }
+});
+
+test("exempts a home path by prefix, never by account", () => {
+  // The account a fleet runs under is the exact spelling of every host path it
+  // would realistically leak, so allowlisting the account discards the whole
+  // category. Only the published toolchain sub-path under it is exempt.
+  assert.deepEqual(
+    structuralClasses(`${homePath("runner")}/work/repo`, allowlist),
+    [],
+  );
+  assert.deepEqual(structuralClasses(`${homePath("dev")}/flutter/bin`, allowlist), []);
+  assert.deepEqual(structuralClasses(`${homePath("dev")}/projects/app`, allowlist), [
     FINDING_CLASSES.HOME_PATH,
   ]);
-  assert.deepEqual(structuralClasses(`cd ${homePath("dev")}/work`, allowlist), []);
+  assert.deepEqual(structuralClasses(homePath("dev"), allowlist), [
+    FINDING_CLASSES.HOME_PATH,
+  ]);
 });
 
 test("does not treat a package-relative import as a home directory", () => {
@@ -206,20 +233,97 @@ test("flags a co-author trailer whose address is not a role address", () => {
 // Layer 3 — the injected secret
 // ---------------------------------------------------------------------------
 
-test("parses configured patterns from newlines or commas, absent means empty", () => {
-  assert.deepEqual(parseConfiguredPatterns("alpha\nbeta, gamma\n\n"), [
-    "alpha",
-    "beta",
-    "gamma",
-  ]);
+test("parses one configured entry per line, absent means empty", () => {
+  assert.deepEqual(
+    parseConfiguredPatterns("alpha\nbeta\n\ngamma\n").map((e) => e.source),
+    ["alpha", "beta", "gamma"],
+  );
   assert.deepEqual(parseConfiguredPatterns(undefined), []);
   assert.deepEqual(parseConfiguredPatterns(""), []);
+});
+
+test("a comma does not separate configured entries", () => {
+  // A configured entry is a regular expression, and `{2,}`, `{4,}` and every
+  // character class contain a comma. Splitting on commas shreds one pasted
+  // pattern into fragments that no longer compile — a silent no-op before the
+  // fail-closed compile, and an unreadable red job after it.
+  const commaQuantified = `fixture[a-z,]{2,}${"end"}`;
+  const entries = parseConfiguredPatterns(commaQuantified);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].source, commaQuantified);
+  assert.deepEqual(compileConfiguredPatterns(entries).invalid, []);
+});
+
+test("each configured entry keeps the line it came from", () => {
+  const entries = parseConfiguredPatterns("\nalpha\n\n(unclosed\n");
+  assert.deepEqual(
+    entries.map((e) => e.line),
+    [2, 4],
+  );
+});
+
+test("configured entries are compiled as regexes, not escaped into literals", () => {
+  const findings = scanRecords([record("build 4821 shipped")], {
+    derived: [],
+    configured: configuredPatterns("build \\d{4}"),
+    allowlist,
+  });
+  assert.deepEqual(classesOf(findings), [FINDING_CLASSES.CONFIGURED]);
+});
+
+test("an entry that does not compile is reported by line, never by value", () => {
+  const entries = parseConfiguredPatterns("fixture(unclosed");
+  const { patterns, invalid } = compileConfiguredPatterns(entries);
+  assert.deepEqual(patterns, []);
+  assert.deepEqual(invalid, [1]);
+});
+
+test("a configured value of the shape an operator is asked to paste survives end to end", () => {
+  // The shape that broke both ways: a character class containing a comma, which
+  // the old parser split the value on, and an alternation the old compiler
+  // escaped into a literal. Synthetic login, assembled at run time.
+  const login = "fixtureowner";
+  const value = `(?<![\\w.@-])${login}(?=[/)\\s,]|$)|/(?:Users|home)/${login}`;
+
+  const entries = parseConfiguredPatterns(value);
+  assert.equal(entries.length, 1, "a comma inside the value does not split it");
+  const { patterns, invalid } = compileConfiguredPatterns(entries);
+  assert.deepEqual(invalid, []);
+
+  const flagged = scanRecords([record(`shipped by ${login}, then ${login} again`)], {
+    derived: [],
+    configured: patterns,
+    allowlist,
+  });
+  assert.deepEqual(classesOf(flagged), [FINDING_CLASSES.CONFIGURED]);
+  assert.equal(flagged[0].count, 2);
+
+  // Both home spellings, via the second alternative.
+  for (const path of [homePath(login), macHomePath(login)]) {
+    const findings = scanRecords([record(`${path}/src`)], {
+      derived: [],
+      configured: patterns,
+      allowlist,
+    });
+    assert.ok(classesOf(findings).includes(FINDING_CLASSES.CONFIGURED), path);
+  }
+
+  // And the identifier the app publishes stays clean — the value's own
+  // lookbehind holds, independently of the shape-based exemption.
+  assert.deepEqual(
+    scanRecords([record(`applicationId: fr.${login}.timecalendar.dev`)], {
+      derived: [],
+      configured: patterns,
+      allowlist,
+    }),
+    [],
+  );
 });
 
 test("an absent secret does not disable the derived or structural layers", () => {
   const findings = scanRecords([record("contact aline about it")], {
     derived: ["aline"],
-    configured: parseConfiguredPatterns(undefined),
+    configured: compileConfiguredPatterns(parseConfiguredPatterns(undefined)).patterns,
     allowlist,
   });
   assert.deepEqual(classesOf(findings), [FINDING_CLASSES.DERIVED]);
@@ -229,10 +333,10 @@ test("an absent secret does not disable the derived or structural layers", () =>
 // Findings
 // ---------------------------------------------------------------------------
 
-test("a supplied pattern is flagged with file and line", () => {
+test("a supplied pattern is flagged with file, line and count", () => {
   const findings = scanRecords([record("released by aline", "docs/notes.md:42")], {
     derived: [],
-    configured: ["aline"],
+    configured: configuredPatterns("aline"),
     allowlist,
   });
   assert.equal(findings.length, 1);
@@ -240,13 +344,14 @@ test("a supplied pattern is flagged with file and line", () => {
   assert.equal(findings[0].file, "fixture.md");
   assert.equal(findings[0].line, 1);
   assert.equal(findings[0].location, "docs/notes.md:42");
+  assert.equal(findings[0].count, 1);
 });
 
 test("a clean line produces no findings", () => {
   assert.deepEqual(
     scanRecords([record("the calendar sync runs every ten minutes")], {
       derived: ["aline"],
-      configured: ["beta"],
+      configured: configuredPatterns("beta"),
       allowlist,
     }),
     [],
@@ -257,7 +362,7 @@ test("a finding never carries the matched text, the pattern, or the line", () =>
   const secret = "aline-fixture-token";
   const findings = scanRecords([record(`written by ${secret} here`)], {
     derived: [],
-    configured: [secret],
+    configured: configuredPatterns(secret),
     allowlist,
   });
   assert.equal(findings.length, 1);
@@ -266,13 +371,65 @@ test("a finding never carries the matched text, the pattern, or the line", () =>
   assert.ok(!serialised.includes("written by"));
 });
 
-test("the same location and class is reported once", () => {
+// ---------------------------------------------------------------------------
+// Occurrences, not matching lines (AC 2b)
+// ---------------------------------------------------------------------------
+
+test("two distinct patterns on one line are counted as two, not one", () => {
+  // The exact miscount this gate exists to avoid: the disclosure surface is
+  // table rows and prose sentences, which routinely carry two identities on one
+  // line. Reporting 1 tells the author to scrub one of two.
+  const findings = scanRecords([record("aline and blake shipped it")], {
+    derived: ["aline", "blake"],
+    configured: [],
+    allowlist,
+  });
+  assert.equal(findings.length, 1, "one location and class");
+  assert.equal(findings[0].count, 2);
+});
+
+test("counts repeats of a single pattern on one line", () => {
   const findings = scanRecords([record("aline and aline again")], {
     derived: ["aline"],
     configured: [],
     allowlist,
   });
   assert.equal(findings.length, 1);
+  assert.equal(findings[0].count, 2);
+});
+
+test("occurrences at one location and class accumulate across records", () => {
+  const findings = scanRecords([record("aline"), record("aline")], {
+    derived: ["aline"],
+    configured: [],
+    allowlist,
+  });
+  assert.equal(findings.length, 1);
+  assert.equal(findings[0].count, 2);
+});
+
+test("counts occurrences per structural class independently", () => {
+  const counts = structuralCounts(
+    `${addr("aline", "fixture-domain.example")} and ${addr("blake", "other-domain.example")} at ${homePath("aline")}/work`,
+    allowlist,
+  );
+  assert.equal(counts.get(FINDING_CLASSES.EMAIL), 2);
+  assert.equal(counts.get(FINDING_CLASSES.HOME_PATH), 1);
+});
+
+test("derived and configured layers report separate findings on one line", () => {
+  const findings = scanRecords([record("aline and blake shipped it")], {
+    derived: ["aline"],
+    configured: configuredPatterns("blake"),
+    allowlist,
+  });
+  assert.deepEqual(
+    findings.map((f) => [f.class, f.count]).sort(),
+    [
+      [FINDING_CLASSES.CONFIGURED, 1],
+      [FINDING_CLASSES.DERIVED, 1],
+    ].sort(),
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -308,11 +465,97 @@ test("ignores additions attributed to a deleted file", () => {
   assert.deepEqual(parseAddedLines(diff), []);
 });
 
+test("scans an added line whose own content begins with a diff header prefix", () => {
+  // Inside a hunk, `+++ x` is an added line reading `++ x` — a Markdown list, a
+  // shell heredoc, a nested diff in a code fence. Read as a file header it is
+  // skipped *and* re-points every following line at the wrong file.
+  const diff = [
+    "diff --git a/docs/notes.md b/docs/notes.md",
+    "--- a/docs/notes.md",
+    "+++ b/docs/notes.md",
+    "@@ -1,0 +1,3 @@",
+    "++ leading plus signs",
+    "--- not a header either",
+    "+++ and neither is this",
+    "",
+  ].join("\n");
+
+  assert.deepEqual(
+    parseAddedLines(diff).map((entry) => [entry.location, entry.text]),
+    [
+      ["docs/notes.md:1", "+ leading plus signs"],
+      ["docs/notes.md:2", "++ and neither is this"],
+    ],
+  );
+});
+
+test("attributes each file's hunks to that file", () => {
+  const diff = [
+    "diff --git a/one.md b/one.md",
+    "--- a/one.md",
+    "+++ b/one.md",
+    "@@ -1,0 +1,1 @@",
+    "+first",
+    "diff --git a/two.md b/two.md",
+    "--- a/two.md",
+    "+++ b/two.md",
+    "@@ -5,0 +6,1 @@",
+    "+second",
+    "",
+  ].join("\n");
+
+  assert.deepEqual(
+    parseAddedLines(diff).map((entry) => entry.location),
+    ["one.md:1", "two.md:6"],
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Wiring and self-consistency
 // ---------------------------------------------------------------------------
 
 const WORKFLOW = resolve(REPO, ".github/workflows/ci-build-deploy.yml");
+
+// An empty range: the entry point runs end to end over real git, and the only
+// thing under test is what it decides, not what the branch happens to contain.
+function runMain(env) {
+  const output = [];
+  const capture = (...args) => output.push(args.join(" "));
+  const [log, error] = [console.log, console.error];
+  console.log = capture;
+  console.error = capture;
+  try {
+    return {
+      code: main(["--base", "HEAD", "--head", "HEAD", "--cwd", REPO], env),
+      output: output.join("\n"),
+    };
+  } finally {
+    console.log = log;
+    console.error = error;
+  }
+}
+
+test("an empty range with no secret passes, and the log says which layers ran", () => {
+  const { code, output } = runMain({});
+  assert.equal(code, 0);
+  assert.match(output, /structural: on/);
+  assert.match(output, /configured secret: absent/);
+  assert.match(output, /derived and structural layers still apply/);
+});
+
+test("the log distinguishes compiled from merely present", () => {
+  const { code, output } = runMain({ DISCLOSURE_PATTERNS: "fixture-token-[0-9]+" });
+  assert.equal(code, 0);
+  assert.match(output, /1 compiled as regular expression/);
+});
+
+test("a configured pattern that does not compile fails the job without printing it", () => {
+  const broken = "fixture(unclosed";
+  const { code, output } = runMain({ DISCLOSURE_PATTERNS: `valid-fixture\n${broken}` });
+  assert.equal(code, 2, "fails closed rather than scanning without the pattern");
+  assert.ok(!output.includes(broken), "the entry is the secret and is never printed");
+  assert.match(output, /DISCLOSURE_PATTERNS entry 2 is not a valid regular expression/);
+});
 
 test("CI invokes the scan and checks out enough history to derive from", () => {
   const workflow = readFileSync(WORKFLOW, "utf8");

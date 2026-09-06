@@ -64,6 +64,14 @@ jobs:
     # it; the derived and structural layers run either way, and the job logs
     # which layers were active as counts only. Never echo a match: this log is
     # public, so printing the offending line would republish it.
+    #
+    # One regular expression per line, and only per line — a comma does not
+    # separate entries, because a quantifier and every character class contain
+    # one. An entry that does not compile fails this job rather than being
+    # skipped, reported by its line number and never by its value. The log says
+    # how many entries *compiled*, not merely that the secret is present: the
+    # latter prints identically whether the entries became patterns or inert
+    # text, so it cannot fail, and a check that cannot fail is not a check.
     - name: Scan for disclosures
       env:
         DISCLOSURE_PATTERNS: ${{ secrets.DISCLOSURE_PATTERNS }}

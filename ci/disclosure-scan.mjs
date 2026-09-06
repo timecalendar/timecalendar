@@ -17,9 +17,12 @@
 //   2. structural — shapes rather than values: an address, a bare profile URL,
 //                   a home directory, a co-author trailer. Always on.
 //   3. configured — the optional DISCLOSURE_PATTERNS secret, for strings this
-//                   repository's history does not contain. Absent by design in
-//                   forks and on the first run; its absence degrades coverage
-//                   and must never fail the job.
+//                   repository's history does not contain. One regular
+//                   expression per line. Absent by design in forks and on the
+//                   first run; its absence degrades coverage and must never
+//                   fail the job, while an entry that does not compile fails it
+//                   closed — a pattern list that half-loads is the failure mode
+//                   that looks green.
 //
 // Two properties matter as much as the matching:
 //
@@ -74,7 +77,7 @@ export function loadAllowlist(path = ALLOWLIST_PATH) {
     emailLocalParts: set("emailLocalParts"),
     fileExtensionTlds: set("fileExtensionTlds"),
     githubLogins: set("githubLogins"),
-    homeUsers: set("homeUsers"),
+    homePathPrefixes: set("homePathPrefixes"),
     applicationIdLabels: set("applicationIdLabels"),
   };
 }
@@ -148,9 +151,51 @@ function dedupeTokens(tokens, minLength) {
 // Layer 3 — the optional injected secret
 // ---------------------------------------------------------------------------
 
+// One entry per line, and *only* per line. A comma cannot separate entries:
+// a configured entry is a regular expression, and `{2,}`, `{4,}` and every
+// character class contain a comma, so a comma-splitting parser shreds a single
+// pasted pattern into fragments that no longer compile. Each entry keeps the
+// 1-based line it came from, because that number is the only thing a failure
+// may ever print about it.
 export function parseConfiguredPatterns(raw) {
   if (!raw) return [];
-  return dedupeTokens(raw.split(/[\r\n,]+/), MIN_CONFIGURED_LENGTH);
+  const entries = [];
+  const seen = new Set();
+  // One line per element, not one run of newlines: a blank line must not shift
+  // the numbering, because that number is the only handle the operator gets on
+  // an entry nobody can read back.
+  raw.split(/\r?\n/).forEach((value, index) => {
+    const source = value.trim();
+    if (source.length < MIN_CONFIGURED_LENGTH) return;
+    const key = source.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    entries.push({ source, line: index + 1 });
+  });
+  return entries;
+}
+
+// Configured entries are compiled as regular expressions, not escaped into
+// literals: the secret exists for shapes the history cannot yield, and a
+// literal-only layer reports itself loaded while matching nothing.
+export function compileConfiguredPattern(source) {
+  return new RegExp(source, "giu");
+}
+
+// Returns the compiled patterns and the line numbers that failed. The caller
+// fails the job on a non-empty `invalid`; it must never print the entry itself,
+// because the entry is the secret and this log is public.
+export function compileConfiguredPatterns(entries) {
+  const patterns = [];
+  const invalid = [];
+  for (const entry of entries) {
+    try {
+      patterns.push(compileConfiguredPattern(entry.source));
+    } catch {
+      invalid.push(entry.line);
+    }
+  }
+  return { patterns, invalid };
 }
 
 // ---------------------------------------------------------------------------
@@ -229,27 +274,41 @@ export function isExemptPublishedIdentifier(text, index, allowlist) {
   );
 }
 
-function hasUnexemptMatch(text, compiled, allowlist) {
-  return compiled.some((pattern) => {
+// Occurrences, not matching lines. The disclosure surface is table rows and
+// prose sentences, which routinely carry two identities on one line; counting
+// lines silently halves the true figure, and the remediation "scrub this line"
+// then scrubs one of two.
+function countUnexemptMatches(text, compiled, allowlist) {
+  let count = 0;
+  for (const pattern of compiled) {
     pattern.lastIndex = 0;
     let match;
     while ((match = pattern.exec(text)) !== null) {
-      if (!isExemptPublishedIdentifier(text, match.index, allowlist)) return true;
+      if (!isExemptPublishedIdentifier(text, match.index, allowlist)) count += 1;
       if (match.index === pattern.lastIndex) pattern.lastIndex += 1;
     }
-    return false;
-  });
+  }
+  return count;
 }
 
 const EMAIL_RE =
   /(?<![\p{L}\p{N}._%+-])([\p{L}\p{N}._%+'-]+)@([\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)/giu;
 const PROFILE_RE =
   /(?:https?:\/\/)?(?:www\.)?github\.com\/([A-Za-z0-9][A-Za-z0-9-]*)/gi;
-const HOME_RE = /(?<![\p{L}\p{N}_/.-])\/home\/([A-Za-z0-9._-]+)/gu;
+// Both spellings of a home directory — the second is where macOS puts them,
+// and a committed path in that form is as much host layout as the first. The
+// optional second group is the first sub-directory, which is what the exempt
+// prefixes are matched against.
+const HOME_RE =
+  /(?<![\p{L}\p{N}_/.-])\/(?:home|Users)\/([A-Za-z0-9._-]+)(\/[A-Za-z0-9._-]+)?/gu;
 const CO_AUTHOR_RE = /^\s*co-?authored-by:\s*(.+)$/i;
 
-export function structuralClasses(text, allowlist) {
-  const classes = new Set();
+// Occurrence counts per class. `structuralClasses` is the same answer without
+// the counts, for callers that only ask whether a line is clean.
+export function structuralCounts(text, allowlist) {
+  const counts = new Map();
+  const bump = (className) =>
+    counts.set(className, (counts.get(className) ?? 0) + 1);
 
   for (const [, localPart, domain] of text.matchAll(EMAIL_RE)) {
     const tld = domain.split(".").pop().toLowerCase();
@@ -261,7 +320,7 @@ export function structuralClasses(text, allowlist) {
     if (allowlist.fileExtensionTlds.has(tld)) continue;
     if (allowlist.emailLocalParts.has(localPart.toLowerCase())) continue;
     if (domainIsAllowed(domain, allowlist.emailDomains)) continue;
-    classes.add(FINDING_CLASSES.EMAIL);
+    bump(FINDING_CLASSES.EMAIL);
   }
 
   for (const match of text.matchAll(PROFILE_RE)) {
@@ -271,12 +330,18 @@ export function structuralClasses(text, allowlist) {
     const after = text.slice(match.index + match[0].length);
     if (/^[/\w~-]/.test(after)) continue;
     if (allowlist.githubLogins.has(match[1].toLowerCase())) continue;
-    classes.add(FINDING_CLASSES.PROFILE_URL);
+    bump(FINDING_CLASSES.PROFILE_URL);
   }
 
-  for (const [, user] of text.matchAll(HOME_RE)) {
-    if (allowlist.homeUsers.has(user.toLowerCase())) continue;
-    classes.add(FINDING_CLASSES.HOME_PATH);
+  // Exempt by *prefix*, never by account. Allowlisting the account a fleet runs
+  // under discards every host path that fleet would realistically leak, which
+  // is the whole category; a toolchain install path under a shared account is
+  // the narrow, published thing that has to keep passing.
+  for (const [, account, sub] of text.matchAll(HOME_RE)) {
+    const prefix = account.toLowerCase();
+    if (allowlist.homePathPrefixes.has(prefix)) continue;
+    if (sub && allowlist.homePathPrefixes.has(prefix + sub.toLowerCase())) continue;
+    bump(FINDING_CLASSES.HOME_PATH);
   }
 
   const trailer = text.match(CO_AUTHOR_RE);
@@ -284,11 +349,15 @@ export function structuralClasses(text, allowlist) {
     const address = trailer[1].match(/<([^>]+)>/)?.[1] ?? trailer[1];
     const localPart = address.split("@")[0].trim().toLowerCase();
     if (!allowlist.emailLocalParts.has(localPart)) {
-      classes.add(FINDING_CLASSES.CO_AUTHOR);
+      bump(FINDING_CLASSES.CO_AUTHOR);
     }
   }
 
-  return [...classes];
+  return counts;
+}
+
+export function structuralClasses(text, allowlist) {
+  return [...structuralCounts(text, allowlist).keys()];
 }
 
 // The About screen names the people who built the app and links to their sites
@@ -302,40 +371,57 @@ export function isCreditPath(file, allowlist) {
   );
 }
 
-// A record is `{ source, location, text }`. The returned findings deliberately
-// carry no excerpt, no matched substring and no pattern — only where and which
-// class — because this output is published.
+// A record is `{ source, location, text }`. `derived` is a list of literal
+// strings; `configured` is a list of already-compiled regular expressions,
+// because compiling one can fail and that failure has to reach the exit code
+// rather than a scan loop.
+//
+// The returned findings deliberately carry no excerpt, no matched substring and
+// no pattern — only where, which class, and how many — because this output is
+// published.
 export function scanRecords(records, { derived, configured, allowlist }) {
   const derivedPatterns = derived.map(compileLiteralPattern);
-  const configuredPatterns = configured.map(compileLiteralPattern);
   const findings = [];
-  const seen = new Set();
+  const byKey = new Map();
 
-  const add = (record, className) => {
+  const add = (record, className, count) => {
+    if (count < 1) return;
     const key = `${record.source}\0${record.location}\0${className}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    findings.push({
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.count += count;
+      return;
+    }
+    const finding = {
       source: record.source,
       location: record.location,
       file: record.file,
       line: record.line,
       class: className,
-    });
+      count,
+    };
+    byKey.set(key, finding);
+    findings.push(finding);
   };
 
   for (const record of records) {
     // On the credit surface an identity is the product, not a leak; the
     // structural rules still run there.
     const credited = record.file !== null && isCreditPath(record.file, allowlist);
-    if (!credited && hasUnexemptMatch(record.text, derivedPatterns, allowlist)) {
-      add(record, FINDING_CLASSES.DERIVED);
+    if (!credited) {
+      add(
+        record,
+        FINDING_CLASSES.DERIVED,
+        countUnexemptMatches(record.text, derivedPatterns, allowlist),
+      );
+      add(
+        record,
+        FINDING_CLASSES.CONFIGURED,
+        countUnexemptMatches(record.text, configured, allowlist),
+      );
     }
-    if (!credited && hasUnexemptMatch(record.text, configuredPatterns, allowlist)) {
-      add(record, FINDING_CLASSES.CONFIGURED);
-    }
-    for (const className of structuralClasses(record.text, allowlist)) {
-      add(record, className);
+    for (const [className, count] of structuralCounts(record.text, allowlist)) {
+      add(record, className, count);
     }
   }
 
@@ -367,18 +453,37 @@ export function parseAddedLines(diff) {
   const records = [];
   let file = null;
   let line = 0;
+  let inHunk = false;
+  let afterFromHeader = false;
+
   for (const raw of diff.split("\n")) {
-    if (raw.startsWith("+++ ")) {
+    if (raw.startsWith("diff --git ")) {
+      file = null;
+      inHunk = false;
+      afterFromHeader = false;
+      continue;
+    }
+
+    // `+++ ` is a file header only where one can occur: outside a hunk, and
+    // directly after the matching `--- ` line. Inside a hunk it is an added
+    // line whose own content begins with `++ `, and treating that as a header
+    // both skips the line and re-points every following line at the wrong file.
+    const isToHeader = !inHunk && afterFromHeader && raw.startsWith("+++ ");
+    afterFromHeader = !inHunk && raw.startsWith("--- ");
+    if (isToHeader) {
       const path = raw.slice(4);
       file = path === "/dev/null" ? null : path.replace(/^b\//, "");
       continue;
     }
+
     const hunk = raw.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
     if (hunk) {
+      inHunk = true;
       line = Number(hunk[1]);
       continue;
     }
-    if (raw.startsWith("+") && !raw.startsWith("+++")) {
+
+    if (inHunk && raw.startsWith("+")) {
       if (file) {
         records.push({
           source: "diff",
@@ -464,6 +569,24 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   const baseRef = options.base ?? env.DISCLOSURE_BASE ?? "origin/main";
   const allowlist = loadAllowlist();
 
+  // Compiled before anything else: a half-loaded pattern list is the failure
+  // that looks green, so it must not be able to reach the scan at all.
+  const configuredEntries = parseConfiguredPatterns(env.DISCLOSURE_PATTERNS);
+  const { patterns: configured, invalid } =
+    compileConfiguredPatterns(configuredEntries);
+  if (invalid.length) {
+    for (const entryLine of invalid) {
+      console.error(
+        `::error::disclosure-scan: DISCLOSURE_PATTERNS entry ${entryLine} is not a valid regular expression. ` +
+          "The entry itself is never printed — this log is public. One expression per line; a comma does not separate entries.",
+      );
+    }
+    console.error(
+      `disclosure-scan: failing closed on ${invalid.length} uncompilable pattern(s) rather than scanning without them.`,
+    );
+    return 2;
+  }
+
   let base;
   try {
     base = git(["merge-base", baseRef, head], cwd).trim();
@@ -478,14 +601,20 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   }
 
   const derived = deriveIdentityPatterns(readIdentities(head, cwd), allowlist);
-  const configured = parseConfiguredPatterns(env.DISCLOSURE_PATTERNS);
 
   // Counts only — a census that printed values would be the leak. This line is
   // also how the presence of the secret is verified: nobody can read it back
-  // through the API with a metadata-scoped token, but every run states it.
+  // through the API with a metadata-scoped token, but every run states it. It
+  // says *compiled*, not merely present: "present (N)" prints identically
+  // whether the entries became patterns or inert text, so it cannot fail, and a
+  // verification step that cannot fail is not a verification step.
   console.log(
-    `disclosure-scan: patterns — derived: ${derived.length}, structural: on, ` +
-      `configured secret: ${configured.length ? `present (${configured.length})` : "absent"}`,
+    `disclosure-scan: patterns — derived: ${derived.length} (literal), structural: on, ` +
+      `configured secret: ${
+        configured.length
+          ? `present, ${configured.length} compiled as regular expression(s)`
+          : "absent"
+      }`,
   );
   if (!configured.length) {
     console.log(
@@ -509,12 +638,15 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       ? `file=${finding.file}${finding.line ? `,line=${finding.line}` : ""}`
       : "";
     console.log(
-      `::error ${where}::disclosure-scan: ${finding.location} — matched ${finding.class}`,
+      `::error ${where}::disclosure-scan: ${finding.location} — ${finding.count} occurrence(s) of ${finding.class}`,
     );
   }
+  const occurrences = findings.reduce((total, f) => total + f.count, 0);
   console.error(
-    `disclosure-scan: ${findings.length} finding(s). The match itself is never printed — this log is public. ` +
-      "Open the location locally to see it. If it is benign, add the domain, login or account name to ci/disclosure-allowlist.json.",
+    `disclosure-scan: ${findings.length} finding(s), ${occurrences} occurrence(s). ` +
+      "The match itself is never printed — this log is public. " +
+      "Open the location locally to see it, and scrub every occurrence the count reports, not the first one you find. " +
+      "If it is benign, add the domain, login or path prefix to ci/disclosure-allowlist.json.",
   );
   return 1;
 }

@@ -147,16 +147,14 @@
     "trending"
   ],
 
-  "_applicationIdLabels": "Our own product label. A derived identity match is excused only inside a reverse-DNS application identifier carrying one of these — see isExemptApplicationId. The label being excused is never named here.",
+  "_applicationIdLabels": "Our own product label. A derived identity match is excused only inside a reverse-DNS application identifier carrying one of these — see isExemptPublishedIdentifier. The label being excused is never named here.",
   "applicationIdLabels": [
     "timecalendar"
   ],
 
-  "_homeUsers": "Shared, non-identifying account names. A home directory named after a person is the finding this rule exists for.",
-  "homeUsers": [
-    "dev",
+  "_homePathPrefixes": "Home-directory prefixes that disclose no host layout. Entries are PREFIXES, not account names: allowlisting a whole account discards every path under it, and the account a fleet runs under is the exact spelling of every host path that fleet would realistically leak. Publishing the host's directory layout is itself the disclosure, whoever the account belongs to. Keep this list identical to the exclusions the agent-side preflight scanner already applies, so the two layers agree on what a disclosure is — the worst available state is two scanners disagreeing with the unskippable one weaker. Entries: the CI runner account, whose paths are identical on every fork and carry no local layout; and the documented toolchain install path, which the contributor handbook publishes on purpose.",
+  "homePathPrefixes": [
     "runner",
-    "user",
-    "root"
+    "dev/flutter"
   ]
 }
