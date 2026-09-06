@@ -1000,3 +1000,66 @@ test("CI baseline generation applies the scanner's excluded path scope", (t) => 
     [{ path: "included.md", id: FINDING_CLASSES.DERIVED, count: 1 }],
   );
 });
+
+test("CI baseline generation counts line-anchored structural detectors", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-structural-anchor-");
+  writeFileSync(
+    join(repo, "fixture.md"),
+    `heading\n${coAuthor("Aline Fixture", addr("aline", "example.com"))}\n`,
+  );
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const entries = generateCiEntries({
+    derived: [],
+    configured: [],
+    allowlist,
+    cwd: repo,
+  });
+  assert.deepEqual(
+    entries.filter((entry) => entry.id === FINDING_CLASSES.CO_AUTHOR),
+    [{ path: "fixture.md", id: FINDING_CLASSES.CO_AUTHOR, count: 1 }],
+  );
+  assert.deepEqual(
+    scanWholeFiles({
+      files: ["fixture.md"],
+      head: "HEAD",
+      baseline: baseline(entries),
+      derived: [],
+      configured: [],
+      allowlist,
+      cwd: repo,
+    }),
+    [],
+  );
+});
+
+test("CI baseline generation counts line-anchored configured detectors", (t) => {
+  const { repo, runGit } = createGitRepo(t, "disclosure-baseline-configured-anchor-");
+  writeFileSync(join(repo, "fixture.md"), "heading\nanchored-fixture\n");
+  runGit("add", "fixture.md");
+  runGit("commit", "--quiet", "-m", "fixture");
+
+  const entries = generateCiEntries({
+    derived: [],
+    configured: configuredPatterns("^anchored[-]fixture$"),
+    allowlist,
+    cwd: repo,
+  });
+  assert.deepEqual(
+    entries.filter((entry) => entry.id === FINDING_CLASSES.CONFIGURED),
+    [{ path: "fixture.md", id: FINDING_CLASSES.CONFIGURED, count: 1 }],
+  );
+  assert.deepEqual(
+    scanWholeFiles({
+      files: ["fixture.md"],
+      head: "HEAD",
+      baseline: baseline(entries),
+      derived: [],
+      configured: configuredPatterns("^anchored[-]fixture$"),
+      allowlist,
+      cwd: repo,
+    }),
+    [],
+  );
+});

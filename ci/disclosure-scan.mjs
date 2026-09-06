@@ -713,6 +713,17 @@ function classCounts(text, { derivedPatterns, configured, allowlist }) {
   return counts;
 }
 
+function contentFindingsByClass(content, detectorOptions) {
+  const byClass = new Map();
+  content.split("\n").forEach((text, index) => {
+    for (const [className, count] of classCounts(text, detectorOptions)) {
+      if (!byClass.has(className)) byClass.set(className, []);
+      byClass.get(className).push({ line: index + 1, count });
+    }
+  });
+  return byClass;
+}
+
 function contentAt(head, path, cwd) {
   const content = git(["show", `${head}:${path}`], cwd);
   return content.includes("\0") ? null : content;
@@ -772,11 +783,12 @@ export function generateCiEntries({ head = "HEAD", derived, configured, allowlis
     if (classCounts(path, { derivedPatterns, configured, allowlist }).size) continue;
     const content = contents.get(path);
     if (content === null) continue;
-    for (const [id, count] of classCounts(content, {
+    for (const [id, findings] of contentFindingsByClass(content, {
       derivedPatterns,
       configured,
       allowlist,
     })) {
+      const count = findings.reduce((sum, finding) => sum + finding.count, 0);
       if (count > 0) entries.push({ path, id, count });
     }
   }
@@ -811,28 +823,25 @@ export function scanWholeFiles({ files, head, baseline, derived, configured, all
       continue;
     }
     if (content === null) continue;
-    const lines = content.split("\n");
-    const byClass = new Map();
-    lines.forEach((text, index) => {
-      for (const [className, count] of classCounts(text, {
-        derivedPatterns,
-        configured,
-        allowlist,
-      })) {
-        if (!byClass.has(className)) byClass.set(className, []);
-        byClass.get(className).push({
-          source: "file",
-          location: `${file}:${index + 1}`,
-          file,
-          line: index + 1,
-          class: className,
-          count,
-        });
-      }
+    const byClass = contentFindingsByClass(content, {
+      derivedPatterns,
+      configured,
+      allowlist,
     });
     for (const [className, classFindings] of byClass) {
       const total = classFindings.reduce((sum, finding) => sum + finding.count, 0);
-      if (total > (pins.get(baselineKey(file, className)) ?? 0)) findings.push(...classFindings);
+      if (total > (pins.get(baselineKey(file, className)) ?? 0)) {
+        findings.push(
+          ...classFindings.map(({ line, count }) => ({
+            source: "file",
+            location: `${file}:${line}`,
+            file,
+            line,
+            class: className,
+            count,
+          })),
+        );
+      }
     }
   }
   return findings;
