@@ -47,7 +47,7 @@
   without weakening the existing gates.
 - [x] 5.3 From `mobile/`, run the full `npm test` suite and record the result; this is the CI proof
   path for the responsive behavior on the proposal's exact implementation head.
-- [ ] 5.4 Review the final diff and confirm it contains no downstream screen conversions, new
+- [x] 5.4 Review the final diff and confirm it contains no downstream screen conversions, new
   dependency, native/store configuration, API/generated-client, server/schema, deploy/workflow,
   or legacy Flutter change, and that the only sensitive surface is the documented Architecture
   Book update.
