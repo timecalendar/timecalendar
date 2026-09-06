@@ -110,13 +110,6 @@ jobs:
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL is
       # baked here, at bundle time: 10.0.2.2 is the host loopback from the emulator.
-      #
-      # BACKEND_ENVIRONMENT_CAPABILITY is what makes that URL reachable at all.
-      # app.config.ts derives the capability from THIS variable alone — by design it
-      # never falls back to APP_VARIANT — and an unset value parses to `production`,
-      # whose only allowed environment is `production`. A build without it therefore
-      # resolves PRODUCTION_API_URL and silently ignores the baked local URL, so the
-      # dev-import deep link asks the live API for a seeded E2E token and gets a 404.
       - name: Build release APK
         working-directory: ./mobile/android
         env:
@@ -265,8 +258,6 @@ jobs:
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
       # here: localhost reaches the host server from the iOS simulator.
-      # BACKEND_ENVIRONMENT_CAPABILITY must accompany it — see the Android build
-      # step for why an unset value silently redirects the app to the live API.
       - name: Build Release simulator app
         working-directory: ./mobile/ios
         env:

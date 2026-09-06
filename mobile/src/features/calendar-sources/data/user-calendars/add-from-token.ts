@@ -1,5 +1,4 @@
 import { calendarControllerFindCalendarByToken } from "@/api/generated/calendars/calendars"
-import { runMigrations } from "@/db/migrate"
 
 import { upsert } from "./repository"
 import { fromCalendarForPublic } from "./types"
@@ -19,7 +18,6 @@ import { fromCalendarForPublic } from "./types"
 // client call + the resolve stay inside data/ (B-1). It rejects on a resolve/upsert
 // failure so the route can surface an accessible failure (+ recordError on device).
 export async function addCalendarFromToken(token: string): Promise<void> {
-  await runMigrations()
   const dto = await calendarControllerFindCalendarByToken(token)
   await upsert(fromCalendarForPublic(dto))
 }
