@@ -628,6 +628,19 @@ Three layers, each independent:
    absence degrades coverage and never disables layers 1–2. Every run logs which layers
    were active, as counts only, so its presence is verifiable from the log alone.
 
+   Each nonblank line is a regular expression, optionally followed by ` :: ` and a probe
+   string that the expression must match. The scanner splits on the first delimiter, so
+   the probe may contain it; a pattern that needs to match the delimiter can express a
+   colon with a character class. Entries are separated only by newlines because commas
+   are regular-expression syntax. An expression that does not compile, or that does not
+   match its probe, fails closed by line number without printing either column.
+
+   The census reports `present, N entries, N compiled, self-test C/N`. A pattern-only
+   entry is active but has no positive control, so it contributes to the entry and
+   compiled counts while the scanner explicitly reports it as unverified. Full self-test
+   coverage proves each supplied probe matched; it does not prove that a pattern covers
+   every value the operator intended.
+
 Two properties are load-bearing:
 
 - **No denylist is committed.** A denylist is a list of the exact strings that must not
@@ -639,10 +652,12 @@ Two properties are load-bearing:
   the string it just caught, somewhere nobody thinks to scrub. Findings carry a location
   and a class, and nothing else — open the location locally to see the match.
 
-Clearing a failure: scrub the string, or, if it is benign, add the domain, login, or
-account name to the allowlist, which puts the decision in the diff where it can be
-reviewed. Two published identifiers — the reverse-DNS application id and the mobile
-backend project id — embed a personal handle, are fixed at creation, and sit in
+Clearing a failure: scrub the string, or, if it is benign, add the applicable public-safe
+domain, reserved route, role address, product identifier, credit path, or narrow home-path
+prefix to the allowlist. Home-path entries are prefixes, never arbitrary account names:
+allowlisting an account would hide every directory below it, including the host layout the
+rule exists to catch. Two published identifiers — the reverse-DNS application id and the
+mobile backend project id — embed a personal handle, are fixed at creation, and sit in
 committed native config; both are exempted by shape, never by naming them.
 
 The About screen credits the people who built the app and links to their sites, on
