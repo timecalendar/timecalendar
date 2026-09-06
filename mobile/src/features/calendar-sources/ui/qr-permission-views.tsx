@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next"
-import { Linking, Pressable, StyleSheet } from "react-native"
+import { Linking, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Spacing } from "@/theme"
+
+import { QrActionButton } from "./qr-action-button"
 
 export function QrPermissionLoadingView() {
   const { t } = useTranslation()
@@ -33,7 +35,7 @@ export function QrPermissionRequestView({
       <ThemedText themeColor="textSecondary">
         {t("calendarSources.qrScan.explainer")}
       </ThemedText>
-      <PermissionButton
+      <QrActionButton
         testID="qr-scan-grant"
         label={t("calendarSources.qrScan.grantLabel")}
         text={t("calendarSources.qrScan.grant")}
@@ -55,7 +57,7 @@ export function QrPermissionSettingsView() {
       >
         {t("calendarSources.qrScan.settings")}
       </ThemedText>
-      <PermissionButton
+      <QrActionButton
         testID="qr-scan-open-settings"
         label={t("calendarSources.qrScan.openSettingsLabel")}
         text={t("calendarSources.qrScan.openSettings")}
@@ -73,38 +75,6 @@ function PermissionFrame({ children }: { children: React.ReactNode }) {
   )
 }
 
-function PermissionButton({
-  testID,
-  label,
-  text,
-  onPress,
-}: {
-  testID: string
-  label: string
-  text: string
-  onPress: () => void
-}) {
-  const theme = useTheme()
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      hitSlop={Spacing.two}
-      onPress={onPress}
-      style={[
-        styles.cta,
-        {
-          backgroundColor: theme.backgroundElement,
-          borderColor: theme.primary,
-        },
-      ]}
-    >
-      <ThemedText type="smallBold">{text}</ThemedText>
-    </Pressable>
-  )
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -118,14 +88,5 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
-  },
-  cta: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
   },
 })

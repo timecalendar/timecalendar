@@ -1,12 +1,14 @@
 import { type BarcodeScanningResult, CameraView } from "expo-camera"
 import { useTranslation } from "react-i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import { Radii, Spacing, useTheme } from "@/theme"
+
+import { QrActionButton } from "./qr-action-button"
 
 interface ScannerProps {
   onBarcodeScanned: (result: BarcodeScanningResult) => void
@@ -55,23 +57,26 @@ export function QrImportFailureView({
     <QrCameraFrame onBarcodeScanned={onBarcodeScanned}>
       <View style={styles.recoveryActions}>
         <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
-        <RecoveryButton
+        <QrActionButton
           testID="qr-scan-retry"
           label={t("calendarSources.qrScan.retryLabel")}
           text={t("calendarSources.qrScan.retry")}
           onPress={retry}
+          disabled={false}
         />
-        <RecoveryButton
+        <QrActionButton
           testID="qr-scan-another"
           label={t("calendarSources.qrScan.scanAnotherLabel")}
           text={t("calendarSources.qrScan.scanAnother")}
           onPress={scanAnother}
+          disabled={false}
         />
-        <RecoveryButton
+        <QrActionButton
           testID="qr-scan-manual-url"
           label={t("calendarSources.qrScan.manualUrlLabel")}
           text={t("calendarSources.qrScan.manualUrl")}
           onPress={enterManualUrl}
+          disabled={false}
         />
       </View>
     </QrCameraFrame>
@@ -106,40 +111,6 @@ function QrCameraFrame({
   )
 }
 
-function RecoveryButton({
-  testID,
-  label,
-  text,
-  onPress,
-}: {
-  testID: string
-  label: string
-  text: string
-  onPress: () => void
-}) {
-  const theme = useTheme()
-  return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: false }}
-      disabled={false}
-      hitSlop={Spacing.two}
-      onPress={onPress}
-      style={[
-        styles.cta,
-        {
-          backgroundColor: theme.backgroundElement,
-          borderColor: theme.primary,
-        },
-      ]}
-    >
-      <ThemedText type="smallBold">{text}</ThemedText>
-    </Pressable>
-  )
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   camera: { flex: 1 },
@@ -159,14 +130,5 @@ const styles = StyleSheet.create({
   recoveryActions: {
     alignSelf: "stretch",
     gap: Spacing.three,
-  },
-  cta: {
-    minHeight: 48,
-    paddingHorizontal: Spacing.four,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "stretch",
-    borderRadius: Radii.medium,
-    borderWidth: 2,
   },
 })
