@@ -17,7 +17,9 @@ The wrapper keeps the main checkout's historical `server` Compose project and
 gives each worktree its own project, network, containers, and named volumes. The
 default URLs remain `https://api.timecalendar.host:1443`, Postgres on
 `localhost:37291`, Redis on `127.0.0.1:37292`, and the separately started NestJS
-server on `http://localhost:3005`.
+server on `http://localhost:3005`. The self-signed TLS certificate the proxy
+serves is generated on first use and is not committed — see
+[the dev TLS certificate](docs/agent-dev-environment.md#the-dev-tls-certificate).
 
 Choose unoccupied host ports for another worktree with shell-scoped overrides:
 
