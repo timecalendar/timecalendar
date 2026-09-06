@@ -170,16 +170,25 @@ wonder why step 3 is a yellow line.
 
 ## 7. CI proof on the pushed head
 
-- [ ] 7.1 After pushing, confirm the `CI build & deploy` `test` job is green on the exact PR head
+- [x] 7.1 After pushing, confirm the `CI build & deploy` `test` job is green on the exact PR head
   and that the "Start Postgres and Redis" step runs with the explicit service list. This is the
   proof that untracking the pair did not break the one CI path that loaded
   `server/docker-compose.yml`.
+  - Result: the run's `head_sha` equals the PR head `37f4736e`, so this is not a stale check.
+    The `Run tests` job passed (4m12s), its "Start Postgres and Redis" step ran
+    `… up -d postgres redis`, and the step created exactly `server-postgres-1` and
+    `server-redis-1` — **no nginx container**. Every other check on the head is `pass` or
+    `skipping`.
 
-- [ ] 7.2 Confirm the PR body states, without pasting any certificate or key bytes, what the
+- [x] 7.2 Confirm the PR body states, without pasting any certificate or key bytes, what the
   deleted key was (a self-signed dev-only key for `*.timecalendar.host` names resolving to
   `127.0.0.1` via `/etc/hosts`, used by no CI path and unrelated to production TLS) and why
   removing it is safe. Run the `disclosure-scan` preflight on the final title and body before
   every `gh pr create`/`gh pr edit`/`gh pr comment`.
+  - Done: the "Sensitive surfaces touched" section already says it; the apply stage added a
+    verification section, the 4.2 grep result, and the out-of-scope note from 6.1. Scanned the
+    exact final title and body before the edit — **0 text findings** — and re-read the body
+    after writing it: identical but for the trailing newline GitHub appends.
 
 - [x] 7.3 Run the `disclosure-scan` preflight once more on the finished branch with no text
   payload, so it reads the diff itself, and confirm the report shows `added: 0`. The two `.pem`
