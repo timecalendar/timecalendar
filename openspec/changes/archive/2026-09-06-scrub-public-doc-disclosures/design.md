@@ -28,13 +28,14 @@ carrying 60 occurrences**, split four ways:
 
 | Set | Paths | Occurrences | Disposition |
 | --- | --- | --- | --- |
-| A — genuine violations | 30 | 53 | scrubbed by this change |
+| A — genuine violations | 29 | 52 | scrubbed by this change |
 | B — spec text quoting the shipped author credit | 2 | 4 | untouched (D10) |
 | C — legacy Android package directories | 2 | 2 | untouched, path-only (D6) |
 | D — committed development TLS key | 1 | 1 | untouched, TIM-472's |
+| E — web mockup greeting | 1 | 1 | untouched, pending a ruling (D11) |
 
-**The expected post-change hit set is therefore 5 paths carrying 7 occurrences** — sets B, C
-and D — and zero in the other 2 578 files.
+**The expected post-change hit set is therefore 6 paths carrying 8 occurrences** — sets B, C,
+D and E — and zero in the other 2 577 files.
 
 An earlier pass of this design put the baseline at 48 paths / 103 occurrences and the expected
 set at 19 paths. That pass predates `publishedIn` reaching the deployed list. Thirteen of the
@@ -210,23 +211,32 @@ scanner's output, the ruling is the product decision, and both are right. Until 
 carve-out or TIM-473 records these two, a branch touching either file reports two occurrences it
 must not fix.
 
-### Decision D11 — the mockup greeting is scrubbed; it is sample data, not a credit
+### Decision D11 — the mockup greeting is left untouched, and the argument is referred upward
 
-**Decision.** `web/app/mockups/calendar-confetti/page.tsx` (1 occurrence, line 125) **is** scrubbed.
-The greeting takes a generic sample first name. Nothing else on the page changes.
+**Decision.** `web/app/mockups/calendar-confetti/page.tsx` (1 occurrence, line 125) is **not**
+scrubbed by this change. The file is left exactly as it stands, and the case for reclassifying it
+is recorded here for the owner of the exclusion set to rule on.
 
-**Why.** It was carried on the exclusion list under "rendered credit", and on inspection it is not
-one. The line is a mockup's greeting heading — a fake user being greeted by name in placeholder
-content, alongside a fake date and a fake day summary. A person's real first name used as dummy
-data is the ordinary case the disclosure rule is about, and replacing it costs the mockup nothing,
-because the mockup is demonstrating a layout and not an identity. This is the exclusion list's own
-test applied in the direction it is usually applied in reverse: a file is excluded because
-inspection shows it is deliberate published content, and inspection here shows it is not.
+**The argument for scrubbing, which is a good one.** The line is a mockup's greeting heading — a
+fake user greeted by name in placeholder content, alongside a fake date and a fake day summary. A
+person's real first name used as dummy data is the ordinary case the disclosure rule is about, and
+replacing it would cost the mockup nothing, because the mockup demonstrates a layout and not an
+identity. It reads differently from the About screen, the footer, `LICENSE` and the privacy policy,
+which name the author *as* the author: remove the name there and the document becomes false or the
+product loses a credit it deliberately ships.
 
-**Distinguishing it from the real credit.** The About screen, the footer, `LICENSE` and the privacy
-policy name the author *as* the author — remove the name and the document becomes false or the
-product loses a credit it deliberately ships. Remove this one and a mockup greets a different
-fictional student. Nothing is asserted about anyone.
+**Why the change does not act on it anyway.** The exclusion set is signed off in writing and names
+this page explicitly, and the ruling admits marginal cases in one direction only — a file may move
+*into* the exclusion set when inspection shows it is deliberate published content, never out of it.
+An argument that a signed-off exclusion was misclassified is exactly the case that has to go back
+to the person who signed it, because the alternative is a stage re-deciding a product question on
+its own reading. Being right about the merits does not convert into authority over the set.
+
+**Consequence to flag while it stands.** No `publishedIn` path covers this file, so unlike the rest
+of the exclusion set it is not carved out of the scan. Until it is either reclassified or given a
+`publishedIn` entry under TIM-470, a branch touching this page reports one occurrence it must not
+fix. That is the same shape as the two entries flagged above, and it is the concrete cost of
+leaving the question open.
 
 ## Verification strategy
 
@@ -238,7 +248,7 @@ Acceptance is a single mechanical measurement, and it is the only evidence that 
 2. Read the 16 patterns out of the running agent's own instructions, compile them the way the
    scanner does (`gi`), honour each pattern's `publishedIn` paths, and walk every tracked file:
    the file's whole content **and** its path.
-3. Diff the resulting hit set against the expected **5 paths / 7 occurrences** — sets B, C and D.
+3. Diff the resulting hit set against the expected **6 paths / 8 occurrences** — sets B, C, D and E.
    Zero occurrences anywhere else. Compare occurrence counts, not path counts: a path that should
    carry 2 and carries 1 has been half-scrubbed, which a path-set diff reports as a pass.
 
@@ -249,7 +259,7 @@ Two traps this design accounts for explicitly:
   whether the work is done. The full-tree measurement is the acceptance evidence; the pre-publication
   scan only guards the text being published alongside it.
 - **A rewrite can introduce a match somewhere new.** Re-measuring before editing, or re-checking
-  only the 30 edited files, would miss it. The scan walks the whole tree, after the edits.
+  only the 29 edited files, would miss it. The scan walks the whole tree, after the edits.
 
 Beyond that: nothing to run. No code path changes, so no test, type-check or lint outcome can
 move, and the only CI gate a documentation change faces is the build-and-deploy workflow.
@@ -263,6 +273,6 @@ move, and the only CI gate a documentation change faces is the build-and-deploy 
 - **Losing meaning while removing an identifier.** Mitigated by making every task state what the
   document must still say afterwards, and by criteria 3 and 4, which exist precisely to catch a
   scrub that deleted rather than rewrote.
-- **Recurrence.** Twelve of the thirty files are instances of one convention. D1 fixes the
+- **Recurrence.** Twelve of the twenty-nine files are instances of one convention. D1 fixes the
   convention at its source, which is what makes the next handoff note compliant by default. This
   is a working-tree fix, not a gate; the gate is TIM-468's job.

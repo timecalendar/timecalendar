@@ -6,7 +6,7 @@ before, the task is not done — go back and say the same thing without the iden
 Read `design.md` first. D1–D11 decide the *form* each rewrite takes; the tasks below say only
 where and what must survive.
 
-Scope is **30 files carrying 53 occurrences**. Counts below are occurrences, not lines: several
+Scope is **29 files carrying 52 occurrences**. Counts below are occurrences, not lines: several
 of these lines carry two or three, and treating a line as one hit half-scrubs it.
 
 ## 1. Fix the convention before the instances
@@ -126,12 +126,13 @@ Edited in place; no re-archive and no `openspec validate` run (D5).
 
 ## 9. The web mockup greeting
 
-- [x] 9.1 `web/app/mockups/calendar-confetti/page.tsx` line 125 — a greeting heading in mockup
-      content uses a real first name as sample data. Replace it with a generic sample first name,
-      per D11. Nothing else on the page changes: the fake date, the day summary and every style
-      reference stay exactly as they are.
-      *Why this one and not the About screen:* the surrounding page is a layout mockup populated
-      with a fictional student, so the name asserts nothing about anyone. Read D11 before editing
+- [ ] 9.1 **Not done, deliberately — do not tick this box.**
+      `web/app/mockups/calendar-confetti/page.tsx` line 125 uses a real first name as sample data
+      in a greeting heading, and the case for treating that as sample data rather than as a credit
+      is good. It is nonetheless left untouched: the exclusion set naming this page is signed off,
+      and a marginal case may only move *into* that set, never out of it. Read D11 — the decision
+      is to refer the reclassification to the set's owner, not to make it here. Reverting an edit
+      to this file is the correct action, not rework.
       if this looks like it belongs on the exclusion list — it was on it, and inspection moved it.
 
 ## 10. Acceptance — the full-tree measurement
