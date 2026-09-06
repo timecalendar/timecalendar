@@ -19,10 +19,10 @@ Other files carry the same categories deliberately — the author credit rendere
 on the website, and the legal identity in `LICENSE` and the privacy policy. Those are a product
 and legal decision, not a scrub, and they are out of scope here (TIM-469). At this branch's head,
 the raw content census used by baseline generation deliberately ignores `publishedIn` and records
-17 files / 49 occurrences. The current `publishedIn`-aware whole-tree scan also checks paths and
-reports only 2 files / 2 occurrences: the development TLS key and the mockup greeting. The
-archived planning files that specify the shipped credit are covered by the current path
-expression, while the raw census still records them for a count-keyed baseline (D10).
+16 files / 48 occurrences. The current `publishedIn`-aware whole-tree scan also checks paths and
+reports only 1 file / 1 occurrence: the mockup greeting. The archived planning files that specify
+the shipped credit are covered by the current path expression, while the raw census still records
+them for a count-keyed baseline (D10).
 
 ## What Changes
 
@@ -85,15 +85,15 @@ full-file gate reads, and what a reader of the repository sees.
   rather than a cosmetic one: Match resolves that url when it fetches certificates for the
   legacy Flutter iOS app. `app/` is under R-5 bounded maintenance; this one line is in bounds
   and nothing else under `app/` is.
-- **Out of scope.** The raw baseline census records 17 content files / 49 occurrences: rendered
-  credit, the planning text that specifies it, legal identity, the development TLS key and the
-  mockup greeting. The `publishedIn`-aware whole-tree scan reports only the last two files, one
-  occurrence each. It also suppresses the two legacy Flutter Android package paths, whose path
-  segments embed the published application id (D6); those permanent path anchors cannot be
-  represented in a baseline whose entries are keyed by path. The key needs rotation rather than
-  a text edit (TIM-472), and the mockup is deferred to neutral sample copy without a carve-out
-  (D11). Also out of scope: the deliberate credit and legal identity generally (TIM-469), the
-  gate itself (TIM-468), and the pattern list it runs (TIM-470).
+- **Out of scope.** The raw baseline census records 16 content files / 48 occurrences: rendered
+  credit, the planning text that specifies it, legal identity and the mockup greeting. The
+  `publishedIn`-aware whole-tree scan reports only the mockup, with one occurrence. It also
+  suppresses the two legacy Flutter Android package paths, whose path segments embed the
+  published application id (D6); those permanent path anchors cannot be
+  represented in a baseline whose entries are keyed by path. The mockup is deferred to neutral
+  sample copy without a carve-out (D11). Also out of scope: the deliberate credit and legal
+  identity generally (TIM-469), the gate itself (TIM-468), and the pattern list it runs
+  (TIM-470).
 
 ## Non-Goals
 

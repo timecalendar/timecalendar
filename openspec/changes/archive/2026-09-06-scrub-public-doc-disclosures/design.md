@@ -20,17 +20,17 @@ The scan compiles each pattern case-**in**sensitively (`gi`) unless an entry opt
 does. Two measurement modes answer different questions and must not share a result label:
 
 - The **raw baseline census** checks tracked-file content and deliberately ignores `publishedIn`,
-  just as `disclosure-baseline` does. At this branch's head it records **17 files / 49
+  just as `disclosure-baseline` does. At this branch's head it records **16 files / 48
   occurrences**. That is the input from which a count-keyed content baseline is generated.
 - The current **`publishedIn`-aware whole-tree scan** checks both content and paths. It suppresses
   the project's published credit and legal-identity content plus the permanent Android package
-  path anchors (D6). At this branch's head it reports **2 files / 2 occurrences**: the committed
-  development TLS key and the mockup greeting.
+  path anchors (D6). At this branch's head it reports **1 file / 1 occurrence**: the mockup
+  greeting.
 
-The scrub itself accounts for the difference from the corrected pre-change raw census: 29 files /
-52 occurrences were removed from 46 files / 101 occurrences, leaving 17 / 49. The path anchors
-are deliberately absent from that arithmetic because a baseline census cannot encode a matching
-path. The aware scan is a separate present-state result, not a smaller baseline census.
+The scrub accounts for 29 files / 52 occurrences removed from the corrected pre-change raw
+census. The current branch-head result is 16 / 48. The path anchors are deliberately absent from
+that arithmetic because a baseline census cannot encode a matching path. The aware scan is a
+separate present-state result, not a smaller baseline census.
 
 ## Decisions
 
@@ -221,10 +221,10 @@ Acceptance is a single mechanical measurement, and it is the only evidence that 
    repository it was meant to protect.
 2. Read the 16 patterns out of the running agent's own instructions and compile them the way the
    scanner does (`gi`). Run the raw content census with `publishedIn` ignored and compare its
-   per-file counts: **17 files / 49 occurrences**.
+   per-file counts: **16 files / 48 occurrences**.
 3. Run the `publishedIn`-aware whole-tree scan over content and paths. Its separate result is
-   **2 files / 2 occurrences**, one in the development TLS key and one in the mockup. Zero
-   occurrences outside those two files. Compare occurrence counts, not only the path set: a path
+   **1 file / 1 occurrence**, in the mockup. Zero occurrences outside that file. Compare
+   occurrence counts, not only the path set: a path
    expected to carry 2 that carries 1 has been half-scrubbed, which a path-set diff reports as a
    pass.
 

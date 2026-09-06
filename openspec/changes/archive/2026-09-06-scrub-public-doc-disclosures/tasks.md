@@ -147,12 +147,12 @@ This is the only evidence that the change is done. Run it **after** every edit a
       strings that must not be published. Read the 16 patterns from the running agent's own
       instructions and compile them case-insensitively, the way the scanner does.
 - [x] 10.2 Run both measurement modes and name them in the report. The raw baseline census scans
-      tracked-file content and deliberately ignores `publishedIn`; it records **17 files / 49
+      tracked-file content and deliberately ignores `publishedIn`; it records **16 files / 48
       occurrences**. The current `publishedIn`-aware whole-tree scan matches both content and paths;
-      it reports **2 files / 2 occurrences**.
+      it reports **1 file / 1 occurrence**.
 - [x] 10.3 Compare per-file occurrence counts in both modes. The aware result contains only the
-      development TLS key and the mockup greeting, one occurrence each, and no file outside that
-      pair. The raw census includes the deliberate content that baseline generation must pin.
+      mockup greeting, with one occurrence, and no other file. The raw census includes the
+      deliberate content that baseline generation must pin.
       Check the **counts**, not just the path set — a path expected to carry 2 that carries 1 has
       been half-scrubbed and a path-set diff calls that a pass. Any other path is a regression
       introduced by a rewrite: fix it and re-run.
@@ -166,13 +166,13 @@ This is the only evidence that the change is done. Run it **after** every edit a
 
 Paths, occurrence counts and pattern ids only — never a matched string.
 
-- [x] 11.1 Tell TIM-473 that the raw content census to regenerate from is **17 files / 49
+- [x] 11.1 Tell TIM-473 that the raw content census to regenerate from is **16 files / 48
       occurrences before any configured exclusion**. The generator deliberately ignores
       `publishedIn`; it must derive its own count-keyed entries rather than copy the aware result.
 - [x] 11.2 Tell TIM-470 that its current `mobile-about-screen` expression already covers the two
       archived planning files. No wider content carve-out is required for them. Preserve only the
       permanent path anchors once generated baseline entries replace content carve-outs.
-- [x] 11.3 Tell TIM-468 that the aware scan reports **2 files / 2 occurrences** after this scrub.
+- [x] 11.3 Tell TIM-468 that the aware scan reports **1 file / 1 occurrence** after this scrub.
       The two Android path-only matches are already handled by permanent `publishedIn` anchors;
       they cannot be represented by a count-keyed baseline because each entry is keyed by path.
 - [x] 11.4 Confirm to the Founding Engineer that this scrub alone does not justify deleting the
