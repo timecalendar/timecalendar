@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native"
 
-import { ColorSwatchPicker, SWATCH_PRESETS } from "./color-swatch-picker"
+import { ColorSwatchPicker } from "./color-swatch-picker"
+import { SWATCH_PRESETS } from "./color-swatch-presets"
 
 // Presentational (70% floor): renders the preset swatches with labels +
 // selected state, and reports the chosen #RRGGBB on press. Localized labels
