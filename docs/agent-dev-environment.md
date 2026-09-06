@@ -175,14 +175,20 @@ The canonical quickstart is `README.md`; the agent-relevant essentials:
      alternate host ports; never rewrite the shared, symlinked `.env` to carry a
      worktree override.
 
-   - For non-mutating ownership/port troubleshooting, inspect the selected inputs
-     and resolved model before considering any cleanup:
+   - For ownership/port troubleshooting, inspect the selected inputs and resolved
+     model before considering any cleanup:
 
      ```bash
      bin/server-compose.sh project-name
      bin/setup-dev.sh --compose-config
      bin/server-compose.sh config --format json | jq '{name, networks, volumes, services}'
      ```
+
+     The first two are pure diagnostics and write nothing. `config` takes the
+     wrapper's pass-through path, so on a fresh checkout it also provisions the
+     gitignored dev TLS pair (see "The dev TLS certificate" below) — a write
+     inside your own checkout, and nothing else. None of the three creates,
+     stops, or removes a container, network, or volume.
 
      Shared-host resources may belong to another checkout. Routine setup must
      never stop, remove, prune, or otherwise clean another Compose project.
@@ -684,7 +690,7 @@ gh pr checks <pr> --watch --interval 30   # wait for green
 gh pr merge <pr> --squash --delete-branch # only after SUCCESS
 ```
 
-Before troubleshooting ownership or ports, use the non-mutating commands in §4.
+Before troubleshooting ownership or ports, use the inspection commands in §4.
 Do not routinely stop, remove, or clean Docker resources owned by another checkout;
 identify the owning project and coordinate an explicit cleanup instead.
 
