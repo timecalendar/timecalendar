@@ -6,6 +6,7 @@ import { Alert } from "react-native"
 import { type EventDetails, useEventDetails } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
+import { useDisplayZone } from "@/features/settings/prefs"
 
 import { EventDetailsScreen } from "./event-details-screen"
 
@@ -31,6 +32,11 @@ jest.mock("@/features/calendar-sources", () => ({
 jest.mock("@/features/hidden-events/data", () => ({
   useHiddenEvents: jest.fn(),
   useHideActions: jest.fn(),
+}))
+
+jest.mock("@/features/settings/prefs", () => ({
+  ...jest.requireActual("@/features/settings/prefs"),
+  useDisplayZone: jest.fn(),
 }))
 
 // The checklist section reads @/db + @/firebase; mock the cross-feature component
@@ -62,6 +68,7 @@ const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockUseRouter = useRouter as jest.Mock
 const mockUseHiddenEvents = useHiddenEvents as jest.Mock
 const mockUseHideActions = useHideActions as jest.Mock
+const mockUseDisplayZone = useDisplayZone as jest.Mock
 
 function eventDetails(overrides: Partial<EventDetails> = {}): EventDetails {
   return {
@@ -106,10 +113,15 @@ beforeEach(() => {
     namedHiddenEvents: [],
   })
   mockUseHideActions.mockReturnValue({ ...hideActions, failed: false })
+  mockUseDisplayZone.mockReturnValue("Etc/UTC")
   mockUseEventDetails.mockReturnValue({
     event: eventDetails(),
     loading: false,
   })
+})
+
+afterEach(() => {
+  jest.restoreAllMocks()
 })
 
 describe("EventDetailsScreen", () => {
@@ -152,6 +164,16 @@ describe("EventDetailsScreen", () => {
     expect(screen.getByText("CM")).toBeTruthy()
   })
 
+  it("preserves two identical tag occurrences", async () => {
+    const tag = { name: "CM", color: "#FF0000", icon: "book" }
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({ tags: [tag, { ...tag }] }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+    expect(screen.getAllByText("CM")).toHaveLength(2)
+  })
+
   it("renders the present content lines", async () => {
     await render(<EventDetailsScreen />)
     expect(screen.getByText("Room A1")).toBeTruthy()
@@ -166,6 +188,30 @@ describe("EventDetailsScreen", () => {
     ])
     await render(<EventDetailsScreen />)
     expect(screen.getByText("ENSEEIHT")).toBeTruthy()
+  })
+
+  it("omits the calendar name when the event calendar cannot be resolved", async () => {
+    mockUseUserCalendars.mockReturnValue([
+      { id: "cal-2", name: "Sport" },
+      { id: "cal-3", name: "Languages" },
+    ])
+    await render(<EventDetailsScreen />)
+    expect(screen.queryByText("Calendar")).toBeNull()
+  })
+
+  it("formats timed content in the resolved display zone", async () => {
+    mockUseDisplayZone.mockReturnValue("Europe/Paris")
+    mockUseEventDetails.mockReturnValue({
+      event: eventDetails({
+        startsAt: new Date("2026-06-16T07:00:00.000Z"),
+        endsAt: new Date("2026-06-16T08:30:00.000Z"),
+      }),
+      loading: false,
+    })
+    await render(<EventDetailsScreen />)
+    expect(
+      screen.getByText("Tuesday, June 16th, 2026 · 09:00 – 10:30"),
+    ).toBeTruthy()
   })
 
   it("renders the fallback name for a whitespace-only calendar name", async () => {
@@ -204,6 +250,7 @@ describe("EventDetailsScreen", () => {
     mockUseEventDetails.mockReturnValue({ event: null, loading: false })
     await render(<EventDetailsScreen />)
     expect(screen.getByText("This event is no longer available.")).toBeTruthy()
+    expect(mockUseHideActions).not.toHaveBeenCalled()
   })
 
   it("renders an accessible loading indicator while the read resolves", async () => {
@@ -212,6 +259,7 @@ describe("EventDetailsScreen", () => {
     expect(screen.getByLabelText("Loading event…")).toBeTruthy()
     // Loading is distinct from not-found — the not-found message must NOT show yet.
     expect(screen.queryByText("This event is no longer available.")).toBeNull()
+    expect(mockUseHideActions).not.toHaveBeenCalled()
   })
 })
 
@@ -219,6 +267,8 @@ describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
   it("offers the hide action for a synced event", async () => {
     await render(<EventDetailsScreen />)
     expect(screen.getByLabelText("Hide this event")).toBeTruthy()
+    expect(mockUseHiddenEvents).toHaveBeenCalledTimes(1)
+    expect(mockUseHideActions).toHaveBeenCalledTimes(1)
   })
 
   it("offers NO hide action for a personal event (synced-only, Flutter parity)", async () => {
@@ -257,11 +307,14 @@ describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
         // Choose the second option: "Hide all events of the same name".
         buttons?.[1]?.onPress?.()
       })
+    const back = jest.fn()
+    mockUseRouter.mockReturnValue({ back, push: jest.fn() })
     await render(<EventDetailsScreen />)
     const user = userEvent.setup()
     await user.press(screen.getByLabelText("Hide this event"))
 
     expect(hideActions.hideByName).toHaveBeenCalledWith("Algorithms")
+    expect(back).toHaveBeenCalled()
     alertSpy.mockRestore()
   })
 
@@ -317,11 +370,29 @@ describe("EventDetailsScreen hide / un-hide action (hidden-events)", () => {
     expect(hideActions.unhideName).toHaveBeenCalledWith("Algorithms")
   })
 
+  it("un-hides matching uid and name entries without navigating", async () => {
+    const back = jest.fn()
+    mockUseRouter.mockReturnValue({ back, push: jest.fn() })
+    mockUseHiddenEvents.mockReturnValue({
+      uidHiddenEvents: ["ev-1"],
+      namedHiddenEvents: ["Algorithms"],
+    })
+    await render(<EventDetailsScreen />)
+    const user = userEvent.setup()
+    await user.press(screen.getByLabelText("Un-hide this event"))
+
+    expect(hideActions.unhideUid).toHaveBeenCalledWith("ev-1")
+    expect(hideActions.unhideName).toHaveBeenCalledWith("Algorithms")
+    expect(back).not.toHaveBeenCalled()
+  })
+
   it("surfaces an accessible failure state when a hide write failed", async () => {
     mockUseHideActions.mockReturnValue({ ...hideActions, failed: true })
     await render(<EventDetailsScreen />)
     expect(
-      screen.getByText("We couldn't hide this event. Please try again."),
+      screen.getByRole("alert", {
+        name: "We couldn't hide this event. Please try again.",
+      }),
     ).toBeTruthy()
   })
 })
