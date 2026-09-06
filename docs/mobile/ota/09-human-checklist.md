@@ -3,7 +3,7 @@
 **Status:** handover (TIM-171) · **Written:** 2026-08-25 · **Audience:** the human owner
 
 The implementation is being handed to AI agents that work on machines **without** production
-access — no `doctl`, no `kubectl`, no Cloudflare dashboard, no the password manager. Everything that
+access — no `doctl`, no `kubectl`, no Cloudflare dashboard, no password manager. Everything that
 needs live credentials either (a) was done on 2026-08-25 during handover (§4), (b) is on this
 list for you to do before you leave (§1), or (c) is a step the agents will ping you for
 mid-implementation (§2).

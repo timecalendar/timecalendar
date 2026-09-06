@@ -81,7 +81,7 @@ For the selected model, EAS may remotely manage:
 
 “EAS-managed” does not mean “no recovery plan.” The current EAS project is linked as
 `@samuelprak/timecalendar` (`3b427ef6-1aae-4175-8217-ea447ee6df6b`) and will remain personally
-owned for now. the password manager should record:
+owned for now. The password manager should record:
 
 - Expo account owner, MFA/recovery path and at least one trusted recovery owner;
 - EAS project URL/name/ID and who has collaborator access;

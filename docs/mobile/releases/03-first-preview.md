@@ -53,7 +53,7 @@ Complete these in order:
    create or select a distribution certificate/profile. For Android, import/select the accepted
    upload key; never create an unrelated replacement unless a Play reset is in progress.
 5. **Configure submission identities.** Record Apple ID/team/app IDs. Create a least-privilege Play
-   service account for EAS Submit and keep its JSON in EAS/the password manager or ephemeral operator
+   service account for EAS Submit and keep its JSON in EAS or the password manager, or ephemeral operator
    storage, never in git.
 6. **Create tester groups.** TestFlight internal testers must be App Store Connect users; Apple
    supports up to 100 internal testers. Create **The team** and enable the desired distribution
