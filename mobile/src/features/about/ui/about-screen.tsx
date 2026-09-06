@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ResponsiveLane } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { readApplicationInfo } from "@/features/about/data"
 import {
@@ -16,7 +15,7 @@ import {
   SettingsSection,
 } from "@/features/settings/ui"
 import { recordUnknownError } from "@/firebase"
-import { Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 const PRIVACY_URL = "https://timecalendar.app/privacy-policy"
 const CONTACT_URL = "mailto:hello@timecalendar.app"
@@ -168,11 +167,7 @@ export function AboutScreen() {
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={styles.scrollContent}
       >
-        <ResponsiveLane
-          lane="standard"
-          testID="about-responsive-lane"
-          contentStyle={styles.content}
-        >
+        <View style={styles.content}>
           <View style={styles.blurb}>
             <ThemedText>{t("about.blurb.access")}</ThemedText>
             <ThemedText themeColor="textSecondary">
@@ -200,7 +195,7 @@ export function AboutScreen() {
               ))}
             </SettingsSection>
           ))}
-        </ResponsiveLane>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -210,11 +205,13 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
     alignItems: "center",
+    paddingHorizontal: Platform.OS === "ios" ? Spacing.three : Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.six,
   },
   content: {
     width: "100%",
+    maxWidth: MaxContentWidth,
     gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
   },
   blurb: { gap: Spacing.two, paddingHorizontal: Spacing.three },

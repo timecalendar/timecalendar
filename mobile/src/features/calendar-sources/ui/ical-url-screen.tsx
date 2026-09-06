@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -13,7 +12,7 @@ import {
 } from "@/features/calendar-sources/data"
 import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 import { leaveImportJourney } from "./leave-import-journey"
 
@@ -50,7 +49,6 @@ interface FailedIcalAttempt {
 export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("readable")
   const { addCalendarFromUrl, isPending, isError, reset } = useAddCalendar()
   // Institution + programme come from the ephemeral journey draft, NOT from the
   // persisted school selection: a durable selection would attribute an import
@@ -107,17 +105,7 @@ export default function IcalUrlScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView
-        testID="ical-url-responsive-lane"
-        onLayout={responsive.onLayout}
-        style={[
-          styles.safeArea,
-          {
-            maxWidth: responsive.layout.outerMaxWidth,
-            paddingHorizontal: responsive.layout.gutter,
-          },
-        ]}
-      >
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.intro}>
           <ThemedText type="title">
             {t("calendarSources.icalUrl.title")}
@@ -257,6 +245,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,

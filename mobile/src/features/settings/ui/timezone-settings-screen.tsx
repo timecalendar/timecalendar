@@ -4,7 +4,6 @@ import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { Host, Picker } from "@/components/chrome"
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -12,7 +11,7 @@ import {
   type CuratedTimezone,
   useTimezonePreference,
 } from "@/features/settings/prefs"
-import { Spacing } from "@/theme"
+import { MaxContentWidth, Spacing } from "@/theme"
 
 // The display-timezone picker screen (timezone design D8) — PRESENTATIONAL
 // (70% floor): the appearance-settings <Picker>/chrome pattern scaled to 11
@@ -39,23 +38,11 @@ const ZONE_LABEL_KEYS = {
 export default function TimezoneSettingsScreen() {
   const { t } = useTranslation()
   const timezone = useTimezonePreference()
-  const responsive = useResponsiveLayout("readable")
 
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("settings.timezone.title") }} />
-      <SafeAreaView
-        testID="timezone-responsive-lane"
-        style={[
-          styles.safeArea,
-          {
-            maxWidth: responsive.layout.outerMaxWidth,
-            paddingHorizontal: responsive.layout.gutter,
-          },
-        ]}
-        edges={["bottom", "left", "right"]}
-        onLayout={responsive.onLayout}
-      >
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
         <View style={styles.control}>
           <ThemedText type="smallBold">
             {t("settings.timezone.label")}
@@ -99,6 +86,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     gap: Spacing.four,
   },

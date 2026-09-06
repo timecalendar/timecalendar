@@ -3,14 +3,13 @@ import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { Host, Picker } from "@/components/chrome"
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
   useLanguagePreference,
   useThemePreference,
 } from "@/features/settings/prefs"
-import { Spacing } from "@/theme"
+import { MaxContentWidth, Spacing } from "@/theme"
 
 // The Settings feature's presentational screen (A2 / TIM-131). It owns NO
 // preference logic — all state comes from A1's reactive hooks
@@ -28,21 +27,10 @@ export default function AppearanceSettingsScreen() {
   const { t } = useTranslation()
   const theme = useThemePreference()
   const language = useLanguagePreference()
-  const responsive = useResponsiveLayout("readable")
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView
-        testID="appearance-responsive-lane"
-        onLayout={responsive.onLayout}
-        style={[
-          styles.safeArea,
-          {
-            maxWidth: responsive.layout.outerMaxWidth,
-            paddingHorizontal: responsive.layout.gutter,
-          },
-        ]}
-      >
+      <SafeAreaView style={styles.safeArea}>
         <ThemedText type="title">{t("settings.title")}</ThemedText>
 
         <View style={styles.control}>
@@ -115,6 +103,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     gap: Spacing.four,
   },

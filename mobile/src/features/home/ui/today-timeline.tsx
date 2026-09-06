@@ -1,5 +1,7 @@
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
+  type LayoutChangeEvent,
   Platform,
   Pressable,
   StyleSheet,
@@ -7,7 +9,6 @@ import {
   View,
 } from "react-native"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import {
   addDaysInZone,
@@ -30,7 +31,7 @@ import {
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
@@ -48,6 +49,9 @@ import { eventSurfaceColor } from "./event-surface"
 // Flutter home zoom (`hourHeight = 70`) — a home concern passed as `pixelsPerHour`,
 // not a grid constant (the day/week DEFAULT_PIXELS_PER_HOUR = 60 stays).
 const HOME_PIXELS_PER_HOUR = 70
+// The home content padding (Spacing.four each side, src/features/home home-screen
+// styles.content) the screen-derived fallback subtracts before the first layout pass.
+const CONTENT_HORIZONTAL_PADDING = Spacing.four * 2
 const MIN_TARGET_SIZE = Platform.OS === "android" ? 48 : 44
 
 // Day bounds + minute positioning on the DISPLAY zone's wall clock (timezone
@@ -103,14 +107,23 @@ export function TodayTimeline({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { fontScale } = useWindowDimensions()
-  const tileArea = useResponsiveLayout("fullBleed")
+  const { width: windowWidth, fontScale } = useWindowDimensions()
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
   // multiplier is dynamic. The tile area is flex:1, so its real width is measured
-  // via onLayout. Before the first layout pass, use the minimum viable tile
-  // width; a global window cannot describe this nested standard lane.
-  const tileAreaWidth = tileArea.layout.width || MIN_TILE_WIDTH
+  // via onLayout. Before the first layout pass, fall back to a screen-derived width
+  // (the bounded content width minus the hours column) so nothing renders 0-width.
+  const fallbackWidth =
+    Math.min(windowWidth, MaxContentWidth) -
+    CONTENT_HORIZONTAL_PADDING -
+    HOURS_COLUMN_WIDTH
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
+  const tileAreaWidth = measuredWidth ?? Math.max(fallbackWidth, MIN_TILE_WIDTH)
+
+  const onTileAreaLayout = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width
+    if (width > 0 && width !== measuredWidth) setMeasuredWidth(width)
+  }
 
   const startMinute = range.startHour * 60
   const endMinute = range.endHour * 60
@@ -128,7 +141,7 @@ export function TodayTimeline({
       const geometry = visibleGeometry(entry.item, now, range, displayZone)
       const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
       return (
-        (tileArea.layout.width > 0 && width < MIN_TARGET_SIZE) ||
+        (measuredWidth !== null && width < MIN_TARGET_SIZE) ||
         height < MIN_TARGET_SIZE
       )
     })
@@ -220,7 +233,7 @@ export function TodayTimeline({
       <View
         testID="today-tile-area"
         style={[styles.tileArea, { height: gridHeight }]}
-        onLayout={tileArea.onLayout}
+        onLayout={onTileAreaLayout}
       >
         {labels.map((hour) => (
           <View

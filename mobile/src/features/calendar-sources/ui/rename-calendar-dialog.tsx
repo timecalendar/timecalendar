@@ -16,7 +16,7 @@ import {
   type UserCalendar,
   useRenameCalendar,
 } from "@/features/calendar-sources/data"
-import { Radii, ResponsiveContentWidth, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The shared controlled rename dialog (TIM-392 / design D4) — PRESENTATIONAL (70%
 // floor). ONE React Native `Modal` used unchanged on both platforms, deliberately
@@ -189,8 +189,6 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   card: {
-    width: "100%",
-    maxWidth: ResponsiveContentWidth.readable,
     alignSelf: "stretch",
     borderRadius: Radii.medium,
     padding: Spacing.four,

@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -12,7 +11,7 @@ import {
   useSchoolGroups,
 } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 // The onboarding group step (C1 / TIM-134; multi-select GROW — Phase-3 ship 2,
 // ADR 016) — PRESENTATIONAL (70% floor): reads the schoolId route param, renders
@@ -27,7 +26,6 @@ import { Radii, Spacing, useTheme } from "@/theme"
 export default function SchoolGroupPickerScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("standard")
   const params = useLocalSearchParams<{ schoolId?: string }>()
   const schoolId = params.schoolId ?? ""
   const { groups, isLoading, isError, refetch } = useSchoolGroups(schoolId)
@@ -58,17 +56,7 @@ export default function SchoolGroupPickerScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView
-        testID="school-groups-responsive-lane"
-        onLayout={responsive.onLayout}
-        style={[
-          styles.safeArea,
-          {
-            maxWidth: responsive.layout.outerMaxWidth,
-            paddingHorizontal: responsive.layout.gutter,
-          },
-        ]}
-      >
+      <SafeAreaView style={styles.safeArea}>
         <ThemedText type="title">{t("onboarding.group.title")}</ThemedText>
 
         {isLoading && (
@@ -237,6 +225,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     gap: Spacing.three,
   },

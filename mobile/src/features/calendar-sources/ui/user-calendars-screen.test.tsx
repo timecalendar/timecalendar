@@ -170,16 +170,7 @@ describe("UserCalendarsScreen", () => {
       screen.getByTestId("user-calendars-safe-area").props.style,
     )
     expect(style.paddingLeft).toBe(44)
-    expect(style.paddingRight).toBe(24)
-
-    await fireEvent(screen.getByTestId("user-calendars-safe-area"), "layout", {
-      nativeEvent: { layout: { width: 768 } },
-    })
-    const tabletStyle = StyleSheet.flatten(
-      screen.getByTestId("user-calendars-safe-area").props.style,
-    )
-    expect(tabletStyle.paddingLeft).toBe(64)
-    expect(tabletStyle.paddingRight).toBe(64)
+    expect(style.paddingRight).toBe(20)
   })
 
   it("falls back to placeholders for an empty name and a personal (no-school) calendar", async () => {

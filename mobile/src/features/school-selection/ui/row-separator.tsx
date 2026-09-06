@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native"
 
-import { Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 import { LogoSize } from "./school-logo"
 
@@ -20,6 +20,7 @@ export function RowSeparator() {
 const styles = StyleSheet.create({
   separator: {
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
     paddingLeft: SeparatorInset,
   },

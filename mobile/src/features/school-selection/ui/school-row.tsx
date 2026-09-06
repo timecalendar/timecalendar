@@ -6,7 +6,7 @@ import { Platform, Pressable, StyleSheet } from "react-native"
 import { ThemedText } from "@/components/themed-text"
 import { useImportDraft } from "@/features/onboarding"
 import { type SchoolListItem } from "@/features/school-selection/data"
-import { Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 import { SchoolLogo } from "./school-logo"
 
@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
   row: {
     minHeight: 56,
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",

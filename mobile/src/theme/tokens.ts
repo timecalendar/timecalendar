@@ -182,8 +182,3 @@ export const Radii = {
 } as const
 
 export const MaxContentWidth = 800
-
-export const ResponsiveContentWidth = {
-  readable: 640,
-  standard: MaxContentWidth,
-} as const

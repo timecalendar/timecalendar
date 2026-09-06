@@ -17,10 +17,9 @@ import PagerView, {
 } from "react-native-pager-view"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { Radii, ResponsiveContentWidth, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 const FADE_IN_MS = 300
 const INDICATOR_ANIMATION_MS = 150
@@ -56,7 +55,6 @@ const PAGE_COUNT = PAGES.length
 export default function WelcomeScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("standard")
   const { height: windowHeight } = useWindowDimensions()
   const pagerRef = useRef<PagerView>(null)
   const [currentPage, setCurrentPage] = useState(0)
@@ -154,17 +152,9 @@ export default function WelcomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} onLayout={responsive.onLayout}>
+      <SafeAreaView style={styles.safeArea}>
         <Animated.View style={[styles.content, { opacity }]}>
-          <View
-            style={[
-              styles.topBar,
-              {
-                maxWidth: responsive.layout.outerMaxWidth,
-                paddingHorizontal: responsive.layout.gutter,
-              },
-            ]}
-          >
+          <View style={styles.topBar}>
             {!isLastPage && (
               <Pressable
                 testID="onboarding-skip"
@@ -189,15 +179,7 @@ export default function WelcomeScreen() {
           >
             {PAGES.map((page) => (
               <View key={page.id} collapsable={false} style={styles.page}>
-                <View
-                  style={[
-                    styles.pageContent,
-                    {
-                      maxWidth: responsive.layout.outerMaxWidth,
-                      paddingHorizontal: responsive.layout.gutter,
-                    },
-                  ]}
-                >
+                <View style={styles.pageContent}>
                   <View
                     accessible={false}
                     importantForAccessibility="no-hide-descendants"
@@ -262,15 +244,7 @@ export default function WelcomeScreen() {
             ))}
           </View>
 
-          <View
-            style={[
-              styles.footer,
-              {
-                maxWidth: responsive.layout.outerMaxWidth,
-                paddingHorizontal: responsive.layout.gutter,
-              },
-            ]}
-          >
+          <View style={styles.footer}>
             {isLastPage ? (
               <Pressable
                 testID="onboarding-welcome-cta"
@@ -326,9 +300,11 @@ const styles = StyleSheet.create({
   topBar: {
     height: 60,
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
     alignItems: "flex-end",
     justifyContent: "center",
+    paddingHorizontal: Spacing.four,
   },
   textButton: {
     minHeight: CONTROL_MIN_HEIGHT,
@@ -346,7 +322,9 @@ const styles = StyleSheet.create({
   },
   pageContent: {
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
+    paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },
   illustrationCard: {
@@ -362,9 +340,6 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   copy: {
-    width: "100%",
-    maxWidth: ResponsiveContentWidth.readable,
-    alignSelf: "center",
     gap: Spacing.three,
   },
   centeredText: {
@@ -384,9 +359,11 @@ const styles = StyleSheet.create({
   footer: {
     minHeight: 64,
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
     justifyContent: "center",
     alignItems: "flex-end",
+    paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.four,
   },
   nextButton: {

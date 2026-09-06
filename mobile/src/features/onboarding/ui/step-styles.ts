@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native"
 
-import { Radii, Spacing } from "@/theme"
+import { MaxContentWidth, Radii, Spacing } from "@/theme"
 
 // The shared frame of the import-journey steps (TIM-391): institution name →
 // programme → Connect → manual import are one visual family — a centred
@@ -24,6 +24,8 @@ export const stepStyles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,

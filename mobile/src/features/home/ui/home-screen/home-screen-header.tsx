@@ -7,17 +7,11 @@ import { GlassSurface } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-export function HomeScreenHeader({
-  horizontalPadding = Spacing.four,
-  onAdd,
-}: {
-  horizontalPadding?: number
-  onAdd: () => void
-}) {
+export function HomeScreenHeader({ onAdd }: { onAdd: () => void }) {
   const { t } = useTranslation()
   const theme = useTheme()
   return (
-    <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+    <View style={styles.header}>
       <View style={styles.brandLockup}>
         <Image
           source={require("@/assets/brand/logo.png")}
@@ -73,6 +67,7 @@ export function HomeAddFab({ onPress }: { onPress: () => void }) {
 const styles = StyleSheet.create({
   header: {
     minHeight: 56,
+    paddingHorizontal: Spacing.four,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

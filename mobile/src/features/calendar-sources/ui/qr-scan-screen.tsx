@@ -4,12 +4,11 @@ import {
   useCameraPermissions,
 } from "expo-camera"
 import { router } from "expo-router"
-import { type ReactNode, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Linking, Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -20,7 +19,7 @@ import {
 } from "@/features/calendar-sources/data"
 import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { Radii, ResponsiveContentWidth, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 import { leaveImportJourney } from "./leave-import-journey"
 
@@ -49,7 +48,6 @@ interface QrImportAttempt {
 export default function QrScanScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("readable")
   const [permission, requestPermission] = useCameraPermissions()
   const { addCalendarFromUrl } = useAddCalendar()
   // The import journey's institution/programme, derived from the draft. Total by
@@ -148,101 +146,92 @@ export default function QrScanScreen() {
     router.push("/onboarding/ical-url")
   }
 
-  const renderPermissionState = (content: ReactNode) => (
-    <ThemedView style={styles.container}>
-      <SafeAreaView
-        style={[
-          styles.safeArea,
-          {
-            maxWidth: responsive.layout.outerMaxWidth,
-            paddingHorizontal: responsive.layout.gutter,
-          },
-        ]}
-        onLayout={responsive.onLayout}
-      >
-        {content}
-      </SafeAreaView>
-    </ThemedView>
-  )
-
   // Permission not yet resolved by the hook on first render.
   if (permission === null) {
-    return renderPermissionState(
-      <ThemedText
-        themeColor="textSecondary"
-        accessibilityLiveRegion="polite"
-        accessibilityRole="text"
-      >
-        {t("calendarSources.qrScan.loading")}
-      </ThemedText>,
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="text"
+          >
+            {t("calendarSources.qrScan.loading")}
+          </ThemedText>
+        </SafeAreaView>
+      </ThemedView>
     )
   }
 
   // Denied and cannot ask again → point the user to system settings.
   if (!permission.granted && !permission.canAskAgain) {
-    return renderPermissionState(
-      <>
-        <ThemedText type="title">
-          {t("calendarSources.qrScan.title")}
-        </ThemedText>
-        <ThemedText
-          themeColor="textSecondary"
-          accessibilityLiveRegion="polite"
-          accessibilityRole="text"
-        >
-          {t("calendarSources.qrScan.settings")}
-        </ThemedText>
-        <Pressable
-          testID="qr-scan-open-settings"
-          accessibilityRole="button"
-          accessibilityLabel={t("calendarSources.qrScan.openSettingsLabel")}
-          hitSlop={Spacing.two}
-          onPress={() => void Linking.openSettings()}
-          style={[
-            styles.cta,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.primary,
-            },
-          ]}
-        >
-          <ThemedText type="smallBold">
-            {t("calendarSources.qrScan.openSettings")}
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ThemedText type="title">
+            {t("calendarSources.qrScan.title")}
           </ThemedText>
-        </Pressable>
-      </>,
+          <ThemedText
+            themeColor="textSecondary"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="text"
+          >
+            {t("calendarSources.qrScan.settings")}
+          </ThemedText>
+          <Pressable
+            testID="qr-scan-open-settings"
+            accessibilityRole="button"
+            accessibilityLabel={t("calendarSources.qrScan.openSettingsLabel")}
+            hitSlop={Spacing.two}
+            onPress={() => void Linking.openSettings()}
+            style={[
+              styles.cta,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.primary,
+              },
+            ]}
+          >
+            <ThemedText type="smallBold">
+              {t("calendarSources.qrScan.openSettings")}
+            </ThemedText>
+          </Pressable>
+        </SafeAreaView>
+      </ThemedView>
     )
   }
 
   // Undetermined (or askable) → explainer + grant button.
   if (!permission.granted) {
-    return renderPermissionState(
-      <>
-        <ThemedText type="title">
-          {t("calendarSources.qrScan.title")}
-        </ThemedText>
-        <ThemedText themeColor="textSecondary">
-          {t("calendarSources.qrScan.explainer")}
-        </ThemedText>
-        <Pressable
-          testID="qr-scan-grant"
-          accessibilityRole="button"
-          accessibilityLabel={t("calendarSources.qrScan.grantLabel")}
-          hitSlop={Spacing.two}
-          onPress={() => void requestPermission()}
-          style={[
-            styles.cta,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.primary,
-            },
-          ]}
-        >
-          <ThemedText type="smallBold">
-            {t("calendarSources.qrScan.grant")}
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <ThemedText type="title">
+            {t("calendarSources.qrScan.title")}
           </ThemedText>
-        </Pressable>
-      </>,
+          <ThemedText themeColor="textSecondary">
+            {t("calendarSources.qrScan.explainer")}
+          </ThemedText>
+          <Pressable
+            testID="qr-scan-grant"
+            accessibilityRole="button"
+            accessibilityLabel={t("calendarSources.qrScan.grantLabel")}
+            hitSlop={Spacing.two}
+            onPress={() => void requestPermission()}
+            style={[
+              styles.cta,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.primary,
+              },
+            ]}
+          >
+            <ThemedText type="smallBold">
+              {t("calendarSources.qrScan.grant")}
+            </ThemedText>
+          </Pressable>
+        </SafeAreaView>
+      </ThemedView>
     )
   }
 
@@ -259,13 +248,7 @@ export default function QrScanScreen() {
         barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
         onBarcodeScanned={handleBarcode}
       >
-        <SafeAreaView
-          style={[
-            styles.overlay,
-            { paddingHorizontal: responsive.layout.gutter },
-          ]}
-          onLayout={responsive.onLayout}
-        >
+        <SafeAreaView style={styles.overlay}>
           <View
             style={[styles.viewfinder, { borderColor: theme.primary }]}
             accessibilityElementsHidden
@@ -360,6 +343,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
@@ -372,6 +357,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
   },
   viewfinder: {
     width: 240,
@@ -380,8 +366,6 @@ const styles = StyleSheet.create({
     borderRadius: Radii.large,
   },
   recoveryActions: {
-    width: "100%",
-    maxWidth: ResponsiveContentWidth.readable,
     alignSelf: "stretch",
     gap: Spacing.three,
   },

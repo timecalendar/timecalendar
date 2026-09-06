@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -25,21 +24,10 @@ import { stepStyles } from "./step-styles"
 export default function ManualImportScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("readable")
 
   return (
     <ThemedView style={stepStyles.container}>
-      <SafeAreaView
-        testID="manual-import-responsive-lane"
-        onLayout={responsive.onLayout}
-        style={[
-          stepStyles.safeArea,
-          {
-            maxWidth: responsive.layout.outerMaxWidth,
-            paddingHorizontal: responsive.layout.gutter,
-          },
-        ]}
-      >
+      <SafeAreaView style={stepStyles.safeArea}>
         <View style={[stepStyles.intro, styles.intro]}>
           <ThemedText type="title">{t("onboarding.import.title")}</ThemedText>
           <ThemedText themeColor="textSecondary">

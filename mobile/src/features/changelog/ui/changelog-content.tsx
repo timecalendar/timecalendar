@@ -3,10 +3,9 @@ import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ResponsiveLane } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import type { ChangelogRelease } from "@/features/changelog/data"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 interface ChangelogContentProps {
   readonly releases: readonly ChangelogRelease[]
@@ -27,11 +26,7 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
         contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: theme.background }}
       >
-        <ResponsiveLane
-          lane="readable"
-          testID="changelog-responsive-lane"
-          contentStyle={styles.content}
-        >
+        <View style={styles.content}>
           {releases.map((release) => (
             <View
               key={release.version}
@@ -78,7 +73,7 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
             </View>
           ))}
           {footer}
-        </ResponsiveLane>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -88,10 +83,11 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
     alignItems: "center",
+    paddingHorizontal: Platform.OS === "ios" ? Spacing.three : Spacing.four,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
   },
-  content: { gap: Spacing.four },
+  content: { width: "100%", maxWidth: MaxContentWidth, gap: Spacing.four },
   release: { gap: Spacing.three },
   items: { gap: Spacing.two },
   item: {

@@ -12,11 +12,10 @@ import {
 } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
-import { Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 import { ListStatus } from "./list-status"
 import { RowSeparator } from "./row-separator"
@@ -56,7 +55,6 @@ function MissingSchoolAction() {
 export default function SchoolPickerScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("standard")
   const insets = useSafeAreaInsets()
   const { source } = useLocalSearchParams<{ source?: string }>()
   const fromCalendarManagement = source === "calendar-management"
@@ -136,13 +134,6 @@ export default function SchoolPickerScreen() {
         }}
       />
       <FlatList
-        testID="school-picker-responsive-lane"
-        onLayout={responsive.onLayout}
-        style={{
-          width: "100%",
-          maxWidth: responsive.layout.outerMaxWidth,
-          alignSelf: "center",
-        }}
         data={visible}
         keyExtractor={(school) => school.id}
         renderItem={({ item }) => <SchoolRow school={item} />}
@@ -155,7 +146,6 @@ export default function SchoolPickerScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.list,
-          { paddingHorizontal: responsive.layout.gutter },
           {
             paddingBottom:
               Spacing.three + (Platform.OS === "android" ? insets.bottom : 0),
@@ -256,6 +246,7 @@ const styles = StyleSheet.create({
   },
   listHeader: {
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
@@ -264,6 +255,7 @@ const styles = StyleSheet.create({
   },
   listFooter: {
     width: "100%",
+    maxWidth: MaxContentWidth,
     alignSelf: "center",
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,

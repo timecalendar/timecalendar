@@ -11,7 +11,6 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useResponsiveLayout } from "@/components/responsive-layout"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -27,7 +26,7 @@ import {
   resolveLocale,
 } from "@/features/calendar/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { Radii, Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
 
 import {
   type ActivityItem,
@@ -39,7 +38,6 @@ import { describeChangedItem, parseRange } from "./describe-change"
 export function ActivityScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
-  const responsive = useResponsiveLayout("standard")
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const { logs, loaded } = useActivityLogs()
@@ -100,12 +98,7 @@ export function ActivityScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("activity.title") }} />
-      <SafeAreaView
-        testID="activity-responsive-lane"
-        style={[styles.safeArea, { maxWidth: responsive.layout.outerMaxWidth }]}
-        edges={["bottom", "left", "right"]}
-        onLayout={responsive.onLayout}
-      >
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
         {!loaded ? (
           <View style={styles.centered} testID="activity-loading">
             <ActivityIndicator
@@ -134,10 +127,7 @@ export function ActivityScreen() {
                 onRetry={loadOlder}
               />
             }
-            contentContainerStyle={[
-              styles.content,
-              { paddingHorizontal: responsive.layout.gutter },
-            ]}
+            contentContainerStyle={styles.content}
             renderSectionHeader={({ section }) => (
               <ActivityGroupHeader
                 section={section}
@@ -399,9 +389,10 @@ function OlderFooter({
 
 const styles = StyleSheet.create({
   container: { flex: 1, flexDirection: "row", justifyContent: "center" },
-  safeArea: { flex: 1 },
+  safeArea: { flex: 1, maxWidth: MaxContentWidth },
   content: {
     flexGrow: 1,
+    paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.four,
     gap: Spacing.two,
   },

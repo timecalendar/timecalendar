@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ResponsiveLane } from "@/components/responsive-layout"
 import { formatUnreadBadge, useActivityState } from "@/features/activity"
 import {
   useUserCalendars,
@@ -13,7 +12,7 @@ import {
   getBackendEnvironmentCapability,
 } from "@/features/environment"
 import { deriveCalendarSummary } from "@/features/settings/data"
-import { Spacing, useTheme } from "@/theme"
+import { MaxContentWidth, Spacing, useTheme } from "@/theme"
 
 import { SettingsRow } from "./settings-row"
 import { SettingsSection } from "./settings-section"
@@ -146,11 +145,7 @@ export function SettingsScreen() {
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={styles.scrollContent}
       >
-        <ResponsiveLane
-          lane="standard"
-          testID="settings-responsive-lane"
-          contentStyle={styles.content}
-        >
+        <View style={styles.content}>
           {summary.state === "loading" ? (
             <View
               testID="settings-calendar-summary-loading"
@@ -238,7 +233,7 @@ export function SettingsScreen() {
               <EnvironmentSettingsControl />
             </SettingsSection>
           ) : null}
-        </ResponsiveLane>
+        </View>
       </ScrollView>
     </SafeAreaView>
   )
@@ -248,11 +243,13 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
     alignItems: "center",
+    paddingHorizontal: Platform.OS === "ios" ? Spacing.three : Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.six,
   },
   content: {
     width: "100%",
+    maxWidth: MaxContentWidth,
     gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
   },
   loading: {
