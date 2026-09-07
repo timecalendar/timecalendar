@@ -88,6 +88,15 @@ describe("TodayTimeline", () => {
       "accessibilityRole",
       "button",
     )
+    const timeline = screen.getByTestId("today-timeline")
+    const reflowedList = screen.getByTestId("today-timeline-list")
+    const geometry = screen.getByTestId("today-timeline-geometry")
+    expect(reflowedList.parent).toBe(timeline)
+    expect(screen.getByTestId("today-tile-area").parent).toBe(geometry)
+    expect(StyleSheet.flatten(geometry.props.style)).toMatchObject({
+      height: 0,
+      overflow: "hidden",
+    })
 
     // After the tile area reports a real width, the single full-width event fills it.
     await reportTileAreaWidth(400)
