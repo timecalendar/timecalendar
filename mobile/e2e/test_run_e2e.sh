@@ -14,6 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HARNESS="$SCRIPT_DIR/run_e2e.sh"
 CLASSIFIER="$SCRIPT_DIR/classify-maestro-attempt.mjs"
+SOURCE_MAESTRO_DIR="${SOURCE_MAESTRO_DIR:-$SCRIPT_DIR/../.maestro}"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/timecalendar-e2e-harness.XXXXXX")"
 trap 'rm -rf "$TEST_ROOT"' EXIT
 
@@ -29,12 +30,28 @@ assert_count() {
     fail "expected $expected occurrence(s) of '$pattern' in $file, got $actual"
 }
 
+assert_smoke_inventory() {
+  local directory="$1" actual expected
+  expected="01-fresh-user-import.yaml
+02-personal-event.yaml
+03-calendar-visibility.yaml"
+  actual="$(find "$directory" -mindepth 1 -maxdepth 1 -type f -name '*.yaml' -exec basename {} \; | LC_ALL=C sort)"
+  [ "$actual" = "$expected" ] || fail "unexpected top-level smoke inventory:\n$actual"
+  find "$directory" -mindepth 2 -type f -name '*.yaml' | grep -q . || \
+    fail "expected at least one nested helper YAML"
+}
+
+assert_smoke_inventory "$SOURCE_MAESTRO_DIR"
+
 make_fixture() {
   local scenario="$1"
   local fixture="$TEST_ROOT/$scenario"
   mkdir -p "$fixture/bin" "$fixture/flows" "$fixture/logs" "$fixture/state" "$fixture/debug"
+  mkdir -p "$fixture/flows/helpers"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/alpha.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/beta.yaml"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/gamma.yaml"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/helpers/setup.yaml"
 
   cat > "$fixture/server" <<'SH'
 #!/usr/bin/env bash
@@ -437,6 +454,8 @@ assert_retried_then_passed() {
   local fixture="$1" what="$2"
   assert_count 2 '^alpha:' "$fixture/calls"
   assert_count 1 '^beta:' "$fixture/calls"
+  assert_count 1 '^gamma:' "$fixture/calls"
+  assert_count 0 '^setup:' "$fixture/calls"
   assert_count 1 '^up$' "$fixture/calls"
   assert_count 1 '^down$' "$fixture/calls"
   grep -q 'retryable startup failure' "$fixture/output" || \
@@ -448,6 +467,8 @@ assert_terminal() {
   local fixture="$1" what="$2"
   assert_count 1 '^alpha:' "$fixture/calls"
   assert_count 0 '^beta:' "$fixture/calls"
+  assert_count 0 '^gamma:' "$fixture/calls"
+  assert_count 0 '^setup:' "$fixture/calls"
   grep -q 'terminal non-startup failure' "$fixture/output" || \
     fail "$what was not classified as terminal"
 }
@@ -475,8 +496,22 @@ fixture="$(make_fixture pass)"
 run_fixture "$fixture" pass 0
 [ "$(sed -n '2p' "$fixture/calls")" = 'alpha:1' ] || fail 'flows were not lexically ordered'
 [ "$(sed -n '3p' "$fixture/calls")" = 'beta:1' ] || fail 'all top-level flows were not enumerated'
+[ "$(sed -n '4p' "$fixture/calls")" = 'gamma:1' ] || fail 'the third top-level flow was not enumerated'
+assert_count 0 '^setup:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+
+# --keep-up preserves the same three-flow discovery while suppressing teardown.
+fixture="$(make_fixture keep_up)"
+run_fixture "$fixture" pass 0 --keep-up
+assert_count 1 '^alpha:' "$fixture/calls"
+assert_count 1 '^beta:' "$fixture/calls"
+assert_count 1 '^gamma:' "$fixture/calls"
+assert_count 0 '^setup:' "$fixture/calls"
+assert_count 1 '^up$' "$fixture/calls"
+assert_count 0 '^down$' "$fixture/calls"
+grep -Fq -- '--keep-up set: leaving the server stack up.' "$fixture/output" || \
+  fail '--keep-up did not report the preserved server lifecycle'
 
 # --- Retryable: the attempt evaluated no assertion and died in startup --------
 retryable_case session_never_opened_flow 'a session that never opened the flow'
@@ -524,6 +559,7 @@ fixture="$(make_fixture deterministic_launch_failure)"
 run_fixture "$fixture" deterministic_launch_failure 45 --startup-attempts 4
 assert_count 4 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
+assert_count 0 '^gamma:' "$fixture/calls"
 grep -q 'retryable startup failure exhausted 4 attempt(s)' "$fixture/output" || \
   fail 'a deterministic launch failure did not exhaust the per-flow budget'
 assert_count 1 '^logs$' "$fixture/calls"
@@ -565,6 +601,7 @@ fixture="$(make_fixture retry_then_assertion_failure)"
 run_fixture "$fixture" retry_then_assertion_failure 54 --startup-attempts 4
 assert_count 2 '^alpha:' "$fixture/calls"
 assert_count 0 '^beta:' "$fixture/calls"
+assert_count 0 '^gamma:' "$fixture/calls"
 grep -q 'terminal non-startup failure' "$fixture/output" || \
   fail 'a failing assertion on the retry attempt was not terminal'
 

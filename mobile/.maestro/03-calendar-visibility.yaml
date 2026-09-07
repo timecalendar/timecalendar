@@ -1,0 +1,73 @@
+# Seeded subscribed-calendar hide → restart → restore → restart journey.
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: helpers/import-seeded-calendar.yaml
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible: "E2E Hide Control(,.*)?"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: "E2E Hide Seminar(,.*)?"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- assertVisible: "E2E Hide Seminar(,.*)?"
+
+- stopApp
+- openLink: timecalendar-dev://user-calendars
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible:
+      id: "user-calendars-list"
+    timeout: 60000
+- tapOn:
+    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
+
+# Re-enter Agenda cold: the schedule is absent, but the list itself is present.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible:
+      id: "agenda-section-list"
+    timeout: 60000
+- assertNotVisible: "E2E Hide Seminar(,.*)?"
+
+# Restore the persisted calendar visibility through the same management switch.
+- stopApp
+- openLink: timecalendar-dev://user-calendars
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible:
+      id: "user-calendars-list"
+    timeout: 60000
+- tapOn:
+    id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible: "E2E Hide Control(,.*)?"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      text: "E2E Hide Seminar(,.*)?"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- assertVisible: "E2E Hide Seminar(,.*)?"

@@ -1,0 +1,10 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar-dev://dev-import?token=e2e-smoke-calendar
+- runFlow: confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000

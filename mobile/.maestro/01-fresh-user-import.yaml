@@ -1,0 +1,94 @@
+# Fresh student → listed school → programme → real URL import → synced details.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar-dev://onboarding
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Welcome to TimeCalendar!"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "onboarding-welcome-cta"
+- extendedWaitUntil:
+    visible: "My Gaming Academia"
+    timeout: 60000
+- tapOn: "My Gaming Academia"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-input"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-programme-input"
+- inputText: "E2E Programme"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-programme-input"
+      text: "E2E Programme"
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      id: "onboarding-programme-continue"
+    direction: DOWN
+    visibilityPercentage: 100
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: "onboarding-programme-continue"
+- tapOn:
+    id: "onboarding-programme-continue"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-connect-continue"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-connect-continue"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-import-url"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-import-url"
+- extendedWaitUntil:
+    visible:
+      id: "ical-url-input"
+    timeout: 60000
+- tapOn:
+    id: "ical-url-input"
+- inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"
+- tapOn:
+    id: "ical-url-submit"
+- extendedWaitUntil:
+    notVisible:
+      id: "ical-url-content"
+    timeout: 120000
+
+# Cold re-entry triggers the normal startup sync for the newly held calendar.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible:
+      id: "agenda-section-list"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "E2E Imported Lecture(,.*)?"
+    timeout: 60000
+- tapOn: "E2E Imported Lecture(,.*)?"
+- extendedWaitUntil:
+    visible: "E2E Imported Lecture(,.*)?"
+    timeout: 60000
+- assertVisible: "Room E2E Import"
+- assertVisible: "Server-backed import fixture."

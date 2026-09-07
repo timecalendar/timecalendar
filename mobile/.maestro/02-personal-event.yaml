@@ -1,0 +1,94 @@
+# Calendar-surface personal-event create → edit → restart → delete journey.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible:
+      id: "agenda-section-list"
+    timeout: 60000
+- tapOn:
+    id: "calendar-(add|fab)"
+- extendedWaitUntil:
+    visible:
+      id: "personal-event-title-input"
+    timeout: 60000
+- tapOn:
+    id: "personal-event-title-input"
+- inputText: "Maestro personal event"
+- tapOn:
+    id: "personal-event-save"
+- extendedWaitUntil:
+    visible: "Maestro personal event(,.*)?"
+    timeout: 60000
+- tapOn: "Maestro personal event(,.*)?"
+- extendedWaitUntil:
+    visible:
+      id: "event-details-content"
+    timeout: 60000
+- tapOn: "Edit this event"
+- scrollUntilVisible:
+    element:
+      id: "personal-event-description-input"
+    direction: DOWN
+    centerElement: true
+    timeout: 30000
+- tapOn:
+    id: "personal-event-description-input"
+- inputText: "Edited and persisted"
+- tapOn:
+    id: "personal-event-save"
+- extendedWaitUntil:
+    visible: "Edited and persisted"
+    timeout: 60000
+
+# Reopen from the rendered Agenda after a cold start to prove SQLite persistence.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible: "Maestro personal event(,.*)?"
+    timeout: 60000
+- tapOn: "Maestro personal event(,.*)?"
+- extendedWaitUntil:
+    visible: "Edited and persisted"
+    timeout: 60000
+- tapOn: "Edit this event"
+- extendedWaitUntil:
+    visible:
+      id: "personal-event-delete"
+    timeout: 60000
+- tapOn:
+    id: "personal-event-delete"
+- tapOn: "Delete"
+
+# A positive screen anchor makes the final negative assertion non-vacuous.
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: helpers/confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"
+- extendedWaitUntil:
+    visible:
+      id: "agenda-section-list"
+    timeout: 60000
+- assertNotVisible: "Maestro personal event(,.*)?"
