@@ -1,0 +1,11 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- stopApp
+- openLink: timecalendar-dev://calendar
+- runFlow: confirm-ios-deep-link.yaml
+- extendedWaitUntil:
+    visible: "Calendar"
+    timeout: 60000
+- tapOn:
+    id: "calendar-view"
+- tapOn: "Agenda"

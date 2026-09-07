@@ -3,15 +3,7 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
-- stopApp
-- openLink: timecalendar-dev://calendar
-- runFlow: helpers/confirm-ios-deep-link.yaml
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-- tapOn:
-    id: "calendar-view"
-- tapOn: "Agenda"
+- runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible:
       id: "agenda-section-list"
@@ -52,15 +44,7 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 
 # Reopen from the rendered Agenda after a cold start to prove SQLite persistence.
-- stopApp
-- openLink: timecalendar-dev://calendar
-- runFlow: helpers/confirm-ios-deep-link.yaml
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-- tapOn:
-    id: "calendar-view"
-- tapOn: "Agenda"
+- runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible: "Maestro personal event(,.*)?"
     timeout: 60000
@@ -78,15 +62,7 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn: "Delete"
 
 # A positive screen anchor makes the final negative assertion non-vacuous.
-- stopApp
-- openLink: timecalendar-dev://calendar
-- runFlow: helpers/confirm-ios-deep-link.yaml
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-- tapOn:
-    id: "calendar-view"
-- tapOn: "Agenda"
+- runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible:
       id: "agenda-section-list"

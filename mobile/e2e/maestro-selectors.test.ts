@@ -165,6 +165,7 @@ const flows = flowFiles.map((file) => ({
 }))
 const flow = (name: string) =>
   flows.find((candidate) => candidate.name === name)?.yaml ?? ""
+const OPEN_AGENDA_FLOW = "- runFlow: helpers/open-calendar-agenda.yaml"
 
 const seededTitles = [
   ...new Set(
@@ -271,8 +272,21 @@ describe("Maestro selector integrity", () => {
 })
 
 describe("Maestro journey contracts", () => {
+  it("keeps cold Calendar-to-Agenda entry in one shared helper", () => {
+    expect(
+      containsOrdered(flow("helpers/open-calendar-agenda.yaml"), [
+        "- stopApp\n- openLink: timecalendar-dev://calendar",
+        "- runFlow: confirm-ios-deep-link.yaml",
+        'visible: "Calendar"',
+        'id: "calendar-view"',
+        '- tapOn: "Agenda"',
+      ]),
+    ).toBe(true)
+  })
+
   it("keeps the real listed-school import path and synced detail proof", () => {
     const yaml = flow("01-fresh-user-import.yaml")
+    expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(2)
     expect(
       containsOrdered(yaml, [
         "clearState: true",
@@ -283,7 +297,7 @@ describe("Maestro journey contracts", () => {
         'id: "onboarding-import-url"',
         '- inputText: "http://127.0.0.1:3005/__e2e/ical/import.ics"',
         'id: "ical-url-submit"',
-        "- stopApp\n- openLink: timecalendar-dev://calendar",
+        OPEN_AGENDA_FLOW,
         'id: "agenda-section-list"',
         "- swipe:\n    start: 50%, 35%\n    end: 50%, 80%\n    duration: 800",
         'visible: "E2E Imported Lecture(,.*)?"',
@@ -295,6 +309,7 @@ describe("Maestro journey contracts", () => {
 
   it("creates, edits, cold-reopens, and deletes through Calendar", () => {
     const yaml = flow("02-personal-event.yaml")
+    expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(4)
     expect(
       containsOrdered(yaml, [
         'id: "calendar-(add|fab)"',
@@ -302,7 +317,7 @@ describe("Maestro journey contracts", () => {
         '- tapOn: "Maestro personal event(,.*)?"',
         '- tapOn: "Edit this event"',
         '- inputText: "Edited and persisted"',
-        "- stopApp\n- openLink: timecalendar-dev://calendar",
+        OPEN_AGENDA_FLOW,
         '- tapOn: "Maestro personal event(,.*)?"',
         'visible: "Edited and persisted"',
         'id: "personal-event-delete"',
@@ -320,16 +335,17 @@ describe("Maestro journey contracts", () => {
     const toggle =
       'id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"'
     expect(yaml.split(toggle)).toHaveLength(3)
+    expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(3)
     expect(
       containsOrdered(yaml, [
         'visible: "E2E Hide Control(,.*)?"',
         '- assertVisible: "E2E Hide Seminar(,.*)?"',
         toggle,
-        "- stopApp\n- openLink: timecalendar-dev://calendar",
+        OPEN_AGENDA_FLOW,
         'id: "agenda-section-list"',
         '- assertNotVisible: "E2E Hide Seminar(,.*)?"',
         toggle,
-        "- stopApp\n- openLink: timecalendar-dev://calendar",
+        OPEN_AGENDA_FLOW,
         'visible: "E2E Hide Control(,.*)?"',
         '- assertVisible: "E2E Hide Seminar(,.*)?"',
       ]),

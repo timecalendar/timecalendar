@@ -27,15 +27,7 @@ appId: fr.samuelprak.timecalendar.dev
     id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
 
 # Re-enter Agenda cold: the schedule is absent, but the list itself is present.
-- stopApp
-- openLink: timecalendar-dev://calendar
-- runFlow: helpers/confirm-ios-deep-link.yaml
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-- tapOn:
-    id: "calendar-view"
-- tapOn: "Agenda"
+- runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible:
       id: "agenda-section-list"
@@ -52,15 +44,7 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 - tapOn:
     id: "user-calendar-visibility-e2e0e2e0-0000-4000-8000-000000000001"
-- stopApp
-- openLink: timecalendar-dev://calendar
-- runFlow: helpers/confirm-ios-deep-link.yaml
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-- tapOn:
-    id: "calendar-view"
-- tapOn: "Agenda"
+- runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible: "E2E Hide Control(,.*)?"
     timeout: 60000

@@ -70,15 +70,7 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 120000
 
 # Cold re-entry triggers the normal startup sync for the newly held calendar.
-- stopApp
-- openLink: timecalendar-dev://calendar
-- runFlow: helpers/confirm-ios-deep-link.yaml
-- extendedWaitUntil:
-    visible: "Calendar"
-    timeout: 60000
-- tapOn:
-    id: "calendar-view"
-- tapOn: "Agenda"
+- runFlow: helpers/open-calendar-agenda.yaml
 - extendedWaitUntil:
     visible:
       id: "agenda-section-list"
