@@ -44,8 +44,8 @@
 - [x] 7.1 Run every focused test named above plus the React Doctor config/contract test, and record exact passing commands and results for each changed behavior.
 - [x] 7.2 From `mobile/`, run `npx tsc --noEmit` and `npm run lint`; resolve all errors and warnings without weakening existing architecture, translation, accessibility, testID, or import-boundary rules.
 - [x] 7.3 Run the full mobile Jest suite with coverage and an external bounded watchdog, confirm all tests pass, and explicitly record that Jest exits naturally without forced termination or open-handle workarounds.
-- [ ] 7.4 Run the full advisory and changed-code React Doctor commands, confirm the full totals match the normalized report, the changed-code command is green, every warning is owned/classified, and no error is untriaged.
-- [ ] 7.5 Run `openspec validate make-mobile-react-doctor-actionable` and `git diff --check`; inspect the complete diff for debug/TODO artifacts, raw absolute tool output, disclosure, generated-client/OpenAPI drift, migrations, native/store config, secrets, deploy config beyond the declared workflow, legacy Flutter, and unrelated changes.
+- [x] 7.4 Run the full advisory and changed-code React Doctor commands, confirm the full totals match the normalized report, the changed-code command is green, every warning is owned/classified, and no error is untriaged.
+- [x] 7.5 Run `openspec validate make-mobile-react-doctor-actionable` and `git diff --check`; inspect the complete diff for debug/TODO artifacts, raw absolute tool output, disclosure, generated-client/OpenAPI drift, migrations, native/store config, secrets, deploy config beyond the declared workflow, legacy Flutter, and unrelated changes.
 
 ## 8. CI proof and handoff evidence
 
