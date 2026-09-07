@@ -11,8 +11,7 @@ import { Radii, Spacing } from "@/theme"
 // back in a single sitting, so a padding that drifts on one of them reads as a
 // layout bug rather than as a variation.
 //
-// Screen-specific deltas compose on top (`[stepStyles.intro, styles.intro]`);
-// only the parts that are identical across the steps live here. A control whose
+// Only the parts that are identical across the steps live here. A control whose
 // shape is genuinely local — Connect's Back/Continue footer pair, the
 // manual-import QR/link pair — keeps its own style next to its sibling, where
 // the primary/secondary distinction is the thing worth reading.
@@ -28,9 +27,6 @@ export const stepStyles = StyleSheet.create({
   formContent: {
     flexGrow: 1,
     justifyContent: "center",
-    gap: Spacing.three,
-  },
-  intro: {
     gap: Spacing.three,
   },
   // The free-text name field shared by the two name steps. Their VALIDATION
