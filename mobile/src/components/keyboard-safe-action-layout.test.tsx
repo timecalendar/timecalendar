@@ -37,6 +37,7 @@ describe.each([
     ).toMatchObject({
       paddingTop: 10,
     })
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({ flex: 1 })
     expect(view.getByTestId("form-actions")).toContainElement(
       view.getByTestId("action"),
     )

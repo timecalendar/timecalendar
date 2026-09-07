@@ -48,6 +48,7 @@ export function KeyboardSafeActionLayout({
           contentTestID ??
           (testID === undefined ? undefined : `${testID}-content`)
         }
+        style={styles.scroller}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[layout.laneStyle, contentContainerStyle]}
       >
@@ -68,4 +69,5 @@ export function KeyboardSafeActionLayout({
 
 const styles = StyleSheet.create({
   owner: { flex: 1 },
+  scroller: { flex: 1 },
 })
