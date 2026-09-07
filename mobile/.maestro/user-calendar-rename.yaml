@@ -33,7 +33,8 @@
 #    openLink carries `timeout: 60000` (release-config cold start).
 #
 # Requires the release-config dev-variant build + the e2e server. Shared across
-# iOS and Android. NOT labelled run-e2e — native E2E runs on main.
+# iOS and Android. Native health runs on the next relevant daily attempt or a
+# deliberate explicit-ref manual dispatch; no feature label is required.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - runFlow: rename-seed.yaml

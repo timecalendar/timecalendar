@@ -18,8 +18,9 @@
 # Requires a release-config dev-variant build installed on the connected device
 # (no server needed — this screen reads only device-local data). Shared across iOS
 # and Android: stable localized text assertions, no per-platform selectors. Run via
-# mobile/e2e/run_e2e.sh. Mirrors settings.yaml. NOT labelled run-e2e (E2E runs on
-# main only).
+# mobile/e2e/run_e2e.sh. Mirrors settings.yaml. Native health runs on the next
+# relevant daily attempt or a deliberate explicit-ref manual dispatch; no feature
+# label is required.
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
