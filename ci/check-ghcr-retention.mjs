@@ -85,9 +85,24 @@ export function validateRetentionWorkflow(source) {
     if (!condition) errors.push(message);
   };
 
-  require(lines.some(({ line }) => /^\s*-\s+cron:\s*['"]0 0 \* \* \*['"]\s*$/.test(line)), "daily midnight schedule is missing");
-  require(lines.some(({ line }) => /^\s+workflow_dispatch:\s*$/.test(line)), "workflow_dispatch is missing");
-  require(lines.some(({ line }) => /^\s+cut-off:\s*$/.test(line)), "cut-off input is missing");
+  const triggers = findBlock(lines, "on");
+  const schedule = triggers &&
+    findBlock(lines, "schedule", triggers.indent, triggers.start + 1, triggers.end);
+  const hasDailySchedule = schedule &&
+    lines.slice(schedule.start + 1, schedule.end).some(({ line }) =>
+      indentation(line) === schedule.indent + 2 &&
+      /^\s*-\s+cron:\s*['"]0 0 \* \* \*['"]\s*$/.test(line),
+    );
+  require(hasDailySchedule, "daily midnight schedule is missing from on.schedule");
+
+  const workflowDispatch = triggers &&
+    findBlock(lines, "workflow_dispatch", triggers.indent, triggers.start + 1, triggers.end);
+  require(workflowDispatch, "workflow_dispatch is missing from on");
+  const dispatchInputs = workflowDispatch &&
+    findBlock(lines, "inputs", workflowDispatch.indent, workflowDispatch.start + 1, workflowDispatch.end);
+  const cutOffInput = dispatchInputs &&
+    findBlock(lines, "cut-off", dispatchInputs.indent, dispatchInputs.start + 1, dispatchInputs.end);
+  require(cutOffInput, "cut-off input is missing from on.workflow_dispatch.inputs");
 
   const jobs = findBlock(lines, "jobs");
   const job = jobs && findBlock(lines, "clean-ghcr", jobs.indent, jobs.start + 1, jobs.end);

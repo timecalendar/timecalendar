@@ -36,3 +36,37 @@ test("extra retention invocations are rejected", () => {
   const errors = validateRetentionWorkflow(`${workflow}\n${extraStep}`);
   assert(errors.some((error) => error.includes("expected exactly 2")));
 });
+
+test("the cron cannot be relocated outside on.schedule", () => {
+  const validWorkflow = readFileSync(workflowPath, "utf8");
+  const workflow = validWorkflow
+    .replace("  schedule:\n    - cron: '0 0 * * *'\n", "  schedule:\n")
+    .concat("\nmisplaced-schedule:\n  - cron: '0 0 * * *'\n");
+  assert.notEqual(workflow, validWorkflow);
+
+  const errors = validateRetentionWorkflow(workflow);
+  assert(errors.some((error) => error.includes("on.schedule")));
+});
+
+test("the cut-off input cannot be relocated into the cleanup job environment", () => {
+  const validWorkflow = readFileSync(workflowPath, "utf8");
+  const cutOffBlock =
+    "      cut-off:\n" +
+    "        description: The timezone-aware datetime you want to delete container versions that are older than.\n" +
+    "        required: false\n" +
+    "        type: string\n";
+  const misplacedCutOffBlock = cutOffBlock.replace(/^ {6}/gm, "      ");
+  const workflow = validWorkflow
+    .replace(
+      cutOffBlock,
+      "",
+    )
+    .replace(
+      "    runs-on: ubuntu-latest\n",
+      `    runs-on: ubuntu-latest\n    env:\n${misplacedCutOffBlock}`,
+    );
+  assert.notEqual(workflow, validWorkflow);
+
+  const errors = validateRetentionWorkflow(workflow);
+  assert(errors.some((error) => error.includes("on.workflow_dispatch.inputs")));
+});
