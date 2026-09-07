@@ -89,3 +89,16 @@ The Android iCal journey SHALL dismiss the optional AOSP keyboard contacts dialo
 - **WHEN** a cold iOS build and the complete shared Maestro suite require more than 75 minutes
 - **THEN** the native health job remains active for up to 120 minutes
 - **AND** a workflow-contract regression fails if that budget is reduced
+
+#### Scenario: The Android programme action is obscured by the focused keyboard
+
+- **WHEN** the exact programme value and the Continue accessibility element are visible
+- **THEN** the flow activates the field's native Return action instead of tapping an obscured coordinate
+- **AND** the journey reaches the connection step through the production submit handler
+
+#### Scenario: SwiftUI omits requested rename resource identifiers
+
+- **WHEN** the iOS hierarchy exposes the rename field and Save action only by their unique semantic labels
+- **THEN** the flow interacts through those labels
+- **AND** Android continues to use the Compose resource IDs
+- **AND** both platforms exact-gate the entered value before saving

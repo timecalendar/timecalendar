@@ -34,6 +34,10 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   3 primitive selection, current-buffer submission, retained draft, outside/Back policy, and
   keyboard/focus layout ownership. They do not claim rendered keyboard, rotation, Dynamic Type, or
   screen-reader behavior; those remain the linked device-evidence pass under ADR 056.
+  Maestro selectors follow the hierarchy each toolkit actually publishes: Compose controls use
+  their resource IDs, while SwiftUI text-entry controls use unique semantic labels when XCUITest
+  omits a requested identifier. Cross-platform flows rejoin at exact value and outcome assertions,
+  and focused selector-mutation tests lock the platform branch.
 
 ## E2E — Maestro, real round-trip
 

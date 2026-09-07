@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useRef, useState } from "react"
+import { type ReactNode, useRef, useState } from "react"
 import {
   KeyboardAvoidingView,
   type LayoutChangeEvent,
@@ -38,17 +38,14 @@ export function KeyboardSafeActionLayout({
   const { laneStyle, onLayout } = useAdaptiveLayout(lane)
   const ownerRef = useRef<View>(null)
   const [keyboardVerticalOffset, setKeyboardVerticalOffset] = useState(0)
-  const handleLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      onLayout(event)
-      ownerRef.current?.measureInWindow((_x, y) => {
-        if (Number.isFinite(y) && y >= 0) {
-          setKeyboardVerticalOffset(y)
-        }
-      })
-    },
-    [onLayout],
-  )
+  const handleLayout = (event: LayoutChangeEvent) => {
+    onLayout(event)
+    ownerRef.current?.measureInWindow((_x, y) => {
+      if (Number.isFinite(y) && y >= 0) {
+        setKeyboardVerticalOffset(y)
+      }
+    })
+  }
 
   return (
     <View

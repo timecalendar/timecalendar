@@ -60,6 +60,18 @@ The clean AOSP emulator does not present its keyboard contacts dialog immediatel
 
 The exact-head iOS job completed its cold build and executed shared flows for more than 42 minutes before the existing 75-minute job ceiling cancelled it without a failing Maestro command. The health job receives a 120-minute ceiling, with a workflow-contract assertion locking that budget. This changes only the diagnostic CI controller; it does not change native configuration, dependencies, application behavior, or the manual/scheduled health-signal policy.
 
+### D10 — Submit the programme step through its native keyboard action
+
+The programme field already routes `onSubmitEditing` through the same validated submission as the visible Continue action. Both native platforms use Return after the exact field-value and CTA visibility gates. This avoids coordinates that Android can report as visible while the focused keyboard still partly obscures them, without adding a test-only route or changing app behavior.
+
+### D11 — Follow each native toolkit's observable rename selector
+
+Compose continues to expose the rename input and Save action through resource IDs. The SwiftUI hierarchy exposes the same controls through the localized semantic labels supplied by the app but does not publish the requested identifiers. The shared flow therefore branches only at native interaction: iOS uses the unique `Calendar name` and `Save` labels, Android retains IDs, and both rejoin at the exact entered-value and server-convergence assertions.
+
+### D12 — Let the React compiler own the layout callback
+
+The keyboard-safe layout's handler has no identity-sensitive consumer. It remains a plain local callback while preserving the same measured window offset, allowing the compiler-managed code gate to remain warning-free without a suppression.
+
 ## Verification
 
 - Focused Activity selector Jest suite, including the red-before-green route-oracle regression.
