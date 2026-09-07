@@ -4,7 +4,7 @@ import { SharedQueueModule } from "@lyrolab/nest-shared/queue"
 import { Module } from "@nestjs/common"
 import { BullMQOtel } from "bullmq-otel"
 import { COMMON_IMPORTS } from "common-imports"
-import { QUEUE_CONCURRENCY } from "config/constants"
+import { QUEUE_CONCURRENCY, NODE_ENV } from "config/constants"
 import { QUEUE_DEFINITIONS } from "config/queues"
 import { dataSourceOptions } from "data-source"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
@@ -23,6 +23,12 @@ import { NotificationSubscriptionModule } from "modules/notification-subscriptio
 import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 import { ObservabilityLifecycleService } from "config/observability/observability-lifecycle.service"
 import { LivenessController } from "health/liveness.controller"
+import { E2eIcalFixtureController } from "e2e/e2e-ical-fixture.controller"
+
+export const e2eFixtureControllers = (
+  environment: string = NODE_ENV,
+): (typeof E2eIcalFixtureController)[] =>
+  environment === "test" ? [E2eIcalFixtureController] : []
 
 @Module({
   imports: [
@@ -59,7 +65,7 @@ import { LivenessController } from "health/liveness.controller"
     NotificationSubscriptionModule,
     FeatureFlagModule,
   ],
-  controllers: [LivenessController],
+  controllers: [LivenessController, ...e2eFixtureControllers()],
   providers: [ObservabilityLifecycleService],
   exports: [],
 })

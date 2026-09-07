@@ -1,7 +1,7 @@
 ## 1. Deterministic import fixture
 
-- [ ] 1.1 Add a test/E2E-environment-only NestJS iCalendar fixture endpoint whose events use a date-safe, date-neutral seeded title; add focused server tests proving the payload parses and the route is absent outside the harness environment.
-- [ ] 1.2 Exercise the existing calendar-create/sync path against the fixture in the cheapest server integration seam and verify the fixture needs no outbound university dependency or API-contract/generated-client change.
+- [x] 1.1 Add a test/E2E-environment-only NestJS iCalendar fixture endpoint whose events use a date-safe, date-neutral seeded title; add focused server tests proving the payload parses and the route is absent outside the harness environment.
+- [x] 1.2 Exercise the existing calendar-create/sync path against the fixture in the cheapest server integration seam and verify the fixture needs no outbound university dependency or API-contract/generated-client change.
 
 ## 2. Three retained Maestro journeys
 
