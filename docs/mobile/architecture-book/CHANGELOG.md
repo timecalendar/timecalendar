@@ -5,6 +5,10 @@
 - Added the reproducible mobile React Doctor contract: an exact lockfile pin, advisory full scan,
   warning-blocking changed-code CI gate against `origin/main`, normalized owned diagnostic report,
   and standalone mobile dependency boundary (ADR 053).
+- Recorded responsive presentation ownership for onboarding, school selection, and calendar
+  sources: readable forms and welcome regions, standard collections, full-bleed QR camera with
+  bounded guidance, and readable rename content inside its existing modal. Compact welcome content
+  has one shared gutter; flow, source, permission, and navigation behavior remain unchanged.
 
 ## 2026-09-06
 

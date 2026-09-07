@@ -2,8 +2,9 @@ import { Image } from "expo-image"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
-import { MaxContentWidth, Radii, Spacing } from "@/theme"
+import { Radii, Spacing } from "@/theme"
 
 import { type WelcomePageDescriptor } from "./welcome-page-catalog"
 
@@ -22,7 +23,11 @@ export function WelcomePage({
 
   return (
     <View collapsable={false} style={styles.page}>
-      <View style={styles.pageContent}>
+      <AdaptiveContent
+        testID={`onboarding-page-content-${page.id}`}
+        lane="readable"
+        contentContainerStyle={styles.pageContent}
+      >
         <View
           accessible={false}
           importantForAccessibility="no-hide-descendants"
@@ -50,7 +55,7 @@ export function WelcomePage({
             {t(page.bodyKey)}
           </ThemedText>
         </View>
-      </View>
+      </AdaptiveContent>
     </View>
   )
 }
@@ -62,10 +67,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pageContent: {
-    width: "100%",
-    maxWidth: MaxContentWidth,
-    alignSelf: "center",
-    paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },
   illustrationCard: {

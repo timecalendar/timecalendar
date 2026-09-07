@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -11,7 +12,7 @@ import {
   useSchoolGroups,
 } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The onboarding group step (C1 / TIM-134; multi-select GROW — Phase-3 ship 2,
 // ADR 016) — PRESENTATIONAL (70% floor): reads the schoolId route param, renders
@@ -55,68 +56,75 @@ export default function SchoolGroupPickerScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">{t("onboarding.group.title")}</ThemedText>
-
-        {isLoading && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("onboarding.group.loading")}
-          </ThemedText>
-        )}
-
-        {isError && <ErrorRetry onRetry={refetch} />}
-
-        {!isLoading && !isError && groups.length === 0 && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("onboarding.group.empty")}
-          </ThemedText>
-        )}
-
-        <ScrollView contentContainerStyle={styles.list}>
-          {groups.map((node) => (
-            <GroupNode
-              key={node.value}
-              node={node}
-              selected={selected}
-              onToggleLeaf={onToggleLeaf}
-            />
-          ))}
-        </ScrollView>
-
-        {showGuard && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
-          >
-            {t("onboarding.group.empty.selectionGuard")}
-          </ThemedText>
-        )}
-
-        <Pressable
-          testID="onboarding-group-confirm"
-          accessibilityRole="button"
-          accessibilityLabel={t("onboarding.group.confirmLabel")}
-          hitSlop={Spacing.two}
-          onPress={onConfirm}
-          style={[
-            styles.confirm,
-            { backgroundColor: theme.backgroundSelected },
-          ]}
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.fill}>
+        <AdaptiveContent
+          testID="onboarding-group-content"
+          lane="standard"
+          style={styles.fill}
+          contentContainerStyle={styles.safeArea}
         >
-          <ThemedText type="smallBold">
-            {t("onboarding.group.confirm")}
-          </ThemedText>
-        </Pressable>
+          <ThemedText type="title">{t("onboarding.group.title")}</ThemedText>
+
+          {isLoading && (
+            <ThemedText
+              themeColor="textSecondary"
+              accessibilityLiveRegion="polite"
+              accessibilityRole="text"
+            >
+              {t("onboarding.group.loading")}
+            </ThemedText>
+          )}
+
+          {isError && <ErrorRetry onRetry={refetch} />}
+
+          {!isLoading && !isError && groups.length === 0 && (
+            <ThemedText
+              themeColor="textSecondary"
+              accessibilityLiveRegion="polite"
+              accessibilityRole="text"
+            >
+              {t("onboarding.group.empty")}
+            </ThemedText>
+          )}
+
+          <ScrollView contentContainerStyle={styles.list}>
+            {groups.map((node) => (
+              <GroupNode
+                key={node.value}
+                node={node}
+                selected={selected}
+                onToggleLeaf={onToggleLeaf}
+              />
+            ))}
+          </ScrollView>
+
+          {showGuard && (
+            <ThemedText
+              themeColor="textSecondary"
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert"
+            >
+              {t("onboarding.group.empty.selectionGuard")}
+            </ThemedText>
+          )}
+
+          <Pressable
+            testID="onboarding-group-confirm"
+            accessibilityRole="button"
+            accessibilityLabel={t("onboarding.group.confirmLabel")}
+            hitSlop={Spacing.two}
+            onPress={onConfirm}
+            style={[
+              styles.confirm,
+              { backgroundColor: theme.backgroundSelected },
+            ]}
+          >
+            <ThemedText type="smallBold">
+              {t("onboarding.group.confirm")}
+            </ThemedText>
+          </Pressable>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )
@@ -218,15 +226,11 @@ function GroupNode({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  fill: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     gap: Spacing.three,
   },

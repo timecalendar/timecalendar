@@ -1,6 +1,6 @@
 import { StyleSheet } from "react-native"
 
-import { MaxContentWidth, Radii, Spacing } from "@/theme"
+import { Radii, Spacing } from "@/theme"
 
 // The shared frame of the import-journey steps (TIM-391): institution name →
 // programme → Connect → manual import are one visual family — a centred
@@ -17,21 +17,14 @@ import { MaxContentWidth, Radii, Spacing } from "@/theme"
 // manual-import QR/link pair — keeps its own style next to its sibling, where
 // the primary/secondary distinction is the thing worth reading.
 export const stepStyles = StyleSheet.create({
-  container: {
+  fill: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
-  },
-  keyboardAvoiding: {
-    flex: 1,
   },
   formContent: {
     flexGrow: 1,

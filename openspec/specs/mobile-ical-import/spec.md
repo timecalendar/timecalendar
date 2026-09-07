@@ -221,3 +221,13 @@ feature SHALL read storage or database tables directly for this handoff.
 - **THEN** the iCal screen imports the import draft through the onboarding feature's public seam and Feedback imports held calendars through the public calendar-sources barrel
 - **AND** no direct `user_calendars`, MMKV, generated school hook, or private sibling-module import is added
 
+### Requirement: iCal URL import uses a measured readable lane
+The iCal URL import screen SHALL center its form and all async states in the shared measured readable
+lane while preserving validation, submission, reporting, retry, keyboard, and navigation behavior.
+
+#### Scenario: Import form is readable on a tablet
+- **WHEN** the iCal URL screen is measured at tablet width
+- **THEN** its introduction, field, actions, pending state, error state, and recovery controls share
+  the readable lane
+- **AND** URL validation and generated-client submission behavior remain unchanged
+

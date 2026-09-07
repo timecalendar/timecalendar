@@ -45,8 +45,8 @@ export default function WelcomeScreen() {
   const openSchoolSelection = () => router.push("/onboarding/school")
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.fill}>
         <WelcomeEntrance reduceMotion={reduceMotion}>
           <WelcomeSkip hidden={isLastPage} onPress={openSchoolSelection} />
           <WelcomePager
@@ -70,10 +70,7 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
+  fill: {
     flex: 1,
   },
 })

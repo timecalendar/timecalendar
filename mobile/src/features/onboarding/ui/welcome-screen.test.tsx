@@ -7,7 +7,7 @@ import {
 } from "react-native"
 import { cancelAnimation, withTiming } from "react-native-reanimated"
 
-import { Colors } from "@/theme"
+import { Colors, resolveResponsiveLayout } from "@/theme"
 
 import WelcomeScreen from "./welcome-screen"
 
@@ -43,6 +43,35 @@ beforeEach(() => {
 afterEach(() => jest.useRealTimers())
 
 describe("WelcomeScreen", () => {
+  it("keeps one compact gutter and readable tablet caps for page and actions", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
+    const owners = [
+      getByTestId("onboarding-page-content-welcome"),
+      getByTestId("onboarding-footer-content"),
+    ]
+
+    for (const width of [390, 1024]) {
+      for (const owner of owners) {
+        await fireEvent(owner, "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        })
+      }
+
+      const layout = resolveResponsiveLayout(width, "readable")
+      expect(layout.contentWidth).toBe(width === 390 ? 342 : 640)
+      for (const owner of owners) {
+        const content = owner.children[0] as unknown as {
+          props: { style: unknown }
+        }
+        expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+          maxWidth: layout.maxContentWidth! + 2 * layout.gutter,
+          paddingHorizontal: layout.gutter,
+        })
+      }
+    }
+    await act(flushMicrotasks)
+  })
+
   it("renders the three localized pages in welcome-first order", async () => {
     const { getAllByRole, getByText } = await render(<WelcomeScreen />)
 

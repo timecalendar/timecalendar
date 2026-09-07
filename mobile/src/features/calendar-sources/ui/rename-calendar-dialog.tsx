@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import {
   effectiveCalendarName,
@@ -108,74 +109,79 @@ export function RenameCalendarDialog({
       onRequestClose={onClose}
     >
       <View style={[styles.backdrop, { backgroundColor: theme.textTertiary }]}>
-        <View
-          testID="user-calendar-rename-dialog"
-          // iOS-only prop (a no-op on Android): isolates VoiceOver to the dialog
-          // so the list behind it is not reachable while it is open.
-          accessibilityViewIsModal
-          style={[styles.card, { backgroundColor: theme.background }]}
-        >
-          {/* A title string distinct from the menu's "Rename" action: two live
+        <AdaptiveContent testID="user-calendar-rename-content" lane="readable">
+          <View
+            testID="user-calendar-rename-dialog"
+            // iOS-only prop (a no-op on Android): isolates VoiceOver to the dialog
+            // so the list behind it is not reachable while it is open.
+            accessibilityViewIsModal
+            style={[styles.card, { backgroundColor: theme.background }]}
+          >
+            {/* A title string distinct from the menu's "Rename" action: two live
               elements sharing one anchored a11y string made both Maestro tapOns
               hit the first element on iOS in TIM-264. */}
-          <ThemedText type="subtitle">
-            {t("userCalendars.rename.title")}
-          </ThemedText>
-
-          <TextInput
-            testID="user-calendar-rename-input"
-            accessibilityLabel={t("userCalendars.rename.label")}
-            placeholder={fallback}
-            placeholderTextColor={theme.textSecondary}
-            value={value}
-            onChangeText={setValue}
-            autoFocus
-            autoCorrect={false}
-            editable={!isPending}
-            style={[
-              styles.input,
-              { color: theme.text, borderColor: theme.backgroundSelected },
-            ]}
-          />
-
-          {inlineMessage !== null && (
-            <ThemedText
-              testID="user-calendar-rename-message"
-              themeColor="textSecondary"
-              accessibilityLiveRegion="assertive"
-              accessibilityRole="alert"
-            >
-              {inlineMessage}
+            <ThemedText type="subtitle">
+              {t("userCalendars.rename.title")}
             </ThemedText>
-          )}
 
-          <View style={styles.actions}>
-            <Pressable
-              testID="user-calendar-rename-cancel"
-              accessibilityRole="button"
-              accessibilityLabel={t("common.cancel")}
-              hitSlop={Spacing.two}
-              onPress={onClose}
-              style={[styles.action, { borderColor: theme.backgroundSelected }]}
-            >
-              <ThemedText type="smallBold">{t("common.cancel")}</ThemedText>
-            </Pressable>
-            <Pressable
-              testID="user-calendar-rename-save"
-              accessibilityRole="button"
-              accessibilityLabel={saveLabel}
-              accessibilityState={{ disabled: saveDisabled }}
-              disabled={saveDisabled}
-              hitSlop={Spacing.two}
-              onPress={() => {
-                void save()
-              }}
-              style={[styles.action, { borderColor: theme.primary }]}
-            >
-              <ThemedText type="smallBold">{saveLabel}</ThemedText>
-            </Pressable>
+            <TextInput
+              testID="user-calendar-rename-input"
+              accessibilityLabel={t("userCalendars.rename.label")}
+              placeholder={fallback}
+              placeholderTextColor={theme.textSecondary}
+              value={value}
+              onChangeText={setValue}
+              autoFocus
+              autoCorrect={false}
+              editable={!isPending}
+              style={[
+                styles.input,
+                { color: theme.text, borderColor: theme.backgroundSelected },
+              ]}
+            />
+
+            {inlineMessage !== null && (
+              <ThemedText
+                testID="user-calendar-rename-message"
+                themeColor="textSecondary"
+                accessibilityLiveRegion="assertive"
+                accessibilityRole="alert"
+              >
+                {inlineMessage}
+              </ThemedText>
+            )}
+
+            <View style={styles.actions}>
+              <Pressable
+                testID="user-calendar-rename-cancel"
+                accessibilityRole="button"
+                accessibilityLabel={t("common.cancel")}
+                hitSlop={Spacing.two}
+                onPress={onClose}
+                style={[
+                  styles.action,
+                  { borderColor: theme.backgroundSelected },
+                ]}
+              >
+                <ThemedText type="smallBold">{t("common.cancel")}</ThemedText>
+              </Pressable>
+              <Pressable
+                testID="user-calendar-rename-save"
+                accessibilityRole="button"
+                accessibilityLabel={saveLabel}
+                accessibilityState={{ disabled: saveDisabled }}
+                disabled={saveDisabled}
+                hitSlop={Spacing.two}
+                onPress={() => {
+                  void save()
+                }}
+                style={[styles.action, { borderColor: theme.primary }]}
+              >
+                <ThemedText type="smallBold">{saveLabel}</ThemedText>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        </AdaptiveContent>
       </View>
     </Modal>
   )
@@ -186,7 +192,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: Spacing.four,
   },
   card: {
     alignSelf: "stretch",

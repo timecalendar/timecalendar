@@ -13,6 +13,7 @@ import {
 } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -23,7 +24,7 @@ import {
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
 import { RenameCalendarDialog } from "@/features/calendar-sources/ui/rename-calendar-dialog"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 import { CalendarRow } from "./calendar-row"
 import {
@@ -51,6 +52,7 @@ export function UserCalendarsScreen() {
   const loaded = useUserCalendarsLoaded()
   const { setVisible, remove, failed } = useUserCalendarActions()
   const visibility = useVisibilityController(calendars, setVisible)
+  const contentLayout = useAdaptiveLayout("standard")
   // The dialog is MOUNTED only while a rename is open, so its controlled input is
   // seeded once per open by its own mount (design D4) with no reset effect.
   const [renameTarget, setRenameTarget] = useState<UserCalendar | null>(null)
@@ -107,100 +109,112 @@ export function UserCalendarsScreen() {
           }),
         }}
       />
-      <SafeAreaView
-        testID="user-calendars-safe-area"
-        style={[
-          styles.safeArea,
-          {
-            paddingLeft: Math.max(insets.left, Spacing.three),
-            paddingRight: Math.max(insets.right, Spacing.three),
-          },
-        ]}
-        edges={["bottom"]}
+      <View
+        testID="user-calendars-content"
+        style={styles.contentOwner}
+        onLayout={contentLayout.onLayout}
       >
-        {failed && (
-          <WriteErrorNotice
-            message={t("userCalendars.error")}
-            style={styles.error}
-          />
-        )}
+        <SafeAreaView
+          testID="user-calendars-safe-area"
+          style={[
+            styles.safeArea,
+            contentLayout.laneStyle,
+            {
+              paddingLeft: Math.max(insets.left, contentLayout.metrics.gutter),
+              paddingRight: Math.max(
+                insets.right,
+                contentLayout.metrics.gutter,
+              ),
+            },
+          ]}
+          edges={["bottom"]}
+        >
+          {failed && (
+            <WriteErrorNotice
+              message={t("userCalendars.error")}
+              style={styles.error}
+            />
+          )}
 
-        {/* Gate the empty state on the read resolving: useLiveQuery starts empty
+          {/* Gate the empty state on the read resolving: useLiveQuery starts empty
             and settles async, so rendering it before `loaded` would flash and
             false-announce "no calendars" on entry. */}
-        {!loaded ? null : calendars.length === 0 ? (
-          <View style={styles.empty}>
-            <ThemedText type="subtitle">
-              {t("userCalendars.emptyTitle")}
-            </ThemedText>
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="text"
-            >
-              {t("userCalendars.empty")}
-            </ThemedText>
-          </View>
-        ) : (
-          <FlatList
-            testID="user-calendars-list"
-            data={calendars}
-            keyExtractor={(calendar) => calendar.id}
-            contentContainerStyle={[
-              styles.content,
-              Platform.OS === "android" && styles.contentWithFab,
-            ]}
-            ListHeaderComponent={
-              <ThemedText themeColor="textSecondary" style={styles.intro}>
-                {t("userCalendars.visibilityDescription")}
+          {!loaded ? null : calendars.length === 0 ? (
+            <View style={styles.empty}>
+              <ThemedText type="subtitle">
+                {t("userCalendars.emptyTitle")}
               </ThemedText>
-            }
-            renderItem={({ item: calendar }) => (
-              <CalendarRow
-                calendar={calendar}
-                visible={visibleFromOperation(
-                  calendar.visible,
-                  visibility.operationFor(calendar.id),
-                )}
-                onToggle={(visible) => visibility.toggle(calendar.id, visible)}
-                onDelete={confirmDelete}
-                onRename={setRenameTarget}
-              />
-            )}
-          />
-        )}
-        {Platform.OS === "android" && (
-          <Pressable
-            testID="user-calendars-add"
-            accessibilityRole="button"
-            accessibilityLabel={t("userCalendars.add")}
-            onPress={() =>
-              router.push({
-                pathname: "/onboarding/school",
-                params: { source: "calendar-management" },
-              })
-            }
-            android_ripple={{
-              color: theme.ripple,
-              borderless: true,
-              radius: 28,
-            }}
-            style={[styles.fab, { backgroundColor: theme.primaryStrong }]}
-          >
-            <SymbolView
-              name={{ android: "add" }}
-              size={26}
-              tintColor={theme.onPrimary}
+              <ThemedText
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                accessibilityRole="text"
+              >
+                {t("userCalendars.empty")}
+              </ThemedText>
+            </View>
+          ) : (
+            <FlatList
+              testID="user-calendars-list"
+              data={calendars}
+              keyExtractor={(calendar) => calendar.id}
+              contentContainerStyle={[
+                styles.content,
+                Platform.OS === "android" && styles.contentWithFab,
+              ]}
+              ListHeaderComponent={
+                <ThemedText themeColor="textSecondary" style={styles.intro}>
+                  {t("userCalendars.visibilityDescription")}
+                </ThemedText>
+              }
+              renderItem={({ item: calendar }) => (
+                <CalendarRow
+                  calendar={calendar}
+                  visible={visibleFromOperation(
+                    calendar.visible,
+                    visibility.operationFor(calendar.id),
+                  )}
+                  onToggle={(visible) =>
+                    visibility.toggle(calendar.id, visible)
+                  }
+                  onDelete={confirmDelete}
+                  onRename={setRenameTarget}
+                />
+              )}
             />
-          </Pressable>
-        )}
-        {renameTarget && (
-          <RenameCalendarDialog
-            calendar={renameTarget}
-            onClose={() => setRenameTarget(null)}
-          />
-        )}
-      </SafeAreaView>
+          )}
+          {Platform.OS === "android" && (
+            <Pressable
+              testID="user-calendars-add"
+              accessibilityRole="button"
+              accessibilityLabel={t("userCalendars.add")}
+              onPress={() =>
+                router.push({
+                  pathname: "/onboarding/school",
+                  params: { source: "calendar-management" },
+                })
+              }
+              android_ripple={{
+                color: theme.ripple,
+                borderless: true,
+                radius: 28,
+              }}
+              style={[styles.fab, { backgroundColor: theme.primaryStrong }]}
+            >
+              <SymbolView
+                name={{ android: "add" }}
+                size={26}
+                tintColor={theme.onPrimary}
+              />
+            </Pressable>
+          )}
+          {renameTarget && (
+            <RenameCalendarDialog
+              calendar={renameTarget}
+              onClose={() => setRenameTarget(null)}
+            />
+          )}
+        </SafeAreaView>
+      </View>
     </ThemedView>
   )
 }
@@ -211,9 +225,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
   },
+  contentOwner: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
     paddingTop: Platform.OS === "ios" ? Spacing.five : Spacing.four,
     gap: Spacing.three,
   },
