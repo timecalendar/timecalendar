@@ -285,6 +285,7 @@ describe("Maestro journey contracts", () => {
         'id: "ical-url-submit"',
         "- stopApp\n- openLink: timecalendar-dev://calendar",
         'id: "agenda-section-list"',
+        "- swipe:\n    start: 50%, 35%\n    end: 50%, 80%\n    duration: 800",
         'visible: "E2E Imported Lecture(,.*)?"',
         '- assertVisible: "Room E2E Import"',
       ]),

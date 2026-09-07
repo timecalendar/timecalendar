@@ -83,6 +83,13 @@ appId: fr.samuelprak.timecalendar.dev
     visible:
       id: "agenda-section-list"
     timeout: 60000
+# Exercise the shipped Agenda pull-to-refresh so the assertion waits on an
+# explicit server sync rather than racing the root layout's fire-and-forget
+# startup sync after the cold re-entry.
+- swipe:
+    start: 50%, 35%
+    end: 50%, 80%
+    duration: 800
 - extendedWaitUntil:
     visible: "E2E Imported Lecture(,.*)?"
     timeout: 60000
