@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Platform, RefreshControl, StyleSheet, View } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 import {
   eventRoute,
@@ -46,6 +47,7 @@ export function CalendarScreen() {
   const eventUids = useMemo(() => events.map((event) => event.id), [events])
   const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
+  const agendaLayout = useAdaptiveLayout("standard")
 
   const onPressEvent = (uid: string) => router.push(eventRoute(uid))
   const onAdd = () => router.push("/personal-event-form")
@@ -73,37 +75,55 @@ export function CalendarScreen() {
         onAdd={onAdd}
       />
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <CalendarScreenStatus
-          isEmpty={events.length === 0}
-          isError={isError}
-          onRetry={onSync}
-        />
-        <View style={styles.calendar}>
+        <View style={styles.calendar} testID="calendar-full-bleed-owner">
           {view === "agenda" ? (
-            <AgendaList
-              events={events}
-              checklistProgress={checklistProgress}
-              locale={locale}
-              displayZone={displayZone}
-              refreshControl={refreshControl}
-              onPressEvent={(event) => onPressEvent(event.id)}
-            />
+            <View
+              testID="calendar-agenda-responsive-owner"
+              style={styles.agendaOwner}
+              onLayout={agendaLayout.onLayout}
+            >
+              <View
+                testID="calendar-agenda-responsive-lane"
+                style={[agendaLayout.laneStyle, styles.agendaLane]}
+              >
+                <CalendarScreenStatus
+                  isEmpty={events.length === 0}
+                  isError={isError}
+                  onRetry={onSync}
+                />
+                <AgendaList
+                  events={events}
+                  checklistProgress={checklistProgress}
+                  locale={locale}
+                  displayZone={displayZone}
+                  refreshControl={refreshControl}
+                  onPressEvent={(event) => onPressEvent(event.id)}
+                />
+              </View>
+            </View>
           ) : (
-            <CalendarTimeline
-              ref={timelineRef}
-              mode={view}
-              anchorDate={anchorDate}
-              displayZone={displayZone}
-              events={events}
-              checklistProgress={checklistProgress}
-              startMinute={GRID_START_MINUTE}
-              endMinute={GRID_END_MINUTE}
-              showWeekends
-              bottomInset={bottomInset}
-              onVisibleDateChange={onVisibleDateChange}
-              onSettledDateChange={onSettledDateChange}
-              onPressEvent={(event) => onPressEvent(event.id)}
-            />
+            <>
+              <CalendarScreenStatus
+                isEmpty={events.length === 0}
+                isError={isError}
+                onRetry={onSync}
+              />
+              <CalendarTimeline
+                ref={timelineRef}
+                mode={view}
+                anchorDate={anchorDate}
+                displayZone={displayZone}
+                events={events}
+                checklistProgress={checklistProgress}
+                startMinute={GRID_START_MINUTE}
+                endMinute={GRID_END_MINUTE}
+                showWeekends
+                bottomInset={bottomInset}
+                onVisibleDateChange={onVisibleDateChange}
+                onSettledDateChange={onSettledDateChange}
+                onPressEvent={(event) => onPressEvent(event.id)}
+              />
+            </>
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}
         </View>
@@ -114,6 +134,8 @@ export function CalendarScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  safeArea: { flex: 1, gap: Spacing.two },
-  calendar: { flex: 1 },
+  safeArea: { flex: 1 },
+  calendar: { flex: 1, gap: Spacing.two },
+  agendaOwner: { flex: 1 },
+  agendaLane: { flex: 1, gap: Spacing.two },
 })

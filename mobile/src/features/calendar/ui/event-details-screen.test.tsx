@@ -1,12 +1,18 @@
-import { render, screen, userEvent } from "@testing-library/react-native"
+import {
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+} from "@testing-library/react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import type { ReactElement } from "react"
-import { Alert } from "react-native"
+import { Alert, StyleSheet } from "react-native"
 
 import { type EventDetails, useEventDetails } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
+import { resolveResponsiveLayout } from "@/theme"
 
 import { EventDetailsScreen } from "./event-details-screen"
 
@@ -125,6 +131,53 @@ afterEach(() => {
 })
 
 describe("EventDetailsScreen", () => {
+  it("keeps loaded details in one measured readable lane", async () => {
+    await render(<EventDetailsScreen />)
+    const owner = screen.getByTestId("event-details-responsive-owner")
+
+    for (const width of [390, 768, 834, 1024]) {
+      await fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width, height: 0 } },
+      })
+      const metrics = resolveResponsiveLayout(width, "readable")
+      const style = StyleSheet.flatten(
+        screen.getByTestId("event-details-responsive-lane").props.style,
+      )
+      expect(style.maxWidth).toBe(
+        (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
+      )
+      expect(style.paddingHorizontal).toBe(metrics.gutter)
+    }
+
+    expect(screen.getByText("Algorithms")).toBeOnTheScreen()
+    expect(screen.getByText("checklist:ev-1")).toBeOnTheScreen()
+  })
+
+  it.each([
+    [true, null, "Loading event…"],
+    [false, null, "This event is no longer available."],
+  ] as const)(
+    "keeps status outcomes in the readable lane",
+    async (loading, event, accessibleText) => {
+      mockUseEventDetails.mockReturnValue({ loading, event })
+      await render(<EventDetailsScreen />)
+      const owner = screen.getByTestId("event-details-status-responsive-owner")
+      await fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0 } },
+      })
+      const style = StyleSheet.flatten(
+        screen.getByTestId("event-details-status-responsive-lane").props.style,
+      )
+      expect(style.maxWidth).toBe(768)
+      expect(style.paddingHorizontal).toBe(64)
+      expect(
+        loading
+          ? screen.getByLabelText(accessibleText)
+          : screen.getByText(accessibleText),
+      ).toBeOnTheScreen()
+    },
+  )
+
   it("renders the title as a heading", async () => {
     await render(<EventDetailsScreen />)
     expect(screen.getByRole("header", { name: "Algorithms" })).toBeTruthy()

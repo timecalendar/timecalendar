@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Platform } from "react-native"
+import { Platform, StyleSheet } from "react-native"
 
 import {
   dayKey,
@@ -18,6 +18,7 @@ import { calendarTimelineEventWindow } from "@/features/calendar/renderer"
 import { useChecklistProgress } from "@/features/event-checklists"
 import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { remove } from "@/storage"
+import { resolveResponsiveLayout } from "@/theme"
 
 import { CalendarScreen } from "./calendar-screen"
 
@@ -354,6 +355,26 @@ describe("CalendarScreen", () => {
     // The fixture event's tile renders with its title + formatted time range.
     expect(screen.getByText("Algorithms")).toBeTruthy()
     expect(screen.getByText("09:00 – 10:30")).toBeTruthy()
+
+    const owner = screen.getByTestId("calendar-agenda-responsive-owner")
+    for (const width of [390, 600, 768, 834, 1024]) {
+      await fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width, height: 0 } },
+      })
+      const metrics = resolveResponsiveLayout(width, "standard")
+      const laneStyle = StyleSheet.flatten(
+        screen.getByTestId("calendar-agenda-responsive-lane").props.style,
+      )
+      expect(laneStyle.maxWidth).toBe(
+        (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
+      )
+      expect(laneStyle.paddingHorizontal).toBe(metrics.gutter)
+    }
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("calendar-full-bleed-owner").props.style,
+      ).maxWidth,
+    ).toBeUndefined()
   })
 
   it("shows zero, partial, and complete Agenda progress and updates the mounted row map", async () => {
@@ -417,6 +438,15 @@ describe("CalendarScreen", () => {
   it("renders an accessible sync-error with a retry that re-syncs", async () => {
     mockUseSyncCalendars.mockReturnValue(syncState({ isError: true }))
     await render(<CalendarScreen />)
+    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await waitFor(() => {
+      expect(screen.getByTestId("calendar-agenda-responsive-lane")).toBeTruthy()
+    })
+    await fireEvent(
+      screen.getByTestId("calendar-agenda-responsive-owner"),
+      "layout",
+      { nativeEvent: { layout: { width: 1024, height: 0 } } },
+    )
 
     expect(
       screen.getByText(
@@ -426,6 +456,18 @@ describe("CalendarScreen", () => {
     const retry = screen.getByTestId("calendar-sync-retry")
     expect(retry.props.accessibilityLabel).toBe(
       "Retry refreshing your calendar",
+    )
+    const agendaMetrics = resolveResponsiveLayout(1024, "standard")
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("calendar-agenda-responsive-lane").props.style,
+      ),
+    ).toEqual(
+      expect.objectContaining({
+        maxWidth:
+          (agendaMetrics.maxContentWidth ?? 0) + 2 * agendaMetrics.gutter,
+        paddingHorizontal: agendaMetrics.gutter,
+      }),
     )
     fireEvent.press(retry)
     expect(mockSync).toHaveBeenCalledTimes(1)
@@ -581,7 +623,9 @@ describe("CalendarScreen", () => {
       expect(screen.queryByTestId("calendar-add")).toBeNull()
       expect(screen.queryByText("Today")).toBeNull()
       expect(screen.getByLabelText("Go to today")).toBeTruthy()
-      fireEvent.press(screen.getByTestId("calendar-fab"))
+      const fab = screen.getByTestId("calendar-fab")
+      expect(fab.parent?.props.testID).toBe("calendar-full-bleed-owner")
+      fireEvent.press(fab)
       expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
     } finally {
       Platform.OS = original
