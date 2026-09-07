@@ -1,5 +1,11 @@
 # Architecture Book changelog
 
+## 2026-09-07
+
+- Added the reproducible mobile React Doctor contract: an exact lockfile pin, advisory full scan,
+  warning-blocking changed-code CI gate against `origin/main`, normalized owned diagnostic report,
+  and standalone mobile dependency boundary (ADR 053).
+
 ## 2026-09-06
 
 - Added the measured responsive layout contract: typed compact/tablet boundaries, readable,

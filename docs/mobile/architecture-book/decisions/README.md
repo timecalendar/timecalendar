@@ -45,6 +45,7 @@ decision changes; use Git for its history.
 | [050](./050-token-authorized-shared-calendar-rename.md) | Authorize shared calendar rename by token possession                  |
 | [051](./051-path-level-v1-prefix-without-global-versioning.md) | Version individual controllers by path                        |
 | [052](./052-eventual-calendar-name-convergence-through-sync.md) | Converge calendar names through a name-only sync write         |
+| [053](./053-react-doctor-changed-code-gate.md)           | Keep React Doctor advisory globally and blocking on changed code      |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`
