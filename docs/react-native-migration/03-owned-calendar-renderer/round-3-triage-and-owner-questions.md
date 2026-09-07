@@ -3,6 +3,11 @@
 Status: Round 3 owner answers recorded. This is product-discovery evidence, not a functional
 specification or renderer architecture.
 
+Current-state note: this document preserves the historical Round 3 audit and its then-current
+counts. [Round 4 owner answers and readiness](./round-4-owner-answers-and-readiness.md) supersedes
+its readiness section and resolves the remaining owner-facing product questions. Do not use the
+49-row Round 3 unanswered list as the current backlog.
+
 ## Why this document exists
 
 Round 2 left 187 questionnaire rows marked `UNANSWERED`. This audit assigned every one of

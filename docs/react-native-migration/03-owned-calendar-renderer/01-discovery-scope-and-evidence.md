@@ -1,6 +1,6 @@
 # Discovery scope and evidence
 
-Status: evidence inventory, not an approved functional specification.
+Status: evidence inventory through Round 4, not an approved functional specification.
 
 ## Purpose
 
@@ -94,9 +94,9 @@ Nothing above confirms that the owned React Native renderer must reproduce the F
 The repository currently contains several layers of written intent:
 
 - The archived `mobile-calendar-timeline` OpenSpec is implementation-specific to the original calendar-kit adoption. It includes useful product candidates such as day/week views, event tiles, navigation, localization, and accessibility, but also obsolete structural requirements such as the former chrome wrapper and calendar-kit dependency.
-- The `mobile-calendar-agenda` OpenSpec establishes the current agenda as an in-place, separate list surface. Whether agenda is part of this replacement project's scope, merely an integration constraint, or due for redesign remains unanswered.
+- The `mobile-calendar-agenda` OpenSpec establishes the current agenda as an in-place, separate list surface. The owner has since confirmed that agenda remains an external presentation integrated into the same Calendar screen, shares date context bidirectionally with the timeline, and is not reimplemented by this renderer project.
 - The accepted renderer-boundary ADR keeps orchestration and event loading in the screen and dependency adaptation in the renderer. It explicitly allows revisiting the contract if an owned renderer needs a materially different product-facing API.
-- The accepted display-timezone ADR and active OpenSpec change establish current cross-application timezone behavior. We still need the owner to confirm whether this project preserves that behavior unchanged, refines it, or treats it as an external invariant.
+- The accepted display-timezone ADR and active OpenSpec change establish current cross-application timezone behavior. The owner has confirmed that the selected effective display-timezone behavior remains an external invariant for this project.
 - Event-details, hidden-events, personal-events, calendar-sync, and user-calendar specs rely on calendar events appearing and remaining tappable or filterable. Those consumers create integration constraints, but they do not decide the new renderer's detailed UX.
 - Architecture-book accessibility, theming, testing, and Definition of Done documents describe current project quality policy. The owner requested an even stronger quality posture, whose concrete bar remains to be defined.
 
@@ -121,9 +121,10 @@ The repository currently contains several layers of written intent:
 | CF-015 | The prompt says the logical date range is unbounded. Current data loading is bounded and historical Flutter paging depends on week-number indexing.                                  | The actual navigation horizon and offline data horizon are product decisions.                                                                |
 | CF-016 | The prompt says no loader during mode changes, while the current screen exposes sync and empty/error status independently of renderer initialization.                                | Loading, stale-data, transition, and failure UX must be specified separately.                                                                |
 
-## Candidate boundary to validate, not a decision
+## Responsibility boundary accepted after this inventory
 
-The current repository suggests this possible responsibility split:
+The inventory originally suggested the following responsibility split. The owner accepted it in
+Round 2, subject to later ADR review if architecture evidence requires a costly boundary change:
 
 ```text
 Calendar product screen
@@ -141,7 +142,9 @@ Separate agenda surface
   chronological/list representation and its own virtualization
 ```
 
-Every arrow and responsibility remains open to refinement. In particular, the product owner must decide whether agenda belongs to this project, whether it is the accessible alternative to the grid, and which date/scroll state is shared across surfaces.
+Round 4 adds that timeline and agenda share their active date bidirectionally, while timeline zoom
+and vertical clock position remain timeline presentation state. Agenda is not a separate accessible
+destination: the Calendar screen provides its accepted chronological accessibility representation.
 
 ## What is in scope now
 
@@ -150,9 +153,13 @@ Every arrow and responsibility remains open to refinement. In particular, the pr
 - Record owner decisions in a form suitable for a future functional specification.
 - Preserve the current implementation unchanged while discovery is incomplete.
 
-## What is not yet in product scope
+## Rule used before features entered product scope
 
-No individual renderer feature is confirmed yet merely because it appears in current React Native code, Flutter code, a test, an ADR, an OpenSpec, the roadmap, or the legacy prompt. This includes day mode, week mode, agenda, zoom, all-day lanes, five-day weeks, seven-day weeks, current-time indicators, infinite paging, event editing, exact performance targets, and any specific technology.
+No renderer feature became confirmed merely because it appeared in current React Native code,
+Flutter code, a test, an ADR, an OpenSpec, the roadmap, or the legacy prompt. Rounds 1–4 have since
+confirmed the specific behaviors recorded in the questionnaire. Unconfirmed technologies, page
+counts, overscan, dependency choices, and historical implementation details remain outside the
+product contract.
 
 ## Research completed for this inventory
 
@@ -690,3 +697,63 @@ Architecture Book/ADR update: **N/A**. This change records product-discovery evi
 change a reusable current rule or load-bearing technical decision. In particular, the accepted
 calendar-kit ADRs remain current until a later architecture decision supersedes them, and ADR 042's
 portrait-only/full-screen contract remains binding until a separately authorized native change.
+
+## Round 4 owner response (2026-09-07)
+
+The owner completed a final product-focused grilling pass. The complete answer audit is
+[Round 4 owner answers and readiness](./round-4-owner-answers-and-readiness.md); the questionnaire
+contains the authoritative row-level wording.
+
+Material decisions and corrections are:
+
+- timeline and agenda share date context bidirectionally; agenda's active date is the visible
+  section nearest the top, with today preferred when entering from the current week and Monday for
+  another week;
+- Today and deep links preserve agenda mode, multi-day events appear in every covered agenda
+  section, and Show weekends affects only the week grid;
+- Calendar navigation reads local device data and never initiates network synchronization or shows
+  a date-navigation loader; initial network synchronization completes before Calendar is available,
+  and routine startup synchronization has no Calendar refreshing indicator;
+- all-day overflow uses per-date `+N` actions, a whole-day/week expansion, bounded internal
+  scrolling, a global collapse affordance by the hours gutter, and automatic collapse on page or
+  mode change;
+- missing titles use `(No title)` / `(Sans titre)`, missing locations are omitted, invalid colors
+  use a neutral theme-safe fallback, and ordinary truncation prioritizes title over location at
+  constrained sizes;
+- two-finger pinch wins, one-finger movement locks to one axis, movement cancels a tap, zoom has a
+  confirmed planning/readability purpose, and day/week share one persisted zoom;
+- phone and tablet portrait and landscape plus resizable tablet windows are product requirements;
+  representative window/orientation acceptance is recorded human QA by the owner, not agent-only
+  evidence;
+- the visual DST rule deliberately keeps a simple 24-hour wall-clock grid, leaving the
+  spring-forward hour empty and adding no repeated-hour row, while underlying instant/date behavior
+  must remain deterministic and correct;
+- local Today/date navigation uses the accepted 250 ms correct-frame and 500 ms interactive p95
+  budgets, cold Calendar render from local data targets one second p95, and a 30-minute resource
+  stress run is required; and
+- the current event shape, local query seam, renderer facade, and Calendar implementation have no
+  compatibility promise. A broken Calendar on `main` is acceptable during development, and
+  compatibility shims are explicitly unwanted.
+
+The earlier portrait-only/full-screen **product** posture is superseded. The repository's current
+configuration is still portrait/full-screen and therefore becomes migration work requiring the
+appropriate native configuration/ADR update; it is no longer the desired final behavior.
+
+### Functional-specification readiness after Round 4
+
+The questionnaire's 280 rows now total 190 `CONFIRMED_IN`, 50 `CONFIRMED_OUT`, five `DEFERRED`,
+29 `NEEDS_RESEARCH`, and six `UNANSWERED`.
+
+The 29 research rows are bounded evidence and engineering work rather than owner questions. The six
+unanswered rows—`PF-021`, `B-006`, `B-010`, `B-011`, `B-012`, and `B-014`—are deliberately held for
+measured architecture work. No broad owner-question backlog remains.
+
+The product contract is sufficiently resolved to draft `03-functional-specification.md`. Creating
+and approving that artifact remains a separate explicit owner act. Release measurements that need
+an implemented renderer or physical hardware remain named downstream gates; their absence does not
+authorize guessed values, weakened acceptance, or implementation before architecture approval.
+
+Architecture Book/ADR update: **required later**. The functional decision now supersedes ADR 042's
+portrait-only/full-screen outcome, but this discovery record does not itself edit the ADR or native
+configuration. The calendar-kit ADR/OpenSpec retirement set remains part of `M-012` research until
+the owned architecture is selected.
