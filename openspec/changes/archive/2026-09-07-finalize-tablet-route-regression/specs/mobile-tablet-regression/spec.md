@@ -1,0 +1,41 @@
+## ADDED Requirements
+
+### Requirement: The tablet route matrix records the integrated shipped disposition
+
+The tablet quick-wins matrix SHALL retain one row for every audited React Native route or surface and SHALL describe the behavior delivered by the tablet workstreams or an explicit no-change disposition. Each row SHALL name its semantic width rule and focused verification evidence. The final reconciliation SHALL NOT introduce landscape, multitasking, tablet-only navigation, native configuration, dependency, generated-client, migration, or legacy Flutter changes.
+
+#### Scenario: A completed tablet workstream is reconciled
+
+- **WHEN** a route owned by a completed tablet workstream is reviewed in the final matrix
+- **THEN** the row describes its shipped measured-lane or full-bleed composition
+- **AND** the row identifies the focused phone/tablet regression that protects preserved behavior
+- **AND** the row contains no future-tense implementation or verification commitment for work that already shipped
+
+#### Scenario: Device evidence is unavailable on the execution host
+
+- **WHEN** the final pass cannot run a simulator, emulator, or physical device locally
+- **THEN** the evidence records that limitation without claiming device execution
+- **AND** available static, component, integration, and CI evidence remains explicit
+
+### Requirement: Activity actionable rows prove resolved details navigation
+
+The shared Activity Maestro journey SHALL activate seeded new and changed rows with a retry limited to taps that produce no hierarchy change. After each activation, the journey SHALL observe a selector that mounts only for resolved event details before asserting seeded details content. Static regression coverage SHALL lock this row-to-details ordering for both actionable fixture kinds.
+
+#### Scenario: A changed row ignores the first iOS tap
+
+- **WHEN** the changed Activity row is visible after scrolling and its first tap produces no hierarchy change
+- **THEN** the flow retries the activation
+- **AND** it waits for the resolved event-details owner
+- **AND** it then confirms the changed event's seeded details content
+
+#### Scenario: An actionable row navigates on the first tap
+
+- **WHEN** a new or changed Activity row transitions to event details on its first activation
+- **THEN** the no-change retry does not cause an unconditional second activation
+- **AND** the resolved details owner proves the route before content assertions run
+
+#### Scenario: Activity list content cannot satisfy the destination oracle
+
+- **WHEN** the app remains on the Activity list after activating an actionable row
+- **THEN** list-rendered title, time, or location text does not satisfy the navigation proof
+- **AND** the flow fails because the resolved event-details owner never appears
