@@ -6,7 +6,6 @@ import PagerView, {
 } from "react-native-pager-view"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 
 import { useReducedMotion } from "./use-reduced-motion"
@@ -48,30 +47,23 @@ export default function WelcomeScreen() {
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.fill}>
-        <AdaptiveContent
-          testID="onboarding-welcome-content"
-          lane="standard"
-          style={styles.fill}
-          contentContainerStyle={styles.fill}
-        >
-          <WelcomeEntrance reduceMotion={reduceMotion}>
-            <WelcomeSkip hidden={isLastPage} onPress={openSchoolSelection} />
-            <WelcomePager
-              ref={pagerRef}
-              illustrationHeight={illustrationHeight}
-              onPageSelected={handlePageSelected}
-            />
-            <WelcomePageIndicator
-              currentPage={currentPage}
-              reduceMotion={reduceMotion}
-            />
-            <WelcomeFooter
-              isLastPage={isLastPage}
-              onFinish={openSchoolSelection}
-              onNext={goToNextPage}
-            />
-          </WelcomeEntrance>
-        </AdaptiveContent>
+        <WelcomeEntrance reduceMotion={reduceMotion}>
+          <WelcomeSkip hidden={isLastPage} onPress={openSchoolSelection} />
+          <WelcomePager
+            ref={pagerRef}
+            illustrationHeight={illustrationHeight}
+            onPageSelected={handlePageSelected}
+          />
+          <WelcomePageIndicator
+            currentPage={currentPage}
+            reduceMotion={reduceMotion}
+          />
+          <WelcomeFooter
+            isLastPage={isLastPage}
+            onFinish={openSchoolSelection}
+            onNext={goToNextPage}
+          />
+        </WelcomeEntrance>
       </SafeAreaView>
     </ThemedView>
   )

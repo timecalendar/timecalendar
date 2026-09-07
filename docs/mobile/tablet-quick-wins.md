@@ -98,7 +98,7 @@ bounded consistency work.
 | `/event-details/[uid]` and checklist        | Loaded and state content is uncapped; long metadata and checklist rows span the tablet.                                                 | Use a readable lane for loaded/loading/missing/error content. Consider 834+ grouping only if the child proves title → metadata → actions → checklist focus order.              | P1       | TIM-500                            | `R`; optional `G` ≥834                | Cover long text, all states, checklist CRUD, large text, and accessibility order at 390/768/834/1024.                  |
 | `/personal-events`                          | The list is already centered at 800 and usable but owns a local frame.                                                                  | Adopt the shared standard lane; keep one list and existing Add/header behavior.                                                                                                | P2       | TIM-500                            | `S`                                   | Check empty/list/header at every target width and ensure rows never exceed 800.                                        |
 | `/personal-event-form` create/edit/delete   | The one-column form and keyboard-safe footer use the 800-point list cap, yielding overly wide fields.                                   | Put form and footer in the same readable lane; preserve keyboard avoidance, native pickers, alerts, and action order.                                                          | P1       | TIM-500                            | `R`                                   | Cover create/edit/validation/error/delete and footer reachability at 390/768/800/1024 plus large text.                 |
-| `/onboarding` welcome carousel              | Pager top/content/footer independently cap at 800; copy and illustration read as an enlarged phone column.                              | Use a standard outer lane with separately bounded illustration and readable copy/action regions; keep page order and motion behavior.                                          | P1       | TIM-501                            | `S` with internal `R`                 | Render every page at 390/768/800/834/1024; verify reduced motion, large text, and visible controls.                    |
+| `/onboarding` welcome carousel              | Pager top/content/footer independently cap at 800; copy and illustration read as an enlarged phone column.                              | Give page and action regions independent readable lanes without a padded outer lane; keep the illustration cap, page order, and motion behavior.                               | P1       | TIM-501                            | independent `R` regions               | Render every page at 390/768/800/834/1024; verify one compact gutter, reduced motion, large text, and visible controls. |
 | `/onboarding/connect`                       | Short prose and actions occupy the shared 800-point step frame.                                                                         | Use a readable one-column lane; preserve vertical action order and external-link behavior.                                                                                     | P1       | TIM-501                            | `R`                                   | Cover optional states, navigation, centered width, and gutters at phone/tablet widths.                                 |
 | `/onboarding/institution-name`              | A single field and CTA can expand to 800; keyboard layout is otherwise appropriate.                                                     | Use a readable one-column lane and retain current validation and keyboard avoidance.                                                                                           | P1       | TIM-501                            | `R`                                   | Test keyboard layout, validation, and CTA visibility at 390/768/800/1024.                                              |
 | `/onboarding/programme`                     | The single-field step uses the same wide frame.                                                                                         | Use a readable one-column lane; preserve skip/continue and back behavior.                                                                                                      | P1       | TIM-501                            | `R`                                   | Test input, skip, validation, header/back, and large text across phone/tablet widths.                                  |
@@ -140,8 +140,9 @@ bounded consistency work.
 
 Implemented on the TIM-501 workstream:
 
-- The welcome carousel uses a measured standard outer lane, with readable page copy and action
-  regions plus the existing independently capped illustration.
+- The welcome carousel leaves its safe-area root uncapped; page and action regions each own one
+  readable lane, and the illustration retains its independent cap. At 390 points this preserves
+  the shared 24-point compact gutter instead of nesting two gutters.
 - Connect, institution name, programme, manual import, and iCal URL import use one-column readable
   lanes while retaining their safe-area, keyboard, validation, and navigation owners.
 - School rows, separators, list header/footer, list states, and the group hierarchy share measured
@@ -151,9 +152,10 @@ Implemented on the TIM-501 workstream:
 - User calendars use a measured standard lane, and the rename card sits inside a readable modal
   lane without changing modal presentation or calendar-source behavior.
 
-Focused component checks exercise compact behavior through the resolver's existing boundary suite
-and assert the TIM-501 standard/readable lane caps at 1024 points. Existing state, navigation,
-keyboard, permission, import, and calendar-management tests continue to cover behavioral parity.
+Focused component checks exercise compact behavior through the resolver's existing boundary suite,
+assert welcome page/action lanes at both 390 and 1024 points, and assert the other TIM-501
+standard/readable lane caps at 1024 points. Existing state, navigation, keyboard, permission,
+import, and calendar-management tests continue to cover behavioral parity.
 
 TIM-499 lands first. TIM-500, TIM-501, and TIM-502 consume that established contract and may then
 proceed according to their blocker graph; TIM-503 follows all implementation workstreams. Shared

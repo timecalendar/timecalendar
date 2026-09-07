@@ -43,24 +43,32 @@ beforeEach(() => {
 afterEach(() => jest.useRealTimers())
 
 describe("WelcomeScreen", () => {
-  it("centers the carousel in a measured standard tablet lane", async () => {
+  it("keeps one compact gutter and readable tablet caps for page and actions", async () => {
     const { getByTestId } = await render(<WelcomeScreen />)
-    const owner = getByTestId("onboarding-welcome-content")
+    const owners = [
+      getByTestId("onboarding-page-content-welcome"),
+      getByTestId("onboarding-footer-content"),
+    ]
 
-    await act(() =>
-      fireEvent(owner, "layout", {
-        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
-      }),
-    )
+    for (const width of [390, 1024]) {
+      for (const owner of owners) {
+        await fireEvent(owner, "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        })
+      }
 
-    const content = owner.children[0] as unknown as {
-      props: { style: unknown }
+      const layout = resolveResponsiveLayout(width, "readable")
+      expect(layout.contentWidth).toBe(width === 390 ? 342 : 640)
+      for (const owner of owners) {
+        const content = owner.children[0] as unknown as {
+          props: { style: unknown }
+        }
+        expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+          maxWidth: layout.maxContentWidth! + 2 * layout.gutter,
+          paddingHorizontal: layout.gutter,
+        })
+      }
     }
-    const layout = resolveResponsiveLayout(1024, "standard")
-    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
-      maxWidth: layout.contentWidth + 2 * layout.gutter,
-      paddingHorizontal: layout.gutter,
-    })
     await act(flushMicrotasks)
   })
 

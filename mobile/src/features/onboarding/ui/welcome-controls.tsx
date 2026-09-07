@@ -50,7 +50,11 @@ export function WelcomeFooter({
   const theme = useTheme()
 
   return (
-    <AdaptiveContent lane="readable" contentContainerStyle={styles.footer}>
+    <AdaptiveContent
+      testID="onboarding-footer-content"
+      lane="readable"
+      contentContainerStyle={styles.footer}
+    >
       {isLastPage ? (
         <Pressable
           testID="onboarding-welcome-cta"
