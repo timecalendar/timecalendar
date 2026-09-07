@@ -19,3 +19,4 @@
 - [x] 3.4 Inspect the branch diff for scope and disclosure hygiene, push the same PR branch, and require exact-head iOS native E2E before review acceptance.
 - [x] 3.5 Inspect the exact-head Android pagination artifact and align the second-page tie traversal with the deterministic merged order, with a focused static direction proof.
 - [x] 3.6 Inspect the next exact-head native artifacts, preserve Android's terminal system-ANR signal, and make the iOS iCal onboarding entry replay its acknowledged deep link only while the stable Welcome destination remains absent.
+- [x] 3.7 Inspect the next exact-head Android pagination artifact and anchor the loaded second page at its oldest fixture before reversing to the lower tie row.
