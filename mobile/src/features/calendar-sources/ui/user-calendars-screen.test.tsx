@@ -574,7 +574,7 @@ describe("UserCalendarsScreen", () => {
       params: { source: "calendar-management" },
     })
     expect(mockScreenOptions).toHaveBeenCalledWith(
-      expect.objectContaining({ headerBackButtonDisplayMode: "generic" }),
+      expect.objectContaining({ headerBackButtonDisplayMode: "minimal" }),
     )
   })
 

@@ -4,6 +4,19 @@ Expo Router is the navigation backbone and the **only** navigation API: `@react-
 
 The two route-structure rules below are recorded as prose because their load-bearing half can't be encoded as a lint rule (R-1).
 
+## Compact root Stack classification
+
+The root Stack uses `buildCompactRootScreenOptions` from `@/components/chrome`: user-facing
+non-tab siblings inherit a visible compact header, no large title, a theme-backed surface, and
+`headerBackButtonDisplayMode: "minimal"`. `(tabs)`, `onboarding`, `profile`, `more`, and
+`dev-import` are explicit headerless exceptions. The route-structure test enumerates top-level
+siblings so a new route cannot inherit either posture accidentally. Features still own localized
+`Stack.Screen` titles and native header actions. See ADR [054](./decisions/054-shared-root-page-semantics.md).
+
+Root content uses `RootPage` only for non-header safe areas, vertical rhythm, and a measured lane.
+It never wraps a virtualized list in another scroller. `PageIntro` may be caption-only when the
+native header is the route heading.
+
 ## Route screens that need a test are thin entrypoints over a feature `ui/` module (or a shared `@/components` module for shell screens)
 
 Expo Router's `require.context` bundles **every** `*.tsx` under `src/app/` as a route — a colocated `*.test.tsx` drags `@testing-library/react-native` (Node-only `console`/`picocolors`) into the Metro bundle and breaks it. The `routes-not-importable` lint then forbids importing the route from a test elsewhere.

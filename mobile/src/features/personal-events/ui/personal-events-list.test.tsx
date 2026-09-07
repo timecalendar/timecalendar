@@ -20,6 +20,7 @@ jest.mock("@/features/personal-events/data", () => ({
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: unknown }) => children,
+  Stack: { Screen: () => null },
 }))
 
 const mockUsePersonalEvents = usePersonalEvents as jest.MockedFunction<

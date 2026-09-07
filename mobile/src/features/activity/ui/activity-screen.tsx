@@ -9,11 +9,11 @@ import {
   StyleSheet,
   View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { EmptyState } from "@/components/empty-state"
+import { developerActivityArtwork } from "@/components/empty-state-artwork"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
 import {
   loadOlderPage,
   markActivityReadFromCache,
@@ -52,7 +52,6 @@ export function ActivityScreen() {
   const [olderFailed, setOlderFailed] = useState(false)
   const olderInFlight = useRef(false)
   const markedOnMount = useRef(false)
-  const { laneStyle, onLayout } = useAdaptiveLayout("standard")
 
   const sections = useMemo(() => buildActivitySections(logs), [logs])
   const refreshFailed =
@@ -98,69 +97,66 @@ export function ActivityScreen() {
   )
 
   return (
-    <ThemedView style={styles.container}>
+    <>
       <Stack.Screen options={{ title: t("activity.title") }} />
-      <SafeAreaView
-        testID="activity-layout-owner"
-        onLayout={onLayout}
-        style={styles.safeArea}
-        edges={["bottom", "left", "right"]}
-      >
-        {!loaded ? (
-          <View style={[laneStyle, styles.stateLane]}>
-            <View style={styles.centered} testID="activity-loading">
-              <ActivityIndicator
-                color={theme.primary}
-                accessibilityLabel={t("activity.loading")}
-              />
+      <RootPage testID="activity-layout-owner" lane="standard">
+        {({ laneStyle }) =>
+          !loaded ? (
+            <View style={[laneStyle, styles.stateLane]}>
+              <View style={styles.centered} testID="activity-loading">
+                <ActivityIndicator
+                  color={theme.primary}
+                  accessibilityLabel={t("activity.loading")}
+                />
+              </View>
             </View>
-          </View>
-        ) : sections.length === 0 && refreshFailed ? (
-          <View style={[laneStyle, styles.stateLane]}>
-            <FullError onRetry={refresh} />
-          </View>
-        ) : (
-          <SectionList<ActivityItem, ActivitySection>
-            testID="activity-section-list"
-            sections={sections}
-            keyExtractor={(item) => item.key}
-            stickySectionHeadersEnabled={false}
-            refreshControl={refreshControl}
-            onEndReached={loadOlder}
-            ListHeaderComponent={
-              refreshFailed ? <CachedError onRetry={refresh} /> : null
-            }
-            ListEmptyComponent={<EmptyState />}
-            ListFooterComponent={
-              <OlderFooter
-                loading={loadingOlder}
-                failed={olderFailed}
-                onRetry={loadOlder}
-              />
-            }
-            contentContainerStyle={[laneStyle, styles.content]}
-            renderSectionHeader={({ section }) => (
-              <ActivityGroupHeader
-                section={section}
-                time={formatFullDateTime(
-                  section.log.createdAt,
-                  locale,
-                  displayZone,
-                )}
-              />
-            )}
-            renderItem={({ item }) => (
-              <ActivityItemRow
-                item={item}
-                formatTime={(start, end) =>
-                  formatEventDateRange(start, end, locale, false, displayZone)
-                }
-              />
-            )}
-          />
-        )}
-      </SafeAreaView>
-    </ThemedView>
+          ) : sections.length === 0 && refreshFailed ? (
+            <View style={[laneStyle, styles.stateLane]}>
+              <FullError onRetry={refresh} />
+            </View>
+          ) : (
+            <SectionList<ActivityItem, ActivitySection>
+              testID="activity-section-list"
+              sections={sections}
+              keyExtractor={(item) => item.key}
+              stickySectionHeadersEnabled={false}
+              refreshControl={refreshControl}
+              onEndReached={loadOlder}
+              ListHeaderComponent={
+                refreshFailed ? <CachedError onRetry={refresh} /> : null
+              }
+              ListEmptyComponent={<ActivityEmptyState />}
+              ListFooterComponent={
+                <OlderFooter
+                  loading={loadingOlder}
+                  failed={olderFailed}
+                  onRetry={loadOlder}
+                />
+              }
+              contentContainerStyle={[laneStyle, styles.content]}
+              renderSectionHeader={({ section }) => (
+                <ActivityGroupHeader
+                  section={section}
+                  time={formatFullDateTime(
+                    section.log.createdAt,
+                    locale,
+                    displayZone,
+                  )}
+                />
+              )}
+              renderItem={({ item }) => (
+                <ActivityItemRow
+                  item={item}
+                  formatTime={(start, end) =>
+                    formatEventDateRange(start, end, locale, false, displayZone)
+                  }
+                />
+              )}
+            />
+          )
+        }
+      </RootPage>
+    </>
   )
 }
 
@@ -270,18 +266,16 @@ function ActivityItemRow({
   )
 }
 
-function EmptyState() {
+function ActivityEmptyState() {
   const { t } = useTranslation()
   return (
-    <ThemedText
+    <EmptyState
       testID="activity-empty"
-      themeColor="textSecondary"
-      accessibilityLiveRegion="polite"
-      accessibilityRole="text"
-      style={styles.centeredText}
-    >
-      {t("activity.empty")}
-    </ThemedText>
+      variant="screen"
+      title={t("activity.empty.title")}
+      caption={t("activity.empty.caption")}
+      artwork={developerActivityArtwork}
+    />
   )
 }
 
@@ -399,8 +393,6 @@ function OlderFooter({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
   content: {
     flexGrow: 1,
     paddingBottom: Spacing.four,

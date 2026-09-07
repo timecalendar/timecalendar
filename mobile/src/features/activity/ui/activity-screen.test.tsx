@@ -112,63 +112,74 @@ afterEach(() => {
 })
 
 describe.each([
-  ["en", "No recent changes. Timetable updates will appear here."],
+  ["en", "No recent changes", "Timetable updates will appear here."],
   [
     "fr",
-    "Aucune modification récente. Les changements d'emploi du temps apparaîtront ici.",
+    "Aucune modification récente",
+    "Les changements d'emploi du temps apparaîtront ici.",
   ],
-] as const)("ActivityScreen states in %s", (locale, emptyCopy) => {
-  beforeEach(async () => {
-    await i18n.changeLanguage(locale)
-  })
-
-  it("renders loading", async () => {
-    mockUseActivityLogs.mockReturnValue({ logs: [], loaded: false })
-    await render(<ActivityScreen />)
-    expect(screen.getByTestId("activity-loading")).toBeTruthy()
-  })
-
-  it("renders the exact empty sentence", async () => {
-    await render(<ActivityScreen />)
-    expect(screen.getByText(emptyCopy)).toBeTruthy()
-  })
-
-  it("renders populated history", async () => {
-    mockUseActivityLogs.mockReturnValue({
-      logs: [populatedLog()],
-      loaded: true,
+] as const)(
+  "ActivityScreen states in %s",
+  (locale, emptyTitle, emptyCaption) => {
+    beforeEach(async () => {
+      await i18n.changeLanguage(locale)
     })
-    await render(<ActivityScreen />)
-    expect(screen.getByText("Computer Science")).toBeTruthy()
-    expect(screen.getByText("Event new")).toBeTruthy()
-  })
 
-  it("keeps cached history when refresh fails", async () => {
-    mockUseActivityLogs.mockReturnValue({
-      logs: [populatedLog()],
-      loaded: true,
+    it("renders loading", async () => {
+      mockUseActivityLogs.mockReturnValue({ logs: [], loaded: false })
+      await render(<ActivityScreen />)
+      expect(screen.getByTestId("activity-loading")).toBeTruthy()
     })
-    mockUseActivityScreenRefresh.mockReturnValue({
-      outcome: { status: "failed", reason: "network" },
-      isRefreshing: false,
-      refresh: mockScreenRefresh,
-    })
-    await render(<ActivityScreen />)
-    expect(screen.getByTestId("activity-cached-error")).toBeTruthy()
-    expect(screen.getByText("Event new")).toBeTruthy()
-  })
 
-  it("renders a full empty failure without the empty sentence", async () => {
-    mockUseActivityScreenRefresh.mockReturnValue({
-      outcome: { status: "failed", reason: "network" },
-      isRefreshing: false,
-      refresh: mockScreenRefresh,
+    it("renders the exact illustrated empty title and caption", async () => {
+      await render(<ActivityScreen />)
+      expect(screen.getByText(emptyTitle)).toBeTruthy()
+      expect(screen.getByText(emptyCaption)).toBeTruthy()
+      expect(
+        screen.getByTestId("activity-empty-artwork", {
+          includeHiddenElements: true,
+        }),
+      ).toHaveProp("accessible", false)
     })
-    await render(<ActivityScreen />)
-    expect(screen.getByTestId("activity-empty-error")).toBeTruthy()
-    expect(screen.queryByText(emptyCopy)).toBeNull()
-  })
-})
+
+    it("renders populated history", async () => {
+      mockUseActivityLogs.mockReturnValue({
+        logs: [populatedLog()],
+        loaded: true,
+      })
+      await render(<ActivityScreen />)
+      expect(screen.getByText("Computer Science")).toBeTruthy()
+      expect(screen.getByText("Event new")).toBeTruthy()
+    })
+
+    it("keeps cached history when refresh fails", async () => {
+      mockUseActivityLogs.mockReturnValue({
+        logs: [populatedLog()],
+        loaded: true,
+      })
+      mockUseActivityScreenRefresh.mockReturnValue({
+        outcome: { status: "failed", reason: "network" },
+        isRefreshing: false,
+        refresh: mockScreenRefresh,
+      })
+      await render(<ActivityScreen />)
+      expect(screen.getByTestId("activity-cached-error")).toBeTruthy()
+      expect(screen.getByText("Event new")).toBeTruthy()
+    })
+
+    it("renders a full empty failure without the empty sentence", async () => {
+      mockUseActivityScreenRefresh.mockReturnValue({
+        outcome: { status: "failed", reason: "network" },
+        isRefreshing: false,
+        refresh: mockScreenRefresh,
+      })
+      await render(<ActivityScreen />)
+      expect(screen.getByTestId("activity-empty-error")).toBeTruthy()
+      expect(screen.queryByText(emptyTitle)).toBeNull()
+      expect(screen.queryByText(emptyCaption)).toBeNull()
+    })
+  },
+)
 
 describe("ActivityScreen behavior", () => {
   it.each([

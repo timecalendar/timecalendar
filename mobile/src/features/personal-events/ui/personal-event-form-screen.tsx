@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router"
+import { Stack, useLocalSearchParams } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -11,7 +11,7 @@ import { useDisplayZone } from "@/features/settings/prefs"
 import { PersonalEventEditor } from "./personal-event-editor"
 
 export default function PersonalEventFormScreen() {
-  const { i18n } = useTranslation()
+  const { i18n, t } = useTranslation()
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const { uid } = useLocalSearchParams<{ uid?: string }>()
@@ -22,7 +22,15 @@ export default function PersonalEventFormScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen
+        options={{
+          title:
+            uid === undefined
+              ? t("personalEvents.form.createTitle")
+              : t("personalEvents.form.editTitle"),
+        }}
+      />
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
         <PersonalEventEditor
           key={editorKey}
           uid={uid}

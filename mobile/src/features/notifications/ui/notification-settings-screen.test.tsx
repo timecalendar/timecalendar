@@ -5,6 +5,8 @@ import { useNotificationPreferences } from "@/features/notifications/data"
 
 import NotificationSettingsScreen from "./notification-settings-screen"
 
+jest.mock("expo-router", () => ({ Stack: { Screen: () => null } }))
+
 // Proof the screen resolves through the real theme + i18n trees and is wired to
 // the feature data hook (mocked here): a control change drives the matching
 // mutator (which the data layer's own tests prove persists + re-PUTs), and the
@@ -63,9 +65,11 @@ describe("NotificationSettingsScreen", () => {
     },
   )
 
-  it("renders the localized title + control labels (not raw keys)", async () => {
-    const { getByText } = await render(<NotificationSettingsScreen />)
-    expect(getByText("Notifications")).toBeTruthy()
+  it("renders localized controls without a duplicate page title", async () => {
+    const { getByText, queryByText } = await render(
+      <NotificationSettingsScreen />,
+    )
+    expect(queryByText("Notifications")).toBeNull()
     expect(getByText("Notification frequency")).toBeTruthy()
     expect(getByText("Enable notifications")).toBeTruthy()
   })

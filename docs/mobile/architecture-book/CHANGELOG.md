@@ -2,6 +2,10 @@
 
 ## 2026-09-07
 
+- Added ADR 054 and the shared compact root Stack, measured page/intro, illustrated empty-state,
+  semantic filled-action, and keyboard-safe action-region contracts. Activity, Hidden events, and
+  the personal-event editor are the representative consumers; platform-native action placement
+  and screen/list/safe-area ownership remain feature-owned.
 - Staged ADR 047's approved export-guide amendment: when the native mandatory guide is implemented,
   production manual-import, QR, and iCal routes require an in-memory completion proof while the
   draft remains process-ephemeral; a persisted catalogue is content cache and cannot restore the

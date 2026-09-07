@@ -1,4 +1,4 @@
-import { Link } from "expo-router"
+import { Link, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -28,19 +28,18 @@ export function PersonalEventsList() {
 
   return (
     <ThemedView style={styles.container}>
+      <Stack.Screen options={{ title: t("personalEvents.list.title") }} />
       <SafeAreaView
         testID="personal-events-responsive-owner"
         style={styles.safeArea}
         onLayout={layout.onLayout}
+        edges={["bottom", "left", "right"]}
       >
         <View
           testID="personal-events-responsive-lane"
           style={[layout.laneStyle, styles.lane]}
         >
           <View style={styles.header}>
-            <ThemedText type="title">
-              {t("personalEvents.list.title")}
-            </ThemedText>
             <Link href="/personal-event-form" asChild>
               <Pressable
                 testID="personal-events-add"

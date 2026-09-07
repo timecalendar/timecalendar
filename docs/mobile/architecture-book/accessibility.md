@@ -1,6 +1,6 @@
 # Accessibility
 
-The lint half is a set of `react-native-a11y` + `i18next` rules (see [Lint & format](./lint-format.md)); the runtime half is the heading-role contract in `ThemedText` and accessible async status. Each entry below is a live rule plus the caveats tooling can't carry — where a rule is encoded in a component or stays prose, it's because lint *cannot* see the intent (R-1).
+The lint half is a set of `react-native-a11y` + `i18next` rules (see [Lint & format](./lint-format.md)); the runtime half is the heading-role contract in `ThemedText` and accessible async status. Each entry below is a live rule plus the caveats tooling can't carry — where a rule is encoded in a component or stays prose, it's because lint _cannot_ see the intent (R-1).
 
 ## What lint enforces
 
@@ -17,10 +17,14 @@ These rules guard real product touchables (interactive controls declare `accessi
 ## Accessible async status
 
 - Loading/error text carries `accessibilityLiveRegion="polite"` (Android announces the change) and a status role (`text` / `alert`), so assistive tech conveys the state rather than reading a silent node.
+- Shared empty states expose localized title then caption as the complete meaning and hide optional
+  artwork from the accessibility tree. They add no motion. `PrimaryAction` keeps one translated
+  button label, reports disabled/busy state on that button, blocks repeat activation, and hides its
+  progress indicator from focus. See ADR [054](./decisions/054-shared-root-page-semantics.md).
 
 ## Proof in CI
 
-- `src/components/themed-text.test.tsx` renders title/subtitle through the real accessibility tree and asserts `getByRole("header")` finds the node — a *resolved semantic*, not merely that a prop was passed. It also covers the negative path (default variant has no header role) and explicit-role-wins. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
+- `src/components/themed-text.test.tsx` renders title/subtitle through the real accessibility tree and asserts `getByRole("header")` finds the node — a _resolved semantic_, not merely that a prop was passed. It also covers the negative path (default variant has no header role) and explicit-role-wins. Gated by the `test-mobile` job (tsc + lint + Jest), R-1.
 
 ## What lint can't encode → prose, each with reason + owner
 
@@ -28,7 +32,7 @@ None of these is a sound lint rule; each is recorded so the owning step/feature 
 
 - **Dynamic Type / font scaling** — RN `Text` scales with the OS font size by default; the posture is **never** pass `allowFontScaling={false}`. A `no-restricted-syntax` guard is deferred debt, added the day someone reaches for it.
 - **Touch-target minimums (44pt iOS / 48dp Android)** — a runtime layout property, not statically checkable. Owned by interactive controls and the [Definition of Done](./definition-of-done.md) (Accessibility axis).
-- **Meaningful labels** — lint guarantees a label *exists* on a touchable, never that it's *meaningful* or correctly translated; human review + the translated-copy rule cover semantics.
+- **Meaningful labels** — lint guarantees a label _exists_ on a touchable, never that it's _meaningful_ or correctly translated; human review + the translated-copy rule cover semantics.
 - **Manual screen-reader passes (VoiceOver / TalkBack)** — focus order, grouping, announcement quality: runtime behavior no static tool can assert. Owned by the [Definition of Done](./definition-of-done.md) (Accessibility axis).
 - **Reduced motion** — **discharged by each animation owner**: Splash handles its own `AccessibilityInfo.isReduceMotionEnabled` branch ([features.md → Splash](./features.md#splash)), while onboarding owns a live read/subscription through `useReducedMotion` and snaps its pager plus decorative entrance/indicator transitions. Lint cannot know which motion is decorative or whether a runtime preference reaches every animation, so any future animation inherits the same feature-level obligation; a `no-restricted-syntax` guard remains day-an-offender-appears debt.
 - **Color contrast** — a theme-token property, not lint-encodable; **discharged by theming**: the AA-verified token pairs are documented in `src/theme/tokens.ts` and the [Theming & native-chrome](./theming.md) file; the DoD's manual contrast review checks rendered screens against them. A runtime/CI checker stays deferred (its trigger is recorded there).

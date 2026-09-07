@@ -14,6 +14,7 @@ import { Platform, StyleSheet } from "react-native"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { queryClient } from "@/api/query-client"
+import { buildCompactRootScreenOptions } from "@/components/chrome"
 import { runMigrations } from "@/db/migrate"
 import {
   useActivityForegroundRefresh,
@@ -104,6 +105,7 @@ function ActivityRuntime() {
 export default function RootLayout() {
   const colorScheme = useColorScheme()
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
+  const rootScreenOptions = buildCompactRootScreenOptions(navTheme.colors.card)
   return (
     // GestureHandlerRootView is the outermost wrapper because the calendar
     // (calendar-kit) requires a gesture-handler root ancestor (Phase-04 / ADR
@@ -125,20 +127,20 @@ export default function RootLayout() {
           <NotificationRegistration />
           <NotificationTapRouting />
           <ThemeProvider value={navTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="profile" />
-              <Stack.Screen name="onboarding" />
+            <Stack screenOptions={rootScreenOptions}>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="profile" options={{ headerShown: false }} />
+              <Stack.Screen name="more" options={{ headerShown: false }} />
               <Stack.Screen
-                name="appearance-settings"
-                options={{ headerShown: true }}
+                name="onboarding"
+                options={{ headerShown: false }}
               />
-              <Stack.Screen name="about" options={{ headerShown: true }} />
-              <Stack.Screen name="changelog" options={{ headerShown: true }} />
+              <Stack.Screen name="appearance-settings" />
+              <Stack.Screen name="about" />
+              <Stack.Screen name="changelog" />
               <Stack.Screen
                 name="changelog-sheet"
                 options={{
-                  headerShown: true,
                   presentation:
                     Platform.OS === "ios" ? "formSheet" : "fullScreenModal",
                   sheetAllowedDetents: [1],
@@ -149,10 +151,7 @@ export default function RootLayout() {
                 reached from Settings, mirroring appearance settings. Header
                 shown for the accessible back affordance + the screen's own
                 title. Deep-linkable: timecalendar-dev://timezone-settings. */}
-              <Stack.Screen
-                name="timezone-settings"
-                options={{ headerShown: true }}
-              />
+              <Stack.Screen name="timezone-settings" />
               <Stack.Screen name="personal-event-form" />
               {/* The standalone personal-events list, relocated off the Home tab
                 (ADR 022 — the Home tab is now the today view). A Stack sibling of
@@ -163,41 +162,29 @@ export default function RootLayout() {
                 accessible back affordance (the screen sets its localized title
                 via its own <Stack.Screen options>). Deep-linkable:
                 timecalendar-dev://event-details/<uid>. */}
-              <Stack.Screen
-                name="event-details/[uid]"
-                options={{ headerShown: true }}
-              />
+              <Stack.Screen name="event-details/[uid]" />
               {/* The hidden-events management screen (Phase 05 Ship A) — a Stack
                 sibling of (tabs), reached from Settings, where
                 hide-by-name (no per-event details surface) is un-hideable.
                 Header shown for the accessible back affordance + the screen's
                 own title. Deep-linkable: timecalendar-dev://hidden-events. */}
-              <Stack.Screen
-                name="hidden-events"
-                options={{ headerShown: true }}
-              />
+              <Stack.Screen name="hidden-events" />
               {/* The Activity timeline — a Stack sibling of (tabs), reached from
                 Settings. Deep-linkable: timecalendar-dev://activity. */}
-              <Stack.Screen name="activity" options={{ headerShown: true }} />
+              <Stack.Screen name="activity" />
               {/* The notification subscription preferences screen (Phase 06 Ship
                 B) — a Stack sibling of (tabs), reached from Settings,
                 mirroring appearance settings / hidden-events. Header shown for the
                 accessible back affordance + the screen's own title.
                 Deep-linkable: timecalendar-dev://notification-settings. */}
-              <Stack.Screen
-                name="notification-settings"
-                options={{ headerShown: true }}
-              />
-              <Stack.Screen name="feedback" options={{ headerShown: true }} />
+              <Stack.Screen name="notification-settings" />
+              <Stack.Screen name="feedback" />
               {/* The user-calendars management screen ("Mes calendriers") — a
                 Stack sibling of (tabs), reached from the Settings summary, where
                 a held calendar's visibility is toggled and a calendar deleted.
                 Header shown for the accessible back affordance + the screen's own
                 title. Deep-linkable: timecalendar-dev://user-calendars. */}
-              <Stack.Screen
-                name="user-calendars"
-                options={{ headerShown: true }}
-              />
+              <Stack.Screen name="user-calendars" />
               {/* The dev-only import deep-link target (ADR 030) — a Stack sibling
                 of (tabs), the E2E seam that makes the app durably hold a seeded
                 calendar token so real synced data renders. Headerless (it self-
