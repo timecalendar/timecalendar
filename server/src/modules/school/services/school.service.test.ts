@@ -4,6 +4,7 @@ import { schoolProfileFactory } from "modules/school/factories/school-profile.fa
 import { SchoolModule } from "modules/school/school.module"
 import { SchoolService } from "modules/school/services/school.service"
 import createTestApp from "test-utils/create-test-app"
+import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-guide-catalogue.store"
 
 describe("SchoolService", () => {
   let app: NestExpressApplication
@@ -21,6 +22,32 @@ describe("SchoolService", () => {
       expect(schools.length).toBe(1)
       expect(schools[0].name).toBe("My Gaming Academia")
       expect(schools[0].imageUrlDark).toBeNull()
+      expect(schools[0].exportGuide).toMatchObject({
+        providerSlug: "groups",
+        catalogueVersion: expect.any(String),
+      })
+    })
+
+    it("captures one catalogue snapshot for every row", async () => {
+      await schoolFactory().create({ name: "School A" })
+      await schoolFactory().create({ name: "School B" })
+      const versions = (await service.findSchools()).schools.map(
+        ({ exportGuide }) => exportGuide.catalogueVersion,
+      )
+      expect(new Set(versions).size).toBe(1)
+    })
+
+    it("fails closed when no active snapshot is available", async () => {
+      const repository = app.get(ExportGuideCatalogueStore)
+      const spy = jest.spyOn(repository, "capture").mockReturnValueOnce({
+        activeVersion: "",
+        active: repository.capture().active,
+        retained: repository.capture().retained,
+      })
+      await expect(service.findSchools()).rejects.toThrow(
+        "Export-guide snapshot unavailable",
+      )
+      spy.mockRestore()
     })
   })
 

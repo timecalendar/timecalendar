@@ -12,24 +12,38 @@ import ensureNotNull from "modules/shared/utils/types/ensure-not-null"
 
 @Injectable()
 export class SchoolMapper {
-  toSchoolForList({
-    assistant,
-    fallbackAssistant,
-    ...school
-  }: School): SchoolForList {
+  toSchoolForList(
+    { assistant, fallbackAssistant, ...school }: School,
+    catalogueVersion: string,
+  ): SchoolForList {
+    const configuredAssistant = getSchoolAssistant(assistant)
+    const legacyAssistant =
+      configuredAssistant ?? ensureNotNull(getSchoolAssistant("generic"))
+    if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(assistant))
+      throw new Error("Invalid export-guide provider slug")
     return {
       ...school,
       imageUrl: S3_PUBLIC_BUCKET_CLIENT_URL + school.imageUrl,
       imageUrlDark: school.imageUrlDark
         ? S3_PUBLIC_BUCKET_CLIENT_URL + school.imageUrlDark
         : null,
-      assistant: ensureNotNull(getSchoolAssistant(assistant)),
+      assistant: legacyAssistant,
       fallbackAssistant: getSchoolAssistant(fallbackAssistant) ?? undefined,
+      exportGuide: {
+        providerSlug: assistant,
+        requireProgramme: legacyAssistant.requireCalendarName,
+        requireConnect: legacyAssistant.requireIntranetAccess,
+        catalogueVersion,
+      },
     }
   }
 
-  toSchoolForSeo(school: School, profile?: SchoolProfile): SchoolForSeo {
-    const schoolForList = this.toSchoolForList(school)
+  toSchoolForSeo(
+    school: School,
+    catalogueVersion: string,
+    profile?: SchoolProfile,
+  ): SchoolForSeo {
+    const schoolForList = this.toSchoolForList(school, catalogueVersion)
 
     return {
       ...schoolForList,

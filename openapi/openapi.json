@@ -221,6 +221,168 @@
         ]
       }
     },
+    "/v1/export-guides": {
+      "get": {
+        "operationId": "ExportGuideV1Controller_findCatalogue",
+        "parameters": [
+          {
+            "name": "locale",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fr",
+                "en"
+              ]
+            }
+          },
+          {
+            "name": "clientSchema",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": 1,
+              "type": "number",
+              "enum": [
+                1
+              ]
+            }
+          },
+          {
+            "name": "catalogueVersion",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 1,
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "headers": {
+              "ETag": {
+                "description": "Strong validator for the exact representation",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "fr",
+                    "en"
+                  ]
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportGuideCatalogueV1Dto"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The exact strong validator matched; response has no body",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "fr",
+                    "en"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportGuideErrorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportGuideErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportGuideErrorDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get an active or retained export-guide catalogue",
+        "tags": [
+          "Export Guides"
+        ]
+      }
+    },
+    "/feature-flags/evaluate": {
+      "get": {
+        "operationId": "FeatureFlagController_evaluateFlags",
+        "parameters": [
+          {
+            "name": "keys",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureFlagEvaluationResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Evaluate multiple feature flags",
+        "tags": [
+          "feature-flags"
+        ]
+      }
+    },
     "/calendar-logs/search": {
       "post": {
         "operationId": "CalendarLogController_getCalendarLogs",
@@ -492,37 +654,6 @@
           "Contact"
         ]
       }
-    },
-    "/feature-flags/evaluate": {
-      "get": {
-        "operationId": "FeatureFlagController_evaluateFlags",
-        "parameters": [
-          {
-            "name": "keys",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FeatureFlagEvaluationResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Evaluate multiple feature flags",
-        "tags": [
-          "feature-flags"
-        ]
-      }
     }
   },
   "info": {
@@ -669,6 +800,33 @@
           "isNative"
         ]
       },
+      "SchoolExportGuideRefV1": {
+        "type": "object",
+        "properties": {
+          "providerSlug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "description": "Raw server-configured export-guide provider slug"
+          },
+          "requireProgramme": {
+            "type": "boolean"
+          },
+          "requireConnect": {
+            "type": "boolean"
+          },
+          "catalogueVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "providerSlug",
+          "requireProgramme",
+          "requireConnect",
+          "catalogueVersion"
+        ]
+      },
       "SchoolForList": {
         "type": "object",
         "properties": {
@@ -719,6 +877,9 @@
           },
           "fallbackAssistant": {
             "$ref": "#/components/schemas/SchoolAssistant"
+          },
+          "exportGuide": {
+            "$ref": "#/components/schemas/SchoolExportGuideRefV1"
           }
         },
         "required": [
@@ -732,7 +893,8 @@
           "visible",
           "createdAt",
           "updatedAt",
-          "assistant"
+          "assistant",
+          "exportGuide"
         ]
       },
       "FindSchoolsRepDto": {
@@ -904,6 +1066,9 @@
           "fallbackAssistant": {
             "$ref": "#/components/schemas/SchoolAssistant"
           },
+          "exportGuide": {
+            "$ref": "#/components/schemas/SchoolExportGuideRefV1"
+          },
           "profile": {
             "$ref": "#/components/schemas/SchoolProfileGet"
           }
@@ -919,8 +1084,211 @@
           "visible",
           "createdAt",
           "updatedAt",
-          "assistant"
+          "assistant",
+          "exportGuide"
         ]
+      },
+      "ExportGuideCompatibilityV1Dto": {
+        "type": "object",
+        "properties": {
+          "minClientSchema": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          },
+          "maxClientSchema": {
+            "type": "number",
+            "minimum": 1,
+            "example": 1
+          }
+        },
+        "required": [
+          "minClientSchema",
+          "maxClientSchema"
+        ]
+      },
+      "ExportGuideImageV1Dto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048
+          },
+          "mimeType": {
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ],
+            "type": "string"
+          },
+          "byteSize": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 1048576
+          },
+          "width": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 4096
+          },
+          "height": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 4096
+          },
+          "altText": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "caption": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "url",
+          "mimeType",
+          "byteSize",
+          "width",
+          "height",
+          "altText"
+        ]
+      },
+      "ExportGuidePageV1Dto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "image": {
+            "$ref": "#/components/schemas/ExportGuideImageV1Dto"
+          }
+        },
+        "required": [
+          "title",
+          "description"
+        ]
+      },
+      "ExportGuideProviderV1Dto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pages"
+            ],
+            "example": "pages"
+          },
+          "selectable": {
+            "type": "boolean"
+          },
+          "compatibility": {
+            "$ref": "#/components/schemas/ExportGuideCompatibilityV1Dto"
+          },
+          "thumbnail": {
+            "$ref": "#/components/schemas/ExportGuideImageV1Dto"
+          },
+          "pages": {
+            "minItems": 1,
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExportGuidePageV1Dto"
+            }
+          }
+        },
+        "required": [
+          "slug",
+          "label",
+          "kind",
+          "selectable",
+          "compatibility",
+          "pages"
+        ]
+      },
+      "ExportGuideCatalogueV1Dto": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "enum": [
+              1
+            ],
+            "example": 1
+          },
+          "catalogueVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "locale": {
+            "enum": [
+              "fr",
+              "en"
+            ],
+            "type": "string"
+          },
+          "providers": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExportGuideProviderV1Dto"
+            }
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "catalogueVersion",
+          "locale",
+          "providers"
+        ]
+      },
+      "ExportGuideErrorDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 503
+          },
+          "message": {
+            "type": "string",
+            "example": "Export guide catalogue unavailable"
+          },
+          "error": {
+            "type": "string",
+            "example": "Service Unavailable"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ]
+      },
+      "FeatureFlagEvaluationResponseDto": {
+        "type": "object",
+        "properties": {}
       },
       "GetCalendarLogsDto": {
         "type": "object",
@@ -1468,10 +1836,6 @@
           "email",
           "message"
         ]
-      },
-      "FeatureFlagEvaluationResponseDto": {
-        "type": "object",
-        "properties": {}
       }
     }
   }
