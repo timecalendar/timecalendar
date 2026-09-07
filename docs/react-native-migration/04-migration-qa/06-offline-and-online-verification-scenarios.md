@@ -82,15 +82,18 @@ throws a migrated student back into onboarding. Covers
 
 **Offline expected result.**
 
-- The splash appears and dismisses. No crash, no white screen, no infinite spinner.
-- The app opens to the **Accueil** tab. It does **not** open onboarding, and it never shows a
+- The splash remains visible until the migration reaches a terminal journal state, then dismisses.
+  Ten seconds or longer is allowed; an unbounded hang is not. No migration warning or recovery UI
+  appears.
+- The app opens to the **Calendrier** tab, matching `SEED-A-06`. It does **not** open onboarding,
+  and it never shows a
   sign-in screen (there is no account — [D-21](./02-persisted-data-inventory.md#d-21)).
 - **À propos** shows version `4.x`.
 - The Calendrier tab shows **no courses** and the "Aucun événement sur cette période." empty
   state. ✅ **This is correct and expected** — timetable courses are server-owned and deliberately
   not migrated ([D-12](./02-persisted-data-inventory.md#d-12)); they come back in `ON-01`.
-- A **sync error banner** ("Impossible d'actualiser votre calendrier…") may appear because the
-  startup sync cannot reach the network. That is expected offline behaviour, not a failure.
+- A **sync error banner** ("Impossible d'actualiser votre calendrier…") may appear only after the
+  migration gate releases and startup sync begins. That is expected offline behavior.
 - Time-to-interactive is not a pass criterion here, but record it — `OFF-19` compares it against
   the large pack.
 
@@ -209,12 +212,10 @@ Accueil or Calendrier.
 - `PE-A2` and `PE-A1` both render on `D0` and visibly overlap on the Calendrier grid.
 - The list is not empty and does not show "Aucun événement. Appuyez sur Ajouter pour en créer un."
 
-**Colour note.** Compare the *rendered* colour against the `BASE-04` screenshots. The seed
-instructions require creating events in light mode precisely so the stored hex equals the picked
-hex ([D-05](./02-persisted-data-inventory.md#d-05)). If a colour is visibly lighter or darker than
-baseline, record it as an observation and reference
-[Q-07](./09-open-engineering-questions.md#q-07--how-should-a-dark-mode-lightened-colour-be-treated-on-import)
-rather than guessing whether it is a defect.
+**Colour rule.** Approved diagnostics must show the target `#RRGGBB` value is byte-for-byte equal
+to the stored Flutter value, including letter case ([D-05](./02-persisted-data-inventory.md#d-05)).
+Do not transform it for dark mode. Record the rendered comparison too, but a small dark-mode
+visual difference is acceptable when the stored value is exact.
 
 **Online expected result.** Personal events must be unchanged by the first sync — see `ON-02`.
 
@@ -514,7 +515,7 @@ notes), and not on every launch (an unclosable nag). Covers
 
 ---
 
-## `OFF-12` — Theme observation (and RN-only language/timezone defaults)
+## `OFF-12` — Preserved theme and RN-only language/timezone defaults
 
 **Purpose / risk.** Low stakes but highly visible: a student who chose dark mode should not be
 blinded on first launch. Also confirms the RN-only preferences default sanely. Covers
@@ -538,32 +539,27 @@ dark mode.
 3. Read **Thème**, **Langue**.
 4. Back → **Fuseau horaire**.
 
-**Offline observation / expected RN-only defaults.**
+**Offline expected result.**
 
-- Record **Thème** and the rendered appearance. If it is **Sombre**, the optional preference was
-  imported; if it is **Système**, it was not. Neither observation is a pass/fail result for D-14
-  until [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy)
-  settles whether theme import is required.
+- **Thème** = **Sombre** and the app renders dark even though the device is light. Theme import is
+  required. A valid legacy `dark_mode` is used only when `theme` is absent.
 - **Langue** = **Système** (RN-only; nothing to import —
   [D-24](./02-persisted-data-inventory.md#d-24)). The app's text is French on a French device.
 - **Fuseau horaire** = **Automatique (fuseau de l'appareil)**.
 
-Only the RN-only language/timezone defaults have settled pass/fail expectations here. State exactly
-what theme behavior you observed; do not convert the unresolved product contract into a failure.
-
 **Online expected result.** n/a.
 
-**Result:** ☐ RECORDED ☐ BLOCKED
+**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
 **Notes:**
 **Evidence:** `[Apparence et langue screenshot]` `[app screenshot showing dark rendering with device in light mode]`
 
 ---
 
-## `OFF-13` — Flutter preferences and features with no RN counterpart
+## `OFF-13` — Preserved and deliberately dropped calendar preferences
 
-**Purpose / risk.** Four calendar preferences, the Activité feature, and its two badge keys exist
-in Flutter and have **no target** in RN. This scenario does not assert a behaviour — it **records
-the actual state** so engineering can confirm the drop is intended. Covers
+**Purpose / risk.** This proves the allowlist boundary: weekend visibility and startup tab are
+preserved, while view type, group-colour mode, hour height, and legacy Activity cache state are
+deliberately dropped. Covers
 [D-13](./02-persisted-data-inventory.md#d-13), [D-16](./02-persisted-data-inventory.md#d-16),
 [D-17](./02-persisted-data-inventory.md#d-17), [D-20](./02-persisted-data-inventory.md#d-20).
 
@@ -575,33 +571,21 @@ the actual state** so engineering can confirm the drop is intended. Covers
 
 **Baseline.** `BASE-11`.
 
-**Steps and what to record.** This is an observation sheet, not a pass/fail gate.
+**Steps and expected values.**
 
-| Flutter setting (baseline) | Where to look in RN | Record |
+| Flutter setting (baseline) | Where to look in RN | Expected |
 | --- | --- | --- |
-| Vue **Planning** | Calendrier tab — which view is active on launch (Jour / Semaine / Agenda) | |
-| Afficher les week-ends **off** | Calendrier — are Saturday and Sunday columns shown? | |
-| Couleurs par groupe **on** | Calendrier / Accueil — are same-type courses coloured alike? (needs `ON-01` first) | |
-| Démarrage sur **Calendrier** | Which tab is selected on launch | |
-| Hour height (pinched) | Calendrier — grid density | |
-| Activité feature | Is there any Activité / activity screen anywhere in Réglages? | |
-
-**Offline expected result** (what the source says will happen, for context, not as a gate):
-
-- The calendar opens in **Semaine**, because RN's view is component state initialised to `"week"`
-  and is not persisted ([D-16](./02-persisted-data-inventory.md#d-16)).
-- Weekends are shown; there is no weekend preference in RN.
-- There is no "colours by group" preference in RN.
-- The app opens on **Accueil**; there is no startup-screen preference in RN.
-- There is no Activité screen ([D-13](./02-persisted-data-inventory.md#d-13)).
-
-Any of these differing from the above is itself worth recording — it would mean an RN surface
-exists that this inventory did not find.
+| Vue **Planning** | Calendrier tab — which view is active | RN default **Semaine**; dropped |
+| Afficher les week-ends **off** | Calendrier columns | Saturday/Sunday hidden; preserved |
+| Couleurs par groupe **on** | Calendrier / Accueil after `ON-01` | RN default colour behavior; dropped |
+| Démarrage sur **Calendrier** | Selected tab immediately after the gate | **Calendrier**; preserved |
+| Hour height (pinched) | Calendrier grid density | RN default density; dropped |
+| Flutter Activity cache/badge | RN Activity surface before/after `ON-01` | no legacy rows/badge imported; current RN Activity re-syncs |
 
 **Online expected result.** Re-check the "couleurs par groupe" row after `ON-01`, once courses
-exist to be coloured.
+exist to be coloured, and confirm the Activity surface contains only server-refetched state.
 
-**Result:** ☐ RECORDED ☐ BLOCKED
+**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
 **Notes:**
 **Evidence:** `[Calendrier screenshot]` `[Réglages full screenshot]`
 **Cross-reference:** [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped), [Q-08](./09-open-engineering-questions.md#q-08--is-the-activité-feature-intentionally-not-ported)
@@ -632,14 +616,12 @@ selection. Covers [D-23](./02-persisted-data-inventory.md#d-23).
 
 **Offline expected result.**
 
-- You land on **Accueil** every time. No onboarding, no welcome pager, no school picker.
+- You land on **Calendrier** every time because `SEED-A-06` selected that startup tab. No
+  onboarding, welcome pager, or school picker appears.
 - The **Vos calendriers** summary shows the migrated calendar(s) and their school count — it does
   **not** show "Ajoutez votre premier calendrier".
-- If the school *name* appears anywhere sourced from the school-selection store rather than the
-  calendar row, note whether it is present or blank — that distinguishes "the selection was
-  synthesised from the calendar" from "the selection is simply absent", which is exactly what
-  [Q-06](./09-open-engineering-questions.md#q-06--should-the-importer-seed-the-rn-school-selection-from-user_calendarsschoolid)
-  asks.
+- Approved diagnostics show school selection remains absent and migration-specific onboarding
+  suppression is set. Do not accept a fabricated school/group selection.
 
 **Online expected result.** n/a.
 
@@ -649,11 +631,10 @@ selection. Covers [D-23](./02-persisted-data-inventory.md#d-23).
 
 ---
 
-## `OFF-15` — Notification preferences default sanely
+## `OFF-15` — Notification enabled is preserved; horizon defaults to 7 days
 
-**Purpose / risk.** RN's notification preferences have no faithful Flutter counterpart (the Flutter
-UI was disabled and the RN defaults deliberately differ). Confirm the migrated app lands on the RN
-defaults and not on something invalid. Covers [D-18](./02-persisted-data-inventory.md#d-18),
+**Purpose / risk.** The enabled flag is allowlisted while the old 14-day horizon is deliberately
+dropped. Confirm both halves of that contract and the RN-only frequency default. Covers [D-18](./02-persisted-data-inventory.md#d-18),
 [D-25](./02-persisted-data-inventory.md#d-25).
 
 **Platforms.** iOS + Android. **Packs.** A, B.
@@ -662,7 +643,7 @@ defaults and not on something invalid. Covers [D-18](./02-persisted-data-invento
 
 **Flutter setup.** None beyond `SEED-A-01` (the Flutter keys carry their defaults).
 
-**Baseline.** —
+**Baseline.** `BASE-15`.
 
 **Steps.**
 
@@ -671,15 +652,14 @@ defaults and not on something invalid. Covers [D-18](./02-persisted-data-invento
 
 **Offline expected result.**
 
-- Notifications **active** (the RN default is opt-in true).
+- Notifications **active**, matching the seeded Flutter value.
 - Days-ahead = **7** — note that this deliberately differs from Flutter's `date_limit` default of
   14 (`mobile/src/features/notifications/data/types.ts` documents the choice). It is not a
   migration failure.
 - Frequency = **immediately** (RN-only, no Flutter equivalent).
 - No control shows an out-of-range or blank value.
 
-If days-ahead shows **14**, the importer copied `date_limit` — also fine, but record it, because
-it answers [Q-05](./09-open-engineering-questions.md#q-05--should-flutters-notification-preferences-be-imported).
+Days-ahead **14** is a failure: `date_limit` is outside the allowlist.
 
 **Online expected result.** See `ON-04` for the actual subscription registration.
 
@@ -833,7 +813,8 @@ where a technically-correct import can still be unusable. Covers
 [D-11](./02-persisted-data-inventory.md#d-11). UID-hidden completeness is proved after refetch in
 `ON-05`, not from the offline screen.
 
-**Platforms.** At least one per release; prefer Android, and the slower device if available.
+**Platforms.** The low-end supported device for every candidate release; prefer Android if only
+one low-end slot is available.
 **Packs.** B only.
 
 **Preconditions.** Global. `SEED-B` fully seeded and baselined.
@@ -854,11 +835,13 @@ where a technically-correct import can still be unusable. Covers
    even-numbered items are the checked ones.
 4. **Hidden list.** Scroll the whole **Événements masqués** screen; count the by-name section.
    Do not expect unresolved uid rows before sync.
-5. **Usability.** Record, informally:
-   - Time from tap to interactive on first launch (compare with `OFF-01`'s pack-A figure).
+5. **Release-mode timing and memory.** Record with approved diagnostics:
+   - tap-to-terminal-migration and tap-to-interactive durations (compare with `OFF-01` pack A);
+   - parser, SQLite-apply, MMKV-apply, and verification durations;
+   - peak process memory and peak JS-heap measure available on the platform;
    - Whether scrolling **Mes événements** is smooth end-to-end.
    - Whether opening an event's details feels immediate.
-   - Whether the app is ever unresponsive for more than ~2 s.
+   - Whether the splash stays visible until settlement and whether any post-splash freeze occurs.
 
 **Offline expected result.**
 
@@ -875,15 +858,15 @@ where a technically-correct import can still be unusable. Covers
 - Every checklist reads `PREMIER` → … → `DERNIER`.
 - The app is usable: no ANR, no crash, no multi-second freeze.
 
-> This is **not** a performance certification ([Non-goals](./README.md#non-goals)). Record numbers
-> as observations. "Launch took 6 s with 60 events vs 2 s with 5" is a useful, reportable fact; it
-> is not a pass/fail threshold.
+> There is no migration wall-clock SLO: ten seconds or longer may be valid. Record exact numbers so
+> release review can distinguish bounded work from a hang and decide whether the JavaScript parser
+> remains appropriate.
 
 **Online expected result.** Repeat the counts after `ON-01` — see `ON-02`.
 
 **Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
 **Notes:**
-**Evidence:** `[count screenshots for each surface]` `[sentinel screenshots]` `[scroll recording]` `[launch timing notes]`
+**Evidence:** `[count screenshots for each surface]` `[sentinel screenshots]` `[scroll recording]` `[release-mode stage timing and peak-memory trace]`
 
 ---
 
@@ -926,6 +909,44 @@ Covers [D-29](./02-persisted-data-inventory.md#d-29).
 
 ---
 
+## `OFF-21` — Partial recovery is invisible and its report waits offline
+
+**Purpose / risk.** Proves best-effort recovery, the lack of a migration-specific warning, and
+the independently retried report outbox.
+
+**Platforms.** iOS + Android instrumented migration build. **Pack.** Synthetic malformed fixture
+from [07](./07-failure-restart-and-recovery-scenarios.md), not a production user's file.
+
+**Preconditions.** The fixture contains at least one valid calendar, event, checklist, hidden
+entry, and preference, plus one invalid sibling and a truncated final JSONL line. Network is off.
+
+**Steps.**
+
+1. Install the RN build in place and launch it offline.
+2. Observe the whole first launch, then verify every valid fixture value and the expected skipped
+   values through the UI/sanitized inspector.
+3. Inspect the journal and report outbox with approved diagnostics.
+4. Force-quit and relaunch offline; repeat step 3.
+5. Only after the rest of the offline suite is complete, reconnect and wait for outbox delivery.
+
+**Expected result.**
+
+- The splash remains until the attempt settles. No migration warning, recovery screen, or skip
+  prompt appears.
+- Valid siblings import; the invalid record and truncated tail do not.
+- The journal is `SETTLED_PARTIAL`, remains terminal after restart, and does not duplicate data.
+- Exactly one sanitized report with the stable report ID is queued offline. Its counts and bounded
+  error codes match the fixture and contain none of the fixture's private marker values.
+- Reconnect delivers that report idempotently; local acknowledgement does not reopen migration.
+
+**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
+
+**Notes:**
+
+**Evidence:** `[first-launch recording]` `[sanitized journal/outbox before restart]` `[same state after restart]` `[server acknowledgement after reconnect]`
+
+---
+
 # Part B — Online scenarios
 
 **Global preconditions for every `ON-*` scenario:**
@@ -958,10 +979,9 @@ Covers [D-01](./02-persisted-data-inventory.md#d-01), [D-12](./02-persisted-data
 3. Compare the visible week against the `BASE-03` screenshot.
 4. Open `COURSE-1` and compare every displayed field available in `BASE-03`: title, start/end,
    all-day/timed placement, room, description, teachers, tag names, cancellation state, and colour.
-5. On Android when database extraction is available, decode one `calendar_events` row and record
-   the exact `uid`, both colours, all three timestamps, parent calendar id, `type`, full teachers
-   array, each tag's `{name,color,icon}`, and the full custom-fields object. Mark unavailable fields
-   `NOT OBSERVABLE` on iOS/store builds; do not guess them from the UI.
+5. Open the RN **Activité** surface and let its post-gate fetch complete.
+6. When sanitized database diagnostics are available, compare one synthetic fixture row locally.
+   Record field-presence/equality checks, not raw row content, identifiers, or private values.
 
 **Online expected result.**
 
@@ -970,6 +990,8 @@ Covers [D-01](./02-persisted-data-inventory.md#d-01), [D-12](./02-persisted-data
   supplied by the reference course is recorded as empty, not silently skipped.
 - The set of courses matches what Flutter showed in `BASE-03` (minus the hidden ones — see
   `ON-05`).
+- The Activity feature exists and loads its RN server-owned state. It does not display imported
+  Flutter cache or badge state.
 - No sync error banner persists after a successful refresh.
 
 **A permanently empty calendar after a successful network sync is the strongest possible signal
@@ -978,7 +1000,7 @@ row. Record it as `FAIL` on both `ON-01` and, retroactively noted, `OFF-02`.
 
 **Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
 **Notes:**
-**Evidence:** `[Calendrier after sync screenshot]` `[COURSE-1 details screenshot]` `[side-by-side with BASE-03]`
+**Evidence:** `[Calendrier after sync screenshot]` `[COURSE-1 details screenshot]` `[Activity state screenshot]` `[side-by-side with BASE-03]`
 
 ---
 
@@ -1207,6 +1229,7 @@ degrades after several. This is the cheapest way to catch a per-sync leak. Cover
 | `OFF-18` | D-01, D-04, D-06 |
 | `OFF-19` | D-02, D-04, D-06, D-08, D-11 |
 | `OFF-20` | D-29 |
+| `OFF-21` | partial recovery, terminal journal, report outbox |
 | `ON-01` | D-01, D-12 |
 | `ON-02` | D-01, D-04 |
 | `ON-03` | D-06, D-07 |

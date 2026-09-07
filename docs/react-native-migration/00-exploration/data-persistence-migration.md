@@ -1,5 +1,11 @@
 # TimeCalendar → React Native: on-device data persistence & migration
 
+> **Historical research note:** this document records the initial investigation. The delivery
+> contract, resolved allowlist, recovery policy, startup state machine, and remaining device-proof
+> requirements now live in
+> [`../05-tech-specs/data-migration.md`](../05-tech-specs/data-migration.md). Where the two differ,
+> the technical specification is authoritative.
+
 > **The blocker this answers:** when we ship the RN binary over the Flutter one, what happens to user data already stored on the device, and can we read it from the RN side?
 >
 > **Short answer: yes, the data survives the update and is retrievable — but not automatically.** RN's default storage tools won't read Flutter's stores; we read them deliberately, once, on first RN launch.
@@ -55,26 +61,29 @@ Not all of this matters equally. The migration only needs to *preserve* what can
 
 | Platform | Where Flutter writes | Gotcha |
 | --- | --- | --- |
-| **iOS** | `NSUserDefaults`, **every key prefixed `flutter.`** (e.g. `flutter.dark_mode`) — **confirmed on device** in `Library/Preferences/fr.samuelprak.timecalendar.plist`: `flutter.theme`, `flutter.dark_mode`, `flutter.calendar_view_type`, `flutter.show_weekends`, `flutter.current_version`, etc. | RN `AsyncStorage` uses a *file* store on iOS, not `NSUserDefaults` — a plain AsyncStorage read finds nothing. |
+| **iOS** | `NSUserDefaults`, **every key prefixed `flutter.`** (e.g. `flutter.dark_mode`) — **confirmed in an iOS simulator** in `Library/Preferences/<bundle-id>.plist`: `flutter.theme`, `flutter.dark_mode`, `flutter.calendar_view_type`, `flutter.show_weekends`, `flutter.current_version`, etc. | RN `AsyncStorage` uses a *file* store on iOS, not `NSUserDefaults` — a plain AsyncStorage read finds nothing. |
 | **Android** | XML file `FlutterSharedPreferences.xml`, also `flutter.`-prefixed | RN `AsyncStorage` uses SQLite (`RKStorage`) — different file. |
 
-**How to read it:** go to the *native* prefs directly — e.g. `react-native-default-preference` (lets you point at the `NSUserDefaults` suite / the Android prefs file name), strip the `flutter.` prefix, write into the RN store. Fully doable.
+**How to read it:** the canonical specification selects a narrow local Expo module that reads only
+the approved keys from the native suite/file and strips the `flutter.` prefix.
 
-> ⚠️ Version caveat: newer `shared_preferences` can use `SharedPreferencesAsync` (Android `DataStore`) as its backend, which changes the Android write location. Confirm which backend `2.5.5` uses on Android before relying on `FlutterSharedPreferences.xml` ([§6](#6-verify-before-you-trust-this)).
+> The pinned released code calls the synchronous legacy API. Its Android implementation uses
+> native `FlutterSharedPreferences` XML, not `SharedPreferencesAsync`/DataStore. Physical path and
+> in-place survival remain device evidence gates.
 
 ### 3.2 `sembast` (the real data)
 
 Located at `<AppDocuments>/simple_database.db` (`simple_database.dart:18-19`).
 
-- **Format:** plain-text **JSONL**, append-only log. First line is metadata (version / sembast), then one JSON record per line; deletes are tombstones. Unencrypted. **Confirmed on device** — `file` reports it as `JSON data`, e.g.:
+- **Format:** plain-text **JSONL**, append-only log. First line is metadata (version / sembast), then one JSON record per line; deletes are tombstones. Unencrypted. **Confirmed in an iOS simulator** — `file` reports it as `JSON data`, e.g.:
   ```
   {"version":3,"sembast":1}
-  {"key":"700ff…","store":"user_calendars","value":{…,"token":"AdWBldUNaMhQfLjGrsAlN",…}}
+  {"key":"calendar-id","store":"user_calendars","value":{…,"token":"<redacted>",…}}
   {"key":"-Ouw…","store":"calendar_events","value":{…}}
   {"key":"-Ouw…","deleted":true,"store":"calendar_events"}        ← tombstone
-  {"key":"5ea1…","store":"personal_events","value":{"title":"Test on device",…}}
+  {"key":"event-id","store":"personal_events","value":{"title":"<redacted>",…}}
   ```
-- **No RN library exists** for sembast — but we don't need one. Read the file (`react-native-fs` / `expo-file-system`) and **replay the log** in JS: apply records in order, last-write-wins per `(store, key)`, drop tombstones. The parser below was run against the real device file and correctly recovered the calendar token and personal event (and collapsed an add→delete→re-add of the same `calendar_events` key to a single live record):
+- **No RN library exists** for sembast — but we don't need one. Read the file with Expo FileSystem and **replay the log** in JS: apply records in order, last-write-wins per `(store, key)`, drop tombstones. The parser below was run against the simulator file and correctly recovered the expected calendar and personal-event records (and collapsed an add→delete→re-add of the same `calendar_events` key to a single live record):
   ```js
   function loadSembast(raw) {
     const lines = raw.split("\n").filter((l) => l.trim());
@@ -102,8 +111,8 @@ Don't port the *storage engine*. Run a one-shot native migration the first time 
 
 1. **Recover the irreplaceable set only:** read sembast JSONL → extract `user_calendars.token`, `personal_events`, `checklist_items`, `hidden_events` → write into the new RN data layer.
 2. **Re-sync the rest from the server** using the recovered token(s) — do **not** migrate `calendar_events` / `calendar_logs`; let them rehydrate.
-3. **Optionally** copy `flutter.`-prefixed settings for UX continuity (theme, view type). Low stakes.
-4. **Set a `migration_done` flag** so it runs exactly once.
+3. Copy only the preference allowlist in the canonical specification.
+4. Use the canonical journal and three terminal outcomes rather than a single done flag.
 
 This shrinks the scary part from "port two databases" to "recover ~4 small things, then let the server rehydrate everything else." Much lower risk, and it aligns with the app's already-local-first, server-rehydratable design ([reference doc §0](./reference-stack-grounded.md)).
 
@@ -114,19 +123,21 @@ This shrinks the scary part from "port two databases" to "recover ~4 small thing
 The genuine data-loss exposure is `personal_events` / `checklist_items` / `hidden_events` — **no server backup exists**, so a bug in the migration code means permanent loss for that user. Treat the migration as a first-class, tested feature:
 
 - Test against a **real pre-update install** (capture a device's `simple_database.db` + prefs, run the migration, diff the result).
-- Ship the migration behind the `migration_done` flag so a crash mid-migration can be retried, not skipped.
-- Consider a one-release **safety net**: keep the old sembast file on disk (don't delete) until the next release, so a botched migration is recoverable.
+- Use the explicit journal so a crash mid-migration retries without overwriting RN data.
+- Keep the old Sembast file and Flutter preferences indefinitely.
 
 ---
 
-## 6. Device verification (done)
+<a id="6-device-verification-done"></a>
+## 6. Simulator verification and remaining device proof
 
-Verified against a live iOS simulator (iPhone 17 Pro, iOS 26.1) with the current Flutter app installed and real user data (a calendar subscription + a hand-created personal event):
+Verified against a live iOS simulator with the current Flutter app and controlled test data:
 
 - [x] **sembast format confirmed.** `simple_database.db` lives at `<container>/Documents/simple_database.db`, is `JSON data` (JSONL), and the [§3.2](#32-sembast-the-real-data) replay parser recovered the `user_calendars` token and the `personal_events` record. Tombstone + last-write-wins logic verified (an add→delete→re-add of one `calendar_events` key collapsed to a single live record).
 - [x] **shared_preferences format confirmed (iOS).** `flutter.`-prefixed keys present in `Library/Preferences/fr.samuelprak.timecalendar.plist` exactly as predicted.
 
 Still open (not testable from the iOS simulator alone):
 
-- [ ] **Android backend.** Confirm whether `shared_preferences` 2.5.5 uses the legacy `SharedPreferences` (XML `FlutterSharedPreferences.xml`) or `SharedPreferencesAsync` (`DataStore`) backend on Android — it changes the read location. iOS is settled.
+- [x] **Android backend selected by code.** The synchronous API uses legacy `SharedPreferences`
+  XML. Physical presence and update survival remain unverified.
 - [ ] **Android sembast path.** Confirm `getApplicationDocumentsDirectory()` → the equivalent Android dir and that the file survives the binary swap there (it should; verify on a test device).

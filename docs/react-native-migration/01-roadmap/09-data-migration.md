@@ -1,35 +1,57 @@
 # Phase 09 — On-device data migration
 
-> **Goal:** the one-shot, first-RN-launch importer that recovers existing users' irreplaceable on-device data when the RN binary lands on top of Flutter. **Non-negotiable** — there is no server backup for personal events / checklists / hidden events.
+> **Goal:** a one-shot, first-RN-launch importer that recovers existing users' irreplaceable
+> on-device data when the RN binary replaces Flutter in place. There is no server backup for
+> personal events, checklists, hidden events, or calendar tokens.
 >
-> **Depends on:** all data-owning schemas existing (Phases 03 + 05). **Modules:** new `migration` module. **Full research (device-verified):** [`../00-exploration/data-persistence-migration.md`](../00-exploration/data-persistence-migration.md).
+> **Canonical implementation contract:**
+> [`../05-tech-specs/data-migration.md`](../05-tech-specs/data-migration.md)
 >
-> **Acceptance suite:** [`../04-migration-qa/`](../04-migration-qa/README.md) — the manual QA playbook that verifies this phase on a real in-place store update (data inventory, seed packs, iOS/Android execution, offline+online scenarios, recovery checks, report template). Its [open questions](../04-migration-qa/09-open-engineering-questions.md) list what this phase still has to decide.
+> **Acceptance suite:** [`../04-migration-qa/`](../04-migration-qa/README.md)
+> **Historical research:**
+> [`../00-exploration/data-persistence-migration.md`](../00-exploration/data-persistence-migration.md)
 
-## Rough steps
+## Delivery outline
 
-1. **Read legacy stores natively** on first launch:
-   - **sembast** `simple_database.db` (JSONL) → replay the log (last-write-wins, drop tombstones) per the verified parser in the research doc §3.2.
-   - **shared_preferences** (`flutter.`-prefixed) → native prefs read.
-   - Validate `flutter.current_version` as a finite, non-negative safe integer and call
-     Changelog's exported `setChangelogSeenVersion` **before `(tabs)` can mount**. In
-     particular, importing Flutter value 3 must allow the bundled version 4 sheet to show
-     once and then persist 4. Implementing this native import remains Phase 09 scope.
-2. **Recover the irreplaceable set only:** `user_calendars.token`, `personal_events`, `checklist_items`, `hidden_events` → write into the new RN schemas (Phases 03/05).
-3. **Re-sync everything else** from the server using the recovered token(s) — do **not** migrate `calendar_events` / `calendar_logs`.
-4. **Optionally** copy `flutter.`-prefixed settings (theme, view type) for UX continuity.
-5. **`migration_done` flag** so it runs exactly once; crash-mid-migration is retried, not skipped.
-6. **Safety net:** keep the old sembast file on disk for one release so a botched migration is recoverable.
+1. Block app readiness on Drizzle schema migrations, environment-reset recovery, and the legacy
+   import journal. Tabs, onboarding, changelog, initial sync, and push registration mount only
+   after the importer reaches a terminal state.
+2. Read `simple_database.db` as bounded, streaming Sembast JSONL and read only the allowlisted
+   `flutter.` native preferences through a narrow local Expo module.
+3. Import calendars/tokens, personal events, checklist items, hidden events, changelog version,
+   theme, notifications enabled, startup tab, and weekend visibility. Imported calendars suppress
+   onboarding without fabricating a school selection.
+4. Deliberately drop timetable/activity caches, group-colour mode, calendar view type, hour
+   height, notification horizon, and every preference outside the allowlist. Server-owned data
+   re-syncs after the gate.
+5. Apply insert-if-absent/identical/conflict semantics. Existing divergent RN data always wins.
+   Recover valid siblings from partially malformed input and report skipped data.
+6. Journal `IN_PROGRESS` work across SQLite and MMKV so every process-kill boundary retries
+   idempotently. Terminal outcomes are `SETTLED_SUCCESS`, `SETTLED_PARTIAL`, or
+   `SETTLED_FAILED` and never rerun automatically.
+7. Enqueue one privacy-safe, idempotent first-party report for every terminal result. Upload is
+   independent of startup and retries after the app mounts.
+8. Keep the Flutter database and preference keys indefinitely. Do not build a reverse bridge or a
+   user-facing migration/recovery flow.
 
 ## Exit criteria
 
-- Migration tested against a **real pre-update install** (capture device `simple_database.db` + prefs, run, diff) on **both** iOS and Android.
-- The open Android items from the research (prefs backend + sembast path) are confirmed.
-- Idempotent (flag-guarded), with the one-release safety net in place.
-- Passes full DoD, held to the highest bar (this is the riskiest code in the project).
+- The canonical specification's automated fixtures pass, including version transforms,
+  last-write-wins/tombstones, malformed and truncated records, collision/no-overwrite cases,
+  every crash boundary, resource limits, and offline report-outbox delivery.
+- A physical iPhone passes a signed internal TestFlight Flutter→RN update without uninstalling,
+  followed by the final production App Store update gate.
+- A physical Android device passes a signed Play internal/closed Flutter→RN update without
+  uninstalling, followed by the final public Play update gate.
+- Android's released preference XML, document path, backup behavior, and in-place survival are
+  proven on device; iOS container and preference survival are proven on a physical device.
+- Release-mode timing and peak-memory evidence exists on low-end supported hardware.
+- Migration reports, privacy controls, dashboards, staged-rollout thresholds, and rollback
+  criteria are operational before rollout.
 
-## Risks & decisions
+## Risk posture
 
-- **Permanent data loss if wrong.** This is the single most dangerous feature — treat it as such: extensive fixtures, real-device dumps, retry-safe.
-- Built **late** (needs target schemas) but its **target shape was considered early** (Phases 02/03/05 designed schemas to receive recovered records).
-  </content>
+This remains the highest-risk migration feature because an incorrect import can permanently lose
+device-only work. It is built after all target schemas exist, uses no-overwrite writes and an
+explicit journal, and is released through staged whole-app cohorts. The operational stop is to
+pause store rollout and ship a corrected build; silently disabling the importer is not safe.

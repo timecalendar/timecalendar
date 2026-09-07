@@ -18,10 +18,10 @@ identifier is unchanged. Both apps use `fr.samuelprak.timecalendar`
 - `<container>/Library/Preferences/fr.samuelprak.timecalendar.plist` — the `flutter.`-prefixed
   preferences — are still there.
 
-Both were confirmed on a real device
+Both were inspected in an iOS simulator, not yet on a physical distribution-signed device
 ([`../00-exploration/data-persistence-migration.md` §6](../00-exploration/data-persistence-migration.md#6-device-verification-done)).
-The data being physically present is *not* the thing under test — reading it is. That is why the
-network must be off before the swap.
+Their physical survival and the import itself are therefore part of this test. The network must be
+off before first RN launch so a refetch cannot hide a failed import.
 
 ---
 
@@ -89,9 +89,10 @@ happened offline.
 > sync and change the baseline. If the Flutter app is launched at any point after the baseline was
 > recorded, re-verify the baseline before continuing.
 
-**Alternative — App Store path.** If the RN build has been released to the App Store rather than
-TestFlight, use App Store → Updates → Update instead. Everything else is identical. Record which
-path you used.
+**Two required release gates.** First run this procedure with the internal TestFlight build. Before
+broad rollout, repeat it with the production App Store update. The internal pass finds defects;
+the final public-listing pass proves the released signing and update identity. Record the path in
+each report.
 
 ### `MIG-IOS-06` — Confirm it is an update, not a second app
 
@@ -121,8 +122,8 @@ the state every `OFF-*` scenario assumes.
 
 1. Tap the TimeCalendar icon.
 2. **Start a screen recording** if your device supports it — the first launch is the only chance
-   to capture a one-shot behaviour like the changelog sheet (`OFF-11`) or a migration progress
-   indicator.
+   to capture one-shot behavior such as the changelog sheet (`OFF-11`) and the splash remaining
+   visible for the invisible migration gate.
 3. Do not tap anything until the app has settled.
 
 Proceed to [06 — Offline verification](./06-offline-and-online-verification-scenarios.md),
@@ -166,9 +167,9 @@ If a Mac with Xcode is available and the build is a development-signed one:
   question.
 
 > **Container download does not work for App Store / TestFlight distribution-signed builds.** If
-> it is unavailable, record `REC-04` as **"not verifiable on this build"** and note
-> [Q-11](./09-open-engineering-questions.md#q-11--is-the-one-release-sembast-safety-net-implemented).
-> Do not mark it `FAIL` — you could not observe it.
+> it is unavailable, use the approved migration diagnostics to record only source presence, size,
+> journal state, counters, and sanitized report fields. Indefinite legacy retention is a release
+> requirement, not an optional observation; missing evidence keeps the gate open.
 
 ### Crash evidence
 

@@ -8,7 +8,7 @@
 
 ---
 
-## 1. The four places data lives
+## 1. The four persistence systems involved
 
 ### 1.1 Flutter — sembast document database
 
@@ -18,7 +18,7 @@ One file, `simple_database.db`, in the app's documents directory
 `main.dart` right after preferences are loaded (`app/lib/main.dart:51-54`).
 
 The format is plain-text **JSONL**, unencrypted, append-only, with tombstones for deletes — a
-line per write, last-write-wins per `(store, key)`. This was confirmed on a real iOS device
+line per write, last-write-wins per `(store, key)`. This was confirmed in an iOS simulator
 ([`../00-exploration/data-persistence-migration.md` §3.2, §6](../00-exploration/data-persistence-migration.md#32-sembast-the-real-data)).
 
 Six stores:
@@ -36,17 +36,18 @@ Six stores:
 
 Key/value settings, loaded at startup (`app/lib/main.dart:51-52`) by
 `app/lib/modules/settings/providers/settings_provider.dart`. On iOS these land in
-`NSUserDefaults` with **every key prefixed `flutter.`** (device-confirmed:
-`Library/Preferences/fr.samuelprak.timecalendar.plist`). On Android the prefix is the same but
-the backend is unconfirmed — see [Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use).
+`NSUserDefaults` with **every key prefixed `flutter.`** (simulator-confirmed:
+`Library/Preferences/<bundle-id>.plist`). Pinned Android plugin code confirms the
+synchronous API uses native `FlutterSharedPreferences` XML with the same prefix, not DataStore;
+signed-device presence and survival remain an evidence gate — see
+[Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use).
 
 ### 1.3 React Native — SQLite via Drizzle
 
-One database, `timecalendar.db` (`mobile/src/db/index.ts`), with four tables declared in
-`mobile/src/db/schema.ts`: `personal_events`, `user_calendars`, `calendar_events`,
-`checklist_items`. Their columns mirror the Flutter wire format **verbatim** — this is a
-deliberate design constraint so the importer can write recovered rows with no transformation
-(the schema file says so at every table). Schema migrations run at startup
+One database, `timecalendar.db` (`mobile/src/db/index.ts`), with six current tables declared in
+`mobile/src/db/schema.ts`: durable `personal_events`, `user_calendars`, `checklist_items`, plus
+server-owned/cache `calendar_events`, `activity_logs`, and `activity_state`. The durable-table
+columns deliberately receive the normalized Flutter shapes. Schema migrations run at startup
 (`mobile/src/app/_layout.tsx:42` → `mobile/src/db/migrate.ts`).
 
 ### 1.4 React Native — MMKV key/value
@@ -69,8 +70,8 @@ Legend for **Class**:
 | 🔴 **DEVICE** | Device-owned, no server copy. **Must migrate.** Loss is permanent. |
 | 🟡 **SERVER** | Server-owned. May be dropped and refetched. |
 | 🔵 **CACHE** | Derived/temporary. May be rebuilt. |
+| 🔵 **DELIBERATELY DROPPED** | Product decision: do not import; use the RN default or re-sync. |
 | ⚪ **RN-ONLY** | Exists only in RN; nothing in Flutter to migrate from. Verify it defaults sanely. |
-| ❓ **UNKNOWN** | Needs an engineering answer before the expectation can be stated. Linked to a `Q-nn`. |
 
 > ⚠️ The **"Visible offline right after the update"** column states the *intended* behavior — the
 > contract the Phase-09 importer is specified to deliver
@@ -136,7 +137,7 @@ Legend for **Class**:
 | --- | --- |
 | **What / owner** | The `#RRGGBB` string, alpha stripped (`ColorUtils.colorToHex`, `app/lib/modules/shared/utils/color_utils.dart`). **Caveat for baselining:** when the student is in dark mode Flutter *lightens* the chosen colour before storing it (`SettingsProvider.getEventColorToSave` → `ColorUtils.lightenEvent`, +0.28 HSL lightness) and darkens it again for display. So the stored hex is not necessarily the hex the student picked. |
 | **Flutter stores it** | Inside `personal_events.color` |
-| **RN expects it** | `personal_events.color`, text, verbatim (`mobile/src/db/schema.ts:25`) |
+| **RN expects it** | `personal_events.color`, text, exactly as stored (`mobile/src/db/schema.ts:25`). A valid `#RRGGBB` value keeps its original bytes and letter case; a small dark-mode visual difference is accepted. |
 | **Class** | 🔴 **DEVICE** |
 | **Visible offline right after the update** | The event's colour swatch in the list and on the details screen. |
 | **Verified by** | `OFF-04` (and see its note — record the colour *as rendered by Flutter*, and expect RN to render the stored hex without Flutter's dark-mode transform) |
@@ -209,7 +210,7 @@ Legend for **Class**:
 | **What / owner** | The set of course *titles* hidden wholesale ("Masquer tous les événements de même nom"). Same store and same blob as [D-10](#d-10). |
 | **Flutter stores it** | `hidden_events` → `namedHiddenEvents` |
 | **RN expects it** | `hiddenEvents.set` → `namedHiddenEvents` |
-| **Class** | 🔴 **DEVICE**. Note it is classified **`backend-bound`** in RN (`mobile/src/storage/index.ts`), meaning a backend-environment switch wipes it. Production builds lock the environment, so this should not fire in a real upgrade — flagged as [Q-09](./09-open-engineering-questions.md#q-09--is-hiddenevents-being-backend-bound-correct-for-a-migrated-user). |
+| **Class** | 🔴 **DEVICE**. It remains **`backend-bound`** in RN (`mobile/src/storage/index.ts`). Environment-reset recovery completes first and import runs only against production, so a later environment switch follows the normal reset contract ([Q-09](./09-open-engineering-questions.md#q-09--is-hiddenevents-being-backend-bound-correct-for-a-migrated-user)). |
 | **Visible offline right after the update** | Listed under **"Masqués par nom"** on the hidden-events screen. |
 | **Verified by** | `OFF-10`, `ON-05` |
 
@@ -252,14 +253,13 @@ value has a dedicated RN visual surface.
 | --- | --- |
 | **What / owner** | The "Activité" feed of timetable changes. Cached from `GET /calendar-logs` (`app/lib/modules/activity/repositories/calendar_log_repository.dart`). Top-level fields are `id`, `calendarId`, `calendarToken`, `calendarName`, `calendarChange`, `createdAt`, `updatedAt` (`app/lib/modules/activity/models/calendar_log.dart:8-45`). `calendarChange` contains `oldItems[]`, `newItems[]`, and `changedItems[]`; each changed item is an old/new pair. Every nested event contains `uid`, `title`, `startsAt`, `endsAt`, and nullable `location` (`app/lib/modules/activity/models/calendar_change.dart:8-59`; `app/lib/modules/activity/models/calendar_log_event.dart:7-39`). |
 | **Flutter stores it** | sembast `calendar_logs` |
-| **RN expects it** | **Nothing.** There is no activity feature in `mobile/src/features/`. |
-| **Class** | 🟡 **SERVER** + feature not ported |
-| **Visible offline right after the update** | Nothing. The RN app has no Activité screen. |
-| **Verified by** | `OFF-13` (record the absence of the feature; not a data-loss failure — the server holds the logs) |
+| **RN expects it** | SQLite `activity_logs` and `activity_state`, owned by the RN Activity feature. They are populated by the server after the migration gate, not by the importer. |
+| **Class** | 🟡 **SERVER** / cache |
+| **Visible offline right after the update** | No Flutter Activity rows are imported. Before the first RN sync the Activity surface may be empty; after reconnect it refetches normally. |
+| **Verified by** | `OFF-13` (excluded from import), `ON-01` (server-owned data returns) |
 
-There is no per-field RN mapping: **all** top-level fields, the three change collections, both
-members of each changed pair, and every nested event field have **no RN target**. `OFF-13` records
-that no Activité surface exists; it does not attempt to compare a cache the RN product cannot read.
+There is intentionally no Flutter-to-RN per-field mapping. `OFF-13` records that the legacy cache
+is excluded; online verification proves the current RN Activity contract re-syncs independently.
 
 ### 2.3 Preferences — `shared_preferences`
 
@@ -275,8 +275,8 @@ and appear on-device with the `flutter.` prefix.
 | **What / owner** | `theme` ∈ `system` \| `light` \| `dark` (default `system`). `dark_mode` is the pre-2.x legacy boolean, still written, and used once to seed `theme` when `theme` is absent. Settings. |
 | **Flutter stores it** | `flutter.theme` (string), `flutter.dark_mode` (bool) |
 | **RN expects it** | MMKV `settings.themePreference` ∈ `system` \| `light` \| `dark` (`mobile/src/features/settings/prefs/types.ts`) — the **same three values**, so a straight copy is possible. |
-| **Class** | ❓ **UNKNOWN** pending [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy). Roadmap 09 step 4 calls preference copying "optional, for UX continuity"; matching value domains prove only that copying is possible, not that it is required. |
-| **Visible offline right after the update** | **Observe and record** Réglages → Apparence et langue → Thème and the rendered appearance. Do not pass/fail the imported choice until Q-10 settles the contract. |
+| **Class** | 🔴 **DEVICE** — import `theme`; use `dark_mode` only as the documented fallback when `theme` is absent. |
+| **Visible offline right after the update** | Réglages → Apparence et langue → Thème and the rendered appearance match the valid Flutter choice. |
 | **Verified by** | `OFF-12` |
 
 <a id="d-15"></a>
@@ -299,8 +299,8 @@ and appear on-device with the `flutter.` prefix.
 | **What / owner** | `Week` \| `Planning` (`app/lib/modules/calendar/models/ui/calendar_view_type.dart`), default `Week`. Calendar. |
 | **Flutter stores it** | `flutter.calendar_view_type` (string) |
 | **RN expects it** | **Nothing persisted.** The RN calendar view is React state initialised to `"week"` on every launch (`mobile/src/features/calendar/ui/calendar-screen/use-calendar-screen-controller.ts`) — no storage key exists for it. |
-| **Class** | ❓ **UNKNOWN** — [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) |
-| **Visible offline right after the update** | Expected: the calendar opens in week view regardless of the Flutter choice. |
+| **Class** | 🔵 **DELIBERATELY DROPPED** |
+| **Visible offline right after the update** | The calendar opens in the RN default week view regardless of the Flutter choice. |
 | **Verified by** | `OFF-13` |
 
 <a id="d-17"></a>
@@ -310,9 +310,9 @@ and appear on-device with the `flutter.` prefix.
 | --- | --- |
 | **What / owner** | Four more Flutter calendar/app preferences: show weekends in week view (default `true`); colour courses by group rather than individually (default `false`); the pinch-zoom hour height (default `60.0`); which tab opens at launch, `home` \| `calendar` (default `home`). Settings. |
 | **Flutter stores it** | `flutter.show_weekends`, `flutter.colors_by_group`, `flutter.calendar_hour_height`, `flutter.startup_screen` |
-| **RN expects it** | **Nothing.** No corresponding key exists in `STORAGE_KEYS` (`mobile/src/storage/index.ts`) and no RN screen offers these settings. |
-| **Class** | ❓ **UNKNOWN** — [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) |
-| **Visible offline right after the update** | Expected: RN behaves as if all four are at their defaults. |
+| **RN expects it** | The import contract adds `calendar.showWeekends` and `navigation.startupTab`. Group-colour mode and hour height have no target and keep RN defaults. |
+| **Class** | 🔴 **DEVICE** for weekends/startup tab; 🔵 **DELIBERATELY DROPPED** for group colours/hour height |
+| **Visible offline right after the update** | Weekend visibility and startup tab match Flutter. Group-colour mode and hour height use RN defaults. |
 | **Verified by** | `OFF-13` |
 
 <a id="d-18"></a>
@@ -323,8 +323,8 @@ and appear on-device with the `flutter.` prefix.
 | **What / owner** | Flutter's two notification preferences: enabled (default `true`) and the "notify me about the next N days" horizon (default `14`). Both are still **written** by `loadSettings`, but the UI that changed them is commented out and the settings screen shows "Les notifications sont temporairement désactivées" with a permanently disabled switch bound to a *different*, unused key (see [D-19](#d-19)). So in practice every real install carries the defaults. |
 | **Flutter stores it** | `flutter.notification_calendar` (bool), `flutter.date_limit` (int) |
 | **RN expects it** | MMKV `notifications.isActive` (bool, default `true`) and `notifications.nbDaysAhead` (number, default **7**, clamped to 1–30). The RN default deliberately differs from Flutter's 14 (`mobile/src/features/notifications/data/types.ts` documents the choice), and `notifications.frequency` has no Flutter counterpart at all. |
-| **Class** | ❓ **UNKNOWN** — [Q-05](./09-open-engineering-questions.md#q-05--should-flutters-notification-preferences-be-imported) |
-| **Visible offline right after the update** | Expected: **Réglages → Notifications** shows the RN defaults (active, 7 days, immediately). |
+| **Class** | 🔴 **DEVICE** for enabled; 🔵 **DELIBERATELY DROPPED** for horizon |
+| **Visible offline right after the update** | **Réglages → Notifications** preserves enabled/disabled, uses the RN default 7-day horizon, and keeps the RN default frequency. |
 | **Verified by** | `OFF-15` |
 
 <a id="d-19"></a>
@@ -346,8 +346,8 @@ and appear on-device with the `flutter.` prefix.
 | --- | --- |
 | **What / owner** | The Activité feature's unread badge (`new_activity`, default `false`) and its last-checked timestamp (`last_activity_update`, default `0`). |
 | **Flutter stores it** | `flutter.new_activity`, `flutter.last_activity_update` |
-| **RN expects it** | Nothing — the Activité feature is not ported ([D-13](#d-13)). |
-| **Class** | 🔵 **CACHE** (feature not ported) |
+| **RN expects it** | Nothing. The RN Activity feature maintains its own server-derived state ([D-13](#d-13)). |
+| **Class** | 🔵 **CACHE** (deliberately dropped) |
 | **Visible offline right after the update** | Nothing. |
 | **Verified by** | `OFF-13` |
 
@@ -386,9 +386,9 @@ and appear on-device with the `flutter.` prefix.
 | --- | --- |
 | **What / owner** | MMKV `schoolSelection.schoolId` + `schoolSelection.groupValues` (`mobile/src/features/school-selection/store/types.ts`). RN derives "onboarding complete" from the presence of a school selection (`isOnboardingComplete()`). **Flutter has no equivalent key** — its school/grade choices are transient provider state used to build the subscription, and the resulting school identity survives only *inside* the `user_calendars` row (`schoolId`, `schoolName`). |
 | **Flutter stores it** | Nothing directly; `user_calendars.schoolId` / `schoolName` are the only durable trace. |
-| **RN expects it** | The two MMKV keys, both absent on a migrated device unless the importer synthesises them. |
-| **Class** | ❓ **UNKNOWN** — [Q-06](./09-open-engineering-questions.md#q-06--should-the-importer-seed-the-rn-school-selection-from-user_calendarsschoolid) |
-| **Visible offline right after the update** | Expected: the app opens normally (there is no redirect-to-onboarding gate in `mobile/src/app/`), the school-selection state is simply empty. It must **not** send a migrated student back through onboarding. |
+| **RN expects it** | Do not synthesize either school-selection key. The import contract adds `onboarding.migrationSuppressed` and sets it when a valid calendar imports or is already present identically. |
+| **Class** | 🔴 **DEVICE compatibility state** |
+| **Visible offline right after the update** | A migrated student with a valid calendar is not sent through onboarding; school selection remains unset. |
 | **Verified by** | `OFF-01`, `OFF-14` |
 
 <a id="d-24"></a>
@@ -432,7 +432,7 @@ and appear on-device with the `flutter.` prefix.
 
 | | |
 | --- | --- |
-| **What / owner** | MMKV `backendEnvironment.selected` + `backendEnvironment.resetJournal` (`mobile/src/storage/index.ts`). Only meaningful on development / store-preview builds; production is locked. Switching environments runs `clearBackendBoundStorage()` **and** `resetBackendDatabase()`, which deletes every row of `checklist_items`, `calendar_events`, `user_calendars`, `personal_events` (`mobile/src/db/reset.ts`). |
+| **What / owner** | MMKV `backendEnvironment.selected` + `backendEnvironment.resetJournal` (`mobile/src/storage/index.ts`). Only meaningful on development / store-preview builds; production is locked. Switching environments runs `clearBackendBoundStorage()` **and** `resetBackendDatabase()`, which deletes every row of the six application tables (`mobile/src/db/reset.ts`). |
 | **Flutter stores it** | Nothing. |
 | **RN expects it** | Absent on a production build; the environment is fixed. |
 | **Class** | ⚪ **RN-ONLY** — but **operationally dangerous during QA**. |
@@ -440,8 +440,8 @@ and appear on-device with the `flutter.` prefix.
 | **Verified by** | — |
 
 > ⛔ **Tester warning.** If your RN build exposes a backend-environment switch, **do not touch it
-> during a migration pass.** It is a destructive, journaled reset that wipes exactly the four
-> tables this playbook exists to verify, and it will look identical to a migration failure.
+> during a migration pass.** It is a destructive, journaled reset that wipes the backend-bound
+> application tables, and it will look identical to a migration failure.
 > If you switch it by accident, the pass is void — restart at step 1.
 
 <a id="d-28"></a>
@@ -449,7 +449,7 @@ and appear on-device with the `flutter.` prefix.
 
 | | |
 | --- | --- |
-| **What / owner** | `simple_database.db` itself, after the import. Roadmap 09 step 6 specifies keeping it on disk for one release so a botched migration is recoverable. |
+| **What / owner** | `simple_database.db` itself, after the import. The migration contract retains it indefinitely as the recovery and downgrade safety net. |
 | **Flutter stores it** | The app documents directory. |
 | **RN expects it** | To leave it alone. |
 | **Class** | 🔴 **DEVICE** (the recovery copy of everything above) |
@@ -472,16 +472,16 @@ and appear on-device with the `flutter.` prefix.
 
 ## 3. Coverage cross-check
 
-Every inventory row must be covered by at least one scenario, or be explicitly marked as needing
-an engineering answer. This table is the check.
+Every inventory row must be covered by at least one scenario, or be explicitly classified as
+inert/control-only. This table is the check.
 
-| Datum | Class | Scenarios | Open question |
+| Datum | Class | Scenarios | Decision/evidence |
 | --- | --- | --- | --- |
 | [D-01](#d-01) subscription token | 🔴 | `OFF-02`, `ON-01`, `ON-02`, `REC-02` | — |
 | [D-02](#d-02) calendar identity/metadata | 🔴/🟡 | `OFF-02`, `OFF-19` | — |
 | [D-03](#d-03) calendar visibility | 🔴 | `OFF-03` | — |
 | [D-04](#d-04) personal events | 🔴 | `OFF-04`…`OFF-07`, `OFF-16`, `OFF-18`, `OFF-19`, `ON-02` | — |
-| [D-05](#d-05) personal-event colour | 🔴 | `OFF-04` | [Q-07](./09-open-engineering-questions.md#q-07--how-should-a-dark-mode-lightened-colour-be-treated-on-import) |
+| [D-05](#d-05) personal-event colour | 🔴 | `OFF-04` | exact stored value; [Q-07](./09-open-engineering-questions.md#q-07--how-should-a-dark-mode-lightened-colour-be-treated-on-import) |
 | [D-06](#d-06) checklist items | 🔴 | `OFF-08`, `OFF-09`, `OFF-17`, `OFF-18`, `OFF-19`, `ON-03` | — |
 | [D-07](#d-07) checklist↔event link | 🔴 | `OFF-09`, `ON-03` | — |
 | [D-08](#d-08) checklist ordering | 🔴 | `OFF-08`, `OFF-19` | — |
@@ -489,22 +489,22 @@ an engineering answer. This table is the check.
 | [D-10](#d-10) hidden by uid | 🔴 | `OFF-10` (offline limitation recorded), `ON-05` | — |
 | [D-11](#d-11) hidden by name | 🔴 | `OFF-10`, `ON-05` | [Q-09](./09-open-engineering-questions.md#q-09--is-hiddenevents-being-backend-bound-correct-for-a-migrated-user) |
 | [D-12](#d-12) timetable courses | 🟡 | `OFF-01`, `ON-01` | — |
-| [D-13](#d-13) activity log | 🟡 | `OFF-13` | [Q-08](./09-open-engineering-questions.md#q-08--is-the-activité-feature-intentionally-not-ported) |
-| [D-14](#d-14) theme / dark_mode | ❓ | `OFF-12` (observation) | [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy) |
+| [D-13](#d-13) activity log | 🟡 | `OFF-13`, `ON-01` | exclude legacy cache; RN Activity re-syncs |
+| [D-14](#d-14) theme / dark_mode | 🔴 | `OFF-12` | import allowlist |
 | [D-15](#d-15) `current_version` | 🔴 | `OFF-11`, `REC-02` | — |
-| [D-16](#d-16) `calendar_view_type` | ❓ | `OFF-13` | [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) |
-| [D-17](#d-17) weekends / group colours / hour height / startup screen | ❓ | `OFF-13` | [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) |
-| [D-18](#d-18) notification prefs | ❓ | `OFF-15` | [Q-05](./09-open-engineering-questions.md#q-05--should-flutters-notification-preferences-be-imported) |
+| [D-16](#d-16) `calendar_view_type` | 🔵 | `OFF-13` | deliberately dropped |
+| [D-17](#d-17) weekends / group colours / hour height / startup screen | 🔴/🔵 | `OFF-13` | weekends/startup imported; others dropped |
+| [D-18](#d-18) notification prefs | 🔴/🔵 | `OFF-15` | enabled imported; horizon dropped |
 | [D-19](#d-19) `notification_calendar_disabled` | 🔵 | — | — |
 | [D-20](#d-20) activity badge keys | 🔵 | `OFF-13` | — |
 | [D-21](#d-21) account state | ⚪ | `OFF-01` | — |
 | [D-22](#d-22) push token | 🟡 | `ON-04` | — |
-| [D-23](#d-23) school selection | ❓ | `OFF-01`, `OFF-14` | [Q-06](./09-open-engineering-questions.md#q-06--should-the-importer-seed-the-rn-school-selection-from-user_calendarsschoolid) |
+| [D-23](#d-23) school selection | 🔴 | `OFF-01`, `OFF-14` | suppress onboarding; do not synthesize selection |
 | [D-24](#d-24) language / timezone | ⚪ | `OFF-12` | — |
 | [D-25](#d-25) notification frequency | ⚪ | `OFF-15` | — |
 | [D-26](#d-26) query cache | 🔵 | — | — |
 | [D-27](#d-27) backend environment | ⚪ | — | — |
-| [D-28](#d-28) legacy sembast file | 🔴 | `REC-04` | [Q-11](./09-open-engineering-questions.md#q-11--is-the-one-release-sembast-safety-net-implemented) |
+| [D-28](#d-28) legacy Sembast file | 🔴 | `REC-04` | retain indefinitely |
 | [D-29](#d-29) remembered feedback email | ⚪ | `OFF-20` | — |
 
 Three rows have no scenario on purpose: [D-19](#d-19) and [D-26](#d-26) are inert, and

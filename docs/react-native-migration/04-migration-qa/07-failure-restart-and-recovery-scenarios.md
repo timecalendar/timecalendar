@@ -2,12 +2,12 @@
 
 ← [06 — Offline & online verification](./06-offline-and-online-verification-scenarios.md) · [Section index](./README.md) · next: [08 — QA execution report](./08-qa-execution-report-template.md)
 
-> `REC-01` … `REC-07`. The things that actually happen to real students during an update: no
+> `REC-01` … `REC-09`. The things that actually happen to real students during an update: no
 > network, the app gets killed mid-launch, the phone reboots, the sync drops halfway.
 >
-> These are **executable** checks. Fault injection that QA cannot perform reliably — corrupting the
-> sembast file, simulating a disk-full write, forcing a partial import — is deliberately excluded;
-> those belong in unit and integration tests, not in a manual playbook.
+> `REC-01…REC-07` are physical-device checks. `REC-08` and `REC-09` are executable automated or
+> instrumented-build checks for malformed input and the report outbox; they are required release
+> evidence even though a store-installed source file cannot be edited safely.
 
 ---
 
@@ -73,8 +73,9 @@ a failed sync aborts it, the data is gone on the very first launch a real user s
 
 ## `REC-02` — Killed during first launch, then relaunched
 
-**Purpose / risk.** Roadmap 09 step 5 requires the importer to be flag-guarded so that "a crash
-mid-migration is retried, not skipped". This is the executable version of that requirement: kill
+**Purpose / risk.** The migration journal requires an `IN_PROGRESS` attempt to retry, while a
+`SETTLED_SUCCESS`, `SETTLED_PARTIAL`, or `SETTLED_FAILED` result never reruns. This is the
+physical-device version of that requirement: kill
 the app during the window when an import would be running, then check that the retry completes the
 job **once**, rather than skipping it (data loss) or redoing it on top of partial results
 (duplicates). Covers [D-01](./02-persisted-data-inventory.md#d-01),
@@ -83,6 +84,10 @@ job **once**, rather than skipping it (data loss) or redoing it on top of partia
 
 **Platforms.** iOS + Android. **Packs.** B strongly preferred — the large pack widens the window
 during which a kill can land mid-import. Pack A works but the window may be too short to hit.
+
+This manual timing samples real OS termination only. The automated suite must also inject a kill
+before and after journal creation, parse completion, the SQLite transaction, each MMKV participant,
+terminal settlement/outbox insertion, report acceptance, and local delivery acknowledgement.
 
 **Preconditions.** ⚠️ **This scenario must be run on a *fresh* migration**, i.e. as an alternative
 first launch. Once the import has completed, killing the app proves nothing about retry.
@@ -185,10 +190,10 @@ particular run of `REC-03` was not strictly offline.
 
 ---
 
-## `REC-04` — The legacy Flutter data is still on disk (safety net)
+## `REC-04` — The legacy Flutter data is retained indefinitely
 
-**Purpose / risk.** Roadmap 09 step 6 specifies keeping `simple_database.db` on disk for one
-release so a botched migration is recoverable. This scenario checks whether that safety net is
+**Purpose / risk.** The migration contract keeps `simple_database.db` and Flutter preference keys
+indefinitely. This scenario checks whether that safety net is
 actually there — it is the difference between "we can write a recovery build" and "the data is
 gone forever". Covers [D-28](./02-persisted-data-inventory.md#d-28).
 
@@ -218,7 +223,7 @@ Container…**, then inspect `AppData/Documents/`.
 
 - `simple_database.db` is **still present** after the update.
 - `timecalendar.db` **also** exists (the RN database).
-- Both coexisting is the intended state for one release.
+- Both coexist indefinitely. Flutter preference keys are also left untouched.
 
 **Recording rules:**
 
@@ -364,15 +369,75 @@ is `BLOCKED`, not `FAIL`.
 
 ---
 
-## Deliberately excluded
+## `REC-08` — Malformed record and truncated-tail recovery
+
+**Purpose / risk.** Proves that one invalid sibling cannot erase valid device-owned work and that
+a torn final Sembast append does not invalidate the complete prefix.
+
+**Platforms.** iOS + Android automated tests; repeat in a signed instrumented build where the
+fixture-injection seam is available.
+
+**Fixture matrix.** At minimum: one interior malformed JSON line, one schema-invalid record in
+each allowlisted store, one invalid preference beside valid preferences, one invalid hidden-event
+array beside a valid sibling, and one malformed final line without a newline. Also test corrupt
+metadata, a newer source version, and every hard resource limit.
+
+**Expected result.**
+
+- Valid live records/preferences import; invalid siblings and the broken tail are skipped.
+- Partial cases settle exactly once as `SETTLED_PARTIAL`; corrupt metadata, newer version, and hard
+  file/record limits settle `SETTLED_FAILED` without target writes.
+- No migration-specific warning appears. The app continues after the terminal journal/outbox
+  transaction.
+- The retained source is byte-for-byte unchanged.
+- Counters/error codes identify the store/stage but contain no source value or raw line.
+
+**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
+
+**Notes:**
+
+**Evidence:** `[fixture ids and expected outputs]` `[platform test results]` `[sanitized terminal reports]`
+
+---
+
+## `REC-09` — Offline report outbox is independent and idempotent
+
+**Purpose / risk.** A migration completed offline must still enter the rollout denominator, and a
+reporting outage must never block or reopen migration.
+
+**Platforms.** iOS + Android automated/instrumented tests.
+
+**Steps.** Settle one success, partial, and failed fixture while offline. Restart between delivery
+attempts, return online, inject a timeout after the server accepts a report but before the client
+records acknowledgement, and finally replay the same report ID.
+
+**Expected result.**
+
+- Each terminal run creates exactly one immutable outbox payload in the same SQLite transaction
+  as settlement.
+- Startup and target data remain available while delivery is pending.
+- Attempts use bounded backoff. The stable report ID makes server replay idempotent.
+- `2xx` or duplicate acknowledgement marks delivery without changing terminal migration state.
+- Payloads contain the approved metadata/count/error allowlist and none of the fixture's token,
+  event/checklist text, hidden identifiers, preference values, raw file bytes, or source hash.
+
+**Result:** ☐ PASS ☐ FAIL ☐ N/A ☐ BLOCKED
+
+**Notes:**
+
+**Evidence:** `[offline/restart trace]` `[idempotent server rows]` `[privacy assertion]`
+
+---
+
+## Manual-pass exclusions
 
 For the record, so the omissions read as decisions rather than gaps:
 
 | Not covered | Why |
 | --- | --- |
-| Corrupting `simple_database.db` and observing the fallback | Requires root or a debuggable build plus a hand-crafted corrupt file; QA cannot do it reliably or reproducibly on a store install. Belongs in unit tests over fixtures. |
+| Editing `simple_database.db` on a store install | Unsafe and generally inaccessible. The required reproducible coverage is `REC-08` in automated/instrumented tests. |
 | Disk-full during import | Not reliably reproducible on a modern phone without destructive setup. |
-| Forcing a *partial* import (stop after N records) | Requires instrumentation the shipped build does not have. `REC-02`'s kill is the executable approximation. |
+| Forcing a *partial* import by editing a store install | Use `REC-08` fixtures and `OFF-21`; use `REC-02` for the real process-kill path. |
 | Downgrading RN → Flutter | A store downgrade is not a path real students have, and it is a release-rollback question, not a data-migration one. |
 | Migration under a locked device / during a phone call | No plausible distinct failure mode beyond what `REC-06` already covers. |
 | Multi-user / work-profile installs | Out of scope with the device matrix ([01 §5](./01-scope-prerequisites-and-execution-order.md#5-devices)). |
@@ -390,6 +455,8 @@ For the record, so the omissions read as decisions rather than gaps:
 | `REC-05` | D-04, D-06, D-12 |
 | `REC-06` | D-01, D-04, D-06; D-10 only with decoded storage / later ON-05 |
 | `REC-07` | D-01, D-04, D-06, D-10, D-15 |
+| `REC-08` | all import participants, parser/resource limits, terminal states |
+| `REC-09` | terminal state, offline report outbox, privacy and idempotence |
 
 ---
 
