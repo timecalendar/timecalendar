@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -26,58 +27,67 @@ export default function ManualImportScreen() {
   const theme = useTheme()
 
   return (
-    <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={stepStyles.safeArea}>
-        <View style={[stepStyles.intro, styles.intro]}>
-          <ThemedText type="title">{t("onboarding.import.title")}</ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t("onboarding.import.body")}
-          </ThemedText>
-        </View>
-
-        <Pressable
-          testID="onboarding-import-qr"
-          accessibilityRole="button"
-          accessibilityLabel={t("onboarding.import.qrLabel")}
-          accessibilityHint={t("onboarding.import.qrHint")}
-          hitSlop={Spacing.two}
-          onPress={() => router.push("/onboarding/qr-scan")}
-          style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
+    <ThemedView style={stepStyles.fill}>
+      <SafeAreaView style={stepStyles.fill}>
+        <AdaptiveContent
+          testID="onboarding-import-content"
+          lane="readable"
+          style={stepStyles.fill}
+          contentContainerStyle={stepStyles.safeArea}
         >
-          <SymbolView
-            name={{ ios: "qrcode.viewfinder", android: "qr_code_scanner" }}
-            size={20}
-            tintColor={theme.onPrimary}
-            accessible={false}
-          />
-          <ThemedText type="smallBold" themeColor="onPrimary">
-            {t("onboarding.import.qr")}
-          </ThemedText>
-        </Pressable>
+          <View style={[stepStyles.intro, styles.intro]}>
+            <ThemedText type="title">{t("onboarding.import.title")}</ThemedText>
+            <ThemedText themeColor="textSecondary">
+              {t("onboarding.import.body")}
+            </ThemedText>
+          </View>
 
-        <Pressable
-          testID="onboarding-import-url"
-          accessibilityRole="button"
-          accessibilityLabel={t("onboarding.import.urlLabel")}
-          accessibilityHint={t("onboarding.import.urlHint")}
-          hitSlop={Spacing.two}
-          onPress={() => router.push("/onboarding/ical-url")}
-          style={[
-            styles.secondary,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.primary,
-            },
-          ]}
-        >
-          <SymbolView
-            name={{ ios: "link", android: "link" }}
-            size={20}
-            tintColor={theme.primary}
-            accessible={false}
-          />
-          <ThemedText type="smallBold">{t("onboarding.import.url")}</ThemedText>
-        </Pressable>
+          <Pressable
+            testID="onboarding-import-qr"
+            accessibilityRole="button"
+            accessibilityLabel={t("onboarding.import.qrLabel")}
+            accessibilityHint={t("onboarding.import.qrHint")}
+            hitSlop={Spacing.two}
+            onPress={() => router.push("/onboarding/qr-scan")}
+            style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
+          >
+            <SymbolView
+              name={{ ios: "qrcode.viewfinder", android: "qr_code_scanner" }}
+              size={20}
+              tintColor={theme.onPrimary}
+              accessible={false}
+            />
+            <ThemedText type="smallBold" themeColor="onPrimary">
+              {t("onboarding.import.qr")}
+            </ThemedText>
+          </Pressable>
+
+          <Pressable
+            testID="onboarding-import-url"
+            accessibilityRole="button"
+            accessibilityLabel={t("onboarding.import.urlLabel")}
+            accessibilityHint={t("onboarding.import.urlHint")}
+            hitSlop={Spacing.two}
+            onPress={() => router.push("/onboarding/ical-url")}
+            style={[
+              styles.secondary,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.primary,
+              },
+            ]}
+          >
+            <SymbolView
+              name={{ ios: "link", android: "link" }}
+              size={20}
+              tintColor={theme.primary}
+              accessible={false}
+            />
+            <ThemedText type="smallBold">
+              {t("onboarding.import.url")}
+            </ThemedText>
+          </Pressable>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )

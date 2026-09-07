@@ -1,9 +1,11 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
+import { StyleSheet } from "react-native"
 
 import { useImportDraft } from "@/features/onboarding/draft"
 import type { SchoolListItem } from "@/features/school-selection/data"
+import { resolveResponsiveLayout } from "@/theme"
 
 import ConnectScreen from "./connect-screen"
 
@@ -45,6 +47,26 @@ beforeEach(() => {
 })
 
 describe("ConnectScreen", () => {
+  it("keeps the step in a measured readable tablet lane", async () => {
+    const { getByTestId } = await render(<ConnectScreen />)
+    const owner = getByTestId("onboarding-connect-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = owner.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    const layout = resolveResponsiveLayout(1024, "readable")
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
+    })
+  })
+
   it("renders the localized guidance", async () => {
     const { getByText } = await render(<ConnectScreen />)
 

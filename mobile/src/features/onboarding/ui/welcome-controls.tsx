@@ -1,9 +1,10 @@
 import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet, View } from "react-native"
+import { Platform, Pressable, StyleSheet } from "react-native"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 const CONTROL_MIN_HEIGHT = Platform.OS === "ios" ? 44 : 48
 
@@ -16,7 +17,7 @@ export function WelcomeSkip({ hidden, onPress }: WelcomeSkipProps) {
   const { t } = useTranslation()
 
   return (
-    <View style={styles.topBar}>
+    <AdaptiveContent lane="readable" contentContainerStyle={styles.topBar}>
       {!hidden && (
         <Pressable
           testID="onboarding-skip"
@@ -30,7 +31,7 @@ export function WelcomeSkip({ hidden, onPress }: WelcomeSkipProps) {
           </ThemedText>
         </Pressable>
       )}
-    </View>
+    </AdaptiveContent>
   )
 }
 
@@ -49,7 +50,11 @@ export function WelcomeFooter({
   const theme = useTheme()
 
   return (
-    <View style={styles.footer}>
+    <AdaptiveContent
+      testID="onboarding-footer-content"
+      lane="readable"
+      contentContainerStyle={styles.footer}
+    >
       {isLastPage ? (
         <Pressable
           testID="onboarding-welcome-cta"
@@ -85,19 +90,15 @@ export function WelcomeFooter({
           />
         </Pressable>
       )}
-    </View>
+    </AdaptiveContent>
   )
 }
 
 const styles = StyleSheet.create({
   topBar: {
     height: 60,
-    width: "100%",
-    maxWidth: MaxContentWidth,
-    alignSelf: "center",
-    alignItems: "flex-end",
     justifyContent: "center",
-    paddingHorizontal: Spacing.four,
+    alignItems: "flex-end",
   },
   textButton: {
     minHeight: CONTROL_MIN_HEIGHT,
@@ -107,12 +108,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     minHeight: 64,
-    width: "100%",
-    maxWidth: MaxContentWidth,
-    alignSelf: "center",
     justifyContent: "center",
     alignItems: "flex-end",
-    paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.four,
   },
   nextButton: {

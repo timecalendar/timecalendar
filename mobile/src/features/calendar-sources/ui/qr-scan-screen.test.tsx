@@ -1,9 +1,10 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
-import { Linking } from "react-native"
+import { Linking, StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
 import { recordUnknownError } from "@/firebase"
+import { resolveResponsiveLayout } from "@/theme"
 
 import QrScanScreen from "./qr-scan-screen"
 
@@ -39,6 +40,7 @@ jest.mock("expo-camera", () => {
     testID?: string
     onBarcodeScanned?: (result: { data: string; type: string }) => void
     children?: unknown
+    style?: unknown
     accessibilityLabel?: string
     accessibilityHint?: string
     barcodeScannerSettings?: { barcodeTypes: string[] }
@@ -51,6 +53,7 @@ jest.mock("expo-camera", () => {
         accessibilityLabel: props.accessibilityLabel,
         accessibilityHint: props.accessibilityHint,
         barcodeScannerSettings: props.barcodeScannerSettings,
+        style: props.style,
       },
       React.createElement(
         Pressable,
@@ -193,6 +196,29 @@ describe("QrScanScreen", () => {
     expect(camera.props.barcodeScannerSettings).toEqual({
       barcodeTypes: ["qr"],
     })
+  })
+
+  it("keeps the camera full bleed while bounding its tablet overlay", async () => {
+    const { getByTestId } = await render(<QrScanScreen />)
+    const overlay = getByTestId("qr-overlay-content")
+
+    await act(() =>
+      fireEvent(overlay, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = overlay.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    const layout = resolveResponsiveLayout(1024, "readable")
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
+    })
+    expect(
+      StyleSheet.flatten(getByTestId("qr-scan-camera").props.style),
+    ).toEqual({ flex: 1 })
   })
 
   it("persists a scanned URL through the durable seam and dismisses", async () => {

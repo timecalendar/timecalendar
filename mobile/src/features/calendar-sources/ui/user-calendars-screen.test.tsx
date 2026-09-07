@@ -14,7 +14,7 @@ import {
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
 import { usePlatform } from "@/test-support/platform"
-import { Spacing } from "@/theme"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import { UserCalendarsScreen } from "./user-calendars-screen"
 
@@ -206,7 +206,30 @@ describe("UserCalendarsScreen", () => {
       screen.getByTestId("user-calendars-safe-area").props.style,
     )
     expect(style.paddingLeft).toBe(44)
-    expect(style.paddingRight).toBe(20)
+    expect(style.paddingRight).toBe(Spacing.four)
+  })
+
+  it("centers the management list in the measured tablet lane", async () => {
+    await render(<UserCalendarsScreen />)
+    const owner = screen.getByTestId("user-calendars-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const layout = resolveResponsiveLayout(1024, "standard")
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("user-calendars-safe-area").props.style,
+      ),
+    ).toMatchObject({
+      alignSelf: "center",
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingLeft: layout.gutter,
+      paddingRight: layout.gutter,
+    })
   })
 
   it("falls back to placeholders for an empty name and a personal (no-school) calendar", async () => {

@@ -1,9 +1,10 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router, Stack, useLocalSearchParams } from "expo-router"
-import { AccessibilityInfo } from "react-native"
+import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useSchools } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { resolveResponsiveLayout } from "@/theme"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
@@ -104,6 +105,27 @@ beforeEach(() => {
 })
 
 describe("SchoolPickerScreen", () => {
+  it("aligns school rows and states in the measured standard tablet lane", async () => {
+    mockUseSchools.mockReturnValue(ready([]))
+    const { getByTestId } = await render(<SchoolPickerScreen />)
+    const owner = getByTestId("onboarding-school-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const list = owner.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    const layout = resolveResponsiveLayout(1024, "standard")
+    expect(StyleSheet.flatten(list.props.style)).toMatchObject({
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
+    })
+  })
+
   it("puts the localized title and search field in the native header", async () => {
     mockUseSchools.mockReturnValue(ready([]))
     const { queryByRole } = await render(<SchoolPickerScreen />)
