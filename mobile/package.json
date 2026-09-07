@@ -70,6 +70,7 @@
     "orval": "^8.17.0",
     "patch-package": "^8.0.1",
     "prettier": "^3.8.4",
+    "react-doctor": "0.9.13",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -79,6 +80,8 @@
     "generate": "orval",
     "generate:migrations": "drizzle-kit generate",
     "lint": "expo lint --max-warnings 0",
+    "react-doctor": "react-doctor . --no-telemetry --no-score --no-supply-chain --verbose --no-cache --blocking none",
+    "react-doctor:changed": "react-doctor . --no-telemetry --no-score --no-supply-chain --verbose --no-cache --scope changed --base origin/main --blocking warning",
     "test": "jest --ci",
     "test:ios-device-contract": "node ./scripts/assert-ios-device-contract.mjs --self-test",
     "verify:ios-device-contract": "bash ./scripts/verify-ios-device-contract.sh",

@@ -18,6 +18,12 @@ truth; this file carries the caveats the config can't (R-1).
   same entrypoint — local and CI cannot diverge on what "clean" means.
 - **Pre-commit:** the `lint-staged` block in `mobile/package.json`
   (`eslint --cache --fix`), picked up by the root husky hook.
+- **React Doctor:** `npm run react-doctor` is the reproducible, mobile-only full audit and remains
+  advisory; `npm run react-doctor:changed` blocks new warnings and errors relative to
+  `origin/main`. Both use the exact lockfile pin and disable telemetry, score reporting, caches,
+  and cross-project supply-chain analysis. CI enforces the changed-code command; the normalized
+  inventory and dispositions live in [`../react-doctor.md`](../react-doctor.md) (ADR
+  [053](./decisions/053-react-doctor-changed-code-gate.md)).
 - `eslint-plugin-react-native-a11y` is ESLint-8-era: loaded via `fixupPluginRules`
   (`@eslint/compat`) with an npm `override` pinning its eslint peer. If its rules
   misbehave under a future ESLint, the fallback is a minimal local rule for touchables.
