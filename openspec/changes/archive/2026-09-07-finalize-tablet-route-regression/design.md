@@ -44,6 +44,10 @@ After each actionable row tap, the flow waits for `event-details-responsive-owne
 
 The About flow retains two optional `Open` taps, but inserts `waitForAnimationToEnd` between them. The first handles the ordinary custom-scheme confirmation. The settle boundary allows a delayed SpringBoard replay to appear before the second optional tap is evaluated; when no replay occurs, the optional tap remains inert. Static coverage locks this ordering.
 
+### D6 — Replay an acknowledged iOS onboarding link only while its destination is absent
+
+The iCal import flow uses the established destination-gated replay pattern after its first iOS onboarding deep link. Once the initial transition settles, it reissues the same link only when the stable Welcome title is still absent, then handles the optional confirmation again. This covers an acknowledged `openLink` that leaves SpringBoard foregrounded without replaying a link that already reached onboarding.
+
 ## Verification
 
 - Focused Activity selector Jest suite, including the red-before-green route-oracle regression.
