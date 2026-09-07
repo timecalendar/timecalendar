@@ -13,8 +13,6 @@ import {
 import { ThemedText } from "@/components/themed-text"
 import { Spacing, useTheme } from "@/theme"
 
-import { useAppReady } from "./use-app-ready"
-
 // Keep the native static splash up until JS is ready (design D1). Called in the
 // global scope without awaiting per the SDK guidance — calling it inside the
 // component/effect can run too late, after the native splash already hid.
@@ -29,7 +27,7 @@ const FADE_OUT_MS = 300
  * brand on a themed background, mounted by the root layout above the navigation
  * Stack so it covers the whole app during startup. It hides the native splash
  * once it has mounted (native→JS handoff, no flash — D1), then fades itself out
- * when `useAppReady()` resolves. Reduced motion is honored in the component
+ * when root readiness resolves. Reduced motion is honored in the component
  * (R-1: lint can't know which view animates), as the app's first animation.
  */
 export interface SplashScreenProps {

@@ -38,6 +38,10 @@ describe("first-launch Maestro flows", () => {
       join(mobileRoot, "src/features/onboarding/ui/welcome-screen.tsx"),
       "utf8",
     )
+    const welcomeControls = readFileSync(
+      join(mobileRoot, "src/features/onboarding/ui/welcome-controls.tsx"),
+      "utf8",
+    )
     const confirmation = readFileSync(
       join(
         mobileRoot,
@@ -50,7 +54,8 @@ describe("first-launch Maestro flows", () => {
       "utf8",
     )
 
-    expect(welcome).toContain('testID="onboarding-skip"')
+    expect(welcome).toContain("<WelcomeSkip")
+    expect(welcomeControls).toContain('testID="onboarding-skip"')
     expect(confirmation).toContain('testID="import-later-confirm"')
     expect(reminder).toContain('testID="first-ical-reminder"')
     expect(flow).toContain('id: "personal-event-title-input"')

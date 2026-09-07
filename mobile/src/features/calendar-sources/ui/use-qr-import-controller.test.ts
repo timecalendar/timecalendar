@@ -24,7 +24,7 @@ function deferred<T>() {
 
 const addCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
 const clearDraft = jest.fn()
-const leaveJourney = jest.fn()
+const leaveJourney = jest.fn((clear: () => void) => clear())
 const openManualUrl = jest.fn()
 const recordError = jest.fn()
 

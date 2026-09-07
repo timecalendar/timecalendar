@@ -137,24 +137,22 @@ describe("WelcomeScreen", () => {
   })
 
   it("confirms Skip without entering school selection and keeps the reminder pending", async () => {
-    const { getByRole, getByTestId, queryByRole } = await render(
+    const { getByRole, getByTestId, queryByTestId } = await render(
       <WelcomeScreen />,
     )
 
     await fireEvent.press(getByTestId("onboarding-skip"))
-    expect(getByRole("dialog")).toBeTruthy()
+    expect(getByTestId("import-later-confirmation")).toBeTruthy()
     expect(mockPush).not.toHaveBeenCalled()
     expect(getOnboardingResolution()).toBeUndefined()
 
-    await fireEvent.press(
-      getByRole("button", { name: "Continue onboarding" }),
-    )
-    expect(queryByRole("dialog")).toBeNull()
+    await fireEvent.press(getByRole("button", { name: "Continue setup" }))
+    expect(queryByTestId("import-later-confirmation")).toBeNull()
     expect(getOnboardingResolution()).toBeUndefined()
 
     await fireEvent.press(getByTestId("onboarding-skip"))
     await fireEvent.press(
-      getByRole("button", { name: "Skip and continue" }),
+      getByRole("button", { name: "Continue without an iCal" }),
     )
     expect(getOnboardingResolution()).toBe("skipped")
     expect(getFirstIcalReminderState()).toBe("pending")
@@ -179,7 +177,7 @@ describe("WelcomeScreen", () => {
     expect(getByRole("button", { name: "Next page" })).toBeTruthy()
     expect(
       getByRole("button", {
-        name: "Skip the introduction and choose your school",
+        name: "Skip university calendar setup",
       }),
     ).toBeTruthy()
     expect(getByTestId("onboarding-page-indicator").props.accessible).toBe(true)

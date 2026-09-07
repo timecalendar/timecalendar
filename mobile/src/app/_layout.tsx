@@ -34,7 +34,8 @@ import {
   useNotificationTapRouting,
 } from "@/features/notifications"
 import { persistOptions } from "@/features/school-selection"
-import { SplashScreen, useAppReady } from "@/features/splash/ui"
+import { useAppReady } from "@/features/splash"
+import { SplashScreen } from "@/features/splash/ui"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { buildNavTheme } from "@/theme"
 import { OtaUpdateRuntime } from "@/updates"

@@ -71,7 +71,7 @@ describe("first-launch root structure", () => {
       "<Stack.Protected guard={!eligible}>",
     )
     expect(rootLayout.slice(0, protectedStart)).toContain(
-      '<Stack.Screen name="onboarding" />',
+      '<Stack.Screen name="onboarding" options={{ headerShown: false }} />',
     )
     expect(rootLayout.slice(protectedEnd)).toContain(
       '<Stack.Screen name="dev-import" options={{ headerShown: false }} />',
