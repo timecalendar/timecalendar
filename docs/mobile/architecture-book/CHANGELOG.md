@@ -2,6 +2,10 @@
 
 ## 2026-09-07
 
+- Added ADR 057: migrations and the typed Phase 09 prerequisite complete before the first atomic
+  calendar read; protected root routes prevent Home/Calendar paint for unresolved fresh users,
+  with only the development token-import route excepted. Onboarding resolution and first-iCal
+  reminder dismissal remain independent environment-independent values.
 - Applied ADR 054's page semantics to the remaining consumers: Settings keeps localized section
   casing, About uses one standard-lane gutter with gutterless readable prose caps, Home shares the
   left-aligned section empty-state rhythm, and Feedback/Programme join personal events on the

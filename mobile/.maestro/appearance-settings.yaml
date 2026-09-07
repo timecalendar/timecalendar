@@ -22,6 +22,7 @@
 appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp
+- runFlow: setup/resolve-first-launch.yaml
 # Cold-start via the deep link (see schools.yaml header): a warm openLink does
 # not navigate on Android release builds — Expo Router resolves the link through
 # getInitialURL on a cold launch, so stopApp first, then openLink relaunches.

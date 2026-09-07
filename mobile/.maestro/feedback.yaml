@@ -20,6 +20,7 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
+- runFlow: setup/resolve-first-launch.yaml
 - extendedWaitUntil:
     visible: "Settings"
     timeout: 120000

@@ -58,7 +58,7 @@ The new `first-launch/data` layer owns a pure decision:
 
 When onboarding is required, the root Stack leaves the onboarding group and the dev-only token-import route available and wraps `(tabs)` plus every other post-onboarding route in `Stack.Protected guard={false}`. The declared onboarding screen is the first available fallback, so normal cold launch and attempts to enter Home/Calendar resolve there without either tab mounting. The dev-import exception preserves the existing seeded native E2E/import recovery seam; after its durable upsert the guard becomes eligible and its existing calendar replacement succeeds. Once eligible, all existing routes are available and onboarding remains manually reachable.
 
-This is the load-bearing navigation rule recorded in a new ADR (reserved number 053 after checking merged and open-PR reservations).
+This is the load-bearing navigation rule recorded in ADR 057, the next available number after rechecking current `main`.
 
 *Alternative rejected*: `router.replace()` in an effect mounts the anchored tabs first and can flash/run them; moving the filesystem into duplicate route groups would churn every route and create ambiguous deep-link ownership.
 

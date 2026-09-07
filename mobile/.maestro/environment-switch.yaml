@@ -16,6 +16,7 @@ appId: fr.samuelprak.timecalendar.dev
 ---
 - launchApp:
     clearState: true
+- runFlow: setup/resolve-first-launch.yaml
 # Cold-start readiness, not an app assertion: a release-config launch on a degraded
 # macOS runner can outlast a 60 s wait. In run 33216821519 this flow's launchApp alone
 # took 75.8 s and the 60 s wait then expired in full, failing here with 4 recorded

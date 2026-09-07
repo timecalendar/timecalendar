@@ -1,0 +1,53 @@
+# Fresh-install personal-calendar path. Shared across iOS and Android.
+appId: fr.samuelprak.timecalendar.dev
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-skip"
+    timeout: 60000
+- assertNotVisible:
+    id: "home-scroll"
+- tapOn:
+    id: "onboarding-skip"
+- extendedWaitUntil:
+    visible:
+      id: "import-later-confirm"
+    timeout: 60000
+- tapOn:
+    id: "import-later-confirm"
+- extendedWaitUntil:
+    visible:
+      id: "home-scroll"
+    timeout: 60000
+- assertVisible:
+    id: "first-ical-reminder"
+
+# Create a durable personal event while no university calendar exists.
+- tapOn:
+    id: "home-add-personal-event"
+- extendedWaitUntil:
+    visible:
+      id: "personal-event-title-input"
+    timeout: 60000
+- tapOn:
+    id: "personal-event-title-input"
+- inputText: "Fresh personal event"
+- tapOn:
+    id: "personal-event-save"
+- extendedWaitUntil:
+    visible: "Fresh personal event"
+    timeout: 60000
+- assertVisible:
+    id: "first-ical-reminder"
+
+# The same shared reminder is present on Calendar and Home.
+- tapOn: "Calendar"
+- extendedWaitUntil:
+    visible:
+      id: "first-ical-reminder"
+    timeout: 60000
+- tapOn: "Home"
+- assertVisible:
+    id: "first-ical-reminder"
