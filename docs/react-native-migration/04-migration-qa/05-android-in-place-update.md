@@ -15,10 +15,11 @@ A Play update keeps the same `/data/data/<applicationId>/` directory as long as 
 ([01 §3](./01-scope-prerequisites-and-execution-order.md#3-builds)), so the Flutter sembast file
 and preferences remain on disk across the swap.
 
-**Unlike iOS, this has not yet been confirmed on real Android hardware.** Two facts are open:
+**Unlike iOS, this has not yet been confirmed on real Android hardware.** Two evidence gates remain:
 
-- Which `shared_preferences` backend the Flutter app writes to — the legacy XML
-  (`shared_prefs/FlutterSharedPreferences.xml`) or the newer DataStore-backed one
+- The pinned synchronous `shared_preferences` implementation selects legacy XML
+  (`shared_prefs/FlutterSharedPreferences.xml`), not DataStore. Confirm that exact backend exists
+  and survives on the signed production install
   ([Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use)).
 - Where `getApplicationDocumentsDirectory()` puts `simple_database.db`, and that it survives the
   binary swap ([Q-03](./09-open-engineering-questions.md#q-03--where-does-sembast-live-on-android-and-does-it-survive-the-swap)).
@@ -113,11 +114,10 @@ network access, not that the download was offline.
 > ⚠️ Do not let the Flutter app run during this window. If it launches, it may sync and change the
 > baseline — re-verify the baseline before continuing.
 
-**Sideload fallback.** If no Play track is available, `adb install -r <apk>` performs an in-place
-update *only if* the APK is signed with the same key (see [the signature rule](#the-signature-rule)).
-Never use `adb install -r -d` with a downgrade, and never pass `adb uninstall` first. Record in
-the report that the sideload path was used instead of Play, because it is not the path real
-students take.
+**Diagnostic-only sideload.** `adb install -r <apk>` can exercise a debuggable in-place diagnostic
+pass if the APK has a compatible signature. It does not satisfy either release gate. The required
+passes are first Play internal/closed, then the final public Play update; never uninstall or use a
+downgrade between source and target.
 
 ### `MIG-AND-07` — Confirm it is an update, not a second app
 
@@ -167,9 +167,9 @@ strongest piece of evidence that this really was an in-place update.
 2. Tap the TimeCalendar icon. Start a screen recording if you can
    (`adb shell screenrecord /sdcard/first-launch.mp4`).
 3. Do not tap anything until the app has settled.
-4. Stop the logcat capture once the app is idle, and attach `migration-first-launch.log` to the
-   report regardless of the outcome. A clean run's log is as useful as a failing one — it is the
-   baseline for the next release.
+4. Stop the logcat capture once the app is idle. Run the approved privacy scrubber before attaching
+   an excerpt. Never attach tokens, event/checklist text, raw files, calendar IDs outside the
+   protected first-party report, or unrelated device/application logs.
 
 Proceed to [06 — Offline verification](./06-offline-and-online-verification-scenarios.md),
 starting at `OFF-01`.
@@ -194,6 +194,11 @@ When the offline scenarios and `REC-01`…`REC-03` are complete:
 | **Play instant rollback** | If a track has both a newer and older build, Play can serve the wrong one. | Confirm `versionName` in `MIG-AND-07` before launching. |
 | **Multiple user profiles / work profile** | The Flutter app and the RN update can end up in different profiles. | Do the whole run as the device owner, in one profile. |
 
+Run a separate controlled backup/restore evidence pass with synthetic seed data. Record whether
+Android restores the legacy database and XML preferences, whether Firebase-managed state is
+regenerated, and whether the importer reaches a safe terminal result. Do not combine that pass
+with the canonical no-restore upgrade run.
+
 ---
 
 ## 6. Collecting storage evidence
@@ -212,15 +217,14 @@ Run the "before" set at `MIG-AND-04` and the "after" set once the offline scenar
 adb shell run-as fr.samuelprak.timecalendar ls -la shared_prefs/
 adb shell run-as fr.samuelprak.timecalendar ls -la files/datastore/ 2>/dev/null
 
-# Dump the legacy XML if it exists — expect flutter.-prefixed keys
-adb shell run-as fr.samuelprak.timecalendar cat shared_prefs/FlutterSharedPreferences.xml
+# Record the XML file's existence and size; APP_ID is the B-1 production application ID
+adb shell run-as "$APP_ID" ls -l shared_prefs/FlutterSharedPreferences.xml
 
 # Where is the sembast file? (Q-03)
 adb shell run-as fr.samuelprak.timecalendar find . -name 'simple_database.db'
 
-# Its size and first lines — expect JSONL, first line {"version":3,"sembast":1}
+# Record its size; inspect metadata through approved diagnostics, never a raw file dump
 adb shell run-as fr.samuelprak.timecalendar ls -la app_flutter/simple_database.db
-adb shell run-as fr.samuelprak.timecalendar head -3 app_flutter/simple_database.db
 ```
 
 Adjust the path in the last two commands to whatever `find` reported.
@@ -228,7 +232,7 @@ Adjust the path in the last two commands to whatever `find` reported.
 ### After the update (React Native installed)
 
 ```sh
-# The Flutter sembast file must still exist — the one-release safety net (D-28 / REC-04)
+# The Flutter Sembast file must still exist — the indefinite safety net (D-28 / REC-04)
 adb shell run-as fr.samuelprak.timecalendar find . -name 'simple_database.db'
 
 # The RN SQLite database must now exist
@@ -242,24 +246,33 @@ adb shell run-as fr.samuelprak.timecalendar sqlite3 <path>/timecalendar.db \
   "select 'personal_events', count(*) from personal_events
    union all select 'user_calendars', count(*) from user_calendars
    union all select 'checklist_items', count(*) from checklist_items
-   union all select 'calendar_events', count(*) from calendar_events;"
+   union all select 'calendar_events', count(*) from calendar_events
+   union all select 'activity_logs', count(*) from activity_logs
+   union all select 'activity_state', count(*) from activity_state;"
 ```
 
 The row counts are the fastest way to distinguish *"the import dropped records"* from *"the UI is
 not showing records that are there"* — two very different bugs that look identical on screen.
-If `sqlite3` is not on the device, pull the file instead:
+If `sqlite3` is not on the device, copy the file only into the approved local QA environment:
 
 ```sh
 adb shell run-as fr.samuelprak.timecalendar cat <path>/timecalendar.db > timecalendar.db
 ```
 
-and inspect it on your workstation.
+Inspect it locally with the sanitized QA tooling, then destroy the copy according to the QA data
+handling policy. Never attach or upload the database; it contains calendar tokens and personal
+content.
 
 ### Table and column reference
 
-For reading the pulled database, the table and column names are in `mobile/src/db/schema.ts`:
-`personal_events`, `user_calendars`, `calendar_events`, `checklist_items`. Column names are
-snake_case (`starts_at`, `event_uid`, `is_checked`, `school_name`, …).
+For reading the pulled database, the six application table names are in `mobile/src/db/schema.ts`:
+`personal_events`, `user_calendars`, `calendar_events`, `checklist_items`, `activity_logs`, and
+`activity_state`. Migration-journal/outbox tables are defined by the migration implementation.
+Column names are snake_case (`starts_at`, `event_uid`, `is_checked`, `school_name`, …).
+
+Run this document first through Play internal/closed testing. Before broad rollout, repeat the
+entire in-place flow through the public Play listing and attach a separate report. A sideload or
+internal-track pass cannot substitute for that final production gate.
 
 ---
 

@@ -28,9 +28,10 @@ regenerates, and is verified only to the extent that it must come *back* correct
 
 ## 2. What this playbook does not test
 
-See [Non-goals](./README.md#non-goals) in the index. In particular: no visual parity, no minimum-OS
-matrix, no performance certification, and **no severity or go/no-go verdicts**. A failed scenario
-is recorded as a fact with evidence; deciding what it means for a release is someone else's job.
+See [Non-goals](./README.md#non-goals) in the index. In particular, this is not a design-parity
+pass. It does, however, capture the required low-end timing/memory evidence and the final
+public-store update gate. A failed scenario is recorded as a fact with evidence and evaluated
+against the release gates in the canonical specification.
 
 ## 3. Builds
 
@@ -90,13 +91,13 @@ App Store Connect app record. Confirm with the release owner —
 
 **This is the precondition that decides how you record the whole run.**
 
-The Phase-09 one-shot importer is what reads Flutter's sembast database and `flutter.`-prefixed
-preferences and writes them into the RN stores. Its intended behavior is specified in
-[`../01-roadmap/09-data-migration.md`](../01-roadmap/09-data-migration.md).
+The Phase-09 one-shot importer is what reads Flutter's Sembast database and `flutter.`-prefixed
+preferences and writes them into the RN stores. Its behavior is specified in
+[`../05-tech-specs/data-migration.md`](../05-tech-specs/data-migration.md).
 
 **At the time this playbook was written, `mobile/` contains no such code.** The evidence:
 
-- There is no `migration` feature module — `mobile/src/features/` holds `about`, `calendar`,
+- There is no `migration` feature module — `mobile/src/features/` holds `about`, `activity`, `calendar`,
   `calendar-sources`, `changelog`, `environment`, `event-checklists`, `feedback`,
   `hidden-events`, `home`, `notifications`, `onboarding`, `personal-events`, `school-selection`,
   `settings`, `splash`, and nothing else.
@@ -128,11 +129,13 @@ preferences and writes them into the RN stores. Its intended behavior is specifi
 | Importer **absent** | Run `OFF-01`, `OFF-13`, `OFF-14`, `OFF-15`, `REC-01` only (they are still meaningful — the app must launch cleanly and default sanely over an existing Flutter container). | Mark every other scenario **`N/A — importer not in build`**. **Do not mark them `FAIL`.** A missing feature is not a defect found by test. |
 | Unknown | Do not start. | Escalate as [Q-01](./09-open-engineering-questions.md#q-01--is-the-phase-09-importer-in-the-build-under-test). |
 
-### B-4 — Android storage locations confirmed
+### B-4 — Android storage evidence captured
 
-Two facts about Android are still unconfirmed on real hardware
-([`../inbox/2026-06-15-android-storage-verification.md`](../inbox/2026-06-15-android-storage-verification.md)):
-which `shared_preferences` backend the Flutter app uses, and where its sembast file lives.
+Pinned source confirms the released synchronous `shared_preferences` API uses the legacy
+`FlutterSharedPreferences` XML backend, not DataStore. Real-hardware evidence is still required
+for that file, the documents path containing `simple_database.db`, in-place survival, and backup
+behavior
+([`../inbox/2026-06-15-android-storage-verification.md`](../inbox/2026-06-15-android-storage-verification.md)).
 
 This does **not** block an Android run — it changes what a failure *means*. If Android-only
 device-owned data fails to migrate while iOS passes, note [Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use)
@@ -142,14 +145,14 @@ on the failure row. [05](./05-android-in-place-update.md#6-collecting-storage-ev
 
 ## 5. Devices
 
-Both platforms are required. Minimum-OS and device-breadth matrices are out of scope — one
-current, healthy device per platform is the target.
+Both platforms are required. Use a physical device on each platform plus a low-end supported
+device for release-mode duration and peak-memory evidence.
 
 | Slot | Platform | Requirements |
 | --- | --- | --- |
 | **iOS-1** | iPhone, current iOS | Signed into the Apple ID enrolled in the TestFlight internal group. App Store access to install the released Flutter build. |
 | **AND-1** | Android phone, current Android | Signed into the Google account on the Play testing track. Play Store access to install the released Flutter build. **Developer options + USB debugging on** if you want the `adb` evidence in [05](./05-android-in-place-update.md#6-collecting-storage-evidence). |
-| **AND-2** *(optional)* | A second, slower Android device | Only used by `OFF-19` (the large pack's practical usability). Skip if unavailable and note it. |
+| **AND-2** | A second, slower supported Android device | Required for `OFF-19` release-mode duration and peak-memory evidence unless AND-1 already represents the low-end class. |
 
 Per device, before you start:
 
@@ -179,7 +182,7 @@ the migration actually dropped. Running the update online first destroys the evi
 | 4 | **Disable the network** (airplane mode) | [04 §2](./04-ios-in-place-update.md#2-cut-the-network) / [05 §2](./05-android-in-place-update.md#2-cut-the-network) | Airplane mode confirmed on-screen |
 | 5 | Install the **React Native** build as an in-place store update. **Do not uninstall. Do not clear app data.** | [04 §3](./04-ios-in-place-update.md#3-install-the-react-native-build-in-place) / [05 §3](./05-android-in-place-update.md#3-install-the-react-native-build-in-place) | Exactly one TimeCalendar icon remains |
 | 6 | Launch React Native **while still offline** | [06](./06-offline-and-online-verification-scenarios.md) | `OFF-01` passes |
-| 7 | Verify every device-owned value survived **exactly once** and is usable; record RN-only persistence defaults | `OFF-02…OFF-20` | All offline scenarios recorded |
+| 7 | Verify every device-owned value survived **exactly once** and is usable; record preserved and deliberately dropped preferences plus RN-only defaults | `OFF-02…OFF-21` | All offline scenarios recorded |
 | 8 | Force-quit, relaunch, repeat the essential durability checks — still offline | [07](./07-failure-restart-and-recovery-scenarios.md) `REC-01…REC-03` | Durability scenarios recorded |
 | 9 | **Restore the network** | — | Connectivity confirmed |
 | 10 | Verify server-owned data refetches, and that sync neither removes migrated local content nor duplicates anything | `ON-01…ON-06`, `REC-05`, `REC-07` | All online scenarios recorded |
@@ -209,12 +212,16 @@ step 1.
 
 iOS and Android are **independent passes** with their own report. Data does not travel between
 them, and the two platforms read Flutter's data from genuinely different places
-(`NSUserDefaults` + the app Documents dir on iOS; the Android app data dir, backend still
-unconfirmed — [Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use)).
+(`NSUserDefaults` + the app Documents dir on iOS; the Android app data dir and code-confirmed
+legacy `FlutterSharedPreferences` XML backend). The physical Android path, file presence,
+in-place update survival, and backup behavior remain to be proved on a signed device —
+[Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use).
 A pass on one says nothing about the other.
 
-Run the compact pack `SEED-A` on both. Run the large pack `SEED-B` on at least one platform per
-release, and prefer Android (the lower-powered target for `OFF-19`).
+Run the compact pack `SEED-A` on both. Run the large pack `SEED-B` on the low-end supported device
+for every candidate release. The internal TestFlight and Play internal/closed passes come first;
+repeat the final in-place gate through the public App Store and Play listings before broad
+rollout.
 
 ## 8. Time budget
 

@@ -1,6 +1,6 @@
 # 08 — QA execution report
 
-← [07 — Failure, restart & recovery](./07-failure-restart-and-recovery-scenarios.md) · [Section index](./README.md) · next: [09 — Open engineering questions](./09-open-engineering-questions.md)
+← [07 — Failure, restart & recovery](./07-failure-restart-and-recovery-scenarios.md) · [Section index](./README.md) · next: [09 — Resolved decisions & evidence](./09-open-engineering-questions.md)
 
 > The reusable report. **Copy this whole file** to
 > `docs/react-native-migration/04-migration-qa/runs/YYYY-MM-DD-<platform>-<pack>.md` (create the
@@ -35,6 +35,8 @@
 | RN version installed (from **Réglages → À propos**) | |
 | RN build number / EAS build id | |
 | RN delivery path | ☐ TestFlight ☐ App Store ☐ Play internal ☐ Play closed ☐ sideload (explain) |
+| Release gate | ☐ internal signed ☐ final public-store |
+| Importer/report schema version | |
 | RN OTA channel, if known | |
 
 ### Build preconditions
@@ -44,7 +46,7 @@
 | [B-1](./01-scope-prerequisites-and-execution-order.md#b-1--same-store-identity) | Same store identity (`fr.samuelprak.timecalendar`, no `.dev`); exactly one app icon after update | ☐ OK ☐ FAILED | |
 | [B-2](./01-scope-prerequisites-and-execution-order.md#b-2--same-signing-identity-android--same-apple-team-ios) | Same signing identity / Apple team; the store offered it as an **update** | ☐ OK ☐ FAILED | |
 | [B-3](./01-scope-prerequisites-and-execution-order.md#b-3--does-the-build-contain-the-importer) | **Does the build contain the Phase 09 importer?** | ☐ Yes ☐ No ☐ Unknown | Quote engineering's written answer verbatim: |
-| [B-4](./01-scope-prerequisites-and-execution-order.md#b-4--android-storage-locations-confirmed) | Android storage locations confirmed (Android runs only) | ☐ Confirmed ☐ Still open ☐ N/A (iOS) | |
+| [B-4](./01-scope-prerequisites-and-execution-order.md#b-4--android-storage-evidence-captured) | Android XML/path/survival/backup evidence (Android runs only) | ☐ Confirmed ☐ Incomplete ☐ N/A (iOS) | |
 
 > **If B-3 is "No":** run `OFF-01`, `OFF-13`, `OFF-14`, `OFF-15`, `REC-01` and mark everything else
 > `N/A — importer not in build`. **If B-3 is "Unknown": do not start the run.**
@@ -91,6 +93,7 @@ here.
 | `BASE-12` | App visibly in dark theme | |
 | `BASE-13` | Mes calendriers — 1 calendar, visible | |
 | `BASE-14` | Post-relaunch confirmation + Flutter version | |
+| `BASE-15` | Sanitized enabled/horizon/changelog preference evidence | |
 | `BASE-B1` | 3 calendar name/school pairs (unordered set), which is hidden | |
 | `BASE-B2` | Personal-event count = 60 + sentinel screenshots | |
 | `BASE-B3` | Checklist item count = 134 + per-event counts | |
@@ -135,26 +138,27 @@ here.
 | `OFF-09` | Checklists attached to the right event | D-07 | | | |
 | `OFF-10` | Hidden names survived; UID proof deferred unless storage decodes | D-10, D-11 | | UID offline: ☐ NOT OBSERVABLE ☐ decoded storage | |
 | `OFF-11` | Changelog gate shows v4 exactly once | D-15 | | | |
-| `OFF-12` | Theme **observation** + RN-only language/timezone defaults | D-14, D-24 | ☐ RECORDED | theme observed: ___ | |
-| `OFF-13` | Flutter-only prefs & features — **observation** | D-13, D-16, D-17, D-20 | ☐ RECORDED | | |
+| `OFF-12` | Preserved theme + RN-only language/timezone defaults | D-14, D-24 | | | |
+| `OFF-13` | Preserved and deliberately dropped calendar/Activity state | D-13, D-16, D-17, D-20 | | | |
 | `OFF-14` | Not sent back through onboarding | D-23 | | | |
-| `OFF-15` | Notification preferences default sanely | D-18, D-25 | | | |
+| `OFF-15` | Notification enabled preserved; horizon defaults to 7 | D-18, D-25 | | | |
 | `OFF-16` | A migrated personal event is usable | D-04 | | | |
 | `OFF-17` | A migrated checklist item is usable | D-06, D-08 | | | |
 | `OFF-18` | Uniqueness sweep — nothing migrated twice | D-01, D-04, D-06 | | | |
-| `OFF-19` | Large pack complete, ordered, usable | D-02, D-04, D-06, D-08, D-11 | ☐ N/A (pack A) | UID-hidden offline: ☐ NOT OBSERVABLE ☐ storage evidence | |
+| `OFF-19` | Large pack complete, ordered, with release-mode timing/memory | D-02, D-04, D-06, D-08, D-11 | ☐ N/A (pack A) | duration/peak memory: ___; UID-hidden: ☐ NOT OBSERVABLE ☐ storage evidence | |
 | `OFF-20` | Remembered feedback email starts empty and survives restart | D-29 | | normalized value: ___ | |
+| `OFF-21` | Invisible partial recovery with offline report queued | migration journal/outbox | | fixture/report id: ___ | |
 
-#### `OFF-13` observation sheet
+#### `OFF-13` allowlist sheet
 
-| Flutter setting (baseline) | RN observed state |
-| --- | --- |
-| Vue **Planning** → which RN view is active on launch | |
-| Week-ends **off** → are Sat/Sun columns shown? | |
-| Couleurs par groupe **on** → same-type courses coloured alike? (after `ON-01`) | |
-| Démarrage sur **Calendrier** → which tab opens | |
-| Hour height (pinched) → grid density | |
-| Activité feature → present anywhere? | |
+| Flutter setting (baseline) | Expected RN result | Observed |
+| --- | --- | --- |
+| Vue **Planning** | default Semaine (dropped) | |
+| Week-ends **off** | hidden (preserved) | |
+| Couleurs par groupe **on** | RN default (dropped; check after `ON-01`) | |
+| Démarrage sur **Calendrier** | Calendrier opens (preserved) | |
+| Hour height (pinched) | RN default (dropped) | |
+| Flutter Activity cache/badge | excluded; RN Activity re-syncs | |
 
 #### `OFF-18` / `OFF-19` counts
 
@@ -185,10 +189,38 @@ here.
 | `REC-01` | Survives repeated offline launches | D-01, D-04, D-06, D-11, D-14 observation, D-15 | | UID-hidden: ☐ NOT OBSERVABLE ☐ storage evidence | |
 | `REC-02` | Killed during first launch, then relaunched | D-01, D-04, D-06, D-15 | | kill timing: ___ s; reduced seed? ☐; UID proof deferred to `ON-05` unless storage decodes | |
 | `REC-03` | Device restart around first launch | D-01, D-04, D-06, D-11, D-14 observation, D-15 | | UID-hidden: ☐ NOT OBSERVABLE ☐ storage evidence | |
-| `REC-04` | Legacy Flutter data still on disk | D-28 | | | |
+| `REC-04` | Legacy Flutter data retained indefinitely | D-28 | | | |
 | `REC-05` | Sync interrupted mid-flight | D-04, D-06, D-12 | | | |
 | `REC-06` | Backgrounded and resumed during a **separate fresh offline first launch** | D-01, D-04, D-06 | | fresh pass report/link: ___; UID proof deferred to `ON-05` unless storage decodes | |
 | `REC-07` | Later OTA update does not disturb data | D-01, D-04, D-06, D-10, D-15 | | | |
+| `REC-08` | Malformed records and truncated tail recover safely | all import participants | | fixture matrix: ___ | |
+| `REC-09` | Offline report outbox is independent and idempotent | journal/outbox/privacy | | | |
+
+---
+
+## Migration journal and first-party report
+
+Use approved sanitized diagnostics. Never paste a token, event/checklist text, hidden identifier,
+raw legacy line/file, preference value, source fingerprint, or unrelated device log here.
+
+| Field | Expected / observed |
+| --- | --- |
+| Stable report ID | |
+| Terminal state | ☐ `SETTLED_SUCCESS` ☐ `SETTLED_PARTIAL` ☐ `SETTLED_FAILED` |
+| Terminal reason | |
+| Attempt count / retry observed | |
+| Started / completed / duration ms | |
+| Platform + source/target app/database version | |
+| Calendar candidates / imported / already present / invalid / conflicts | |
+| Personal-event candidates / imported / already present / invalid / conflicts | |
+| Checklist candidates / imported / already present / invalid / conflicts | |
+| Hidden-event candidates / imported / already present / invalid / conflicts | |
+| Preference candidates / imported / already present / invalid / conflicts | |
+| Bounded error stages/codes; examples truncated? | |
+| Calendar IDs present only in protected report table | ☐ yes ☐ no |
+| Outbox offline before reconnect | ☐ queued ☐ N/A |
+| Server delivery after reconnect | ☐ acknowledged ☐ duplicate acknowledged ☐ pending |
+| Privacy assertions | ☐ pass ☐ fail |
 
 ---
 
@@ -212,8 +244,8 @@ an empty cell means the run is incomplete.
 | [D-10](./02-persisted-data-inventory.md#d-10) Hidden by uid | `OFF-10` limitation/evidence, `ON-05` required UI proof | |
 | [D-11](./02-persisted-data-inventory.md#d-11) Hidden by name | `OFF-10`, `ON-05` | |
 | [D-12](./02-persisted-data-inventory.md#d-12) Timetable courses refetch | `OFF-01`, `ON-01` | |
-| [D-13](./02-persisted-data-inventory.md#d-13) Activity log / feature | `OFF-13` | |
-| [D-14](./02-persisted-data-inventory.md#d-14) Theme (contract unresolved) | `OFF-12` observation | |
+| [D-13](./02-persisted-data-inventory.md#d-13) Activity cache excluded / feature re-syncs | `OFF-13`, `ON-01` | |
+| [D-14](./02-persisted-data-inventory.md#d-14) Theme preserved | `OFF-12` | |
 | [D-15](./02-persisted-data-inventory.md#d-15) Changelog seen-version | `OFF-11`, `REC-02` | |
 | [D-16](./02-persisted-data-inventory.md#d-16) Calendar view type | `OFF-13` | |
 | [D-17](./02-persisted-data-inventory.md#d-17) Weekends / group colours / hour height / startup screen | `OFF-13` | |
@@ -241,25 +273,21 @@ or a release recommendation** — that is deliberately out of scope
 | 2 | | | | | ☐ always ☐ once ☐ untried | |
 | 3 | | | | | ☐ always ☐ once ☐ untried | |
 
-## Open questions raised or answered
+## Decision and evidence gates
 
-Anything this run resolved, or newly raised, against
-[09 — Open engineering questions](./09-open-engineering-questions.md).
+Product behavior is frozen in
+[09 — Resolved decisions and remaining evidence](./09-open-engineering-questions.md). Record only
+build/device evidence and any contradiction found by this run.
 
-| Q | Status after this run | Evidence |
+| Gate | Result | Evidence |
 | --- | --- | --- |
-| [Q-01](./09-open-engineering-questions.md#q-01--is-the-phase-09-importer-in-the-build-under-test) Importer present? | ☐ answered ☐ still open | |
-| [Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use) Android prefs backend | ☐ answered ☐ still open ☐ N/A (iOS) | |
-| [Q-03](./09-open-engineering-questions.md#q-03--where-does-sembast-live-on-android-and-does-it-survive-the-swap) Android sembast path | ☐ answered ☐ still open ☐ N/A (iOS) | |
-| [Q-04](./09-open-engineering-questions.md#q-04--are-the-flutter-only-calendar-preferences-intentionally-dropped) Flutter-only calendar prefs | ☐ answered ☐ still open | |
-| [Q-05](./09-open-engineering-questions.md#q-05--should-flutters-notification-preferences-be-imported) Notification prefs import | ☐ answered ☐ still open | |
-| [Q-06](./09-open-engineering-questions.md#q-06--should-the-importer-seed-the-rn-school-selection-from-user_calendarsschoolid) School-selection seeding | ☐ answered ☐ still open | |
-| [Q-07](./09-open-engineering-questions.md#q-07--how-should-a-dark-mode-lightened-colour-be-treated-on-import) Dark-mode colour on import | ☐ answered ☐ still open | |
-| [Q-08](./09-open-engineering-questions.md#q-08--is-the-activité-feature-intentionally-not-ported) Activité not ported | ☐ answered ☐ still open | |
-| [Q-09](./09-open-engineering-questions.md#q-09--is-hiddenevents-being-backend-bound-correct-for-a-migrated-user) `hiddenEvents` backend-bound | ☐ answered ☐ still open | |
-| [Q-10](./09-open-engineering-questions.md#q-10--which-preferences-does-the-importer-actually-copy) Which prefs are copied | ☐ answered ☐ still open | |
-| [Q-11](./09-open-engineering-questions.md#q-11--is-the-one-release-sembast-safety-net-implemented) Sembast safety net | ☐ answered ☐ still open ☐ not observable | |
-| [Q-12](./09-open-engineering-questions.md#q-12--is-there-any-user-visible-signal-that-the-migration-ran) Migration visibility signal | ☐ answered ☐ still open | |
+| Q-01 importer version present | ☐ proved ☐ absent ☐ unknown | |
+| Q-02 Android XML backend present/retained | ☐ proved ☐ incomplete ☐ N/A | |
+| Q-03 Android document path/update survival/backup | ☐ proved ☐ incomplete ☐ N/A | |
+| iOS physical container/preferences survival | ☐ proved ☐ incomplete ☐ N/A | |
+| low-end release-mode duration/peak memory | ☐ proved ☐ incomplete | |
+| internal signed in-place gate | ☐ pass ☐ fail ☐ not run | |
+| final public-store in-place gate | ☐ pass ☐ fail ☐ not run | |
 
 ## Evidence index
 

@@ -8,15 +8,17 @@
 > code. Source references are given so a finding can be escalated precisely, not so QA has to
 > follow them.
 >
-> **Status:** documentation only (TIM-278). No app, database, or migration code is changed by
-> this section. No QA has been executed against it yet.
+> **Status:** documentation only. The importer is specified but not yet implemented, and no signed
+> physical-device migration pass has been recorded.
 
 ---
 
 ## The one thing to read first
 
 The **on-device importer** that moves Flutter's data into the React Native stores is Phase 09 of
-the migration roadmap. **As of this document being written it is not present in `mobile/`** — see
+the migration roadmap. Its authoritative behavior is the
+[data-migration specification](../05-tech-specs/data-migration.md). **It is not yet present in
+`mobile/`** — see
 [§Build precondition B-3](./01-scope-prerequisites-and-execution-order.md#b-3--does-the-build-contain-the-importer)
 and [Q-01](./09-open-engineering-questions.md#q-01--is-the-phase-09-importer-in-the-build-under-test).
 
@@ -40,10 +42,10 @@ of scope by design (see [Non-goals](#non-goals)).
 | 03 | [Flutter seed packs](./03-flutter-seed-packs.md) | The two deterministic datasets (`SEED-A` compact, `SEED-B` large) with exact creation steps, exact values, and the baseline record sheet |
 | 04 | [iOS in-place update execution](./04-ios-in-place-update.md) | Installing the released Flutter build, then replacing it in place via TestFlight / the App Store without wiping the container |
 | 05 | [Android in-place update execution](./05-android-in-place-update.md) | The same, via Google Play internal/closed testing, plus the `adb` evidence commands |
-| 06 | [Offline & online verification scenarios](./06-offline-and-online-verification-scenarios.md) | `OFF-01…OFF-20` (offline, immediately after update) and `ON-01…ON-06` (after network is restored) |
-| 07 | [Failure, restart & recovery scenarios](./07-failure-restart-and-recovery-scenarios.md) | `REC-01…REC-07` — first launch with no network, kill/restart around first launch, retry idempotency, sync resumption |
+| 06 | [Offline & online verification scenarios](./06-offline-and-online-verification-scenarios.md) | `OFF-01…OFF-21` (offline, immediately after update) and `ON-01…ON-06` (after network is restored) |
+| 07 | [Failure, restart & recovery scenarios](./07-failure-restart-and-recovery-scenarios.md) | `REC-01…REC-09` — first launch without network, crash-boundary retry, malformed/truncated fixtures, indefinite retention, and report-outbox delivery |
 | 08 | [QA execution report](./08-qa-execution-report-template.md) | The reusable report: run header, per-scenario pass/fail rows, evidence placeholders, and the sign-off block |
-| 09 | [Open engineering questions](./09-open-engineering-questions.md) | `Q-01…Q-12` — every "unknown" in the inventory, phrased as the exact question engineering must answer |
+| 09 | [Resolved decisions & remaining evidence](./09-open-engineering-questions.md) | `Q-01…Q-12` — the frozen product decisions plus signed-device and build evidence still required |
 
 ## How the identifiers work
 
@@ -57,7 +59,7 @@ of scope by design (see [Non-goals](#non-goals)).
 | `OFF-nn` | An offline post-update verification scenario | [06](./06-offline-and-online-verification-scenarios.md) |
 | `ON-nn` | An online / refetch verification scenario | [06](./06-offline-and-online-verification-scenarios.md) |
 | `REC-nn` | A failure / restart / recovery scenario | [07](./07-failure-restart-and-recovery-scenarios.md) |
-| `Q-nn` | An open engineering question | [09](./09-open-engineering-questions.md) |
+| `Q-nn` | A stable decision/evidence identifier | [09](./09-open-engineering-questions.md) |
 
 Every inventory row names the scenarios that verify it, and every scenario names the inventory
 rows it covers. The coverage cross-check lives at the end of
@@ -68,9 +70,11 @@ rows it covers. The coverage cross-check lives at the end of
 Explicitly **not** part of this section:
 
 - Visual-parity or design-review passes.
-- Minimum-OS and broad device-compatibility matrices.
-- Performance certification (`OFF-19` checks *practical* usability at scale, nothing more).
-- A release-blocking severity policy or a go/no-go framework.
+- A broad device-compatibility matrix beyond the supported-platform and required low-end slots.
+- General application performance certification. `OFF-19` still records migration duration and
+  peak memory because those are release gates for the importer.
+- Inventing a release policy during execution; the stop/hold conditions are defined by the
+  canonical migration specification.
 - Exhaustive create/edit/delete lifecycle coverage of every entity — representative edits and
   restarts are used to prove that migrated records are genuinely usable, not to re-test the
   features themselves.
@@ -78,14 +82,16 @@ Explicitly **not** part of this section:
 
 ## Related material
 
+- [`../05-tech-specs/data-migration.md`](../05-tech-specs/data-migration.md) — the canonical source,
+  target, parser, state-machine, startup, privacy, rollout, and test contract.
 - [`../00-exploration/data-persistence-migration.md`](../00-exploration/data-persistence-migration.md)
-  — the device-verified research this inventory is built on (sembast JSONL format, the
-  `flutter.` preference prefix, the replay parser).
+  — the historical research this inventory is built on.
 - [`../01-roadmap/09-data-migration.md`](../01-roadmap/09-data-migration.md) — the importer's
   intended behavior (the contract the scenarios below assert).
 - [`../01-roadmap/10-parity-cutover-release.md`](../01-roadmap/10-parity-cutover-release.md) —
   the cutover, which requires "real upgrades from a Flutter install" during internal hardening.
 - [`../inbox/2026-06-15-android-storage-verification.md`](../inbox/2026-06-15-android-storage-verification.md)
-  — the two still-open Android storage questions ([Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use), [Q-03](./09-open-engineering-questions.md#q-03--where-does-sembast-live-on-android-and-does-it-survive-the-swap)).
+  — the physical Android path, survival, and backup evidence still required by
+  [Q-02/Q-03](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use).
 - [`../../mobile/releases/README.md`](../../mobile/releases/README.md) — signing custody, store
   preview, and what remains owner-only. Read it before requesting builds.

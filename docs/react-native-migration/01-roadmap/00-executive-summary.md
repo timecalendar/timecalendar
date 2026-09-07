@@ -2,7 +2,7 @@
 
 > **What this is:** the progressive, end-to-end plan for *how we build the RN app* — every phase, in dependency order, from empty repo to store cutover. Rough by design; each phase gets a real task breakdown only when we reach it (we earn detail, we don't front-load it).
 >
-> **Reads on top of:** [`../00-exploration/migration-approach.md`](../00-exploration/migration-approach.md) (the method), [`reference-stack-grounded.md`](../00-exploration/reference-stack-grounded.md) (the stack), [`data-persistence-migration.md`](../00-exploration/data-persistence-migration.md) (the on-device data migration, already device-verified).
+> **Reads on top of:** [`../00-exploration/migration-approach.md`](../00-exploration/migration-approach.md) (the method), [`reference-stack-grounded.md`](../00-exploration/reference-stack-grounded.md) (the stack), [`data-persistence-migration.md`](../00-exploration/data-persistence-migration.md) (the on-device data-migration research). The importer contract is specified; signed physical-device and public-store upgrade proof remains a release gate.
 >
 > Status: roadmap / approved direction. One file per phase: `01-…` through `10-…`.
 

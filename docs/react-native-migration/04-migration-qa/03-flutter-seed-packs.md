@@ -245,10 +245,22 @@ On the **Calendrier** tab:
 | View type | **Planning** (the list view, not the week grid) | [D-16](./02-persisted-data-inventory.md#d-16) |
 | Hour height | Pinch-zoom the week grid noticeably in or out, then return to Planning | [D-17](./02-persisted-data-inventory.md#d-17) |
 
+This deliberately seeds both sides of the import contract:
+
+- **preserved:** dark theme, weekends hidden, startup tab Calendar, notifications enabled, and
+  changelog seen version;
+- **dropped:** group colours on, Planning view, changed hour height, and Flutter's 14-day
+  notification horizon.
+
+The released Flutter notification control is disabled, so confirm its persisted default is
+enabled and `date_limit` is 14 through the approved sanitized preference inspector supplied with
+the migration QA build. Do not attach a complete preferences dump.
+
 | ID | Baseline value to record |
 | --- | --- |
 | `BASE-11` | Screenshot of the **Paramètres** screen showing all four positions. |
 | `BASE-12` | The app is visibly in **dark** theme. |
+| `BASE-15` | Sanitized inspector: notifications enabled, horizon 14, current changelog version recorded; no unrelated preference values. |
 
 ### 3.7 `SEED-A-07` — Calendar visibility
 
@@ -269,7 +281,7 @@ the migration and not to a Flutter write that never landed.
 
 | ID | Baseline value to record |
 | --- | --- |
-| `BASE-14` | Post-relaunch confirmation of `BASE-04`…`BASE-13`. Note the Flutter version from **Profil → À propos**. |
+| `BASE-14` | Post-relaunch confirmation of `BASE-04`…`BASE-13` and `BASE-15`. Note the Flutter version from **Profil → À propos**. |
 
 ### 3.9 `SEED-A` at a glance
 
@@ -408,6 +420,7 @@ unreportable — you will have nothing to compare against.
 | `BASE-12` | App visibly in dark theme | A, B | |
 | `BASE-13` | Mes calendriers — 1 calendar, visible | A | |
 | `BASE-14` | Post-relaunch confirmation + Flutter version from À propos | A, B | |
+| `BASE-15` | Sanitized enabled/horizon/changelog preference evidence | A, B | |
 | `BASE-B1` | 3 calendar name/school pairs (unordered set), which is hidden | B | |
 | `BASE-B2` | Personal-event count = 60 + sentinel screenshots | B | |
 | `BASE-B3` | Checklist item count = 134 + per-event counts | B | |
