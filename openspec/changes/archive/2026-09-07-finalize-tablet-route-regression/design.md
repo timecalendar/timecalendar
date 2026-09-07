@@ -4,6 +4,8 @@ The tablet foundation and three route-polish changes already own the responsive 
 
 The shared Activity native journey is the one narrow executable correction. On iOS, a changed-row selector was visible and targeted after scrolling, but a single tap produced no route transition. Its former location-text wait was also not a route oracle: the same location is rendered in the Activity row, while the row's accessibility label can hide that child text from XCUITest. The resolved details screen already exposes `event-details-responsive-owner`, a stable test ID that is absent from Activity and from loading/not-found outcomes.
 
+Exact-head regression also exposed an iOS system transition before Activity could run: the About deep link's first confirmation was dismissed, its second optional tap ran while the dialog was absent, and the operating system then re-presented the prompt. The failure artifact showed SpringBoard and the delayed confirmation rather than the app. The flow already owns a replay tap for this platform behavior; it needs a settle boundary between the two taps.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -11,6 +13,7 @@ The shared Activity native journey is the one narrow executable correction. On i
 - Make every matrix row describe shipped portrait behavior or an explicit no-change disposition.
 - Keep evidence tied to focused tests and actual native outcomes rather than predicted checks.
 - Make both actionable Activity row transitions recover from a no-change tap and assert a details-only destination.
+- Keep the existing About deep-link replay tap late enough to dismiss a delayed iOS confirmation.
 - Keep the regression enforceable through a focused static Jest suite and strict OpenSpec validation.
 
 **Non-goals:**
@@ -36,6 +39,10 @@ Each actionable Activity-row `tapOn` uses Maestro's `retryTapIfNoChange` option.
 ### D4 — Prove the route before proving its data
 
 After each actionable row tap, the flow waits for `event-details-responsive-owner`. That selector mounts only for resolved event details, so it proves both navigation and successful data resolution. A subsequent location assertion retains the seeded-content round-trip proof. The static test requires this ordered sequence for the new and changed fixture rows.
+
+### D5 — Settle the iOS system transition before the About replay tap
+
+The About flow retains two optional `Open` taps, but inserts `waitForAnimationToEnd` between them. The first handles the ordinary custom-scheme confirmation. The settle boundary allows a delayed SpringBoard replay to appear before the second optional tap is evaluated; when no replay occurs, the optional tap remains inert. Static coverage locks this ordering.
 
 ## Verification
 

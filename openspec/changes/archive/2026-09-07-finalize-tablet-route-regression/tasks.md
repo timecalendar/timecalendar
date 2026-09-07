@@ -9,6 +9,7 @@
 - [x] 2.1 Reproduce the proof gap with a focused static assertion that requires both actionable Activity fixture rows to use no-change tap retry and reach a details-only selector before seeded content is asserted.
 - [x] 2.2 Update the shared Activity Maestro flow so new and changed rows use `retryTapIfNoChange: true`, wait for `event-details-responsive-owner`, and then assert their seeded details location.
 - [x] 2.3 Keep the Activity production screen, row selectors, accessibility labels, data/cache semantics, paging, refresh, native configuration, and fixtures unchanged.
+- [x] 2.4 Inspect the exact-head iOS failure artifact, keep the About flow's existing two optional confirmation taps, insert an animation-settle boundary before the replay tap, and lock the sequence in the general selector suite.
 
 ## 3. Verification and delivery
 
