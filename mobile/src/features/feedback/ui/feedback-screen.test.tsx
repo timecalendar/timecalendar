@@ -70,7 +70,7 @@ it.each([390, 768, 800, 1024])(
 )
 
 describe.each([
-  ["ios" as const, "padding", 44],
+  ["ios" as const, "height", 44],
   ["android" as const, "height", 48],
 ])("FeedbackScreen on %s", (platform, behavior, minimumTarget) => {
   usePlatform(platform)

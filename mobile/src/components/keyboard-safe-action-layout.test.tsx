@@ -7,7 +7,7 @@ import { resolveKeyboardAvoidingBehavior } from "./keyboard-avoiding-behavior"
 import { KeyboardSafeActionLayout } from "./keyboard-safe-action-layout"
 
 describe.each([
-  ["ios" as const, "padding"],
+  ["ios" as const, "height"],
   ["android" as const, "height"],
 ])("KeyboardSafeActionLayout on %s", (platform, behavior) => {
   usePlatform(platform)
