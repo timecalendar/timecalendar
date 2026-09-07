@@ -44,6 +44,6 @@
 - `cd mobile && npm test -- --coverage --runInBand` — 163 suites and 1,381 tests passed; 98.96% lines and 92.93% branches.
 - `cd server && npm run lint` — passed.
 - `cd server && npm run test:e2e -- --runInBand` — 1 suite and 1 test passed.
-- PR baseline CI for exact implementation head `c348e01374c9b762ea13e76e1e61775e880afc7e` — all 8 checks passed, including mobile checks, server tests, and the branch disclosure scan.
-- Deliberate native workflow run `34159981625` resolved exact implementation head `c348e01374c9b762ea13e76e1e61775e880afc7e`, selected Android and iOS, and passed target selection plus server-image preparation.
-- The bounded native evidence pass ended while both platform jobs were still building. Neither platform had reached Maestro execution, so trustworthy conclusions and platform artifacts were unavailable; this is recorded as grouped Android/iOS E2E-health debt, with no duplicate dispatch.
+- Historical pre-rebase baseline CI for implementation head `c348e01374c9b762ea13e76e1e61775e880afc7e` — all 8 checks passed, including mobile checks, server tests, and the branch disclosure scan. This is not final-head proof after the later Maestro configuration, rebase, and archive changes.
+- Historical deliberate native workflow run `34159981625` resolved `c348e01374c9b762ea13e76e1e61775e880afc7e`, selected Android and iOS, and passed target selection plus server-image preparation. The bounded pass ended while both platform jobs were still building, before Maestro conclusions or platform artifacts existed.
+- The qualifying post-rebase/archive exact-head baseline and both-platform native evidence are recorded on the issue and pull request so recording the run does not itself create a newer repository head.
