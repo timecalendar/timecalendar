@@ -109,8 +109,9 @@ the fully prefixed key in `shared_prefs/FlutterSharedPreferences.xml`: booleans 
 integers as long, and strings as native string. The plugin encodes doubles and string lists inside
 strings with private type prefixes, but none of the imported keys uses either representation. iOS
 stores the fully prefixed keys in the standard application domain as native `NSNumber`,
-`NSString`, or `NSArray` values. The bridge must request the declared type for each allowlisted
-key and reject a mismatched native type rather than coerce it.
+`NSString`, or `NSArray` values. The bridge reads each allowlisted native object independently,
+classifies its exact type, and never coerces it. An absent key, a mismatched native type, and a
+per-key read failure are distinct results so one bad preference cannot fail its siblings.
 
 The complete decision matrix is:
 
@@ -305,6 +306,13 @@ Every target comparison has exactly three results:
 Canonical equality compares every persisted target field after the documented timestamp and
 default normalization. It never compares raw JSON serialization.
 
+After Sembast replay and validation, two live records under different store keys can still map to
+the same logical target ID (`value.id`, `value.uid`, or `value.uuid`). Among valid candidates, the
+one whose final effective source write occurs latest in the JSONL log wins; skip the other
+candidates as `DUPLICATE_SOURCE_ID`, report them, and settle partial. An invalid later candidate
+does not suppress an earlier valid candidate. This also resolves historical pre-v2 event copies
+and pre-v3 calendar keys deterministically.
+
 Calendars have two collision axes. The `id` comparison above runs first. A candidate whose token
 already belongs to a different RN calendar is also a conflict and is skipped. If multiple valid
 legacy calendars share a token, the last effective Sembast candidate wins deterministically and
@@ -360,9 +368,23 @@ API. Its contract is limited to:
 ```ts
 type LegacyMigrationSource = {
   database: null | { uri: string; sizeBytes: number; modifiedAtMs: number | null };
-  preferences: Record<string, boolean | number | string | string[]>;
+  preferences: Record<LegacyPreferenceKey, LegacyPreferenceRead>;
   platformEvidence: { preferenceBackend: 'ios-user-defaults' | 'android-shared-preferences' };
 };
+
+type LegacyPreferenceKey =
+  | 'current_version'
+  | 'theme'
+  | 'dark_mode'
+  | 'notification_calendar'
+  | 'startup_screen'
+  | 'show_weekends';
+
+type LegacyPreferenceRead =
+  | { state: 'absent' }
+  | { state: 'value'; value: boolean | number | string }
+  | { state: 'invalid_type' }
+  | { state: 'read_failed' };
 
 getLegacyMigrationSource(): Promise<LegacyMigrationSource>;
 ```
@@ -370,8 +392,10 @@ getLegacyMigrationSource(): Promise<LegacyMigrationSource>;
 On iOS it locates `simple_database.db` in the application's documents directory and reads only
 the allowlisted `flutter.` keys from standard `UserDefaults`. On Android it locates the same
 document file using the path corresponding to Flutter's application-documents directory and reads
-only allowlisted keys from native `FlutterSharedPreferences`. The module returns no raw preference
-file, directory listing, token, event content, or database bytes.
+only allowlisted keys from native `FlutterSharedPreferences`. Result keys are the unprefixed
+logical names above; the native implementation alone adds `flutter.` when it reads the source.
+It returns one result for every key, including absent and failed reads. The module returns no raw
+preference file, directory listing, token, event content, or database bytes.
 
 The module operates inside the existing application sandbox and requires no app-group, keychain,
 shared-container, external-storage, or broad filesystem entitlement/permission. A build whose
@@ -676,7 +700,7 @@ Commit synthetic, non-personal fixtures and expected normalized outputs for:
 - missing, empty, zero-byte, malformed-metadata, unknown-version, interior-malformed, and
   truncated-final-line files;
 - each file/line/record/text/array resource boundary immediately below, at, and above its limit;
-- duplicate source keys/tokens and target absent/identical/divergent collisions;
+- duplicate logical source IDs/tokens and target absent/identical/divergent collisions;
 - pre-existing RN content newer than the Flutter source;
 - an MMKV write/read failure for each native participant;
 - process kill injection before and after every boundary in the crash matrix;
