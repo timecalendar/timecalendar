@@ -49,5 +49,5 @@
 
 ## 8. CI proof and handoff evidence
 
-- [ ] 8.1 Push the implementation and confirm the existing mobile checks plus the named React Doctor step pass on the exact PR head; if the diagnostic step fails, classify or fix the finding rather than suppressing it or weakening blocking severity.
-- [ ] 8.2 Update the PR body and issue evidence with before/after diagnostics, the seven prerequisite PR/commit pairs, focused tests, TypeScript, lint, full Jest natural exit, full/changed Doctor results, deliberate deferrals, Architecture Book/ADR changes, and the exact `.github/workflows/ci-mobile.yml` sensitive-surface review.
+- [x] 8.1 Push the implementation and confirm the existing mobile checks plus the named React Doctor step pass on the exact PR head; if the diagnostic step fails, classify or fix the finding rather than suppressing it or weakening blocking severity.
+- [x] 8.2 Update the PR body and issue evidence with before/after diagnostics, the seven prerequisite PR/commit pairs, focused tests, TypeScript, lint, full Jest natural exit, full/changed Doctor results, deliberate deferrals, Architecture Book/ADR changes, and the exact `.github/workflows/ci-mobile.yml` sensitive-surface review.
