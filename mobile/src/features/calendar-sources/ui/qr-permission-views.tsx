@@ -70,12 +70,12 @@ export function QrPermissionSettingsView() {
 
 function PermissionFrame({ children }: { children: React.ReactNode }) {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeAreaOwner}>
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.fill}>
         <AdaptiveContent
           testID="qr-permission-content"
           lane="readable"
-          style={styles.adaptiveOwner}
+          style={styles.fill}
           contentContainerStyle={styles.safeArea}
         >
           {children}
@@ -86,13 +86,7 @@ function PermissionFrame({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeAreaOwner: {
-    flex: 1,
-  },
-  adaptiveOwner: {
+  fill: {
     flex: 1,
   },
   safeArea: {

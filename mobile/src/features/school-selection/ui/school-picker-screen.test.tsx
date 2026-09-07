@@ -4,6 +4,7 @@ import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useSchools } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
+import { resolveResponsiveLayout } from "@/theme"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
@@ -118,9 +119,10 @@ describe("SchoolPickerScreen", () => {
     const list = owner.children[0] as unknown as {
       props: { style: unknown }
     }
+    const layout = resolveResponsiveLayout(1024, "standard")
     expect(StyleSheet.flatten(list.props.style)).toMatchObject({
-      maxWidth: 928,
-      paddingHorizontal: 64,
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
     })
   })
 

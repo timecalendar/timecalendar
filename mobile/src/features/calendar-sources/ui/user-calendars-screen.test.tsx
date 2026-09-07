@@ -14,7 +14,7 @@ import {
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
 import { usePlatform } from "@/test-support/platform"
-import { Spacing } from "@/theme"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import { UserCalendarsScreen } from "./user-calendars-screen"
 
@@ -211,7 +211,7 @@ describe("UserCalendarsScreen", () => {
 
   it("centers the management list in the measured tablet lane", async () => {
     await render(<UserCalendarsScreen />)
-    const owner = screen.getByTestId("user-calendars-safe-area")
+    const owner = screen.getByTestId("user-calendars-content")
 
     await act(() =>
       fireEvent(owner, "layout", {
@@ -219,11 +219,16 @@ describe("UserCalendarsScreen", () => {
       }),
     )
 
-    expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
+    const layout = resolveResponsiveLayout(1024, "standard")
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("user-calendars-safe-area").props.style,
+      ),
+    ).toMatchObject({
       alignSelf: "center",
-      maxWidth: 928,
-      paddingLeft: Spacing.six,
-      paddingRight: Spacing.six,
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingLeft: layout.gutter,
+      paddingRight: layout.gutter,
     })
   })
 

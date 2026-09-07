@@ -4,6 +4,7 @@ import { StyleSheet } from "react-native"
 
 import { useSchoolGroups } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
+import { resolveResponsiveLayout } from "@/theme"
 
 import SchoolGroupPickerScreen from "./school-group-picker-screen"
 
@@ -60,9 +61,10 @@ describe("SchoolGroupPickerScreen", () => {
     const content = owner.children[0] as unknown as {
       props: { style: unknown }
     }
+    const layout = resolveResponsiveLayout(1024, "standard")
     expect(StyleSheet.flatten(content.props.style)).toMatchObject({
-      maxWidth: 928,
-      paddingHorizontal: 64,
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
     })
   })
 

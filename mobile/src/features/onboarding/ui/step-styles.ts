@@ -17,13 +17,7 @@ import { Radii, Spacing } from "@/theme"
 // manual-import QR/link pair — keeps its own style next to its sibling, where
 // the primary/secondary distinction is the thing worth reading.
 export const stepStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeAreaOwner: {
-    flex: 1,
-  },
-  adaptiveOwner: {
+  fill: {
     flex: 1,
   },
   safeArea: {
@@ -31,9 +25,6 @@ export const stepStyles = StyleSheet.create({
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
-  },
-  keyboardAvoiding: {
-    flex: 1,
   },
   formContent: {
     flexGrow: 1,

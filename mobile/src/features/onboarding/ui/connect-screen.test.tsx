@@ -5,6 +5,7 @@ import { StyleSheet } from "react-native"
 
 import { useImportDraft } from "@/features/onboarding/draft"
 import type { SchoolListItem } from "@/features/school-selection/data"
+import { resolveResponsiveLayout } from "@/theme"
 
 import ConnectScreen from "./connect-screen"
 
@@ -59,9 +60,10 @@ describe("ConnectScreen", () => {
     const content = owner.children[0] as unknown as {
       props: { style: unknown }
     }
+    const layout = resolveResponsiveLayout(1024, "readable")
     expect(StyleSheet.flatten(content.props.style)).toMatchObject({
-      maxWidth: 768,
-      paddingHorizontal: 64,
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
     })
   })
 

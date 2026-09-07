@@ -7,7 +7,7 @@ import {
 } from "react-native"
 import { cancelAnimation, withTiming } from "react-native-reanimated"
 
-import { Colors } from "@/theme"
+import { Colors, resolveResponsiveLayout } from "@/theme"
 
 import WelcomeScreen from "./welcome-screen"
 
@@ -56,9 +56,10 @@ describe("WelcomeScreen", () => {
     const content = owner.children[0] as unknown as {
       props: { style: unknown }
     }
+    const layout = resolveResponsiveLayout(1024, "standard")
     expect(StyleSheet.flatten(content.props.style)).toMatchObject({
-      maxWidth: 928,
-      paddingHorizontal: 64,
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
     })
     await act(flushMicrotasks)
   })

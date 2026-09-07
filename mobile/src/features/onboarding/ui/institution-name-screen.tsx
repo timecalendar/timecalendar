@@ -61,16 +61,16 @@ export default function InstitutionNameScreen() {
   }
 
   return (
-    <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={stepStyles.safeAreaOwner}>
+    <ThemedView style={stepStyles.fill}>
+      <SafeAreaView style={stepStyles.fill}>
         <AdaptiveContent
           testID="onboarding-institution-content"
           lane="readable"
-          style={stepStyles.adaptiveOwner}
+          style={stepStyles.fill}
           contentContainerStyle={stepStyles.safeArea}
         >
           <KeyboardAvoidingView
-            style={stepStyles.keyboardAvoiding}
+            style={stepStyles.fill}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             <ScrollView

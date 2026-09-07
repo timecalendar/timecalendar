@@ -56,12 +56,12 @@ export default function SchoolGroupPickerScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeAreaOwner}>
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.fill}>
         <AdaptiveContent
           testID="onboarding-group-content"
           lane="standard"
-          style={styles.adaptiveOwner}
+          style={styles.fill}
           contentContainerStyle={styles.safeArea}
         >
           <ThemedText type="title">{t("onboarding.group.title")}</ThemedText>
@@ -226,13 +226,7 @@ function GroupNode({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeAreaOwner: {
-    flex: 1,
-  },
-  adaptiveOwner: {
+  fill: {
     flex: 1,
   },
   safeArea: {

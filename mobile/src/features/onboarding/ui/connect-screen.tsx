@@ -45,12 +45,12 @@ export default function ConnectScreen() {
   const intranetUrl = safeIntranetUrl(school?.intranetUrl)
 
   return (
-    <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={stepStyles.safeAreaOwner}>
+    <ThemedView style={stepStyles.fill}>
+      <SafeAreaView style={stepStyles.fill}>
         <AdaptiveContent
           testID="onboarding-connect-content"
           lane="readable"
-          style={stepStyles.adaptiveOwner}
+          style={stepStyles.fill}
           contentContainerStyle={[stepStyles.safeArea, styles.safeArea]}
         >
           <View style={stepStyles.intro}>

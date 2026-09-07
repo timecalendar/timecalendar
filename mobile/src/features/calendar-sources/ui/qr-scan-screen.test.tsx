@@ -4,6 +4,7 @@ import { Linking, StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
 import { recordUnknownError } from "@/firebase"
+import { resolveResponsiveLayout } from "@/theme"
 
 import QrScanScreen from "./qr-scan-screen"
 
@@ -210,9 +211,10 @@ describe("QrScanScreen", () => {
     const content = overlay.children[0] as unknown as {
       props: { style: unknown }
     }
+    const layout = resolveResponsiveLayout(1024, "readable")
     expect(StyleSheet.flatten(content.props.style)).toMatchObject({
-      maxWidth: 768,
-      paddingHorizontal: 64,
+      maxWidth: layout.contentWidth + 2 * layout.gutter,
+      paddingHorizontal: layout.gutter,
     })
     expect(
       StyleSheet.flatten(getByTestId("qr-scan-camera").props.style),

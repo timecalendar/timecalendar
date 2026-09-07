@@ -67,7 +67,7 @@ export default function ProgrammeScreen() {
   const skip = () => advance("")
 
   return (
-    <ThemedView style={stepStyles.container}>
+    <ThemedView style={stepStyles.fill}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -106,18 +106,15 @@ export default function ProgrammeScreen() {
           }),
         }}
       />
-      <SafeAreaView
-        style={stepStyles.safeAreaOwner}
-        edges={["left", "right", "bottom"]}
-      >
+      <SafeAreaView style={stepStyles.fill} edges={["left", "right", "bottom"]}>
         <AdaptiveContent
           testID="onboarding-programme-content"
           lane="readable"
-          style={stepStyles.adaptiveOwner}
+          style={stepStyles.fill}
           contentContainerStyle={stepStyles.safeArea}
         >
           <KeyboardAvoidingView
-            style={stepStyles.keyboardAvoiding}
+            style={stepStyles.fill}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
             <ScrollView

@@ -105,12 +105,12 @@ export default function IcalUrlScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeAreaOwner}>
+    <ThemedView style={styles.fill}>
+      <SafeAreaView style={styles.fill}>
         <AdaptiveContent
           testID="ical-url-content"
           lane="readable"
-          style={styles.adaptiveOwner}
+          style={styles.fill}
           contentContainerStyle={styles.safeArea}
         >
           <View style={styles.intro}>
@@ -246,13 +246,7 @@ export default function IcalUrlScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeAreaOwner: {
-    flex: 1,
-  },
-  adaptiveOwner: {
+  fill: {
     flex: 1,
   },
   safeArea: {

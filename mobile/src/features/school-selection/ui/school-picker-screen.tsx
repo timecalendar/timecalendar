@@ -75,7 +75,7 @@ export default function SchoolPickerScreen() {
   const browsing = !isLoading && !isError && schools.length > 0 && !searching
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.fill}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -139,7 +139,7 @@ export default function SchoolPickerScreen() {
       <View
         testID="onboarding-school-content"
         onLayout={schoolListLayout.onLayout}
-        style={styles.listOwner}
+        style={styles.fill}
       >
         <FlatList
           style={schoolListLayout.laneStyle}
@@ -239,10 +239,7 @@ export default function SchoolPickerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listOwner: {
+  fill: {
     flex: 1,
   },
   list: {
