@@ -17,3 +17,4 @@
 - [x] 3.2 Parse the Activity flow with the pinned Maestro CLI and run applicable TypeScript, lint, formatting, and diff checks.
 - [x] 3.3 Run strict OpenSpec validation and confirm the completed proposal, design, delta spec, and checked task record are present in the dated archive.
 - [x] 3.4 Inspect the branch diff for scope and disclosure hygiene, push the same PR branch, and require exact-head iOS native E2E before review acceptance.
+- [x] 3.5 Inspect the exact-head Android pagination artifact and align the second-page tie traversal with the deterministic merged order, with a focused static direction proof.
