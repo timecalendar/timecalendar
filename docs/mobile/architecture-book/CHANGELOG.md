@@ -2,6 +2,11 @@
 
 ## 2026-09-07
 
+- Staged ADR 047's approved export-guide amendment: when the native mandatory guide is implemented,
+  production manual-import, QR, and iCal routes require an in-memory completion proof while the
+  draft remains process-ephemeral; a persisted catalogue is content cache and cannot restore the
+  journey or completion proof. Current no-draft behavior remains authoritative until that
+  implementation updates navigation and removes the transitional clause.
 - Added the reproducible mobile React Doctor contract: an exact lockfile pin, advisory full scan,
   warning-blocking changed-code CI gate against `origin/main`, normalized owned diagnostic report,
   and standalone mobile dependency boundary (ADR 053).

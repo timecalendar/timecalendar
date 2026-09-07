@@ -67,6 +67,25 @@ QR ↔ URL switch a failed import needs).
 - Screens reading the draft must tolerate `null`; that is a contract, not a guard
   to be "tightened" later into a throw.
 
+## Approved export-guide amendment
+
+The native export-guide specification changes one route-legality rule when that feature is
+implemented. The draft and guide snapshot remain ephemeral and Stack-scoped, but production-capable
+builds must then require in-memory guide completion before manual import, QR, or iCal URL entry.
+A protected direct/restored route with no valid journey restarts at the earliest recoverable
+onboarding route instead of creating with empty draft fields. Only runtime-verified development/test
+tooling may bypass that gate.
+
+A persisted validated guide catalogue is rebuildable content cache, not journey state. It contains
+no draft, selected provider, page index, or completion proof, and therefore cannot make a protected
+route legal after process death or restore partial progress.
+
+This amendment becomes current-state architecture only with the export-guide implementation. Until
+then, the existing no-draft QR/iCal behavior above remains authoritative. The implementation change
+must update `navigation.md`, remove the obsolete no-draft clauses here, and prove that recovery
+cannot redirect to itself or trap normal Back navigation. See
+`docs/react-native-migration/05-tech-specs/export-guides.md`.
+
 ## Revisit if
 
 - A journey step needs to survive backgrounding, a crash, or an app restart (e.g. a
