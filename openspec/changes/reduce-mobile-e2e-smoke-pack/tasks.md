@@ -25,11 +25,22 @@
 
 ## 5. Local-green and CI proof
 
-- [ ] 5.1 Run OpenSpec validation, the focused server fixture/import tests, focused mobile coverage added by the audit, Maestro selector-integrity tests, `mobile/e2e/test_run_e2e.sh`, and the retry-classifier/workflow-structure fixtures; record exact commands and results.
-- [ ] 5.2 Run the applicable mobile TypeScript, lint, formatting, and Jest gates plus the affected server lint/test checks, fixing only failures caused by this change; confirm no API contract, generated client, migration, native/store config, deploy workflow, or legacy Flutter file changed.
+- [x] 5.1 Run OpenSpec validation, the focused server fixture/import tests, focused mobile coverage added by the audit, Maestro selector-integrity tests, `mobile/e2e/test_run_e2e.sh`, and the retry-classifier/workflow-structure fixtures; record exact commands and results.
+- [x] 5.2 Run the applicable mobile TypeScript, lint, formatting, and Jest gates plus the affected server lint/test checks, fixing only failures caused by this change; confirm no API contract, generated client, migration, native/store config, deploy workflow, or legacy Flutter file changed.
 - [ ] 5.3 Add or update the CI proof so baseline CI fails for any fourth top-level YAML, independently discovered helper, stale retained selector, or weakened harness/classifier invariant, then confirm the exact implementation head is green.
 
 ## 6. Bounded native evidence
 
 - [ ] 6.1 After all focused/static checks pass and the final implementation commit is pushed, manually dispatch the native E2E workflow once for that exact immutable commit and verify both Android and iOS are selected.
 - [ ] 6.2 Record both platform conclusions and artifact links on the issue. Do not repeat without a relevant code/config commit or concrete artifact evidence of a transient infrastructure failure; if trustworthy proof remains unavailable, report grouped E2E-health debt instead of expanding the remediation chain.
+
+## Verification evidence
+
+- `openspec validate reduce-mobile-e2e-smoke-pack --strict` — passed.
+- `cd server && npm test -- --runInBand e2e/e2e-ical-fixture.controller.test.ts` — 1 suite, 3 tests passed.
+- `cd mobile && npm test -- --runInBand e2e/maestro-selectors.test.ts` — 1 suite, 20 tests passed.
+- `mobile/e2e/test_run_e2e.sh` and `mobile/e2e/test_ci_mobile_e2e.sh` — passed.
+- `cd mobile && npx tsc --noEmit && npm run lint` — passed.
+- `cd mobile && npm test -- --coverage --runInBand` — 163 suites and 1,381 tests passed; 98.96% lines and 92.93% branches.
+- `cd server && npm run lint` — passed.
+- `cd server && npm run test:e2e -- --runInBand` — 1 suite and 1 test passed.
