@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
-import { AccessibilityInfo } from "react-native"
+import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useRenameCalendar } from "@/features/calendar-sources/data"
 
@@ -74,6 +74,25 @@ beforeEach(() => {
 })
 
 describe("RenameCalendarDialog", () => {
+  it("bounds dialog content to the measured readable tablet lane", async () => {
+    await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
+    const owner = screen.getByTestId("user-calendar-rename-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = owner.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+      maxWidth: 768,
+      paddingHorizontal: 64,
+    })
+  })
+
   it("seeds the input from the TRIMMED current name and labels it", async () => {
     await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
     const input = screen.getByTestId("user-calendar-rename-input")

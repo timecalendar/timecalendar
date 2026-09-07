@@ -9,13 +9,15 @@ import {
   Pressable,
   StyleSheet,
   useWindowDimensions,
+  View,
 } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
-import { MaxContentWidth, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
 
 import { ListStatus } from "./list-status"
 import { RowSeparator } from "./row-separator"
@@ -61,6 +63,7 @@ export default function SchoolPickerScreen() {
   const { height: windowHeight } = useWindowDimensions()
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")
+  const schoolListLayout = useAdaptiveLayout("standard")
 
   const visible = useMemo(
     // Accent-insensitive name/code match.
@@ -133,103 +136,113 @@ export default function SchoolPickerScreen() {
           },
         }}
       />
-      <FlatList
-        data={visible}
-        keyExtractor={(school) => school.id}
-        renderItem={({ item }) => <SchoolRow school={item} />}
-        ItemSeparatorComponent={Platform.OS === "ios" ? RowSeparator : null}
-        contentInsetAdjustmentBehavior="automatic"
-        // No automaticallyAdjustKeyboardInsets: it sticks content under the
-        // header after the keyboard hides (RN #47731).
-        alwaysBounceVertical
-        keyboardDismissMode="on-drag"
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[
-          styles.list,
-          {
-            paddingBottom:
-              Spacing.three + (Platform.OS === "android" ? insets.bottom : 0),
-          },
-          // Upper-third so the open search keyboard never covers the status.
-          visible.length === 0 && { paddingTop: windowHeight * 0.15 },
-        ]}
-        ListHeaderComponent={
-          browsing ? (
-            <ThemedView style={styles.listHeader}>
-              <ThemedText type="subtitle">
-                {t("onboarding.school.title")}
-              </ThemedText>
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-                style={styles.subtitle}
-              >
-                {t("onboarding.school.subtitle")}
-              </ThemedText>
-            </ThemedView>
-          ) : null
-        }
-        ListFooterComponent={
-          browsing ? (
-            <ThemedView style={styles.listFooter}>
-              <MissingSchoolAction />
-            </ThemedView>
-          ) : null
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <ListStatus
-              media={<ActivityIndicator />}
-              message={t("onboarding.school.loading")}
-              announceKey="loading"
-            />
-          ) : isError ? (
-            <ListStatus
-              media={<StatusSymbol name="wifi.exclamationmark" />}
-              message={t("onboarding.school.error")}
-              announceKey="error"
-              alert
-            >
-              <Pressable
-                testID="onboarding-school-retry"
-                accessibilityRole="button"
-                accessibilityLabel={t("onboarding.school.retry")}
-                hitSlop={Spacing.two}
-                onPress={refetch}
-                style={styles.retry}
-              >
-                <ThemedText type="smallBold" themeColor="primary">
-                  {t("onboarding.school.retry")}
+      <View
+        testID="onboarding-school-content"
+        onLayout={schoolListLayout.onLayout}
+        style={styles.listOwner}
+      >
+        <FlatList
+          style={schoolListLayout.laneStyle}
+          data={visible}
+          keyExtractor={(school) => school.id}
+          renderItem={({ item }) => <SchoolRow school={item} />}
+          ItemSeparatorComponent={Platform.OS === "ios" ? RowSeparator : null}
+          contentInsetAdjustmentBehavior="automatic"
+          // No automaticallyAdjustKeyboardInsets: it sticks content under the
+          // header after the keyboard hides (RN #47731).
+          alwaysBounceVertical
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.list,
+            {
+              paddingBottom:
+                Spacing.three + (Platform.OS === "android" ? insets.bottom : 0),
+            },
+            // Upper-third so the open search keyboard never covers the status.
+            visible.length === 0 && { paddingTop: windowHeight * 0.15 },
+          ]}
+          ListHeaderComponent={
+            browsing ? (
+              <ThemedView style={styles.listHeader}>
+                <ThemedText type="subtitle">
+                  {t("onboarding.school.title")}
                 </ThemedText>
-              </Pressable>
-            </ListStatus>
-          ) : searching ? (
-            <ListStatus
-              media={<StatusSymbol name="magnifyingglass" />}
-              message={t("onboarding.school.noResults", {
-                query: filter.trim(),
-              })}
-              announceKey="noResults"
-            >
-              <MissingSchoolAction />
-            </ListStatus>
-          ) : (
-            <ListStatus
-              media={<StatusSymbol name="graduationcap" />}
-              message={t("onboarding.school.empty")}
-              announceKey="empty"
-            >
-              <MissingSchoolAction />
-            </ListStatus>
-          )
-        }
-      />
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={styles.subtitle}
+                >
+                  {t("onboarding.school.subtitle")}
+                </ThemedText>
+              </ThemedView>
+            ) : null
+          }
+          ListFooterComponent={
+            browsing ? (
+              <ThemedView style={styles.listFooter}>
+                <MissingSchoolAction />
+              </ThemedView>
+            ) : null
+          }
+          ListEmptyComponent={
+            isLoading ? (
+              <ListStatus
+                media={<ActivityIndicator />}
+                message={t("onboarding.school.loading")}
+                announceKey="loading"
+              />
+            ) : isError ? (
+              <ListStatus
+                media={<StatusSymbol name="wifi.exclamationmark" />}
+                message={t("onboarding.school.error")}
+                announceKey="error"
+                alert
+              >
+                <Pressable
+                  testID="onboarding-school-retry"
+                  accessibilityRole="button"
+                  accessibilityLabel={t("onboarding.school.retry")}
+                  hitSlop={Spacing.two}
+                  onPress={refetch}
+                  style={styles.retry}
+                >
+                  <ThemedText type="smallBold" themeColor="primary">
+                    {t("onboarding.school.retry")}
+                  </ThemedText>
+                </Pressable>
+              </ListStatus>
+            ) : searching ? (
+              <ListStatus
+                media={<StatusSymbol name="magnifyingglass" />}
+                message={t("onboarding.school.noResults", {
+                  query: filter.trim(),
+                })}
+                announceKey="noResults"
+              >
+                <MissingSchoolAction />
+              </ListStatus>
+            ) : (
+              <ListStatus
+                media={<StatusSymbol name="graduationcap" />}
+                message={t("onboarding.school.empty")}
+                announceKey="empty"
+              >
+                <MissingSchoolAction />
+              </ListStatus>
+            )
+          }
+        />
+      </View>
     </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  listOwner: {
     flex: 1,
   },
   list: {
@@ -246,8 +259,6 @@ const styles = StyleSheet.create({
   },
   listHeader: {
     width: "100%",
-    maxWidth: MaxContentWidth,
-    alignSelf: "center",
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
@@ -255,8 +266,6 @@ const styles = StyleSheet.create({
   },
   listFooter: {
     width: "100%",
-    maxWidth: MaxContentWidth,
-    alignSelf: "center",
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.three,

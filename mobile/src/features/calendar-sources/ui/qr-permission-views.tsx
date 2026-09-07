@@ -2,9 +2,10 @@ import { useTranslation } from "react-i18next"
 import { Linking, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
-import { MaxContentWidth, Spacing } from "@/theme"
+import { Spacing } from "@/theme"
 
 import { QrActionButton } from "./qr-action-button"
 
@@ -70,7 +71,16 @@ export function QrPermissionSettingsView() {
 function PermissionFrame({ children }: { children: React.ReactNode }) {
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>{children}</SafeAreaView>
+      <SafeAreaView style={styles.safeAreaOwner}>
+        <AdaptiveContent
+          testID="qr-permission-content"
+          lane="readable"
+          style={styles.adaptiveOwner}
+          contentContainerStyle={styles.safeArea}
+        >
+          {children}
+        </AdaptiveContent>
+      </SafeAreaView>
     </ThemedView>
   )
 }
@@ -78,13 +88,15 @@ function PermissionFrame({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
+  },
+  safeAreaOwner: {
+    flex: 1,
+  },
+  adaptiveOwner: {
+    flex: 1,
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,

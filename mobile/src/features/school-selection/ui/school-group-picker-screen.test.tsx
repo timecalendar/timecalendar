@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
+import { StyleSheet } from "react-native"
 
 import { useSchoolGroups } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
@@ -45,6 +46,26 @@ beforeEach(() => {
 })
 
 describe("SchoolGroupPickerScreen", () => {
+  it("keeps the hierarchy in a measured standard tablet lane", async () => {
+    mockUseSchoolGroups.mockReturnValue(ready([]))
+    const { getByTestId } = await render(<SchoolGroupPickerScreen />)
+    const owner = getByTestId("onboarding-group-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = owner.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+      maxWidth: 928,
+      paddingHorizontal: 64,
+    })
+  })
+
   it("renders the localized title, a leaf node, and the confirm control", async () => {
     mockUseSchoolGroups.mockReturnValue(
       ready([{ text: "Group A", value: "a", children: [] }]),

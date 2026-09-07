@@ -1,5 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router } from "expo-router"
+import { StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
 import { recordUnknownError } from "@/firebase"
@@ -59,6 +60,25 @@ beforeEach(() => {
 })
 
 describe("IcalUrlScreen", () => {
+  it("keeps import fields and states in a measured readable tablet lane", async () => {
+    const { getByTestId } = await render(<IcalUrlScreen />)
+    const owner = getByTestId("ical-url-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = owner.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+      maxWidth: 768,
+      paddingHorizontal: 64,
+    })
+  })
+
   it("renders the localized title, field label, and submit (not raw keys)", async () => {
     const { getByText } = await render(<IcalUrlScreen />)
 

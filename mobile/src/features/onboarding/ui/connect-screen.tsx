@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { safeIntranetUrl, useImportDraft } from "@/features/onboarding/draft"
@@ -45,71 +46,80 @@ export default function ConnectScreen() {
 
   return (
     <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={[stepStyles.safeArea, styles.safeArea]}>
-        <View style={stepStyles.intro}>
-          <ThemedText type="title">{t("onboarding.connect.title")}</ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t("onboarding.connect.body")}
-          </ThemedText>
-        </View>
-
-        {school !== null && intranetUrl !== null && (
-          <Pressable
-            testID="onboarding-connect-intranet"
-            accessibilityRole="link"
-            accessibilityLabel={t("onboarding.connect.intranetLabel", {
-              institution: school.name,
-            })}
-            hitSlop={Spacing.two}
-            onPress={() => void WebBrowser.openBrowserAsync(intranetUrl)}
-            style={[
-              styles.intranetLink,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.primary,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold">{school.name}</ThemedText>
-            <SymbolView
-              name={{
-                ios: "arrow.up.right",
-                android: "open_in_new",
-                web: "open_in_new",
-              }}
-              size={18}
-              tintColor={theme.primary}
-              accessible={false}
-            />
-          </Pressable>
-        )}
-
-        <View style={styles.footer}>
-          <Pressable
-            testID="onboarding-connect-back"
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-            hitSlop={Spacing.two}
-            onPress={() => router.back()}
-            style={[styles.secondary, { borderColor: theme.primary }]}
-          >
-            <ThemedText type="smallBold" themeColor="primary">
-              {t("common.back")}
+      <SafeAreaView style={stepStyles.safeAreaOwner}>
+        <AdaptiveContent
+          testID="onboarding-connect-content"
+          lane="readable"
+          style={stepStyles.adaptiveOwner}
+          contentContainerStyle={[stepStyles.safeArea, styles.safeArea]}
+        >
+          <View style={stepStyles.intro}>
+            <ThemedText type="title">
+              {t("onboarding.connect.title")}
             </ThemedText>
-          </Pressable>
-          <Pressable
-            testID="onboarding-connect-continue"
-            accessibilityRole="button"
-            accessibilityLabel={t("onboarding.connect.continueLabel")}
-            hitSlop={Spacing.two}
-            onPress={() => router.push("/onboarding/import")}
-            style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
-          >
-            <ThemedText type="smallBold" themeColor="onPrimary">
-              {t("onboarding.connect.continue")}
+            <ThemedText themeColor="textSecondary">
+              {t("onboarding.connect.body")}
             </ThemedText>
-          </Pressable>
-        </View>
+          </View>
+
+          {school !== null && intranetUrl !== null && (
+            <Pressable
+              testID="onboarding-connect-intranet"
+              accessibilityRole="link"
+              accessibilityLabel={t("onboarding.connect.intranetLabel", {
+                institution: school.name,
+              })}
+              hitSlop={Spacing.two}
+              onPress={() => void WebBrowser.openBrowserAsync(intranetUrl)}
+              style={[
+                styles.intranetLink,
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.primary,
+                },
+              ]}
+            >
+              <ThemedText type="smallBold">{school.name}</ThemedText>
+              <SymbolView
+                name={{
+                  ios: "arrow.up.right",
+                  android: "open_in_new",
+                  web: "open_in_new",
+                }}
+                size={18}
+                tintColor={theme.primary}
+                accessible={false}
+              />
+            </Pressable>
+          )}
+
+          <View style={styles.footer}>
+            <Pressable
+              testID="onboarding-connect-back"
+              accessibilityRole="button"
+              accessibilityLabel={t("common.back")}
+              hitSlop={Spacing.two}
+              onPress={() => router.back()}
+              style={[styles.secondary, { borderColor: theme.primary }]}
+            >
+              <ThemedText type="smallBold" themeColor="primary">
+                {t("common.back")}
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              testID="onboarding-connect-continue"
+              accessibilityRole="button"
+              accessibilityLabel={t("onboarding.connect.continueLabel")}
+              hitSlop={Spacing.two}
+              onPress={() => router.push("/onboarding/import")}
+              style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
+            >
+              <ThemedText type="smallBold" themeColor="onPrimary">
+                {t("onboarding.connect.continue")}
+              </ThemedText>
+            </Pressable>
+          </View>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )

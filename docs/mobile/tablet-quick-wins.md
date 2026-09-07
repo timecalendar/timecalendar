@@ -136,6 +136,25 @@ bounded consistency work.
 5. TIM-503 owns the final full-route reconciliation and available automated/device regression. It
    records actual outcomes only after the implementation children have landed.
 
+### TIM-501 implementation status
+
+Implemented on the TIM-501 workstream:
+
+- The welcome carousel uses a measured standard outer lane, with readable page copy and action
+  regions plus the existing independently capped illustration.
+- Connect, institution name, programme, manual import, and iCal URL import use one-column readable
+  lanes while retaining their safe-area, keyboard, validation, and navigation owners.
+- School rows, separators, list header/footer, list states, and the group hierarchy share measured
+  standard lanes; the native school search header remains unchanged and full width.
+- QR permission content and overlay guidance/actions use readable lanes while the camera remains
+  full bleed and the fixed-square viewfinder remains undistorted.
+- User calendars use a measured standard lane, and the rename card sits inside a readable modal
+  lane without changing modal presentation or calendar-source behavior.
+
+Focused component checks exercise compact behavior through the resolver's existing boundary suite
+and assert the TIM-501 standard/readable lane caps at 1024 points. Existing state, navigation,
+keyboard, permission, import, and calendar-management tests continue to cover behavioral parity.
+
 TIM-499 lands first. TIM-500, TIM-501, and TIM-502 consume that established contract and may then
 proceed according to their blocker graph; TIM-503 follows all implementation workstreams. Shared
 responsive/theme/chrome files have one owner. If another workstream needs one of them, it rebases

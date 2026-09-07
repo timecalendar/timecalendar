@@ -13,6 +13,7 @@ import {
 } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -23,7 +24,7 @@ import {
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources/data"
 import { RenameCalendarDialog } from "@/features/calendar-sources/ui/rename-calendar-dialog"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 import { CalendarRow } from "./calendar-row"
 import {
@@ -51,6 +52,7 @@ export function UserCalendarsScreen() {
   const loaded = useUserCalendarsLoaded()
   const { setVisible, remove, failed } = useUserCalendarActions()
   const visibility = useVisibilityController(calendars, setVisible)
+  const contentLayout = useAdaptiveLayout("standard")
   // The dialog is MOUNTED only while a rename is open, so its controlled input is
   // seeded once per open by its own mount (design D4) with no reset effect.
   const [renameTarget, setRenameTarget] = useState<UserCalendar | null>(null)
@@ -111,11 +113,13 @@ export function UserCalendarsScreen() {
         testID="user-calendars-safe-area"
         style={[
           styles.safeArea,
+          contentLayout.laneStyle,
           {
-            paddingLeft: Math.max(insets.left, Spacing.three),
-            paddingRight: Math.max(insets.right, Spacing.three),
+            paddingLeft: Math.max(insets.left, contentLayout.metrics.gutter),
+            paddingRight: Math.max(insets.right, contentLayout.metrics.gutter),
           },
         ]}
+        onLayout={contentLayout.onLayout}
         edges={["bottom"]}
       >
         {failed && (
@@ -213,7 +217,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
     paddingTop: Platform.OS === "ios" ? Spacing.five : Spacing.four,
     gap: Spacing.three,
   },

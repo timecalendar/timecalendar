@@ -43,6 +43,26 @@ beforeEach(() => {
 afterEach(() => jest.useRealTimers())
 
 describe("WelcomeScreen", () => {
+  it("centers the carousel in a measured standard tablet lane", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
+    const owner = getByTestId("onboarding-welcome-content")
+
+    await act(() =>
+      fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+
+    const content = owner.children[0] as unknown as {
+      props: { style: unknown }
+    }
+    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+      maxWidth: 928,
+      paddingHorizontal: 64,
+    })
+    await act(flushMicrotasks)
+  })
+
   it("renders the three localized pages in welcome-first order", async () => {
     const { getAllByRole, getByText } = await render(<WelcomeScreen />)
 

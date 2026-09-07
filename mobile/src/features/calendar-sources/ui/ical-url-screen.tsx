@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/features/calendar-sources/data"
 import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 import { leaveImportJourney } from "./leave-import-journey"
 
@@ -105,118 +106,104 @@ export default function IcalUrlScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.intro}>
-          <ThemedText type="title">
-            {t("calendarSources.icalUrl.title")}
-          </ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {t("calendarSources.icalUrl.helper")}
-          </ThemedText>
-        </View>
-
-        <ThemedText type="smallBold">
-          {t("calendarSources.icalUrl.fieldLabel")}
-        </ThemedText>
-        <TextInput
-          testID="ical-url-input"
-          accessibilityLabel={t("calendarSources.icalUrl.fieldLabel")}
-          placeholder={t("calendarSources.icalUrl.placeholder")}
-          placeholderTextColor={theme.textSecondary}
-          value={url}
-          onChangeText={(next) => {
-            setUrl(next)
-            if (errorKey !== null) {
-              setErrorKey(null)
-            }
-          }}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          inputMode="url"
-          editable={!isPending}
-          style={[
-            styles.input,
-            { color: theme.text, borderColor: theme.backgroundSelected },
-          ]}
-        />
-
-        {errorKey !== null && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
-          >
-            {t(errorKey)}
-          </ThemedText>
-        )}
-
-        <Pressable
-          testID="ical-url-submit"
-          accessibilityRole="button"
-          accessibilityLabel={t("calendarSources.icalUrl.submitLabel")}
-          accessibilityState={{ disabled: isPending }}
-          disabled={isPending}
-          hitSlop={Spacing.two}
-          onPress={submit}
-          style={[
-            styles.cta,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.primary,
-            },
-          ]}
+      <SafeAreaView style={styles.safeAreaOwner}>
+        <AdaptiveContent
+          testID="ical-url-content"
+          lane="readable"
+          style={styles.adaptiveOwner}
+          contentContainerStyle={styles.safeArea}
         >
+          <View style={styles.intro}>
+            <ThemedText type="title">
+              {t("calendarSources.icalUrl.title")}
+            </ThemedText>
+            <ThemedText themeColor="textSecondary">
+              {t("calendarSources.icalUrl.helper")}
+            </ThemedText>
+          </View>
+
           <ThemedText type="smallBold">
-            {t("calendarSources.icalUrl.submit")}
+            {t("calendarSources.icalUrl.fieldLabel")}
           </ThemedText>
-        </Pressable>
+          <TextInput
+            testID="ical-url-input"
+            accessibilityLabel={t("calendarSources.icalUrl.fieldLabel")}
+            placeholder={t("calendarSources.icalUrl.placeholder")}
+            placeholderTextColor={theme.textSecondary}
+            value={url}
+            onChangeText={(next) => {
+              setUrl(next)
+              if (errorKey !== null) {
+                setErrorKey(null)
+              }
+            }}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            inputMode="url"
+            editable={!isPending}
+            style={[
+              styles.input,
+              { color: theme.text, borderColor: theme.backgroundSelected },
+            ]}
+          />
 
-        {isPending && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("calendarSources.icalUrl.importing")}
-          </ThemedText>
-        )}
-
-        {isError && (
-          <View style={styles.errorBlock}>
+          {errorKey !== null && (
             <ThemedText
               themeColor="textSecondary"
               accessibilityLiveRegion="polite"
               accessibilityRole="alert"
             >
-              {t("calendarSources.icalUrl.serverError")}
+              {t(errorKey)}
             </ThemedText>
-            <Pressable
-              testID="ical-url-retry"
-              accessibilityRole="button"
-              accessibilityLabel={t("calendarSources.icalUrl.retryLabel")}
-              hitSlop={Spacing.two}
-              onPress={submit}
-              style={[
-                styles.cta,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
+          )}
+
+          <Pressable
+            testID="ical-url-submit"
+            accessibilityRole="button"
+            accessibilityLabel={t("calendarSources.icalUrl.submitLabel")}
+            accessibilityState={{ disabled: isPending }}
+            disabled={isPending}
+            hitSlop={Spacing.two}
+            onPress={submit}
+            style={[
+              styles.cta,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.primary,
+              },
+            ]}
+          >
+            <ThemedText type="smallBold">
+              {t("calendarSources.icalUrl.submit")}
+            </ThemedText>
+          </Pressable>
+
+          {isPending && (
+            <ThemedText
+              themeColor="textSecondary"
+              accessibilityLiveRegion="polite"
+              accessibilityRole="text"
             >
-              <ThemedText type="smallBold">
-                {t("calendarSources.icalUrl.retry")}
+              {t("calendarSources.icalUrl.importing")}
+            </ThemedText>
+          )}
+
+          {isError && (
+            <View style={styles.errorBlock}>
+              <ThemedText
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+              >
+                {t("calendarSources.icalUrl.serverError")}
               </ThemedText>
-            </Pressable>
-            {failedAttempt ? (
               <Pressable
-                testID="ical-url-report"
-                accessibilityRole="link"
-                accessibilityLabel={t("calendarSources.icalUrl.report")}
-                accessibilityHint={t("calendarSources.icalUrl.reportHint")}
+                testID="ical-url-retry"
+                accessibilityRole="button"
+                accessibilityLabel={t("calendarSources.icalUrl.retryLabel")}
                 hitSlop={Spacing.two}
-                onPress={report}
+                onPress={submit}
                 style={[
                   styles.cta,
                   {
@@ -226,12 +213,33 @@ export default function IcalUrlScreen() {
                 ]}
               >
                 <ThemedText type="smallBold">
-                  {t("calendarSources.icalUrl.report")}
+                  {t("calendarSources.icalUrl.retry")}
                 </ThemedText>
               </Pressable>
-            ) : null}
-          </View>
-        )}
+              {failedAttempt ? (
+                <Pressable
+                  testID="ical-url-report"
+                  accessibilityRole="link"
+                  accessibilityLabel={t("calendarSources.icalUrl.report")}
+                  accessibilityHint={t("calendarSources.icalUrl.reportHint")}
+                  hitSlop={Spacing.two}
+                  onPress={report}
+                  style={[
+                    styles.cta,
+                    {
+                      backgroundColor: theme.backgroundElement,
+                      borderColor: theme.primary,
+                    },
+                  ]}
+                >
+                  <ThemedText type="smallBold">
+                    {t("calendarSources.icalUrl.report")}
+                  </ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
+          )}
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )
@@ -240,13 +248,15 @@ export default function IcalUrlScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
+  },
+  safeAreaOwner: {
+    flex: 1,
+  },
+  adaptiveOwner: {
+    flex: 1,
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,

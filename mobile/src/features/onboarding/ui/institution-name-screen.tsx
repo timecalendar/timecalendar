@@ -11,6 +11,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -61,76 +62,86 @@ export default function InstitutionNameScreen() {
 
   return (
     <ThemedView style={stepStyles.container}>
-      <SafeAreaView style={stepStyles.safeArea}>
-        <KeyboardAvoidingView
-          style={stepStyles.keyboardAvoiding}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <SafeAreaView style={stepStyles.safeAreaOwner}>
+        <AdaptiveContent
+          testID="onboarding-institution-content"
+          lane="readable"
+          style={stepStyles.adaptiveOwner}
+          contentContainerStyle={stepStyles.safeArea}
         >
-          <ScrollView
-            contentContainerStyle={stepStyles.formContent}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAvoidingView
+            style={stepStyles.keyboardAvoiding}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <View style={stepStyles.intro}>
-              <ThemedText type="title">
-                {t("onboarding.institution.title")}
-              </ThemedText>
-              <ThemedText themeColor="textSecondary">
-                {t("onboarding.institution.helper")}
-              </ThemedText>
-            </View>
-
-            <ThemedText
-              nativeID="onboarding-institution-label"
-              type="smallBold"
+            <ScrollView
+              contentContainerStyle={stepStyles.formContent}
+              keyboardShouldPersistTaps="handled"
             >
-              {t("onboarding.institution.fieldLabel")}
-            </ThemedText>
-            <TextInput
-              testID="onboarding-institution-input"
-              accessibilityLabel={t("onboarding.institution.fieldLabel")}
-              accessibilityLabelledBy="onboarding-institution-label"
-              placeholder={t("onboarding.institution.placeholder")}
-              placeholderTextColor={theme.textSecondary}
-              value={name}
-              onChangeText={(next) => {
-                setName(next)
-                if (errorKey !== null) setErrorKey(null)
-              }}
-              autoCapitalize="words"
-              autoCorrect={false}
-              returnKeyType="next"
-              onSubmitEditing={submit}
-              style={[
-                stepStyles.input,
-                { color: theme.text, borderColor: theme.backgroundSelected },
-              ]}
-            />
+              <View style={stepStyles.intro}>
+                <ThemedText type="title">
+                  {t("onboarding.institution.title")}
+                </ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  {t("onboarding.institution.helper")}
+                </ThemedText>
+              </View>
 
-            {errorKey !== null && (
               <ThemedText
-                testID="onboarding-institution-error"
-                themeColor="textSecondary"
-                accessibilityLiveRegion="polite"
-                accessibilityRole="alert"
+                nativeID="onboarding-institution-label"
+                type="smallBold"
               >
-                {t(errorKey)}
+                {t("onboarding.institution.fieldLabel")}
               </ThemedText>
-            )}
+              <TextInput
+                testID="onboarding-institution-input"
+                accessibilityLabel={t("onboarding.institution.fieldLabel")}
+                accessibilityLabelledBy="onboarding-institution-label"
+                placeholder={t("onboarding.institution.placeholder")}
+                placeholderTextColor={theme.textSecondary}
+                value={name}
+                onChangeText={(next) => {
+                  setName(next)
+                  if (errorKey !== null) setErrorKey(null)
+                }}
+                autoCapitalize="words"
+                autoCorrect={false}
+                returnKeyType="next"
+                onSubmitEditing={submit}
+                style={[
+                  stepStyles.input,
+                  { color: theme.text, borderColor: theme.backgroundSelected },
+                ]}
+              />
 
-            <Pressable
-              testID="onboarding-institution-continue"
-              accessibilityRole="button"
-              accessibilityLabel={t("onboarding.institution.continueLabel")}
-              hitSlop={Spacing.two}
-              onPress={submit}
-              style={[stepStyles.cta, { backgroundColor: theme.primaryStrong }]}
-            >
-              <ThemedText type="smallBold" themeColor="onPrimary">
-                {t("onboarding.institution.continue")}
-              </ThemedText>
-            </Pressable>
-          </ScrollView>
-        </KeyboardAvoidingView>
+              {errorKey !== null && (
+                <ThemedText
+                  testID="onboarding-institution-error"
+                  themeColor="textSecondary"
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole="alert"
+                >
+                  {t(errorKey)}
+                </ThemedText>
+              )}
+
+              <Pressable
+                testID="onboarding-institution-continue"
+                accessibilityRole="button"
+                accessibilityLabel={t("onboarding.institution.continueLabel")}
+                hitSlop={Spacing.two}
+                onPress={submit}
+                style={[
+                  stepStyles.cta,
+                  { backgroundColor: theme.primaryStrong },
+                ]}
+              >
+                <ThemedText type="smallBold" themeColor="onPrimary">
+                  {t("onboarding.institution.continue")}
+                </ThemedText>
+              </Pressable>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )

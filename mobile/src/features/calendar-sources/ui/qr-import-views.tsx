@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -100,11 +101,17 @@ function QrCameraFrame({
         onBarcodeScanned={onBarcodeScanned}
       >
         <SafeAreaView style={styles.overlay}>
-          <View
-            style={[styles.viewfinder, { borderColor: theme.primary }]}
-            accessibilityElementsHidden
-          />
-          {children}
+          <AdaptiveContent
+            testID="qr-overlay-content"
+            lane="readable"
+            contentContainerStyle={styles.overlayLane}
+          >
+            <View
+              style={[styles.viewfinder, { borderColor: theme.primary }]}
+              accessibilityElementsHidden
+            />
+            {children}
+          </AdaptiveContent>
         </SafeAreaView>
       </CameraView>
     </ThemedView>
@@ -118,8 +125,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  overlayLane: {
+    alignItems: "center",
     gap: Spacing.three,
-    paddingHorizontal: Spacing.four,
   },
   viewfinder: {
     width: 240,
