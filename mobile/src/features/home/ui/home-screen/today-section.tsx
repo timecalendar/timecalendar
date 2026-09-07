@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
+import { EmptyState } from "@/components/empty-state"
 import { ThemedText } from "@/components/themed-text"
 import { type CalendarEvent } from "@/features/calendar/data"
 import {
@@ -35,11 +36,22 @@ export function TodaySection({
   onPressEvent,
 }: TodaySectionProps) {
   const { t } = useTranslation()
+  const isEmpty = allDayEvents.length === 0 && timedEvents.length === 0
+
   return (
     <View style={styles.section}>
-      <ThemedText style={styles.sectionTitle}>
-        {t("home.today.title")}
-      </ThemedText>
+      {isEmpty ? (
+        <EmptyState
+          variant="section"
+          title={t("home.today.title")}
+          caption={t("home.today.empty")}
+          testID="home-today-empty"
+        />
+      ) : (
+        <ThemedText style={styles.sectionTitle}>
+          {t("home.today.title")}
+        </ThemedText>
+      )}
       {allDayEvents.length > 0 && (
         <AllDayEvents
           events={allDayEvents}
@@ -58,10 +70,6 @@ export function TodaySection({
           checklistProgress={checklistProgress}
           onPressEvent={onPressEvent}
         />
-      ) : allDayEvents.length === 0 ? (
-        <ThemedText themeColor="textSecondary" accessibilityLiveRegion="polite">
-          {t("home.today.empty")}
-        </ThemedText>
       ) : null}
     </View>
   )

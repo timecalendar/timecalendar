@@ -18,6 +18,8 @@ type KeyboardSafeActionLayoutProps = {
   actions: ReactNode
   lane?: ResponsiveLane
   testID?: string
+  contentTestID?: string
+  actionsTestID?: string
   contentContainerStyle?: StyleProp<ViewStyle>
   actionContainerStyle?: StyleProp<ViewStyle>
 }
@@ -27,6 +29,8 @@ export function KeyboardSafeActionLayout({
   actions,
   lane = "readable",
   testID,
+  contentTestID,
+  actionsTestID,
   contentContainerStyle,
   actionContainerStyle,
 }: KeyboardSafeActionLayoutProps) {
@@ -40,14 +44,20 @@ export function KeyboardSafeActionLayout({
       style={styles.owner}
     >
       <ScrollView
-        testID={testID === undefined ? undefined : `${testID}-content`}
+        testID={
+          contentTestID ??
+          (testID === undefined ? undefined : `${testID}-content`)
+        }
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[layout.laneStyle, contentContainerStyle]}
       >
         {children}
       </ScrollView>
       <View
-        testID={testID === undefined ? undefined : `${testID}-actions`}
+        testID={
+          actionsTestID ??
+          (testID === undefined ? undefined : `${testID}-actions`)
+        }
         style={[layout.laneStyle, actionContainerStyle]}
       >
         {actions}

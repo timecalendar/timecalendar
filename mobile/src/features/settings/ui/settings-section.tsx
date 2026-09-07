@@ -45,7 +45,6 @@ const styles = StyleSheet.create({
   section: { gap: Spacing.two },
   title: {
     paddingHorizontal: Spacing.three,
-    textTransform: "uppercase",
   },
   surface: { overflow: "hidden" },
 })

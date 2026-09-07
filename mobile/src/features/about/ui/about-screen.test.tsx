@@ -43,27 +43,40 @@ beforeEach(async () => {
 })
 
 describe("AboutScreen", () => {
-  it("uses standard sections with readable prose at tablet width", async () => {
-    const view = await render(<AboutScreen />)
-    await act(() =>
-      fireEvent(view.getByTestId("about-safe-area"), "layout", {
-        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
-      }),
-    )
-    await act(() =>
-      fireEvent(view.getByTestId("about-scroll-owner"), "layout", {
-        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
-      }),
-    )
-    expect(
-      StyleSheet.flatten(
-        view.getByTestId("about-responsive-content").props.style,
-      ),
-    ).toMatchObject({ maxWidth: 928, paddingHorizontal: 64 })
-    expect(
-      StyleSheet.flatten(view.getByTestId("about-readable-copy").props.style),
-    ).toMatchObject({ maxWidth: 768, paddingHorizontal: 64 })
-  })
+  it.each([
+    [390, 848, 24],
+    [1024, 928, 64],
+  ])(
+    "uses one standard gutter and a gutterless readable prose cap at %ipx",
+    async (width, standardMaxWidth, standardGutter) => {
+      const view = await render(<AboutScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("about-safe-area"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("about-responsive-content").props.style,
+        ),
+      ).toMatchObject({
+        maxWidth: standardMaxWidth,
+        paddingHorizontal: standardGutter,
+      })
+      expect(
+        StyleSheet.flatten(view.getByTestId("about-readable-copy").props.style),
+      ).toMatchObject({
+        alignSelf: "center",
+        width: "100%",
+        maxWidth: 640,
+      })
+      expect(
+        StyleSheet.flatten(view.getByTestId("about-readable-copy").props.style)
+          .paddingHorizontal,
+      ).toBeUndefined()
+      expect(view.getByTestId("about-section-privacy")).toBeOnTheScreen()
+    },
+  )
 
   it("renders English content in stable native groups without deferred rows", async () => {
     const view = await render(<AboutScreen />)

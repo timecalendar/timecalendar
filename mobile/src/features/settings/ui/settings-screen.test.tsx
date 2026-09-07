@@ -7,6 +7,7 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources"
+import { usePlatform } from "@/test-support/platform"
 
 import { SettingsScreen } from "./settings-screen"
 
@@ -62,6 +63,25 @@ beforeEach(() => {
 })
 
 describe("SettingsScreen", () => {
+  describe.each(["ios", "android"] as const)("on %s", (platform) => {
+    usePlatform(platform)
+
+    it("keeps localized section casing and grouped hierarchy", async () => {
+      const view = await render(<SettingsScreen />)
+      for (const title of ["Events", "Preferences", "App", "Support"]) {
+        const titleStyle = StyleSheet.flatten(view.getByText(title).props.style)
+        expect(titleStyle).toMatchObject({
+          fontSize: 14,
+          lineHeight: 20,
+          fontWeight: 700,
+        })
+        expect(titleStyle).not.toHaveProperty("textTransform")
+      }
+      expect(view.queryByText("EVENTS")).toBeNull()
+      expect(view.getByTestId("settings-section-events")).toBeOnTheScreen()
+    })
+  })
+
   it.each([
     [390, 24, 848],
     [768, 64, 928],

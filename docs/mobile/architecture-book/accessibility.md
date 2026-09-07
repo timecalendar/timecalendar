@@ -21,6 +21,9 @@ These rules guard real product touchables (interactive controls declare `accessi
   artwork from the accessibility tree. They add no motion. `PrimaryAction` keeps one translated
   button label, reports disabled/busy state on that button, blocks repeat activation, and hides its
   progress indicator from focus. See ADR [054](./decisions/054-shared-root-page-semantics.md).
+- Home's section empty states keep title-before-caption source order and left alignment. Feedback,
+  Programme, and personal-event focused forms keep fields and errors in one scroll body followed by
+  a sibling primary-action region, so keyboard avoidance does not reorder or cover the action.
 - Ordinary pushed routes expose their localized name once through native compact chrome. Caption-
   only `PageIntro` content follows that navigation heading before fields, actions, status, or rows;
   content headings remain only when they identify domain content such as an event or release.

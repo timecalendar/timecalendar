@@ -12,6 +12,7 @@ import { Radii, Spacing, useTheme } from "@/theme"
 
 type PrimaryActionProps = {
   label: string
+  accessibilityLabel?: string
   onPress: () => void
   testID?: string
   disabled?: boolean
@@ -21,6 +22,7 @@ type PrimaryActionProps = {
 
 export function PrimaryAction({
   label,
+  accessibilityLabel = label,
   onPress,
   testID,
   disabled = false,
@@ -34,7 +36,7 @@ export function PrimaryAction({
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled: blocked, busy }}
       disabled={blocked}
       onPress={blocked ? undefined : onPress}

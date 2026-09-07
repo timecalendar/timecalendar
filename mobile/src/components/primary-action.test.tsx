@@ -39,6 +39,24 @@ describe.each([
     expect(view.getByText("Save")).toHaveStyle({
       color: Colors.light.onPrimary,
     })
+    expect(view.getByTestId("save")).toHaveProp("accessibilityLabel", "Save")
+  })
+
+  it("supports a more descriptive accessible label", async () => {
+    const view = await render(
+      <PrimaryAction
+        label="Continue"
+        accessibilityLabel="Continue to the connection step"
+        onPress={jest.fn()}
+        testID="continue"
+      />,
+    )
+
+    expect(view.getByText("Continue")).toBeTruthy()
+    expect(view.getByTestId("continue")).toHaveProp(
+      "accessibilityLabel",
+      "Continue to the connection step",
+    )
   })
 
   it("keeps the verified semantic pair in dark mode", async () => {

@@ -8,6 +8,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router"
 import { Alert, StyleSheet } from "react-native"
 
+import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import type { PersonalEvent } from "@/features/personal-events/data"
 import {
   useDeleteEvent,
@@ -15,7 +16,7 @@ import {
   useSaveEvent,
 } from "@/features/personal-events/form"
 import { usePlatform } from "@/test-support/platform"
-import { resolveResponsiveLayout, Spacing } from "@/theme"
+import { Colors, resolveResponsiveLayout, Spacing } from "@/theme"
 
 import PersonalEventFormScreen from "./personal-event-form-screen"
 
@@ -119,6 +120,50 @@ afterEach(() => {
 })
 
 describe("PersonalEventFormScreen", () => {
+  describe.each([
+    ["ios" as const, "padding", 44],
+    ["android" as const, "height", 48],
+  ])("shared editor contract on %s", (platform, behavior, minimumTarget) => {
+    usePlatform(platform)
+
+    it("keeps semantic Save and ordered errors/actions beside the sole scroll body", async () => {
+      useEditEvent()
+      mockUseSaveEvent.mockReturnValue({ save: mockSave, failed: true })
+      const view = await render(<PersonalEventFormScreen />)
+      await waitFor(() => expect(view.getByDisplayValue("Old")).toBeTruthy())
+
+      const owner = view.getByTestId("personal-event-form-responsive-owner")
+      const body = view.getByTestId(
+        "personal-event-form-responsive-owner-content",
+      )
+      const actions = view.getByTestId(
+        "personal-event-form-responsive-owner-actions",
+      )
+      const save = view.getByTestId("personal-event-save")
+      const remove = view.getByTestId("personal-event-delete")
+      const error = view.getByText("Could not save the event.")
+
+      expect(resolveKeyboardAvoidingBehavior(platform)).toBe(behavior)
+      expect(body).toContainElement(
+        view.getByTestId("personal-event-title-input"),
+      )
+      expect(body).not.toContainElement(save)
+      expect(actions).toContainElement(error)
+      expect(actions).toContainElement(save)
+      expect(actions).toContainElement(remove)
+      expect(within(actions).getAllByRole("button")).toEqual([save, remove])
+      expect(StyleSheet.flatten(save.props.style)).toMatchObject({
+        minHeight: minimumTarget,
+        backgroundColor: Colors.light.primaryStrong,
+      })
+      expect(save.props.accessibilityState).toEqual({
+        disabled: false,
+        busy: false,
+      })
+      expect(owner).toBeOnTheScreen()
+    })
+  })
+
   it("starts create mode with blank fields and a one-hour default range", async () => {
     const { getByTestId, queryByTestId } = await render(
       <PersonalEventFormScreen />,

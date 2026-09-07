@@ -2,6 +2,11 @@
 
 ## 2026-09-07
 
+- Applied ADR 054's page semantics to the remaining consumers: Settings keeps localized section
+  casing, About uses one standard-lane gutter with gutterless readable prose caps, Home shares the
+  left-aligned section empty-state rhythm, and Feedback/Programme join personal events on the
+  keyboard-safe body/action and semantic primary-action contracts. Native Programme Skip placement
+  and all feature behavior remain unchanged.
 - Applied ADR 054 to the exhaustive root and nested-onboarding route inventories: ordinary pushes
   now share compact localized chrome, caption-first page rhythm, and one measured `RootPage` while
   branded, redirect, development, camera-content, and platform-sheet exceptions stay explicit.
