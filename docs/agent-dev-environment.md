@@ -621,12 +621,31 @@ does not carry the label, only the path-triggered post-merge `main` run provides
 that native proof.
 | **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. Its `test` job runs, against the image built from the same SHA: `Run tests` (`npm run test`), **`Run server E2E tests`** (`npm run test:e2e -- --runInBand` — the in-process Nest HTTP smoke of §7; a missing config, zero discovered specs, or a failed assertion fails at that named step), `Verify server image runtime lifecycle`, and the OpenAPI drift check. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
-| **`delete-old-images.yaml`** | scheduled | Image cleanup. |
+| **`delete-old-images.yaml`** | daily schedule and manual dispatch | GHCR retention for the server and web packages. Scheduled runs delete eligible old versions; manual runs are always dry-run. |
 
 **Per the project owner, `run-e2e` is normally NOT added to PRs — native E2E runs on
 `main` only** (it is slow). For extra confidence on runtime-heavy changes, run Maestro
 locally instead (where the host supports it). Path-filtered jobs that are skipped do
 not report a status; none are _required_ checks today.
+
+### GHCR retention contract
+
+`delete-old-images.yaml` invokes `snok/container-retention-policy@v2` separately for the exact
+`timecalendar` and `timecalendar-web` package names. The cleanup job grants only
+`packages: write` and authenticates both invocations with the repository's ephemeral workflow
+token in `github-token` mode; it does not depend on a stored personal token.
+
+The daily schedule may delete versions older than the selected cut-off. Every manual dispatch
+derives dry-run mode from the workflow event, so callers can select a timezone-aware cut-off but
+cannot enable deletion. Both package steps default to `1 week ago UTC`, preserve the `latest` and
+`production` tags, and retain at least five versions.
+
+Validate this contract locally without credentials or network access:
+
+```bash
+node --test ci/check-ghcr-retention.test.mjs
+node ci/check-ghcr-retention.mjs
+```
 
 ### Disclosure scan — `ci/disclosure-scan.mjs`
 
