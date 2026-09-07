@@ -56,7 +56,7 @@ describe("EmptyState", () => {
     const image = view.getByTestId("empty-artwork", {
       includeHiddenElements: true,
     })
-    expect(image).toHaveProp("source", expected)
+    expect(image).toHaveProp("source", [expected])
     expect(image).toHaveProp("accessible", false)
     expect(image).toHaveProp("importantForAccessibility", "no-hide-descendants")
   })

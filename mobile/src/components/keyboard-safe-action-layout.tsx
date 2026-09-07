@@ -10,6 +10,7 @@ import {
 } from "react-native"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import type { ResponsiveLane } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {
@@ -19,12 +20,6 @@ type KeyboardSafeActionLayoutProps = {
   testID?: string
   contentContainerStyle?: StyleProp<ViewStyle>
   actionContainerStyle?: StyleProp<ViewStyle>
-}
-
-export function resolveKeyboardAvoidingBehavior(
-  platform: typeof Platform.OS,
-): "padding" | "height" {
-  return platform === "ios" ? "padding" : "height"
 }
 
 export function KeyboardSafeActionLayout({

@@ -3,10 +3,8 @@ import { StyleSheet, Text, View } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
 
-import {
-  KeyboardSafeActionLayout,
-  resolveKeyboardAvoidingBehavior,
-} from "./keyboard-safe-action-layout"
+import { resolveKeyboardAvoidingBehavior } from "./keyboard-avoiding-behavior"
+import { KeyboardSafeActionLayout } from "./keyboard-safe-action-layout"
 
 describe.each([
   ["ios" as const, "padding"],

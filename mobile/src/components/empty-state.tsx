@@ -1,19 +1,13 @@
-import {
-  Image,
-  type ImageSourcePropType,
-  type StyleProp,
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from "react-native"
+import { Image, type ImageSource } from "expo-image"
+import { type StyleProp, StyleSheet, View, type ViewStyle } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import { useColorScheme } from "@/hooks/use-color-scheme"
 import { Spacing } from "@/theme"
 
 export type EmptyStateArtwork = {
-  light: ImageSourcePropType
-  dark: ImageSourcePropType
+  light: ImageSource
+  dark: ImageSource
 }
 
 type EmptyStateProps = {
@@ -50,7 +44,7 @@ export function EmptyState({
         <Image
           testID={testID === undefined ? undefined : `${testID}-artwork`}
           source={artwork[scheme]}
-          resizeMode="contain"
+          contentFit="contain"
           accessible={false}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
