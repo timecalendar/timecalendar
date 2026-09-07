@@ -1,5 +1,8 @@
-## ADDED Requirements
+# mobile-tablet-utility-layout Specification
 
+## Purpose
+TBD - created by archiving change polish-tablet-settings-and-utility-screens. Update Purpose after archive.
+## Requirements
 ### Requirement: Settings destinations use semantic measured lanes without changing preference behavior
 
 The Settings hub SHALL place its grouped summary and destination sections in one measured standard lane. Appearance, timezone, and notification settings SHALL place their one-column controls and every loading, error, retry, and destructive state in a measured readable lane. The lane SHALL remain inside the existing safe-area and route owners, and preference controls SHALL preserve immediate writes, native Picker/Host and Switch behavior, labels, summaries, badges, conditional rows, and destination order.
@@ -102,4 +105,3 @@ TIM-502 SHALL NOT edit the TIM-501-owned user-calendar responsive UI; it SHALL v
 - **WHEN** mobile static regression tests inspect the route tree and Maestro selectors
 - **THEN** changelog presentation, Settings and Activity headers, dev-import headerlessness, and `/profile` and `/more` redirects match the existing contract
 - **AND** every existing selector used by the affected flows still resolves to shipped UI
-
