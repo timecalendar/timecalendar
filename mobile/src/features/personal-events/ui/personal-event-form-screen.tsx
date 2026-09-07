@@ -29,13 +29,15 @@ export default function PersonalEventFormScreen() {
         }}
       />
       <RootPage lane="readable" testID="personal-event-form-layout-owner">
-        <PersonalEventEditor
-          key={editorKey}
-          uid={uid}
-          existing={existing}
-          locale={locale}
-          displayZone={displayZone}
-        />
+        {() => (
+          <PersonalEventEditor
+            key={editorKey}
+            uid={uid}
+            existing={existing}
+            locale={locale}
+            displayZone={displayZone}
+          />
+        )}
       </RootPage>
     </>
   )

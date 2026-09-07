@@ -12,7 +12,7 @@ import { type EventDetails, useEventDetails } from "@/features/calendar/data"
 import { useUserCalendars } from "@/features/calendar-sources"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { resolveResponsiveLayout } from "@/theme"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import { EventDetailsScreen } from "./event-details-screen"
 
@@ -151,6 +151,13 @@ describe("EventDetailsScreen", () => {
 
     expect(screen.getByText("Algorithms")).toBeOnTheScreen()
     expect(screen.getByText("checklist:ev-1")).toBeOnTheScreen()
+    const pageStyle = StyleSheet.flatten(owner.props.style)
+    const contentStyle = StyleSheet.flatten(
+      screen.getByTestId("event-details-content").props.contentContainerStyle,
+    )
+    expect(pageStyle.paddingTop).toBe(Spacing.four)
+    expect(contentStyle.paddingTop).toBeUndefined()
+    expect(contentStyle.paddingBottom).toBe(Spacing.three)
   })
 
   it.each([

@@ -10,7 +10,6 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
@@ -56,7 +55,6 @@ function MissingSchoolAction() {
 export default function SchoolPickerScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
   const { source } = useLocalSearchParams<{ source?: string }>()
   const fromCalendarManagement = source === "calendar-management"
   const { height: windowHeight } = useWindowDimensions()
@@ -149,11 +147,6 @@ export default function SchoolPickerScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[
               styles.list,
-              {
-                paddingBottom:
-                  Spacing.three +
-                  (Platform.OS === "android" ? insets.bottom : 0),
-              },
               // Upper-third so the open search keyboard never covers the status.
               visible.length === 0 && { paddingTop: windowHeight * 0.15 },
             ]}
@@ -231,7 +224,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   list: {
-    paddingTop: Spacing.two,
+    paddingBottom: Spacing.three,
   },
   headerBack: {
     minWidth: 44,
@@ -245,7 +238,6 @@ const styles = StyleSheet.create({
   listHeader: {
     width: "100%",
     paddingHorizontal: Spacing.three,
-    paddingTop: Spacing.two,
     paddingBottom: Spacing.three,
     gap: Spacing.two,
   },

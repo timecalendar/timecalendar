@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Spacing.four,
     gap: Spacing.three,
   },
   errorBlock: {

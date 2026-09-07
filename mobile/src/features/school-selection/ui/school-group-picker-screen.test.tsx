@@ -4,7 +4,7 @@ import { StyleSheet } from "react-native"
 
 import { useSchoolGroups } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
-import { resolveResponsiveLayout } from "@/theme"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import SchoolGroupPickerScreen from "./school-group-picker-screen"
 
@@ -67,6 +67,12 @@ describe("SchoolGroupPickerScreen", () => {
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
     })
+    expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
+      paddingTop: Spacing.four,
+    })
+    expect(StyleSheet.flatten(content.props.style)).not.toHaveProperty(
+      "paddingTop",
+    )
   })
 
   it("renders the localized title, a leaf node, and the confirm control", async () => {

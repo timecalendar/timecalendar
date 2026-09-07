@@ -15,7 +15,7 @@ import {
   useSaveEvent,
 } from "@/features/personal-events/form"
 import { usePlatform } from "@/test-support/platform"
-import { resolveResponsiveLayout } from "@/theme"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import PersonalEventFormScreen from "./personal-event-form-screen"
 
@@ -263,6 +263,17 @@ describe("PersonalEventFormScreen", () => {
     }
     expect(within(scrollView).queryByTestId("personal-event-save")).toBeNull()
     expect(within(scrollView).queryByTestId("personal-event-delete")).toBeNull()
+    expect(
+      view.queryByTestId("personal-event-form-layout-owner-lane"),
+    ).toBeNull()
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId("personal-event-form-layout-owner").props.style,
+      ),
+    ).toMatchObject({ paddingTop: Spacing.four })
+    expect(
+      StyleSheet.flatten(scrollView.props.contentContainerStyle).paddingTop,
+    ).toBeUndefined()
 
     const owner = view.getByTestId("personal-event-form-responsive-owner")
     for (const width of [390, 600, 768, 800, 834, 1024]) {

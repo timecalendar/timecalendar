@@ -57,7 +57,10 @@ function ResolvedEventDetails({ event }: { event: EventDetails }) {
                 style={styles.hideError}
               />
             )}
-            <ScrollView contentContainerStyle={styles.content}>
+            <ScrollView
+              testID="event-details-content"
+              contentContainerStyle={styles.content}
+            >
               <EventDetailsContent
                 event={event}
                 locale={locale}
@@ -79,7 +82,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
   },
   content: {
-    paddingVertical: Spacing.three,
+    paddingBottom: Spacing.three,
     gap: Spacing.four,
   },
 })
