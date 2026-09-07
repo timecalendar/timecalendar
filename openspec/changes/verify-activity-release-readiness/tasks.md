@@ -1,16 +1,16 @@
 ## 1. Establish the candidate and evidence contract
 
-- [ ] 1.1 Create `docs/react-native-migration/05-tech-specs/activity-release-readiness.md`
+- [x] 1.1 Create `docs/react-native-migration/05-tech-specs/activity-release-readiness.md`
       with a fail-closed template for the code/configuration candidate SHA, evidence revision, evidence
       date/environment, immutable server identity when already available, G1–G9 plus G3a rows,
       compatibility rows, privacy rows, automated/native checks, rollout/rollback, and top-level
       `GO`/`NO-GO`. Verify every required row has method, measured value or evidence, threshold,
       location and verdict fields before collecting results.
-- [ ] 1.2 Inventory the current candidate's Activity route, shared SQL import, capacity scripts,
+- [x] 1.2 Inventory the current candidate's Activity route, shared SQL import, capacity scripts,
       server telemetry, mobile coordinator/trigger seams, Activity UI/Maestro flow, OpenAPI/client,
       schema/retention/reset behavior, and existing CI jobs. Record only repository-relative sources in
       the readiness record; verify that no historical result is marked as candidate evidence.
-- [ ] 1.3 Record the sensitive-surface posture before implementation: contract
+- [x] 1.3 Record the sensitive-surface posture before implementation: contract
       (`openapi/openapi.json`, `mobile/src/api/generated/`), schema (`server/src/migrations/`),
       native/store (`mobile/app.config.ts`, `mobile/eas.json`, `mobile/firebase/`), CI/deploy
       (`.github/workflows/`, `terraform/`, `k8s/`), secret material, and legacy `app/` are
@@ -19,39 +19,39 @@
 
 ## 2. Prove the shipped HTTP route at deterministic scale
 
-- [ ] 2.1 Add a focused route-level measurement module under
+- [x] 2.1 Add a focused route-level measurement module under
       `server/src/scripts/activity-capacity/` that boots the real calendar-log Nest module against the
       explicitly supplied local PostgreSQL fixture database and exercises
       `POST /v1/calendar-logs/search` through the normal HTTP adapter. Measure first/following pages at
       limits 50 and 100, unread count, serialized response bytes and representative concurrent reads;
       print aggregate JSON only and never request/response bodies. Verify non-local database hosts are
       refused before connecting.
-- [ ] 2.2 Add the corresponding `server/package.json` command and update the capacity README with
+- [x] 2.2 Add the corresponding `server/package.json` command and update the capacity README with
       prerequisites, exact commands, output schema, warm-up/sample policy, candidate-binding rules and
       the distinction between the full measurement and CI tripwire. Verify the README names the actual
       relocated `activity-search.queries.ts` source and contains no stale private-query claim.
-- [ ] 2.3 Add a bounded PostgreSQL-backed CI test for the route measurement seam. Prove the real
+- [x] 2.3 Add a bounded PostgreSQL-backed CI test for the route measurement seam. Prove the real
       controller/service/repository/mapper path, 50/100 limits, first/following pages, unread result,
       concurrency completion/error counts, aggregate-only output, local-host refusal, and that both
       repository and harness import the production-owned `calendarLogPageLateralSql` rather than a
       copied query. Verify with the focused server Jest command.
-- [ ] 2.4 Extend planner assertions to fail both a full `calendar_log` sequential scan (G3) and a
+- [x] 2.4 Extend planner assertions to fail both a full `calendar_log` sequential scan (G3) and a
       full global-index walk (G3a) for bounded one-, ten-, one-hundred- and empty-calendar cohorts.
       Keep `EXPLAIN` fixture-only and pass every emitted plan through `redactPlan`; mutation-check the
       G3a assertion against the specification query shape.
 
 ## 3. Make telemetry privacy a mechanical gate
 
-- [ ] 3.1 Add or extend focused server tests that inventory Activity metric instruments and prove
+- [x] 3.1 Add or extend focused server tests that inventory Activity metric instruments and prove
       every explicit label is a finite literal, no Activity code adds sensitive span attributes or log
       payloads, validation/cursor/database failures emit sanitized responses, and captured metric,
       trace and log sinks contain zero matches for synthetic sensitive-marker categories. Verify the
       test reports category counts only.
-- [ ] 3.2 Add or extend focused mobile tests covering Activity mapping/storage/network failures and
+- [x] 3.2 Add or extend focused mobile tests covering Activity mapping/storage/network failures and
       trigger outcomes. Prove every Crashlytics context/attribute and analytics event is static and all
       captured mobile sinks contain zero synthetic-marker matches; do not snapshot or print marker
       values.
-- [ ] 3.3 Inspect automatic HTTP instrumentation plus every explicit Activity metric, span, log,
+- [x] 3.3 Inspect automatic HTTP instrumentation plus every explicit Activity metric, span, log,
       Crashlytics and analytics call site and enter the source/test matrix into the readiness record.
       If an already-available immutable candidate telemetry window can be queried without a deploy,
       credential read or live-data export, record only bounded negative-query counts; otherwise mark
