@@ -46,6 +46,8 @@ export function NativeTextEntryDialogAndroid({
     >
       <AlertDialog
         modifiers={[testID(ids.dialog)]}
+        // Compose routes enabled hardware Back through onDismissRequest; the
+        // disabled outside-click path therefore cannot silently cancel.
         properties={{
           dismissOnBackPress: true,
           dismissOnClickOutside: false,
