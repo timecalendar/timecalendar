@@ -184,7 +184,7 @@ export function AboutScreen() {
                   accessibilityLiveRegion="polite"
                   accessibilityRole="alert"
                   themeColor="textSecondary"
-                  style={[styles.readableCopy, styles.linkError]}
+                  style={styles.readableCopy}
                 >
                   {t("about.linkError")}
                 </ThemedText>
@@ -221,5 +221,4 @@ const styles = StyleSheet.create({
     maxWidth: ResponsiveContentWidths.readable,
   },
   blurb: { gap: Spacing.two },
-  linkError: {},
 })
