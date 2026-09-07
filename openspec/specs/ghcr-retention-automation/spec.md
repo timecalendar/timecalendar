@@ -113,4 +113,3 @@ show successful package-version processing for both exact package names without 
 - **THEN** the pipeline stops for a revised credential design using a dedicated classic token with
   only `read:packages` and `delete:packages`, stored as an Actions secret and owned by an identity with
   admin access to both packages
-
