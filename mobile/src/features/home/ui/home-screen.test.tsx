@@ -6,10 +6,11 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
-import { Platform } from "react-native"
+import { Platform, StyleSheet } from "react-native"
 
 import { useCalendarEvents, useSyncCalendars } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
+import { resolveResponsiveLayout } from "@/theme"
 
 import { HomeScreen } from "./home-screen"
 
@@ -100,6 +101,37 @@ beforeEach(() => {
 })
 
 describe("HomeScreen", () => {
+  it.each([390, 599, 600, 768, 800, 834, 1024])(
+    "uses one measured standard lane at %ipx",
+    async (width) => {
+      mockUseCalendarEvents.mockReturnValue([todayEvent()])
+      await render(<HomeScreen />)
+
+      await fireEvent(screen.getByTestId("home-responsive-owner"), "layout", {
+        nativeEvent: { layout: { width, height: 0 } },
+      })
+
+      let lane = screen.getByText("TimeCalendar").parent
+      while (
+        lane !== null &&
+        StyleSheet.flatten(lane.props.style).maxWidth === undefined
+      ) {
+        lane = lane.parent
+      }
+      expect(lane).not.toBeNull()
+      const style = StyleSheet.flatten(lane?.props.style)
+      const metrics = resolveResponsiveLayout(width, "standard")
+      expect(style.maxWidth).toBe(
+        (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
+      )
+      expect(style.paddingHorizontal).toBe(metrics.gutter)
+      expect(
+        StyleSheet.flatten(screen.getByTestId("upcoming-card-ev-1").props.style)
+          .width,
+      ).toBe(200)
+    },
+  )
+
   it("renders the app-name heading and the empty-day state when there are no events", async () => {
     await render(<HomeScreen />)
     expect(screen.getByText("TimeCalendar")).toBeTruthy()

@@ -81,8 +81,22 @@ describe("TodayTimeline", () => {
         onPressEvent={jest.fn()}
       />,
     )
-    // A sensible (non-zero) fallback width is used before any layout pass.
-    expect(tileWidth()).toBeGreaterThan(0)
+    // No global-width guess: the ordered interactive presentation is used
+    // until the tile-area owner reports its first positive width.
+    expect(screen.getByTestId("today-timeline-list")).toBeTruthy()
+    expect(screen.getByTestId("today-tile-ev-1")).toHaveProp(
+      "accessibilityRole",
+      "button",
+    )
+    const timeline = screen.getByTestId("today-timeline")
+    const reflowedList = screen.getByTestId("today-timeline-list")
+    const geometry = screen.getByTestId("today-timeline-geometry")
+    expect(reflowedList.parent).toBe(timeline)
+    expect(screen.getByTestId("today-tile-area").parent).toBe(geometry)
+    expect(StyleSheet.flatten(geometry.props.style)).toMatchObject({
+      height: 0,
+      overflow: "hidden",
+    })
 
     // After the tile area reports a real width, the single full-width event fills it.
     await reportTileAreaWidth(400)
@@ -91,6 +105,40 @@ describe("TodayTimeline", () => {
     // A wider device → a wider tile (the px multiplier is dynamic, not fixed).
     await reportTileAreaWidth(700)
     expect(tileWidth()).toBe(700)
+  })
+
+  it("remeasures overlap pixels and reflows when the tile owner is too narrow", async () => {
+    const overlapping = event({
+      id: "ev-2",
+      title: "Databases",
+      startsAt: new Date(2026, 5, 15, 9, 15),
+      endsAt: new Date(2026, 5, 15, 10, 15),
+    })
+    await render(
+      <TodayTimeline
+        events={[event(), overlapping]}
+        range={range}
+        locale="en"
+        displayZone={ZONE}
+        isToday={false}
+        now={new Date(2026, 5, 15, 9, 30)}
+        checklistProgress={noChecklistProgress}
+        onPressEvent={jest.fn()}
+      />,
+    )
+
+    await reportTileAreaWidth(400)
+    expect(tileWidth()).toBe(200)
+
+    await reportTileAreaWidth(600)
+    expect(tileWidth()).toBe(300)
+
+    await reportTileAreaWidth(80)
+    expect(screen.getByTestId("today-timeline-list")).toBeTruthy()
+    expect(screen.getByTestId("today-tile-ev-2")).toHaveProp(
+      "accessibilityRole",
+      "button",
+    )
   })
 
   it("fires the press handler with the tapped event", async () => {
@@ -191,6 +239,7 @@ describe("TodayTimeline", () => {
         onPressEvent={jest.fn()}
       />,
     )
+    await reportTileAreaWidth(400)
     const style = StyleSheet.flatten(
       screen.getByTestId("today-now-indicator").props.style,
     )
@@ -215,6 +264,7 @@ describe("TodayTimeline", () => {
         onPressEvent={jest.fn()}
       />,
     )
+    await reportTileAreaWidth(400)
     const style = StyleSheet.flatten(
       screen.getByTestId("today-tile-ev-1").props.style,
     )

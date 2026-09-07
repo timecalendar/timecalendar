@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Alert } from "react-native"
+import { Alert, StyleSheet } from "react-native"
 
 import type { PersonalEvent } from "@/features/personal-events/data"
 import {
@@ -15,6 +15,7 @@ import {
   useSaveEvent,
 } from "@/features/personal-events/form"
 import { usePlatform } from "@/test-support/platform"
+import { resolveResponsiveLayout } from "@/theme"
 
 import PersonalEventFormScreen from "./personal-event-form-screen"
 
@@ -256,6 +257,27 @@ describe("PersonalEventFormScreen", () => {
     }
     expect(within(scrollView).queryByTestId("personal-event-save")).toBeNull()
     expect(within(scrollView).queryByTestId("personal-event-delete")).toBeNull()
+
+    const owner = view.getByTestId("personal-event-form-responsive-owner")
+    for (const width of [390, 600, 768, 800, 834, 1024]) {
+      await fireEvent(owner, "layout", {
+        persist: jest.fn(),
+        nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+      })
+      const metrics = resolveResponsiveLayout(width, "readable")
+      const bodyStyle = StyleSheet.flatten(
+        scrollView.props.contentContainerStyle,
+      )
+      const actionsStyle = StyleSheet.flatten(
+        view.getByTestId("personal-event-actions").props.style,
+      )
+      const expectedMaxWidth =
+        (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter
+      expect(bodyStyle.maxWidth).toBe(expectedMaxWidth)
+      expect(actionsStyle.maxWidth).toBe(expectedMaxWidth)
+      expect(bodyStyle.paddingHorizontal).toBe(metrics.gutter)
+      expect(actionsStyle.paddingHorizontal).toBe(metrics.gutter)
+    }
   })
 
   it("saves a valid create through the save hook with a built event", async () => {

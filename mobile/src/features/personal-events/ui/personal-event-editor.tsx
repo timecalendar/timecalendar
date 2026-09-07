@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { KeyboardAvoidingView, ScrollView, StyleSheet } from "react-native"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import type { AppLocale } from "@/features/calendar/data"
 import type { PersonalEvent } from "@/features/personal-events/data"
@@ -65,6 +66,7 @@ export function PersonalEventEditor({
   const [errors, setErrors] = useState<EventFormErrors>({})
   const save = useSaveEvent()
   const deletion = usePersonalEventDeleteConfirmation(uid)
+  const layout = useAdaptiveLayout("readable")
 
   const update: UpdateEventFormValue = (key, value) => {
     setValues((previous) => ({ ...previous, [key]: value }))
@@ -83,9 +85,14 @@ export function PersonalEventEditor({
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior="padding">
+    <KeyboardAvoidingView
+      testID="personal-event-form-responsive-owner"
+      style={styles.flex}
+      behavior="padding"
+      onLayout={layout.onLayout}
+    >
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[layout.laneStyle, styles.content]}
         keyboardShouldPersistTaps="handled"
       >
         <ThemedText type="title">
@@ -104,6 +111,7 @@ export function PersonalEventEditor({
       </ScrollView>
 
       <PersonalEventActions
+        laneStyle={layout.laneStyle}
         canDelete={uid !== undefined}
         isDeleting={deletion.isDeleting}
         saveFailed={save.failed}
@@ -119,7 +127,6 @@ export function PersonalEventEditor({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.five,
     gap: Spacing.three,

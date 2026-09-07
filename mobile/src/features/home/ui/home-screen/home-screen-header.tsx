@@ -67,7 +67,6 @@ export function HomeAddFab({ onPress }: { onPress: () => void }) {
 const styles = StyleSheet.create({
   header: {
     minHeight: 56,
-    paddingHorizontal: Spacing.four,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

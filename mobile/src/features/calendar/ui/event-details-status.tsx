@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { ActivityIndicator, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 
@@ -41,10 +42,23 @@ export function EventDetailsNotFound() {
 }
 
 function EventDetailsStatus({ children }: { children: React.ReactNode }) {
+  const layout = useAdaptiveLayout("readable")
+
   return (
     <ThemedView style={styles.container}>
       <EventDetailsHeader />
-      <SafeAreaView style={styles.safeArea}>{children}</SafeAreaView>
+      <SafeAreaView
+        testID="event-details-status-responsive-owner"
+        style={styles.safeArea}
+        onLayout={layout.onLayout}
+      >
+        <View
+          testID="event-details-status-responsive-lane"
+          style={[layout.laneStyle, styles.lane]}
+        >
+          {children}
+        </View>
+      </SafeAreaView>
     </ThemedView>
   )
 }
@@ -54,6 +68,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   safeArea: {
+    flex: 1,
+  },
+  lane: {
     flex: 1,
   },
   loading: {

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { ScrollView, StyleSheet } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
@@ -41,24 +42,35 @@ function ResolvedEventDetails({ event }: { event: EventDetails }) {
   const locale = resolveLocale(i18n.language)
   const displayZone = useDisplayZone()
   const { action, failed } = useEventDetailsAction(event)
+  const layout = useAdaptiveLayout("readable")
 
   return (
     <ThemedView style={styles.container}>
       <EventDetailsHeader action={action} />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
-        {failed && (
-          <WriteErrorNotice
-            message={t("eventDetails.hide.error")}
-            style={styles.hideError}
-          />
-        )}
-        <ScrollView contentContainerStyle={styles.content}>
-          <EventDetailsContent
-            event={event}
-            locale={locale}
-            displayZone={displayZone}
-          />
-        </ScrollView>
+      <SafeAreaView
+        testID="event-details-responsive-owner"
+        style={styles.safeArea}
+        edges={["bottom", "left", "right"]}
+        onLayout={layout.onLayout}
+      >
+        <ThemedView
+          testID="event-details-responsive-lane"
+          style={[layout.laneStyle, styles.lane]}
+        >
+          {failed && (
+            <WriteErrorNotice
+              message={t("eventDetails.hide.error")}
+              style={styles.hideError}
+            />
+          )}
+          <ScrollView contentContainerStyle={styles.content}>
+            <EventDetailsContent
+              event={event}
+              locale={locale}
+              displayZone={displayZone}
+            />
+          </ScrollView>
+        </ThemedView>
       </SafeAreaView>
     </ThemedView>
   )
@@ -71,12 +83,14 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  lane: {
+    flex: 1,
+  },
   hideError: {
-    paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
   },
   content: {
-    padding: Spacing.three,
+    paddingVertical: Spacing.three,
     gap: Spacing.four,
   },
 })
