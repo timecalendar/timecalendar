@@ -199,14 +199,14 @@ describe("UserCalendarsScreen", () => {
     ).toBeTruthy()
   })
 
-  it("applies safe-area or design insets once, whichever is larger", async () => {
+  it("delegates non-header safe areas to the shared page owner", async () => {
     mockInsets = { top: 0, right: 20, bottom: 0, left: 44 }
     await render(<UserCalendarsScreen />)
-    const style = StyleSheet.flatten(
-      screen.getByTestId("user-calendars-safe-area").props.style,
-    )
-    expect(style.paddingLeft).toBe(44)
-    expect(style.paddingRight).toBe(Spacing.four)
+    expect(screen.getByTestId("user-calendars-content").props.edges).toEqual([
+      "bottom",
+      "left",
+      "right",
+    ])
   })
 
   it("centers the management list in the measured tablet lane", async () => {
@@ -227,8 +227,7 @@ describe("UserCalendarsScreen", () => {
     ).toMatchObject({
       alignSelf: "center",
       maxWidth: layout.contentWidth + 2 * layout.gutter,
-      paddingLeft: layout.gutter,
-      paddingRight: layout.gutter,
+      paddingHorizontal: layout.gutter,
     })
   })
 

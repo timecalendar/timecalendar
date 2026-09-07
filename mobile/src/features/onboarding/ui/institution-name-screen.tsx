@@ -1,4 +1,4 @@
-import { router } from "expo-router"
+import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -7,13 +7,10 @@ import {
   Pressable,
   ScrollView,
   TextInput,
-  View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
+import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
 import {
   isImportNameWithinLimit,
   normalizeImportName,
@@ -61,88 +58,77 @@ export default function InstitutionNameScreen() {
   }
 
   return (
-    <ThemedView style={stepStyles.fill}>
-      <SafeAreaView style={stepStyles.fill}>
-        <AdaptiveContent
-          testID="onboarding-institution-content"
-          lane="readable"
+    <>
+      <Stack.Screen options={{ title: t("onboarding.institution.title") }} />
+      <RootPage
+        testID="onboarding-institution-content"
+        lane="readable"
+        style={stepStyles.fill}
+        contentContainerStyle={stepStyles.safeArea}
+      >
+        <KeyboardAvoidingView
           style={stepStyles.fill}
-          contentContainerStyle={stepStyles.safeArea}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <KeyboardAvoidingView
-            style={stepStyles.fill}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          <ScrollView
+            contentContainerStyle={stepStyles.formContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <ScrollView
-              contentContainerStyle={stepStyles.formContent}
-              keyboardShouldPersistTaps="handled"
+            <PageIntro caption={t("onboarding.institution.helper")} />
+
+            <ThemedText
+              nativeID="onboarding-institution-label"
+              type="smallBold"
             >
-              <View style={stepStyles.intro}>
-                <ThemedText type="title">
-                  {t("onboarding.institution.title")}
-                </ThemedText>
-                <ThemedText themeColor="textSecondary">
-                  {t("onboarding.institution.helper")}
-                </ThemedText>
-              </View>
+              {t("onboarding.institution.fieldLabel")}
+            </ThemedText>
+            <TextInput
+              testID="onboarding-institution-input"
+              accessibilityLabel={t("onboarding.institution.fieldLabel")}
+              accessibilityLabelledBy="onboarding-institution-label"
+              placeholder={t("onboarding.institution.placeholder")}
+              placeholderTextColor={theme.textSecondary}
+              value={name}
+              onChangeText={(next) => {
+                setName(next)
+                if (errorKey !== null) setErrorKey(null)
+              }}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={submit}
+              style={[
+                stepStyles.input,
+                { color: theme.text, borderColor: theme.backgroundSelected },
+              ]}
+            />
 
+            {errorKey !== null && (
               <ThemedText
-                nativeID="onboarding-institution-label"
-                type="smallBold"
+                testID="onboarding-institution-error"
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
               >
-                {t("onboarding.institution.fieldLabel")}
+                {t(errorKey)}
               </ThemedText>
-              <TextInput
-                testID="onboarding-institution-input"
-                accessibilityLabel={t("onboarding.institution.fieldLabel")}
-                accessibilityLabelledBy="onboarding-institution-label"
-                placeholder={t("onboarding.institution.placeholder")}
-                placeholderTextColor={theme.textSecondary}
-                value={name}
-                onChangeText={(next) => {
-                  setName(next)
-                  if (errorKey !== null) setErrorKey(null)
-                }}
-                autoCapitalize="words"
-                autoCorrect={false}
-                returnKeyType="next"
-                onSubmitEditing={submit}
-                style={[
-                  stepStyles.input,
-                  { color: theme.text, borderColor: theme.backgroundSelected },
-                ]}
-              />
+            )}
 
-              {errorKey !== null && (
-                <ThemedText
-                  testID="onboarding-institution-error"
-                  themeColor="textSecondary"
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
-                >
-                  {t(errorKey)}
-                </ThemedText>
-              )}
-
-              <Pressable
-                testID="onboarding-institution-continue"
-                accessibilityRole="button"
-                accessibilityLabel={t("onboarding.institution.continueLabel")}
-                hitSlop={Spacing.two}
-                onPress={submit}
-                style={[
-                  stepStyles.cta,
-                  { backgroundColor: theme.primaryStrong },
-                ]}
-              >
-                <ThemedText type="smallBold" themeColor="onPrimary">
-                  {t("onboarding.institution.continue")}
-                </ThemedText>
-              </Pressable>
-            </ScrollView>
-          </KeyboardAvoidingView>
-        </AdaptiveContent>
-      </SafeAreaView>
-    </ThemedView>
+            <Pressable
+              testID="onboarding-institution-continue"
+              accessibilityRole="button"
+              accessibilityLabel={t("onboarding.institution.continueLabel")}
+              hitSlop={Spacing.two}
+              onPress={submit}
+              style={[stepStyles.cta, { backgroundColor: theme.primaryStrong }]}
+            >
+              <ThemedText type="smallBold" themeColor="onPrimary">
+                {t("onboarding.institution.continue")}
+              </ThemedText>
+            </Pressable>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </RootPage>
+    </>
   )
 }

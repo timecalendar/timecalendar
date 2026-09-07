@@ -1,9 +1,7 @@
 import { Stack, useLocalSearchParams } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { ThemedView } from "@/components/themed-view"
+import { RootPage } from "@/components/root-page"
 import { resolveLocale } from "@/features/calendar/data"
 import { useEventToEdit } from "@/features/personal-events/form"
 import { useDisplayZone } from "@/features/settings/prefs"
@@ -21,7 +19,7 @@ export default function PersonalEventFormScreen() {
     uid === undefined ? "create" : `${uid}:${existing?.uid ?? "loading"}`
 
   return (
-    <ThemedView style={styles.container}>
+    <>
       <Stack.Screen
         options={{
           title:
@@ -30,24 +28,17 @@ export default function PersonalEventFormScreen() {
               : t("personalEvents.form.editTitle"),
         }}
       />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
-        <PersonalEventEditor
-          key={editorKey}
-          uid={uid}
-          existing={existing}
-          locale={locale}
-          displayZone={displayZone}
-        />
-      </SafeAreaView>
-    </ThemedView>
+      <RootPage lane="readable" testID="personal-event-form-layout-owner">
+        {() => (
+          <PersonalEventEditor
+            key={editorKey}
+            uid={uid}
+            existing={existing}
+            locale={locale}
+            displayZone={displayZone}
+          />
+        )}
+      </RootPage>
+    </>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-  },
-})

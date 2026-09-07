@@ -46,7 +46,7 @@ it.each([390, 768, 800, 1024])(
   async (width) => {
     const view = await render(<FeedbackScreen />)
     await act(() =>
-      fireEvent(view.getByTestId("feedback-scroll-owner"), "layout", {
+      fireEvent(view.getByTestId("feedback-layout-owner"), "layout", {
         nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
       }),
     )
@@ -70,10 +70,10 @@ it("normalizes scalar, array, empty, and bounded route params", () => {
 })
 
 it("renders accessible fields and rejects an empty form locally", async () => {
-  const { getAllByRole, getByTestId, getByText } = await render(
+  const { queryAllByRole, getByTestId, getByText } = await render(
     <FeedbackScreen />,
   )
-  expect(getAllByRole("header").length).toBeGreaterThan(0)
+  expect(queryAllByRole("header")).toHaveLength(0)
   expect(getByTestId("feedback-email-input").props.returnKeyType).toBe("next")
   expect(getByTestId("feedback-message-input").props.multiline).toBe(true)
   await fireEvent.press(getByTestId("feedback-submit"))

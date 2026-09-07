@@ -9,11 +9,10 @@ import {
   Pressable,
   StyleSheet,
   useWindowDimensions,
-  View,
 } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { schoolMatches, useSchools } from "@/features/school-selection/data"
@@ -63,7 +62,6 @@ export default function SchoolPickerScreen() {
   const { height: windowHeight } = useWindowDimensions()
   const { schools, isLoading, isError, refetch } = useSchools()
   const [filter, setFilter] = useState("")
-  const schoolListLayout = useAdaptiveLayout("standard")
 
   const visible = useMemo(
     // Accent-insensitive name/code match.
@@ -75,12 +73,11 @@ export default function SchoolPickerScreen() {
   const browsing = !isLoading && !isError && schools.length > 0 && !searching
 
   return (
-    <ThemedView style={styles.fill}>
+    <>
       <Stack.Screen
         options={{
           headerShown: true,
           title: t("onboarding.school.title"),
-          headerTitle: "",
           headerBackButtonDisplayMode: "minimal",
           ...(fromCalendarManagement &&
             Platform.OS === "ios" && {
@@ -136,105 +133,96 @@ export default function SchoolPickerScreen() {
           },
         }}
       />
-      <View
-        testID="onboarding-school-content"
-        onLayout={schoolListLayout.onLayout}
-        style={styles.fill}
-      >
-        <FlatList
-          style={schoolListLayout.laneStyle}
-          data={visible}
-          keyExtractor={(school) => school.id}
-          renderItem={({ item }) => <SchoolRow school={item} />}
-          ItemSeparatorComponent={Platform.OS === "ios" ? RowSeparator : null}
-          contentInsetAdjustmentBehavior="automatic"
-          // No automaticallyAdjustKeyboardInsets: it sticks content under the
-          // header after the keyboard hides (RN #47731).
-          alwaysBounceVertical
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[
-            styles.list,
-            {
-              paddingBottom:
-                Spacing.three + (Platform.OS === "android" ? insets.bottom : 0),
-            },
-            // Upper-third so the open search keyboard never covers the status.
-            visible.length === 0 && { paddingTop: windowHeight * 0.15 },
-          ]}
-          ListHeaderComponent={
-            browsing ? (
-              <ThemedView style={styles.listHeader}>
-                <ThemedText type="subtitle">
-                  {t("onboarding.school.title")}
-                </ThemedText>
-                <ThemedText
-                  type="small"
-                  themeColor="textSecondary"
-                  style={styles.subtitle}
+      <RootPage testID="onboarding-school-content" lane="standard">
+        {(schoolListLayout) => (
+          <FlatList
+            style={schoolListLayout.laneStyle}
+            data={visible}
+            keyExtractor={(school) => school.id}
+            renderItem={({ item }) => <SchoolRow school={item} />}
+            ItemSeparatorComponent={Platform.OS === "ios" ? RowSeparator : null}
+            contentInsetAdjustmentBehavior="automatic"
+            // No automaticallyAdjustKeyboardInsets: it sticks content under the
+            // header after the keyboard hides (RN #47731).
+            alwaysBounceVertical
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[
+              styles.list,
+              {
+                paddingBottom:
+                  Spacing.three +
+                  (Platform.OS === "android" ? insets.bottom : 0),
+              },
+              // Upper-third so the open search keyboard never covers the status.
+              visible.length === 0 && { paddingTop: windowHeight * 0.15 },
+            ]}
+            ListHeaderComponent={
+              browsing ? (
+                <PageIntro
+                  caption={t("onboarding.school.subtitle")}
+                  style={styles.listHeader}
+                />
+              ) : null
+            }
+            ListFooterComponent={
+              browsing ? (
+                <ThemedView style={styles.listFooter}>
+                  <MissingSchoolAction />
+                </ThemedView>
+              ) : null
+            }
+            ListEmptyComponent={
+              isLoading ? (
+                <ListStatus
+                  media={<ActivityIndicator />}
+                  message={t("onboarding.school.loading")}
+                  announceKey="loading"
+                />
+              ) : isError ? (
+                <ListStatus
+                  media={<StatusSymbol name="wifi.exclamationmark" />}
+                  message={t("onboarding.school.error")}
+                  announceKey="error"
+                  alert
                 >
-                  {t("onboarding.school.subtitle")}
-                </ThemedText>
-              </ThemedView>
-            ) : null
-          }
-          ListFooterComponent={
-            browsing ? (
-              <ThemedView style={styles.listFooter}>
-                <MissingSchoolAction />
-              </ThemedView>
-            ) : null
-          }
-          ListEmptyComponent={
-            isLoading ? (
-              <ListStatus
-                media={<ActivityIndicator />}
-                message={t("onboarding.school.loading")}
-                announceKey="loading"
-              />
-            ) : isError ? (
-              <ListStatus
-                media={<StatusSymbol name="wifi.exclamationmark" />}
-                message={t("onboarding.school.error")}
-                announceKey="error"
-                alert
-              >
-                <Pressable
-                  testID="onboarding-school-retry"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("onboarding.school.retry")}
-                  hitSlop={Spacing.two}
-                  onPress={refetch}
-                  style={styles.retry}
+                  <Pressable
+                    testID="onboarding-school-retry"
+                    accessibilityRole="button"
+                    accessibilityLabel={t("onboarding.school.retry")}
+                    hitSlop={Spacing.two}
+                    onPress={refetch}
+                    style={styles.retry}
+                  >
+                    <ThemedText type="smallBold" themeColor="primary">
+                      {t("onboarding.school.retry")}
+                    </ThemedText>
+                  </Pressable>
+                </ListStatus>
+              ) : searching ? (
+                <ListStatus
+                  media={<StatusSymbol name="magnifyingglass" />}
+                  message={t("onboarding.school.noResults", {
+                    query: filter.trim(),
+                  })}
+                  announceKey="noResults"
                 >
-                  <ThemedText type="smallBold" themeColor="primary">
-                    {t("onboarding.school.retry")}
-                  </ThemedText>
-                </Pressable>
-              </ListStatus>
-            ) : searching ? (
-              <ListStatus
-                media={<StatusSymbol name="magnifyingglass" />}
-                message={t("onboarding.school.noResults", {
-                  query: filter.trim(),
-                })}
-                announceKey="noResults"
-              >
-                <MissingSchoolAction />
-              </ListStatus>
-            ) : (
-              <ListStatus
-                media={<StatusSymbol name="graduationcap" />}
-                message={t("onboarding.school.empty")}
-                announceKey="empty"
-              >
-                <MissingSchoolAction />
-              </ListStatus>
-            )
-          }
-        />
-      </View>
-    </ThemedView>
+                  <MissingSchoolAction />
+                </ListStatus>
+              ) : (
+                <ListStatus
+                  media={<StatusSymbol name="graduationcap" />}
+                  message={t("onboarding.school.empty")}
+                  announceKey="empty"
+                >
+                  <MissingSchoolAction />
+                </ListStatus>
+              )
+            }
+          />
+        )}
+      </RootPage>
+    </>
   )
 }
 

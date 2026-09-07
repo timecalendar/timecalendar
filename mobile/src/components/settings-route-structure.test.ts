@@ -17,11 +17,11 @@ function route(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), "src/app", relativePath), "utf8")
 }
 
-function rootRoutes(): string[] {
-  const appRoot = resolve(process.cwd(), "src/app")
+function discoveredRoutes(relativeRoot = ""): string[] {
+  const appRoot = resolve(process.cwd(), "src/app", relativeRoot)
 
   return readdirSync(appRoot, { withFileTypes: true })
-    .flatMap((entry) => {
+    .flatMap((entry): string[] => {
       if (entry.isFile()) {
         return entry.name.endsWith(".tsx") && entry.name !== "_layout.tsx"
           ? [entry.name.replace(/\.tsx$/, "")]
@@ -30,17 +30,21 @@ function rootRoutes(): string[] {
 
       if (!entry.isDirectory()) return []
 
-      const directory = resolve(appRoot, entry.name)
-      const children = readdirSync(directory, { withFileTypes: true })
-      if (
-        children.some((child) => child.isFile() && child.name === "_layout.tsx")
-      ) {
-        return [entry.name]
+      if (relativeRoot === "") {
+        const children = readdirSync(resolve(appRoot, entry.name), {
+          withFileTypes: true,
+        })
+        if (
+          children.some(
+            (child) => child.isFile() && child.name === "_layout.tsx",
+          )
+        ) {
+          return [entry.name]
+        }
       }
-
-      return children
-        .filter((child) => child.isFile() && child.name.endsWith(".tsx"))
-        .map((child) => `${entry.name}/${child.name.replace(/\.tsx$/, "")}`)
+      return discoveredRoutes(
+        relativeRoot === "" ? entry.name : `${relativeRoot}/${entry.name}`,
+      ).map((child) => `${entry.name}/${child}`)
     })
     .sort()
 }
@@ -145,7 +149,9 @@ describe("Settings route structure", () => {
     ])
     const registrations = rootRegistrations(rootLayout)
 
-    expect(registrations.map(({ name }) => name).sort()).toEqual(rootRoutes())
+    expect(registrations.map(({ name }) => name).sort()).toEqual(
+      discoveredRoutes(),
+    )
     for (const registration of registrations) {
       if (headerlessRoutes.has(registration.name)) {
         expect(registration.props).toContain("headerShown: false")
@@ -157,6 +163,29 @@ describe("Settings route structure", () => {
     expect(route("../components/chrome/root-screen-options.ts")).toContain(
       'headerBackButtonDisplayMode: "minimal"',
     )
+    expect(route("../components/chrome/root-screen-options.ts")).toContain(
+      "headerLargeTitle: false",
+    )
+  })
+
+  it("classifies every nested onboarding route under compact defaults", () => {
+    const layout = route("onboarding/_layout.tsx")
+    const registrations = rootRegistrations(layout)
+
+    expect(layout).toContain("buildCompactRootScreenOptions")
+    expect(layout).toContain("<ImportDraftProvider>")
+    expect(registrations.map(({ name }) => name).sort()).toEqual(
+      discoveredRoutes("onboarding"),
+    )
+    expect(registrations.find(({ name }) => name === "index")?.props).toContain(
+      "headerShown: false",
+    )
+    for (const registration of registrations) {
+      if (registration.name !== "index") {
+        expect(registration.props).not.toContain("headerShown: false")
+      }
+    }
+    expect(layout).not.toContain("@react-navigation/")
   })
 
   it("keeps personal-event list and form titles feature-owned and localized", () => {
@@ -177,5 +206,46 @@ describe("Settings route structure", () => {
     expect(
       route("../features/notifications/ui/notification-settings-screen.tsx"),
     ).toContain('title: t("notifications.title")')
+  })
+
+  it("keeps onboarding push titles feature-owned and localized", () => {
+    const titledScreens = [
+      [
+        "../features/school-selection/ui/school-picker-screen.tsx",
+        "onboarding.school.title",
+      ],
+      [
+        "../features/onboarding/ui/institution-name-screen.tsx",
+        "onboarding.institution.title",
+      ],
+      [
+        "../features/onboarding/ui/programme-screen.tsx",
+        "onboarding.programme.title",
+      ],
+      [
+        "../features/onboarding/ui/connect-screen.tsx",
+        "onboarding.connect.title",
+      ],
+      [
+        "../features/onboarding/ui/manual-import-screen.tsx",
+        "onboarding.import.title",
+      ],
+      [
+        "../features/calendar-sources/ui/qr-scan-screen.tsx",
+        "calendarSources.qrScan.title",
+      ],
+      [
+        "../features/calendar-sources/ui/ical-url-screen.tsx",
+        "calendarSources.icalUrl.title",
+      ],
+      [
+        "../features/school-selection/ui/school-group-picker-screen.tsx",
+        "onboarding.group.title",
+      ],
+    ] as const
+
+    for (const [file, titleKey] of titledScreens) {
+      expect(route(file)).toContain(`title: t("${titleKey}")`)
+    }
   })
 })

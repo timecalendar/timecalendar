@@ -22,7 +22,6 @@ export const stepStyles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
   },

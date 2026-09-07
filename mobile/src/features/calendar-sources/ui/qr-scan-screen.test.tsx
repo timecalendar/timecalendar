@@ -87,6 +87,7 @@ jest.mock("expo-router", () => ({
     dismissAll: jest.fn(),
     push: jest.fn(),
   },
+  Stack: { Screen: () => null },
 }))
 jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({

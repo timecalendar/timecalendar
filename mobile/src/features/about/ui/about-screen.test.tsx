@@ -46,6 +46,11 @@ describe("AboutScreen", () => {
   it("uses standard sections with readable prose at tablet width", async () => {
     const view = await render(<AboutScreen />)
     await act(() =>
+      fireEvent(view.getByTestId("about-safe-area"), "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+    await act(() =>
       fireEvent(view.getByTestId("about-scroll-owner"), "layout", {
         nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
       }),

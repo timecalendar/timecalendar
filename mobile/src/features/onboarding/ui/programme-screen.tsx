@@ -8,13 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
+import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
 import {
   isImportNameWithinLimit,
   normalizeImportName,
@@ -67,12 +64,11 @@ export default function ProgrammeScreen() {
   const skip = () => advance("")
 
   return (
-    <ThemedView style={stepStyles.fill}>
+    <>
       <Stack.Screen
         options={{
           headerShown: true,
           title: t("onboarding.programme.title"),
-          headerTitle: "",
           headerBackButtonDisplayMode: "minimal",
           headerStyle: { backgroundColor: theme.background },
           headerShadowVisible: false,
@@ -106,95 +102,83 @@ export default function ProgrammeScreen() {
           }),
         }}
       />
-      <SafeAreaView style={stepStyles.fill} edges={["left", "right", "bottom"]}>
-        <AdaptiveContent
-          testID="onboarding-programme-content"
-          lane="readable"
+      <RootPage
+        testID="onboarding-programme-content"
+        lane="readable"
+        style={stepStyles.fill}
+        contentContainerStyle={stepStyles.safeArea}
+      >
+        <KeyboardAvoidingView
           style={stepStyles.fill}
-          contentContainerStyle={stepStyles.safeArea}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <KeyboardAvoidingView
-            style={stepStyles.fill}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          <ScrollView
+            contentContainerStyle={stepStyles.formContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <ScrollView
-              contentContainerStyle={stepStyles.formContent}
-              keyboardShouldPersistTaps="handled"
-            >
-              <View style={stepStyles.intro}>
-                <ThemedText type="title">
-                  {t("onboarding.programme.title")}
-                </ThemedText>
-                <ThemedText themeColor="textSecondary">
-                  {t("onboarding.programme.helper")}
-                </ThemedText>
-              </View>
+            <PageIntro caption={t("onboarding.programme.helper")} />
 
-              <ThemedText
-                nativeID="onboarding-programme-label"
-                type="smallBold"
-              >
-                {t("onboarding.programme.fieldLabel")}
-              </ThemedText>
-              <TextInput
-                testID="onboarding-programme-input"
-                accessibilityLabel={t("onboarding.programme.fieldLabel")}
-                accessibilityLabelledBy="onboarding-programme-label"
-                // Example only — a `placeholder` prop can never reach the draft.
-                placeholder={t("onboarding.programme.placeholder")}
-                placeholderTextColor={theme.textSecondary}
-                value={name}
-                onChangeText={(next) => {
-                  setName(next)
-                  if (errorKey !== null) setErrorKey(null)
-                }}
-                autoCapitalize="sentences"
-                autoCorrect={false}
-                returnKeyType="next"
-                onSubmitEditing={submit}
-                style={[
-                  stepStyles.input,
-                  { color: theme.text, borderColor: theme.backgroundSelected },
-                ]}
-              />
-
-              {errorKey !== null && (
-                <ThemedText
-                  testID="onboarding-programme-error"
-                  themeColor="textSecondary"
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
-                >
-                  {t(errorKey)}
-                </ThemedText>
-              )}
-            </ScrollView>
-
-            <Pressable
-              testID="onboarding-programme-continue"
-              accessibilityRole="button"
-              accessibilityLabel={t("onboarding.programme.continueLabel")}
-              accessibilityState={{ disabled: !canContinue }}
-              disabled={!canContinue}
-              hitSlop={Spacing.two}
-              onPress={submit}
+            <ThemedText nativeID="onboarding-programme-label" type="smallBold">
+              {t("onboarding.programme.fieldLabel")}
+            </ThemedText>
+            <TextInput
+              testID="onboarding-programme-input"
+              accessibilityLabel={t("onboarding.programme.fieldLabel")}
+              accessibilityLabelledBy="onboarding-programme-label"
+              // Example only — a `placeholder` prop can never reach the draft.
+              placeholder={t("onboarding.programme.placeholder")}
+              placeholderTextColor={theme.textSecondary}
+              value={name}
+              onChangeText={(next) => {
+                setName(next)
+                if (errorKey !== null) setErrorKey(null)
+              }}
+              autoCapitalize="sentences"
+              autoCorrect={false}
+              returnKeyType="next"
+              onSubmitEditing={submit}
               style={[
-                stepStyles.cta,
-                styles.footerCta,
-                {
-                  backgroundColor: theme.primaryStrong,
-                  opacity: canContinue ? 1 : 0.5,
-                },
+                stepStyles.input,
+                { color: theme.text, borderColor: theme.backgroundSelected },
               ]}
-            >
-              <ThemedText type="smallBold" themeColor="onPrimary">
-                {t("onboarding.programme.continue")}
+            />
+
+            {errorKey !== null && (
+              <ThemedText
+                testID="onboarding-programme-error"
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+              >
+                {t(errorKey)}
               </ThemedText>
-            </Pressable>
-          </KeyboardAvoidingView>
-        </AdaptiveContent>
-      </SafeAreaView>
-    </ThemedView>
+            )}
+          </ScrollView>
+
+          <Pressable
+            testID="onboarding-programme-continue"
+            accessibilityRole="button"
+            accessibilityLabel={t("onboarding.programme.continueLabel")}
+            accessibilityState={{ disabled: !canContinue }}
+            disabled={!canContinue}
+            hitSlop={Spacing.two}
+            onPress={submit}
+            style={[
+              stepStyles.cta,
+              styles.footerCta,
+              {
+                backgroundColor: theme.primaryStrong,
+                opacity: canContinue ? 1 : 0.5,
+              },
+            ]}
+          >
+            <ThemedText type="smallBold" themeColor="onPrimary">
+              {t("onboarding.programme.continue")}
+            </ThemedText>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </RootPage>
+    </>
   )
 }
 

@@ -9,7 +9,10 @@ import ManualImportScreen from "./manual-import-screen"
 // what it does NOT do (design D7): it orchestrates the two existing, tested
 // routes and owns no permission, validation, create or retry logic. The source
 // assertion below is the only way to state that as a test rather than a promise.
-jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
+jest.mock("expo-router", () => ({
+  router: { push: jest.fn() },
+  Stack: { Screen: () => null },
+}))
 
 const mockPush = router.push as jest.Mock
 
@@ -19,7 +22,6 @@ describe("ManualImportScreen", () => {
   it("renders the localized copy and both entry points", async () => {
     const { getByText } = await render(<ManualImportScreen />)
 
-    expect(getByText("Import your timetable")).toBeTruthy()
     expect(getByText("Scan QR code")).toBeTruthy()
     expect(getByText("Paste an iCal link")).toBeTruthy()
   })

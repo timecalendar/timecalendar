@@ -15,6 +15,7 @@ import ConnectScreen from "./connect-screen"
 // will hand to the browser, not a restatement of types.test.ts.
 jest.mock("expo-router", () => ({
   router: { back: jest.fn(), push: jest.fn() },
+  Stack: { Screen: () => null },
 }))
 jest.mock("expo-web-browser", () => ({ openBrowserAsync: jest.fn() }))
 jest.mock("@/features/onboarding/draft", () => ({
@@ -68,9 +69,9 @@ describe("ConnectScreen", () => {
   })
 
   it("renders the localized guidance", async () => {
-    const { getByText } = await render(<ConnectScreen />)
+    const { getByText, queryByText } = await render(<ConnectScreen />)
 
-    expect(getByText("Sign in to your intranet")).toBeTruthy()
+    expect(queryByText("Sign in to your intranet")).toBeNull()
     expect(
       getByText(
         "On your computer, or in this device's browser, sign in to your institution's site and open your timetable.",

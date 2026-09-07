@@ -26,6 +26,7 @@ jest.mock("@/features/school-selection/store", () => ({
 jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(),
   router: { back: jest.fn(), dismissTo: jest.fn() },
+  Stack: { Screen: () => null },
 }))
 
 const mockUseSchoolGroups = useSchoolGroups as jest.Mock
@@ -72,9 +73,8 @@ describe("SchoolGroupPickerScreen", () => {
     mockUseSchoolGroups.mockReturnValue(
       ready([{ text: "Group A", value: "a", children: [] }]),
     )
-    const { getByText, getByTestId } = await render(<SchoolGroupPickerScreen />)
+    const { getByTestId } = await render(<SchoolGroupPickerScreen />)
 
-    expect(getByText("Choose your group")).toBeTruthy()
     expect(getByTestId("onboarding-group-leaf-a")).toBeTruthy()
     const confirm = getByTestId("onboarding-group-confirm")
     expect(confirm.props.accessibilityLabel).toBe(

@@ -131,7 +131,7 @@ describe("SchoolPickerScreen", () => {
     const { queryByRole } = await render(<SchoolPickerScreen />)
 
     expect(screenOptions().title).toBe("Select your school")
-    expect(screenOptions().headerTitle).toBe("")
+    expect(screenOptions().headerTitle).toBeUndefined()
     expect(queryByRole("header")).toBeNull()
     expect(screenOptions().headerSearchBarOptions.placeholder).toBe(
       "Search schools",
@@ -155,11 +155,11 @@ describe("SchoolPickerScreen", () => {
         { id: "univeiffel", name: "Université Gustave Eiffel", imageUrl: "" },
       ]),
     )
-    const { getByText, getByTestId } = await render(<SchoolPickerScreen />)
-
-    expect(getByText("Select your school").props.accessibilityRole).toBe(
-      "header",
+    const { getByText, getByTestId, queryByText } = await render(
+      <SchoolPickerScreen />,
     )
+
+    expect(queryByText("Select your school")).toBeNull()
     expect(getByText("Université Gustave Eiffel")).toBeTruthy()
     expect(getByText("Your timetable comes from your school.")).toBeTruthy()
     const row = getByTestId("onboarding-school-row-univeiffel")

@@ -17,6 +17,14 @@ Root content uses `RootPage` only for non-header safe areas, vertical rhythm, an
 It never wraps a virtualized list in another scroller. `PageIntro` may be caption-only when the
 native header is the route heading.
 
+The nested onboarding Stack follows the same compact defaults while its root container stays
+headerless. Its explicit inventory is `index`, `school`, `institution-name`, `programme`,
+`connect`, `import`, `qr-scan`, `ical-url`, and `groups`; only the branded `index` landing is
+headerless. Feature screens own every localized title and platform action. The QR camera remains
+full-bleed content below its visible header. The route-structure suite recursively compares both
+the root and onboarding files with these registrations so auto-discovered routes cannot acquire an
+implicit header posture.
+
 ## Route screens that need a test are thin entrypoints over a feature `ui/` module (or a shared `@/components` module for shell screens)
 
 Expo Router's `require.context` bundles **every** `*.tsx` under `src/app/` as a route — a colocated `*.test.tsx` drags `@testing-library/react-native` (Node-only `console`/`picocolors`) into the Metro bundle and breaks it. The `routes-not-importable` lint then forbids importing the route from a test elsewhere.
