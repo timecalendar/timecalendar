@@ -190,4 +190,3 @@ Settings grouped-section labels SHALL render the casing supplied by the active l
 - **WHEN** Settings renders on iOS or Android in English
 - **THEN** section labels use normal localized casing
 - **AND** their semantic typography, spacing, and grouped containers distinguish them from rows without forced uppercase
-

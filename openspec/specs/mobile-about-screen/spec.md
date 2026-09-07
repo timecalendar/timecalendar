@@ -178,4 +178,3 @@ The About screen SHALL retain one measured `standard` lane for grouped actions a
 - **WHEN** About is measured at a supported tablet portrait width
 - **THEN** the introductory and link-error prose blocks are centered and capped at the readable maximum width
 - **AND** grouped action sections continue to use the wider standard lane
-
