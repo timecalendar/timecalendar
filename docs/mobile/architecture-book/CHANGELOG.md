@@ -2,6 +2,11 @@
 
 ## 2026-09-07
 
+- Applied ADR 054 to the exhaustive root and nested-onboarding route inventories: ordinary pushes
+  now share compact localized chrome, caption-first page rhythm, and one measured `RootPage` while
+  branded, redirect, development, camera-content, and platform-sheet exceptions stay explicit.
+- Adopted shared text-only empty states for loaded-empty Personal events and User calendars while
+  preserving loading gates, list/scroll/keyboard owners, native actions, selectors, and state behavior.
 - Added ADR 054 and the shared compact root Stack, measured page/intro, illustrated empty-state,
   semantic filled-action, and keyboard-safe action-region contracts. Activity, Hidden events, and
   the personal-event editor are the representative consumers; platform-native action placement

@@ -11,11 +11,9 @@ import {
   TextInput,
   View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
 import {
   getRememberedEmail,
   setRememberedEmail,
@@ -67,7 +65,6 @@ export default function FeedbackScreen() {
   const [email, setEmail] = useState(getRememberedEmail)
   const [message, setMessage] = useState("")
   const [errors, setErrors] = useState<FeedbackFormErrors>({})
-  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
 
   const submit = async () => {
     if (isPending || submitInFlightRef.current) return
@@ -99,170 +96,170 @@ export default function FeedbackScreen() {
   const minimumTarget = Platform.OS === "ios" ? 44 : 48
 
   return (
-    <ThemedView style={styles.flex}>
+    <>
       <Stack.Screen options={{ title: t("feedback.title") }} />
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <SafeAreaView edges={["left", "right", "bottom"]} style={styles.flex}>
-          <ScrollView
-            testID="feedback-scroll-owner"
-            onLayout={onLayout}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollContent}
+      <RootPage lane="readable" testID="feedback-layout-owner">
+        {(layout) => (
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <View
-              testID="feedback-responsive-content"
-              style={[laneStyle, styles.content]}
+            <ScrollView
+              testID="feedback-scroll-owner"
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.scrollContent}
             >
-              <View style={styles.intro}>
-                <ThemedText type="title">{t("feedback.title")}</ThemedText>
-                <ThemedText themeColor="textSecondary">
-                  {t("feedback.intro")}
-                </ThemedText>
-              </View>
-
-              <View style={styles.field}>
-                <ThemedText nativeID="feedback-email-label" type="smallBold">
-                  {t("feedback.email.label")}
-                </ThemedText>
-                <TextInput
-                  testID="feedback-email-input"
-                  accessibilityLabel={t("feedback.email.label")}
-                  accessibilityLabelledBy="feedback-email-label"
-                  value={email}
-                  onChangeText={(value) => {
-                    setEmail(value)
-                    if (errors.email)
-                      setErrors(({ email: _email, ...current }) => current)
-                  }}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  inputMode="email"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
-                  onSubmitEditing={() => messageRef.current?.focus()}
-                  editable={!isPending}
-                  style={[
-                    styles.input,
-                    {
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                />
-                {errors.email ? (
-                  <ThemedText
-                    accessibilityLiveRegion="polite"
-                    accessibilityRole="alert"
-                    themeColor="textSecondary"
-                  >
-                    {t(errors.email)}
-                  </ThemedText>
-                ) : null}
-              </View>
-
-              <View style={styles.field}>
-                <ThemedText nativeID="feedback-message-label" type="smallBold">
-                  {t("feedback.message.label")}
-                </ThemedText>
-                <TextInput
-                  ref={messageRef}
-                  testID="feedback-message-input"
-                  accessibilityLabel={t("feedback.message.label")}
-                  accessibilityLabelledBy="feedback-message-label"
-                  value={message}
-                  onChangeText={(value) => {
-                    setMessage(value)
-                    if (errors.message)
-                      setErrors(({ message: _message, ...current }) => current)
-                  }}
-                  multiline
-                  textAlignVertical="top"
-                  returnKeyType="default"
-                  blurOnSubmit={false}
-                  editable={!isPending}
-                  style={[
-                    styles.input,
-                    styles.messageInput,
-                    {
-                      color: theme.text,
-                      borderColor: theme.backgroundSelected,
-                    },
-                  ]}
-                />
-                {errors.message ? (
-                  <ThemedText
-                    accessibilityLiveRegion="polite"
-                    accessibilityRole="alert"
-                    themeColor="textSecondary"
-                  >
-                    {t(errors.message)}
-                  </ThemedText>
-                ) : null}
-              </View>
-
-              {submitFailed ? (
-                <ThemedText
-                  testID="feedback-submit-error"
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
-                  themeColor="textSecondary"
-                >
-                  {t("feedback.failure")}
-                </ThemedText>
-              ) : null}
-
-              <Pressable
-                testID="feedback-submit"
-                accessibilityRole="button"
-                accessibilityLabel={t("feedback.submit")}
-                accessibilityState={{ disabled: isPending, busy: isPending }}
-                disabled={isPending}
-                onPress={() => void submit()}
-                style={[
-                  styles.submit,
-                  {
-                    minHeight: minimumTarget,
-                    backgroundColor: theme.primary,
-                    opacity: isPending ? 0.6 : 1,
-                  },
-                ]}
+              <View
+                testID="feedback-responsive-content"
+                style={[layout.laneStyle, styles.content]}
               >
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: theme.background }}
+                <PageIntro caption={t("feedback.intro")} />
+
+                <View style={styles.field}>
+                  <ThemedText nativeID="feedback-email-label" type="smallBold">
+                    {t("feedback.email.label")}
+                  </ThemedText>
+                  <TextInput
+                    testID="feedback-email-input"
+                    accessibilityLabel={t("feedback.email.label")}
+                    accessibilityLabelledBy="feedback-email-label"
+                    value={email}
+                    onChangeText={(value) => {
+                      setEmail(value)
+                      if (errors.email)
+                        setErrors(({ email: _email, ...current }) => current)
+                    }}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="email"
+                    keyboardType="email-address"
+                    inputMode="email"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() => messageRef.current?.focus()}
+                    editable={!isPending}
+                    style={[
+                      styles.input,
+                      {
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                  {errors.email ? (
+                    <ThemedText
+                      accessibilityLiveRegion="polite"
+                      accessibilityRole="alert"
+                      themeColor="textSecondary"
+                    >
+                      {t(errors.email)}
+                    </ThemedText>
+                  ) : null}
+                </View>
+
+                <View style={styles.field}>
+                  <ThemedText
+                    nativeID="feedback-message-label"
+                    type="smallBold"
+                  >
+                    {t("feedback.message.label")}
+                  </ThemedText>
+                  <TextInput
+                    ref={messageRef}
+                    testID="feedback-message-input"
+                    accessibilityLabel={t("feedback.message.label")}
+                    accessibilityLabelledBy="feedback-message-label"
+                    value={message}
+                    onChangeText={(value) => {
+                      setMessage(value)
+                      if (errors.message)
+                        setErrors(
+                          ({ message: _message, ...current }) => current,
+                        )
+                    }}
+                    multiline
+                    textAlignVertical="top"
+                    returnKeyType="default"
+                    blurOnSubmit={false}
+                    editable={!isPending}
+                    style={[
+                      styles.input,
+                      styles.messageInput,
+                      {
+                        color: theme.text,
+                        borderColor: theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                  {errors.message ? (
+                    <ThemedText
+                      accessibilityLiveRegion="polite"
+                      accessibilityRole="alert"
+                      themeColor="textSecondary"
+                    >
+                      {t(errors.message)}
+                    </ThemedText>
+                  ) : null}
+                </View>
+
+                {submitFailed ? (
+                  <ThemedText
+                    testID="feedback-submit-error"
+                    accessibilityLiveRegion="polite"
+                    accessibilityRole="alert"
+                    themeColor="textSecondary"
+                  >
+                    {t("feedback.failure")}
+                  </ThemedText>
+                ) : null}
+
+                <Pressable
+                  testID="feedback-submit"
+                  accessibilityRole="button"
+                  accessibilityLabel={t("feedback.submit")}
+                  accessibilityState={{ disabled: isPending, busy: isPending }}
+                  disabled={isPending}
+                  onPress={() => void submit()}
+                  style={[
+                    styles.submit,
+                    {
+                      minHeight: minimumTarget,
+                      backgroundColor: theme.primary,
+                      opacity: isPending ? 0.6 : 1,
+                    },
+                  ]}
                 >
-                  {t("feedback.submit")}
-                </ThemedText>
-              </Pressable>
-              {isPending ? (
-                <ThemedText
-                  accessibilityLiveRegion="polite"
-                  accessibilityRole="text"
-                  themeColor="textSecondary"
-                >
-                  {t("feedback.sending")}
-                </ThemedText>
-              ) : null}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
-    </ThemedView>
+                  <ThemedText
+                    type="smallBold"
+                    style={{ color: theme.background }}
+                  >
+                    {t("feedback.submit")}
+                  </ThemedText>
+                </Pressable>
+                {isPending ? (
+                  <ThemedText
+                    accessibilityLiveRegion="polite"
+                    accessibilityRole="text"
+                    themeColor="textSecondary"
+                  >
+                    {t("feedback.sending")}
+                  </ThemedText>
+                ) : null}
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        )}
+      </RootPage>
+    </>
   )
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
-    paddingVertical: Spacing.four,
+    paddingBottom: Spacing.four,
   },
   content: { gap: Spacing.four },
-  intro: { gap: Spacing.two },
   field: { gap: Spacing.two },
   input: {
     minHeight: 48,

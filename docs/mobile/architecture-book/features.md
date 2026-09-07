@@ -28,13 +28,13 @@ code and product specifications.
 - `activity` and `hidden-events` use `RootPage` with a measured standard lane. Their list/scroll
   owners, loading/error distinctions, pagination, filtering, and write behavior remain
   feature-owned; only loaded-empty presentation uses the shared local illustrated state.
-- `personal-events` keeps list ownership in the feature and gives create/edit titles to compact
-  native Stack chrome. The editor's fields scroll independently while the shared keyboard owner
+- `personal-events` uses a standard `RootPage` for its standalone list and a readable page for the
+  editor, while giving list/create/edit titles to compact native Stack chrome. The editor's fields scroll independently while the shared keyboard owner
   pins the readable-lane Save/Delete region; CRUD hooks and selector families are unchanged.
-- `onboarding` keeps its existing safe-area and keyboard owners. Welcome page and action regions
-  independently use the shared readable lane so compact screens receive one gutter; illustrations
-  retain their own cap. Connect, institution-name, programme, and manual-import steps use readable
-  one-column lanes. These presentation bounds do not change step order, validation, or routing.
+- `onboarding/index` keeps its branded safe-area composition. Every ordinary pushed child uses
+  compact native chrome and one shared page frame; form screens retain their keyboard/scroll owners,
+  School retains its virtualized list and native search, and QR retains its full-bleed camera below
+  the header. These presentation bounds do not change step order, validation, or routing.
 - `school-selection` applies one measured standard lane to rows, separators, feature-owned list
   chrome, hierarchy, and states. The native school-search header remains full width.
 - `calendar-sources` keeps the QR camera full bleed and bounds permission, viewfinder, guidance,

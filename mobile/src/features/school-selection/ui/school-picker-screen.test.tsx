@@ -4,7 +4,8 @@ import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useSchools } from "@/features/school-selection/data"
 import { useColorScheme } from "@/hooks/use-color-scheme"
-import { resolveResponsiveLayout } from "@/theme"
+import { usePlatform } from "@/test-support/platform"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import SchoolPickerScreen from "./school-picker-screen"
 
@@ -41,15 +42,28 @@ jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(() => ({})),
 }))
 
-// The screen reads the bottom inset for the Android list padding; the library's
-// official Jest mock supplies zero-inset metrics without a provider tree.
-jest.mock(
-  "react-native-safe-area-context",
-  () =>
-    jest.requireActual<{ default: unknown }>(
-      "react-native-safe-area-context/jest/mock",
-    ).default,
-)
+let mockInsets = { top: 0, right: 0, bottom: 0, left: 0 }
+jest.mock("react-native-safe-area-context", () => {
+  const { View } = jest.requireActual("react-native")
+  return {
+    SafeAreaView: ({
+      children,
+      edges,
+      style,
+      ...props
+    }: React.ComponentProps<typeof View> & { edges?: string[] }) => (
+      <View
+        {...props}
+        style={[
+          style,
+          edges?.includes("bottom") && { paddingBottom: mockInsets.bottom },
+        ]}
+      >
+        {children}
+      </View>
+    ),
+  }
+})
 
 const mockUseSchools = useSchools as jest.Mock
 const mockPush = router.push as jest.Mock
@@ -97,6 +111,7 @@ const ready = (
 })
 
 beforeEach(() => {
+  mockInsets = { top: 0, right: 0, bottom: 0, left: 0 }
   mockUseColorScheme.mockReturnValue("light")
   mockPush.mockClear()
   mockDismiss.mockClear()
@@ -124,6 +139,33 @@ describe("SchoolPickerScreen", () => {
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
     })
+    expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
+      paddingTop: Spacing.four,
+    })
+  })
+
+  describe("on Android", () => {
+    usePlatform("android")
+
+    it("keeps the bottom inset on the page instead of duplicating it in the list", async () => {
+      mockInsets = { top: 0, right: 0, bottom: 24, left: 0 }
+      mockUseSchools.mockReturnValue(
+        ready([{ id: "a", name: "Alpha University", imageUrl: "" }]),
+      )
+      const { getByTestId } = await render(<SchoolPickerScreen />)
+      const owner = getByTestId("onboarding-school-content")
+      const list = owner.children[0] as unknown as {
+        props: { contentContainerStyle: unknown }
+      }
+
+      expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
+        paddingTop: Spacing.four,
+        paddingBottom: 24,
+      })
+      expect(
+        StyleSheet.flatten(list.props.contentContainerStyle),
+      ).toMatchObject({ paddingBottom: Spacing.three })
+    })
   })
 
   it("puts the localized title and search field in the native header", async () => {
@@ -131,7 +173,7 @@ describe("SchoolPickerScreen", () => {
     const { queryByRole } = await render(<SchoolPickerScreen />)
 
     expect(screenOptions().title).toBe("Select your school")
-    expect(screenOptions().headerTitle).toBe("")
+    expect(screenOptions().headerTitle).toBeUndefined()
     expect(queryByRole("header")).toBeNull()
     expect(screenOptions().headerSearchBarOptions.placeholder).toBe(
       "Search schools",
@@ -155,11 +197,11 @@ describe("SchoolPickerScreen", () => {
         { id: "univeiffel", name: "Université Gustave Eiffel", imageUrl: "" },
       ]),
     )
-    const { getByText, getByTestId } = await render(<SchoolPickerScreen />)
-
-    expect(getByText("Select your school").props.accessibilityRole).toBe(
-      "header",
+    const { getByText, getByTestId, queryByText } = await render(
+      <SchoolPickerScreen />,
     )
+
+    expect(queryByText("Select your school")).toBeNull()
     expect(getByText("Université Gustave Eiffel")).toBeTruthy()
     expect(getByText("Your timetable comes from your school.")).toBeTruthy()
     const row = getByTestId("onboarding-school-row-univeiffel")

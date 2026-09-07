@@ -4,7 +4,7 @@ import { StyleSheet } from "react-native"
 
 import { useSchoolGroups } from "@/features/school-selection/data"
 import { selectGroup, selectSchool } from "@/features/school-selection/store"
-import { resolveResponsiveLayout } from "@/theme"
+import { resolveResponsiveLayout, Spacing } from "@/theme"
 
 import SchoolGroupPickerScreen from "./school-group-picker-screen"
 
@@ -26,6 +26,7 @@ jest.mock("@/features/school-selection/store", () => ({
 jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(),
   router: { back: jest.fn(), dismissTo: jest.fn() },
+  Stack: { Screen: () => null },
 }))
 
 const mockUseSchoolGroups = useSchoolGroups as jest.Mock
@@ -66,15 +67,20 @@ describe("SchoolGroupPickerScreen", () => {
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
     })
+    expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
+      paddingTop: Spacing.four,
+    })
+    expect(StyleSheet.flatten(content.props.style)).not.toHaveProperty(
+      "paddingTop",
+    )
   })
 
   it("renders the localized title, a leaf node, and the confirm control", async () => {
     mockUseSchoolGroups.mockReturnValue(
       ready([{ text: "Group A", value: "a", children: [] }]),
     )
-    const { getByText, getByTestId } = await render(<SchoolGroupPickerScreen />)
+    const { getByTestId } = await render(<SchoolGroupPickerScreen />)
 
-    expect(getByText("Choose your group")).toBeTruthy()
     expect(getByTestId("onboarding-group-leaf-a")).toBeTruthy()
     const confirm = getByTestId("onboarding-group-confirm")
     expect(confirm.props.accessibilityLabel).toBe(

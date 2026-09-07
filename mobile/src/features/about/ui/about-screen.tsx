@@ -5,9 +5,9 @@ import type { TFunction } from "i18next"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { readApplicationInfo } from "@/features/about/data"
 import {
@@ -41,7 +41,6 @@ export function AboutScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const [linkFailed, setLinkFailed] = useState(false)
-  const standardLayout = useAdaptiveLayout("standard")
   const readableLayout = useAdaptiveLayout("readable")
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
@@ -160,65 +159,60 @@ export function AboutScreen() {
   ]
 
   return (
-    <SafeAreaView
-      edges={["left", "right", "bottom"]}
-      testID="about-safe-area"
-      style={[styles.safeArea, { backgroundColor: theme.background }]}
-    >
+    <>
       <Stack.Screen options={{ title: t("about.title") }} />
-      <ScrollView
-        testID="about-scroll-owner"
-        onLayout={(event) => {
-          standardLayout.onLayout(event)
-          readableLayout.onLayout(event)
-        }}
-        style={{ backgroundColor: theme.background }}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View
-          testID="about-responsive-content"
-          style={[standardLayout.laneStyle, styles.content]}
-        >
-          <View
-            testID="about-readable-copy"
-            style={[readableLayout.laneStyle, styles.blurb]}
+      <RootPage testID="about-safe-area" lane="standard">
+        {(standardLayout) => (
+          <ScrollView
+            testID="about-scroll-owner"
+            onLayout={readableLayout.onLayout}
+            style={{ backgroundColor: theme.background }}
+            contentContainerStyle={styles.scrollContent}
           >
-            <ThemedText>{t("about.blurb.access")}</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              {t("about.blurb.created")}
-            </ThemedText>
-          </View>
-          {linkFailed && (
-            <ThemedText
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-              themeColor="textSecondary"
-              style={[readableLayout.laneStyle, styles.linkError]}
+            <View
+              testID="about-responsive-content"
+              style={[standardLayout.laneStyle, styles.content]}
             >
-              {t("about.linkError")}
-            </ThemedText>
-          )}
-          {sections.map((section) => (
-            <SettingsSection
-              key={section.key}
-              title={section.title}
-              testID={`about-section-${section.key}`}
-            >
-              {section.rows.map((row) => (
-                <SettingsRow key={row.testID} {...row} />
+              <View
+                testID="about-readable-copy"
+                style={[readableLayout.laneStyle, styles.blurb]}
+              >
+                <ThemedText>{t("about.blurb.access")}</ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  {t("about.blurb.created")}
+                </ThemedText>
+              </View>
+              {linkFailed && (
+                <ThemedText
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole="alert"
+                  themeColor="textSecondary"
+                  style={[readableLayout.laneStyle, styles.linkError]}
+                >
+                  {t("about.linkError")}
+                </ThemedText>
+              )}
+              {sections.map((section) => (
+                <SettingsSection
+                  key={section.key}
+                  title={section.title}
+                  testID={`about-section-${section.key}`}
+                >
+                  {section.rows.map((row) => (
+                    <SettingsRow key={row.testID} {...row} />
+                  ))}
+                </SettingsSection>
               ))}
-            </SettingsSection>
-          ))}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            </View>
+          </ScrollView>
+        )}
+      </RootPage>
+    </>
   )
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
   scrollContent: {
-    paddingTop: Spacing.three,
     paddingBottom: Spacing.six,
   },
   content: {

@@ -1,9 +1,8 @@
 import { SymbolView } from "expo-symbols"
 import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import type { ChangelogRelease } from "@/features/changelog/data"
 import { Radii, Spacing, useTheme } from "@/theme"
@@ -16,80 +15,74 @@ interface ChangelogContentProps {
 export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
 
   return (
-    <SafeAreaView
-      edges={["left", "right", "bottom"]}
-      testID="changelog-safe-area"
-      style={[styles.safeArea, { backgroundColor: theme.background }]}
-    >
-      <ScrollView
-        testID="changelog-scroll-owner"
-        onLayout={onLayout}
-        contentContainerStyle={styles.scrollContent}
-        style={{ backgroundColor: theme.background }}
-      >
-        <View
-          testID="changelog-responsive-content"
-          style={[laneStyle, styles.content]}
+    <RootPage testID="changelog-safe-area" lane="readable">
+      {(layout) => (
+        <ScrollView
+          testID="changelog-scroll-owner"
+          contentContainerStyle={styles.scrollContent}
+          style={{ backgroundColor: theme.background }}
         >
-          {releases.map((release) => (
-            <View
-              key={release.version}
-              style={styles.release}
-              testID={`changelog-release-${release.version}`}
-            >
-              <ThemedText type="subtitle">
-                {t("changelog.versionHeading", { version: release.label })}
-              </ThemedText>
-              <View style={styles.items}>
-                {release.items.map((item) => (
-                  <View
-                    key={item.titleKey}
-                    style={[
-                      styles.item,
-                      { backgroundColor: theme.backgroundElement },
-                    ]}
-                  >
+          <View
+            testID="changelog-responsive-content"
+            style={[layout.laneStyle, styles.content]}
+          >
+            {releases.map((release) => (
+              <View
+                key={release.version}
+                style={styles.release}
+                testID={`changelog-release-${release.version}`}
+              >
+                <ThemedText type="subtitle">
+                  {t("changelog.versionHeading", { version: release.label })}
+                </ThemedText>
+                <View style={styles.items}>
+                  {release.items.map((item) => (
                     <View
-                      accessible={false}
-                      importantForAccessibility="no-hide-descendants"
+                      key={item.titleKey}
                       style={[
-                        styles.icon,
-                        { backgroundColor: theme.primarySoft },
+                        styles.item,
+                        { backgroundColor: theme.backgroundElement },
                       ]}
                     >
-                      <SymbolView
-                        name={item.icon}
-                        tintColor={theme.primary}
-                        style={styles.symbol}
-                      />
+                      <View
+                        accessible={false}
+                        importantForAccessibility="no-hide-descendants"
+                        style={[
+                          styles.icon,
+                          { backgroundColor: theme.primarySoft },
+                        ]}
+                      >
+                        <SymbolView
+                          name={item.icon}
+                          tintColor={theme.primary}
+                          style={styles.symbol}
+                        />
+                      </View>
+                      <View style={styles.copy}>
+                        <ThemedText style={styles.itemTitle}>
+                          {t(item.titleKey)}
+                        </ThemedText>
+                        <ThemedText themeColor="textSecondary">
+                          {t(item.subtitleKey)}
+                        </ThemedText>
+                      </View>
                     </View>
-                    <View style={styles.copy}>
-                      <ThemedText style={styles.itemTitle}>
-                        {t(item.titleKey)}
-                      </ThemedText>
-                      <ThemedText themeColor="textSecondary">
-                        {t(item.subtitleKey)}
-                      </ThemedText>
-                    </View>
-                  </View>
-                ))}
+                  ))}
+                </View>
               </View>
-            </View>
-          ))}
-          {footer}
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+            ))}
+            {footer}
+          </View>
+        </ScrollView>
+      )}
+    </RootPage>
   )
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
   scrollContent: {
-    paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
   },
   content: { gap: Spacing.four },

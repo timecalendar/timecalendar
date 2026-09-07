@@ -39,7 +39,10 @@ jest.mock("react-native", () => {
     descriptors,
   )
 })
-jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
+jest.mock("expo-router", () => ({
+  router: { push: jest.fn() },
+  Stack: { Screen: () => null },
+}))
 jest.mock("@/features/school-selection", () => ({ clearSelection: jest.fn() }))
 
 const mockSetUnlistedInstitution = jest.fn()
@@ -79,7 +82,6 @@ describe("InstitutionNameScreen", () => {
   it("renders the localized title, label and action (not raw keys)", async () => {
     const { getByText } = await render(<InstitutionNameScreen />)
 
-    expect(getByText("Which institution?")).toBeTruthy()
     expect(getByText("Institution name")).toBeTruthy()
     expect(getByText("Continue")).toBeTruthy()
   })

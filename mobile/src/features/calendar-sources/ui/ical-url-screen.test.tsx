@@ -22,6 +22,7 @@ jest.mock("expo-router", () => ({
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
   },
+  Stack: { Screen: () => null },
 }))
 jest.mock("@/firebase", () => ({ recordUnknownError: jest.fn() }))
 jest.mock("@/features/calendar-sources/data", () => ({
@@ -84,7 +85,6 @@ describe("IcalUrlScreen", () => {
   it("renders the localized title, field label, and submit (not raw keys)", async () => {
     const { getByText } = await render(<IcalUrlScreen />)
 
-    expect(getByText("Add a calendar by URL")).toBeTruthy()
     expect(getByText("Calendar URL")).toBeTruthy()
     expect(getByText("Import")).toBeTruthy()
   })

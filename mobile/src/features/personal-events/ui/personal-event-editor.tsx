@@ -119,7 +119,6 @@ export function PersonalEventEditor({
 
 const styles = StyleSheet.create({
   content: {
-    paddingTop: Spacing.four,
     paddingBottom: Spacing.five,
     gap: Spacing.three,
   },

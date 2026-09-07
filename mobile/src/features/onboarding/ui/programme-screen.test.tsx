@@ -107,7 +107,6 @@ describe("ProgrammeScreen", () => {
   it("renders the localized copy, the field label and the example placeholder", async () => {
     const { getByText, getByTestId } = await render(<ProgrammeScreen />)
 
-    expect(getByText("Your programme")).toBeTruthy()
     expect(getByText("Programme name")).toBeTruthy()
     // The example is a placeholder prop only — it can never reach the draft.
     expect(getByTestId("onboarding-programme-input").props.placeholder).toBe(

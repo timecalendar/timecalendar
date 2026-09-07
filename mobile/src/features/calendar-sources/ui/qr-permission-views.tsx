@@ -1,10 +1,8 @@
 import { useTranslation } from "react-i18next"
 import { Linking, StyleSheet } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { AdaptiveContent } from "@/components/adaptive-content"
+import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
 import { Spacing } from "@/theme"
 
 import { QrActionButton } from "./qr-action-button"
@@ -32,10 +30,7 @@ export function QrPermissionRequestView({
   const { t } = useTranslation()
   return (
     <PermissionFrame>
-      <ThemedText type="title">{t("calendarSources.qrScan.title")}</ThemedText>
-      <ThemedText themeColor="textSecondary">
-        {t("calendarSources.qrScan.explainer")}
-      </ThemedText>
+      <PageIntro caption={t("calendarSources.qrScan.explainer")} />
       <QrActionButton
         testID="qr-scan-grant"
         label={t("calendarSources.qrScan.grantLabel")}
@@ -50,7 +45,6 @@ export function QrPermissionSettingsView() {
   const { t } = useTranslation()
   return (
     <PermissionFrame>
-      <ThemedText type="title">{t("calendarSources.qrScan.title")}</ThemedText>
       <ThemedText
         themeColor="textSecondary"
         accessibilityLiveRegion="polite"
@@ -70,18 +64,14 @@ export function QrPermissionSettingsView() {
 
 function PermissionFrame({ children }: { children: React.ReactNode }) {
   return (
-    <ThemedView style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        <AdaptiveContent
-          testID="qr-permission-content"
-          lane="readable"
-          style={styles.fill}
-          contentContainerStyle={styles.safeArea}
-        >
-          {children}
-        </AdaptiveContent>
-      </SafeAreaView>
-    </ThemedView>
+    <RootPage
+      testID="qr-permission-content"
+      lane="readable"
+      style={styles.fill}
+      contentContainerStyle={styles.safeArea}
+    >
+      {children}
+    </RootPage>
   )
 }
 
@@ -91,7 +81,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingTop: Spacing.four,
     justifyContent: "center",
     gap: Spacing.three,
   },

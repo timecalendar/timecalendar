@@ -143,6 +143,13 @@ theme-backed compact defaults and minimal back display described by ADR
 [054](./decisions/054-shared-root-page-semantics.md). It is stable Expo Router composition rather
 than an alpha API, but co-location keeps root chrome policy discoverable.
 
+Every ordinary non-tab root and onboarding push uses that compact chrome plus one `RootPage`.
+The native title is the route heading; `PageIntro` contains supporting caption text only and adds
+no placeholder when no caption exists. `RootPage` replaces feature-local themed surfaces, safe
+areas, top padding, and primary lane measurement while leaving `FlatList`, `SectionList`,
+`ScrollView`, keyboard avoidance, refresh, pagination, overlays, and native actions with the
+feature that already owns them.
+
 `EmptyState` accepts optional local light/dark artwork pairs selected through the single
 color-scheme seam. Eligible full-screen illustrations are recolored to each scheme's exact
 `primary` accent; the localized text carries meaning and the image remains decorative. Filled
