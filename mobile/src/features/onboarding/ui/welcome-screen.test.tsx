@@ -7,6 +7,11 @@ import {
 } from "react-native"
 import { cancelAnimation, withTiming } from "react-native-reanimated"
 
+import {
+  getFirstIcalReminderState,
+  getOnboardingResolution,
+} from "@/features/first-launch/store"
+import { remove, STORAGE_KEYS } from "@/storage"
 import { Colors, resolveResponsiveLayout } from "@/theme"
 
 import WelcomeScreen from "./welcome-screen"
@@ -33,6 +38,8 @@ async function flushMicrotasks(turns = 3): Promise<void> {
 
 beforeEach(() => {
   mockPush.mockClear()
+  remove(STORAGE_KEYS.onboardingResolution)
+  remove(STORAGE_KEYS.firstIcalReminderState)
   pagerMock.setPage.mockClear()
   pagerMock.setPageWithoutAnimation.mockClear()
   jest.mocked(AccessibilityInfo.isReduceMotionEnabled).mockResolvedValue(false)
@@ -129,18 +136,39 @@ describe("WelcomeScreen", () => {
     expect(queryByTestId("onboarding-skip")).toBeNull()
   })
 
-  it("pushes the school step from Skip and the final CTA", async () => {
-    const { getByTestId } = await render(<WelcomeScreen />)
+  it("confirms Skip without entering school selection and keeps the reminder pending", async () => {
+    const { getByRole, getByTestId, queryByRole } = await render(
+      <WelcomeScreen />,
+    )
 
     await fireEvent.press(getByTestId("onboarding-skip"))
-    expect(mockPush).toHaveBeenLastCalledWith("/onboarding/school")
+    expect(getByRole("dialog")).toBeTruthy()
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(getOnboardingResolution()).toBeUndefined()
+
+    await fireEvent.press(
+      getByRole("button", { name: "Continue onboarding" }),
+    )
+    expect(queryByRole("dialog")).toBeNull()
+    expect(getOnboardingResolution()).toBeUndefined()
+
+    await fireEvent.press(getByTestId("onboarding-skip"))
+    await fireEvent.press(
+      getByRole("button", { name: "Skip and continue" }),
+    )
+    expect(getOnboardingResolution()).toBe("skipped")
+    expect(getFirstIcalReminderState()).toBe("pending")
+  })
+
+  it("pushes the school step from the final CTA", async () => {
+    const { getByTestId } = await render(<WelcomeScreen />)
 
     await fireEvent(getByTestId("onboarding-pager"), "pageSelected", {
       nativeEvent: { position: 2 },
     })
     await fireEvent.press(getByTestId("onboarding-welcome-cta"))
     expect(mockPush).toHaveBeenLastCalledWith("/onboarding/school")
-    expect(mockPush).toHaveBeenCalledTimes(2)
+    expect(mockPush).toHaveBeenCalledTimes(1)
 
     await act(flushMicrotasks)
   })

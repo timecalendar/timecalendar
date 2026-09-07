@@ -50,7 +50,7 @@ interface UseQrImportControllerOptions {
     fields: CalendarImportFields,
   ) => Promise<void>
   clearDraft: () => void
-  leaveJourney: () => void
+  leaveJourney: (clearDraft: () => void) => void
   openManualUrl: () => void
   recordError: (error: unknown, context: string) => void
 }
@@ -101,8 +101,7 @@ export function useQrImportController({
 
         completedRef.current = true
         setState({ phase: "completed" })
-        clearDraft()
-        leaveJourney()
+        leaveJourney(clearDraft)
       })
       .catch((error: unknown) => {
         if (!activeRef.current || completedRef.current) return

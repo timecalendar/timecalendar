@@ -1,55 +1,76 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
-// Max time the splash may wait for the readiness gate before dismissing anyway.
-// A watchdog so a future slow/stalled gate can never brick launch: every branch
-// of the gate below already resolves immediately today, but the timeout is the
-// load-bearing safety net the design (D3 risk) requires — the native splash is
-// held by preventAutoHideAsync() and only hideAsync() releases it, so a gate
-// that never resolves would hang the app forever.
-const READY_WATCHDOG_MS = 5000
+import { runMigrations } from "@/db/migrate"
+import {
+  type LegacyImportPrerequisite,
+  runLegacyImport,
+} from "@/startup/legacy-import"
 
-// First-paint prerequisites. All resolve synchronously today, so the gate is
-// satisfied on mount and the hook exists to give a future async prerequisite
-// one place to gate (design D3):
-//  - i18n: synchronous via the `import "@/i18n"` side-effect in the root layout
-//    (initializes before render); a future async-catalog change gates here.
-//  - fonts: a no-op seam while the app uses system fonts; adding expo-font's
-//    `useFonts` later is a one-line `&& fontsLoaded` here.
-//  - migrations: the empty-bundle `runMigrations()` is instant and idempotent
-//    today. The first feature whose initial read must block on a table adopts
-//    the blocking `useMigrations()` hook and gates here — the app is not
-//    converted to it prematurely (R-2, storage change posture).
-function prerequisitesReady(): boolean {
-  const i18nReady = true
-  const fontsReady = true
-  const migrationsReady = true
-  return i18nReady && fontsReady && migrationsReady
+export const READY_WATCHDOG_MS = 5000
+
+export interface AppReadyDependencies {
+  runMigrations: () => Promise<void>
+  runLegacyImport: LegacyImportPrerequisite
 }
 
+const DEFAULT_DEPENDENCIES: AppReadyDependencies = {
+  runMigrations,
+  runLegacyImport,
+}
+
+export type AppReadyState =
+  | { status: "pending"; recoveryVisible: boolean; retry: () => void }
+  | { status: "ready"; recoveryVisible: false; retry: () => void }
+  | { status: "failed"; recoveryVisible: true; retry: () => void }
+
 /**
- * Readiness gate: returns true once first-paint prerequisites are satisfied.
- * The reusable "render only when prerequisites are satisfied" pattern features
- * inherit. The gate always resolves — synchronously today, and never later than
- * the watchdog deadline even if a future async prerequisite stalls.
- *
- * `isReady` is injectable (default `prerequisitesReady`) so the load-bearing
- * watchdog path — unreachable today because every prerequisite is synchronous —
- * is exercisable by a test that starts the gate not-ready, the shape a future
- * async prerequisite would produce.
+ * Ordered startup coordinator. A timeout changes presentation only: it exposes
+ * recovery and Retry while keeping every database reader and route unavailable.
  */
 export function useAppReady(
-  isReady: () => boolean = prerequisitesReady,
-): boolean {
-  const [ready, setReady] = useState(isReady)
+  dependencies: AppReadyDependencies = DEFAULT_DEPENDENCIES,
+): AppReadyState {
+  const [attempt, setAttempt] = useState(0)
+  const [status, setStatus] = useState<AppReadyState["status"]>("pending")
+  const [recoveryVisible, setRecoveryVisible] = useState(false)
+
+  const retry = useCallback(() => {
+    setStatus("pending")
+    setRecoveryVisible(false)
+    setAttempt((current) => current + 1)
+  }, [])
 
   useEffect(() => {
-    if (ready) return
-    // Unreachable today (prerequisites are synchronous), but the load-bearing
-    // watchdog: dismiss regardless once the deadline passes so a stalled future
-    // gate cannot hang the splash.
-    const watchdog = setTimeout(() => setReady(true), READY_WATCHDOG_MS)
-    return () => clearTimeout(watchdog)
-  }, [ready])
+    let active = true
+    const watchdog = setTimeout(() => {
+      if (active) setRecoveryVisible(true)
+    }, READY_WATCHDOG_MS)
 
-  return ready
+    void (async () => {
+      try {
+        await dependencies.runMigrations()
+        await dependencies.runLegacyImport()
+        if (active) {
+          clearTimeout(watchdog)
+          setStatus("ready")
+          setRecoveryVisible(false)
+        }
+      } catch {
+        if (active) {
+          clearTimeout(watchdog)
+          setStatus("failed")
+          setRecoveryVisible(true)
+        }
+      }
+    })()
+
+    return () => {
+      active = false
+      clearTimeout(watchdog)
+    }
+  }, [attempt, dependencies])
+
+  if (status === "ready") return { status, recoveryVisible: false, retry }
+  if (status === "failed") return { status, recoveryVisible: true, retry }
+  return { status, recoveryVisible, retry }
 }

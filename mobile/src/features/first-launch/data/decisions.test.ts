@@ -1,4 +1,8 @@
-import { decideInitialRoute, shouldShowFirstIcalReminder } from "./decisions"
+import {
+  decideInitialRoute,
+  onboardingResolutionToSeed,
+  shouldShowFirstIcalReminder,
+} from "./decisions"
 
 describe("decideInitialRoute", () => {
   it.each([
@@ -20,6 +24,25 @@ describe("decideInitialRoute", () => {
       ).toBe(expected)
     },
   )
+})
+
+describe("onboardingResolutionToSeed", () => {
+  it("seeds a recovered calendar once so later deletion stays eligible", () => {
+    const seeded = onboardingResolutionToSeed(1, undefined)
+    expect(seeded).toBe("calendarImported")
+    expect(
+      decideInitialRoute({
+        calendarsLoaded: true,
+        calendarCount: 0,
+        onboardingResolution: seeded,
+      }),
+    ).toBe("tabs")
+  })
+
+  it("does not overwrite an existing resolution or seed an empty install", () => {
+    expect(onboardingResolutionToSeed(0, undefined)).toBeUndefined()
+    expect(onboardingResolutionToSeed(1, "skipped")).toBeUndefined()
+  })
 })
 
 describe("shouldShowFirstIcalReminder", () => {

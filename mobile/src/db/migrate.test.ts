@@ -26,13 +26,13 @@ describe("runMigrations", () => {
   it("records a migration failure through the @/firebase seam", async () => {
     const failure = new Error("migration boom")
     mockMigrate.mockRejectedValueOnce(failure)
-    await runMigrations()
+    await expect(runMigrations()).rejects.toBe(failure)
     expect(mockRecordError).toHaveBeenCalledWith(expect.anything(), failure)
   })
 
   it("wraps a non-Error rejection before recording it", async () => {
     mockMigrate.mockRejectedValueOnce("string failure")
-    await runMigrations()
+    await expect(runMigrations()).rejects.toBe("string failure")
     expect(mockRecordError).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ message: "string failure" }),

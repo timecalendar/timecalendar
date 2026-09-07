@@ -3,7 +3,9 @@ import { router } from "expo-router"
 import { StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
+import { getOnboardingResolution } from "@/features/first-launch"
 import { recordUnknownError } from "@/firebase"
+import { remove, STORAGE_KEYS } from "@/storage"
 import { resolveResponsiveLayout } from "@/theme"
 
 import IcalUrlScreen from "./ical-url-screen"
@@ -18,6 +20,7 @@ import IcalUrlScreen from "./ical-url-screen"
 jest.mock("expo-router", () => ({
   router: {
     back: jest.fn(),
+    replace: jest.fn(),
     push: jest.fn(),
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
@@ -39,6 +42,7 @@ jest.mock("@/features/onboarding", () => ({
 }))
 
 const mockBack = router.back as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const mockCanDismiss = router.canDismiss as jest.Mock
 const mockDismissAll = router.dismissAll as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
@@ -50,6 +54,7 @@ let addState: { isPending: boolean; isError: boolean }
 
 beforeEach(() => {
   jest.clearAllMocks()
+  remove(STORAGE_KEYS.onboardingResolution)
   addState = { isPending: false, isError: false }
   mockUseAddCalendar.mockImplementation(() => ({
     addCalendarFromUrl: mockAddCalendarFromUrl,
@@ -111,6 +116,7 @@ describe("IcalUrlScreen", () => {
       { name: "", schoolName: "" },
     )
     expect(mockClearDraft).toHaveBeenCalledTimes(1)
+    expect(getOnboardingResolution()).toBe("calendarImported")
     expect(mockReset).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
@@ -185,7 +191,7 @@ describe("IcalUrlScreen", () => {
     await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
   })
 
-  it("falls back to back() when there is no journey to dismiss", async () => {
+  it("replaces to Calendar when there is no journey to dismiss", async () => {
     mockCanDismiss.mockReturnValue(false)
     mockAddCalendarFromUrl.mockResolvedValue(undefined)
     const { getByTestId } = await render(<IcalUrlScreen />)
@@ -198,7 +204,8 @@ describe("IcalUrlScreen", () => {
     })
     await act(async () => fireEvent.press(getByTestId("ical-url-submit")))
 
-    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/calendar"))
+    expect(mockBack).not.toHaveBeenCalled()
     expect(mockDismissAll).not.toHaveBeenCalled()
   })
 

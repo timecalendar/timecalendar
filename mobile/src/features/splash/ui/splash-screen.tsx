@@ -1,7 +1,14 @@
 import * as ExpoSplashScreen from "expo-splash-screen"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { AccessibilityInfo, Animated, StyleSheet } from "react-native"
+import {
+  AccessibilityInfo,
+  Animated,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import { Spacing, useTheme } from "@/theme"
@@ -25,10 +32,19 @@ const FADE_OUT_MS = 300
  * when `useAppReady()` resolves. Reduced motion is honored in the component
  * (R-1: lint can't know which view animates), as the app's first animation.
  */
-export function SplashScreen() {
+export interface SplashScreenProps {
+  ready: boolean
+  recoveryVisible: boolean
+  onRetry: () => void
+}
+
+export function SplashScreen({
+  ready,
+  recoveryVisible,
+  onRetry,
+}: SplashScreenProps) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const ready = useAppReady()
 
   // Reduced-motion state, read async on mount and kept current via the event
   // subscription so a mid-splash toggle is respected (the splash is
@@ -97,9 +113,11 @@ export function SplashScreen() {
 
   return (
     <Animated.View
-      accessible
-      accessibilityRole="progressbar"
-      accessibilityLabel={t("splash.status.loading")}
+      accessible={!recoveryVisible}
+      accessibilityRole={recoveryVisible ? undefined : "progressbar"}
+      accessibilityLabel={
+        recoveryVisible ? undefined : t("splash.status.loading")
+      }
       accessibilityLiveRegion="polite"
       style={[
         StyleSheet.absoluteFill,
@@ -108,6 +126,33 @@ export function SplashScreen() {
       ]}
     >
       <ThemedText type="title">{t("app.name")}</ThemedText>
+      {recoveryVisible ? (
+        <View style={styles.recovery}>
+          <ThemedText
+            type="subtitle"
+            accessibilityRole="alert"
+            accessibilityLabel={t("splash.recovery.accessibilityLabel")}
+            accessibilityLiveRegion="assertive"
+          >
+            {t("splash.recovery.title")}
+          </ThemedText>
+          <ThemedText>{t("splash.recovery.body")}</ThemedText>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("splash.recovery.retry.label")}
+            accessibilityHint={t("splash.recovery.retry.hint")}
+            onPress={onRetry}
+            style={({ pressed }) => [
+              styles.retry,
+              { backgroundColor: theme.primary, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <ThemedText style={{ color: theme.onPrimary }}>
+              {t("splash.recovery.retry.label")}
+            </ThemedText>
+          </Pressable>
+        </View>
+      ) : null}
     </Animated.View>
   )
 }
@@ -119,5 +164,18 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     // Cover the navigation Stack while startup completes.
     zIndex: 1,
+  },
+  recovery: {
+    alignItems: "center",
+    gap: Spacing.two,
+    maxWidth: 420,
+    paddingTop: Spacing.four,
+  },
+  retry: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.two,
+    minHeight: Platform.OS === "ios" ? 44 : 48,
+    paddingHorizontal: Spacing.four,
   },
 })

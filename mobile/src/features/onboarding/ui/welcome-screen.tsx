@@ -7,6 +7,8 @@ import PagerView, {
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { ThemedView } from "@/components/themed-view"
+import { setOnboardingResolution } from "@/features/first-launch/store"
+import { ImportLaterConfirmation } from "@/features/first-launch/ui"
 
 import { useReducedMotion } from "./use-reduced-motion"
 import { WelcomeFooter, WelcomeSkip } from "./welcome-controls"
@@ -22,6 +24,7 @@ export default function WelcomeScreen() {
   const { height: windowHeight } = useWindowDimensions()
   const pagerRef = useRef<PagerView>(null)
   const [currentPage, setCurrentPage] = useState(0)
+  const [skipConfirmationVisible, setSkipConfirmationVisible] = useState(false)
   const reduceMotion = useReducedMotion()
   const isLastPage = currentPage === WELCOME_PAGES.length - 1
   const illustrationHeight = Math.min(
@@ -43,12 +46,19 @@ export default function WelcomeScreen() {
   }
 
   const openSchoolSelection = () => router.push("/onboarding/school")
+  const confirmSkip = () => {
+    setOnboardingResolution("skipped")
+    setSkipConfirmationVisible(false)
+  }
 
   return (
     <ThemedView style={styles.fill}>
       <SafeAreaView style={styles.fill}>
         <WelcomeEntrance reduceMotion={reduceMotion}>
-          <WelcomeSkip hidden={isLastPage} onPress={openSchoolSelection} />
+          <WelcomeSkip
+            hidden={isLastPage}
+            onPress={() => setSkipConfirmationVisible(true)}
+          />
           <WelcomePager
             ref={pagerRef}
             illustrationHeight={illustrationHeight}
@@ -64,6 +74,12 @@ export default function WelcomeScreen() {
             onNext={goToNextPage}
           />
         </WelcomeEntrance>
+        <ImportLaterConfirmation
+          visible={skipConfirmationVisible}
+          cancelLabelKey="firstLaunch.importLater.continueOnboarding"
+          onCancel={() => setSkipConfirmationVisible(false)}
+          onConfirm={confirmSkip}
+        />
       </SafeAreaView>
     </ThemedView>
   )
