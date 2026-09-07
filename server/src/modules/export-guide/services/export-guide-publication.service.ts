@@ -31,6 +31,15 @@ export class ExportGuidePublicationService {
     en: unknown,
     options: { initial?: boolean; now?: Date } = {},
   ): Promise<ExportGuideBundle> {
+    return this.publishWithAssetValidator(fr, en, options, this.assetValidator)
+  }
+
+  private async publishWithAssetValidator(
+    fr: unknown,
+    en: unknown,
+    options: { initial?: boolean; now?: Date },
+    assetValidator: ExportGuideAssetValidator,
+  ): Promise<ExportGuideBundle> {
     const catalogues = this.validator.validatePair(fr, en, options)
     const catalogueVersion = catalogues.fr.catalogueVersion
     if (this.catalogues.capture().retained.has(catalogueVersion))
@@ -54,7 +63,7 @@ export class ExportGuidePublicationService {
       }
     }
     for (const { image, role } of assets.values())
-      await this.assetValidator.validate(image, role)
+      await assetValidator.validate(image, role)
 
     const bundle: ExportGuideBundle = Object.freeze({
       catalogueVersion,
@@ -71,11 +80,14 @@ export class ExportGuidePublicationService {
     return bundle
   }
 
-  async publishInitial(): Promise<ExportGuideBundle> {
-    return this.publish(
+  async publishInitial(
+    assetValidator: ExportGuideAssetValidator = this.assetValidator,
+  ): Promise<ExportGuideBundle> {
+    return this.publishWithAssetValidator(
       createInitialExportGuideCatalogue("fr"),
       createInitialExportGuideCatalogue("en"),
       { initial: true, now: new Date(0) },
+      assetValidator,
     )
   }
 

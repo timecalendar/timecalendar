@@ -39,4 +39,5 @@ lerna-debug.log*
 .eslintcache
 /volumes/postgres
 /volumes/redis
+/export-guide-catalogues
 junit.xml

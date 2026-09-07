@@ -4,7 +4,6 @@ import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { ExportGuideModule } from "modules/export-guide/export-guide.module"
-import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
 import {
   EXPORT_GUIDE_CATALOGUE_DIRECTORY,
   ExportGuideCatalogueStore,
@@ -14,7 +13,6 @@ import {
   ExportGuideService,
 } from "modules/export-guide/services/export-guide.service"
 import { FeatureFlagService } from "modules/feature-flag/services/feature-flag.service"
-import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import createTestApp from "test-utils/create-test-app"
 
 describe("ExportGuideV1Controller", () => {
@@ -36,19 +34,6 @@ describe("ExportGuideV1Controller", () => {
         ],
       },
     )
-    const repository = app.get(ExportGuideCatalogueStore)
-    const validator = app.get(ExportGuideCatalogueValidator)
-    const catalogues = validator.validatePair(
-      createInitialExportGuideCatalogue("fr"),
-      createInitialExportGuideCatalogue("en"),
-      { initial: true },
-    )
-    repository.stage({
-      catalogueVersion: catalogues.fr.catalogueVersion,
-      catalogues,
-      publishedAt: new Date(0),
-    })
-    repository.commitStaged(catalogues.fr.catalogueVersion)
   })
 
   afterAll(() => {

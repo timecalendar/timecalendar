@@ -10,7 +10,7 @@ import {
 
 export const INITIAL_EXPORT_GUIDE_VERSION = "2026-09-07.1"
 
-const configuredOrigin = (() => {
+export const INITIAL_EXPORT_GUIDE_ASSET_ORIGIN = (() => {
   try {
     const url = new URL(S3_PUBLIC_BUCKET_CLIENT_URL)
     return url.protocol === "https:"
@@ -29,7 +29,7 @@ const image = (
   altText: string,
   caption: string,
 ) => ({
-  url: `${configuredOrigin}/export-guides/${INITIAL_EXPORT_GUIDE_VERSION}/${path}`,
+  url: `${INITIAL_EXPORT_GUIDE_ASSET_ORIGIN}/export-guides/${INITIAL_EXPORT_GUIDE_VERSION}/${path}`,
   mimeType: "image/png" as const,
   byteSize,
   width,

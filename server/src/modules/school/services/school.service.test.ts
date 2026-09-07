@@ -2,12 +2,10 @@ import { mkdtempSync, rmSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
-import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
 import {
   EXPORT_GUIDE_CATALOGUE_DIRECTORY,
   ExportGuideCatalogueStore,
 } from "modules/export-guide/stores/export-guide-catalogue.store"
-import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { schoolProfileFactory } from "modules/school/factories/school-profile.factory"
 import { SchoolModule } from "modules/school/school.module"
@@ -34,19 +32,6 @@ describe("SchoolService", () => {
       },
     )
     service = app.get(SchoolService)
-    const repository = app.get(ExportGuideCatalogueStore)
-    const validator = app.get(ExportGuideCatalogueValidator)
-    const catalogues = validator.validatePair(
-      createInitialExportGuideCatalogue("fr"),
-      createInitialExportGuideCatalogue("en"),
-      { initial: true },
-    )
-    repository.stage({
-      catalogueVersion: catalogues.fr.catalogueVersion,
-      catalogues,
-      publishedAt: new Date(0),
-    })
-    repository.commitStaged(catalogues.fr.catalogueVersion)
   })
 
   afterAll(() => {

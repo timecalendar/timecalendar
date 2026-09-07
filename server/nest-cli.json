@@ -2,6 +2,12 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
+    "assets": [
+      {
+        "include": "modules/export-guide/data/initial-assets/**/*",
+        "outDir": "dist"
+      }
+    ],
     "plugins": [
       {
         "name": "@nestjs/swagger",
