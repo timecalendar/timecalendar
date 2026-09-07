@@ -22,3 +22,5 @@
 - [x] 3.7 Inspect the next exact-head Android pagination artifact and anchor the loaded second page at its oldest fixture before reversing to the lower tie row.
 - [x] 3.8 Inspect the next exact-head iOS About artifact, replay the acknowledged link once only while the stable About destination remains absent, and lock the destination gate in the static selector suite.
 - [x] 3.9 Inspect the exact-head iOS pagination artifact and keep the post-import process alive until ownership reconciliation can reopen the completed baseline chain, with a focused static lifecycle proof.
+- [x] 3.10 Move the Android AOSP keyboard contacts dismissal after the primary institution Continue tap, before its bounded retry, and lock the ordering in the selector mutation suite.
+- [ ] 3.11 Raise the iOS native health job budget to 120 minutes, add a workflow-contract regression, run the focused/static/full mobile bar, and obtain a new exact-head Android/iOS verdict.

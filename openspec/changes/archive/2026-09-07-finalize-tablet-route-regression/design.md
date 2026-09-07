@@ -52,6 +52,14 @@ The iCal import flow uses the established destination-gated replay pattern after
 
 The Activity journey keeps the application process alive when it returns from the newer-calendar import and immediately routes to Settings. Adding that calendar reopens a pagination chain that the one-row baseline legitimately completed. Stopping the process as soon as the Calendar destination appeared could interrupt that asynchronous ownership reconciliation; the next launch then treated the expanded calendar set as its initial observation and retained the stale completed-chain state. Keeping the root lifecycle mounted preserves the production ownership path without adding a test-only reset or weakening the page-two assertion.
 
+### D8 — Dismiss the Android keyboard permission after the action that triggers it
+
+The clean AOSP emulator does not present its keyboard contacts dialog immediately after text input. It presents the dialog only after the institution Continue action is activated. The Android-only optional dismissal therefore runs between the primary Continue tap and the existing optional same-id retry. This keeps the shared journey semantic, leaves devices that have already answered the keyboard prompt unchanged, and lets the retry perform the application action after the system modal has closed.
+
+### D9 — Budget the iOS health job for the complete shared flow set
+
+The exact-head iOS job completed its cold build and executed shared flows for more than 42 minutes before the existing 75-minute job ceiling cancelled it without a failing Maestro command. The health job receives a 120-minute ceiling, with a workflow-contract assertion locking that budget. This changes only the diagnostic CI controller; it does not change native configuration, dependencies, application behavior, or the manual/scheduled health-signal policy.
+
 ## Verification
 
 - Focused Activity selector Jest suite, including the red-before-green route-oracle regression.

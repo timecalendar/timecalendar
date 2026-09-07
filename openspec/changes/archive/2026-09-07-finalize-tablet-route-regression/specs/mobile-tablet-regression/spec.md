@@ -72,3 +72,20 @@ The About native flow SHALL allow the iOS custom-scheme confirmation transition 
 - **THEN** the flow reissues that same onboarding link once
 - **AND** it handles the optional confirmation again
 - **AND** it does not replay the link after Welcome is already visible
+
+### Requirement: Exact-head native health can finish the integrated journey
+
+The Android iCal journey SHALL dismiss the optional AOSP keyboard contacts dialog after the first institution Continue action can trigger it and before retrying that application action. The iOS native health job SHALL provide a 120-minute execution budget for the complete shared flow set, and the workflow contract SHALL reject a smaller budget.
+
+#### Scenario: The clean Android keyboard prompts on the first Continue action
+
+- **WHEN** the institution name is complete and the first Continue tap triggers the AOSP keyboard contacts dialog
+- **THEN** the Android-only dismissal targets the negative system action
+- **AND** the existing optional Continue retry runs after that dismissal
+- **AND** the journey reaches the programme input without granting contacts access
+
+#### Scenario: The iOS flow set outlives its former job ceiling
+
+- **WHEN** a cold iOS build and the complete shared Maestro suite require more than 75 minutes
+- **THEN** the native health job remains active for up to 120 minutes
+- **AND** a workflow-contract regression fails if that budget is reduced
