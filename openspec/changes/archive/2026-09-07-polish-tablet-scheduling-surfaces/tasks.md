@@ -27,7 +27,7 @@
 
 - [x] 5.1 Update `docs/mobile/tablet-quick-wins.md` only after implementation to mark the Home, Calendar, event-details/checklist, personal-events list, and form rows with their actual disposition, touched ownership seams, and focused automated proof; record native/device evidence as unavailable on this host rather than claiming execution.
 - [x] 5.2 Reconcile `docs/mobile/architecture-book/calendar.md`, `theming.md`, `testing.md`, and `CHANGELOG.md` against the finished code. The expected disposition is no Architecture Book rule or ADR change because this work consumes the existing responsive/calendar/testing contracts; if implementation creates a reusable current-state rule, update the topical page plus `CHANGELOG.md` and identify the decision explicitly for Reviewer scrutiny.
-- [x] 5.3 Confirm OpenSpec delta scenarios still match the implemented behavior and leave `.openspec.yaml`, proposal, design, specs, and checked tasks on the branch for archive after merge.
+- [x] 5.3 Confirm OpenSpec delta scenarios still match the implemented behavior, then sync the canonical specs and archive `.openspec.yaml`, proposal, design, specs, and checked tasks before final review.
 
 ## 6. Verification and CI proof
 
