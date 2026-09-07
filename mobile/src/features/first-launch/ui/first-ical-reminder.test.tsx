@@ -12,7 +12,7 @@ import { remove, STORAGE_KEYS } from "@/storage"
 import { FirstIcalReminder } from "./first-ical-reminder"
 
 let mockCalendarState = { calendars: [] as { id: string }[], loaded: true }
-jest.mock("@/features/calendar-sources", () => ({
+jest.mock("@/features/calendar-sources/data", () => ({
   useUserCalendarsState: () => mockCalendarState,
 }))
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }))
