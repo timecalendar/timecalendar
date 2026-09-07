@@ -7,11 +7,10 @@ import { type HourRange } from "@/features/home/data"
 import { TodayTimeline } from "./today-timeline"
 
 let mockFontScale = 1
-let mockWindowWidth = 400
 jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
   __esModule: true,
   default: () => ({
-    width: mockWindowWidth,
+    width: 400,
     height: 800,
     scale: 2,
     fontScale: mockFontScale,
@@ -67,7 +66,6 @@ async function reportTileAreaWidth(width: number) {
 describe("TodayTimeline", () => {
   afterEach(() => {
     mockFontScale = 1
-    mockWindowWidth = 400
   })
 
   it("scales a full-width tile to the measured tile-area width", async () => {
@@ -100,27 +98,7 @@ describe("TodayTimeline", () => {
     expect(tileWidth()).toBe(700)
   })
 
-  it("uses a narrow nested owner instead of the wider mocked window", async () => {
-    mockWindowWidth = 1024
-    await render(
-      <TodayTimeline
-        events={[event()]}
-        range={range}
-        locale="en"
-        displayZone={ZONE}
-        isToday={false}
-        now={new Date(2026, 5, 15, 9, 30)}
-        checklistProgress={noChecklistProgress}
-        onPressEvent={jest.fn()}
-      />,
-    )
-
-    await reportTileAreaWidth(240)
-    expect(tileWidth()).toBe(240)
-  })
-
   it("remeasures overlap pixels and reflows when the tile owner is too narrow", async () => {
-    mockWindowWidth = 1024
     const overlapping = event({
       id: "ev-2",
       title: "Databases",

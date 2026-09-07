@@ -168,8 +168,11 @@ describe("EventDetailsScreen", () => {
       const style = StyleSheet.flatten(
         screen.getByTestId("event-details-status-responsive-lane").props.style,
       )
-      expect(style.maxWidth).toBe(768)
-      expect(style.paddingHorizontal).toBe(64)
+      const metrics = resolveResponsiveLayout(1024, "readable")
+      expect(style.maxWidth).toBe(
+        (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
+      )
+      expect(style.paddingHorizontal).toBe(metrics.gutter)
       expect(
         loading
           ? screen.getByLabelText(accessibleText)

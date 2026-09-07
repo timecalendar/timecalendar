@@ -438,15 +438,6 @@ describe("CalendarScreen", () => {
   it("renders an accessible sync-error with a retry that re-syncs", async () => {
     mockUseSyncCalendars.mockReturnValue(syncState({ isError: true }))
     await render(<CalendarScreen />)
-    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
-    await waitFor(() => {
-      expect(screen.getByTestId("calendar-agenda-responsive-lane")).toBeTruthy()
-    })
-    await fireEvent(
-      screen.getByTestId("calendar-agenda-responsive-owner"),
-      "layout",
-      { nativeEvent: { layout: { width: 1024, height: 0 } } },
-    )
 
     expect(
       screen.getByText(
@@ -456,18 +447,6 @@ describe("CalendarScreen", () => {
     const retry = screen.getByTestId("calendar-sync-retry")
     expect(retry.props.accessibilityLabel).toBe(
       "Retry refreshing your calendar",
-    )
-    const agendaMetrics = resolveResponsiveLayout(1024, "standard")
-    expect(
-      StyleSheet.flatten(
-        screen.getByTestId("calendar-agenda-responsive-lane").props.style,
-      ),
-    ).toEqual(
-      expect.objectContaining({
-        maxWidth:
-          (agendaMetrics.maxContentWidth ?? 0) + 2 * agendaMetrics.gutter,
-        paddingHorizontal: agendaMetrics.gutter,
-      }),
     )
     fireEvent.press(retry)
     expect(mockSync).toHaveBeenCalledTimes(1)

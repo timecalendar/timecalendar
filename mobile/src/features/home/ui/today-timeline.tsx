@@ -127,10 +127,10 @@ export function TodayTimeline({
     startMinute,
   })
 
-  const placed = layoutOverlaps(events)
+  const canUseTimeline = measuredWidth !== null && fontScale < 1.3
+  const placed = canUseTimeline ? layoutOverlaps(events) : []
   const usesReflowedList =
-    measuredWidth === null ||
-    fontScale >= 1.3 ||
+    !canUseTimeline ||
     placed.some((entry) => {
       const width = (entry.endX - entry.startX) * measuredWidth
       const geometry = visibleGeometry(entry.item, now, range, displayZone)

@@ -64,6 +64,13 @@ export function CalendarScreen() {
       accessibilityLabel={t("calendar.sync.refreshingLabel")}
     />
   )
+  const status = (
+    <CalendarScreenStatus
+      isEmpty={events.length === 0}
+      isError={isError}
+      onRetry={onSync}
+    />
+  )
 
   return (
     <ThemedView style={styles.container}>
@@ -86,11 +93,7 @@ export function CalendarScreen() {
                 testID="calendar-agenda-responsive-lane"
                 style={[agendaLayout.laneStyle, styles.agendaLane]}
               >
-                <CalendarScreenStatus
-                  isEmpty={events.length === 0}
-                  isError={isError}
-                  onRetry={onSync}
-                />
+                {status}
                 <AgendaList
                   events={events}
                   checklistProgress={checklistProgress}
@@ -103,11 +106,7 @@ export function CalendarScreen() {
             </View>
           ) : (
             <>
-              <CalendarScreenStatus
-                isEmpty={events.length === 0}
-                isError={isError}
-                onRetry={onSync}
-              />
+              {status}
               <CalendarTimeline
                 ref={timelineRef}
                 mode={view}
