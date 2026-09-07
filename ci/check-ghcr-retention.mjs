@@ -11,16 +11,20 @@ function indentation(line) {
   return line.match(/^ */)[0].length;
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function meaningfulLines(source) {
   return source
     .split(/\r?\n/)
-    .map((line, index) => ({ line: line.replace(/\s+$/, ""), number: index + 1 }))
+    .map((line) => ({ line: line.replace(/\s+$/, "") }))
     .filter(({ line }) => line.trim() && !line.trimStart().startsWith("#"));
 }
 
 function findBlock(lines, key, parentIndent = -1, start = 0, end = lines.length) {
   const keyIndent = parentIndent < 0 ? 0 : parentIndent + 2;
-  const keyPattern = new RegExp(`^${" ".repeat(keyIndent)}${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*(?:#.*)?$`);
+  const keyPattern = new RegExp(`^${" ".repeat(keyIndent)}${escapeRegExp(key)}:\\s*(?:#.*)?$`);
   const index = lines.findIndex(({ line }, candidate) =>
     candidate >= start && candidate < end && keyPattern.test(line),
   );
@@ -64,7 +68,7 @@ function scalarMap(lines, block, key) {
 }
 
 function stepValue(lines, step, key) {
-  const pattern = new RegExp(`^(?:-\\s+)?${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*(.*?)\\s*$`);
+  const pattern = new RegExp(`^(?:-\\s+)?${escapeRegExp(key)}:\\s*(.*?)\\s*$`);
   for (let index = step.start; index < step.end; index += 1) {
     const line = lines[index].line;
     if (indentation(line) !== step.indent && indentation(line) !== step.indent + 2) continue;
