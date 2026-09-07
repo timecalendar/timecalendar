@@ -31,7 +31,7 @@ import {
   type ChecklistProgressMap,
 } from "@/features/event-checklists"
 import { type HourRange } from "@/features/home/data"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 import { homeEventOpenLabel } from "./event-accessibility"
 import { eventSurfaceColor } from "./event-surface"
@@ -49,9 +49,6 @@ import { eventSurfaceColor } from "./event-surface"
 // Flutter home zoom (`hourHeight = 70`) — a home concern passed as `pixelsPerHour`,
 // not a grid constant (the day/week DEFAULT_PIXELS_PER_HOUR = 60 stays).
 const HOME_PIXELS_PER_HOUR = 70
-// The home content padding (Spacing.four each side, src/features/home home-screen
-// styles.content) the screen-derived fallback subtracts before the first layout pass.
-const CONTENT_HORIZONTAL_PADDING = Spacing.four * 2
 const MIN_TARGET_SIZE = Platform.OS === "android" ? 48 : 44
 
 // Day bounds + minute positioning on the DISPLAY zone's wall clock (timezone
@@ -107,22 +104,19 @@ export function TodayTimeline({
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { width: windowWidth, fontScale } = useWindowDimensions()
+  const { fontScale } = useWindowDimensions()
 
   // Overlap columns are device-independent FRACTIONS (startX/endX); only the px
   // multiplier is dynamic. The tile area is flex:1, so its real width is measured
-  // via onLayout. Before the first layout pass, fall back to a screen-derived width
-  // (the bounded content width minus the hours column) so nothing renders 0-width.
-  const fallbackWidth =
-    Math.min(windowWidth, MaxContentWidth) -
-    CONTENT_HORIZONTAL_PADDING -
-    HOURS_COLUMN_WIDTH
+  // via onLayout. Before the first positive layout pass, keep the ordered,
+  // interactive reflow presentation instead of guessing from the window.
   const [measuredWidth, setMeasuredWidth] = useState<number | null>(null)
-  const tileAreaWidth = measuredWidth ?? Math.max(fallbackWidth, MIN_TILE_WIDTH)
 
   const onTileAreaLayout = (event: LayoutChangeEvent) => {
     const width = event.nativeEvent.layout.width
-    if (width > 0 && width !== measuredWidth) setMeasuredWidth(width)
+    if (Number.isFinite(width) && width > 0 && width !== measuredWidth) {
+      setMeasuredWidth(width)
+    }
   }
 
   const startMinute = range.startHour * 60
@@ -135,15 +129,13 @@ export function TodayTimeline({
 
   const placed = layoutOverlaps(events)
   const usesReflowedList =
+    measuredWidth === null ||
     fontScale >= 1.3 ||
     placed.some((entry) => {
-      const width = (entry.endX - entry.startX) * tileAreaWidth
+      const width = (entry.endX - entry.startX) * measuredWidth
       const geometry = visibleGeometry(entry.item, now, range, displayZone)
       const height = eventHeight(geometry.durationMinutes, HOME_PIXELS_PER_HOUR)
-      return (
-        (measuredWidth !== null && width < MIN_TARGET_SIZE) ||
-        height < MIN_TARGET_SIZE
-      )
+      return width < MIN_TARGET_SIZE || height < MIN_TARGET_SIZE
     })
   const nowIndicator = isToday
     ? nowIndicatorPosition(now, displayZone, {
@@ -153,177 +145,189 @@ export function TodayTimeline({
       })
     : { visible: false, pixel: 0, fraction: 0 }
 
-  if (usesReflowedList) {
-    return (
-      <View style={styles.reflowedList} testID="today-timeline-list">
-        {events.map((event) => {
-          const time = formatTimeRange(
-            event.startsAt,
-            event.endsAt,
-            locale,
-            displayZone,
-          )
-          const location = event.location ?? ""
-          const progress = checklistProgress.get(event.id)
-          return (
-            <Pressable
-              key={event.id}
-              testID={`today-tile-${event.id}`}
-              accessibilityRole="button"
-              accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
-              accessibilityHint={
-                event.userCalendarId !== undefined
-                  ? t("home.event.hint.details")
-                  : t("home.event.hint.edit")
-              }
-              onPress={() => onPressEvent(event)}
-              android_ripple={{ color: theme.ripple, foreground: true }}
-              style={({ pressed }) => [
-                styles.reflowedEvent,
-                {
-                  backgroundColor: eventSurfaceColor(event.color),
-                },
-                Platform.OS === "ios" && pressed && styles.iosPressed,
-              ]}
-            >
+  const reflowedEvents = usesReflowedList ? (
+    <View style={styles.reflowedList} testID="today-timeline-list">
+      {events.map((event) => {
+        const time = formatTimeRange(
+          event.startsAt,
+          event.endsAt,
+          locale,
+          displayZone,
+        )
+        const location = event.location ?? ""
+        const progress = checklistProgress.get(event.id)
+        return (
+          <Pressable
+            key={event.id}
+            testID={`today-tile-${event.id}`}
+            accessibilityRole="button"
+            accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
+            accessibilityHint={
+              event.userCalendarId !== undefined
+                ? t("home.event.hint.details")
+                : t("home.event.hint.edit")
+            }
+            onPress={() => onPressEvent(event)}
+            android_ripple={{ color: theme.ripple, foreground: true }}
+            style={({ pressed }) => [
+              styles.reflowedEvent,
+              {
+                backgroundColor: eventSurfaceColor(event.color),
+              },
+              Platform.OS === "ios" && pressed && styles.iosPressed,
+            ]}
+          >
+            <ThemedText type="small" themeColor="textSecondary">
+              {time}
+            </ThemedText>
+            <ThemedText type="smallBold">{event.title}</ThemedText>
+            {location.length > 0 && (
               <ThemedText type="small" themeColor="textSecondary">
-                {time}
+                {location}
               </ThemedText>
-              <ThemedText type="smallBold">{event.title}</ThemedText>
-              {location.length > 0 && (
-                <ThemedText type="small" themeColor="textSecondary">
-                  {location}
-                </ThemedText>
-              )}
-              <ChecklistProgressIndicator progress={progress} />
-            </Pressable>
-          )
-        })}
-      </View>
-    )
-  }
+            )}
+            <ChecklistProgressIndicator progress={progress} />
+          </Pressable>
+        )
+      })}
+    </View>
+  ) : null
 
   return (
     <View style={styles.container} testID="today-timeline">
-      <View style={[styles.hoursColumn, { height: gridHeight }]}>
-        {labels.map((hour) => (
-          <View
-            key={hour}
-            style={[
-              styles.hourLine,
-              {
-                top: minuteToPixel(hour * 60, {
-                  pixelsPerHour: HOME_PIXELS_PER_HOUR,
-                  startMinute,
-                }),
-              },
-            ]}
-          >
-            <ThemedText
-              type="small"
-              themeColor="textSecondary"
-              accessibilityRole="text"
+      <View
+        style={[
+          styles.hoursColumn,
+          !usesReflowedList && { height: gridHeight },
+        ]}
+      >
+        {!usesReflowedList &&
+          labels.map((hour) => (
+            <View
+              key={hour}
+              style={[
+                styles.hourLine,
+                {
+                  top: minuteToPixel(hour * 60, {
+                    pixelsPerHour: HOME_PIXELS_PER_HOUR,
+                    startMinute,
+                  }),
+                },
+              ]}
             >
-              {`${String(hour).padStart(2, "0")}:00`}
-            </ThemedText>
-          </View>
-        ))}
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                accessibilityRole="text"
+              >
+                {`${String(hour).padStart(2, "0")}:00`}
+              </ThemedText>
+            </View>
+          ))}
       </View>
 
       <View
         testID="today-tile-area"
-        style={[styles.tileArea, { height: gridHeight }]}
+        style={[styles.tileArea, !usesReflowedList && { height: gridHeight }]}
         onLayout={onTileAreaLayout}
       >
-        {labels.map((hour) => (
-          <View
-            key={hour}
-            style={[
-              styles.gridLine,
-              {
-                top: minuteToPixel(hour * 60, {
-                  pixelsPerHour: HOME_PIXELS_PER_HOUR,
-                  startMinute,
-                }),
-                backgroundColor: theme.backgroundSelected,
-              },
-            ]}
-          />
-        ))}
-
-        {placed.map((entry) => {
-          const event = entry.item
-          const geometry = visibleGeometry(event, now, range, displayZone)
-          const top = minuteToPixel(geometry.startMinute, {
-            pixelsPerHour: HOME_PIXELS_PER_HOUR,
-            startMinute,
-          })
-          const height = eventHeight(
-            geometry.durationMinutes,
-            HOME_PIXELS_PER_HOUR,
-          )
-          const left = entry.startX * tileAreaWidth
-          const width = (entry.endX - entry.startX) * tileAreaWidth
-          const showText = width >= MIN_TILE_WIDTH
-          const time = formatTimeRange(
-            event.startsAt,
-            event.endsAt,
-            locale,
-            displayZone,
-          )
-          const location = event.location ?? ""
-          const progress = checklistProgress.get(event.id)
-
-          return (
-            <Pressable
-              key={event.id}
-              testID={`today-tile-${event.id}`}
-              accessibilityRole="button"
-              accessibilityLabel={homeEventOpenLabel(t, event, time, progress)}
-              accessibilityHint={
-                event.userCalendarId !== undefined
-                  ? t("home.event.hint.details")
-                  : t("home.event.hint.edit")
-              }
-              onPress={() => onPressEvent(event)}
-              android_ripple={{ color: theme.ripple, foreground: true }}
-              style={({ pressed }) => [
-                styles.tile,
+        {reflowedEvents}
+        {!usesReflowedList &&
+          labels.map((hour) => (
+            <View
+              key={hour}
+              style={[
+                styles.gridLine,
                 {
-                  top,
-                  left,
-                  width,
-                  height,
-                  backgroundColor: eventSurfaceColor(event.color),
+                  top: minuteToPixel(hour * 60, {
+                    pixelsPerHour: HOME_PIXELS_PER_HOUR,
+                    startMinute,
+                  }),
+                  backgroundColor: theme.backgroundSelected,
                 },
-                Platform.OS === "ios" && pressed && styles.iosPressed,
               ]}
-            >
-              {showText && (
-                <>
-                  <ThemedText type="small" numberOfLines={2}>
-                    {event.title}
-                  </ThemedText>
-                  {location.length > 0 && (
-                    <ThemedText
-                      type="small"
-                      themeColor="textSecondary"
-                      numberOfLines={1}
-                    >
-                      {location}
-                    </ThemedText>
-                  )}
-                </>
-              )}
-              <ChecklistProgressIndicator
-                progress={progress}
-                variant="compact"
-              />
-            </Pressable>
-          )
-        })}
+            />
+          ))}
 
-        {nowIndicator.visible && (
+        {!usesReflowedList &&
+          placed.map((entry) => {
+            const event = entry.item
+            const geometry = visibleGeometry(event, now, range, displayZone)
+            const top = minuteToPixel(geometry.startMinute, {
+              pixelsPerHour: HOME_PIXELS_PER_HOUR,
+              startMinute,
+            })
+            const height = eventHeight(
+              geometry.durationMinutes,
+              HOME_PIXELS_PER_HOUR,
+            )
+            const left = entry.startX * measuredWidth
+            const width = (entry.endX - entry.startX) * measuredWidth
+            const showText = width >= MIN_TILE_WIDTH
+            const time = formatTimeRange(
+              event.startsAt,
+              event.endsAt,
+              locale,
+              displayZone,
+            )
+            const location = event.location ?? ""
+            const progress = checklistProgress.get(event.id)
+
+            return (
+              <Pressable
+                key={event.id}
+                testID={`today-tile-${event.id}`}
+                accessibilityRole="button"
+                accessibilityLabel={homeEventOpenLabel(
+                  t,
+                  event,
+                  time,
+                  progress,
+                )}
+                accessibilityHint={
+                  event.userCalendarId !== undefined
+                    ? t("home.event.hint.details")
+                    : t("home.event.hint.edit")
+                }
+                onPress={() => onPressEvent(event)}
+                android_ripple={{ color: theme.ripple, foreground: true }}
+                style={({ pressed }) => [
+                  styles.tile,
+                  {
+                    top,
+                    left,
+                    width,
+                    height,
+                    backgroundColor: eventSurfaceColor(event.color),
+                  },
+                  Platform.OS === "ios" && pressed && styles.iosPressed,
+                ]}
+              >
+                {showText && (
+                  <>
+                    <ThemedText type="small" numberOfLines={2}>
+                      {event.title}
+                    </ThemedText>
+                    {location.length > 0 && (
+                      <ThemedText
+                        type="small"
+                        themeColor="textSecondary"
+                        numberOfLines={1}
+                      >
+                        {location}
+                      </ThemedText>
+                    )}
+                  </>
+                )}
+                <ChecklistProgressIndicator
+                  progress={progress}
+                  variant="compact"
+                />
+              </Pressable>
+            )
+          })}
+
+        {!usesReflowedList && nowIndicator.visible && (
           <View
             testID="today-now-indicator"
             accessibilityRole="text"
