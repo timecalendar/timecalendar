@@ -10,10 +10,7 @@ import {
 import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import { ExportGuideValidationError } from "modules/export-guide/validation/export-guide-validation.error"
 
-const immutableMap = <K, V>(
-  entries: Iterable<readonly [K, V]>,
-): ReadonlyMap<K, V> => {
-  const map = new Map(entries)
+const immutableMap = <K, V>(map: Map<K, V>): ReadonlyMap<K, V> => {
   return Object.freeze(
     new Proxy(map, {
       get(target, property) {
@@ -47,7 +44,9 @@ export class ExportGuideCatalogueStore {
     this.snapshot = Object.freeze({
       activeVersion: INITIAL_EXPORT_GUIDE_VERSION,
       active: initial,
-      retained: immutableMap([[INITIAL_EXPORT_GUIDE_VERSION, initial]]),
+      retained: immutableMap(
+        new Map([[INITIAL_EXPORT_GUIDE_VERSION, initial]]),
+      ),
     })
   }
 
@@ -76,7 +75,7 @@ export class ExportGuideCatalogueStore {
       activeVersion: version,
       active: bundle,
       retained: immutableMap(
-        new Map(this.snapshot.retained).set(version, bundle).entries(),
+        new Map(this.snapshot.retained).set(version, bundle),
       ),
     })
     this.staged.delete(version)
@@ -117,7 +116,7 @@ export class ExportGuideCatalogueStore {
     if (removed.length)
       this.snapshot = Object.freeze({
         ...this.snapshot,
-        retained: immutableMap(retained.entries()),
+        retained: immutableMap(retained),
       })
     return removed
   }

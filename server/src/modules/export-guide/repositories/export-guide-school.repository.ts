@@ -10,7 +10,10 @@ export class ExportGuideSchoolRepository {
     private readonly schools: Repository<School>,
   ) {}
 
-  findVisible(): Promise<School[]> {
-    return this.schools.find({ where: { visible: true } })
+  findVisible(): Promise<Pick<School, "assistant">[]> {
+    return this.schools.find({
+      select: { assistant: true },
+      where: { visible: true },
+    })
   }
 }

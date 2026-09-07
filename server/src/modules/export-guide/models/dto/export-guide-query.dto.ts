@@ -8,20 +8,27 @@ import {
   MaxLength,
   MinLength,
 } from "class-validator"
-import { EXPORT_GUIDE_LOCALES } from "modules/export-guide/models/export-guide.model"
+import {
+  EXPORT_GUIDE_LOCALES,
+  EXPORT_GUIDE_SCHEMA_VERSION,
+  ExportGuideLocale,
+} from "modules/export-guide/models/export-guide.model"
 
 export class ExportGuideQueryDto {
   @ApiProperty({ enum: EXPORT_GUIDE_LOCALES })
   @IsIn(EXPORT_GUIDE_LOCALES)
-  locale: "fr" | "en"
+  locale: ExportGuideLocale
 
-  @ApiProperty({ enum: [1], example: 1 })
+  @ApiProperty({
+    enum: [EXPORT_GUIDE_SCHEMA_VERSION],
+    example: EXPORT_GUIDE_SCHEMA_VERSION,
+  })
   @Transform(({ value }) =>
     typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value,
   )
   @IsInt()
-  @IsIn([1])
-  clientSchema: 1
+  @IsIn([EXPORT_GUIDE_SCHEMA_VERSION])
+  clientSchema: typeof EXPORT_GUIDE_SCHEMA_VERSION
 
   @ApiPropertyOptional({ type: String, minLength: 1, maxLength: 128 })
   @IsOptional()

@@ -1,7 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import {
+  EXPORT_GUIDE_IMAGE_MAX_BYTES,
+  EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
   EXPORT_GUIDE_LOCALES,
   EXPORT_GUIDE_MIME_TYPES,
+  EXPORT_GUIDE_PROVIDER_KIND,
+  EXPORT_GUIDE_PROVIDER_SLUG_PATTERN_SOURCE,
+  EXPORT_GUIDE_SCHEMA_VERSION,
+  ExportGuideLocale,
+  ExportGuideMimeType,
 } from "modules/export-guide/models/export-guide.model"
 
 export class ExportGuideCompatibilityV1Dto {
@@ -17,15 +24,27 @@ export class ExportGuideImageV1Dto {
   url: string
 
   @ApiProperty({ enum: EXPORT_GUIDE_MIME_TYPES })
-  mimeType: "image/png" | "image/jpeg" | "image/webp"
+  mimeType: ExportGuideMimeType
 
-  @ApiProperty({ type: Number, minimum: 1, maximum: 1048576 })
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    maximum: EXPORT_GUIDE_IMAGE_MAX_BYTES.page,
+  })
   byteSize: number
 
-  @ApiProperty({ type: Number, minimum: 1, maximum: 4096 })
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    maximum: EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
+  })
   width: number
 
-  @ApiProperty({ type: Number, minimum: 1, maximum: 4096 })
+  @ApiProperty({
+    type: Number,
+    minimum: 1,
+    maximum: EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
+  })
   height: number
 
   @ApiProperty({ type: String, minLength: 1, maxLength: 500 })
@@ -47,14 +66,20 @@ export class ExportGuidePageV1Dto {
 }
 
 export class ExportGuideProviderV1Dto {
-  @ApiProperty({ type: String, pattern: "^[a-z0-9][a-z0-9-]{0,63}$" })
+  @ApiProperty({
+    type: String,
+    pattern: EXPORT_GUIDE_PROVIDER_SLUG_PATTERN_SOURCE,
+  })
   slug: string
 
   @ApiProperty({ type: String, minLength: 1, maxLength: 80 })
   label: string
 
-  @ApiProperty({ enum: ["pages"], example: "pages" })
-  kind: "pages"
+  @ApiProperty({
+    enum: [EXPORT_GUIDE_PROVIDER_KIND],
+    example: EXPORT_GUIDE_PROVIDER_KIND,
+  })
+  kind: typeof EXPORT_GUIDE_PROVIDER_KIND
 
   @ApiProperty({ type: Boolean })
   selectable: boolean
@@ -70,14 +95,17 @@ export class ExportGuideProviderV1Dto {
 }
 
 export class ExportGuideCatalogueV1Dto {
-  @ApiProperty({ enum: [1], example: 1 })
-  schemaVersion: 1
+  @ApiProperty({
+    enum: [EXPORT_GUIDE_SCHEMA_VERSION],
+    example: EXPORT_GUIDE_SCHEMA_VERSION,
+  })
+  schemaVersion: typeof EXPORT_GUIDE_SCHEMA_VERSION
 
   @ApiProperty({ type: String, minLength: 1, maxLength: 128 })
   catalogueVersion: string
 
   @ApiProperty({ enum: EXPORT_GUIDE_LOCALES })
-  locale: "fr" | "en"
+  locale: ExportGuideLocale
 
   @ApiProperty({ type: [ExportGuideProviderV1Dto], minItems: 1, maxItems: 50 })
   providers: ExportGuideProviderV1Dto[]

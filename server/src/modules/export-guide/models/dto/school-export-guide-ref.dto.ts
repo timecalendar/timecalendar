@@ -1,9 +1,10 @@
 import { ApiProperty } from "@nestjs/swagger"
+import { EXPORT_GUIDE_PROVIDER_SLUG_PATTERN_SOURCE } from "modules/export-guide/models/export-guide.model"
 
 export class SchoolExportGuideRefV1 {
   @ApiProperty({
     type: String,
-    pattern: "^[a-z0-9][a-z0-9-]{0,63}$",
+    pattern: EXPORT_GUIDE_PROVIDER_SLUG_PATTERN_SOURCE,
     description: "Raw server-configured export-guide provider slug",
   })
   providerSlug: string

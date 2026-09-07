@@ -9,6 +9,7 @@ import { SchoolProfile } from "modules/school/models/entities/school-profile.ent
 import { getSchoolAssistant } from "modules/school/models/school-assistant.model"
 import { School } from "modules/school/models/school.entity"
 import ensureNotNull from "modules/shared/utils/types/ensure-not-null"
+import { EXPORT_GUIDE_PROVIDER_SLUG_PATTERN } from "modules/export-guide/models/export-guide.model"
 
 @Injectable()
 export class SchoolMapper {
@@ -19,7 +20,7 @@ export class SchoolMapper {
     const configuredAssistant = getSchoolAssistant(assistant)
     const legacyAssistant =
       configuredAssistant ?? ensureNotNull(getSchoolAssistant("generic"))
-    if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(assistant))
+    if (!EXPORT_GUIDE_PROVIDER_SLUG_PATTERN.test(assistant))
       throw new Error("Invalid export-guide provider slug")
     return {
       ...school,

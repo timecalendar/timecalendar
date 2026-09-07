@@ -1,7 +1,15 @@
 import { Injectable } from "@nestjs/common"
 import {
   EXPORT_GUIDE_LOCALES,
+  EXPORT_GUIDE_MAX_BODY_BYTES,
   EXPORT_GUIDE_MIME_TYPES,
+  EXPORT_GUIDE_IMAGE_MAX_BYTES,
+  EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
+  EXPORT_GUIDE_IMAGE_MAX_PIXELS,
+  EXPORT_GUIDE_PROVIDER_KIND,
+  EXPORT_GUIDE_PROVIDER_SLUG_PATTERN,
+  EXPORT_GUIDE_SCHEMA_VERSION,
+  INITIAL_EXPORT_GUIDE_PROVIDER_SLUGS,
   ExportGuideCatalogueV1,
   ExportGuideImageRole,
   ExportGuideImageV1,
@@ -11,10 +19,7 @@ import {
 } from "modules/export-guide/models/export-guide.model"
 import { ExportGuideValidationError } from "modules/export-guide/validation/export-guide-validation.error"
 
-const MAX_BODY_BYTES = 512 * 1024
-const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
 const ASCII = /^[\x20-\x7e]+$/
-const INITIAL_SELECTABLE = ["ade", "hplanning", "celcat", "generic"]
 
 const fail = (code: string): never => {
   throw new ExportGuideValidationError(code)
@@ -59,12 +64,22 @@ const optionalImage = (
   const byteSize = integer(
     raw.byteSize,
     1,
-    role === "thumbnail" ? 262144 : 1048576,
+    EXPORT_GUIDE_IMAGE_MAX_BYTES[role],
     "image_bytes",
   )
-  const width = integer(raw.width, 1, 4096, "image_width")
-  const height = integer(raw.height, 1, 4096, "image_height")
-  if (width * height > 8388608) fail("image_pixels")
+  const width = integer(
+    raw.width,
+    1,
+    EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
+    "image_width",
+  )
+  const height = integer(
+    raw.height,
+    1,
+    EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
+    "image_height",
+  )
+  if (width * height > EXPORT_GUIDE_IMAGE_MAX_PIXELS) fail("image_pixels")
   const altText = trimmed(raw.altText, 1, 500, "image_alt")
   const caption =
     raw.caption === undefined
@@ -94,8 +109,8 @@ const page = (value: unknown): ExportGuidePageV1 => {
 const provider = (value: unknown): ExportGuideProviderV1 => {
   const raw = object(value, "provider_object")
   const slug = trimmed(raw.slug, 1, 64, "provider_slug")
-  if (!SLUG.test(slug)) fail("provider_slug")
-  if (raw.kind !== "pages") fail("provider_kind")
+  if (!EXPORT_GUIDE_PROVIDER_SLUG_PATTERN.test(slug)) fail("provider_slug")
+  if (raw.kind !== EXPORT_GUIDE_PROVIDER_KIND) fail("provider_kind")
   if (typeof raw.selectable !== "boolean") fail("provider_selectable")
   const selectable = raw.selectable as boolean
   const compatibility = object(raw.compatibility, "compatibility_object")
@@ -123,7 +138,7 @@ const provider = (value: unknown): ExportGuideProviderV1 => {
   return {
     slug,
     label: trimmed(raw.label, 1, 80, "provider_label"),
-    kind: "pages",
+    kind: EXPORT_GUIDE_PROVIDER_KIND,
     selectable,
     compatibility: { minClientSchema, maxClientSchema },
     ...(thumbnail === undefined ? {} : { thumbnail }),
@@ -143,7 +158,8 @@ const deepFreeze = <T>(value: T): Readonly<T> => {
 export class ExportGuideCatalogueValidator {
   validate(value: unknown): ExportGuideCatalogueV1 {
     const raw = object(value, "catalogue_object")
-    if (raw.schemaVersion !== 1) fail("catalogue_schema")
+    if (raw.schemaVersion !== EXPORT_GUIDE_SCHEMA_VERSION)
+      fail("catalogue_schema")
     const catalogueVersion = trimmed(
       raw.catalogueVersion,
       1,
@@ -163,21 +179,24 @@ export class ExportGuideCatalogueValidator {
     const providers = rawProviders.map(provider)
     if (new Set(providers.map(({ slug }) => slug)).size !== providers.length)
       fail("provider_duplicate")
-    const generic = providers.filter(({ slug }) => slug === "generic")
+    const generic = providers.find(({ slug }) => slug === "generic")
     if (
-      generic.length !== 1 ||
-      !generic[0].selectable ||
-      generic[0].compatibility.minClientSchema > 1 ||
-      generic[0].compatibility.maxClientSchema < 1
+      !generic ||
+      !generic.selectable ||
+      generic.compatibility.minClientSchema > EXPORT_GUIDE_SCHEMA_VERSION ||
+      generic.compatibility.maxClientSchema < EXPORT_GUIDE_SCHEMA_VERSION
     )
       fail("generic_invalid")
     const normalized: ExportGuideCatalogueV1 = {
-      schemaVersion: 1,
+      schemaVersion: EXPORT_GUIDE_SCHEMA_VERSION,
       catalogueVersion,
       locale: raw.locale as ExportGuideLocale,
       providers,
     }
-    if (Buffer.byteLength(JSON.stringify(normalized), "utf8") > MAX_BODY_BYTES)
+    if (
+      Buffer.byteLength(JSON.stringify(normalized), "utf8") >
+      EXPORT_GUIDE_MAX_BODY_BYTES
+    )
       fail("catalogue_bytes")
     return deepFreeze(normalized) as ExportGuideCatalogueV1
   }
@@ -215,7 +234,10 @@ export class ExportGuideCatalogueValidator {
       const selectable = fr.providers
         .filter(({ selectable }) => selectable)
         .map(({ slug }) => slug)
-      if (JSON.stringify(selectable) !== JSON.stringify(INITIAL_SELECTABLE))
+      if (
+        JSON.stringify(selectable) !==
+        JSON.stringify(INITIAL_EXPORT_GUIDE_PROVIDER_SLUGS)
+      )
         fail("initial_selectable_order")
     }
     return deepFreeze({ fr, en }) as Readonly<

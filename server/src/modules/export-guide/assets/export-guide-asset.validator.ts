@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common"
 import sharp from "sharp"
 import {
+  EXPORT_GUIDE_IMAGE_MAX_BYTES,
+  EXPORT_GUIDE_IMAGE_MAX_DIMENSION,
+  EXPORT_GUIDE_IMAGE_MAX_PIXELS,
   ExportGuideImageRole,
   ExportGuideImageV1,
 } from "modules/export-guide/models/export-guide.model"
@@ -26,7 +29,7 @@ export class ExportGuideAssetValidator {
     role: ExportGuideImageRole,
   ): Promise<void> {
     const url = this.urlPolicy.validate(image.url)
-    const roleLimit = role === "thumbnail" ? 262144 : 1048576
+    const roleLimit = EXPORT_GUIDE_IMAGE_MAX_BYTES[role]
     const asset = await this.reader.read(url, roleLimit)
     if (asset.redirected) throw new ExportGuideValidationError("asset_redirect")
     if (asset.mimeType !== image.mimeType)
@@ -37,7 +40,7 @@ export class ExportGuideAssetValidator {
     try {
       metadata = await sharp(asset.bytes, {
         animated: true,
-        limitInputPixels: 8388608,
+        limitInputPixels: EXPORT_GUIDE_IMAGE_MAX_PIXELS,
       }).metadata()
     } catch {
       throw new ExportGuideValidationError("asset_decode")
@@ -52,9 +55,9 @@ export class ExportGuideAssetValidator {
     if (
       !metadata.width ||
       !metadata.height ||
-      metadata.width > 4096 ||
-      metadata.height > 4096 ||
-      metadata.width * metadata.height > 8388608
+      metadata.width > EXPORT_GUIDE_IMAGE_MAX_DIMENSION ||
+      metadata.height > EXPORT_GUIDE_IMAGE_MAX_DIMENSION ||
+      metadata.width * metadata.height > EXPORT_GUIDE_IMAGE_MAX_PIXELS
     )
       throw new ExportGuideValidationError("asset_dimensions")
   }

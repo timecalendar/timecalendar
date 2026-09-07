@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common"
 import { ExportGuideAssetValidator } from "modules/export-guide/assets/export-guide-asset.validator"
 import {
+  EXPORT_GUIDE_PROVIDER_SLUG_PATTERN,
   ExportGuideBundle,
   ExportGuideCatalogueV1,
 } from "modules/export-guide/models/export-guide.model"
@@ -8,8 +9,6 @@ import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-gu
 import { ExportGuideSchoolRepository } from "modules/export-guide/repositories/export-guide-school.repository"
 import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import { ExportGuideValidationError } from "modules/export-guide/validation/export-guide-validation.error"
-
-const VALID_PROVIDER_SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
 
 @Injectable()
 export class ExportGuidePublicationService {
@@ -31,7 +30,11 @@ export class ExportGuidePublicationService {
       throw new ExportGuideValidationError("version_exists")
 
     const schools = await this.schools.findVisible()
-    if (schools.some(({ assistant }) => !VALID_PROVIDER_SLUG.test(assistant)))
+    if (
+      schools.some(
+        ({ assistant }) => !EXPORT_GUIDE_PROVIDER_SLUG_PATTERN.test(assistant),
+      )
+    )
       throw new ExportGuideValidationError("school_provider_slug")
 
     const assets = new Map<

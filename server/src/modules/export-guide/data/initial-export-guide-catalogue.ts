@@ -1,8 +1,11 @@
 import { S3_PUBLIC_BUCKET_CLIENT_URL } from "config/constants"
 import {
+  EXPORT_GUIDE_PROVIDER_KIND,
+  EXPORT_GUIDE_SCHEMA_VERSION,
   ExportGuideCatalogueV1,
   ExportGuideLocale,
   ExportGuidePageV1,
+  INITIAL_EXPORT_GUIDE_PROVIDER_SLUGS,
 } from "modules/export-guide/models/export-guide.model"
 
 export const INITIAL_EXPORT_GUIDE_VERSION = "2026-09-07.1"
@@ -350,15 +353,18 @@ const labels = {
 export const createInitialExportGuideCatalogue = (
   locale: ExportGuideLocale,
 ): ExportGuideCatalogueV1 => ({
-  schemaVersion: 1,
+  schemaVersion: EXPORT_GUIDE_SCHEMA_VERSION,
   catalogueVersion: INITIAL_EXPORT_GUIDE_VERSION,
   locale,
-  providers: ["ade", "hplanning", "celcat", "generic"].map((slug) => ({
+  providers: INITIAL_EXPORT_GUIDE_PROVIDER_SLUGS.map((slug) => ({
     slug,
     label: labels[locale][slug as keyof (typeof labels)[typeof locale]],
-    kind: "pages",
+    kind: EXPORT_GUIDE_PROVIDER_KIND,
     selectable: true,
-    compatibility: { minClientSchema: 1, maxClientSchema: 1 },
+    compatibility: {
+      minClientSchema: EXPORT_GUIDE_SCHEMA_VERSION,
+      maxClientSchema: EXPORT_GUIDE_SCHEMA_VERSION,
+    },
     pages: (locale === "fr" ? frPages : enPages)[slug],
   })),
 })
