@@ -9,7 +9,7 @@ The portrait-tablet quick-wins epic needs one final integrated record after its 
 - Preserve the integrated application implementation, responsive ownership, portrait-only product boundary, native configuration, dependencies, generated clients, migrations, and legacy application unchanged.
 - Strengthen the existing Activity Maestro journey so actionable rows retry a tap only when it produced no hierarchy change and prove navigation with a resolved-event-details-only selector before checking seeded content.
 - Add a focused static regression that locks the Activity row-to-details oracle for both new and changed rows.
-- Let the first iOS About deep-link confirmation transition settle before its existing optional replay tap, preventing a delayed system prompt from masking the route regression suite.
+- Let the first iOS About deep-link confirmation transition settle before its existing optional replay tap, then reissue the link once only while the stable About destination remains absent.
 
 ## Capabilities
 

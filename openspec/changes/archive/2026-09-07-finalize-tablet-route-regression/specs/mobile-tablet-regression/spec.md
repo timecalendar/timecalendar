@@ -51,6 +51,14 @@ The About native flow SHALL allow the iOS custom-scheme confirmation transition 
 - **AND** the replay tap dismisses the returned prompt
 - **AND** the About content assertions execute inside the app rather than against SpringBoard
 
+#### Scenario: An acknowledged About link leaves SpringBoard foregrounded
+
+- **WHEN** iOS completes both optional confirmation activations but the stable About destination remains absent
+- **THEN** the flow reissues that same About link once
+- **AND** it handles the optional confirmation again
+- **AND** it observes the About responsive-content owner before checking route content
+- **AND** it does not replay the link after the About destination is already visible
+
 #### Scenario: An acknowledged onboarding link leaves SpringBoard foregrounded
 
 - **WHEN** iOS reports the iCal journey's onboarding link complete but the stable Welcome destination remains absent after the transition settles
