@@ -7,6 +7,8 @@ import { getString, remove } from "@/storage"
 
 import AppearanceSettingsScreen from "./appearance-settings-screen"
 
+jest.mock("expo-router", () => ({ Stack: { Screen: () => null } }))
+
 // Proof that the Settings screen wiring resolves through the real theme + i18n +
 // A1 prefs (MMKV) trees (mirrors the splash / themed-text proofs). @expo/ui's
 // native universal controls are mocked suite-wide in jest/setup-expo-ui.ts: Host
@@ -48,11 +50,13 @@ describe("AppearanceSettingsScreen", () => {
     },
   )
 
-  it("renders the localized title and both control labels (not raw keys)", async () => {
-    const { getByText } = await render(<AppearanceSettingsScreen />)
+  it("renders both localized control labels without a duplicate page title", async () => {
+    const { getByText, queryByText } = await render(
+      <AppearanceSettingsScreen />,
+    )
 
     // EN catalog values (jest-expo device locale resolves to en), not the keys.
-    expect(getByText("Appearance & language")).toBeTruthy()
+    expect(queryByText("Appearance & language")).toBeNull()
     expect(getByText("Theme")).toBeTruthy()
     expect(getByText("Language")).toBeTruthy()
   })

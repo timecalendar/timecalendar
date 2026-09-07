@@ -1,5 +1,12 @@
-const { readFileSync } = jest.requireActual("node:fs") as {
+const { readFileSync, readdirSync } = jest.requireActual("node:fs") as {
   readFileSync(path: string, encoding: "utf8"): string
+  readdirSync(
+    path: string,
+    options: { withFileTypes: true },
+  ): {
+    name: string
+    isFile(): boolean
+  }[]
 }
 const { resolve } = jest.requireActual("node:path") as {
   resolve(...paths: string[]): string
@@ -35,9 +42,7 @@ describe("Settings route structure", () => {
       'export { AboutScreen as default } from "@/features/about/ui"',
     )
     const rootLayout = route("_layout.tsx")
-    expect(rootLayout).toContain(
-      '<Stack.Screen name="about" options={{ headerShown: true }} />',
-    )
+    expect(rootLayout).toContain('<Stack.Screen name="about" />')
     expect(rootLayout).toContain('initialRouteName: "(tabs)"')
   })
 
@@ -45,9 +50,7 @@ describe("Settings route structure", () => {
     expect(route("activity.tsx").trim()).toBe(
       'export { ActivityScreen as default } from "@/features/activity/ui"',
     )
-    expect(route("_layout.tsx")).toContain(
-      '<Stack.Screen name="activity" options={{ headerShown: true }} />',
-    )
+    expect(route("_layout.tsx")).toContain('<Stack.Screen name="activity" />')
   })
 
   it("keeps both Changelog routes thin with tabs-only gate ownership", () => {
@@ -58,9 +61,7 @@ describe("Settings route structure", () => {
       'export { ChangelogSheetScreen as default } from "@/features/changelog/ui"',
     )
     const rootLayout = route("_layout.tsx")
-    expect(rootLayout).toContain(
-      '<Stack.Screen name="changelog" options={{ headerShown: true }} />',
-    )
+    expect(rootLayout).toContain('<Stack.Screen name="changelog" />')
     expect(rootLayout).toContain('name="changelog-sheet"')
     expect(rootLayout).toContain(
       'Platform.OS === "ios" ? "formSheet" : "fullScreenModal"',
@@ -72,5 +73,84 @@ describe("Settings route structure", () => {
     const tabsLayout = route("(tabs)/_layout.tsx")
     expect(tabsLayout).toContain("<ChangelogGate />")
     expect(route("onboarding/_layout.tsx")).not.toContain("ChangelogGate")
+  })
+
+  it("classifies every root route under compact defaults or an explicit exception", () => {
+    const rootLayout = route("_layout.tsx")
+    expect(rootLayout).toContain("screenOptions={rootScreenOptions}")
+    expect(rootLayout).toContain("buildCompactRootScreenOptions")
+
+    for (const name of [
+      "(tabs)",
+      "onboarding",
+      "profile",
+      "more",
+      "dev-import",
+    ]) {
+      expect(rootLayout).toMatch(
+        new RegExp(
+          `name=["']${name.replace(/[()]/g, "\\$&")}["'][^>]*headerShown: false`,
+        ),
+      )
+    }
+
+    const visibleRoutes = [
+      "about",
+      "activity",
+      "appearance-settings",
+      "changelog",
+      "changelog-sheet",
+      "event-details/[uid]",
+      "feedback",
+      "hidden-events",
+      "notification-settings",
+      "personal-event-form",
+      "personal-events",
+      "timezone-settings",
+      "user-calendars",
+    ]
+    for (const name of visibleRoutes) {
+      expect(rootLayout).toContain(`name="${name}"`)
+    }
+
+    const topLevelRoutes = readdirSync(resolve(process.cwd(), "src/app"), {
+      withFileTypes: true,
+    })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".tsx"))
+      .map((entry) => entry.name.replace(/\.tsx$/, ""))
+      .filter((name) => name !== "_layout")
+      .sort()
+    expect(topLevelRoutes).toEqual(
+      [
+        ...visibleRoutes.filter((name) => !name.includes("/")),
+        "dev-import",
+        "more",
+        "profile",
+      ].sort(),
+    )
+
+    expect(route("../components/chrome/root-screen-options.ts")).toContain(
+      'headerBackButtonDisplayMode: "minimal"',
+    )
+  })
+
+  it("keeps personal-event list and form titles feature-owned and localized", () => {
+    expect(
+      route("../features/personal-events/ui/personal-events-list.tsx"),
+    ).toContain('title: t("personalEvents.list.title")')
+    const form = route(
+      "../features/personal-events/ui/personal-event-form-screen.tsx",
+    )
+    expect(form).toContain('t("personalEvents.form.createTitle")')
+    expect(form).toContain('t("personalEvents.form.editTitle")')
+  })
+
+  it("keeps Settings root destination titles feature-owned and localized", () => {
+    expect(
+      route("../features/settings/ui/appearance-settings-screen.tsx"),
+    ).toContain('title: t("settings.title")')
+    expect(
+      route("../features/notifications/ui/notification-settings-screen.tsx"),
+    ).toContain('title: t("notifications.title")')
   })
 })

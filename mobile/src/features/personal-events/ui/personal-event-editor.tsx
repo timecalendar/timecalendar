@@ -1,10 +1,9 @@
 import { router } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { KeyboardAvoidingView, ScrollView, StyleSheet } from "react-native"
+import { StyleSheet } from "react-native"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
-import { ThemedText } from "@/components/themed-text"
+import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
 import type { AppLocale } from "@/features/calendar/data"
 import type { PersonalEvent } from "@/features/personal-events/data"
 import {
@@ -64,71 +63,68 @@ export function PersonalEventEditor({
     initialValues(existing),
   )
   const [errors, setErrors] = useState<EventFormErrors>({})
+  const [saving, setSaving] = useState(false)
   const save = useSaveEvent()
   const deletion = usePersonalEventDeleteConfirmation(uid)
-  const layout = useAdaptiveLayout("readable")
 
   const update: UpdateEventFormValue = (key, value) => {
     setValues((previous) => ({ ...previous, [key]: value }))
   }
 
   async function onSave() {
+    if (saving) return
     const validation = validateEventForm(values)
     setErrors(validation.errors)
     if (!validation.valid) {
       return
     }
-    const saved = await save.save(buildEventFromForm(values, existing))
+    setSaving(true)
+    const saved = await save
+      .save(buildEventFromForm(values, existing))
+      .finally(() => setSaving(false))
     if (saved) {
       router.back()
     }
   }
 
   return (
-    <KeyboardAvoidingView
+    <KeyboardSafeActionLayout
       testID="personal-event-form-responsive-owner"
-      style={styles.flex}
-      behavior="padding"
-      onLayout={layout.onLayout}
-    >
-      <ScrollView
-        contentContainerStyle={[layout.laneStyle, styles.content]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <ThemedText type="title">
-          {uid === undefined
-            ? t("personalEvents.form.createTitle")
-            : t("personalEvents.form.editTitle")}
-        </ThemedText>
-        <PersonalEventFields
-          values={values}
-          errors={errors}
-          locale={locale}
-          displayZone={displayZone}
-          update={update}
+      contentContainerStyle={styles.content}
+      actionContainerStyle={styles.footer}
+      actions={
+        <PersonalEventActions
+          canDelete={uid !== undefined}
+          isSaving={saving}
+          isDeleting={deletion.isDeleting}
+          saveFailed={save.failed}
+          deleteFailed={deletion.deleteFailed}
+          onSave={onSave}
+          onDelete={deletion.requestDelete}
           t={t}
         />
-      </ScrollView>
-
-      <PersonalEventActions
-        laneStyle={layout.laneStyle}
-        canDelete={uid !== undefined}
-        isDeleting={deletion.isDeleting}
-        saveFailed={save.failed}
-        deleteFailed={deletion.deleteFailed}
-        onSave={onSave}
-        onDelete={deletion.requestDelete}
+      }
+    >
+      <PersonalEventFields
+        values={values}
+        errors={errors}
+        locale={locale}
+        displayZone={displayZone}
+        update={update}
         t={t}
       />
-    </KeyboardAvoidingView>
+    </KeyboardSafeActionLayout>
   )
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   content: {
     paddingTop: Spacing.four,
     paddingBottom: Spacing.five,
     gap: Spacing.three,
+  },
+  footer: {
+    paddingTop: Spacing.three,
+    paddingBottom: Spacing.four,
   },
 })

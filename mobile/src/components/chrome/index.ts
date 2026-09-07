@@ -7,6 +7,7 @@
 
 export { GlassSurface } from "@/components/chrome/glass-surface"
 export { NativeTabs } from "@/components/chrome/native-tabs"
+export { buildCompactRootScreenOptions } from "@/components/chrome/root-screen-options"
 
 // @expo/ui — wrapper landed (A2 / TIM-131). The Settings screen is the first
 // `@expo/ui` consumer (discharging the theming-D6 deferral), so the boundary-only

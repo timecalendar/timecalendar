@@ -32,6 +32,7 @@ const mockSave = jest.fn<Promise<boolean>, [PersonalEvent]>(() =>
 const mockRemove = jest.fn<Promise<boolean>, [string]>(() =>
   Promise.resolve(true),
 )
+const mockStackScreen = jest.fn((_props: unknown) => null)
 
 jest.mock("@/features/personal-events/form", () => {
   const actual = jest.requireActual("@/features/personal-events/form")
@@ -46,6 +47,7 @@ jest.mock("@/features/personal-events/form", () => {
 jest.mock("expo-router", () => ({
   useLocalSearchParams: jest.fn(),
   router: { back: jest.fn() },
+  Stack: { Screen: (props: unknown) => mockStackScreen(props) },
 }))
 
 // buildEventFromForm (real, via requireActual above) calls the @/db seam's
@@ -99,6 +101,7 @@ function latestAlert() {
 beforeEach(() => {
   mockAlert = jest.spyOn(Alert, "alert").mockImplementation(() => undefined)
   mockBack.mockReset()
+  mockStackScreen.mockClear()
   mockSave.mockClear().mockResolvedValue(true)
   mockRemove.mockClear().mockResolvedValue(true)
   mockUseLocalSearchParams.mockReturnValue({})
@@ -210,11 +213,14 @@ describe("PersonalEventFormScreen", () => {
     expect(view.queryByTestId("personal-event-delete")).toBeNull()
   })
 
-  it("renders the localized create title and field labels (no uid)", async () => {
-    const { getByText, queryByTestId } = await render(
+  it("places the localized create title in native chrome without duplicating it", async () => {
+    const { getByText, queryByText, queryByTestId } = await render(
       <PersonalEventFormScreen />,
     )
-    expect(getByText("New event")).toBeTruthy()
+    expect(mockStackScreen).toHaveBeenLastCalledWith(
+      expect.objectContaining({ options: { title: "New event" } }),
+    )
+    expect(queryByText("New event")).toBeNull()
     expect(getByText("Title")).toBeTruthy()
     expect(getByText("Color")).toBeTruthy()
     // No delete control in create mode.
@@ -269,7 +275,8 @@ describe("PersonalEventFormScreen", () => {
         scrollView.props.contentContainerStyle,
       )
       const actionsStyle = StyleSheet.flatten(
-        view.getByTestId("personal-event-actions").props.style,
+        view.getByTestId("personal-event-form-responsive-owner-actions").props
+          .style,
       )
       const expectedMaxWidth =
         (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter
@@ -293,6 +300,41 @@ describe("PersonalEventFormScreen", () => {
     expect(mockSave).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Lunch" }),
     )
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it("exposes one busy Save action and blocks a duplicate submission", async () => {
+    let resolveSave: ((saved: boolean) => void) | undefined
+    mockSave.mockImplementationOnce(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveSave = resolve
+        }),
+    )
+    const view = await render(<PersonalEventFormScreen />)
+    await fireEvent.changeText(
+      view.getByTestId("personal-event-title-input"),
+      "Lunch",
+    )
+    const firstPress = fireEvent.press(view.getByTestId("personal-event-save"))
+
+    await waitFor(() =>
+      expect(view.getByTestId("personal-event-save")).toBeDisabled(),
+    )
+    const saveButton = view.getByTestId("personal-event-save")
+    expect(saveButton).toBeDisabled()
+    expect(saveButton).toHaveProp("accessibilityState", {
+      disabled: true,
+      busy: true,
+    })
+    await fireEvent.press(saveButton)
+    expect(mockSave).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveSave?.(true)
+      await Promise.resolve()
+    })
+    await firstPress
     expect(mockBack).toHaveBeenCalledTimes(1)
   })
 
@@ -353,9 +395,11 @@ describe("PersonalEventFormScreen", () => {
 
   it("opens a localized native confirmation without deleting or navigating", async () => {
     useEditEvent()
-    const { getByTestId, getByText } = await render(<PersonalEventFormScreen />)
+    const { getByTestId } = await render(<PersonalEventFormScreen />)
 
-    expect(getByText("Edit event")).toBeTruthy()
+    expect(mockStackScreen).toHaveBeenLastCalledWith(
+      expect.objectContaining({ options: { title: "Edit event" } }),
+    )
     await fireEvent.press(getByTestId("personal-event-delete"))
 
     expect(mockAlert).toHaveBeenCalledWith(

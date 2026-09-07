@@ -1,19 +1,14 @@
 import type { TFunction } from "i18next"
-import {
-  Pressable,
-  type StyleProp,
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from "react-native"
+import { Pressable, StyleSheet, View } from "react-native"
 
+import { PrimaryAction } from "@/components/primary-action"
 import { ThemedText } from "@/components/themed-text"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 type PersonalEventActionsProps = {
-  laneStyle: StyleProp<ViewStyle>
   canDelete: boolean
+  isSaving: boolean
   isDeleting: boolean
   saveFailed: boolean
   deleteFailed: boolean
@@ -23,8 +18,8 @@ type PersonalEventActionsProps = {
 }
 
 export function PersonalEventActions({
-  laneStyle,
   canDelete,
+  isSaving,
   isDeleting,
   saveFailed,
   deleteFailed,
@@ -35,7 +30,7 @@ export function PersonalEventActions({
   const theme = useTheme()
 
   return (
-    <View testID="personal-event-actions" style={[laneStyle, styles.footer]}>
+    <View testID="personal-event-actions" style={styles.footer}>
       {(saveFailed || deleteFailed) && (
         <WriteErrorNotice
           message={
@@ -46,17 +41,12 @@ export function PersonalEventActions({
         />
       )}
 
-      <Pressable
+      <PrimaryAction
         testID="personal-event-save"
-        accessibilityRole="button"
-        accessibilityLabel={t("personalEvents.form.save")}
+        label={t("personalEvents.form.save")}
         onPress={onSave}
-        style={[styles.action, { backgroundColor: theme.backgroundSelected }]}
-      >
-        <ThemedText type="smallBold">
-          {t("personalEvents.form.save")}
-        </ThemedText>
-      </Pressable>
+        busy={isSaving}
+      />
 
       {canDelete && (
         <Pressable

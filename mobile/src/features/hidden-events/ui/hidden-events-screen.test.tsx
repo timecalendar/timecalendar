@@ -9,6 +9,7 @@ import { StyleSheet } from "react-native"
 
 import { useSyncedEvents } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
+import i18n from "@/i18n"
 
 import { HiddenEventsScreen } from "./hidden-events-screen"
 
@@ -62,7 +63,8 @@ function syncedEvent(id: string, title: string) {
   }
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  await i18n.changeLanguage("en")
   jest.clearAllMocks()
   mockUseSyncedEvents.mockReturnValue([])
   mockUseHideActions.mockReturnValue({ ...hideActions, failed: false })
@@ -100,7 +102,33 @@ describe("HiddenEventsScreen", () => {
 
   it("renders the empty state when nothing is hidden", async () => {
     await render(<HiddenEventsScreen />)
-    expect(screen.getByText("No hidden events.")).toBeTruthy()
+    expect(screen.getByText("No hidden events")).toBeTruthy()
+    expect(screen.getByText("Events you hide will appear here.")).toBeTruthy()
+    expect(
+      screen.getByTestId("hidden-events-empty-artwork", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveProp("accessible", false)
+  })
+
+  it("renders the exact French empty title and caption", async () => {
+    await i18n.changeLanguage("fr")
+    await render(<HiddenEventsScreen />)
+    expect(screen.getByText("Aucun événement masqué")).toBeTruthy()
+    expect(
+      screen.getByText("Les événements que vous masquez apparaîtront ici."),
+    ).toBeTruthy()
+  })
+
+  it("keeps a write failure distinct when rendered entries are empty", async () => {
+    mockUseHideActions.mockReturnValue({ ...hideActions, failed: true })
+    await render(<HiddenEventsScreen />)
+    expect(screen.getByTestId("hidden-events-empty")).toBeTruthy()
+    expect(
+      screen.getByText(
+        "We couldn't update your hidden events. Please try again.",
+      ),
+    ).toBeTruthy()
   })
 
   it("lists name-hidden titles with an un-hide control", async () => {
@@ -141,7 +169,7 @@ describe("HiddenEventsScreen", () => {
     await render(<HiddenEventsScreen />)
     // The non-resolving uid is not shown; with nothing else hidden, the screen
     // shows the empty state.
-    expect(screen.getByText("No hidden events.")).toBeTruthy()
+    expect(screen.getByText("No hidden events")).toBeTruthy()
   })
 
   it("surfaces an accessible failure state when an un-hide write failed", async () => {

@@ -89,7 +89,7 @@ export function UserCalendarsScreen() {
       <Stack.Screen
         options={{
           title: t("userCalendars.title"),
-          headerBackButtonDisplayMode: "generic",
+          headerBackButtonDisplayMode: "minimal",
           ...(Platform.OS === "ios" && {
             unstable_headerRightItems: () => [
               {

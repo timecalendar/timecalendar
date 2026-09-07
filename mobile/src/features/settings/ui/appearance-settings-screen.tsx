@@ -1,3 +1,4 @@
+import { Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -30,14 +31,13 @@ export default function AppearanceSettingsScreen() {
   const language = useLanguagePreference()
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen options={{ title: t("settings.title") }} />
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
         <AdaptiveContent
           lane="readable"
           testID="appearance-layout-owner"
           contentContainerStyle={styles.content}
         >
-          <ThemedText type="title">{t("settings.title")}</ThemedText>
-
           <View style={styles.control}>
             <ThemedText type="smallBold">
               {t("settings.theme.label")}

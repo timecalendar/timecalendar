@@ -2,11 +2,11 @@ import { Stack } from "expo-router"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { EmptyState } from "@/components/empty-state"
+import { noDataArtwork } from "@/components/empty-state-artwork"
+import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import {
   formatTimeRange,
@@ -41,7 +41,6 @@ export function HiddenEventsScreen() {
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   const { unhideUid, unhideName, failed } = useHideActions()
   const syncedEvents = useSyncedEvents()
-  const { laneStyle, onLayout } = useAdaptiveLayout("standard")
 
   // Resolve each hidden uid to its current synced event (title + time). Only
   // still-resolving uids are listed (Flutter parity — a uid with no current event
@@ -68,78 +67,79 @@ export function HiddenEventsScreen() {
   const isEmpty = namedHiddenEvents.length === 0 && uidEntries.length === 0
 
   return (
-    <ThemedView style={styles.container}>
+    <>
       <Stack.Screen options={{ title: t("hiddenEvents.title") }} />
-      <SafeAreaView
-        testID="hidden-events-layout-owner"
-        onLayout={onLayout}
-        style={styles.safeArea}
-        edges={["bottom", "left", "right"]}
-      >
-        {failed && (
-          <View style={laneStyle}>
-            <WriteErrorNotice
-              message={t("hiddenEvents.error")}
-              style={styles.error}
-            />
-          </View>
-        )}
-
-        {isEmpty ? (
-          <View style={laneStyle}>
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="text"
-            >
-              {t("hiddenEvents.empty")}
-            </ThemedText>
-          </View>
-        ) : (
-          <ScrollView
-            testID="hidden-events-responsive-content"
-            contentContainerStyle={[laneStyle, styles.content]}
-          >
-            {namedHiddenEvents.length > 0 && (
-              <View style={styles.section}>
-                <ThemedText type="subtitle">
-                  {t("hiddenEvents.namedSection")}
-                </ThemedText>
-                {namedHiddenEvents.map((name) => (
-                  <HiddenRow
-                    key={`name-${name}`}
-                    title={name}
-                    unhideLabel={t("hiddenEvents.unhideLabel", { title: name })}
-                    onUnhide={() => unhideName(name)}
-                    background={theme.backgroundElement}
-                  />
-                ))}
+      <RootPage testID="hidden-events-layout-owner" lane="standard">
+        {({ laneStyle }) => (
+          <>
+            {failed && (
+              <View style={laneStyle}>
+                <WriteErrorNotice
+                  message={t("hiddenEvents.error")}
+                  style={styles.error}
+                />
               </View>
             )}
 
-            {uidEntries.length > 0 && (
-              <View style={styles.section}>
-                <ThemedText type="subtitle">
-                  {t("hiddenEvents.uidSection")}
-                </ThemedText>
-                {uidEntries.map((entry) => (
-                  <HiddenRow
-                    key={`uid-${entry.uid}`}
-                    title={entry.title}
-                    subtitle={entry.time}
-                    unhideLabel={t("hiddenEvents.unhideLabel", {
-                      title: entry.title,
-                    })}
-                    onUnhide={() => unhideUid(entry.uid)}
-                    background={theme.backgroundElement}
-                  />
-                ))}
+            {isEmpty ? (
+              <View style={[laneStyle, styles.stateLane]}>
+                <EmptyState
+                  testID="hidden-events-empty"
+                  variant="screen"
+                  title={t("hiddenEvents.empty.title")}
+                  caption={t("hiddenEvents.empty.caption")}
+                  artwork={noDataArtwork}
+                />
               </View>
+            ) : (
+              <ScrollView
+                testID="hidden-events-responsive-content"
+                contentContainerStyle={[laneStyle, styles.content]}
+              >
+                {namedHiddenEvents.length > 0 && (
+                  <View style={styles.section}>
+                    <ThemedText type="subtitle">
+                      {t("hiddenEvents.namedSection")}
+                    </ThemedText>
+                    {namedHiddenEvents.map((name) => (
+                      <HiddenRow
+                        key={`name-${name}`}
+                        title={name}
+                        unhideLabel={t("hiddenEvents.unhideLabel", {
+                          title: name,
+                        })}
+                        onUnhide={() => unhideName(name)}
+                        background={theme.backgroundElement}
+                      />
+                    ))}
+                  </View>
+                )}
+
+                {uidEntries.length > 0 && (
+                  <View style={styles.section}>
+                    <ThemedText type="subtitle">
+                      {t("hiddenEvents.uidSection")}
+                    </ThemedText>
+                    {uidEntries.map((entry) => (
+                      <HiddenRow
+                        key={`uid-${entry.uid}`}
+                        title={entry.title}
+                        subtitle={entry.time}
+                        unhideLabel={t("hiddenEvents.unhideLabel", {
+                          title: entry.title,
+                        })}
+                        onUnhide={() => unhideUid(entry.uid)}
+                        background={theme.backgroundElement}
+                      />
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
             )}
-          </ScrollView>
+          </>
         )}
-      </SafeAreaView>
-    </ThemedView>
+      </RootPage>
+    </>
   )
 }
 
@@ -183,11 +183,7 @@ function HiddenRow({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: {
-    flex: 1,
-    paddingTop: Spacing.four,
-  },
+  stateLane: { flex: 1 },
   content: {
     gap: Spacing.four,
     paddingBottom: Spacing.four,
