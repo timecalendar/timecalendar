@@ -120,14 +120,14 @@ documentation finalization). A single PR is acceptable but two is recommended.
 
 ## 8. CI health evidence — scheduled or deliberate native execution
 
-- [ ] 8.1 Confirm the ordinary pull-request baseline runs the selector, harness, workflow,
+- [x] 8.1 Confirm the ordinary pull-request baseline runs the selector, harness, workflow,
   unit/component/integration, type, and lint checks. Do not add a label or require native E2E
   proof for the feature merge.
-- [ ] 8.2 Observe the next relevant daily run or deliberately dispatch an explicit ref/SHA when
+- [x] 8.2 Observe the next relevant daily run or deliberately dispatch an explicit ref/SHA when
   focused diagnosis is useful. Record Android and iOS results as informational health evidence:
   the dev-variant binary is built per selected native run via `expo prebuild`, so the new
   `dev-import` route ships automatically.
-- [ ] 8.3 If native health evidence exposes a timing defect, diagnose the flow separately and
+- [x] 8.3 If native health evidence exposes a timing defect, diagnose the flow separately and
   preserve its synced-data assertion; do not weaken it to an empty/reachability state or expand
   platform retry loops as a substitute for fixing the defect.
 
