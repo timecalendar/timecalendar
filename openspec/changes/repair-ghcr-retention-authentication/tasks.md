@@ -50,18 +50,18 @@
 
 ## 5. Exact-head CI and non-destructive live proof
 
-- [ ] 5.1 Commit and push the implementation head, then obtain green pull-request CI for that exact
+- [x] 5.1 Commit and push the implementation head, then obtain green pull-request CI for that exact
   SHA, including the new focused retention-contract job; do not treat skipped, pending, or older-head
   checks as proof.
-- [ ] 5.2 Dispatch `delete-old-images.yaml` once against that branch ref with an explicit
+- [x] 5.2 Dispatch `delete-old-images.yaml` once against that branch ref with an explicit
   timezone-aware cut-off, verify from the run event/config that both steps are forced dry-run, and
   confirm both exact package steps complete version-list processing successfully without a deletion.
   Record only the public run URL, tested head SHA, step conclusions, and sanitized outcome.
-- [ ] 5.3 If either package returns an authorization failure, stop and block the issue naming the
+- [x] 5.3 If either package returns an authorization failure, stop and block the issue naming the
   package and the required repository `admin` grant in its Actions access settings. If organization
   policy prohibits that grant, return for design revision specifying a dedicated classic token held
   by a package-admin identity, stored as an Actions secret, and limited to `read:packages` plus
   `delete:packages`; never inspect, create, rotate, or print the token.
-- [ ] 5.4 Before handing to review, re-check that the PR head still equals the CI and dry-run head. If
+- [x] 5.4 Before handing to review, re-check that the PR head still equals the CI and dry-run head. If
   a later stage changed the workflow or validation code, repeat the exact-head CI and safe branch
   dry-run proofs.
