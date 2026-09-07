@@ -1,8 +1,11 @@
 # mobile-react-diagnostics Specification
 
 ## Purpose
-TBD - created by archiving change make-mobile-react-doctor-actionable. Update Purpose after archive.
+Defines reproducible mobile-only React Doctor scanning, durable diagnostic classification,
+changed-code CI enforcement, dependency-boundary evidence, and final integration verification.
+
 ## Requirements
+
 ### Requirement: Reproducible standalone mobile scan
 The mobile project SHALL expose a repository command that runs an exactly pinned React Doctor 0.9.13 against the standalone `mobile/` Expo project with telemetry and score reporting disabled. The command SHALL exclude cross-project supply-chain analysis and SHALL remain advisory so a full existing diagnostic inventory is emitted.
 
