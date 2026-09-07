@@ -221,10 +221,11 @@ lands separately.
   `hidden-events.yaml` rewritten on top of the now-proven preamble, plus the Architecture
   Book / ADR / changelog documentation finalization.
 
-This keeps each PR's `run-e2e` CI cost focused and lets the anchor prove the seam before the
-three dependent flows pile on. A single PR is acceptable if the implementer prefers one
-`run-e2e` cycle, but two is recommended to de-risk the anchor first. The `tasks.md` phases
-map to this split.
+This keeps each pull request's baseline proof focused and lets the anchor establish the seam
+before the three dependent flows pile on. A single pull request is acceptable if the implementer
+prefers one change, but two are recommended to de-risk the anchor first. Native execution remains
+informational health evidence from the next relevant daily run or a deliberate ref/SHA dispatch;
+it is not a merge gate. The `tasks.md` phases map to this split.
 
 ## Risks / Trade-offs
 
@@ -247,12 +248,11 @@ map to this split.
   don't disturb the seeded server rows; the hide/un-hide flow un-hides at the end
   (idempotent, restores state). Flows are ordered-independent because Maestro cold-starts
   (`stopApp`) each flow, but each flow leaves device state as it found it where practical.
-- **[E2E is only fully verifiable on device]** → CI `ci-mobile-e2e.yml` runs both platforms;
-  locally we prove `addCalendarFromToken` + the variant gate in Jest and typecheck/lint. The
+- **[E2E is only fully verifiable on device]** → The daily/manual native workflow runs both
+  platforms when selected; locally and in the pull-request baseline we prove
+  `addCalendarFromToken`, the variant gate, selectors, harness structure, typecheck, lint, and
+  unit/integration behavior. Native results are follow-up health evidence, not merge proof. The
   verification plan is explicit in tasks.md. **This is the honest boundary, not a gap.**
-- **[Only run-e2e-labelled PRs run the flows]** → Both PRs must carry the `run-e2e` label to
-  exercise the change's core proof in CI before merge (main always runs it on mobile changes,
-  but pre-merge needs the label). Called out in tasks.md.
 
 ## Migration Plan
 

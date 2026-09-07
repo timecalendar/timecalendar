@@ -88,6 +88,7 @@ trigger_block="$(top_level_block on)"
 permissions_block="$(top_level_block permissions)"
 concurrency_block="$(top_level_block concurrency)"
 prepare_block="$(job_block prepare)"
+select_step_block="$(step_block prepare 'Select execution decision')"
 build_server_block="$(job_block build-server)"
 android_block="$(job_block e2e-mobile-android)"
 ios_block="$(job_block e2e-mobile-ios)"
@@ -125,6 +126,13 @@ assert_block_present "$prepare_block" 'previous?.head_sha' 'preceding-run bounda
 assert_block_present "$prepare_block" "          MANUAL_REF: \${{ inputs.ref }}" 'manual ref environment'
 assert_block_present "$prepare_block" 'target_sha="$(git rev-parse HEAD^{commit})"' 'immutable target resolution'
 assert_block_present "$prepare_block" 'Manual dispatch requires a non-empty ref input' 'manual validation'
+manual_branch="$(awk '
+  /if \[ "\$EVENT_NAME" = '\''workflow_dispatch'\'' \]; then/ { inside = 1 }
+  inside { print }
+  inside && /^[[:space:]]*fi$/ { exit }
+' <<< "$select_step_block")"
+[ -n "$manual_branch" ] || fail 'missing manual dispatch decision branch'
+assert_block_count 1 "$manual_branch" "echo 'should_run=true' >> \"\$GITHUB_OUTPUT\"" 'manual dispatch decision'
 assert_block_present "$prepare_block" 'No preceding scheduled attempt; both platforms selected' 'first-run diagnostic'
 assert_block_present "$prepare_block" 'git cat-file -e "$PREVIOUS_SHA^{commit}"' 'comparison validation'
 assert_block_present "$prepare_block" 'git diff --name-only "$PREVIOUS_SHA" "$target_sha"' 'scheduled comparison'
@@ -209,6 +217,7 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   mutation_dir="$(mktemp -d)"
   trap 'rm -rf "$mutation_dir"' EXIT
   expect_mutation_failure trigger 's/  schedule:/  schedule_removed:/'
+  expect_mutation_failure manual-should-run 's/(if \[ "\$EVENT_NAME" = '\''workflow_dispatch'\'' \]; then.*?)echo '\''should_run=true'\'' >> "\$GITHUB_OUTPUT"/${1}echo '\''should_run=false'\'' >> "\$GITHUB_OUTPUT"/s'
   expect_mutation_failure previous-boundary 's/previous\?\.head_sha/previous?.updated_at/'
   expect_mutation_failure first-run 's/No preceding scheduled attempt; both platforms selected/No boundary available/'
   expect_mutation_failure android-platform 's/  e2e-mobile-android:/  e2e-mobile-android-removed:/'

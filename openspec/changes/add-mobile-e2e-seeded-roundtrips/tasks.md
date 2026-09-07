@@ -118,18 +118,18 @@ documentation finalization). A single PR is acceptable but two is recommended.
 - [x] 7.4 Confirm gen-drift clean (mobile `npm run generate` + server OpenAPI regen produce no
   diff — no client/spec change expected).
 
-## 8. CI proof — the on-device E2E gate (the real proof)
+## 8. CI health evidence — scheduled or deliberate native execution
 
-- [ ] 8.1 Add the **`run-e2e` label** to each PR so `ci-mobile-e2e.yml` runs the flows on the
-  Android emulator AND the iOS simulator (the flows are only fully verifiable on device; local
-  Jest cannot assert the synced render).
-- [ ] 8.2 Confirm `e2e-mobile-android` + `e2e-mobile-ios` are green: the rewritten flows import
-  the seeded token, sync, and assert real synced data / round-trips on both platforms. (No
-  rebuild step needed — the dev-variant binary is built per CI run via `expo prebuild`, so the
-  new `dev-import` route ships automatically.)
-- [ ] 8.3 If a flow flakes on timing, widen the first-synced-assertion `extendedWaitUntil`
-  before merging (do not weaken the assertion to an empty/reachability state — that would
-  reintroduce the gap this change closes).
+- [ ] 8.1 Confirm the ordinary pull-request baseline runs the selector, harness, workflow,
+  unit/component/integration, type, and lint checks. Do not add a label or require native E2E
+  proof for the feature merge.
+- [ ] 8.2 Observe the next relevant daily run or deliberately dispatch an explicit ref/SHA when
+  focused diagnosis is useful. Record Android and iOS results as informational health evidence:
+  the dev-variant binary is built per selected native run via `expo prebuild`, so the new
+  `dev-import` route ships automatically.
+- [ ] 8.3 If native health evidence exposes a timing defect, diagnose the flow separately and
+  preserve its synced-data assertion; do not weaken it to an empty/reachability state or expand
+  platform retry loops as a substitute for fixing the defect.
 
 ## 9. DoD close-out
 
