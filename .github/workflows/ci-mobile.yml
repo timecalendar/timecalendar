@@ -2,88 +2,86 @@ name: CI mobile checks
 
 # Fast mobile feedback: generated-client drift, typecheck, lint, Jest. Runs on
 # every push that touches mobile sources or the shared OpenAPI spec. The slow
-# native E2E jobs live in ci-mobile-e2e (label-gated).
+# native E2E jobs live in ci-mobile-e2e as a daily/manual health signal.
 on:
   # Keep the required mobile gate runnable when a follow-up commit only changes
   # paths outside the push filter (for example, archiving an OpenSpec change).
   workflow_dispatch:
   push:
     paths:
-      - 'mobile/**'
-      - 'openapi/**'
-      - '.github/workflows/ci-mobile.yml'
+      - "mobile/**"
+      - "openapi/**"
+      - ".github/workflows/ci-mobile.yml"
       # ci-mobile-e2e.yml's own build contract is proved by a step in this job
       # (see "Check the native E2E harness and workflow contract"). The native
-      # jobs that used to be its only home are label-gated, so a PR touching
-      # only that file would otherwise run no gate at all and surface red on
-      # main.
-      - '.github/workflows/ci-mobile-e2e.yml'
+      # Jobs do not run for pull requests, so a PR touching only that
+      # file still receives fast structural proof here.
+      - ".github/workflows/ci-mobile-e2e.yml"
 
 jobs:
   test-mobile:
     name: Run mobile checks
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-    - name: Checkout main
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
 
-    - name: Set up Node
-      uses: actions/setup-node@v6
-      with:
-        node-version-file: .nvmrc
-        cache: npm
-        cache-dependency-path: mobile/package-lock.json
+      # Both proofs are pure bash + node against files in the repo — no device, no
+      # emulator, no Maestro (test_run_e2e.sh drives a fake one on PATH). They live
+      # here, not only in the scheduled/manual native jobs, so that a change to
+      # ci-mobile-e2e.yml or to the E2E harness is checked by a gate that actually
+      # runs on the pull request.
+      - name: Check the native E2E harness and workflow contract
+        run: |
+          ./mobile/e2e/test_run_e2e.sh
+          ./mobile/e2e/test_ci_mobile_e2e.sh
 
-    # Both proofs are pure bash + node against files in the repo — no device, no
-    # emulator, no Maestro (test_run_e2e.sh drives a fake one on PATH). They live
-    # here, not only in the label-gated native jobs, so that a change to
-    # ci-mobile-e2e.yml or to the E2E harness is checked by a gate that actually
-    # runs on the pull request.
-    - name: Check the native E2E harness and workflow contract
-      run: |
-        ./mobile/e2e/test_run_e2e.sh
-        ./mobile/e2e/test_ci_mobile_e2e.sh
+      - name: Install dependencies
+        working-directory: ./mobile
+        run: npm ci
 
-    - name: Install dependencies
-      working-directory: ./mobile
-      run: npm ci
+      - name: Check changed mobile code with React Doctor
+        working-directory: ./mobile
+        run: npm run react-doctor:changed
 
-    - name: Check changed mobile code with React Doctor
-      working-directory: ./mobile
-      run: npm run react-doctor:changed
+      - name: Check generated API client matches the committed spec
+        working-directory: ./mobile
+        run: |
+          npm run generate
+          git diff --exit-code src/api/generated || {
+            echo "::error::mobile/src/api/generated is out of date with openapi/openapi.json — run 'npm run generate' in mobile/ and commit the result"
+            exit 1
+          }
 
-    - name: Check generated API client matches the committed spec
-      working-directory: ./mobile
-      run: |
-        npm run generate
-        git diff --exit-code src/api/generated || {
-          echo "::error::mobile/src/api/generated is out of date with openapi/openapi.json — run 'npm run generate' in mobile/ and commit the result"
-          exit 1
-        }
+      # Generates the gitignored expo-env.d.ts and .expo/types (typed routes,
+      # CSS module declarations) that `expo start` produces locally — the
+      # documented way to typecheck in CI without a dev server.
+      - name: Generate Expo type declarations
+        working-directory: ./mobile
+        env:
+          APP_VARIANT: development
+        run: npx expo customize tsconfig.json
 
-    # Generates the gitignored expo-env.d.ts and .expo/types (typed routes,
-    # CSS module declarations) that `expo start` produces locally — the
-    # documented way to typecheck in CI without a dev server.
-    - name: Generate Expo type declarations
-      working-directory: ./mobile
-      env:
-        APP_VARIANT: development
-      run: npx expo customize tsconfig.json
+      - name: Typecheck
+        working-directory: ./mobile
+        run: npx tsc --noEmit
 
-    - name: Typecheck
-      working-directory: ./mobile
-      run: npx tsc --noEmit
+      - name: Lint
+        working-directory: ./mobile
+        run: npm run lint
 
-    - name: Lint
-      working-directory: ./mobile
-      run: npm run lint
-
-    # Coverage gated (K-3, ADR 003 — revisit fired): the coverageThreshold lives
-    # in mobile/jest.config.js (90% logic / 70% global floor); CI just runs the
-    # same `npm test -- --coverage` entrypoint as local — the gate is in config.
-    - name: Test
-      working-directory: ./mobile
-      run: npm test -- --coverage
+      # Coverage gated (K-3, ADR 003 — revisit fired): the coverageThreshold lives
+      # in mobile/jest.config.js (90% logic / 70% global floor); CI just runs the
+      # same `npm test -- --coverage` entrypoint as local — the gate is in config.
+      - name: Test
+        working-directory: ./mobile
+        run: npm test -- --coverage
