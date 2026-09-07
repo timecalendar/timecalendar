@@ -19,6 +19,7 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
 `@expo/ui` controls — SwiftUI menu on iOS, Compose dropdown on Android.
 
 ## 1. Manual VoiceOver pass (iOS) — DoD: Accessibility
+
 - **What:** With VoiceOver on, navigate to the **Profile→Settings entry control** and confirm it
   announces a meaningful role + label ("Settings", link/button). Open Settings; confirm the title
   is a heading, each control's label reads, and the **native picker** announces its current value,
@@ -30,11 +31,13 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
   swipe through the title, both controls, and open a picker.
 
 ## 2. Manual TalkBack pass (Android) — DoD: Accessibility
+
 - **What:** Same as #1 with TalkBack on Android (the Compose dropdown's announcement).
 - **Why:** Same — platform-specific screen-reader behavior, especially the native picker.
 - **How to verify:** Settings → Accessibility → TalkBack on; open Settings via the Profile entry.
 
 ## 3. On-device native-picker feel / native-correctness — iOS — DoD: Native correctness
+
 - **What:** Eyeball the theme + language pickers on iOS (SwiftUI menu): opening/closing feels
   native, the selected option is marked, selecting **immediately** re-themes (theme) / switches
   language (language) with no apply step, light **and** dark mode both correct. Safe areas
@@ -46,11 +49,13 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
   Appearance and repeat.
 
 ## 4. On-device native-picker feel / native-correctness — Android — DoD: Native correctness
+
 - **What:** Same as #3 on Android (Compose dropdown, Material feel, light + dark).
-- **Why:** Same — both platforms reviewed against the *platform*, not the Flutter Settings page.
+- **Why:** Same — both platforms reviewed against the _platform_, not the Flutter Settings page.
 - **How to verify:** Open Settings on an Android device/emulator, exercise both pickers, light then dark.
 
 ## 5. Touch-target on-device check — Profile→Settings entry — DoD: Accessibility
+
 - **What:** Confirm the Profile→Settings entry control is comfortably tappable by finger
   (≥ 44pt iOS / 48dp Android). The layout supplies padding + `hitSlop`; verify it on a device, not
   by eye in a simulator.
@@ -59,6 +64,7 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
 - **How to verify:** Tap the entry control repeatedly at its edges; it should activate reliably.
 
 ## 6. Color-contrast eyeball — both schemes — DoD: Accessibility / Native correctness
+
 - **What:** Confirm the screen text (title, control labels) on the background is comfortably legible
   in light and dark. The token pairs are documented in `mobile/src/theme/tokens.ts` (WCAG-AA pairs)
   — confirm the rendered screen matches a documented AA pair. The native picker carries its own OS
@@ -68,6 +74,7 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
 - **How to verify:** View Settings in both schemes against the documented pairs.
 
 ## 7. Performance / no-jank — low-end Android — DoD: Performance
+
 - **What:** On a low-end Android device (or throttled emulator), open Settings and switch
   theme/language. Confirm no jank: the re-theme (whole-app re-render) and the language switch are
   smooth, the picker opens/closes without stutter.
@@ -76,6 +83,7 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
 - **How to verify:** Toggle theme and language a few times; transitions feel instant.
 
 ## 8. E2E — the Settings flow (+ schools non-regression) — DoD: E2E
+
 - **What:** Run `mobile/.maestro/appearance-settings.yaml` (deep-link → assert the localized title +
   the two picker `testID`s render) on **iOS and Android**, and confirm `mobile/.maestro/schools.yaml`
   still passes. Optionally evaluate whether a native-picker toggle round-trip is reliable enough on
@@ -85,8 +93,8 @@ Settings either from the **Profile tab → Settings** entry control, or by deep 
   render + reachability on the real native render (a native `@expo/ui` failure would blank/crash the
   screen). The control→hook wiring is intentionally NOT driven through the native picker (not
   deterministically addressable across platforms — D5).
-- **How to verify:** Run `ci-mobile-e2e.yml` (on-demand — PR with the `run-e2e` label, or on
-  main/production when mobile/openapi changed). Both flows must pass on both platforms.
+- **How to verify:** Manually dispatch `ci-mobile-e2e.yml` with the ref/SHA under test, or use
+  the next relevant daily health run. Both flows must pass on both platforms.
 
 ---
 

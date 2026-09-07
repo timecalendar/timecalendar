@@ -8,17 +8,18 @@ loop). The block is self-orienting and idempotent: each wake it re-derives state
 criteria are met.
 
 **This ports the Flutter `user_calendars_screen`** (`app/lib/modules/calendar/screens/user_calendars_screen.dart`
-+ `widgets/user_calendars_view/`) — the "Mes calendriers" list: per-calendar visibility
-checkbox, delete, and an add affordance. It is a **parity gap**: Phase 03 shipped the durable
-`user_calendars` token store (ADR 018) and its reactive read (`useUserCalendars()`) but
-**deliberately shipped no list UI** ("no list UI ships this phase" — 03 exit criteria). This
-ship is the missing management surface. It belongs in the Phase 07 (auxiliary features) parity
-bucket but was never enumerated as a step there — this prompt is its home.
+
+- `widgets/user_calendars_view/`) — the "Mes calendriers" list: per-calendar visibility
+  checkbox, delete, and an add affordance. It is a **parity gap**: Phase 03 shipped the durable
+  `user_calendars` token store (ADR 018) and its reactive read (`useUserCalendars()`) but
+  **deliberately shipped no list UI** ("no list UI ships this phase" — 03 exit criteria). This
+  ship is the missing management surface. It belongs in the Phase 07 (auxiliary features) parity
+  bucket but was never enumerated as a step there — this prompt is its home.
 
 **Unlike the Phase-05 ships, this writes NO new irreplaceable data and adds NO schema:** the
 whole data layer already exists (`repository.remove` / `repository.setVisible` / reactive
 `useUserCalendars()`, all tested — `mobile/src/features/calendar-sources/data/user-calendars/`).
-The one real *behavioral* change is that the visibility checkbox must filter events out of the
+The one real _behavioral_ change is that the visibility checkbox must filter events out of the
 timeline. Everything else is a screen over an existing seam.
 
 **Decisions baked in** (confirmed with the user 2026-07-05; the delete pattern decided by the
@@ -44,7 +45,7 @@ three-reviewer `/iterate-screen` panel — native / RN / a11y):
   mirrors the house hide-chooser (`event-details-screen.tsx:77`, `jest.spyOn(Alert, "alert")`
   tested) and the `hidden-events` row grammar. Rationale the panel converged on: swipe-/long-
   press-only are exclusionary for screen-reader/motor users (WCAG 2.5.1) and **untestable under
-  the 90% branch-coverage gate**; an undo-snackbar would *lie* because `remove()` is irreversible.
+  the 90% branch-coverage gate**; an undo-snackbar would _lie_ because `remove()` is irreversible.
   Zero new dependencies, no schema change.
 - **iOS swipe-to-delete IS in this ship** (iOS-only, the native reviewer's platform-pure reflex) —
   `ReanimatedSwipeable` trailing red action, gated by the SAME `Alert` (full-swipe opens the
@@ -104,7 +105,7 @@ Once the change is code-complete and green, run the /iterate-screen loop on user
 1. ORIENT: git fetch origin; check git log origin/main + openspec/changes/archive/ to see whether the ship already merged; read this doc.
 2. If the ship is merged AND the screen has been through /iterate-screen to a clean device pass AND the inbox notes exist → verify EXIT CRITERIA (below), tick it in docs/react-native-migration/01-roadmap/07-auxiliary-features.md (add the enumerated step if missing), STOP the loop (no further wakeup), and report.
 3. Otherwise advance the ship: if not yet code-complete/merged, run the full /ship pipeline (.claude/commands/ship.md) — delegate plan/apply/simplify/review to the sub-agents; you own only git/PR/merge. If merged but the screen hasn't been iterated to a clean device pass, run /iterate-screen next.
-4. Ship invariants: reviewer is the sole merge gate (cap 3 review rounds, then inbox-escalate + leave the PR draft only if truly stuck); wait for GREEN with gh pr checks <pr> --watch before gh pr merge --squash --delete-branch (NEVER --auto — main is unprotected); do NOT add the run-e2e label (E2E runs on main only); optionally run Maestro LOCALLY via mobile/e2e/run_e2e.sh for confidence (add/toggle/delete a calendar, confirm a hidden calendar's events leave the timeline).
+4. Ship invariants: reviewer is the sole merge gate (cap 3 review rounds, then inbox-escalate + leave the PR draft only if truly stuck); wait for GREEN with gh pr checks <pr> --watch before gh pr merge --squash --delete-branch (NEVER --auto — main is unprotected); native E2E is not a feature gate — deliberately dispatch the exact ref/SHA for diagnosis when useful, while the next relevant daily attempt owns ongoing health.
 5. After a successful merge, schedule the next wakeup (dynamic /loop) to run the /iterate-screen device loop. After a genuine hard block you can't resolve, inbox it and continue rather than halting.
 
 ## EXIT CRITERIA

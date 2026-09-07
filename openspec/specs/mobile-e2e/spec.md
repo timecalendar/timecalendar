@@ -3,7 +3,50 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-test-harness. Update Purpose after archive.
+
 ## Requirements
+
+### Requirement: Native E2E is a conditional health signal
+
+The native mobile E2E workflow SHALL be an informational health signal rather than an ordinary feature-merge gate. It SHALL expose exactly one daily schedule and a manual dispatch, SHALL have no push or pull-request trigger, and SHALL NOT use a label convention to run on feature-branch updates. Scheduled or manual failures SHALL preserve diagnostic evidence without blocking unrelated feature delivery.
+
+#### Scenario: An ordinary feature pull request uses only fast gates
+
+- **WHEN** a pull request changes mobile code, a Maestro flow, server behavior, or the OpenAPI contract
+- **THEN** the native E2E workflow is not invoked
+- **AND** the baseline workflow still runs applicable unit, component, integration, type, lint, selector, harness, and workflow-structure checks
+
+#### Scenario: A relevant main change receives one daily platform pair
+
+- **WHEN** the daily schedule finds a relevant path changed on `main` since the preceding scheduled attempt
+- **THEN** one Android job and one iOS job run against the same resolved `main` commit
+
+#### Scenario: Manual diagnosis selects an immutable target
+
+- **WHEN** manual dispatch supplies a reachable ref or SHA
+- **THEN** preparation resolves it once and both native platforms run against that SHA regardless of changed paths
+- **AND** invalid input fails before native allocation
+
+#### Scenario: Native invocations do not overlap
+
+- **WHEN** a daily or manual invocation starts while another is active
+- **THEN** workflow concurrency queues it without cancelling the in-progress evidence collection
+
+### Requirement: Scheduled change detection uses the previous attempt boundary
+
+The scheduled controller SHALL compare current `main` with the `head_sha` of the newest preceding scheduled attempt of the same workflow, regardless of conclusion. It SHALL use read-only Actions metadata and repository contents, run both platforms when no prior attempt exists, and SHALL NOT substitute a fixed elapsed-time window or last-success checkpoint. Relevant paths SHALL cover `mobile/**`, `openapi/**`, `server/**`, the shared E2E lifecycle and dummy-key generator, `.nvmrc`, and the native workflow itself.
+
+#### Scenario: A day without relevant changes skips native allocation
+
+- **WHEN** no relevant path changed since the preceding scheduled attempt
+- **THEN** preparation records the boundary and skip reason
+- **AND** the server-build, Android, and iOS jobs do not run
+
+#### Scenario: An unusable comparison fails visibly
+
+- **WHEN** the preceding attempt SHA cannot be compared with current `main`
+- **THEN** preparation fails rather than silently reporting no changes
+
 ### Requirement: Real-round-trip Maestro flow
 
 The mobile app SHALL have Maestro flows that prove the app ↔ server contract end to end
@@ -142,7 +185,7 @@ omitted.
 
 ### Requirement: E2E builds reach the local server
 
-The `development` app variant SHALL be able to reach a server on the host machine over plain HTTP. Every Android and iOS native E2E prebuild and release-compilation step SHALL explicitly resolve `APP_VARIANT=development`, `BACKEND_ENVIRONMENT_CAPABILITY=development`, and the platform-correct base URL (`http://10.0.2.2:3005` on Android, `http://localhost:3005` on iOS) via `EXPO_PUBLIC_API_URL`. Android cleartext traffic and iOS local-networking ATS exceptions SHALL remain enabled for that variant only. Focused workflow structure proof SHALL fail if any platform or build phase omits, duplicates, or misstates one of those inputs. That proof SHALL run in a gate that fires on a change to the native E2E workflow file alone: the baseline mobile workflow SHALL include the native E2E workflow file in its path filter and SHALL invoke both the workflow structure proof and the harness proof itself, because the native jobs that also invoke them are label-gated and therefore do not run on every pull request.
+The `development` app variant SHALL be able to reach a server on the host machine over plain HTTP. Every Android and iOS native E2E prebuild and release-compilation step SHALL explicitly resolve `APP_VARIANT=development`, `BACKEND_ENVIRONMENT_CAPABILITY=development`, and the platform-correct base URL (`http://10.0.2.2:3005` on Android, `http://localhost:3005` on iOS) via `EXPO_PUBLIC_API_URL`. Android cleartext traffic and iOS local-networking ATS exceptions SHALL remain enabled for that variant only. Focused workflow structure proof SHALL fail if any platform or build phase omits, duplicates, or misstates one of those inputs. The baseline mobile workflow SHALL watch the native workflow and invoke both workflow-structure and harness proof because native jobs do not run on ordinary pull requests.
 
 #### Scenario: A release-config dev-variant build calls the harness server
 
@@ -158,8 +201,7 @@ The `development` app variant SHALL be able to reach a server on the host machin
 
 #### Scenario: A change to the native E2E workflow alone is still gated
 
-- **WHEN** a pull request modifies only the native E2E workflow file, so its label-gated
-  native jobs do not run
+- **WHEN** a pull request modifies only the native E2E workflow file
 - **THEN** the baseline mobile workflow runs anyway and executes both the workflow structure
   proof and the harness proof, failing the pull request rather than surfacing the break on
   the default branch
@@ -176,12 +218,7 @@ The `development` app variant SHALL be able to reach a server on the host machin
 
 ### Requirement: CI runs Maestro on both platforms
 
-CI SHALL run every top-level Maestro flow on an Android emulator (Linux runner) and an iOS
-simulator (macOS runner), using release-config development-variant binaries built on the
-runners—no Metro and no EAS. Both jobs SHALL install the same explicitly pinned Maestro
-version, print it, and preserve debug output and server logs on failure. A recovery PR that
-changes this build contract SHALL pass the baseline gate and both native jobs on one exact
-reviewed head, and its handoff SHALL record that commit plus direct run/job links.
+Every selected native E2E invocation SHALL run every top-level Maestro flow on an Android emulator and an iOS simulator using release-config development-variant binaries built on the runners, with no Metro or EAS. Preparation SHALL resolve one immutable target before fan-out; the server image and both platform jobs SHALL check out and identify that SHA. Both jobs SHALL install the same explicitly pinned Maestro version, print it, and preserve debug output and server logs on failure.
 
 #### Scenario: Android e2e builds within explicit hosted-runner bounds
 
@@ -210,12 +247,11 @@ reviewed head, and its handoff SHALL record that commit plus direct run/job link
 - **THEN** the job remains failed and uploads Maestro debug output plus server logs without
   introducing secrets
 
-#### Scenario: One exact head proves seeded local routing on both platforms
+#### Scenario: Both platforms consume one preparation decision
 
-- **WHEN** the recovery PR is ready for review
-- **THEN** its baseline gate and both named native jobs report success for the same commit SHA
-- **AND** the flow set completes seeded calendar import through the real local server and the full calendar-family round trip — agenda switch, seeded-title assertion, event details, hide/un-hide — before later B10 assertions
-- **AND** the issue handoff records the exact SHA and direct run/job links, and names any flow that remains blocked by a separately ticketed stale selector rather than reporting the full set green
+- **WHEN** preparation selects a scheduled or manual invocation
+- **THEN** server build, Android, and iOS depend on its `should_run` output and resolved SHA
+- **AND** neither platform independently resolves a mutable branch or applies a different path condition
 
 #### Scenario: An assertion fails while the application was never foregrounded
 
@@ -357,19 +393,6 @@ top-level flow in a fresh Maestro process and SHALL NOT resume within an epoch.
 - **WHEN** the harness is invoked without the explicit iOS startup-attempt option
 - **THEN** each top-level flow is attempted exactly once
 
-### Requirement: Main CI supplies terminal native proof
-
-The recovery SHALL not be considered complete until a `main` SHA containing onboarding merge
-`482f134f` records `SUCCESS` for both `Run mobile E2E (iOS)` and
-`Run mobile E2E (Android)`, and the run includes the current onboarding flow without any flow
-being ignored or optional.
-
-#### Scenario: Both post-merge jobs prove the recovered gate
-
-- **WHEN** the recovery change is merged to a `main` SHA descending from the onboarding merge
-- **THEN** both named native jobs complete successfully and their direct job links are
-  recorded before the recovery issue closes
-
 ### Requirement: A rename round trip proves the server converged, not just the local row
 
 The suite SHALL carry a `user-calendar-rename.yaml` flow that renames a calendar through the UI and
@@ -403,8 +426,9 @@ title string and its Save control SHALL be distinguishable from the menu's "Rena
 live elements share one anchored selector.
 
 The flow SHALL be cross-platform (no per-platform selector fork beyond the existing optional iOS
-"Open" tap) and SHALL run under the existing `run_e2e.sh` folder run. It is native-gate work: it
-SHALL be landed without blocking the pull request on an emulator run, since Maestro runs on `main`.
+"Open" tap) and SHALL run under the existing `run_e2e.sh` folder run. It is native-health work:
+its pull request SHALL rely on baseline selector/harness/structure proof and SHALL NOT require
+emulator execution to merge; the next relevant daily run or deliberate manual dispatch exercises it.
 
 `mobile/e2e/README.md` SHALL record that step 2's baseline assertion requires a freshly seeded
 server — CI re-seeds every run, but a local re-run without re-running the seed will fail there
@@ -689,7 +713,7 @@ interaction shared by both platforms, with no per-platform selector or branch.
 #### Scenario: A measured first-page pagination traversal exceeds the default bound
 
 - **WHEN** a real-server Activity flow must traverse to the final row of its 50-row first page,
-  and a native gate shows both platforms still making forward progress when the default
+  and a native health run shows both platforms still making forward progress when the default
   60-second scroll bound expires
 - **THEN** only that row-50 `tie-higher` traversal SHALL receive the measured 120-second bound
 - **AND** the following `tie-lower` and `older-anchor` traversals SHALL remain at 60 seconds,
@@ -827,7 +851,7 @@ interaction shared by both platforms, with no per-platform selector or branch.
   and focused mutation proof SHALL reject moving it back inside the scroll, outside the avoiding
   view, before the scroll, duplicating it, or losing iOS `padding` or scroll tap-handling semantics
 - **AND** the institution screen and the shared programme sequence SHALL remain unchanged, so the
-  next native gate still proves the explicit visible CTA transition rather than a Return-key,
+  next native health run still proves the explicit visible CTA transition rather than a Return-key,
   keyboard-dismiss, coordinate, platform-fork, optional-route, or deep-link bypass
 
 #### Scenario: An exact controlled-input suffix survives both erase boundaries
@@ -873,4 +897,3 @@ The deterministic Maestro shell harness SHALL protect assertion-family recogniti
 - **WHEN** a failed first attempt writes a parseable `commands.json` containing an empty list
 - **THEN** the unmodified classifier SHALL treat the record as retryable and report `0 command(s) recorded, last=none status=none`
 - **AND** only forcing the explicit empty-list branch to return false among the four listed mutations SHALL make the record terminal
-

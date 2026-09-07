@@ -57,15 +57,15 @@ handbook.
 
 This is what must exist on the machine for the dev env and the pipelines to run.
 
-| Tool             | Version / location                                                                                                                                 | Notes                                                                                                                                                                                                                               |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js**      | `24.13.0` (pinned in `.nvmrc`)                                                                                                                     | npm workspaces at the root (`web`, `openapi/javascript`); `server/` and `mobile/` are **standalone** npm projects with their own lockfiles.                                                                                         |
-| **Docker**       | required                                                                                                                                           | Runs the dev-env services and is the lifecycle manager for the E2E server stack.                                                                                                                                                    |
-| **Flutter SDK**  | `3.41.9` stable, installed at **`$HOME/flutter`** (NOT on `PATH`)                                                                              | Invoke as `$HOME/flutter/bin/flutter`. Only needed for `app/` (legacy) work and the Flutter E2E harness.                                                                                                                        |
-| **JDK**          | **JDK 21** available (`/usr/lib/jvm/java-21-openjdk-amd64`); native Android mobile builds historically needed **JDK 17** + `ANDROID_HOME` exported | `ANDROID_HOME` is **unset by default** — export it (and the right `JAVA_HOME`) before `expo run:android`/Gradle. Pure `mobile/` CI checks (tsc/lint/jest) do **not** need the native toolchain.                                     |
-| **Maestro**      | 2.8.0 on `PATH` for mobile E2E                                                                                                                     | Install with `export MAESTRO_VERSION=2.8.0`, then `curl -fsSL https://get.maestro.mobile.dev \| bash`; add `$HOME/.maestro/bin` to `PATH` and verify with `maestro --version`. JVM-based, needs a JDK.                              |
-| **gh CLI**       | authenticated as **`paperclip-timecalendar[bot]`** via `GH_TOKEN`                                                                                  | The remote is HTTPS — `https://github.com/timecalendar/timecalendar.git`; no SSH, no host alias. The per-run token is a GitHub App installation token — see the delivery-identity subsection below.                                 |
-| **Git identity** | `paperclip-timecalendar[bot] <325604666+paperclip-timecalendar[bot]@users.noreply.github.com>`                                                     | Set **repo-locally** in `.git/config` and inherited by every worktree. The host's global git identity is a different, unrelated value that this overrides — never read the global config to confirm who you commit as.              |
+| Tool             | Version / location                                                                                                                                 | Notes                                                                                                                                                                                                                  |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Node.js**      | `24.13.0` (pinned in `.nvmrc`)                                                                                                                     | npm workspaces at the root (`web`, `openapi/javascript`); `server/` and `mobile/` are **standalone** npm projects with their own lockfiles.                                                                            |
+| **Docker**       | required                                                                                                                                           | Runs the dev-env services and is the lifecycle manager for the E2E server stack.                                                                                                                                       |
+| **Flutter SDK**  | `3.41.9` stable, installed at **`$HOME/flutter`** (NOT on `PATH`)                                                                                  | Invoke as `$HOME/flutter/bin/flutter`. Only needed for `app/` (legacy) work and the Flutter E2E harness.                                                                                                               |
+| **JDK**          | **JDK 21** available (`/usr/lib/jvm/java-21-openjdk-amd64`); native Android mobile builds historically needed **JDK 17** + `ANDROID_HOME` exported | `ANDROID_HOME` is **unset by default** — export it (and the right `JAVA_HOME`) before `expo run:android`/Gradle. Pure `mobile/` CI checks (tsc/lint/jest) do **not** need the native toolchain.                        |
+| **Maestro**      | 2.8.0 on `PATH` for mobile E2E                                                                                                                     | Install with `export MAESTRO_VERSION=2.8.0`, then `curl -fsSL https://get.maestro.mobile.dev \| bash`; add `$HOME/.maestro/bin` to `PATH` and verify with `maestro --version`. JVM-based, needs a JDK.                 |
+| **gh CLI**       | authenticated as **`paperclip-timecalendar[bot]`** via `GH_TOKEN`                                                                                  | The remote is HTTPS — `https://github.com/timecalendar/timecalendar.git`; no SSH, no host alias. The per-run token is a GitHub App installation token — see the delivery-identity subsection below.                    |
+| **Git identity** | `paperclip-timecalendar[bot] <325604666+paperclip-timecalendar[bot]@users.noreply.github.com>`                                                     | Set **repo-locally** in `.git/config` and inherited by every worktree. The host's global git identity is a different, unrelated value that this overrides — never read the global config to confirm who you commit as. |
 
 ### GitHub delivery identity: the **Paperclip GitHub App**
 
@@ -603,10 +603,10 @@ of concerns holds. The `ship` skill is the solo equivalent of the `/ship` comman
 
 ## 10. CI pipelines (`.github/workflows/`)
 
-| Workflow                | Trigger                                                                                                | What it gates                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`ci-mobile.yml`**     | push touching `mobile/**` or `openapi/**`                                                              | The fast `test-mobile` job: **generated-client drift check** (`npm run generate` must produce no diff in `src/api/generated`), generate Expo type decls (`npx expo customize tsconfig.json`), **`tsc --noEmit`**, **`npm run lint`** (`--max-warnings 0`), **`npm test -- --coverage`** (coverage gate in config). This is the gate the conductor watches for `mobile/` changes. |
-| **`ci-mobile-e2e.yml`** | on-demand: PRs with the **`run-e2e`** label; always on `main`/`production` when mobile/openapi changed | Native Maestro E2E on an Android emulator (KVM) and an iOS simulator (macOS runner). Slow (~20–30 min/platform). Builds its own server image.                                                                                                                                                                                                                                    |
+| Workflow                | Trigger                                                                               | What it gates                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`ci-mobile.yml`**     | push touching `mobile/**` or `openapi/**`                                             | The fast `test-mobile` job: **generated-client drift check** (`npm run generate` must produce no diff in `src/api/generated`), generate Expo type decls (`npx expo customize tsconfig.json`), **`tsc --noEmit`**, **`npm run lint`** (`--max-warnings 0`), **`npm test -- --coverage`** (coverage gate in config). This is the gate the conductor watches for `mobile/` changes. |
+| **`ci-mobile-e2e.yml`** | daily when relevant changes landed on `main`; manual dispatch with a required ref/SHA | Informational native Maestro health on Android and iOS. Preparation compares the preceding scheduled attempt, resolves one SHA, and skips native allocation when nothing relevant changed. Slow (~20–30 min/platform); builds its own server image.                                                                                                                              |
 
 The native workflow pins and prints Maestro 2.8.0 in both jobs. Android bounds
 the Release Gradle build to 3072 MiB heap, 1024 MiB Metaspace, two workers, and
@@ -614,19 +614,24 @@ no daemon. iOS prints the Xcode path/version and available plus selected
 simulator name, UDID, and runtime. Local shell/static checks prove harness and
 workflow control flow, including the complete `APP_VARIANT=development`,
 `BACKEND_ENVIRONMENT_CAPABILITY=development`, and platform-local URL contract in
-every prebuild and release-compilation step. A labeled PR run with baseline,
-Android, and iOS checks passing on the same exact head provides definitive
-simulator/emulator proof for that PR head on this non-virtualized host; when a PR
-does not carry the label, only the path-triggered post-merge `main` run provides
-that native proof.
+every prebuild and release-compilation step. The scheduled controller treats
+`mobile/**`, `openapi/**`, `server/**`, the shared E2E lifecycle/key generator,
+`.nvmrc`, and its own workflow as relevant. It compares against the preceding
+scheduled run's `head_sha` regardless of conclusion; no predecessor runs both
+platforms, while an unusable boundary fails visibly. Manual dispatch resolves the
+required ref once and always selects both platforms. All invocations serialize
+without cancellation, and failures retain each platform's Maestro and server-log
+artifacts. These results are diagnostic maintenance evidence, not ordinary
+feature-merge proof.
 | **`ci-build-deploy.yml`** | every push (deploy self-gates to main/production) | Server/web images, server tests, deploy. Its `test` job runs, against the image built from the same SHA: `Run tests` (`npm run test`), **`Run server E2E tests`** (`npm run test:e2e -- --runInBand` — the in-process Nest HTTP smoke of §7; a missing config, zero discovered specs, or a failed assertion fails at that named step), `Verify server image runtime lifecycle`, and the OpenAPI drift check. |
 | **`ci-flutter.yml`** | main/production pushes touching `app/**` | Legacy Flutter `test-app` + `test-e2e` (R-5 bounded maintenance). |
 | **`delete-old-images.yaml`** | daily schedule and manual dispatch | GHCR retention for the server and web packages. Scheduled runs delete eligible old versions; manual runs are always dry-run. |
 
-**Per the project owner, `run-e2e` is normally NOT added to PRs — native E2E runs on
-`main` only** (it is slow). For extra confidence on runtime-heavy changes, run Maestro
-locally instead (where the host supports it). Path-filtered jobs that are skipped do
-not report a status; none are _required_ checks today.
+The native workflow has no pull-request or push trigger. For E2E-focused work or
+diagnosis, dispatch it manually with the exact implementation ref/SHA; ordinary
+pull requests rely on baseline selector, harness, workflow-structure, type, lint,
+unit/component, and integration checks. Scheduled failures are maintenance signals
+and do not block unrelated delivery.
 
 ### GHCR retention contract
 
@@ -669,7 +674,7 @@ Three layers, each independent:
    already public in the history, so reading them discloses nothing and configures
    nothing. Platform and bot identities contribute no vocabulary, and neither does a
    role local part such as `noreply`, which identifies nobody. That is a rule about what
-   the layer *derives*, never about what it *inspects*: every record, commit headers
+   the layer _derives_, never about what it _inspects_: every record, commit headers
    included, is matched against all three layers, so a person re-pushing under a forge
    address the structural layer allows is still caught by the derived one.
 2. **Structural** — shapes, not values: an address on a domain that is not allowlisted,
@@ -679,7 +684,7 @@ Three layers, each independent:
    absence degrades coverage and never disables layers 1–2. Every run logs which layers
    were active, as counts only, so its presence is verifiable from the log alone.
 
-   Each nonblank line is a regular expression, optionally followed by ` :: ` and a probe
+   Each nonblank line is a regular expression, optionally followed by `::` and a probe
    string that the expression must match. The scanner splits on the first delimiter, so
    the probe may contain it; a pattern that needs to match the delimiter can express a
    colon with a character class. Entries are separated only by newlines because commas

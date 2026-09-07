@@ -5,7 +5,10 @@ anything that does not apply.
 
 - `npx tsc --noEmit`, lint, formatting, and tests pass.
 - Logic meets the 90% coverage threshold and the project meets the 70% global floor.
-- A Maestro happy path covers user-facing behavior on iOS and Android when practical.
+- A meaningful shared Maestro happy path is committed for user-facing behavior when practical;
+  baseline selector, harness, and workflow-structure checks pass. Native Android/iOS execution is
+  scheduled or deliberately dispatched health evidence, not ordinary feature-merge proof (ADR
+  [055](./decisions/055-native-e2e-daily-health-signal.md)).
 - User-facing text is localized in French and English with typed key parity.
 - VoiceOver and TalkBack behavior, focus order, labels, large text, contrast, reduced
   motion, and 44pt iOS / 48dp Android targets are checked on-device.

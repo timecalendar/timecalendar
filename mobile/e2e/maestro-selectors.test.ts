@@ -11,7 +11,7 @@ import ts from "typescript"
 // Every `id:` selector in mobile/.maestro/**.yaml must resolve to a testID that
 // really exists in mobile/src. Three flows had rotted silently — `calendar-view-agenda`,
 // `onboarding-welcome-url-cta` and `onboarding-school-filter` were each deleted by a
-// UI-rework PR that passed the baseline gate and never ran the on-demand native gate.
+// UI-rework PR that passed the baseline gate before the next native health run.
 // run_e2e.sh stops at the first failing flow, so one stale id masks every later flow
 // and costs a full native CI cycle to discover. This guard runs in the BASELINE gate,
 // which is the point: it catches the break in the PR that causes it.

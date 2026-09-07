@@ -1,35 +1,147 @@
 name: CI mobile E2E
 
-# Native mobile end-to-end (Maestro on a real emulator/simulator). These jobs
-# are slow (cold native build + device boot ~20-30 min each), so they are
-# on-demand:
-#   - Pull requests: run ONLY when the PR carries the `run-e2e` label. Add the
-#     label to opt in; every subsequent push to the PR re-runs while it's set.
-#   - main / production: always run, but only when mobile or the shared OpenAPI
-#     spec changed (path filter below).
+# Native mobile end-to-end (Maestro on a real emulator/simulator). This is a
+# daily/manual health signal, not a pull-request gate. The preparation job
+# avoids native allocation when no relevant change landed since the preceding
+# scheduled attempt and resolves one immutable commit before platform fan-out.
 #
 # This workflow is self-contained: it builds its own server image (cache-from
 # type=gha — a fast cache hit when ci-build-deploy already built it for this
 # SHA) rather than sharing an artifact across workflow runs.
 on:
-  push:
-    branches: [main, production]
-    paths:
-      - "mobile/**"
-      - "openapi/**"
-      - ".github/workflows/ci-mobile-e2e.yml"
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref or commit SHA to test
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ci-mobile-e2e
+  cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Select native E2E target
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.select.outputs.should_run }}
+      target_sha: ${{ steps.select.outputs.target_sha }}
+      comparison_base: ${{ steps.select.outputs.comparison_base }}
+      reason: ${{ steps.select.outputs.reason }}
+    steps:
+      - name: Checkout selected target
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'main' }}
+          fetch-depth: 0
+
+      - name: Find preceding scheduled attempt
+        id: previous
+        if: github.event_name == 'schedule'
+        uses: actions/github-script@v8
+        env:
+          CURRENT_RUN_NUMBER: ${{ github.run_number }}
+          WORKFLOW_FILE: ci-mobile-e2e.yml
+        with:
+          script: |
+            const runs = await github.paginate(
+              github.rest.actions.listWorkflowRuns,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: process.env.WORKFLOW_FILE,
+                event: 'schedule',
+                branch: 'main',
+                per_page: 100,
+              },
+            );
+            const currentRunNumber = Number(process.env.CURRENT_RUN_NUMBER);
+            const previous = runs
+              .filter((run) => run.run_number < currentRunNumber)
+              .sort((left, right) => right.run_number - left.run_number)[0];
+            core.setOutput('head_sha', previous?.head_sha ?? '');
+            core.setOutput('run_number', previous?.run_number ?? '');
+
+      - name: Select execution decision
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_REF: ${{ inputs.ref }}
+          PREVIOUS_SHA: ${{ steps.previous.outputs.head_sha }}
+          PREVIOUS_RUN_NUMBER: ${{ steps.previous.outputs.run_number }}
+        run: |
+          set -euo pipefail
+          target_sha="$(git rev-parse HEAD^{commit})"
+          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+          echo "Resolved native E2E target: $target_sha"
+
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ]; then
+            [ -n "$MANUAL_REF" ] || {
+              echo 'Manual dispatch requires a non-empty ref input' >&2
+              exit 1
+            }
+            echo 'should_run=true' >> "$GITHUB_OUTPUT"
+            echo 'comparison_base=' >> "$GITHUB_OUTPUT"
+            echo 'reason=manual dispatch always runs both platforms' >> "$GITHUB_OUTPUT"
+            echo "Manual ref resolved to $target_sha; both platforms selected"
+            exit 0
+          fi
+
+          if [ -z "$PREVIOUS_SHA" ]; then
+            echo 'should_run=true' >> "$GITHUB_OUTPUT"
+            echo 'comparison_base=' >> "$GITHUB_OUTPUT"
+            echo 'reason=no preceding scheduled attempt; initializing health signal' >> "$GITHUB_OUTPUT"
+            echo 'No preceding scheduled attempt; both platforms selected'
+            exit 0
+          fi
+
+          git cat-file -e "$PREVIOUS_SHA^{commit}" || {
+            echo "Preceding scheduled target is unavailable: $PREVIOUS_SHA" >&2
+            exit 1
+          }
+          echo "comparison_base=$PREVIOUS_SHA" >> "$GITHUB_OUTPUT"
+          changed_paths="$(git diff --name-only "$PREVIOUS_SHA" "$target_sha")"
+          printf 'Comparing scheduled run %s (%s) to %s\n' \
+            "$PREVIOUS_RUN_NUMBER" "$PREVIOUS_SHA" "$target_sha"
+          printf '%s\n' "$changed_paths"
+
+          relevant=false
+          while IFS= read -r path; do
+            case "$path" in
+              mobile/*|openapi/*|server/*|ci/e2e-server.sh|ci/generate-dummy-firebase-key.sh|.nvmrc|.github/workflows/ci-mobile-e2e.yml)
+                relevant=true
+                break
+                ;;
+            esac
+          done <<< "$changed_paths"
+
+          if [ "$relevant" = true ]; then
+            echo 'should_run=true' >> "$GITHUB_OUTPUT"
+            echo 'reason=relevant changes since preceding scheduled attempt' >> "$GITHUB_OUTPUT"
+            echo 'Relevant changes found; both platforms selected'
+          else
+            echo 'should_run=false' >> "$GITHUB_OUTPUT"
+            echo 'reason=no relevant changes since preceding scheduled attempt' >> "$GITHUB_OUTPUT"
+            echo 'No relevant changes; native allocation skipped'
+          fi
+
   build-server:
     name: Build server image
-    # Push events (main/production) always run; PRs only with the run-e2e label.
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    needs: prepare
+    if: needs.prepare.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout selected target
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.target_sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -38,13 +150,13 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ./server
-          tags: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+          tags: ghcr.io/timecalendar/timecalendar:${{ needs.prepare.outputs.target_sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           load: true
 
       - name: Save server image to tarball
-        run: docker save ghcr.io/timecalendar/timecalendar:${{ github.sha }} -o /tmp/server-image.tar
+        run: docker save ghcr.io/timecalendar/timecalendar:${{ needs.prepare.outputs.target_sha }} -o /tmp/server-image.tar
 
       - name: Upload server image artifact
         uses: actions/upload-artifact@v7
@@ -55,7 +167,8 @@ jobs:
 
   e2e-mobile-android:
     name: Run mobile E2E (Android)
-    needs: build-server
+    needs: [prepare, build-server]
+    if: needs.prepare.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     # Emulator cold boot + a release Gradle build are both slow; KVM keeps the
     # emulator usable but the whole job is the long pole alongside the iOS one.
@@ -63,10 +176,12 @@ jobs:
     env:
       # Reuse the build-server artifact image — the shared lifecycle skips its
       # own build when E2E_SERVER_IMAGE is set (ci/e2e-server.sh).
-      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ github.sha }}
+      E2E_SERVER_IMAGE: ghcr.io/timecalendar/timecalendar:${{ needs.prepare.outputs.target_sha }}
     steps:
-      - name: Checkout main
+      - name: Checkout selected target
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.target_sha }}
 
       - name: Download server image artifact
         uses: actions/download-artifact@v8
@@ -178,8 +293,8 @@ jobs:
 
   e2e-mobile-ios:
     name: Run mobile E2E (iOS)
-    # Push events (main/production) always run; PRs only with the run-e2e label.
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    needs: prepare
+    if: needs.prepare.outputs.should_run == 'true'
     # macos-26 ships Xcode 26 (Swift 6.2). Required: Expo SDK 56 / RN pods
     # declare Swift tools 6.2, and macos-latest's default Xcode (16.x, Swift
     # 6.1) fails SPM resolution ("installed version is 6.1.0").
@@ -201,8 +316,10 @@ jobs:
       # (generous vs the sub-minute happy path, fails fast on a crash). Value in ms.
       MAESTRO_DRIVER_STARTUP_TIMEOUT: "240000"
     steps:
-      - name: Checkout main
+      - name: Checkout selected target
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.target_sha }}
 
       # JDK for Maestro (JVM-based).
       - name: Set up Java

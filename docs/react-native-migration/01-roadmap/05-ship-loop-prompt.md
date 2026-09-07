@@ -14,6 +14,7 @@ write paths must be correct and tested, and every new schema must be importer-re
 
 **Decisions baked in** (confirmed 2026-06-16, grounded in the Flutter `hidden_event` /
 `event_details` modules):
+
 - **Roadmap step 1 (personal events on the calendar) is ALREADY DONE** — it landed in Phase 04. The
   `useCalendarEvents` seam (`mobile/src/features/calendar/data/events.ts`) already merges
   `usePersonalEvents()` into day/week/agenda + home, with origin-keyed tap routing. Step 1 is a
@@ -72,7 +73,7 @@ personal_events is already importer-ready (ADR 011). Ship A confirms hidden_even
 2. FIRST wake only: confirm step 1 (personal events on the timeline) per the verify-only checkpoint above; tick the roadmap; do not ship it.
 3. If BOTH real ships (Hidden events, Checklists) are merged AND the inbox notes exist → verify the EXIT CRITERIA (personal events render alongside synced events; hide/un-hide works and persists; checklists persist per event; all pass full DoD on both platforms; all three irreplaceable schemas confirmed migration-ready). Tick the roadmap, then STOP the loop (do not schedule another wakeup) and report.
 4. Otherwise pick the FIRST unmerged ship (Hidden events → Checklists) and run the full `/ship` pipeline (see .claude/commands/ship.md). Delegate every phase to the sub-agents (change-planner / change-implementer / change-simplifier / change-reviewer). You own only git/PR/merge.
-5. Ship invariants: reviewer is the sole merge gate (cap 3 review rounds, then inbox-escalate + leave PR draft + skip to next only if truly stuck); wait for GREEN with `gh pr checks <pr> --watch` before `gh pr merge --squash --delete-branch` (NEVER `--auto` — main is unprotected); do NOT add the run-e2e label (E2E runs on main only) — for the data-write-heavy ships run Maestro LOCALLY via mobile/e2e/run_e2e.sh for extra confidence (a checklist/hidden state that survives a relaunch from local storage is the real proof).
+5. Ship invariants: reviewer is the sole merge gate (cap 3 review rounds, then inbox-escalate + leave PR draft + skip to next only if truly stuck); wait for GREEN with `gh pr checks <pr> --watch` before `gh pr merge --squash --delete-branch` (NEVER `--auto` — main is unprotected); native E2E is not a feature gate — deliberately dispatch the exact ref/SHA for data-write diagnosis when useful, while the next relevant daily attempt owns ongoing health.
 6. After a successful merge, schedule the next wakeup (dynamic /loop). After a genuine hard block you can't resolve, inbox it and continue to the next shippable item rather than halting.
 
 ## Stop-the-bleeding escape hatch (refactor over more features)

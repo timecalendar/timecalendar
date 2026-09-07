@@ -22,6 +22,7 @@ group step `timecalendar-dev://onboarding/groups?schoolId=<id>`. The school list
 server must be up (`ci/e2e-server.sh up`) for the read paths.
 
 ## 1. Manual VoiceOver pass (iOS) — DoD: Accessibility
+
 - **What:** With VoiceOver on, navigate the **school step** (the title heading, the search/filter
   input, each school row, the retry control in the error state) and the **nested group step** (the
   group tree — selectable leaf nodes and expandable branch nodes, the retry). Confirm each announces a
@@ -35,11 +36,13 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
   through it, select a school, swipe through the group tree, expand a branch.
 
 ## 2. Manual TalkBack pass (Android) — DoD: Accessibility
+
 - **What:** Same as #1 with TalkBack on Android.
 - **Why:** Same — platform-specific screen-reader behavior on the list + tree.
 - **How to verify:** Settings → Accessibility → TalkBack on; open the school step and the group step.
 
 ## 3. On-device nested-navigation feel / native-correctness — both platforms, light + dark — DoD: Native correctness
+
 - **What:** Push school → group and back, on iOS and Android, in light **and** dark. Confirm the
   Expo Router nested-stack push/back animation, the header/back affordance, and the screen transitions
   feel native; safe areas respected; the screens render scheme-appropriate `@/theme` tokens.
@@ -50,6 +53,7 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
   and repeat on both platforms.
 
 ## 4. Offline behavior on a real device — DoD: Performance / the persister's real proof
+
 - **What:** With the network on, load the school list (and open a school to load its groups). Then
   **kill the network** (airplane mode), **cold-launch** the app, and reopen the onboarding flow.
   Confirm the persisted query cache is restored and the last-fetched schools/groups render rather than
@@ -62,6 +66,7 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
   shows the error + retry — that's expected, not a failure.)
 
 ## 5. Touch-target by finger — DoD: Accessibility
+
 - **What:** Confirm the school rows, group leaf/branch nodes, the retry control, and the Profile entry
   link are comfortably tappable by finger (≥ 44pt iOS / 48dp Android) — on a device, not by eye in a
   simulator.
@@ -70,6 +75,7 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
 - **How to verify:** Tap each control at its edges; it should activate reliably.
 
 ## 6. Color-contrast eyeball — both schemes — DoD: Accessibility / Native correctness
+
 - **What:** Confirm the list/group text on the background, the filter input text/placeholder, and the
   error/empty status text are comfortably legible in light and dark, against the documented WCAG-AA
   pairs in `mobile/src/theme/tokens.ts`.
@@ -79,6 +85,7 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
   against the documented pairs.
 
 ## 7. Performance / no-jank — low-end Android — DoD: Performance
+
 - **What:** On a low-end Android device (or throttled emulator), scroll the school list and expand a
   deep group tree (a school with nested groups, e.g. Université Gustave Eiffel). Confirm no jank: the
   `FlatList` scrolls smoothly, the filter narrows without stutter, the tree expands/collapses smoothly.
@@ -87,6 +94,7 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
   instant. Optionally capture a Reassure baseline for the list.
 
 ## 8. E2E — the onboarding read flow (+ settings/personal-events non-regression) — DoD: E2E
+
 - **What:** Run the new `mobile/.maestro/onboarding.yaml` (deep-link the school step → assert the
   seeded "My Gaming Academia" renders from the live `GET /schools`) on **iOS and Android**, and confirm
   `mobile/.maestro/settings.yaml` and `mobile/.maestro/personal-events.yaml` still pass and that
@@ -96,8 +104,8 @@ server must be up (`ci/e2e-server.sh up`) for the read paths.
 - **Why:** CI proves the query mapping + navigation wiring via Jest; the Maestro flow proves the full
   live read round-trip on the real stack (app → generated client → `customFetch` → NestJS → Postgres).
   The nested group step is intentionally NOT driven (group selectors vary by fixture — D5).
-- **How to verify:** Run `ci-mobile-e2e.yml` (on-demand — PR with the `run-e2e` label, or on
-  main/production when mobile/openapi changed). All three flows must pass on both platforms.
+- **How to verify:** Manually dispatch `ci-mobile-e2e.yml` with the ref/SHA under test, or use
+  the next relevant daily health run. All three flows must pass on both platforms.
 
 ---
 
@@ -123,19 +131,22 @@ The axes below are the **new on-device surface** ship 2 adds — extending the s
 duplicating them.
 
 ## S2.1 VoiceOver (iOS) — the new group surface — DoD: Accessibility
+
 - **What:** With VoiceOver on, on `…/onboarding/school` → tap a school → on the group step: confirm each
   leaf announces its **selected/unselected state** on toggle (tap a leaf, hear it become "selected"; tap
   again, hear it become "not selected"); the **confirm** control announces its role + label ("Confirm
   your group selection", button); confirming with **nothing selected** announces the guard ("Select at
   least one group."); focus order through a multi-pick tree (branches expand/collapse, leaves toggle).
-- **Why:** lint guarantees the props exist; only a real screen-reader pass proves the *announcements*
+- **Why:** lint guarantees the props exist; only a real screen-reader pass proves the _announcements_
   are correct and the multi-pick is usable non-visually.
 - **How to verify:** iOS device/simulator + VoiceOver; walk the group step end to end.
 
 ## S2.2 TalkBack (Android) — same as S2.1 — DoD: Accessibility
+
 - **What / Why / How:** as S2.1, on Android with TalkBack.
 
 ## S2.3 Native-correctness feel — toggle / confirm / full-stack dismissal — DoD: Native correctness
+
 - **What:** Toggle multiple leaves, confirm, and confirm the **whole onboarding Stack dismisses** back
   to the onboarding entry (the welcome surface) — not a single screen pop, not stranded on the school
   list. Both platforms, **light + dark**.
@@ -144,17 +155,20 @@ duplicating them.
 - **How to verify:** run the flow on iOS + Android, both schemes.
 
 ## S2.4 Touch-target by finger — leaf toggle + confirm — DoD: Accessibility
+
 - **What:** Each leaf toggle and the confirm control are comfortably tappable (≥44pt iOS / 48dp Android
   — `minHeight: 48` + `hitSlop` on the confirm).
 - **How to verify:** tap each by finger on a device.
 
 ## S2.5 Color-contrast — selected-leaf accent + confirm — DoD: Accessibility / Theming
+
 - **What:** The selected-leaf fill (`backgroundSelected` token) + the confirm control read correctly on
   `background`, both schemes, against the documented AA pairs in `src/theme/tokens.ts` (text on
   `backgroundSelected` is AAA in both schemes per the tokens block).
 - **How to verify:** eyeball on a device, both schemes.
 
 ## S2.6 E2E — the extended onboarding flow — DoD: E2E
+
 - **What:** Run the extended `mobile/.maestro/onboarding.yaml` (welcome → CTA → live `GET /schools` →
   the new **stable school-search** step) on **iOS and Android**, and confirm `settings.yaml` /
   `personal-events.yaml` still pass. The multi-select group toggle/confirm is **not** e2e-driven (D5 —

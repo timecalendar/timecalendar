@@ -165,5 +165,5 @@ checklist SHALL retain device-only iOS/Android evidence without blocking automat
 #### Scenario: Device-only behavior remains explicit
 
 - **WHEN** the change is ready for review on the no-KVM development host
-- **THEN** a stable Maestro flow is committed for simulator-capable `main` CI
+- **THEN** a stable Maestro flow is committed for the next relevant daily health run or a deliberate manual dispatch
 - **AND** the remaining human device checks are listed in the migration inbox note
