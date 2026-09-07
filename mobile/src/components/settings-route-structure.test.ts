@@ -23,9 +23,15 @@ describe("Settings route structure", () => {
   })
 
   it("redirects legacy Profile and More routes to canonical Settings", () => {
-    expect(route("profile.tsx")).toContain('<Redirect href="/settings" />')
-    expect(route("more.tsx")).toContain('<Redirect href="/settings" />')
+    expect(route("profile.tsx").trim()).toBe(
+      'import { Redirect } from "expo-router"\n\nexport default function ProfileCompatibilityRedirect() {\n  return <Redirect href="/settings" />\n}',
+    )
+    expect(route("more.tsx").trim()).toBe(
+      'import { Redirect } from "expo-router"\n\nexport default function MoreCompatibilityRedirect() {\n  return <Redirect href="/settings" />\n}',
+    )
     expect(route("(tabs)/_layout.tsx")).not.toContain("profile")
+    expect(route("profile.tsx")).not.toMatch(/useWindowDimensions|onLayout/)
+    expect(route("more.tsx")).not.toMatch(/useWindowDimensions|onLayout/)
   })
 
   it("keeps About as a thin feature route registered in the root Stack", () => {

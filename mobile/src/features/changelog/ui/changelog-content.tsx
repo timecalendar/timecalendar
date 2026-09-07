@@ -3,9 +3,10 @@ import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import type { ChangelogRelease } from "@/features/changelog/data"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 interface ChangelogContentProps {
   readonly releases: readonly ChangelogRelease[]
@@ -15,6 +16,7 @@ interface ChangelogContentProps {
 export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
   const { t } = useTranslation()
   const theme = useTheme()
+  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
 
   return (
     <SafeAreaView
@@ -23,10 +25,15 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
       style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
       <ScrollView
+        testID="changelog-scroll-owner"
+        onLayout={onLayout}
         contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: theme.background }}
       >
-        <View style={styles.content}>
+        <View
+          testID="changelog-responsive-content"
+          style={[laneStyle, styles.content]}
+        >
           {releases.map((release) => (
             <View
               key={release.version}
@@ -82,12 +89,10 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
-    alignItems: "center",
-    paddingHorizontal: Platform.OS === "ios" ? Spacing.three : Spacing.four,
     paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
   },
-  content: { width: "100%", maxWidth: MaxContentWidth, gap: Spacing.four },
+  content: { gap: Spacing.four },
   release: { gap: Spacing.three },
   items: { gap: Spacing.two },
   item: {

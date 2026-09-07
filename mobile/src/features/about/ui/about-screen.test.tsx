@@ -2,6 +2,7 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import * as Linking from "expo-linking"
 import { router } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
+import { StyleSheet } from "react-native"
 
 import { readApplicationInfo } from "@/features/about/data"
 import { recordUnknownError } from "@/firebase"
@@ -42,6 +43,23 @@ beforeEach(async () => {
 })
 
 describe("AboutScreen", () => {
+  it("uses standard sections with readable prose at tablet width", async () => {
+    const view = await render(<AboutScreen />)
+    await act(() =>
+      fireEvent(view.getByTestId("about-scroll-owner"), "layout", {
+        nativeEvent: { layout: { width: 1024, height: 0, x: 0, y: 0 } },
+      }),
+    )
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId("about-responsive-content").props.style,
+      ),
+    ).toMatchObject({ maxWidth: 928, paddingHorizontal: 64 })
+    expect(
+      StyleSheet.flatten(view.getByTestId("about-readable-copy").props.style),
+    ).toMatchObject({ maxWidth: 768, paddingHorizontal: 64 })
+  })
+
   it("renders English content in stable native groups without deferred rows", async () => {
     const view = await render(<AboutScreen />)
 

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { Host, Picker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -11,7 +12,7 @@ import {
   type CuratedTimezone,
   useTimezonePreference,
 } from "@/features/settings/prefs"
-import { MaxContentWidth, Spacing } from "@/theme"
+import { Spacing } from "@/theme"
 
 // The display-timezone picker screen (timezone design D8) — PRESENTATIONAL
 // (70% floor): the appearance-settings <Picker>/chrome pattern scaled to 11
@@ -38,39 +39,50 @@ const ZONE_LABEL_KEYS = {
 export default function TimezoneSettingsScreen() {
   const { t } = useTranslation()
   const timezone = useTimezonePreference()
+  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
 
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("settings.timezone.title") }} />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("settings.timezone.label")}
-          </ThemedText>
-          {/* testID on an RN-core View — the @expo/ui Android Picker drops the
+      <SafeAreaView
+        testID="timezone-layout-owner"
+        onLayout={onLayout}
+        style={styles.safeArea}
+        edges={["bottom", "left", "right"]}
+      >
+        <View
+          testID="timezone-responsive-content"
+          style={[laneStyle, styles.content]}
+        >
+          <View style={styles.control}>
+            <ThemedText type="smallBold">
+              {t("settings.timezone.label")}
+            </ThemedText>
+            {/* testID on an RN-core View — the @expo/ui Android Picker drops the
               prop (see appearance-settings-screen.tsx); the inner testID feeds
               the Jest mock's per-item ids. */}
-          <View testID="settings-timezone-picker">
-            <Host matchContents>
-              <Picker
-                testID="settings-timezone-picker"
-                appearance="menu"
-                selectedValue={timezone.preference}
-                onValueChange={timezone.setPreference}
-              >
-                <Picker.Item
-                  label={t("settings.timezone.automatic")}
-                  value="system"
-                />
-                {CURATED_TIMEZONES.map((zone) => (
+            <View testID="settings-timezone-picker">
+              <Host matchContents>
+                <Picker
+                  testID="settings-timezone-picker"
+                  appearance="menu"
+                  selectedValue={timezone.preference}
+                  onValueChange={timezone.setPreference}
+                >
                   <Picker.Item
-                    key={zone}
-                    label={t(ZONE_LABEL_KEYS[zone])}
-                    value={zone}
+                    label={t("settings.timezone.automatic")}
+                    value="system"
                   />
-                ))}
-              </Picker>
-            </Host>
+                  {CURATED_TIMEZONES.map((zone) => (
+                    <Picker.Item
+                      key={zone}
+                      label={t(ZONE_LABEL_KEYS[zone])}
+                      value={zone}
+                    />
+                  ))}
+                </Picker>
+              </Host>
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -86,8 +98,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
+  },
+  content: {
     paddingTop: Spacing.four,
     gap: Spacing.four,
   },

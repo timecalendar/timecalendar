@@ -6,6 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router } from "expo-router"
+import { StyleSheet } from "react-native"
 
 import type { ActivityLog, ActivityState } from "@/features/activity/data"
 import i18n from "@/i18n"
@@ -170,6 +171,32 @@ describe.each([
 })
 
 describe("ActivityScreen behavior", () => {
+  it.each([
+    [390, 24, 848],
+    [834, 64, 928],
+  ])(
+    "keeps the virtualized list in one measured standard lane at %ipx",
+    async (width, gutter, maxWidth) => {
+      mockUseActivityLogs.mockReturnValue({
+        logs: [populatedLog()],
+        loaded: true,
+      })
+      const view = await render(<ActivityScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("activity-layout-owner"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      const list = view.getByTestId("activity-section-list")
+      expect(
+        StyleSheet.flatten(list.props.contentContainerStyle),
+      ).toMatchObject({
+        maxWidth,
+        paddingHorizontal: gutter,
+      })
+    },
+  )
+
   it("composes the screen refresh hook into pull-to-refresh", async () => {
     mockUseActivityScreenRefresh.mockReturnValue({
       outcome: null,

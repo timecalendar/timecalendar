@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Alert } from "react-native"
+import { Alert, StyleSheet } from "react-native"
 
 import {
   getRememberedEmail,
@@ -40,6 +40,26 @@ beforeEach(async () => {
     reset,
   })
 })
+
+it.each([390, 768, 800, 1024])(
+  "keeps the keyboard-safe form in a readable lane at %ipx",
+  async (width) => {
+    const view = await render(<FeedbackScreen />)
+    await act(() =>
+      fireEvent(view.getByTestId("feedback-scroll-owner"), "layout", {
+        nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+      }),
+    )
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId("feedback-responsive-content").props.style,
+      ),
+    ).toMatchObject({
+      maxWidth: width < 600 ? 688 : 768,
+      paddingHorizontal: width < 600 ? 24 : 64,
+    })
+  },
+)
 
 it("normalizes scalar, array, empty, and bounded route params", () => {
   expect(normalizeFeedbackParam(" value ")).toBe("value")

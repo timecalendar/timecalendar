@@ -1,4 +1,11 @@
-import { render, screen, userEvent } from "@testing-library/react-native"
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+} from "@testing-library/react-native"
+import { StyleSheet } from "react-native"
 
 import { useSyncedEvents } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
@@ -66,6 +73,31 @@ beforeEach(() => {
 })
 
 describe("HiddenEventsScreen", () => {
+  it.each([
+    [390, 24, 848],
+    [1024, 64, 928],
+  ])(
+    "uses one measured standard list lane at %ipx",
+    async (width, gutter, maxWidth) => {
+      mockUseHiddenEvents.mockReturnValue({
+        uidHiddenEvents: [],
+        namedHiddenEvents: ["Algorithms"],
+      })
+      const view = await render(<HiddenEventsScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("hidden-events-layout-owner"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("hidden-events-responsive-content").props
+            .contentContainerStyle,
+        ),
+      ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
+    },
+  )
+
   it("renders the empty state when nothing is hidden", async () => {
     await render(<HiddenEventsScreen />)
     expect(screen.getByText("No hidden events.")).toBeTruthy()

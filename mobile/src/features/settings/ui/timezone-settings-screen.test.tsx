@@ -1,4 +1,5 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render } from "@testing-library/react-native"
+import { StyleSheet } from "react-native"
 
 import { CURATED_TIMEZONES, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { getString, remove } from "@/storage"
@@ -21,6 +22,23 @@ afterEach(() => {
 })
 
 describe("TimezoneSettingsScreen", () => {
+  it.each([
+    [800, 64, 768],
+    [1024, 64, 768],
+  ])("uses a capped readable lane at %ipx", async (width, gutter, maxWidth) => {
+    const view = await render(<TimezoneSettingsScreen />)
+    await act(() =>
+      fireEvent(view.getByTestId("timezone-layout-owner"), "layout", {
+        nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+      }),
+    )
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId("timezone-responsive-content").props.style,
+      ),
+    ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
+  })
+
   it("renders the localized control label and all 11 options", async () => {
     const { getByText, getByTestId } = await render(<TimezoneSettingsScreen />)
 

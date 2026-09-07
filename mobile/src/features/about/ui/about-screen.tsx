@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { readApplicationInfo } from "@/features/about/data"
 import {
@@ -15,7 +16,7 @@ import {
   SettingsSection,
 } from "@/features/settings/ui"
 import { recordUnknownError } from "@/firebase"
-import { MaxContentWidth, Spacing, useTheme } from "@/theme"
+import { Spacing, useTheme } from "@/theme"
 
 const PRIVACY_URL = "https://timecalendar.app/privacy-policy"
 const CONTACT_URL = "mailto:hello@timecalendar.app"
@@ -40,6 +41,8 @@ export function AboutScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const [linkFailed, setLinkFailed] = useState(false)
+  const standardLayout = useAdaptiveLayout("standard")
+  const readableLayout = useAdaptiveLayout("readable")
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
     context: string,
@@ -164,11 +167,22 @@ export function AboutScreen() {
     >
       <Stack.Screen options={{ title: t("about.title") }} />
       <ScrollView
+        testID="about-scroll-owner"
+        onLayout={(event) => {
+          standardLayout.onLayout(event)
+          readableLayout.onLayout(event)
+        }}
         style={{ backgroundColor: theme.background }}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.content}>
-          <View style={styles.blurb}>
+        <View
+          testID="about-responsive-content"
+          style={[standardLayout.laneStyle, styles.content]}
+        >
+          <View
+            testID="about-readable-copy"
+            style={[readableLayout.laneStyle, styles.blurb]}
+          >
             <ThemedText>{t("about.blurb.access")}</ThemedText>
             <ThemedText themeColor="textSecondary">
               {t("about.blurb.created")}
@@ -179,7 +193,7 @@ export function AboutScreen() {
               accessibilityLiveRegion="polite"
               accessibilityRole="alert"
               themeColor="textSecondary"
-              style={styles.linkError}
+              style={[readableLayout.laneStyle, styles.linkError]}
             >
               {t("about.linkError")}
             </ThemedText>
@@ -204,16 +218,12 @@ export function AboutScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scrollContent: {
-    alignItems: "center",
-    paddingHorizontal: Platform.OS === "ios" ? Spacing.three : Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.six,
   },
   content: {
-    width: "100%",
-    maxWidth: MaxContentWidth,
     gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
   },
-  blurb: { gap: Spacing.two, paddingHorizontal: Spacing.three },
-  linkError: { paddingHorizontal: Spacing.three },
+  blurb: { gap: Spacing.two },
+  linkError: {},
 })

@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { Host, Picker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -9,7 +10,7 @@ import {
   useLanguagePreference,
   useThemePreference,
 } from "@/features/settings/prefs"
-import { MaxContentWidth, Spacing } from "@/theme"
+import { Spacing } from "@/theme"
 
 // The Settings feature's presentational screen (A2 / TIM-131). It owns NO
 // preference logic — all state comes from A1's reactive hooks
@@ -27,15 +28,26 @@ export default function AppearanceSettingsScreen() {
   const { t } = useTranslation()
   const theme = useThemePreference()
   const language = useLanguagePreference()
+  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">{t("settings.title")}</ThemedText>
+      <SafeAreaView
+        testID="appearance-layout-owner"
+        onLayout={onLayout}
+        style={styles.safeArea}
+      >
+        <View
+          testID="appearance-responsive-content"
+          style={[laneStyle, styles.content]}
+        >
+          <ThemedText type="title">{t("settings.title")}</ThemedText>
 
-        <View style={styles.control}>
-          <ThemedText type="smallBold">{t("settings.theme.label")}</ThemedText>
-          {/* The testID lives on this RN-core View, not on <Picker>, because
+          <View style={styles.control}>
+            <ThemedText type="smallBold">
+              {t("settings.theme.label")}
+            </ThemedText>
+            {/* The testID lives on this RN-core View, not on <Picker>, because
               @expo/ui's Jetpack-Compose Picker (Picker.android.tsx) drops the
               `testID` prop entirely — it only forwards selectedValue /
               onValueChange / enabled / children to the native view, so on
@@ -47,47 +59,51 @@ export default function AppearanceSettingsScreen() {
               cross-platform anchor. The inner <Picker testID> is kept because
               the Jest mock derives each item's testID
               (`settings-theme-picker-item-<value>`) from it. */}
-          <View testID="settings-theme-picker">
-            <Host matchContents>
-              <Picker
-                testID="settings-theme-picker"
-                appearance="menu"
-                selectedValue={theme.preference}
-                onValueChange={theme.setPreference}
-              >
-                <Picker.Item
-                  label={t("settings.theme.system")}
-                  value="system"
-                />
-                <Picker.Item label={t("settings.theme.light")} value="light" />
-                <Picker.Item label={t("settings.theme.dark")} value="dark" />
-              </Picker>
-            </Host>
+            <View testID="settings-theme-picker">
+              <Host matchContents>
+                <Picker
+                  testID="settings-theme-picker"
+                  appearance="menu"
+                  selectedValue={theme.preference}
+                  onValueChange={theme.setPreference}
+                >
+                  <Picker.Item
+                    label={t("settings.theme.system")}
+                    value="system"
+                  />
+                  <Picker.Item
+                    label={t("settings.theme.light")}
+                    value="light"
+                  />
+                  <Picker.Item label={t("settings.theme.dark")} value="dark" />
+                </Picker>
+              </Host>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("settings.language.label")}
-          </ThemedText>
-          {/* See the theme picker above: the @expo/ui Android Picker drops
+          <View style={styles.control}>
+            <ThemedText type="smallBold">
+              {t("settings.language.label")}
+            </ThemedText>
+            {/* See the theme picker above: the @expo/ui Android Picker drops
               testID, so the cross-platform anchor lives on this RN-core View. */}
-          <View testID="settings-language-picker">
-            <Host matchContents>
-              <Picker
-                testID="settings-language-picker"
-                appearance="menu"
-                selectedValue={language.preference}
-                onValueChange={language.setPreference}
-              >
-                <Picker.Item
-                  label={t("settings.language.system")}
-                  value="system"
-                />
-                <Picker.Item label={t("settings.language.fr")} value="fr" />
-                <Picker.Item label={t("settings.language.en")} value="en" />
-              </Picker>
-            </Host>
+            <View testID="settings-language-picker">
+              <Host matchContents>
+                <Picker
+                  testID="settings-language-picker"
+                  appearance="menu"
+                  selectedValue={language.preference}
+                  onValueChange={language.setPreference}
+                >
+                  <Picker.Item
+                    label={t("settings.language.system")}
+                    value="system"
+                  />
+                  <Picker.Item label={t("settings.language.fr")} value="fr" />
+                  <Picker.Item label={t("settings.language.en")} value="en" />
+                </Picker>
+              </Host>
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -103,8 +119,8 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
+  },
+  content: {
     paddingTop: Spacing.four,
     gap: Spacing.four,
   },
