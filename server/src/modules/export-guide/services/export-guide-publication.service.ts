@@ -4,12 +4,18 @@ import { createInitialExportGuideCatalogue } from "modules/export-guide/data/ini
 import {
   EXPORT_GUIDE_PROVIDER_SLUG_PATTERN,
   ExportGuideBundle,
-  ExportGuideCatalogueV1,
+  ExportGuideImageRole,
+  ExportGuideImageV1,
 } from "modules/export-guide/models/export-guide.model"
 import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-guide-catalogue.store"
 import { ExportGuideSchoolRepository } from "modules/export-guide/repositories/export-guide-school.repository"
 import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import { ExportGuideValidationError } from "modules/export-guide/validation/export-guide-validation.error"
+
+type AssetDeclaration = {
+  image: ExportGuideImageV1
+  role: ExportGuideImageRole
+}
 
 @Injectable()
 export class ExportGuidePublicationService {
@@ -38,15 +44,7 @@ export class ExportGuidePublicationService {
     )
       throw new ExportGuideValidationError("school_provider_slug")
 
-    const assets = new Map<
-      string,
-      {
-        image: NonNullable<
-          ExportGuideCatalogueV1["providers"][number]["thumbnail"]
-        >
-        role: "thumbnail" | "page"
-      }
-    >()
+    const assets = new Map<string, AssetDeclaration>()
     for (const catalogue of Object.values(catalogues)) {
       for (const provider of catalogue.providers) {
         if (provider.thumbnail)
@@ -82,19 +80,9 @@ export class ExportGuidePublicationService {
   }
 
   private addAsset(
-    assets: Map<
-      string,
-      {
-        image: NonNullable<
-          ExportGuideCatalogueV1["providers"][number]["thumbnail"]
-        >
-        role: "thumbnail" | "page"
-      }
-    >,
-    image: NonNullable<
-      ExportGuideCatalogueV1["providers"][number]["thumbnail"]
-    >,
-    role: "thumbnail" | "page",
+    assets: Map<string, AssetDeclaration>,
+    image: ExportGuideImageV1,
+    role: ExportGuideImageRole,
   ): void {
     const existing = assets.get(image.url)
     if (existing) {
