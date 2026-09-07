@@ -1,4 +1,5 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render } from "@testing-library/react-native"
+import { StyleSheet } from "react-native"
 
 import { useNotificationPreferences } from "@/features/notifications/data"
 
@@ -41,6 +42,27 @@ beforeEach(() => {
 })
 
 describe("NotificationSettingsScreen", () => {
+  it.each([
+    [599, 24, 688],
+    [600, 64, 768],
+  ])(
+    "switches readable-lane gutters at %ipx",
+    async (width, gutter, maxWidth) => {
+      const view = await render(<NotificationSettingsScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("notifications-layout-owner"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("notifications-layout-owner").props.children.props
+            .style,
+        ),
+      ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
+    },
+  )
+
   it("renders the localized title + control labels (not raw keys)", async () => {
     const { getByText } = await render(<NotificationSettingsScreen />)
     expect(getByText("Notifications")).toBeTruthy()

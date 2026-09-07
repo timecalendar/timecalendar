@@ -72,7 +72,7 @@ export function DevImportScreen() {
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
+        <View testID="dev-import-content" style={styles.content}>
           {!isDev ? (
             <ThemedText
               themeColor="textSecondary"

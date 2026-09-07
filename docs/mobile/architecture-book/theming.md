@@ -124,6 +124,11 @@ surfaces and calendar content; native controls are tinted and composed rather th
   gutter. Place it inside the route's existing safe-area/presentation owner. Stack headers,
   native tabs, safe-area and automatic list insets, keyboard avoidance, menus, alerts, pickers,
   modal presentation, and full-window overlay anchoring remain with their current owners.
+- Settings destinations and management/history collections use one measured `standard` lane at
+  their existing scroll or virtualized-list owner. Preference controls, forms, prose, and shared
+  changelog content use a measured `readable` lane; About keeps its grouped actions standard and
+  bounds only its prose inside a readable lane. Presented content measures inside its actual
+  sheet or screen, and responsive adaptation never wraps a virtualized list in another scroller.
 
 ## Tokenized React Navigation theme — `buildNavTheme` (C2)
 

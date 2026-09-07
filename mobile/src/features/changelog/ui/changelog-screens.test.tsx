@@ -1,6 +1,7 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router, Stack } from "expo-router"
 import type { ReactElement } from "react"
+import { StyleSheet } from "react-native"
 
 import {
   getChangelogSeenVersion,
@@ -48,6 +49,27 @@ beforeEach(async () => {
 })
 
 describe("Changelog screens", () => {
+  it.each([390, 768, 1024])(
+    "uses one readable lane for history content at %ipx",
+    async (width) => {
+      const view = await render(<ChangelogHistoryScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("changelog-scroll-owner"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("changelog-responsive-content").props.style,
+        ),
+      ).toMatchObject({
+        maxWidth: width < 600 ? 688 : 768,
+        paddingHorizontal: width < 600 ? 24 : 64,
+      })
+      await view.unmount()
+    },
+  )
+
   it("renders the shared newest-first history content in English", async () => {
     const view = await render(<ChangelogHistoryScreen />)
     expect(view.getByText("Version 4.0").props.accessibilityRole).toBe("header")

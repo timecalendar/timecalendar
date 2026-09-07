@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react-native"
+import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { router } from "expo-router"
+import { StyleSheet } from "react-native"
 
 import { useActivityState } from "@/features/activity"
 import {
@@ -61,6 +62,34 @@ beforeEach(() => {
 })
 
 describe("SettingsScreen", () => {
+  it.each([
+    [390, 24, 848],
+    [768, 64, 928],
+    [800, 64, 928],
+    [834, 64, 928],
+    [1024, 64, 928],
+  ])(
+    "keeps one measured standard lane at %ipx",
+    async (width, gutter, maxWidth) => {
+      const view = await render(<SettingsScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("settings-scroll-owner"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("settings-responsive-content").props.style,
+        ),
+      ).toMatchObject({
+        alignSelf: "center",
+        width: "100%",
+        maxWidth,
+        paddingHorizontal: gutter,
+      })
+    },
+  )
+
   it("renders localized groups in order with only live destinations", async () => {
     await render(<SettingsScreen />)
     const events = screen.getByTestId("settings-section-events")

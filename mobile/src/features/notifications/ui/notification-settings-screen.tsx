@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, Switch, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { Host, Picker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -9,7 +10,7 @@ import {
   type NotificationFrequency,
   useNotificationPreferences,
 } from "@/features/notifications/data"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The notification subscription preferences screen (design Decision 5) —
 // PRESENTATIONAL (70% floor): a frequency Picker (immediately/hourly/daily via
@@ -39,154 +40,155 @@ export default function NotificationSettingsScreen() {
     register,
     isError,
   } = useNotificationPreferences()
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">{t("notifications.title")}</ThemedText>
+        <AdaptiveContent
+          lane="readable"
+          testID="notifications-layout-owner"
+          contentContainerStyle={styles.content}
+        >
+          <ThemedText type="title">{t("notifications.title")}</ThemedText>
 
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("notifications.frequency.label")}
-          </ThemedText>
-          {/* The testID lives on this RN-core View (the @expo/ui Android Picker
+          <View style={styles.control}>
+            <ThemedText type="smallBold">
+              {t("notifications.frequency.label")}
+            </ThemedText>
+            {/* The testID lives on this RN-core View (the @expo/ui Android Picker
               drops testID) — see settings-screen for the full rationale. */}
-          <View testID="notifications-frequency-picker">
-            <Host matchContents>
-              <Picker
-                testID="notifications-frequency-picker"
-                appearance="menu"
-                selectedValue={frequency}
-                onValueChange={(value) =>
-                  setFrequency(value as NotificationFrequency)
-                }
+            <View testID="notifications-frequency-picker">
+              <Host matchContents>
+                <Picker
+                  testID="notifications-frequency-picker"
+                  appearance="menu"
+                  selectedValue={frequency}
+                  onValueChange={(value) =>
+                    setFrequency(value as NotificationFrequency)
+                  }
+                >
+                  <Picker.Item
+                    label={t("notifications.frequency.immediately")}
+                    value="immediately"
+                  />
+                  <Picker.Item
+                    label={t("notifications.frequency.hourly")}
+                    value="hourly"
+                  />
+                  <Picker.Item
+                    label={t("notifications.frequency.daily")}
+                    value="daily"
+                  />
+                </Picker>
+              </Host>
+            </View>
+          </View>
+
+          <View style={styles.control}>
+            <ThemedText type="smallBold">
+              {t("notifications.nbDaysAhead.label")}
+            </ThemedText>
+            <View style={styles.stepper}>
+              <Pressable
+                testID="notifications-nb-days-decrement"
+                accessibilityRole="button"
+                accessibilityLabel={t("notifications.nbDaysAhead.decrement")}
+                accessibilityState={{ disabled: nbDaysAhead <= NB_DAYS_MIN }}
+                disabled={nbDaysAhead <= NB_DAYS_MIN}
+                hitSlop={Spacing.two}
+                onPress={() => setNbDaysAhead(nbDaysAhead - 1)}
+                style={[
+                  styles.stepperButton,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.primary,
+                  },
+                ]}
               >
-                <Picker.Item
-                  label={t("notifications.frequency.immediately")}
-                  value="immediately"
-                />
-                <Picker.Item
-                  label={t("notifications.frequency.hourly")}
-                  value="hourly"
-                />
-                <Picker.Item
-                  label={t("notifications.frequency.daily")}
-                  value="daily"
-                />
-              </Picker>
-            </Host>
-          </View>
-        </View>
-
-        <View style={styles.control}>
-          <ThemedText type="smallBold">
-            {t("notifications.nbDaysAhead.label")}
-          </ThemedText>
-          <View style={styles.stepper}>
-            <Pressable
-              testID="notifications-nb-days-decrement"
-              accessibilityRole="button"
-              accessibilityLabel={t("notifications.nbDaysAhead.decrement")}
-              accessibilityState={{ disabled: nbDaysAhead <= NB_DAYS_MIN }}
-              disabled={nbDaysAhead <= NB_DAYS_MIN}
-              hitSlop={Spacing.two}
-              onPress={() => setNbDaysAhead(nbDaysAhead - 1)}
-              style={[
-                styles.stepperButton,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">−</ThemedText>
-            </Pressable>
-            <ThemedText
-              testID="notifications-nb-days-value"
-              accessibilityLiveRegion="polite"
-            >
-              {t("notifications.nbDaysAhead.value", { count: nbDaysAhead })}
-            </ThemedText>
-            <Pressable
-              testID="notifications-nb-days-increment"
-              accessibilityRole="button"
-              accessibilityLabel={t("notifications.nbDaysAhead.increment")}
-              accessibilityState={{ disabled: nbDaysAhead >= NB_DAYS_MAX }}
-              disabled={nbDaysAhead >= NB_DAYS_MAX}
-              hitSlop={Spacing.two}
-              onPress={() => setNbDaysAhead(nbDaysAhead + 1)}
-              style={[
-                styles.stepperButton,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">+</ThemedText>
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.toggleRow}>
-          <ThemedText type="smallBold">
-            {t("notifications.isActive.label")}
-          </ThemedText>
-          <Switch
-            testID="notifications-is-active-switch"
-            accessibilityRole="switch"
-            accessibilityLabel={t("notifications.isActive.label")}
-            value={isActive}
-            onValueChange={setIsActive}
-          />
-        </View>
-
-        {isError && (
-          <View style={styles.errorBlock}>
-            <ThemedText
-              themeColor="textSecondary"
-              accessibilityLiveRegion="polite"
-              accessibilityRole="alert"
-            >
-              {t("notifications.error.message")}
-            </ThemedText>
-            <Pressable
-              testID="notifications-retry"
-              accessibilityRole="button"
-              accessibilityLabel={t("notifications.error.retryLabel")}
-              hitSlop={Spacing.two}
-              onPress={() => {
-                void register().catch(() => {})
-              }}
-              style={[
-                styles.cta,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.primary,
-                },
-              ]}
-            >
-              <ThemedText type="smallBold">
-                {t("notifications.error.retry")}
+                <ThemedText type="smallBold">−</ThemedText>
+              </Pressable>
+              <ThemedText
+                testID="notifications-nb-days-value"
+                accessibilityLiveRegion="polite"
+              >
+                {t("notifications.nbDaysAhead.value", { count: nbDaysAhead })}
               </ThemedText>
-            </Pressable>
+              <Pressable
+                testID="notifications-nb-days-increment"
+                accessibilityRole="button"
+                accessibilityLabel={t("notifications.nbDaysAhead.increment")}
+                accessibilityState={{ disabled: nbDaysAhead >= NB_DAYS_MAX }}
+                disabled={nbDaysAhead >= NB_DAYS_MAX}
+                hitSlop={Spacing.two}
+                onPress={() => setNbDaysAhead(nbDaysAhead + 1)}
+                style={[
+                  styles.stepperButton,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.primary,
+                  },
+                ]}
+              >
+                <ThemedText type="smallBold">+</ThemedText>
+              </Pressable>
+            </View>
           </View>
-        )}
+
+          <View style={styles.toggleRow}>
+            <ThemedText type="smallBold">
+              {t("notifications.isActive.label")}
+            </ThemedText>
+            <Switch
+              testID="notifications-is-active-switch"
+              accessibilityRole="switch"
+              accessibilityLabel={t("notifications.isActive.label")}
+              value={isActive}
+              onValueChange={setIsActive}
+            />
+          </View>
+
+          {isError && (
+            <View style={styles.errorBlock}>
+              <ThemedText
+                themeColor="textSecondary"
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+              >
+                {t("notifications.error.message")}
+              </ThemedText>
+              <Pressable
+                testID="notifications-retry"
+                accessibilityRole="button"
+                accessibilityLabel={t("notifications.error.retryLabel")}
+                hitSlop={Spacing.two}
+                onPress={() => {
+                  void register().catch(() => {})
+                }}
+                style={[
+                  styles.cta,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.primary,
+                  },
+                ]}
+              >
+                <ThemedText type="smallBold">
+                  {t("notifications.error.retry")}
+                </ThemedText>
+              </Pressable>
+            </View>
+          )}
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
+  },
+  content: {
     paddingTop: Spacing.four,
     gap: Spacing.four,
   },

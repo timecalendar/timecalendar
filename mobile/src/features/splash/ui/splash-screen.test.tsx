@@ -1,5 +1,5 @@
 import { act, cleanup, render } from "@testing-library/react-native"
-import { AccessibilityInfo, Animated } from "react-native"
+import { AccessibilityInfo, Animated, StyleSheet } from "react-native"
 
 import { SplashScreen } from "./splash-screen"
 
@@ -59,6 +59,17 @@ describe("SplashScreen", () => {
       const { getByText } = await render(<SplashScreen />)
 
       expect(getByText("TimeCalendar").props.allowFontScaling).not.toBe(false)
+    })
+
+    it("keeps the full-window overlay centered and non-stretched", async () => {
+      const { getByRole } = await render(<SplashScreen />)
+      expect(
+        StyleSheet.flatten(getByRole("progressbar").props.style),
+      ).toMatchObject({
+        position: "absolute",
+        alignItems: "center",
+        justifyContent: "center",
+      })
     })
   })
 

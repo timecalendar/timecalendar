@@ -13,6 +13,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -24,7 +25,7 @@ import {
   type FeedbackFormErrors,
   validateFeedbackForm,
 } from "@/features/feedback/form"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 const MAX_CONTEXT_LENGTH = 2_048
 
@@ -66,6 +67,7 @@ export default function FeedbackScreen() {
   const [email, setEmail] = useState(getRememberedEmail)
   const [message, setMessage] = useState("")
   const [errors, setErrors] = useState<FeedbackFormErrors>({})
+  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
 
   const submit = async () => {
     if (isPending || submitInFlightRef.current) return
@@ -105,10 +107,15 @@ export default function FeedbackScreen() {
       >
         <SafeAreaView edges={["left", "right", "bottom"]} style={styles.flex}>
           <ScrollView
+            testID="feedback-scroll-owner"
+            onLayout={onLayout}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.scrollContent}
           >
-            <View style={styles.content}>
+            <View
+              testID="feedback-responsive-content"
+              style={[laneStyle, styles.content]}
+            >
               <View style={styles.intro}>
                 <ThemedText type="title">{t("feedback.title")}</ThemedText>
                 <ThemedText themeColor="textSecondary">
@@ -252,11 +259,9 @@ export default function FeedbackScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   scrollContent: {
-    alignItems: "center",
-    paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.four,
   },
-  content: { width: "100%", maxWidth: MaxContentWidth, gap: Spacing.four },
+  content: { gap: Spacing.four },
   intro: { gap: Spacing.two },
   field: { gap: Spacing.two },
   input: {

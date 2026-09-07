@@ -11,6 +11,7 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import {
@@ -26,7 +27,7 @@ import {
   resolveLocale,
 } from "@/features/calendar/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 import {
   type ActivityItem,
@@ -51,6 +52,7 @@ export function ActivityScreen() {
   const [olderFailed, setOlderFailed] = useState(false)
   const olderInFlight = useRef(false)
   const markedOnMount = useRef(false)
+  const { laneStyle, onLayout } = useAdaptiveLayout("standard")
 
   const sections = useMemo(() => buildActivitySections(logs), [logs])
   const refreshFailed =
@@ -98,16 +100,25 @@ export function ActivityScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("activity.title") }} />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        testID="activity-layout-owner"
+        onLayout={onLayout}
+        style={styles.safeArea}
+        edges={["bottom", "left", "right"]}
+      >
         {!loaded ? (
-          <View style={styles.centered} testID="activity-loading">
-            <ActivityIndicator
-              color={theme.primary}
-              accessibilityLabel={t("activity.loading")}
-            />
+          <View style={[laneStyle, styles.stateLane]}>
+            <View style={styles.centered} testID="activity-loading">
+              <ActivityIndicator
+                color={theme.primary}
+                accessibilityLabel={t("activity.loading")}
+              />
+            </View>
           </View>
         ) : sections.length === 0 && refreshFailed ? (
-          <FullError onRetry={refresh} />
+          <View style={[laneStyle, styles.stateLane]}>
+            <FullError onRetry={refresh} />
+          </View>
         ) : (
           <SectionList<ActivityItem, ActivitySection>
             testID="activity-section-list"
@@ -127,7 +138,7 @@ export function ActivityScreen() {
                 onRetry={loadOlder}
               />
             }
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[laneStyle, styles.content]}
             renderSectionHeader={({ section }) => (
               <ActivityGroupHeader
                 section={section}
@@ -388,11 +399,10 @@ function OlderFooter({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, flexDirection: "row", justifyContent: "center" },
-  safeArea: { flex: 1, maxWidth: MaxContentWidth },
+  container: { flex: 1 },
+  safeArea: { flex: 1 },
   content: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.four,
     paddingBottom: Spacing.four,
     gap: Spacing.two,
   },
@@ -404,6 +414,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   centeredText: { textAlign: "center" },
+  stateLane: { flex: 1 },
   groupHeader: { paddingTop: Spacing.four, gap: Spacing.half },
   item: {
     minHeight: 48,

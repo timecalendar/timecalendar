@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
+import { StyleSheet } from "react-native"
 
 import { isDevVariant } from "@/config/variant"
 import { useSyncCalendars } from "@/features/calendar/data"
@@ -50,6 +51,20 @@ beforeEach(() => {
 })
 
 describe("DevImportScreen", () => {
+  it("keeps its transient state centered and non-stretched", async () => {
+    mockIsDevVariant.mockReturnValue(false)
+    const view = await render(<DevImportScreen />)
+    const contentStyle = StyleSheet.flatten(
+      view.getByTestId("dev-import-content").props.style,
+    )
+    expect(contentStyle).toMatchObject({
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    })
+    expect(contentStyle).not.toHaveProperty("width")
+  })
+
   it("dev variant: imports the token, syncs, and routes to the calendar", async () => {
     mockIsDevVariant.mockReturnValue(true)
 

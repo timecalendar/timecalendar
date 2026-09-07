@@ -1,4 +1,5 @@
-import { fireEvent, render } from "@testing-library/react-native"
+import { act, fireEvent, render } from "@testing-library/react-native"
+import { StyleSheet } from "react-native"
 
 import { SETTINGS_KEYS } from "@/features/settings/prefs"
 import i18n from "@/i18n"
@@ -26,6 +27,27 @@ beforeEach(async () => {
 })
 
 describe("AppearanceSettingsScreen", () => {
+  it.each([
+    [390, 24, 688],
+    [768, 64, 768],
+  ])(
+    "uses a measured readable lane at %ipx",
+    async (width, gutter, maxWidth) => {
+      const view = await render(<AppearanceSettingsScreen />)
+      await act(() =>
+        fireEvent(view.getByTestId("appearance-layout-owner"), "layout", {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        }),
+      )
+      expect(
+        StyleSheet.flatten(
+          view.getByTestId("appearance-layout-owner").props.children.props
+            .style,
+        ),
+      ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
+    },
+  )
+
   it("renders the localized title and both control labels (not raw keys)", async () => {
     const { getByText } = await render(<AppearanceSettingsScreen />)
 

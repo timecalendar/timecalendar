@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
@@ -14,7 +15,7 @@ import {
 } from "@/features/calendar/data"
 import { useHiddenEvents, useHideActions } from "@/features/hidden-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The hidden-events management screen (D7) — PRESENTATIONAL (70% floor). Hide-by-
 // name has no per-event details surface, so un-hide MUST be reachable here. It
@@ -40,6 +41,7 @@ export function HiddenEventsScreen() {
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   const { unhideUid, unhideName, failed } = useHideActions()
   const syncedEvents = useSyncedEvents()
+  const { laneStyle, onLayout } = useAdaptiveLayout("standard")
 
   // Resolve each hidden uid to its current synced event (title + time). Only
   // still-resolving uids are listed (Flutter parity — a uid with no current event
@@ -68,24 +70,36 @@ export function HiddenEventsScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("hiddenEvents.title") }} />
-      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+      <SafeAreaView
+        testID="hidden-events-layout-owner"
+        onLayout={onLayout}
+        style={styles.safeArea}
+        edges={["bottom", "left", "right"]}
+      >
         {failed && (
-          <WriteErrorNotice
-            message={t("hiddenEvents.error")}
-            style={styles.error}
-          />
+          <View style={laneStyle}>
+            <WriteErrorNotice
+              message={t("hiddenEvents.error")}
+              style={styles.error}
+            />
+          </View>
         )}
 
         {isEmpty ? (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("hiddenEvents.empty")}
-          </ThemedText>
+          <View style={laneStyle}>
+            <ThemedText
+              themeColor="textSecondary"
+              accessibilityLiveRegion="polite"
+              accessibilityRole="text"
+            >
+              {t("hiddenEvents.empty")}
+            </ThemedText>
+          </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView
+            testID="hidden-events-responsive-content"
+            contentContainerStyle={[laneStyle, styles.content]}
+          >
             {namedHiddenEvents.length > 0 && (
               <View style={styles.section}>
                 <ThemedText type="subtitle">
@@ -169,15 +183,9 @@ function HiddenRow({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
   },
   content: {
