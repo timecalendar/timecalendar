@@ -15,10 +15,11 @@ the existing manual QR/iCal selector. The tutorial explains how to copy an iCal 
 provider mapping, localized copy, and instructional images are server-owned, while every screen and
 navigation transition is native React Native.
 
-The first selectable providers are ADE, Hyperplanning (wire slug `hplanning`), Celcat, and Generic.
-A listed institution resolves its configured content-only provider or Generic. An unlisted
-institution lets the student choose one of those providers. A valid guide must be completed before
-the existing manual selector, QR scanner, or iCal URL entry can be used in production.
+The initial catalogue's selectable providers are ADE, Hyperplanning (wire slug `hplanning`),
+Celcat, and Generic. A listed institution resolves its configured content-only provider or Generic.
+An unlisted institution chooses from the valid selectable providers in the loaded catalogue; later
+catalogue versions may add content-only choices. A valid guide must be completed before the existing
+manual selector, QR scanner, or iCal URL entry can be used in production.
 
 This document specifies future delivery. It does not change the server, the committed OpenAPI
 contract, generated clients, either mobile application, deployment configuration, or any runtime
@@ -130,15 +131,17 @@ present. An unsafe or absent URL is never opened.
 2. Programme is always shown and remains skippable under its existing validation.
 3. Load a valid active catalogue and show a native provider selector containing only
    `selectable: true`, compatible, valid `kind: "pages"` providers, in catalogue order.
-4. v1 publication must make exactly `ade`, `hplanning`, `celcat`, and `generic` selectable. Generic
-   is labelled as the other/unknown choice in localized server content.
+4. The initial production catalogue must make exactly `ade`, `hplanning`, `celcat`, and `generic`
+   selectable. Generic is labelled as the other/unknown choice in localized server content.
 5. Selecting a provider pins it and opens page 0. If the selected definition becomes unavailable
    before pinning, resolve Generic; if Generic is unusable, show the blocking catalogue error.
 6. Complete the pages -> existing manual selector -> QR or iCal URL.
 
-Unlisted institutions never show Connect because there is no trusted intranet URL. A later
-catalogue may add another selectable content-only provider without an app release, but removing one
-or changing selectability requires a new immutable catalogue version.
+Unlisted institutions never show Connect because there is no trusted intranet URL. The lasting v1
+invariant is data-driven: show every provider that is `selectable: true`, `kind: "pages"`, valid,
+and compatible, in server order, with no client allowlist of the four initial slugs. Every valid
+catalogue keeps Generic selectable. A later immutable catalogue version may add, remove, reorder, or
+change the selectability of other content-only providers without an app release.
 
 ## Native journey and navigation
 
@@ -235,12 +238,43 @@ If-None-Match: "<etag>"
   reference; an unlisted journey requests the active version.
 - `Content-Language` is `fr` or `en` and equals the response body's `locale`. A strong `ETag`
   identifies the exact locale/schema/version representation; matching `If-None-Match` returns
-  `304` with no body.
+  `304` with no body and repeats both `ETag` and `Content-Language` for that representation.
 - The endpoint is additive and needs no calendar token or user identity.
 
 The committed `openapi/openapi.json` remains the contract source. Later server delivery regenerates
 it from built NestJS output, then regenerates `mobile/src/api/generated/` with Orval. Generated
 files are committed and never hand-edited.
+
+#### Response-aware generated-client seam
+
+The current `mobile/src/api/mutator.ts` `customFetch<T>` contract returns only the parsed body,
+throws for `304`, and discards response headers. Keep that contract for existing generated
+operations. Add an owned `customFetchResponse<T>` transport in the same file with this stable result:
+
+```ts
+type ApiResponse<T> = {
+  status: number;
+  headers: Headers;
+  data: T | undefined;
+};
+```
+
+Configure only the generated `GET /v1/export-guides` operation through an Orval operation override
+to use `customFetchResponse`; do not hand-edit its generated function. The raw transport composes
+the existing timeout/caller cancellation and JSON parsing, returns all HTTP statuses without
+turning `304` into `ApiError`, and never decides cache validity. The export-guide repository owns
+narrowing the result: accept a fully validated `200` body or a bodyless `304` whose strong `ETag`
+and `Content-Language` match the candidate LKG; map every other status/header/body combination to a
+sanitized failure enum before it can reach UI or diagnostics. Existing operations continue through
+`customFetch`, which adapts the raw result back to today's body-or-`ApiError` behavior.
+
+Treat `/v1/export-guides` as a sensitive-payload path in the mutator. Development diagnostics may
+emit only method, normalized path, status, duration bucket, and sanitized failure enum: never the
+query string, request headers, response headers, parsed/raw body, provider/page copy, image URL, or
+cache record. Direct mutator tests own `200`/`304`/non-success results, header preservation,
+cancellation, and proof that distinctive guide payload and query values are absent from logs.
+Repository tests mock `customFetchResponse`, never the network, and own ETag, locale, LKG, and error
+mapping behavior.
 
 ### Neutral school reference
 
@@ -295,6 +329,8 @@ type ExportGuidePageV1 = {
 
 type ExportGuideImageV1 = {
   url: string;
+  mimeType: "image/png" | "image/jpeg" | "image/webp";
+  byteSize: number;
   width: number;
   height: number;
   altText: string;
@@ -321,7 +357,9 @@ Server publication and mobile defensive parsing enforce the same bounds:
 | Page `title`           | Trimmed plain text, 1-120 characters.                                                                          |
 | Page `description`     | Trimmed plain text, 1-2,000 characters.                                                                        |
 | Image URL              | Absolute HTTPS, at most 2,048 characters, approved first-party host, no credentials, query token, or fragment. |
-| Image dimensions       | Integer width/height from 1 through 4,096 pixels.                                                              |
+| Image format           | Static PNG (`image/png`), JPEG (`image/jpeg`), or non-animated WebP (`image/webp`) only.                       |
+| Image encoded bytes    | Thumbnail: 1-262,144 bytes (256 KiB); page image: 1-1,048,576 bytes (1 MiB).                                   |
+| Image dimensions       | Integer width/height from 1 through 4,096 pixels and at most 8,388,608 decoded pixels.                         |
 | `altText`              | Trimmed, meaningful plain text, 1-500 characters whenever an image exists.                                     |
 | `caption`              | Optional trimmed plain text, 1-500 characters when present.                                                    |
 | Compatibility          | Integer bounds with `1 <= minClientSchema <= maxClientSchema`; v1 renders only when `min <= 1 <= max`.         |
@@ -333,14 +371,17 @@ a listed mapping to it substitutes Generic. Publication validation is stricter a
 invalid provider before a manifest can become active.
 
 Every valid FR and EN version has the same provider slugs, order, kinds, selectability,
-compatibility, page count, and asset semantics. Copy and locale-specific assets may differ.
+compatibility, page count, and asset roles. Copy and locale-specific assets may differ; each
+locale's manifest declares and validates its own asset MIME type, encoded byte count, dimensions,
+alternative text, and caption.
 
 ### Atomic publication and retention
 
 1. Upload fingerprinted image objects first. They are immutable and return long-lived immutable
    cache headers. Never overwrite an existing URL.
-2. Validate the complete FR/EN manifest pair, all referenced assets, Generic, initial selectable
-   providers, every school reference, and compatibility bounds.
+2. Validate the complete FR/EN manifest pair, all referenced assets, Generic, the exact four
+   selectable providers for the first production catalogue (the data-driven v1 invariant for later
+   versions), every school reference, and compatibility bounds.
 3. Publish the immutable manifests under a new `catalogueVersion` without activating them.
 4. In one server-owned publication operation, make school references and the active catalogue
    pointer refer to that version. A reference must never become visible before its manifest.
@@ -356,18 +397,31 @@ place is prohibited.
 
 ### Validated last-known-good rules
 
-- Persist only fully validated, schema-compatible catalogues containing valid Generic, keyed by
-  locale, client schema, and catalogue version, through the owned `@/storage`/query-persistence
-  seam. Do not persist journey state or page progress.
+- Resolve the app language to `fr` or `en` before requesting a guide; unsupported device languages
+  resolve to `en` through the existing bundled-language rule. Call that value `requestedLocale`.
+  The server returns that exact locale or an error; it never substitutes a different guide locale.
+- Persist only fully validated, schema-compatible catalogues containing valid Generic through the
+  owned `@/storage`/query-persistence seam. The lookup key is (`requestedLocale`, client schema,
+  version selector), where the selector is either `active` for an unlisted request or
+  `exact:<catalogueVersion>` for a school reference. The record stores the resolved body
+  `catalogueVersion`, locale, ETag, and validation times. Body `locale` and `Content-Language` must
+  both equal `requestedLocale`. Do not persist journey state or page progress.
 - A new journey attempts a time-bounded network revalidation. A successful valid `200` replaces
-  the LKG atomically. A valid `304` refreshes `validatedAt` for the matching stored representation.
+  the exact-key LKG atomically. A valid `304` refreshes `validatedAt` only for the candidate record
+  whose strong ETag, requested locale, client schema, and requested catalogue version all match.
 - On timeout, offline/network error, HTTP failure, malformed/empty/unsupported response, or invalid
   Generic, the client may use a matching LKG only when `now - validatedAt <= 24 hours`.
-- The 24-hour boundary is inclusive. Device-clock rollback cannot extend freshness: store a wall
-  timestamp plus a monotonic age for the live process; any impossible/negative persisted age is
-  stale and blocks.
+- The 24-hour boundary is inclusive. Store `validatedAt` as UTC wall time and, for the current JS
+  process, pair it with a monotonic observation. While that process lives, freshness uses monotonic
+  elapsed time and wall-clock changes cannot extend it. After process restart or device reboot the
+  monotonic origin is gone, so use `now - validatedAt`; a negative result is impossible state and
+  blocks. A backward clock adjustment that still leaves `now >= validatedAt` can extend freshness
+  by at most the size of that adjustment. v1 explicitly accepts this bounded offline limitation;
+  it does not claim cross-process rollback detection without a trusted time source.
 - A stale or incompatible cache is removed or ignored and never shown silently. A cache for another
-  locale, schema, or requested school catalogue version is not a match.
+  requested locale, body/response locale, schema, version selector, resolved exact version, or ETag
+  is not a match. An `active` record may be revalidated only for another `active` request; it never
+  satisfies an exact-version school reference merely because its resolved version happens to match.
 - Once accepted, the journey pins a snapshot; it does not observe cache replacement.
 
 ### Failure matrix
@@ -410,9 +464,14 @@ Leaving the screen cancels or makes completion inert.
 - Only immutable HTTPS image URLs on a compiled first-party host allowlist are accepted. Reject URL
   credentials, fragments, signed/user-specific query values, unsupported ports, and any redirect
   contract. The asset service must serve the final object directly with the declared media type.
-- Accept only the documented raster formats supported by `expo-image`; reject SVG or active
-  document formats. Server validation checks content type, dimensions, size budget, and that the
-  decoded file matches metadata before publication.
+- Accept only static PNG, JPEG, and non-animated WebP. Reject GIF, animated WebP (`ANIM`/`ANMF`),
+  SVG, AVIF, HEIF/HEIC, PDF, and every other type so iOS and Android decode the same v1 set. Server
+  publication reads the object rather than trusting extension or upload headers: MIME, magic bytes,
+  decoded single-frame format, encoded byte count, and decoded dimensions/pixel count must equal the
+  manifest and stay within the role-specific bounds. The client validates declared metadata before
+  handing the URL to `expo-image`; it does not duplicate-download assets merely to inspect response
+  bytes. Asset endpoint integration tests own runtime header/body agreement. A native decode or load
+  failure uses the specified text-only image-failure path and never blocks guide completion.
 - Descriptions can name UI controls but cannot create tappable arbitrary links. The only external
   action remains the separately validated listed-school intranet button on Connect.
 - Catalogue and image failures never expose raw response bodies or URLs in logs, analytics,
@@ -436,9 +495,11 @@ Leaving the screen cancels or makes completion inert.
 - The server owns provider labels, guide page copy, alt text, and captions in complete FR and EN
   manifests. The client owns route titles, selector instructions, progress, loading/error/retry,
   Back/Next, and accessibility shell copy in typed bundled FR/EN resources.
-- The client requests its resolved app language. If the server returns EN fallback, it must declare
-  `Content-Language: en`; the client renders that internally consistent response and records only a
-  locale-fallback enum. Mixed-language catalogues are invalid.
+- The client resolves unsupported device languages to bundled English before the request, then asks
+  for exactly `fr` or `en`. The endpoint does not perform language fallback: a `200` body locale and
+  `Content-Language` must equal `requestedLocale`, and a `304` must repeat that same language.
+  Missing exact-locale content is an endpoint failure eligible only for the exact-locale LKG. Mixed
+  language, cross-locale cache reuse, and a response-language substitution are invalid.
 
 ## Observability and support
 
@@ -507,10 +568,13 @@ separate board or human approval gate.
 
 ### Server and contract automation
 
-- Manifest validator unit tests cover every bound, duplicate slug, required Generic, FR/EN parity,
-  compatibility, image origin/type/dimensions, selectable set, and publication ordering.
+- Manifest validator unit tests cover every bound, duplicate slug, required/selectable Generic,
+  FR/EN parity, compatibility, image origin/MIME/magic/decoded format/animation/encoded bytes/pixel
+  budget, the first catalogue's exact selectable set, later data-driven selectable providers, and
+  publication ordering.
 - Controller tests cover locale/client-schema negotiation, exact retained version, `200`, `304`,
-  `404`, ETag stability, headers, body-size limit, feature flag, and dependency-free failures.
+  `404`, exact-locale failure without server fallback, ETag stability, required headers on `200` and
+  `304`, body-size limit, feature flag, and dependency-free failures.
 - Real Postgres/object-storage integration covers upload-before-pointer activation, atomic school
   reference visibility, rollback, version retention, and an unknown school provider reaching the
   wire unchanged.
@@ -520,11 +584,16 @@ separate board or human approval gate.
 
 ### React Native automation
 
-- Pure parser/resolver tests cover every validation bound, provider-to-Generic reason, invalid
-  Generic, locale/schema compatibility, and initial selectable ordering.
+- Pure parser/resolver tests cover every validation bound (including declared MIME, role byte size,
+  dimensions, and pixel count), provider-to-Generic reason, invalid/non-selectable Generic,
+  locale/schema compatibility, exact initial selectable ordering, and acceptance/order of a later
+  server-added selectable content-only provider without a client allowlist.
 - Cache tests use controlled clocks at 24h minus one millisecond, exactly 24h, and 24h plus one;
-  cover `200`, matching/mismatched `304`, atomic replacement, clock rollback, corrupt storage,
-  first-run offline, stale/foreign LKG, and pinned-snapshot isolation.
+  cover response-aware `200`, matching/mismatched ETag and `Content-Language` on `304`, atomic
+  replacement, live-process monotonic rollback, restart/reboot wall-time fallback, negative age,
+  accepted partial rollback limitation, corrupt storage, first-run offline, active-versus-exact
+  selector isolation, requested-locale/body-locale/response-locale foreign LKG, and pinned-snapshot
+  isolation.
 - Journey tests cover listed gate combinations, required Connect with safe/missing/unsafe URL,
   unlisted selection, programme skip, provider change, final completion, and draft invalidation.
 - Navigation tests prove one Stack entry per page; header/iOS gesture/Android Back-equivalent pops;
@@ -533,8 +602,9 @@ separate board or human approval gate.
 - Component tests cover loading, every blocking error class, single-flight Retry, text-only image
   failure, theme, large text layout, screen-reader semantics/order/progress, focus restoration, and
   inert rendering of markup-shaped strings.
-- Analytics/privacy tests assert the full event allowlist and prove forbidden fields never reach
-  Analytics or Crashlytics.
+- Mutator/repository and analytics/privacy tests assert the full diagnostic/event allowlists and
+  prove request queries, response headers/bodies, guide copy, asset URLs, and forbidden fields never
+  reach development logs, Analytics, or Crashlytics.
 - Logic remains above the 90% lines/branches threshold and the project above 70% global.
 
 ### Real-server and release-build evidence
@@ -596,12 +666,14 @@ expected for a versioned manifest implementation.
 
 **Dependency:** T1's committed contract.
 
-**Ownership:** `mobile/src/features/export-guides/data/`, owned storage/query persistence,
-school-selection projection, generated client consumption, and pure resolver tests.
+**Ownership:** `mobile/src/features/export-guides/data/`, `mobile/src/api/mutator.ts` plus its direct
+tests, the export-guide operation override in `mobile/orval.config.ts`, owned storage/query
+persistence, school-selection projection, generated client consumption, and pure resolver tests.
 
-**Acceptance gate:** all parser/resolution reasons, exact-version mapping, 24-hour LKG boundary,
-atomic persistence, locale/schema isolation, invalid Generic, and privacy-safe diagnostics pass
-with 90% logic coverage.
+**Acceptance gate:** response-aware generated transport, all parser/resolution reasons,
+exact-version mapping, 24-hour LKG boundary and documented restart limitation, atomic persistence,
+requested/response/body locale isolation, invalid Generic, and privacy-safe diagnostics pass with
+90% logic coverage.
 
 ### T3 — Native provider selector, guide Stack, guards, and UI
 
@@ -627,6 +699,7 @@ approved, and recorded physical-device verification.
 the full named physical-device matrix above are attached to the same implementation head. Any
 missing device axis returns to T3/T4 as rework; it is not a new approval gate.
 
-Deferred interactive Groups/custom-provider logic and legacy fallback behavior require a separate
-future specification. Rollout/activation remains a separate operational scope after all four
-delivery outcomes are reviewed and merged.
+Deferred interactive Groups/custom-provider behavior and legacy fallback behavior require a
+separate future specification. Data-driven content-only providers already conforming to schema v1
+do not. Rollout/activation remains a separate operational scope after all four delivery outcomes
+are reviewed and merged.

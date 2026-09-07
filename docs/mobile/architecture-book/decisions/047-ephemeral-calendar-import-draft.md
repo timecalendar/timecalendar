@@ -76,6 +76,10 @@ A protected direct/restored route with no valid journey restarts at the earliest
 onboarding route instead of creating with empty draft fields. Only runtime-verified development/test
 tooling may bypass that gate.
 
+A persisted validated guide catalogue is rebuildable content cache, not journey state. It contains
+no draft, selected provider, page index, or completion proof, and therefore cannot make a protected
+route legal after process death or restore partial progress.
+
 This amendment becomes current-state architecture only with the export-guide implementation. Until
 then, the existing no-draft QR/iCal behavior above remains authoritative. The implementation change
 must update `navigation.md`, remove the obsolete no-draft clauses here, and prove that recovery
