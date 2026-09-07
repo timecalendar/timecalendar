@@ -121,7 +121,7 @@ attempts; retry costs attempts, never correctness.
    fragility across platforms).
 4. Every `id:` you select by must exist as a `testID` in `mobile/src`.
    `maestro-selectors.test.ts` enforces this in the **baseline** gate (`npm test`),
-   because the native gate is on-demand: without it a UI rework that deletes a
+   because native execution is a daily/manual health signal: without it a UI rework that deletes a
    `testID` merges green and the break costs a native run to find — and since
    `run_e2e.sh` stops at the first failing flow, one stale id hides every later
    one. Selectors match as regexes and testIDs may be object properties or
@@ -247,10 +247,11 @@ Both jobs pin and print Maestro 2.8.0. Android assembles Release with a 3072 MiB
 heap, 1024 MiB Metaspace, at most two Gradle workers, and no persistent daemon.
 iOS logs the selected Xcode path/version plus available and selected simulator
 runtime, name, and UDID before running the harness with four startup attempts.
-The shell proofs and workflow assertions run without a device; definitive native
-proof is the labeled PR run on GitHub-hosted runners, with baseline, Android, and
-iOS checks passing on the same exact head.
-
-These jobs are **on-demand** (a cold native build + device boot is ~20–30 min
-each): add the **`run-e2e` label** to a PR to run them, and they always run on
-`main`/`production` when `mobile/**` or `openapi/**` changed.
+The shell proofs and mutation-backed workflow assertions run without a device and
+remain ordinary pull-request gates. Native execution is informational health
+evidence: the daily schedule compares `main` with the preceding scheduled
+attempt and runs both platforms only for relevant app, contract, server,
+lifecycle/toolchain, or workflow changes. A manual dispatch requires an explicit
+ref or SHA, resolves it once, and always runs both platforms. Daily and manual
+runs share a non-cancelling concurrency group; failures retain platform Maestro
+debug output and server logs.

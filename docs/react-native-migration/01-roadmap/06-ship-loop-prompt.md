@@ -18,6 +18,7 @@ CI proves the seam wiring; real delivery is inboxed for human hardware. The loop
 **Decisions baked in** (confirmed 2026-06-16, grounded in the Flutter
 `modules/firebase/services/notification/notification.dart` + the server
 `notification-subscription` module, which is **already built and stays UNCHANGED**):
+
 - **No server ship.** The server `firebase-admin` sender + `notification-subscription` PUT flow are
   done and frozen. Every ship in this phase is **mobile-only**. Expo Push stays rejected (firebase.md
   R-2 / roadmap "Reject Expo Push"). The production Firebase project (`timecalendar-samuelprak`) is
@@ -85,7 +86,7 @@ Each item is one full /ship (plan → apply → simplify → review-loop → arc
 1. ORIENT: `git fetch origin`, check `git log origin/main` + `openspec/changes/archive/` to see which ships already merged. Read the roadmap doc for checkboxes; check whether firebase.md still says "Messaging deferred" (if it does, Ship A hasn't landed).
 2. Pick the FIRST unmerged ship in order (A → B → C → D) and run the full `/ship` pipeline (see .claude/commands/ship.md). Delegate every phase to the sub-agents (change-planner / change-implementer / change-simplifier / change-reviewer). You own only git/PR/merge.
 3. If ALL of A–C are merged, D has a written decision (built or recorded-deferred), AND the device-verification inbox notes exist → verify the EXIT CRITERIA (push received foreground/background/killed [INBOXED for human hardware — green wiring + honest note is the bar]; tap routes correctly; subscription prefs round-trip [PUT succeeds, local store is source of truth]; both platforms; full DoD). Tick the roadmap, then STOP the loop (do not schedule another wakeup) and report.
-4. Ship invariants: reviewer is the sole merge gate (cap 3 review rounds, then inbox-escalate + leave PR draft + skip to next only if truly stuck); wait for GREEN with `gh pr checks <pr> --watch` before `gh pr merge --squash --delete-branch` (NEVER `--auto` — main is unprotected); do NOT add the run-e2e label (E2E runs on main only) — for the messaging/routing ships run Maestro LOCALLY via mobile/e2e/run_e2e.sh where it adds confidence (but remember Maestro can't deliver a real push — the seam-wiring tests + the human inbox note are the real proof).
+4. Ship invariants: reviewer is the sole merge gate (cap 3 review rounds, then inbox-escalate + leave PR draft + skip to next only if truly stuck); wait for GREEN with `gh pr checks <pr> --watch` before `gh pr merge --squash --delete-branch` (NEVER `--auto` — main is unprotected); native E2E is not a feature gate — deliberately dispatch the exact ref/SHA for messaging/routing diagnosis when useful, while the next relevant daily attempt owns ongoing health (Maestro still cannot deliver a real push, so seam tests and device evidence own that behavior).
 5. After a successful merge, schedule the next wakeup (dynamic /loop). After a genuine hard block you can't resolve, inbox it and continue to the next shippable item rather than halting.
 
 ## Stop-the-bleeding escape hatch (refactor over more features)

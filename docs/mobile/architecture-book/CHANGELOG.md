@@ -11,6 +11,10 @@
   semantic filled-action, and keyboard-safe action-region contracts. Activity, Hidden events, and
   the personal-event editor are the representative consumers; platform-native action placement
   and screen/list/safe-area ownership remain feature-owned.
+- Made native Android and iOS E2E a conditional daily/manual health signal rather than an
+  ordinary feature gate. The preceding scheduled attempt bounds change detection, one immutable
+  SHA feeds both platforms, and fast selector/harness/workflow checks remain baseline proof
+  (ADR 055).
 - Staged ADR 047's approved export-guide amendment: when the native mandatory guide is implemented,
   production manual-import, QR, and iCal routes require an in-memory completion proof while the
   draft remains process-ephemeral; a persisted catalogue is content cache and cannot restore the

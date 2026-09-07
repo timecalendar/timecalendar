@@ -20,6 +20,7 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
 `DateTimePicker`s — SwiftUI `DatePicker` on iOS, Jetpack Compose date/time dialogs on Android.
 
 ## 1. Manual VoiceOver pass (iOS) — DoD: Accessibility
+
 - **What:** With VoiceOver on, navigate the **list** (the title heading, each row, the Add control) and
   the **form** (title/location/description inputs, the start/end native pickers, the color-swatch group,
   Save, and Delete in edit mode). Confirm each announces a meaningful role + label, the swatch group
@@ -32,11 +33,13 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
   form, swipe through every control, open a date picker.
 
 ## 2. Manual TalkBack pass (Android) — DoD: Accessibility
+
 - **What:** Same as #1 with TalkBack on Android (the Compose date/time dialogs' announcement).
 - **Why:** Same — platform-specific screen-reader behavior, especially the native pickers.
 - **How to verify:** Settings → Accessibility → TalkBack on; open the list and the form.
 
 ## 3. On-device native date/time picker feel / native-correctness — iOS — DoD: Native correctness
+
 - **What:** Eyeball the start + end pickers on iOS (SwiftUI `DatePicker`): opening/closing feels native,
   changing the value flows into the form, light **and** dark both correct, safe areas respected. Confirm
   the picker adopts the platform appearance (deliberately not theme-tinted — D1 / R-3).
@@ -45,11 +48,13 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
 - **How to verify:** Open the form, open each picker, change start then end; toggle Dark Appearance.
 
 ## 4. On-device native date/time picker feel / native-correctness — Android — DoD: Native correctness
+
 - **What:** Same as #3 on Android (Compose date/time dialogs, Material feel, light + dark).
-- **Why:** Same — both platforms reviewed against the *platform*, not the Flutter form.
+- **Why:** Same — both platforms reviewed against the _platform_, not the Flutter form.
 - **How to verify:** Open the form on an Android device/emulator, exercise both pickers, light then dark.
 
 ## 5. Color-swatch + form native-correctness + touch-target by finger — DoD: Accessibility / Native
+
 - **What:** Confirm the list rows, the Add control, the color swatches, Save, and Delete are comfortably
   tappable by finger (≥ 44pt iOS / 48dp Android), the selected swatch is clearly ringed, the form scrolls
   and the inputs behave natively (keyboard, multiline description). Verify on a device, not by eye in a
@@ -60,6 +65,7 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
   obvious.
 
 ## 6. Color-contrast eyeball — both schemes — DoD: Accessibility / Native correctness
+
 - **What:** Confirm the list/form text on the background and the swatch selection ring are comfortably
   legible in light and dark, against the documented WCAG-AA pairs in `mobile/src/theme/tokens.ts`. The
   swatch fills are arbitrary event colors (data, ADR 011) — confirm the ring (a `@/theme` token) reads
@@ -69,6 +75,7 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
 - **How to verify:** View the list + form in both schemes against the documented pairs.
 
 ## 7. Performance / no-jank — low-end Android — DoD: Performance
+
 - **What:** On a low-end Android device (or throttled emulator), scroll a list with many events and
   create/edit/delete a few. Confirm no jank: the `FlatList` scrolls smoothly, the reactive list re-renders
   on create/delete without stutter, the form opens/closes smoothly.
@@ -78,6 +85,7 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
   capture a Reassure baseline for the list.
 
 ## 8. Observability arrival — forced write failure — DoD: Observability (the manual half)
+
 - **What:** Force an `upsert`/`remove` rejection on-device (e.g. a temporary throw in the repository or a
   DB-locked condition) and confirm the recorded error **arrives** in Crashlytics (DebugView / dashboard),
   and that the form surfaces the localized failure message.
@@ -88,6 +96,7 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
   error; confirm the in-app failure message shows.
 
 ## 9. E2E — the personal-events CRUD flow (+ schools/settings non-regression) — DoD: E2E
+
 - **What:** Run the new `mobile/.maestro/personal-events.yaml` (deep-link create → type a title → accept
   default dates → Save → assert in the list → open → Delete → assert gone) on **iOS and Android**, and
   confirm `mobile/.maestro/schools.yaml` and `settings.yaml` still pass. Optionally evaluate whether a
@@ -97,8 +106,8 @@ on the **Home tab** ("Accueil"), open the form via **Add** or a list row, or dee
   create→list→delete round-trip on the real stack (migrations → SQLite → repository → live query). The
   native date/time picker is intentionally NOT driven (not deterministically addressable across platforms
   — D5).
-- **How to verify:** Run `ci-mobile-e2e.yml` (on-demand — PR with the `run-e2e` label, or on
-  main/production when mobile/openapi changed). All three flows must pass on both platforms.
+- **How to verify:** Manually dispatch `ci-mobile-e2e.yml` with the ref/SHA under test, or use
+  the next relevant daily health run. All three flows must pass on both platforms.
 
 ---
 

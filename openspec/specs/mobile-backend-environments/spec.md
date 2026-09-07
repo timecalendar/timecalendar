@@ -3,7 +3,9 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-backend-environment-selector. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Build capability authorizes backend choices independently
 
 The app SHALL resolve a dedicated backend-environment capability with exactly three valid values: `development`, `preview`, and `production`. It SHALL NOT infer this capability from app identity, `APP_VARIANT`, bundle/package id, scheme, Firebase project, `__DEV__`, or OTA channel/update metadata. A missing, malformed, or unknown capability SHALL behave as `production` at runtime.
@@ -171,8 +173,8 @@ Settings entry's accessible name carries the effective environment, because it i
 indicator. A practical Maestro flow SHALL cover the visible Settings confirmation and SHALL read the
 effective environment from the Settings entry alone, using selectors that resolve on both platforms
 and that do not assume the entry is above the fold. Native reload/accessibility/screenshot evidence
-that cannot run on this host SHALL be captured in a non-blocking `(HUMAN: …)` inbox note rather than
-adding `run-e2e` by default.
+that cannot run on this host SHALL be captured in a non-blocking `(HUMAN: …)` inbox note. Native
+workflow execution remains optional diagnostic evidence rather than ordinary feature proof.
 
 #### Scenario: Local gates prove the safety contract
 
@@ -185,4 +187,3 @@ adding `run-e2e` by default.
 - **WHEN** the host cannot run native iOS/Android verification
 - **THEN** the remaining device checks are recorded as a tagged inbox checklist
 - **AND** the PR does not request native E2E merely because this host lacks KVM
-
