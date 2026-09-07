@@ -14,14 +14,31 @@ jobs:
   clean-ghcr:
     name: Delete old unused container images
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
-      - name: Delete old images
+      - name: Retain server images
         uses: snok/container-retention-policy@v2
         with:
-          image-names: timecalendar, timecalendar-web
+          image-names: timecalendar
           cut-off: ${{ inputs.cut-off || '1 week ago UTC' }}
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
           skip-tags: latest, production
-          token: ${{ secrets.PAT }}
+          token: ${{ github.token }}
+          token-type: github-token
+          dry-run: ${{ github.event_name == 'workflow_dispatch' }}
+
+      - name: Retain web images
+        uses: snok/container-retention-policy@v2
+        with:
+          image-names: timecalendar-web
+          cut-off: ${{ inputs.cut-off || '1 week ago UTC' }}
+          account-type: org
+          org-name: timecalendar
+          keep-at-least: 5
+          skip-tags: latest, production
+          token: ${{ github.token }}
+          token-type: github-token
+          dry-run: ${{ github.event_name == 'workflow_dispatch' }}

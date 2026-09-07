@@ -7,6 +7,18 @@ on:
   push:
 
 jobs:
+  test-ghcr-retention:
+    name: Test GHCR retention contract
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout main
+      uses: actions/checkout@v6
+
+    # Pure Node configuration checks: no package credentials or GHCR access.
+    - name: Test retention workflow contract
+      run: node --test ci/check-ghcr-retention.test.mjs && node ci/check-ghcr-retention.mjs
+
   test-chart:
     name: Test Helm chart
     runs-on: ubuntu-latest
