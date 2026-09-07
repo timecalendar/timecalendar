@@ -31,18 +31,7 @@ appId: fr.samuelprak.timecalendar.dev
       id: "onboarding-programme-input"
       text: "E2E Programme"
     timeout: 15000
-- scrollUntilVisible:
-    element:
-      id: "onboarding-programme-continue"
-    direction: DOWN
-    visibilityPercentage: 100
-    centerElement: true
-    timeout: 30000
-- tapOn:
-    id: "onboarding-programme-continue"
-- tapOn:
-    id: "onboarding-programme-continue"
-    optional: true
+- pressKey: Enter
 - extendedWaitUntil:
     visible:
       id: "onboarding-connect-continue"
