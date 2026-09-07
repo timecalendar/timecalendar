@@ -71,6 +71,31 @@ describe.each([
     expect(view.getByText("Save")).toBeTruthy()
   })
 
+  it.each([
+    ["disabled", { disabled: true }],
+    ["busy", { busy: true }],
+  ])(
+    "keeps required invariants when caller styles are hostile while %s",
+    async (_state, stateProps) => {
+      const view = await render(
+        <PrimaryAction
+          label="Save"
+          onPress={jest.fn()}
+          testID="save"
+          style={{ backgroundColor: "red", minHeight: 1, opacity: 1 }}
+          {...stateProps}
+        />,
+      )
+      expect(
+        StyleSheet.flatten(view.getByTestId("save").props.style),
+      ).toMatchObject({
+        backgroundColor: Colors.light.primaryStrong,
+        minHeight,
+        opacity: 0.55,
+      })
+    },
+  )
+
   it("keeps busy progress inside the one accessible button", async () => {
     const view = await render(
       <PrimaryAction label="Save" onPress={jest.fn()} testID="save" busy />,

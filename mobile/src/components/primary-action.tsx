@@ -39,13 +39,13 @@ export function PrimaryAction({
       disabled={blocked}
       onPress={blocked ? undefined : onPress}
       style={[
+        style,
         styles.action,
         {
           backgroundColor: theme.primaryStrong,
           minHeight: Platform.OS === "ios" ? 44 : 48,
         },
-        blocked && styles.blocked,
-        style,
+        blocked ? styles.blocked : styles.enabled,
       ]}
     >
       {busy ? (
@@ -75,5 +75,8 @@ const styles = StyleSheet.create({
   },
   blocked: {
     opacity: 0.55,
+  },
+  enabled: {
+    opacity: 1,
   },
 })

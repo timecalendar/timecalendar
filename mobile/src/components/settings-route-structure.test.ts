@@ -5,6 +5,7 @@ const { readFileSync, readdirSync } = jest.requireActual("node:fs") as {
     options: { withFileTypes: true },
   ): {
     name: string
+    isDirectory(): boolean
     isFile(): boolean
   }[]
 }
@@ -14,6 +15,47 @@ const { resolve } = jest.requireActual("node:path") as {
 
 function route(relativePath: string): string {
   return readFileSync(resolve(process.cwd(), "src/app", relativePath), "utf8")
+}
+
+function rootRoutes(): string[] {
+  const appRoot = resolve(process.cwd(), "src/app")
+
+  return readdirSync(appRoot, { withFileTypes: true })
+    .flatMap((entry) => {
+      if (entry.isFile()) {
+        return entry.name.endsWith(".tsx") && entry.name !== "_layout.tsx"
+          ? [entry.name.replace(/\.tsx$/, "")]
+          : []
+      }
+
+      if (!entry.isDirectory()) return []
+
+      const directory = resolve(appRoot, entry.name)
+      const children = readdirSync(directory, { withFileTypes: true })
+      if (
+        children.some((child) => child.isFile() && child.name === "_layout.tsx")
+      ) {
+        return [entry.name]
+      }
+
+      return children
+        .filter((child) => child.isFile() && child.name.endsWith(".tsx"))
+        .map((child) => `${entry.name}/${child.name.replace(/\.tsx$/, "")}`)
+    })
+    .sort()
+}
+
+function rootRegistrations(rootLayout: string) {
+  return [...rootLayout.matchAll(/<Stack\.Screen\s+([\s\S]*?)\/>/g)].map(
+    (match) => {
+      const props = match[1]
+      if (props === undefined) throw new Error("Root Stack.Screen has no props")
+      const name = props.match(/name=["']([^"']+)["']/)?.[1]
+      if (name === undefined)
+        throw new Error(`Root Stack.Screen has no name: ${props}`)
+      return { name, props }
+    },
+  )
 }
 
 describe("Settings route structure", () => {
@@ -94,40 +136,23 @@ describe("Settings route structure", () => {
       )
     }
 
-    const visibleRoutes = [
-      "about",
-      "activity",
-      "appearance-settings",
-      "changelog",
-      "changelog-sheet",
-      "event-details/[uid]",
-      "feedback",
-      "hidden-events",
-      "notification-settings",
-      "personal-event-form",
-      "personal-events",
-      "timezone-settings",
-      "user-calendars",
-    ]
-    for (const name of visibleRoutes) {
-      expect(rootLayout).toContain(`name="${name}"`)
-    }
+    const headerlessRoutes = new Set([
+      "(tabs)",
+      "onboarding",
+      "profile",
+      "more",
+      "dev-import",
+    ])
+    const registrations = rootRegistrations(rootLayout)
 
-    const topLevelRoutes = readdirSync(resolve(process.cwd(), "src/app"), {
-      withFileTypes: true,
-    })
-      .filter((entry) => entry.isFile() && entry.name.endsWith(".tsx"))
-      .map((entry) => entry.name.replace(/\.tsx$/, ""))
-      .filter((name) => name !== "_layout")
-      .sort()
-    expect(topLevelRoutes).toEqual(
-      [
-        ...visibleRoutes.filter((name) => !name.includes("/")),
-        "dev-import",
-        "more",
-        "profile",
-      ].sort(),
-    )
+    expect(registrations.map(({ name }) => name).sort()).toEqual(rootRoutes())
+    for (const registration of registrations) {
+      if (headerlessRoutes.has(registration.name)) {
+        expect(registration.props).toContain("headerShown: false")
+      } else {
+        expect(registration.props).not.toContain("headerShown: false")
+      }
+    }
 
     expect(route("../components/chrome/root-screen-options.ts")).toContain(
       'headerBackButtonDisplayMode: "minimal"',
