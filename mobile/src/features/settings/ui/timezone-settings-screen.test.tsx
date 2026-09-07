@@ -34,7 +34,7 @@ describe("TimezoneSettingsScreen", () => {
     )
     expect(
       StyleSheet.flatten(
-        view.getByTestId("timezone-responsive-content").props.style,
+        view.getByTestId("timezone-layout-owner").props.children.props.style,
       ),
     ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
   })

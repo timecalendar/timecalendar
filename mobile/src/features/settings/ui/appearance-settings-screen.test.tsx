@@ -41,7 +41,8 @@ describe("AppearanceSettingsScreen", () => {
       )
       expect(
         StyleSheet.flatten(
-          view.getByTestId("appearance-responsive-content").props.style,
+          view.getByTestId("appearance-layout-owner").props.children.props
+            .style,
         ),
       ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
     },

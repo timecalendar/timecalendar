@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, Switch, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { Host, Picker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -40,18 +40,13 @@ export default function NotificationSettingsScreen() {
     register,
     isError,
   } = useNotificationPreferences()
-  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
-
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView
-        testID="notifications-layout-owner"
-        onLayout={onLayout}
-        style={styles.safeArea}
-      >
-        <View
-          testID="notifications-responsive-content"
-          style={[laneStyle, styles.content]}
+      <SafeAreaView style={styles.safeArea}>
+        <AdaptiveContent
+          lane="readable"
+          testID="notifications-layout-owner"
+          contentContainerStyle={styles.content}
         >
           <ThemedText type="title">{t("notifications.title")}</ThemedText>
 
@@ -182,18 +177,14 @@ export default function NotificationSettingsScreen() {
               </Pressable>
             </View>
           )}
-        </View>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   safeArea: {
     flex: 1,
   },

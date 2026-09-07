@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { Host, Picker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -28,18 +28,13 @@ export default function AppearanceSettingsScreen() {
   const { t } = useTranslation()
   const theme = useThemePreference()
   const language = useLanguagePreference()
-  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
-
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView
-        testID="appearance-layout-owner"
-        onLayout={onLayout}
-        style={styles.safeArea}
-      >
-        <View
-          testID="appearance-responsive-content"
-          style={[laneStyle, styles.content]}
+      <SafeAreaView style={styles.safeArea}>
+        <AdaptiveContent
+          lane="readable"
+          testID="appearance-layout-owner"
+          contentContainerStyle={styles.content}
         >
           <ThemedText type="title">{t("settings.title")}</ThemedText>
 
@@ -105,18 +100,14 @@ export default function AppearanceSettingsScreen() {
               </Host>
             </View>
           </View>
-        </View>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   safeArea: {
     flex: 1,
   },

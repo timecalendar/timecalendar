@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { AdaptiveContent } from "@/components/adaptive-content"
 import { Host, Picker } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
@@ -39,20 +39,14 @@ const ZONE_LABEL_KEYS = {
 export default function TimezoneSettingsScreen() {
   const { t } = useTranslation()
   const timezone = useTimezonePreference()
-  const { laneStyle, onLayout } = useAdaptiveLayout("readable")
-
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: t("settings.timezone.title") }} />
-      <SafeAreaView
-        testID="timezone-layout-owner"
-        onLayout={onLayout}
-        style={styles.safeArea}
-        edges={["bottom", "left", "right"]}
-      >
-        <View
-          testID="timezone-responsive-content"
-          style={[laneStyle, styles.content]}
+      <SafeAreaView style={styles.safeArea} edges={["bottom", "left", "right"]}>
+        <AdaptiveContent
+          lane="readable"
+          testID="timezone-layout-owner"
+          contentContainerStyle={styles.content}
         >
           <View style={styles.control}>
             <ThemedText type="smallBold">
@@ -84,18 +78,14 @@ export default function TimezoneSettingsScreen() {
               </Host>
             </View>
           </View>
-        </View>
+        </AdaptiveContent>
       </SafeAreaView>
     </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   safeArea: {
     flex: 1,
   },

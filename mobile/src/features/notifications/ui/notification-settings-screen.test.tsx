@@ -56,7 +56,8 @@ describe("NotificationSettingsScreen", () => {
       )
       expect(
         StyleSheet.flatten(
-          view.getByTestId("notifications-responsive-content").props.style,
+          view.getByTestId("notifications-layout-owner").props.children.props
+            .style,
         ),
       ).toMatchObject({ maxWidth, paddingHorizontal: gutter })
     },

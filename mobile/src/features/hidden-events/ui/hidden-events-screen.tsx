@@ -183,11 +183,7 @@ function HiddenRow({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  container: { flex: 1 },
   safeArea: {
     flex: 1,
     paddingTop: Spacing.four,
