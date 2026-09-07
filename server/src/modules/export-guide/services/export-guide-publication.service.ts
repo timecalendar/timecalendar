@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common"
 import { ExportGuideAssetValidator } from "modules/export-guide/assets/export-guide-asset.validator"
+import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
 import {
   EXPORT_GUIDE_PROVIDER_SLUG_PATTERN,
   ExportGuideBundle,
@@ -49,13 +50,9 @@ export class ExportGuidePublicationService {
     for (const catalogue of Object.values(catalogues)) {
       for (const provider of catalogue.providers) {
         if (provider.thumbnail)
-          assets.set(provider.thumbnail.url, {
-            image: provider.thumbnail,
-            role: "thumbnail",
-          })
+          this.addAsset(assets, provider.thumbnail, "thumbnail")
         for (const page of provider.pages)
-          if (page.image)
-            assets.set(page.image.url, { image: page.image, role: "page" })
+          if (page.image) this.addAsset(assets, page.image, "page")
       }
     }
     for (const { image, role } of assets.values())
@@ -74,6 +71,44 @@ export class ExportGuidePublicationService {
       throw error
     }
     return bundle
+  }
+
+  async publishInitial(): Promise<ExportGuideBundle> {
+    return this.publish(
+      createInitialExportGuideCatalogue("fr"),
+      createInitialExportGuideCatalogue("en"),
+      { initial: true, now: new Date(0) },
+    )
+  }
+
+  private addAsset(
+    assets: Map<
+      string,
+      {
+        image: NonNullable<
+          ExportGuideCatalogueV1["providers"][number]["thumbnail"]
+        >
+        role: "thumbnail" | "page"
+      }
+    >,
+    image: NonNullable<
+      ExportGuideCatalogueV1["providers"][number]["thumbnail"]
+    >,
+    role: "thumbnail" | "page",
+  ): void {
+    const existing = assets.get(image.url)
+    if (existing) {
+      if (
+        existing.image.mimeType !== image.mimeType ||
+        existing.image.byteSize !== image.byteSize ||
+        existing.image.width !== image.width ||
+        existing.image.height !== image.height
+      )
+        throw new ExportGuideValidationError("asset_metadata_conflict")
+      if (role === "thumbnail") existing.role = "thumbnail"
+      return
+    }
+    assets.set(image.url, { image, role })
   }
 
   rollback(version: string): void {

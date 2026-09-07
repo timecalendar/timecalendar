@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
 import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-guide-catalogue.store"
 import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
@@ -5,9 +8,15 @@ import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/e
 describe("ExportGuideCatalogueStore", () => {
   const validator = new ExportGuideCatalogueValidator()
   let repository: ExportGuideCatalogueStore
+  let directory: string
 
   beforeEach(() => {
-    repository = new ExportGuideCatalogueStore(validator)
+    directory = mkdtempSync(join(tmpdir(), "export-guide-store-"))
+    repository = new ExportGuideCatalogueStore(directory, validator)
+  })
+
+  afterEach(() => {
+    rmSync(directory, { recursive: true, force: true })
   })
 
   const bundle = (version: string, publishedAt = new Date(0)) => {
@@ -41,23 +50,61 @@ describe("ExportGuideCatalogueStore", () => {
   })
 
   it("rejects overwrites and rolls back only to retained versions", () => {
+    repository.stage(bundle("initial"))
+    repository.commitStaged("initial")
     repository.stage(bundle("later"))
     repository.commitStaged("later")
     expect(() => repository.stage(bundle("later"))).toThrow("version_exists")
-    const initial = [...repository.capture().retained.keys()][0]
-    repository.activate(initial)
-    expect(repository.capture().activeVersion).toBe(initial)
+    repository.activate("initial")
+    expect(repository.capture().activeVersion).toBe("initial")
     expect(() => repository.activate("missing")).toThrow("version_missing")
+  })
+
+  it("restores retained versions and rollback targets after reconstruction", () => {
+    repository.stage(bundle("initial"))
+    repository.commitStaged("initial")
+    repository.stage(bundle("later"))
+    repository.commitStaged("later")
+
+    const reconstructed = new ExportGuideCatalogueStore(directory, validator)
+    expect([...reconstructed.capture().retained.keys()]).toEqual([
+      "initial",
+      "later",
+    ])
+    expect(reconstructed.find("initial")?.catalogueVersion).toBe("initial")
+    reconstructed.activate("initial")
+
+    const rolledBack = new ExportGuideCatalogueStore(directory, validator)
+    expect(rolledBack.capture().activeVersion).toBe("initial")
+    expect(rolledBack.find("later")?.catalogueVersion).toBe("later")
+  })
+
+  it("restores the staged file when pointer replacement fails", () => {
+    repository.stage(bundle("initial"))
+    repository.commitStaged("initial")
+    repository.stage(bundle("later"))
+    const replacePointer = jest
+      .spyOn(repository as any, "replacePointer")
+      .mockImplementationOnce(() => {
+        throw new Error("pointer failure")
+      })
+
+    expect(() => repository.commitStaged("later")).toThrow("pointer failure")
+    repository.discardStaged("later")
+    replacePointer.mockRestore()
+
+    const reconstructed = new ExportGuideCatalogueStore(directory, validator)
+    expect(reconstructed.capture().activeVersion).toBe("initial")
+    expect(reconstructed.find("later")).toBeUndefined()
   })
 
   it("prunes strictly after 24 hours plus cache age", () => {
     const publishedAt = new Date("2026-01-01T00:00:00.000Z")
+    repository.stage(bundle("initial", publishedAt))
+    repository.commitStaged("initial")
     repository.stage(bundle("old", publishedAt))
     repository.commitStaged("old")
-    const initial = [...repository.capture().retained.keys()].find(
-      (version) => version !== "old",
-    )!
-    repository.activate(initial)
+    repository.activate("initial")
     const cacheAge = 60_000
     const boundary = publishedAt.getTime() + 24 * 60 * 60 * 1000 + cacheAge
     expect(repository.prune(new Date(boundary), cacheAge, new Set())).toEqual(

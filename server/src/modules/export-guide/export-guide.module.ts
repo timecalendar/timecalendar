@@ -1,3 +1,4 @@
+import { join } from "path"
 import { Module } from "@nestjs/common"
 import { TypeOrmModule } from "@nestjs/typeorm"
 import {
@@ -6,7 +7,10 @@ import {
 } from "modules/export-guide/assets/export-guide-asset-reader"
 import { ExportGuideAssetValidator } from "modules/export-guide/assets/export-guide-asset.validator"
 import { ExportGuideV1Controller } from "modules/export-guide/controllers/export-guide-v1.controller"
-import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-guide-catalogue.store"
+import {
+  EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+  ExportGuideCatalogueStore,
+} from "modules/export-guide/stores/export-guide-catalogue.store"
 import { ExportGuideSchoolRepository } from "modules/export-guide/repositories/export-guide-school.repository"
 import { ExportGuidePublicationService } from "modules/export-guide/services/export-guide-publication.service"
 import { ExportGuideService } from "modules/export-guide/services/export-guide.service"
@@ -28,6 +32,10 @@ import { S3_PUBLIC_BUCKET_CLIENT_URL } from "config/constants"
     ExportGuideUrlPolicy,
     { provide: ExportGuideAssetReader, useClass: HttpExportGuideAssetReader },
     ExportGuideAssetValidator,
+    {
+      provide: EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+      useValue: join(process.cwd(), "export-guide-catalogues"),
+    },
     ExportGuideCatalogueStore,
     ExportGuideSchoolRepository,
     ExportGuidePublicationService,

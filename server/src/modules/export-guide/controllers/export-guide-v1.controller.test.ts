@@ -1,17 +1,26 @@
+import { mkdtempSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
 import { ExportGuideModule } from "modules/export-guide/export-guide.module"
-import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-guide-catalogue.store"
+import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
+import {
+  EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+  ExportGuideCatalogueStore,
+} from "modules/export-guide/stores/export-guide-catalogue.store"
 import {
   EXPORT_GUIDE_UNAVAILABLE_MESSAGE,
   ExportGuideService,
 } from "modules/export-guide/services/export-guide.service"
 import { FeatureFlagService } from "modules/feature-flag/services/feature-flag.service"
+import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import createTestApp from "test-utils/create-test-app"
 
 describe("ExportGuideV1Controller", () => {
   let app: NestExpressApplication
   let enabled = true
+  const directory = mkdtempSync(join(tmpdir(), "export-guide-controller-"))
   const evaluateFlag = jest.fn(async () => enabled)
 
   beforeAll(async () => {
@@ -23,9 +32,27 @@ describe("ExportGuideV1Controller", () => {
             provide: FeatureFlagService,
             useValue: { evaluateFlag },
           },
+          { provide: EXPORT_GUIDE_CATALOGUE_DIRECTORY, useValue: directory },
         ],
       },
     )
+    const repository = app.get(ExportGuideCatalogueStore)
+    const validator = app.get(ExportGuideCatalogueValidator)
+    const catalogues = validator.validatePair(
+      createInitialExportGuideCatalogue("fr"),
+      createInitialExportGuideCatalogue("en"),
+      { initial: true },
+    )
+    repository.stage({
+      catalogueVersion: catalogues.fr.catalogueVersion,
+      catalogues,
+      publishedAt: new Date(0),
+    })
+    repository.commitStaged(catalogues.fr.catalogueVersion)
+  })
+
+  afterAll(() => {
+    rmSync(directory, { recursive: true, force: true })
   })
 
   beforeEach(() => {
@@ -52,7 +79,7 @@ describe("ExportGuideV1Controller", () => {
     const version = repository.capture().activeVersion
     const { body } = await get(
       `locale=en&clientSchema=1&catalogueVersion=${encodeURIComponent(
-        version,
+        version!,
       )}`,
     ).expect(200)
     expect(body.locale).toBe("en")

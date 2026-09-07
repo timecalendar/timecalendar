@@ -1,4 +1,6 @@
+import { mkdtempSync, rmSync } from "fs"
 import { readFile } from "fs/promises"
+import { tmpdir } from "os"
 import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import {
@@ -6,11 +8,15 @@ import {
   FileExportGuideAssetReader,
 } from "modules/export-guide/assets/export-guide-asset-reader"
 import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
-import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-guide-catalogue.store"
+import {
+  EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+  ExportGuideCatalogueStore,
+} from "modules/export-guide/stores/export-guide-catalogue.store"
 import { ExportGuidePublicationService } from "modules/export-guide/services/export-guide-publication.service"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { SchoolModule } from "modules/school/school.module"
 import { SchoolService } from "modules/school/services/school.service"
+import { ExportGuideCatalogueValidator } from "modules/export-guide/validation/export-guide-catalogue.validator"
 import createTestApp from "test-utils/create-test-app"
 
 const fixtureRoot = join(__dirname, "../assets/__fixtures__")
@@ -21,6 +27,9 @@ describe("ExportGuidePublicationService integration", () => {
   let publication: ExportGuidePublicationService
   let catalogues: ExportGuideCatalogueStore
   let schools: SchoolService
+  const catalogueDirectory = mkdtempSync(
+    join(tmpdir(), "export-guide-integration-"),
+  )
 
   beforeAll(async () => {
     app = await createTestApp(
@@ -28,6 +37,10 @@ describe("ExportGuidePublicationService integration", () => {
       {
         overrides: [
           { provide: "EXPORT_GUIDE_ASSET_ORIGIN", useValue: origin },
+          {
+            provide: EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+            useValue: catalogueDirectory,
+          },
           {
             provide: ExportGuideAssetReader,
             useValue: new FileExportGuideAssetReader(fixtureRoot, {
@@ -40,6 +53,10 @@ describe("ExportGuidePublicationService integration", () => {
     publication = app.get(ExportGuidePublicationService)
     catalogues = app.get(ExportGuideCatalogueStore)
     schools = app.get(SchoolService)
+  })
+
+  afterAll(() => {
+    rmSync(catalogueDirectory, { recursive: true, force: true })
   })
 
   const candidate = async (version: string) => {
@@ -151,5 +168,23 @@ describe("ExportGuidePublicationService integration", () => {
     const object = catalogues.find(retained)
     publication.rollback(retained)
     expect(catalogues.capture().active).toBe(object)
+  })
+
+  it("keeps retained reads and rollback durable across reconstruction", () => {
+    const reconstructed = new ExportGuideCatalogueStore(
+      catalogueDirectory,
+      app.get(ExportGuideCatalogueValidator),
+    )
+    const retained = [...reconstructed.capture().retained.keys()][0]
+    const latest = reconstructed.capture().activeVersion
+    expect(reconstructed.find(retained)).toBeDefined()
+    reconstructed.activate(retained)
+
+    const rolledBack = new ExportGuideCatalogueStore(
+      catalogueDirectory,
+      app.get(ExportGuideCatalogueValidator),
+    )
+    expect(rolledBack.capture().activeVersion).toBe(retained)
+    expect(rolledBack.find(latest)).toBeDefined()
   })
 })

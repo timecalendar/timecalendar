@@ -74,7 +74,7 @@ export type ExportGuideBundle = Readonly<{
 }>
 
 export type ExportGuideSnapshot = Readonly<{
-  activeVersion: string
-  active: ExportGuideBundle
+  activeVersion?: string
+  active?: ExportGuideBundle
   retained: ReadonlyMap<string, ExportGuideBundle>
 }>
