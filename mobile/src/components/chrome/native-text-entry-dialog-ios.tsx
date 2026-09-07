@@ -19,13 +19,7 @@ import {
   padding,
   textFieldStyle,
 } from "@expo/ui/swift-ui/modifiers"
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  StyleSheet,
-  View,
-} from "react-native"
+import { KeyboardAvoidingView, Modal, StyleSheet, View } from "react-native"
 
 import { AdaptiveContent } from "@/components/adaptive-content"
 import { Spacing } from "@/theme"
@@ -63,7 +57,7 @@ export function NativeTextEntryDialogIos({
     >
       <KeyboardAvoidingView
         testID="native-text-entry-dialog-keyboard-owner"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior="padding"
         style={styles.fill}
       >
         <View
