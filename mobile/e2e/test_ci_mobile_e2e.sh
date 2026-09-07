@@ -46,12 +46,13 @@ job_block() {
 }
 
 step_block() {
-  local job="$1" step="$2"
-  job_block "$job" | awk -v target="$step" '
+  local job="$1" step="$2" block
+  block="$(job_block "$job")"
+  awk -v target="$step" '
     $0 == "      - name: " target { inside = 1 }
     inside && seen && /^      - name:/ { exit }
     inside { print; seen = 1 }
-  '
+  ' <<< "$block"
 }
 
 assert_block_present() {
