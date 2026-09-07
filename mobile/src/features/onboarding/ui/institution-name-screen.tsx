@@ -1,14 +1,10 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  TextInput,
-} from "react-native"
+import { StyleSheet, TextInput } from "react-native"
 
+import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
+import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -64,15 +60,20 @@ export default function InstitutionNameScreen() {
         testID="onboarding-institution-content"
         lane="readable"
         style={stepStyles.fill}
-        contentContainerStyle={stepStyles.safeArea}
       >
-        <KeyboardAvoidingView
-          style={stepStyles.fill}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <ScrollView
+        {() => (
+          <KeyboardSafeActionLayout
+            testID="onboarding-institution-keyboard-layout"
             contentContainerStyle={stepStyles.formContent}
-            keyboardShouldPersistTaps="handled"
+            actionContainerStyle={styles.actionRegion}
+            actions={
+              <PrimaryAction
+                testID="onboarding-institution-continue"
+                label={t("onboarding.institution.continue")}
+                accessibilityLabel={t("onboarding.institution.continueLabel")}
+                onPress={submit}
+              />
+            }
           >
             <PageIntro caption={t("onboarding.institution.helper")} />
 
@@ -113,22 +114,13 @@ export default function InstitutionNameScreen() {
                 {t(errorKey)}
               </ThemedText>
             )}
-
-            <Pressable
-              testID="onboarding-institution-continue"
-              accessibilityRole="button"
-              accessibilityLabel={t("onboarding.institution.continueLabel")}
-              hitSlop={Spacing.two}
-              onPress={submit}
-              style={[stepStyles.cta, { backgroundColor: theme.primaryStrong }]}
-            >
-              <ThemedText type="smallBold" themeColor="onPrimary">
-                {t("onboarding.institution.continue")}
-              </ThemedText>
-            </Pressable>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </KeyboardSafeActionLayout>
+        )}
       </RootPage>
     </>
   )
 }
+
+const styles = StyleSheet.create({
+  actionRegion: { paddingTop: Spacing.three, paddingBottom: Spacing.four },
+})

@@ -1,10 +1,13 @@
 import { act, fireEvent, render } from "@testing-library/react-native"
 import { router } from "expo-router"
 import type { ReactNode } from "react"
+import { StyleSheet } from "react-native"
 
+import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import { useImportDraft } from "@/features/onboarding/draft"
 import { clearSelection } from "@/features/school-selection"
 import { usePlatform } from "@/test-support/platform"
+import { Colors } from "@/theme"
 
 import InstitutionNameScreen from "./institution-name-screen"
 
@@ -96,6 +99,21 @@ describe("InstitutionNameScreen", () => {
     expect(mockPush).toHaveBeenCalledWith("/onboarding/programme")
   })
 
+  it("submits the normalized value from the keyboard action", async () => {
+    const view = await render(<InstitutionNameScreen />)
+    await fireEvent.changeText(
+      view.getByTestId("onboarding-institution-input"),
+      "  E2E Institution  ",
+    )
+    await fireEvent(
+      view.getByTestId("onboarding-institution-input"),
+      "submitEditing",
+    )
+
+    expect(mockSetUnlistedInstitution).toHaveBeenCalledWith("E2E Institution")
+    expect(mockPush).toHaveBeenCalledWith("/onboarding/programme")
+  })
+
   it.each([
     ["empty", ""],
     ["whitespace-only", "   "],
@@ -150,40 +168,62 @@ describe("InstitutionNameScreen", () => {
         const view = await render(<InstitutionNameScreen />)
         const avoiding = view.getByTestId("keyboard-avoiding-layout")
         const scroll = view.getByTestId("keyboard-scroll-layout")
-
-        expect(avoiding.props.behavior).toBe("padding")
-        expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
-        expect(scroll.props.contentContainerStyle).toEqual(
-          expect.objectContaining({ flexGrow: 1, justifyContent: "center" }),
+        const actions = view.getByTestId(
+          "onboarding-institution-keyboard-layout-actions",
         )
+        const cta = view.getByTestId("onboarding-institution-continue")
+
+        expect(avoiding.props.behavior).toBe(
+          resolveKeyboardAvoidingBehavior("ios"),
+        )
+        expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
+        expect(
+          StyleSheet.flatten(scroll.props.contentContainerStyle),
+        ).toMatchObject({ flexGrow: 1, justifyContent: "center" })
         expect(
           scroll.queryAll(
             (node) => node.props.testID === "onboarding-institution-continue",
           ),
-        ).toHaveLength(1)
+        ).toHaveLength(0)
         expect(
           avoiding.queryAll(
             (node) => node.props.testID === "onboarding-institution-continue",
           ),
         ).toHaveLength(1)
+        expect(actions).toContainElement(cta)
+        expect(StyleSheet.flatten(cta.props.style)).toMatchObject({
+          minHeight: 44,
+          backgroundColor: Colors.light.primaryStrong,
+        })
       })
     })
 
     describe("on Android", () => {
       usePlatform("android")
 
-      it("keeps resize-driven behavior while allowing taps through the keyboard", async () => {
+      it("keeps the sticky action on the measured keyboard-safe path", async () => {
         const view = await render(<InstitutionNameScreen />)
         const avoiding = view.getByTestId("keyboard-avoiding-layout")
         const scroll = view.getByTestId("keyboard-scroll-layout")
+        const actions = view.getByTestId(
+          "onboarding-institution-keyboard-layout-actions",
+        )
+        const cta = view.getByTestId("onboarding-institution-continue")
 
-        expect(avoiding.props.behavior).toBeUndefined()
+        expect(avoiding.props.behavior).toBe(
+          resolveKeyboardAvoidingBehavior("android"),
+        )
         expect(scroll.props.keyboardShouldPersistTaps).toBe("handled")
         expect(
           scroll.queryAll(
             (node) => node.props.testID === "onboarding-institution-continue",
           ),
-        ).toHaveLength(1)
+        ).toHaveLength(0)
+        expect(actions).toContainElement(cta)
+        expect(StyleSheet.flatten(cta.props.style)).toMatchObject({
+          minHeight: 48,
+          backgroundColor: Colors.light.primaryStrong,
+        })
       })
     })
   })

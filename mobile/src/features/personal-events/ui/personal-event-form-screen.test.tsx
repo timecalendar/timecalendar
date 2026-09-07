@@ -281,6 +281,14 @@ describe("PersonalEventFormScreen", () => {
       "accessibilityLabel",
       "Title",
     )
+    expect(view.getByTestId("personal-event-title-input")).toHaveProp(
+      "returnKeyType",
+      "done",
+    )
+    expect(view.getByTestId("personal-event-title-input")).toHaveProp(
+      "onSubmitEditing",
+      expect.any(Function),
+    )
     expect(view.getByTestId("personal-event-start-picker")).toBeTruthy()
     expect(view.getByTestId("personal-event-end-picker")).toBeTruthy()
     expect(view.getByTestId("personal-event-location-input")).toHaveProp(
@@ -320,7 +328,9 @@ describe("PersonalEventFormScreen", () => {
       StyleSheet.flatten(scrollView.props.contentContainerStyle).paddingTop,
     ).toBeUndefined()
 
-    const owner = view.getByTestId("personal-event-form-responsive-owner")
+    const owner = view.getByTestId(
+      "personal-event-form-responsive-owner-window-owner",
+    )
     for (const width of [390, 600, 768, 800, 834, 1024]) {
       await fireEvent(owner, "layout", {
         persist: jest.fn(),
@@ -355,6 +365,21 @@ describe("PersonalEventFormScreen", () => {
     await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1))
     expect(mockSave).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Lunch" }),
+    )
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it("saves a valid create from the title keyboard action", async () => {
+    const { getByTestId } = await render(<PersonalEventFormScreen />)
+    await fireEvent.changeText(
+      getByTestId("personal-event-title-input"),
+      "Keyboard save",
+    )
+    await fireEvent(getByTestId("personal-event-title-input"), "submitEditing")
+
+    await waitFor(() => expect(mockSave).toHaveBeenCalledTimes(1))
+    expect(mockSave).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Keyboard save" }),
     )
     expect(mockBack).toHaveBeenCalledTimes(1)
   })
