@@ -244,7 +244,7 @@ value has a dedicated RN visual surface.
 | `tags[]` | JSON text `tags` | Each nested tag is `{ name, color, icon }` (`app/lib/modules/calendar/models/event_tag.dart:41-43`). RN rendering projects tag names, so `ON-01` observes names; storage evidence proves all three nested fields. |
 | `fields?` | nullable JSON text `fields` | The nested object is `{ canceled?, shortDescription?, subject?, groupColor? }` (`app/lib/modules/calendar/models/calendar_event_custom_fields.dart:3-34`). `ON-01` records any rendered canceled/short-description/subject state; storage evidence proves the full object. |
 | `userCalendarId` | `user_calendar_id` | Parent calendar association in `ON-01`; exact value in storage evidence |
-| *(not persisted by Flutter)* | required `type` | RN-only richer server field. Live sync supplies the API enum; the importer must use its documented safe default for any recovered cache row (`mobile/src/db/schema.ts:92-98`). No Flutter value exists to compare. |
+| *(not persisted by Flutter)* | required `type` | RN-only richer server field supplied by live sync. No Flutter value exists to compare, and the importer never recovers or writes cache rows (`mobile/src/db/schema.ts:92-98`). |
 
 <a id="d-13"></a>
 #### D-13 · Activity / change log (`calendar_logs`)

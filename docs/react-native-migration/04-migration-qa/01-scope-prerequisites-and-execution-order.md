@@ -212,8 +212,10 @@ step 1.
 
 iOS and Android are **independent passes** with their own report. Data does not travel between
 them, and the two platforms read Flutter's data from genuinely different places
-(`NSUserDefaults` + the app Documents dir on iOS; the Android app data dir, backend still
-unconfirmed — [Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use)).
+(`NSUserDefaults` + the app Documents dir on iOS; the Android app data dir and code-confirmed
+legacy `FlutterSharedPreferences` XML backend). The physical Android path, file presence,
+in-place update survival, and backup behavior remain to be proved on a signed device —
+[Q-02](./09-open-engineering-questions.md#q-02--which-shared_preferences-backend-does-android-use).
 A pass on one says nothing about the other.
 
 Run the compact pack `SEED-A` on both. Run the large pack `SEED-B` on the low-end supported device

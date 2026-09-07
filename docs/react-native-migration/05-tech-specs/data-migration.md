@@ -2,6 +2,8 @@
 
 **Status:** delivery specification
 
+**Planning package:** [Flutter-to-React-Native data migration](../../projects/flutter-rn-data-migration/README.md)
+
 **Roadmap:** [Phase 09 — On-device data migration](../01-roadmap/09-data-migration.md)
 
 **Acceptance suite:** [Flutter → React Native in-place upgrade QA](../04-migration-qa/README.md)
