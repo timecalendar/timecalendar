@@ -6,7 +6,6 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, ScrollView, StyleSheet, View } from "react-native"
 
-import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import { readApplicationInfo } from "@/features/about/data"
@@ -16,7 +15,7 @@ import {
   SettingsSection,
 } from "@/features/settings/ui"
 import { recordUnknownError } from "@/firebase"
-import { Spacing, useTheme } from "@/theme"
+import { ResponsiveContentWidths, Spacing, useTheme } from "@/theme"
 
 const PRIVACY_URL = "https://timecalendar.app/privacy-policy"
 const CONTACT_URL = "mailto:hello@timecalendar.app"
@@ -41,7 +40,6 @@ export function AboutScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const [linkFailed, setLinkFailed] = useState(false)
-  const readableLayout = useAdaptiveLayout("readable")
   const versionValue = formatApplicationInfo(t)
   const openLink = async (
     context: string,
@@ -165,7 +163,6 @@ export function AboutScreen() {
         {(standardLayout) => (
           <ScrollView
             testID="about-scroll-owner"
-            onLayout={readableLayout.onLayout}
             style={{ backgroundColor: theme.background }}
             contentContainerStyle={styles.scrollContent}
           >
@@ -175,7 +172,7 @@ export function AboutScreen() {
             >
               <View
                 testID="about-readable-copy"
-                style={[readableLayout.laneStyle, styles.blurb]}
+                style={[styles.readableCopy, styles.blurb]}
               >
                 <ThemedText>{t("about.blurb.access")}</ThemedText>
                 <ThemedText themeColor="textSecondary">
@@ -187,7 +184,7 @@ export function AboutScreen() {
                   accessibilityLiveRegion="polite"
                   accessibilityRole="alert"
                   themeColor="textSecondary"
-                  style={[readableLayout.laneStyle, styles.linkError]}
+                  style={[styles.readableCopy, styles.linkError]}
                 >
                   {t("about.linkError")}
                 </ThemedText>
@@ -217,6 +214,11 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Platform.OS === "ios" ? Spacing.four : Spacing.five,
+  },
+  readableCopy: {
+    alignSelf: "center",
+    width: "100%",
+    maxWidth: ResponsiveContentWidths.readable,
   },
   blurb: { gap: Spacing.two },
   linkError: {},

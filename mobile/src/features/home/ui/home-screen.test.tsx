@@ -135,6 +135,25 @@ describe("HomeScreen", () => {
   it("renders the app-name heading and the empty-day state when there are no events", async () => {
     await render(<HomeScreen />)
     expect(screen.getByText("TimeCalendar")).toBeTruthy()
+    const upcoming = screen.getByTestId("home-upcoming-empty")
+    const today = screen.getByTestId("home-today-empty")
+    expect(upcoming.props.accessibilityLiveRegion).toBe("polite")
+    expect(today.props.accessibilityLiveRegion).toBe("polite")
+    expect(StyleSheet.flatten(upcoming.props.style)).toMatchObject({
+      alignItems: "flex-start",
+      gap: 8,
+    })
+    expect(StyleSheet.flatten(today.props.style)).toMatchObject({
+      alignItems: "flex-start",
+      gap: 8,
+    })
+    expect(
+      StyleSheet.flatten(screen.getByText("Up next").props.style),
+    ).toMatchObject({ fontSize: 32, lineHeight: 44, fontWeight: 600 })
+    expect(
+      StyleSheet.flatten(screen.getByText("Today").props.style),
+    ).toMatchObject({ fontSize: 32, lineHeight: 44, fontWeight: 600 })
+    expect(screen.getByText("Nothing coming up for now.")).toBeTruthy()
     expect(screen.getByText("No events today")).toBeTruthy()
     expect(screen.getByText("Enjoy the open day.")).toBeTruthy()
     // No scroller / timeline when the day is empty.
@@ -154,6 +173,8 @@ describe("HomeScreen", () => {
     expect(screen.getByText("1 event today")).toBeTruthy()
     // The card + tile both render the title.
     expect(screen.getAllByText("Algorithms").length).toBeGreaterThan(0)
+    expect(screen.queryByTestId("home-upcoming-empty")).toBeNull()
+    expect(screen.queryByTestId("home-today-empty")).toBeNull()
   })
 
   it("shows partial and complete progress for personal and synced upcoming/timed events", async () => {

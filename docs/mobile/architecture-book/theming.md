@@ -125,9 +125,12 @@ surfaces and calendar content; native controls are tinted and composed rather th
   native tabs, safe-area and automatic list insets, keyboard avoidance, menus, alerts, pickers,
   modal presentation, and full-window overlay anchoring remain with their current owners.
 - Settings destinations and management/history collections use one measured `standard` lane at
-  their existing scroll or virtualized-list owner. Preference controls, forms, prose, and shared
-  changelog content use a measured `readable` lane; About keeps its grouped actions standard and
-  bounds only its prose inside a readable lane. Presented content measures inside its actual
+  their existing scroll or virtualized-list owner. Settings group labels keep the localized
+  catalog's normal casing; semantic small-bold typography, secondary color, inset, grouped surface,
+  and platform radius provide the hierarchy without a text transform. Preference controls, forms,
+  prose, and shared changelog content use a measured `readable` lane; About keeps its grouped
+  actions standard and centers its prose under a gutterless readable cap inside that standard
+  lane, so the outer lane supplies the only responsive gutter. Presented content measures inside its actual
   sheet or screen, and responsive adaptation never wraps a virtualized list in another scroller.
 
 ## Tokenized React Navigation theme — `buildNavTheme` (C2)
@@ -155,6 +158,12 @@ color-scheme seam. Eligible full-screen illustrations are recolored to each sche
 `primary` accent; the localized text carries meaning and the image remains decorative. Filled
 body/footer `PrimaryAction` controls always use `primaryStrong` with `onPrimary`. Platform-native
 header actions and FABs retain their native placement and sizing.
+
+Home's true-empty Up next and Today title/caption pairs use section `EmptyState`, retaining
+left alignment while sharing subtitle hierarchy, secondary captions, semantic spacing, and polite
+announcement. Feedback, onboarding Programme, and the personal-event editor compose one readable
+`KeyboardSafeActionLayout`: the fields remain in its sole scroll body and the `PrimaryAction`
+region is a measured sibling above the keyboard. Programme Skip remains native per platform.
 
 The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tabs` is "API subject to change"; `@expo/ui` ships unstable entry points; `expo-glass-effect` is iOS-26-only). The wrapper seam localizes that churn to one directory. Each module is the **single import site** for its alpha API:
 

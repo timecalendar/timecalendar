@@ -2,12 +2,15 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { Alert, StyleSheet } from "react-native"
 
+import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
 import {
   getRememberedEmail,
   setRememberedEmail,
   useSendFeedback,
 } from "@/features/feedback/data"
 import i18n from "@/i18n"
+import { usePlatform } from "@/test-support/platform"
+import { Colors } from "@/theme"
 
 import FeedbackScreen, { normalizeFeedbackParam } from "./feedback-screen"
 
@@ -46,20 +49,55 @@ it.each([390, 768, 800, 1024])(
   async (width) => {
     const view = await render(<FeedbackScreen />)
     await act(() =>
-      fireEvent(view.getByTestId("feedback-layout-owner"), "layout", {
+      fireEvent(view.getByTestId("feedback-keyboard-layout"), "layout", {
         nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+        persist: jest.fn(),
       }),
     )
-    expect(
-      StyleSheet.flatten(
-        view.getByTestId("feedback-responsive-content").props.style,
-      ),
-    ).toMatchObject({
-      maxWidth: width < 600 ? 688 : 768,
-      paddingHorizontal: width < 600 ? 24 : 64,
-    })
+    for (const testID of ["feedback-scroll-owner", "feedback-action-region"]) {
+      expect(
+        StyleSheet.flatten(
+          testID === "feedback-scroll-owner"
+            ? view.getByTestId(testID).props.contentContainerStyle
+            : view.getByTestId(testID).props.style,
+        ),
+      ).toMatchObject({
+        maxWidth: width < 600 ? 688 : 768,
+        paddingHorizontal: width < 600 ? 24 : 64,
+      })
+    }
   },
 )
+
+describe.each([
+  ["ios" as const, "padding", 44],
+  ["android" as const, "height", 48],
+])("FeedbackScreen on %s", (platform, behavior, minimumTarget) => {
+  usePlatform(platform)
+
+  it("keeps one scroll body before a semantic sibling action region", async () => {
+    const view = await render(<FeedbackScreen />)
+    const body = view.getByTestId("feedback-scroll-owner")
+    const actions = view.getByTestId("feedback-action-region")
+    const submit = view.getByTestId("feedback-submit")
+
+    expect(resolveKeyboardAvoidingBehavior(platform)).toBe(behavior)
+    expect(body.props.keyboardShouldPersistTaps).toBe("handled")
+    expect(body).toContainElement(view.getByTestId("feedback-email-input"))
+    expect(body).toContainElement(view.getByTestId("feedback-message-input"))
+    expect(body).not.toContainElement(submit)
+    expect(actions).toContainElement(submit)
+    expect(StyleSheet.flatten(submit.props.style)).toMatchObject({
+      minHeight: minimumTarget,
+      backgroundColor: Colors.light.primaryStrong,
+    })
+    expect(submit.props.accessibilityLabel).toBe("Send")
+    expect(submit.props.accessibilityState).toEqual({
+      disabled: false,
+      busy: false,
+    })
+  })
+})
 
 it("normalizes scalar, array, empty, and bounded route params", () => {
   expect(normalizeFeedbackParam(" value ")).toBe("value")
@@ -82,6 +120,16 @@ it("renders accessible fields and rejects an empty form locally", async () => {
   ).toBe("polite")
   expect(getByText("Enter your message.").props.accessibilityRole).toBe("alert")
   expect(sendFeedback).not.toHaveBeenCalled()
+})
+
+it("keeps next-key focus traversal wired to the multiline message field", async () => {
+  const view = await render(<FeedbackScreen />)
+  const email = view.getByTestId("feedback-email-input")
+  const message = view.getByTestId("feedback-message-input")
+
+  expect(email.props.onSubmitEditing).toEqual(expect.any(Function))
+  expect(message.props.multiline).toBe(true)
+  await fireEvent(email, "submitEditing")
 })
 
 it("prefills remembered e-mail and submits normalized values with route context", async () => {
@@ -151,6 +199,7 @@ it.each([
     const error = getByText(guidance)
     expect(error.props.accessibilityRole).toBe("alert")
     expect(error.props.accessibilityLiveRegion).toBe("polite")
+    expect(getByTestId("feedback-action-region")).toContainElement(error)
     expect(getByTestId("feedback-email-input").props.value).toBe(
       "student@example.fr",
     )

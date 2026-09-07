@@ -1,15 +1,10 @@
 import { router, Stack } from "expo-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-} from "react-native"
+import { Platform, Pressable, StyleSheet, TextInput } from "react-native"
 
+import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
+import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -106,15 +101,20 @@ export default function ProgrammeScreen() {
         testID="onboarding-programme-content"
         lane="readable"
         style={stepStyles.fill}
-        contentContainerStyle={stepStyles.safeArea}
       >
-        <KeyboardAvoidingView
-          style={stepStyles.fill}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <ScrollView
+        {() => (
+          <KeyboardSafeActionLayout
+            testID="onboarding-programme-keyboard-layout"
             contentContainerStyle={stepStyles.formContent}
-            keyboardShouldPersistTaps="handled"
+            actionContainerStyle={styles.actionRegion}
+            actions={
+              <PrimaryAction
+                testID="onboarding-programme-continue"
+                label={t("onboarding.programme.continue")}
+                disabled={!canContinue}
+                onPress={submit}
+              />
+            }
           >
             <PageIntro caption={t("onboarding.programme.helper")} />
 
@@ -153,40 +153,15 @@ export default function ProgrammeScreen() {
                 {t(errorKey)}
               </ThemedText>
             )}
-          </ScrollView>
-
-          <Pressable
-            testID="onboarding-programme-continue"
-            accessibilityRole="button"
-            accessibilityLabel={t("onboarding.programme.continueLabel")}
-            accessibilityState={{ disabled: !canContinue }}
-            disabled={!canContinue}
-            hitSlop={Spacing.two}
-            onPress={submit}
-            style={[
-              stepStyles.cta,
-              styles.footerCta,
-              {
-                backgroundColor: theme.primaryStrong,
-                opacity: canContinue ? 1 : 0.5,
-              },
-            ]}
-          >
-            <ThemedText type="smallBold" themeColor="onPrimary">
-              {t("onboarding.programme.continue")}
-            </ThemedText>
-          </Pressable>
-        </KeyboardAvoidingView>
+          </KeyboardSafeActionLayout>
+        )}
       </RootPage>
     </>
   )
 }
 
 const styles = StyleSheet.create({
-  footerCta: {
-    marginTop: Spacing.three,
-    marginBottom: Spacing.four,
-  },
+  actionRegion: { paddingTop: Spacing.three, paddingBottom: Spacing.four },
   // Local: the Android header action, the only control this step adds to the
   // shared step frame. 48dp minimum in both axes (the iOS branch is a native
   // header item and is sized by the platform).

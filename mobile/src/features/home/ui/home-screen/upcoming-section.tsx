@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet, View } from "react-native"
 
+import { EmptyState } from "@/components/empty-state"
 import { ThemedText } from "@/components/themed-text"
 import {
   type CalendarEvent,
@@ -36,12 +37,25 @@ export function UpcomingSection({
   onPressEvent,
 }: UpcomingSectionProps) {
   const { t } = useTranslation()
+  const isEmpty =
+    events.length === 0 && todayEventCount === 0 && nextDay === undefined
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <ThemedText style={styles.sectionTitle}>
-          {t("home.upcoming.title")}
-        </ThemedText>
+        {isEmpty ? (
+          <EmptyState
+            variant="section"
+            title={t("home.upcoming.title")}
+            caption={t("home.upcoming.none")}
+            testID="home-upcoming-empty"
+            style={styles.emptyState}
+          />
+        ) : (
+          <ThemedText style={styles.sectionTitle}>
+            {t("home.upcoming.title")}
+          </ThemedText>
+        )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t("home.upcoming.seeAll")}
@@ -74,11 +88,7 @@ export function UpcomingSection({
           displayZone={displayZone}
           onPress={() => onOpenCalendar(nextDay.day)}
         />
-      ) : (
-        <ThemedText themeColor="textSecondary">
-          {t("home.upcoming.none")}
-        </ThemedText>
-      )}
+      ) : null}
     </View>
   )
 }
@@ -137,6 +147,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   sectionTitle: { fontSize: 20, lineHeight: 25, fontWeight: "700" },
+  emptyState: { flexShrink: 1 },
   textAction: {
     minWidth: Platform.OS === "android" ? 48 : 44,
     minHeight: Platform.OS === "android" ? 48 : 44,

@@ -9,7 +9,9 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
   semantic action colors and platform targets, and iOS/Android keyboard-avoidance structure.
   Consumer suites retain responsibility for every feature-owned title/action, content owner,
   loading/empty/error/populated rhythm, Activity pagination, Hidden-event filtering and write
-  failures, and personal-event CRUD/selectors. Native keyboard and assistive-technology
+  failures, normal localized Settings section casing, About's single-gutter prose geometry, Home's
+  shared section-empty rhythm, and Feedback/Programme/personal-event keyboard-safe body/action
+  ownership and behavior/selectors. Native keyboard and assistive-technology
   rendering stays device evidence under ADR [054](./decisions/054-shared-root-page-semantics.md).
 
 - **`jest-expo` preset** owns the transform/ignore lists (the RN failure mode the preset exists to prevent — no hand-rolled transform config). `@testing-library/react-native`; tests colocated as `*.test.ts(x)` next to source. `npm test` = `jest --ci`, the same entrypoint locally and in CI (like lint).

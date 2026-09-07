@@ -1,17 +1,10 @@
 import { router, Stack, useLocalSearchParams } from "expo-router"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native"
+import { Alert, StyleSheet, TextInput, View } from "react-native"
 
+import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layout"
+import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
 import {
@@ -93,115 +86,19 @@ export default function FeedbackScreen() {
     }
   }
 
-  const minimumTarget = Platform.OS === "ios" ? 44 : 48
-
   return (
     <>
       <Stack.Screen options={{ title: t("feedback.title") }} />
       <RootPage lane="readable" testID="feedback-layout-owner">
-        {(layout) => (
-          <KeyboardAvoidingView
-            style={styles.flex}
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-          >
-            <ScrollView
-              testID="feedback-scroll-owner"
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.scrollContent}
-            >
-              <View
-                testID="feedback-responsive-content"
-                style={[layout.laneStyle, styles.content]}
-              >
-                <PageIntro caption={t("feedback.intro")} />
-
-                <View style={styles.field}>
-                  <ThemedText nativeID="feedback-email-label" type="smallBold">
-                    {t("feedback.email.label")}
-                  </ThemedText>
-                  <TextInput
-                    testID="feedback-email-input"
-                    accessibilityLabel={t("feedback.email.label")}
-                    accessibilityLabelledBy="feedback-email-label"
-                    value={email}
-                    onChangeText={(value) => {
-                      setEmail(value)
-                      if (errors.email)
-                        setErrors(({ email: _email, ...current }) => current)
-                    }}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="email"
-                    keyboardType="email-address"
-                    inputMode="email"
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => messageRef.current?.focus()}
-                    editable={!isPending}
-                    style={[
-                      styles.input,
-                      {
-                        color: theme.text,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}
-                  />
-                  {errors.email ? (
-                    <ThemedText
-                      accessibilityLiveRegion="polite"
-                      accessibilityRole="alert"
-                      themeColor="textSecondary"
-                    >
-                      {t(errors.email)}
-                    </ThemedText>
-                  ) : null}
-                </View>
-
-                <View style={styles.field}>
-                  <ThemedText
-                    nativeID="feedback-message-label"
-                    type="smallBold"
-                  >
-                    {t("feedback.message.label")}
-                  </ThemedText>
-                  <TextInput
-                    ref={messageRef}
-                    testID="feedback-message-input"
-                    accessibilityLabel={t("feedback.message.label")}
-                    accessibilityLabelledBy="feedback-message-label"
-                    value={message}
-                    onChangeText={(value) => {
-                      setMessage(value)
-                      if (errors.message)
-                        setErrors(
-                          ({ message: _message, ...current }) => current,
-                        )
-                    }}
-                    multiline
-                    textAlignVertical="top"
-                    returnKeyType="default"
-                    blurOnSubmit={false}
-                    editable={!isPending}
-                    style={[
-                      styles.input,
-                      styles.messageInput,
-                      {
-                        color: theme.text,
-                        borderColor: theme.backgroundSelected,
-                      },
-                    ]}
-                  />
-                  {errors.message ? (
-                    <ThemedText
-                      accessibilityLiveRegion="polite"
-                      accessibilityRole="alert"
-                      themeColor="textSecondary"
-                    >
-                      {t(errors.message)}
-                    </ThemedText>
-                  ) : null}
-                </View>
-
+        {() => (
+          <KeyboardSafeActionLayout
+            testID="feedback-keyboard-layout"
+            contentTestID="feedback-scroll-owner"
+            actionsTestID="feedback-action-region"
+            contentContainerStyle={styles.scrollContent}
+            actionContainerStyle={styles.actions}
+            actions={
+              <>
                 {submitFailed ? (
                   <ThemedText
                     testID="feedback-submit-error"
@@ -212,30 +109,12 @@ export default function FeedbackScreen() {
                     {t("feedback.failure")}
                   </ThemedText>
                 ) : null}
-
-                <Pressable
+                <PrimaryAction
                   testID="feedback-submit"
-                  accessibilityRole="button"
-                  accessibilityLabel={t("feedback.submit")}
-                  accessibilityState={{ disabled: isPending, busy: isPending }}
-                  disabled={isPending}
+                  label={t("feedback.submit")}
+                  busy={isPending}
                   onPress={() => void submit()}
-                  style={[
-                    styles.submit,
-                    {
-                      minHeight: minimumTarget,
-                      backgroundColor: theme.primary,
-                      opacity: isPending ? 0.6 : 1,
-                    },
-                  ]}
-                >
-                  <ThemedText
-                    type="smallBold"
-                    style={{ color: theme.background }}
-                  >
-                    {t("feedback.submit")}
-                  </ThemedText>
-                </Pressable>
+                />
                 {isPending ? (
                   <ThemedText
                     accessibilityLiveRegion="polite"
@@ -245,9 +124,95 @@ export default function FeedbackScreen() {
                     {t("feedback.sending")}
                   </ThemedText>
                 ) : null}
+              </>
+            }
+          >
+            <View testID="feedback-responsive-content" style={styles.content}>
+              <PageIntro caption={t("feedback.intro")} />
+
+              <View style={styles.field}>
+                <ThemedText nativeID="feedback-email-label" type="smallBold">
+                  {t("feedback.email.label")}
+                </ThemedText>
+                <TextInput
+                  testID="feedback-email-input"
+                  accessibilityLabel={t("feedback.email.label")}
+                  accessibilityLabelledBy="feedback-email-label"
+                  value={email}
+                  onChangeText={(value) => {
+                    setEmail(value)
+                    if (errors.email)
+                      setErrors(({ email: _email, ...current }) => current)
+                  }}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoComplete="email"
+                  keyboardType="email-address"
+                  inputMode="email"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={() => messageRef.current?.focus()}
+                  editable={!isPending}
+                  style={[
+                    styles.input,
+                    {
+                      color: theme.text,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}
+                />
+                {errors.email ? (
+                  <ThemedText
+                    accessibilityLiveRegion="polite"
+                    accessibilityRole="alert"
+                    themeColor="textSecondary"
+                  >
+                    {t(errors.email)}
+                  </ThemedText>
+                ) : null}
               </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
+
+              <View style={styles.field}>
+                <ThemedText nativeID="feedback-message-label" type="smallBold">
+                  {t("feedback.message.label")}
+                </ThemedText>
+                <TextInput
+                  ref={messageRef}
+                  testID="feedback-message-input"
+                  accessibilityLabel={t("feedback.message.label")}
+                  accessibilityLabelledBy="feedback-message-label"
+                  value={message}
+                  onChangeText={(value) => {
+                    setMessage(value)
+                    if (errors.message)
+                      setErrors(({ message: _message, ...current }) => current)
+                  }}
+                  multiline
+                  textAlignVertical="top"
+                  returnKeyType="default"
+                  blurOnSubmit={false}
+                  editable={!isPending}
+                  style={[
+                    styles.input,
+                    styles.messageInput,
+                    {
+                      color: theme.text,
+                      borderColor: theme.backgroundSelected,
+                    },
+                  ]}
+                />
+                {errors.message ? (
+                  <ThemedText
+                    accessibilityLiveRegion="polite"
+                    accessibilityRole="alert"
+                    themeColor="textSecondary"
+                  >
+                    {t(errors.message)}
+                  </ThemedText>
+                ) : null}
+              </View>
+            </View>
+          </KeyboardSafeActionLayout>
         )}
       </RootPage>
     </>
@@ -255,7 +220,6 @@ export default function FeedbackScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
   scrollContent: {
     paddingBottom: Spacing.four,
   },
@@ -270,10 +234,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   messageInput: { minHeight: 144 },
-  submit: {
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: Radii.medium,
-    paddingHorizontal: Spacing.four,
-  },
+  actions: { gap: Spacing.two, paddingBottom: Spacing.four },
 })
