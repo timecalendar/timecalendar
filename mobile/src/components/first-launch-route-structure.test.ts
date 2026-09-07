@@ -40,7 +40,10 @@ describe("first-launch root structure", () => {
     const protectedStart = rootLayout.indexOf(
       "<Stack.Protected guard={eligible}>",
     )
-    const protectedEnd = rootLayout.indexOf("</Stack.Protected>")
+    const protectedEnd = rootLayout.indexOf(
+      "</Stack.Protected>",
+      protectedStart,
+    )
     const protectedGraph = rootLayout.slice(protectedStart, protectedEnd)
 
     for (const route of [
@@ -64,6 +67,9 @@ describe("first-launch root structure", () => {
     }
     expect(protectedGraph).not.toContain('name="onboarding"')
     expect(protectedGraph).not.toContain('name="dev-import"')
+    expect(rootLayout.slice(0, protectedStart)).toContain(
+      "<Stack.Protected guard={!eligible}>",
+    )
     expect(rootLayout.slice(0, protectedStart)).toContain(
       '<Stack.Screen name="onboarding" />',
     )
