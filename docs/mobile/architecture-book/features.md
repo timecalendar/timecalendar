@@ -42,8 +42,11 @@ code and product specifications.
   chrome, hierarchy, and states. The native school-search header remains full width.
 - `calendar-sources` keeps the QR camera full bleed and bounds permission, viewfinder, guidance,
   import, and recovery content with readable lanes. iCal form and state content is readable;
-  user-calendar collection content is standard; rename content is readable inside its existing
-  modal owner. Source behavior, permission lifecycle, and modal presentation remain unchanged.
+  user-calendar collection content is standard; its first-content inset belongs to the populated
+  list so it scrolls beneath native chrome. Rename uses the product-neutral controlled native dialog
+  seam from ADR [056](./decisions/056-compose-native-dialog-behind-chrome.md): SwiftUI on iOS and
+  Material 3 on Android own the field/actions while calendar validation and persistence stay in the
+  feature. Source behavior and permission lifecycle remain unchanged.
 
 ## Cross-feature contracts
 
@@ -66,7 +69,8 @@ code and product specifications.
   operation synchronously, and later canonical changes render without a stale optimistic mask.
   This presentation state does not change the event-source visibility filter in `calendar`.
 - Each user-calendar row exposes one overflow menu, identical on both platforms, carrying
-  Rename and Delete. Rename is a server write first: it PATCHes the token, then persists the
+  Rename and Delete. Rename retains its localized meaning while using an SF Symbol on iOS and a
+  bundled monochrome Material Symbol image on Android. Rename is a server write first: it PATCHes the token, then persists the
   name the **server returned**, never the string the user typed, so the renaming device
   converges through the same rule every other device reaches at its next sync. The token is
   a capability — possession authorizes rename — so a rename is global to every installation

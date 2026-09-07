@@ -8,6 +8,7 @@ import {
 import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import { useRenameCalendar } from "@/features/calendar-sources/data"
+import { usePlatform } from "@/test-support/platform"
 import { resolveResponsiveLayout } from "@/theme"
 
 import { RenameCalendarDialog } from "./rename-calendar-dialog"
@@ -77,7 +78,7 @@ beforeEach(() => {
 describe("RenameCalendarDialog", () => {
   it("bounds dialog content to the measured readable tablet lane", async () => {
     await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
-    const owner = screen.getByTestId("user-calendar-rename-content")
+    const owner = screen.getByTestId("native-text-entry-dialog-content")
 
     await act(() =>
       fireEvent(owner, "layout", {
@@ -140,6 +141,9 @@ describe("RenameCalendarDialog", () => {
     const save = screen.getByTestId("user-calendar-rename-save")
     expect(save.props.accessibilityState.disabled).toBe(true)
     expect(screen.getByText("Use 100 characters or fewer.")).toBeTruthy()
+    expect(screen.getByTestId("user-calendar-rename-input").props.value).toBe(
+      "x".repeat(101),
+    )
 
     await press("user-calendar-rename-save")
     expect(rename).not.toHaveBeenCalled()
@@ -208,21 +212,53 @@ describe("RenameCalendarDialog", () => {
     expect(input.props.editable).toBe(false)
   })
 
-  it("cancels without writing, from the button and from Android's hardware back", async () => {
+  it("keeps submission single-flight before pending state rerenders", async () => {
+    let resolveRename!: () => void
+    rename.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveRename = resolve
+      }),
+    )
+    await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
+
+    await press("user-calendar-rename-save")
+    await press("user-calendar-rename-save")
+    expect(rename).toHaveBeenCalledTimes(1)
+
+    await act(async () => resolveRename())
+  })
+
+  it("cancels without writing from the native Cancel button", async () => {
     await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
     await press("user-calendar-rename-cancel")
     expect(onClose).toHaveBeenCalledTimes(1)
     expect(rename).not.toHaveBeenCalled()
+  })
 
-    // The Android hardware back is the other explicit dismissal; the backdrop
-    // deliberately is not one.
+  it("suppresses close and success announcement after cancel wins an in-flight race", async () => {
+    let resolveRename!: () => void
+    rename.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveRename = resolve
+      }),
+    )
+    const announceSpy = jest.spyOn(
+      AccessibilityInfo,
+      "announceForAccessibility",
+    )
+    await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
+    await type("L3 Informatique")
+    await press("user-calendar-rename-save")
+    await press("user-calendar-rename-cancel")
+
     await act(async () => {
-      fireEvent(
-        screen.getByTestId("user-calendar-rename-dialog"),
-        "requestClose",
-      )
+      resolveRename()
     })
-    expect(onClose).toHaveBeenCalledTimes(2)
+
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(announceSpy).not.toHaveBeenCalledWith(
+      "Calendar renamed to L3 Informatique",
+    )
   })
 
   it("announces the rename once the write has resolved", async () => {
@@ -239,5 +275,21 @@ describe("RenameCalendarDialog", () => {
         "Calendar renamed to L3 Informatique",
       ),
     )
+  })
+})
+
+describe("RenameCalendarDialog on Android", () => {
+  usePlatform("android")
+
+  it("maps hardware Back to explicit cancel without writing", async () => {
+    await render(<RenameCalendarDialog calendar={calendar} onClose={onClose} />)
+    await act(async () => {
+      fireEvent(
+        screen.getByTestId("user-calendar-rename-dialog"),
+        "dismissRequest",
+      )
+    })
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(rename).not.toHaveBeenCalled()
   })
 })

@@ -29,6 +29,12 @@ The testing rules for `mobile/`. R-1 pointer convention: entries point at the li
 - **Restore every `Platform.OS` override before the next test, including when the overriding test throws.** `usePlatform` from `src/test-support/platform.ts` is the mechanism for a `describe`-scoped override; a `try`/`finally` that restores the captured original is equally conforming. Tests must not call `jest.replaceProperty(Platform, "OS", …)` inline in an `it`, and must not rely on `jest.restoreAllMocks()` for the restore — the latter would also discard the suite-wide `AccessibilityInfo` spies from `jest/setup-splash.ts`.
 - **Await React Native Testing Library 14 helpers and tear down suite-owned state in `afterEach`.** `render`, `renderHook`, `fireEvent`, and RNTL's exported `act` are asynchronous; every call must settle inside the test that starts it, and `fireEvent` must not be wrapped in a redundant outer `act`. One-shot mock queues, per-case spy implementations, and test-written storage keys belong to the suite that mutates them: reset or remove them with targeted `afterEach` cleanup, then reinstall deterministic defaults in `beforeEach`. Never use `jest.restoreAllMocks()` for this cleanup because it also removes harness-installed native spies such as `AccessibilityInfo` from `jest/setup-splash.ts`. The randomized-order regression proof is specified by `openspec/specs/mobile-test-harness/spec.md`.
 - **Use the supported Reanimated/Worklets Jest implementations for feature-owned animation.** `jest/setup-reanimated.ts` installs Worklets' package mock and Reanimated's package mock through the ordinary Jest entrypoint, then calls `setUpTests()`. Component suites assert rendered end states and user behavior; focused lifecycle tests may inspect the wrapped `withTiming` and `cancelAnimation` calls. Do not handwrite a worklet runtime, loosen timers, or substitute React Native `Animated` call-shape assertions.
+- **Native composed chrome is mocked at each platform package subpath.** The suite-wide Expo UI mock
+  preserves native observable-buffer reads, field changes, disabled/busy state, dialog properties,
+  dismissal callbacks, modifier selectors, and children. Chrome tests prove SwiftUI versus Material
+  3 primitive selection, current-buffer submission, retained draft, outside/Back policy, and
+  keyboard/focus layout ownership. They do not claim rendered keyboard, rotation, Dynamic Type, or
+  screen-reader behavior; those remain the linked device-evidence pass under ADR 056.
 
 ## E2E — Maestro, real round-trip
 

@@ -170,6 +170,11 @@ The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tab
 - **`chrome/native-tabs.tsx`** — the only import site for `expo-router/unstable-native-tabs`. Wraps `NativeTabs` so tab-bar colors come from `@/theme`; the `.Trigger` compound parts are re-attached (`Object.assign`) so callers use `NativeTabs.Trigger` / `.Trigger.Label` / `.Trigger.Icon` unchanged.
 - **`chrome/glass-surface.tsx`** — the only import site for `expo-glass-effect`. Centralizes the **Liquid-Glass degradation decision** in one place: `isLiquidGlassAvailable()` → `GlassView` (iOS 26+); else (iOS 16.4–25, Android, Jest) a plain `View` rendering the same children, dropping the glass-only props. `isLiquidGlassAvailable()` is itself alpha, so it lives here too.
 - **`chrome/expo-ui.tsx`** — the only import site for `@expo/ui` (SDK-56 native controls — SwiftUI / Jetpack Compose). Re-exports the **universal** entry's `Host` + `Picker` (the universal `Picker` carries `Picker.Item` as a static compound member), `DateTimePicker` from `@expo/ui/community/datetime-picker`, and the anchored `MenuView` plus its ref type from `@expo/ui/community/menu`. The wrapper is **thin**: it does **not** theme native controls. Operational facts: `@expo/ui` **autolinks** (ships `expo-module.config.json`, no `app.plugin.js`) → **no `app.config.ts` plugin entry**; its babel-plugin is **`Icon`-only** (not added until an `Icon` consumer); its native module has no off-device JS, so Jest needs suite-wide mocks for each imported subpath. See ADR [010](./decisions/010-expo-ui-chrome-wrapper.md) and ADR [012](./decisions/012-personal-event-datetime-picker.md).
+- **`chrome/native-text-entry-dialog*`** — the narrow composed-control exception in ADR
+  [056](./decisions/056-compose-native-dialog-behind-chrome.md). One stable contract privately
+  adapts SwiftUI and Material 3 text fields, progress, native buttons, observable buffers, keyboard
+  insets, selectors, and explicit dismissal. Features keep validation, data, copy, and lifecycle;
+  ordinary controls remain thin re-exports. Native controls follow system appearance and typography.
 - **`chrome/index.ts`** — the barrel. Exports `NativeTabs`, `GlassSurface`, `Host`, `Picker`, `DateTimePicker`, `MenuView`, and `MenuComponentRef`.
 
 ## Lint boundary — the R-1 enforcement
