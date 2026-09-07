@@ -206,6 +206,10 @@ describe("ProgrammeScreen", () => {
         minHeight: 44,
         backgroundColor: Colors.light.primaryStrong,
       })
+      expect(cta.props.accessibilityLabel).toBe(
+        "Continue to the connection step",
+      )
+      expect(cta).toHaveTextContent("Continue")
     })
 
     it("offers Skip as a trailing native header item that stores an empty name", async () => {
@@ -235,6 +239,10 @@ describe("ProgrammeScreen", () => {
         minHeight: 48,
         backgroundColor: Colors.light.primaryStrong,
       })
+      expect(cta.props.accessibilityLabel).toBe(
+        "Continue to the connection step",
+      )
+      expect(cta).toHaveTextContent("Continue")
     })
 
     it("offers Skip as a headerRight control meeting the 48dp target", async () => {

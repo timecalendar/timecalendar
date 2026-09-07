@@ -111,6 +111,7 @@ export default function ProgrammeScreen() {
               <PrimaryAction
                 testID="onboarding-programme-continue"
                 label={t("onboarding.programme.continue")}
+                accessibilityLabel={t("onboarding.programme.continueLabel")}
                 disabled={!canContinue}
                 onPress={submit}
               />
