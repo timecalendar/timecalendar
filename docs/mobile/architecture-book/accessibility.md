@@ -27,6 +27,11 @@ These rules guard real product touchables (interactive controls declare `accessi
 - Ordinary pushed routes expose their localized name once through native compact chrome. Caption-
   only `PageIntro` content follows that navigation heading before fields, actions, status, or rows;
   content headings remain only when they identify domain content such as an event or release.
+- Controlled native text-entry dialogs isolate the background accessibility tree, keep native input
+  and Cancel/Save actions present while pending, announce inline validation/write failure and
+  persistence-gated success, and expose stable native identifiers on both platforms. Back is an
+  explicit cancel on Android; outside taps are inert on both platforms. Jest proves callbacks,
+  identifiers, and structure; VoiceOver/TalkBack focus and announcement quality remain device proof.
 
 ## Proof in CI
 

@@ -168,3 +168,283 @@ jest.mock("@expo/ui/community/menu", () => {
 
   return { __esModule: true, default: MenuView, MenuView }
 })
+
+jest.mock("@expo/ui/swift-ui/modifiers", () => {
+  const modifier = (type: string, value?: unknown) => ({ $type: type, value })
+  return {
+    accessibilityIdentifier: (value: string) =>
+      modifier("accessibilityIdentifier", value),
+    accessibilityLabel: (value: string) =>
+      modifier("accessibilityLabel", value),
+    buttonStyle: (value: string) => modifier("buttonStyle", value),
+    disabled: (value = true) => modifier("disabled", value),
+    font: (value: unknown) => modifier("font", value),
+    frame: (value: unknown) => modifier("frame", value),
+    padding: (value: unknown) => modifier("padding", value),
+    textFieldStyle: (value: string) => modifier("textFieldStyle", value),
+  }
+})
+
+jest.mock("@expo/ui/swift-ui", () => {
+  const React = jest.requireActual("react")
+
+  const {
+    Pressable,
+    Text: NativeText,
+    TextInput,
+    View,
+  } = jest.requireActual("react-native")
+
+  const modifierValue = (
+    modifiers: { $type: string; value: unknown }[] | undefined,
+    type: string,
+  ) => modifiers?.find((modifier) => modifier.$type === type)?.value
+
+  function useNativeState(initialValue: unknown) {
+    const state = React.useRef({
+      value: initialValue,
+      get() {
+        return this.value
+      },
+      set(value: unknown) {
+        this.value = value
+      },
+      onChange: null,
+    })
+    return state.current
+  }
+
+  function Host({ children, ...props }: { children?: unknown }) {
+    return React.createElement(View, props, children)
+  }
+  function Stack({ children, ...props }: { children?: unknown }) {
+    return React.createElement(View, props, children)
+  }
+  function Text({ children, ...props }: { children?: unknown }) {
+    return React.createElement(NativeText, props, children)
+  }
+  function TextField(props: {
+    testID?: string
+    text: { get: () => string; set: (value: string) => void }
+    placeholder?: string
+    onTextChange?: (value: string) => void
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    const [value, setValue] = React.useState(props.text.get())
+    const isDisabled = modifierValue(props.modifiers, "disabled") === true
+    return React.createElement(TextInput, {
+      testID: props.testID,
+      value,
+      placeholder: props.placeholder,
+      editable: !isDisabled,
+      accessibilityLabel: modifierValue(props.modifiers, "accessibilityLabel"),
+      onChangeText: (nextValue: string) => {
+        props.text.set(nextValue)
+        setValue(nextValue)
+        props.onTextChange?.(nextValue)
+      },
+    })
+  }
+  function Button(props: {
+    testID?: string
+    label?: string
+    onPress?: () => void
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    const isDisabled = modifierValue(props.modifiers, "disabled") === true
+    return React.createElement(
+      Pressable,
+      {
+        testID: props.testID,
+        accessibilityRole: "button",
+        accessibilityLabel: props.label,
+        accessibilityState: { disabled: isDisabled },
+        disabled: isDisabled,
+        onPress: props.onPress,
+      },
+      React.createElement(NativeText, null, props.label),
+    )
+  }
+  function ProgressView(props: object) {
+    return React.createElement(View, props)
+  }
+  function Spacer(props: object) {
+    return React.createElement(View, props)
+  }
+
+  return {
+    Button,
+    HStack: Stack,
+    Host,
+    ProgressView,
+    Spacer,
+    Text,
+    TextField,
+    useNativeState,
+    VStack: Stack,
+  }
+})
+
+jest.mock("@expo/ui/jetpack-compose/modifiers", () => {
+  const modifier = (type: string, value?: unknown) => ({ $type: type, value })
+  return {
+    fillMaxWidth: (value = 1) => modifier("fillMaxWidth", value),
+    imePadding: () => modifier("imePadding"),
+    testID: (value: string) => modifier("testID", value),
+  }
+})
+
+jest.mock("@expo/ui/jetpack-compose", () => {
+  const React = jest.requireActual("react")
+
+  const {
+    Pressable,
+    Text: NativeText,
+    TextInput,
+    View,
+  } = jest.requireActual("react-native")
+
+  const testID = (modifiers: { $type: string; value: unknown }[] | undefined) =>
+    modifiers?.find((modifier) => modifier.$type === "testID")?.value
+
+  function useNativeState(initialValue: unknown) {
+    const state = React.useRef({
+      value: initialValue,
+      get() {
+        return this.value
+      },
+      set(value: unknown) {
+        this.value = value
+      },
+      onChange: null,
+    })
+    return state.current
+  }
+  function Host({
+    children,
+    modifiers,
+    ...props
+  }: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      View,
+      { ...props, testID: testID(modifiers) },
+      children,
+    )
+  }
+  function Slot({ children }: { children?: unknown }) {
+    return React.createElement(React.Fragment, null, children)
+  }
+  function AlertDialog(props: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+    properties?: unknown
+    onDismissRequest?: () => void
+  }) {
+    return React.createElement(
+      View,
+      {
+        testID: testID(props.modifiers),
+        properties: props.properties,
+        onDismissRequest: props.onDismissRequest,
+      },
+      props.children,
+    )
+  }
+  Object.assign(AlertDialog, {
+    Title: Slot,
+    Text: Slot,
+    ConfirmButton: Slot,
+    DismissButton: Slot,
+    Icon: Slot,
+  })
+  function OutlinedTextField(props: {
+    value: { get: () => string; set: (value: string) => void }
+    enabled?: boolean
+    onValueChange?: (value: string) => void
+    modifiers?: { $type: string; value: unknown }[]
+    children?: unknown
+  }) {
+    const [value, setValue] = React.useState(props.value.get())
+    return React.createElement(
+      View,
+      null,
+      React.createElement(TextInput, {
+        testID: testID(props.modifiers),
+        value,
+        editable: props.enabled,
+        onChangeText: (nextValue: string) => {
+          props.value.set(nextValue)
+          setValue(nextValue)
+          props.onValueChange?.(nextValue)
+        },
+      }),
+      props.children,
+    )
+  }
+  Object.assign(OutlinedTextField, {
+    Label: Slot,
+    Placeholder: Slot,
+    LeadingIcon: Slot,
+    TrailingIcon: Slot,
+    Prefix: Slot,
+    Suffix: Slot,
+    SupportingText: Slot,
+  })
+  function TextButton(props: {
+    children?: unknown
+    enabled?: boolean
+    onClick?: () => void
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      Pressable,
+      {
+        testID: testID(props.modifiers),
+        accessibilityRole: "button",
+        accessibilityState: { disabled: props.enabled === false },
+        disabled: props.enabled === false,
+        onPress: props.onClick,
+      },
+      props.children,
+    )
+  }
+  function Column(props: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      View,
+      { testID: testID(props.modifiers) },
+      props.children,
+    )
+  }
+  function Text(props: {
+    children?: unknown
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(
+      NativeText,
+      { testID: testID(props.modifiers) },
+      props.children,
+    )
+  }
+  function CircularProgressIndicator(props: {
+    modifiers?: { $type: string; value: unknown }[]
+  }) {
+    return React.createElement(View, { testID: testID(props.modifiers) })
+  }
+
+  return {
+    AlertDialog,
+    CircularProgressIndicator,
+    Column,
+    Host,
+    OutlinedTextField,
+    Text,
+    TextButton,
+    useNativeState,
+  }
+})

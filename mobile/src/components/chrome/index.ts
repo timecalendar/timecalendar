@@ -7,6 +7,11 @@
 
 export { GlassSurface } from "@/components/chrome/glass-surface"
 export { NativeTabs } from "@/components/chrome/native-tabs"
+export {
+  NativeTextEntryDialog,
+  type NativeTextEntryDialogIds,
+  type NativeTextEntryDialogProps,
+} from "@/components/chrome/native-text-entry-dialog"
 export { buildCompactRootScreenOptions } from "@/components/chrome/root-screen-options"
 
 // @expo/ui — wrapper landed (A2 / TIM-131). The Settings screen is the first

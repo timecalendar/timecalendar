@@ -7,6 +7,10 @@
   left-aligned section empty-state rhythm, and Feedback/Programme join personal events on the
   keyboard-safe body/action and semantic primary-action contracts. Native Programme Skip placement
   and all feature behavior remain unchanged.
+- Added ADR 056 and the controlled native text-entry dialog chrome exception: calendar rename now
+  composes SwiftUI or Material 3 fields, progress, and actions around one retained native buffer,
+  while validation, persistence, success, and cancellation remain feature-owned. Calendar-management
+  top rhythm now scrolls with its populated list, and Rename carries native platform iconography.
 - Applied ADR 054 to the exhaustive root and nested-onboarding route inventories: ordinary pushes
   now share compact localized chrome, caption-first page rhythm, and one measured `RootPage` while
   branded, redirect, development, camera-content, and platform-sheet exceptions stay explicit.

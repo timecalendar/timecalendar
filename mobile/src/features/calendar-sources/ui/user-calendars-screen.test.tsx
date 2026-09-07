@@ -43,7 +43,11 @@ jest.mock("@/features/calendar-sources/data", () => ({
 const mockShow = jest.fn()
 jest.mock("@/components/chrome", () => {
   const { View } = jest.requireActual("react-native")
+  const { NativeTextEntryDialog } = jest.requireActual(
+    "@/components/chrome/native-text-entry-dialog",
+  )
   return {
+    NativeTextEntryDialog,
     MenuView: ({
       children,
       ref,
@@ -164,7 +168,7 @@ describe("UserCalendarsScreen", () => {
     expect(
       screen.getByTestId("user-calendar-actions-cal-1").props.actions,
     ).toEqual([
-      { id: "rename", title: "Rename" },
+      { id: "rename", title: "Rename", image: "pencil" },
       {
         id: "delete",
         title: "Delete",
@@ -180,9 +184,11 @@ describe("UserCalendarsScreen", () => {
     mockUseUserCalendars.mockReturnValue(calendars)
     await render(<UserCalendarsScreen />)
 
-    const list = (
+    const lists = (
       renderList.mock.contexts as FlatList<ReturnType<typeof calendar>>[]
-    ).find((instance) => instance.props.testID === "user-calendars-list")
+    ).filter((instance) => instance.props.testID === "user-calendars-list")
+    expect(lists).toHaveLength(1)
+    const list = lists[0]
     if (!list)
       throw new Error("Expected UserCalendarsScreen to render FlatList")
     expect(list.props.data).toBe(calendars)
@@ -192,6 +198,14 @@ describe("UserCalendarsScreen", () => {
     expect(
       StyleSheet.flatten(list.props.contentContainerStyle).paddingBottom,
     ).toBe(Spacing.four)
+    expect(
+      StyleSheet.flatten(list.props.contentContainerStyle).paddingTop,
+    ).toBe(Spacing.four)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("user-calendars-content").props.style,
+      ).paddingTop,
+    ).toBe(0)
     expect(screen.getByTestId("user-calendar-row-cal-1")).toBeTruthy()
     expect(screen.getByTestId("user-calendar-row-cal-2")).toBeTruthy()
     expect(
@@ -703,7 +717,14 @@ describe("UserCalendarsScreen", () => {
       expect(
         screen.getByTestId("user-calendar-actions-cal-1").props.actions,
       ).toEqual([
-        { id: "rename", title: "Rename" },
+        {
+          id: "rename",
+          title: "Rename",
+          image: {
+            testUri:
+              "../../../assets/images/menu/drive-file-rename-outline.png",
+          },
+        },
         {
           id: "delete",
           title: "Delete",
@@ -719,6 +740,11 @@ describe("UserCalendarsScreen", () => {
           screen.getByTestId("user-calendars-list").props.contentContainerStyle,
         ).paddingBottom,
       ).toBe(Spacing.six + Spacing.five)
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("user-calendars-add").props.style,
+        ),
+      ).toMatchObject({ bottom: Spacing.four, right: Spacing.three })
     })
 
     // MenuView does not self-open on Android: both the press and TalkBack's
@@ -765,5 +791,11 @@ describe("UserCalendarsScreen", () => {
     expect(
       screen.getByText("We couldn't update your calendars. Please try again."),
     ).toBeTruthy()
+    expect(
+      StyleSheet.flatten(
+        screen.getByText("We couldn't update your calendars. Please try again.")
+          .props.style,
+      ).marginTop,
+    ).toBe(Spacing.four)
   })
 })

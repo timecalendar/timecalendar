@@ -57,6 +57,10 @@ export function CalendarRow({
           },
         }
       : null
+  const renameImage =
+    Platform.OS === "ios"
+      ? "pencil"
+      : require("@/assets/images/menu/drive-file-rename-outline.png")
 
   return (
     <View
@@ -74,7 +78,11 @@ export function CalendarRow({
           ref={menuRef}
           testID={`user-calendar-actions-${calendar.id}`}
           actions={[
-            { id: "rename", title: t("userCalendars.rename.action") },
+            {
+              id: "rename",
+              title: t("userCalendars.rename.action"),
+              image: renameImage,
+            },
             {
               id: "delete",
               title: t("userCalendars.delete.action"),

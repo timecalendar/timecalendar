@@ -105,7 +105,11 @@ export function UserCalendarsScreen() {
           }),
         }}
       />
-      <RootPage testID="user-calendars-content" lane="standard">
+      <RootPage
+        testID="user-calendars-content"
+        lane="standard"
+        style={styles.page}
+      >
         {(layout) => (
           <View
             testID="user-calendars-safe-area"
@@ -197,18 +201,23 @@ export function UserCalendarsScreen() {
 }
 
 const styles = StyleSheet.create({
+  page: {
+    paddingTop: 0,
+  },
   safeArea: {
     flex: 1,
     gap: Spacing.three,
   },
   content: {
     gap: Spacing.two,
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.four,
   },
   contentWithFab: {
     paddingBottom: Spacing.six + Spacing.five,
   },
   error: {
+    marginTop: Spacing.four,
     marginBottom: Spacing.one,
   },
   fab: {
