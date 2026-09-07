@@ -7,7 +7,6 @@ import { ThemedView } from "@/components/themed-view"
 import { resolveLocale } from "@/features/calendar/data"
 import { useEventToEdit } from "@/features/personal-events/form"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth } from "@/theme"
 
 import { PersonalEventEditor } from "./personal-event-editor"
 
@@ -39,11 +38,8 @@ export default function PersonalEventFormScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
   },
 })

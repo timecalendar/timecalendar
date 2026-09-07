@@ -1,11 +1,18 @@
 import type { TFunction } from "i18next"
-import { Pressable, StyleSheet, View } from "react-native"
+import {
+  Pressable,
+  type StyleProp,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 type PersonalEventActionsProps = {
+  laneStyle: StyleProp<ViewStyle>
   canDelete: boolean
   isDeleting: boolean
   saveFailed: boolean
@@ -16,6 +23,7 @@ type PersonalEventActionsProps = {
 }
 
 export function PersonalEventActions({
+  laneStyle,
   canDelete,
   isDeleting,
   saveFailed,
@@ -27,7 +35,7 @@ export function PersonalEventActions({
   const theme = useTheme()
 
   return (
-    <View style={styles.footer}>
+    <View testID="personal-event-actions" style={[laneStyle, styles.footer]}>
       {(saveFailed || deleteFailed) && (
         <WriteErrorNotice
           message={
@@ -71,7 +79,6 @@ export function PersonalEventActions({
 
 const styles = StyleSheet.create({
   footer: {
-    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.four,
     gap: Spacing.three,

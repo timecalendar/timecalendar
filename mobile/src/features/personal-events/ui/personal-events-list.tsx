@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { FlatList, Pressable, StyleSheet, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
+import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedView } from "@/components/themed-view"
 import { formatShortDateTime, resolveLocale } from "@/features/calendar/data"
@@ -11,7 +12,7 @@ import {
   usePersonalEvents,
 } from "@/features/personal-events/data"
 import { useDisplayZone } from "@/features/settings/prefs"
-import { MaxContentWidth, Radii, Spacing, useTheme } from "@/theme"
+import { Radii, Spacing, useTheme } from "@/theme"
 
 // The Home-tab personal-events list (B2 / TIM-133) — PRESENTATIONAL (70% floor):
 // it reads B1's reactive usePersonalEvents() (useLiveQuery, so it re-renders on
@@ -23,44 +24,56 @@ export function PersonalEventsList() {
   const { t } = useTranslation()
   const theme = useTheme()
   const events = usePersonalEvents()
+  const layout = useAdaptiveLayout("standard")
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <ThemedText type="title">{t("personalEvents.list.title")}</ThemedText>
-          <Link href="/personal-event-form" asChild>
-            <Pressable
-              testID="personal-events-add"
-              accessibilityRole="button"
-              accessibilityLabel={t("personalEvents.list.add")}
-              hitSlop={Spacing.two}
-              // Flatten: Link asChild forwards through expo-router's radix
-              // <Slot>, whose dev-only shim throws on an array `style` child.
-              style={StyleSheet.flatten([
-                styles.addButton,
-                { backgroundColor: theme.backgroundElement },
-              ])}
-            >
-              <ThemedText type="smallBold">
-                {t("personalEvents.list.add")}
-              </ThemedText>
-            </Pressable>
-          </Link>
-        </View>
+      <SafeAreaView
+        testID="personal-events-responsive-owner"
+        style={styles.safeArea}
+        onLayout={layout.onLayout}
+      >
+        <View
+          testID="personal-events-responsive-lane"
+          style={[layout.laneStyle, styles.lane]}
+        >
+          <View style={styles.header}>
+            <ThemedText type="title">
+              {t("personalEvents.list.title")}
+            </ThemedText>
+            <Link href="/personal-event-form" asChild>
+              <Pressable
+                testID="personal-events-add"
+                accessibilityRole="button"
+                accessibilityLabel={t("personalEvents.list.add")}
+                hitSlop={Spacing.two}
+                // Flatten: Link asChild forwards through expo-router's radix
+                // <Slot>, whose dev-only shim throws on an array `style` child.
+                style={StyleSheet.flatten([
+                  styles.addButton,
+                  { backgroundColor: theme.backgroundElement },
+                ])}
+              >
+                <ThemedText type="smallBold">
+                  {t("personalEvents.list.add")}
+                </ThemedText>
+              </Pressable>
+            </Link>
+          </View>
 
-        {events.length === 0 ? (
-          <ThemedText themeColor="textSecondary" accessibilityRole="text">
-            {t("personalEvents.list.empty")}
-          </ThemedText>
-        ) : (
-          <FlatList
-            data={events}
-            keyExtractor={(event) => event.uid}
-            contentContainerStyle={styles.list}
-            renderItem={({ item }) => <EventRow event={item} />}
-          />
-        )}
+          {events.length === 0 ? (
+            <ThemedText themeColor="textSecondary" accessibilityRole="text">
+              {t("personalEvents.list.empty")}
+            </ThemedText>
+          ) : (
+            <FlatList
+              data={events}
+              keyExtractor={(event) => event.uid}
+              contentContainerStyle={styles.list}
+              renderItem={({ item }) => <EventRow event={item} />}
+            />
+          )}
+        </View>
       </SafeAreaView>
     </ThemedView>
   )
@@ -115,13 +128,12 @@ function EventRow({ event }: { event: PersonalEvent }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "row",
-    justifyContent: "center",
   },
   safeArea: {
     flex: 1,
-    maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
+  },
+  lane: {
+    flex: 1,
     paddingTop: Spacing.four,
     gap: Spacing.three,
   },

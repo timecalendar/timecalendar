@@ -1,9 +1,11 @@
-import { cleanup, render } from "@testing-library/react-native"
+import { cleanup, fireEvent, render } from "@testing-library/react-native"
 import { fromZonedTime } from "date-fns-tz"
+import { StyleSheet } from "react-native"
 
 import { usePersonalEvents } from "@/features/personal-events/data"
 import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
 import { remove } from "@/storage"
+import { resolveResponsiveLayout } from "@/theme"
 
 import { PersonalEventsList } from "./personal-events-list"
 
@@ -41,6 +43,21 @@ describe("PersonalEventsList", () => {
     const add = getByTestId("personal-events-add")
     expect(add.props.accessibilityRole).toBe("button")
     expect(add.props.accessibilityLabel).toBe("Add event")
+
+    const owner = getByTestId("personal-events-responsive-owner")
+    for (const width of [390, 600, 768, 800, 834, 1024]) {
+      await fireEvent(owner, "layout", {
+        nativeEvent: { layout: { width, height: 0 } },
+      })
+      const metrics = resolveResponsiveLayout(width, "standard")
+      const style = StyleSheet.flatten(
+        getByTestId("personal-events-responsive-lane").props.style,
+      )
+      expect(style.maxWidth).toBe(
+        (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
+      )
+      expect(style.paddingHorizontal).toBe(metrics.gutter)
+    }
   })
 
   it("renders a row per event with title and an accessible edit label", async () => {
