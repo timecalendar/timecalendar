@@ -59,7 +59,7 @@
 
 ## 4. Re-run the frozen capacity and single-flight gates
 
-- [ ] 4.1 Start the isolated local Postgres/Redis services, migrate, seed the deterministic
+- [x] 4.1 Start the isolated local Postgres/Redis services, migrate, seed the deterministic
       full-scale Activity corpus and refresh planner statistics. Record the explicit local database
       target, corpus counts, candidate SHA and command versions without committing environment values
       or raw fixture rows.
@@ -98,7 +98,7 @@
 
 ## 6. Obtain exact-candidate native and environment evidence
 
-- [ ] 6.1 After all code/configuration changes are complete, commit and push one immutable
+- [x] 6.1 After all code/configuration changes are complete, commit and push one immutable
       code/configuration candidate. Record its full SHA and prohibit further runtime, contract, native
       config or workflow edits without invalidating all head-dependent evidence and starting a new
       candidate.

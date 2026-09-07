@@ -9,12 +9,12 @@ mismatched, or failed evidence is `FAIL`, and any failed row makes the dispositi
 
 | Field                           | Value                                                               |
 | ------------------------------- | ------------------------------------------------------------------- |
-| Code/configuration candidate    | Not frozen — `FAIL`                                                 |
+| Code/configuration candidate    | `0493e3950f18e00b9b5e13bb9f87a090a7ee44c4` — frozen, failed         |
 | Evidence revision               | This document's eventual commit; pending                            |
-| Evidence date                   | Pending                                                             |
+| Evidence date                   | 2026-09-07                                                          |
 | Evidence environment            | Isolated local synthetic PostgreSQL/Redis and repository CI only    |
 | Immutable server image identity | Unavailable without separately authorized rollout evidence — `FAIL` |
-| Native CI target                | Exact full candidate SHA after it is frozen; pending                |
+| Native CI target                | `0493e3950f18e00b9b5e13bb9f87a090a7ee44c4`; dispatched, pending     |
 
 The runtime candidate is the final code/configuration commit before evidence-only documentation
 commits. Any later runtime, contract, schema, native, or workflow edit invalidates all
@@ -51,18 +51,18 @@ review for a revised design.
 
 The budgets come unchanged from [`activity-capacity-gate.md`](./activity-capacity-gate.md).
 
-| Gate | Method                                                                                               | Candidate value/evidence | Threshold                                                              | Location              | Verdict |
-| ---- | ---------------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------- | --------------------- | ------- |
-| G1   | Full-scale synthetic SQL plus real first-page HTTP route, limit 50                                   | Missing                  | p95 < 250 ms                                                           | Pending aggregate     | FAIL    |
-| G2   | Full-scale synthetic SQL plus real first-page HTTP route, limit 100                                  | Missing                  | p95 < 500 ms                                                           | Pending aggregate     | FAIL    |
-| G3   | Redacted fixture-only plans and CI tripwire                                                          | Missing                  | No full `calendar_log` sequential scan                                 | Pending test/run      | FAIL    |
-| G3a  | Redacted fixture-only plans, global-index-walk assertion, and mutation check                         | Missing                  | No full global-index walk                                              | Pending test/run      | FAIL    |
-| G4   | Real route with recent and one-year unread watermarks                                                | Missing                  | p95 < 250 ms                                                           | Pending aggregate     | FAIL    |
-| G5   | Server/mobile sink inventory and synthetic negative tests                                            | Missing                  | Zero sensitive-category matches                                        | Pending tests         | FAIL    |
-| G6   | Representative concurrent route reads                                                                | Missing                  | All complete, zero errors, event-loop max < 50 ms, heap growth < 64 MB | Pending aggregate     | FAIL    |
-| G7   | Serialized v1 pages at limits 50 and 100, reconciled with projection                                 | Missing                  | p99 < 1,000,000 bytes                                                  | Pending aggregate     | FAIL    |
-| G8   | Four overlapping real trigger edges at the mobile request boundary, then one post-settlement trigger | Missing                  | One shared request, then one new request                               | Pending focused tests | FAIL    |
-| G9   | Exact-candidate Activity Maestro journey on Android and iOS                                          | Missing                  | Both platform jobs pass the complete flow                              | Pending native run    | FAIL    |
+| Gate | Method                                                                                               | Candidate value/evidence                                                                     | Threshold                                                              | Location                                                  | Verdict |
+| ---- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------- | ------- |
+| G1   | Full-scale synthetic SQL plus real first-page HTTP route, limit 50                                   | SQL p95 worst 77.63 ms; HTTP harness exits on first validated request                        | p95 < 250 ms                                                           | 1,004,934-row local run; `activity:capacity:http`         | FAIL    |
+| G2   | Full-scale synthetic SQL plus real first-page HTTP route, limit 100                                  | SQL p95 worst 69.57 ms; HTTP route result unavailable                                        | p95 < 500 ms                                                           | 1,004,934-row local run; blocked after first HTTP request | FAIL    |
+| G3   | Redacted fixture-only plans and CI tripwire                                                          | Missing                                                                                      | No full `calendar_log` sequential scan                                 | Pending test/run                                          | FAIL    |
+| G3a  | Redacted fixture-only plans, global-index-walk assertion, and mutation check                         | Missing                                                                                      | No full global-index walk                                              | Pending test/run                                          | FAIL    |
+| G4   | Real route with recent and one-year unread watermarks                                                | SQL p95 worst 3.22 ms; HTTP route result unavailable                                         | p95 < 250 ms                                                           | 1,004,934-row local run; blocked HTTP harness             | FAIL    |
+| G5   | Server/mobile sink inventory and synthetic negative tests                                            | Missing                                                                                      | Zero sensitive-category matches                                        | Pending tests                                             | FAIL    |
+| G6   | Representative concurrent route reads                                                                | Not reached after HTTP harness failure                                                       | All complete, zero errors, event-loop max < 50 ms, heap growth < 64 MB | Blocked HTTP harness                                      | FAIL    |
+| G7   | Serialized v1 pages at limits 50 and 100, reconciled with projection                                 | SQL fixture pages: p99 1,600,989-byte worst-case cohort; distribution reconciliation pending | p99 < 1,000,000 bytes                                                  | 1,004,934-row local run                                   | FAIL    |
+| G8   | Four overlapping real trigger edges at the mobile request boundary, then one post-settlement trigger | Missing                                                                                      | One shared request, then one new request                               | Pending focused tests                                     | FAIL    |
+| G9   | Exact-candidate Activity Maestro journey on Android and iOS                                          | Missing                                                                                      | Both platform jobs pass the complete flow                              | Pending native run                                        | FAIL    |
 
 ## Telemetry privacy
 
@@ -116,4 +116,10 @@ v1 route and Activity cache tables remain; no destructive schema rollback is req
 
 ## Disposition
 
-**NO-GO** — the candidate is not yet frozen and all candidate-bound evidence remains missing.
+**NO-GO** — candidate `0493e3950f18e00b9b5e13bb9f87a090a7ee44c4` fails the shipped-route
+measurement gate. The standalone harness gives class-validator the Nest application proxy instead
+of the selected root-module context, so the first DTO validation enters Nest's exception teardown
+and terminates the process. The bounded remediation is tracked in
+[TIM-526](/TIM/issues/TIM-526). A corrected commit becomes a new candidate and requires every
+affected head-bound measurement and CI result to be regenerated; the pending results for this
+failed candidate cannot be promoted into evidence for it.
