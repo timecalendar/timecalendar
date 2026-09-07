@@ -138,6 +138,17 @@ surfaces and calendar content; native controls are tinted and composed rather th
 
 ## Native-chrome wrapper seam — `src/components/chrome/`
 
+Root Stack chrome also enters through this seam: `buildCompactRootScreenOptions` supplies the
+theme-backed compact defaults and minimal back display described by ADR
+[054](./decisions/054-shared-root-page-semantics.md). It is stable Expo Router composition rather
+than an alpha API, but co-location keeps root chrome policy discoverable.
+
+`EmptyState` accepts optional local light/dark artwork pairs selected through the single
+color-scheme seam. Eligible full-screen illustrations are recolored to each scheme's exact
+`primary` accent; the localized text carries meaning and the image remains decorative. Filled
+body/footer `PrimaryAction` controls always use `primaryStrong` with `onPrimary`. Platform-native
+header actions and FABs retain their native placement and sizing.
+
 The alpha native-chrome surfaces all **churn** (`expo-router/unstable-native-tabs` is "API subject to change"; `@expo/ui` ships unstable entry points; `expo-glass-effect` is iOS-26-only). The wrapper seam localizes that churn to one directory. Each module is the **single import site** for its alpha API:
 
 - **`chrome/native-tabs.tsx`** — the only import site for `expo-router/unstable-native-tabs`. Wraps `NativeTabs` so tab-bar colors come from `@/theme`; the `.Trigger` compound parts are re-attached (`Object.assign`) so callers use `NativeTabs.Trigger` / `.Trigger.Label` / `.Trigger.Icon` unchanged.
