@@ -48,6 +48,10 @@ The About flow retains two optional `Open` taps and `waitForAnimationToEnd` betw
 
 The iCal import flow uses the established destination-gated replay pattern after its first iOS onboarding deep link. Once the initial transition settles, it reissues the same link only when the stable Welcome title is still absent, then handles the optional confirmation again. This covers an acknowledged `openLink` that leaves SpringBoard foregrounded without replaying a link that already reached onboarding.
 
+### D7 — Let calendar-add reconciliation finish before stopping the Activity fixture
+
+The Activity journey keeps the application process alive when it returns from the newer-calendar import and immediately routes to Settings. Adding that calendar reopens a pagination chain that the one-row baseline legitimately completed. Stopping the process as soon as the Calendar destination appeared could interrupt that asynchronous ownership reconciliation; the next launch then treated the expanded calendar set as its initial observation and retained the stale completed-chain state. Keeping the root lifecycle mounted preserves the production ownership path without adding a test-only reset or weakening the page-two assertion.
+
 ## Verification
 
 - Focused Activity selector Jest suite, including the red-before-green route-oracle regression.

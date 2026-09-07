@@ -10,6 +10,7 @@ The portrait-tablet quick-wins epic needs one final integrated record after its 
 - Strengthen the existing Activity Maestro journey so actionable rows retry a tap only when it produced no hierarchy change and prove navigation with a resolved-event-details-only selector before checking seeded content.
 - Add a focused static regression that locks the Activity row-to-details oracle for both new and changed rows.
 - Let the first iOS About deep-link confirmation transition settle before its existing optional replay tap, then reissue the link once only while the stable About destination remains absent.
+- Keep the Activity fixture process alive after the second calendar import so ownership reconciliation reopens the previously completed pagination chain before the flow traverses page two.
 
 ## Capabilities
 

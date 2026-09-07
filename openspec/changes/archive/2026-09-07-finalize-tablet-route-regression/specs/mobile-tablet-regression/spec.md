@@ -40,6 +40,13 @@ The shared Activity Maestro journey SHALL activate seeded new and changed rows w
 - **THEN** list-rendered title, time, or location text does not satisfy the navigation proof
 - **AND** the flow fails because the resolved event-details owner never appears
 
+#### Scenario: A newly held calendar expands a completed Activity chain
+
+- **WHEN** the Activity journey imports a second calendar after the baseline calendar completed its one-row pagination chain
+- **THEN** the application process remains alive while ownership reconciliation observes the addition
+- **AND** the stale completed-chain state is reopened through the production ownership path
+- **AND** the later page-two traversal proves both boundary fixtures are available
+
 ### Requirement: A delayed iOS deep-link confirmation does not mask route regression
 
 The About native flow SHALL allow the iOS custom-scheme confirmation transition to settle between its initial optional activation and its optional replay activation. The flow SHALL remain shared with Android and SHALL retain the About route and content assertions after the system prompt is dismissed.
