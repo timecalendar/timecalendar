@@ -21,7 +21,7 @@ import { SplashScreen } from "./splash-screen"
 
 // Controllable readiness: false keeps the overlay mounted for render assertions.
 const mockUseAppReady = jest.fn<boolean, []>()
-jest.mock("@/hooks/use-app-ready", () => ({
+jest.mock("./use-app-ready", () => ({
   useAppReady: () => mockUseAppReady(),
 }))
 

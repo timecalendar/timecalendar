@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next"
 import { AccessibilityInfo, Animated, StyleSheet } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
-import { useAppReady } from "@/hooks/use-app-ready"
 import { Spacing, useTheme } from "@/theme"
+
+import { useAppReady } from "./use-app-ready"
 
 // Keep the native static splash up until JS is ready (design D1). Called in the
 // global scope without awaiting per the SDK guidance — calling it inside the

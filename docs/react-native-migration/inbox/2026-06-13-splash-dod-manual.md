@@ -69,13 +69,14 @@ splash shows on cold launch; force-quit and relaunch to re-trigger.
 
 ## 8. Observability arrival (non-regression) — DoD: Observability / Product analytics
 - **What:** Confirm the splash change did not break Firebase: the app still launches, Crashlytics
-  still initializes (a forced crash via the dev panel still arrives), and no new startup error is
+  still initializes (a forced development-build crash still arrives), and no new startup error is
   reported. **Product analytics for the splash is ➖ N/A** (a splash is not a user action — see
   design D6); there is intentionally no splash analytics event to verify.
 - **Why:** CI proves the `@/firebase` wiring but not console arrival (Architecture Book Firebase
   "What CI proves vs. manual"); the splash must not regress launch/observability.
-- **How to verify:** Dev variant, force a test crash from the `FirebaseDebugPanel`, confirm it
-  arrives in the Crashlytics dashboard on next launch; confirm normal launches report no error.
+- **How to verify:** Dev variant, invoke the `@/firebase` `crashTest` helper from a temporary local
+  caller, confirm it arrives in the Crashlytics dashboard on next launch, then remove the caller;
+  confirm normal launches report no error.
 
 ## 9. E2E through the splash (non-regression) — DoD: E2E
 - **What:** Confirm the existing Maestro flow (`mobile/.maestro/schools.yaml`) still passes with

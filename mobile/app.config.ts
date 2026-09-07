@@ -187,7 +187,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           // launch screen runs pre-JS, so it can neither read JS theme tokens nor
           // switch on the OS color scheme. It is the brand fill (not a body-text
           // surface) and reads acceptably in both light and dark; the JS splash
-          // overlay (src/components/splash-screen.tsx) mounts immediately after JS
+          // overlay (src/features/splash/ui/splash-screen.tsx) mounts immediately after JS
           // loads and corrects to the scheme-appropriate @/theme token (design D5).
           backgroundColor: "#E91E63",
           android: {
