@@ -9,8 +9,8 @@
 1. **Grades** (`add_grade`) — grade entry/display (check current server vs. local-only nature when reached).
 2. **Activity** — the sync/calendar activity log view, bounded virtual pages, cache, unread badge,
    shared refresh seam, and native flow are implemented. The corrected candidate passes the frozen
-   local capacity gates, but production readiness remains **NO-GO** pending exact-candidate native
-   completion and separately authorized environment evidence; see the candidate-bound
+   local capacity and environment gates, but production readiness remains **NO-GO** pending a
+   passing exact-candidate Android native flow; see the candidate-bound
    [release-readiness record](../05-tech-specs/activity-release-readiness.md).
 3. **Suggestions** — ✅ **shipped** (#269): root Feedback form with validated remembered
    e-mail, existing `/contact` enrichment, Settings entry, and a context-bounded report

@@ -739,8 +739,8 @@ compatibility evidence, and an executable rollback plan.
 
 **Current readiness:** **NO-GO**. The candidate-bound
 [release-readiness record](./activity-release-readiness.md) is authoritative; the implementation
-passes the corrected local capacity gates, while exact-candidate native completion and separately
-authorized environment evidence remain required before production approval.
+passes the corrected local capacity and environment gates, while a passing exact-candidate Android
+native flow remains required before production approval.
 
 **Scope:**
 
