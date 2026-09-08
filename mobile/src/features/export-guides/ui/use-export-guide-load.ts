@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -67,7 +67,7 @@ export function useExportGuideLoad({
     [],
   )
 
-  const load = useCallback(() => {
+  const load = () => {
     const current = latest.current
     if (current.state.phase === "empty" || current.selector === null) return
     const draftRevision = current.state.draftRevision
@@ -143,9 +143,9 @@ export function useExportGuideLoad({
       })
     activeRequest.current = { key: requestKey, promise }
     return promise
-  }, [dispatch])
+  }
 
-  const retry = useCallback(() => {
+  const retry = () => {
     const current = latest.current.state
     if (current.phase === "blocked") {
       emitExportGuideEvent({
@@ -158,7 +158,7 @@ export function useExportGuideLoad({
       })
     }
     load()
-  }, [load])
+  }
 
   return { locale, busy, load, retry }
 }
