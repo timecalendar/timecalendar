@@ -2,6 +2,7 @@ import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import {
   createE2eExportGuideCatalogue,
+  E2E_EXPORT_GUIDE_ASSET_ORIGIN,
   E2E_EXPORT_GUIDE_VERSION,
 } from "modules/export-guide/data/initial-export-guide-catalogue"
 import { EXPORT_GUIDE_SCHEMA_VERSION } from "modules/export-guide/models/export-guide.model"
@@ -100,6 +101,15 @@ describe("E2E export-guide seed", () => {
         "celcat",
         "generic",
       ])
+      const images = catalogue.providers
+        .flatMap(({ pages }) => pages)
+        .flatMap(({ image }) => (image ? [image] : []))
+      expect(images.length).toBeGreaterThan(0)
+      expect(
+        images.every(
+          ({ url }) => new URL(url).origin === E2E_EXPORT_GUIDE_ASSET_ORIGIN,
+        ),
+      ).toBe(true)
       expect(
         catalogue.providers
           .flatMap(({ pages }) => pages)

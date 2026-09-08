@@ -109,6 +109,16 @@ verify_export_guide_fixture() {
   grep -Eiq '^content-language: en' "$headers" || fail "export-guide language is missing."
   grep -Fq '"catalogueVersion":"2026-09-08.t4"' "$body" || fail "wrong fixture version."
   grep -Fq 'controlled-broken.png' "$body" || fail "controlled broken image is missing."
+  node -e '
+    const fs = require("fs");
+    const catalogue = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const expectedOrigin = "https://timecalendar-dev-public.fra1.digitaloceanspaces.com";
+    const images = catalogue.providers.flatMap((provider) => provider.pages)
+      .flatMap((page) => page.image ? [page.image] : []);
+    if (!images.length || images.some((image) => new URL(image.url).origin !== expectedOrigin)) {
+      process.exit(1);
+    }
+  ' "$body" || fail "export-guide fixture image origin is not approved."
   broken_url="$(node -e '
     const fs = require("fs");
     const catalogue = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));

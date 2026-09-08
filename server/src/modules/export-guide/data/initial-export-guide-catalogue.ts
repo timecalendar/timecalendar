@@ -11,6 +11,8 @@ import { ExportGuideValidationError } from "modules/export-guide/validation/expo
 
 export const INITIAL_EXPORT_GUIDE_VERSION = "2026-09-07.1"
 export const E2E_EXPORT_GUIDE_VERSION = "2026-09-08.t4"
+export const E2E_EXPORT_GUIDE_ASSET_ORIGIN =
+  "https://timecalendar-dev-public.fra1.digitaloceanspaces.com"
 
 export const resolveInitialExportGuideAssetOrigin = (value: string): string => {
   let url: URL
@@ -387,14 +389,24 @@ export const createE2eExportGuideCatalogue = (
   locale: ExportGuideLocale,
 ): ExportGuideCatalogueV1 => {
   const catalogue = structuredClone(createInitialExportGuideCatalogue(locale))
-  const replaceVersion = (url: string) =>
-    url.replace(INITIAL_EXPORT_GUIDE_VERSION, E2E_EXPORT_GUIDE_VERSION)
+  const replaceFixtureIdentity = (url: string) => {
+    const parsed = new URL(url)
+    return `${E2E_EXPORT_GUIDE_ASSET_ORIGIN}${parsed.pathname.replace(
+      INITIAL_EXPORT_GUIDE_VERSION,
+      E2E_EXPORT_GUIDE_VERSION,
+    )}`
+  }
   const providers = catalogue.providers.map((provider) => ({
     ...provider,
     pages: provider.pages.map((page) => ({
       ...page,
       ...(page.image
-        ? { image: { ...page.image, url: replaceVersion(page.image.url) } }
+        ? {
+            image: {
+              ...page.image,
+              url: replaceFixtureIdentity(page.image.url),
+            },
+          }
         : {}),
     })),
   }))
@@ -406,7 +418,7 @@ export const createE2eExportGuideCatalogue = (
       ...page,
       image: {
         ...pageImage,
-        url: `${INITIAL_EXPORT_GUIDE_ASSET_ORIGIN}/export-guides/${E2E_EXPORT_GUIDE_VERSION}/${locale}/generic/controlled-broken.png`,
+        url: `${E2E_EXPORT_GUIDE_ASSET_ORIGIN}/export-guides/${E2E_EXPORT_GUIDE_VERSION}/${locale}/generic/controlled-broken.png`,
       },
     }
   }
