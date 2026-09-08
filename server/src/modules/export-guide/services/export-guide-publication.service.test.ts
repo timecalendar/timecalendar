@@ -42,16 +42,50 @@ describe("ExportGuidePublicationService", () => {
     expect(store.capture().retained.size).toBe(0)
   })
 
-  it("bootstraps validated packaged data without requiring database schema", async () => {
-    schools.findVisible.mockRejectedValueOnce(new Error("schema unavailable"))
+  it("rejects an invalid visible school before bootstrap activation", async () => {
+    schools.findVisible.mockResolvedValueOnce([
+      { assistant: "INVALID!" },
+    ] as never)
 
-    await publication.bootstrapInitial(
+    await expect(
+      publication.publishInitial(
+        assetValidator as unknown as ExportGuideAssetValidator,
+      ),
+    ).rejects.toThrow("school_provider_slug")
+
+    expect(schools.findVisible).toHaveBeenCalledTimes(1)
+    expect(assetValidator.validate).not.toHaveBeenCalled()
+    expect(store.capture().activeVersion).toBeUndefined()
+    expect(store.capture().retained.size).toBe(0)
+  })
+
+  it("retains a newly superseded initial catalogue through the boundary", async () => {
+    const publishedAt = new Date("2026-09-08T00:00:00.000Z")
+    const cacheAge = 60_000
+    await publication.publishInitial(
       assetValidator as unknown as ExportGuideAssetValidator,
+      publishedAt,
     )
+    const fr: any = JSON.parse(
+      JSON.stringify(createInitialExportGuideCatalogue("fr")),
+    )
+    const en: any = JSON.parse(
+      JSON.stringify(createInitialExportGuideCatalogue("en")),
+    )
+    fr.catalogueVersion = "2026-09-08.1"
+    en.catalogueVersion = "2026-09-08.1"
+    await publication.publish(fr, en, {
+      now: new Date(publishedAt.getTime() + 1),
+    })
 
-    expect(store.capture().activeVersion).toBe("2026-09-07.1")
-    expect(assetValidator.validate).toHaveBeenCalled()
-    expect(schools.findVisible).not.toHaveBeenCalled()
+    const boundary = publishedAt.getTime() + 24 * 60 * 60 * 1000 + cacheAge
+    expect(publication.prune(new Date(boundary), cacheAge, new Set())).toEqual(
+      [],
+    )
+    expect(store.find("2026-09-07.1")).toBeDefined()
+    expect(
+      publication.prune(new Date(boundary + 1), cacheAge, new Set()),
+    ).toEqual(["2026-09-07.1"])
   })
 
   it("rejects conflicting storage metadata declared for one URL", async () => {

@@ -17,6 +17,6 @@ export class ExportGuideBootstrapService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap(): Promise<void> {
     if (this.catalogues.capture().activeVersion) return
-    await this.publication.bootstrapInitial(this.initialAssetValidator)
+    await this.publication.publishInitial(this.initialAssetValidator)
   }
 }

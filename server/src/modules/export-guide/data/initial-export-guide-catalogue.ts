@@ -7,19 +7,32 @@ import {
   ExportGuidePageV1,
   INITIAL_EXPORT_GUIDE_PROVIDER_SLUGS,
 } from "modules/export-guide/models/export-guide.model"
+import { ExportGuideValidationError } from "modules/export-guide/validation/export-guide-validation.error"
 
 export const INITIAL_EXPORT_GUIDE_VERSION = "2026-09-07.1"
 
-export const INITIAL_EXPORT_GUIDE_ASSET_ORIGIN = (() => {
+export const resolveInitialExportGuideAssetOrigin = (value: string): string => {
+  let url: URL
   try {
-    const url = new URL(S3_PUBLIC_BUCKET_CLIENT_URL)
-    return url.protocol === "https:"
-      ? url.origin
-      : "https://timecalendar-dev-public.fra1.digitaloceanspaces.com"
+    url = new URL(value)
   } catch {
-    return "https://timecalendar-dev-public.fra1.digitaloceanspaces.com"
+    throw new ExportGuideValidationError("asset_origin")
   }
-})()
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.port ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  )
+    throw new ExportGuideValidationError("asset_origin")
+  return url.origin
+}
+
+export const INITIAL_EXPORT_GUIDE_ASSET_ORIGIN =
+  resolveInitialExportGuideAssetOrigin(S3_PUBLIC_BUCKET_CLIENT_URL)
 
 const image = (
   path: string,

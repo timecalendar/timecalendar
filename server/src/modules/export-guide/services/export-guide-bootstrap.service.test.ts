@@ -6,7 +6,7 @@ import { ExportGuideCatalogueStore } from "modules/export-guide/stores/export-gu
 describe("ExportGuideBootstrapService", () => {
   const initialAssetValidator = {} as ExportGuideAssetValidator
   const publication = {
-    bootstrapInitial: jest.fn().mockResolvedValue(undefined),
+    publishInitial: jest.fn().mockResolvedValue(undefined),
   } as unknown as ExportGuidePublicationService
 
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe("ExportGuideBootstrapService", () => {
 
     await bootstrap.onApplicationBootstrap()
 
-    expect(publication.bootstrapInitial).toHaveBeenCalledWith(
+    expect(publication.publishInitial).toHaveBeenCalledWith(
       initialAssetValidator,
     )
   })
@@ -45,6 +45,6 @@ describe("ExportGuideBootstrapService", () => {
 
     await bootstrap.onApplicationBootstrap()
 
-    expect(publication.bootstrapInitial).not.toHaveBeenCalled()
+    expect(publication.publishInitial).not.toHaveBeenCalled()
   })
 })
