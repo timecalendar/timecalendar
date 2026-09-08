@@ -25,10 +25,27 @@
 
 ## Single fetch mutator
 
-- Every generated operation calls `customFetch` in `mobile/src/api/mutator.ts`: base-URL prefixing, JSON headers, non-2xx → typed `ApiError<TBody>` carrying status + parsed body. **No axios in mobile.**
+- Every generated operation uses the single request routine in `mobile/src/api/mutator.ts` for
+  base-URL prefixing, JSON headers, timeout, and cancellation. Existing operations call
+  `customFetch`: non-2xx becomes typed `ApiError<TBody>` carrying status and parsed body. The
+  generated `GET /v1/export-guides` operation alone is configured by an Orval operation override
+  to call `customFetchResponse`, preserving status, `Headers`, and optional data so its repository
+  can narrow strict `200` and `304` responses. Generated output remains generator-owned. **No axios
+  in mobile.**
 - **Every request is time-bounded** (`DEFAULT_TIMEOUT_MS`, an internal `AbortController`): RN's `fetch` has no timeout, so a black-hole network would hang a query forever — the timeout aborts it and the failure surfaces as an ordinary recoverable `isError`. The mutator also **forwards the caller's `options.signal`** (TanStack Query's per-query cancellation) by composing it with the timeout controller, so either source aborts the in-flight `fetch`. The seam's contract is proven directly in `mutator.test.ts` (the one suite that does NOT mock `@/api/mutator`).
 - Enforced by codegen config (`orval.config.ts` mutator) and by lint: `no-restricted-globals` bans `fetch` everywhere except `src/api/mutator.ts`, and `no-restricted-imports` bans `axios` — both in `mobile/eslint.config.js`.
-- Development diagnostics identify `POST /contact` by method/path/status but redact both request and response payloads, because either side can contain submitted e-mail or message content. Other API paths retain the existing payload diagnostics. Enforced at the shared mutator seam by `src/api/mutator.test.ts`.
+- Development diagnostics identify `POST /contact` by method/path/status but redact both request and response payloads, because either side can contain submitted e-mail or message content. Export-guide diagnostics likewise use only the normalized path, method, numeric status when known, coarse duration, and static outcome; query values, headers, bodies, copy, URLs, and exception messages are excluded. Other API paths retain the existing payload diagnostics. Enforced at the shared mutator seam by `src/api/mutator.test.ts`.
+
+## Export-guide defensive repository
+
+- `features/export-guides/data/` is the only generated export-guide client consumer. It treats DTOs
+  and persisted JSON as unknown, validates the complete schema-v1 envelope and image metadata,
+  requires a usable Generic provider, isolates invalid optional providers, and returns copied,
+  recursively frozen domain values.
+- Active loads retain server provider order. Listed schools load the exact projected catalogue
+  version and resolve the requested validated slug or Generic with a bounded reason. Resolution
+  creates a copied immutable page snapshot, so later response mutation or LKG replacement cannot
+  alter an active journey.
 
 ## Base URL
 

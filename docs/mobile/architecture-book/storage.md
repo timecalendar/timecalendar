@@ -58,6 +58,20 @@ MMKV holds settings, notification preferences, query persistence, school/group i
 hidden-event identifiers, and Changelog acknowledgement. Keys are flat and namespaced.
 Reads are total and return a safe default for missing, malformed, or legacy values.
 
+The versioned export-guide LKG registry is a backend-bound rebuildable cache behind `@/storage`.
+Each logical record is isolated by requested locale, client schema, and active or exact-version
+selector, then revalidates its strong ETag, response/body locale, resolved version, timestamp, and
+complete catalogue before use. A valid response constructs the next registry in memory and commits
+it with one string write, preserving other valid logical records; a thrown write leaves the prior
+document intact. The registry never stores an import draft, provider selection, page index,
+completion proof, route state, or active journey snapshot.
+
+LKG freshness is inclusive through exactly 24 hours. A process-local monotonic observation ages
+records while the JS process lives, so live wall-clock changes cannot extend freshness. After a
+restart, that observation is unavailable and age falls back to persisted UTC wall time; negative
+age fails closed, while a non-negative backward adjustment before restart can extend freshness by
+the adjustment. This documented limitation is accepted for the rebuildable cache.
+
 Changelog stores the flat numeric key `changelogSeenVersion`. Its feature store accepts only
 finite, non-negative safe integers; missing, malformed, negative, or fractional values decode
 as absent. The tabs gate silently seeds an absent value to the bundled current integer, while
@@ -88,7 +102,8 @@ an installed database is a data incident, and the mocked seam cannot catch one.
   display-timezone and Changelog acknowledgement survive; selected backend and the temporary
   reset journal are controls; school/group selection, hidden events, notification values,
   remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
-  backend-bound and are removed. Type coverage fails when a centralized known key is unclassified.
+  backend-bound and are removed. The export-guide LKG registry is also backend-bound and is removed
+  on reset. Type coverage fails when a centralized known key is unclassified.
 - `@/db.resetBackendDatabase()` synchronously deletes `checklist_items`, `activity_logs`,
   `activity_state`, `calendar_events`, `user_calendars` and `personal_events` in that order
   inside one transaction. That list is the only one: the environment switch calls

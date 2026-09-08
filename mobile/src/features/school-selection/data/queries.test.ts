@@ -27,6 +27,12 @@ const schoolsResponse: FindSchoolsRepDto = {
       imageUrl: "a.png",
       imageUrlDark: "a-dark.png",
       intranetUrl: "https://intranet.mga.example/",
+      exportGuide: {
+        providerSlug: "future-provider",
+        requireProgramme: false,
+        requireConnect: true,
+        catalogueVersion: "2026-09-07.1",
+      },
     },
     {
       id: "univeiffel",
@@ -35,6 +41,12 @@ const schoolsResponse: FindSchoolsRepDto = {
       imageUrl: "b.png",
       imageUrlDark: null,
       intranetUrl: null,
+      exportGuide: {
+        providerSlug: "generic",
+        requireProgramme: true,
+        requireConnect: false,
+        catalogueVersion: "2026-09-07.1",
+      },
     },
   ] as SchoolForList[],
 }
@@ -72,6 +84,12 @@ describe("useSchools", () => {
       imageUrl: "a.png",
       imageUrlDark: "a-dark.png",
       intranetUrl: "https://intranet.mga.example/",
+      exportGuide: {
+        providerSlug: "future-provider",
+        requireProgramme: false,
+        requireConnect: true,
+        catalogueVersion: "2026-09-07.1",
+      },
     })
     // The Connect step reads intranetUrl off the draft's SchoolListItem, so the
     // nullable case must survive the projection as null, not be dropped.

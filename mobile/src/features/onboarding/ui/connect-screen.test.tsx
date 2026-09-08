@@ -35,6 +35,12 @@ const school = (intranetUrl: string | null): SchoolListItem => ({
   imageUrl: "",
   imageUrlDark: null,
   intranetUrl,
+  exportGuide: {
+    providerSlug: "generic",
+    requireProgramme: true,
+    requireConnect: true,
+    catalogueVersion: "test-v1",
+  },
 })
 
 const listed = (intranetUrl: string | null) => ({

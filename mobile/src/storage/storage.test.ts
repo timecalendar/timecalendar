@@ -135,6 +135,7 @@ describe("storage seam", () => {
       setString(STORAGE_KEYS.selectedBackendEnvironment, "preprod")
       setString(STORAGE_KEYS.backendResetJournal, "journal")
       setString(STORAGE_KEYS.schoolId, "school-1")
+      setString(STORAGE_KEYS.exportGuideLkgRegistry, "catalogue")
       setString("future.unclassified", "must be removed")
 
       clearBackendBoundStorage()
@@ -143,6 +144,7 @@ describe("storage seam", () => {
       expect(getString(STORAGE_KEYS.selectedBackendEnvironment)).toBe("preprod")
       expect(getString(STORAGE_KEYS.backendResetJournal)).toBe("journal")
       expect(getString(STORAGE_KEYS.schoolId)).toBeUndefined()
+      expect(getString(STORAGE_KEYS.exportGuideLkgRegistry)).toBeUndefined()
       expect(getString("future.unclassified")).toBeUndefined()
     })
 

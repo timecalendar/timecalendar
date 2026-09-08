@@ -4,6 +4,7 @@
 // sub-barrel pattern).
 export {
   persistOptions,
+  type SchoolExportGuideReference,
   type SchoolGroupNode,
   type SchoolGroupsQuery,
   type SchoolListItem,

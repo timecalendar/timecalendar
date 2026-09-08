@@ -24,6 +24,12 @@ function toSchoolListItem(school: SchoolForList): SchoolListItem {
     imageUrl: school.imageUrl,
     imageUrlDark: school.imageUrlDark,
     intranetUrl: school.intranetUrl,
+    exportGuide: {
+      providerSlug: school.exportGuide.providerSlug,
+      requireProgramme: school.exportGuide.requireProgramme,
+      requireConnect: school.exportGuide.requireConnect,
+      catalogueVersion: school.exportGuide.catalogueVersion,
+    },
   }
 }
 

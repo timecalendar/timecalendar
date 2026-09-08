@@ -24,10 +24,52 @@ import type {
   ExportGuideV1ControllerFindCatalogueParams,
 } from "../timeCalendar.schemas"
 
-import { customFetch } from "../../mutator"
+import { customFetchResponse } from "../../mutator"
 import type { ErrorType } from "../../mutator"
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1]
+
+export type exportGuideV1ControllerFindCatalogueResponse200 = {
+  data: ExportGuideCatalogueV1Dto
+  status: 200
+}
+
+export type exportGuideV1ControllerFindCatalogueResponse304 = {
+  data: void
+  status: 304
+}
+
+export type exportGuideV1ControllerFindCatalogueResponse400 = {
+  data: ExportGuideErrorDto
+  status: 400
+}
+
+export type exportGuideV1ControllerFindCatalogueResponse404 = {
+  data: ExportGuideErrorDto
+  status: 404
+}
+
+export type exportGuideV1ControllerFindCatalogueResponse503 = {
+  data: ExportGuideErrorDto
+  status: 503
+}
+
+export type exportGuideV1ControllerFindCatalogueResponseSuccess =
+  exportGuideV1ControllerFindCatalogueResponse200 & {
+    headers: Headers
+  }
+export type exportGuideV1ControllerFindCatalogueResponseError = (
+  | exportGuideV1ControllerFindCatalogueResponse304
+  | exportGuideV1ControllerFindCatalogueResponse400
+  | exportGuideV1ControllerFindCatalogueResponse404
+  | exportGuideV1ControllerFindCatalogueResponse503
+) & {
+  headers: Headers
+}
+
+export type exportGuideV1ControllerFindCatalogueResponse =
+  | exportGuideV1ControllerFindCatalogueResponseSuccess
+  | exportGuideV1ControllerFindCatalogueResponseError
 
 export const getExportGuideV1ControllerFindCatalogueUrl = (
   params: ExportGuideV1ControllerFindCatalogueParams,
@@ -53,8 +95,8 @@ export const getExportGuideV1ControllerFindCatalogueUrl = (
 export const exportGuideV1ControllerFindCatalogue = async (
   params: ExportGuideV1ControllerFindCatalogueParams,
   options?: RequestInit,
-): Promise<ExportGuideCatalogueV1Dto> => {
-  return customFetch<ExportGuideCatalogueV1Dto>(
+): Promise<exportGuideV1ControllerFindCatalogueResponse> => {
+  return customFetchResponse<exportGuideV1ControllerFindCatalogueResponse>(
     getExportGuideV1ControllerFindCatalogueUrl(params),
     {
       ...options,
@@ -82,7 +124,7 @@ export const getExportGuideV1ControllerFindCatalogueQueryOptions = <
         TData
       >
     >
-    request?: SecondParameter<typeof customFetch>
+    request?: SecondParameter<typeof customFetchResponse>
   },
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {}
@@ -130,7 +172,7 @@ export function useExportGuideV1ControllerFindCatalogue<
         >,
         "initialData"
       >
-    request?: SecondParameter<typeof customFetch>
+    request?: SecondParameter<typeof customFetchResponse>
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -157,7 +199,7 @@ export function useExportGuideV1ControllerFindCatalogue<
         >,
         "initialData"
       >
-    request?: SecondParameter<typeof customFetch>
+    request?: SecondParameter<typeof customFetchResponse>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -176,7 +218,7 @@ export function useExportGuideV1ControllerFindCatalogue<
         TData
       >
     >
-    request?: SecondParameter<typeof customFetch>
+    request?: SecondParameter<typeof customFetchResponse>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -199,7 +241,7 @@ export function useExportGuideV1ControllerFindCatalogue<
         TData
       >
     >
-    request?: SecondParameter<typeof customFetch>
+    request?: SecondParameter<typeof customFetchResponse>
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
