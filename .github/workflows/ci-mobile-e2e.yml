@@ -303,9 +303,7 @@ jobs:
     # repo + downloaded pods, outside the repo tree) survives `prebuild --clean`
     # and shaves the pod-install step; DerivedData lives under the cleaned ios/
     # so it can't be cached across runs. npm is cached by setup-node.
-    # The full shared flow set now takes about 43 minutes after a 30-minute cold
-    # build on the hosted runner. Keep enough headroom for teardown and uploads.
-    timeout-minutes: 120
+    timeout-minutes: 75
     env:
       # Maestro boots its XCTest driver with `xcodebuild test-without-building`,
       # then polls the driver's local HTTP port until it's listening. On the
