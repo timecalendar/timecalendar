@@ -1,5 +1,5 @@
 import { fireEvent, render } from "@testing-library/react-native"
-import { router, useLocalSearchParams } from "expo-router"
+import { router, Stack, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import type {
@@ -7,6 +7,8 @@ import type {
   ExportGuidePinnedSnapshot,
 } from "@/features/export-guides/data"
 import { useImportDraft } from "@/features/onboarding/draft"
+import i18n from "@/i18n"
+import { Colors } from "@/theme"
 
 import GuidePageScreen from "./guide-page-screen"
 import ProviderSelectionScreen from "./provider-selection-screen"
@@ -14,11 +16,25 @@ import ProviderSelectionScreen from "./provider-selection-screen"
 const mockLoad = jest.fn()
 const mockRetry = jest.fn()
 let mockBusy = false
+let mockScheme: "light" | "dark" = "light"
+let mockFontScale = 1
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn(), replace: jest.fn(), back: jest.fn() },
-  Stack: { Screen: () => null },
+  Stack: { Screen: jest.fn(() => null) },
   useLocalSearchParams: jest.fn(() => ({ pageIndex: "0" })),
+}))
+jest.mock("@/hooks/use-color-scheme", () => ({
+  useColorScheme: () => mockScheme,
+}))
+jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
+  __esModule: true,
+  default: () => ({
+    width: 320,
+    height: 480,
+    scale: 2,
+    fontScale: mockFontScale,
+  }),
 }))
 jest.mock("@/features/onboarding/draft", () => ({
   ...jest.requireActual("@/features/onboarding/draft"),
@@ -44,6 +60,8 @@ jest.mock("expo-image", () => {
 })
 
 const mockUseImportDraft = useImportDraft as jest.Mock
+const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
+const mockStackScreen = Stack.Screen as unknown as jest.Mock
 const dispatch = jest.fn()
 
 const snapshot: ExportGuidePinnedSnapshot = {
@@ -70,9 +88,13 @@ const snapshot: ExportGuidePinnedSnapshot = {
   ],
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.clearAllMocks()
   mockBusy = false
+  mockScheme = "light"
+  mockFontScale = 1
+  mockUseLocalSearchParams.mockReturnValue({ pageIndex: "0" })
+  await i18n.changeLanguage("en")
   jest
     .spyOn(AccessibilityInfo, "setAccessibilityFocus")
     .mockImplementation(() => undefined)
@@ -144,6 +166,119 @@ describe("GuidePageScreen", () => {
     expect(router.push).toHaveBeenCalledWith("/onboarding/export-guide/1")
   })
 
+  it("renders the complete French shell for a French pinned page", async () => {
+    await i18n.changeLanguage("fr")
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "guide",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "Établissement" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot: { ...snapshot, locale: "fr" },
+        visitedThrough: 0,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    expect(
+      view.getByTestId("export-guide-progress").props.accessibilityLabel,
+    ).toBe("Page 1 sur 2")
+    expect(view.getByText("Suivant")).toBeTruthy()
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          title: "Exportez votre emploi du temps",
+        }),
+      }),
+      undefined,
+    )
+  })
+
+  it("uses dark tokens without replacing native Stack chrome", async () => {
+    mockScheme = "dark"
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "guide",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot,
+        visitedThrough: 0,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    expect(
+      StyleSheet.flatten(view.getByTestId("export-guide-page").props.style),
+    ).toEqual(
+      expect.objectContaining({ backgroundColor: Colors.dark.background }),
+    )
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId("export-guide-visible-back").props.style,
+      ),
+    ).toEqual(expect.objectContaining({ borderColor: Colors.dark.primary }))
+    expect(mockStackScreen).toHaveBeenCalled()
+  })
+
+  it("keeps the largest text layout scrollable with reachable actions", async () => {
+    mockFontScale = 3
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "guide",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot,
+        visitedThrough: 0,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    expect(view.getByTestId("export-guide-page-scroll")).toBeTruthy()
+    expect(view.getByTestId("export-guide-next")).toBeEnabled()
+    expect(view.getByTestId("export-guide-visible-back")).toBeEnabled()
+  })
+
+  it("keeps native Stack Back enabled and makes visible Back pop once", async () => {
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "guide",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot,
+        visitedThrough: 0,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.not.objectContaining({ gestureEnabled: false }),
+      }),
+      undefined,
+    )
+    await fireEvent.press(view.getByTestId("export-guide-visible-back"))
+    expect(router.back).toHaveBeenCalledTimes(1)
+  })
+
   it("degrades a failed image to one accessible text-only meaning", async () => {
     mockUseImportDraft.mockReturnValue({
       state: {
@@ -196,6 +331,30 @@ describe("GuidePageScreen", () => {
     expect(router.push).toHaveBeenCalledWith("/onboarding/import")
   })
 
+  it("renders the completed final page restored by Back from manual import", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ pageIndex: "1" })
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "completed",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot,
+        visitedThrough: 1,
+        manualHandoff: "none",
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    expect(view.getByText("Second")).toBeTruthy()
+    expect(view.getByTestId("export-guide-next")).toBeDisabled()
+    expect(router.replace).not.toHaveBeenCalled()
+  })
+
   it("renders blocking recovery with single retry and ordinary Back", async () => {
     mockUseImportDraft.mockReturnValue({
       state: {
@@ -226,28 +385,36 @@ describe("GuidePageScreen", () => {
     expect(router.back).toHaveBeenCalledTimes(1)
   })
 
-  it("does not clamp a malformed page index", async () => {
-    ;(useLocalSearchParams as jest.Mock).mockReturnValue({ pageIndex: "1x" })
-    mockUseImportDraft.mockReturnValue({
-      state: {
-        phase: "guide",
-        draft: {
-          institution: { kind: "unlisted", schoolName: "School" },
-          calendarName: "",
+  it.each([
+    ["malformed", "1x", 1],
+    ["negative", "-1", 1],
+    ["out of range", "2", 1],
+    ["ahead of contiguous progress", "1", 0],
+  ])(
+    "does not clamp a %s page index",
+    async (_case, pageIndex, visitedThrough) => {
+      mockUseLocalSearchParams.mockReturnValue({ pageIndex })
+      mockUseImportDraft.mockReturnValue({
+        state: {
+          phase: "guide",
+          draft: {
+            institution: { kind: "unlisted", schoolName: "School" },
+            calendarName: "",
+          },
+          draftRevision: 1,
+          gateProgress: "programme",
+          snapshot,
+          visitedThrough,
         },
-        draftRevision: 1,
-        gateProgress: "programme",
-        snapshot,
-        visitedThrough: 1,
-      },
-      dispatch,
-    })
-    await render(<GuidePageScreen />)
-    expect(router.replace).toHaveBeenCalledWith("/onboarding/export-guide/0")
-    expect(dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: "complete-guide" }),
-    )
-  })
+        dispatch,
+      })
+      await render(<GuidePageScreen />)
+      expect(router.replace).toHaveBeenCalledWith("/onboarding/export-guide/0")
+      expect(dispatch).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "complete-guide" }),
+      )
+    },
+  )
 })
 
 describe("ProviderSelectionScreen", () => {

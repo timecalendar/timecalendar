@@ -3,6 +3,7 @@ import { router } from "expo-router"
 import { StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
+import type { ImportJourneyState } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 import { resolveResponsiveLayout } from "@/theme"
 
@@ -21,6 +22,7 @@ jest.mock("expo-router", () => ({
     push: jest.fn(),
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
+    replace: jest.fn(),
   },
   Stack: { Screen: () => null },
 }))
@@ -32,16 +34,69 @@ jest.mock("@/features/calendar-sources/data", () => ({
 // Institution + programme now come from the ephemeral import draft, NOT from the
 // persisted school selection (TIM-391 / design D10) — that read is gone.
 let mockImportFields: { name: string; schoolId?: string; schoolName?: string }
+let mockGuardState: ImportJourneyState | null = null
 const mockClearDraft = jest.fn()
-jest.mock("@/features/onboarding", () => ({
-  useImportCreateFields: () => mockImportFields,
-  useImportDraft: () => ({ clearDraft: mockClearDraft }),
-  useProtectedImportRoute: () => true,
+const mockImportDraftValue = () => {
+  const draft =
+    mockImportFields.schoolId === undefined
+      ? {
+          institution: {
+            kind: "unlisted" as const,
+            schoolName: mockImportFields.schoolName ?? "",
+          },
+          calendarName: mockImportFields.name,
+        }
+      : {
+          institution: {
+            kind: "listed" as const,
+            school: {
+              id: mockImportFields.schoolId,
+              name: "Listed school",
+              code: "LISTED",
+              imageUrl: "https://assets.example.com/school.png",
+              imageUrlDark: null,
+              intranetUrl: null,
+              exportGuide: {
+                providerSlug: "provider-one",
+                requireProgramme: false,
+                requireConnect: false,
+                catalogueVersion: "v1",
+              },
+            },
+          },
+          calendarName: mockImportFields.name,
+        }
+  const state: ImportJourneyState = mockGuardState ?? {
+    phase: "completed",
+    draftRevision: 1,
+    gateProgress: "programme",
+    draft,
+    snapshot: {
+      locale: "en",
+      catalogueVersion: "v1",
+      providerSlug: "provider-one",
+      providerLabel: "Provider One",
+      reason: "exact",
+      pages: [{ title: "Export", description: "Export instructions" }],
+    },
+    visitedThrough: 0,
+    manualHandoff: "ical",
+  }
+  return {
+    state,
+    draft: state.phase === "empty" ? null : state.draft,
+    clearDraft: mockClearDraft,
+    dispatch: jest.fn(),
+  }
+}
+jest.mock("@/features/onboarding/draft/context", () => ({
+  useImportDraft: () => mockImportDraftValue(),
 }))
 
 const mockBack = router.back as jest.Mock
 const mockCanDismiss = router.canDismiss as jest.Mock
 const mockDismissAll = router.dismissAll as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
 const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
@@ -51,6 +106,7 @@ let addState: { isPending: boolean; isError: boolean }
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockGuardState = null
   addState = { isPending: false, isError: false }
   mockUseAddCalendar.mockImplementation(() => ({
     addCalendarFromUrl: mockAddCalendarFromUrl,
@@ -63,6 +119,25 @@ beforeEach(() => {
 })
 
 describe("IcalUrlScreen", () => {
+  it("fails closed through the real guard for an incomplete unlisted journey", async () => {
+    mockGuardState = {
+      phase: "draft",
+      draftRevision: 2,
+      gateProgress: "programme",
+      draft: {
+        institution: { kind: "unlisted", schoolName: "Unlisted school" },
+        calendarName: "",
+      },
+    }
+    const view = await render(<IcalUrlScreen />)
+
+    expect(view.toJSON()).toBeNull()
+    expect(mockReplace).toHaveBeenCalledWith(
+      "/onboarding/export-guide/providers",
+    )
+    expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
+  })
+
   it("keeps import fields and states in a measured readable tablet lane", async () => {
     const { getByTestId } = await render(<IcalUrlScreen />)
     const owner = getByTestId("ical-url-keyboard-layout-window-owner")

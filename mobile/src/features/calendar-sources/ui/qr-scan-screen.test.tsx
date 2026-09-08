@@ -3,6 +3,7 @@ import { router } from "expo-router"
 import { Linking, StyleSheet } from "react-native"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
+import type { ImportJourneyState } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 import { resolveResponsiveLayout } from "@/theme"
 
@@ -86,6 +87,7 @@ jest.mock("expo-router", () => ({
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
     push: jest.fn(),
+    replace: jest.fn(),
   },
   Stack: { Screen: () => null },
 }))
@@ -94,24 +96,72 @@ jest.mock("@/features/calendar-sources/data", () => ({
   ...jest.requireActual("@/features/calendar-sources/data"),
   useAddCalendar: jest.fn(),
 }))
-// The onboarding seam is seeded as legal here; guard rejection is covered by
-// the journey route tests while these cases retain focus on camera/import logic.
 let mockImportFields: { name: string; schoolId?: string; schoolName?: string }
+let mockGuardState: ImportJourneyState | null = null
 const mockClearDraft = jest.fn()
 const mockDispatch = jest.fn()
-jest.mock("@/features/onboarding", () => ({
-  useImportCreateFields: () => mockImportFields,
-  useImportDraft: () => ({
+const mockImportDraftValue = () => {
+  const draft =
+    mockImportFields.schoolId === undefined
+      ? {
+          institution: {
+            kind: "unlisted" as const,
+            schoolName: mockImportFields.schoolName ?? "",
+          },
+          calendarName: mockImportFields.name,
+        }
+      : {
+          institution: {
+            kind: "listed" as const,
+            school: {
+              id: mockImportFields.schoolId,
+              name: "Listed school",
+              code: "LISTED",
+              imageUrl: "https://assets.example.com/school.png",
+              imageUrlDark: null,
+              intranetUrl: null,
+              exportGuide: {
+                providerSlug: "provider-one",
+                requireProgramme: false,
+                requireConnect: false,
+                catalogueVersion: "v1",
+              },
+            },
+          },
+          calendarName: mockImportFields.name,
+        }
+  const state: ImportJourneyState = mockGuardState ?? {
+    phase: "completed",
+    draftRevision: 1,
+    gateProgress: "programme",
+    draft,
+    snapshot: {
+      locale: "en",
+      catalogueVersion: "v1",
+      providerSlug: "provider-one",
+      providerLabel: "Provider One",
+      reason: "exact",
+      pages: [{ title: "Export", description: "Export instructions" }],
+    },
+    visitedThrough: 0,
+    manualHandoff: "qr",
+  }
+  return {
+    state,
+    draft: state.phase === "empty" ? null : state.draft,
     clearDraft: mockClearDraft,
     dispatch: mockDispatch,
-  }),
-  useProtectedImportRoute: () => true,
+  }
+}
+jest.mock("@/features/onboarding/draft/context", () => ({
+  useImportDraft: () => mockImportDraftValue(),
 }))
 
 const mockBack = router.back as jest.Mock
 const mockCanDismiss = router.canDismiss as jest.Mock
 const mockDismissAll = router.dismissAll as jest.Mock
 const mockPush = router.push as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
 const mockUseAddCalendar = useAddCalendar as jest.Mock
 const mockAddCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
@@ -128,6 +178,7 @@ function deferred<T>() {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockGuardState = null
   mockImportFields = { name: "L3 Informatique", schoolId: "univeiffel" }
   mockCanDismiss.mockReturnValue(true)
   mockAddCalendarFromUrl.mockResolvedValue(undefined)
@@ -146,6 +197,39 @@ beforeEach(() => {
 })
 
 describe("QrScanScreen", () => {
+  it("fails closed through the real guard for an incomplete listed journey", async () => {
+    mockGuardState = {
+      phase: "draft",
+      draftRevision: 2,
+      gateProgress: "programme",
+      draft: {
+        institution: {
+          kind: "listed",
+          school: {
+            id: "listed-school",
+            name: "Listed school",
+            code: "LISTED",
+            imageUrl: "https://assets.example.com/school.png",
+            imageUrlDark: null,
+            intranetUrl: null,
+            exportGuide: {
+              providerSlug: "provider-one",
+              requireProgramme: false,
+              requireConnect: false,
+              catalogueVersion: "v1",
+            },
+          },
+        },
+        calendarName: "",
+      },
+    }
+    const view = await render(<QrScanScreen />)
+
+    expect(view.toJSON()).toBeNull()
+    expect(mockReplace).toHaveBeenCalledWith("/onboarding/export-guide/0")
+    expect(mockAddCalendarFromUrl).not.toHaveBeenCalled()
+  })
+
   it("announces camera preparation while permission is loading", async () => {
     cameraState.permission = null
     const { getByText } = await render(<QrScanScreen />)

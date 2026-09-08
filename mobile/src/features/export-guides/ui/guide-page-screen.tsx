@@ -227,8 +227,11 @@ function GuidePageContent({
   return (
     <>
       <Stack.Screen options={{ title: t("exportGuide.page.title") }} />
-      <RootPage lane="readable" style={styles.fill}>
-        <ScrollView contentContainerStyle={styles.content}>
+      <RootPage testID="export-guide-page" lane="readable" style={styles.fill}>
+        <ScrollView
+          testID="export-guide-page-scroll"
+          contentContainerStyle={styles.content}
+        >
           <View ref={heading} accessible accessibilityRole="header">
             <ThemedText type="title">{page.title}</ThemedText>
             <ThemedText

@@ -92,9 +92,79 @@ export type ExportGuideAnalyticsEvent =
       }
     }>
 
+function allowlistedParams(event: ExportGuideAnalyticsEvent) {
+  switch (event.name) {
+    case "export_guide_catalogue_load":
+      return {
+        outcome: event.params.outcome,
+        source: event.params.source,
+        locale: event.params.locale,
+        schema_version: event.params.schema_version,
+        cache_age_bucket: event.params.cache_age_bucket,
+        ...(event.params.catalogue_version === undefined
+          ? {}
+          : { catalogue_version: event.params.catalogue_version }),
+      }
+    case "export_guide_provider_resolved":
+      return {
+        requested_provider: event.params.requested_provider,
+        resolved_provider: event.params.resolved_provider,
+        reason: event.params.reason,
+        catalogue_version: event.params.catalogue_version,
+      }
+    case "export_guide_started":
+      return {
+        provider_slug: event.params.provider_slug,
+        page_count: event.params.page_count,
+        locale: event.params.locale,
+        catalogue_version: event.params.catalogue_version,
+      }
+    case "export_guide_page_viewed":
+      return {
+        provider_slug: event.params.provider_slug,
+        page_index: event.params.page_index,
+        page_count: event.params.page_count,
+        catalogue_version: event.params.catalogue_version,
+      }
+    case "export_guide_completed":
+      return {
+        provider_slug: event.params.provider_slug,
+        page_count: event.params.page_count,
+        catalogue_version: event.params.catalogue_version,
+      }
+    case "export_guide_retry":
+      return {
+        prior_failure: event.params.prior_failure,
+        attempt_bucket: event.params.attempt_bucket,
+        lkg_availability: event.params.lkg_availability,
+      }
+    case "export_guide_blocked":
+      return {
+        failure: event.params.failure,
+        cache_age_bucket: event.params.cache_age_bucket,
+        locale: event.params.locale,
+        schema_version: event.params.schema_version,
+      }
+    case "export_guide_image_failed":
+      return {
+        provider_slug: event.params.provider_slug,
+        image_role: event.params.image_role,
+        failure: event.params.failure,
+        ...(event.params.page_index === undefined
+          ? {}
+          : { page_index: event.params.page_index }),
+      }
+    case "export_guide_connect_skipped":
+      return {
+        reason: event.params.reason,
+        provider_slug: event.params.provider_slug,
+      }
+  }
+}
+
 export function emitExportGuideEvent(event: ExportGuideAnalyticsEvent): void {
   void logEvent(event.name, {
-    ...event.params,
+    ...allowlistedParams(event),
     app_version: Constants.expoConfig?.version ?? "unknown",
     platform: Platform.OS,
   })
