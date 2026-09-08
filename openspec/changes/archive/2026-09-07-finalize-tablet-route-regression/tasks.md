@@ -22,3 +22,9 @@
 - [x] 4.2 Run full mobile TypeScript, lint, and Jest coverage verification.
 - [x] 4.3 Run strict OpenSpec, diff, native/dependency boundary, and disclosure checks.
 - [x] 4.4 Push the same PR branch and dispatch exact-head Android/iOS native health verification before review acceptance.
+
+## 5. Android native-health rework
+
+- [x] 5.1 Inspect the retained Android screenshot and hierarchy and identify the submit action below the keyboard boundary.
+- [x] 5.2 Apply the measured owner offset only on iOS, keep Android aligned to its window-relative keyboard frame, and cover the platform rule.
+- [x] 5.3 Re-run the focused and full mobile gates and strict OpenSpec validation, then dispatch exact-head Android/iOS native health verification.

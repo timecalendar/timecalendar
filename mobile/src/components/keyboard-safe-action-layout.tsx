@@ -11,7 +11,10 @@ import {
 } from "react-native"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
-import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
+import {
+  resolveKeyboardAvoidingBehavior,
+  resolveKeyboardVerticalOffset,
+} from "@/components/keyboard-avoiding-behavior"
 import type { ResponsiveLane } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {
@@ -42,7 +45,7 @@ export function KeyboardSafeActionLayout({
     onLayout(event)
     ownerRef.current?.measureInWindow((_x, y) => {
       if (Number.isFinite(y) && y >= 0) {
-        setKeyboardVerticalOffset(y)
+        setKeyboardVerticalOffset(resolveKeyboardVerticalOffset(Platform.OS, y))
       }
     })
   }

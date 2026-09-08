@@ -4,7 +4,10 @@ import { StyleSheet, Text, View } from "react-native"
 
 import { usePlatform } from "@/test-support/platform"
 
-import { resolveKeyboardAvoidingBehavior } from "./keyboard-avoiding-behavior"
+import {
+  resolveKeyboardAvoidingBehavior,
+  resolveKeyboardVerticalOffset,
+} from "./keyboard-avoiding-behavior"
 import { KeyboardSafeActionLayout } from "./keyboard-safe-action-layout"
 
 jest.mock("react-native", () => {
@@ -27,6 +30,13 @@ jest.mock("react-native", () => {
     { KeyboardAvoidingView: TransparentKeyboardAvoidingView },
     descriptors,
   )
+})
+
+it.each([
+  ["ios" as const, 338],
+  ["android" as const, 0],
+])("uses the platform-safe offset on %s", (platform, expectedOffset) => {
+  expect(resolveKeyboardVerticalOffset(platform, 338)).toBe(expectedOffset)
 })
 
 describe.each([

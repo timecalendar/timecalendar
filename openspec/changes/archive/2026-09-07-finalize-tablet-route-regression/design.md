@@ -27,9 +27,11 @@ The native suite now intentionally contains three business journeys. The persona
 
 The tablet quick-wins matrix remains the single route inventory. Rows describe the actual measured-lane or full-bleed implementation and name focused evidence rather than duplicating the inventory in another report.
 
-### D2 — Measure the keyboard-safe owner in window coordinates
+### D2 — Apply the measured keyboard-safe offset per platform
 
 The shared layout wraps its keyboard-avoiding region in a measured owner. `measureInWindow` supplies the top offset after layout, and only finite non-negative measurements update state. Both platforms use height behavior so the sibling action region participates in the unobscured height.
+
+iOS receives the measured top offset. Android receives zero because React Native's Android keyboard frame is already window-relative; adding the owner's top position back to that frame extends the avoided region below the keyboard edge.
 
 ### D3 — Keep content and actions independently owned
 
@@ -49,3 +51,4 @@ The integrated-base smoke-pack change removes the earlier route-by-route YAML su
 - Full mobile TypeScript, lint, and coverage bar.
 - Native harness contract and strict OpenSpec validation.
 - Exact-head Android/iOS manual workflow dispatch; infrastructure failures are reported as such and product assertions are repaired before review.
+- Retained native hierarchy geometry confirms the submit action stays above the Android keyboard boundary.

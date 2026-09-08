@@ -19,12 +19,13 @@ The tablet quick-wins matrix SHALL retain one row for every audited React Native
 
 ### Requirement: Keyboard-safe forms keep actions inside the visible height
 
-The shared keyboard-safe action layout SHALL measure its top edge in window coordinates and SHALL provide that value as the keyboard vertical offset. It SHALL use height avoidance on both platforms, retain a flexible scroll body, and keep the action region as a sibling inside the constrained owner.
+The shared keyboard-safe action layout SHALL measure its top edge in window coordinates and SHALL apply the offset according to the platform keyboard-frame contract. It SHALL use height avoidance on both platforms, retain a flexible scroll body, and keep the action region as a sibling inside the constrained owner.
 
 #### Scenario: A fixed header precedes the form
 
 - **WHEN** the form owner is laid out below native or application chrome
-- **THEN** its non-negative finite window position becomes the keyboard vertical offset
+- **THEN** iOS uses its non-negative finite window position as the keyboard vertical offset
+- **AND** Android uses zero because its keyboard frame is already window-relative
 - **AND** the software keyboard constrains only the height actually available below that chrome
 
 #### Scenario: A measurement is invalid
