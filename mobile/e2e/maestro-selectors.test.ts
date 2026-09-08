@@ -8,6 +8,13 @@ const EXPECTED_TOP_LEVEL = [
   "02-personal-event.yaml",
   "03-calendar-visibility.yaml",
 ]
+const EXPECTED_EXPORT_GUIDE_TOP_LEVEL = [
+  "01-listed-exact.yaml",
+  "02-generic-substitution.yaml",
+  "03-connect-skips.yaml",
+  "04-unlisted-provider.yaml",
+  "05-blocking-retry.yaml",
+]
 const SAMPLE_INTERPOLATION: Record<string, string> = {
   time: "14:00 – 16:00",
   location: "Room E2E Import",
@@ -16,9 +23,15 @@ const INTERPOLATION_SAMPLE = "00000000-0000-4000-8000-000000000000"
 
 const mobileRoot = join(__dirname, "..")
 const flowsDir = join(mobileRoot, ".maestro")
+const exportGuideFlowsDir = join(flowsDir, "export-guide")
 const srcDir = join(mobileRoot, "src")
 const serverRoot = join(mobileRoot, "..", "server", "src")
 const seedScript = join(serverRoot, "scripts", "seed-e2e-calendar.ts")
+const exportGuideSeedScript = join(
+  serverRoot,
+  "scripts",
+  "seed-e2e-export-guide.ts",
+)
 const fixtureController = join(
   serverRoot,
   "e2e",
@@ -169,7 +182,7 @@ const OPEN_AGENDA_FLOW = "- runFlow: helpers/open-calendar-agenda.yaml"
 
 const seededTitles = [
   ...new Set(
-    [seedScript, fixtureController].flatMap((file) =>
+    [seedScript, exportGuideSeedScript, fixtureController].flatMap((file) =>
       [
         ...readFileSync(file, "utf8").matchAll(
           /(?:title:|EVENT_TITLE\s*=)\s*"([^"]+)"/g,
@@ -211,6 +224,18 @@ describe("Maestro smoke inventory", () => {
 
     expect(topLevel).toEqual(EXPECTED_TOP_LEVEL)
     expect(flows.filter(({ name }) => name.includes("/"))).not.toHaveLength(0)
+  })
+
+  it("keeps the export-guide suite separate with a fixed ordered inventory", () => {
+    const topLevel = readdirSync(exportGuideFlowsDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".yaml"))
+      .map((entry) => entry.name)
+      .sort()
+
+    expect(topLevel).toEqual(EXPECTED_EXPORT_GUIDE_TOP_LEVEL)
+    expect(
+      flows.filter(({ name }) => name.startsWith("export-guide/helpers/")),
+    ).not.toHaveLength(0)
   })
 
   it("keeps helpers nested and every runFlow target resolvable", () => {
@@ -272,6 +297,55 @@ describe("Maestro selector integrity", () => {
 })
 
 describe("Maestro journey contracts", () => {
+  it("covers exact, Generic, Connect-skip, broken-image and unlisted handoffs", () => {
+    const exact = flow("export-guide/01-listed-exact.yaml")
+    const generic = flow("export-guide/02-generic-substitution.yaml")
+    const skipped = flow("export-guide/03-connect-skips.yaml")
+    const unlisted = flow("export-guide/04-unlisted-provider.yaml")
+    const retry = flow("export-guide/05-blocking-retry.yaml")
+
+    expect(
+      containsOrdered(exact, [
+        'tapOn: "E2E Export ADE Safe"',
+        'id: "onboarding-connect-intranet"',
+        'id: "export-guide-visible-back"',
+        'visible:\n      id: "onboarding-import-content"',
+        'assertNotVisible:\n    id: "ical-url-content"',
+      ]),
+    ).toBe(true)
+    expect(
+      containsOrdered(generic, [
+        'tapOn: "E2E Export Future Provider"',
+        'visible: "Display your timetable"',
+        'id: "export-guide-page-image-placeholder"',
+        'id: "onboarding-import-content"',
+      ]),
+    ).toBe(true)
+    expect(skipped).toContain('tapOn: "E2E Export Missing Connect"')
+    expect(skipped).toContain('tapOn: "E2E Export Unsafe Connect"')
+    expect(skipped.split('id: "onboarding-connect-intranet"')).toHaveLength(3)
+    expect(
+      containsOrdered(unlisted, [
+        'id: "onboarding-school-missing"',
+        'id: "export-guide-provider-ade"',
+        'id: "export-guide-provider-hplanning"',
+        'id: "export-guide-provider-celcat"',
+        'id: "export-guide-provider-generic"',
+        'id: "onboarding-import-content"',
+      ]),
+    ).toBe(true)
+    expect(
+      containsOrdered(retry, [
+        "- runScript: fail-next.js",
+        'id: "export-guide-retry"',
+        'id: "export-guide-back"',
+        'id: "onboarding-import-content"',
+        'id: "export-guide-retry"',
+        'id: "export-guide-page"',
+      ]),
+    ).toBe(true)
+  })
+
   it("keeps cold Calendar-to-Agenda entry in one shared helper", () => {
     expect(
       containsOrdered(flow("helpers/open-calendar-agenda.yaml"), [

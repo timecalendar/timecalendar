@@ -46,12 +46,16 @@ assert_smoke_inventory "$SOURCE_MAESTRO_DIR"
 make_fixture() {
   local scenario="$1"
   local fixture="$TEST_ROOT/$scenario"
-  mkdir -p "$fixture/bin" "$fixture/flows" "$fixture/logs" "$fixture/state" "$fixture/debug"
+  mkdir -p "$fixture/bin" "$fixture/flows" "$fixture/export-flows" "$fixture/logs" "$fixture/state" "$fixture/debug"
   mkdir -p "$fixture/flows/helpers"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/alpha.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/beta.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/gamma.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/helpers/setup.yaml"
+  mkdir -p "$fixture/export-flows/helpers"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/export-flows/export-alpha.yaml"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/export-flows/export-beta.yaml"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/export-flows/helpers/export-setup.yaml"
 
   cat > "$fixture/server" <<'SH'
 #!/usr/bin/env bash
@@ -437,6 +441,7 @@ run_fixture() {
   PATH="$fixture/bin:$PATH" \
     E2E_SERVER="$fixture/server" \
     MAESTRO_DIR="$fixture/flows" \
+    EXPORT_GUIDE_MAESTRO_DIR="$fixture/export-flows" \
     MAESTRO_LOG_ROOT="$fixture/logs" \
     MAESTRO_DEBUG_ROOT="$fixture/debug" \
     STATE_DIR="$fixture/state" \
@@ -500,6 +505,28 @@ run_fixture "$fixture" pass 0
 assert_count 0 '^setup:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+
+# The explicitly selected suite has its own lexical inventory and excludes its helper.
+fixture="$(make_fixture export_suite)"
+run_fixture "$fixture" pass 0 --suite export-guide
+assert_count 1 '^export-alpha:' "$fixture/calls"
+assert_count 1 '^export-beta:' "$fixture/calls"
+assert_count 0 '^export-setup:' "$fixture/calls"
+assert_count 0 '^alpha:' "$fixture/calls"
+assert_count 1 '^up$' "$fixture/calls"
+assert_count 1 '^down$' "$fixture/calls"
+
+assert_invalid_suite() {
+  local label="$1"
+  shift
+  fixture="$(make_fixture "suite_$label")"
+  run_fixture "$fixture" pass 2 "$@"
+  [ ! -f "$fixture/calls" ] || assert_count 0 '^up$' "$fixture/calls"
+}
+assert_invalid_suite missing --suite
+assert_invalid_suite empty --suite ""
+assert_invalid_suite unknown --suite other
+assert_invalid_suite path --suite ../export-guide
 
 # --keep-up preserves the same three-flow discovery while suppressing teardown.
 fixture="$(make_fixture keep_up)"

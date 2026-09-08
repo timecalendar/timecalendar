@@ -1,0 +1,26 @@
+appId: fr.samuelprak.timecalendar.dev
+env:
+  E2E_SERVER_URL: ${E2E_SERVER_URL}
+---
+- runFlow: helpers/start-onboarding.yaml
+- runScript: fail-next.js
+- tapOn: "E2E Export ADE Safe"
+- runFlow: helpers/enter-programme.yaml
+- tapOn:
+    id: "onboarding-connect-continue"
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-retry"
+    timeout: 60000
+- assertVisible:
+    id: "export-guide-back"
+- assertNotVisible:
+    id: "onboarding-import-content"
+- tapOn:
+    id: "export-guide-retry"
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-page"
+    timeout: 60000
+- assertNotVisible:
+    id: "onboarding-import-content"

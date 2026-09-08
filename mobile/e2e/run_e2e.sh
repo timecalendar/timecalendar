@@ -17,7 +17,9 @@
 # mobile/e2e/README.md.
 #
 # Usage:
-#   ./e2e/run_e2e.sh [--keep-up] [--native] [--startup-attempts N]
+#   ./e2e/run_e2e.sh [--suite smoke|export-guide] [--keep-up] [--native] [--startup-attempts N]
+#     --suite     Select the daily smoke pack (default) or the dedicated
+#                 export-guide release proof.
 #     --keep-up   Leave the server stack running after the run, for debugging.
 #     --native    Pass through to the lifecycle (Docker-less hosts, e.g. macOS
 #                 CI): the caller provisions Postgres/Redis; see ci/e2e-server.sh.
@@ -40,10 +42,16 @@ set -euo pipefail
 KEEP_UP=0
 NATIVE_FLAG=""
 STARTUP_ATTEMPTS=1
+SUITE=smoke
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --keep-up) KEEP_UP=1 ;;
     --native)  NATIVE_FLAG="--native" ;;
+    --suite)
+      [ "$#" -ge 2 ] || { echo "run_e2e.sh: --suite requires a value" >&2; exit 2; }
+      SUITE="$2"
+      shift
+      ;;
     --startup-attempts)
       [ "$#" -ge 2 ] || { echo "run_e2e.sh: --startup-attempts requires a value" >&2; exit 2; }
       STARTUP_ATTEMPTS="$2"
@@ -53,6 +61,11 @@ while [ "$#" -gt 0 ]; do
   esac
   shift
 done
+
+case "$SUITE" in
+  smoke|export-guide) ;;
+  *) echo "run_e2e.sh: --suite must be smoke or export-guide" >&2; exit 2 ;;
+esac
 
 case "$STARTUP_ATTEMPTS" in
   1|2|3|4) ;;
@@ -64,7 +77,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOBILE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$MOBILE_DIR/.." && pwd)"
 E2E_SERVER="${E2E_SERVER:-$REPO_ROOT/ci/e2e-server.sh}"
-MAESTRO_DIR="${MAESTRO_DIR:-$MOBILE_DIR/.maestro}"
+SMOKE_MAESTRO_DIR="${MAESTRO_DIR:-$MOBILE_DIR/.maestro}"
+EXPORT_GUIDE_MAESTRO_DIR="${EXPORT_GUIDE_MAESTRO_DIR:-$MOBILE_DIR/.maestro/export-guide}"
+if [ "$SUITE" = "export-guide" ]; then
+  SELECTED_MAESTRO_DIR="$EXPORT_GUIDE_MAESTRO_DIR"
+else
+  SELECTED_MAESTRO_DIR="$SMOKE_MAESTRO_DIR"
+fi
 MAESTRO_LOG_ROOT="${MAESTRO_LOG_ROOT:-${HOME}/.maestro/tests/timecalendar-harness}"
 # Where Maestro writes its own debug output: one
 # <root>/<yyyy-MM-dd_HHmmss>/<flow>/commands.json per attempt that opened a
@@ -96,7 +115,7 @@ command -v maestro >/dev/null 2>&1 || fail \
   "maestro is not on PATH. Install it with:
     curl -fsSL https://get.maestro.mobile.dev | bash
   (Maestro is JVM-based and needs a JDK on PATH.)"
-[ -d "$MAESTRO_DIR" ] || fail "Maestro flow directory does not exist: $MAESTRO_DIR"
+[ -d "$SELECTED_MAESTRO_DIR" ] || fail "Maestro flow directory does not exist: $SELECTED_MAESTRO_DIR"
 # The retry classifier reads Maestro's JSON command record; node is the runtime
 # every mobile CI job and every mobile dev machine already has (.nvmrc).
 command -v node >/dev/null 2>&1 || fail "node is not on PATH (see .nvmrc)"
@@ -186,19 +205,26 @@ run_flow() {
 log "booting the e2e server stack (ci/e2e-server.sh up $NATIVE_FLAG)…"
 # shellcheck disable=SC2086  # NATIVE_FLAG is intentionally word-split (may be empty)
 "$E2E_SERVER" up $NATIVE_FLAG
+if [ "$SUITE" = "export-guide" ] && [ -z "${E2E_SERVER_URL:-}" ]; then
+  if [ "$NATIVE_FLAG" = "--native" ]; then
+    export E2E_SERVER_URL="http://localhost:3005"
+  else
+    export E2E_SERVER_URL="http://10.0.2.2:3005"
+  fi
+fi
 
 # --- 2. Run the Maestro flows against the connected device -------------------
 # Maestro auto-detects the single running simulator/emulator. The flows assert
 # stable seeded text, so the same YAML runs on both platforms.
-log "running each top-level Maestro flow in a fresh process (${MAESTRO_DIR})…"
+log "running ${SUITE} suite in fresh Maestro processes (${SELECTED_MAESTRO_DIR})…"
 mkdir -p "$MAESTRO_LOG_ROOT"
 flow_exit=0
 flow_count=0
 # Shell glob expansion is lexical under C locale and remains compatible with
 # macOS Bash 3.2. Nested YAML files are intentionally excluded.
 export LC_ALL=C
-for flow in "$MAESTRO_DIR"/*.yaml; do
-  [ -e "$flow" ] || fail "no top-level Maestro YAML files found in $MAESTRO_DIR"
+for flow in "$SELECTED_MAESTRO_DIR"/*.yaml; do
+  [ -e "$flow" ] || fail "no top-level Maestro YAML files found in $SELECTED_MAESTRO_DIR"
   flow_count=$((flow_count + 1))
   if run_flow "$flow"; then
     :

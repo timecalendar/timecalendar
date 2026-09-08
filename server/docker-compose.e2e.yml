@@ -15,6 +15,7 @@ services:
     restart: "no"
     environment:
       NODE_ENV: test
+      EXPORT_GUIDE_E2E_FIXTURES: "1"
       PORT: "3005"
       # Reach the sibling compose services by name — overrides the test-env
       # defaults (localhost:37291 / 127.0.0.1:37292), which target the *host*

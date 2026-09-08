@@ -1,0 +1,49 @@
+appId: fr.samuelprak.timecalendar
+---
+- launchApp:
+    clearState: true
+- stopApp
+- openLink: timecalendar://onboarding/import
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-school-content"
+    timeout: 60000
+- assertNotVisible:
+    id: "onboarding-import-content"
+- stopApp
+- openLink: timecalendar://onboarding/qr-scan
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-school-content"
+    timeout: 60000
+- assertNotVisible:
+    id: "qr-scan-camera"
+- stopApp
+- openLink: timecalendar://onboarding/ical-url
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Open"
+          optional: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-school-content"
+    timeout: 60000
+- assertNotVisible:
+    id: "ical-url-content"

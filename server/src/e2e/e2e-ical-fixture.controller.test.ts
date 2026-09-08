@@ -7,6 +7,7 @@ import request from "lib/supertest"
 import createTestApp from "test-utils/create-test-app"
 import { DataSource } from "typeorm"
 import { e2eFixtureControllers } from "app.module"
+import { E2eExportGuideControlController } from "./e2e-export-guide-control.controller"
 import {
   buildE2eIcalFixture,
   E2E_ICAL_EVENT_TITLE,
@@ -33,7 +34,10 @@ describe("E2eIcalFixtureController", () => {
   })
 
   it("registers the fixture only in the test/E2E module graph", () => {
-    expect(e2eFixtureControllers("test")).toEqual([E2eIcalFixtureController])
+    expect(e2eFixtureControllers("test")).toEqual([
+      E2eIcalFixtureController,
+      E2eExportGuideControlController,
+    ])
     expect(e2eFixtureControllers("development")).toEqual([])
     expect(e2eFixtureControllers("production")).toEqual([])
   })

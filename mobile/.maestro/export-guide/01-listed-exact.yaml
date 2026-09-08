@@ -1,0 +1,37 @@
+appId: fr.samuelprak.timecalendar.dev
+---
+- runFlow: helpers/start-onboarding.yaml
+- tapOn: "E2E Export ADE Safe"
+- runFlow: helpers/enter-programme.yaml
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-connect-intranet"
+    timeout: 60000
+- tapOn:
+    id: "onboarding-connect-continue"
+- extendedWaitUntil:
+    visible:
+      id: "export-guide-page"
+    timeout: 60000
+- assertVisible: "Page 1 of 4"
+- tapOn:
+    id: "export-guide-next"
+- assertVisible: "Page 2 of 4"
+- tapOn:
+    id: "export-guide-visible-back"
+- assertVisible: "Page 1 of 4"
+- tapOn:
+    id: "export-guide-next"
+- tapOn:
+    id: "export-guide-next"
+- tapOn:
+    id: "export-guide-next"
+- assertVisible: "Page 4 of 4"
+- tapOn:
+    id: "export-guide-next"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-import-content"
+    timeout: 60000
+- assertNotVisible:
+    id: "ical-url-content"

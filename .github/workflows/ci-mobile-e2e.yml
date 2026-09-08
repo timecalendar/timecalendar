@@ -17,6 +17,13 @@ on:
         description: Git ref or commit SHA to test
         required: true
         type: string
+      suite:
+        description: Native proof suite
+        required: true
+        type: choice
+        options:
+          - smoke
+          - export-guide
 
 permissions:
   contents: read
@@ -35,6 +42,7 @@ jobs:
       target_sha: ${{ steps.select.outputs.target_sha }}
       comparison_base: ${{ steps.select.outputs.comparison_base }}
       reason: ${{ steps.select.outputs.reason }}
+      suite: ${{ steps.select.outputs.suite }}
     steps:
       - name: Checkout selected target
         uses: actions/checkout@v6
@@ -74,6 +82,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           MANUAL_REF: ${{ inputs.ref }}
+          MANUAL_SUITE: ${{ inputs.suite }}
           PREVIOUS_SHA: ${{ steps.previous.outputs.head_sha }}
           PREVIOUS_RUN_NUMBER: ${{ steps.previous.outputs.run_number }}
         run: |
@@ -87,12 +96,19 @@ jobs:
               echo 'Manual dispatch requires a non-empty ref input' >&2
               exit 1
             }
+            case "$MANUAL_SUITE" in
+              smoke|export-guide) ;;
+              *) echo 'Manual dispatch requires smoke or export-guide' >&2; exit 1 ;;
+            esac
+            echo "suite=$MANUAL_SUITE" >> "$GITHUB_OUTPUT"
             echo 'should_run=true' >> "$GITHUB_OUTPUT"
             echo 'comparison_base=' >> "$GITHUB_OUTPUT"
             echo 'reason=manual dispatch always runs both platforms' >> "$GITHUB_OUTPUT"
             echo "Manual ref resolved to $target_sha; both platforms selected"
             exit 0
           fi
+
+          echo 'suite=smoke' >> "$GITHUB_OUTPUT"
 
           if [ -z "$PREVIOUS_SHA" ]; then
             echo 'should_run=true' >> "$GITHUB_OUTPUT"
@@ -262,6 +278,8 @@ jobs:
       # and the e2e run both live here. run_e2e.sh boots the server stack (compose,
       # reusing E2E_SERVER_IMAGE), runs the Maestro flows, and tears down.
       - name: Run mobile E2E flows
+        id: export_guide
+        continue-on-error: ${{ needs.prepare.outputs.suite == 'export-guide' }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -269,7 +287,79 @@ jobs:
           profile: pixel_6
           script: |
             adb install -r mobile/android/app/build/outputs/apk/release/app-release.apk
-            ./mobile/e2e/run_e2e.sh
+            ./mobile/e2e/run_e2e.sh --suite "${{ needs.prepare.outputs.suite }}"
+
+      - name: Prebuild Android production identity
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        working-directory: ./mobile
+        env:
+          APP_VARIANT: production
+          OTA_CHANNEL: preview
+          BACKEND_ENVIRONMENT_CAPABILITY: production
+          EXPO_PUBLIC_API_URL: https://api.example.invalid
+        run: npx expo prebuild --platform android --clean
+
+      - name: Build production-identity release APK
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        working-directory: ./mobile/android
+        env:
+          APP_VARIANT: production
+          OTA_CHANNEL: preview
+          BACKEND_ENVIRONMENT_CAPABILITY: production
+          EXPO_PUBLIC_API_URL: https://api.example.invalid
+        run: ./gradlew --no-daemon --max-workers=2 :app:assembleRelease
+
+      - name: Run production protected-route guard
+        id: production_guard
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb install -r mobile/android/app/build/outputs/apk/release/app-release.apk
+            adb logcat -c
+            maestro test mobile/.maestro/production-guard/protected-routes.yaml
+            adb logcat -d > "$RUNNER_TEMP/production-guard-android.log"
+            ! grep -F '[api] →' "$RUNNER_TEMP/production-guard-android.log"
+
+      - name: Write Android export-guide evidence
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        env:
+          TARGET_SHA: ${{ needs.prepare.outputs.target_sha }}
+          WORKFLOW_RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PLATFORM: android
+          APP_IDENTITY: fr.samuelprak.timecalendar.dev+fr.samuelprak.timecalendar
+          FIXTURE_VERSION: 2026-09-08.t4
+          RUNNER_IMAGE: ubuntu-latest
+          DEVICE_MODEL: pixel_6
+          OS_RUNTIME: Android-API-34
+          TOOLCHAIN: Node-24.13.0;Maestro-2.8.0;JDK-17
+          EXPORT_GUIDE_RESULT: ${{ steps.export_guide.outcome == 'success' && 'passed' || steps.export_guide.outcome }}
+          PRODUCTION_GUARD_RESULT: ${{ steps.production_guard.outcome == 'success' && 'passed' || steps.production_guard.outcome }}
+          NO_NETWORK_RESULT: ${{ steps.production_guard.outcome == 'success' && 'passed' || steps.production_guard.outcome }}
+        run: node mobile/e2e/write-export-guide-evidence.mjs "$RUNNER_TEMP/android.json"
+
+      - name: Upload Android export-guide evidence
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        uses: actions/upload-artifact@v7
+        with:
+          name: export-guide-evidence-android
+          path: |
+            ${{ runner.temp }}/android.json
+            ${{ runner.temp }}/android.md
+            ${{ runner.temp }}/production-guard-android.log
+            ~/.maestro/tests
+          retention-days: 30
+
+      - name: Enforce Android export-guide results
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        env:
+          EXPORT_RESULT: ${{ steps.export_guide.outcome }}
+          GUARD_RESULT: ${{ steps.production_guard.outcome }}
+        run: '[ "$EXPORT_RESULT" = success ] && [ "$GUARD_RESULT" = success ]'
 
       - name: Upload Maestro debug output
         if: failure()
@@ -440,6 +530,9 @@ jobs:
           EOF
           [ -n "$DEVICE_UDID" ] || { echo 'No available iPhone simulator selected' >&2; exit 1; }
           echo "Selected simulator: name=$DEVICE_NAME udid=$DEVICE_UDID runtime=$DEVICE_RUNTIME"
+          echo "E2E_DEVICE_MODEL=$DEVICE_NAME" >> "$GITHUB_ENV"
+          echo "E2E_OS_RUNTIME=$DEVICE_RUNTIME" >> "$GITHUB_ENV"
+          echo "E2E_DEVICE_UDID=$DEVICE_UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$DEVICE_UDID" || true
           APP="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -n1)"
           xcrun simctl install "$DEVICE_UDID" "$APP"
@@ -462,7 +555,81 @@ jobs:
       # retries only a positively classified first-launch driver transport failure.
       # Assertion, application, and unknown failures remain terminal.
       - name: Run mobile E2E flows
-        run: ./mobile/e2e/run_e2e.sh --native --startup-attempts 4
+        id: export_guide
+        continue-on-error: ${{ needs.prepare.outputs.suite == 'export-guide' }}
+        run: ./mobile/e2e/run_e2e.sh --suite "${{ needs.prepare.outputs.suite }}" --native --startup-attempts 4
+
+      - name: Prebuild iOS production identity
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        working-directory: ./mobile
+        env:
+          APP_VARIANT: production
+          OTA_CHANNEL: preview
+          BACKEND_ENVIRONMENT_CAPABILITY: production
+          EXPO_PUBLIC_API_URL: https://api.example.invalid
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build production-identity Release simulator app
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        working-directory: ./mobile/ios
+        env:
+          APP_VARIANT: production
+          OTA_CHANNEL: preview
+          BACKEND_ENVIRONMENT_CAPABILITY: production
+          EXPO_PUBLIC_API_URL: https://api.example.invalid
+        run: |
+          WORKSPACE="$(ls -d *.xcworkspace | head -n1)"
+          SCHEME="${WORKSPACE%.xcworkspace}"
+          xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release \
+            -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+
+      - name: Run production protected-route guard
+        id: production_guard
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        continue-on-error: true
+        working-directory: ./mobile/ios
+        run: |
+          APP="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -n1)"
+          xcrun simctl install "$E2E_DEVICE_UDID" "$APP"
+          maestro --device "$E2E_DEVICE_UDID" test ../.maestro/production-guard/protected-routes.yaml
+          xcrun simctl spawn "$E2E_DEVICE_UDID" log show --last 5m --style compact > "$RUNNER_TEMP/production-guard-ios.log"
+          ! grep -F '[api] →' "$RUNNER_TEMP/production-guard-ios.log"
+
+      - name: Write iOS export-guide evidence
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        env:
+          TARGET_SHA: ${{ needs.prepare.outputs.target_sha }}
+          WORKFLOW_RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PLATFORM: ios
+          APP_IDENTITY: fr.samuelprak.timecalendar.dev+fr.samuelprak.timecalendar
+          FIXTURE_VERSION: 2026-09-08.t4
+          RUNNER_IMAGE: macos-26
+          DEVICE_MODEL: ${{ env.E2E_DEVICE_MODEL }}
+          OS_RUNTIME: ${{ env.E2E_OS_RUNTIME }}
+          TOOLCHAIN: Xcode-26;Node-24.13.0;Maestro-2.8.0;JDK-17
+          EXPORT_GUIDE_RESULT: ${{ steps.export_guide.outcome == 'success' && 'passed' || steps.export_guide.outcome }}
+          PRODUCTION_GUARD_RESULT: ${{ steps.production_guard.outcome == 'success' && 'passed' || steps.production_guard.outcome }}
+          NO_NETWORK_RESULT: ${{ steps.production_guard.outcome == 'success' && 'passed' || steps.production_guard.outcome }}
+        run: node mobile/e2e/write-export-guide-evidence.mjs "$RUNNER_TEMP/ios.json"
+
+      - name: Upload iOS export-guide evidence
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        uses: actions/upload-artifact@v7
+        with:
+          name: export-guide-evidence-ios
+          path: |
+            ${{ runner.temp }}/ios.json
+            ${{ runner.temp }}/ios.md
+            ${{ runner.temp }}/production-guard-ios.log
+            ~/.maestro/tests
+          retention-days: 30
+
+      - name: Enforce iOS export-guide results
+        if: always() && needs.prepare.outputs.suite == 'export-guide'
+        env:
+          EXPORT_RESULT: ${{ steps.export_guide.outcome }}
+          GUARD_RESULT: ${{ steps.production_guard.outcome }}
+        run: '[ "$EXPORT_RESULT" = success ] && [ "$GUARD_RESULT" = success ]'
 
       - name: Upload Maestro debug output
         if: failure()
@@ -483,3 +650,29 @@ jobs:
           name: e2e-server-logs-ios
           path: /tmp/e2e-server-ios.log
           retention-days: 7
+
+  verify-export-guide-evidence:
+    name: Verify exact-head export-guide evidence
+    needs: [prepare, e2e-mobile-android, e2e-mobile-ios]
+    if: always() && needs.prepare.outputs.suite == 'export-guide'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout selected target
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.target_sha }}
+      - name: Download export-guide evidence
+        uses: actions/download-artifact@v8
+        with:
+          pattern: export-guide-evidence-*
+          path: evidence
+          merge-multiple: true
+      - name: Check complete same-SHA evidence
+        run: node mobile/e2e/check-export-guide-evidence.mjs "${{ needs.prepare.outputs.target_sha }}" evidence/android.json evidence/ios.json
+      - name: Upload combined export-guide evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: export-guide-evidence-${{ needs.prepare.outputs.target_sha }}
+          path: evidence
+          retention-days: 30

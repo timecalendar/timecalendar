@@ -22,6 +22,12 @@ suite. Phase 10 release candidates still receive broader human exploratory
 acceptance for parity areas such as notifications, assistant behavior,
 Flutter-to-React-Native migration, settings, and detailed UI behavior.
 
+The separate `mobile/.maestro/export-guide/` suite is selected only with
+`--suite export-guide`. It proves the native server-driven guide against the
+disposable test server and does not add a fourth daily smoke journey. Manual CI
+dispatch also builds the unchanged production identity and runs the cold
+protected-route flow under `mobile/.maestro/production-guard/`.
+
 ## Deterministic data
 
 `ci/e2e-server.sh` boots and seeds NestJS, Postgres, and Redis once for the run.
@@ -52,6 +58,7 @@ From `mobile/`:
 
 ```bash
 ./e2e/run_e2e.sh
+./e2e/run_e2e.sh --suite export-guide
 ./e2e/run_e2e.sh --keep-up
 ./e2e/run_e2e.sh --native --startup-attempts 4
 ```
@@ -81,7 +88,10 @@ Baseline CI stays the primary feedback loop:
   execution, helper exclusion, terminal stop, teardown, `--keep-up`, and the
   mutation-backed retry-classifier branches without allocating a device.
 - `test_ci_mobile_e2e.sh` proves the daily/manual workflow contract and both
-  platform jobs.
+  platform jobs, including exact-SHA export-guide selection, production guard
+  builds, no-network assertions, and retained evidence.
+- `check-export-guide-evidence.mjs` accepts only complete Android+iOS summaries
+  for the requested SHA and reports stable axis IDs for missing evidence.
 
 ## Removed-flow coverage map
 
@@ -115,3 +125,8 @@ manually dispatched with an explicit ref or SHA. Preparation resolves one
 immutable commit used by the server image and both platform jobs. Android and iOS
 retain Maestro debug output and server logs on failure. Native results are health
 evidence; ordinary pull requests rely on the static and lower-level gates above.
+An `export-guide` manual dispatch is the feature-specific proof lane: it retains
+JSON and Markdown evidence for the resolved exact SHA, fixture version, release
+configurations, runners, device runtimes, toolchains, and axis results. Syntax
+checks are never recorded as executed native evidence. Physical-device outcomes
+remain in the named `(HUMAN: ...)` inbox matrix and stay `NOT RUN` until observed.
