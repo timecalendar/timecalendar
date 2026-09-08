@@ -6,8 +6,7 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "onboarding-institution-input"
 - inputText: "E2E Unlisted University"
-- tapOn:
-    id: "onboarding-institution-continue"
+- pressKey: Enter
 - runFlow: helpers/enter-programme.yaml
 - extendedWaitUntil:
     visible:
