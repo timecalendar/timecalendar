@@ -7,6 +7,10 @@ environment: ""
 server:
   replicaCount: 1
   tag: ""
+  # Opts the server pod template into restarts when this chart's rendered
+  # ConfigMap changes. This does not cover the externally supplied Secret and
+  # must remain disabled until the separately authorized TIM-314 activation.
+  configMapChecksumEnabled: false
   # Annotations stamped onto the server *pod template*. Setting or changing any
   # key here mutates the pod spec, so ArgoCD rolls the server pods on its next
   # sync. This is the supported way to apply a change to a Secret consumed

@@ -1,3 +1,7 @@
+{{- $podAnnotations := deepCopy (.Values.server.podAnnotations | default dict) -}}
+{{- if .Values.server.configMapChecksumEnabled -}}
+{{- $_ := set $podAnnotations "checksum/config" (include (print $.Template.BasePath "/server-configmap.yaml") . | sha256sum) -}}
+{{- end -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,7 +15,7 @@ spec:
       {{- include "timecalendar.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.server.podAnnotations }}
+      {{- with $podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -49,6 +53,12 @@ spec:
               port: http
             failureThreshold: 120
             periodSeconds: 2
+          {{- /*
+          envFrom order is deliberate: later sources win duplicate keys, so
+          secretRef must remain after configMapRef. The Secret is authoritative
+          for keys in both; swapping the sources or removing a duplicated Secret
+          key silently falls back to an unmaintained ConfigMap value.
+          */}}
           envFrom:
             - configMapRef:
                 name: {{ include "timecalendar.fullname" . }}-configmap
