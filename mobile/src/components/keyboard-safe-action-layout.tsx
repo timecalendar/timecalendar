@@ -1,6 +1,7 @@
-import type { ReactNode } from "react"
+import { type ReactNode, useRef, useState } from "react"
 import {
   KeyboardAvoidingView,
+  type LayoutChangeEvent,
   Platform,
   ScrollView,
   type StyleProp,
@@ -10,7 +11,10 @@ import {
 } from "react-native"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
-import { resolveKeyboardAvoidingBehavior } from "@/components/keyboard-avoiding-behavior"
+import {
+  resolveKeyboardAvoidingBehavior,
+  resolveKeyboardVerticalOffset,
+} from "@/components/keyboard-avoiding-behavior"
 import type { ResponsiveLane } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {
@@ -34,38 +38,57 @@ export function KeyboardSafeActionLayout({
   contentContainerStyle,
   actionContainerStyle,
 }: KeyboardSafeActionLayoutProps) {
-  const layout = useAdaptiveLayout(lane)
+  const { laneStyle, onLayout } = useAdaptiveLayout(lane)
+  const ownerRef = useRef<View>(null)
+  const [keyboardVerticalOffset, setKeyboardVerticalOffset] = useState(0)
+  const handleLayout = (event: LayoutChangeEvent) => {
+    onLayout(event)
+    ownerRef.current?.measureInWindow((_x, y) => {
+      if (Number.isFinite(y) && y >= 0) {
+        setKeyboardVerticalOffset(resolveKeyboardVerticalOffset(Platform.OS, y))
+      }
+    })
+  }
 
   return (
-    <KeyboardAvoidingView
-      testID={testID}
-      behavior={resolveKeyboardAvoidingBehavior(Platform.OS)}
-      onLayout={layout.onLayout}
+    <View
+      ref={ownerRef}
+      testID={testID === undefined ? undefined : `${testID}-window-owner`}
+      onLayout={handleLayout}
       style={styles.owner}
     >
-      <ScrollView
-        testID={
-          contentTestID ??
-          (testID === undefined ? undefined : `${testID}-content`)
-        }
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[layout.laneStyle, contentContainerStyle]}
+      <KeyboardAvoidingView
+        testID={testID}
+        behavior={resolveKeyboardAvoidingBehavior(Platform.OS)}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        style={styles.owner}
       >
-        {children}
-      </ScrollView>
-      <View
-        testID={
-          actionsTestID ??
-          (testID === undefined ? undefined : `${testID}-actions`)
-        }
-        style={[layout.laneStyle, actionContainerStyle]}
-      >
-        {actions}
-      </View>
-    </KeyboardAvoidingView>
+        <ScrollView
+          testID={
+            contentTestID ??
+            (testID === undefined ? undefined : `${testID}-content`)
+          }
+          style={styles.scroller}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[laneStyle, contentContainerStyle]}
+        >
+          {children}
+        </ScrollView>
+        <View
+          testID={
+            actionsTestID ??
+            (testID === undefined ? undefined : `${testID}-actions`)
+          }
+          style={[laneStyle, actionContainerStyle]}
+        >
+          {actions}
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   owner: { flex: 1 },
+  scroller: { flex: 1 },
 })

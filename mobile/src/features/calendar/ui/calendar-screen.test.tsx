@@ -473,6 +473,20 @@ describe("CalendarScreen", () => {
     expect(mockSync).toHaveBeenCalledTimes(1)
   })
 
+  it("offers a deterministic accessible refresh action when Agenda is empty", async () => {
+    mockUseCalendarEvents.mockReturnValue([])
+    await render(<CalendarScreen />)
+    fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await waitFor(() => {
+      expect(screen.getByTestId("calendar-empty-refresh")).toBeTruthy()
+    })
+
+    const refresh = screen.getByTestId("calendar-empty-refresh")
+    expect(refresh.props.accessibilityLabel).toBe("Refresh your calendar")
+    fireEvent.press(refresh)
+    expect(mockSync).toHaveBeenCalledTimes(1)
+  })
+
   it("routes a synced grid-event press to the event-details screen", async () => {
     mockUseCalendarEvents.mockReturnValue([
       calendarEvent({ id: "synced-1", userCalendarId: "cal-1" }),

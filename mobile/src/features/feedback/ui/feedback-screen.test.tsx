@@ -49,10 +49,14 @@ it.each([390, 768, 800, 1024])(
   async (width) => {
     const view = await render(<FeedbackScreen />)
     await act(() =>
-      fireEvent(view.getByTestId("feedback-keyboard-layout"), "layout", {
-        nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
-        persist: jest.fn(),
-      }),
+      fireEvent(
+        view.getByTestId("feedback-keyboard-layout-window-owner"),
+        "layout",
+        {
+          nativeEvent: { layout: { width, height: 0, x: 0, y: 0 } },
+          persist: jest.fn(),
+        },
+      ),
     )
     for (const testID of ["feedback-scroll-owner", "feedback-action-region"]) {
       expect(
@@ -70,7 +74,7 @@ it.each([390, 768, 800, 1024])(
 )
 
 describe.each([
-  ["ios" as const, "padding", 44],
+  ["ios" as const, "height", 44],
   ["android" as const, "height", 48],
 ])("FeedbackScreen on %s", (platform, behavior, minimumTarget) => {
   usePlatform(platform)

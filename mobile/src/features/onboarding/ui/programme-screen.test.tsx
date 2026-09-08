@@ -198,7 +198,7 @@ describe("ProgrammeScreen", () => {
     it("keeps Continue as the sole sticky sibling after the scroll", async () => {
       const { avoiding, scroll, cta } = await expectStickyProgrammeCta()
 
-      expect(avoiding.props.behavior).toBe("padding")
+      expect(avoiding.props.behavior).toBe("height")
       expect(
         StyleSheet.flatten(scroll.props.contentContainerStyle),
       ).toMatchObject({ flexGrow: 1, justifyContent: "center" })

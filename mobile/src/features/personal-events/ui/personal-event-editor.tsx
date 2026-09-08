@@ -111,6 +111,7 @@ export function PersonalEventEditor({
         locale={locale}
         displayZone={displayZone}
         update={update}
+        onSubmitTitle={onSave}
         t={t}
       />
     </KeyboardSafeActionLayout>

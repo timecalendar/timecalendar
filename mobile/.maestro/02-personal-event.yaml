@@ -59,7 +59,26 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 - tapOn:
     id: "personal-event-delete"
-- tapOn: "Delete"
+# Both native alerts expose the same label as the editor action. Follow the
+# platform hierarchy so Maestro targets the confirmation inside the alert.
+- extendedWaitUntil:
+    visible: "Delete event.*"
+    timeout: 30000
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          text: "Delete"
+          rightOf: "Cancel"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Delete"
+          above:
+            id: "personal-event-delete"
 
 # A positive screen anchor makes the final negative assertion non-vacuous.
 - runFlow: helpers/open-calendar-agenda.yaml

@@ -64,7 +64,7 @@ beforeEach(() => {
 describe("IcalUrlScreen", () => {
   it("keeps import fields and states in a measured readable tablet lane", async () => {
     const { getByTestId } = await render(<IcalUrlScreen />)
-    const owner = getByTestId("ical-url-content")
+    const owner = getByTestId("ical-url-keyboard-layout-window-owner")
 
     await act(() =>
       fireEvent(owner, "layout", {
@@ -72,14 +72,20 @@ describe("IcalUrlScreen", () => {
       }),
     )
 
-    const content = owner.children[0] as unknown as {
-      props: { style: unknown }
-    }
+    const content = getByTestId("ical-url-keyboard-layout-content")
+    const actions = getByTestId("ical-url-keyboard-layout-actions")
+    const submit = getByTestId("ical-url-submit")
     const layout = resolveResponsiveLayout(1024, "readable")
-    expect(StyleSheet.flatten(content.props.style)).toMatchObject({
+    expect(
+      StyleSheet.flatten(content.props.contentContainerStyle),
+    ).toMatchObject({
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
+      flexGrow: 1,
     })
+    expect(content.props.keyboardShouldPersistTaps).toBe("handled")
+    expect(actions).toContainElement(submit)
+    expect(content).not.toContainElement(submit)
   })
 
   it("renders the localized title, field label, and submit (not raw keys)", async () => {

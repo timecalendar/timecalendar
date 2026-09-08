@@ -23,6 +23,7 @@ type PersonalEventFieldsProps = {
   locale: AppLocale
   displayZone: string
   update: UpdateEventFormValue
+  onSubmitTitle: () => void
   t: TFunction
 }
 
@@ -32,6 +33,7 @@ export function PersonalEventFields({
   locale,
   displayZone,
   update,
+  onSubmitTitle,
   t,
 }: PersonalEventFieldsProps) {
   const theme = useTheme()
@@ -53,6 +55,8 @@ export function PersonalEventFields({
           placeholderTextColor={theme.textSecondary}
           value={values.title}
           onChangeText={(text) => update("title", text)}
+          returnKeyType="done"
+          onSubmitEditing={onSubmitTitle}
           style={inputStyle}
         />
         {errors.title !== undefined && (
