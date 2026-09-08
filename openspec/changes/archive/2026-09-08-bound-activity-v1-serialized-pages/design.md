@@ -62,8 +62,12 @@ coordinated client migration.
 
 Fragment boundaries are deterministic for immutable source rows: greedy packing uses a named
 per-fragment serialized-byte target and the fixed traversal order from Decision 1. Fragment zero
-keeps the source log's existing id. Later fragments use a deterministic opaque string derived only
-from the source id and their zero-based fragment index.
+keeps the source log's existing id. Later fragments use deterministic opaque strings derived from
+the source UUID and zero-based fragment index. Their sortable prefix is the immediately preceding
+UUID value and their fixed-width suffix decreases as the fragment index increases. The resulting
+descending string order is fragment zero, fragment one, fragment two, and then the next possible
+source UUID, so existing SQLite and React Native descending-id tie-breaks preserve both fragment
+contiguity and traversal without parsing the opaque value.
 
 Keeping fragment zero's old id is a compatibility control, not convenience. A device that cached
 the pre-change whole item upserts fragment zero over that row on its first refreshed page instead
@@ -71,10 +75,11 @@ of retaining the old whole log beside the fragments. Distinct later ids prevent 
 row-by-row SQLite upsert from silently replacing one fragment with another. The server tests pin
 identity stability across repeated requests and uniqueness within/across source logs.
 
-The React Native app needs no schema or reassembly change: every fragment is renderable and all
-changes remain present. A focused mobile regression will prove that storing a fragmented page
-replaces a cached whole item and retains every additional fragment. No fragment metadata is added
-to the public contract.
+The React Native app needs no production, schema, or reassembly change: every fragment is renderable,
+all changes remain present, and its existing descending-id tie-break preserves the encoded order.
+Focused mobile regressions prove that storing a fragmented page replaces a cached whole item,
+retains every additional fragment, and reconstructs the cached and rendered traversal sequence.
+No fragment metadata is added to the public contract.
 
 Alternative: reuse the source id on every fragment. Rejected because the cache's last upsert would
 silently discard all earlier fragments. Alternative: give every fragment a new id. Rejected

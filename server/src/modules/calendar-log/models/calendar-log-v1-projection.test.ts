@@ -61,7 +61,22 @@ describe("CalendarLogV1 projection", () => {
       [411, 660],
     ])
     expect(second).toEqual(first)
-    expect(first.fragments[0]?.item.id).toBe(item.id)
+    expect(first.fragments.map(({ item: fragment }) => fragment.id)).toEqual([
+      item.id,
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe",
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffd",
+    ])
+    expect(
+      [
+        ...first.fragments.map(({ item: fragment }) => fragment.id),
+        "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04",
+      ].sort((left, right) => right.localeCompare(left)),
+    ).toEqual([
+      item.id,
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe",
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffd",
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04",
+    ])
     expect(
       new Set(first.fragments.map((fragment) => fragment.item.id)).size,
     ).toBe(first.fragments.length)

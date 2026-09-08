@@ -157,6 +157,7 @@ describe("page upsert", () => {
   })
 
   it("replaces a cached whole item with fragment zero and retains later fragments", async () => {
+    const sourceId = "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d05"
     const base: Omit<ActivityLogDto, "id" | "calendarChange"> = {
       calendarId: "cal-1",
       calendarName: "L3 Informatique",
@@ -172,7 +173,7 @@ describe("page upsert", () => {
     })
     const whole = dtoToActivityRow({
       ...base,
-      id: "source-log",
+      id: sourceId,
       calendarChange: {
         newItems: [dtoEvent("new-a"), dtoEvent("new-b")],
         changedItems: [],
@@ -181,7 +182,7 @@ describe("page upsert", () => {
     })
     const fragmentZero = dtoToActivityRow({
       ...base,
-      id: "source-log",
+      id: sourceId,
       calendarChange: {
         newItems: [dtoEvent("new-a")],
         changedItems: [],
@@ -190,7 +191,7 @@ describe("page upsert", () => {
     })
     const fragmentOne = dtoToActivityRow({
       ...base,
-      id: "fragment-stable-1",
+      id: "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe",
       calendarChange: {
         newItems: [dtoEvent("new-b")],
         changedItems: [],
@@ -210,12 +211,14 @@ describe("page upsert", () => {
 
     const logs = await listActivityLogs()
     expect(logs).toHaveLength(2)
-    expect(
-      logs.find((log) => log.id === "source-log")?.change.newItems,
-    ).toEqual([dtoEvent("new-a")])
-    expect(
-      logs.find((log) => log.id === "fragment-stable-1")?.change.newItems,
-    ).toEqual([dtoEvent("new-b")])
+    expect(logs.map((log) => log.id)).toEqual([
+      sourceId,
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe",
+    ])
+    expect(logs.flatMap((log) => log.change.newItems)).toEqual([
+      dtoEvent("new-a"),
+      dtoEvent("new-b"),
+    ])
   })
 
   // The whole reason the cache is merged rather than drop+replaced: a backfilled

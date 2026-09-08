@@ -13,9 +13,10 @@ cannot correct it.
 - Extend the opaque cursor internally with the next fragment position while retaining the original
   snapshot and `(createdAt, id)` ordering anchors. Fragments from one log stay contiguous and every
   change entry appears exactly once across the cursor chain.
-- Give every projected fragment a stable, distinct opaque item id so existing v1 consumers can
-  store and render all fragments without overwriting one another. The response schema and request
-  schema remain unchanged.
+- Give every projected fragment a stable, distinct string item id that preserves fragment traversal
+  under the existing descending-id tie-break, so valid v1 consumers can store and render all
+  fragments without overwriting or reordering them. The response schema and request schema remain
+  unchanged.
 - Keep exact unread counting in calendar-log rows, not response fragments, and preserve the existing
   first-page-only rule.
 - Add focused cursor, projection, ordering, identity, and serialized-byte tests, plus a real-route

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto"
 import { CalendarLogV1 } from "modules/calendar-log/models/dto/calendar-log-v1.dto"
 import { CalendarChangeGet } from "modules/calendar-log/models/dto/calendar-change-get.dto"
 import { CalendarLogEventGet } from "modules/calendar-log/models/dto/calendar-log-event-get.dto"
@@ -58,12 +57,25 @@ const append = (change: CalendarChangeGet, atomic: AtomicChange) => {
   }
 }
 
+const FRAGMENT_RANK_WIDTH = Number.MAX_SAFE_INTEGER.toString(16).length
+
+const uuidPredecessor = (sourceId: string): string => {
+  const value = BigInt(`0x${sourceId.replace(/-/g, "")}`) - BigInt(1)
+  const hex = value.toString(16).padStart(32, "0")
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(
+    12,
+    16,
+  )}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 const fragmentId = (sourceId: string, fragmentIndex: number): string =>
   fragmentIndex === 0
     ? sourceId
-    : `fragment_${createHash("sha256")
-        .update(`calendar-log-v1\0${sourceId}\0${fragmentIndex}`)
-        .digest("base64url")}`
+    : `${uuidPredecessor(sourceId)}z${(
+        BigInt(Number.MAX_SAFE_INTEGER) - BigInt(fragmentIndex)
+      )
+        .toString(16)
+        .padStart(FRAGMENT_RANK_WIDTH, "0")}`
 
 const fragmentItem = (
   source: CalendarLogV1,

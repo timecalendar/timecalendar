@@ -85,3 +85,13 @@
 - [x] 6.4 Push the implementation and confirm the existing server and mobile CI checks, including the
   real serialized-response regression, are green on the exact PR head. Preserve aggregate-only
   evidence in the PR and handoff; do not paste ids, tokens, cursors, bodies, or event content.
+
+## 7. Preserve fragment order through the React Native consumer
+
+- [x] 7.1 Replace hash-only later-fragment ids with deterministic opaque strings that occupy the
+  descending lexical interval immediately below the source UUID; pin exact identity, fragment
+  order, and next-source contiguity in the projection test.
+- [x] 7.2 Preserve the existing SQLite and UI descending-id tie-breaks, requiring no mobile
+  production or schema change while equal-timestamp fragments retain ascending traversal order.
+- [x] 7.3 Strengthen the cache regression to assert ordered reconstruction, add focused presentation
+  coverage, and update the archived design/spec plus Architecture Book ADR.

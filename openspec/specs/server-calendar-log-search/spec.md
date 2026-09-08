@@ -337,8 +337,11 @@ sequence SHALL preserve `newItems`, then `changedItems`, then `oldItems`, and pr
 order within each array.
 
 Fragment zero SHALL retain the source log id. Every later fragment SHALL have a stable distinct
-opaque id derived from the source id and fragment position, so a consumer that upserts by item id
-replaces a previously cached whole item and does not replace one new fragment with another.
+opaque string id derived from the source UUID and fragment position, so a consumer that upserts by
+item id replaces a previously cached whole item and does not replace one new fragment with another.
+The ids SHALL sort under a descending string tie-break as fragment zero followed by ascending
+fragment position, with the next possible lower source UUID after the final fragment; consumers do
+not parse the opaque value.
 
 #### Scenario: Many changes in one source log
 
@@ -361,7 +364,8 @@ replaces a previously cached whole item and does not replace one new fragment wi
 
 - **WHEN** a consumer already holds the complete source item and upserts a fragmented response by id
 - **THEN** fragment zero replaces the old item and every later fragment remains separately stored,
-  so the old whole item does not duplicate the projected changes
+  the cached and rendered fragments retain source traversal order, and the old whole item does not
+  duplicate the projected changes
 
 ### Requirement: Serialized v1 pages are packed against the wire representation
 
