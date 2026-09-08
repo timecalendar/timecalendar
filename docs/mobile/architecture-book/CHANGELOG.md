@@ -2,6 +2,10 @@
 
 ## 2026-09-07
 
+- Recorded the server-owned export-guide contract: an exact localized, versioned catalogue lives
+  behind a controller-local `/v1` route, while school responses carry a required neutral reference
+  rather than page content. OpenAPI remains generated from built Nest output before the committed
+  Orval client, with both generated surfaces changed together.
 - Applied ADR 054's page semantics to the remaining consumers: Settings keeps localized section
   casing, About uses one standard-lane gutter with gutterless readable prose caps, Home shares the
   left-aligned section empty-state rhythm, and Feedback/Programme join personal events on the

@@ -1,4 +1,11 @@
+import { mkdtempSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
+import {
+  EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+  ExportGuideCatalogueStore,
+} from "modules/export-guide/stores/export-guide-catalogue.store"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { schoolProfileFactory } from "modules/school/factories/school-profile.factory"
 import { SchoolModule } from "modules/school/school.module"
@@ -8,10 +15,27 @@ import createTestApp from "test-utils/create-test-app"
 describe("SchoolService", () => {
   let app: NestExpressApplication
   let service: SchoolService
+  const catalogueDirectory = mkdtempSync(
+    join(tmpdir(), "school-service-export-guides-"),
+  )
 
   beforeAll(async () => {
-    app = await createTestApp({ imports: [SchoolModule] })
+    app = await createTestApp(
+      { imports: [SchoolModule] },
+      {
+        overrides: [
+          {
+            provide: EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+            useValue: catalogueDirectory,
+          },
+        ],
+      },
+    )
     service = app.get(SchoolService)
+  })
+
+  afterAll(() => {
+    rmSync(catalogueDirectory, { recursive: true, force: true })
   })
 
   describe("findSchools", () => {
@@ -21,6 +45,30 @@ describe("SchoolService", () => {
       expect(schools.length).toBe(1)
       expect(schools[0].name).toBe("My Gaming Academia")
       expect(schools[0].imageUrlDark).toBeNull()
+      expect(schools[0].exportGuide).toMatchObject({
+        providerSlug: "groups",
+        catalogueVersion: expect.any(String),
+      })
+    })
+
+    it("captures one catalogue snapshot for every row", async () => {
+      await schoolFactory().create({ name: "School A" })
+      await schoolFactory().create({ name: "School B" })
+      const versions = (await service.findSchools()).schools.map(
+        ({ exportGuide }) => exportGuide.catalogueVersion,
+      )
+      expect(new Set(versions).size).toBe(1)
+    })
+
+    it("fails closed when no active snapshot is available", async () => {
+      const repository = app.get(ExportGuideCatalogueStore)
+      const spy = jest.spyOn(repository, "capture").mockReturnValueOnce({
+        retained: repository.capture().retained,
+      })
+      await expect(service.findSchools()).rejects.toThrow(
+        "Export-guide snapshot unavailable",
+      )
+      spy.mockRestore()
     })
   })
 

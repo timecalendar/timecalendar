@@ -72,6 +72,21 @@ export interface SchoolAssistant {
   isNative: boolean
 }
 
+export interface SchoolExportGuideRefV1 {
+  /**
+   * Raw server-configured export-guide provider slug
+   * @pattern ^[a-z0-9][a-z0-9-]{0,63}$
+   */
+  providerSlug: string
+  requireProgramme: boolean
+  requireConnect: boolean
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
+  catalogueVersion: string
+}
+
 export interface SchoolForList {
   id: string
   code: string
@@ -90,6 +105,7 @@ export interface SchoolForList {
   deletedAt?: string
   assistant: SchoolAssistant
   fallbackAssistant?: SchoolAssistant
+  exportGuide: SchoolExportGuideRefV1
 }
 
 export interface FindSchoolsRepDto {
@@ -150,7 +166,135 @@ export interface SchoolForSeo {
   deletedAt?: string
   assistant: SchoolAssistant
   fallbackAssistant?: SchoolAssistant
+  exportGuide: SchoolExportGuideRefV1
   profile?: SchoolProfileGet
+}
+
+export interface ExportGuideCompatibilityV1Dto {
+  /** @minimum 1 */
+  minClientSchema: number
+  /** @minimum 1 */
+  maxClientSchema: number
+}
+
+export type ExportGuideImageV1DtoMimeType =
+  (typeof ExportGuideImageV1DtoMimeType)[keyof typeof ExportGuideImageV1DtoMimeType]
+
+export const ExportGuideImageV1DtoMimeType = {
+  "image/png": "image/png",
+  "image/jpeg": "image/jpeg",
+  "image/webp": "image/webp",
+} as const
+
+export interface ExportGuideImageV1Dto {
+  /** @maxLength 2048 */
+  url: string
+  mimeType: ExportGuideImageV1DtoMimeType
+  /**
+   * @minimum 1
+   * @maximum 1048576
+   */
+  byteSize: number
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  width: number
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  height: number
+  /**
+   * @minLength 1
+   * @maxLength 500
+   */
+  altText: string
+  /**
+   * @minLength 1
+   * @maxLength 500
+   */
+  caption?: string
+}
+
+export interface ExportGuidePageV1Dto {
+  /**
+   * @minLength 1
+   * @maxLength 120
+   */
+  title: string
+  /**
+   * @minLength 1
+   * @maxLength 2000
+   */
+  description: string
+  image?: ExportGuideImageV1Dto
+}
+
+export type ExportGuideProviderV1DtoKind =
+  (typeof ExportGuideProviderV1DtoKind)[keyof typeof ExportGuideProviderV1DtoKind]
+
+export const ExportGuideProviderV1DtoKind = {
+  pages: "pages",
+} as const
+
+export interface ExportGuideProviderV1Dto {
+  /** @pattern ^[a-z0-9][a-z0-9-]{0,63}$ */
+  slug: string
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  label: string
+  kind: ExportGuideProviderV1DtoKind
+  selectable: boolean
+  compatibility: ExportGuideCompatibilityV1Dto
+  thumbnail?: ExportGuideImageV1Dto
+  /**
+   * @minItems 1
+   * @maxItems 20
+   */
+  pages: ExportGuidePageV1Dto[]
+}
+
+export type ExportGuideCatalogueV1DtoSchemaVersion =
+  (typeof ExportGuideCatalogueV1DtoSchemaVersion)[keyof typeof ExportGuideCatalogueV1DtoSchemaVersion]
+
+export const ExportGuideCatalogueV1DtoSchemaVersion = {
+  NUMBER_1: 1,
+} as const
+
+export type ExportGuideCatalogueV1DtoLocale =
+  (typeof ExportGuideCatalogueV1DtoLocale)[keyof typeof ExportGuideCatalogueV1DtoLocale]
+
+export const ExportGuideCatalogueV1DtoLocale = {
+  fr: "fr",
+  en: "en",
+} as const
+
+export interface ExportGuideCatalogueV1Dto {
+  schemaVersion: ExportGuideCatalogueV1DtoSchemaVersion
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
+  catalogueVersion: string
+  locale: ExportGuideCatalogueV1DtoLocale
+  /**
+   * @minItems 1
+   * @maxItems 50
+   */
+  providers: ExportGuideProviderV1Dto[]
+}
+
+export interface ExportGuideErrorDto {
+  statusCode: number
+  message: string
+  error: string
+}
+
+export interface FeatureFlagEvaluationResponseDto {
+  [key: string]: unknown
 }
 
 export interface GetCalendarLogsDto {
@@ -334,9 +478,30 @@ export interface SendMessageDto {
   calendarUrl?: string
 }
 
-export interface FeatureFlagEvaluationResponseDto {
-  [key: string]: unknown
+export type ExportGuideV1ControllerFindCatalogueParams = {
+  locale: ExportGuideV1ControllerFindCatalogueLocale
+  clientSchema: ExportGuideV1ControllerFindCatalogueClientSchema
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
+  catalogueVersion?: string
 }
+
+export type ExportGuideV1ControllerFindCatalogueLocale =
+  (typeof ExportGuideV1ControllerFindCatalogueLocale)[keyof typeof ExportGuideV1ControllerFindCatalogueLocale]
+
+export const ExportGuideV1ControllerFindCatalogueLocale = {
+  fr: "fr",
+  en: "en",
+} as const
+
+export type ExportGuideV1ControllerFindCatalogueClientSchema =
+  (typeof ExportGuideV1ControllerFindCatalogueClientSchema)[keyof typeof ExportGuideV1ControllerFindCatalogueClientSchema]
+
+export const ExportGuideV1ControllerFindCatalogueClientSchema = {
+  NUMBER_1: 1,
+} as const
 
 export type FeatureFlagControllerEvaluateFlagsParams = {
   keys: string

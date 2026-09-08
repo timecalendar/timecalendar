@@ -1,4 +1,8 @@
+import { mkdtempSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
+import { EXPORT_GUIDE_CATALOGUE_DIRECTORY } from "modules/export-guide/stores/export-guide-catalogue.store"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { schoolProfileFactory } from "modules/school/factories/school-profile.factory"
 import { SchoolRepository } from "modules/school/repositories/school.repository"
@@ -8,10 +12,27 @@ import createTestApp from "test-utils/create-test-app"
 describe("SchoolRepository", () => {
   let app: NestExpressApplication
   let repository: SchoolRepository
+  const catalogueDirectory = mkdtempSync(
+    join(tmpdir(), "school-repository-export-guides-"),
+  )
 
   beforeAll(async () => {
-    app = await createTestApp({ imports: [SchoolModule] })
+    app = await createTestApp(
+      { imports: [SchoolModule] },
+      {
+        overrides: [
+          {
+            provide: EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+            useValue: catalogueDirectory,
+          },
+        ],
+      },
+    )
     repository = app.get(SchoolRepository)
+  })
+
+  afterAll(() => {
+    rmSync(catalogueDirectory, { recursive: true, force: true })
   })
 
   describe("findAll", () => {

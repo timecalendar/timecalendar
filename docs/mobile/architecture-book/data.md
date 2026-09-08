@@ -7,6 +7,12 @@
 - `openapi/openapi.json` is the **single server↔mobile contract artifact**, committed. Regenerate with `npm run generate:openapi` in `server/` (needs the local docker-compose services up — same prerequisite as `npm test`). The script runs from the built `dist/`: the `@nestjs/swagger` CLI plugin injects response/property schemas at compile time, so a ts-node run emits a spec missing every response type.
 - CI gate: the `test` job's "Check committed OpenAPI spec matches the server code" step fails on drift and names the regen command.
 - `/v1` routes are **path-level prefixes on their own controllers**, never NestJS global versioning (ADR [051](./decisions/051-path-level-v1-prefix-without-global-versioning.md)). `app.enableVersioning` is **deliberately not enabled** — it would apply a default version to every controller, and Flutter release builds in the field call the unversioned paths. The contract currently carries two such routes: `PATCH /v1/calendars/{token}` (the token-authorized calendar rename, served by `CalendarV1Controller` in the existing `CalendarModule`) and `POST /v1/calendar-logs/search`. Every other route — calendar read by token, create, sync — stays unversioned. An API-wide versioning migration is deferred; nothing here commits to versioning anything else.
+- The server-owned export-guide catalogue is a third controller-local surface:
+  `GET /v1/export-guides` negotiates exact FR/EN schema-v1 representations and retained versions.
+  `SchoolForList.exportGuide` carries only the raw provider slug, neutral Programme/Connect gates,
+  and the catalogue version; guide pages stay in the catalogue response. Both shapes are owned by
+  the server DTOs. Any change regenerates OpenAPI from built Nest output first, then regenerates the
+  committed Orval client. Never reverse that order or hand-edit either generated surface.
 
 ## Generated client: Orval → `mobile/src/api/generated/`
 

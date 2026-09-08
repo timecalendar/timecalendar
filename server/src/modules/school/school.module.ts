@@ -8,9 +8,13 @@ import { SchoolRepository } from "modules/school/repositories/school.repository"
 import { SchoolProfileRepository } from "modules/school/repositories/school-profile.repository"
 import { SchoolService } from "modules/school/services/school.service"
 import { SchoolProfileGenerationService } from "modules/school/services/school-profile-generation.service"
+import { ExportGuideModule } from "modules/export-guide/export-guide.module"
 
 @Module({
-  imports: [TypeOrmModule.forFeature([School, SchoolProfile])],
+  imports: [
+    TypeOrmModule.forFeature([School, SchoolProfile]),
+    ExportGuideModule,
+  ],
   providers: [
     SchoolService,
     SchoolRepository,

@@ -1,5 +1,12 @@
+import { mkdtempSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { join } from "path"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import request from "lib/supertest"
+import {
+  EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+  ExportGuideCatalogueStore,
+} from "modules/export-guide/stores/export-guide-catalogue.store"
 import { schoolFactory } from "modules/school/factories/school.factory"
 import { schoolProfileFactory } from "modules/school/factories/school-profile.factory"
 import { SchoolModule } from "modules/school/school.module"
@@ -7,18 +14,51 @@ import createTestApp from "test-utils/create-test-app"
 
 describe("SchoolController", () => {
   let app: NestExpressApplication
+  const catalogueDirectory = mkdtempSync(
+    join(tmpdir(), "school-controller-export-guides-"),
+  )
 
   beforeAll(async () => {
-    app = await createTestApp({ imports: [SchoolModule] })
+    app = await createTestApp(
+      { imports: [SchoolModule] },
+      {
+        overrides: [
+          {
+            provide: EXPORT_GUIDE_CATALOGUE_DIRECTORY,
+            useValue: catalogueDirectory,
+          },
+        ],
+      },
+    )
+  })
+
+  afterAll(() => {
+    rmSync(catalogueDirectory, { recursive: true, force: true })
   })
 
   describe("GET /schools", () => {
-    it("returns schools", async () => {
+    it("serves schools after bootstrapping a fresh packaged catalogue", async () => {
+      expect(app.get(ExportGuideCatalogueStore).capture().activeVersion).toBe(
+        "2026-09-07.1",
+      )
       await schoolFactory().create()
       const { body } = await request(app).get("/schools").expect(200)
       expect(body).toBeDefined()
       expect(body.schools.length).toBe(1)
       expect(body.schools[0].name).toBe("My Gaming Academia")
+      expect(body.schools[0].exportGuide).toMatchObject({
+        providerSlug: "groups",
+        requireProgramme: false,
+        requireConnect: false,
+        catalogueVersion: expect.any(String),
+      })
+    })
+
+    it("serializes an unknown provider without breaking the legacy field", async () => {
+      await schoolFactory().create({ assistant: "future-provider" })
+      const { body } = await request(app).get("/schools").expect(200)
+      expect(body.schools[0].exportGuide.providerSlug).toBe("future-provider")
+      expect(body.schools[0].assistant.slug).toBe("generic")
     })
   })
 
@@ -30,6 +70,18 @@ describe("SchoolController", () => {
         .expect(200)
       expect(body).toBeDefined()
       expect(body.name).toBe("My Gaming Academia")
+      expect(body.exportGuide.catalogueVersion).toEqual(expect.any(String))
+    })
+
+    it("preserves an unknown provider on a single school", async () => {
+      const school = await schoolFactory().create({
+        assistant: "future-provider",
+      })
+      const { body } = await request(app)
+        .get(`/schools/${school.id}`)
+        .expect(200)
+      expect(body.exportGuide.providerSlug).toBe("future-provider")
+      expect(body.assistant.slug).toBe("generic")
     })
 
     it("returns 400 for invalid UUID", async () => {
@@ -54,6 +106,19 @@ describe("SchoolController", () => {
       expect(body.length).toBe(0)
     })
 
+    it("preserves an unknown provider in SEO search", async () => {
+      await schoolFactory().create({
+        seoUrl: "future-provider-school",
+        assistant: "future-provider",
+      })
+      const { body } = await request(app)
+        .post("/schools/search")
+        .send({ seoUrl: "future-provider-school" })
+        .expect(201)
+      expect(body[0].exportGuide.providerSlug).toBe("future-provider")
+      expect(body[0].assistant.slug).toBe("generic")
+    })
+
     it("returns a school matching seoUrl", async () => {
       await schoolFactory().create({ seoUrl: "test-url" })
       const { body } = await request(app)
@@ -64,6 +129,7 @@ describe("SchoolController", () => {
       expect(body.length).toBe(1)
       expect(body[0].name).toBe("My Gaming Academia")
       expect(body[0].seoUrl).toBe("test-url")
+      expect(body[0].exportGuide.catalogueVersion).toEqual(expect.any(String))
       expect(body[0].profile).toBeUndefined() // No profile associated
     })
 

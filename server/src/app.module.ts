@@ -24,6 +24,7 @@ import { FeatureFlagModule } from "modules/feature-flag/feature-flag.module"
 import { ObservabilityLifecycleService } from "config/observability/observability-lifecycle.service"
 import { LivenessController } from "health/liveness.controller"
 import { E2eIcalFixtureController } from "e2e/e2e-ical-fixture.controller"
+import { ExportGuideModule } from "modules/export-guide/export-guide.module"
 
 export const e2eFixtureControllers = (
   environment: string = NODE_ENV,
@@ -64,6 +65,7 @@ export const e2eFixtureControllers = (
     NotificationPipelineModule,
     NotificationSubscriptionModule,
     FeatureFlagModule,
+    ExportGuideModule,
   ],
   controllers: [LivenessController, ...e2eFixtureControllers()],
   providers: [ObservabilityLifecycleService],
