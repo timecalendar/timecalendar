@@ -328,6 +328,8 @@
   "calendar.agenda.event.openLabelWithProgress": "{{title}}, {{time}} {{location}}. {{progress}}. View details",
   "calendar.agenda.nowLabel": "Up next",
   "calendar.sync.refreshingLabel": "Refreshing your calendar",
+  "calendar.sync.refresh": "Refresh",
+  "calendar.sync.refreshLabel": "Refresh your calendar",
   "calendar.sync.error": "We couldn't refresh your calendar. Showing your last update.",
   "calendar.sync.retry": "Retry",
   "calendar.sync.retryLabel": "Retry refreshing your calendar",

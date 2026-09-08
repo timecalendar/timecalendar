@@ -68,6 +68,7 @@ export function CalendarScreen() {
     <CalendarScreenStatus
       isEmpty={events.length === 0}
       isError={isError}
+      isSyncing={isSyncing}
       onRetry={onSync}
     />
   )
