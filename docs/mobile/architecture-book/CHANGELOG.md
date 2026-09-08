@@ -11,6 +11,10 @@
   composes SwiftUI or Material 3 fields, progress, and actions around one retained native buffer,
   while validation, persistence, success, and cancellation remain feature-owned. Calendar-management
   top rhythm now scrolls with its populated list, and Rename carries native platform iconography.
+- Added ADR 057: daily native smoke now contains exactly the fresh-user real URL import,
+  personal-event lifecycle, and subscribed-calendar visibility journeys. Static inventory,
+  selector, harness, and classifier gates remain baseline CI; broader release-candidate parity
+  is human-directed exploratory acceptance.
 - Applied ADR 054 to the exhaustive root and nested-onboarding route inventories: ordinary pushes
   now share compact localized chrome, caption-first page rhythm, and one measured `RootPage` while
   branded, redirect, development, camera-content, and platform-sheet exceptions stay explicit.

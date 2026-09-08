@@ -29,7 +29,6 @@
     { "path": "docs/mobile/releases/02-signing-and-credentials.md", "id": "derived-identity", "count": 1 },
     { "path": "docs/mobile/releases/05-readiness-and-gaps.md", "id": "derived-identity", "count": 1 },
     { "path": "LICENSE", "id": "derived-identity", "count": 2 },
-    { "path": "mobile/.maestro/about.yaml", "id": "derived-identity", "count": 2 },
     { "path": "mobile/EAS.md", "id": "derived-identity", "count": 1 },
     { "path": "mobile/firebase/google-services.json", "id": "derived-identity", "count": 2 },
     { "path": "mobile/firebase/GoogleService-Info.plist", "id": "derived-identity", "count": 2 },

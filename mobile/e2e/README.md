@@ -1,257 +1,117 @@
 # Mobile E2E (Maestro)
 
-End-to-end tests for the mobile app. One [Maestro](https://maestro.mobile.dev/)
-flow proves the real round-trip: the app fetches live seeded data from a NestJS
-instance and asserts it renders — nothing mocked. Runs on the iOS simulator and
-an Android emulator, locally and in CI.
+The native daily/manual smoke pack contains exactly three cross-platform user
+journeys, executed lexically from `mobile/.maestro/*.yaml`:
 
-- **Flows:** `mobile/.maestro/*.yaml` (Maestro's convention). Shared across
-  platforms — they assert stable seeded text, so no per-platform selectors.
-- **Wrapper:** `mobile/e2e/run_e2e.sh` boots the server stack once, runs each
-  top-level flow in a fresh Maestro process, and tears the stack down once.
-- **Server lifecycle:** owned by `../../ci/e2e-server.sh` (compose-first, shared
-  with the Flutter harness). This harness never hand-rolls server boot/seed.
+1. `01-fresh-user-import.yaml` — a fresh student selects the live seeded school,
+   enters a programme, follows Connect and URL import, imports the harness-owned
+   iCalendar URL through the real backend, then opens the synced event details.
+2. `02-personal-event.yaml` — create, edit, cold-reopen, and delete a personal
+   event from the shipped Calendar/Agenda surface through the real SQLite store.
+3. `03-calendar-visibility.yaml` — import the seeded subscription, hide it,
+   cold-reopen Agenda to prove its schedule is absent, restore it, and cold-reopen
+   again to prove the schedule returns.
 
-## Prerequisites
+Reusable YAML belongs under `.maestro/helpers/`. Helpers run only through
+`runFlow`; the harness never discovers them as business journeys. The exact
+three-file inventory is a baseline-CI invariant in both
+`maestro-selectors.test.ts` and `test_run_e2e.sh`.
 
-- A **release-config dev-variant build installed** on the connected
-  simulator/emulator (see "Build & install" below). The wrapper does **not**
-  build or install the app — only the server + Maestro.
-- **Docker** (for the default compose lifecycle) — except macOS CI, which uses
-  `--native`.
-- **Maestro 2.8.0** on `PATH` (the same exact version CI installs and prints):
-  ```bash
-  export MAESTRO_VERSION=2.8.0
-  curl -fsSL https://get.maestro.mobile.dev | bash
-  export PATH="$HOME/.maestro/bin:$PATH"
-  maestro --version
-  ```
-  Maestro is JVM-based and needs a JDK on `PATH`.
-- A booted iOS simulator **or** Android emulator. Maestro auto-detects the
-  single running device.
-- Android toolchain notes (JDK 17, `ANDROID_HOME`) — see the main
-  [`../README.md`](../README.md).
+This pack is a release-health smoke signal, not the complete release acceptance
+suite. Phase 10 release candidates still receive broader human exploratory
+acceptance for parity areas such as notifications, assistant behavior,
+Flutter-to-React-Native migration, settings, and detailed UI behavior.
 
-## Build & install the e2e binary
+## Deterministic data
 
-Release config so the JS bundle is embedded (no Metro), `development` variant so
-the `timecalendar-dev` scheme and local-server network exceptions apply, and the
-independent `development` backend capability so the runtime can select `local`.
-`EXPO_PUBLIC_API_URL` is baked at build time and must match the platform's path
-to the host server on port 3005. Supply all three inputs to both prebuild and
-release compilation:
+`ci/e2e-server.sh` boots and seeds NestJS, Postgres, and Redis once for the run.
+The fresh-import journey submits
+`http://127.0.0.1:3005/__e2e/ical/import.ics`. That endpoint is registered only
+in the server test/E2E module graph, excluded from OpenAPI, and returns a
+date-neutral event on the next UTC day. The backend fetches its own loopback URL,
+so the journey needs no university endpoint and no emulator-specific URL for the
+iCalendar source.
 
-```bash
-# Android — 10.0.2.2 is the host loopback from the emulator
-APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
-  EXPO_PUBLIC_API_URL=http://10.0.2.2:3005 \
-  npx expo run:android --variant release
+The visibility journey uses the existing `e2e-smoke-calendar` token through the
+nested import helper. Its target and control events are both anchored on the next
+UTC day, keeping the negative assertion meaningful if a job crosses midnight.
 
-# iOS — localhost reaches the host from the simulator
-APP_VARIANT=development BACKEND_ENVIRONMENT_CAPABILITY=development \
-  EXPO_PUBLIC_API_URL=http://localhost:3005 \
-  npx expo run:ios --configuration Release
-```
+## Prerequisites and local command
 
-## Run
+- Install a release-config `development` variant on one booted simulator or
+  emulator. The wrapper does not build or install the app.
+- Install Maestro 2.8.0 and a JDK.
+- Use Docker for the default lifecycle. `--native` is the Docker-less macOS-CI
+  seam where the caller provisions Postgres and Redis.
+- Build with the platform-local backend URL:
+  `http://10.0.2.2:3005` for Android or `http://localhost:3005` for iOS, with
+  `APP_VARIANT=development` and
+  `BACKEND_ENVIRONMENT_CAPABILITY=development`.
+
+From `mobile/`:
 
 ```bash
-./e2e/run_e2e.sh              # up once → one process per *.yaml → down once
-./e2e/run_e2e.sh --keep-up    # leave the server stack up for debugging
-./e2e/run_e2e.sh --native     # Docker-less host: caller provisions Postgres/Redis
-./e2e/run_e2e.sh --native --startup-attempts 4 # iOS CI startup recovery
+./e2e/run_e2e.sh
+./e2e/run_e2e.sh --keep-up
+./e2e/run_e2e.sh --native --startup-attempts 4
 ```
 
-The script exits with Maestro's pass/fail status and tears the stack down on
-success and failure alike. On failure it dumps the backend log tail. With
-`--keep-up` it prints the commands to inspect logs and tear down manually.
-`--startup-attempts` accepts 1–4 and defaults to one. Whether a failure may be
-retried is decided **structurally**, from Maestro's own per-flow
-`~/.maestro/tests/<run>/<flow>/commands.json` — never from stack-trace text
-(ADR 038; the rule lives in `e2e/classify-maestro-attempt.mjs`). An attempt is
-retryable only when it proved nothing about the app:
+The wrapper boots the shared server lifecycle once, runs each top-level YAML in
+a fresh Maestro process, stops at the first terminal failure, and tears the stack
+down once. `--keep-up` retains the stack and prints the log/teardown commands.
 
-- the harness output carries no assertion-failure evidence (this guard runs
-  first and wins outright), **and**
-- no independent command before the final startup failure has status `FAILED`;
-  a later restart never erases an earlier assertion/application/interaction
-  failure. A failed `runFlowCommand` is non-independent only while it remains
-  the final startup command's live lower-depth ancestor: it precedes that
-  command, and every intervening entry stays deeper. A same-depth or already-
-  closed wrapper and every failed child assertion/interaction stay terminal,
-  **and**
-- from the latest explicit `launchAppCommand`, `stopAppCommand` or
-  `openLinkCommand` at the failing command's depth through the final command,
-  only startup-phase commands (`defineVariablesCommand`,
-  `applyConfigurationCommand`, `launchAppCommand`, `stopAppCommand`,
-  `openLinkCommand`, `runFlowCommand`) and non-evaluated assertions occur.
-  Assertions are `assertConditionCommand` (which `assertVisible`,
-  `assertNotVisible` and `extendedWaitUntil` collapse into) or
-  `scrollUntilVisible`; `COMPLETED` and `FAILED` are evaluated, while `RUNNING`,
-  `PENDING` and `SKIPPED` are not.
+## Retry and static integrity
 
-A `COMPLETED` assertion before the latest restart boundary may belong to a
-successful earlier phase and does not veto recovery from the later transport
-failure. An evaluated assertion or non-startup interaction in the current epoch
-is terminal. No record means the session aborted before opening the flow and is
-retryable; malformed records fail closed. A retry always reruns the **entire**
-top-level flow in a fresh Maestro process — it never resumes mid-flow.
+ADR 038 remains binding. Normal and Android runs attempt each flow once; iOS CI
+may request up to four attempts. Retry classification is structural and reads
+Maestro's per-flow `commands.json`. Assertion evidence, an independent failed
+command, an evaluated assertion, or an interaction in the final restart epoch is
+terminal. A missing record or a startup-only final epoch is retryable; malformed
+records fail closed. Every retry starts the whole top-level journey in a new
+Maestro process.
 
-Everything else stops immediately, retains its exit status, and prevents later
-flows from running. Note the bound: an app that _deterministically_ fails to
-launch also matches the startup shape. It still ends red, having spent all four
-attempts; retry costs attempts, never correctness.
+Baseline CI stays the primary feedback loop:
 
-## Add a flow
+- `maestro-selectors.test.ts` recursively scans journeys and helpers, resolves
+  every `id:` regex against shipped `testID`s, rejects bare `back` and
+  `hideKeyboard`, validates title selectors across Android/iOS accessibility
+  projections, and pins the three nominal journey sequences including positive
+  anchors before negative assertions.
+- `test_run_e2e.sh` proves the exact inventory, lexical process-per-flow
+  execution, helper exclusion, terminal stop, teardown, `--keep-up`, and the
+  mutation-backed retry-classifier branches without allocating a device.
+- `test_ci_mobile_e2e.sh` proves the daily/manual workflow contract and both
+  platform jobs.
 
-1. Drop a `mobile/.maestro/<name>.yaml` in. Start with the app id and the deep
-   link, assert on **seeded** data (see
-   `server/src/modules/**/fixtures/*.yml` for the deterministic fixtures
-   `db:init` loads):
-   ```yaml
-   appId: fr.samuelprak.timecalendar.dev
-   ---
-   - launchApp
-   - openLink: timecalendar-dev://<route>
-   - assertVisible: "<seeded text>"
-   ```
-2. `run_e2e.sh` discovers every top-level YAML lexically — no manifest wiring
-   needed — and gives each one a fresh Maestro process.
-3. Keep assertions on stable seeded text (ASCII-safe avoids accent-matching
-   fragility across platforms).
-4. Every `id:` you select by must exist as a `testID` in `mobile/src`.
-   `maestro-selectors.test.ts` enforces this in the **baseline** gate (`npm test`),
-   because native execution is a daily/manual health signal: without it a UI rework that deletes a
-   `testID` merges green and the break costs a native run to find — and since
-   `run_e2e.sh` stops at the first failing flow, one stale id hides every later
-   one. Selectors match as regexes and testIDs may be object properties or
-   template literals, so the guard resolves all three shapes. If it flags an id
-   you believe works, fix the flow or the guard — never allowlist it. For a
-   control that can carry no testID at all (the native-header search bar), select
-   its EN label; the e2e device runs in EN.
-5. A `testID` that exists is not the same as one that is **on screen**. Maestro
-   matches only the visible hierarchy, so a row below the fold fails a plain
-   `assertVisible`/`extendedWaitUntil` after the full timeout, and the failure
-   reads exactly like a deleted `testID` — `maestro-selectors.test.ts` cannot
-   catch this, since the id resolves fine in source. Reach anything past the
-   first screenful with `scrollUntilVisible` instead:
-   ```yaml
-   - scrollUntilVisible:
-       element:
-         id: "settings-environment"
-       direction: DOWN
-       timeout: 60000
-   ```
-   The Settings hub is the live example: `settings-about` is on screen while
-   `settings-feedback` (one row lower) and `settings-environment` (its own
-   section, last on the page) are not.
-6. To assert **real synced calendar data**, start the flow with the shared import
-   preamble so the app durably holds the seeded token and syncs it (ADR 030):
-   ```yaml
-   - runFlow: import-seed.yaml
-   ```
-   `import-seed.yaml` opens `timecalendar-dev://dev-import?token=e2e-smoke-calendar`,
-   which resolves + upserts the token into `user_calendars`, triggers a sync, and
-   lands on the calendar. The seeded today-anchored events (`E2E Today Lecture`,
-   the `E2E Overlap A/B` pair) then render as real synced tiles. Caveat: "today"
-   is computed in **UTC** on the server; on a local run whose machine day differs
-   from UTC near midnight the device's local-time `isToday` can disagree — a known
-   local edge, not a CI flake (CI is UTC end to end).
-7. A seeded event asserted through the **agenda** must not be anchored on the seed
-   day unless the flow needs it to be. The server seeds once, at the start of a job
-   that runs well over an hour; the agenda's window runs from the anchor day's
-   midnight to seven days later and is **forward-only**, recomputed from the device
-   clock each time a flow mounts it. A job that crosses UTC midnight drops every
-   seed-day event
-   out of the agenda, and the flow fails on a date defect that reads exactly like a
-   broken feature — in run 33220510226 the agenda showed `No events this period.`
-   and `hidden-events.yaml` looked like a broken hide. Anchor such fixtures on the
-   **next** UTC day (`E2E Hide Seminar` + `E2E Hide Control`), give them
-   date-neutral titles, and keep any non-hidden control on the same day as its
-   target — a control that outlives the crossing its target survives is the only
-   kind that still guards against an empty view. `home.yaml` is the exception that
-   keeps the seed-day anchor, because it asserts the _today_ timeline and no other
-   anchor satisfies it.
+## Removed-flow coverage map
 
-## The rename round trip and its re-run caveat
+The reduction was audited against deterministic lower-level coverage. No valuable
+uncovered behavior required a new mobile test; the only missing seam was the real
+server-backed import fixture and create-path integration proof added with this
+change.
 
-`user-calendar-rename.yaml` (TIM-392) renames a calendar through the UI and then
-proves the new name came back **from the server on a device that never performed
-the rename**: it renames, then runs `rename-seed.yaml` a second time, whose
-leading `launchApp: clearState: true` wipes the device so the re-import resolves
-the token from the server.
+| Removed native coverage                                                                   | Retained cheaper proof                                                                                                                                            |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Activity pagination, unread watermark, tie ordering, current/cancelled routing            | Server `calendar-log` controller/repository/service suites; mobile `activity/data` pagination, restart, ownership, unread, and `activity-screen` component suites |
+| Settings, About, changelog, appearance, notification, and timezone destinations           | `settings-screen`, `about-screen`, changelog, appearance, notification-settings, and timezone-settings component suites                                           |
+| Backend environment switching and recovery                                                | `environment/data` orchestrator/session/store/switch suites and `environment-runtime-gate` / settings-control component suites                                    |
+| Feedback reachability, validation, remembered email, and submit failure                   | `feedback/data`, `feedback/form`, and `feedback-screen` suites                                                                                                    |
+| Shared-calendar rename and convergence                                                    | Server calendar rename/controller tests plus mobile `user-calendars/rename`, sync convergence, and rename-dialog suites                                           |
+| Checklist CRUD, ordering, restart, and progress rendering                                 | `event-checklists/data` repository/restart/hooks/progress suites and checklist/progress renderer component suites                                                 |
+| Per-event hide/un-hide                                                                    | `hidden-events` store/restart/hooks/component suites and calendar event-filter tests                                                                              |
+| Standalone Home and Calendar reachability/rendering variants                              | `home-screen`, `calendar-screen`, agenda/timeline renderer, routing, and calendar data tests                                                                      |
+| iCalendar inline validation, failure/retry/report, unlisted institution, and route wiring | `validate-url`, `ical-url-screen`, programme/connect/manual-import, and school-picker component/data suites                                                       |
+| Harness recovery fixtures and UI-polish variants                                          | Device-free classifier/harness mutation fixtures, recursive selector integrity, and owning component suites                                                       |
 
-It uses its **own** seeded calendar, `e2e-rename-calendar`, never
-`e2e-smoke-calendar`. A rename is a durable server mutation and `run_e2e.sh` runs
-the whole folder in one device session, so renaming the shared smoke calendar
-would change state under every other flow in the run.
+Do not mechanically recreate a removed assertion. Add lower-level coverage only
+when a valuable behavior is genuinely absent, and prefer replacing a smoke
+journey over growing the daily pack. More than five top-level business journeys
+requires a new board decision (ADR 057).
 
-**Re-run caveat.** Step 2 asserts the seeded **baseline** name (`E2E Rename
-Baseline`), which only holds against a server seeded since the last rename. Any
-second pass over the flow against the same server fails there, because the
-calendar is already renamed. That covers two cases:
+## CI evidence
 
-- a **local re-run without re-running `ci/e2e-server.sh`** — re-seed and run again;
-- a **CI retry of this flow**. `run_e2e.sh` seeds once per job (`ci/e2e-server.sh
-up`), _outside_ `run_flow`, but `run_flow` retries a flow up to
-  `--startup-attempts` — 4 on iOS, 1 on Android — and a retry re-runs the flow
-  from step 1 **without re-seeding**. Step 5 is a mid-flow `launchApp:
-clearState: true`; an XCTest transport death there is classified retryable
-  (steps 1–4 left no assertion-failure text in the log), so the flow restarts and
-  step 2 burns its 60 s timeout against a calendar this job already renamed. Rare,
-  but when it happens the red is a stale-state artifact, not a rename regression —
-  check the attempt number in the flow log before attributing it to the feature.
-
-Dropping the baseline assertion to make re-runs idempotent would make the final
-convergence assertion vacuous on a re-run, which is a silent false green rather
-than a visible, diagnosable failure.
-
-## Activity's staged unread and pagination fixture
-
-`activity.yaml` uses two dedicated tokens because a fresh Activity store has no
-read watermark and therefore cannot ask the server for an unread count:
-
-- `e2e-activity-baseline` has one older row. Its nested import clears device
-  state; opening Activity persists that row's server timestamp as read.
-- `e2e-activity-calendar` has exactly 52 newer rows. Its nested import preserves
-  device state, so the sync refresh sends the baseline watermark and Settings
-  renders exactly `52` unread changes.
-
-Rows 50 and 51 share one timestamp and have fixed UUIDs ordered descending. The
-higher UUID ends page one; the lower UUID and `E2E Activity Older Page` anchor
-can only render after `onEndReached` loads the following page. `db:init --drop`
-restores both calendars, their names/content, and all fixed log rows.
-
-To debug only this flow from `mobile/` against an installed development build:
-
-```bash
-../../ci/e2e-server.sh up
-maestro test .maestro/activity.yaml
-../../ci/e2e-server.sh logs
-../../ci/e2e-server.sh down
-```
-
-The normal `./e2e/run_e2e.sh` remains the preferred all-flow lifecycle. Nested
-files under `.maestro/activity/` are setup fragments and are intentionally not
-discovered as top-level flows.
-
-## CI
-
-`e2e-mobile-android` (Linux + KVM emulator) and `e2e-mobile-ios` (macOS runner,
-native Postgres/Redis via `--native`) in
-[`../../.github/workflows/ci-mobile-e2e.yml`](../../.github/workflows/ci-mobile-e2e.yml)
-build the binary on the runner, install it, and run the flows. Maestro debug
-output and server logs upload as artifacts on failure.
-
-Both jobs pin and print Maestro 2.8.0. Android assembles Release with a 3072 MiB
-heap, 1024 MiB Metaspace, at most two Gradle workers, and no persistent daemon.
-iOS logs the selected Xcode path/version plus available and selected simulator
-runtime, name, and UDID before running the harness with four startup attempts.
-The shell proofs and mutation-backed workflow assertions run without a device and
-remain ordinary pull-request gates. Native execution is informational health
-evidence: the daily schedule compares `main` with the preceding scheduled
-attempt and runs both platforms only for relevant app, contract, server,
-lifecycle/toolchain, or workflow changes. A manual dispatch requires an explicit
-ref or SHA, resolves it once, and always runs both platforms. Daily and manual
-runs share a non-cancelling concurrency group; failures retain platform Maestro
-debug output and server logs.
+The native workflow is scheduled daily when relevant inputs changed and may be
+manually dispatched with an explicit ref or SHA. Preparation resolves one
+immutable commit used by the server image and both platform jobs. Android and iOS
+retain Maestro debug output and server logs on failure. Native results are health
+evidence; ordinary pull requests rely on the static and lower-level gates above.
