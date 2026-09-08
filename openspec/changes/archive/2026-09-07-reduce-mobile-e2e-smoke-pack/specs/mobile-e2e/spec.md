@@ -79,6 +79,20 @@ After focused static tests pass, this suite reduction SHALL receive one delibera
 - **THEN** the failure and retained artifacts are reported as grouped E2E-health debt
 - **AND** the suite is not expanded into repeated remediation or rerun chains
 
+### Requirement: Static E2E integrity remains a baseline gate
+
+Baseline CI SHALL recursively inspect retained top-level flows and nested helpers, fail any `id:` selector that resolves to no shipped `testID`, reject platform-asymmetric bare `back`, and retain the structural retry-classifier and shell-harness fixtures. The guards SHALL be updated to refer to the new journey/helper paths without weakening their matching behavior.
+
+#### Scenario: A retained selector drifts
+
+- **WHEN** a retained flow or helper references a removed or renamed shipped `testID`
+- **THEN** the baseline selector proof names the YAML location and fails before native execution
+
+#### Scenario: Harness recovery logic changes
+
+- **WHEN** retry classification, process isolation, or top-level discovery changes
+- **THEN** the existing mutation-backed shell/Jest fixtures fail unless the structural contract remains satisfied
+
 ## MODIFIED Requirements
 
 ### Requirement: Real-round-trip Maestro flow
@@ -178,19 +192,3 @@ The repository SHALL provide one command that boots the server stack once, disco
 **Reason**: The existing requirement embeds flow-specific incident cases for journeys removed from native execution; selector integrity remains mandatory under a smaller, generic contract.
 
 **Migration**: Replace it with the concise static-baseline requirement below.
-
-## ADDED Requirements
-
-### Requirement: Static E2E integrity remains a baseline gate
-
-Baseline CI SHALL recursively inspect retained top-level flows and nested helpers, fail any `id:` selector that resolves to no shipped `testID`, reject platform-asymmetric bare `back`, and retain the structural retry-classifier and shell-harness fixtures. The guards SHALL be updated to refer to the new journey/helper paths without weakening their matching behavior.
-
-#### Scenario: A retained selector drifts
-
-- **WHEN** a retained flow or helper references a removed or renamed shipped `testID`
-- **THEN** the baseline selector proof names the YAML location and fails before native execution
-
-#### Scenario: Harness recovery logic changes
-
-- **WHEN** retry classification, process isolation, or top-level discovery changes
-- **THEN** the existing mutation-backed shell/Jest fixtures fail unless the structural contract remains satisfied

@@ -4,6 +4,85 @@
 
 TBD - created by archiving change add-mobile-test-harness. Update Purpose after archive.
 ## Requirements
+### Requirement: The native smoke pack contains exactly three business journeys
+
+Maestro discovery SHALL expose exactly three top-level YAML flows under `mobile/.maestro/`: fresh-user school/programme import, personal-event lifecycle, and subscribed-calendar visibility. Nested setup flows MAY be shared, but SHALL NOT be independently discovered or counted as business journeys. Increasing the pack beyond five top-level business journeys MUST require a new board decision.
+
+#### Scenario: Harness discovery sees the durable inventory
+
+- **WHEN** the focused harness proof enumerates `mobile/.maestro/*.yaml`
+- **THEN** it finds exactly the three named business journeys in deterministic order
+- **AND** every helper YAML is nested below the top-level directory
+
+#### Scenario: A fourth top-level YAML is introduced
+
+- **WHEN** a contributor adds or moves another YAML directly under `mobile/.maestro/`
+- **THEN** baseline CI fails with the unexpected top-level inventory before a native runner is allocated
+
+### Requirement: Fresh-user import proves the real school-to-calendar path
+
+The fresh-user journey SHALL clear application state, follow the shipped welcome, seeded school selection, programme, connect, and URL-import screens, and submit a deterministic iCalendar fixture served by the harness-managed backend in the test/E2E environment. It SHALL finish on a rendered synced calendar and open a seeded synced-event detail with real content.
+
+#### Scenario: A fresh student imports a timetable
+
+- **WHEN** the flow selects the seeded school returned by the live schools endpoint, enters a programme, continues to URL import, and submits the harness fixture URL
+- **THEN** the backend creates and synchronizes the calendar through the generated client and persistence seams with nothing mocked
+- **AND** the flow observes the fixture event in Agenda and opens details showing its seeded title and content
+
+#### Scenario: Production does not expose the fixture
+
+- **WHEN** the server module graph is built outside the test/E2E environment
+- **THEN** the deterministic iCalendar fixture route is not registered
+
+### Requirement: Personal-event smoke covers edit and restart persistence
+
+The personal-event journey SHALL enter creation through the shipped Home or Calendar surface, create an event, reopen it from the rendered calendar/home surface, edit it, save it, cold-reopen the app without clearing state, verify the edit persisted, and delete the event through the confirmed destructive path.
+
+#### Scenario: A personal event survives edits and restart
+
+- **WHEN** a student creates a personal event with deterministic text, edits a stable text field, saves, and cold-reopens the owning surface
+- **THEN** the edited event renders from the real local database and opens with the edited value
+- **AND** confirmed deletion removes it from the rendered surface
+
+### Requirement: Subscribed-calendar visibility updates the rendered schedule
+
+The calendar-management journey SHALL import the seeded subscribed calendar, positively observe its schedule, toggle the calendar hidden, cold-reopen the rendered calendar and prove the schedule is absent, toggle it visible again, and cold-reopen the rendered calendar to prove the schedule is restored. The flow SHALL leave visibility restored.
+
+#### Scenario: A subscription is hidden and restored
+
+- **WHEN** the flow toggles the seeded calendar off through its stable visibility switch and later toggles it on through the same management surface
+- **THEN** a target event disappears while a positive current-screen or control anchor prevents an empty-screen false positive
+- **AND** the target event reappears after restoration, proving the persisted filter is consumed by schedule rendering
+
+### Requirement: Removed device behavior remains at the cheapest valuable seam
+
+Detailed Activity pagination/tie ordering, settings destinations, environment switching, feedback, rename convergence, checklist permutations, UI variants, and retry-recovery fixtures SHALL NOT remain independently executed native journeys. Static selector integrity and structural harness-classifier fixtures SHALL remain baseline CI checks. The implementation SHALL add focused server, store/persistence, or component coverage only for valuable behavior found absent during the removal audit.
+
+#### Scenario: A removed flow has existing focused coverage
+
+- **WHEN** the implementation audit maps a removed native assertion to an existing deterministic lower-level test
+- **THEN** no duplicate replacement test is added
+
+#### Scenario: Valuable behavior has no cheaper proof
+
+- **WHEN** the audit identifies valuable ordering, persistence, or navigation behavior with no existing focused coverage
+- **THEN** the smallest appropriate server, integration, or component test is added and runs in baseline CI
+
+### Requirement: Smoke changes receive one bounded exact-head native proof
+
+After focused static tests pass, this suite reduction SHALL receive one deliberate manual workflow dispatch for the final exact commit on both Android and iOS. A repeat SHALL require a relevant code/config change or concrete transient-failure evidence recorded with the issue. Broader release-candidate parity remains human-directed exploratory acceptance rather than additional daily top-level journeys.
+
+#### Scenario: The final smoke implementation is ready for native evidence
+
+- **WHEN** the final implementation commit passes selector, harness, classifier, fixture, and relevant focused tests
+- **THEN** one manual dispatch targets that immutable commit and selects both platforms
+
+#### Scenario: Infrastructure prevents trustworthy proof
+
+- **WHEN** the bounded dispatch cannot produce trustworthy platform evidence because of runner infrastructure
+- **THEN** the failure and retained artifacts are reported as grouped E2E-health debt
+- **AND** the suite is not expanded into repeated remediation or rerun chains
+
 ### Requirement: Native E2E is a conditional health signal
 
 The native mobile E2E workflow SHALL be an informational health signal rather than an ordinary feature-merge gate. It SHALL expose exactly one daily schedule and a manual dispatch, SHALL have no push or pull-request trigger, and SHALL NOT use a label convention to run on feature-branch updates. Scheduled or manual failures SHALL preserve diagnostic evidence without blocking unrelated feature delivery.

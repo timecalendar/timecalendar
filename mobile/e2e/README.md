@@ -106,7 +106,7 @@ change.
 Do not mechanically recreate a removed assertion. Add lower-level coverage only
 when a valuable behavior is genuinely absent, and prefer replacing a smoke
 journey over growing the daily pack. More than five top-level business journeys
-requires a new board decision (ADR 056).
+requires a new board decision (ADR 057).
 
 ## CI evidence
 
