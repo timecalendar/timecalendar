@@ -354,6 +354,10 @@ describe("Maestro journey contracts", () => {
       ]),
     ).toBe(true)
     expect(failNext).toContain("body: JSON.stringify({})")
+    expect(failNext).toContain(
+      "`${E2E_CONTROL_URL}/__e2e/export-guide/fail-next`",
+    )
+    expect(retry).toContain("E2E_CONTROL_URL: ${E2E_CONTROL_URL}")
   })
 
   it("keeps cold Calendar-to-Agenda entry in one shared helper", () => {

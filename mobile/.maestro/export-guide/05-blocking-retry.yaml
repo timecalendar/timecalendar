@@ -1,6 +1,6 @@
 appId: fr.samuelprak.timecalendar.dev
 env:
-  E2E_SERVER_URL: ${E2E_SERVER_URL}
+  E2E_CONTROL_URL: ${E2E_CONTROL_URL}
 ---
 - runFlow: helpers/start-onboarding.yaml
 - runScript: fail-next.js

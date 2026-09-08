@@ -174,7 +174,7 @@ run_flow() {
 
   maestro_args=(test)
   if [ "$SUITE" = "export-guide" ]; then
-    maestro_args+=(-e "E2E_SERVER_URL=$E2E_SERVER_URL")
+    maestro_args+=(-e "E2E_CONTROL_URL=$E2E_CONTROL_URL")
   fi
   maestro_args+=("$flow")
 
@@ -212,12 +212,11 @@ run_flow() {
 log "booting the e2e server stack (ci/e2e-server.sh up $NATIVE_FLAG)…"
 # shellcheck disable=SC2086  # NATIVE_FLAG is intentionally word-split (may be empty)
 "$E2E_SERVER" up $NATIVE_FLAG
-if [ "$SUITE" = "export-guide" ] && [ -z "${E2E_SERVER_URL:-}" ]; then
-  if [ "$NATIVE_FLAG" = "--native" ]; then
-    export E2E_SERVER_URL="http://localhost:3005"
-  else
-    export E2E_SERVER_URL="http://10.0.2.2:3005"
-  fi
+if [ "$SUITE" = "export-guide" ] && [ -z "${E2E_CONTROL_URL:-}" ]; then
+  # runScript HTTP executes in Maestro's host JVM, not inside the app. Keep
+  # this control-plane address on runner loopback even when Android's baked
+  # EXPO_PUBLIC_API_URL uses the emulator bridge address.
+  export E2E_CONTROL_URL="http://localhost:3005"
 fi
 
 # --- 2. Run the Maestro flows against the connected device -------------------

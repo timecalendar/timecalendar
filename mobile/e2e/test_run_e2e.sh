@@ -507,7 +507,7 @@ run_fixture "$fixture" pass 0
 assert_count 0 '^setup:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
-assert_count 0 'E2E_SERVER_URL=' "$fixture/maestro-args"
+assert_count 0 'E2E_CONTROL_URL=' "$fixture/maestro-args"
 
 # The explicitly selected suite has its own lexical inventory and excludes its helper.
 fixture="$(make_fixture export_suite)"
@@ -518,12 +518,12 @@ assert_count 0 '^export-setup:' "$fixture/calls"
 assert_count 0 '^alpha:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
-assert_count 2 '^test -e E2E_SERVER_URL=http://10.0.2.2:3005 ' "$fixture/maestro-args"
+assert_count 2 '^test -e E2E_CONTROL_URL=http://localhost:3005 ' "$fixture/maestro-args"
 
-# Native runners publish the loopback host to Maestro's JavaScript environment.
+# Native runners use the same host-loopback control endpoint.
 fixture="$(make_fixture export_suite_native)"
 run_fixture "$fixture" pass 0 --suite export-guide --native
-assert_count 2 '^test -e E2E_SERVER_URL=http://localhost:3005 ' "$fixture/maestro-args"
+assert_count 2 '^test -e E2E_CONTROL_URL=http://localhost:3005 ' "$fixture/maestro-args"
 
 assert_invalid_suite() {
   local label="$1"
