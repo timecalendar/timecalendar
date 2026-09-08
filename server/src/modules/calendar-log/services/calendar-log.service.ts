@@ -15,7 +15,6 @@ import { CalendarLogSearchV1Response } from "modules/calendar-log/models/dto/cal
 import { SearchCalendarLogsV1Dto } from "modules/calendar-log/models/dto/search-calendar-logs-v1.dto"
 import { CalendarLogMetricsService } from "modules/calendar-log/services/calendar-log-metrics.service"
 import {
-  CalendarLogV1Fragment,
   projectCalendarLogV1,
   serializedJsonBytes,
 } from "modules/calendar-log/models/calendar-log-v1-projection"
@@ -115,7 +114,7 @@ export class CalendarLogService {
       const projection = projectCalendarLogV1(
         this.mapper.toCalendarLogV1(row.log),
       )
-      let fragments: CalendarLogV1Fragment[] = projection.fragments
+      let fragments = projection.fragments
       if (rowIndex === 0 && resumeOffset !== null) {
         if (resumeOffset >= projection.totalEntries) {
           throw invalidCalendarLogCursor()

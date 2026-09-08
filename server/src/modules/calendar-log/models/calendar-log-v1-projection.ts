@@ -103,25 +103,26 @@ const collectionLength = (
 export const projectCalendarLogV1 = (
   source: CalendarLogV1,
 ): CalendarLogV1Projection => {
-  const entries = atomicChanges(source)
-  if (
-    serializedJsonBytes(source) <= MAX_FRAGMENT_BYTES ||
-    entries.length === 0
-  ) {
+  const totalEntries =
+    source.calendarChange.newItems.length +
+    source.calendarChange.changedItems.length +
+    source.calendarChange.oldItems.length
+  if (serializedJsonBytes(source) <= MAX_FRAGMENT_BYTES || totalEntries === 0) {
     return {
       fragments: [
         {
           item: source,
           startOffset: 0,
-          endOffset: entries.length,
+          endOffset: totalEntries,
           oversized: false,
         },
       ],
-      totalEntries: entries.length,
+      totalEntries,
       oversizedAtomicEntries: 0,
     }
   }
 
+  const entries = atomicChanges(source)
   const fragments: CalendarLogV1Fragment[] = []
   let change = emptyChange()
   let item = fragmentItem(source, 0, change)
@@ -133,10 +134,12 @@ export const projectCalendarLogV1 = (
     const oversized = currentBytes > MAX_FRAGMENT_BYTES
     if (oversized) oversizedAtomicEntries += 1
     fragments.push({ item, startOffset, endOffset, oversized })
-    startOffset = endOffset
-    change = emptyChange()
-    item = fragmentItem(source, fragments.length, change)
-    currentBytes = serializedJsonBytes(item)
+    if (endOffset < entries.length) {
+      startOffset = endOffset
+      change = emptyChange()
+      item = fragmentItem(source, fragments.length, change)
+      currentBytes = serializedJsonBytes(item)
+    }
   }
 
   entries.forEach((entry, index) => {

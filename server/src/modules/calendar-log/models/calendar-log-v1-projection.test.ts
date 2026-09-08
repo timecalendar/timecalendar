@@ -1,6 +1,7 @@
 import {
   MAX_FRAGMENT_BYTES,
   projectCalendarLogV1,
+  serializedJsonBytes,
 } from "modules/calendar-log/models/calendar-log-v1-projection"
 import { CalendarLogV1 } from "modules/calendar-log/models/dto/calendar-log-v1.dto"
 import { CalendarLogEventGet } from "modules/calendar-log/models/dto/calendar-log-event-get.dto"
@@ -66,9 +67,7 @@ describe("CalendarLogV1 projection", () => {
     ).toBe(first.fragments.length)
     expect(
       first.fragments.every(
-        (fragment) =>
-          Buffer.byteLength(JSON.stringify(fragment.item), "utf8") <=
-          MAX_FRAGMENT_BYTES,
+        (fragment) => serializedJsonBytes(fragment.item) <= MAX_FRAGMENT_BYTES,
       ),
     ).toBe(true)
 
