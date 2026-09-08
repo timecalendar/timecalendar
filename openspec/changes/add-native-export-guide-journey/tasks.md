@@ -61,10 +61,10 @@
   feature guidance for the selector/dynamic routes and ephemeral state, and add the Architecture
   Book `CHANGELOG.md` entry; verify no obsolete production no-draft or Connect-to-manual statement
   remains and add a new ADR only if implementation introduces another costly-to-reverse rule.
-- [ ] 5.2 Run formatting plus focused journey, navigation, route-structure, component, localization,
+- [x] 5.2 Run formatting plus focused journey, navigation, route-structure, component, localization,
   image, and observability suites; then run `npx tsc --noEmit`, `npm run lint`, and
   `npm test -- --coverage` from `mobile/`, preserving 90% logic and 70% global thresholds.
-- [ ] 5.3 Run `openspec validate add-native-export-guide-journey --strict`, inspect the final diff
+- [x] 5.3 Run `openspec validate add-native-export-guide-journey --strict`, inspect the final diff
   for scope and disclosure safety, and confirm the branch changes none of the OpenAPI/generated API,
   server, storage schema, native/store configuration, workflow, Flutter, web, deployment,
   catalogue-activation, or production-flag surfaces.
