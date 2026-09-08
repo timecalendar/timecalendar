@@ -51,9 +51,11 @@ describe("CalendarLogRepository search", () => {
 
       const last = pageRows[pageRows.length - 1]
       cursor = {
+        version: 2,
         asOfText,
         createdAtText: last.createdAtText,
         id: last.log.id,
+        offset: 0,
       }
     }
 
@@ -154,6 +156,55 @@ describe("CalendarLogRepository search", () => {
       expect(row.createdAtText).toBe("2026-08-01 10:00:25.641234")
       // A Date could not have carried those last three digits.
       expect(row.log.createdAt.getTime() % 1000).toBe(641)
+    })
+
+    it("includes the anchored row only for a positive version 2 offset", async () => {
+      const calendar = await calendarFactory().create()
+      const anchorId = await createCalendarLogAt(
+        calendar,
+        "2026-08-01 10:00:02.123456",
+      )
+      const olderId = await createCalendarLogAt(
+        calendar,
+        "2026-08-01 10:00:01.123456",
+      )
+      const { asOfText } = await snapshot()
+      const cursor: CalendarLogCursor = {
+        version: 2,
+        asOfText,
+        createdAtText: "2026-08-01 10:00:02.123456",
+        id: anchorId,
+        offset: 1,
+      }
+
+      await expect(
+        repository.searchPage({
+          tokens: [calendar.token],
+          asOfText,
+          cursor,
+          limit: 10,
+        }),
+      ).resolves.toEqual([
+        expect.objectContaining({
+          log: expect.objectContaining({ id: anchorId }),
+        }),
+        expect.objectContaining({
+          log: expect.objectContaining({ id: olderId }),
+        }),
+      ])
+
+      await expect(
+        repository.searchPage({
+          tokens: [calendar.token],
+          asOfText,
+          cursor: { ...cursor, version: 1, offset: 0 },
+          limit: 10,
+        }),
+      ).resolves.toEqual([
+        expect.objectContaining({
+          log: expect.objectContaining({ id: olderId }),
+        }),
+      ])
     })
 
     it("excludes rows written after the snapshot from every page", async () => {

@@ -62,6 +62,29 @@ describe("buildActivitySections", () => {
     expect(section?.data[1]).toMatchObject({ kind: "cancelled" })
   })
 
+  it("keeps equal-timestamp fragments in source traversal order", () => {
+    const sourceId = "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d05"
+    const createdAt = "2026-08-30T10:00:00Z"
+    const fragment = (id: string, uid: string) =>
+      log(id, createdAt, {
+        oldItems: [],
+        newItems: [event(uid)],
+        changedItems: [],
+      })
+
+    const sections = buildActivitySections([
+      fragment("3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffd", "third"),
+      fragment(sourceId, "first"),
+      fragment("3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe", "second"),
+    ])
+
+    expect(
+      sections.flatMap((section) =>
+        section.log.change.newItems.map(({ uid }) => uid),
+      ),
+    ).toEqual(["first", "second", "third"])
+  })
+
   it("omits an all-empty change payload", () => {
     expect(
       buildActivitySections([

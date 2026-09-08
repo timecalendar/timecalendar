@@ -1,5 +1,13 @@
 # Architecture Book changelog
 
+## 2026-09-08
+
+- Added ADR 058 and the binding Activity virtual-page contract: oversized source logs become
+  deterministic valid fragments, fragment zero replaces an old id-keyed cache row, sortable
+  later ids preserve traversal order after persistence, version 1 cursors remain readable, and
+  version 2 resumes at an exact atomic-entry position. The client limit of 50 now explicitly
+  combines with the server's 900,000-byte serialized-envelope target.
+
 ## 2026-09-07
 
 - Added the native export-guide data boundary: one response-aware generated operation, complete

@@ -42,6 +42,14 @@ export class CalendarLogMetricsService {
     { unit: "{requests}", description: "v1 calendar-log search outcomes" },
   )
 
+  private readonly fragmentOverflowCounter = meter.createCounter(
+    "calendar_log_fragment_atomic_overflow_total",
+    {
+      unit: "{entries}",
+      description: "Atomic v1 change entries exceeding the fragment target",
+    },
+  )
+
   recordPageRows(rows: number, page: CalendarLogSearchPage) {
     this.pageRows.record(rows, { page })
   }
@@ -52,5 +60,9 @@ export class CalendarLogMetricsService {
 
   recordSearch(attributes: CalendarLogSearchAttributes) {
     this.searchCounter.add(1, attributes)
+  }
+
+  recordFragmentOverflow(entries: number) {
+    this.fragmentOverflowCounter.add(entries)
   }
 }

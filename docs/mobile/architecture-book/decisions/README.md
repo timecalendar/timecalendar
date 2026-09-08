@@ -50,6 +50,7 @@ decision changes; use Git for its history.
 | [055](./055-native-e2e-daily-health-signal.md)                        | Run native E2E as a conditional daily/manual health signal                                        |
 | [056](./056-compose-native-dialog-behind-chrome.md)                   | Compose divergent native dialogs behind the chrome seam                                            |
 | [057](./057-three-journey-native-smoke-budget.md)                     | Limit daily native smoke to three durable business journeys                                       |
+| [058](./058-activity-virtual-fragment-pagination.md)                  | Page Activity as stable byte-bounded virtual fragments                                             |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

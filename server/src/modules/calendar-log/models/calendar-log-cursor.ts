@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common"
 
-export const CALENDAR_LOG_CURSOR_VERSION = 1
+export const LEGACY_CALENDAR_LOG_CURSOR_VERSION = 1
+export const CALENDAR_LOG_CURSOR_VERSION = 2
 
 // Postgres renders a `timestamp` as `YYYY-MM-DD HH:MM:SS[.ffffff]`. The `T`
 // separator is accepted too so a cursor stays decodable if the driver ever
@@ -13,14 +14,25 @@ const BASE64URL = /^[A-Za-z0-9_-]+$/
 // decoded out of it back to the caller.
 const INVALID_CURSOR = "Invalid cursor"
 
+export const invalidCalendarLogCursor = (): BadRequestException =>
+  new BadRequestException(INVALID_CURSOR)
+
 export interface CalendarLogCursor {
+  version: 1 | 2
   /** The chain's snapshot watermark, as Postgres timestamp text. */
   asOfText: string
   /** The last returned row's `createdAt`, as Postgres timestamp text. */
   createdAtText: string
   /** The last returned row's id. */
   id: string
+  /** Exact next atomic-change position. Version 1 always decodes to zero. */
+  offset: number
 }
+
+export const isFragmentResumeCursor = (
+  cursor: CalendarLogCursor | null | undefined,
+): cursor is CalendarLogCursor & { version: 2 } =>
+  cursor?.version === CALENDAR_LOG_CURSOR_VERSION && cursor.offset > 0
 
 /**
  * The wire payload is deliberately terse and positional-free: a version plus
@@ -32,6 +44,7 @@ interface CursorPayload {
   a: string
   c: string
   i: string
+  o: number
 }
 
 export const encodeCursor = (cursor: CalendarLogCursor): string => {
@@ -40,6 +53,7 @@ export const encodeCursor = (cursor: CalendarLogCursor): string => {
     a: cursor.asOfText,
     c: cursor.createdAtText,
     i: cursor.id,
+    o: cursor.offset,
   }
 
   return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url")
@@ -75,14 +89,14 @@ const isTimestampText = (value: string): boolean => {
  */
 const anchorField = (value: unknown, pattern: RegExp): string => {
   if (typeof value !== "string" || !pattern.test(value)) {
-    throw new BadRequestException(INVALID_CURSOR)
+    throw invalidCalendarLogCursor()
   }
   return value
 }
 
 const timestampField = (value: unknown): string => {
   if (typeof value !== "string" || !isTimestampText(value)) {
-    throw new BadRequestException(INVALID_CURSOR)
+    throw invalidCalendarLogCursor()
   }
   return value
 }
@@ -98,24 +112,35 @@ const timestampField = (value: unknown): string => {
  * cursor can only move the window inside data the caller could already read.
  */
 export const decodeCursor = (value: string): CalendarLogCursor => {
-  if (!BASE64URL.test(value)) throw new BadRequestException(INVALID_CURSOR)
+  if (!BASE64URL.test(value)) throw invalidCalendarLogCursor()
 
   let payload: unknown
   try {
     payload = JSON.parse(Buffer.from(value, "base64url").toString("utf8"))
   } catch {
-    throw new BadRequestException(INVALID_CURSOR)
+    throw invalidCalendarLogCursor()
   }
 
-  if (!isRecord(payload)) throw new BadRequestException(INVALID_CURSOR)
-  if (payload.v !== CALENDAR_LOG_CURSOR_VERSION) {
-    throw new BadRequestException(INVALID_CURSOR)
+  if (!isRecord(payload)) throw invalidCalendarLogCursor()
+  if (
+    payload.v !== LEGACY_CALENDAR_LOG_CURSOR_VERSION &&
+    payload.v !== CALENDAR_LOG_CURSOR_VERSION
+  ) {
+    throw invalidCalendarLogCursor()
+  }
+
+  const offset =
+    payload.v === LEGACY_CALENDAR_LOG_CURSOR_VERSION ? 0 : payload.o
+  if (!Number.isSafeInteger(offset) || (offset as number) < 0) {
+    throw invalidCalendarLogCursor()
   }
 
   return {
+    version: payload.v,
     asOfText: timestampField(payload.a),
     createdAtText: timestampField(payload.c),
     id: anchorField(payload.i, UUID),
+    offset: offset as number,
   }
 }
 

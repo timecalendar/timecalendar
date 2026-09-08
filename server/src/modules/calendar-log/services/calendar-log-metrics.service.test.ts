@@ -60,6 +60,7 @@ const pageRow = () => ({
 describe("CalendarLogMetricsService", () => {
   let service: CalendarLogService
   let repository: jest.Mocked<CalendarLogRepository>
+  let mapper: jest.Mocked<CalendarLogMapper>
 
   beforeEach(async () => {
     mockMeasurements.length = 0
@@ -72,7 +73,7 @@ describe("CalendarLogMetricsService", () => {
 
     service = module.get(CalendarLogService)
     repository = module.get(CalendarLogRepository)
-    const mapper: jest.Mocked<CalendarLogMapper> = module.get(CalendarLogMapper)
+    mapper = module.get(CalendarLogMapper)
 
     repository.getSnapshotTime.mockResolvedValue({
       asOf: timestampTextToDate(ASOF_TEXT),
@@ -80,7 +81,14 @@ describe("CalendarLogMetricsService", () => {
     })
     repository.searchPage.mockResolvedValue([pageRow()])
     repository.countSince.mockResolvedValue(7)
-    mapper.toCalendarLogV1.mockReturnValue({} as never)
+    mapper.toCalendarLogV1.mockReturnValue({
+      id: LOG_ID,
+      calendarId: CALENDAR_ID,
+      calendarName: CALENDAR_NAME,
+      calendarChange: { oldItems: [], newItems: [], changedItems: [] },
+      createdAt: timestampTextToDate(CREATED_AT_TEXT),
+      updatedAt: timestampTextToDate(CREATED_AT_TEXT),
+    })
   })
 
   const attributeValues = () =>
@@ -113,9 +121,11 @@ describe("CalendarLogMetricsService", () => {
       tokens: [TOKEN],
       limit: 50,
       cursor: encodeCursor({
+        version: 2,
         asOfText: ASOF_TEXT,
         createdAtText: CREATED_AT_TEXT,
         id: LOG_ID,
+        offset: 0,
       }),
     })
 
@@ -152,12 +162,45 @@ describe("CalendarLogMetricsService", () => {
     ])
   })
 
+  it("records an oversized atomic-entry escape without labels", async () => {
+    mapper.toCalendarLogV1.mockReturnValue({
+      id: LOG_ID,
+      calendarId: CALENDAR_ID,
+      calendarName: CALENDAR_NAME,
+      calendarChange: {
+        oldItems: [],
+        changedItems: [],
+        newItems: [
+          {
+            uid: "synthetic",
+            title: "x".repeat(300_000),
+            location: "room",
+            startsAt: new Date("2026-09-01T08:00:00.000Z"),
+            endsAt: new Date("2026-09-01T09:00:00.000Z"),
+          },
+        ],
+      },
+      createdAt: timestampTextToDate(CREATED_AT_TEXT),
+      updatedAt: timestampTextToDate(CREATED_AT_TEXT),
+    })
+
+    await service.searchV1({ tokens: [TOKEN], limit: 50 })
+
+    expect(mockMeasurements).toContainEqual({
+      instrument: "calendar_log_fragment_atomic_overflow_total",
+      value: 1,
+      attributes: undefined,
+    })
+  })
+
   // The privacy negative the Reviewer can point at.
   it("never emits a token, calendar, log id or cursor in any label", async () => {
     const cursor = encodeCursor({
+      version: 2,
       asOfText: ASOF_TEXT,
       createdAtText: CREATED_AT_TEXT,
       id: LOG_ID,
+      offset: 0,
     })
 
     await service.searchV1({

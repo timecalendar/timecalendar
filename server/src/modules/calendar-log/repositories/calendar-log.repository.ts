@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common"
 import { InjectRepository } from "@nestjs/typeorm"
 import { DeepPartial, Repository, In } from "typeorm"
-import { CalendarLogCursor } from "modules/calendar-log/models/calendar-log-cursor"
+import {
+  CalendarLogCursor,
+  isFragmentResumeCursor,
+} from "modules/calendar-log/models/calendar-log-cursor"
 import { CalendarLog } from "modules/calendar-log/models/calendar-log.entity"
 import { Calendar } from "modules/calendar/models/calendar.entity"
 import {
@@ -130,7 +133,10 @@ export class CalendarLogRepository {
         ]
       : [calendars.map((calendar) => calendar.id), asOfText, limit]
     const rows = await this.repository.query<RawCalendarLogPageRow[]>(
-      calendarLogPageLateralSql(Boolean(cursor)),
+      calendarLogPageLateralSql(
+        Boolean(cursor),
+        isFragmentResumeCursor(cursor),
+      ),
       parameters,
     )
 

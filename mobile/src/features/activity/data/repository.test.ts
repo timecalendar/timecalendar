@@ -1,7 +1,11 @@
 import { recordUnknownError } from "@/firebase"
 import { createFakeDb } from "@/test-support/fake-db"
 
-import type { ActivityLogInsert, ActivityPageWrite } from "./types"
+import type {
+  ActivityLogDto,
+  ActivityLogInsert,
+  ActivityPageWrite,
+} from "./types"
 
 // Driven through the SHARED stateful in-memory @/db harness (createFakeDb), never
 // a bespoke Activity mock — the hand-rolled duplication TIM-151 was dispatched to
@@ -51,6 +55,10 @@ const {
   require("./repository") as typeof import("./repository")
 
 const mockRecordUnknownError = recordUnknownError as jest.Mock
+
+const { dtoToActivityRow } =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require("./mappers") as typeof import("./mappers")
 
 const CHANGE = { oldItems: [], newItems: [], changedItems: [] }
 
@@ -146,6 +154,71 @@ describe("page upsert", () => {
     const logs = await listActivityLogs()
     expect(logs).toHaveLength(1)
     expect(logs[0]?.calendarName).toBe("Renamed")
+  })
+
+  it("replaces a cached whole item with fragment zero and retains later fragments", async () => {
+    const sourceId = "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d05"
+    const base: Omit<ActivityLogDto, "id" | "calendarChange"> = {
+      calendarId: "cal-1",
+      calendarName: "L3 Informatique",
+      createdAt: "2026-06-16T09:00:00.000Z",
+      updatedAt: "2026-06-16T09:00:00.000Z",
+    }
+    const dtoEvent = (uid: string) => ({
+      uid,
+      title: `Event ${uid}`,
+      location: "Room",
+      startsAt: "2026-06-16T09:00:00.000Z",
+      endsAt: "2026-06-16T10:00:00.000Z",
+    })
+    const whole = dtoToActivityRow({
+      ...base,
+      id: sourceId,
+      calendarChange: {
+        newItems: [dtoEvent("new-a"), dtoEvent("new-b")],
+        changedItems: [],
+        oldItems: [],
+      },
+    })
+    const fragmentZero = dtoToActivityRow({
+      ...base,
+      id: sourceId,
+      calendarChange: {
+        newItems: [dtoEvent("new-a")],
+        changedItems: [],
+        oldItems: [],
+      },
+    })
+    const fragmentOne = dtoToActivityRow({
+      ...base,
+      id: "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe",
+      calendarChange: {
+        newItems: [dtoEvent("new-b")],
+        changedItems: [],
+        oldItems: [],
+      },
+    })
+
+    if (whole === null || fragmentZero === null || fragmentOne === null) {
+      throw new Error("valid Activity fragment fixture did not map")
+    }
+    await storeNewestPage(page({ rows: [whole] }))
+    await storeNewestPage(
+      page({
+        rows: [fragmentZero, fragmentOne],
+      }),
+    )
+
+    const logs = await listActivityLogs()
+    expect(logs).toHaveLength(2)
+    expect(logs.map((log) => log.id)).toEqual([
+      sourceId,
+      "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d04z1ffffffffffffe",
+    ])
+    expect(logs.flatMap((log) => log.change.newItems)).toEqual([
+      dtoEvent("new-a"),
+      dtoEvent("new-b"),
+    ])
   })
 
   // The whole reason the cache is merged rather than drop+replaced: a backfilled
