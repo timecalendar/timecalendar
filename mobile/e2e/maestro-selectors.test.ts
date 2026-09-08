@@ -303,6 +303,10 @@ describe("Maestro journey contracts", () => {
     const skipped = flow("export-guide/03-connect-skips.yaml")
     const unlisted = flow("export-guide/04-unlisted-provider.yaml")
     const retry = flow("export-guide/05-blocking-retry.yaml")
+    const failNext = readFileSync(
+      join(exportGuideFlowsDir, "fail-next.js"),
+      "utf8",
+    )
 
     expect(
       containsOrdered(exact, [
@@ -349,6 +353,7 @@ describe("Maestro journey contracts", () => {
         'id: "export-guide-page"',
       ]),
     ).toBe(true)
+    expect(failNext).toContain("body: JSON.stringify({})")
   })
 
   it("keeps cold Calendar-to-Agenda entry in one shared helper", () => {
