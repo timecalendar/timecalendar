@@ -94,14 +94,18 @@ jest.mock("@/features/calendar-sources/data", () => ({
   ...jest.requireActual("@/features/calendar-sources/data"),
   useAddCalendar: jest.fn(),
 }))
-// The onboarding draft seam. `mockImportFields` is what the derivation would
-// yield for the journey the screen was opened from; the no-draft direct route is
-// covered by its own case below.
+// The onboarding seam is seeded as legal here; guard rejection is covered by
+// the journey route tests while these cases retain focus on camera/import logic.
 let mockImportFields: { name: string; schoolId?: string; schoolName?: string }
 const mockClearDraft = jest.fn()
+const mockDispatch = jest.fn()
 jest.mock("@/features/onboarding", () => ({
   useImportCreateFields: () => mockImportFields,
-  useImportDraft: () => ({ clearDraft: mockClearDraft }),
+  useImportDraft: () => ({
+    clearDraft: mockClearDraft,
+    dispatch: mockDispatch,
+  }),
+  useProtectedImportRoute: () => true,
 }))
 
 const mockBack = router.back as jest.Mock
@@ -249,9 +253,8 @@ describe("QrScanScreen", () => {
     expect(mockDismissAll).toHaveBeenCalledTimes(1)
   })
 
-  it("creates with empty metadata and falls back to back() on a direct route with no draft", async () => {
-    // The route opened by a dev link / external link / restored navigation: no
-    // provider, so no draft — a supported entry point, not an error.
+  it("preserves the inert empty-field derivation in a seeded development journey", async () => {
+    // The explicit development seed may exercise the existing empty-field seam.
     mockImportFields = { name: "", schoolName: "" }
     mockCanDismiss.mockReturnValue(false)
     const { getByTestId } = await render(<QrScanScreen />)

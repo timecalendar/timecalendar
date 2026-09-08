@@ -36,6 +36,7 @@ const mockClearDraft = jest.fn()
 jest.mock("@/features/onboarding", () => ({
   useImportCreateFields: () => mockImportFields,
   useImportDraft: () => ({ clearDraft: mockClearDraft }),
+  useProtectedImportRoute: () => true,
 }))
 
 const mockBack = router.back as jest.Mock
@@ -56,7 +57,7 @@ beforeEach(() => {
     reset: mockReset,
     ...addState,
   }))
-  // The direct-route default: no draft, so no institution and no programme.
+  // A seeded legal test journey may retain the inert empty-field derivation.
   mockImportFields = { name: "", schoolName: "" }
   mockCanDismiss.mockReturnValue(true)
 })

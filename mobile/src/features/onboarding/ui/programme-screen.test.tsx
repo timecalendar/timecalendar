@@ -96,7 +96,18 @@ const expectStickyProgrammeCta = async () => {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockUseImportDraft.mockReturnValue({ setCalendarName: mockSetCalendarName })
+  mockUseImportDraft.mockReturnValue({
+    setCalendarName: mockSetCalendarName,
+    draft: {
+      institution: {
+        kind: "listed",
+        school: {
+          intranetUrl: "https://example.com",
+          exportGuide: { requireConnect: true, providerSlug: "generic" },
+        },
+      },
+    },
+  })
 })
 
 const typeAndSubmit = async (value: string) => {

@@ -102,7 +102,7 @@ export default function ConnectScreen() {
             accessibilityRole="button"
             accessibilityLabel={t("onboarding.connect.continueLabel")}
             hitSlop={Spacing.two}
-            onPress={() => router.push("/onboarding/import")}
+            onPress={() => router.push("/onboarding/export-guide/0")}
             style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
           >
             <ThemedText type="smallBold" themeColor="onPrimary">

@@ -7,7 +7,9 @@ import { KeyboardSafeActionLayout } from "@/components/keyboard-safe-action-layo
 import { PrimaryAction } from "@/components/primary-action"
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
+import { emitExportGuideEvent } from "@/features/export-guides/ui"
 import {
+  decideIntranetUrl,
   isImportNameWithinLimit,
   normalizeImportName,
   useImportDraft,
@@ -34,7 +36,7 @@ import { stepStyles } from "./step-styles"
 export default function ProgrammeScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { setCalendarName } = useImportDraft()
+  const { draft, setCalendarName } = useImportDraft()
   const [name, setName] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
 
@@ -43,7 +45,30 @@ export default function ProgrammeScreen() {
 
   const advance = (value: string) => {
     setCalendarName(value)
-    router.push("/onboarding/connect")
+    if (draft?.institution.kind === "unlisted") {
+      router.push("/onboarding/export-guide/providers")
+      return
+    }
+    if (draft?.institution.kind !== "listed") {
+      router.replace("/onboarding/school")
+      return
+    }
+    const { exportGuide } = draft.institution.school
+    if (exportGuide.requireConnect) {
+      const intranet = decideIntranetUrl(draft.institution.school.intranetUrl)
+      if (intranet.kind === "safe") {
+        router.push("/onboarding/connect")
+        return
+      }
+      emitExportGuideEvent({
+        name: "export_guide_connect_skipped",
+        params: {
+          reason: intranet.kind === "missing" ? "missing_url" : "unsafe_url",
+          provider_slug: exportGuide.providerSlug,
+        },
+      })
+    }
+    router.push("/onboarding/export-guide/0")
   }
 
   const submit = () => {

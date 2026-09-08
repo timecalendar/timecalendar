@@ -8,9 +8,18 @@
 // top-level barrel re-exports ui/, whose screens import this one.
 export {
   type CalendarImportDraft,
+  canEnterProtectedRoute,
+  decideIntranetUrl,
+  earliestLegalRoute,
+  type GateDecision,
   ImportDraftProvider,
   type ImportDraftValue,
   type ImportInstitution,
+  type ImportJourneyAction,
+  importJourneyReducer,
+  type ImportJourneyRoute,
+  type ImportJourneyState,
+  initialImportJourneyState,
   isImportNameWithinLimit,
   NAME_MAX_LENGTH,
   normalizeImportName,
@@ -18,6 +27,7 @@ export {
   toCreateFields,
   useImportCreateFields,
   useImportDraft,
+  useProtectedImportRoute,
 } from "./draft"
 export {
   ConnectScreen,

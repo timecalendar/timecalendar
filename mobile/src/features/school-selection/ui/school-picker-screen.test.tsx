@@ -32,8 +32,16 @@ jest.mock("@/hooks/use-color-scheme", () => ({
 // the picker test stays about the picker (the draft's own behaviour is proven in
 // onboarding/draft).
 const mockSetListedInstitution = jest.fn()
+const mockSetCalendarName = jest.fn()
 jest.mock("@/features/onboarding", () => ({
-  useImportDraft: () => ({ setListedInstitution: mockSetListedInstitution }),
+  ...jest.requireActual("@/features/onboarding"),
+  useImportDraft: () => ({
+    setListedInstitution: mockSetListedInstitution,
+    setCalendarName: mockSetCalendarName,
+  }),
+}))
+jest.mock("@/features/export-guides/ui", () => ({
+  emitExportGuideEvent: jest.fn(),
 }))
 
 jest.mock("expo-router", () => ({

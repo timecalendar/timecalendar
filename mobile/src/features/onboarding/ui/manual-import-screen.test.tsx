@@ -10,8 +10,13 @@ import ManualImportScreen from "./manual-import-screen"
 // routes and owns no permission, validation, create or retry logic. The source
 // assertion below is the only way to state that as a test rather than a promise.
 jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: () => null },
+}))
+const mockDispatch = jest.fn()
+jest.mock("@/features/onboarding/draft", () => ({
+  useImportDraft: () => ({ dispatch: mockDispatch }),
+  useProtectedImportRoute: () => true,
 }))
 
 const mockPush = router.push as jest.Mock

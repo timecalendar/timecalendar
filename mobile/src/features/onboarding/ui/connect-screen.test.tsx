@@ -150,7 +150,7 @@ describe("ConnectScreen", () => {
         fireEvent.press(getByTestId("onboarding-connect-continue")),
       )
       // The assistant insertion point: a plain push, nothing handed forward.
-      expect(mockPush).toHaveBeenCalledWith("/onboarding/import")
+      expect(mockPush).toHaveBeenCalledWith("/onboarding/export-guide/0")
     },
   )
 })

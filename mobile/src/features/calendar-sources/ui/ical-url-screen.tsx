@@ -10,7 +10,11 @@ import {
   useAddCalendar,
   validateIcalUrl,
 } from "@/features/calendar-sources/data"
-import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
+import {
+  useImportCreateFields,
+  useImportDraft,
+  useProtectedImportRoute,
+} from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 import { Radii, Spacing, useTheme } from "@/theme"
 
@@ -53,14 +57,18 @@ export default function IcalUrlScreen() {
   // Institution + programme come from the ephemeral journey draft, NOT from the
   // persisted school selection: a durable selection would attribute an import
   // made weeks later to a school the student is no longer importing from
-  // (TIM-391 / design D3, D10). Total — no draft ⇒ { name: "", schoolName: "" }.
+  // (TIM-391 / design D3, D10). The derivation stays total during guarded
+  // recovery, but no create action is reachable without current completion.
   const importFields = useImportCreateFields()
   const { clearDraft } = useImportDraft()
+  const legal = useProtectedImportRoute("ical", "/onboarding/ical-url")
   const [url, setUrl] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const [failedAttempt, setFailedAttempt] = useState<FailedIcalAttempt | null>(
     null,
   )
+
+  if (!legal) return null
 
   const report = () => {
     if (!failedAttempt) return

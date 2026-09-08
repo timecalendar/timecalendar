@@ -5,6 +5,10 @@ import { Pressable, StyleSheet } from "react-native"
 
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
+import {
+  useImportDraft,
+  useProtectedImportRoute,
+} from "@/features/onboarding/draft"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { stepStyles } from "./step-styles"
@@ -23,6 +27,10 @@ import { stepStyles } from "./step-styles"
 export default function ManualImportScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
+  const { dispatch } = useImportDraft()
+  const legal = useProtectedImportRoute("manual", "/onboarding/import")
+
+  if (!legal) return null
 
   return (
     <>
@@ -41,7 +49,10 @@ export default function ManualImportScreen() {
           accessibilityLabel={t("onboarding.import.qrLabel")}
           accessibilityHint={t("onboarding.import.qrHint")}
           hitSlop={Spacing.two}
-          onPress={() => router.push("/onboarding/qr-scan")}
+          onPress={() => {
+            dispatch({ type: "set-manual-handoff", target: "qr" })
+            router.push("/onboarding/qr-scan")
+          }}
           style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
         >
           <SymbolView
@@ -61,7 +72,10 @@ export default function ManualImportScreen() {
           accessibilityLabel={t("onboarding.import.urlLabel")}
           accessibilityHint={t("onboarding.import.urlHint")}
           hitSlop={Spacing.two}
-          onPress={() => router.push("/onboarding/ical-url")}
+          onPress={() => {
+            dispatch({ type: "set-manual-handoff", target: "ical" })
+            router.push("/onboarding/ical-url")
+          }}
           style={[
             styles.secondary,
             {

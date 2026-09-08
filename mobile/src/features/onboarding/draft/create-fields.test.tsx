@@ -1,10 +1,16 @@
 import { act, renderHook } from "@testing-library/react-native"
+import Constants from "expo-constants"
 import type { ReactNode } from "react"
 
 import type { SchoolListItem } from "@/features/school-selection/data"
 
 import { ImportDraftProvider, useImportDraft } from "./context"
 import { toCreateFields, useImportCreateFields } from "./create-fields"
+
+jest.mock("expo-constants", () => ({ expoConfig: { extra: {} } }))
+const mockConstants = Constants as unknown as {
+  expoConfig: { extra: Record<string, unknown> }
+}
 
 // The derivation table (design D3) and the draft's own lifecycle, at the 90%
 // logic gate. The load-bearing assertions are about key ABSENCE: the server
@@ -110,6 +116,20 @@ describe("useImportDraft", () => {
         result.current.setUnlistedInstitution("École du Coin")
         result.current.setCalendarName("L3")
         result.current.clearDraft()
+        result.current.seedDevelopmentCompletion(
+          {
+            institution: { kind: "listed", school },
+            calendarName: "",
+          },
+          {
+            locale: "en",
+            catalogueVersion: "v1",
+            providerSlug: "generic",
+            providerLabel: "Generic",
+            reason: "generic",
+            pages: [{ title: "One", description: "One" }],
+          },
+        )
       }),
     ).resolves.not.toThrow()
     expect(result.current.draft).toBeNull()
@@ -168,5 +188,38 @@ describe("useImportDraft", () => {
       result.current.clearDraft()
     })
     expect(result.current.draft).toBeNull()
+  })
+
+  it("seeds completion only for the runtime development variant", async () => {
+    const { result } = await renderHook(() => useImportDraft(), { wrapper })
+    const draft = {
+      institution: { kind: "listed" as const, school },
+      calendarName: "",
+    }
+    const snapshot = {
+      locale: "en" as const,
+      catalogueVersion: "v1",
+      providerSlug: "generic",
+      providerLabel: "Generic",
+      reason: "generic" as const,
+      pages: [{ title: "One", description: "One" }],
+    }
+    mockConstants.expoConfig = { extra: { appVariant: "production" } }
+    expect(result.current.seedDevelopmentCompletion(draft, snapshot)).toBe(
+      false,
+    )
+    mockConstants.expoConfig = { extra: { appVariant: "development" } }
+    expect(
+      result.current.seedDevelopmentCompletion(draft, {
+        ...snapshot,
+        pages: [],
+      }),
+    ).toBe(false)
+    await act(() => {
+      expect(result.current.seedDevelopmentCompletion(draft, snapshot)).toBe(
+        true,
+      )
+    })
+    expect(result.current.state.phase).toBe("completed")
   })
 })

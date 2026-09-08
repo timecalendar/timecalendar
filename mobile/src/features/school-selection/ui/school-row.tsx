@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next"
 import { Platform, Pressable, StyleSheet } from "react-native"
 
 import { ThemedText } from "@/components/themed-text"
-import { useImportDraft } from "@/features/onboarding"
+import { emitExportGuideEvent } from "@/features/export-guides/ui"
+import { decideIntranetUrl, useImportDraft } from "@/features/onboarding"
 import { type SchoolListItem } from "@/features/school-selection/data"
 import { Spacing, useTheme } from "@/theme"
 
@@ -13,7 +14,7 @@ import { SchoolLogo } from "./school-logo"
 export function SchoolRow({ school }: { school: SchoolListItem }) {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { setListedInstitution } = useImportDraft()
+  const { setListedInstitution, setCalendarName } = useImportDraft()
 
   return (
     <Pressable
@@ -28,7 +29,27 @@ export function SchoolRow({ school }: { school: SchoolListItem }) {
       // cleanup (design D10).
       onPress={() => {
         setListedInstitution(school)
-        router.push("/onboarding/programme")
+        if (school.exportGuide.requireProgramme) {
+          router.push("/onboarding/programme")
+          return
+        }
+        setCalendarName("")
+        if (school.exportGuide.requireConnect) {
+          const intranet = decideIntranetUrl(school.intranetUrl)
+          if (intranet.kind === "safe") {
+            router.push("/onboarding/connect")
+            return
+          }
+          emitExportGuideEvent({
+            name: "export_guide_connect_skipped",
+            params: {
+              reason:
+                intranet.kind === "missing" ? "missing_url" : "unsafe_url",
+              provider_slug: school.exportGuide.providerSlug,
+            },
+          })
+        }
+        router.push("/onboarding/export-guide/0")
       }}
       // foreground ripple: the background lane regresses on New Arch (RN #52939/#54372).
       android_ripple={{ color: theme.ripple, foreground: true }}

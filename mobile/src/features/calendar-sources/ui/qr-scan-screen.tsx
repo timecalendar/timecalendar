@@ -3,7 +3,11 @@ import { router, Stack } from "expo-router"
 import { useTranslation } from "react-i18next"
 
 import { useAddCalendar } from "@/features/calendar-sources/data"
-import { useImportCreateFields, useImportDraft } from "@/features/onboarding"
+import {
+  useImportCreateFields,
+  useImportDraft,
+  useProtectedImportRoute,
+} from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 
 import { leaveImportJourney } from "./leave-import-journey"
@@ -25,15 +29,21 @@ export default function QrScanScreen() {
   const [permission, requestPermission] = useCameraPermissions()
   const { addCalendarFromUrl } = useAddCalendar()
   const fields = useImportCreateFields()
-  const { clearDraft } = useImportDraft()
+  const { clearDraft, dispatch } = useImportDraft()
+  const legal = useProtectedImportRoute("qr", "/onboarding/qr-scan")
   const controller = useQrImportController({
     fields,
     addCalendarFromUrl,
     clearDraft,
     leaveJourney: leaveImportJourney,
-    openManualUrl: () => router.push("/onboarding/ical-url"),
+    openManualUrl: () => {
+      dispatch({ type: "set-manual-handoff", target: "ical" })
+      router.push("/onboarding/ical-url")
+    },
     recordError: recordUnknownError,
   })
+
+  if (!legal) return null
 
   let content: React.ReactNode
   if (permission === null) content = <QrPermissionLoadingView />

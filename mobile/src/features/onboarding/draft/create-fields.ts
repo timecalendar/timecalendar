@@ -16,10 +16,10 @@ import { type CalendarImportDraft, normalizeImportName } from "./types"
 // with the mirror condition, so sending both keys fails validation even when one
 // is undefined-ish. The spread-conditional below is the mechanism.
 //
-// The null row is the direct-route contract, not an error: a QR/URL route opened
-// by a dev link, an external link, a test or restored navigation has no draft and
-// must still create. `schoolName: ""` with no `schoolId` satisfies the server's
-// @ValidateIf pair, which is why this needs no server change.
+// The null row keeps derivation total for protected-route recovery renders. It
+// cannot authorize creation: manual/QR/iCal screens guard the journey before
+// their create actions become reachable. `schoolName: ""` with no `schoolId`
+// remains the server-compatible inert value while that recovery occurs.
 //
 // `CalendarImportFields` is imported from the cross-feature `data/` SUB-barrel —
 // the same edge settings/data/summary.ts already uses. That sub-barrel does not
