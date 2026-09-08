@@ -10,6 +10,11 @@
 
 ## 2026-09-07
 
+- Delivered the native mandatory export-guide journey: data-driven unlisted provider selection,
+  immutable page snapshots, contiguous Stack history, fail-closed manual/QR/iCal guards, localized
+  accessible recovery and image degradation, and closed privacy-safe telemetry. ADR 047 now treats
+  guide completion and manual handoff as process-ephemeral route legality rather than allowing
+  production no-draft imports.
 - Added the native export-guide data boundary: one response-aware generated operation, complete
   schema-v1 defensive validation, data-driven provider resolution, immutable snapshots, and a
   backend-bound atomic LKG registry with strict conditional-response and 24-hour freshness rules.

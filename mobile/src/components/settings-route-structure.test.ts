@@ -227,6 +227,14 @@ describe("Settings route structure", () => {
         "onboarding.connect.title",
       ],
       [
+        "../features/export-guides/ui/provider-selection-screen.tsx",
+        "exportGuide.provider.title",
+      ],
+      [
+        "../features/export-guides/ui/guide-page-screen.tsx",
+        "exportGuide.page.title",
+      ],
+      [
         "../features/onboarding/ui/manual-import-screen.tsx",
         "onboarding.import.title",
       ],

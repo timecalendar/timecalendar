@@ -29,6 +29,8 @@ export default function OnboardingLayout() {
         <Stack.Screen name="institution-name" />
         <Stack.Screen name="programme" />
         <Stack.Screen name="connect" />
+        <Stack.Screen name="export-guide/providers" />
+        <Stack.Screen name="export-guide/[pageIndex]" />
         <Stack.Screen name="import" />
         <Stack.Screen name="qr-scan" />
         <Stack.Screen name="ical-url" />

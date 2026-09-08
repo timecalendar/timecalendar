@@ -6,7 +6,11 @@ import { Pressable, StyleSheet, View } from "react-native"
 
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
-import { safeIntranetUrl, useImportDraft } from "@/features/onboarding/draft"
+import {
+  safeIntranetUrl,
+  useImportDraft,
+  useJourneyGateRoute,
+} from "@/features/onboarding/draft"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { stepStyles } from "./step-styles"
@@ -32,7 +36,8 @@ import { stepStyles } from "./step-styles"
 export default function ConnectScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { draft } = useImportDraft()
+  const { state, draft, dispatch } = useImportDraft()
+  const legal = useJourneyGateRoute(state, "connect")
 
   // An unlisted institution has no school row and therefore no trusted URL, so
   // both the link's label and its target come from the listed school or not at
@@ -41,6 +46,8 @@ export default function ConnectScreen() {
   const school =
     draft?.institution.kind === "listed" ? draft.institution.school : null
   const intranetUrl = safeIntranetUrl(school?.intranetUrl)
+
+  if (!legal) return null
 
   return (
     <>
@@ -102,7 +109,10 @@ export default function ConnectScreen() {
             accessibilityRole="button"
             accessibilityLabel={t("onboarding.connect.continueLabel")}
             hitSlop={Spacing.two}
-            onPress={() => router.push("/onboarding/import")}
+            onPress={() => {
+              dispatch({ type: "complete-connect" })
+              router.push("/onboarding/export-guide/0")
+            }}
             style={[styles.primary, { backgroundColor: theme.primaryStrong }]}
           >
             <ThemedText type="smallBold" themeColor="onPrimary">
