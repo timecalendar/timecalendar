@@ -168,15 +168,22 @@ is_retryable_startup_failure() {
 run_flow() {
   local flow="$1"
   local flow_name attempt attempt_log attempt_marker flow_exit
+  local -a maestro_args
   flow_name="$(basename "$flow" .yaml)"
   attempt=1
+
+  maestro_args=(test)
+  if [ "$SUITE" = "export-guide" ]; then
+    maestro_args+=(-e "E2E_SERVER_URL=$E2E_SERVER_URL")
+  fi
+  maestro_args+=("$flow")
 
   while [ "$attempt" -le "$STARTUP_ATTEMPTS" ]; do
     attempt_log="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.log"
     attempt_marker="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.started"
     log "flow ${flow_name}: attempt ${attempt}/${STARTUP_ATTEMPTS}"
     : > "$attempt_marker"
-    if maestro test "$flow" 2>&1 | tee "$attempt_log"; then
+    if maestro "${maestro_args[@]}" 2>&1 | tee "$attempt_log"; then
       flow_exit=0
     else
       flow_exit=${PIPESTATUS[0]}

@@ -65,7 +65,8 @@ SH
 
   cat > "$fixture/bin/maestro" <<'SH'
 #!/usr/bin/env bash
-flow="$(basename "$2" .yaml)"
+echo "$*" >> "$ARG_LOG"
+flow="$(basename "${!#}" .yaml)"
 count_file="$STATE_DIR/$flow"
 count=0
 [ ! -f "$count_file" ] || count="$(cat "$count_file")"
@@ -446,6 +447,7 @@ run_fixture() {
     MAESTRO_DEBUG_ROOT="$fixture/debug" \
     STATE_DIR="$fixture/state" \
     CALL_LOG="$fixture/calls" \
+    ARG_LOG="$fixture/maestro-args" \
     SCENARIO="$scenario" \
     "$HARNESS" "$@" > "$fixture/output" 2>&1
   status=$?
@@ -505,6 +507,7 @@ run_fixture "$fixture" pass 0
 assert_count 0 '^setup:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+assert_count 0 'E2E_SERVER_URL=' "$fixture/maestro-args"
 
 # The explicitly selected suite has its own lexical inventory and excludes its helper.
 fixture="$(make_fixture export_suite)"
@@ -515,6 +518,12 @@ assert_count 0 '^export-setup:' "$fixture/calls"
 assert_count 0 '^alpha:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+assert_count 2 '^test -e E2E_SERVER_URL=http://10.0.2.2:3005 ' "$fixture/maestro-args"
+
+# Native runners publish the loopback host to Maestro's JavaScript environment.
+fixture="$(make_fixture export_suite_native)"
+run_fixture "$fixture" pass 0 --suite export-guide --native
+assert_count 2 '^test -e E2E_SERVER_URL=http://localhost:3005 ' "$fixture/maestro-args"
 
 assert_invalid_suite() {
   local label="$1"
