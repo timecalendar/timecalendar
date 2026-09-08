@@ -739,7 +739,8 @@ compatibility evidence, and an executable rollback plan.
 
 **Current readiness:** **NO-GO**. The candidate-bound
 [release-readiness record](./activity-release-readiness.md) is authoritative; the implementation
-must satisfy every frozen gate on one corrected candidate before production approval.
+passes the corrected local capacity gates, while exact-candidate native completion and separately
+authorized environment evidence remain required before production approval.
 
 **Scope:**
 
