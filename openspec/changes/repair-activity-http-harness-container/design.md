@@ -26,7 +26,7 @@ The HTTP harness currently exists only on the separate, unmerged release-readine
 
 ## Decision 1 — Select the harness root module before configuring global validation
 
-After `NestFactory.create` constructs the harness application, call `configureMainApp(app.select(ActivityCapacityHttpRootModule), app)`. The selected module context becomes class-validator's service container; the application remains the target for pipes, middleware, filters, CORS, and HTTP lifecycle configuration.
+After `NestFactory.create` constructs the harness application, call `configureMainApp(app.select(root), app)`, selecting the exact `ActivityCapacityHttpRootModule` dynamic-module descriptor used to create it. Selecting the bare module class would compute its static token rather than the registered dynamic token. The selected module context becomes class-validator's service container; the application remains the target for pipes, middleware, filters, CORS, and HTTP lifecycle configuration.
 
 This mirrors `configureMainApp(app.select(AppModule), app)` in production while keeping the harness's intentionally small dynamic root. It also preserves `fallbackOnErrors: true`, so validators that are not Nest providers retain class-validator's normal fallback behavior.
 
