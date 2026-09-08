@@ -5,7 +5,7 @@ import type {
 } from "@/features/export-guides/data"
 import type { SchoolListItem } from "@/features/school-selection/data"
 
-import { importJourneyReducer } from "./context"
+import { importJourneyReducer } from "./reducer"
 import {
   canEnterProtectedRoute,
   earliestLegalRoute,

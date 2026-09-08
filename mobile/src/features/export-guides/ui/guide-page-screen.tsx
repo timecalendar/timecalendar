@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from "expo-router"
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { type RefObject, useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -18,7 +18,12 @@ import {
   type ExportGuideSelector,
   resolveExportGuideProvider,
 } from "@/features/export-guides/data"
-import { earliestLegalRoute, useImportDraft } from "@/features/onboarding/draft"
+import {
+  earliestLegalRoute,
+  type ImportJourneyAction,
+  type ImportJourneyState,
+  useImportDraft,
+} from "@/features/onboarding/draft"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { ExportGuideImage } from "./export-guide-image"
@@ -35,69 +40,65 @@ const parsePageIndex = (
   return Number.isSafeInteger(parsed) ? parsed : null
 }
 
+type ActiveGuideState = Extract<
+  ImportJourneyState,
+  { phase: "guide" | "completed" }
+>
+
 export default function GuidePageScreen() {
-  const { t, i18n } = useTranslation()
-  const theme = useTheme()
+  const { i18n } = useTranslation()
   const params = useLocalSearchParams<{ pageIndex?: string | string[] }>()
   const pageIndex = parsePageIndex(params.pageIndex)
   const { state, dispatch } = useImportDraft()
   const heading = useRef<View>(null)
 
-  const listedDraft =
+  const listedInstitution =
     state.phase !== "empty" && state.draft.institution.kind === "listed"
-      ? state.draft
+      ? state.draft.institution
       : null
-  const selector: ExportGuideSelector | null = useMemo(
-    () =>
-      listedDraft === null
-        ? null
-        : {
-            kind: "exact",
-            catalogueVersion:
-              listedDraft.institution.kind === "listed"
-                ? listedDraft.institution.school.exportGuide.catalogueVersion
-                : "",
-          },
-    [listedDraft],
-  )
+  const selector: ExportGuideSelector | null =
+    listedInstitution === null
+      ? null
+      : {
+          kind: "exact",
+          catalogueVersion:
+            listedInstitution.school.exportGuide.catalogueVersion,
+        }
   const requestedProvider =
-    listedDraft?.institution.kind === "listed"
-      ? listedDraft.institution.school.exportGuide.providerSlug
-      : null
+    listedInstitution?.school.exportGuide.providerSlug ?? null
 
-  const onCatalogue = useCallback(
-    (outcome: Exclude<ExportGuideLoadOutcome, { source: "none" }>) => {
-      if (requestedProvider === null) return
-      const resolution = resolveExportGuideProvider(
-        outcome.catalogue,
-        requestedProvider,
-      )
-      emitExportGuideEvent({
-        name: "export_guide_provider_resolved",
-        params: {
-          requested_provider: requestedProvider,
-          resolved_provider: resolution.snapshot.providerSlug,
-          reason: resolution.reason,
-          catalogue_version: resolution.snapshot.catalogueVersion,
-        },
-      })
-      dispatch({
-        type: "start-guide",
-        snapshot: resolution.snapshot,
-        draftRevision: state.draftRevision,
-      })
-      emitExportGuideEvent({
-        name: "export_guide_started",
-        params: {
-          provider_slug: resolution.snapshot.providerSlug,
-          page_count: resolution.snapshot.pages.length,
-          locale: resolution.snapshot.locale,
-          catalogue_version: resolution.snapshot.catalogueVersion,
-        },
-      })
-    },
-    [dispatch, requestedProvider, state.draftRevision],
-  )
+  const onCatalogue = (
+    outcome: Exclude<ExportGuideLoadOutcome, { source: "none" }>,
+  ) => {
+    if (requestedProvider === null) return
+    const resolution = resolveExportGuideProvider(
+      outcome.catalogue,
+      requestedProvider,
+    )
+    emitExportGuideEvent({
+      name: "export_guide_provider_resolved",
+      params: {
+        requested_provider: requestedProvider,
+        resolved_provider: resolution.snapshot.providerSlug,
+        reason: resolution.reason,
+        catalogue_version: resolution.snapshot.catalogueVersion,
+      },
+    })
+    dispatch({
+      type: "start-guide",
+      snapshot: resolution.snapshot,
+      draftRevision: state.draftRevision,
+    })
+    emitExportGuideEvent({
+      name: "export_guide_started",
+      params: {
+        provider_slug: resolution.snapshot.providerSlug,
+        page_count: resolution.snapshot.pages.length,
+        locale: resolution.snapshot.locale,
+        catalogue_version: resolution.snapshot.catalogueVersion,
+      },
+    })
+  }
   const { busy, load, retry } = useExportGuideLoad({
     state,
     dispatch,
@@ -171,8 +172,35 @@ export default function GuidePageScreen() {
     return <GuideLoading />
   }
 
-  const page = snapshotState.snapshot.pages[pageIndex]!
-  const total = snapshotState.snapshot.pages.length
+  return (
+    <GuidePageContent
+      state={snapshotState}
+      pageIndex={pageIndex}
+      heading={heading}
+      dispatch={dispatch}
+    />
+  )
+}
+
+function GuidePageContent({
+  state,
+  pageIndex,
+  heading,
+  dispatch,
+}: {
+  state: ActiveGuideState
+  pageIndex: number
+  heading: RefObject<View | null>
+  dispatch: (action: ImportJourneyAction) => void
+}) {
+  const { t } = useTranslation()
+  const theme = useTheme()
+  const page = state.snapshot.pages[pageIndex]!
+  const total = state.snapshot.pages.length
+  const progress = t("exportGuide.progress", {
+    current: pageIndex + 1,
+    total,
+  })
   const next = () => {
     if (state.phase !== "guide") return
     if (pageIndex < total - 1) {
@@ -201,13 +229,10 @@ export default function GuidePageScreen() {
             <ThemedText type="title">{page.title}</ThemedText>
             <ThemedText
               testID="export-guide-progress"
-              accessibilityLabel={t("exportGuide.progress", {
-                current: pageIndex + 1,
-                total,
-              })}
+              accessibilityLabel={progress}
               themeColor="textSecondary"
             >
-              {t("exportGuide.progress", { current: pageIndex + 1, total })}
+              {progress}
             </ThemedText>
           </View>
           <ThemedText>{page.description}</ThemedText>
@@ -220,7 +245,7 @@ export default function GuidePageScreen() {
                 emitExportGuideEvent({
                   name: "export_guide_image_failed",
                   params: {
-                    provider_slug: snapshotState.snapshot.providerSlug,
+                    provider_slug: state.snapshot.providerSlug,
                     image_role: "page",
                     page_index: pageIndex,
                     failure: "load",
@@ -255,8 +280,6 @@ export default function GuidePageScreen() {
     </>
   )
 }
-
-export { parsePageIndex }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },

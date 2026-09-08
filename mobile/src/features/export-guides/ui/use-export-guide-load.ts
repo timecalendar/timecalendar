@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -34,9 +34,8 @@ export function useExportGuideLoad({
 }) {
   const { i18n } = useTranslation()
   const locale = exportGuideLocale(i18n.resolvedLanguage ?? i18n.language)
-  const coordinator = useMemo(
-    () => createExportGuideJourneyCoordinator(createExportGuideRepository()),
-    [],
+  const coordinator = createExportGuideJourneyCoordinator(
+    createExportGuideRepository(),
   )
   const mounted = useRef(true)
   const [busy, setBusy] = useState(false)
@@ -54,7 +53,7 @@ export function useExportGuideLoad({
     [coordinator],
   )
 
-  const load = useCallback(() => {
+  const load = () => {
     const current = latest.current
     if (current.state.phase === "empty" || current.selector === null) return
     const draftRevision = current.state.draftRevision
@@ -118,9 +117,9 @@ export function useExportGuideLoad({
         }
       })
       .finally(() => mounted.current && setBusy(false))
-  }, [coordinator, dispatch])
+  }
 
-  const retry = useCallback(() => {
+  const retry = () => {
     const current = latest.current.state
     if (current.phase === "blocked") {
       emitExportGuideEvent({
@@ -133,7 +132,7 @@ export function useExportGuideLoad({
       })
     }
     load()
-  }, [load])
+  }
 
   return { locale, busy, load, retry }
 }

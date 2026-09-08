@@ -1,12 +1,11 @@
 export {
   ImportDraftProvider,
   type ImportDraftValue,
-  type ImportJourneyAction,
-  importJourneyReducer,
   useImportDraft,
 } from "./context"
 export { toCreateFields, useImportCreateFields } from "./create-fields"
 export { useProtectedImportRoute } from "./protected-route"
+export { type ImportJourneyAction, importJourneyReducer } from "./reducer"
 export {
   canEnterProtectedRoute,
   earliestLegalRoute,

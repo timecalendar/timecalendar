@@ -1,8 +1,8 @@
 import { Image } from "expo-image"
 import { router, Stack } from "expo-router"
-import { useCallback, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { FlatList, Pressable, StyleSheet, View } from "react-native"
 
 import { PageIntro, RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
@@ -28,18 +28,17 @@ export default function ProviderSelectionScreen() {
     new Set(),
   )
 
-  const onCatalogue = useCallback(
-    (outcome: Exclude<ExportGuideLoadOutcome, { source: "none" }>) => {
-      dispatch({
-        type: "show-provider-selection",
-        locale: outcome.catalogue.locale,
-        catalogue: outcome.catalogue,
-        providers: getSelectableExportGuideProviders(outcome.catalogue),
-        draftRevision: state.draftRevision,
-      })
-    },
-    [dispatch, state.draftRevision],
-  )
+  const onCatalogue = (
+    outcome: Exclude<ExportGuideLoadOutcome, { source: "none" }>,
+  ) => {
+    dispatch({
+      type: "show-provider-selection",
+      locale: outcome.catalogue.locale,
+      catalogue: outcome.catalogue,
+      providers: getSelectableExportGuideProviders(outcome.catalogue),
+      draftRevision: state.draftRevision,
+    })
+  }
   const { busy, load, retry } = useExportGuideLoad({
     state,
     dispatch,
@@ -70,6 +69,9 @@ export default function ProviderSelectionScreen() {
   if (catalogue === undefined || providers === undefined)
     return <GuideLoading />
 
+  const instructions = t("exportGuide.provider.instructions")
+  const providerHint = t("exportGuide.provider.hint")
+
   const select = (
     provider: ExportGuideProvider,
     catalogue: ExportGuideCatalogue,
@@ -96,64 +98,67 @@ export default function ProviderSelectionScreen() {
     <>
       <Stack.Screen options={{ title: t("exportGuide.provider.title") }} />
       <RootPage lane="readable" style={styles.fill}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          accessibilityLabel={t("exportGuide.provider.instructions")}
-        >
-          <PageIntro caption={t("exportGuide.provider.instructions")} />
-          {providers.map((provider) => (
-            <Pressable
-              key={provider.slug}
-              testID={`export-guide-provider-${provider.slug}`}
-              accessibilityRole="button"
-              accessibilityLabel={provider.label}
-              accessibilityHint={t("exportGuide.provider.hint")}
-              onPress={() => select(provider, catalogue)}
-              style={[
-                styles.provider,
-                {
-                  backgroundColor: theme.backgroundElement,
-                  borderColor: theme.separator,
-                },
-              ]}
-            >
-              {provider.thumbnail !== undefined &&
-              !failedImages.has(provider.slug) ? (
-                <Image
-                  source={{ uri: provider.thumbnail.url }}
-                  accessibilityLabel={provider.thumbnail.altText}
-                  accessibilityRole="image"
-                  onError={() => {
-                    setFailedImages((current) =>
-                      new Set(current).add(provider.slug),
-                    )
-                    emitExportGuideEvent({
-                      name: "export_guide_image_failed",
-                      params: {
-                        provider_slug: provider.slug,
-                        image_role: "thumbnail",
-                        failure: "load",
-                      },
-                    })
-                  }}
-                  style={styles.thumbnail}
-                />
-              ) : null}
-              <View style={styles.label}>
-                <ThemedText type="smallBold">{provider.label}</ThemedText>
+        {(layout) => (
+          <FlatList
+            style={layout.laneStyle}
+            data={providers}
+            keyExtractor={(provider) => provider.slug}
+            contentContainerStyle={styles.content}
+            accessibilityLabel={instructions}
+            ListHeaderComponent={<PageIntro caption={instructions} />}
+            renderItem={({ item: provider }) => (
+              <Pressable
+                testID={`export-guide-provider-${provider.slug}`}
+                accessibilityRole="button"
+                accessibilityLabel={provider.label}
+                accessibilityHint={providerHint}
+                onPress={() => select(provider, catalogue)}
+                style={[
+                  styles.provider,
+                  {
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.separator,
+                  },
+                ]}
+              >
                 {provider.thumbnail !== undefined &&
-                failedImages.has(provider.slug) ? (
-                  <ThemedText
-                    themeColor="textSecondary"
+                !failedImages.has(provider.slug) ? (
+                  <Image
+                    source={{ uri: provider.thumbnail.url }}
                     accessibilityLabel={provider.thumbnail.altText}
-                  >
-                    {t("exportGuide.imageUnavailable")}
-                  </ThemedText>
+                    accessibilityRole="image"
+                    onError={() => {
+                      setFailedImages((current) =>
+                        new Set(current).add(provider.slug),
+                      )
+                      emitExportGuideEvent({
+                        name: "export_guide_image_failed",
+                        params: {
+                          provider_slug: provider.slug,
+                          image_role: "thumbnail",
+                          failure: "load",
+                        },
+                      })
+                    }}
+                    style={styles.thumbnail}
+                  />
                 ) : null}
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
+                <View style={styles.label}>
+                  <ThemedText type="smallBold">{provider.label}</ThemedText>
+                  {provider.thumbnail !== undefined &&
+                  failedImages.has(provider.slug) ? (
+                    <ThemedText
+                      themeColor="textSecondary"
+                      accessibilityLabel={provider.thumbnail.altText}
+                    >
+                      {t("exportGuide.imageUnavailable")}
+                    </ThemedText>
+                  ) : null}
+                </View>
+              </Pressable>
+            )}
+          />
+        )}
       </RootPage>
     </>
   )
