@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common"
+import { Injectable } from "@nestjs/common"
 import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
 import { CalendarLogMapper } from "modules/calendar-log/mappers/calendar-log.mapper"
 import { GetCalendarLogsDto } from "modules/calendar-log/models/dto/get-calendar-logs.dto"
@@ -7,6 +7,8 @@ import {
   CalendarLogCursor,
   decodeCursor,
   encodeCursor,
+  invalidCalendarLogCursor,
+  isFragmentResumeCursor,
   timestampTextToDate,
 } from "modules/calendar-log/models/calendar-log-cursor"
 import { CalendarLogSearchV1Response } from "modules/calendar-log/models/dto/calendar-log-search-v1-response.dto"
@@ -15,10 +17,10 @@ import { CalendarLogMetricsService } from "modules/calendar-log/services/calenda
 import {
   CalendarLogV1Fragment,
   projectCalendarLogV1,
+  serializedJsonBytes,
 } from "modules/calendar-log/models/calendar-log-v1-projection"
 
 export const MAX_SERIALIZED_PAGE_BYTES = 900_000
-const INVALID_CURSOR = "Invalid cursor"
 
 @Injectable()
 export class CalendarLogService {
@@ -75,8 +77,7 @@ export class CalendarLogService {
       ? cursor.asOfText
       : (await this.repository.getSnapshotTime()).asOfText
 
-    const resumeOffset =
-      cursor?.version === 2 && cursor.offset > 0 ? cursor.offset : null
+    const resumeOffset = isFragmentResumeCursor(cursor) ? cursor.offset : null
     const inclusiveResume = resumeOffset !== null
     const rows = await this.repository.searchPage({
       tokens: payload.tokens,
@@ -95,17 +96,18 @@ export class CalendarLogService {
       (rows[0]?.log.id !== cursor?.id ||
         rows[0]?.createdAtText !== cursor?.createdAtText)
     ) {
-      throw new BadRequestException(INVALID_CURSOR)
+      throw invalidCalendarLogCursor()
     }
 
     const asOf = timestampTextToDate(asOfText)
-    let response: CalendarLogSearchV1Response = {
+    const response: CalendarLogSearchV1Response = {
       items: [],
       nextCursor: null,
       asOf,
       unreadCount,
     }
-    const consumedRows = new Set<string>()
+    let serializedItemsBytes = 0
+    let consumedRows = 0
     let overflowEntries = 0
 
     outer: for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
@@ -116,12 +118,12 @@ export class CalendarLogService {
       let fragments: CalendarLogV1Fragment[] = projection.fragments
       if (rowIndex === 0 && resumeOffset !== null) {
         if (resumeOffset >= projection.totalEntries) {
-          throw new BadRequestException(INVALID_CURSOR)
+          throw invalidCalendarLogCursor()
         }
         const fragmentIndex = fragments.findIndex(
           (fragment) => fragment.startOffset === resumeOffset,
         )
-        if (fragmentIndex === -1) throw new BadRequestException(INVALID_CURSOR)
+        if (fragmentIndex === -1) throw invalidCalendarLogCursor()
         fragments = fragments.slice(fragmentIndex)
       }
 
@@ -143,29 +145,33 @@ export class CalendarLogService {
                 offset: hasLaterFragment ? fragment.endOffset : 0,
               })
             : null
-        const candidate: CalendarLogSearchV1Response = {
-          items: [...response.items, fragment.item],
-          nextCursor,
-          asOf,
-          unreadCount,
-        }
+        const fragmentBytes = serializedJsonBytes(fragment.item)
+        const candidateItemsBytes =
+          serializedItemsBytes +
+          (response.items.length > 0 ? 1 : 0) +
+          fragmentBytes
+        const candidateResponseBytes =
+          serializedJsonBytes({ ...response, items: [], nextCursor }) -
+          2 +
+          candidateItemsBytes
 
         if (
           response.items.length > 0 &&
-          Buffer.byteLength(JSON.stringify(candidate), "utf8") >
-            MAX_SERIALIZED_PAGE_BYTES
+          candidateResponseBytes > MAX_SERIALIZED_PAGE_BYTES
         ) {
           break outer
         }
 
-        response = candidate
-        consumedRows.add(row.log.id)
+        response.items.push(fragment.item)
+        response.nextCursor = nextCursor
+        serializedItemsBytes = candidateItemsBytes
+        if (fragmentIndex === 0) consumedRows += 1
         if (fragment.oversized) overflowEntries += 1
         if (response.items.length === payload.limit) break outer
       }
     }
 
-    this.metrics.recordPageRows(consumedRows.size, page)
+    this.metrics.recordPageRows(consumedRows, page)
     if (overflowEntries > 0) {
       this.metrics.recordFragmentOverflow(overflowEntries)
     }

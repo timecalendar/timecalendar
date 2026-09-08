@@ -75,11 +75,11 @@ const fragmentItem = (
   calendarChange,
 })
 
-const serializedBytes = (value: unknown): number =>
+export const serializedJsonBytes = (value: unknown): number =>
   Buffer.byteLength(JSON.stringify(value), "utf8")
 
 const atomicBytes = (atomic: AtomicChange): number =>
-  serializedBytes(atomic.value)
+  serializedJsonBytes(atomic.value)
 
 const collectionLength = (
   change: CalendarChangeGet,
@@ -104,7 +104,10 @@ export const projectCalendarLogV1 = (
   source: CalendarLogV1,
 ): CalendarLogV1Projection => {
   const entries = atomicChanges(source)
-  if (serializedBytes(source) <= MAX_FRAGMENT_BYTES || entries.length === 0) {
+  if (
+    serializedJsonBytes(source) <= MAX_FRAGMENT_BYTES ||
+    entries.length === 0
+  ) {
     return {
       fragments: [
         {
@@ -121,20 +124,19 @@ export const projectCalendarLogV1 = (
 
   const fragments: CalendarLogV1Fragment[] = []
   let change = emptyChange()
+  let item = fragmentItem(source, 0, change)
   let startOffset = 0
   let oversizedAtomicEntries = 0
-  let currentBytes = serializedBytes(fragmentItem(source, 0, change))
+  let currentBytes = serializedJsonBytes(item)
 
   const finish = (endOffset: number) => {
-    const item = fragmentItem(source, fragments.length, change)
-    const oversized = serializedBytes(item) > MAX_FRAGMENT_BYTES
+    const oversized = currentBytes > MAX_FRAGMENT_BYTES
     if (oversized) oversizedAtomicEntries += 1
     fragments.push({ item, startOffset, endOffset, oversized })
     startOffset = endOffset
     change = emptyChange()
-    currentBytes = serializedBytes(
-      fragmentItem(source, fragments.length, change),
-    )
+    item = fragmentItem(source, fragments.length, change)
+    currentBytes = serializedJsonBytes(item)
   }
 
   entries.forEach((entry, index) => {
