@@ -389,13 +389,15 @@ jobs:
     # declare Swift tools 6.2, and macos-latest's default Xcode (16.x, Swift
     # 6.1) fails SPM resolution ("installed version is 6.1.0").
     runs-on: macos-26
-    # A cold xcodebuild is ~20-40 min. Export-guide proof performs two cold
+    # A cold xcodebuild is ~20-50 min. Export-guide proof performs two cold
     # Release builds around the real-server suite, then runs the production
-    # guard and writes evidence. The CocoaPods download cache (the spec repo +
-    # downloaded pods, outside the repo tree) survives `prebuild --clean` and
-    # shaves the pod-install step; DerivedData lives under the cleaned ios/ so
-    # it can't be cached across runs. npm is cached by setup-node.
-    timeout-minutes: 120
+    # guard and writes evidence. Keep enough headroom for both builds and the
+    # XCTest driver without truncating the terminal evidence steps. The
+    # CocoaPods download cache (the spec repo + downloaded pods, outside the
+    # repo tree) survives `prebuild --clean`; DerivedData lives under the
+    # cleaned ios/ so it can't be cached across runs. npm is cached by
+    # setup-node.
+    timeout-minutes: 180
     env:
       # Maestro boots its XCTest driver with `xcodebuild test-without-building`,
       # then polls the driver's local HTTP port until it's listening. On the
