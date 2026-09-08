@@ -166,6 +166,7 @@ assert_downstream_contract() {
 assert_downstream_contract build-server "$build_server_block" '    needs: prepare'
 assert_downstream_contract e2e-mobile-android "$android_block" '    needs: [prepare, build-server]'
 assert_downstream_contract e2e-mobile-ios "$ios_block" '    needs: prepare'
+assert_block_present "$ios_block" '    timeout-minutes: 120' 'iOS two-build evidence budget'
 assert_absent '${{ github.sha }}'
 assert_count 4 '          ref: ${{ needs.prepare.outputs.target_sha }}'
 assert_count 3 "    if: needs.prepare.outputs.should_run == 'true'"
@@ -250,6 +251,7 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure first-run 's/No preceding scheduled attempt; both platforms selected/No boundary available/'
   expect_mutation_failure android-platform 's/  e2e-mobile-android:/  e2e-mobile-android-removed:/'
   expect_mutation_failure ios-platform 's/  e2e-mobile-ios:/  e2e-mobile-ios-removed:/'
+  expect_mutation_failure ios-timeout 's/    timeout-minutes: 120/    timeout-minutes: 75/'
   expect_mutation_failure suite-routing 's/--suite "\$\{\{ needs\.prepare\.outputs\.suite \}\}"/--suite smoke/'
   expect_mutation_failure production-identity 's/APP_VARIANT: production/APP_VARIANT: development/g'
   expect_mutation_failure no-network-guard "s/! grep -F '\[api\] →'/grep -F '[api] →'/"
