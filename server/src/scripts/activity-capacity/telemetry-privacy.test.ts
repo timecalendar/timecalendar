@@ -90,11 +90,12 @@ describe("Activity telemetry privacy inventory", () => {
     )
 
     expect(source.match(/meter\.create(?:Histogram|Counter)\(/g)).toHaveLength(
-      3,
+      4,
     )
     expect(source).toContain('"calendar_log_search_page_rows"')
     expect(source).toContain('"calendar_log_unread_count_duration"')
     expect(source).toContain('"calendar_log_search_total"')
+    expect(source).toContain('"calendar_log_fragment_atomic_overflow_total"')
     expect(source).toContain(
       'export type CalendarLogSearchPage = "first" | "following"',
     )
