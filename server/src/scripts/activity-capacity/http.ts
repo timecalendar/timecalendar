@@ -31,6 +31,12 @@ const DEFAULT_CONCURRENT_ROUNDS = 10
 const PAGE_SIZES = [50, 100] as const
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"])
 const DAY_MS = 86_400_000
+const RECENT_UNREAD_SINCE = new Date(
+  FIXTURE_REFERENCE_DATE.getTime() - 30 * DAY_MS,
+).toISOString()
+const YEAR_UNREAD_SINCE = new Date(
+  FIXTURE_REFERENCE_DATE.getTime() - 365 * DAY_MS,
+).toISOString()
 
 /** Identity proof: the route harness and repository resolve this same export. */
 export const activityCapacityPageSql = calendarLogPageLateralSql
@@ -186,9 +192,6 @@ const requestPage = async (
   }
 }
 
-const unreadWatermark = (days: number) =>
-  new Date(FIXTURE_REFERENCE_DATE.getTime() - days * DAY_MS).toISOString()
-
 const measureCohort = async (
   baseUrl: URL,
   cohort: CohortSpec,
@@ -217,12 +220,12 @@ const measureCohort = async (
     const unreadRecent = await requestPage(baseUrl, {
       tokens,
       limit: pageSize,
-      unreadSince: unreadWatermark(30),
+      unreadSince: RECENT_UNREAD_SINCE,
     })
     const unreadYear = await requestPage(baseUrl, {
       tokens,
       limit: pageSize,
-      unreadSince: unreadWatermark(365),
+      unreadSince: YEAR_UNREAD_SINCE,
     })
 
     if (!record) continue
@@ -322,6 +325,12 @@ export const measureActivityRoute = async (
   }
   const baseUrl = assertLocalBaseUrl(baseUrlValue)
   const cohorts: ActivityRouteMeasurement["cohorts"] = []
+  const concurrencyCohort =
+    options.cohorts.find((cohort) => cohort.key === "c100-year") ??
+    options.cohorts[0]
+  if (!concurrencyCohort) {
+    throw new Error("activity-capacity-http: at least one cohort is required")
+  }
 
   for (const pageSize of options.pageSizes) {
     for (const cohort of options.cohorts) {
@@ -340,17 +349,7 @@ export const measureActivityRoute = async (
       concurrentRounds: options.concurrentRounds,
     },
     cohorts,
-    concurrency: await measureConcurrency(
-      baseUrl,
-      options,
-      options.cohorts.find((cohort) => cohort.key === "c100-year") ??
-        options.cohorts[0] ??
-        (() => {
-          throw new Error(
-            "activity-capacity-http: at least one cohort is required",
-          )
-        })(),
-    ),
+    concurrency: await measureConcurrency(baseUrl, options, concurrencyCohort),
   }
 }
 
