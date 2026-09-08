@@ -299,17 +299,18 @@ export function parseExportGuideCatalogue(
           : undefined
       if (rawSlug === "generic") genericCount += 1
       if (result.ok) {
-        if (validSlugs.has(result.provider.slug)) {
+        const provider = result.provider
+        if (validSlugs.has(provider.slug)) {
           return {
             ok: false,
             failure:
-              result.provider.slug === "generic"
+              provider.slug === "generic"
                 ? "invalid_generic"
                 : "invalid_envelope",
           }
         }
-        validSlugs.add(result.provider.slug)
-        providers.push(result.provider)
+        validSlugs.add(provider.slug)
+        providers.push(provider)
       } else if (result.slug !== undefined) {
         if (
           validSlugs.has(result.slug) ||
