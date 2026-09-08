@@ -63,34 +63,34 @@
       full-scale Activity corpus and refresh planner statistics. Record the explicit local database
       target, corpus counts, candidate SHA and command versions without committing environment values
       or raw fixture rows.
-- [ ] 4.2 Run the full capacity comparison and shipped-route measurements with the documented sample
+- [x] 4.2 Run the full capacity comparison and shipped-route measurements with the documented sample
       counts. Populate G1 (50-row p95), G2 (100-row p95), G3, G3a, G4 (unread p95), G6
       (concurrent completion/error count, p95, event-loop delay and heap change) and G7 (measured v1
       p50/p95/p99/worst bytes reconciled with the projection). Verify every plan is redacted and every
       committed result is aggregate-only.
-- [ ] 4.3 Run the focused Activity coordinator and trigger integration suites with controlled
+- [x] 4.3 Run the focused Activity coordinator and trigger integration suites with controlled
       overlap across push, successful sync, screen open and foreground. Populate G8 only when exactly
       one newest-page request crosses the request boundary, all observing callers share its outcome,
       and a later post-settlement forced trigger issues one new request.
-- [ ] 4.4 Compare the new results with the frozen gate table without changing its thresholds or
+- [x] 4.4 Compare the new results with the frozen gate table without changing its thresholds or
       relabelling missing evidence. Any failure sets the record to `NO-GO` and names the smallest
       bounded remediation whose corrected candidate must be remeasured.
 
 ## 5. Prove automated gates and compatibility
 
-- [ ] 5.1 Run the complete server checks required by the current repository gate: focused Activity
+- [x] 5.1 Run the complete server checks required by the current repository gate: focused Activity
       capacity/controller/repository/service/privacy tests, full server Jest, dependency-free server
       E2E smoke, build/typecheck and lint. Record commands, suite/test counts and pass/fail against the
       candidate; do not treat the bounded planner tripwire as the full capacity run.
-- [ ] 5.2 Regenerate the server OpenAPI contract and the mobile Orval client through their supported
+- [x] 5.2 Regenerate the server OpenAPI contract and the mobile Orval client through their supported
       commands, then prove `openapi/openapi.json` and `mobile/src/api/generated/` have zero drift.
       Any intentional contract difference is out of scope and requires a revised proposal rather than
       acceptance here.
-- [ ] 5.3 Run the complete mobile baseline required by the current repository gate: E2E harness
+- [x] 5.3 Run the complete mobile baseline required by the current repository gate: E2E harness
       regression/selector proofs, generated-client drift, TypeScript, lint, React Doctor changed-scope
       gate and Jest with coverage. Record exact commands and suite/test totals; retain Activity's
       focused unread, cache, navigation, pagination, ownership, restart and single-flight proofs.
-- [ ] 5.4 Complete the compatibility matrix row by row: React Native v1; valid unversioned arrays;
+- [x] 5.4 Complete the compatibility matrix row by row: React Native v1; valid unversioned arrays;
       malformed bare-string 400; unchanged Flutter generated client/source behavior; notification
       pipeline independence; one-year prune; backend-environment reset; and the previous mobile
       release against the candidate server. Each row must cite a focused test, zero-diff/static proof
@@ -102,49 +102,49 @@
       code/configuration candidate. Record its full SHA and prohibit further runtime, contract, native
       config or workflow edits without invalidating all head-dependent evidence and starting a new
       candidate.
-- [ ] 6.2 Confirm the repository baseline CI jobs complete successfully for that candidate, then
+- [x] 6.2 Confirm the repository baseline CI jobs complete successfully for that candidate, then
       dispatch the existing manual native workflow with the full candidate SHA. Verify the workflow
       resolves that exact SHA and record Android and iOS job results plus retained artifact links; do
       not edit the workflow or add a pull-request trigger to obtain the run.
-- [ ] 6.3 Populate G9 only if the candidate Activity Maestro journey passes on both platforms with
+- [x] 6.3 Populate G9 only if the candidate Activity Maestro journey passes on both platforms with
       its unread, current-details, cancelled-item, pull-refresh, page-boundary tie-order and older-page
       assertions intact. A missing, mismatched, cancelled or failed platform result is `NO-GO`.
-- [ ] 6.4 If immutable preproduction image identity, route health or telemetry-window evidence is
+- [x] 6.4 If immutable preproduction image identity, route health or telemetry-window evidence is
       required but unavailable without a deployment or credentialed action, record the exact missing
       evidence and keep `NO-GO`. Do not deploy, promote, submit, backfill or access production from
       this change.
 
 ## 7. Reconcile release operations and living documentation
 
-- [ ] 7.1 Finish the readiness record's executable rollout order: deploy and verify the immutable
+- [x] 7.1 Finish the readiness record's executable rollout order: deploy and verify the immutable
       server image and both v1/unversioned routes before any store/OTA build that calls v1. Document
       rollback to a compatible mobile release/OTA plus the prior server image while retaining the
       additive route/tables and requiring no destructive rollback. State explicitly that this change
       performs neither rollout nor rollback.
-- [ ] 7.2 Reconcile `docs/react-native-migration/01-roadmap/07-auxiliary-features.md`,
+- [x] 7.2 Reconcile `docs/react-native-migration/01-roadmap/07-auxiliary-features.md`,
       `docs/react-native-migration/05-tech-specs/activity-revival.md`,
       `docs/mobile/architecture-book/features.md`, and the Architecture Book changelog with the final
       readiness disposition, active OpenSpec truth, compatibility and remaining work. Verify no
       implementation chronology is added; if a binding rule changed, add the required ADR and book
       changelog entry before continuing.
-- [ ] 7.3 Add one non-blocking `(HUMAN: ...)` note under
+- [x] 7.3 Add one non-blocking `(HUMAN: ...)` note under
       `docs/react-native-migration/inbox/` for physical iPhone, iPad portrait, supported Android,
       VoiceOver/TalkBack, large-text and low-end scroll passes. Make clear that unfinished device work
       remains release evidence and is not a repository-merge gate.
-- [ ] 7.4 Finalize `GO` only when every candidate-bound row passes. Otherwise finalize `NO-GO`,
+- [x] 7.4 Finalize `GO` only when every candidate-bound row passes. Otherwise finalize `NO-GO`,
       track each bounded product correction or separately authorized evidence action outside this
       review, and require a fresh candidate plus rerun of every affected row before reconsideration.
 
 ## 8. Final verification and delivery proof
 
-- [ ] 8.1 Run `openspec validate verify-activity-release-readiness --strict`, `git diff --check`,
+- [x] 8.1 Run `openspec validate verify-activity-release-readiness --strict`, `git diff --check`,
       documentation formatting checks, and all new focused CI-proof tests. Confirm task and spec
       scenarios match the final record.
-- [ ] 8.2 Inspect the complete branch diff, commit headers/messages and publication text with the
+- [x] 8.2 Inspect the complete branch diff, commit headers/messages and publication text with the
       repository disclosure preflight. Verify no credentials, certificate material, customer/live
       data, raw identifiers, request/response bodies, cursors, telemetry excerpts or external host
       paths are introduced.
-- [ ] 8.3 Verify the intended documentation/harness changes are the only modified paths and call out
+- [x] 8.3 Verify the intended documentation/harness changes are the only modified paths and call out
       every sensitive surface in the pull-request body and handoff. Contract/schema/native/store/
       CI/deploy/legacy surfaces must remain unchanged unless a separately reviewed proposal explicitly
       supersedes this one.
