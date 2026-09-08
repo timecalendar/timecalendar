@@ -8,6 +8,7 @@ import {
   EXPORT_GUIDE_MIME_TYPES,
   EXPORT_GUIDE_PROVIDER_SLUG,
 } from "./constants"
+import { deepFreeze } from "./immutable"
 import type {
   ExportGuideCatalogue,
   ExportGuideImage,
@@ -62,14 +63,6 @@ const asInteger = (value: unknown, min: number, max: number): number => {
     return fail("invalid_envelope")
   }
   return value as number
-}
-
-const copyAndFreeze = <T>(value: T): T => {
-  if (value !== null && typeof value === "object") {
-    for (const child of Object.values(value)) copyAndFreeze(child)
-    Object.freeze(value)
-  }
-  return value
 }
 
 const utf8ByteLength = (value: string): number => {
@@ -288,16 +281,8 @@ export function parseExportGuideCatalogue(
       Record<string, ExportGuideProviderRejection>
     > = {}
     const validSlugs = new Set<string>()
-    let genericCount = 0
     for (const candidate of raw.providers) {
       const result = parseProvider(candidate)
-      const rawSlug =
-        candidate !== null &&
-        typeof candidate === "object" &&
-        !Array.isArray(candidate)
-          ? (candidate as UnknownRecord).slug
-          : undefined
-      if (rawSlug === "generic") genericCount += 1
       if (result.ok) {
         const provider = result.provider
         if (validSlugs.has(provider.slug)) {
@@ -312,10 +297,7 @@ export function parseExportGuideCatalogue(
         validSlugs.add(provider.slug)
         providers.push(provider)
       } else if (result.slug !== undefined) {
-        if (
-          validSlugs.has(result.slug) ||
-          rejectedProviders[result.slug] !== undefined
-        ) {
+        if (validSlugs.has(result.slug)) {
           return {
             ok: false,
             failure:
@@ -330,13 +312,13 @@ export function parseExportGuideCatalogue(
     }
 
     const generic = providers.find(({ slug }) => slug === "generic")
-    if (genericCount !== 1 || generic === undefined || !generic.selectable) {
+    if (generic === undefined || !generic.selectable) {
       return { ok: false, failure: "invalid_generic" }
     }
 
     return {
       ok: true,
-      catalogue: copyAndFreeze({
+      catalogue: deepFreeze({
         schemaVersion: EXPORT_GUIDE_CLIENT_SCHEMA,
         catalogueVersion,
         locale: raw.locale,

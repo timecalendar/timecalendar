@@ -1,4 +1,5 @@
 import { EXPORT_GUIDE_PROVIDER_SLUG } from "./constants"
+import { deepFreeze } from "./immutable"
 import type {
   ExportGuideCatalogue,
   ExportGuidePage,
@@ -6,14 +7,6 @@ import type {
   ExportGuideResolution,
   ExportGuideResolutionReason,
 } from "./types"
-
-const deepFreeze = <T>(value: T): T => {
-  if (value !== null && typeof value === "object") {
-    for (const child of Object.values(value)) deepFreeze(child)
-    Object.freeze(value)
-  }
-  return value
-}
 
 const copyPages = (pages: readonly ExportGuidePage[]): ExportGuidePage[] =>
   pages.map((page) => ({

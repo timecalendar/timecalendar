@@ -73,6 +73,19 @@ const classifyThrown = (
   return "network"
 }
 
+const persist = (
+  record: ExportGuideCacheRecord,
+  clock: ExportGuideClock,
+): boolean => {
+  try {
+    writeExportGuideCacheRecord(record)
+    observeExportGuideCacheRecord(record, clock)
+    return true
+  } catch {
+    return false
+  }
+}
+
 export interface LoadExportGuideRequest {
   readonly locale: ExportGuideLocale
   readonly selector: ExportGuideSelector
@@ -169,10 +182,7 @@ export function createExportGuideRepository(
           validatedAt: clock.wallNow(),
           catalogue: parsed.catalogue,
         }
-        try {
-          writeExportGuideCacheRecord(record)
-          observeExportGuideCacheRecord(record, clock)
-        } catch {
+        if (!persist(record, clock)) {
           return fallback(request.locale, selector, "storage", clock)
         }
         return { source: "network", catalogue: parsed.catalogue }
@@ -220,10 +230,7 @@ export function createExportGuideRepository(
           catalogue: parsed.catalogue,
           validatedAt: clock.wallNow(),
         }
-        try {
-          writeExportGuideCacheRecord(refreshed)
-          observeExportGuideCacheRecord(refreshed, clock)
-        } catch {
+        if (!persist(refreshed, clock)) {
           return fallback(request.locale, selector, "storage", clock)
         }
         return { source: "not_modified", catalogue: parsed.catalogue }
