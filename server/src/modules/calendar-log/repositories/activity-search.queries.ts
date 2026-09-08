@@ -80,14 +80,14 @@ const pageColumns = (alias?: string) =>
  * comparison, not `createdAt < $3 OR (createdAt = $3 AND id < $4)`, so no row is
  * skipped and none is returned twice.
  */
-export const calendarLogPageSql = (hasCursor: boolean) =>
+export const calendarLogPageSql = (hasCursor: boolean, inclusive = false) =>
   hasCursor
     ? `
   SELECT ${pageColumns()}
   FROM "calendar_log"
   WHERE "calendarId" = ANY($1)
     AND "createdAt" <= $2
-    AND ("createdAt", "id") < ($3, $4)
+    AND ("createdAt", "id") ${inclusive ? "<=" : "<"} ($3, $4)
   ORDER BY "createdAt" DESC, "id" DESC
   LIMIT $5
 `
@@ -136,7 +136,10 @@ export const calendarLogPageSql = (hasCursor: boolean) =>
  * shape (8.2 ms against 3.6 ms), because it descends the index 100 times instead
  * of once. That is the premium for not having a 600× cliff.
  */
-export const calendarLogPageLateralSql = (hasCursor: boolean) => `
+export const calendarLogPageLateralSql = (
+  hasCursor: boolean,
+  inclusive = false,
+) => `
   SELECT p.*
   FROM unnest($1::uuid[]) AS c(id)
   CROSS JOIN LATERAL (
@@ -144,7 +147,11 @@ export const calendarLogPageLateralSql = (hasCursor: boolean) => `
     FROM "calendar_log" l
     WHERE l."calendarId" = c.id
       AND l."createdAt" <= $2
-      ${hasCursor ? `AND (l."createdAt", l."id") < ($3, $4)` : ""}
+      ${
+        hasCursor
+          ? `AND (l."createdAt", l."id") ${inclusive ? "<=" : "<"} ($3, $4)`
+          : ""
+      }
     ORDER BY l."createdAt" DESC, l."id" DESC
     LIMIT ${hasCursor ? "$5" : "$3"}
   ) p

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { BadRequestException, Injectable } from "@nestjs/common"
 import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
 import { CalendarLogMapper } from "modules/calendar-log/mappers/calendar-log.mapper"
 import { GetCalendarLogsDto } from "modules/calendar-log/models/dto/get-calendar-logs.dto"
@@ -12,6 +12,13 @@ import {
 import { CalendarLogSearchV1Response } from "modules/calendar-log/models/dto/calendar-log-search-v1-response.dto"
 import { SearchCalendarLogsV1Dto } from "modules/calendar-log/models/dto/search-calendar-logs-v1.dto"
 import { CalendarLogMetricsService } from "modules/calendar-log/services/calendar-log-metrics.service"
+import {
+  CalendarLogV1Fragment,
+  projectCalendarLogV1,
+} from "modules/calendar-log/models/calendar-log-v1-projection"
+
+export const MAX_SERIALIZED_PAGE_BYTES = 900_000
+const INVALID_CURSOR = "Invalid cursor"
 
 @Injectable()
 export class CalendarLogService {
@@ -68,38 +75,103 @@ export class CalendarLogService {
       ? cursor.asOfText
       : (await this.repository.getSnapshotTime()).asOfText
 
+    const resumeOffset =
+      cursor?.version === 2 && cursor.offset > 0 ? cursor.offset : null
+    const inclusiveResume = resumeOffset !== null
     const rows = await this.repository.searchPage({
       tokens: payload.tokens,
       asOfText,
       cursor,
-      // One row beyond the page decides whether a next page exists, with no
-      // COUNT(*) over the whole match set.
-      limit: payload.limit + 1,
+      // One source row beyond the maximum number of virtual items decides
+      // whether the chain continues. An inclusive fragment resume can add its
+      // anchored row without reducing that look-ahead.
+      limit: payload.limit + 1 + (inclusiveResume ? 1 : 0),
     })
-
-    const hasMore = rows.length > payload.limit
-    const pageRows = hasMore ? rows.slice(0, payload.limit) : rows
-    // `hasMore` implies a full page, and `limit` is at least 1, so this is
-    // defined wherever it is read below.
-    const last = pageRows[pageRows.length - 1]
 
     const unreadCount = await this.countUnread(payload, cursor, asOfText)
 
-    this.metrics.recordPageRows(pageRows.length, page)
-    this.metrics.recordSearch({ page, outcome: "ok" })
+    if (
+      inclusiveResume &&
+      (rows[0]?.log.id !== cursor?.id ||
+        rows[0]?.createdAtText !== cursor?.createdAtText)
+    ) {
+      throw new BadRequestException(INVALID_CURSOR)
+    }
 
-    return {
-      items: pageRows.map((row) => this.mapper.toCalendarLogV1(row.log)),
-      nextCursor: hasMore
-        ? encodeCursor({
-            asOfText,
-            createdAtText: last.createdAtText,
-            id: last.log.id,
-          })
-        : null,
-      asOf: timestampTextToDate(asOfText),
+    const asOf = timestampTextToDate(asOfText)
+    let response: CalendarLogSearchV1Response = {
+      items: [],
+      nextCursor: null,
+      asOf,
       unreadCount,
     }
+    const consumedRows = new Set<string>()
+    let overflowEntries = 0
+
+    outer: for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+      const row = rows[rowIndex]
+      const projection = projectCalendarLogV1(
+        this.mapper.toCalendarLogV1(row.log),
+      )
+      let fragments: CalendarLogV1Fragment[] = projection.fragments
+      if (rowIndex === 0 && resumeOffset !== null) {
+        if (resumeOffset >= projection.totalEntries) {
+          throw new BadRequestException(INVALID_CURSOR)
+        }
+        const fragmentIndex = fragments.findIndex(
+          (fragment) => fragment.startOffset === resumeOffset,
+        )
+        if (fragmentIndex === -1) throw new BadRequestException(INVALID_CURSOR)
+        fragments = fragments.slice(fragmentIndex)
+      }
+
+      for (
+        let fragmentIndex = 0;
+        fragmentIndex < fragments.length;
+        fragmentIndex += 1
+      ) {
+        const fragment = fragments[fragmentIndex]
+        const hasLaterFragment = fragmentIndex + 1 < fragments.length
+        const hasLaterRow = rowIndex + 1 < rows.length
+        const nextCursor =
+          hasLaterFragment || hasLaterRow
+            ? encodeCursor({
+                version: 2,
+                asOfText,
+                createdAtText: row.createdAtText,
+                id: row.log.id,
+                offset: hasLaterFragment ? fragment.endOffset : 0,
+              })
+            : null
+        const candidate: CalendarLogSearchV1Response = {
+          items: [...response.items, fragment.item],
+          nextCursor,
+          asOf,
+          unreadCount,
+        }
+
+        if (
+          response.items.length > 0 &&
+          Buffer.byteLength(JSON.stringify(candidate), "utf8") >
+            MAX_SERIALIZED_PAGE_BYTES
+        ) {
+          break outer
+        }
+
+        response = candidate
+        consumedRows.add(row.log.id)
+        if (fragment.oversized) overflowEntries += 1
+        if (response.items.length === payload.limit) break outer
+      }
+    }
+
+    this.metrics.recordPageRows(consumedRows.size, page)
+    if (overflowEntries > 0) {
+      this.metrics.recordFragmentOverflow(overflowEntries)
+    }
+    this.metrics.recordSearch({ page, outcome: "ok" })
+
+    return response
   }
 
   /**

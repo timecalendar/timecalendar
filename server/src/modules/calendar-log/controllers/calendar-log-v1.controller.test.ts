@@ -8,6 +8,8 @@ import {
   createCalendarLogAt,
 } from "modules/calendar-log/factories/calendar-log.factory"
 import { CalendarLogRepository } from "modules/calendar-log/repositories/calendar-log.repository"
+import { encodeCursor } from "modules/calendar-log/models/calendar-log-cursor"
+import { fixtureCalendarChange } from "scripts/activity-capacity/fixtures"
 import createTestApp from "test-utils/create-test-app"
 
 const SEARCH = "/v1/calendar-logs/search"
@@ -31,6 +33,66 @@ describe("CalendarLogV1Controller", () => {
   const search = (body: object) => request(app).post(SEARCH).send(body)
 
   describe("paging", () => {
+    it.each([50, 100])(
+      "returns every change from an oversized log in byte-bounded pages at limit %i",
+      async (limit) => {
+        const calendar = await calendarFactory().create()
+        const source = await calendarLogFactory()
+          .calendar(calendar.id)
+          .params({
+            calendarChange: fixtureCalendarChange(2, 3656) as never,
+          })
+          .create()
+
+        const pages: Array<Record<string, any>> = []
+        let cursor: string | null = null
+        for (let page = 0; page < 20; page += 1) {
+          const response = await search({
+            tokens: [calendar.token],
+            limit,
+            unreadSince: "2020-01-01T00:00:00.000Z",
+            ...(cursor ? { cursor } : {}),
+          }).expect(200)
+          expect(Buffer.byteLength(response.text, "utf8")).toBeLessThan(
+            1_000_000,
+          )
+          pages.push(response.body)
+          cursor = response.body.nextCursor
+          if (cursor === null) break
+        }
+
+        expect(cursor).toBeNull()
+        expect(pages.length).toBeGreaterThan(1)
+        expect(pages[0]?.unreadCount).toBe(1)
+        expect(pages.slice(1).every((page) => !("unreadCount" in page))).toBe(
+          true,
+        )
+        expect(new Set(pages.map((page) => page.asOf)).size).toBe(1)
+
+        const items = pages.flatMap((page) => page.items)
+        expect(items[0]?.id).toBe(source.id)
+        expect(new Set(items.map((item) => item.id)).size).toBe(items.length)
+        expect(items.every((item) => item.calendarId === calendar.id)).toBe(
+          true,
+        )
+        expect(
+          items.reduce(
+            (count, item) => count + item.calendarChange.changedItems.length,
+            0,
+          ),
+        ).toBe(3656)
+        expect(
+          items.reduce(
+            (count, item) =>
+              count +
+              item.calendarChange.newItems.length +
+              item.calendarChange.oldItems.length,
+            0,
+          ),
+        ).toBe(0)
+      },
+    )
+
     it("returns the newest page with a cursor when more rows exist", async () => {
       const calendar = await calendarFactory().create()
       const newest = await createCalendarLogAt(calendar, "2026-08-01 10:00:03")
@@ -255,12 +317,39 @@ describe("CalendarLogV1Controller", () => {
       search({
         tokens: [],
         cursor: encodePayload({
-          v: 2,
+          v: 3,
           a: "2026-08-01 10:00:00",
           c: "2026-08-01 10:00:00",
           i: "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d05",
         }),
       }).expect(400))
+
+    it("rejects a version 2 offset beyond the anchored log", async () => {
+      const calendar = await calendarFactory().create()
+      await createCalendarLogAt(calendar, "2026-08-01 10:00:01.123456")
+      const { asOfText } = await repository.getSnapshotTime()
+      const [row] = await repository.searchPage({
+        tokens: [calendar.token],
+        asOfText,
+        cursor: null,
+        limit: 1,
+      })
+      const invalidCursor = encodeCursor({
+        version: 2,
+        asOfText,
+        createdAtText: row.createdAtText,
+        id: row.log.id,
+        offset: 999,
+      })
+
+      const { body } = await search({
+        tokens: [calendar.token],
+        cursor: invalidCursor,
+      }).expect(400)
+
+      expect(body.message).toBe("Invalid cursor")
+      expect(JSON.stringify(body)).not.toContain(invalidCursor)
+    })
 
     it.each([
       ["snapshot", "2026-99-99 99:99:99.999999", "2026-08-01 10:00:00"],

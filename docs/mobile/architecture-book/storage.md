@@ -51,6 +51,10 @@ longer holds, then advances the cursor — so a failed write leaves both the row
 pagination position untouched. The one-year cutoff and the read watermark both derive
 from server-issued time; no Activity code path may write a device-clock value into
 `last_read_at`. See ADR [046](./decisions/046-activity-cache-merge-and-server-read-watermark.md).
+The v1 server may represent one oversized source log as several adjacent rows. Fragment zero keeps
+the source id so its upsert replaces a previously cached whole item; later fragments use stable
+distinct ids and therefore coexist. The cache does not reassemble fragments (ADR
+[058](./decisions/058-activity-virtual-fragment-pagination.md)).
 
 ## MMKV values
 

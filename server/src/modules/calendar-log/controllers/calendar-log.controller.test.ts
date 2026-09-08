@@ -4,6 +4,7 @@ import { calendarFactory } from "modules/calendar/factories/calendar.factory"
 import { CalendarLogModule } from "modules/calendar-log/calendar-log.module"
 import { calendarLogFactory } from "modules/calendar-log/factories/calendar-log.factory"
 import createTestApp from "test-utils/create-test-app"
+import { fixtureCalendarChange } from "scripts/activity-capacity/fixtures"
 
 describe("CalendarLogController", () => {
   let app: NestExpressApplication
@@ -225,6 +226,24 @@ describe("CalendarLogController", () => {
       ])
       expect(body[0].id).toBe(log.id)
       expect(body[0].calendarToken).toBe(calendar.token)
+    })
+
+    it("keeps an oversized source log atomic on the legacy array route", async () => {
+      const calendar = await calendarFactory().create()
+      const log = await calendarLogFactory()
+        .calendar(calendar.id)
+        .params({ calendarChange: fixtureCalendarChange(2, 600) as never })
+        .create()
+
+      const { body } = await request(app)
+        .post("/calendar-logs/search")
+        .send({ tokens: [calendar.token] })
+        .expect(200)
+
+      expect(body).toHaveLength(1)
+      expect(body[0].id).toBe(log.id)
+      expect(body[0].calendarToken).toBe(calendar.token)
+      expect(body[0].calendarChange.changedItems).toHaveLength(600)
     })
   })
 })

@@ -130,7 +130,10 @@ export class CalendarLogRepository {
         ]
       : [calendars.map((calendar) => calendar.id), asOfText, limit]
     const rows = await this.repository.query<RawCalendarLogPageRow[]>(
-      calendarLogPageLateralSql(Boolean(cursor)),
+      calendarLogPageLateralSql(
+        Boolean(cursor),
+        cursor?.version === 2 && cursor.offset > 0,
+      ),
       parameters,
     )
 

@@ -7,9 +7,11 @@ import {
 } from "modules/calendar-log/models/calendar-log-cursor"
 
 const cursor: CalendarLogCursor = {
+  version: 2,
   asOfText: "2026-08-29 18:22:06.641234",
   createdAtText: "2026-08-29 18:20:25.142981",
   id: "3f1d9a20-1f1e-4a5b-9c7d-8e2b6a4c1d05",
+  offset: 0,
 }
 
 const encodePayload = (payload: unknown) =>
@@ -33,6 +35,24 @@ describe("calendar log cursor", () => {
     it("emits a url-safe token", () => {
       expect(encodeCursor(cursor)).toMatch(/^[A-Za-z0-9_-]+$/)
     })
+
+    it("round-trips a positive exact-next-position offset", () => {
+      const insideLog = { ...cursor, offset: 731 }
+      expect(decodeCursor(encodeCursor(insideLog))).toEqual(insideLog)
+    })
+
+    it("retains the exclusive meaning of a version 1 cursor", () => {
+      expect(
+        decodeCursor(
+          encodePayload({
+            v: 1,
+            a: cursor.asOfText,
+            c: cursor.createdAtText,
+            i: cursor.id,
+          }),
+        ),
+      ).toEqual({ ...cursor, version: 1, offset: 0 })
+    })
   })
 
   describe("rejection", () => {
@@ -53,12 +73,26 @@ describe("calendar log cursor", () => {
     it("rejects an unsupported version", () =>
       expectRejected(
         encodePayload({
-          v: 2,
+          v: 3,
           a: cursor.asOfText,
           c: cursor.createdAtText,
           i: cursor.id,
         }),
       ))
+
+    it.each([-1, 1.5, Number.MAX_SAFE_INTEGER + 1, null, "1"])(
+      "rejects version 2 offset %p",
+      (offset) =>
+        expectRejected(
+          encodePayload({
+            v: 2,
+            a: cursor.asOfText,
+            c: cursor.createdAtText,
+            i: cursor.id,
+            o: offset,
+          }),
+        ),
+    )
 
     it("rejects a missing id", () =>
       expectRejected(
@@ -160,9 +194,11 @@ describe("calendar log cursor", () => {
     it("carries no token and no event content", () => {
       const token = "cal-token-8f2c4b1a"
       const issued = encodeCursor({
+        version: 2,
         asOfText: cursor.asOfText,
         createdAtText: cursor.createdAtText,
         id: cursor.id,
+        offset: 17,
       })
 
       const decoded = Buffer.from(issued, "base64url").toString("utf8")
@@ -175,6 +211,7 @@ describe("calendar log cursor", () => {
         "a",
         "c",
         "i",
+        "o",
         "v",
       ])
     })

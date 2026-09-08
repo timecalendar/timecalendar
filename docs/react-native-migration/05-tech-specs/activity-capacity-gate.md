@@ -1,6 +1,6 @@
 # Activity capacity gate
 
-**Status:** frozen 2026-08-29 · **Ticket:** TIM-394 · **Gates:** TIM-395 (endpoint acceptance), TIM-401 (release review)
+**Status:** frozen 2026-08-29 · candidate review remains NO-GO · **Ticket:** TIM-394 · **Remediation:** TIM-529 · **Release review:** TIM-522
 
 The measured performance contract for the Activity read path specified in
 [`activity-revival.md`](./activity-revival.md). TIM-395's acceptance and TIM-401's release review
@@ -14,6 +14,23 @@ and is runnable locally with no production access.
 ---
 
 ## Headline
+
+### Current correction state (2026-09-08)
+
+The exact shipped-route rerun for the prior candidate found a 1,600,989-byte many-change page at
+both requested limits. That candidate remains NO-GO under G7; the threshold and its strict
+inequality are unchanged.
+
+The current correction projects oversized source logs into deterministic valid v1 fragments at
+atomic entry boundaries, then packs virtual-item pages against the exact serialized envelope with
+a 900,000-byte target. The client default remains 50 virtual items and the public maximum remains
+100. Local PostgreSQL-backed route coverage follows the complete 3,656-change cursor chain at both
+limits, reconstructs 45 new, 3,656 changed, and 214 old entries, and asserts every raw page remains
+below 1,000,000 bytes. Raising the byte stop produced a 1,552,009-byte page and failed the focused
+proof; shifting the continuation offset failed the reconstruction chain.
+
+This is remediation evidence, not a replacement candidate result. After merge, TIM-522 must freeze
+a new exact head and rerun every affected gate; none of the prior candidate evidence is reusable.
 
 1. **The default page size of 50 is safe.** The v1 response shape drops roughly 59% of the bytes
    the database stores, which the production aggregate read could not see. Estimated production
@@ -178,7 +195,7 @@ tightened or loosened **only** by editing its Evidence cell in the same commit a
 | G4 | Unread count p95 < 250 ms over recent and one-year watermarks | **PASS** — worst 4.5 ms, all cohorts, both watermarks, both shapes. | Run A |
 | G5 | No token or event data in telemetry or recorded evidence | **PASS** — plans pass through `redactPlan`; unit-tested; plans are captured against synthetic fixtures only. | `redact.test.ts`; §7 |
 | G6 | Event-loop delay stays bounded under representative concurrent reads | **PASS** — 8 concurrent readers × 10 rounds: max delay 12.8 ms, p99 12.0 ms, heap growth 27.3 MB. | Run B |
-| G7 | Serialized v1 page stays under 1 MB at p99 | **PASS (estimated)** — ~400 KB at page 50; ~950 KB at page 100. Derived, not directly measured — see [§4](#4-default-page-size-verdict). | Run A + §1 |
+| G7 | Serialized v1 page stays under 1 MB at p99 | **NO-GO on the prior candidate** — the real route produced 1,600,989 bytes for the many-change cohort at limits 50 and 100. The correction has a local mutation-effective route proof, but only a newly frozen post-merge candidate can change this verdict. | TIM-522 candidate run; TIM-529 local proof |
 | G8 | One request per trigger after single-flight collapse | **Not measured here.** Owned by **TIM-397** (coordinator) and **TIM-399** (lifecycle); verified at release by **TIM-401**. | — |
 | G9 | Smooth cached scrolling on supported iPhone, iPad portrait, and Android devices | **Not measured here.** Owned by **TIM-398**; verified at release by **TIM-401**. | — |
 
@@ -315,12 +332,12 @@ Two things this verdict does **not** claim:
   pagination is not a byte limit, and this document does not pretend otherwise — see the open
   question below.
 
-### Open question carried to TIM-389
+### Earlier representation question
 
-Whether the list response should carry the full `calendarChange` or a summary with detail fetched
-on demand is a **specification-level question**, not TIM-394's to decide. It was raised on
-[TIM-389](/TIM/issues/TIM-389) so TIM-395 is not where it gets discovered. This document's verdict
-is conditional on the current shape: *given* that the response carries the full change, 50 is safe.
+The earlier review asked whether the list should replace `calendarChange` with a summary and detail
+fetch. The compatible correction retains the current public shape and divides only oversized logs
+into independently valid items. A breaking summary/detail contract is therefore not required for
+the current budget correction.
 
 ---
 
@@ -493,3 +510,4 @@ This is enforced by construction, not by review:
 | 2026-08-29 | Added **G3a** (no full *index* scan). G3 as specified only forbids sequential scans and is satisfied by the 944 ms failure. | Run A, `c100-empty` plan |
 | 2026-08-29 | Added the `c100-empty` cohort, which is not in TIM-394's original cohort list. 75% of production calendars carry no log. | §1 population |
 | 2026-08-29 | G7 (page bytes) recorded as **estimated**, not measured, and its derivation stated. The production read could not see the v1 projection. | §4 |
+| 2026-09-08 | Recorded the prior candidate's real-route G7 failure and the byte-bounded virtual-fragment correction. G7 remains NO-GO until a new exact post-merge candidate reruns affected gates. | TIM-522 candidate run; TIM-529 local proof |

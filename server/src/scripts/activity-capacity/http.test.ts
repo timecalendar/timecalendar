@@ -3,7 +3,13 @@ import { SharedDatabaseModule } from "@lyrolab/nest-shared/database"
 import { DataSource } from "typeorm"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { calendarLogPageLateralSql } from "modules/calendar-log/repositories/activity-search.queries"
-import { CohortSpec, SqlRunner, cohortTokens, seedFixtures } from "./fixtures"
+import {
+  CohortSpec,
+  MANY_CHANGES_COHORT,
+  SqlRunner,
+  cohortTokens,
+  seedFixtures,
+} from "./fixtures"
 import {
   activityCapacityPageSql,
   assertCandidateSha,
@@ -55,7 +61,7 @@ describe("Activity route capacity measurement", () => {
   it("exercises the real route with bounded aggregate-only output", async () => {
     await seedFixtures(runner, {
       scale: { backgroundCalendars: 0, backgroundLogs: 0 },
-      cohorts: [cohort],
+      cohorts: [cohort, MANY_CHANGES_COHORT],
       vacuum: false,
     })
 
@@ -79,13 +85,15 @@ describe("Activity route capacity measurement", () => {
       warmups: 0,
       concurrency: 2,
       concurrentRounds: 1,
-      cohorts: [cohort],
+      cohorts: [cohort, MANY_CHANGES_COHORT],
       pageSizes: [50, 100],
     })
 
     expect(result.candidate).toBe(CANDIDATE)
     expect(result.policy).toMatchObject({ samples: 1, warmups: 0 })
-    expect(result.cohorts.map(({ pageSize }) => pageSize)).toEqual([50, 100])
+    expect(result.cohorts.map(({ pageSize }) => pageSize)).toEqual([
+      50, 50, 100, 100,
+    ])
     expect(result.cohorts.every((entry) => entry.followingPageAvailable)).toBe(
       true,
     )
@@ -104,8 +112,27 @@ describe("Activity route capacity measurement", () => {
       errors: 0,
     })
 
+    const manyChanges = result.cohorts.filter(
+      (entry) => entry.cohort === MANY_CHANGES_COHORT.key,
+    )
+    expect(manyChanges).toHaveLength(2)
+    expect(
+      manyChanges.every(
+        (entry) =>
+          entry.pagesMeasured > 1 &&
+          entry.serializedResponseBytes.max < 1_000_000,
+      ),
+    ).toBe(true)
+    expect(manyChanges.map((entry) => entry.changeCounts)).toEqual([
+      { newItems: 45, changedItems: 3656, oldItems: 214 },
+      { newItems: 45, changedItems: 3656, oldItems: 214 },
+    ])
+
     const output = JSON.stringify(result)
-    for (const token of cohortTokens(cohort))
+    for (const token of [
+      ...cohortTokens(cohort),
+      ...cohortTokens(MANY_CHANGES_COHORT),
+    ])
       expect(output).not.toContain(token)
     expect(output).not.toMatch(/nextCursor|"items"|calendarId|calendarName/)
   })

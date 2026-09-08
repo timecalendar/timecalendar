@@ -50,7 +50,13 @@ type Distribution = {
 }
 
 type PageResponse = {
-  items: unknown[]
+  items: Array<{
+    calendarChange?: {
+      newItems?: unknown[]
+      changedItems?: unknown[]
+      oldItems?: unknown[]
+    }
+  }>
   nextCursor: string | null
   asOf: string
   unreadCount?: number
@@ -92,6 +98,12 @@ export type ActivityRouteMeasurement = {
     serializedResponseBytes: Distribution
     rowsInFirstPage: number
     followingPageAvailable: boolean
+    pagesMeasured: number
+    changeCounts: {
+      newItems: number
+      changedItems: number
+      oldItems: number
+    }
   }>
   concurrency: {
     concurrency: number
@@ -206,17 +218,29 @@ const measureCohort = async (
   const serializedResponseBytes: number[] = []
   let rowsInFirstPage = 0
   let followingPageAvailable = false
+  let pagesMeasured = 0
+  let changeCounts = { newItems: 0, changedItems: 0, oldItems: 0 }
 
   for (let sample = -options.warmups; sample < options.samples; sample++) {
     const record = sample >= 0
     const first = await requestPage(baseUrl, { tokens, limit: pageSize })
-    const following = first.payload.nextCursor
-      ? await requestPage(baseUrl, {
-          tokens,
-          limit: pageSize,
-          cursor: first.payload.nextCursor,
-        })
-      : null
+    const chain = [first]
+    let nextCursor = first.payload.nextCursor
+    const completeChain = cohort.key === "many-changes"
+    while (nextCursor && (completeChain || chain.length < 2)) {
+      const following = await requestPage(baseUrl, {
+        tokens,
+        limit: pageSize,
+        cursor: nextCursor,
+      })
+      chain.push(following)
+      nextCursor = following.payload.nextCursor
+      if (chain.length > 1_000) {
+        throw new Error(
+          "activity-capacity-http: cursor chain did not terminate",
+        )
+      }
+    }
     const unreadRecent = await requestPage(baseUrl, {
       tokens,
       limit: pageSize,
@@ -230,14 +254,28 @@ const measureCohort = async (
 
     if (!record) continue
     rowsInFirstPage = first.payload.items.length
-    followingPageAvailable = following !== null
+    followingPageAvailable = chain.length > 1
+    pagesMeasured = chain.length
+    changeCounts = chain
+      .flatMap(({ payload }) => payload.items)
+      .reduce(
+        (counts, item) => ({
+          newItems:
+            counts.newItems + (item.calendarChange?.newItems?.length ?? 0),
+          changedItems:
+            counts.changedItems +
+            (item.calendarChange?.changedItems?.length ?? 0),
+          oldItems:
+            counts.oldItems + (item.calendarChange?.oldItems?.length ?? 0),
+        }),
+        { newItems: 0, changedItems: 0, oldItems: 0 },
+      )
     firstPageMs.push(first.durationMs)
     unreadRecentMs.push(unreadRecent.durationMs)
     unreadYearMs.push(unreadYear.durationMs)
-    serializedResponseBytes.push(first.bytes)
-    if (following) {
-      followingPageMs.push(following.durationMs)
-      serializedResponseBytes.push(following.bytes)
+    serializedResponseBytes.push(...chain.map(({ bytes }) => bytes))
+    if (chain[1]) {
+      followingPageMs.push(chain[1].durationMs)
     }
   }
 
@@ -253,6 +291,8 @@ const measureCohort = async (
     serializedResponseBytes: distribution(serializedResponseBytes, 0),
     rowsInFirstPage,
     followingPageAvailable,
+    pagesMeasured,
+    changeCounts,
   }
 }
 
