@@ -19,6 +19,12 @@ const school: SchoolListItem = {
   imageUrl: "b.png",
   imageUrlDark: null,
   intranetUrl: "https://intranet.univ-eiffel.fr/",
+  exportGuide: {
+    providerSlug: "generic",
+    requireProgramme: true,
+    requireConnect: true,
+    catalogueVersion: "test-v1",
+  },
 }
 
 function wrapper({ children }: { children: ReactNode }) {

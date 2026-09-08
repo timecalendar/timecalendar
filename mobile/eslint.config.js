@@ -133,6 +133,12 @@ const activityClientImportPattern = {
     "Use the @/features/activity/data seam — the generated calendar-log client is imported only inside src/features/activity/data/ (TIM-397 / ADR 048).",
 }
 
+const exportGuideClientImportPattern = {
+  regex: "^@/api/generated/export-guides($|/)",
+  message:
+    "Use the @/features/export-guides/data seam — the generated export-guide client is imported only inside src/features/export-guides/data/.",
+}
+
 // Route files are entrypoints, not modules. Named (rather than inlined in the
 // block that applies it) because two blocks now re-include it: any block that
 // re-sets `no-restricted-imports` for files under src/ has to carry it forward,
@@ -169,6 +175,7 @@ const restrictedImports = (
     banChromeSeam = true,
     banCalendarKit = true,
     banActivitySeam = true,
+    banExportGuideSeam = true,
   } = {},
 ) => [
   "error",
@@ -179,6 +186,7 @@ const restrictedImports = (
       ...(banChromeSeam ? chromeSeamImportPatterns : []),
       ...(banCalendarKit ? [calendarKitImportPattern] : []),
       ...(banActivitySeam ? [activityClientImportPattern] : []),
+      ...(banExportGuideSeam ? [exportGuideClientImportPattern] : []),
       ...extraPatterns,
     ],
     paths: [
@@ -309,6 +317,15 @@ module.exports = defineConfig([
     rules: {
       "no-restricted-imports": restrictedImports([], {
         banActivitySeam: false,
+      }),
+    },
+  },
+  {
+    name: "timecalendar/export-guide-seam",
+    files: ["src/features/export-guides/data/**"],
+    rules: {
+      "no-restricted-imports": restrictedImports([], {
+        banExportGuideSeam: false,
       }),
     },
   },

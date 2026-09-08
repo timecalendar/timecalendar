@@ -33,6 +33,7 @@ export const STORAGE_KEYS = {
   notificationIsActive: "notifications.isActive",
   feedbackLastEmail: "feedback.lastEmail",
   persistedSchoolSelectionQuery: "rq.schoolSelection.cache",
+  exportGuideLkgRegistry: "exportGuides.lkg.v1",
 } as const
 
 export type KnownStorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
@@ -56,6 +57,7 @@ export const STORAGE_KEY_CLASSIFICATION = {
   [STORAGE_KEYS.notificationIsActive]: "backend-bound",
   [STORAGE_KEYS.feedbackLastEmail]: "backend-bound",
   [STORAGE_KEYS.persistedSchoolSelectionQuery]: "backend-bound",
+  [STORAGE_KEYS.exportGuideLkgRegistry]: "backend-bound",
 } as const satisfies Record<KnownStorageKey, StorageKeyClassification>
 
 export interface BackendResetJournal {

@@ -6,4 +6,8 @@ export {
   useSchools,
 } from "./queries"
 export { schoolMatches } from "./search"
-export type { SchoolGroupNode, SchoolListItem } from "./types"
+export type {
+  SchoolExportGuideReference,
+  SchoolGroupNode,
+  SchoolListItem,
+} from "./types"

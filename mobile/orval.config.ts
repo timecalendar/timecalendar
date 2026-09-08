@@ -13,6 +13,17 @@ export default defineConfig({
           path: "src/api/mutator.ts",
           name: "customFetch",
         },
+        operations: {
+          ExportGuideV1Controller_findCatalogue: {
+            mutator: {
+              path: "src/api/mutator.ts",
+              name: "customFetchResponse",
+            },
+            fetch: {
+              includeHttpResponseReturnType: true,
+            },
+          },
+        },
         fetch: {
           includeHttpResponseReturnType: false,
         },

@@ -12,6 +12,12 @@ const eiffel: SchoolListItem = {
   imageUrl: "",
   imageUrlDark: null,
   intranetUrl: null,
+  exportGuide: {
+    providerSlug: "generic",
+    requireProgramme: true,
+    requireConnect: false,
+    catalogueVersion: "test-v1",
+  },
 }
 
 describe("normalize", () => {

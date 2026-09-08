@@ -4,37 +4,21 @@
 TBD - created by archiving change add-mobile-school-selection. Update Purpose after archive.
 ## Requirements
 ### Requirement: Schools and per-school groups are read from the server through TanStack Query behind a feature query layer
-The app SHALL read the list of schools from the server's `GET /schools` endpoint and, for a chosen
-school, its school groups from the per-school groups endpoint, using the committed generated TanStack
-Query hooks over the single `customFetch` mutator. The query calls SHALL be reached only through a
-feature query layer under `mobile/src/features/school-selection/data/` (the 90% coverage glob); the
-presentational screens SHALL consume the feature barrel and SHALL NOT import the generated API hooks or
-call `fetch` directly. No new network code SHALL be written (the generated client + `customFetch` stay
-the only fetch path). The `SchoolListItem` domain projection SHALL additionally carry the school's
-nullable `intranetUrl` from the generated `SchoolForList`, so the Connect step can render an
-institution link from the already-fetched (and offline-persisted) school list without issuing a
-second request. The projection SHALL stay minimal: only what the screens render plus what the import
-journey needs.
+The app SHALL read the list of schools from `GET /schools` and per-school groups from the generated TanStack Query hooks over `customFetch`, only through `mobile/src/features/school-selection/data/`. Screens SHALL consume the feature barrel and SHALL NOT import generated API hooks or call `fetch` directly. `SchoolListItem` SHALL remain a minimal domain projection while carrying `intranetUrl` and a copied neutral `exportGuide` reference with raw `providerSlug`, `requireProgramme`, `requireConnect`, and exact `catalogueVersion`, so the later import journey can request the pinned server version without retaining a generated DTO or issuing another school request.
 
-#### Scenario: The school list is read from the live endpoint
-- **WHEN** the school-picker screen mounts
-- **THEN** it reads the school list through the feature query layer's schools hook
-- **AND** that hook wraps the generated `findSchools` query over `customFetch`
+#### Scenario: School and group reads keep the generated seam
+- **WHEN** school or group data is requested
+- **THEN** the feature data layer wraps the corresponding generated hook over `customFetch`
+- **AND** screens do not import generated hooks or call fetch directly
 
-#### Scenario: A chosen school's groups are read from the live endpoint
-- **WHEN** the group-picker screen mounts for a selected `schoolId`
-- **THEN** it reads that school's groups through the feature query layer's groups hook
-- **AND** that hook wraps the generated per-school `findSchoolGroups` query
+#### Scenario: School projection carries guide identity and gates
+- **WHEN** `SchoolForList` is mapped to `SchoolListItem`
+- **THEN** its nullable `intranetUrl` and all four `exportGuide` fields are copied exactly into domain values
+- **AND** an unknown valid raw provider slug is preserved for later Generic resolution
 
-#### Scenario: Screens reach the server only through the feature layer
-- **WHEN** a presentational onboarding screen needs server data
-- **THEN** it imports the read hooks from `@/features/school-selection`
-- **AND** it does not import the generated API hooks or call `fetch` directly
-
-#### Scenario: The projection carries the nullable intranet URL
-- **WHEN** the schools query maps a `SchoolForList` into `SchoolListItem`
-- **THEN** the projection includes `intranetUrl` as `string | null`
-- **AND** the Connect step reads it from the import draft rather than issuing another query
+#### Scenario: Generated DTO is not retained downstream
+- **WHEN** onboarding stores the selected `SchoolListItem` in its ephemeral draft
+- **THEN** later features can consume the domain export-guide reference without importing `SchoolForList` or issuing a second school query
 
 ### Requirement: The query cache is persisted offline through a sync persister backed by the MMKV storage seam
 The app SHALL persist the schools and school-groups query cache to device storage so a cold launch

@@ -2,6 +2,11 @@
 
 ## 2026-09-07
 
+- Added the native export-guide data boundary: one response-aware generated operation, complete
+  schema-v1 defensive validation, data-driven provider resolution, immutable snapshots, and a
+  backend-bound atomic LKG registry with strict conditional-response and 24-hour freshness rules.
+  School selection now projects the neutral exact-version guide reference; no UI or journey state
+  is persisted.
 - Recorded the server-owned export-guide contract: an exact localized, versioned catalogue lives
   behind a controller-local `/v1` route, while school responses carry a required neutral reference
   rather than page content. OpenAPI remains generated from built Nest output before the committed

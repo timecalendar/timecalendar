@@ -273,6 +273,12 @@ describe("SchoolPickerScreen", () => {
       name: "Eiffel",
       imageUrl: "",
       intranetUrl: null,
+      exportGuide: {
+        providerSlug: "generic",
+        requireProgramme: true,
+        requireConnect: false,
+        catalogueVersion: "test-v1",
+      },
     }
     mockUseSchools.mockReturnValue(ready([school]))
     const { getByTestId } = await render(<SchoolPickerScreen />)

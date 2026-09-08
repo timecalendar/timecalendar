@@ -9,6 +9,13 @@
 // `intranetUrl` is carried for the import journey's Connect step: the row the
 // student picked becomes the draft's institution, so Connect renders its link
 // from this projection with no second query (TIM-391 / design D2).
+export interface SchoolExportGuideReference {
+  readonly providerSlug: string
+  readonly requireProgramme: boolean
+  readonly requireConnect: boolean
+  readonly catalogueVersion: string
+}
+
 export interface SchoolListItem {
   id: string
   name: string
@@ -16,6 +23,7 @@ export interface SchoolListItem {
   imageUrl: string
   imageUrlDark: string | null
   intranetUrl: string | null
+  exportGuide: SchoolExportGuideReference
 }
 
 // A node in the school-group tree — mirrors the generated SchoolGroupItem
