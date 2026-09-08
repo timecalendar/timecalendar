@@ -13,19 +13,19 @@ describe("ExportGuidePublicationService", () => {
   let directory: string
   let store: ExportGuideCatalogueStore
   let assetValidator: jest.Mocked<Pick<ExportGuideAssetValidator, "validate">>
+  let schools: jest.Mocked<Pick<ExportGuideSchoolRepository, "findVisible">>
   let publication: ExportGuidePublicationService
 
   beforeEach(() => {
     directory = mkdtempSync(join(tmpdir(), "export-guide-publication-"))
     store = new ExportGuideCatalogueStore(directory, validator)
     assetValidator = { validate: jest.fn().mockResolvedValue(undefined) }
+    schools = { findVisible: jest.fn().mockResolvedValue([]) }
     publication = new ExportGuidePublicationService(
       validator,
       assetValidator as unknown as ExportGuideAssetValidator,
       store,
-      {
-        findVisible: jest.fn().mockResolvedValue([]),
-      } as unknown as ExportGuideSchoolRepository,
+      schools as unknown as ExportGuideSchoolRepository,
     )
   })
 
@@ -40,6 +40,18 @@ describe("ExportGuidePublicationService", () => {
 
     expect(store.capture().activeVersion).toBeUndefined()
     expect(store.capture().retained.size).toBe(0)
+  })
+
+  it("bootstraps validated packaged data without requiring database schema", async () => {
+    schools.findVisible.mockRejectedValueOnce(new Error("schema unavailable"))
+
+    await publication.bootstrapInitial(
+      assetValidator as unknown as ExportGuideAssetValidator,
+    )
+
+    expect(store.capture().activeVersion).toBe("2026-09-07.1")
+    expect(assetValidator.validate).toHaveBeenCalled()
+    expect(schools.findVisible).not.toHaveBeenCalled()
   })
 
   it("rejects conflicting storage metadata declared for one URL", async () => {

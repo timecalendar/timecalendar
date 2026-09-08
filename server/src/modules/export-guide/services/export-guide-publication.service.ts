@@ -31,7 +31,13 @@ export class ExportGuidePublicationService {
     en: unknown,
     options: { initial?: boolean; now?: Date } = {},
   ): Promise<ExportGuideBundle> {
-    return this.publishWithAssetValidator(fr, en, options, this.assetValidator)
+    return this.publishWithAssetValidator(
+      fr,
+      en,
+      options,
+      this.assetValidator,
+      true,
+    )
   }
 
   private async publishWithAssetValidator(
@@ -39,19 +45,23 @@ export class ExportGuidePublicationService {
     en: unknown,
     options: { initial?: boolean; now?: Date },
     assetValidator: ExportGuideAssetValidator,
+    validateSchools: boolean,
   ): Promise<ExportGuideBundle> {
     const catalogues = this.validator.validatePair(fr, en, options)
     const catalogueVersion = catalogues.fr.catalogueVersion
     if (this.catalogues.capture().retained.has(catalogueVersion))
       throw new ExportGuideValidationError("version_exists")
 
-    const schools = await this.schools.findVisible()
-    if (
-      schools.some(
-        ({ assistant }) => !EXPORT_GUIDE_PROVIDER_SLUG_PATTERN.test(assistant),
+    if (validateSchools) {
+      const schools = await this.schools.findVisible()
+      if (
+        schools.some(
+          ({ assistant }) =>
+            !EXPORT_GUIDE_PROVIDER_SLUG_PATTERN.test(assistant),
+        )
       )
-    )
-      throw new ExportGuideValidationError("school_provider_slug")
+        throw new ExportGuideValidationError("school_provider_slug")
+    }
 
     const assets = new Map<string, AssetDeclaration>()
     for (const catalogue of Object.values(catalogues)) {
@@ -88,6 +98,19 @@ export class ExportGuidePublicationService {
       createInitialExportGuideCatalogue("en"),
       { initial: true, now: new Date(0) },
       assetValidator,
+      true,
+    )
+  }
+
+  async bootstrapInitial(
+    assetValidator: ExportGuideAssetValidator,
+  ): Promise<ExportGuideBundle> {
+    return this.publishWithAssetValidator(
+      createInitialExportGuideCatalogue("fr"),
+      createInitialExportGuideCatalogue("en"),
+      { initial: true, now: new Date(0) },
+      assetValidator,
+      false,
     )
   }
 
