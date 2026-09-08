@@ -20,6 +20,7 @@ export interface CalendarImportDraft {
 interface JourneyIdentity {
   readonly draft: CalendarImportDraft
   readonly draftRevision: number
+  readonly gateProgress: "institution" | "programme" | "connect"
 }
 
 export type ImportJourneyState =

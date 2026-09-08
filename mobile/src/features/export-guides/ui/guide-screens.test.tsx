@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { AccessibilityInfo } from "react-native"
+import { AccessibilityInfo, StyleSheet } from "react-native"
 
 import type {
   ExportGuideCatalogue,
@@ -10,6 +10,10 @@ import { useImportDraft } from "@/features/onboarding/draft"
 
 import GuidePageScreen from "./guide-page-screen"
 import ProviderSelectionScreen from "./provider-selection-screen"
+
+const mockLoad = jest.fn()
+const mockRetry = jest.fn()
+let mockBusy = false
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn(), replace: jest.fn(), back: jest.fn() },
@@ -24,9 +28,9 @@ jest.mock("./use-export-guide-load", () => ({
   exportGuideLocale: () => "en",
   useExportGuideLoad: () => ({
     locale: "en",
-    busy: false,
-    load: jest.fn(),
-    retry: jest.fn(),
+    busy: mockBusy,
+    load: mockLoad,
+    retry: mockRetry,
   }),
 }))
 jest.mock("./telemetry", () => ({
@@ -68,6 +72,7 @@ const snapshot: ExportGuidePinnedSnapshot = {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockBusy = false
   jest
     .spyOn(AccessibilityInfo, "setAccessibilityFocus")
     .mockImplementation(() => undefined)
@@ -76,6 +81,37 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks())
 
 describe("GuidePageScreen", () => {
+  it("recovers page zero to an incomplete listed Connect gate", async () => {
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "draft",
+        draft: {
+          institution: {
+            kind: "listed",
+            school: {
+              intranetUrl: "https://example.com/connect",
+              exportGuide: {
+                providerSlug: "future-provider",
+                requireProgramme: false,
+                requireConnect: true,
+                catalogueVersion: "v1",
+              },
+            },
+          },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+      },
+      dispatch,
+    })
+
+    const view = await render(<GuidePageScreen />)
+    expect(view.getByText("Loading the export guide…")).toBeTruthy()
+    expect(mockLoad).not.toHaveBeenCalled()
+    expect(router.replace).toHaveBeenCalledWith("/onboarding/connect")
+  })
+
   it("renders server strings inertly with localized progress and advances by push", async () => {
     mockUseImportDraft.mockReturnValue({
       state: {
@@ -85,6 +121,7 @@ describe("GuidePageScreen", () => {
           calendarName: "",
         },
         draftRevision: 1,
+        gateProgress: "programme",
         snapshot,
         visitedThrough: 0,
       },
@@ -98,9 +135,95 @@ describe("GuidePageScreen", () => {
     expect(
       view.getByTestId("export-guide-progress").props.accessibilityLabel,
     ).toBe("Page 1 of 2")
-    fireEvent.press(view.getByTestId("export-guide-next"))
+    expect(AccessibilityInfo.setAccessibilityFocus).toHaveBeenCalledTimes(1)
+    expect(
+      StyleSheet.flatten(view.getByTestId("export-guide-next").props.style),
+    ).toEqual(expect.objectContaining({ minHeight: expect.any(Number) }))
+    await fireEvent.press(view.getByTestId("export-guide-next"))
     expect(dispatch).toHaveBeenCalledWith({ type: "visit-page", pageIndex: 1 })
     expect(router.push).toHaveBeenCalledWith("/onboarding/export-guide/1")
+  })
+
+  it("degrades a failed image to one accessible text-only meaning", async () => {
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "guide",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot,
+        visitedThrough: 0,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    await fireEvent(view.getByTestId("export-guide-page-image"), "error")
+    const placeholder = view.getByTestId("export-guide-page-image-placeholder")
+    expect(placeholder.props.accessibilityRole).toBe("image")
+    expect(placeholder.props.accessibilityLabel).toBe("Open the export menu")
+    expect(view.getByText("The menu is beside Settings")).toBeTruthy()
+    expect(view.getAllByLabelText("Open the export menu")).toHaveLength(1)
+    expect(view.getByTestId("export-guide-next")).toBeEnabled()
+  })
+
+  it("completes only the visited final page and pushes manual import", async () => {
+    ;(useLocalSearchParams as jest.Mock).mockReturnValue({ pageIndex: "1" })
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "guide",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        snapshot,
+        visitedThrough: 1,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    await fireEvent.press(view.getByTestId("export-guide-next"))
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "complete-guide",
+      pageIndex: 1,
+    })
+    expect(router.push).toHaveBeenCalledWith("/onboarding/import")
+  })
+
+  it("renders blocking recovery with single retry and ordinary Back", async () => {
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "blocked",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 2,
+        gateProgress: "programme",
+        locale: "en",
+        selector: { kind: "active" },
+        failure: "network",
+        attempt: 1,
+      },
+      dispatch,
+    })
+    const view = await render(<GuidePageScreen />)
+
+    expect(
+      view.getByText(
+        "The guide is required before you can import your timetable.",
+      ).parent?.props.accessibilityRole,
+    ).toBe("alert")
+    await fireEvent.press(view.getByTestId("export-guide-retry"))
+    await fireEvent.press(view.getByTestId("export-guide-back"))
+    expect(mockRetry).toHaveBeenCalledTimes(1)
+    expect(router.back).toHaveBeenCalledTimes(1)
   })
 
   it("does not clamp a malformed page index", async () => {
@@ -113,6 +236,7 @@ describe("GuidePageScreen", () => {
           calendarName: "",
         },
         draftRevision: 1,
+        gateProgress: "programme",
         snapshot,
         visitedThrough: 1,
       },
@@ -127,6 +251,36 @@ describe("GuidePageScreen", () => {
 })
 
 describe("ProviderSelectionScreen", () => {
+  it("recovers a listed direct entry instead of loading forever", async () => {
+    mockUseImportDraft.mockReturnValue({
+      state: {
+        phase: "draft",
+        draft: {
+          institution: {
+            kind: "listed",
+            school: {
+              intranetUrl: null,
+              exportGuide: {
+                providerSlug: "future-provider",
+                requireProgramme: false,
+                requireConnect: false,
+                catalogueVersion: "v1",
+              },
+            },
+          },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+      },
+      dispatch,
+    })
+
+    const view = await render(<ProviderSelectionScreen />)
+    expect(view.toJSON()).toBeNull()
+    expect(router.replace).toHaveBeenCalledWith("/onboarding/export-guide/0")
+  })
+
   it("renders every ordered selectable provider without a client allowlist", async () => {
     const provider = {
       slug: "future-provider",
@@ -152,6 +306,7 @@ describe("ProviderSelectionScreen", () => {
           calendarName: "",
         },
         draftRevision: 1,
+        gateProgress: "programme",
         locale: "en",
         catalogue,
         providers: [provider, generic],
@@ -162,7 +317,9 @@ describe("ProviderSelectionScreen", () => {
     expect(
       view.getAllByRole("button").map((node) => node.props.accessibilityLabel),
     ).toEqual(["Future Provider", "Generic"])
-    fireEvent.press(view.getByTestId("export-guide-provider-future-provider"))
+    await fireEvent.press(
+      view.getByTestId("export-guide-provider-future-provider"),
+    )
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: "start-guide" }),
     )

@@ -14,7 +14,7 @@ import ConnectScreen from "./connect-screen"
 // javascript:/file: rows below are a security assertion about what this screen
 // will hand to the browser, not a restatement of types.test.ts.
 jest.mock("expo-router", () => ({
-  router: { back: jest.fn(), push: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: () => null },
 }))
 jest.mock("expo-web-browser", () => ({ openBrowserAsync: jest.fn() }))
@@ -24,6 +24,7 @@ jest.mock("@/features/onboarding/draft", () => ({
 }))
 
 const mockPush = router.push as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const mockBack = router.back as jest.Mock
 const mockOpenBrowser = WebBrowser.openBrowserAsync as jest.Mock
 const mockUseImportDraft = useImportDraft as jest.Mock
@@ -48,12 +49,46 @@ const listed = (intranetUrl: string | null) => ({
   calendarName: "L3 Informatique",
 })
 
+const draftValue = (draft: ReturnType<typeof listed> | null) => ({
+  draft,
+  dispatch: jest.fn(),
+  state:
+    draft === null
+      ? { phase: "empty" as const, draftRevision: 0 }
+      : {
+          phase: "draft" as const,
+          draftRevision: 2,
+          gateProgress: "programme" as const,
+          draft,
+        },
+})
+
 beforeEach(() => {
   jest.clearAllMocks()
-  mockUseImportDraft.mockReturnValue({ draft: listed(null) })
+  mockUseImportDraft.mockReturnValue(
+    draftValue(listed("https://example.com/connect")),
+  )
 })
 
 describe("ConnectScreen", () => {
+  it("recovers a restored Connect route that skipped required Programme", async () => {
+    const draft = listed("https://example.com/connect")
+    mockUseImportDraft.mockReturnValue({
+      draft,
+      dispatch: jest.fn(),
+      state: {
+        phase: "draft",
+        draftRevision: 1,
+        gateProgress: "institution",
+        draft,
+      },
+    })
+
+    const view = await render(<ConnectScreen />)
+    expect(view.toJSON()).toBeNull()
+    expect(mockReplace).toHaveBeenCalledWith("/onboarding/programme")
+  })
+
   it("keeps the step in a measured readable tablet lane", async () => {
     const { getByTestId } = await render(<ConnectScreen />)
     const owner = getByTestId("onboarding-connect-content")
@@ -88,7 +123,7 @@ describe("ConnectScreen", () => {
   it.each(["https://intranet.univ-eiffel.fr/", "http://ent.example.org/edt"])(
     "renders an institution-labelled link for %s and opens it",
     async (url) => {
-      mockUseImportDraft.mockReturnValue({ draft: listed(url) })
+      mockUseImportDraft.mockReturnValue(draftValue(listed(url)))
       const { getByTestId, getByText } = await render(<ConnectScreen />)
 
       const link = getByTestId("onboarding-connect-intranet")
@@ -113,32 +148,43 @@ describe("ConnectScreen", () => {
     ["a file: scheme", "file:///etc/passwd"],
     ["an unparseable value", "univ-eiffel.fr"],
   ])("renders no link for %s", async (_label, intranetUrl) => {
-    mockUseImportDraft.mockReturnValue({ draft: listed(intranetUrl) })
+    mockUseImportDraft.mockReturnValue(draftValue(listed(intranetUrl)))
     const { queryByTestId } = await render(<ConnectScreen />)
 
     expect(queryByTestId("onboarding-connect-intranet")).toBeNull()
+    expect(mockReplace).toHaveBeenCalledWith("/onboarding/export-guide/0")
   })
 
   it("renders no link for an unlisted institution — there is no trusted URL", async () => {
+    const draft = {
+      institution: { kind: "unlisted" as const, schoolName: "École du Coin" },
+      calendarName: "",
+    }
     mockUseImportDraft.mockReturnValue({
-      draft: {
-        institution: { kind: "unlisted", schoolName: "École du Coin" },
-        calendarName: "",
+      draft,
+      dispatch: jest.fn(),
+      state: {
+        phase: "draft",
+        draftRevision: 2,
+        gateProgress: "programme",
+        draft,
       },
     })
     const { queryByTestId } = await render(<ConnectScreen />)
 
     expect(queryByTestId("onboarding-connect-intranet")).toBeNull()
+    expect(mockReplace).toHaveBeenCalledWith(
+      "/onboarding/export-guide/providers",
+    )
   })
 
   it.each([
     ["a listed draft with a link", () => listed("https://ent.example.org")],
-    ["a listed draft without one", () => listed(null)],
-    ["no draft at all", () => null],
   ])(
     "always offers Back and Continue with %s, and Continue opens manual import",
     async (_label, makeDraft) => {
-      mockUseImportDraft.mockReturnValue({ draft: makeDraft() })
+      const value = draftValue(makeDraft())
+      mockUseImportDraft.mockReturnValue(value)
       const { getByTestId } = await render(<ConnectScreen />)
 
       await act(async () =>
@@ -151,6 +197,9 @@ describe("ConnectScreen", () => {
       )
       // The assistant insertion point: a plain push, nothing handed forward.
       expect(mockPush).toHaveBeenCalledWith("/onboarding/export-guide/0")
+      expect(value.dispatch).toHaveBeenCalledWith({
+        type: "complete-connect",
+      })
     },
   )
 })

@@ -13,7 +13,10 @@ import {
   getSelectableExportGuideProviders,
   resolveExportGuideProvider,
 } from "@/features/export-guides/data"
-import { useImportDraft } from "@/features/onboarding/draft"
+import {
+  useImportDraft,
+  useJourneyGateRoute,
+} from "@/features/onboarding/draft"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 import { GuideBlockingError, GuideLoading } from "./guide-status"
@@ -24,6 +27,7 @@ export default function ProviderSelectionScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
   const { state, dispatch } = useImportDraft()
+  const legal = useJourneyGateRoute(state, "providers")
   const [failedImages, setFailedImages] = useState<ReadonlySet<string>>(
     new Set(),
   )
@@ -51,6 +55,7 @@ export default function ProviderSelectionScreen() {
       load()
   }, [load, state])
 
+  if (!legal) return null
   if (state.phase === "blocked") {
     return <GuideBlockingError retry={retry} busy={busy} />
   }

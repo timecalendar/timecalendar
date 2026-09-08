@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -19,6 +19,11 @@ export const exportGuideLocale = (
   language: string | undefined,
 ): ExportGuideLocale => (language?.toLowerCase().startsWith("fr") ? "fr" : "en")
 
+const selectorKey = (selector: ExportGuideSelector): string =>
+  selector.kind === "active"
+    ? selector.kind
+    : `${selector.kind}:${selector.catalogueVersion}`
+
 export function useExportGuideLoad({
   state,
   dispatch,
@@ -34,12 +39,21 @@ export function useExportGuideLoad({
 }) {
   const { i18n } = useTranslation()
   const locale = exportGuideLocale(i18n.resolvedLanguage ?? i18n.language)
-  const coordinator = createExportGuideJourneyCoordinator(
-    createExportGuideRepository(),
-  )
+  const coordinator = useRef<ReturnType<
+    typeof createExportGuideJourneyCoordinator
+  > | null>(null)
+  if (coordinator.current === null) {
+    coordinator.current = createExportGuideJourneyCoordinator(
+      createExportGuideRepository(),
+    )
+  }
   const mounted = useRef(true)
   const [busy, setBusy] = useState(false)
   const attempt = useRef(0)
+  const activeRequest = useRef<{
+    key: string
+    promise: Promise<void>
+  } | null>(null)
   const latest = useRef({ state, locale, selector, onCatalogue })
   useEffect(() => {
     latest.current = { state, locale, selector, onCatalogue }
@@ -48,15 +62,19 @@ export function useExportGuideLoad({
   useEffect(
     () => () => {
       mounted.current = false
-      coordinator.cancel()
+      coordinator.current?.cancel()
     },
-    [coordinator],
+    [],
   )
 
-  const load = () => {
+  const load = useCallback(() => {
     const current = latest.current
     if (current.state.phase === "empty" || current.selector === null) return
     const draftRevision = current.state.draftRevision
+    const requestKey = `${draftRevision}:${current.locale}:${selectorKey(current.selector)}`
+    if (activeRequest.current?.key === requestKey) {
+      return activeRequest.current.promise
+    }
     const nextAttempt = ++attempt.current
     setBusy(true)
     dispatch({
@@ -65,8 +83,8 @@ export function useExportGuideLoad({
       selector: current.selector,
       attempt: nextAttempt,
     })
-    void coordinator
-      .load({
+    const promise = coordinator
+      .current!.load({
         draftRevision,
         locale: current.locale,
         selector: current.selector,
@@ -78,7 +96,9 @@ export function useExportGuideLoad({
           nextAttempt !== attempt.current ||
           now.state.phase === "empty" ||
           now.state.draftRevision !== request.draftRevision ||
-          now.locale !== request.locale
+          now.locale !== request.locale ||
+          now.selector === null ||
+          selectorKey(now.selector) !== selectorKey(request.selector)
         )
           return
         emitExportGuideEvent({
@@ -113,13 +133,19 @@ export function useExportGuideLoad({
             draftRevision,
           })
         } else {
-          current.onCatalogue(outcome)
+          now.onCatalogue(outcome)
         }
       })
-      .finally(() => mounted.current && setBusy(false))
-  }
+      .finally(() => {
+        if (activeRequest.current?.key !== requestKey) return
+        activeRequest.current = null
+        if (mounted.current) setBusy(false)
+      })
+    activeRequest.current = { key: requestKey, promise }
+    return promise
+  }, [dispatch])
 
-  const retry = () => {
+  const retry = useCallback(() => {
     const current = latest.current.state
     if (current.phase === "blocked") {
       emitExportGuideEvent({
@@ -132,7 +158,7 @@ export function useExportGuideLoad({
       })
     }
     load()
-  }
+  }, [load])
 
   return { locale, busy, load, retry }
 }

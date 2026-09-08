@@ -20,6 +20,7 @@ export type ImportJourneyAction =
   | Readonly<{ type: "set-listed"; school: SchoolListItem }>
   | Readonly<{ type: "set-unlisted"; schoolName: string }>
   | Readonly<{ type: "set-calendar-name"; name: string }>
+  | Readonly<{ type: "complete-connect" }>
   | Readonly<{
       type: "start-resolution"
       locale: ExportGuideLocale
@@ -66,6 +67,9 @@ export function importJourneyReducer(
       return {
         phase: "draft",
         draftRevision: state.draftRevision + 1,
+        gateProgress: action.school.exportGuide.requireProgramme
+          ? "institution"
+          : "programme",
         draft: {
           institution: { kind: "listed", school: action.school },
           calendarName: "",
@@ -75,6 +79,7 @@ export function importJourneyReducer(
       return {
         phase: "draft",
         draftRevision: state.draftRevision + 1,
+        gateProgress: "institution",
         draft: {
           institution: {
             kind: "unlisted",
@@ -88,17 +93,22 @@ export function importJourneyReducer(
       return {
         phase: "draft",
         draftRevision: state.draftRevision + 1,
+        gateProgress: "programme",
         draft: {
           ...state.draft,
           calendarName: normalizeImportName(action.name),
         },
       }
+    case "complete-connect":
+      if (state.phase === "empty") return state
+      return { ...state, gateProgress: "connect" }
     case "start-resolution":
       if (state.phase === "empty") return state
       return {
         phase: "resolving",
         draft: state.draft,
         draftRevision: state.draftRevision,
+        gateProgress: state.gateProgress,
         locale: action.locale,
         selector: action.selector,
         attempt: action.attempt,
@@ -113,6 +123,7 @@ export function importJourneyReducer(
         phase: "selecting-provider",
         draft: state.draft,
         draftRevision: state.draftRevision,
+        gateProgress: state.gateProgress,
         locale: action.locale,
         catalogue: action.catalogue,
         providers: action.providers,
@@ -127,6 +138,7 @@ export function importJourneyReducer(
         phase: "blocked",
         draft: state.draft,
         draftRevision: state.draftRevision,
+        gateProgress: state.gateProgress,
         locale: action.locale,
         selector: action.selector,
         failure: action.failure,
@@ -143,6 +155,7 @@ export function importJourneyReducer(
         phase: "guide",
         draft: state.draft,
         draftRevision: state.draftRevision,
+        gateProgress: state.gateProgress,
         snapshot: action.snapshot,
         visitedThrough: 0,
         ...(state.phase === "selecting-provider"
@@ -185,6 +198,7 @@ export function importJourneyReducer(
         phase: "draft",
         draft: state.draft,
         draftRevision: state.draftRevision + 1,
+        gateProgress: state.gateProgress,
       }
     case "seed-development-completion":
       if (!isDevVariant() || action.snapshot.pages.length === 0) return state
@@ -192,6 +206,7 @@ export function importJourneyReducer(
         phase: "completed",
         draft: action.draft,
         draftRevision: state.draftRevision + 1,
+        gateProgress: "connect",
         snapshot: action.snapshot,
         visitedThrough: action.snapshot.pages.length - 1,
         manualHandoff: "none",

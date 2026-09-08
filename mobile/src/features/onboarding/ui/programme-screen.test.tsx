@@ -15,7 +15,7 @@ import ProgrammeScreen from "./programme-screen"
 // reads at runtime. Both platforms are exercised through usePlatform (an inline
 // jest.replaceProperty leaks into later tests — TIM-273).
 jest.mock("expo-router", () => ({
-  router: { push: jest.fn() },
+  router: { push: jest.fn(), replace: jest.fn() },
   Stack: { Screen: jest.fn(() => null) },
 }))
 jest.mock("react-native", () => {
@@ -52,6 +52,7 @@ jest.mock("@/features/onboarding/draft", () => ({
 }))
 
 const mockPush = router.push as jest.Mock
+const mockReplace = router.replace as jest.Mock
 const mockUseImportDraft = useImportDraft as jest.Mock
 const mockStackScreen = Stack.Screen as unknown as jest.Mock
 
@@ -96,16 +97,29 @@ const expectStickyProgrammeCta = async () => {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockUseImportDraft.mockReturnValue({
-    setCalendarName: mockSetCalendarName,
-    draft: {
-      institution: {
-        kind: "listed",
-        school: {
-          intranetUrl: "https://example.com",
-          exportGuide: { requireConnect: true, providerSlug: "generic" },
+  const draft = {
+    institution: {
+      kind: "listed" as const,
+      school: {
+        intranetUrl: "https://example.com",
+        exportGuide: {
+          requireProgramme: true,
+          requireConnect: true,
+          providerSlug: "generic",
+          catalogueVersion: "v1",
         },
       },
+    },
+    calendarName: "",
+  }
+  mockUseImportDraft.mockReturnValue({
+    setCalendarName: mockSetCalendarName,
+    draft,
+    state: {
+      phase: "draft",
+      draftRevision: 1,
+      gateProgress: "institution",
+      draft,
     },
   })
 })
@@ -122,6 +136,38 @@ const typeAndSubmit = async (value: string) => {
 }
 
 describe("ProgrammeScreen", () => {
+  it("recovers a direct entry when Programme is disabled", async () => {
+    const draft = {
+      institution: {
+        kind: "listed" as const,
+        school: {
+          intranetUrl: "https://example.com",
+          exportGuide: {
+            requireProgramme: false,
+            requireConnect: true,
+            providerSlug: "generic",
+            catalogueVersion: "v1",
+          },
+        },
+      },
+      calendarName: "",
+    }
+    mockUseImportDraft.mockReturnValue({
+      draft,
+      setCalendarName: mockSetCalendarName,
+      state: {
+        phase: "draft",
+        draftRevision: 1,
+        gateProgress: "programme",
+        draft,
+      },
+    })
+
+    const view = await render(<ProgrammeScreen />)
+    expect(view.toJSON()).toBeNull()
+    expect(mockReplace).toHaveBeenCalledWith("/onboarding/connect")
+  })
+
   it("renders the localized copy, the field label and the example placeholder", async () => {
     const { getByText, getByTestId } = await render(<ProgrammeScreen />)
 

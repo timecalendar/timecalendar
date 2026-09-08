@@ -13,6 +13,7 @@ import {
   isImportNameWithinLimit,
   normalizeImportName,
   useImportDraft,
+  useJourneyGateRoute,
 } from "@/features/onboarding/draft"
 import { Spacing, useTheme } from "@/theme"
 
@@ -36,7 +37,8 @@ import { stepStyles } from "./step-styles"
 export default function ProgrammeScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { draft, setCalendarName } = useImportDraft()
+  const { state, draft, setCalendarName } = useImportDraft()
+  const legal = useJourneyGateRoute(state, "programme")
   const [name, setName] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
 
@@ -82,6 +84,8 @@ export default function ProgrammeScreen() {
   }
 
   const skip = () => advance("")
+
+  if (!legal) return null
 
   return (
     <>

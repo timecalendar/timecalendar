@@ -66,6 +66,8 @@ export default function GuidePageScreen() {
         }
   const requestedProvider =
     listedInstitution?.school.exportGuide.providerSlug ?? null
+  const legalPageZero =
+    earliestLegalRoute(state) === "/onboarding/export-guide/0"
 
   const onCatalogue = (
     outcome: Exclude<ExportGuideLoadOutcome, { source: "none" }>,
@@ -110,11 +112,12 @@ export default function GuidePageScreen() {
     if (
       pageIndex === 0 &&
       state.phase === "draft" &&
-      requestedProvider !== null
+      requestedProvider !== null &&
+      legalPageZero
     ) {
       load()
     }
-  }, [load, pageIndex, requestedProvider, state.phase])
+  }, [legalPageZero, load, pageIndex, requestedProvider, state.phase])
 
   const snapshotState =
     state.phase === "guide" || state.phase === "completed" ? state : null
@@ -139,7 +142,8 @@ export default function GuidePageScreen() {
     if (
       pageIndex === 0 &&
       state.phase === "draft" &&
-      requestedProvider !== null
+      requestedProvider !== null &&
+      legalPageZero
     )
       return
     if (!validPage) {
@@ -148,7 +152,7 @@ export default function GuidePageScreen() {
         router.replace(target)
       }
     }
-  }, [pageIndex, requestedProvider, state, validPage])
+  }, [legalPageZero, pageIndex, requestedProvider, state, validPage])
 
   useEffect(() => {
     if (!validPage || pageIndex === null || snapshotState === null) return

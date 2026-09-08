@@ -7,8 +7,10 @@ import type { SchoolListItem } from "@/features/school-selection/data"
 
 import { importJourneyReducer } from "./reducer"
 import {
+  canEnterJourneyGate,
   canEnterProtectedRoute,
   earliestLegalRoute,
+  gateRecoveryRoute,
   nextRouteAfterConnect,
   nextRouteAfterInstitution,
   nextRouteAfterProgramme,
@@ -197,5 +199,52 @@ describe("journey defensive route decisions", () => {
       pageIndex: 0,
     })
     expect(earliestLegalRoute(completed)).toBe("/onboarding/export-guide/0")
+  })
+
+  it("recovers direct gate entries without skipping Programme or Connect", () => {
+    const programmeSchool = {
+      ...school,
+      exportGuide: {
+        ...school.exportGuide,
+        requireProgramme: true,
+        requireConnect: true,
+      },
+    }
+    const beforeProgramme = importJourneyReducer(empty, {
+      type: "set-listed",
+      school: programmeSchool,
+    })
+    expect(canEnterJourneyGate(beforeProgramme, "programme")).toBe(true)
+    expect(canEnterJourneyGate(beforeProgramme, "connect")).toBe(false)
+    expect(gateRecoveryRoute(beforeProgramme, "connect")).toBe(
+      "/onboarding/programme",
+    )
+    expect(earliestLegalRoute(beforeProgramme)).toBe("/onboarding/programme")
+
+    const beforeConnect = importJourneyReducer(beforeProgramme, {
+      type: "set-calendar-name",
+      name: "L3",
+    })
+    expect(canEnterJourneyGate(beforeConnect, "connect")).toBe(true)
+    expect(earliestLegalRoute(beforeConnect)).toBe("/onboarding/connect")
+    const afterConnect = importJourneyReducer(beforeConnect, {
+      type: "complete-connect",
+    })
+    expect(earliestLegalRoute(afterConnect)).toBe("/onboarding/export-guide/0")
+  })
+
+  it("allows provider selection only after the unlisted Programme gate", () => {
+    expect(canEnterJourneyGate(unlisted, "providers")).toBe(false)
+    expect(gateRecoveryRoute(unlisted, "providers")).toBe(
+      "/onboarding/programme",
+    )
+    const afterProgramme = importJourneyReducer(unlisted, {
+      type: "set-calendar-name",
+      name: "",
+    })
+    expect(canEnterJourneyGate(afterProgramme, "providers")).toBe(true)
+    expect(gateRecoveryRoute(listed, "providers")).toBe(
+      "/onboarding/export-guide/0",
+    )
   })
 })

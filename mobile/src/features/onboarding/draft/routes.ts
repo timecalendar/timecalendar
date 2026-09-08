@@ -86,9 +86,64 @@ export function earliestLegalRoute(
   if (state.phase === "guide" || state.phase === "completed") {
     return "/onboarding/export-guide/0"
   }
-  return state.draft.institution.kind === "unlisted"
-    ? "/onboarding/export-guide/providers"
-    : "/onboarding/export-guide/0"
+  if (state.draft.institution.kind === "unlisted") {
+    return state.gateProgress === "institution"
+      ? "/onboarding/programme"
+      : "/onboarding/export-guide/providers"
+  }
+  const { exportGuide } = state.draft.institution.school
+  if (exportGuide.requireProgramme && state.gateProgress === "institution") {
+    return "/onboarding/programme"
+  }
+  if (
+    nextRouteAfterProgramme(state).route === "/onboarding/connect" &&
+    state.gateProgress !== "connect"
+  ) {
+    return "/onboarding/connect"
+  }
+  return "/onboarding/export-guide/0"
+}
+
+export type JourneyGate = "programme" | "connect" | "providers"
+
+export type JourneyGateDecision =
+  | Readonly<{ legal: true }>
+  | Readonly<{ legal: false; recovery: ImportJourneyRoute }>
+
+export function canEnterJourneyGate(
+  state: ImportJourneyState,
+  gate: JourneyGate,
+): boolean {
+  if (state.phase === "empty") return false
+  if (gate === "programme") {
+    return nextRouteAfterInstitution(state).route === "/onboarding/programme"
+  }
+  if (gate === "connect") {
+    return (
+      state.gateProgress !== "institution" &&
+      nextRouteAfterProgramme(state).route === "/onboarding/connect"
+    )
+  }
+  return (
+    state.draft.institution.kind === "unlisted" &&
+    state.gateProgress !== "institution"
+  )
+}
+
+export function gateRecoveryRoute(
+  state: ImportJourneyState,
+  gate: JourneyGate,
+): ImportJourneyRoute | null {
+  const decision = journeyGateDecision(state, gate)
+  return decision.legal ? null : decision.recovery
+}
+
+export function journeyGateDecision(
+  state: ImportJourneyState,
+  gate: JourneyGate,
+): JourneyGateDecision {
+  if (canEnterJourneyGate(state, gate)) return { legal: true }
+  return { legal: false, recovery: earliestLegalRoute(state) }
 }
 
 export function canEnterProtectedRoute(
