@@ -15,44 +15,35 @@ TBD - created by archiving change add-mobile-api-client. Update Purpose after ar
 - **THEN** the mobile project typechecks using the committed generated code, without running Orval
 
 ### Requirement: All generated operations go through a single fetch mutator
-Generated operations SHALL call one custom `fetch`-based mutator owned by `mobile/src/api/`. The mutator SHALL prefix the configured base URL, set JSON headers, and convert non-2xx responses into a typed error carrying the HTTP status and parsed body. The mobile app SHALL NOT depend on axios.
+Generated operations SHALL call a custom `fetch`-based mutator owned by `mobile/src/api/`. The mutator SHALL prefix the configured base URL, set JSON headers, and share one timeout/caller-cancellation request routine. Every existing operation SHALL continue through `customFetch`, resolving with its typed body on success and converting non-2xx responses into `ApiError` carrying HTTP status and parsed body. The generated export-guide operation alone SHALL use `customFetchResponse`, resolving an `ApiResponse<T>` that preserves numeric status, the `Headers` object, and optional parsed data for all HTTP statuses including bodyless `304`. The mobile app SHALL NOT depend on axios or add a handwritten export-guide fetch path.
 
-#### Scenario: Successful request
-- **WHEN** a generated hook fires against a reachable server
-- **THEN** the request goes through the mutator to `<baseURL><operation path>` and resolves with the typed response body
+#### Scenario: Existing successful request is unchanged
+- **WHEN** any generated operation other than export guides receives a successful response
+- **THEN** it continues through `customFetch` and resolves directly with the typed response body
 
-#### Scenario: Server error surfaces as typed error
-- **WHEN** the server responds with a non-2xx status
-- **THEN** the hook's `error` is the mutator's typed error exposing the status code and the parsed response body
+#### Scenario: Existing server error is unchanged
+- **WHEN** any generated operation other than export guides receives a non-2xx response
+- **THEN** it continues to reject with `ApiError` exposing the status code and parsed response body
+
+#### Scenario: Export-guide response preserves transport metadata
+- **WHEN** the generated export-guide operation receives `200`, bodyless `304`, or another HTTP status
+- **THEN** it resolves through `customFetchResponse` with status, case-insensitive response headers, and parsed data or `undefined`
+- **AND** repository code, not the transport, decides whether the result is a valid catalogue/cache response
 
 ### Requirement: The mutator bounds each request with a timeout and forwards cancellation
-
-The single `customFetch` mutator SHALL bound every request with a default timeout so no
-generated operation can hang indefinitely on a stalled network, AND SHALL forward a
-caller-supplied `AbortSignal` (`options.signal`) into the underlying `fetch` so a hook or
-TanStack Query cancellation actually aborts the in-flight request. A timeout or cancellation
-SHALL surface as an ordinary network failure (the recoverable `isError` path), not a swallowed
-hang, and the mutator's existing success/error contract (base-URL prefix, JSON headers, non-2xx
-→ typed `ApiError`) SHALL be unchanged.
+Both `customFetch` and `customFetchResponse` SHALL use the same default request timeout and SHALL forward a caller-supplied `AbortSignal` into the underlying fetch through one composed controller. Timeout or cancellation SHALL reject as an ordinary transport failure, and a settled request SHALL clear its timeout/controller bookkeeping. The existing `customFetch` base-URL, header, success, and `ApiError` behavior SHALL remain unchanged.
 
 #### Scenario: A stalled request is aborted by the default timeout
+- **WHEN** the underlying fetch used by either mutator never settles and the default timeout elapses
+- **THEN** its composed request signal is aborted and the rejection propagates instead of hanging
 
-- **WHEN** the underlying `fetch` never settles and the default timeout elapses
-- **THEN** the request is aborted and the resulting rejection propagates to the hook as an
-  ordinary network error (surfacing as `isError`), rather than remaining `pending` forever
+#### Scenario: A caller aborts either mutator
+- **WHEN** either generated operation contract is called with a signal that is already aborted or aborts in flight
+- **THEN** the underlying fetch receives the aborted composed signal
 
-#### Scenario: A caller's abort signal cancels the request
-
-- **WHEN** a generated operation is called with `options.signal` and that signal aborts (or is
-  already aborted) before the response settles
-- **THEN** the underlying `fetch` is aborted, so an unmounted/cancelled query does not keep an
-  in-flight request alive
-
-#### Scenario: A fast response leaves no dangling timer
-
-- **WHEN** the request resolves before the timeout elapses
-- **THEN** the timeout is cleared and the typed response body resolves exactly as before (no
-  behavior change to the success path)
+#### Scenario: A settled request leaves no timeout behind
+- **WHEN** either mutator resolves or rejects before the timeout
+- **THEN** timeout and in-flight controller bookkeeping are cleared
 
 ### Requirement: Base URL is configurable per environment
 
@@ -96,4 +87,19 @@ Mobile CI SHALL re-run Orval against the committed spec and fail if the output d
 #### Scenario: Generated code in sync
 - **WHEN** the committed generated code matches what Orval produces from the committed spec
 - **THEN** the drift check and typecheck pass
+
+### Requirement: Sensitive endpoint diagnostics are payload-free
+The shared mutator SHALL recognize the normalized export-guide pathname without retaining its query string in diagnostics. Development diagnostics for `/contact` SHALL keep their current request/response redaction. Development diagnostics for `/v1/export-guides` SHALL contain only method, normalized path, status when known, a bounded duration bucket, and a static transport outcome; they SHALL exclude the full URL/query, request options and headers, response headers, raw/parsed body, exception message, copy, and asset URLs. Diagnostics for other existing paths SHALL remain unchanged.
+
+#### Scenario: Export-guide success and failure diagnostics are sanitized
+- **WHEN** export-guide requests exercise success, `304`, HTTP, timeout, caller-cancellation, malformed, and oversized-body behavior with distinctive sensitive values
+- **THEN** no diagnostic argument contains a query value, header/body value, guide copy, cache data, exception message, or asset URL
+
+#### Scenario: Existing contact redaction remains intact
+- **WHEN** `/contact` sends and receives payload-bearing content
+- **THEN** its diagnostics continue to omit both request and response bodies
+
+#### Scenario: Existing non-sensitive diagnostics remain compatible
+- **WHEN** another generated operation logs in development
+- **THEN** its existing diagnostic shape and `customFetch` behavior remain unchanged
 

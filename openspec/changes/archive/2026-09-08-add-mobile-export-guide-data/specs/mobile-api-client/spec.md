@@ -31,6 +31,8 @@ Both `customFetch` and `customFetchResponse` SHALL use the same default request 
 - **WHEN** either mutator resolves or rejects before the timeout
 - **THEN** timeout and in-flight controller bookkeeping are cleared
 
+## ADDED Requirements
+
 ### Requirement: Sensitive endpoint diagnostics are payload-free
 The shared mutator SHALL recognize the normalized export-guide pathname without retaining its query string in diagnostics. Development diagnostics for `/contact` SHALL keep their current request/response redaction. Development diagnostics for `/v1/export-guides` SHALL contain only method, normalized path, status when known, a bounded duration bucket, and a static transport outcome; they SHALL exclude the full URL/query, request options and headers, response headers, raw/parsed body, exception message, copy, and asset URLs. Diagnostics for other existing paths SHALL remain unchanged.
 
@@ -45,4 +47,3 @@ The shared mutator SHALL recognize the normalized export-guide pathname without 
 #### Scenario: Existing non-sensitive diagnostics remain compatible
 - **WHEN** another generated operation logs in development
 - **THEN** its existing diagnostic shape and `customFetch` behavior remain unchanged
-

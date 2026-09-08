@@ -1,5 +1,8 @@
-## ADDED Requirements
+# mobile-export-guide-data Specification
 
+## Purpose
+TBD - created by archiving change add-mobile-export-guide-data. Update Purpose after archive.
+## Requirements
 ### Requirement: Schema-v1 catalogue input is defensively parsed into immutable mobile domain values
 The mobile export-guide data layer SHALL treat generated catalogue responses and persisted records as unknown input. It SHALL accept only `schemaVersion: 1`, the exact requested locale, an opaque non-empty ASCII catalogue version of 1–128 characters, and 1–50 provider entries in server order with unique valid lowercase slugs. It SHALL enforce trimmed label, compatibility, page-title, page-description, and collection bounds; SHALL ignore additive unknown object fields; and SHALL copy and deeply freeze every accepted value. An unsupported schema, invalid envelope, duplicate slug, request/body locale mismatch, or exact-selector/body-version mismatch SHALL reject the response.
 
@@ -118,4 +121,3 @@ The export-guide data layer SHALL expose only bounded failure/source/reason enum
 - **WHEN** tests exercise `200`, `304`, timeout, cancellation, HTTP, malformed, and corrupt-cache paths using distinctive query, header, body, copy, and asset-URL values
 - **THEN** serialized diagnostic calls contain none of those values
 - **AND** outcomes contain only the documented bounded enums and validated metadata
-

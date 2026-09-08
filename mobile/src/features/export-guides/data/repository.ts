@@ -213,27 +213,14 @@ export function createExportGuideRepository(
         ) {
           return fallback(request.locale, selector, "version_mismatch", clock)
         }
-        const parsed = parseExportGuideCatalogue(candidate.catalogue, {
-          requestedLocale: request.locale,
-          selector,
-        })
-        if (!parsed.ok) {
-          return fallback(
-            request.locale,
-            selector,
-            mapParseFailure(parsed.failure),
-            clock,
-          )
-        }
         const refreshed: ExportGuideCacheRecord = {
           ...candidate,
-          catalogue: parsed.catalogue,
           validatedAt: clock.wallNow(),
         }
         if (!persist(refreshed, clock)) {
           return fallback(request.locale, selector, "storage", clock)
         }
-        return { source: "not_modified", catalogue: parsed.catalogue }
+        return { source: "not_modified", catalogue: candidate.catalogue }
       }
 
       return fallback(request.locale, selector, "http", clock)

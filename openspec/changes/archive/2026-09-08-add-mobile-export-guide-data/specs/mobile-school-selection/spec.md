@@ -16,4 +16,3 @@ The app SHALL read the list of schools from `GET /schools` and per-school groups
 #### Scenario: Generated DTO is not retained downstream
 - **WHEN** onboarding stores the selected `SchoolListItem` in its ephemeral draft
 - **THEN** later features can consume the domain export-guide reference without importing `SchoolForList` or issuing a second school query
-

@@ -35,6 +35,26 @@ const validatedCatalogue = (locale: "fr" | "en" = "en", version = "v1") => {
   return parsed.catalogue
 }
 
+const validatedCatalogueWithRejections = () => {
+  const parsed = parseExportGuideCatalogue(
+    {
+      schemaVersion: 1,
+      catalogueVersion: "v1",
+      locale: "en",
+      providers: [
+        {
+          slug: "future-provider",
+          kind: "video",
+        },
+        ...validatedCatalogue().providers,
+      ],
+    },
+    { requestedLocale: "en", selector: active },
+  )
+  if (!parsed.ok) throw new Error(parsed.failure)
+  return parsed.catalogue
+}
+
 const record = (
   overrides: Partial<ExportGuideCacheRecord> = {},
 ): ExportGuideCacheRecord => ({
@@ -87,6 +107,49 @@ describe("export-guide LKG registry", () => {
         ).records,
       ),
     ).toHaveLength(3)
+  })
+
+  it("round-trips the validated provider rejection index", () => {
+    writeExportGuideCacheRecord(
+      record({ catalogue: validatedCatalogueWithRejections() }),
+    )
+
+    expect(
+      readExportGuideCacheRecord("en", active)?.catalogue.rejectedProviders,
+    ).toEqual({ "future-provider": "unknown_kind" })
+  })
+
+  it.each([
+    ["non-object", []],
+    ["invalid slug", { "Invalid Slug": "invalid" }],
+    ["invalid reason", { future: "missing" }],
+    ["accepted-provider collision", { generic: "invalid" }],
+    [
+      "more entries than the provider bound",
+      Object.fromEntries(
+        Array.from({ length: 50 }, (_, index) => [
+          `future-${index}`,
+          "invalid",
+        ]),
+      ),
+    ],
+  ])("rejects a %s rejection index", (_name, rejectedProviders) => {
+    const key = exportGuideCacheKey("en", active)
+    const cachedRecord = record()
+    storage.setString(
+      storage.STORAGE_KEYS.exportGuideLkgRegistry,
+      JSON.stringify({
+        version: 1,
+        records: {
+          [key]: {
+            ...cachedRecord,
+            catalogue: { ...cachedRecord.catalogue, rejectedProviders },
+          },
+        },
+      }),
+    )
+
+    expect(readExportGuideCacheRecord("en", active)).toBeUndefined()
   })
 
   it.each([

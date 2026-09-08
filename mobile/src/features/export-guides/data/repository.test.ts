@@ -57,6 +57,24 @@ const catalogue = (locale: "fr" | "en" = "en", version = "2026-09-07.1") => ({
   ],
 })
 
+const catalogueWithRejectedProvider = (
+  rejection: "unknown_kind" | "incompatible" | "invalid",
+) => ({
+  ...catalogue(),
+  providers: [
+    {
+      ...catalogue().providers[0],
+      slug: "future-provider",
+      ...(rejection === "unknown_kind" ? { kind: "video" } : {}),
+      ...(rejection === "incompatible"
+        ? { compatibility: { minClientSchema: 2, maxClientSchema: 2 } }
+        : {}),
+      ...(rejection === "invalid" ? { pages: [] } : {}),
+    },
+    ...catalogue().providers,
+  ],
+})
+
 const apiResponse = (
   status: number,
   data: unknown,
@@ -117,6 +135,37 @@ describe("export-guide repository", () => {
       storage.getString(storage.STORAGE_KEYS.exportGuideLkgRegistry),
     ).not.toBe(firstRegistry)
   })
+
+  it.each(["unknown_kind", "incompatible", "invalid"] as const)(
+    "preserves the %s resolver reason through 304 and LKG cache reads",
+    async (reason) => {
+      const repository = createExportGuideRepository()
+      responseMock.mockResolvedValueOnce(
+        apiResponse(200, catalogueWithRejectedProvider(reason)),
+      )
+      await repository.load({ locale: "en", selector: active })
+
+      responseMock.mockResolvedValueOnce(apiResponse(304, undefined))
+      const notModified = await repository.load({
+        locale: "en",
+        selector: active,
+      })
+      if (notModified.source === "none") throw new Error("expected catalogue")
+      expect(notModified.source).toBe("not_modified")
+      expect(
+        resolveExportGuideProvider(notModified.catalogue, "future-provider")
+          .reason,
+      ).toBe(reason)
+
+      responseMock.mockRejectedValueOnce(new Error("offline"))
+      const lkg = await repository.load({ locale: "en", selector: active })
+      if (lkg.source === "none") throw new Error("expected LKG")
+      expect(lkg.source).toBe("lkg")
+      expect(
+        resolveExportGuideProvider(lkg.catalogue, "future-provider").reason,
+      ).toBe(reason)
+    },
+  )
 
   it.each([
     ["missing ETag", { "Content-Language": "en" }, "etag_mismatch"],

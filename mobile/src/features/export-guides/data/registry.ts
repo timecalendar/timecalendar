@@ -3,11 +3,14 @@ import { getString, setString, STORAGE_KEYS } from "@/storage"
 import {
   EXPORT_GUIDE_CLIENT_SCHEMA,
   EXPORT_GUIDE_MAX_AGE_MS,
+  EXPORT_GUIDE_PROVIDER_SLUG,
 } from "./constants"
+import { deepFreeze } from "./immutable"
 import { parseExportGuideCatalogue } from "./parser"
 import type {
   ExportGuideCatalogue,
   ExportGuideLocale,
+  ExportGuideProviderRejection,
   ExportGuideSelector,
 } from "./types"
 
@@ -51,6 +54,38 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 
 const isLocale = (value: unknown): value is ExportGuideLocale =>
   value === "fr" || value === "en"
+
+const isProviderRejection = (
+  value: unknown,
+): value is ExportGuideProviderRejection =>
+  value === "unknown_kind" || value === "incompatible" || value === "invalid"
+
+const decodeRejectedProviders = (
+  value: unknown,
+  catalogue: ExportGuideCatalogue,
+):
+  | Readonly<Partial<Record<string, ExportGuideProviderRejection>>>
+  | undefined => {
+  if (!isObject(value)) return undefined
+  const entries = Object.entries(value)
+  if (catalogue.providers.length + entries.length > 50) return undefined
+
+  const acceptedSlugs = new Set(catalogue.providers.map(({ slug }) => slug))
+  const rejectedProviders: Partial<
+    Record<string, ExportGuideProviderRejection>
+  > = {}
+  for (const [slug, rejection] of entries) {
+    if (
+      !EXPORT_GUIDE_PROVIDER_SLUG.test(slug) ||
+      acceptedSlugs.has(slug) ||
+      !isProviderRejection(rejection)
+    ) {
+      return undefined
+    }
+    rejectedProviders[slug] = rejection
+  }
+  return rejectedProviders
+}
 
 export const isStrongEtag = (value: unknown): value is string =>
   typeof value === "string" && /^"[\x21\x23-\x5b\x5d-\x7e]+"$/.test(value)
@@ -123,6 +158,17 @@ const decodeRecord = (
   ) {
     return undefined
   }
+  const rawCatalogue = value.catalogue
+  const rejectedProviders = decodeRejectedProviders(
+    isObject(rawCatalogue) ? rawCatalogue.rejectedProviders : undefined,
+    parsed.catalogue,
+  )
+  if (rejectedProviders === undefined) return undefined
+
+  const catalogue = deepFreeze({
+    ...parsed.catalogue,
+    rejectedProviders,
+  } as ExportGuideCatalogue)
   return {
     version: 1,
     requestedLocale: value.requestedLocale,
@@ -132,7 +178,7 @@ const decodeRecord = (
     responseLanguage: value.responseLanguage,
     etag: value.etag,
     validatedAt: value.validatedAt as number,
-    catalogue: parsed.catalogue,
+    catalogue,
   }
 }
 

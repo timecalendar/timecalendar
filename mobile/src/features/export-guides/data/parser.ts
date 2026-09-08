@@ -68,7 +68,7 @@ const asInteger = (value: unknown, min: number, max: number): number => {
 const utf8ByteLength = (value: string): number => {
   let bytes = 0
   for (const character of value) {
-    const codePoint = character.codePointAt(0) ?? 0
+    const codePoint = character.codePointAt(0)!
     if (codePoint <= 0x7f) bytes += 1
     else if (codePoint <= 0x7ff) bytes += 2
     else if (codePoint <= 0xffff) bytes += 3
