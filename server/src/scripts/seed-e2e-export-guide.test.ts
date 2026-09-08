@@ -40,6 +40,10 @@ describe("E2E export-guide seed", () => {
     })
     expect(schools).toHaveLength(E2E_EXPORT_GUIDE_SCHOOLS.length)
     expect(
+      E2E_EXPORT_GUIDE_SCHOOLS.find(({ code }) => code === "e2e-export-unsafe")
+        ?.intranetUrl,
+    ).toMatch(/^ftp:/)
+    expect(
       schools.map(({ code, assistant, intranetUrl }) => ({
         code,
         assistant,

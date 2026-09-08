@@ -5,6 +5,12 @@ appId: fr.samuelprak.timecalendar.dev
 - stopApp
 - openLink: timecalendar-dev://onboarding
 - runFlow: ../../helpers/confirm-ios-deep-link.yaml
+- runFlow:
+    when:
+      notVisible: "Welcome to TimeCalendar!"
+    commands:
+      - openLink: timecalendar-dev://onboarding
+      - runFlow: ../../helpers/confirm-ios-deep-link.yaml
 - extendedWaitUntil:
     visible: "Welcome to TimeCalendar!"
     timeout: 60000

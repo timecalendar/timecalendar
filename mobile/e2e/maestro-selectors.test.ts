@@ -325,6 +325,11 @@ describe("Maestro journey contracts", () => {
     expect(skipped).toContain('tapOn: "E2E Export Unsafe Connect"')
     expect(skipped.split('id: "onboarding-connect-intranet"')).toHaveLength(3)
     expect(
+      flow("export-guide/helpers/start-onboarding.yaml").split(
+        "openLink: timecalendar-dev://onboarding",
+      ),
+    ).toHaveLength(3)
+    expect(
       containsOrdered(unlisted, [
         'id: "onboarding-school-missing"',
         'id: "export-guide-provider-ade"',
@@ -356,6 +361,13 @@ describe("Maestro journey contracts", () => {
         '- tapOn: "Agenda"',
       ]),
     ).toBe(true)
+  })
+
+  it("starts every production protected-route probe from cleared state", () => {
+    const guard = flow("production-guard/protected-routes.yaml")
+
+    expect(guard.split("clearState: true")).toHaveLength(4)
+    expect(guard.split('id: "onboarding-school-content"')).toHaveLength(4)
   })
 
   it("keeps the real listed-school import path and synced detail proof", () => {

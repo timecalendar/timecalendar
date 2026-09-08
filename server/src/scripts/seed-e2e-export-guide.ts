@@ -28,7 +28,7 @@ export const E2E_EXPORT_GUIDE_SCHOOLS = Object.freeze([
     code: "e2e-export-unsafe",
     name: "E2E Export Unsafe Connect",
     assistant: "hplanning",
-    intranetUrl: "http://connect.example.com/export",
+    intranetUrl: "ftp://connect.example.com/export",
   },
 ] as const)
 
