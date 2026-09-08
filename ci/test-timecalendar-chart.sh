@@ -65,7 +65,7 @@ assert_queue_concurrency() {
 }
 
 readonly STAMP='--set-string server.podAnnotations.tim337=stamp'
-readonly CHECKSUM_ENABLED='--set server.configMapChecksumEnabled=true'
+readonly -a CHECKSUM_ENABLED=(--set server.configMapChecksumEnabled=true)
 
 render_deployment() {
   local template="$1"
@@ -166,12 +166,10 @@ configmap_checksum() {
 
 assert_configmap_checksum_annotations_compose() {
   local computed_checksum
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  computed_checksum="$(configmap_checksum $CHECKSUM_ENABLED)"
+  computed_checksum="$(configmap_checksum "${CHECKSUM_ENABLED[@]}")"
 
   local custom_render
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  custom_render="$(render_deployment server-deployment.yaml $CHECKSUM_ENABLED \
+  custom_render="$(render_deployment server-deployment.yaml "${CHECKSUM_ENABLED[@]}" \
     --set-string server.podAnnotations.tim292=stamp)"
   if ! grep -q '^        tim292: stamp$' <<<"$custom_render"; then
     echo "Expected a custom server pod annotation to survive beside the computed checksum" >&2
@@ -179,8 +177,7 @@ assert_configmap_checksum_annotations_compose() {
   fi
 
   local custom_checksum
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  custom_checksum="$(configmap_checksum $CHECKSUM_ENABLED \
+  custom_checksum="$(configmap_checksum "${CHECKSUM_ENABLED[@]}" \
     --set-string server.podAnnotations.tim292=stamp)"
   if [[ "$custom_checksum" != "$computed_checksum" ]]; then
     echo "Expected the computed checksum to survive beside a custom server pod annotation" >&2
@@ -188,8 +185,7 @@ assert_configmap_checksum_annotations_compose() {
   fi
 
   local collision_checksum
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  collision_checksum="$(configmap_checksum $CHECKSUM_ENABLED \
+  collision_checksum="$(configmap_checksum "${CHECKSUM_ENABLED[@]}" \
     --set-string server.podAnnotations.checksum/config=caller-supplied)"
   if [[ "$collision_checksum" != "$computed_checksum" ]]; then
     echo "Expected the computed checksum to override a colliding custom annotation" >&2
@@ -199,13 +195,10 @@ assert_configmap_checksum_annotations_compose() {
 
 assert_configmap_checksum_dependencies() {
   local baseline_checksum crisp_checksum tag_checksum
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  baseline_checksum="$(configmap_checksum $CHECKSUM_ENABLED)"
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  crisp_checksum="$(configmap_checksum $CHECKSUM_ENABLED \
+  baseline_checksum="$(configmap_checksum "${CHECKSUM_ENABLED[@]}")"
+  crisp_checksum="$(configmap_checksum "${CHECKSUM_ENABLED[@]}" \
     --set-string timecalendar.crisp.websiteId=changed-for-checksum-test)"
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
-  tag_checksum="$(configmap_checksum $CHECKSUM_ENABLED --set-string server.tag=checksum-test-tag)"
+  tag_checksum="$(configmap_checksum "${CHECKSUM_ENABLED[@]}" --set-string server.tag=checksum-test-tag)"
 
   if [[ "$crisp_checksum" == "$baseline_checksum" ]]; then
     echo "Expected a rendered ConfigMap value change to change checksum/config" >&2
@@ -246,9 +239,8 @@ assert_env_from_precedence() {
 }
 
 assert_checksum_web_deployment_unaffected() {
-  # shellcheck disable=SC2086 # CHECKSUM_ENABLED is deliberately word-split into flags
   if ! diff <(render_deployment web-deployment.yaml) \
-            <(render_deployment web-deployment.yaml $CHECKSUM_ENABLED) >/dev/null; then
+            <(render_deployment web-deployment.yaml "${CHECKSUM_ENABLED[@]}") >/dev/null; then
     echo "Expected the web Deployment render to be unchanged by the server ConfigMap checksum gate" >&2
     return 1
   fi
