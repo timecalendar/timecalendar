@@ -92,6 +92,8 @@ select_step_block="$(step_block prepare 'Select execution decision')"
 build_server_block="$(job_block build-server)"
 android_block="$(job_block e2e-mobile-android)"
 ios_block="$(job_block e2e-mobile-ios)"
+ios_production_guard_block="$(step_block e2e-mobile-ios 'Run production protected-route guard')"
+evidence_block="$(job_block verify-export-guide-evidence)"
 
 [ -n "$trigger_block" ] || fail 'missing on trigger block'
 assert_count 1 '  schedule:'
@@ -100,6 +102,9 @@ assert_count 1 '  workflow_dispatch:'
 assert_block_present "$trigger_block" '      ref:' 'workflow_dispatch'
 assert_block_present "$trigger_block" '        required: true' 'workflow_dispatch ref input'
 assert_block_present "$trigger_block" '        type: string' 'workflow_dispatch ref input'
+assert_block_present "$trigger_block" '      suite:' 'workflow_dispatch suite input'
+assert_block_present "$trigger_block" '          - smoke' 'workflow_dispatch suite input'
+assert_block_present "$trigger_block" '          - export-guide' 'workflow_dispatch suite input'
 for retired in '  push:' '  pull_request:' 'production' 'run-e2e' 'github.event.pull_request' 'labeled'; do
   ! grep -Fq -- "$retired" <<< "$trigger_block" || fail "retired trigger remains: $retired"
 done
@@ -113,7 +118,7 @@ assert_block_present "$concurrency_block" '  group: ci-mobile-e2e' 'workflow con
 assert_block_present "$concurrency_block" '  cancel-in-progress: false' 'workflow concurrency'
 
 [ -n "$prepare_block" ] || fail 'missing prepare job'
-for output in should_run target_sha comparison_base reason; do
+for output in should_run target_sha comparison_base reason suite; do
   assert_block_present "$prepare_block" "      $output: \${{ steps.select.outputs.$output }}" 'prepare outputs'
 done
 assert_block_present "$prepare_block" '          fetch-depth: 0' 'prepare checkout'
@@ -124,8 +129,12 @@ assert_block_present "$prepare_block" "                branch: 'main'" 'schedule
 assert_block_present "$prepare_block" '.filter((run) => run.run_number < currentRunNumber)' 'preceding-run selection'
 assert_block_present "$prepare_block" 'previous?.head_sha' 'preceding-run boundary'
 assert_block_present "$prepare_block" "          MANUAL_REF: \${{ inputs.ref }}" 'manual ref environment'
+assert_block_present "$prepare_block" "          MANUAL_SUITE: \${{ inputs.suite }}" 'manual suite environment'
 assert_block_present "$prepare_block" 'target_sha="$(git rev-parse HEAD^{commit})"' 'immutable target resolution'
 assert_block_present "$prepare_block" 'Manual dispatch requires a non-empty ref input' 'manual validation'
+assert_block_present "$prepare_block" 'smoke|export-guide)' 'closed manual suite validation'
+assert_block_present "$prepare_block" 'echo "suite=$MANUAL_SUITE"' 'manual suite output'
+assert_block_present "$prepare_block" "echo 'suite=smoke'" 'scheduled smoke suite'
 manual_branch="$(awk '
   /if \[ "\$EVENT_NAME" = '\''workflow_dispatch'\'' \]; then/ { inside = 1 }
   inside { print }
@@ -158,12 +167,54 @@ assert_downstream_contract() {
 assert_downstream_contract build-server "$build_server_block" '    needs: prepare'
 assert_downstream_contract e2e-mobile-android "$android_block" '    needs: [prepare, build-server]'
 assert_downstream_contract e2e-mobile-ios "$ios_block" '    needs: prepare'
+assert_block_present "$ios_block" '    timeout-minutes: 180' 'iOS two-build evidence budget'
+assert_block_present "$ios_block" '      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "600"' \
+  'iOS evidence-preserving Maestro attempt timeout'
+assert_block_count 2 "$ios_block" 'EXPO_USE_PRECOMPILED_MODULES: "0"' \
+  'iOS deterministic source-module prebuild contract'
+assert_block_count 2 "$ios_block" 'RCT_USE_PREBUILT_RNCORE: "0"' \
+  'iOS source React core prebuild contract'
+assert_block_count 2 "$ios_block" 'RCT_USE_RN_DEP: "0"' \
+  'iOS source React dependency prebuild contract'
+assert_block_count 2 "$ios_block" 'RCT_BUILD_HERMES_FROM_SOURCE: "true"' \
+  'iOS pinned Hermes source-build contract'
+assert_block_count 2 "$ios_block" 'set -o pipefail' \
+  'iOS prebuild pipeline failure propagation'
+assert_block_count 2 "$ios_block" \
+  "LC_ALL=C sed \$'s/\\x1b\\\\[[0-9;]*m//g'" \
+  'iOS prebuild ANSI normalization contract'
+assert_block_count 10 "$ios_block" 'prebuild.normalized.log' \
+  'iOS normalized prebuild log enforcement'
+assert_block_count 2 "$ios_block" \
+  "grep -F '[ReactNativeCore] Building from source: true'" \
+  'iOS React core source-build log proof'
+assert_block_count 2 "$ios_block" \
+  "grep -F '[ReactNativeDependencies] Building from source: true'" \
+  'iOS React dependency source-build log proof'
+assert_block_count 2 "$ios_block" \
+  "grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10'" \
+  'iOS pinned Hermes tag log proof'
+assert_block_count 2 "$ios_block" \
+  "! grep -F '[Hermes] Using the latest commit'" \
+  'iOS moving Hermes branch rejection'
+assert_block_count 2 "$ios_block" 'ARCHS=arm64' 'iOS arm64 simulator build contract'
+assert_block_present "$ios_production_guard_block" '        timeout-minutes: 15' \
+  'iOS production guard evidence-preserving timeout'
+assert_block_present "$ios_production_guard_block" \
+  'xcrun simctl uninstall "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar || true' \
+  'iOS production guard cleared install'
+assert_block_present "$ios_production_guard_block" \
+  'xcrun simctl install "$E2E_DEVICE_UDID" "$APP"' \
+  'iOS production guard app install'
+! grep -Fq -- 'xcrun simctl launch' <<< "$ios_production_guard_block" || \
+  fail 'iOS production guard must let Maestro own the first clear-state launch'
 assert_absent '${{ github.sha }}'
-assert_count 3 '          ref: ${{ needs.prepare.outputs.target_sha }}'
+assert_count 4 '          ref: ${{ needs.prepare.outputs.target_sha }}'
 assert_count 3 "    if: needs.prepare.outputs.should_run == 'true'"
 assert_block_count 3 "$build_server_block" '${{ needs.prepare.outputs.target_sha }}' build-server
-assert_block_count 2 "$android_block" '${{ needs.prepare.outputs.target_sha }}' e2e-mobile-android
-assert_block_count 1 "$ios_block" '${{ needs.prepare.outputs.target_sha }}' e2e-mobile-ios
+assert_block_count 3 "$android_block" '${{ needs.prepare.outputs.target_sha }}' e2e-mobile-android
+assert_block_count 2 "$ios_block" '${{ needs.prepare.outputs.target_sha }}' e2e-mobile-ios
+assert_block_count 3 "$evidence_block" '${{ needs.prepare.outputs.target_sha }}' verify-export-guide-evidence
 
 assert_step_contract e2e-mobile-android 'Prebuild Android (dev variant)' 'http://10.0.2.2:3005' 'http://localhost:3005'
 assert_step_contract e2e-mobile-android 'Build release APK' 'http://10.0.2.2:3005' 'http://localhost:3005'
@@ -178,8 +229,36 @@ assert_present 'Selected simulator: name=$DEVICE_NAME udid=$DEVICE_UDID runtime=
 assert_present '--no-daemon'
 assert_present '--max-workers=2'
 assert_present '-Xmx3072m -XX:MaxMetaspaceSize=1024m'
-assert_present './mobile/e2e/run_e2e.sh --native --startup-attempts 4'
+assert_present './mobile/e2e/run_e2e.sh --suite "${{ needs.prepare.outputs.suite }}" --native --startup-attempts 4'
+assert_present './mobile/e2e/run_e2e.sh --suite "${{ needs.prepare.outputs.suite }}"'
 assert_absent 'for attempt in 1 2 3 4'
+
+for job in e2e-mobile-android e2e-mobile-ios; do
+  block="$(job_block "$job")"
+  assert_block_present "$block" '--suite "${{ needs.prepare.outputs.suite }}"' "$job suite routing"
+  assert_block_present "$block" 'APP_VARIANT: production' "$job production identity"
+  assert_block_present "$block" 'OTA_CHANNEL: preview' "$job production identity"
+  assert_block_present "$block" 'BACKEND_ENVIRONMENT_CAPABILITY: production' "$job production identity"
+  assert_block_present "$block" 'EXPO_PUBLIC_API_URL: https://api.example.invalid' "$job no-network build"
+  assert_block_present "$block" 'production-guard/protected-routes.yaml' "$job protected routes"
+  assert_block_present "$block" "! grep -F '[api] →'" "$job no-network assertion"
+  assert_block_present "$block" 'write-export-guide-evidence.mjs' "$job evidence writer"
+  assert_block_present "$block" 'retention-days: 30' "$job evidence retention"
+  for provenance in TARGET_SHA WORKFLOW_RUN PLATFORM APP_IDENTITY FIXTURE_VERSION RUNNER_IMAGE DEVICE_MODEL OS_RUNTIME TOOLCHAIN EXPORT_GUIDE_RESULT PRODUCTION_GUARD_RESULT NO_NETWORK_RESULT; do
+    assert_block_present "$block" "          $provenance:" "$job evidence provenance"
+  done
+done
+assert_block_present "$(job_block e2e-mobile-android)" \
+  'adb install -r mobile/android/app/build/outputs/apk/release/app-release.apk' \
+  'Android production guard fresh install'
+assert_block_present "$(job_block e2e-mobile-ios)" \
+  'xcrun simctl uninstall "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar || true' \
+  'iOS production guard fresh uninstall'
+assert_block_present "$(job_block e2e-mobile-ios)" \
+  'xcrun simctl install "$E2E_DEVICE_UDID" "$APP"' \
+  'iOS production guard fresh install'
+assert_block_present "$evidence_block" 'check-export-guide-evidence.mjs' 'evidence checker'
+assert_block_present "$evidence_block" 'pattern: export-guide-evidence-*' 'evidence collection'
 
 assert_failure_artifact() {
   local job="$1" step="$2" name="$3" block
@@ -222,6 +301,40 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure first-run 's/No preceding scheduled attempt; both platforms selected/No boundary available/'
   expect_mutation_failure android-platform 's/  e2e-mobile-android:/  e2e-mobile-android-removed:/'
   expect_mutation_failure ios-platform 's/  e2e-mobile-ios:/  e2e-mobile-ios-removed:/'
+  expect_mutation_failure ios-timeout 's/    timeout-minutes: 180/    timeout-minutes: 120/'
+  expect_mutation_failure ios-maestro-attempt-timeout \
+    's/      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "600"/      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "601"/'
+  expect_mutation_failure ios-precompiled-modules \
+    's/EXPO_USE_PRECOMPILED_MODULES: "0"/EXPO_USE_PRECOMPILED_MODULES: "1"/'
+  expect_mutation_failure ios-prebuilt-react-core \
+    's/RCT_USE_PREBUILT_RNCORE: "0"/RCT_USE_PREBUILT_RNCORE: "1"/'
+  expect_mutation_failure ios-prebuilt-react-dependencies \
+    's/RCT_USE_RN_DEP: "0"/RCT_USE_RN_DEP: "1"/'
+  expect_mutation_failure ios-hermes-source-build \
+    's/RCT_BUILD_HERMES_FROM_SOURCE: "true"/RCT_BUILD_HERMES_FROM_SOURCE: "false"/'
+  expect_mutation_failure ios-prebuild-pipefail \
+    's/set -o pipefail/set +o pipefail/'
+  expect_mutation_failure ios-prebuild-ansi-normalization \
+    's/LC_ALL=C sed/LC_ALL=C printf/'
+  expect_mutation_failure ios-normalized-prebuild-log \
+    's/prebuild\.normalized\.log/prebuild.log/'
+  expect_mutation_failure ios-react-core-source-log \
+    's/\[ReactNativeCore\] Building from source: true/\[ReactNativeCore\] Building from source: false/'
+  expect_mutation_failure ios-react-dependencies-source-log \
+    's/\[ReactNativeDependencies\] Building from source: true/\[ReactNativeDependencies\] Building from source: false/'
+  expect_mutation_failure ios-hermes-tag-log \
+    's/hermes-v250829098\.0\.10/hermes-v250829098.0.9/'
+  expect_mutation_failure ios-hermes-latest-commit-rejection \
+    "s/! grep -F '\[Hermes\] Using the latest commit'/grep -F '[Hermes] Using the latest commit'/"
+  expect_mutation_failure ios-simulator-architecture 's/ARCHS=arm64/ARCHS=x86_64/g'
+  expect_mutation_failure ios-production-guard-timeout 's/        timeout-minutes: 15/        timeout-minutes: 14/'
+  expect_mutation_failure ios-production-guard-install \
+    's/xcrun simctl install "\$E2E_DEVICE_UDID"/xcrun simctl install-removed "\$E2E_DEVICE_UDID"/'
+  expect_mutation_failure suite-routing 's/--suite "\$\{\{ needs\.prepare\.outputs\.suite \}\}"/--suite smoke/'
+  expect_mutation_failure production-identity 's/APP_VARIANT: production/APP_VARIANT: development/g'
+  expect_mutation_failure no-network-guard "s/! grep -F '\[api\] →'/grep -F '[api] →'/"
+  expect_mutation_failure evidence-checker 's/check-export-guide-evidence\.mjs/check-export-guide-evidence-removed.mjs/'
+  expect_mutation_failure evidence-provenance 's/          FIXTURE_VERSION:/          FIXTURE_VERSION_REMOVED:/g'
   expect_mutation_failure preparation-dependency 's/    needs: \[prepare, build-server\]/    needs: build-server/'
   expect_mutation_failure failure-artifact 's/(name: Upload Maestro debug output\n        )if: failure\(\)/${1}if: always()/'
 fi

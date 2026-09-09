@@ -46,12 +46,16 @@ assert_smoke_inventory "$SOURCE_MAESTRO_DIR"
 make_fixture() {
   local scenario="$1"
   local fixture="$TEST_ROOT/$scenario"
-  mkdir -p "$fixture/bin" "$fixture/flows" "$fixture/logs" "$fixture/state" "$fixture/debug"
+  mkdir -p "$fixture/bin" "$fixture/flows" "$fixture/export-flows" "$fixture/logs" "$fixture/state" "$fixture/debug"
   mkdir -p "$fixture/flows/helpers"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/alpha.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/beta.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/gamma.yaml"
   printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/flows/helpers/setup.yaml"
+  mkdir -p "$fixture/export-flows/helpers"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/export-flows/export-alpha.yaml"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/export-flows/export-beta.yaml"
+  printf '%s\n' 'appId: test' '---' '- launchApp' > "$fixture/export-flows/helpers/export-setup.yaml"
 
   cat > "$fixture/server" <<'SH'
 #!/usr/bin/env bash
@@ -61,7 +65,8 @@ SH
 
   cat > "$fixture/bin/maestro" <<'SH'
 #!/usr/bin/env bash
-flow="$(basename "$2" .yaml)"
+echo "$*" >> "$ARG_LOG"
+flow="$(basename "${!#}" .yaml)"
 count_file="$STATE_DIR/$flow"
 count=0
 [ ! -f "$count_file" ] || count="$(cat "$count_file")"
@@ -171,6 +176,25 @@ case "$SCENARIO" in
     fi
     emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
     exit 0
+    ;;
+  post_launch_driver_hang)
+    # Maestro reported a post-launch stopApp transport failure but its JVM did
+    # not exit. The per-attempt process bound must return control to the
+    # structural classifier, which retries this startup-only restart epoch.
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        launchAppCommand:COMPLETED stopAppCommand:RUNNING
+      sleep 10
+      exit 65
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  deterministic_driver_hang)
+    emit_commands "${LAUNCH_PROLOGUE[@]}" \
+      launchAppCommand:COMPLETED stopAppCommand:RUNNING
+    sleep 10
+    exit 66
     ;;
   deterministic_launch_failure)
     # An app that never launches matches the startup shape on every attempt. The
@@ -437,10 +461,13 @@ run_fixture() {
   PATH="$fixture/bin:$PATH" \
     E2E_SERVER="$fixture/server" \
     MAESTRO_DIR="$fixture/flows" \
+    EXPORT_GUIDE_MAESTRO_DIR="$fixture/export-flows" \
     MAESTRO_LOG_ROOT="$fixture/logs" \
     MAESTRO_DEBUG_ROOT="$fixture/debug" \
+    MAESTRO_ATTEMPT_TIMEOUT_SECONDS="${ATTEMPT_TIMEOUT_SECONDS:-900}" \
     STATE_DIR="$fixture/state" \
     CALL_LOG="$fixture/calls" \
+    ARG_LOG="$fixture/maestro-args" \
     SCENARIO="$scenario" \
     "$HARNESS" "$@" > "$fixture/output" 2>&1
   status=$?
@@ -500,6 +527,35 @@ run_fixture "$fixture" pass 0
 assert_count 0 '^setup:' "$fixture/calls"
 assert_count 1 '^up$' "$fixture/calls"
 assert_count 1 '^down$' "$fixture/calls"
+assert_count 0 'E2E_CONTROL_URL=' "$fixture/maestro-args"
+
+# The explicitly selected suite has its own lexical inventory and excludes its helper.
+fixture="$(make_fixture export_suite)"
+run_fixture "$fixture" pass 0 --suite export-guide
+assert_count 1 '^export-alpha:' "$fixture/calls"
+assert_count 1 '^export-beta:' "$fixture/calls"
+assert_count 0 '^export-setup:' "$fixture/calls"
+assert_count 0 '^alpha:' "$fixture/calls"
+assert_count 1 '^up$' "$fixture/calls"
+assert_count 1 '^down$' "$fixture/calls"
+assert_count 2 '^test -e E2E_CONTROL_URL=http://localhost:3005 ' "$fixture/maestro-args"
+
+# Native runners use the same host-loopback control endpoint.
+fixture="$(make_fixture export_suite_native)"
+run_fixture "$fixture" pass 0 --suite export-guide --native
+assert_count 2 '^test -e E2E_CONTROL_URL=http://localhost:3005 ' "$fixture/maestro-args"
+
+assert_invalid_suite() {
+  local label="$1"
+  shift
+  fixture="$(make_fixture "suite_$label")"
+  run_fixture "$fixture" pass 2 "$@"
+  [ ! -f "$fixture/calls" ] || assert_count 0 '^up$' "$fixture/calls"
+}
+assert_invalid_suite missing --suite
+assert_invalid_suite empty --suite ""
+assert_invalid_suite unknown --suite other
+assert_invalid_suite path --suite ../export-guide
 
 # --keep-up preserves the same three-flow discovery while suppressing teardown.
 fixture="$(make_fixture keep_up)"
@@ -542,6 +598,20 @@ grep -Fq 'last=launchAppCommand status=RUNNING' "$fixture/output" || \
 
 retryable_case open_link_never_completed 'the deep-link reopen shape'
 
+# A stuck Maestro JVM is killed with its descendants, its command record is
+# retained, and the structural classifier gets control for a fresh-process retry.
+fixture="$(make_fixture post_launch_driver_hang)"
+ATTEMPT_TIMEOUT_SECONDS=1 run_fixture "$fixture" post_launch_driver_hang 0 --startup-attempts 2
+assert_retried_then_passed "$fixture" 'a post-launch driver hang'
+grep -Fq 'command exceeded 1s; terminating process group' "$fixture/output" || \
+  fail 'the post-launch driver hang did not report its attempt timeout'
+
+# The process deadline remains bounded when the same startup-only hang repeats.
+fixture="$(make_fixture deterministic_driver_hang)"
+ATTEMPT_TIMEOUT_SECONDS=1 run_fixture "$fixture" deterministic_driver_hang 124 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+grep -Fq 'retryable startup failure exhausted 2 attempt(s)' "$fixture/output" || \
+  fail 'the repeated driver hang did not exhaust the configured attempt bound'
 retryable_case completed_assertion_before_restart 'the captured phase-local restart shape'
 captured_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
 grep -Fq '12 command(s) recorded, last=openLinkCommand status=FAILED' "$fixture/output" || \

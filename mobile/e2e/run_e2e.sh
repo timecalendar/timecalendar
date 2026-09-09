@@ -17,7 +17,10 @@
 # mobile/e2e/README.md.
 #
 # Usage:
-#   ./e2e/run_e2e.sh [--keep-up] [--native] [--startup-attempts N]
+#   MAESTRO_ATTEMPT_TIMEOUT_SECONDS=900 ./e2e/run_e2e.sh \
+#     [--suite smoke|export-guide] [--keep-up] [--native] [--startup-attempts N]
+#     --suite     Select the daily smoke pack (default) or the dedicated
+#                 export-guide release proof.
 #     --keep-up   Leave the server stack running after the run, for debugging.
 #     --native    Pass through to the lifecycle (Docker-less hosts, e.g. macOS
 #                 CI): the caller provisions Postgres/Redis; see ci/e2e-server.sh.
@@ -27,6 +30,10 @@
 #                 classification epoch; earlier FAILED commands and current-
 #                 epoch assertions/interactions remain terminal. See ADR 038 and
 #                 classify-maestro-attempt.mjs.
+#   MAESTRO_ATTEMPT_TIMEOUT_SECONDS
+#                 Bounds each Maestro process (default 900 seconds). A timed-out
+#                 process group is terminated, then its retained command record
+#                 is classified by the same retry rule.
 #
 # Prerequisites and CI notes: see e2e/README.md.
 
@@ -40,10 +47,16 @@ set -euo pipefail
 KEEP_UP=0
 NATIVE_FLAG=""
 STARTUP_ATTEMPTS=1
+SUITE=smoke
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --keep-up) KEEP_UP=1 ;;
     --native)  NATIVE_FLAG="--native" ;;
+    --suite)
+      [ "$#" -ge 2 ] || { echo "run_e2e.sh: --suite requires a value" >&2; exit 2; }
+      SUITE="$2"
+      shift
+      ;;
     --startup-attempts)
       [ "$#" -ge 2 ] || { echo "run_e2e.sh: --startup-attempts requires a value" >&2; exit 2; }
       STARTUP_ATTEMPTS="$2"
@@ -53,6 +66,11 @@ while [ "$#" -gt 0 ]; do
   esac
   shift
 done
+
+case "$SUITE" in
+  smoke|export-guide) ;;
+  *) echo "run_e2e.sh: --suite must be smoke or export-guide" >&2; exit 2 ;;
+esac
 
 case "$STARTUP_ATTEMPTS" in
   1|2|3|4) ;;
@@ -64,13 +82,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MOBILE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO_ROOT="$(cd "$MOBILE_DIR/.." && pwd)"
 E2E_SERVER="${E2E_SERVER:-$REPO_ROOT/ci/e2e-server.sh}"
-MAESTRO_DIR="${MAESTRO_DIR:-$MOBILE_DIR/.maestro}"
+SMOKE_MAESTRO_DIR="${MAESTRO_DIR:-$MOBILE_DIR/.maestro}"
+EXPORT_GUIDE_MAESTRO_DIR="${EXPORT_GUIDE_MAESTRO_DIR:-$MOBILE_DIR/.maestro/export-guide}"
+if [ "$SUITE" = "export-guide" ]; then
+  SELECTED_MAESTRO_DIR="$EXPORT_GUIDE_MAESTRO_DIR"
+else
+  SELECTED_MAESTRO_DIR="$SMOKE_MAESTRO_DIR"
+fi
 MAESTRO_LOG_ROOT="${MAESTRO_LOG_ROOT:-${HOME}/.maestro/tests/timecalendar-harness}"
 # Where Maestro writes its own debug output: one
 # <root>/<yyyy-MM-dd_HHmmss>/<flow>/commands.json per attempt that opened a
 # flow. This is what the retry classifier reads (see is_retryable_startup_failure).
 MAESTRO_DEBUG_ROOT="${MAESTRO_DEBUG_ROOT:-${HOME}/.maestro/tests}"
 CLASSIFIER="${CLASSIFIER:-$SCRIPT_DIR/classify-maestro-attempt.mjs}"
+ATTEMPT_RUNNER="${ATTEMPT_RUNNER:-$SCRIPT_DIR/run-command-with-timeout.mjs}"
+MAESTRO_ATTEMPT_TIMEOUT_SECONDS="${MAESTRO_ATTEMPT_TIMEOUT_SECONDS:-900}"
 
 log()  { echo "[run_e2e] $*"; }
 fail() { echo "[run_e2e] ERROR: $*" >&2; exit 1; }
@@ -96,11 +122,17 @@ command -v maestro >/dev/null 2>&1 || fail \
   "maestro is not on PATH. Install it with:
     curl -fsSL https://get.maestro.mobile.dev | bash
   (Maestro is JVM-based and needs a JDK on PATH.)"
-[ -d "$MAESTRO_DIR" ] || fail "Maestro flow directory does not exist: $MAESTRO_DIR"
+[ -d "$SELECTED_MAESTRO_DIR" ] || fail "Maestro flow directory does not exist: $SELECTED_MAESTRO_DIR"
 # The retry classifier reads Maestro's JSON command record; node is the runtime
 # every mobile CI job and every mobile dev machine already has (.nvmrc).
 command -v node >/dev/null 2>&1 || fail "node is not on PATH (see .nvmrc)"
 [ -f "$CLASSIFIER" ] || fail "retry classifier is missing: $CLASSIFIER"
+[ -f "$ATTEMPT_RUNNER" ] || fail "attempt timeout runner is missing: $ATTEMPT_RUNNER"
+case "$MAESTRO_ATTEMPT_TIMEOUT_SECONDS" in
+  *[!0-9]*|"") fail "MAESTRO_ATTEMPT_TIMEOUT_SECONDS must be a positive integer" ;;
+esac
+[ "$MAESTRO_ATTEMPT_TIMEOUT_SECONDS" -ge 1 ] || \
+  fail "MAESTRO_ATTEMPT_TIMEOUT_SECONDS must be a positive integer"
 
 # The per-flow command record Maestro wrote for the attempt that just ran:
 # $MAESTRO_DEBUG_ROOT/<yyyy-MM-dd_HHmmss>/<flow>/commands.json. `marker` is a
@@ -149,18 +181,27 @@ is_retryable_startup_failure() {
 run_flow() {
   local flow="$1"
   local flow_name attempt attempt_log attempt_marker flow_exit
+  local -a maestro_args
   flow_name="$(basename "$flow" .yaml)"
   attempt=1
+
+  maestro_args=(test)
+  if [ "$SUITE" = "export-guide" ]; then
+    maestro_args+=(-e "E2E_CONTROL_URL=$E2E_CONTROL_URL")
+  fi
+  maestro_args+=("$flow")
 
   while [ "$attempt" -le "$STARTUP_ATTEMPTS" ]; do
     attempt_log="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.log"
     attempt_marker="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.started"
     log "flow ${flow_name}: attempt ${attempt}/${STARTUP_ATTEMPTS}"
     : > "$attempt_marker"
-    if maestro test "$flow" 2>&1 | tee "$attempt_log"; then
+    if node "$ATTEMPT_RUNNER" \
+      "$MAESTRO_ATTEMPT_TIMEOUT_SECONDS" "$attempt_log" -- \
+      maestro "${maestro_args[@]}"; then
       flow_exit=0
     else
-      flow_exit=${PIPESTATUS[0]}
+      flow_exit=$?
     fi
 
     if [ "$flow_exit" -eq 0 ]; then
@@ -186,19 +227,25 @@ run_flow() {
 log "booting the e2e server stack (ci/e2e-server.sh up $NATIVE_FLAG)…"
 # shellcheck disable=SC2086  # NATIVE_FLAG is intentionally word-split (may be empty)
 "$E2E_SERVER" up $NATIVE_FLAG
+if [ "$SUITE" = "export-guide" ] && [ -z "${E2E_CONTROL_URL:-}" ]; then
+  # runScript HTTP executes in Maestro's host JVM, not inside the app. Keep
+  # this control-plane address on runner loopback even when Android's baked
+  # EXPO_PUBLIC_API_URL uses the emulator bridge address.
+  export E2E_CONTROL_URL="http://localhost:3005"
+fi
 
 # --- 2. Run the Maestro flows against the connected device -------------------
 # Maestro auto-detects the single running simulator/emulator. The flows assert
 # stable seeded text, so the same YAML runs on both platforms.
-log "running each top-level Maestro flow in a fresh process (${MAESTRO_DIR})…"
+log "running ${SUITE} suite in fresh Maestro processes (${SELECTED_MAESTRO_DIR})…"
 mkdir -p "$MAESTRO_LOG_ROOT"
 flow_exit=0
 flow_count=0
 # Shell glob expansion is lexical under C locale and remains compatible with
 # macOS Bash 3.2. Nested YAML files are intentionally excluded.
 export LC_ALL=C
-for flow in "$MAESTRO_DIR"/*.yaml; do
-  [ -e "$flow" ] || fail "no top-level Maestro YAML files found in $MAESTRO_DIR"
+for flow in "$SELECTED_MAESTRO_DIR"/*.yaml; do
+  [ -e "$flow" ] || fail "no top-level Maestro YAML files found in $SELECTED_MAESTRO_DIR"
   flow_count=$((flow_count + 1))
   if run_flow "$flow"; then
     :

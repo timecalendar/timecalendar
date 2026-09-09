@@ -1,6 +1,9 @@
 import { Injectable } from "@nestjs/common"
 import { ExportGuideAssetValidator } from "modules/export-guide/assets/export-guide-asset.validator"
-import { createInitialExportGuideCatalogue } from "modules/export-guide/data/initial-export-guide-catalogue"
+import {
+  createE2eExportGuideCatalogue,
+  createInitialExportGuideCatalogue,
+} from "modules/export-guide/data/initial-export-guide-catalogue"
 import {
   EXPORT_GUIDE_PROVIDER_SLUG_PATTERN,
   ExportGuideBundle,
@@ -84,9 +87,14 @@ export class ExportGuidePublicationService {
     assetValidator: ExportGuideAssetValidator = this.assetValidator,
     now: Date = new Date(),
   ): Promise<ExportGuideBundle> {
+    const catalogueFactory =
+      process.env.NODE_ENV === "test" &&
+      process.env.EXPORT_GUIDE_E2E_FIXTURES === "1"
+        ? createE2eExportGuideCatalogue
+        : createInitialExportGuideCatalogue
     return this.publishWithAssetValidator(
-      createInitialExportGuideCatalogue("fr"),
-      createInitialExportGuideCatalogue("en"),
+      catalogueFactory("fr"),
+      catalogueFactory("en"),
       { initial: true, now },
       assetValidator,
     )
