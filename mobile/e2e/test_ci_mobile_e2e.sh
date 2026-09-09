@@ -170,6 +170,7 @@ assert_downstream_contract e2e-mobile-ios "$ios_block" '    needs: prepare'
 assert_block_present "$ios_block" '    timeout-minutes: 180' 'iOS two-build evidence budget'
 assert_block_present "$ios_block" '      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "600"' \
   'iOS evidence-preserving Maestro attempt timeout'
+assert_block_count 2 "$ios_block" 'ARCHS=arm64' 'iOS arm64 simulator build contract'
 assert_block_present "$ios_production_guard_block" '        timeout-minutes: 15' \
   'iOS production guard evidence-preserving timeout'
 assert_block_present "$ios_production_guard_block" \
@@ -276,6 +277,7 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure ios-timeout 's/    timeout-minutes: 180/    timeout-minutes: 120/'
   expect_mutation_failure ios-maestro-attempt-timeout \
     's/      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "600"/      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "601"/'
+  expect_mutation_failure ios-simulator-architecture 's/ARCHS=arm64/ARCHS=x86_64/g'
   expect_mutation_failure ios-production-guard-timeout 's/        timeout-minutes: 15/        timeout-minutes: 14/'
   expect_mutation_failure ios-production-guard-install \
     's/xcrun simctl install "\$E2E_DEVICE_UDID"/xcrun simctl install-removed "\$E2E_DEVICE_UDID"/'

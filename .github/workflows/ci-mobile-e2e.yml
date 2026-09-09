@@ -494,6 +494,7 @@ jobs:
             -configuration Release \
             -sdk iphonesimulator \
             -derivedDataPath build \
+            ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
             build
 
@@ -590,7 +591,7 @@ jobs:
           WORKSPACE="$(ls -d *.xcworkspace | head -n1)"
           SCHEME="${WORKSPACE%.xcworkspace}"
           xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" -configuration Release \
-            -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+            -sdk iphonesimulator -derivedDataPath build ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build
 
       - name: Run production protected-route guard
         id: production_guard

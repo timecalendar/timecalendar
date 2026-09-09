@@ -410,6 +410,20 @@ describe("Maestro journey contracts", () => {
     expect(guard.split('id: "onboarding-school-content"')).toHaveLength(4)
   })
 
+  it("waits for every welcome-page transition in the export-guide setup", () => {
+    const start = flow("export-guide/helpers/start-onboarding.yaml")
+
+    expect(
+      containsOrdered(start, [
+        'id: "onboarding-next"',
+        'visible: "Page 2 of 3"',
+        'id: "onboarding-next"',
+        'id: "onboarding-welcome-cta"',
+        '- tapOn:\n    id: "onboarding-welcome-cta"',
+      ]),
+    ).toBe(true)
+  })
+
   it("keeps the real listed-school import path and synced detail proof", () => {
     const yaml = flow("01-fresh-user-import.yaml")
     expect(yaml.split(OPEN_AGENDA_FLOW)).toHaveLength(2)

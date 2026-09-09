@@ -16,8 +16,15 @@ appId: fr.samuelprak.timecalendar.dev
     timeout: 60000
 - tapOn:
     id: "onboarding-next"
+- extendedWaitUntil:
+    visible: "Page 2 of 3"
+    timeout: 60000
 - tapOn:
     id: "onboarding-next"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-welcome-cta"
+    timeout: 60000
 - tapOn:
     id: "onboarding-welcome-cta"
 - extendedWaitUntil:
