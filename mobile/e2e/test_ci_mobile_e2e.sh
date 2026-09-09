@@ -170,6 +170,12 @@ assert_downstream_contract e2e-mobile-ios "$ios_block" '    needs: prepare'
 assert_block_present "$ios_block" '    timeout-minutes: 180' 'iOS two-build evidence budget'
 assert_block_present "$ios_production_guard_block" '        timeout-minutes: 15' \
   'iOS production guard evidence-preserving timeout'
+assert_block_present "$ios_production_guard_block" \
+  'xcrun simctl uninstall "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar || true' \
+  'iOS production guard cleared install'
+assert_block_present "$ios_production_guard_block" \
+  'xcrun simctl launch "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar >/dev/null' \
+  'iOS production guard first clear-state launch'
 assert_absent '${{ github.sha }}'
 assert_count 4 '          ref: ${{ needs.prepare.outputs.target_sha }}'
 assert_count 3 "    if: needs.prepare.outputs.should_run == 'true'"
@@ -256,6 +262,8 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure ios-platform 's/  e2e-mobile-ios:/  e2e-mobile-ios-removed:/'
   expect_mutation_failure ios-timeout 's/    timeout-minutes: 180/    timeout-minutes: 120/'
   expect_mutation_failure ios-production-guard-timeout 's/        timeout-minutes: 15/        timeout-minutes: 14/'
+  expect_mutation_failure ios-production-guard-launch \
+    's/xcrun simctl launch "\$E2E_DEVICE_UDID" fr\.samuelprak\.timecalendar >\/dev\/null/xcrun simctl launch "\$E2E_DEVICE_UDID" fr.samuelprak.timecalendar.removed >\/dev\/null/'
   expect_mutation_failure suite-routing 's/--suite "\$\{\{ needs\.prepare\.outputs\.suite \}\}"/--suite smoke/'
   expect_mutation_failure production-identity 's/APP_VARIANT: production/APP_VARIANT: development/g'
   expect_mutation_failure no-network-guard "s/! grep -F '\[api\] →'/grep -F '[api] →'/"

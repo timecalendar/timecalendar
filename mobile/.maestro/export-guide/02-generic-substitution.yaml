@@ -6,7 +6,7 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "onboarding-connect-continue"
 - extendedWaitUntil:
-    visible: "Display your timetable"
+    visible: "Display your timetable(,.*)?"
     timeout: 60000
 - assertVisible: "Page 1 of 3"
 - extendedWaitUntil:

@@ -320,7 +320,7 @@ describe("Maestro journey contracts", () => {
     expect(
       containsOrdered(generic, [
         'tapOn: "E2E Export Future Provider"',
-        'visible: "Display your timetable"',
+        'visible: "Display your timetable(,.*)?"',
         'id: "export-guide-page-image-placeholder"',
         'id: "onboarding-import-content"',
       ]),
