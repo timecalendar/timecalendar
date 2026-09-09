@@ -178,6 +178,13 @@ assert_block_count 2 "$ios_block" 'RCT_USE_RN_DEP: "0"' \
   'iOS source React dependency prebuild contract'
 assert_block_count 2 "$ios_block" 'RCT_BUILD_HERMES_FROM_SOURCE: "true"' \
   'iOS pinned Hermes source-build contract'
+assert_block_count 2 "$ios_block" 'set -o pipefail' \
+  'iOS prebuild pipeline failure propagation'
+assert_block_count 2 "$ios_block" \
+  "LC_ALL=C sed \$'s/\\x1b\\\\[[0-9;]*m//g'" \
+  'iOS prebuild ANSI normalization contract'
+assert_block_count 10 "$ios_block" 'prebuild.normalized.log' \
+  'iOS normalized prebuild log enforcement'
 assert_block_count 2 "$ios_block" \
   "grep -F '[ReactNativeCore] Building from source: true'" \
   'iOS React core source-build log proof'
@@ -305,6 +312,12 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
     's/RCT_USE_RN_DEP: "0"/RCT_USE_RN_DEP: "1"/'
   expect_mutation_failure ios-hermes-source-build \
     's/RCT_BUILD_HERMES_FROM_SOURCE: "true"/RCT_BUILD_HERMES_FROM_SOURCE: "false"/'
+  expect_mutation_failure ios-prebuild-pipefail \
+    's/set -o pipefail/set +o pipefail/'
+  expect_mutation_failure ios-prebuild-ansi-normalization \
+    's/LC_ALL=C sed/LC_ALL=C printf/'
+  expect_mutation_failure ios-normalized-prebuild-log \
+    's/prebuild\.normalized\.log/prebuild.log/'
   expect_mutation_failure ios-react-core-source-log \
     's/\[ReactNativeCore\] Building from source: true/\[ReactNativeCore\] Building from source: false/'
   expect_mutation_failure ios-react-dependencies-source-log \

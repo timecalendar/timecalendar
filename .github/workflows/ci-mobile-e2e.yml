@@ -479,11 +479,13 @@ jobs:
           RCT_USE_RN_DEP: "0"
           RCT_BUILD_HERMES_FROM_SOURCE: "true"
         run: |
+          set -o pipefail
           npx expo prebuild --platform ios --clean 2>&1 | tee "$RUNNER_TEMP/ios-development-prebuild.log"
-          grep -F '[ReactNativeCore] Building from source: true' "$RUNNER_TEMP/ios-development-prebuild.log"
-          grep -F '[ReactNativeDependencies] Building from source: true' "$RUNNER_TEMP/ios-development-prebuild.log"
-          grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10' "$RUNNER_TEMP/ios-development-prebuild.log"
-          ! grep -F '[Hermes] Using the latest commit' "$RUNNER_TEMP/ios-development-prebuild.log"
+          LC_ALL=C sed $'s/\x1b\\[[0-9;]*m//g' "$RUNNER_TEMP/ios-development-prebuild.log" > "$RUNNER_TEMP/ios-development-prebuild.normalized.log"
+          grep -F '[ReactNativeCore] Building from source: true' "$RUNNER_TEMP/ios-development-prebuild.normalized.log"
+          grep -F '[ReactNativeDependencies] Building from source: true' "$RUNNER_TEMP/ios-development-prebuild.normalized.log"
+          grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10' "$RUNNER_TEMP/ios-development-prebuild.normalized.log"
+          ! grep -F '[Hermes] Using the latest commit' "$RUNNER_TEMP/ios-development-prebuild.normalized.log"
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
       # here: localhost reaches the host server from the iOS simulator.
@@ -595,11 +597,13 @@ jobs:
           RCT_USE_RN_DEP: "0"
           RCT_BUILD_HERMES_FROM_SOURCE: "true"
         run: |
+          set -o pipefail
           npx expo prebuild --platform ios --clean 2>&1 | tee "$RUNNER_TEMP/ios-production-prebuild.log"
-          grep -F '[ReactNativeCore] Building from source: true' "$RUNNER_TEMP/ios-production-prebuild.log"
-          grep -F '[ReactNativeDependencies] Building from source: true' "$RUNNER_TEMP/ios-production-prebuild.log"
-          grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10' "$RUNNER_TEMP/ios-production-prebuild.log"
-          ! grep -F '[Hermes] Using the latest commit' "$RUNNER_TEMP/ios-production-prebuild.log"
+          LC_ALL=C sed $'s/\x1b\\[[0-9;]*m//g' "$RUNNER_TEMP/ios-production-prebuild.log" > "$RUNNER_TEMP/ios-production-prebuild.normalized.log"
+          grep -F '[ReactNativeCore] Building from source: true' "$RUNNER_TEMP/ios-production-prebuild.normalized.log"
+          grep -F '[ReactNativeDependencies] Building from source: true' "$RUNNER_TEMP/ios-production-prebuild.normalized.log"
+          grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10' "$RUNNER_TEMP/ios-production-prebuild.normalized.log"
+          ! grep -F '[Hermes] Using the latest commit' "$RUNNER_TEMP/ios-production-prebuild.normalized.log"
 
       - name: Build production-identity Release simulator app
         if: always() && needs.prepare.outputs.suite == 'export-guide'
