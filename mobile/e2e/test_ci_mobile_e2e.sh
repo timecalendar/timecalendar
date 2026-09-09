@@ -263,7 +263,7 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure ios-timeout 's/    timeout-minutes: 180/    timeout-minutes: 120/'
   expect_mutation_failure ios-production-guard-timeout 's/        timeout-minutes: 15/        timeout-minutes: 14/'
   expect_mutation_failure ios-production-guard-launch \
-    's/xcrun simctl launch "\$E2E_DEVICE_UDID" fr\.samuelprak\.timecalendar >\/dev\/null/xcrun simctl launch "\$E2E_DEVICE_UDID" fr.samuelprak.timecalendar.removed >\/dev\/null/'
+    's/(xcrun simctl launch "\$E2E_DEVICE_UDID" [^[:space:]]+)/${1}.removed/'
   expect_mutation_failure suite-routing 's/--suite "\$\{\{ needs\.prepare\.outputs\.suite \}\}"/--suite smoke/'
   expect_mutation_failure production-identity 's/APP_VARIANT: production/APP_VARIANT: development/g'
   expect_mutation_failure no-network-guard "s/! grep -F '\[api\] →'/grep -F '[api] →'/"
