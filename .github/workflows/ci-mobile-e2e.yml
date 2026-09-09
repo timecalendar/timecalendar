@@ -591,6 +591,9 @@ jobs:
         id: production_guard
         if: always() && needs.prepare.outputs.suite == 'export-guide'
         continue-on-error: true
+        # A stuck XCTest driver must fail this step while leaving enough job
+        # budget for the always-run evidence writer, upload, and enforcement.
+        timeout-minutes: 15
         working-directory: ./mobile/ios
         run: |
           APP="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -n1)"

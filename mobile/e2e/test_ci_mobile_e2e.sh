@@ -92,6 +92,7 @@ select_step_block="$(step_block prepare 'Select execution decision')"
 build_server_block="$(job_block build-server)"
 android_block="$(job_block e2e-mobile-android)"
 ios_block="$(job_block e2e-mobile-ios)"
+ios_production_guard_block="$(step_block e2e-mobile-ios 'Run production protected-route guard')"
 evidence_block="$(job_block verify-export-guide-evidence)"
 
 [ -n "$trigger_block" ] || fail 'missing on trigger block'
@@ -167,6 +168,8 @@ assert_downstream_contract build-server "$build_server_block" '    needs: prepar
 assert_downstream_contract e2e-mobile-android "$android_block" '    needs: [prepare, build-server]'
 assert_downstream_contract e2e-mobile-ios "$ios_block" '    needs: prepare'
 assert_block_present "$ios_block" '    timeout-minutes: 180' 'iOS two-build evidence budget'
+assert_block_present "$ios_production_guard_block" '        timeout-minutes: 15' \
+  'iOS production guard evidence-preserving timeout'
 assert_absent '${{ github.sha }}'
 assert_count 4 '          ref: ${{ needs.prepare.outputs.target_sha }}'
 assert_count 3 "    if: needs.prepare.outputs.should_run == 'true'"
@@ -252,6 +255,7 @@ if [ "$RUN_MUTATIONS" = 1 ]; then
   expect_mutation_failure android-platform 's/  e2e-mobile-android:/  e2e-mobile-android-removed:/'
   expect_mutation_failure ios-platform 's/  e2e-mobile-ios:/  e2e-mobile-ios-removed:/'
   expect_mutation_failure ios-timeout 's/    timeout-minutes: 180/    timeout-minutes: 120/'
+  expect_mutation_failure ios-production-guard-timeout 's/        timeout-minutes: 15/        timeout-minutes: 14/'
   expect_mutation_failure suite-routing 's/--suite "\$\{\{ needs\.prepare\.outputs\.suite \}\}"/--suite smoke/'
   expect_mutation_failure production-identity 's/APP_VARIANT: production/APP_VARIANT: development/g'
   expect_mutation_failure no-network-guard "s/! grep -F '\[api\] →'/grep -F '[api] →'/"
