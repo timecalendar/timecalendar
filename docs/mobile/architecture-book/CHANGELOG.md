@@ -5,7 +5,9 @@
 - Added the separate export-guide release-proof lane: deterministic test-only server fixtures,
   closed suite selection, production-identity protected-route checks, exact-SHA evidence, and a
   named physical-device matrix whose unexecuted observations remain `NOT RUN`. The daily
-  three-journey smoke inventory and ADRs 038, 055, and 057 remain unchanged.
+  three-journey smoke inventory and ADRs 038, 055, and 057 remain unchanged. Every Maestro process
+  now has a harness-owned deadline so a stuck native-driver transport returns to structural retry
+  classification while retaining failure evidence.
 - Added ADR 058 and the binding Activity virtual-page contract: oversized source logs become
   deterministic valid fragments, fragment zero replaces an old id-keyed cache row, sortable
   later ids preserve traversal order after persistence, version 1 cursors remain readable, and

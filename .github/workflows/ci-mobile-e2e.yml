@@ -409,6 +409,11 @@ jobs:
       # below relaunches the driver by retrying instead. Give each attempt 4 min
       # (generous vs the sub-minute happy path, fails fast on a crash). Value in ms.
       MAESTRO_DRIVER_STARTUP_TIMEOUT: "240000"
+      # Maestro can print a post-launch XCTest transport failure yet leave its
+      # JVM alive indefinitely. Bound each whole-flow process so the harness can
+      # retain its command record, classify the failed restart epoch, and retry
+      # or fail while the unconditional evidence steps still have job budget.
+      MAESTRO_ATTEMPT_TIMEOUT_SECONDS: "600"
     steps:
       - name: Checkout selected target
         uses: actions/checkout@v6

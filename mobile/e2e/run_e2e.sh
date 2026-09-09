@@ -17,7 +17,8 @@
 # mobile/e2e/README.md.
 #
 # Usage:
-#   ./e2e/run_e2e.sh [--suite smoke|export-guide] [--keep-up] [--native] [--startup-attempts N]
+#   MAESTRO_ATTEMPT_TIMEOUT_SECONDS=900 ./e2e/run_e2e.sh \
+#     [--suite smoke|export-guide] [--keep-up] [--native] [--startup-attempts N]
 #     --suite     Select the daily smoke pack (default) or the dedicated
 #                 export-guide release proof.
 #     --keep-up   Leave the server stack running after the run, for debugging.
@@ -29,6 +30,10 @@
 #                 classification epoch; earlier FAILED commands and current-
 #                 epoch assertions/interactions remain terminal. See ADR 038 and
 #                 classify-maestro-attempt.mjs.
+#   MAESTRO_ATTEMPT_TIMEOUT_SECONDS
+#                 Bounds each Maestro process (default 900 seconds). A timed-out
+#                 process group is terminated, then its retained command record
+#                 is classified by the same retry rule.
 #
 # Prerequisites and CI notes: see e2e/README.md.
 
@@ -90,6 +95,8 @@ MAESTRO_LOG_ROOT="${MAESTRO_LOG_ROOT:-${HOME}/.maestro/tests/timecalendar-harnes
 # flow. This is what the retry classifier reads (see is_retryable_startup_failure).
 MAESTRO_DEBUG_ROOT="${MAESTRO_DEBUG_ROOT:-${HOME}/.maestro/tests}"
 CLASSIFIER="${CLASSIFIER:-$SCRIPT_DIR/classify-maestro-attempt.mjs}"
+ATTEMPT_RUNNER="${ATTEMPT_RUNNER:-$SCRIPT_DIR/run-command-with-timeout.mjs}"
+MAESTRO_ATTEMPT_TIMEOUT_SECONDS="${MAESTRO_ATTEMPT_TIMEOUT_SECONDS:-900}"
 
 log()  { echo "[run_e2e] $*"; }
 fail() { echo "[run_e2e] ERROR: $*" >&2; exit 1; }
@@ -120,6 +127,12 @@ command -v maestro >/dev/null 2>&1 || fail \
 # every mobile CI job and every mobile dev machine already has (.nvmrc).
 command -v node >/dev/null 2>&1 || fail "node is not on PATH (see .nvmrc)"
 [ -f "$CLASSIFIER" ] || fail "retry classifier is missing: $CLASSIFIER"
+[ -f "$ATTEMPT_RUNNER" ] || fail "attempt timeout runner is missing: $ATTEMPT_RUNNER"
+case "$MAESTRO_ATTEMPT_TIMEOUT_SECONDS" in
+  *[!0-9]*|"") fail "MAESTRO_ATTEMPT_TIMEOUT_SECONDS must be a positive integer" ;;
+esac
+[ "$MAESTRO_ATTEMPT_TIMEOUT_SECONDS" -ge 1 ] || \
+  fail "MAESTRO_ATTEMPT_TIMEOUT_SECONDS must be a positive integer"
 
 # The per-flow command record Maestro wrote for the attempt that just ran:
 # $MAESTRO_DEBUG_ROOT/<yyyy-MM-dd_HHmmss>/<flow>/commands.json. `marker` is a
@@ -183,10 +196,12 @@ run_flow() {
     attempt_marker="$MAESTRO_LOG_ROOT/${flow_name}-attempt-${attempt}.started"
     log "flow ${flow_name}: attempt ${attempt}/${STARTUP_ATTEMPTS}"
     : > "$attempt_marker"
-    if maestro "${maestro_args[@]}" 2>&1 | tee "$attempt_log"; then
+    if node "$ATTEMPT_RUNNER" \
+      "$MAESTRO_ATTEMPT_TIMEOUT_SECONDS" "$attempt_log" -- \
+      maestro "${maestro_args[@]}"; then
       flow_exit=0
     else
-      flow_exit=${PIPESTATUS[0]}
+      flow_exit=$?
     fi
 
     if [ "$flow_exit" -eq 0 ]; then

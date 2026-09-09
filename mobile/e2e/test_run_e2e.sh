@@ -177,6 +177,25 @@ case "$SCENARIO" in
     emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
     exit 0
     ;;
+  post_launch_driver_hang)
+    # Maestro reported a post-launch stopApp transport failure but its JVM did
+    # not exit. The per-attempt process bound must return control to the
+    # structural classifier, which retries this startup-only restart epoch.
+    if [ "$flow" = alpha ] && [ "$count" -eq 1 ]; then
+      emit_commands "${LAUNCH_PROLOGUE[@]}" \
+        launchAppCommand:COMPLETED stopAppCommand:RUNNING
+      sleep 10
+      exit 65
+    fi
+    emit_commands "${LAUNCH_PROLOGUE[@]}" launchAppCommand:COMPLETED assertConditionCommand:COMPLETED
+    exit 0
+    ;;
+  deterministic_driver_hang)
+    emit_commands "${LAUNCH_PROLOGUE[@]}" \
+      launchAppCommand:COMPLETED stopAppCommand:RUNNING
+    sleep 10
+    exit 66
+    ;;
   deterministic_launch_failure)
     # An app that never launches matches the startup shape on every attempt. The
     # documented bound: retry costs attempts, not correctness — the run still
@@ -445,6 +464,7 @@ run_fixture() {
     EXPORT_GUIDE_MAESTRO_DIR="$fixture/export-flows" \
     MAESTRO_LOG_ROOT="$fixture/logs" \
     MAESTRO_DEBUG_ROOT="$fixture/debug" \
+    MAESTRO_ATTEMPT_TIMEOUT_SECONDS="${ATTEMPT_TIMEOUT_SECONDS:-900}" \
     STATE_DIR="$fixture/state" \
     CALL_LOG="$fixture/calls" \
     ARG_LOG="$fixture/maestro-args" \
@@ -578,6 +598,20 @@ grep -Fq 'last=launchAppCommand status=RUNNING' "$fixture/output" || \
 
 retryable_case open_link_never_completed 'the deep-link reopen shape'
 
+# A stuck Maestro JVM is killed with its descendants, its command record is
+# retained, and the structural classifier gets control for a fresh-process retry.
+fixture="$(make_fixture post_launch_driver_hang)"
+ATTEMPT_TIMEOUT_SECONDS=1 run_fixture "$fixture" post_launch_driver_hang 0 --startup-attempts 2
+assert_retried_then_passed "$fixture" 'a post-launch driver hang'
+grep -Fq 'command exceeded 1s; terminating process group' "$fixture/output" || \
+  fail 'the post-launch driver hang did not report its attempt timeout'
+
+# The process deadline remains bounded when the same startup-only hang repeats.
+fixture="$(make_fixture deterministic_driver_hang)"
+ATTEMPT_TIMEOUT_SECONDS=1 run_fixture "$fixture" deterministic_driver_hang 124 --startup-attempts 2
+assert_count 2 '^alpha:' "$fixture/calls"
+grep -Fq 'retryable startup failure exhausted 2 attempt(s)' "$fixture/output" || \
+  fail 'the repeated driver hang did not exhaust the configured attempt bound'
 retryable_case completed_assertion_before_restart 'the captured phase-local restart shape'
 captured_record="$(find "$fixture/debug" -path '*/alpha/commands.json' | sort | head -n 1)"
 grep -Fq '12 command(s) recorded, last=openLinkCommand status=FAILED' "$fixture/output" || \

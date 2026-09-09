@@ -63,6 +63,12 @@ From `mobile/`:
 ./e2e/run_e2e.sh --native --startup-attempts 4
 ```
 
+Each Maestro process has a 15-minute default deadline. Set
+`MAESTRO_ATTEMPT_TIMEOUT_SECONDS` to a positive integer to narrow that bound;
+the iOS proof lane uses 10 minutes. A timed-out process group is terminated only
+after its output and command record have been retained, so the ordinary
+structural retry classifier still decides whether a fresh-process retry is safe.
+
 The wrapper boots the shared server lifecycle once, runs each top-level YAML in
 a fresh Maestro process, stops at the first terminal failure, and tears the stack
 down once. `--keep-up` retains the stack and prints the log/teardown commands.
