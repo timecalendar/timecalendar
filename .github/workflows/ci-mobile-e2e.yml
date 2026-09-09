@@ -470,7 +470,20 @@ jobs:
           APP_VARIANT: development
           BACKEND_ENVIRONMENT_CAPABILITY: development
           EXPO_PUBLIC_API_URL: http://localhost:3005
-        run: npx expo prebuild --platform ios --clean
+          # Expo's precompiled-module CocoaPods hook can serialize an array-valued
+          # HEADER_SEARCH_PATHS as one malformed -I argument. Build the complete
+          # Expo/React graph from source so Hermes and JSI also share one header
+          # set across clean Release builds.
+          EXPO_USE_PRECOMPILED_MODULES: "0"
+          RCT_USE_PREBUILT_RNCORE: "0"
+          RCT_USE_RN_DEP: "0"
+          RCT_BUILD_HERMES_FROM_SOURCE: "true"
+        run: |
+          npx expo prebuild --platform ios --clean 2>&1 | tee "$RUNNER_TEMP/ios-development-prebuild.log"
+          grep -F '[ReactNativeCore] Building from source: true' "$RUNNER_TEMP/ios-development-prebuild.log"
+          grep -F '[ReactNativeDependencies] Building from source: true' "$RUNNER_TEMP/ios-development-prebuild.log"
+          grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10' "$RUNNER_TEMP/ios-development-prebuild.log"
+          ! grep -F '[Hermes] Using the latest commit' "$RUNNER_TEMP/ios-development-prebuild.log"
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
       # here: localhost reaches the host server from the iOS simulator.
@@ -577,7 +590,16 @@ jobs:
           OTA_CHANNEL: preview
           BACKEND_ENVIRONMENT_CAPABILITY: production
           EXPO_PUBLIC_API_URL: https://api.example.invalid
-        run: npx expo prebuild --platform ios --clean
+          EXPO_USE_PRECOMPILED_MODULES: "0"
+          RCT_USE_PREBUILT_RNCORE: "0"
+          RCT_USE_RN_DEP: "0"
+          RCT_BUILD_HERMES_FROM_SOURCE: "true"
+        run: |
+          npx expo prebuild --platform ios --clean 2>&1 | tee "$RUNNER_TEMP/ios-production-prebuild.log"
+          grep -F '[ReactNativeCore] Building from source: true' "$RUNNER_TEMP/ios-production-prebuild.log"
+          grep -F '[ReactNativeDependencies] Building from source: true' "$RUNNER_TEMP/ios-production-prebuild.log"
+          grep -F '[Hermes] Using tag defined in sdks/.hermesv1version: hermes-v250829098.0.10' "$RUNNER_TEMP/ios-production-prebuild.log"
+          ! grep -F '[Hermes] Using the latest commit' "$RUNNER_TEMP/ios-production-prebuild.log"
 
       - name: Build production-identity Release simulator app
         if: always() && needs.prepare.outputs.suite == 'export-guide'
