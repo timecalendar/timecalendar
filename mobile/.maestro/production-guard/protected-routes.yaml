@@ -8,6 +8,8 @@ appId: fr.samuelprak.timecalendar
       - tapOn:
           text: "Open"
           optional: true
+      - tapOn:
+          text: "Don’t Allow"
 - extendedWaitUntil:
     visible:
       id: "onboarding-school-content"

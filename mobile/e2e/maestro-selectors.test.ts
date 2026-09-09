@@ -390,11 +390,21 @@ describe("Maestro journey contracts", () => {
     ).toBe(true)
   })
 
-  it("keeps production protected-route probes cold without clearing fresh install state", () => {
+  it("keeps production protected-route probes cold and dismisses the fresh iOS notification prompt", () => {
     const guard = flow("production-guard/protected-routes.yaml")
 
     expect(guard).not.toContain("clearState")
     expect(guard).not.toContain("launchApp")
+    expect(
+      containsOrdered(guard, [
+        "- openLink: timecalendar://onboarding/import",
+        'text: "Open"',
+        'text: "Don’t Allow"',
+        'id: "onboarding-school-content"',
+        'id: "onboarding-import-content"',
+      ]),
+    ).toBe(true)
+    expect(guard.split('text: "Don’t Allow"')).toHaveLength(2)
     expect(guard.split("- stopApp")).toHaveLength(3)
     expect(guard.split("- openLink:")).toHaveLength(4)
     expect(guard.split('id: "onboarding-school-content"')).toHaveLength(4)
