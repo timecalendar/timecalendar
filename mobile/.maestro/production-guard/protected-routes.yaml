@@ -1,8 +1,5 @@
 appId: fr.samuelprak.timecalendar
 ---
-- launchApp:
-    clearState: true
-- stopApp
 - openLink: timecalendar://onboarding/import
 - runFlow:
     when:
@@ -17,8 +14,6 @@ appId: fr.samuelprak.timecalendar
     timeout: 60000
 - assertNotVisible:
     id: "onboarding-import-content"
-- launchApp:
-    clearState: true
 - stopApp
 - openLink: timecalendar://onboarding/qr-scan
 - runFlow:
@@ -34,8 +29,6 @@ appId: fr.samuelprak.timecalendar
     timeout: 60000
 - assertNotVisible:
     id: "qr-scan-camera"
-- launchApp:
-    clearState: true
 - stopApp
 - openLink: timecalendar://onboarding/ical-url
 - runFlow:

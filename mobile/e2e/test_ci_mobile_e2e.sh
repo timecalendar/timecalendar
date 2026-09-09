@@ -218,6 +218,15 @@ for job in e2e-mobile-android e2e-mobile-ios; do
     assert_block_present "$block" "          $provenance:" "$job evidence provenance"
   done
 done
+assert_block_present "$(job_block e2e-mobile-android)" \
+  'adb install -r mobile/android/app/build/outputs/apk/release/app-release.apk' \
+  'Android production guard fresh install'
+assert_block_present "$(job_block e2e-mobile-ios)" \
+  'xcrun simctl uninstall "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar || true' \
+  'iOS production guard fresh uninstall'
+assert_block_present "$(job_block e2e-mobile-ios)" \
+  'xcrun simctl install "$E2E_DEVICE_UDID" "$APP"' \
+  'iOS production guard fresh install'
 assert_block_present "$evidence_block" 'check-export-guide-evidence.mjs' 'evidence checker'
 assert_block_present "$evidence_block" 'pattern: export-guide-evidence-*' 'evidence collection'
 

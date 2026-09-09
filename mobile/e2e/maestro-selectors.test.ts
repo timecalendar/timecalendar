@@ -390,10 +390,13 @@ describe("Maestro journey contracts", () => {
     ).toBe(true)
   })
 
-  it("starts every production protected-route probe from cleared state", () => {
+  it("keeps production protected-route probes cold without clearing fresh install state", () => {
     const guard = flow("production-guard/protected-routes.yaml")
 
-    expect(guard.split("clearState: true")).toHaveLength(4)
+    expect(guard).not.toContain("clearState")
+    expect(guard).not.toContain("launchApp")
+    expect(guard.split("- stopApp")).toHaveLength(3)
+    expect(guard.split("- openLink:")).toHaveLength(4)
     expect(guard.split('id: "onboarding-school-content"')).toHaveLength(4)
   })
 
