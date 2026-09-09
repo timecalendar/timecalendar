@@ -336,6 +336,8 @@ describe("Maestro journey contracts", () => {
     expect(
       containsOrdered(unlisted, [
         'id: "onboarding-school-missing"',
+        "platform: Android",
+        "pressKey: back",
         'id: "onboarding-institution-continue"',
         'id: "export-guide-provider-ade"',
         'id: "export-guide-provider-hplanning"',

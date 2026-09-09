@@ -6,6 +6,11 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "onboarding-institution-input"
 - inputText: "E2E Unlisted University"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: back
 - tapOn:
     id: "onboarding-institution-continue"
 - runFlow: helpers/enter-programme.yaml
