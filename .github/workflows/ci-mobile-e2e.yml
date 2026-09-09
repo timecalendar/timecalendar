@@ -470,6 +470,11 @@ jobs:
           APP_VARIANT: development
           BACKEND_ENVIRONMENT_CAPABILITY: development
           EXPO_PUBLIC_API_URL: http://localhost:3005
+          # Expo's precompiled-module CocoaPods hook can serialize an array-valued
+          # HEADER_SEARCH_PATHS as one malformed -I argument. Building those
+          # modules from source keeps clean Release builds deterministic while
+          # retaining the prebuilt React core used by the production app.
+          EXPO_USE_PRECOMPILED_MODULES: "0"
         run: npx expo prebuild --platform ios --clean
 
       # Release config embeds the JS bundle (no Metro). EXPO_PUBLIC_API_URL baked
@@ -577,6 +582,7 @@ jobs:
           OTA_CHANNEL: preview
           BACKEND_ENVIRONMENT_CAPABILITY: production
           EXPO_PUBLIC_API_URL: https://api.example.invalid
+          EXPO_USE_PRECOMPILED_MODULES: "0"
         run: npx expo prebuild --platform ios --clean
 
       - name: Build production-identity Release simulator app
