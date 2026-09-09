@@ -27,7 +27,7 @@ appId: fr.samuelprak.timecalendar.dev
 - tapOn:
     id: "export-guide-provider-celcat"
 - extendedWaitUntil:
-    visible: "Select your group"
+    visible: "Select your group(,.*)?"
     timeout: 60000
 - assertVisible: "Page 1 of 3"
 - tapOn:

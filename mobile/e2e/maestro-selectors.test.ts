@@ -353,6 +353,7 @@ describe("Maestro journey contracts", () => {
         'id: "export-guide-provider-hplanning"',
         'id: "export-guide-provider-celcat"',
         'id: "export-guide-provider-generic"',
+        'visible: "Select your group(,.*)?"',
         '- tapOn:\n    id: "export-guide-next"',
         'visible: "Page 2 of 3"',
         '- tapOn:\n    id: "export-guide-next"',
