@@ -599,7 +599,6 @@ jobs:
           APP="$(ls -d build/Build/Products/Release-iphonesimulator/*.app | head -n1)"
           xcrun simctl uninstall "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar || true
           xcrun simctl install "$E2E_DEVICE_UDID" "$APP"
-          xcrun simctl launch "$E2E_DEVICE_UDID" fr.samuelprak.timecalendar >/dev/null
           maestro --device "$E2E_DEVICE_UDID" test ../.maestro/production-guard/protected-routes.yaml
           xcrun simctl spawn "$E2E_DEVICE_UDID" log show --last 5m --style compact > "$RUNNER_TEMP/production-guard-ios.log"
           ! grep -F '[api] →' "$RUNNER_TEMP/production-guard-ios.log"

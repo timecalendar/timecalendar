@@ -22,11 +22,19 @@ appId: fr.samuelprak.timecalendar.dev
 - assertVisible: "Page 1 of 4"
 - tapOn:
     id: "export-guide-next"
+- extendedWaitUntil:
+    visible: "Page 2 of 4"
+    timeout: 60000
 - tapOn:
     id: "export-guide-next"
+- extendedWaitUntil:
+    visible: "Page 3 of 4"
+    timeout: 60000
 - tapOn:
     id: "export-guide-next"
-- assertVisible: "Page 4 of 4"
+- extendedWaitUntil:
+    visible: "Page 4 of 4"
+    timeout: 60000
 - tapOn:
     id: "export-guide-next"
 - extendedWaitUntil:
