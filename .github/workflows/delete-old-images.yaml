@@ -25,7 +25,10 @@ jobs:
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
-          skip-tags: latest, production
+          # GitOps deploys immutable main-<sha> tags in both preprod and production.
+          # Protect that whole tag family: keep-at-least cannot protect a quiet
+          # production release when main publishes more than five newer images.
+          skip-tags: latest, production, main-*
           token: ${{ github.token }}
           token-type: github-token
           dry-run: ${{ github.event_name == 'workflow_dispatch' }}
@@ -38,7 +41,9 @@ jobs:
           account-type: org
           org-name: timecalendar
           keep-at-least: 5
-          skip-tags: latest, production
+          # Keep this identical to the server policy. Production promotes the
+          # server and web main-<sha> tags in lock-step.
+          skip-tags: latest, production, main-*
           token: ${{ github.token }}
           token-type: github-token
           dry-run: ${{ github.event_name == 'workflow_dispatch' }}

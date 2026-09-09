@@ -22,12 +22,23 @@ test("comments cannot provide missing authentication or safety inputs", () => {
 
 test("one package step cannot provide the other package's safeguards", () => {
   const workflow = readFileSync(workflowPath, "utf8").replace(
-    /          skip-tags: latest, production\n(?=          token: \$\{\{ github\.token \}\}\n          token-type: github-token\n          dry-run:)/,
+    /          skip-tags: latest, production, main-\*\n(?=          token: \$\{\{ github\.token \}\}\n          token-type: github-token\n          dry-run:)/,
     "",
   );
 
   const errors = validateRetentionWorkflow(workflow);
-  assert(errors.some((error) => error.includes("must protect latest and production")));
+  assert(errors.some((error) => error.includes("must protect latest, production, and main-*")));
+});
+
+test("immutable GitOps deployment tags cannot lose wildcard protection", () => {
+  const workflow = readFileSync(workflowPath, "utf8").replaceAll(
+    "skip-tags: latest, production, main-*",
+    "skip-tags: latest, production, main",
+  );
+
+  const errors = validateRetentionWorkflow(workflow);
+  assert.equal(errors.length, 2);
+  assert(errors.every((error) => error.includes("main-* deployment tags")));
 });
 
 test("extra retention invocations are rejected", () => {

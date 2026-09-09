@@ -132,7 +132,12 @@ export function validateRetentionWorkflow(source) {
     require(inputs.get("dry-run") === "${{ github.event_name == 'workflow_dispatch' }}", `${imageName ?? "retention step"} must force manual runs to dry-run`);
     require(Number(inputs.get("keep-at-least")) >= 5, `${imageName ?? "retention step"} must keep at least five versions`);
     const protectedTags = new Set((inputs.get("skip-tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean));
-    require(protectedTags.has("latest") && protectedTags.has("production"), `${imageName ?? "retention step"} must protect latest and production`);
+    require(
+      protectedTags.has("latest") &&
+        protectedTags.has("production") &&
+        protectedTags.has("main-*"),
+      `${imageName ?? "retention step"} must protect latest, production, and main-* deployment tags`,
+    );
   }
 
   require(PACKAGES.every((name) => seen.filter((candidate) => candidate === name).length === 1), "each required package must have exactly one retention step");
