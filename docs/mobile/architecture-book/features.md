@@ -51,6 +51,10 @@ code and product specifications.
 
 ## Cross-feature contracts
 
+- Activity's repository, cache, unread, trigger, and navigation ownership above is implemented but
+  not production-approved. The candidate-bound
+  [release-readiness record](../../react-native-migration/05-tech-specs/activity-release-readiness.md)
+  remains fail-closed until every frozen capacity, compatibility, privacy, and native row passes.
 - The calendar event-source seam merges synced and personal events, applies calendar
   visibility and hidden-event filters, and supplies Home, Calendar, and event details.
 - Calendar taps open unified event details for both event kinds. Personal events can
