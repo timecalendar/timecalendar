@@ -4,17 +4,19 @@
 
 ## What is ready
 
-Revision `a5e92c0652f4a9b0297fef60619a6d9089e13407` implements one-week paging on the empty
+Revision `86ae8e0c1807bb5748b425299d68ec02d81090d5` implements one-week paging on the empty
 owned Calendar surface. It adds no native dependency or configuration change.
 
 Automated evidence on that source tree:
 
 - `npx tsc --noEmit` and `npm run lint`: passed.
-- `npm test -- --coverage`: 177 suites and 1,647 tests passed; global coverage was 97.64%
+- `npm test -- --coverage`: 177 suites and 1,647 tests passed; global coverage was 97.63%
   statements and 92.19% branches. The new pure week and transition modules each reached 100%
   statements, branches, functions, and lines in their focused coverage run.
-- `npm run react-doctor:changed`: passed with no issues after adopting the Worklets scheduler.
-- The Calendar-focused run passed 8 suites and 92 tests; both Maestro shell harness tests passed.
+- `npm run react-doctor:changed`: passed with no issues after removing manual memoization from the
+  compiler-managed Calendar controller.
+- The repaired Calendar screen and renderer run passed 2 suites and 33 tests. The Maestro selector
+  suite passed within the full Jest run, and both shell harnesses passed independently.
 
 No iOS runtime, Android runtime, or attached device was available on the development host. Device,
 OS, build, refresh-rate, native gesture, and screen-reader results below are intentionally pending;
