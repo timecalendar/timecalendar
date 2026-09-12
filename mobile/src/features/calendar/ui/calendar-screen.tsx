@@ -100,11 +100,9 @@ export function CalendarScreen() {
               </View>
             </View>
           ) : (
-            <>
-              <OwnedCalendarShell
-                heading={formatFullDay(selectedDate, locale, displayZone)}
-              />
-            </>
+            <OwnedCalendarShell
+              heading={formatFullDay(selectedDate, locale, displayZone)}
+            />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}
         </View>
