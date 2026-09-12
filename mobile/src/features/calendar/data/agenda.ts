@@ -1,6 +1,6 @@
 // The agenda's pure day-grouping logic — the agenda analog of `layoutOverlaps`,
 // 90%-gated, mirroring the Flutter `events_for_planning_view_helper` / `EventsByDay`.
-// Pure: no React, no calendar-kit, no @/db, no t() (grouping is calendar-day
+// Pure: no React, no renderer, no @/db, no t() (grouping is calendar-day
 // arithmetic over the day-key seam; formatting is format.ts's job).
 
 import { dayKey, startOfDayInZone } from "./day-key"

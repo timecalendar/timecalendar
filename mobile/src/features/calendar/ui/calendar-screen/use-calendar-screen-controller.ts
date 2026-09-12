@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import {
   addDaysInZone,
@@ -8,14 +8,9 @@ import {
   dayKeyToDate,
   startOfDayInZone,
 } from "@/features/calendar/data"
-import {
-  calendarTimelineEventWindow,
-  calendarTimelineEventWindowKey,
-  type CalendarTimelineHandle,
-} from "@/features/calendar/renderer"
 import { useDisplayZone } from "@/features/settings/prefs"
 
-export type CalendarView = "day" | "week" | "agenda"
+export type CalendarView = "week" | "agenda"
 
 const AGENDA_DAYS = 7
 
@@ -32,64 +27,28 @@ export function useCalendarScreenController() {
   const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
   const displayZone = useDisplayZone()
   const [view, setView] = useState<CalendarView>("week")
-  const [anchorDate, setAnchorDate] = useState(() =>
+  const [selectedDate, setSelectedDate] = useState(() =>
     startOfDayInZone(new Date(), displayZone),
   )
-  const [visibleDate, setVisibleDate] = useState(() =>
-    startOfDayInZone(new Date(), displayZone),
-  )
-  const timelineRef = useRef<CalendarTimelineHandle>(null)
 
-  const timelineRange = useMemo(
-    () => calendarTimelineEventWindow(anchorDate, displayZone),
-    [anchorDate, displayZone],
-  )
   const agendaRange = useMemo<DateRange>(() => {
-    const from = startOfDayInZone(anchorDate, displayZone)
+    const from = startOfDayInZone(selectedDate, displayZone)
     return { from, to: addDaysInZone(from, AGENDA_DAYS, displayZone) }
-  }, [anchorDate, displayZone])
+  }, [selectedDate, displayZone])
 
   const goToToday = () => {
     const today = startOfDayInZone(new Date(), displayZone)
-    timelineRef.current?.goToDate(today, {
-      animated: true,
-      scrollToCurrentTime: true,
-    })
-    setAnchorDate(today)
-    setVisibleDate(today)
+    setSelectedDate(today)
   }
-
-  const onVisibleDateChange = (date: Date) => {
-    const next = startOfDayInZone(date, displayZone)
-    setVisibleDate((previous) =>
-      dayKey(previous, displayZone).slice(0, 7) ===
-      dayKey(next, displayZone).slice(0, 7)
-        ? previous
-        : next,
-    )
-    setAnchorDate((previous) =>
-      calendarTimelineEventWindowKey(previous, displayZone) ===
-      calendarTimelineEventWindowKey(next, displayZone)
-        ? previous
-        : next,
-    )
-  }
-
-  const onSettledDateChange = (date: Date) => {
-    setAnchorDate(startOfDayInZone(date, displayZone))
-  }
+  const canGoToToday =
+    dayKey(selectedDate, displayZone) !== dayKey(new Date(), displayZone)
 
   useEffect(() => {
     if (focusDate === undefined) return
     const target = parseFocusDate(focusDate, displayZone)
     if (target !== undefined) {
-      timelineRef.current?.goToDate(target, {
-        animated: true,
-        scrollToCurrentTime: true,
-      })
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAnchorDate(target)
-      setVisibleDate(target)
+      setSelectedDate(target)
     }
     router.setParams({ focusDate: undefined })
   }, [focusDate, displayZone])
@@ -97,13 +56,10 @@ export function useCalendarScreenController() {
   return {
     view,
     setView,
-    anchorDate,
-    visibleDate,
+    selectedDate,
     displayZone,
-    range: view === "agenda" ? agendaRange : timelineRange,
-    timelineRef,
+    range: agendaRange,
+    canGoToToday,
     goToToday,
-    onVisibleDateChange,
-    onSettledDateChange,
   }
 }

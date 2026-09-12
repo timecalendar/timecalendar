@@ -1,5 +1,13 @@
 # Architecture Book changelog
 
+## 2026-09-12
+
+- Replaced the patched third-party Calendar timeline with the T01 feature-owned React Native
+  shell: one localized semantic date heading and stable themed canvas, with Week/Agenda as the
+  only working view choices. Agenda refresh, checklist progress, stored-event access, and unified
+  event-details navigation remain intact. Events, paging, vertical scrolling, weekday columns,
+  day/week switching, current-time presentation, gestures, and zoom remain intentionally absent.
+
 ## 2026-09-08
 
 - Added ADR 058 and the binding Activity virtual-page contract: oversized source logs become

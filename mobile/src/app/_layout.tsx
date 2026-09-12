@@ -107,10 +107,8 @@ export default function RootLayout() {
   const navTheme = buildNavTheme(colorScheme === "dark" ? "dark" : "light")
   const rootScreenOptions = buildCompactRootScreenOptions(navTheme.colors.card)
   return (
-    // GestureHandlerRootView is the outermost wrapper because the calendar
-    // (calendar-kit) requires a gesture-handler root ancestor (Phase-04 / ADR
-    // 019 / D5); it is the standard RN gesture root and app infrastructure, not
-    // a calendar-kit import (the screen/seam own the calendar-kit specifics).
+    // GestureHandlerRootView remains the outermost wrapper for the Expo runtime
+    // and the app's current and future owned gesture consumers.
     <GestureHandlerRootView style={styles.root}>
       <EnvironmentRuntimeGate>
         {/* The sync persister (ADR 013 / D8) restores the schools/groups query

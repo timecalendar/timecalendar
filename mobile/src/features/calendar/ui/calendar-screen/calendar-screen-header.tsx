@@ -17,7 +17,7 @@ export function CalendarScreenHeader({
   title: string
   view: CalendarView
   onViewChange: (view: CalendarView) => void
-  onToday: () => void
+  onToday: (() => void) | undefined
   onAdd: () => void
 }) {
   const theme = useTheme()

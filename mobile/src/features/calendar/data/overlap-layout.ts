@@ -5,12 +5,9 @@
 // overlapping intervals share a column, then assigns each a fractional
 // horizontal span [startX, endX] over the cluster width.
 //
-// Pure: no React, no calendar-kit, no @/db, no t(). The day/week screen renders
-// through calendar-kit (which has its own internal layout), so this engine's
-// first RENDERING consumer is the agenda follow-up + the home today-grid; its
-// first TESTED consumer is this ship's suite. It is the de-risking insurance
-// behind the seam — if calendar-kit is ever dropped (ADR 019 revisit), this +
-// a Reanimated grid become the renderer behind the unchanged wrapper.
+// Pure: no React, no renderer, no @/db, no t(). The owned Calendar shell does
+// not consume overlap layout until its event-tile slice lands; today-grid is
+// the current rendering consumer.
 
 export interface Interval {
   startsAt: Date

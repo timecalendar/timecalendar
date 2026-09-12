@@ -54,11 +54,6 @@ module.exports = {
     // Register Reanimated's supported Jest matchers/runtime before suites render
     // feature-owned UI-thread styles.
     "<rootDir>/jest/setup-reanimated.ts",
-    // calendar-kit/setup mocks @howljs/calendar-kit (a Reanimated/worklet grid
-    // with no off-device runtime) so the calendar screen renders through the
-    // renderer adapter and its renderEvent→tile wiring is provable under Jest
-    // (Phase-04 — the Reanimated grid can't be CI/Maestro-driven).
-    "<rootDir>/jest/calendar-kit/setup.ts",
   ],
   // Per-test wall-clock budget (ADR 044, TIM-273). Jest's 5 000 ms default is
   // sized for trivial units; this harness mounts real React Native trees under
@@ -127,10 +122,6 @@ module.exports = {
     // ui excluded, the screens land in `global` — the same posture they had in
     // src/components, which also keeps the global pool (they're well-tested) ≥70.
     "src/features/*/!(ui|renderer)/**": { lines: 90, branches: 90 },
-    "src/features/*/renderer/**/{event-adapter,event-window}.ts": {
-      lines: 90,
-      branches: 90,
-    },
     "src/hooks/**": { lines: 90, branches: 90 },
     "src/storage/**": { lines: 90, branches: 90 },
     "src/db/**": { lines: 90, branches: 90 },

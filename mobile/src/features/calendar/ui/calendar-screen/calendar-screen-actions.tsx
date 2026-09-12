@@ -11,18 +11,20 @@ export function CalendarHeaderActions({
   onToday,
   onAdd,
 }: {
-  onToday: () => void
+  onToday: (() => void) | undefined
   onAdd: () => void
 }) {
   const { t } = useTranslation()
   return (
     <View style={styles.headerActions}>
-      <HeaderIconAction
-        testID="calendar-today"
-        symbol="calendar"
-        label={t("calendar.todayLabel")}
-        onPress={onToday}
-      />
+      {onToday !== undefined && (
+        <HeaderIconAction
+          testID="calendar-today"
+          symbol="calendar"
+          label={t("calendar.todayLabel")}
+          onPress={onToday}
+        />
+      )}
       {Platform.OS !== "android" && (
         <HeaderIconAction
           testID="calendar-add"

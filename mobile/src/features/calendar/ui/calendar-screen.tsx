@@ -2,20 +2,19 @@ import { router } from "expo-router"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { Platform, RefreshControl, StyleSheet, View } from "react-native"
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 import {
   eventRoute,
+  formatFullDay,
   formatMonthYear,
-  GRID_END_MINUTE,
-  GRID_START_MINUTE,
   resolveLocale,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
-import { CalendarTimeline } from "@/features/calendar/renderer"
+import { OwnedCalendarShell } from "@/features/calendar/renderer"
 import { useChecklistProgress } from "@/features/event-checklists"
 import { Spacing, useTheme } from "@/theme"
 
@@ -28,20 +27,15 @@ import { useCalendarScreenController } from "./calendar-screen/use-calendar-scre
 export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
-  const insets = useSafeAreaInsets()
-  const bottomInset = Platform.OS === "ios" ? insets.bottom : 0
   const locale = resolveLocale(i18n.language)
   const {
     view,
     setView,
-    anchorDate,
-    visibleDate,
+    selectedDate,
     displayZone,
     range,
-    timelineRef,
+    canGoToToday,
     goToToday,
-    onVisibleDateChange,
-    onSettledDateChange,
   } = useCalendarScreenController()
   const events = useCalendarEvents(range)
   const eventUids = useMemo(() => events.map((event) => event.id), [events])
@@ -76,10 +70,10 @@ export function CalendarScreen() {
   return (
     <ThemedView style={styles.container}>
       <CalendarScreenHeader
-        title={formatMonthYear(visibleDate, locale, displayZone)}
+        title={formatMonthYear(selectedDate, locale, displayZone)}
         view={view}
         onViewChange={setView}
-        onToday={goToToday}
+        onToday={canGoToToday ? goToToday : undefined}
         onAdd={onAdd}
       />
       <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
@@ -107,21 +101,8 @@ export function CalendarScreen() {
             </View>
           ) : (
             <>
-              {status}
-              <CalendarTimeline
-                ref={timelineRef}
-                mode={view}
-                anchorDate={anchorDate}
-                displayZone={displayZone}
-                events={events}
-                checklistProgress={checklistProgress}
-                startMinute={GRID_START_MINUTE}
-                endMinute={GRID_END_MINUTE}
-                showWeekends
-                bottomInset={bottomInset}
-                onVisibleDateChange={onVisibleDateChange}
-                onSettledDateChange={onSettledDateChange}
-                onPressEvent={(event) => onPressEvent(event.id)}
+              <OwnedCalendarShell
+                heading={formatFullDay(selectedDate, locale, displayZone)}
               />
             </>
           )}

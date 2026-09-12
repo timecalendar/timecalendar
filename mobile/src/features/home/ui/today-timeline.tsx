@@ -38,7 +38,7 @@ import { eventSurfaceColor } from "./event-surface"
 
 // The home today mini-timeline (D5) — PRESENTATIONAL (70% floor) and the FIRST
 // RENDERING consumer of the salvaged overlap engine (ADR 019's salvage payoff). A
-// plain absolute-positioned grid (NOT @howljs/calendar-kit): hour lines + a hours
+// plain feature-owned absolute-positioned grid: hour lines + a hours
 // column from `hourLabels`, event tiles placed by `layoutOverlaps` (horizontal
 // column packing) + `minuteToPixel`/`eventHeight` (vertical placement, the salvaged
 // math) at the Flutter-parity 70px/hour zoom. The hour window is the dynamic range

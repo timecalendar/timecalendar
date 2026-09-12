@@ -110,12 +110,6 @@ const chromeSeamImportPatterns = [
   },
 ]
 
-const calendarKitImportPattern = {
-  regex: "^@howljs/calendar-kit($|/)",
-  message:
-    "Use the @/features/calendar/renderer seam — @howljs/calendar-kit is imported only by renderer/calendar-kit/vendor.ts (ADR 033).",
-}
-
 // The Activity refresh seam is the SINGLE issuer of calendar-log requests
 // (TIM-397 / ADR 048): every trigger — calendar sync, push, screen open,
 // foreground — goes through @/features/activity/data so four triggers can never
@@ -126,7 +120,7 @@ const calendarKitImportPattern = {
 // data/ sublayer may import @/api/generated/**"), so it permits ANY feature's
 // data/ to reach the calendar-log client. The restriction wanted here is to ONE
 // feature's data/, which the `boundaries` plugin cannot express against a file
-// inside a single element — hence the seam-ban idiom, like calendar-kit above.
+// inside a single element — hence the seam-ban idiom used here.
 const activityClientImportPattern = {
   regex: "^@/api/generated/calendar-logs($|/)",
   message:
@@ -173,7 +167,6 @@ const restrictedImports = (
   {
     banStorageBackends = true,
     banChromeSeam = true,
-    banCalendarKit = true,
     banActivitySeam = true,
     banExportGuideSeam = true,
   } = {},
@@ -184,7 +177,6 @@ const restrictedImports = (
       ...restrictedImportPatterns,
       ...(banStorageBackends ? storageBackendImportPatterns : []),
       ...(banChromeSeam ? chromeSeamImportPatterns : []),
-      ...(banCalendarKit ? [calendarKitImportPattern] : []),
       ...(banActivitySeam ? [activityClientImportPattern] : []),
       ...(banExportGuideSeam ? [exportGuideClientImportPattern] : []),
       ...extraPatterns,
@@ -297,18 +289,6 @@ module.exports = defineConfig([
     },
   },
   {
-    // calendar-kit is a feature renderer, not shared app chrome. Only this exact
-    // vendor module may import the package; the rest of the feature consumes the
-    // renderer-neutral facade or the adapter's local exports.
-    name: "timecalendar/calendar-kit-vendor-seam",
-    files: ["src/features/calendar/renderer/calendar-kit/vendor.ts"],
-    rules: {
-      "no-restricted-imports": restrictedImports([], {
-        banCalendarKit: false,
-      }),
-    },
-  },
-  {
     // The Activity data sublayer IS the seam — the single issuer of calendar-log
     // requests (TIM-397 / ADR 048), so it is the one place that may import the
     // generated client the ban keeps out of every other module.
@@ -341,7 +321,7 @@ module.exports = defineConfig([
     // matches these files and does not ignore them) is otherwise the last block
     // to set this rule here. A block listing only the Activity pattern would
     // silently switch off every base seam ban — storage backends, chrome,
-    // calendar-kit, the generated calendar-log client, @/db's Activity tables —
+    // the generated calendar-log client and @/db's Activity tables —
     // for the whole calendar-sources feature, with `npm run lint` still green.
     // The route-entrypoint pattern is re-included for the same reason.
     //

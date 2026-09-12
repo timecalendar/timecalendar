@@ -1,7 +1,7 @@
 // Pure time-grid math — salvaged and OWNED regardless of the renderer (ADR 019;
 // D4). The Flutter-parity grid constants + the minute→pixel / event-height /
-// hour-label / now-indicator math the agenda follow-up, the home today-grid, and
-// the fallback renderer consume. Pure: no React, no calendar-kit.
+// hour-label / now-indicator math the agenda follow-up, home today-grid, and
+// later owned renderer slices consume. Pure: no React or renderer imports.
 
 import { minuteOfDayInZone } from "./day-key"
 
