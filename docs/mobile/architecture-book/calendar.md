@@ -2,41 +2,48 @@
 
 ## Rendering
 
-The T01 day/week surface is a feature-owned React Native shell under
+The T02 week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
-selected date as a localized semantic heading above a stable themed canvas. The shell is
-private to the Calendar feature and exposes no imperative ref, navigation callback,
-event collection, gesture, scrolling, or compatibility API.
+committed launch week as a localized semantic heading above a stable themed canvas. The
+shell keeps exactly the previous, current, and next empty pages mounted. A horizontal
+gesture or labelled previous/next action requests one whole week; transient translation
+stays on the UI thread, while one revisioned settle path commits the date, headings,
+Agenda range, page generation, and accessibility announcement together.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
-timed tiles, the 7:00–21:00 grid, current-time presentation, paging, vertical scrolling,
-hour labels, weekday columns, weekend filtering, day/week switching, gestures, and zoom
-are absent until their numbered owned-renderer slices land. The blank shell never claims
+timed tiles, the 7:00–21:00 grid, current-time presentation, vertical scrolling, hour
+labels, weekday columns, weekend filtering, day/week switching, pinch, and zoom are
+absent until their numbered owned-renderer slices land. Paging remains bounded to one
+adjacent empty week; there is no far-date pager. The blank shell never claims
 that stored event data is empty: Agenda remains the route for reading and opening stored
 events during this cut.
 
 The app owns pure calendar primitives for grouping, time-grid math, overlap layout,
 day keys, and formatting. Home and Agenda use the applicable primitives without
-depending on the timeline renderer. The T01 shell consumes only the selected-date
-heading; retained time-grid and overlap primitives do not imply that the shell renders a
-grid or events.
+depending on the timeline renderer. The shell consumes a committed week anchor and
+display zone for its three page identities; retained time-grid and overlap primitives do
+not imply that the shell renders a grid or events.
 
 Every displayed timed-event value and day boundary is computed in the effective display
 zone ([ADR 035](./decisions/035-display-timezone-preference.md)). Consumers obtain the
 zone from `useDisplayZone()` and pass it explicitly to formatters, day-key and bucketing
 helpers, and time-grid math; helpers never read the zone implicitly. `CalendarScreen`
-uses the same explicit zone for its selected-date heading and Agenda range. The T01 shell
-has no event window, now indicator, or renderer timezone prop. Deriving a displayed time
-or day from device-local `Date` fields or `toLocaleString` is a defect. All-day events are
+uses the same explicit zone for its selected-date heading and Agenda range. Launch weeks
+start on Monday through an explicit first-weekday input, and whole-week shifts compose
+civil day-key helpers rather than fixed-duration milliseconds. The shell has no event
+window or now indicator. Deriving a displayed time or day from device-local `Date` fields
+or `toLocaleString` is a defect. All-day events are
 the exception: they stay on the floating UTC-day-key path and never shift with the
 preference.
 
-`CalendarScreen` owns one selected date and resolves its localized heading in the
-effective display zone. A valid one-shot `focusDate` and the retained Today action update
-that date without implying canvas motion. Agenda reads the unchanged bounded seven-day
-event range and keeps checklist progress, refresh/retry, synced and personal event
-activation, and unified event-details navigation. The view selector offers only Week and
-Agenda until distinct day/week behavior exists.
+`CalendarScreen` owns one committed week anchor and resolves its localized heading in the
+effective display zone. A valid one-shot `focusDate` and the retained Today action
+normalize to the containing launch week and replace pending motion. Swipe and button
+requests carry monotonic revisions; duplicate, cancelled, and stale completions cannot
+relabel the settled screen. Agenda reads the unchanged bounded seven-day event range and
+keeps checklist progress, refresh/retry, synced and personal event activation, and unified
+event-details navigation. The view selector offers only Week and Agenda until distinct
+day/week behavior exists.
 
 ## Event source
 
@@ -116,8 +123,10 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers the T01 owned Week shell and Agenda, with platform-specific native chrome.
-  Day/week switching and visible weekday columns belong to later renderer slices.
+- Calendar offers the T02 owned Week shell and Agenda, with platform-specific native chrome.
+  Week paging has one three-page working set, reduced-motion settlement, hidden neighbour
+  semantics, and accessible previous/next alternatives. Day/week switching and visible
+  weekday columns belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.
@@ -137,8 +146,9 @@ separate. The binding contract and regression scenarios live in the
 
 ## Verification
 
-Unit/component tests cover the owned shell heading/canvas, Calendar remount and selection,
-Agenda grouping/routing, filtering, sync orchestration, failure states, and the repository
-cutover contract. Native mount/return, assistive technology, platform chrome, and physical
-device presentation remain recorded owner checks; later scrolling, dense-calendar, and
-all-day-lane behavior is not claimed by T01.
+Unit/component tests cover display-zone week arithmetic, revision/cancellation semantics,
+three-page gesture and control behavior, atomic settled screen context, Calendar remount
+and selection, Agenda grouping/routing, filtering, sync orchestration, failure states, and
+the repository cutover contract. Native held-drag feel, fling continuity, assistive
+technology, platform chrome, and physical-device presentation remain recorded owner
+checks; later scrolling, dense-calendar, and all-day-lane behavior is not claimed by T02.
