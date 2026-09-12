@@ -1,7 +1,7 @@
 ---
 kind: product
-status: draft
-decision: pending
+status: approved
+decision: go
 ---
 
 # Product shaping: owned calendar renderer
@@ -126,9 +126,11 @@ commitment. Correctness, privacy, and complete accessibility outrank latency and
 outrank visual richness. The work may break the unshipped Calendar during coordinated development,
 but it may not knowingly trade away the launch contract or accumulate compatibility baggage.
 
-Product approval authorizes technical design, not implementation. Major dependency, rendering,
-responsibility-boundary, or migration choices require measured alternatives and explicit approval
-in project-local decision records.
+Product approval establishes behavior; architecture and delivery authorization are recorded
+separately in D01–D08 and delivery.md. The owner approved those decisions on 2026-09-12 and moved
+D04–D06 measurement into small implementation slices. Major changes to those approved boundaries
+require evidence and an explicit project-local decision; passing slices do not require a separate
+competing prototype. Final correctness, accessibility and performance obligations remain binding.
 
 ## In scope
 
@@ -152,12 +154,12 @@ complete exclusion contract.
 
 ## Assumptions and unknowns
 
-- The owner-answer record accurately captures the intended contract; approval of this consolidated
-  document is still pending.
+- The product owner approved this consolidated contract on 2026-09-12; the named research
+  gates remain unresolved acceptance obligations.
 - Twenty-nine `NEEDS_RESEARCH` rows cover user/workload evidence, failure reproduction, device
   floor, zoom/density/contrast, resource budgets/tooling, and repository migration work.
-- Six `UNANSWERED` rows are deliberately architecture-stage questions: `PF-021`, `B-006`,
-  `B-010`, `B-011`, `B-012`, and `B-014`.
+- Six historical `UNANSWERED` architecture rows now map to approved D02–D05/D08 records:
+  `PF-021`, `B-006`, `B-010`, `B-011`, `B-012`, and `B-014`. Their evidence is collected during implementation.
 - Several acceptance values can only be measured after an owned renderer and release build exist.
 - The React Native app remains unshipped and the wider launch plan can accommodate a coordinated
   breaking Calendar migration.
@@ -188,21 +190,24 @@ Revise and re-approve rather than silently weakening `P01`–`P08` if evidence i
 
 ## Recommendation
 
-`go`, conditional on explicit approval of this exact product contract. Then complete bounded
-pre-architecture research, compare technical options, and request approval of the target design
-and every implementation-constraining decision before creating delivery epics.
+`go`, approved by the product owner on 2026-09-12. D01–D08 are also approved. Implement the
+ordered small slices in roadmap.md, collect their evidence and stop for owner QA/acceptance and
+merge before the next slice. Preserve the full launch contract throughout acceptance planning.
 
 ## Approval
 
-Pending. The owner approved many row-level answers during Rounds 1–4 but has not approved this
-consolidated contract as the product authority. Valid next decisions are `approve`, `revise`,
-`pause`, or `kill`.
+Approved by the product owner on 2026-09-12 in the project continuation conversation:
+“I approve the product specs. Continue with the next step $lyro-tools:project-planning”.
+This approval covers the consolidated product contract, P01–P08 and sections 1–17, including
+its named research gates. The subsequent owner message separately approved all decisions,
+explicitly including D04–D06 with implementation-time evidence, and required small sequential
+QA/feedback/acceptance/merge cycles. See delivery.md and each decision’s approval record.
 
 ---
 
 ## Detailed functional contract
 
-**Draft date:** 2026-09-12
+**Approval date:** 2026-09-12
 **Scope:** TimeCalendar React Native Calendar screen, owned day/week timeline, and agenda
 integration on iOS and Android
 
@@ -219,10 +224,9 @@ The row-level source for every decision is the
 [Round 4 answer record](./research/round-4-owner-answers-and-readiness.md) preserve the reasoning and
 corrections behind those decisions.
 
-Until the product owner approves this document, it is a draft and does not authorize architecture
-or implementation. After approval, this document becomes the product-behavior authority. Named
-research gates remain binding unknowns rather than permission to invent values or weaken the
-contract.
+This approved document is the product-behavior authority. D01–D08 and delivery.md record the
+separate architecture approval and incremental implementation policy. Named research gates remain
+binding unknowns rather than permission to invent values or weaken the final contract.
 
 Normative terms such as **must**, **must not**, and **may** describe the intended first-delivery
 contract.
@@ -791,8 +795,8 @@ and evidence posture rather than reopening it as product scope:
   accessibility evidence, performance evidence, and repository quality.
 
 Launch also requires zero TypeScript errors, lint warnings, formatting drift, React Doctor
-findings, architecture-boundary violations, and unreviewed suppressions. No `TODO`, `FIXME`,
-`HACK`, compatibility shim, temporary dual renderer, unexplained magic timeout, disabled check,
+findings, architecture-boundary violations, and unreviewed suppressions. No unfinished-work, fix-needed or hack markers, compatibility shim, temporary dual renderer,
+unexplained magic timeout, disabled check,
 knowingly flaky test, or accepted P0/P1 correctness, accessibility, privacy, or performance defect
 may remain. No lower-severity defect is pre-approved; any known residual requires explicit
 case-by-case owner approval after its impact and risk are documented. Costly-to-reverse technology
@@ -804,17 +808,17 @@ budgets belong in later acceptance research and the approved technical design.
 Sources: `P-008`, `P-009`, `A-024`, `PF-004`, `PF-005`, `Q-001`, `Q-002`, `Q-005`–`Q-015`,
 `Q-020`, `M-004`, `M-013`, `M-014`.
 
-### 16.3 Deliberately unresolved architecture decisions
+### 16.3 Separately approved architecture decisions
 
-The following questionnaire rows remain outside this functional specification and must be decided
-only after measured architecture options exist:
+The following questionnaire rows are resolved architecturally by approved project-local records.
+Their implementation measurements remain required under the owner-approved incremental policy:
 
-- `PF-021`: visible work and bounded prefetch/overscan;
-- `B-006`: whether and how an imperative renderer API exists;
-- `B-010`: final Hermes/New Architecture constraint;
-- `B-011`: the role of Reanimated, Gesture Handler, or alternatives;
-- `B-012`: evidence required for a native or rendering dependency; and
-- `B-014`: dependency ownership, maintenance, licensing, release, and security criteria.
+- `PF-021`: visible work and bounded prefetch/overscan, D05;
+- `B-006`: whether and how an imperative renderer API exists, D02;
+- `B-010`: final Hermes/New Architecture constraint, D03;
+- `B-011`: the role of Reanimated, Gesture Handler, or alternatives, D04;
+- `B-012`: evidence required for a native or rendering dependency, D08; and
+- `B-014`: dependency ownership, maintenance, licensing, release, and security criteria, D08.
 
 No architecture option may weaken the functional contract to make its implementation easier.
 
@@ -831,4 +835,4 @@ Approval of this document authorizes the product contract, not a renderer archit
 implementation. Architecture options, the non-functional requirements, and the acceptance plan
 remain separate reviewed artifacts.
 
-**Product-owner decision:** Pending.
+**Product-owner decision:** Approved, `go`, 2026-09-12; see the Approval record above.

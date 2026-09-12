@@ -1,8 +1,8 @@
 ---
 kind: project
 id: owned-calendar-renderer
-status: shaping
-decision: pending
+status: implementable
+decision: go
 ---
 
 # Owned calendar renderer
@@ -18,18 +18,21 @@ synchronization, agenda, and event-details navigation outside the timeline bound
 
 As of 2026-09-12:
 
-- Product: `draft`; four owner-answer rounds and a follow-up clarification are incorporated, but
-  the consolidated contract has not received explicit product-owner approval.
-- Technical design: `not-started`; starting it is gated on product approval.
-- Project-local architecture decisions: `not-started`; six measured architecture questions are
-  already identified.
-- Roadmap and tickets: `not-started`; creating implementation epics before the product and
-  architecture gates would imply unapproved scope.
-- Readiness: `not-implementable`.
+- Product: `approved`, `go`; P01–P08 and the detailed launch contract remain binding.
+- Design and architecture: `approved`; the owner approved D01–D08, explicitly including D04–D06
+  with evidence collected during implementation.
+- Delivery policy: approved small vertical slices, one at a time. Agent implements/checks, owner
+  tests/gives feedback, fixes are verified, owner accepts, the slice merges, then the next starts.
+- Roadmap: seven outcome groups and 29 planned tickets, each with a concrete owner QA checklist.
+- Readiness: `implementable` planning package. No ticket is implemented, tested, accepted or merged;
+  no native feasibility, performance or launch acceptance result is claimed.
 
-The immediate gate is an explicit `approve`, `revise`, `pause`, or `kill` decision on
-[product.md](./product.md). Approval authorizes technical investigation and design, not renderer
-implementation.
+Start with [T01 — Open the owned Calendar shell](./epics/E01-move-through-an-empty-week/T01-owned-calendar-shell.md),
+then [T02 — Horizontal paging](./epics/E01-move-through-an-empty-week/T02-horizontal-week-paging.md),
+[T03 — Vertical hours](./epics/E01-move-through-an-empty-week/T03-vertical-hours-scroll.md), and
+[T04 — Weekday columns](./epics/E01-move-through-an-empty-week/T04-weekday-columns.md).
+The [roadmap](./roadmap.md) defines the full execution order; [delivery.md](./delivery.md) defines
+exactly when to stop for the owner. An epic is a grouping, never a batch to finish before QA.
 
 ## Position in the React Native migration
 
@@ -46,36 +49,69 @@ release infrastructure while parity, signed upgrade proof, hardening, and store 
 
 ## Planning map
 
-- [Product contract](./product.md) — active draft and current approval gate.
-- [Technical design](./design.md) — records constraints and open design work without choosing an
-  architecture prematurely.
-- [Roadmap](./roadmap.md) — records the gate sequence; implementation epics and tickets are
-  intentionally absent until approvals exist.
-- [Decision index](./decisions/README.md) — architecture decisions that must be created and
-  approved during technical design.
-- [Epic index](./epics/README.md) — why no implementation decomposition exists yet.
-- [Discovery evidence](./research/README.md) — the preserved questionnaire, evidence inventory,
-  owner-answer rounds, and historical discovery status.
+- [Product contract](./product.md): approved product authority, P01–P08 and detailed behavior.
+- [Technical design](./design.md): approved architecture and incremental migration path.
+- [Decision index](./decisions/README.md): eight approved choices, alternatives and approval evidence.
+- [System audit](./research/technical-system-audit.md): source evidence and scoped migration inventory.
+- [Acceptance research](./research/technical-acceptance-plan.md): comparative evidence gates and all
+  29 discovery research rows, with remaining measurement and human-review obligations.
+- [Roadmap](./roadmap.md) and [epic index](./epics/README.md): ordered small slices.
+- [Delivery protocol](./delivery.md): owner QA, feedback, acceptance, merge and evidence records.
+- [Discovery evidence](./research/README.md): preserved owner inputs and historical records.
 
 ## Approval log
 
-- 2026-08-27 through 2026-09-07 — the product owner answered four discovery rounds. Those answers
-  establish row-level input to the draft contract; they do not approve the consolidated
-  `product.md`.
-- 2026-09-12 — the owner clarified that Monday is the launch week-start policy rather than a
-  permanent renderer invariant, then accepted the distinction between date-only all-day events and
-  instant-bounded timed events. The product remains pending consolidated approval.
-- No product approval or project-local architecture approval is recorded yet.
+- 2026-08-27 through 2026-09-07: four discovery answer rounds supplied product input.
+- 2026-09-12: owner clarified Monday as launch policy and date-only versus timed semantics.
+- 2026-09-12: product owner stated “I approve the product specs. Continue with the next step
+  $lyro-tools:project-planning” in the continuation conversation for this project. Product is
+  approved; this authorizes technical investigation and design.
+- 2026-09-12: owner stated “I hereby approve all decisions” and explicitly approved D04–D06
+  with testing during implementation. The same message requested small vertical slices with
+  per-ticket checklists, owner feedback/acceptance and merge before the next brick. D01–D08, the
+  corresponding target design and this delivery policy are approved; individual implementation
+  tickets remain planned until their real QA/merge evidence exists.
 
 ## Residual risks and caveats
 
-- Twenty-nine evidence rows still require bounded research. Several need an implemented release
-  renderer, physical devices, privacy-safe production aggregation, or opt-in user evidence.
-- Six unanswered rows are architecture questions, not additional product questions.
-- The exact current calendar-kit failure reproduction and the proposed Galaxy A16 5G performance
-  floor still need physical-device evidence.
-- The old global migration roadmap still describes the 2026-06 calendar-kit adoption as Phase 04
-  completion. Its status is historical for the day/week renderer and must not be mistaken for
-  approval of this replacement.
-- No renderer implementation, technology choice, compatibility layer, feature flag, dependency
-  removal, native configuration change, or release action is authorized by this package.
+- T01 intentionally makes day/week a minimal owned shell while preserving stored data and existing
+  agenda/details. Capabilities return one accepted brick at a time. The app must stay buildable;
+  the incomplete timeline cannot ship. This follows the approved pre-launch breaking replacement
+  and avoids a vendor/owned dual path.
+- D04–D06 are approved starting choices, not measured guarantees. Each relevant ticket owns its
+  immediate evidence; T26–T28 retain final performance/resource/human-device gates. Failures stop
+  the affected slice, and a changed architecture/product premise requires a recorded decision.
+- Low-confidence tickets are T12 (native off-viewport semantic reachability), T14 (DST visual
+  geometry), and T24 (representative workload data/access). Each names a bounded first experiment
+  or concrete external evidence requirement; none is hidden in a final quality sweep.
+- Production aggregate access was historically blocked. Tablet identities, physical-device access,
+  human accessibility testers and the owner-approved visual reference still need confirmation at
+  the owning tickets. The agent prepares engineering evidence; the owner is not asked to invent
+  algorithms, workload percentiles or numerical budgets.
+- All 29 research rows map to execution tickets in the acceptance plan. Original discovery labels
+  remain historical; no measurement is marked complete merely because architecture is approved.
+- A ticket accepted on an agreed narrow fixture/device does not establish the full final product
+  matrix. Explicit intermediate deferrals have a destination ticket and must close before launch.
+- Ticket sites match local `main` and local `origin/main` at
+  `ca09257e1daa5d4794a80bbcf776c17be7ccaf90`; no remote fetch was performed. Revalidate actual default
+  branch state before execution. The unrelated workspace ICS file is not inspected or used.
+
+## Adversarial readiness review
+
+The plan would fail if the initial shell grew into a complete renderer before first review, if an
+agent continued while owner feedback was pending, or if accessibility/DST work were postponed to
+final polish. T01’s exclusions, delivery.md’s explicit stop/merge gate, and early T12/T14 demos
+address those failure modes. A large discovered fix must be split before expanding implementation.
+
+A small page count alone cannot guarantee dense-event memory or accessible reachability. T09/T11
+and T12 measure the separate data/visual/semantic costs; T27 measures long-session recovery.
+Unavailable workload data cannot be replaced by invented percentiles: T24 names the operator or
+explicit synthetic-assumption review required to proceed. These uncertainties affect downstream
+acceptance, not the ability to implement and test the first small shell.
+
+## Document validation
+
+On 2026-09-12 the ready validator passed with zero errors/warnings. Active-document links, all
+29 ticket-specific QA checklists, all 29 research-to-ticket mappings and formatting also passed.
+Planning readiness means the next ticket is defined; it does not certify native behavior, imply owner QA happened,
+authorize automatic merges, or complete the broader React Native release process.

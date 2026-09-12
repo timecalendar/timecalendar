@@ -1,8 +1,13 @@
 # Discovery and research evidence
 
-This directory preserves the evidence that shaped the owned-renderer product draft. These files are
-inputs and history; [product.md](../product.md) is the canonical consolidated contract once the
-owner approves it.
+This directory preserves discovery history and technical evidence. [product.md](../product.md)
+is the approved consolidated contract as of 2026-09-12; historical discovery approval states remain
+historical. D01–D08 are separately approved with implementation-time evidence and a small-ticket QA loop.
+
+- [Technical system audit](./technical-system-audit.md): current flows, utility/workaround inventory,
+  compatibility sources and scoped documentation reconciliation.
+- [Technical acceptance research plan](./technical-acceptance-plan.md): incremental architecture
+  evidence, release measurement protocol and complete remaining research disposition.
 
 - [Discovery scope and evidence](./discovery-scope-and-evidence.md) separates owner decisions,
   repository observations, research, conflicts, and remaining gaps.
