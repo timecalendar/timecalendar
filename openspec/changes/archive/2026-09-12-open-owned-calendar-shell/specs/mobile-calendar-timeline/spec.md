@@ -100,7 +100,7 @@ Every user-facing string added or retained on the T01 Calendar shell SHALL be tr
 - **THEN** every enabled action has a translated label and supported result
 - **AND** absent future timeline behavior is not exposed as an actionable element
 
-### Requirement: Wiring proven in CI and shell stability checked on-device
+### Requirement: Wiring proven in CI grid and performance on-device
 
 The change MUST prove owned shell rendering, localized heading semantics, Calendar remount, shell/Agenda switching, retained agenda event activation, and removal of the vendor/configuration footprint with focused Jest and repository checks. It MUST preserve the three established Maestro journeys and their shared agenda helper. Native mount/return and agenda/details checks SHALL be recorded through the ticket's testable build and owner checklist rather than claimed from this host.
 
@@ -126,7 +126,7 @@ The change MUST prove owned shell rendering, localized heading semantics, Calend
 - **THEN** it records automated results and preserves the Maestro journeys without claiming native execution
 - **AND** the testable build identifies the revision and device checklist still awaiting owner verification
 
-### Requirement: Day and week retain full-bleed renderer ownership
+### Requirement: Calendar day and week retain full-bleed renderer ownership
 
 The T01 owned shell SHALL receive the complete positive width and height of the existing Calendar content owner without an Agenda responsive cap. Agenda SHALL retain its measured standard lane. Existing platform-owned header structure and the working Add action SHALL remain outside the renderer, while controls for capabilities absent at this milestone SHALL not remain enabled.
 

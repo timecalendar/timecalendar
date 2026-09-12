@@ -1,55 +1,20 @@
 # mobile-calendar-timeline Specification
 
 ## Purpose
+
 TBD - created by archiving change add-mobile-calendar-timeline. Update Purpose after archive.
+
 ## Requirements
-### Requirement: Calendar-kit dependency, pure-JS, no native footprint
-
-The mobile app SHALL add `@howljs/calendar-kit` (Expo SDK 56-aligned) as the day/week timeline
-renderer. It is pure-JS: it SHALL NOT add native code, an `app.config.ts` config plugin, or bump the
-EAS runtime fingerprint.
-
-#### Scenario: calendar-kit is declared and pure-JS
-
-- **WHEN** `mobile/package.json` is inspected
-- **THEN** it declares `@howljs/calendar-kit` at the SDK-56-aligned version and the lockfile is consistent
-- **AND** no new `app.config.ts` `plugins` entry is added for it
-- **AND** the change adds no native module that would change the EAS fingerprint (it rides the OTA lane)
 
 ### Requirement: GestureHandlerRootView mounted at the app root
 
-The app root layout SHALL mount a `GestureHandlerRootView` (from the already-present
-`react-native-gesture-handler`) as the outermost wrapper, because calendar-kit requires it.
+The app root layout SHALL retain `GestureHandlerRootView` from the already-present `react-native-gesture-handler` package as the outermost wrapper for the Expo 56 runtime and existing/future owned gesture consumers. The wrapper SHALL NOT be documented or tested as a calendar-kit requirement.
 
-#### Scenario: Root layout wraps the tree in GestureHandlerRootView
+#### Scenario: Root layout retains the gesture owner
 
 - **WHEN** `src/app/_layout.tsx` is inspected
-- **THEN** a `GestureHandlerRootView` with `style={{ flex: 1 }}` wraps the provider/Stack tree
-- **AND** the app launches and the existing test suite stays green
-
-### Requirement: Calendar-kit is reached only through a chrome-wrapper seam
-
-`@howljs/calendar-kit` SHALL be imported only inside the chrome wrapper
-`src/components/chrome/calendar-kit.tsx`; feature/screen/route code SHALL consume the calendar surface
-through `@/components/chrome`, never the library directly. The boundary SHALL be lint-enforced.
-
-#### Scenario: Single import site
-
-- **WHEN** the codebase is searched for `@howljs/calendar-kit` imports
-- **THEN** the only import site is `src/components/chrome/calendar-kit.tsx`
-- **AND** the chrome barrel re-exports the calendar surface the screen needs under a stable local API
-
-#### Scenario: Lint bans the library outside the chrome seam
-
-- **WHEN** `mobile/eslint.config.js` is inspected
-- **THEN** `no-restricted-imports` bans `@howljs/calendar-kit` everywhere except `src/components/chrome/**`
-- **AND** the ban is re-set off for the chrome seam dir (mirroring the `@expo/ui` ban)
-- **AND** an import of the library from outside the chrome dir fails lint with a message naming the seam
-
-#### Scenario: Swap reversibility is localized
-
-- **WHEN** a future fork or custom renderer replaces calendar-kit (ADR 019 revisit)
-- **THEN** the swap is localized to `src/components/chrome/calendar-kit.tsx`, leaving the wrapper API and every consumer unchanged
+- **THEN** a `GestureHandlerRootView` with a flex-filling style wraps the provider/Stack tree
+- **AND** no comment or test claims that calendar-kit owns the wrapper
 
 ### Requirement: Salvaged overlap-layout engine, pure and 90%-gated
 
@@ -142,76 +107,75 @@ only the source.
 
 ### Requirement: Day/week timeline screen as a brand surface
 
-The feature `ui/` sublayer SHALL provide a read-only timeline screen rendering day and week views through
-the chrome seam, as a designed brand surface themed from `@/theme` tokens (R-3 — the platform/brand is
-the reference, not the Flutter pixels). It SHALL render the 7:00–21:00 grid, the now-indicator (brand
-`primary`), overlapping events via `renderEvent`, and a day/week view switch. A thin route under
-`src/app/` SHALL re-export it through the `ui/` sub-barrel and register it as a `Stack` sibling of the
-tabs.
+At the T01 milestone, the feature `renderer/` sublayer SHALL provide a read-only owned shell on the real Calendar route as a designed brand surface themed from `@/theme` tokens. It SHALL render a localized date heading and full-bleed empty canvas without importing a vendor renderer. Timeline events, the 7:00–21:00 grid, current-time indicator, day/week switching, paging, vertical scrolling, hour labels, weekday columns, weekend filtering, gestures, and zoom SHALL remain absent until their numbered slices land.
 
-#### Scenario: Day and week views render
-
-- **WHEN** the screen renders
-- **THEN** it shows the timeline through the chrome seam with the 7:00–21:00 grid and the now-indicator
-- **AND** a day/week view switch toggles between a single day and the multi-day week (default 5 days)
-
-#### Scenario: Events render as themed tiles
-
-- **WHEN** events are present in the visible range
-- **THEN** each renders via `renderEvent` as a tile showing its title (and location when present), tinted by its `#RRGGBB` color, with overlaps packed into columns
-
-#### Scenario: Theme comes from tokens
-
-- **WHEN** the calendar `theme` is built
-- **THEN** grid lines, hour labels, header, and the now-indicator derive from `@/theme` tokens (the now-indicator from the brand `primary`)
-
-#### Scenario: Reachable via a thin route
+#### Scenario: Owned shell renders on the real route
 
 - **WHEN** `timecalendar-dev://calendar` is opened
-- **THEN** the timeline screen renders (the route is a thin re-export of the `ui/` screen, registered as a `Stack` sibling of `(tabs)`)
+- **THEN** the feature-owned heading and canvas render through the existing thin Calendar route
+- **AND** no calendar-kit, fallback, compatibility, or duplicate renderer mounts
 
-#### Scenario: Read-only, no write path
+#### Scenario: Brand surface uses owned tokens
 
-- **WHEN** the screen is used
-- **THEN** it only reads and renders events (no create/edit/delete on this surface)
+- **WHEN** the shell renders in a supported theme
+- **THEN** its surface, border, and text presentation derive from `@/theme` and shared semantic text primitives
+
+#### Scenario: Timeline capabilities are intentionally absent
+
+- **WHEN** the T01 shell is inspected or exercised
+- **THEN** it contains no event tiles, grid, current-time indicator, paging, scroll viewport, weekday columns, weekend filtering, day/week switch, gesture, or zoom behavior
+
+#### Scenario: Read-only shell has no event write path
+
+- **WHEN** the shell is used
+- **THEN** it neither mutates nor rewrites synced or personal event facts
 
 ### Requirement: Internationalization and accessibility
 
-Every user-facing string on the timeline screen SHALL be translated (FR + EN, no hardcoded strings), and
-interactive controls, event tiles, and status SHALL be accessible.
+Every user-facing string added or retained on the T01 Calendar shell SHALL be translated in French and English with typed key parity. The visible date SHALL be locale- and display-zone-aware and exposed with heading semantics. Retained interactive controls SHALL expose translated labels, valid roles/states, and platform minimum targets; the shell SHALL not add inaccessible placeholder controls.
 
-#### Scenario: FR/EN parity
+#### Scenario: French and English date headings
 
-- **WHEN** the i18n catalogs are typechecked
-- **THEN** every new key (view labels, day/week switch, empty state, accessibility labels) exists in both `en.json` and `fr.json` (bidirectional `tsc` parity)
-- **AND** no user-facing string is hardcoded
+- **WHEN** the shell renders for the same selected date in French and English
+- **THEN** its heading uses the corresponding locale and effective display zone
+- **AND** neither catalog exposes a raw translation key
 
-#### Scenario: Accessible controls and tiles
+#### Scenario: Date heading is accessible
 
-- **WHEN** the screen renders
-- **THEN** the title carries a heading role, the view-switch controls declare a role + translated label + ≥44pt/48dp target, each event tile is an accessible element with a translated label (title + time + location), and the empty-range state uses a polite live region
+- **WHEN** assistive technology traverses the shell
+- **THEN** it discovers the visible localized date as a heading
+
+#### Scenario: Controls describe only supported actions
+
+- **WHEN** assistive technology traverses the Calendar chrome
+- **THEN** every enabled action has a translated label and supported result
+- **AND** absent future timeline behavior is not exposed as an actionable element
 
 ### Requirement: Wiring proven in CI grid and performance on-device
 
-The change MUST prove the screen's event→tile wiring, the `CalendarEvent`→`EventItem` mapping, the
-theme/label plumbing, the salvaged primitives, and the events-source seam by Jest (the calendar-kit grid
-mocked suite-wide), and MUST record the dense-overlap visual correctness, the low-end-Android frame rate,
-and the brand visual review as manual on-device verification (CI cannot drive the Reanimated grid).
+The change MUST prove owned shell rendering, localized heading semantics, Calendar remount, shell/Agenda switching, retained agenda event activation, and removal of the vendor/configuration footprint with focused Jest and repository checks. It MUST preserve the three established Maestro journeys and their shared agenda helper. Native mount/return and agenda/details checks SHALL be recorded through the ticket's testable build and owner checklist rather than claimed from this host.
 
-#### Scenario: Screen wiring is proven without the real grid
+#### Scenario: Owned shell is proven without a vendor mock
 
-- **WHEN** the screen test runs with the calendar-kit seam mocked (the mocked body invokes `renderEvent` per event)
-- **THEN** a fixture event's tile renders with its translated label, the day/week switch is exercised, and localized text (not keys) is asserted
+- **WHEN** the focused renderer and Calendar screen suites run
+- **THEN** they render the owned canvas and query the localized date by heading role
+- **AND** they require no calendar-kit Jest setup or fallback renderer
 
-#### Scenario: Maestro asserts a fixture event renders
+#### Scenario: Retained Agenda and details wiring is proven
 
-- **WHEN** the Maestro flow deep-links to the calendar
-- **THEN** the timeline screen renders and a committed fixture event's title is visible (reachable with no seeded backend, since sync is not built)
+- **WHEN** the Calendar screen suite switches from the shell to Agenda and activates a fabricated event
+- **THEN** Agenda renders and the existing unified event-details route receives that event identity
 
-#### Scenario: Perf and visual review are recorded as manual
+#### Scenario: Vendor footprint is absent
 
-- **WHEN** the change is reviewed for the performance and native-correctness DoD axes
-- **THEN** the low-end-Android frame-rate + Reassure baseline pass and the brand visual review are captured in inbox notes (CI cannot assert them)
+- **WHEN** dependency, source, patch, Jest, coverage, and lint configuration checks run
+- **THEN** no calendar-kit package, lock entry, import, adapter, vendor file, patch, exclusive mock, renderer-only coverage key, or import exception remains
+
+#### Scenario: Native evidence is not fabricated
+
+- **WHEN** local verification completes on the non-virtualized development host
+- **THEN** it records automated results and preserves the Maestro journeys without claiming native execution
+- **AND** the testable build identifies the revision and device checklist still awaiting owner verification
 
 ### Requirement: Observability is N/A for this read-only surface
 
@@ -224,47 +188,65 @@ anywhere it adds.
 - **WHEN** the change is reviewed for the Observability DoD axis
 - **THEN** it is marked N/A because the surface only reads and renders (a failed read is a recoverable UI state, not a recorded crash) — mirroring the school-selection read path
 
-### Requirement: Day and week tiles surface checklist progress without rebuilding renderer events
-
-The calendar day/week timeline SHALL show checklist progress on timed and all-day tiles for synced and personal events. It SHALL obtain progress through one UID-set projection outside individual tiles and pass the progress map through the renderer-neutral facade separately from `CalendarEvent[]`.
-
-Checklist progress changes SHALL update tile content without recreating the memoized CalendarKit vendor event collection or changing projected event identity. Zero-item events SHALL show no indicator. Nonzero events SHALL use the compact shared indicator, including an explicit non-color all-complete state and a localized progress phrase in the tile accessibility label.
-
-#### Scenario: Timed tiles render partial and complete progress in day and week modes
-
-- **WHEN** day or week mode renders timed synced and personal events with partial or complete checklists
-- **THEN** each tile shows the correct compact completed/total state and announces the localized progress phrase
-
-#### Scenario: All-day tiles render progress
-
-- **WHEN** an all-day event has checklist items
-- **THEN** its CalendarKit header tile shows the compact progress state without changing all-day date projection
-
-#### Scenario: Small and dense tiles retain meaningful progress
-
-- **WHEN** overlap packing or minimum tile geometry leaves insufficient room for normal title/location content
-- **THEN** the compact indicator remains bounded to the tile and preserves an icon/count signal rather than degrading to a color-only dot
-- **AND** the complete accessible label retains the full progress phrase
-
-#### Scenario: Progress-only rerender preserves event projection identity
-
-- **WHEN** only checklist counts change while `CalendarEvent[]` is referentially unchanged
-- **THEN** tile content updates from the sidecar progress map
-- **AND** the CalendarKit vendor event array and its projected event objects are not recreated
-
 ### Requirement: Calendar day and week retain full-bleed renderer ownership
-Calendar day and week modes SHALL continue to give the renderer-neutral timeline seam the complete positive width of the existing Calendar content owner. Responsive Agenda constraints SHALL NOT cap the timeline, enter the calendar-kit adapter, replace platform-owned header/actions/view-menu chrome, or reposition the Android add FAB away from the full-bleed Calendar bounds.
 
-#### Scenario: Day and week fill their owner on tablet
-- **WHEN** day or week mode is active at a portrait-tablet width
-- **THEN** the timeline receives the complete laid-out Calendar width without a responsive gutter or content cap
-- **AND** existing tile rendering, all-day lanes, gestures, date focus, and bottom-inset behavior are preserved
+The T01 owned shell SHALL receive the complete positive width and height of the existing Calendar content owner without an Agenda responsive cap. Agenda SHALL retain its measured standard lane. Existing platform-owned header structure and the working Add action SHALL remain outside the renderer, while controls for capabilities absent at this milestone SHALL not remain enabled.
 
-#### Scenario: Android FAB follows full-bleed bounds
-- **WHEN** Calendar renders its Android add FAB in day or week mode
-- **THEN** the FAB remains anchored to the full-bleed Calendar bounds with its existing edge offset and action
+#### Scenario: Owned canvas fills its owner
 
-#### Scenario: Native Calendar chrome remains platform-owned
-- **WHEN** responsive scheduling polish is applied
-- **THEN** the existing iOS and Android header, Today action, Add action, and view menu retain their platform-specific ownership, labels, and behavior
+- **WHEN** the shell renders at phone or portrait-tablet width
+- **THEN** its canvas fills the Calendar content owner without a responsive gutter or content cap
 
+#### Scenario: Agenda retains its measured lane
+
+- **WHEN** Agenda is selected
+- **THEN** its headers, states, and rows remain in the existing measured standard lane
+- **AND** its grouping, refresh, checklist, and event-press behavior remain unchanged
+
+#### Scenario: Platform Calendar chrome remains screen-owned
+
+- **WHEN** the T01 shell renders
+- **THEN** the native header, working Add action, and working view selector remain owned by the Calendar screen
+- **AND** the owned renderer exports no imperative chrome or navigation API
+
+### Requirement: T01 exposes a stable owned Calendar shell
+
+The Calendar day/week branch SHALL render a feature-owned React Native surface with a localized date heading and a stable positive-size canvas. The date text SHALL be exposed as a heading, use the effective display zone and active French or English locale, and remain correct across Calendar mount/unmount and tab leave/return. The shell SHALL render no timeline events and SHALL NOT represent that intentional absence as an empty local-data result.
+
+#### Scenario: Calendar opens the owned shell
+
+- **WHEN** the student opens Calendar in the shell mode
+- **THEN** a localized date heading and owned canvas render without a crash
+- **AND** the heading is discoverable with heading semantics
+
+#### Scenario: Calendar returns to a stable shell
+
+- **WHEN** the Calendar screen unmounts and mounts again, or the student leaves its tab and returns
+- **THEN** the owned heading and canvas render again without stale vendor state or duplicate renderers
+
+#### Scenario: Stored events are not misreported as absent
+
+- **WHEN** local events exist while T01's shell is active
+- **THEN** the shell renders no event tiles by design
+- **AND** it does not claim that the underlying event collection is empty
+- **AND** the same events remain available through Agenda
+
+### Requirement: T01 retains only working Calendar controls
+
+Every enabled Calendar control at this milestone SHALL produce an observable supported result. The view selector SHALL expose the owned shell and Agenda; it SHALL NOT expose a Day/Week switch before the T05 day/week behavior exists. Add, Agenda selection, agenda refresh/retry, agenda event activation, and any retained Today action SHALL preserve their existing localized accessibility behavior. A Today action MAY remain only when it updates the selected date and visible date heading.
+
+#### Scenario: View choices are implemented
+
+- **WHEN** the student opens the Calendar view selector
+- **THEN** every offered choice renders a distinct working surface
+- **AND** no enabled choice silently does nothing
+
+#### Scenario: Future controls are absent
+
+- **WHEN** the T01 shell renders
+- **THEN** no control offers paging, vertical scrolling, weekday selection, day/week switching, zoom, or event activation on the shell
+
+#### Scenario: Retained controls remain accessible
+
+- **WHEN** the student uses a retained Calendar action
+- **THEN** it has a translated label, the platform minimum target, and an observable supported result

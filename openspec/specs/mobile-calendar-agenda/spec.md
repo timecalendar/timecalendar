@@ -1,8 +1,11 @@
 # mobile-calendar-agenda Specification
 
 ## Purpose
+
 TBD - created by archiving change add-mobile-calendar-agenda. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Pure day-grouping helper, 90%-gated
 
 The calendar feature `data/` sublayer SHALL own a pure function that groups a flat list of
@@ -81,34 +84,33 @@ or bump the EAS runtime fingerprint.
 
 ### Requirement: Agenda is a third in-place view mode of the calendar screen
 
-The calendar screen SHALL offer an agenda/planning view as a third view mode alongside day and week,
-switched in place (matching the Flutter view-type switch). Selecting the agenda view SHALL render the
-day-grouped list instead of the day/week grid, over a bounded multi-day range, reading from the
-unchanged events-source seam. The agenda SHALL NOT add a new route, a new dependency on the
-calendar-kit grid, or a change to the events-source seam.
+The calendar screen SHALL keep the agenda/planning view reachable in place beside the T01 owned Calendar shell. Selecting Agenda SHALL render the existing day-grouped list over its bounded multi-day range from the unchanged events-source seam. Until T05 implements meaningful day/week switching, the selector SHALL offer only working shell and Agenda choices and SHALL NOT expose a Day choice that renders the same static shell.
 
-#### Scenario: A third view switch control exists
+#### Scenario: Working view choices remain
 
-- **WHEN** the calendar screen renders
-- **THEN** the view switch offers day, week, and agenda controls, each accessible (role + translated
-  label + selected state + ≥44pt/48dp target)
+- **WHEN** the Calendar screen renders at the T01 milestone
+- **THEN** its view selector offers the owned Calendar shell and Agenda with translated accessible labels and selected state
+- **AND** every offered choice renders a distinct working surface
 
-#### Scenario: Selecting agenda renders the list
+#### Scenario: Selecting Agenda renders the retained list
 
-- **WHEN** the agenda view is selected
-- **THEN** the screen renders the day-grouped agenda list (not the calendar-kit grid) for a bounded
-  multi-day window
+- **WHEN** Agenda is selected
+- **THEN** the existing day-grouped agenda list replaces the owned shell for a bounded multi-day window
 
 #### Scenario: Agenda reads the unchanged events-source seam
 
-- **WHEN** the agenda view computes its events
-- **THEN** it reads through `useCalendarEvents(range)` (the same seam the day/week views use) with no
-  change to the hook signature, the `CalendarEvent` shape, or the seam's source
+- **WHEN** Agenda computes its events
+- **THEN** it reads through `useCalendarEvents(range)` with no change to the hook signature, `CalendarEvent` shape, stored facts, or source filtering
 
-#### Scenario: No new route
+#### Scenario: Agenda remains on the Calendar route
 
-- **WHEN** the agenda is reached
-- **THEN** it is a view mode of the existing `/calendar` route (no new `src/app/` route is added)
+- **WHEN** Agenda is reached
+- **THEN** it remains a view mode of the existing `/calendar` route and no new route is added
+
+#### Scenario: Later day/week switching is not prebuilt
+
+- **WHEN** the T01 selector is inspected
+- **THEN** it contains no hidden or enabled Day/Week switching implementation reserved for T05
 
 ### Requirement: Agenda list renders day-grouped events as a brand surface
 
@@ -232,20 +234,23 @@ Agenda SHALL receive the same screen-level UID-keyed checklist progress map as t
 - **THEN** the affected row updates from the shared progress map without reopening Agenda
 
 ### Requirement: Agenda presentation shares a measured standard lane
+
 Calendar Agenda SHALL place its loaded rows, section headers, empty/error status presentation, and refreshable content in one `standard` lane resolved from the positive width of the Calendar content owner. The lane SHALL remain inside the existing safe-area owner and SHALL NOT change event grouping, ordering, refresh semantics, checklist progress, routing, sticky-header behavior, or accessibility labels.
 
 #### Scenario: Loaded Agenda is centered on tablet
+
 - **WHEN** Agenda mode is active and its owner reports a portrait-tablet width
 - **THEN** section headers and event rows align within the centered standard lane with tablet gutters
 - **AND** rows do not stretch beyond the standard content cap
 
 #### Scenario: Agenda states align with loaded content
+
 - **WHEN** Agenda is empty, sync has failed, or pull-to-refresh is active
 - **THEN** its state or refresh presentation uses the same measured standard lane as loaded Agenda content
 - **AND** retry and refresh actions preserve their existing behavior
 
 #### Scenario: Phone Agenda behavior is preserved
+
 - **WHEN** Agenda's owner reports a compact width below 600
 - **THEN** the list and states use compact gutters in the same single-column order
 - **AND** sticky headers, event presses, checklist progress, and refresh remain unchanged
-

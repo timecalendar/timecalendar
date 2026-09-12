@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 
-### Requirement: Agenda is an in-place view mode of the calendar screen
+### Requirement: Agenda is a third in-place view mode of the calendar screen
 
 The calendar screen SHALL keep the agenda/planning view reachable in place beside the T01 owned Calendar shell. Selecting Agenda SHALL render the existing day-grouped list over its bounded multi-day range from the unchanged events-source seam. Until T05 implements meaningful day/week switching, the selector SHALL offer only working shell and Agenda choices and SHALL NOT expose a Day choice that renders the same static shell.
 

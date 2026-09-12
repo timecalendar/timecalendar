@@ -16,18 +16,19 @@ that stored event data is empty: Agenda remains the route for reading and openin
 events during this cut.
 
 The app owns pure calendar primitives for grouping, time-grid math, overlap layout,
-day keys, and formatting. Home and agenda use these primitives without depending on
-the timeline renderer. Calendar-kit's quarter event-window selection is an adapter
-workaround, not a domain primitive.
+day keys, and formatting. Home and Agenda use the applicable primitives without
+depending on the timeline renderer. The T01 shell consumes only the selected-date
+heading; retained time-grid and overlap primitives do not imply that the shell renders a
+grid or events.
 
-Every rendered event time and day boundary is computed in the effective display
-zone ([ADR 035](./decisions/035-display-timezone-preference.md)): the zone from
-`useDisplayZone()` is threaded explicitly into the formatters, the day-key and
-bucketing helpers, the now-indicator math, the quarter event window, and the
-renderer's `timeZone` prop — never read internally by a helper. Deriving a
-rendered time or day from device-local `Date` fields or `toLocaleString` is a
-defect; the zone-parameterized seams are the only path. All-day events are the
-exception: they stay on the floating UTC-day-key path and never shift with the
+Every displayed timed-event value and day boundary is computed in the effective display
+zone ([ADR 035](./decisions/035-display-timezone-preference.md)). Consumers obtain the
+zone from `useDisplayZone()` and pass it explicitly to formatters, day-key and bucketing
+helpers, and time-grid math; helpers never read the zone implicitly. `CalendarScreen`
+uses the same explicit zone for its selected-date heading and Agenda range. The T01 shell
+has no event window, now indicator, or renderer timezone prop. Deriving a displayed time
+or day from device-local `Date` fields or `toLocaleString` is a defect. All-day events are
+the exception: they stay on the floating UTC-day-key path and never shift with the
 preference.
 
 `CalendarScreen` owns one selected date and resolves its localized heading in the

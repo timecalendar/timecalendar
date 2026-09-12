@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 
-### Requirement: Tap-through from Calendar event surfaces
+### Requirement: Tap-through from the timeline and agenda views
 
 At the T01 milestone, the existing agenda list SHALL keep its event tiles tappable and SHALL open the unified event-details screen for both synced and personal events. Agenda tiles SHALL remain accessible touchables with translated view-details labels and platform minimum targets. The owned day/week shell SHALL expose no event tiles or event activation until the owned timed-event slice lands. Routing SHALL remain identity-based: both event kinds open `event-details/<uid>`, and personal-event edit/delete remains one tap deeper through the details screen.
 

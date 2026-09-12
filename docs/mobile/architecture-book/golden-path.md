@@ -26,7 +26,8 @@ feature-specific screens.
 - Generated API hooks and `@/db` are accessed only from the feature's `data/` layer.
 - MMKV is accessed through `@/storage` and a typed feature store.
 - Firebase native packages are accessed through `@/firebase`.
-- Native chrome and calendar-kit are accessed through owned component seams.
+- Native chrome is accessed through owned component seams; feature renderers remain
+  feature-private and vendor-free.
 - Routes in `src/app/` contain routing configuration or re-export feature UI; they do not
   contain feature logic.
 
