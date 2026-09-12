@@ -16,15 +16,16 @@ screen-reader output, target sizing, or platform presentation.
 
 ## Build and fabricated fixture
 
-- Tested revision: `TESTED_REVISION_PENDING_FINAL_COMMIT`.
+- Tested revision: `7015700778979f4960a0fb1b66c57776e93b93e3`.
 - Build kind: local development build; no native dependency or configuration changed in T01.
 - Install/launch from the tested revision: run `npm ci` in `mobile/`, then `npm run ios` or
   `npm run android` with a supported device attached.
 - Fixture version: `t01-server-import-v1`, the repository's deterministic server-backed import
   fixture used by `mobile/.maestro/01-fresh-user-import.yaml`.
-- Setup: start the repository E2E server lifecycle, run the fresh-user import journey once, then
-  open Calendar. The fixture event is labelled `E2E Imported Lecture` and is visible in Agenda.
-- Reset: uninstall the development app or clear its app data, stop the E2E server lifecycle, and
+- Setup: from the repository root run `ci/e2e-server.sh up`; with the development app installed,
+  run `maestro test mobile/.maestro/01-fresh-user-import.yaml`, then open Calendar. The fixture
+  event is labelled `E2E Imported Lecture` and is visible in Agenda.
+- Reset: run `ci/e2e-server.sh down`, uninstall the development app or clear its app data, and
   repeat from a fresh install. Do not use a personal calendar or production export.
 
 ## How to verify
