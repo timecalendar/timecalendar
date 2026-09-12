@@ -56,7 +56,7 @@ export function AgendaList({
   refreshControl?: ReactElement<RefreshControlProps>
   onPressEvent: (event: CalendarEvent) => void
 }) {
-  // The clock is read once at mount (like the screen's visibleDate) so the render
+  // The clock is read once at mount (like the screen's selected date) so the render
   // stays pure — the "up next" marker is relative to when the agenda opened.
   const [now] = useState(() => Date.now())
 

@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.17",
-    "@howljs/calendar-kit": "2.5.6",
     "@react-native-firebase/analytics": "^24.1.1",
     "@react-native-firebase/app": "^24.1.1",
     "@react-native-firebase/crashlytics": "^24.1.1",
@@ -68,7 +67,6 @@
     "jest": "^29.7.0",
     "jest-expo": "~56.0.5",
     "orval": "^8.17.0",
-    "patch-package": "^8.0.1",
     "prettier": "^3.8.4",
     "react-doctor": "0.9.13",
     "typescript": "~6.0.3"
@@ -84,8 +82,7 @@
     "react-doctor:changed": "react-doctor . --no-telemetry --no-score --no-supply-chain --verbose --no-cache --scope changed --base origin/main --blocking warning",
     "test": "jest --ci",
     "test:ios-device-contract": "node ./scripts/assert-ios-device-contract.mjs --self-test",
-    "verify:ios-device-contract": "bash ./scripts/verify-ios-device-contract.sh",
-    "postinstall": "patch-package --error-on-fail"
+    "verify:ios-device-contract": "bash ./scripts/verify-ios-device-contract.sh"
   },
   "private": true,
   "lint-staged": {

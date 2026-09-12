@@ -1,8 +1,11 @@
 # mobile-event-details Specification
 
 ## Purpose
+
 TBD - created by archiving change add-mobile-event-details. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: Rich event-details read over the verbatim row, 90%-gated
 
 The calendar feature `data/` sublayer SHALL own the first consumer of the verbatim `calendar_events`
@@ -96,37 +99,33 @@ The details screen SHALL render an accessible not-found message when its uid res
 
 ### Requirement: Tap-through from the timeline and agenda views
 
-The day/week timeline grid and the agenda list SHALL make their event tiles tappable, opening the
-unified event-details screen for BOTH a synced calendar event AND a personal event. The agenda tile
-SHALL be an accessible touchable (role + translated label + ≥44pt/48dp target), and the grid SHALL wire
-the calendar-kit `onPressEvent` through the chrome seam. Routing SHALL no longer be origin-keyed at the
-tap: both a synced event (it carries a `userCalendarId`) and a personal event (no `userCalendarId`) open
-`event-details/<uid>` — the single tap-routing discriminator now returns the details route for both
-kinds. The personal-event edit/delete flow stays reachable one tap deeper, via the **Edit** header
-action on the unified details screen (not directly from the tile).
+At the T01 milestone, the existing agenda list SHALL keep its event tiles tappable and SHALL open the unified event-details screen for both synced and personal events. Agenda tiles SHALL remain accessible touchables with translated view-details labels and platform minimum targets. The owned day/week shell SHALL expose no event tiles or event activation until the owned timed-event slice lands. Routing SHALL remain identity-based: both event kinds open `event-details/<uid>`, and personal-event edit/delete remains one tap deeper through the details screen.
 
-#### Scenario: Agenda tile is a touchable
+#### Scenario: Agenda tile remains a touchable
 
 - **WHEN** the agenda list renders an event tile
-- **THEN** the tile is an accessible touchable (role + translated label including a view-details hint +
-  ≥44pt/48dp target) — no longer a non-touchable `text` node
+- **THEN** the tile is an accessible touchable with a translated label, view-details hint, and platform minimum target
 
-#### Scenario: Tapping a synced event opens details
+#### Scenario: Tapping a synced agenda event opens details
 
-- **WHEN** a synced calendar event tile (in the grid or the agenda) is tapped
-- **THEN** the app navigates to the unified details route for that event's uid
+- **WHEN** a synced event tile in Agenda is tapped
+- **THEN** the app navigates to the unified event-details route for that event's uid
 
-#### Scenario: Tapping a personal event opens details
+#### Scenario: Tapping a personal agenda event opens details
 
-- **WHEN** a personal event tile (in the grid or the agenda) is tapped
-- **THEN** the app navigates to the unified details route for that event's uid (NOT directly to the
-  personal-event form — the form is reached from the details screen's Edit action)
+- **WHEN** a personal event tile in Agenda is tapped
+- **THEN** the app navigates to the unified event-details route for that event's uid
+- **AND** editing remains available from the details screen rather than directly from the tile
 
-#### Scenario: Grid uses the chrome seam
+#### Scenario: Owned shell does not expose unavailable event activation
 
-- **WHEN** the calendar-kit grid wires event presses
-- **THEN** it passes `onPressEvent` through the `@/components/chrome` seam (the screen never imports
-  `@howljs/calendar-kit` directly — the calendar-kit ban still holds)
+- **WHEN** the T01 day/week shell renders
+- **THEN** it presents no event tiles, stale activation callback, or silent event press target
+
+#### Scenario: Details return preserves Calendar usability
+
+- **WHEN** the student returns from a fabricated event's details screen
+- **THEN** Calendar remains usable and Agenda can be reached again
 
 ### Requirement: Deep-linkable details route, thin entrypoint
 
@@ -372,25 +371,29 @@ The tag renderer SHALL preserve every tag occurrence, including identical duplic
 - **AND** memoization in unchanged data, renderer, checklist, and other feature modules is not broadened into this change
 
 ### Requirement: Every event-details outcome uses one readable lane
+
 Event details SHALL place loaded content, loading, missing/not-found, recoverable error content, and the resolved event checklist in one `readable` lane measured inside the existing safe-area/presentation owner. The surface SHALL remain one column at every supported portrait width and SHALL preserve the existing title → metadata → event action → checklist source and accessibility order.
 
 #### Scenario: Loaded details and checklist stay readable on tablet
+
 - **WHEN** a synced or personal event resolves at a portrait-tablet owner width
 - **THEN** its title, date, tags, metadata, update text, action feedback, and checklist align within the centered readable lane
 - **AND** checklist CRUD and event hide/unhide-or-edit behavior remain unchanged
 
 #### Scenario: Loading and missing states share the lane
+
 - **WHEN** event details are loading or the requested event is missing
 - **THEN** the accessible status content is constrained by the same readable lane used by loaded content
 - **AND** the existing live-region and status semantics are preserved
 
 #### Scenario: Large text retains one ordered column
+
 - **WHEN** font scaling stresses the details content at 834 or a wider owner
 - **THEN** content remains a wrapping one-column readable lane
 - **AND** source and focus order are not changed by the eligible optional-column breakpoint
 
 #### Scenario: Compact details behavior is preserved
+
 - **WHEN** the details owner reports a width below 600
 - **THEN** loaded and status content use compact readable-lane gutters
 - **AND** routing, scrolling, actions, metadata, and checklist behavior remain unchanged
-

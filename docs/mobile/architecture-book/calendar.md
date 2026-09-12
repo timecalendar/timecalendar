@@ -2,44 +2,41 @@
 
 ## Rendering
 
-The day/week timeline uses `@howljs/calendar-kit` v2 through the owned calendar
-renderer seam. Feature code must not import the package directly. The dependency is
-patched with `patch-package`; installs fail when the pinned package no longer accepts
-the patch. The renderer-neutral contract lives in `features/calendar/renderer`, while
-the dependency, its event projection, theme mapping, tiles, event-window policy, and
-packing workarounds live in `renderer/calendar-kit`. See
-[ADR 033](./decisions/033-calendar-renderer-module-boundary.md) and
-[ADR 032](./decisions/032-calendar-kit-vendor-patch-live-anchor.md).
+The T01 day/week surface is a feature-owned React Native shell under
+`features/calendar/renderer`. It fills the Calendar content owner and presents the
+selected date as a localized semantic heading above a stable themed canvas. The shell is
+private to the Calendar feature and exposes no imperative ref, navigation callback,
+event collection, gesture, scrolling, or compatibility API.
+
+This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
+timed tiles, the 7:00–21:00 grid, current-time presentation, paging, vertical scrolling,
+hour labels, weekday columns, weekend filtering, day/week switching, gestures, and zoom
+are absent until their numbered owned-renderer slices land. The blank shell never claims
+that stored event data is empty: Agenda remains the route for reading and opening stored
+events during this cut.
 
 The app owns pure calendar primitives for grouping, time-grid math, overlap layout,
-day keys, and formatting. Home and agenda use these primitives without depending on
-the timeline renderer. Calendar-kit's quarter event-window selection is an adapter
-workaround, not a domain primitive.
+day keys, and formatting. Home and Agenda use the applicable primitives without
+depending on the timeline renderer. The T01 shell consumes only the selected-date
+heading; retained time-grid and overlap primitives do not imply that the shell renders a
+grid or events.
 
-Every rendered event time and day boundary is computed in the effective display
-zone ([ADR 035](./decisions/035-display-timezone-preference.md)): the zone from
-`useDisplayZone()` is threaded explicitly into the formatters, the day-key and
-bucketing helpers, the now-indicator math, the quarter event window, and the
-renderer's `timeZone` prop — never read internally by a helper. Deriving a
-rendered time or day from device-local `Date` fields or `toLocaleString` is a
-defect; the zone-parameterized seams are the only path. All-day events are the
-exception: they stay on the floating UTC-day-key path and never shift with the
+Every displayed timed-event value and day boundary is computed in the effective display
+zone ([ADR 035](./decisions/035-display-timezone-preference.md)). Consumers obtain the
+zone from `useDisplayZone()` and pass it explicitly to formatters, day-key and bucketing
+helpers, and time-grid math; helpers never read the zone implicitly. `CalendarScreen`
+uses the same explicit zone for its selected-date heading and Agenda range. The T01 shell
+has no event window, now indicator, or renderer timezone prop. Deriving a displayed time
+or day from device-local `Date` fields or `toLocaleString` is a defect. All-day events are
+the exception: they stay on the floating UTC-day-key path and never shift with the
 preference.
 
-The grid uses a quarter-quantized event feed with a two-month buffer and four pages per
-side. Calendar-kit tracks the visible anchor during scrolling so fast flings do not show
-an empty grid. Re-check this coupling and dense-calendar performance when changing the
-renderer, patch, buffer, or page count.
-
-Checklist progress is sidecar presentation state. `CalendarScreen` reads one reactive
-UID-set map for the rendered event collection and passes it separately through the
-renderer-neutral facade and Agenda. Calendar-kit's projected `events` array remains
-memoized only from `CalendarEvent[]`; a checklist-only update refreshes tile content
-without rebuilding projected event objects.
-
-All-day events use date-only renderer values derived from UTC day keys. Their stored end
-is exclusive while calendar-kit's displayed end is inclusive, so projection subtracts
-one millisecond before deriving the final day. Timed events retain date-time values.
+`CalendarScreen` owns one selected date and resolves its localized heading in the
+effective display zone. A valid one-shot `focusDate` and the retained Today action update
+that date without implying canvas motion. Agenda reads the unchanged bounded seven-day
+event range and keeps checklist progress, refresh/retry, synced and personal event
+activation, and unified event-details navigation. The view selector offers only Week and
+Agenda until distinct day/week behavior exists.
 
 ## Event source
 
@@ -119,11 +116,11 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers day/week timeline and agenda modes, with platform-specific native chrome.
-  The current week displays seven days; configurable five/seven-day weeks belong to the
-  replacement renderer work.
+- Calendar offers the T01 owned Week shell and Agenda, with platform-specific native chrome.
+  Day/week switching and visible weekday columns belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
-  view/date state and one-shot focus navigation; header and status UI are separate components.
+  view/selected-date state and one-shot focus selection; header and Agenda status UI are
+  separate components.
 - Home shows today only, separating all-day and timed events. When today is empty it may
   summarize the next active day without substituting that day into today's timeline.
 - Event details are shared by personal and synced events and include the event checklist.
@@ -131,7 +128,7 @@ separate. The binding contract and regression scenarios live in the
   not-found, and resolved outcomes. Feature-internal calendar UI modules own status
   presentation, the single resolved-event hide/unhide-or-edit action boundary, and rich
   content/checklist composition; they do not widen the calendar feature barrel.
-- Home upcoming/all-day/timed summaries, Calendar timed/all-day tiles, and Agenda rows
+- Home upcoming/all-day/timed summaries and Agenda rows
   hide zero-item progress and share the explicit completed/total indicator. The visual
   primitive is excluded from accessibility; each owning event label announces the
   localized completed-of-total phrase once.
@@ -140,6 +137,8 @@ separate. The binding contract and regression scenarios live in the
 
 ## Verification
 
-Unit/component tests cover projection, grouping, routing, filtering, sync orchestration,
-failure states, and the renderer seam. Real scrolling, dense-calendar performance, native
-pickers, accessibility, all-day lanes, and background/foreground sync remain device checks.
+Unit/component tests cover the owned shell heading/canvas, Calendar remount and selection,
+Agenda grouping/routing, filtering, sync orchestration, failure states, and the repository
+cutover contract. Native mount/return, assistive technology, platform chrome, and physical
+device presentation remain recorded owner checks; later scrolling, dense-calendar, and
+all-day-lane behavior is not claimed by T01.

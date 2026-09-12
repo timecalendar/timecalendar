@@ -16,8 +16,8 @@ import { HomeScreen } from "./home-screen"
 
 // Presentational screen (70% floor): renders through the real theme + i18n trees.
 // The events-source seam + the sync orchestrator are mocked here to drive
-// deterministic state without a SQLite/network dependency. No calendar-kit is used
-// on home (the today timeline is the custom overlap grid), so no calendar-kit mock
+// deterministic state without a SQLite/network dependency. Home's today timeline
+// is its own custom overlap grid, so no Calendar renderer mock
 // is needed. The home selectors run for real (pure). Tap routing + pull-to-refresh
 // wiring are asserted against the mocked router/sync.
 
