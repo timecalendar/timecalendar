@@ -37,6 +37,7 @@ import { Spacing, useTheme } from "@/theme"
 const SETTLE_DURATION_MS = 220
 const PAGE_THRESHOLD_RATIO = 0.2
 const FLING_VELOCITY = 500
+const PAGE_DIRECTIONS = [-1, 0, 1] as const
 
 type OwnedCalendarShellProps = {
   heading: string
@@ -117,10 +118,6 @@ export function OwnedCalendarShell({
     }
   }
 
-  const interruptMotion = () => {
-    cancelPending()
-  }
-
   useEffect(() => {
     cancelAnimation(translation)
     translation.set(0)
@@ -150,7 +147,7 @@ export function OwnedCalendarShell({
       "worklet"
       if (event.state === State.BEGAN) {
         cancelAnimation(translation)
-        scheduleOnRN(interruptMotion)
+        scheduleOnRN(cancelPending)
         return
       }
       if (event.state === State.ACTIVE) {
@@ -196,11 +193,11 @@ export function OwnedCalendarShell({
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: -width.get() + translation.get() }],
   }))
-  const pages = [-1, 0, 1].map((direction) => {
+  const pages = PAGE_DIRECTIONS.map((direction) => {
     const pageAnchor =
       direction === 0
         ? anchor
-        : shiftWeekInZone(anchor, direction as WeekDirection, displayZone, 1)
+        : shiftWeekInZone(anchor, direction, displayZone, 1)
     return { direction, key: dayKey(pageAnchor, displayZone) }
   })
 
