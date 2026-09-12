@@ -16,10 +16,10 @@ synchronization, agenda, and event-details navigation outside the timeline bound
 
 ## State
 
-As of 2026-09-10:
+As of 2026-09-12:
 
-- Product: `draft`; four owner-answer rounds are incorporated, but the consolidated contract has
-  not received explicit product-owner approval.
+- Product: `draft`; four owner-answer rounds and a follow-up clarification are incorporated, but
+  the consolidated contract has not received explicit product-owner approval.
 - Technical design: `not-started`; starting it is gated on product approval.
 - Project-local architecture decisions: `not-started`; six measured architecture questions are
   already identified.
@@ -62,6 +62,9 @@ release infrastructure while parity, signed upgrade proof, hardening, and store 
 - 2026-08-27 through 2026-09-07 — the product owner answered four discovery rounds. Those answers
   establish row-level input to the draft contract; they do not approve the consolidated
   `product.md`.
+- 2026-09-12 — the owner clarified that Monday is the launch week-start policy rather than a
+  permanent renderer invariant, then accepted the distinction between date-only all-day events and
+  instant-bounded timed events. The product remains pending consolidated approval.
 - No product approval or project-local architecture approval is recorded yet.
 
 ## Residual risks and caveats

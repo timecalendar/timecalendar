@@ -12,7 +12,9 @@ owner approves it.
 - [Round 3 triage and owner questions](./round-3-triage-and-owner-questions.md) preserves the
   historical 187-row triage and its corrections.
 - [Round 4 owner answers and readiness](./round-4-owner-answers-and-readiness.md) records the final
-  owner-answer pass and research/architecture boundary.
+  full questionnaire pass and research/architecture boundary.
+- [Follow-up owner clarifications](./follow-up-owner-clarifications.md) records the later week-start
+  maintainability requirement and the accepted all-day terminology clarification.
 - [Historical discovery index](./discovery-index.md) preserves the status and continuation notes
   that existed before conversion to the canonical project layout.
 

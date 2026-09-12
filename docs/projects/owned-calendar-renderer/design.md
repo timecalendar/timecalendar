@@ -32,6 +32,14 @@ interval, timezone, segmentation, overlap, label-input, and geometry semantics. 
 imperative API, module split, cache/index shape, and migration path remain undecided (`P02`, `P03`,
 `P06`).
 
+The first weekday must enter week arithmetic, paging, and layout as an explicit product-policy
+input. Monday is the only launch value, but it must not be encoded as an unchangeable primitive;
+weekend filtering must identify Saturday and Sunday rather than assume that a work week is the
+first five columns. The event domain must likewise preserve the semantic distinction between a
+date-only all-day range and an instant-bounded timed event. A provider-specific timezone-bearing
+all-day representation is not part of the launch contract and must not be inferred from duration or
+midnight boundaries.
+
 ## Security and integrity
 
 Invalid events must be isolated without exposing event content or identifiers in diagnostics.

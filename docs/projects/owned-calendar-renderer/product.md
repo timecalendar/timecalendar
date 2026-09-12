@@ -13,15 +13,18 @@ The React Native Calendar's day/week surface is code-complete on
 renderer seam. The product owner has required that calendar-kit not ship in the React Native
 launch and has explicitly allowed a clean breaking replacement because the app is not yet shipped.
 
-Observed code establishes the current boundary and behavior. Four owner-answer rounds establish
-the desired product behavior. They do not establish a target implementation. The exact current
-failure reproduction, representative production workload shapes, release resource budgets, and
-physical-device floor remain named research gaps rather than fabricated evidence.
+Observed code establishes the current boundary and behavior. Four owner-answer rounds plus a
+follow-up owner clarification establish the desired product behavior. They do not establish a
+target implementation. The exact current failure reproduction, representative production workload
+shapes, release resource budgets, and physical-device floor remain named research gaps rather than
+fabricated evidence.
 
 The evidence trail is preserved in the
 [questionnaire](./research/functional-specification-questionnaire.md),
 [discovery inventory](./research/discovery-scope-and-evidence.md), and
-[Round 4 answer record](./research/round-4-owner-answers-and-readiness.md).
+[Round 4 answer record](./research/round-4-owner-answers-and-readiness.md). The
+[follow-up owner clarification](./research/follow-up-owner-clarifications.md) records the latest
+week-start and all-day terminology corrections without rewriting the historical rounds.
 
 ## Users and desired outcomes
 
@@ -36,9 +39,9 @@ activation in French and English, light and dark themes.
 
 ### P02 — Navigate one coherent date context
 
-**Outcome:** Day, week, and agenda share predictable Monday-based date state across paging, Today,
-deep links, mode changes, restarts, orientation changes, and window resizing without wrong-date or
-partial intermediate frames.
+**Outcome:** Day, week, and agenda share predictable date state across paging, Today, deep links,
+mode changes, restarts, orientation changes, and window resizing without wrong-date or partial
+intermediate frames.
 
 **Acceptance evidence:** Automated state and geometry tests plus human phone/tablet checks prove
 the specified settle rules, persisted mode/zoom behavior, agenda transfer, visible clock-position
@@ -199,7 +202,7 @@ consolidated contract as the product authority. Valid next decisions are `approv
 
 ## Detailed functional contract
 
-**Draft date:** 2026-09-07  
+**Draft date:** 2026-09-12
 **Scope:** TimeCalendar React Native Calendar screen, owned day/week timeline, and agenda
 integration on iOS and Android
 
@@ -311,18 +314,24 @@ week; agenda remains the existing separate presentation.
 - Reinstall resets the mode to week.
 - Calendar-source changes do not reset the selected mode.
 - Day mode shows exactly one selected day.
-- Week mode shows exactly one complete Monday-based calendar week.
-- Week mode shows Monday through Sunday by default.
+- Week mode shows exactly one complete launch calendar week.
+- For the first delivery, the week starts on Monday and shows Monday through Sunday by default.
 - Settings > Calendar provides a **Show weekends** switch, on by default. Turning it off changes
   week mode to Monday through Friday.
-- Locale, device region, and display timezone never change Monday as the product week start.
+- Locale, device region, and display timezone do not override the Monday-first launch policy.
 - A settled week page never straddles two weeks or rests on a partial week.
 - An empty day or week retains the time grid and clearly communicates that no events are present.
 - A narrow or resized window never changes week mode to day automatically; the user changes mode
   explicitly.
 
-The Show weekends setting affects week mode only. It never removes weekend dates or events from
-agenda.
+The Show weekends setting filters Saturday and Sunday by weekday identity; it does not define a
+week as merely its first five days. It affects week mode only and never removes weekend dates or
+events from agenda.
+
+Sunday-first and a user-configurable week start are outside the first delivery. Monday is a launch
+policy, not a permanent renderer invariant: the approved technical design must isolate the first
+weekday as an explicit policy input so future support does not require rewriting week arithmetic,
+paging, or layout.
 
 Sources: `S-001`–`S-013`, `S-017`, `N-001`, `N-002`, `D-006`, `D-007`, `D-012`.
 
@@ -331,7 +340,7 @@ Sources: `S-001`–`S-013`, `S-017`, `N-001`, `N-002`, `D-006`, `D-007`, `D-012`
 ### 6.1 Paging
 
 - Day mode pages exactly one calendar day at a time.
-- Week mode pages exactly one complete Monday-based week at a time.
+- Week mode pages exactly one complete launch week at a time.
 - One swipe or fling settles only one page, even for a fast fling.
 - Paging uses native-feeling platform physics while preserving the same settled outcomes on both
   platforms.
@@ -344,8 +353,8 @@ Sources: `S-001`–`S-013`, `S-017`, `N-001`, `N-002`, `D-006`, `D-007`, `D-012`
 
 ### 6.2 Day/week switching
 
-- Switching from day to week shows the Monday-based week containing the day-mode date.
-- Switching from week to day selects that week's Monday.
+- Switching from day to week shows the launch week containing the day-mode date.
+- Switching from week to day selects that week's first day, which is Monday at launch.
 - The timeline preserves its visible clock position and shared zoom value across a day/week mode
   switch.
 - Focus follows a stable event identity when possible; otherwise it moves predictably to the
@@ -357,9 +366,9 @@ Timeline and agenda share date context in both directions.
 
 - Agenda's active date is the visible date section nearest the top.
 - Entering agenda from the current week targets today.
-- Entering agenda from another week targets that week's Monday.
+- Entering agenda from another week targets that week's first day, which is Monday at launch.
 - Returning from agenda to day uses agenda's active date.
-- Returning from agenda to week uses the Monday-based week containing agenda's active date.
+- Returning from agenda to week uses the launch week containing agenda's active date.
 - Agenda omits dates with no events.
 - A multi-day event appears in every agenda date section it covers.
 - Timeline-only zoom and visible-clock state remain timeline state; agenda does not replace them.
@@ -370,7 +379,7 @@ There is no separate agenda date-selection interaction.
 
 - Today preserves the current mode and the timeline zoom value.
 - In day mode, Today selects the current date and scrolls to the current time.
-- In week mode, Today selects the current Monday-based week and scrolls to the current time.
+- In week mode, Today selects the current launch week and scrolls to the current time.
 - In agenda, Today preserves agenda mode and scrolls to today's section.
 - A deep-linked date preserves day, week, or agenda mode. It selects the requested day/week or
   scrolls agenda to the requested section.
@@ -392,7 +401,7 @@ Sources: `N-001`–`N-018`, `S-009`, `D-004`, `D-005`, `A-012`, `A-013`, `A-021`
 - Day headers remain pinned during vertical scrolling.
 - Hour labels honor the device's 12/24-hour preference.
 - The grid shows major hour lines and smaller divisions whose presentation may vary with zoom.
-- A fresh day open selects today; a fresh week open selects the current Monday-based week.
+- A fresh day open selects today; a fresh week open selects the current launch week.
 - A fresh timeline viewport scrolls to the current time without using event times to choose its
   position. It leaves useful previous-hour context and targets the current-time indicator at
   approximately 30% from the viewport top.
@@ -487,11 +496,17 @@ accessibility targets.
 ### 8.3 All-day events
 
 - All-day events appear in a lane above the timed grid.
-- Imported all-day events use floating calendar dates. Changing display timezone does not change
-  their named dates.
+- A standard imported all-day event is a date-only calendar range. Its dates carry no event
+  timezone, so changing display timezone does not change its named dates.
 - The all-day end date is exclusive; an event from the 10th to the 11th covers only the 10th.
 - Multi-day all-day events are supported across every covered date.
 - A zero-day all-day event is invalid and is skipped in isolation.
+
+An imported event defined by date-time or instant boundaries follows the timed-event rules in
+section 8.2, even when it spans one or more whole wall-clock days. Projection into the selected
+display timezone may therefore place its segments on different or multiple local dates. Supporting
+a future provider-specific timezone-bearing all-day representation would require an explicit
+domain contract; it must not be inferred from duration or midnight boundaries.
 
 The collapsed all-day lane shows a bounded number of rows. Each visible date owns a **+N** action
 beneath that date's visible all-day events, where `N` is the number hidden on that date. A hidden
@@ -554,12 +569,12 @@ Sources: `I-004`–`I-014`, `A-019`, `A-020`.
 - Timed events, Today, the current-time indicator, local-day segmentation, and navigation use that
   single display timezone.
 - Per-calendar and per-event timezone display is not supported in the first delivery.
-- All-day events retain floating-date semantics independently of display timezone.
+- Date-only all-day events retain their named-date semantics independently of display timezone.
 - Launch date semantics are Gregorian. Non-Gregorian system calendars are not rendered, and the
   limitation must be explicit.
 - French and English are the complete launch locale set.
-- Date navigation and Monday-week arithmetic must remain correct across daylight-saving gaps and
-  repeats.
+- Date navigation and week arithmetic under the explicit launch week-start policy must remain
+  correct across daylight-saving gaps and repeats.
 
 Every date uses a familiar 24-hour wall-clock visual grid. On spring-forward dates, the nonexistent
 hour remains an ordinary empty visual hour. On fall-back dates, the grid does not add a repeated
@@ -687,6 +702,7 @@ choice.
 The first delivery does not include:
 
 - month view or custom multi-day modes;
+- Sunday-first, locale-derived, or user-configurable week-start behavior;
 - reimplementation or redesign of the existing agenda presentation;
 - Home/mini/embedded renderer reuse;
 - side-by-side date or calendar comparison;
