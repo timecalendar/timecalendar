@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 
 import {
   addDaysInZone,
@@ -72,13 +72,10 @@ export function useCalendarScreenController() {
   )
   const selectedDate = transition.anchor
 
-  const agendaRange = useMemo<DateRange>(
-    () => ({
-      from: selectedDate,
-      to: addDaysInZone(selectedDate, AGENDA_DAYS, displayZone),
-    }),
-    [selectedDate, displayZone],
-  )
+  const agendaRange: DateRange = {
+    from: selectedDate,
+    to: addDaysInZone(selectedDate, AGENDA_DAYS, displayZone),
+  }
 
   const goToToday = () => {
     dispatchTransition({ type: "replace", date: new Date() })
@@ -99,15 +96,15 @@ export function useCalendarScreenController() {
     router.setParams({ focusDate: undefined })
   }, [focusDate, displayZone])
 
-  const requestTransition = useCallback((request: WeekTransitionRequest) => {
+  const requestTransition = (request: WeekTransitionRequest) => {
     dispatchTransition({ type: "request", request })
-  }, [])
-  const settleTransition = useCallback((revision: number) => {
+  }
+  const settleTransition = (revision: number) => {
     dispatchTransition({ type: "settle", revision })
-  }, [])
-  const cancelTransition = useCallback((revision: number) => {
+  }
+  const cancelTransition = (revision: number) => {
     dispatchTransition({ type: "cancel", revision })
-  }, [])
+  }
 
   return {
     view,
