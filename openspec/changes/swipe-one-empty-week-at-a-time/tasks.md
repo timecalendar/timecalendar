@@ -41,6 +41,6 @@
 
 ## 7. Update the existing PR and pause for owner acceptance
 
-- [ ] 7.1 Push the tested implementation revision to the existing draft PR and update its feature-level body with exact local/native evidence, build/fixture instructions, sensitive-surface statement, T02 limitations, and remaining owner checks; run the required disclosure scan on the exact title/body before publication and re-read the stored PR body after every write.
-- [ ] 7.2 Provide the ticket-specific owner with the immutable build/revision and checklist for Monday 2026-09-14, including held heading, coherent settle, one-page fling, reversal plus previous/next, stable long paging, and the previously accepted T01 interaction; record each result and focused retest evidence on this same ticket.
-- [ ] 7.3 Keep the PR unmerged and auto-merge disabled while the board-user-required owner QA and human review are pending; do not start, assign, or wake T03 until T02 has explicit owner acceptance and its PR has been human-merged.
+- [x] 7.1 Push the tested implementation revision to the existing draft PR and update its feature-level body with exact local/native evidence, build/fixture instructions, sensitive-surface statement, T02 limitations, and remaining owner checks; run the required disclosure scan on the exact title/body before publication and re-read the stored PR body after every write.
+- [x] 7.2 Provide the ticket-specific owner with the immutable build/revision and checklist for Monday 2026-09-14, including held heading, coherent settle, one-page fling, reversal plus previous/next, stable long paging, and the previously accepted T01 interaction; record each result and focused retest evidence on this same ticket.
+- [x] 7.3 Keep the PR unmerged and auto-merge disabled while the board-user-required owner QA and human review are pending; do not start, assign, or wake T03 until T02 has explicit owner acceptance and its PR has been human-merged.
