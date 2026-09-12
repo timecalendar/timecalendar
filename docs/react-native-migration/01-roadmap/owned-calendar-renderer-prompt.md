@@ -1,6 +1,6 @@
 # Owned React Native calendar renderer implementation prompt
 
-> **Status: historical, unapproved implementation prompt. Do not implement from this file.** Product scope discovery now lives in [`../03-owned-calendar-renderer/README.md`](../03-owned-calendar-renderer/README.md). Every proposed feature, threshold, API, and technology below remains unconfirmed unless it is later recorded as an explicit product-owner decision.
+> **Status: historical, unapproved implementation prompt. Do not implement from this file.** Canonical planning now lives in [`../../projects/owned-calendar-renderer/README.md`](../../projects/owned-calendar-renderer/README.md). Every proposed feature, threshold, API, and technology below remains unconfirmed unless it is recorded in the approved product contract or an approved project-local architecture decision.
 
 The historical prompt is reproduced below for audit. Do not execute it.
 

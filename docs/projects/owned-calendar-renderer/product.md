@@ -1,7 +1,205 @@
-# Owned calendar renderer functional specification
+---
+kind: product
+status: draft
+decision: pending
+---
 
-**Status:** Draft for product-owner approval  
-**Date:** 2026-09-07  
+# Product shaping: owned calendar renderer
+
+## Problem and evidence
+
+The React Native Calendar's day/week surface is code-complete on
+`@howljs/calendar-kit` 2.5.6, a committed vendor patch, and an adapter behind the repository's
+renderer seam. The product owner has required that calendar-kit not ship in the React Native
+launch and has explicitly allowed a clean breaking replacement because the app is not yet shipped.
+
+Observed code establishes the current boundary and behavior. Four owner-answer rounds establish
+the desired product behavior. They do not establish a target implementation. The exact current
+failure reproduction, representative production workload shapes, release resource budgets, and
+physical-device floor remain named research gaps rather than fabricated evidence.
+
+The evidence trail is preserved in the
+[questionnaire](./research/functional-specification-questionnaire.md),
+[discovery inventory](./research/discovery-scope-and-evidence.md), and
+[Round 4 answer record](./research/round-4-owner-answers-and-readiness.md).
+
+## Users and desired outcomes
+
+### P01 — Understand the schedule at a glance
+
+**Outcome:** A student can open day or week, find the next class and room quickly, follow classes
+and breaks hour by hour, and plan the next day or week from correct local calendar data.
+
+**Acceptance evidence:** Representative empty, normal, dense, overlap, all-day, multi-day, missing
+content, and invalid-event fixtures show correct dates, time positions, titles, rooms, and event
+activation in French and English, light and dark themes.
+
+### P02 — Navigate one coherent date context
+
+**Outcome:** Day, week, and agenda share predictable Monday-based date state across paging, Today,
+deep links, mode changes, restarts, orientation changes, and window resizing without wrong-date or
+partial intermediate frames.
+
+**Acceptance evidence:** Automated state and geometry tests plus human phone/tablet checks prove
+the specified settle rules, persisted mode/zoom behavior, agenda transfer, visible clock-position
+continuity, and atomic geometry replacement.
+
+### P03 — Preserve correct event semantics
+
+**Outcome:** Timed, all-day, multi-day, cross-midnight, overlapping, hidden, synced, personal,
+missing-field, and invalid events render or fail in the explicitly defined way without changing
+calendar data or leaking content.
+
+**Acceptance evidence:** Deterministic unit, property, integration, and fabricated-fixture tests
+cover interval, timezone, segmentation, overlap, truncation, all-day overflow, filtering, malformed
+input isolation, and event-details routing.
+
+### P04 — Make the complete Calendar operable accessibly
+
+**Outcome:** VoiceOver, TalkBack, Switch Control, largest supported text, reduced motion, and
+increased-contrast users can understand chronological schedule content and complete every Calendar
+action without relying on pinch, color, visual truncation, or recycled mount order.
+
+**Acceptance evidence:** Automated semantic/focus invariants and recorded human assistive-technology
+passes on the binding device/window matrix prove labels, order, actions, focus recovery, hit areas,
+zoom alternatives, announcements, and full event meaning.
+
+### P05 — Feel immediate while remaining resource-bounded
+
+**Outcome:** Locally available Calendar actions meet the accepted first-frame and interaction
+latencies, gestures feel native at the active display rate, and long sessions do not accumulate
+pages, events, views, semantic nodes, memory, or idle work.
+
+**Acceptance evidence:** Reproducible release-build profiles cover warm and cold entry, paging,
+Today, arbitrary local-date navigation, mode changes, dense fixtures, and a 30-minute stress run on
+the approved device floor with recorded frame, memory, node, battery, and thermal evidence.
+
+### P06 — Keep rendering local and synchronization separate
+
+**Outcome:** Date navigation reads device-local data without a network loader; completed sync
+changes apply atomically; background sync failure leaves local events visible; and local-store
+failure has accessible retry behavior.
+
+**Acceptance evidence:** Offline, zero-event, background-sync success/failure, atomic replacement,
+and local-store recovery scenarios prove the boundary without a Calendar-owned refresh state.
+
+### P07 — Work across the supported mobile environment
+
+**Outcome:** The Calendar supports the accepted iOS/Android floors, phone/tablet portrait and
+landscape, representative split/resizable windows, French/English, light/dark themes, the effective
+display timezone, and correctly fingerprinted Expo development/release builds.
+
+**Acceptance evidence:** Compatibility smoke tests and recorded human compact/medium/expanded
+window checks on the binding physical-device matrix prove behavior, geometry, focus, and native
+configuration transitions.
+
+### P08 — Ship a clean owned replacement
+
+**Outcome:** The React Native launch contains an internally reusable TimeCalendar renderer and no
+calendar-kit dependency, vendor patch, adapter, fallback, dual renderer, compatibility shim, or
+deliberate quality debt.
+
+**Acceptance evidence:** Repository audits, dependency/build checks, approved architecture records,
+quality gates, and final release-candidate parity evidence demonstrate one owned implementation and
+the absence of forbidden transitional machinery.
+
+## Outcome traceability
+
+| Project outcome | Detailed contract sections | Primary questionnaire areas |
+| --------------- | -------------------------- | --------------------------- |
+| `P01`           | 2, 5, 7, 8                 | `P-*`, `U-*`, `S-*`, `V-*`  |
+| `P02`           | 5, 6, 10, 13               | `N-*`, `S-*`, `D-*`, `R-*`  |
+| `P03`           | 8, 10, 11                  | `E-*`, `D-*`, `R-*`         |
+| `P04`           | 12, 16.2                   | `A-*`, `I-*`, `V-*`         |
+| `P05`           | 13, 16                     | `PF-*`, `Q-*`, `M-*`        |
+| `P06`           | 3.2, 6, 11                 | `B-*`, `R-*`, `M-*`         |
+| `P07`           | 4, 10, 16.2                | `PL-*`, `D-*`, `M-*`        |
+| `P08`           | 3, 14, 15, 16              | `B-*`, `Q-*`, `M-*`, `X-*`  |
+
+## Appetite and constraints
+
+This is a pre-launch replacement of the highest-risk Calendar surface, not an elapsed-time
+commitment. Correctness, privacy, and complete accessibility outrank latency and fluidity, which
+outrank visual richness. The work may break the unshipped Calendar during coordinated development,
+but it may not knowingly trade away the launch contract or accumulate compatibility baggage.
+
+Product approval authorizes technical design, not implementation. Major dependency, rendering,
+responsibility-boundary, or migration choices require measured alternatives and explicit approval
+in project-local decision records.
+
+## In scope
+
+- Owned day and whole-week timelines plus integration with the existing agenda mode.
+- Timeline grid, headers, hour labels, current-time presentation, bounded paging and scrolling,
+  all-day presentation, event layout/activation, zoom, and complete accessibility.
+- Synced and personal local events, filtering, display timezone, localization, theming, shared date
+  context, event-details routing, orientation, and resizable-window behavior.
+- Deterministic correctness, resource/performance evidence, clean calendar-kit removal, and the
+  repository migration/supersession work required by the approved replacement.
+
+The exact behavior is normative in sections 3–16 below.
+
+## Out of scope and non-goals
+
+The first delivery excludes month/custom multi-day modes, agenda redesign, Home/embedded reuse,
+search/filter UI, event creation or direct manipulation, recurrence editing, per-event timezone
+display, routine keyboard/mouse optimization, web, public-package promises, and general parity with
+Flutter, calendar-kit, current incidental behavior, or the historical prompt. Section 14 is the
+complete exclusion contract.
+
+## Assumptions and unknowns
+
+- The owner-answer record accurately captures the intended contract; approval of this consolidated
+  document is still pending.
+- Twenty-nine `NEEDS_RESEARCH` rows cover user/workload evidence, failure reproduction, device
+  floor, zoom/density/contrast, resource budgets/tooling, and repository migration work.
+- Six `UNANSWERED` rows are deliberately architecture-stage questions: `PF-021`, `B-006`,
+  `B-010`, `B-011`, `B-012`, and `B-014`.
+- Several acceptance values can only be measured after an owned renderer and release build exist.
+- The React Native app remains unshipped and the wider launch plan can accommodate a coordinated
+  breaking Calendar migration.
+
+## Alternatives
+
+- **Do nothing / ship calendar-kit:** smallest engineering intervention, but contradicts the
+  owner's stated launch outcome and retains the patched dependency.
+- **Patch, fork, wrap, or dual-run calendar-kit:** may reduce short-term replacement work, but
+  creates the compatibility and maintenance baggage explicitly excluded from this project.
+- **Reduce the Calendar contract:** potentially cheaper, but requires a new product decision and
+  would currently sacrifice confirmed workflows, accessibility, or quality outcomes.
+- **Build an owned renderer:** recommended because it matches the confirmed clean-replacement
+  intent while leaving the technical stack open to evidence.
+- **Pause or kill the React Native launch replacement:** valid if the product contract is not
+  approved or measured architecture cannot meet it within an acceptable maintenance burden.
+
+## Risks and kill criteria
+
+The largest risks are unmeasured dense-schedule performance, accessible virtualization and focus,
+gesture arbitration, orientation/resizable geometry, dependency maintenance, and a stale global
+roadmap that still calls the calendar-kit Phase 04 result complete.
+
+Pause or kill this project if the owner does not approve a coherent product contract, if measured
+options cannot meet correctness and complete accessibility without an unacceptable platform or
+maintenance burden, or if the wider React Native launch no longer requires an owned renderer.
+Revise and re-approve rather than silently weakening `P01`–`P08` if evidence invalidates a premise.
+
+## Recommendation
+
+`go`, conditional on explicit approval of this exact product contract. Then complete bounded
+pre-architecture research, compare technical options, and request approval of the target design
+and every implementation-constraining decision before creating delivery epics.
+
+## Approval
+
+Pending. The owner approved many row-level answers during Rounds 1–4 but has not approved this
+consolidated contract as the product authority. Valid next decisions are `approve`, `revise`,
+`pause`, or `kill`.
+
+---
+
+## Detailed functional contract
+
+**Draft date:** 2026-09-07  
 **Scope:** TimeCalendar React Native Calendar screen, owned day/week timeline, and agenda
 integration on iOS and Android
 
@@ -13,9 +211,9 @@ launch. It is deliberately technology-neutral. It does not select a rendering st
 library, page-recycling strategy, data API, or component architecture.
 
 The row-level source for every decision is the
-[functional specification questionnaire](./02-functional-specification-questionnaire.md). The
-[discovery evidence](./01-discovery-scope-and-evidence.md) and
-[Round 4 answer record](./round-4-owner-answers-and-readiness.md) preserve the reasoning and
+[functional specification questionnaire](./research/functional-specification-questionnaire.md). The
+[discovery evidence](./research/discovery-scope-and-evidence.md) and
+[Round 4 answer record](./research/round-4-owner-answers-and-readiness.md) preserve the reasoning and
 corrections behind those decisions.
 
 Until the product owner approves this document, it is a draft and does not authorize architecture
@@ -461,9 +659,8 @@ Sources: `A-001`–`A-024`, `V-005`, `V-006`, `V-011`, `I-014`.
 
 ## 13. User-visible continuity and responsiveness
 
-Detailed measurement procedures belong in
-`04-non-functional-requirements.md` and `05-acceptance-plan.md`, but the following accepted product
-outcomes constrain them:
+Detailed measurement procedures belong in later acceptance research and the approved technical
+design, but the following accepted product outcomes constrain them:
 
 - transitions never show a wrong date, unexplained blank or partial frame, unlabeled stale events,
   or theme flash;
@@ -586,7 +783,7 @@ case-by-case owner approval after its impact and risk are documented. Costly-to-
 or responsibility-boundary choices require an ADR.
 
 Exact scripts, repetitions, reports, raw-result locations, and measurable resource/regression
-budgets belong in `04-non-functional-requirements.md` and `05-acceptance-plan.md`.
+budgets belong in later acceptance research and the approved technical design.
 
 Sources: `P-008`, `P-009`, `A-024`, `PF-004`, `PF-005`, `Q-001`, `Q-002`, `Q-005`–`Q-015`,
 `Q-020`, `M-004`, `M-013`, `M-014`.

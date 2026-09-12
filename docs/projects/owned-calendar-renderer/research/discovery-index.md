@@ -1,4 +1,7 @@
-# Owned calendar renderer discovery
+# Historical owned calendar renderer discovery index
+
+> Superseded as the active index on 2026-09-10 by the canonical
+> [project README](../README.md). The discovery status below is preserved as evidence.
 
 Status: Rounds 1–4 owner answers are recorded and the functional specification has been drafted
 for product-owner review. Owner interrogation is wrapped up; bounded research remains. No
@@ -9,15 +12,15 @@ This directory is the working home for the owned React Native calendar renderer 
 
 ## Document map
 
-1. [Discovery scope and evidence](./01-discovery-scope-and-evidence.md) records what is confirmed, what was merely observed, where existing sources disagree, and what this discovery may and may not decide.
-2. [Functional specification questionnaire](./02-functional-specification-questionnaire.md) is the row-level source of truth for confirmed, excluded, deferred, research, and architecture-stage decisions.
+1. [Discovery scope and evidence](./discovery-scope-and-evidence.md) records what is confirmed, what was merely observed, where existing sources disagree, and what this discovery may and may not decide.
+2. [Functional specification questionnaire](./functional-specification-questionnaire.md) is the row-level source of truth for confirmed, excluded, deferred, research, and architecture-stage decisions.
 3. [Round 3 triage and answer record](./round-3-triage-and-owner-questions.md) maps all 187 rows that were unanswered after Round 2 and preserves its historical ELI5 question set and corrections.
 4. [Round 4 owner answers and readiness](./round-4-owner-answers-and-readiness.md) records the final owner-grilling pass, corrections to prior assumptions, and the current research/architecture boundary.
-5. [Functional specification draft](./03-functional-specification.md) consolidates the confirmed
+5. [Canonical product draft](../product.md) consolidates the confirmed
    product behavior, explicit exclusions, deferrals, and named downstream gates for owner review.
-6. [The original implementation prompt](../01-roadmap/owned-calendar-renderer-prompt.md) is retained as historical input. Its proposed requirements and solutions are not approved scope.
+6. [The original implementation prompt](../../../react-native-migration/01-roadmap/owned-calendar-renderer-prompt.md) is retained as historical input. Its proposed requirements and solutions are not approved scope.
 
-Future numbered documents should follow this naming scheme:
+The following historical filename sequence has been superseded by the canonical project layout:
 
 - `04-non-functional-requirements.md` after measurable quality and performance budgets are confirmed;
 - `05-acceptance-plan.md` after the supported device and accessibility matrix is confirmed;
@@ -75,7 +78,7 @@ The only remaining `UNANSWERED` keys are `PF-021`, `B-006`, `B-010`, `B-011`, `B
 dependency governance. They belong to measured architecture work and should not be pushed back to
 the owner as speculative product questions.
 
-The product contract is drafted in `03-functional-specification.md` and awaits explicit
+The product contract is drafted in [`product.md`](../product.md) and awaits explicit
 product-owner approval. Architecture and implementation remain unauthorized until the
 specification is approved and the relevant research has been carried forward into non-functional
 requirements and acceptance planning.
@@ -93,7 +96,8 @@ requirements and acceptance planning.
 
 ## How to continue discovery
 
-1. Read this README and `01-discovery-scope-and-evidence.md` completely.
+1. Read the [canonical project README](../README.md) and
+   [discovery evidence](./discovery-scope-and-evidence.md) completely.
 2. Treat the questionnaire as the row-level source of truth, Round 3 as historical triage, and
    Round 4 as the current owner-answer audit; never restore a superseded recommendation.
 3. Complete bounded factual or technical research with agents. Do not ask the owner to provide

@@ -748,7 +748,7 @@ The 29 research rows are bounded evidence and engineering work rather than owner
 unanswered rows—`PF-021`, `B-006`, `B-010`, `B-011`, `B-012`, and `B-014`—are deliberately held for
 measured architecture work. No broad owner-question backlog remains.
 
-The product contract is sufficiently resolved to draft `03-functional-specification.md`. Creating
+The product contract is sufficiently resolved to draft [`product.md`](../product.md). Creating
 and approving that artifact remains a separate explicit owner act. Release measurements that need
 an implemented renderer or physical hardware remain named downstream gates; their absence does not
 authorize guessed values, weakened acceptance, or implementation before architecture approval.

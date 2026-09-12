@@ -1,5 +1,9 @@
 # Handover — owned calendar renderer discovery
 
+> Historical layout note (2026-09-10): the active documents described below were converted to
+> [`docs/projects/owned-calendar-renderer/`](../projects/owned-calendar-renderer/README.md). Old paths
+> and filenames in this handover record the workspace as it existed on 2026-09-07.
+
 **Date:** 2026-09-07 · **Branch:** `main` · **Base:** `origin/main`
 **Repo:** `/home/samuel/Projects/timecalendar` · **PR:** none
 

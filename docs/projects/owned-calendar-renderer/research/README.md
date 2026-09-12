@@ -1,0 +1,21 @@
+# Discovery and research evidence
+
+This directory preserves the evidence that shaped the owned-renderer product draft. These files are
+inputs and history; [product.md](../product.md) is the canonical consolidated contract once the
+owner approves it.
+
+- [Discovery scope and evidence](./discovery-scope-and-evidence.md) separates owner decisions,
+  repository observations, research, conflicts, and remaining gaps.
+- [Functional-specification questionnaire](./functional-specification-questionnaire.md) is the
+  280-row source of truth: 190 `CONFIRMED_IN`, 50 `CONFIRMED_OUT`, five `DEFERRED`, 29
+  `NEEDS_RESEARCH`, and six architecture-stage `UNANSWERED` rows.
+- [Round 3 triage and owner questions](./round-3-triage-and-owner-questions.md) preserves the
+  historical 187-row triage and its corrections.
+- [Round 4 owner answers and readiness](./round-4-owner-answers-and-readiness.md) records the final
+  owner-answer pass and research/architecture boundary.
+- [Historical discovery index](./discovery-index.md) preserves the status and continuation notes
+  that existed before conversion to the canonical project layout.
+
+The historical implementation prompt remains at
+[owned-calendar-renderer-prompt.md](../../../react-native-migration/01-roadmap/owned-calendar-renderer-prompt.md).
+It is unapproved input, not a product or architecture authority.

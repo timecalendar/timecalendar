@@ -11,7 +11,7 @@ user-visible behavior and authority boundaries. It did not ask the owner to inve
 percentiles, memory limits, algorithms, profiler choices, or dependency policy.
 
 This record captures the owner's corrections as well as accepted recommendations. The
-[questionnaire](./02-functional-specification-questionnaire.md) remains the row-level source of
+[questionnaire](./functional-specification-questionnaire.md) remains the row-level source of
 truth.
 
 ## Owner decisions

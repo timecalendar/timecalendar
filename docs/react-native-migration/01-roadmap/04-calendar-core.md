@@ -4,9 +4,16 @@
 >
 > **Depends on:** Phase 03 (needs real calendars to render). **Modules:** `calendar`, `event_details` (view), `home`, `activity` (sync logs, partial).
 
+> **Current launch status (2026-09-10):** the six calendar-kit-based steps below remain
+> code-complete current-system evidence, but the day/week renderer has been reopened for a clean
+> pre-launch replacement. Canonical planning is in
+> [`docs/projects/owned-calendar-renderer/`](../../projects/owned-calendar-renderer/README.md) and is
+> currently awaiting explicit approval of its product contract. No replacement architecture or
+> implementation plan is approved yet.
+
 ## Rough steps
 
-1. ~~**Calendar spike (first task, time-boxed 3 days — [K-5](../00-exploration/migration-approach.md#8-resolved-knobs-phase-0-kickoff-decisions)).** Read-only render of a real dense university week on `@howljs/calendar-kit` v2, our styling, overlaps, 120fps target. **Decision gate: adopt / fork / build custom.** Likely custom.~~ ✅ **Done (2026-06-16).** Spike run on the real stack; **gate decided: ADOPT `@howljs/calendar-kit` v2** for the day/week timeline behind a seam + **salvage** the overlap/time-grid primitives (build agenda + home on them) — **ADR [019](../../../docs/mobile/architecture-book/decisions/019-calendar-rendering-adopt-calendar-kit.md)** (the "likely custom" prior was *disproven by evidence* — the library booted with no Reanimated-4 crash and rendered a dense week + correct overlaps on SDK 56 / RN 0.85.3 / Reanimated 4.3.1 / New Arch). Low-end-Android frame-rate verification inboxed (`inbox/2026-06-16-calendar-low-end-android-perf.md`).
+1. ~~**Calendar spike (first task, time-boxed 3 days — [K-5](../00-exploration/migration-approach.md#8-resolved-knobs-phase-0-kickoff-decisions)).** Read-only render of a real dense university week on `@howljs/calendar-kit` v2, our styling, overlaps, 120fps target. **Decision gate: adopt / fork / build custom.** Likely custom.~~ ✅ **Done (2026-06-16).** Spike run on the real stack; **gate decided: ADOPT `@howljs/calendar-kit` v2** for the day/week timeline behind a seam + **salvage** the overlap/time-grid primitives (build agenda + home on them) — **ADR [019](../../../docs/mobile/architecture-book/decisions/019-calendar-rendering-adopt-calendar-kit.md)** (the "likely custom" prior was _disproven by evidence_ — the library booted with no Reanimated-4 crash and rendered a dense week + correct overlaps on SDK 56 / RN 0.85.3 / Reanimated 4.3.1 / New Arch). Low-end-Android frame-rate verification inboxed (`inbox/2026-06-16-calendar-low-end-android-perf.md`).
 2. ~~**Timeline rendering** (per spike outcome): day / week / agenda.~~ ✅ **Done (2026-06-16).** Day/week via `@howljs/calendar-kit` behind a seam (`add-mobile-calendar-timeline`, **ADR [020](../../../docs/mobile/architecture-book/decisions/020-calendar-kit-seam.md)**); the **agenda/planning view** as a zero-dep `SectionList` on the salvaged `groupEventsByDay` (`add-mobile-calendar-agenda`). The salvaged overlap-packing engine (`layoutOverlaps`, ported + unit-validated from Flutter) + time-grid math are our own pure 90%-gated primitives, used by agenda + home regardless of the adopt outcome (ADR 019's salvage mandate).
 3. ~~**Sync** — TanStack Query → `syncCalendars(tokens)` → local cache (the drop+replace flow, RN-side). Offline reads from persister/SQLite.~~ ✅ **Done (2026-06-16).** `add-mobile-calendar-sync` (**ADR [021](../../../docs/mobile/architecture-book/decisions/021-calendar-event-storage-and-sync.md)**): a 3rd Drizzle `calendar_events` table mirroring the Flutter `toDbMap()` / DTO **verbatim** (importer fidelity; JSON-as-TEXT columns with defensive mappers) + a 3rd committed migration; the batch `POST /calendars/sync` orchestrator (`useSyncCalendars`) writes rows **verbatim** (`dtoToRow`) via a **transactional drop+replace**; `useCalendarEvents` reads SQLite reactively (`useLiveQuery`), merged with personal events — offline reads from the local table, a failed sync keeps last-good rows. Split observability (recoverable fetch → `isError`; local write-transaction failure → `recordError`).
 4. ~~**Event details (view)** — read-only event screen.~~ ✅ **Done (2026-06-16).** `add-mobile-event-details`: a read-only details screen reached by tapping an event (synced → details, personal → existing edit form, routed by `userCalendarId`), the **first rich consumer** of ADR 021's verbatim rows (`getByUid` + `rowToEventDetails` surface groupColor/type/teachers/full-tags/fields/description). Edit/delete/hide/checklist deferred (write features; inboxed).
@@ -15,7 +22,9 @@
 
 ## Exit criteria
 
-**Status (2026-06-16): code-complete — all 6 steps shipped; the on-device perf/visual/offline proofs are inboxed for human hardware verification (a CI emulator / iOS simulator is not a low-end Android device — the loop cannot machine-verify the frame-rate bar).**
+**Historical delivery status (2026-06-16): the calendar-kit version was code-complete — all six
+steps shipped; the on-device perf/visual/offline proofs were inboxed for human hardware
+verification. Current launch readiness additionally requires the owned-renderer project above.**
 
 - Day/week/agenda render real timetables, with overlaps — ✅ **code-complete** (timeline #175, agenda #176, real synced data #177). ⏳ **at target frame rate on a low-end Android device** — inboxed (`inbox/2026-06-16-calendar-low-end-android-perf.md`; the headline #1-risk bar, device-only).
 - Works offline (renders from local cache with no network) — ✅ **code-complete** (sync writes SQLite, `useLiveQuery` reads it, a failed sync keeps last-good rows). ⏳ on-device offline-after-sync confirmation inboxed (`inbox/2026-06-16-calendar-sync-on-device.md`).
@@ -28,4 +37,4 @@
 - **#1 risk in the whole migration.** A dense day with many overlapping events at 120fps is genuinely hard.
 - The spike outcome can **reshape the roadmap** — if custom, budget accordingly; salvage primitives (time-grid math, overlap layout, now-indicator) into our own reusable components regardless of adopt/fork/custom.
 - Calendar is a **designed brand surface**, not native-default chrome.
-</content>
+  </content>

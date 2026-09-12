@@ -422,4 +422,4 @@ Discovery is complete only when:
 - performance targets include metrics, datasets, devices, build type, measurement method, and pass criteria;
 - accessibility targets include interaction model, assistive technologies, device matrix, and manual acceptance ownership;
 - no architecture choice is masquerading as a functional requirement;
-- the owner explicitly authorizes creation of `03-functional-specification.md`.
+- the owner explicitly approves the consolidated [`product.md`](../product.md) contract.
