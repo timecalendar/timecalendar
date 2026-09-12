@@ -1,18 +1,31 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useReducer, useState } from "react"
 
 import {
   addDaysInZone,
+  cancelWeekTransition,
+  createWeekTransitionState,
   type DateRange,
   dayKey,
   dayKeyToDate,
-  startOfDayInZone,
+  replaceWeekTransitionAnchor,
+  requestWeekTransition,
+  settleWeekTransition,
+  startOfWeekInZone,
+  type WeekTransitionRequest,
 } from "@/features/calendar/data"
 import { useDisplayZone } from "@/features/settings/prefs"
 
 export type CalendarView = "week" | "agenda"
 
 const AGENDA_DAYS = 7
+const LAUNCH_FIRST_WEEKDAY = 1 as const
+
+type TransitionAction =
+  | { type: "request"; request: WeekTransitionRequest }
+  | { type: "settle"; revision: number }
+  | { type: "cancel"; revision: number }
+  | { type: "replace"; date: Date }
 
 // A `focusDate` param is a zone calendar day (`YYYY-MM-DD`); resolve it to the
 // display zone's midnight instant, rejecting malformed or non-existent dates
@@ -27,31 +40,71 @@ export function useCalendarScreenController() {
   const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
   const displayZone = useDisplayZone()
   const [view, setView] = useState<CalendarView>("week")
-  const [selectedDate, setSelectedDate] = useState(() =>
-    startOfDayInZone(new Date(), displayZone),
+  const [transition, dispatchTransition] = useReducer(
+    (
+      state: ReturnType<typeof createWeekTransitionState>,
+      action: TransitionAction,
+    ) => {
+      switch (action.type) {
+        case "request":
+          return requestWeekTransition(
+            state,
+            action.request,
+            displayZone,
+            LAUNCH_FIRST_WEEKDAY,
+          )
+        case "settle":
+          return settleWeekTransition(state, action.revision).state
+        case "cancel":
+          return cancelWeekTransition(state, action.revision)
+        case "replace":
+          return replaceWeekTransitionAnchor(
+            state,
+            action.date,
+            displayZone,
+            LAUNCH_FIRST_WEEKDAY,
+          )
+      }
+    },
+    undefined,
+    () =>
+      createWeekTransitionState(new Date(), displayZone, LAUNCH_FIRST_WEEKDAY),
   )
+  const selectedDate = transition.anchor
 
-  const agendaRange = useMemo<DateRange>(() => {
-    const from = startOfDayInZone(selectedDate, displayZone)
-    return { from, to: addDaysInZone(from, AGENDA_DAYS, displayZone) }
-  }, [selectedDate, displayZone])
+  const agendaRange: DateRange = {
+    from: selectedDate,
+    to: addDaysInZone(selectedDate, AGENDA_DAYS, displayZone),
+  }
 
   const goToToday = () => {
-    const today = startOfDayInZone(new Date(), displayZone)
-    setSelectedDate(today)
+    dispatchTransition({ type: "replace", date: new Date() })
   }
   const canGoToToday =
-    dayKey(selectedDate, displayZone) !== dayKey(new Date(), displayZone)
+    dayKey(selectedDate, displayZone) !==
+    dayKey(
+      startOfWeekInZone(new Date(), displayZone, LAUNCH_FIRST_WEEKDAY),
+      displayZone,
+    )
 
   useEffect(() => {
     if (focusDate === undefined) return
     const target = parseFocusDate(focusDate, displayZone)
     if (target !== undefined) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedDate(target)
+      dispatchTransition({ type: "replace", date: target })
     }
     router.setParams({ focusDate: undefined })
   }, [focusDate, displayZone])
+
+  const requestTransition = (request: WeekTransitionRequest) => {
+    dispatchTransition({ type: "request", request })
+  }
+  const settleTransition = (revision: number) => {
+    dispatchTransition({ type: "settle", revision })
+  }
+  const cancelTransition = (revision: number) => {
+    dispatchTransition({ type: "cancel", revision })
+  }
 
   return {
     view,
@@ -61,5 +114,11 @@ export function useCalendarScreenController() {
     range: agendaRange,
     canGoToToday,
     goToToday,
+    rendererGeneration: transition.generation,
+    transitionRevision: transition.lastRequestRevision,
+    acceptedTransitionRevision: transition.acceptedRevision,
+    requestTransition,
+    settleTransition,
+    cancelTransition,
   }
 }

@@ -331,6 +331,8 @@
   "calendar.view.agenda": "Agenda",
   "calendar.todayLabel": "Go to today",
   "calendar.today": "Today",
+  "calendar.previousWeekLabel": "Previous week",
+  "calendar.nextWeekLabel": "Next week",
   "calendar.add": "+",
   "calendar.addLabel": "Add an event",
   "calendar.empty": "No events this period.",
