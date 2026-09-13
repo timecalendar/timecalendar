@@ -68,6 +68,8 @@ const CONTENT_HEIGHT = gridContentHeight(
   FULL_DAY_END_MINUTE,
   DEFAULT_PIXELS_PER_HOUR,
 )
+const MAJOR_MINUTES = fullDayMajorMinutes()
+const MINOR_MINUTES = fullDayMinorMinutes()
 
 function restingTranslation(pagePosition: number, pageWidth: number) {
   "worklet"
@@ -310,13 +312,14 @@ export function OwnedCalendarShell({
     const velocityX = event.velocityX ?? 0
     const velocityY = event.velocityY ?? 0
     if (event.state === State.ACTIVE) {
+      const currentDecision = gesture.get()
       const decision = updateGestureDecision(
-        gesture.get(),
+        currentDecision,
         translationX,
         translationY,
         motionEpoch.get(),
       )
-      gesture.set(decision)
+      if (decision !== currentDecision) gesture.set(decision)
       if (decision.axis === "horizontal") {
         const measuredWidth = width.get()
         translation.set(
@@ -622,7 +625,7 @@ function WeekPage({
         testID={`owned-calendar-page-clock-${direction}`}
         style={[styles.clockPlane, { height: CONTENT_HEIGHT }, clockStyle]}
       >
-        {fullDayMinorMinutes().map((minute) => (
+        {MINOR_MINUTES.map((minute) => (
           <View
             key={`minor-${minute}`}
             testID={`owned-calendar-minor-${direction}-${minute}`}
@@ -638,7 +641,7 @@ function WeekPage({
             ]}
           />
         ))}
-        {fullDayMajorMinutes().map((minute) => (
+        {MAJOR_MINUTES.map((minute) => (
           <View
             key={`major-${minute}`}
             testID={`owned-calendar-major-${direction}-${minute}`}

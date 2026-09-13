@@ -25,38 +25,32 @@ function productionCalendarFiles(): string[] {
     .map((entry) => join(sourceRoot, entry))
 }
 
+function compileForNativeRuntime(path: string): string {
+  return execFileSync(
+    process.execPath,
+    [
+      "-e",
+      `const babel = require("@babel/core");
+       const result = babel.transformFileSync(process.argv[1], {
+         envName: "development",
+         caller: { name: "metro", platform: "ios", isDev: true }
+       });
+       process.stdout.write(result.code);`,
+      path,
+    ],
+    { cwd: root, encoding: "utf8" },
+  )
+}
+
 describe("owned Calendar paging repository contract", () => {
   it("compiles the motion and gesture helpers for the native UI runtime", () => {
     // Jest's animation mocks do not enforce the native runtime boundary.
-    const compiled = execFileSync(
-      process.execPath,
-      [
-        "-e",
-        `const babel = require("@babel/core");
-         const result = babel.transformFileSync(
-           "src/features/calendar/renderer/owned-calendar-shell.tsx",
-           {
-             envName: "development",
-             caller: { name: "metro", platform: "ios", isDev: true }
-           }
-         );
-         process.stdout.write(result.code);`,
-      ],
-      { cwd: root, encoding: "utf8" },
+    const compiled = compileForNativeRuntime(
+      "src/features/calendar/renderer/owned-calendar-shell.tsx",
     )
     expect(compiled).toMatch(/restingTranslation\.__workletHash\s*=/)
-    const gesture = execFileSync(
-      process.execPath,
-      [
-        "-e",
-        `const babel = require("@babel/core");
-         const result = babel.transformFileSync(
-           "src/features/calendar/renderer/gesture-state.ts",
-           { envName: "development", caller: { name: "metro", platform: "ios", isDev: true } }
-         );
-         process.stdout.write(result.code);`,
-      ],
-      { cwd: root, encoding: "utf8" },
+    const gesture = compileForNativeRuntime(
+      "src/features/calendar/renderer/gesture-state.ts",
     )
     expect(gesture).toMatch(/updateGestureDecision\.__workletHash\s*=/)
   })
