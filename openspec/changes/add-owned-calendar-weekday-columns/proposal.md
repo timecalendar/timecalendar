@@ -5,9 +5,9 @@ The owned Calendar can page and vertically scroll an empty week, but its grid st
 ## What Changes
 
 - Derive a complete launch week as seven display-zone civil dates from the explicit first-weekday policy, then filter Saturday and Sunday by weekday identity only for week presentation.
-- Render five or seven equal-width, aligned day columns beneath the existing native month/year title, with localized weekday/date labels and a non-color Today cue.
+- Render five or seven equal-width, aligned day columns beneath the existing native month/year title, with localized weekday/date labels and a non-color Today cue; the vertically pinned date strip follows the existing native pager's horizontal progress so headers and grid move as one surface.
 - Add a default-true `Show weekends` switch to the Calendar section of Settings and persist it through the existing typed MMKV settings seam.
-- Feed the reactive preference into every previous/current/next owned week page while retaining seven-calendar-day paging, the bounded three-page working set, revisioned settlement, vertical scroll position, and unchanged Agenda range/content.
+- Feed the reactive preference into every previous/current/next owned week page and header slot while retaining seven-calendar-day paging, the bounded three-page working set, one native gesture owner, revisioned settlement, vertical scroll position, and unchanged Agenda range/content.
 - Add focused civil-week, formatting, preference, renderer, Settings, Calendar-screen, repository-contract, localization, and regression verification, plus revision-bound owner-device evidence.
 - Update current Calendar, Settings/storage, and feature-map Architecture Book guidance and its changelog for the T04 contract.
 
@@ -24,6 +24,6 @@ None.
 ## Impact
 
 - Affected runtime modules: pure Calendar week/day helpers and formatting exports, `mobile/src/features/calendar/renderer/owned-calendar-shell.tsx`, Calendar screen wiring, the typed Settings preference store/hooks, and the existing Settings hub.
-- Affected tests and harnesses: Calendar data/renderer/screen suites, Settings preference/hub suites, storage classification tests, localization catalogs, `mobile/calendar-owned-shell.contract.test.ts`, and the established Maestro selector/harness contracts.
+- Affected tests and harnesses: Calendar data/renderer/screen suites, including native page-progress/header synchronization and cancellation proofs; Settings preference/hub suites; storage classification tests; localization catalogs; `mobile/calendar-owned-shell.contract.test.ts`; and the established Maestro selector/harness contracts.
 - Affected documentation: Calendar and settings/storage current-state Architecture Book pages, feature map, changelog, and a T04 owner-device evidence note.
 - Existing React Native, date-fns/date-fns-tz, Expo Localization, MMKV, and PagerView seams are sufficient. No dependency, API/generated client, database schema or migration, native/store configuration, deployment/CI configuration, or legacy Flutter change is expected.

@@ -58,7 +58,7 @@ Settings SHALL own one typed `Show weekends` boolean through the existing `@/sto
 
 ### Requirement: T04 aligns dated headers and clock columns with a non-color Today cue
 
-The owned week surface SHALL render one committed date-header row beneath the existing native month/year title and above vertical clock motion. The row SHALL reserve the same fixed hour-gutter width as the timed surface and SHALL render one equal-width cell per visible date. Every previous/current/next clock page SHALL render the same count and ordering of equal-width day columns, with vertical boundaries aligned to the committed header structure at supported phone and portrait-tablet widths. Each header SHALL show a locale-aware weekday and calendar date. The effective display-zone date matching Today SHALL have a visible shape or typography cue in addition to any color and SHALL expose Today meaning semantically without becoming a selectable date control.
+The owned week surface SHALL render one vertically pinned, clipped date-header viewport beneath the existing native month/year title and above vertical clock motion. The viewport SHALL reserve the same fixed hour-gutter width as the timed surface and SHALL contain previous/current/next visual header slots derived from the same ordered column records as their clock pages. Each slot SHALL render one equal-width cell per visible date. The header strip SHALL follow the existing native pager's continuous horizontal position and offset so each visual header remains aligned with, and moves in the same direction and progress as, its clock page without adding another pager, responder, or gesture owner. Each header SHALL show a locale-aware weekday and calendar date. The effective display-zone date matching Today SHALL have a visible shape or typography cue in addition to any color and SHALL expose Today meaning semantically without becoming a selectable date control.
 
 #### Scenario: Seven dated columns align
 
@@ -78,11 +78,17 @@ The owned week surface SHALL render one committed date-header row beneath the ex
 - **THEN** that column has a visible non-color shape or typography distinction and localized Today semantics
 - **AND** changing only locale or device timezone cannot select the wrong display-zone date
 
-#### Scenario: Week headers stay pinned to committed context
+#### Scenario: Week headers stay vertically pinned and move with horizontal paging
 
 - **WHEN** the student scrolls vertically or holds an unsettled horizontal page transition
-- **THEN** the header remains visible and continues to label the committed week
-- **AND** only an accepted week settle replaces its dates together with the native title, canvas label, Agenda range, and page generation
+- **THEN** the header remains visible during vertical motion, and horizontal motion carries the source header out while the matching destination header and grid enter together
+- **AND** the native title, canvas label, Agenda range, committed anchor, and accessible date context remain on the settled revision until an accepted week settle
+
+#### Scenario: Cancelled horizontal motion recenters one coherent surface
+
+- **WHEN** a drag snaps back, app inactivity cancels motion, the generation is replaced, or a stale page callback arrives
+- **THEN** the header strip and native pager return to the center slot without committing or announcing a different week
+- **AND** no independently animated header, second pager settlement, or obsolete transform remains
 
 ### Requirement: T04 changes week presentation without filtering Agenda
 
@@ -224,7 +230,7 @@ Every enabled Calendar control at the T04 milestone SHALL produce an observable 
 
 ### Requirement: T02 paging is operable and announces only settled context
 
-The Calendar week surface SHALL expose translated previous-week and next-week accessibility actions as decrement/increment on the adjustable canvas. Each action SHALL enter the same one-page revisioned transition path as a swipe. No separate full-date row or visible arrow toolbar SHALL render. One committed localized weekday/date row SHALL render in the week columns beneath the native month/year title. Development builds SHALL show per-week preview labels, measured viewport bounds, and stable contrasting tints within the moving pages; production builds SHALL omit these diagnostics. Only an accepted changed-week settle SHALL announce the localized destination week once. Adjacent recycled pages MUST NOT create duplicate native focus trees, and reduced-motion operation SHALL settle without nonessential travel animation.
+The Calendar week surface SHALL expose translated previous-week and next-week accessibility actions as decrement/increment on the adjustable canvas. Each action SHALL enter the same one-page revisioned transition path as a swipe. No separate full-date row or visible arrow toolbar SHALL render. One vertically pinned localized weekday/date strip SHALL render beneath the native month/year title and move from the same native page-scroll progress as the clock pages. Its current slot SHALL remain the sole accessible committed date row until settlement. Development builds SHALL show per-week preview labels, measured viewport bounds, and stable contrasting tints within the moving pages; production builds SHALL omit these diagnostics. Only an accepted changed-week settle SHALL announce the localized destination week once. Adjacent recycled pages MUST NOT create duplicate native focus trees, and reduced-motion operation SHALL settle without nonessential travel animation.
 
 #### Scenario: Previous and next actions move one week
 
@@ -235,14 +241,14 @@ The Calendar week surface SHALL expose translated previous-week and next-week ac
 #### Scenario: One accepted settle produces one announcement
 
 - **WHEN** a current transition revision settles on a different week
-- **THEN** the localized settled week and dated columns update and the week is announced exactly once
+- **THEN** the localized settled week, centered header slot, and dated columns update and the week is announced exactly once
 - **AND** finger movement, snap-back, cancellation, stale completion, duplicate delivery, and preference changes produce no extra week announcement
 
 #### Scenario: Recycled neighbours are not duplicate semantics
 
 - **WHEN** assistive technology traverses the settled Calendar week
 - **THEN** it encounters one adjustable committed week context with labelled paging actions and one chronological committed date row
-- **AND** offscreen previous/next visual slots are hidden from the accessibility tree until committed
+- **AND** moving previous/next visual slots are hidden from the accessibility tree until their week becomes the centered committed generation
 
 #### Scenario: Reduced motion settles directly
 

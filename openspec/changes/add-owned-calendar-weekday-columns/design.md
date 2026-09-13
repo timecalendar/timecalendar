@@ -35,13 +35,15 @@ Alternatives considered:
 - Use `Date#getDay()` on display instants: rejected because device-local projection can disagree with the effective display zone.
 - Change page stepping to five dates when weekends are hidden: rejected because a page remains one complete launch week and must not drift across week boundaries.
 
-## Decision: Keep one committed header outside vertical motion and share the column model with every grid page
+## Decision: Project the existing pager's native progress into one vertically pinned header strip
 
-Render one header row between the native month/year title and the vertical clock viewport. It contains an hour-gutter-width spacer and one equal-flex cell for each visible committed-week date. The row remains vertically pinned and committed during a held horizontal transition, matching D02. On accepted settle, the screen anchor and header labels update with the same revision that replaces the centered three-page generation.
+Render a clipped date-header viewport between the native month/year title and the vertical clock viewport. It contains an hour-gutter-width spacer plus a passive three-slot strip for the previous, current, and next weeks. Every slot derives its cells from the same `pages` records as the matching clock page. The header stays outside the vertical `ScrollView`, so it remains pinned while reading later hours, but the strip translates horizontally from the existing `PagerView`'s native page position and offset. The source dates therefore leave the viewport while the destination dates enter at the same progress and in the same direction as the grid beneath them.
 
-Each previous/current/next pager page derives its own column records with the same `showWeekends`, first-weekday, and display-zone inputs. Its clock plane draws vertical boundaries from those equal-flex cells while retaining T03’s horizontal lines and full-day geometry. The shared ordered model and gutter width, rather than independently calculated percentages, are the alignment contract at narrow and tablet widths. Development page tints/labels remain diagnostic only and production pixels remain identical across the edge-to-center remount.
+`PagerView` remains the only horizontal gesture and settlement owner. The header strip has no responder, scroll view, pager, or independent animation clock; it is a render-only projection of the pager event. Its measured viewport width and the pager's normalized `position + offset` determine one translation, while the fixed header spacer and clock gutter remain stationary. The shared ordered column model, gutter width, and measured content lane are the alignment contract at narrow and tablet widths. Development page tints/labels remain diagnostic only and production pixels remain identical across the edge-to-center remount.
 
-A separate header `PagerView` is rejected because synchronizing two native pagers would add another motion owner and introduce a split-settlement race. Putting headers inside the vertical ScrollView is rejected because dates would disappear while reading later hours. Keeping one static committed header also preserves the approved rule that held motion does not relabel the old settled date context.
+The moving strip is visual transition state, not a second committed date context. Only the center slot exposes date semantics; neighbour slots are hidden from accessibility. During a held drag the native month/year title, adjustable canvas label, Agenda range, committed anchor, and accessible center dates remain on the settled revision even though the visual header previews the adjacent week. An accepted idle edge commits through the existing revision callback, remounts the same three-page generation around the destination, and recenters both pager and strip. Snap-back, AppState cancellation, generation replacement, and stale callbacks restore the center transform without changing or announcing a week. Reduced-motion programmatic paging uses the same pager path and may jump the passive strip directly rather than adding its own animation.
+
+A separate header `PagerView` is rejected because synchronizing two native pagers would add another gesture owner and a split-settlement race. A static header is rejected because it visually contradicts the moving grid and cannot satisfy synchronized-scroll QA. Putting headers inside the vertical `ScrollView` is rejected because dates would disappear while reading later hours. Driving header motion from JS timers or an independently started animation is rejected because it can drift from native drag, fling, cancellation, and snap-back progress.
 
 ## Decision: Represent Today by identity with both visual and semantic non-color cues
 
@@ -79,7 +81,8 @@ The owned-shell repository contract continues to reject vendor/fallback/duplicat
 - **Header and clock boundaries can drift by subpixels** → Reuse one ordered column count/model and equal-flex layout beside the same fixed gutter; test measured structure at five and seven columns.
 - **A timezone change can change which column is Today** → Derive Today from the effective display zone on render and cover midnight/zone boundaries with a controlled clock.
 - **A missing boolean is indistinguishable from a first install** → This is intentional: missing always means the approved default `true`; explicit `false` remains distinct and durable.
-- **Preference changes during native motion could alter width** → Apply one boolean consistently to the header and all three pages in one render; do not create a date revision or second pager. If native evidence shows an incoherent held transition, cancel/recenter through the existing generation path rather than adding synchronization machinery.
+- **Preference or geometry changes during native motion could alter width** → Apply one boolean consistently to every header/grid slot, update the measured transform lane atomically, and cancel/recenter through the existing generation path when a replacement invalidates held progress. Do not create a date revision or second pager.
+- **A JS-driven header transform could lag the native pager** → Bind the passive transform directly to the installed pager's native page-scroll event through the existing animation runtime, prove position/offset mapping and stale-generation rejection in focused tests, and require owner-device drag/fling/snap-back evidence.
 - **T04 could absorb later interaction or event scope** → Keep headers non-selectable and exclude event tiles, current time, day mode, zoom, and Agenda changes.
 
 ## Migration Plan
@@ -87,7 +90,7 @@ The owned-shell repository contract continues to reject vendor/fallback/duplicat
 1. Add and fully cover the pure civil-week column model and retain existing week arithmetic/formatting contracts.
 2. Add the default-true persisted setting through centralized storage classification, typed settings APIs, and reactive hooks.
 3. Add the Calendar-owned Settings switch and localized copy without adding a route.
-4. Wire the preference into Calendar and render the committed header plus matching five/seven-column clock planes on all three pages.
+4. Wire the preference into Calendar and render the vertically pinned, pager-progress-driven three-slot header plus matching five/seven-column clock planes from one page model.
 5. Update focused tests, repository contracts, Architecture Book current state/changelog, and revision-bound T04 owner evidence.
 6. Run local-green, strict OpenSpec validation, exact-head CI proof, and the ticket’s testable-build handoff; pause for the required owner QA and review path.
 
