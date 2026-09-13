@@ -92,7 +92,7 @@ fixed.
   pending explicit acceptance, and the paused next slice as separate clauses.
 - **[A broader edit manufactures evidence]** → Restrict the implementation diff to the one inbox
   note and preserve unchecked/pending lines verbatim.
-- **[The proposal itself outlives the correction]** → Archive the OpenSpec change after merge through
+- **[The proposal itself outlives the correction]** → Archive the OpenSpec change before merge through
   the standard pipeline; the inbox note remains the operational owner handoff.
 
 ## Migration Plan
