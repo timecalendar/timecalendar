@@ -5,7 +5,7 @@
 ## Testable build target
 
 The immutable corrected source revision is
-`763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`. Build a development app from that
+`a14333a9feb0fe47f62fb7270178542f2b21359f`. Build a development app from that
 revision for the pending owner checks; no native result below is attributed to a different
 build.
 
@@ -18,22 +18,22 @@ The T04 weekday/date labels belong to the week columns, without an extra date to
 
 Automated checks from `mobile/`:
 
-- `npm test -- --runInBand src/features/calendar/renderer/owned-calendar-shell.test.tsx src/features/calendar/ui/calendar-screen.test.tsx src/features/calendar/data/week-transition.test.ts src/features/calendar/data/week.test.ts calendar-owned-shell.contract.test.ts`: 5 suites, 71 tests passed.
+- `npm test -- --runInBand src/features/calendar/renderer/owned-calendar-shell.test.tsx src/features/calendar/ui/calendar-screen.test.tsx src/features/calendar/data/week-transition.test.ts src/features/calendar/data/week.test.ts calendar-owned-shell.contract.test.ts`: 5 suites, 72 tests passed.
 - `npx tsc --noEmit`: passed.
 - `npm run lint`: passed.
 - `npm run react-doctor:changed`: passed, no issues.
-- `npm test -- --coverage`: 177 suites and 1,658 tests passed; global coverage was 97.64%
+- `npm test -- --coverage`: 177 suites and 1,659 tests passed; global coverage was 97.64%
   statements and 92.12% branches.
 
 These commands ran against immutable source revision
-`763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`. The focused renderer test verifies that the
+`a14333a9feb0fe47f62fb7270178542f2b21359f`. The focused renderer test verifies that the
 destination animation target and replacement strip position keep the same page at the viewport
 origin, while the screen test pages beyond the initial slots in both directions.
 
 ## Build and fabricated fixture
 
 - Build kind: development build from revision
-  `763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`.
+  `a14333a9feb0fe47f62fb7270178542f2b21359f`.
 - Install: run `npm ci` from `mobile/`, then `npm run ios` or `npm run android` with a supported
   device attached.
 - Reset: fully reload the development bundle so no interrupted Fast Refresh motion remains.
@@ -48,7 +48,7 @@ origin, while the screen test pages beyond the initial slots in both directions.
 
 - Device / OS / platform: pending owner entry; no corrected native result is claimed yet.
 - Installed build / revision: pending owner build from
-  `763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`.
+  `a14333a9feb0fe47f62fb7270178542f2b21359f`.
 - Active refresh rate: pending owner entry; make no timing or smoothness claim without it.
 - VoiceOver or TalkBack enabled for announcement pass: pending owner entry.
 
@@ -78,5 +78,6 @@ origin, while the screen test pages beyond the initial slots in both directions.
 - Focused retest revision and evidence after any finding: pending if required.
 - Acceptance source and date: pending explicit owner acceptance.
 
-The PR remains unmerged with automatic merge disabled. The next owned-renderer ticket remains
-paused until this checklist, explicit owner acceptance, human review, and human merge are recorded.
+PR #410 was human-merged as `ffc2bd88cedaeaa9d2d2e9a0739d9305f22d1a6d`. The owner checklist
+and explicit acceptance remain pending, so the next renderer slice remains paused for that
+acceptance.
