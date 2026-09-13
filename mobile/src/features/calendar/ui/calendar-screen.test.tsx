@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -6,11 +7,14 @@ import {
   waitFor,
 } from "@testing-library/react-native"
 import { router, useLocalSearchParams } from "expo-router"
-import { Platform, StyleSheet } from "react-native"
+import { AccessibilityInfo, AppState, Platform, StyleSheet } from "react-native"
+import { State } from "react-native-gesture-handler"
+import { withTiming } from "react-native-reanimated"
 
 import {
   formatFullDay,
   formatMonthYear,
+  startOfWeekInZone,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
@@ -92,6 +96,7 @@ const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
 const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
 const mockSync = jest.fn()
+const mockAnnounce = jest.spyOn(AccessibilityInfo, "announceForAccessibility")
 
 function syncState(overrides = {}) {
   return {
@@ -122,6 +127,7 @@ function calendarEvent(overrides = {}) {
 }
 
 beforeEach(() => {
+  AppState.currentState = "active"
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
@@ -129,13 +135,18 @@ beforeEach(() => {
   mockSync.mockReset()
   mockPush.mockReset()
   mockSetParams.mockReset()
+  mockAnnounce.mockClear()
 })
 
 describe("CalendarScreen owned shell", () => {
   it("mounts and remounts the localized heading and full-bleed canvas", async () => {
     const first = await render(<CalendarScreen />)
-    const heading = formatFullDay(new Date(), "en", ZONE)
-    expect(screen.getByRole("header", { name: heading })).toBeOnTheScreen()
+    const heading = formatFullDay(
+      startOfWeekInZone(new Date(), ZONE, 1),
+      "en",
+      ZONE,
+    )
+    expect(screen.getByRole("adjustable", { name: heading })).toBeOnTheScreen()
     expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
     expect(
       StyleSheet.flatten(
@@ -145,7 +156,7 @@ describe("CalendarScreen owned shell", () => {
 
     await first.unmount()
     await render(<CalendarScreen />)
-    expect(screen.getByRole("header", { name: heading })).toBeOnTheScreen()
+    expect(screen.getByRole("adjustable", { name: heading })).toBeOnTheScreen()
     expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
   })
 
@@ -163,8 +174,8 @@ describe("CalendarScreen owned shell", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("header", {
-          name: formatFullDay(new Date(2026, 7, 6), "en", ZONE),
+        screen.getByRole("adjustable", {
+          name: formatFullDay(new Date(2026, 7, 3), "en", ZONE),
         }),
       ).toBeOnTheScreen()
       expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
@@ -180,8 +191,8 @@ describe("CalendarScreen owned shell", () => {
     await render(<CalendarScreen />)
 
     expect(
-      screen.getByRole("header", {
-        name: formatFullDay(new Date(), "en", ZONE),
+      screen.getByRole("adjustable", {
+        name: formatFullDay(startOfWeekInZone(new Date(), ZONE, 1), "en", ZONE),
       }),
     ).toBeOnTheScreen()
     expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
@@ -192,7 +203,7 @@ describe("CalendarScreen owned shell", () => {
     await render(<CalendarScreen />)
     await waitFor(() => {
       expect(
-        screen.getByText(formatMonthYear(new Date(2026, 7, 6), "en", ZONE)),
+        screen.getByText(formatMonthYear(new Date(2026, 7, 3), "en", ZONE)),
       ).toBeOnTheScreen()
     })
     expect(screen.getByTestId("calendar-today")).toBeOnTheScreen()
@@ -200,12 +211,202 @@ describe("CalendarScreen owned shell", () => {
     await fireEvent.press(screen.getByTestId("calendar-today"))
     await waitFor(() => {
       expect(
-        screen.getByRole("header", {
-          name: formatFullDay(new Date(), "en", ZONE),
+        screen.getByRole("adjustable", {
+          name: formatFullDay(
+            startOfWeekInZone(new Date(), ZONE, 1),
+            "en",
+            ZONE,
+          ),
         }),
       ).toBeOnTheScreen()
     })
     expect(screen.queryByTestId("calendar-today")).toBeNull()
+  })
+
+  it("commits one next week to the heading, native title, Agenda range, and announcement", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
+    await render(<CalendarScreen />)
+    await waitFor(() => {
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(new Date(2026, 7, 31), "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+    })
+
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+
+    const destination = new Date(2026, 8, 7)
+    await waitFor(() => {
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(destination, "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+      expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
+        formatMonthYear(destination, "en", ZONE),
+      )
+    })
+    const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
+    expect(range.from).toEqual(destination)
+    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    expect(mockAnnounce).toHaveBeenCalledWith(
+      formatFullDay(destination, "en", ZONE),
+    )
+    expect(
+      screen.getAllByTestId(/^owned-calendar-page--?\d$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(3)
+  })
+
+  it("commits a deferred settle after the request rerenders the controller", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
+    await render(<CalendarScreen />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    jest.mocked(withTiming).mockClear()
+    jest.mocked(withTiming).mockImplementationOnce((value) => value)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      {
+        nativeEvent: { actionName: "increment" },
+      },
+    )
+    const completion = jest.mocked(withTiming).mock.calls[0]?.[2]
+    expect(completion).toBeDefined()
+    await act(async () => completion?.(true, undefined))
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+  })
+
+  it("pages past the initial three slots in both directions with deferred native settlements", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
+    await render(<CalendarScreen />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    let day = 7
+    for (const direction of [1, 1, 1, 1, -1, -1, -1, -1, -1]) {
+      jest.mocked(withTiming).mockClear()
+      jest.mocked(withTiming).mockImplementationOnce((value) => value)
+      for (const state of [State.BEGAN, State.ACTIVE, State.END]) {
+        const canvas = screen.getByTestId("owned-calendar-canvas")
+        await fireEvent(canvas, "gestureHandlerStateChange", {
+          nativeEvent: {
+            handlerTag: canvas.props.handlerTag,
+            state,
+            translationX: -direction * 200,
+            velocityX: 0,
+          },
+        })
+      }
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(new Date(2026, 8, day), "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+      const completion = jest.mocked(withTiming).mock.calls[0]?.[2]
+      expect(completion).toBeDefined()
+      await act(async () => completion?.(true, undefined))
+      day += direction * 7
+      expect(
+        screen.getByRole("adjustable", {
+          name: formatFullDay(new Date(2026, 8, day), "en", ZONE),
+        }),
+      ).toBeOnTheScreen()
+      expect(mockUseCalendarEvents.mock.calls.at(-1)?.[0].from).toEqual(
+        new Date(2026, 8, day),
+      )
+      expect(
+        screen.getAllByTestId(/^owned-calendar-page--?\d$/, {
+          includeHiddenElements: true,
+        }),
+      ).toHaveLength(3)
+    }
+    expect(mockAnnounce).toHaveBeenCalledTimes(9)
+  })
+
+  it("discards a settle interrupted by iOS inactivity and resumes from the committed week", async () => {
+    const listener = jest.mocked(AppState.addEventListener)
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
+    await render(<CalendarScreen />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    jest.mocked(withTiming).mockClear()
+    jest.mocked(withTiming).mockImplementationOnce((value) => value)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    const completion = jest.mocked(withTiming).mock.calls[0]?.[2]
+    const onState = listener.mock.calls.findLast(
+      ([type]) => type === "change",
+    )?.[1]
+    expect(onState).toBeDefined()
+    await act(async () => {
+      onState?.("inactive")
+      onState?.("background")
+    })
+    await act(async () => completion?.(true, undefined))
+    await act(async () => onState?.("active"))
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(mockAnnounce).not.toHaveBeenCalled()
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    listener.mockClear()
+  })
+
+  it("discards a completion superseded by Today", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
+    jest.mocked(withTiming).mockImplementationOnce((value) => value)
+    await render(<CalendarScreen />)
+    await waitFor(() => {
+      expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
+    })
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    const staleCompletion = jest.mocked(withTiming).mock.calls[0]?.[2]
+
+    await fireEvent.press(screen.getByTestId("calendar-today"))
+    await act(async () => staleCompletion?.(true, undefined))
+
+    const todayWeek = startOfWeekInZone(new Date(), ZONE, 1)
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(todayWeek, "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(mockAnnounce).not.toHaveBeenCalled()
   })
 })
 
@@ -350,9 +551,9 @@ describe("CalendarScreen display-zone heading", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("header", {
+        screen.getByRole("adjustable", {
           name: formatFullDay(
-            new Date("2026-06-15T13:00:00.000Z"),
+            new Date("2026-06-14T13:00:00.000Z"),
             "en",
             "Pacific/Noumea",
           ),

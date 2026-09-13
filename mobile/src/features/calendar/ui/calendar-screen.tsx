@@ -1,7 +1,13 @@
 import { router } from "expo-router"
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { Platform, RefreshControl, StyleSheet, View } from "react-native"
+import {
+  AccessibilityInfo,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
@@ -36,7 +42,27 @@ export function CalendarScreen() {
     range,
     canGoToToday,
     goToToday,
+    rendererGeneration,
+    rendererPagePosition,
+    transitionRevision,
+    acceptedTransitionRevision,
+    requestTransition,
+    settleTransition,
+    cancelTransition,
   } = useCalendarScreenController()
+  const weekHeading = formatFullDay(selectedDate, locale, displayZone)
+  const announcedRevision = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (
+      acceptedTransitionRevision === null ||
+      acceptedTransitionRevision === announcedRevision.current
+    ) {
+      return
+    }
+    announcedRevision.current = acceptedTransitionRevision
+    AccessibilityInfo.announceForAccessibility(weekHeading)
+  }, [acceptedTransitionRevision, weekHeading])
   const events = useCalendarEvents(range)
   const eventUids = useMemo(() => events.map((event) => event.id), [events])
   const checklistProgress = useChecklistProgress(eventUids)
@@ -101,7 +127,15 @@ export function CalendarScreen() {
             </View>
           ) : (
             <OwnedCalendarShell
-              heading={formatFullDay(selectedDate, locale, displayZone)}
+              heading={weekHeading}
+              anchor={selectedDate}
+              displayZone={displayZone}
+              generation={rendererGeneration}
+              pagePosition={rendererPagePosition}
+              revisionFloor={transitionRevision}
+              onTransitionRequest={requestTransition}
+              onTransitionSettled={settleTransition}
+              onTransitionCancelled={cancelTransition}
             />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}

@@ -18,6 +18,9 @@ The empty week has dated Monday-to-Sunday columns and a persistent Show weekends
 ## Scope
 
 - Lay out one complete week with localized weekday/date headers and a non-color Today cue.
+  These labels belong to the columns beneath the existing native month/year title. There is
+  no separate full-date row or arrow toolbar. Development paging placeholders give way to
+  the dated columns.
 
 - Add Settings > Calendar > Show weekends, enabled by default and persisted through the existing settings seam.
 
