@@ -97,7 +97,7 @@ describe("owned Calendar paging repository contract", () => {
     ).toBe(true)
   })
 
-  it("keeps one native vertical owner and the installed native pager", () => {
+  it("keeps one native vertical owner and one pager with a passive header projection", () => {
     const renderer = readFileSync(
       join(root, "src/features/calendar/renderer/owned-calendar-shell.tsx"),
       "utf8",
@@ -110,7 +110,21 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
     expect(renderer).toContain("weekColumns")
     expect(renderer).toContain('testID="owned-calendar-date-header"')
-    expect(renderer).not.toMatch(/PanGestureHandler|withTiming|useSharedValue/)
+    expect(renderer).toContain('testID="owned-calendar-date-header-viewport"')
+    expect(renderer).toContain('testID="owned-calendar-date-header-strip"')
+    expect(renderer).toContain("pages={pages}")
+    expect(renderer).toContain("onPageScroll={onPageScroll}")
+    expect(renderer).toContain("position: pageScrollPosition")
+    expect(renderer).toContain("offset: pageScrollOffset")
+    expect(renderer).toContain("useNativeDriver: true")
+    expect(renderer).toContain('overflow: "hidden"')
+    expect(renderer).toContain('left: "-100%"')
+    expect(renderer).toContain('width: "300%"')
+    expect(renderer).toContain('page.direction === 0 ? "auto"')
+    expect(renderer).toContain('"no-hide-descendants"')
+    expect(renderer).not.toMatch(
+      /PanGestureHandler|withTiming|useSharedValue|Animated\.timing|setInterval/,
+    )
   })
 
   it("keeps weekend persistence in the typed settings and storage seams", () => {

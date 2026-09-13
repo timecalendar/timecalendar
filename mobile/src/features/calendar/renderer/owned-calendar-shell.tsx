@@ -1,7 +1,16 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { useTranslation } from "react-i18next"
 import {
+  Animated,
   AppState,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   ScrollView,
@@ -9,6 +18,7 @@ import {
   View,
 } from "react-native"
 import PagerView, {
+  type PagerViewOnPageScrollEvent,
   type PagerViewOnPageSelectedEvent,
   type PageScrollStateChangedNativeEvent,
 } from "react-native-pager-view"
@@ -55,6 +65,14 @@ function stableTintIndex(key: string) {
       return total + character.charCodeAt(0)
     }, 0) % 3
   )
+}
+
+function createHeaderProgress(contextKey: string) {
+  return {
+    contextKey,
+    position: new Animated.Value(CENTER_PAGE),
+    offset: new Animated.Value(0),
+  }
 }
 
 type OwnedCalendarShellProps = {
@@ -116,6 +134,7 @@ export function OwnedCalendarShell({
   const reduceMotion = useReducedMotion()
   const pagerRef = useRef<PagerView>(null)
   const scrollRef = useRef<ScrollView>(null)
+  const [headerLaneWidth, setHeaderLaneWidth] = useState(0)
   const revisionRef = useRef(revisionFloor)
   const pendingRevisionRef = useRef<number | null>(null)
   const onTransitionCancelledRef = useRef(onTransitionCancelled)
@@ -126,12 +145,73 @@ export function OwnedCalendarShell({
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
+  const previousShowWeekendsRef = useRef(showWeekends)
+  const headerProgressContext = `${generation}:${headerLaneWidth}:${showWeekends}`
+  const headerProgress = useMemo(
+    () => createHeaderProgress(headerProgressContext),
+    [headerProgressContext],
+  )
+  const pageScrollPosition = headerProgress.position
+  const pageScrollOffset = headerProgress.offset
+  const pageScrollPositionRef = useRef(pageScrollPosition)
+  const pageScrollOffsetRef = useRef(pageScrollOffset)
   const pages = useMemo(
     () => calendarPages(anchor, displayZone, firstWeekday, showWeekends),
     [anchor, displayZone, firstWeekday, showWeekends],
   )
-  const committedColumns = pages[CENTER_PAGE]!.columns
   const todayKey = dayKey(currentDate, displayZone)
+  const headerTranslateX = useMemo(
+    () =>
+      Animated.multiply(
+        Animated.subtract(
+          CENTER_PAGE,
+          Animated.add(pageScrollPosition, pageScrollOffset),
+        ),
+        headerLaneWidth,
+      ),
+    [headerLaneWidth, pageScrollOffset, pageScrollPosition],
+  )
+  const onPageScroll = useMemo(
+    () =>
+      Animated.event<PagerViewOnPageScrollEvent>(
+        [
+          {
+            nativeEvent: {
+              position: pageScrollPosition,
+              offset: pageScrollOffset,
+            },
+          },
+        ],
+        { useNativeDriver: true },
+      ),
+    [pageScrollOffset, pageScrollPosition],
+  )
+
+  const resetHeaderProgress = useCallback(() => {
+    pageScrollPositionRef.current.setValue(CENTER_PAGE)
+    pageScrollOffsetRef.current.setValue(0)
+  }, [])
+
+  const cancelHorizontalTransition = useCallback(
+    (recenterPager: boolean) => {
+      const revision = pendingRevisionRef.current
+      if (revision !== null) {
+        pendingRevisionRef.current = null
+        onTransitionCancelledRef.current(revision)
+      }
+      selectedPageRef.current = CENTER_PAGE
+      resetHeaderProgress()
+      if (recenterPager) pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
+    },
+    [resetHeaderProgress],
+  )
+
+  const onHeaderLaneLayout = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width
+    if (width === headerLaneWidth) return
+    if (headerLaneWidth > 0) cancelHorizontalTransition(true)
+    setHeaderLaneWidth(width)
+  }
 
   const cancelVerticalCandidate = () => {
     if (verticalFrameRef.current !== null) {
@@ -182,7 +262,12 @@ export function OwnedCalendarShell({
     event: PageScrollStateChangedNativeEvent,
   ) => {
     if (currentGenerationRef.current !== generation) return
-    if (event.nativeEvent.pageScrollState === "idle") settleSelectedPage()
+    if (event.nativeEvent.pageScrollState !== "idle") return
+    if (selectedPageRef.current === CENTER_PAGE) {
+      cancelHorizontalTransition(false)
+      return
+    }
+    settleSelectedPage()
   }
 
   const requestAccessiblePage = (
@@ -222,15 +307,21 @@ export function OwnedCalendarShell({
   }, [onTransitionCancelled])
 
   useLayoutEffect(() => {
+    pageScrollPositionRef.current = pageScrollPosition
+    pageScrollOffsetRef.current = pageScrollOffset
+  }, [pageScrollOffset, pageScrollPosition])
+
+  useLayoutEffect(() => {
     currentGenerationRef.current = generation
-    selectedPageRef.current = CENTER_PAGE
     consumedGenerationRef.current = null
-    const revision = pendingRevisionRef.current
-    if (revision !== null) {
-      pendingRevisionRef.current = null
-      onTransitionCancelledRef.current(revision)
-    }
-  }, [generation])
+    cancelHorizontalTransition(false)
+  }, [cancelHorizontalTransition, generation])
+
+  useLayoutEffect(() => {
+    if (previousShowWeekendsRef.current === showWeekends) return
+    previousShowWeekendsRef.current = showWeekends
+    cancelHorizontalTransition(true)
+  }, [cancelHorizontalTransition, showWeekends])
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -241,13 +332,7 @@ export function OwnedCalendarShell({
         verticalFrameRef.current = null
       }
       verticalCandidateRef.current = null
-      const revision = pendingRevisionRef.current
-      if (revision !== null) {
-        pendingRevisionRef.current = null
-        onTransitionCancelledRef.current(revision)
-      }
-      selectedPageRef.current = CENTER_PAGE
-      pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
+      cancelHorizontalTransition(true)
       scrollRef.current?.scrollTo({
         y: committedVerticalOffsetRef.current,
         animated: false,
@@ -264,7 +349,7 @@ export function OwnedCalendarShell({
         onTransitionCancelledRef.current(revision)
       }
     }
-  }, [])
+  }, [cancelHorizontalTransition])
 
   return (
     <View
@@ -273,10 +358,12 @@ export function OwnedCalendarShell({
       style={[styles.shell, { backgroundColor: theme.background }]}
     >
       <OwnedCalendarDateHeader
-        columns={committedColumns}
+        pages={pages}
         locale={locale}
         displayZone={displayZone}
         todayKey={todayKey}
+        translateX={headerTranslateX}
+        onLaneLayout={onHeaderLaneLayout}
       />
       <ScrollView
         ref={scrollRef}
@@ -341,6 +428,7 @@ export function OwnedCalendarShell({
             initialPage={CENTER_PAGE}
             offscreenPageLimit={1}
             overdrag={false}
+            onPageScroll={onPageScroll}
             onPageSelected={onPageSelected}
             onPageScrollStateChanged={onPageScrollStateChanged}
             accessible={false}
@@ -391,15 +479,19 @@ export function OwnedCalendarShell({
 }
 
 function OwnedCalendarDateHeader({
-  columns,
+  pages,
   locale,
   displayZone,
   todayKey,
+  translateX,
+  onLaneLayout,
 }: {
-  columns: WeekColumn[]
+  pages: ReturnType<typeof calendarPages>
   locale: AppLocale
   displayZone: string
   todayKey: string
+  translateX: Animated.AnimatedMultiplication<number>
+  onLaneLayout: (event: LayoutChangeEvent) => void
 }) {
   const { t } = useTranslation()
   const theme = useTheme()
@@ -420,50 +512,81 @@ function OwnedCalendarDateHeader({
         importantForAccessibility="no-hide-descendants"
         style={[styles.dateHeaderGutter, { borderColor: theme.separator }]}
       />
-      {columns.map((column) => {
-        const parts = formatDayHeaderParts(column.date, locale, displayZone)
-        const isToday = column.key === todayKey
-        const dateLabel = `${parts.weekday} ${parts.dayOfMonth}`
-        return (
-          <View
-            key={column.key}
-            testID={`owned-calendar-date-${column.key}`}
-            accessible
-            accessibilityLabel={
-              isToday ? `${dateLabel}, ${t("calendar.today")}` : dateLabel
-            }
-            style={styles.dateHeaderCell}
-          >
-            <ThemedText
-              accessible={false}
-              type={isToday ? "smallBold" : "small"}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-              style={styles.weekdayLabel}
-            >
-              {parts.weekday}
-            </ThemedText>
+      <View
+        testID="owned-calendar-date-header-viewport"
+        style={styles.dateHeaderViewport}
+        onLayout={onLaneLayout}
+      >
+        <Animated.View
+          testID="owned-calendar-date-header-strip"
+          pointerEvents="none"
+          style={[styles.dateHeaderStrip, { transform: [{ translateX }] }]}
+        >
+          {pages.map((page) => (
             <View
+              key={page.key}
+              testID={`owned-calendar-date-header-slot-${page.direction}`}
               accessible={false}
-              style={[
-                styles.dateBadge,
-                isToday && {
-                  borderColor: theme.primary,
-                  backgroundColor: theme.primarySoft,
-                },
-              ]}
+              accessibilityElementsHidden={page.direction !== 0}
+              importantForAccessibility={
+                page.direction === 0 ? "auto" : "no-hide-descendants"
+              }
+              style={styles.dateHeaderSlot}
             >
-              <ThemedText
-                accessible={false}
-                type={isToday ? "smallBold" : "small"}
-              >
-                {parts.dayOfMonth}
-              </ThemedText>
+              {page.columns.map((column) => {
+                const parts = formatDayHeaderParts(
+                  column.date,
+                  locale,
+                  displayZone,
+                )
+                const isToday = column.key === todayKey
+                const dateLabel = `${parts.weekday} ${parts.dayOfMonth}`
+                return (
+                  <View
+                    key={column.key}
+                    testID={`owned-calendar-date-${page.direction}-${column.key}`}
+                    accessible={page.direction === 0}
+                    accessibilityLabel={
+                      isToday
+                        ? `${dateLabel}, ${t("calendar.today")}`
+                        : dateLabel
+                    }
+                    style={styles.dateHeaderCell}
+                  >
+                    <ThemedText
+                      accessible={false}
+                      type={isToday ? "smallBold" : "small"}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                      style={styles.weekdayLabel}
+                    >
+                      {parts.weekday}
+                    </ThemedText>
+                    <View
+                      accessible={false}
+                      style={[
+                        styles.dateBadge,
+                        isToday && {
+                          borderColor: theme.primary,
+                          backgroundColor: theme.primarySoft,
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        accessible={false}
+                        type={isToday ? "smallBold" : "small"}
+                      >
+                        {parts.dayOfMonth}
+                      </ThemedText>
+                    </View>
+                  </View>
+                )
+              })}
             </View>
-          </View>
-        )
-      })}
+          ))}
+        </Animated.View>
+      </View>
     </View>
   )
 }
@@ -539,6 +662,16 @@ const styles = StyleSheet.create({
     width: HOURS_COLUMN_WIDTH,
     borderRightWidth: StyleSheet.hairlineWidth,
   },
+  dateHeaderViewport: { flex: 1, overflow: "hidden" },
+  dateHeaderStrip: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: "-100%",
+    width: "300%",
+    flexDirection: "row",
+  },
+  dateHeaderSlot: { flex: 1, flexDirection: "row" },
   dateHeaderCell: {
     flex: 1,
     minWidth: 0,

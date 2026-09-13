@@ -21,13 +21,19 @@ UIKit's computed adjusted inset; restoration lets the native ScrollView clamp ag
 current geometry. Calendar tab reselect-to-top is disabled. The ScrollView
 exposes the committed localized week date as an adjustable accessibility label with
 translated previous/next actions.
-One committed weekday/date row remains above vertical motion beneath the native month title. It
-uses the same fixed gutter and ordered column model as all three pages. Monday is an explicit
-launch input; the pure display-zone civil-week model returns Monday through Sunday by default and
-removes Saturday/Sunday by weekday identity when the persisted Show weekends preference is off.
-Paging and Agenda still advance and read seven civil days. Today is identified in the effective
-display zone and has both a typography/outlined-shape cue and localized semantics. There is no
-additional single-date header or permanent paging toolbar.
+One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native
+month title. Its fixed spacer matches the hour gutter, and its previous/current/next slots reuse the
+same ordered column records as the three clock pages. The installed pager's native `position` and
+`offset` drive the strip transform across the measured content lane, so there is no second pager,
+responder, timer, or animation owner. Only the centered committed slot is accessible; moving
+neighbours stay hidden until accepted idle settlement rebuilds the centered generation. Snap-back,
+AppState inactivity, generation replacement, and preference or lane-geometry replacement recenter
+both surfaces without committing a week. Monday is an explicit launch input; the pure display-zone
+civil-week model returns Monday through Sunday by default and removes Saturday/Sunday by weekday
+identity when the persisted Show weekends preference is off. Paging and Agenda still advance and
+read seven civil days. Today is identified in the effective display zone and has both a
+typography/outlined-shape cue and localized semantics. There is no additional single-date header or
+permanent paging toolbar.
 
 Pager selection is recorded independently from pager state and commits only when the native
 pager reports idle at an edge. The accepted generation remounts the same three direct,

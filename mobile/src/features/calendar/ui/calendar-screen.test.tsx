@@ -211,7 +211,7 @@ describe("CalendarScreen owned shell", () => {
     await render(<CalendarScreen />)
     await waitFor(() => {
       expect(
-        screen.getAllByTestId(/^owned-calendar-date-\d{4}-\d{2}-\d{2}$/),
+        screen.getAllByTestId(/^owned-calendar-date-0-\d{4}-\d{2}-\d{2}$/),
       ).toHaveLength(7)
     })
     await fireEvent(
@@ -229,7 +229,7 @@ describe("CalendarScreen owned shell", () => {
 
     await act(async () => setShowWeekends(false))
     expect(
-      screen.getAllByTestId(/^owned-calendar-date-\d{4}-\d{2}-\d{2}$/),
+      screen.getAllByTestId(/^owned-calendar-date-0-\d{4}-\d{2}-\d{2}$/),
     ).toHaveLength(5)
     expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
       "contentOffset",

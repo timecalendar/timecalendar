@@ -15,6 +15,9 @@ jest.mock("react-native-pager-view", () => {
   const PagerView = React.forwardRef(function PagerView(
     props: {
       children?: unknown
+      onPageScroll?: (event: {
+        nativeEvent: { position: number; offset: number }
+      }) => void
       onPageSelected?: (event: { nativeEvent: { position: number } }) => void
       onPageScrollStateChanged?: (event: {
         nativeEvent: { pageScrollState: "idle" | "dragging" | "settling" }
@@ -55,6 +58,7 @@ jest.mock("react-native-pager-view", () => {
       View,
       {
         testID: props.testID,
+        onPageScroll: props.onPageScroll,
         onPageSelected: props.onPageSelected,
         onPageScrollStateChanged: props.onPageScrollStateChanged,
         initialPage: props.initialPage,
