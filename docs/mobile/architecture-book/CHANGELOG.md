@@ -2,6 +2,11 @@
 
 ## 2026-09-12
 
+- Added T02 one-week paging to the empty owned Calendar shell: explicit Monday-first civil
+  arithmetic, a bounded previous/current/next strip, UI-thread gesture translation, revisioned
+  atomic settlement, reduced-motion behavior, labelled platform-sized controls, hidden neighbour
+  semantics, and one accepted-week announcement. Hour grids, columns, events, vertical scrolling,
+  day mode, pinch/zoom, and far-date controls remain absent.
 - Replaced the patched third-party Calendar timeline with the T01 feature-owned React Native
   shell: one localized semantic date heading and stable themed canvas, with Week/Agenda as the
   only working view choices. Agenda refresh, checklist progress, stored-event access, and unified

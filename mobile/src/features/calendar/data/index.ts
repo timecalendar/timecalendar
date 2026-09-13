@@ -56,3 +56,19 @@ export {
   nowIndicatorPosition,
 } from "./time-grid"
 export { type CalendarEvent } from "./types"
+export {
+  type FirstWeekday,
+  shiftWeekInZone,
+  startOfWeekInZone,
+  type WeekDirection,
+} from "./week"
+export {
+  cancelWeekTransition,
+  createWeekTransitionState,
+  replaceWeekTransitionAnchor,
+  requestWeekTransition,
+  settleWeekTransition,
+  type WeekTransitionRequest,
+  type WeekTransitionSource,
+  type WeekTransitionState,
+} from "./week-transition"

@@ -20,6 +20,15 @@ jest.mock("react-native-reanimated", () => {
     useAnimatedStyle: jest.fn((updater: () => Record<string, unknown>) =>
       updater(),
     ),
+    // The supported mock leaves useEvent inert. Preserve its handler shape so
+    // Gesture Handler's Jest utility can deliver nativeEvent payloads through
+    // the same production event seam.
+    useEvent: jest.fn(
+      <Event extends object>(handler: (event: Event) => void) =>
+        (event: Event | { nativeEvent: Event }) =>
+          handler("nativeEvent" in event ? event.nativeEvent : event),
+    ),
+    useReducedMotion: jest.fn(() => false),
     useSharedValue: jest.fn(
       <Value>(initial: Value) =>
         useRef(reanimated.useSharedValue(initial)).current,

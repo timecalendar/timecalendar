@@ -21,9 +21,14 @@ A horizontal swipe moves the empty calendar exactly one week and updates its set
 
 - Keep the previous settled heading during finger-held movement; commit page/date/heading together and discard stale completions.
 
-- Keep only the current page, immediate neighbours and one pending replacement generation; add labelled previous/next actions and one settled announcement.
+- Keep only the current page, immediate neighbours and one pending replacement generation; expose labelled previous/next screen-reader actions on the adjustable canvas and one settled announcement.
 
 - Capture first focused paging/frame/retained-page evidence for D04/D05; tune the slice rather than create a second prototype by default.
+
+The native month/year title is the sole page header. There is no secondary full-date row
+or visible arrow toolbar. Development-only labels, measured viewport bounds, and stable
+week tints make dragging and settling observable; T04 places dated weekday labels in the
+columns beneath the native title.
 
 ## Non-goals
 
@@ -47,7 +52,7 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 ## Acceptance and verification
 
-- Test one-fling/one-page, reversal/cancellation, repeated button delivery, week arithmetic across month/year/DST boundaries and stable retained page count.
+- Test one-fling/one-page, reversal/cancellation, repeated accessibility-action delivery, week arithmetic across month/year/DST boundaries and stable retained page count.
 
 - Record held-drag and rapid-swipe native behavior; identify active refresh rate if making timing claims.
 
@@ -55,11 +60,11 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 ## Owner QA checklist
 
-**Preparation:** Agent opens the empty week at Monday 2026-09-14, with labelled previous/next actions. Early iOS and Android gesture testing is valuable; record the actual device/build.
+**Preparation:** Agent opens the empty week at Monday 2026-09-14, with labelled previous/next screen-reader actions and development page markers. Early iOS and Android gesture testing is valuable; record the actual device/build.
 
-- [ ] Drag halfway and hold: the heading still names the original week.
+- [ ] Drag halfway and hold: the native title and canvas accessibility label still represent the original week.
 
-- [ ] Release to settle: canvas/date heading agree on the destination week.
+- [ ] Release to settle: canvas/date context agree on the destination week.
 
 - [ ] Fling quickly: it moves one week, never two or a partial week.
 
