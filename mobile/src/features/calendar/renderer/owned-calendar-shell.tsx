@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AppState,
@@ -126,14 +126,12 @@ export function OwnedCalendarShell({
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
-  const committedColumns = weekColumns(
-    anchor,
-    displayZone,
-    firstWeekday,
-    showWeekends,
+  const pages = useMemo(
+    () => calendarPages(anchor, displayZone, firstWeekday, showWeekends),
+    [anchor, displayZone, firstWeekday, showWeekends],
   )
+  const committedColumns = pages[CENTER_PAGE]!.columns
   const todayKey = dayKey(currentDate, displayZone)
-  const pages = calendarPages(anchor, displayZone, firstWeekday, showWeekends)
 
   const cancelVerticalCandidate = () => {
     if (verticalFrameRef.current !== null) {
