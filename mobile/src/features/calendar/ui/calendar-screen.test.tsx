@@ -6,6 +6,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
+import * as Localization from "expo-localization"
 import { router, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo, AppState, Platform, StyleSheet } from "react-native"
 import { State } from "react-native-gesture-handler"
@@ -97,6 +98,18 @@ const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
 const mockSync = jest.fn()
 const mockAnnounce = jest.spyOn(AccessibilityInfo, "announceForAccessibility")
+const mockUseCalendars = jest.spyOn(Localization, "useCalendars")
+
+function deviceCalendars(uses24hourClock: boolean | null) {
+  return [
+    {
+      calendar: "gregory",
+      uses24hourClock,
+      firstWeekday: 1,
+      timeZone: ZONE,
+    },
+  ] as unknown as ReturnType<typeof Localization.useCalendars>
+}
 
 function syncState(overrides = {}) {
   return {
@@ -136,9 +149,55 @@ beforeEach(() => {
   mockPush.mockReset()
   mockSetParams.mockReset()
   mockAnnounce.mockClear()
+  mockUseCalendars.mockReturnValue(deviceCalendars(true))
 })
 
 describe("CalendarScreen owned shell", () => {
+  it.each([
+    [false, "12 AM"],
+    [true, "00:00"],
+    [null, "00:00"],
+  ] as const)(
+    "passes the device clock preference %s to the gutter",
+    async (preference, midnight) => {
+      mockUseCalendars.mockReturnValue(deviceCalendars(preference))
+      await render(<CalendarScreen />)
+      expect(
+        screen.getByTestId("owned-calendar-hour-label-0", {
+          includeHiddenElements: true,
+        }),
+      ).toHaveTextContent(midnight)
+    },
+  )
+
+  it("restores a settled vertical offset after switching through Agenda", async () => {
+    await render(<CalendarScreen />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    for (const state of [State.BEGAN, State.ACTIVE, State.END]) {
+      const canvas = screen.getByTestId("owned-calendar-canvas")
+      await fireEvent(canvas, "gestureHandlerStateChange", {
+        nativeEvent: {
+          handlerTag: canvas.props.handlerTag,
+          state,
+          translationX: 0,
+          translationY: state === State.BEGAN ? 0 : -400,
+          velocityX: 0,
+          velocityY: 0,
+        },
+      })
+    }
+    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await fireEvent.press(screen.getByTestId("calendar-view-item-week"))
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-gutter-clock").props.style,
+      ),
+    ).toMatchObject({ transform: [{ translateY: -400 }] })
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
   it("mounts and remounts the localized heading and full-bleed canvas", async () => {
     const first = await render(<CalendarScreen />)
     const heading = formatFullDay(

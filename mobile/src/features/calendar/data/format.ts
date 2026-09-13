@@ -28,6 +28,23 @@ export function resolveLocale(language: string): AppLocale {
   return language.startsWith("fr") ? "fr" : "en"
 }
 
+/** Formats a normalized 0–23 hour start from an explicit device preference. */
+export function formatHourStartLabel(
+  hour: number,
+  locale: AppLocale,
+  uses24HourClock: boolean | null,
+): string {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    throw new RangeError("hour must be an integer from 0 through 23")
+  }
+  if (uses24HourClock !== false) return `${String(hour).padStart(2, "0")}:00`
+  return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+    hour: "numeric",
+    hourCycle: "h12",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2020, 0, 1, hour)))
+}
+
 // The day header's two parts (Flutter `fullDayToShortDay` + `day.day`): the short
 // weekday abbreviation UPPERCASED ("LUN" / "MON") + the day-of-month number.
 export function formatDayHeaderParts(

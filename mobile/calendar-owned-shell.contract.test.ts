@@ -26,7 +26,7 @@ function productionCalendarFiles(): string[] {
 }
 
 describe("owned Calendar paging repository contract", () => {
-  it("compiles the resting-offset helper for the native UI runtime", () => {
+  it("compiles the motion and gesture helpers for the native UI runtime", () => {
     // Jest's animation mocks do not enforce the native runtime boundary.
     const compiled = execFileSync(
       process.execPath,
@@ -45,6 +45,20 @@ describe("owned Calendar paging repository contract", () => {
       { cwd: root, encoding: "utf8" },
     )
     expect(compiled).toMatch(/restingTranslation\.__workletHash\s*=/)
+    const gesture = execFileSync(
+      process.execPath,
+      [
+        "-e",
+        `const babel = require("@babel/core");
+         const result = babel.transformFileSync(
+           "src/features/calendar/renderer/gesture-state.ts",
+           { envName: "development", caller: { name: "metro", platform: "ios", isDev: true } }
+         );
+         process.stdout.write(result.code);`,
+      ],
+      { cwd: root, encoding: "utf8" },
+    )
+    expect(gesture).toMatch(/updateGestureDecision\.__workletHash\s*=/)
   })
 
   it("keeps the vendor dependency, adapter, patch, and exclusive config absent", () => {
@@ -70,6 +84,8 @@ describe("owned Calendar paging repository contract", () => {
   it("keeps one owned renderer with no vendor, fallback, or compatibility path", () => {
     const rendererRoot = join(root, "src", "features", "calendar", "renderer")
     expect(readdirSync(rendererRoot).sort()).toEqual([
+      "gesture-state.test.ts",
+      "gesture-state.ts",
       "index.ts",
       "owned-calendar-shell.test.tsx",
       "owned-calendar-shell.tsx",
@@ -102,6 +118,10 @@ describe("owned Calendar paging repository contract", () => {
       "utf8",
     )
     expect(renderer).toMatch(/<PanGestureHandler\b[^>]*>\s*<Animated\.View\b/)
+    expect(renderer).toMatch(/minPointers=\{1\}/)
+    expect(renderer).toMatch(/maxPointers=\{1\}/)
+    expect(renderer).toMatch(/cancelsTouchesInView/)
+    expect(renderer).toMatch(/shouldCancelWhenOutside=\{false\}/)
   })
 
   it("keeps snap-back on the UI runtime instead of queuing a guarded JS callback", () => {

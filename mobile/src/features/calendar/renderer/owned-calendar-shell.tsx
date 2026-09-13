@@ -21,6 +21,7 @@ import {
 } from "react-native-gesture-handler"
 import Animated, {
   cancelAnimation,
+  type SharedValue,
   useAnimatedStyle,
   useEvent,
   useReducedMotion,
@@ -31,18 +32,42 @@ import { scheduleOnRN } from "react-native-worklets"
 
 import { ThemedText } from "@/components/themed-text"
 import {
+  type AppLocale,
+  clampVerticalOffset,
   dayKey,
+  DEFAULT_PIXELS_PER_HOUR,
+  formatHourStartLabel,
+  FULL_DAY_END_MINUTE,
+  FULL_DAY_START_MINUTE,
+  fullDayMajorMinutes,
+  fullDayMinorMinutes,
+  gridContentHeight,
+  HOURS_COLUMN_WIDTH,
+  minuteToPixel,
   shiftWeekInZone,
   type WeekDirection,
   type WeekTransitionRequest,
   type WeekTransitionSource,
 } from "@/features/calendar/data"
-import { Spacing, useTheme } from "@/theme"
+import { useTheme } from "@/theme"
+
+import {
+  createGestureDecision,
+  type GestureDecision,
+  terminateGestureDecision,
+  updateGestureDecision,
+} from "./gesture-state"
 
 const SETTLE_DURATION_MS = 220
 const PAGE_THRESHOLD_RATIO = 0.2
 const FLING_VELOCITY = 500
+const VERTICAL_FLING_PROJECTION_SECONDS = 0.15
 const PAGE_DIRECTIONS = [-1, 0, 1] as const
+const CONTENT_HEIGHT = gridContentHeight(
+  FULL_DAY_START_MINUTE,
+  FULL_DAY_END_MINUTE,
+  DEFAULT_PIXELS_PER_HOUR,
+)
 
 function restingTranslation(pagePosition: number, pageWidth: number) {
   "worklet"
@@ -53,9 +78,13 @@ type OwnedCalendarShellProps = {
   heading: string
   anchor: Date
   displayZone: string
+  locale: AppLocale
+  uses24HourClock: boolean | null
+  initialVerticalOffset: number
   generation: number
   pagePosition: number
   revisionFloor: number
+  onVerticalOffsetSettled: (offset: number) => void
   onTransitionRequest: (request: WeekTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
@@ -65,9 +94,13 @@ export function OwnedCalendarShell({
   heading,
   anchor,
   displayZone,
+  locale,
+  uses24HourClock,
+  initialVerticalOffset,
   generation,
   pagePosition,
   revisionFloor,
+  onVerticalOffsetSettled,
   onTransitionRequest,
   onTransitionSettled,
   onTransitionCancelled,
@@ -75,11 +108,15 @@ export function OwnedCalendarShell({
   const { t } = useTranslation()
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
-  const [layoutWidth, setLayoutWidth] = useState(0)
-  const [layoutHeight, setLayoutHeight] = useState(0)
+  const [pageWidth, setPageWidth] = useState(0)
   const width = useSharedValue(0)
+  const viewportHeight = useSharedValue(0)
   const translation = useSharedValue(0)
-  const dragOrigin = useSharedValue(0)
+  const horizontalOrigin = useSharedValue(0)
+  const verticalOffset = useSharedValue(Math.max(0, initialVerticalOffset))
+  const verticalOrigin = useSharedValue(Math.max(0, initialVerticalOffset))
+  const verticalResting = useSharedValue(Math.max(0, initialVerticalOffset))
+  const gesture = useSharedValue<GestureDecision>(createGestureDecision(0))
   const dragging = useSharedValue(false)
   const canStartDrag = useSharedValue(false)
   const motionEpoch = useSharedValue(0)
@@ -102,6 +139,12 @@ export function OwnedCalendarShell({
     onTransitionSettled(revision)
   }
 
+  const finishVertical = (offset: number, epoch: number, finished: boolean) => {
+    if (!finished || epoch !== motionEpoch.get()) return
+    verticalResting.set(offset)
+    onVerticalOffsetSettled(offset)
+  }
+
   const startTransition = (
     direction: WeekDirection,
     source: WeekTransitionSource,
@@ -119,12 +162,10 @@ export function OwnedCalendarShell({
     revisionRef.current = revision
     pendingRevisionRef.current = revision
     onTransitionRequest({ revision, direction, source })
-
     if (reduceMotion || width.get() <= 0) {
       finishTransition(revision, true)
       return
     }
-
     translation.set(
       withTiming(
         restingTranslation(pagePosition + direction, width.get()),
@@ -139,29 +180,39 @@ export function OwnedCalendarShell({
     "worklet"
     cancelAnimation(translation)
     const restingPosition = restingTranslation(pagePosition, width.get())
-    if (reduceMotion) {
-      translation.set(restingPosition)
-    } else {
+    if (reduceMotion) translation.set(restingPosition)
+    else
       translation.set(
         withTiming(restingPosition, { duration: SETTLE_DURATION_MS }),
       )
-    }
   }
 
-  // Callback identity is not a lifecycle boundary: requesting a page rerenders the owner.
+  const restoreVertical = () => {
+    "worklet"
+    cancelAnimation(verticalOffset)
+    verticalOffset.set(
+      clampVerticalOffset(
+        verticalResting.get(),
+        CONTENT_HEIGHT,
+        viewportHeight.get(),
+      ),
+    )
+  }
+
   const resetMotion = useEffectEvent(() => {
     motionEpoch.set(motionEpoch.get() + 1)
     cancelAnimation(translation)
+    cancelAnimation(verticalOffset)
     translation.set(restingTranslation(pagePosition, width.get()))
+    restoreVertical()
     dragging.set(false)
     canStartDrag.set(false)
     settling.set(false)
+    gesture.set(createGestureDecision(motionEpoch.get()))
     cancelPending()
   })
 
-  useLayoutEffect(() => {
-    resetMotion()
-  }, [generation])
+  useLayoutEffect(() => resetMotion(), [generation])
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -184,62 +235,102 @@ export function OwnedCalendarShell({
       canStartDrag.set(!settling.get() && width.get() > 0)
       return
     }
-    // iOS can emit BEGAN while resetting after release. Only activation may interrupt snap-back.
     if (event.state === State.ACTIVE && !dragging.get()) {
       if (!canStartDrag.get() || settling.get()) return
       cancelAnimation(translation)
+      cancelAnimation(verticalOffset)
       motionEpoch.set(motionEpoch.get() + 1)
-      dragOrigin.set(translation.get())
+      horizontalOrigin.set(translation.get())
+      verticalOrigin.set(verticalOffset.get())
+      gesture.set(createGestureDecision(motionEpoch.get()))
       dragging.set(true)
     }
     if (!dragging.get()) return
-    if (
-      Math.abs(event.translationY) > 20 &&
-      Math.abs(event.translationY) > Math.abs(event.translationX)
-    ) {
-      dragging.set(false)
-      snapBack()
-      return
-    }
+    const translationX = event.translationX ?? 0
+    const translationY = event.translationY ?? 0
+    const velocityX = event.velocityX ?? 0
+    const velocityY = event.velocityY ?? 0
     if (event.state === State.ACTIVE) {
-      const pageWidth = width.get()
-      translation.set(
-        Math.max(
-          -(pagePosition + 1) * pageWidth,
-          Math.min(
-            -(pagePosition - 1) * pageWidth,
-            dragOrigin.get() + event.translationX,
-          ),
-        ),
+      const decision = updateGestureDecision(
+        gesture.get(),
+        translationX,
+        translationY,
+        motionEpoch.get(),
       )
+      gesture.set(decision)
+      if (decision.axis === "horizontal") {
+        const measuredWidth = width.get()
+        translation.set(
+          Math.max(
+            -(pagePosition + 1) * measuredWidth,
+            Math.min(
+              -(pagePosition - 1) * measuredWidth,
+              horizontalOrigin.get() + translationX,
+            ),
+          ),
+        )
+      } else if (decision.axis === "vertical") {
+        verticalOffset.set(
+          clampVerticalOffset(
+            verticalOrigin.get() - translationY,
+            CONTENT_HEIGHT,
+            viewportHeight.get(),
+          ),
+        )
+      }
       return
     }
+    const decision = terminateGestureDecision(gesture.get(), motionEpoch.get())
+    gesture.set(decision)
+    dragging.set(false)
     if (event.state === State.CANCELLED || event.state === State.FAILED) {
-      dragging.set(false)
       snapBack()
+      restoreVertical()
       return
     }
     if (event.state !== State.END) return
-    dragging.set(false)
-
-    const pageWidth = width.get()
+    if (decision.axis === "vertical") {
+      snapBack()
+      const epoch = motionEpoch.get()
+      const target = clampVerticalOffset(
+        verticalOffset.get() - velocityY * VERTICAL_FLING_PROJECTION_SECONDS,
+        CONTENT_HEIGHT,
+        viewportHeight.get(),
+      )
+      if (reduceMotion) {
+        verticalOffset.set(target)
+        verticalResting.set(target)
+        scheduleOnRN(onVerticalOffsetSettled, target)
+      } else {
+        verticalOffset.set(
+          withTiming(target, { duration: SETTLE_DURATION_MS }, (finished) =>
+            scheduleOnRN(finishVertical, target, epoch, finished === true),
+          ),
+        )
+      }
+      return
+    }
+    restoreVertical()
+    if (decision.axis !== "horizontal") {
+      snapBack()
+      return
+    }
+    const measuredWidth = width.get()
     const displacement =
-      dragOrigin.get() +
-      event.translationX -
-      restingTranslation(pagePosition, pageWidth)
+      horizontalOrigin.get() +
+      translationX -
+      restingTranslation(pagePosition, measuredWidth)
     const displacementQualifies =
-      pageWidth > 0 &&
-      Math.abs(displacement) >= pageWidth * PAGE_THRESHOLD_RATIO
-    const flingQualifies = Math.abs(event.velocityX) >= FLING_VELOCITY
+      measuredWidth > 0 &&
+      Math.abs(displacement) >= measuredWidth * PAGE_THRESHOLD_RATIO
+    const flingQualifies = Math.abs(velocityX) >= FLING_VELOCITY
     const motion = displacementQualifies
       ? displacement
       : flingQualifies
-        ? event.velocityX
+        ? velocityX
         : 0
-
-    if (motion === 0) {
-      snapBack()
-    } else {
+    if (motion === 0) snapBack()
+    else {
       settling.set(true)
       scheduleOnRN(
         startTransition,
@@ -249,7 +340,7 @@ export function OwnedCalendarShell({
       )
     }
   }
-  // A handler holder must own one registration; sharing it across props leaks native listeners.
+
   const panGestureEventHandler = useEvent(
     handlePanEvent,
     ["onGestureHandlerEvent"],
@@ -262,33 +353,46 @@ export function OwnedCalendarShell({
   ) as unknown as (
     event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>,
   ) => void
-
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translation.get() }],
+  }))
+  const clockStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -verticalOffset.get() }],
   }))
   const pages = PAGE_DIRECTIONS.map((direction) => {
     const pageAnchor =
       direction === 0
         ? anchor
         : shiftWeekInZone(anchor, direction, displayZone, 1)
-    const key = dayKey(pageAnchor, displayZone)
-    // A civil-week identity keeps the tint stable when a neighbour becomes current.
-    const tintIndex = Math.abs(Math.floor(Date.parse(key) / (7 * 86400000))) % 3
-    return { direction, key, tintIndex }
+    return { direction, key: dayKey(pageAnchor, displayZone) }
   })
 
   const onLayout = (event: LayoutChangeEvent) => {
     motionEpoch.set(motionEpoch.get() + 1)
     cancelAnimation(translation)
+    cancelAnimation(verticalOffset)
     cancelPending()
     dragging.set(false)
     canStartDrag.set(false)
     settling.set(false)
-    const nextWidth = Math.max(0, event.nativeEvent.layout.width)
+    const nextWidth = Math.max(
+      0,
+      event.nativeEvent.layout.width - HOURS_COLUMN_WIDTH,
+    )
+    const nextHeight = Math.max(0, event.nativeEvent.layout.height)
     width.set(nextWidth)
-    setLayoutWidth(nextWidth)
-    setLayoutHeight(Math.max(0, event.nativeEvent.layout.height))
+    viewportHeight.set(nextHeight)
+    setPageWidth(nextWidth)
     translation.set(restingTranslation(pagePosition, nextWidth))
+    const clamped = clampVerticalOffset(
+      verticalResting.get(),
+      CONTENT_HEIGHT,
+      nextHeight,
+    )
+    verticalResting.set(clamped)
+    verticalOffset.set(clamped)
+    gesture.set(createGestureDecision(motionEpoch.get()))
+    onVerticalOffsetSettled(clamped)
   }
 
   return (
@@ -298,8 +402,11 @@ export function OwnedCalendarShell({
     >
       <PanGestureHandler
         testID="owned-calendar-canvas"
-        activeOffsetX={[-10, 10]}
-        failOffsetY={[-20, 20]}
+        minDist={1}
+        minPointers={1}
+        maxPointers={1}
+        cancelsTouchesInView
+        shouldCancelWhenOutside={false}
         onGestureEvent={panGestureEventHandler}
         onHandlerStateChange={panStateChangeHandler}
       >
@@ -320,28 +427,61 @@ export function OwnedCalendarShell({
               startTransition(-1, "previous")
           }}
         >
-          <Animated.View
-            testID="owned-calendar-page-strip"
-            style={[
-              styles.strip,
-              {
-                left: (pagePosition - 1) * layoutWidth,
-                width: layoutWidth * 3,
-              },
-              stripStyle,
-            ]}
+          <View
+            testID="owned-calendar-hour-gutter"
+            style={[styles.gutter, { borderColor: theme.separator }]}
+            pointerEvents="none"
           >
-            {pages.map((page) => (
-              <WeekPage
-                key={page.key}
-                dateKey={page.key}
-                direction={page.direction}
-                tintIndex={page.tintIndex}
-                width={layoutWidth}
-                height={layoutHeight}
-              />
-            ))}
-          </Animated.View>
+            <Animated.View
+              testID="owned-calendar-gutter-clock"
+              style={[
+                styles.clockPlane,
+                { height: CONTENT_HEIGHT },
+                clockStyle,
+              ]}
+            >
+              {Array.from({ length: 24 }, (_, hour) => (
+                <ThemedText
+                  key={hour}
+                  type="small"
+                  testID={`owned-calendar-hour-label-${hour}`}
+                  style={[
+                    styles.hourLabel,
+                    {
+                      top: minuteToPixel(hour * 60, {
+                        startMinute: FULL_DAY_START_MINUTE,
+                      }),
+                    },
+                  ]}
+                >
+                  {formatHourStartLabel(hour, locale, uses24HourClock)}
+                </ThemedText>
+              ))}
+            </Animated.View>
+          </View>
+          <View
+            testID="owned-calendar-timed-lane"
+            style={styles.lane}
+            pointerEvents="none"
+          >
+            <Animated.View
+              testID="owned-calendar-page-strip"
+              style={[
+                styles.strip,
+                { left: (pagePosition - 1) * pageWidth, width: pageWidth * 3 },
+                stripStyle,
+              ]}
+            >
+              {pages.map((page) => (
+                <WeekPage
+                  key={page.key}
+                  direction={page.direction}
+                  width={pageWidth}
+                  verticalOffset={verticalOffset}
+                />
+              ))}
+            </Animated.View>
+          </View>
         </Animated.View>
       </PanGestureHandler>
     </View>
@@ -349,68 +489,68 @@ export function OwnedCalendarShell({
 }
 
 function WeekPage({
-  dateKey,
   direction,
-  tintIndex,
   width,
-  height,
+  verticalOffset,
 }: {
-  dateKey: string
   direction: number
-  tintIndex: number
   width: number
-  height: number
+  verticalOffset: SharedValue<number>
 }) {
   const theme = useTheme()
+  const clockStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -verticalOffset.get() }],
+  }))
   return (
     <View
       testID={`owned-calendar-page-${direction}`}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
-      pointerEvents="none"
       style={[
         styles.page,
         {
           width,
-          backgroundColor: __DEV__
-            ? [
-                theme.homeHero,
-                theme.backgroundSelected,
-                theme.backgroundElement,
-              ][tintIndex]
-            : theme.backgroundElement,
+          backgroundColor: theme.backgroundElement,
           borderColor: theme.separator,
         },
       ]}
     >
-      {__DEV__ && (
-        <WeekPagingPreview dateKey={dateKey} width={width} height={height} />
-      )}
-    </View>
-  )
-}
-
-function WeekPagingPreview({
-  dateKey,
-  width,
-  height,
-}: {
-  dateKey: string
-  width: number
-  height: number
-}) {
-  const { t } = useTranslation()
-  return (
-    <View style={styles.placeholder}>
-      <ThemedText>{t("calendar.weekPagingPlaceholder")}</ThemedText>
-      <ThemedText>{dateKey}</ThemedText>
-      <ThemedText type="small">
-        {t("calendar.weekPagingSize", {
-          width: Math.round(width),
-          height: Math.round(height),
-        })}
-      </ThemedText>
-      <ThemedText type="small">{t("calendar.weekPagingHint")}</ThemedText>
+      <Animated.View
+        testID={`owned-calendar-page-clock-${direction}`}
+        style={[styles.clockPlane, { height: CONTENT_HEIGHT }, clockStyle]}
+      >
+        {fullDayMinorMinutes().map((minute) => (
+          <View
+            key={`minor-${minute}`}
+            testID={`owned-calendar-minor-${direction}-${minute}`}
+            style={[
+              styles.gridLine,
+              styles.minorLine,
+              {
+                top: minuteToPixel(minute, {
+                  startMinute: FULL_DAY_START_MINUTE,
+                }),
+                borderColor: theme.separator,
+              },
+            ]}
+          />
+        ))}
+        {fullDayMajorMinutes().map((minute) => (
+          <View
+            key={`major-${minute}`}
+            testID={`owned-calendar-major-${direction}-${minute}`}
+            style={[
+              styles.gridLine,
+              {
+                top: minuteToPixel(minute, {
+                  startMinute: FULL_DAY_START_MINUTE,
+                }),
+                borderColor: theme.textSecondary,
+              },
+            ]}
+          />
+        ))}
+      </Animated.View>
     </View>
   )
 }
@@ -419,23 +559,33 @@ const styles = StyleSheet.create({
   shell: { flex: 1 },
   viewport: {
     flex: 1,
+    flexDirection: "row",
     overflow: "hidden",
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  strip: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    flexDirection: "row",
+  gutter: {
+    width: HOURS_COLUMN_WIDTH,
+    overflow: "hidden",
+    borderRightWidth: StyleSheet.hairlineWidth,
   },
+  lane: { flex: 1, overflow: "hidden" },
+  strip: { position: "absolute", top: 0, bottom: 0, flexDirection: "row" },
   page: {
     height: "100%",
+    overflow: "hidden",
     borderLeftWidth: StyleSheet.hairlineWidth,
-    justifyContent: "center",
   },
-  placeholder: {
-    alignItems: "center",
-    padding: Spacing.four,
-    gap: Spacing.two,
+  clockPlane: { position: "absolute", top: 0, left: 0, right: 0 },
+  hourLabel: {
+    position: "absolute",
+    right: 6,
+    transform: [{ translateY: -8 }],
   },
+  gridLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  minorLine: { opacity: 0.5 },
 })

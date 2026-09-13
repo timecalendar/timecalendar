@@ -1,3 +1,4 @@
+import { useCalendars } from "expo-localization"
 import { router } from "expo-router"
 import { useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
@@ -34,6 +35,7 @@ export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
+  const uses24HourClock = useCalendars()[0].uses24hourClock
   const {
     view,
     setView,
@@ -46,6 +48,8 @@ export function CalendarScreen() {
     rendererPagePosition,
     transitionRevision,
     acceptedTransitionRevision,
+    verticalOffset,
+    settleVerticalOffset,
     requestTransition,
     settleTransition,
     cancelTransition,
@@ -130,12 +134,16 @@ export function CalendarScreen() {
               heading={weekHeading}
               anchor={selectedDate}
               displayZone={displayZone}
+              locale={locale}
+              uses24HourClock={uses24HourClock}
+              initialVerticalOffset={verticalOffset}
               generation={rendererGeneration}
               pagePosition={rendererPagePosition}
               revisionFloor={transitionRevision}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}
               onTransitionCancelled={cancelTransition}
+              onVerticalOffsetSettled={settleVerticalOffset}
             />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}

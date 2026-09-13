@@ -18,18 +18,23 @@ describe("OwnedCalendarShell", () => {
   const onTransitionRequest = jest.fn()
   const onTransitionSettled = jest.fn()
   const onTransitionCancelled = jest.fn()
+  const onVerticalOffsetSettled = jest.fn()
 
   function shellProps(heading = "Monday, June 15th, 2026") {
     return {
       heading,
       anchor,
       displayZone: "UTC",
+      locale: "en" as const,
+      uses24HourClock: true,
+      initialVerticalOffset: 0,
       generation: 0,
       pagePosition: 0,
       revisionFloor: 0,
       onTransitionRequest,
       onTransitionSettled,
       onTransitionCancelled,
+      onVerticalOffsetSettled,
     }
   }
 
@@ -39,6 +44,7 @@ describe("OwnedCalendarShell", () => {
       translationX?: number
       translationY?: number
       velocityX?: number
+      velocityY?: number
     }[],
   ) {
     for (const event of events) {
@@ -129,7 +135,7 @@ describe("OwnedCalendarShell", () => {
           includeHiddenElements: true,
         }).props.style,
       ),
-    ).toMatchObject({ width: 320, height: "100%" })
+    ).toMatchObject({ width: 270, height: "100%" })
   })
 
   it.each([
@@ -181,8 +187,8 @@ describe("OwnedCalendarShell", () => {
   it.each([
     [-140, 0, 1],
     [140, 0, -1],
-    [-10, -1600, 1],
-    [10, 1600, -1],
+    [-11, -1600, 1],
+    [11, 1600, -1],
   ])(
     "settles a drag/fling (%i, %i) by one page",
     async (translationX, velocityX, direction) => {
@@ -204,7 +210,7 @@ describe("OwnedCalendarShell", () => {
       })
       expect(onTransitionSettled).toHaveBeenCalledTimes(1)
       expect(withTiming).toHaveBeenCalledWith(
-        -direction * 320,
+        -direction * 270,
         { duration: 220 },
         expect.any(Function),
       )
@@ -268,20 +274,21 @@ describe("OwnedCalendarShell", () => {
     expect(cancelAnimation).not.toHaveBeenCalled()
   })
 
-  it("rejects a drag that turns into a vertical system gesture", async () => {
+  it("keeps a vertical lock through diagonal continuation and reversal", async () => {
     await render(<OwnedCalendarShell {...shellProps()} />)
     await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
       nativeEvent: { layout: { width: 320, height: 500 } },
     })
     await firePan([
       { state: State.BEGAN, translationX: 0, translationY: 0 },
-      { state: State.ACTIVE, translationX: -30, translationY: -5 },
-      { state: State.ACTIVE, translationX: -100, translationY: -250 },
+      { state: State.ACTIVE, translationX: -5, translationY: -30 },
+      { state: State.ACTIVE, translationX: -250, translationY: -100 },
       {
         state: State.END,
         translationX: -150,
-        translationY: -300,
+        translationY: 300,
         velocityX: -900,
+        velocityY: 0,
       },
     ])
     expect(onTransitionRequest).not.toHaveBeenCalled()
@@ -319,37 +326,53 @@ describe("OwnedCalendarShell", () => {
     expect(withTiming).not.toHaveBeenCalled()
   })
 
-  it("renders measured preview labels and keeps a week's tint when it becomes current", async () => {
+  it("renders aligned full-day geometry and preserves the vertical offset across a generation", async () => {
     const result = await render(<OwnedCalendarShell {...shellProps()} />)
     await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
       nativeEvent: { layout: { width: 320, height: 500 } },
     })
     expect(
-      screen.getAllByText("320 × 500", { includeHiddenElements: true }),
-    ).toHaveLength(3)
+      screen.getAllByTestId(/^owned-calendar-major-0-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(25)
     expect(
-      screen.getByText("2026-06-22", { includeHiddenElements: true }),
-    ).toBeOnTheScreen()
-    const nextColor = StyleSheet.flatten(
-      screen.getByTestId("owned-calendar-page-1", {
+      screen.getAllByTestId(/^owned-calendar-minor-0-/, {
         includeHiddenElements: true,
-      }).props.style,
-    ).backgroundColor
-    const currentColor = StyleSheet.flatten(
-      screen.getByTestId("owned-calendar-page-0", {
+      }),
+    ).toHaveLength(24)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-hour-label-/, {
         includeHiddenElements: true,
-      }).props.style,
-    ).backgroundColor
-    expect(nextColor).not.toBe(currentColor)
+      }),
+    ).toHaveLength(24)
+    expect(
+      screen.queryByText("24:00", { includeHiddenElements: true }),
+    ).toBeNull()
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-hour-label-12", {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({ top: 720 })
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-major-0-720", {
+          includeHiddenElements: true,
+        }).props.style,
+      ),
+    ).toMatchObject({ top: 720 })
+    await firePan([
+      { state: State.BEGAN },
+      { state: State.ACTIVE, translationY: -400 },
+      { state: State.END, translationY: -400, velocityY: 0 },
+    ])
+    expect(onVerticalOffsetSettled).toHaveBeenLastCalledWith(400)
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "accessibilityAction",
       { nativeEvent: { actionName: "increment" } },
-    )
-    expect(withTiming).toHaveBeenCalledWith(
-      -320,
-      { duration: 220 },
-      expect.any(Function),
     )
     await result.rerender(
       <OwnedCalendarShell
@@ -361,19 +384,13 @@ describe("OwnedCalendarShell", () => {
     )
     expect(
       StyleSheet.flatten(
-        screen.getByTestId("owned-calendar-page-0", {
-          includeHiddenElements: true,
-        }).props.style,
-      ).backgroundColor,
-    ).toBe(nextColor)
-    expect(
-      StyleSheet.flatten(
         screen.getByTestId("owned-calendar-page-strip").props.style,
       ),
     ).toMatchObject({
       left: 0,
-      transform: [{ translateX: -320 }],
+      transform: [{ translateX: -270 }],
     })
+    expect(onVerticalOffsetSettled).toHaveBeenLastCalledWith(400)
   })
 
   it("registers movement and terminal state events with separate native handler holders", async () => {
@@ -396,5 +413,41 @@ describe("OwnedCalendarShell", () => {
       { name: "decrement", label: "Previous week" },
       { name: "increment", label: "Next week" },
     ])
+  })
+
+  it.each([
+    [-2000, -500, 940],
+    [2000, 500, 0],
+  ])(
+    "clamps vertical drag %s and fling %s to %s",
+    async (translationY, velocityY, expected) => {
+      await render(<OwnedCalendarShell {...shellProps()} />)
+      await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+        nativeEvent: { layout: { width: 320, height: 500 } },
+      })
+      await firePan([
+        { state: State.BEGAN },
+        { state: State.ACTIVE, translationY },
+        { state: State.END, translationY, velocityY },
+      ])
+      expect(onVerticalOffsetSettled).toHaveBeenLastCalledWith(expected)
+      expect(onTransitionRequest).not.toHaveBeenCalled()
+    },
+  )
+
+  it("renders 12-hour labels from the explicit preference", async () => {
+    await render(
+      <OwnedCalendarShell {...shellProps()} uses24HourClock={false} />,
+    )
+    expect(
+      screen.getByTestId("owned-calendar-hour-label-0", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveTextContent("12 AM")
+    expect(
+      screen.getByTestId("owned-calendar-hour-label-12", {
+        includeHiddenElements: true,
+      }),
+    ).toHaveTextContent("12 PM")
   })
 })
