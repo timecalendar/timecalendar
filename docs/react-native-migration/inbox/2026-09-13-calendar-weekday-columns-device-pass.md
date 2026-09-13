@@ -4,12 +4,15 @@
 
 ## Testable build target
 
-Implementation revision: pending final tested commit.
+Implementation revision: `1a6960b0adbd64290400cf686fe4c7af48c19b36`.
 
-Automated checks from `mobile/` at that revision will be recorded in the pull request. Host
-automation verifies civil-date identity, five/seven structure, persistence semantics, seven-day
-Agenda/page ranges, native-owner inventory, and retained transition behavior. It does not claim
-native readability, alignment, gesture feel, restart behavior, contrast, or screen-reader results.
+Automated checks from `mobile/` passed at that implementation revision: 177 suites and 1,685 tests
+with coverage, 12 focused suites and 195 tests, 26 pure week-model tests at 100% statements and
+branches, TypeScript, lint, scoped formatting, React Doctor, repository contracts, and strict
+OpenSpec validation. Host automation verifies civil-date identity, five/seven structure,
+persistence semantics, seven-day Agenda/page ranges, native-owner inventory, and retained
+transition behavior. It does not claim native readability, alignment, gesture feel, restart
+behavior, contrast, or screen-reader results.
 
 ## Build and fabricated fixture
 
