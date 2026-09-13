@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native"
+import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { AppState, StyleSheet } from "react-native"
 import { State } from "react-native-gesture-handler"
 import {
@@ -434,6 +434,82 @@ describe("OwnedCalendarShell", () => {
       expect(onTransitionRequest).not.toHaveBeenCalled()
     },
   )
+
+  it("clamps the settled vertical offset when the viewport grows", async () => {
+    await render(<OwnedCalendarShell {...shellProps()} />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    await firePan([
+      { state: State.BEGAN },
+      { state: State.ACTIVE, translationY: -400 },
+      { state: State.END, translationY: -400, velocityY: 0 },
+    ])
+    expect(onVerticalOffsetSettled).toHaveBeenLastCalledWith(400)
+
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 1200 } },
+    })
+
+    expect(onVerticalOffsetSettled).toHaveBeenLastCalledWith(240)
+    expect(cancelAnimation).toHaveBeenCalled()
+  })
+
+  it("restores the settled offset when AppState interrupts vertical motion", async () => {
+    jest
+      .mocked(withTiming)
+      .mockImplementationOnce((value) => value)
+      .mockImplementationOnce((value) => value)
+    await render(<OwnedCalendarShell {...shellProps()} />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    jest.mocked(withTiming).mockClear()
+    await firePan([
+      { state: State.BEGAN },
+      { state: State.ACTIVE, translationY: -400 },
+      { state: State.END, translationY: -400, velocityY: 0 },
+    ])
+    const staleCompletion = jest.mocked(withTiming).mock.calls[1]?.[2]
+    const onState = jest
+      .mocked(AppState.addEventListener)
+      .mock.calls.findLast(([type]) => type === "change")?.[1]
+    expect(staleCompletion).toBeDefined()
+    expect(onState).toBeDefined()
+
+    await act(async () => onState?.("background"))
+    await act(async () => staleCompletion?.(true, undefined))
+
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalledWith(400)
+    expect(cancelAnimation).toHaveBeenCalled()
+  })
+
+  it("rejects a stale vertical completion after a layout change", async () => {
+    jest
+      .mocked(withTiming)
+      .mockImplementationOnce((value) => value)
+      .mockImplementationOnce((value) => value)
+    await render(<OwnedCalendarShell {...shellProps()} />)
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 500 } },
+    })
+    jest.mocked(withTiming).mockClear()
+    await firePan([
+      { state: State.BEGAN },
+      { state: State.ACTIVE, translationY: -400 },
+      { state: State.END, translationY: -400, velocityY: 0 },
+    ])
+    const staleCompletion = jest.mocked(withTiming).mock.calls[1]?.[2]
+    expect(staleCompletion).toBeDefined()
+
+    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
+      nativeEvent: { layout: { width: 320, height: 1200 } },
+    })
+    await act(async () => staleCompletion?.(true, undefined))
+
+    expect(onVerticalOffsetSettled).toHaveBeenLastCalledWith(0)
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalledWith(400)
+  })
 
   it("renders 12-hour labels from the explicit preference", async () => {
     await render(

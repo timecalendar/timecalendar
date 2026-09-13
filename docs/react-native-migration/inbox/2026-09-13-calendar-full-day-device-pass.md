@@ -4,11 +4,11 @@
 
 ## Testable build target
 
-Build a development app from immutable implementation revision
-`3ecc063de70fa0ca7858344ccf19c69d787e4430`. It renders an empty complete-day grid beside
+Build a development app from immutable final runtime revision
+`53a242f69707ebaa4c1304dda6f222f5630b27e2`. It renders an empty complete-day grid beside
 one pinned gutter while retaining the accepted three-page week movement.
 
-Automated checks from `mobile/` at that implementation revision:
+Automated checks from `mobile/` at that runtime revision:
 
 - Six focused suites: 106 tests passed (time geometry, hour formatting, gesture decisions,
   renderer, Calendar screen/controller, and repository contract).
