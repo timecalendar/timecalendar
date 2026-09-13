@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next"
-import { Platform, ScrollView, StyleSheet, View } from "react-native"
+import { Platform, ScrollView, StyleSheet, Switch, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { useAdaptiveLayout } from "@/components/adaptive-content"
+import { ThemedText } from "@/components/themed-text"
 import { formatUnreadBadge, useActivityState } from "@/features/activity"
 import {
   useUserCalendars,
@@ -13,6 +14,7 @@ import {
   getBackendEnvironmentCapability,
 } from "@/features/environment"
 import { deriveCalendarSummary } from "@/features/settings/data"
+import { useShowWeekendsPreference } from "@/features/settings/prefs"
 import { Spacing, useTheme } from "@/theme"
 
 import { SettingsRow } from "./settings-row"
@@ -126,6 +128,7 @@ export function SettingsScreen() {
   const calendars = useUserCalendars()
   const loaded = useUserCalendarsLoaded()
   const { unreadCount } = useActivityState()
+  const { showWeekends, setShowWeekends } = useShowWeekendsPreference()
   const summary = deriveCalendarSummary(calendars, loaded)
   const showEnvironmentControl =
     getBackendEnvironmentCapability() !== "production"
@@ -188,6 +191,35 @@ export function SettingsScreen() {
                 testID="settings-calendar-summary"
                 {...(secondary ? { secondary } : {})}
               />
+              <View
+                testID="settings-show-weekends-row"
+                style={[
+                  styles.toggleRow,
+                  {
+                    minHeight: Platform.OS === "ios" ? 44 : 48,
+                    backgroundColor: theme.backgroundElement,
+                  },
+                ]}
+              >
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.toggleSeparator,
+                    { backgroundColor: theme.separator },
+                  ]}
+                />
+                <ThemedText style={styles.toggleLabel}>
+                  {t("settingsHub.summary.showWeekends")}
+                </ThemedText>
+                <Switch
+                  testID="settings-show-weekends-switch"
+                  accessibilityRole="switch"
+                  accessibilityLabel={t("settingsHub.summary.showWeekends")}
+                  accessibilityState={{ checked: showWeekends }}
+                  value={showWeekends}
+                  onValueChange={setShowWeekends}
+                />
+              </View>
             </SettingsSection>
           )}
 
@@ -259,5 +291,20 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 16,
     opacity: 0.6,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 6,
+  },
+  toggleLabel: { flex: 1 },
+  toggleSeparator: {
+    position: "absolute",
+    top: 0,
+    left: Spacing.three,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
   },
 })

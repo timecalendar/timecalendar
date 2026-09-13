@@ -105,8 +105,45 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).toMatch(/<ScrollView\b/)
     expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
     expect(renderer).toMatch(/<PagerView\b/)
+    expect(renderer.match(/<ScrollView\s/g)).toHaveLength(1)
+    expect(renderer.match(/<PagerView\s/g)).toHaveLength(1)
     expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
+    expect(renderer).toContain("weekColumns")
+    expect(renderer).toContain('testID="owned-calendar-date-header"')
     expect(renderer).not.toMatch(/PanGestureHandler|withTiming|useSharedValue/)
+  })
+
+  it("keeps weekend persistence in the typed settings and storage seams", () => {
+    const week = readFileSync(
+      join(root, "src/features/calendar/data/week.ts"),
+      "utf8",
+    )
+    const settingsStore = readFileSync(
+      join(root, "src/features/settings/prefs/store.ts"),
+      "utf8",
+    )
+    const settingsHooks = readFileSync(
+      join(root, "src/features/settings/prefs/hooks.ts"),
+      "utf8",
+    )
+    const storage = readFileSync(join(root, "src/storage/index.ts"), "utf8")
+
+    expect(week).toContain("startOfWeekInZone(anchor, zone, firstWeekday)")
+    expect(week).toMatch(/weekday === 0 \|\| weekday === 6/)
+    expect(settingsStore).toContain("getBoolean(SETTINGS_KEYS.showWeekends)")
+    expect(settingsStore).toContain("setBoolean(SETTINGS_KEYS.showWeekends")
+    expect(settingsHooks).toContain(
+      "useStoredBoolean(SETTINGS_KEYS.showWeekends)",
+    )
+    expect(storage).toContain(
+      '[STORAGE_KEYS.showWeekends]: "environment-independent"',
+    )
+
+    for (const source of productionCalendarFiles().map((file) =>
+      readFileSync(file, "utf8"),
+    )) {
+      expect(source).not.toContain("react-native-mmkv")
+    }
   })
 
   it("pins the three journeys and retained Agenda helper", () => {

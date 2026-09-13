@@ -62,6 +62,9 @@ tie-break. The cache does not parse the ids or reassemble fragments (ADR
 MMKV holds settings, notification preferences, query persistence, school/group identity,
 hidden-event identifiers, and Changelog acknowledgement. Keys are flat and namespaced.
 Reads are total and return a safe default for missing, malformed, or legacy values.
+The Settings-owned `settings.showWeekends` boolean is environment-independent: missing or
+malformed reads resolve to `true`, explicit false/true values remain reactive across app starts,
+and backend reset preserves it.
 
 The versioned export-guide LKG registry is a backend-bound rebuildable cache behind `@/storage`.
 Each logical record is isolated by requested locale, client schema, and active or exact-version
@@ -104,7 +107,7 @@ an installed database is a data incident, and the mocked seam cannot catch one.
 ## Backend environment reset
 
 - `@/storage` centrally enumerates and classifies every known MMKV key. Theme, language,
-  display-timezone and Changelog acknowledgement survive; selected backend and the temporary
+  display-timezone, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
   reset journal are controls; school/group selection, hidden events, notification values,
   remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
   backend-bound and are removed. The export-guide LKG registry is also backend-bound and is removed

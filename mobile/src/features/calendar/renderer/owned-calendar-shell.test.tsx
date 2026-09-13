@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { AppState, StyleSheet } from "react-native"
 import { useReducedMotion } from "react-native-reanimated"
 
+import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
 import { Colors } from "@/theme"
 
 import { OwnedCalendarShell } from "./owned-calendar-shell"
@@ -23,6 +24,9 @@ describe("OwnedCalendarShell", () => {
     anchor: new Date("2026-06-15T00:00:00.000Z"),
     displayZone: "UTC",
     locale: "en" as const,
+    firstWeekday: 1 as const,
+    showWeekends: true,
+    currentDate: new Date("2026-06-17T12:00:00.000Z"),
     uses24HourClock: true,
     initialVerticalOffset: 0,
     generation: 0,
@@ -71,6 +75,60 @@ describe("OwnedCalendarShell", () => {
         includeHiddenElements: true,
       }),
     ).toHaveProp("offscreenPageLimit", 1)
+  })
+
+  it("renders one pinned seven-day header aligned with all three pages", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    const header = screen.getByTestId("owned-calendar-date-header")
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    expect(header.parent).toBe(canvas.parent)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-date-header-gutter", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).width,
+    ).toBe(HOURS_COLUMN_WIDTH)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(7)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-column--?\d-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(21)
+    expect(screen.getByLabelText("MON 15")).toBeOnTheScreen()
+    expect(screen.getByLabelText("WED 17, Today")).toBeOnTheScreen()
+    expect(screen.queryByRole("button", { name: /Today/ })).toBeNull()
+  })
+
+  it("redistributes five weekday cells and restores seven without a generation change", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await view.rerender(<OwnedCalendarShell {...props} showWeekends={false} />)
+
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(5)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-column--?\d-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(15)
+    expect(screen.queryByLabelText("SAT 20")).toBeNull()
+    expect(screen.queryByLabelText("SUN 21")).toBeNull()
+
+    await view.rerender(<OwnedCalendarShell {...props} showWeekends />)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(7)
+    expect(onTransitionRequest).not.toHaveBeenCalled()
   })
 
   it("keeps three non-collapsible pages with development identities", async () => {

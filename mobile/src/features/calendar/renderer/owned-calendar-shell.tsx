@@ -19,6 +19,8 @@ import {
   type AppLocale,
   dayKey,
   DEFAULT_PIXELS_PER_HOUR,
+  type FirstWeekday,
+  formatDayHeaderParts,
   formatHourStartLabel,
   FULL_DAY_END_MINUTE,
   FULL_DAY_START_MINUTE,
@@ -28,6 +30,8 @@ import {
   HOURS_COLUMN_WIDTH,
   minuteToPixel,
   shiftWeekInZone,
+  type WeekColumn,
+  weekColumns,
   type WeekDirection,
   type WeekTransitionRequest,
   type WeekTransitionSource,
@@ -58,6 +62,9 @@ type OwnedCalendarShellProps = {
   anchor: Date
   displayZone: string
   locale: AppLocale
+  firstWeekday: FirstWeekday
+  showWeekends: boolean
+  currentDate: Date
   uses24HourClock: boolean | null
   initialVerticalOffset: number
   generation: number
@@ -68,11 +75,33 @@ type OwnedCalendarShellProps = {
   onTransitionCancelled: (revision: number) => void
 }
 
+function calendarPages(
+  anchor: Date,
+  displayZone: string,
+  firstWeekday: FirstWeekday,
+  showWeekends: boolean,
+) {
+  return PAGE_DIRECTIONS.map((direction) => {
+    const pageAnchor =
+      direction === 0
+        ? anchor
+        : shiftWeekInZone(anchor, direction, displayZone, firstWeekday)
+    return {
+      direction,
+      key: dayKey(pageAnchor, displayZone),
+      columns: weekColumns(pageAnchor, displayZone, firstWeekday, showWeekends),
+    }
+  })
+}
+
 export function OwnedCalendarShell({
   heading,
   anchor,
   displayZone,
   locale,
+  firstWeekday,
+  showWeekends,
+  currentDate,
   uses24HourClock,
   initialVerticalOffset,
   generation,
@@ -97,13 +126,14 @@ export function OwnedCalendarShell({
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
-  const pages = PAGE_DIRECTIONS.map((direction) => {
-    const pageAnchor =
-      direction === 0
-        ? anchor
-        : shiftWeekInZone(anchor, direction, displayZone, 1)
-    return { direction, key: dayKey(pageAnchor, displayZone) }
-  })
+  const committedColumns = weekColumns(
+    anchor,
+    displayZone,
+    firstWeekday,
+    showWeekends,
+  )
+  const todayKey = dayKey(currentDate, displayZone)
+  const pages = calendarPages(anchor, displayZone, firstWeekday, showWeekends)
 
   const cancelVerticalCandidate = () => {
     if (verticalFrameRef.current !== null) {
@@ -244,6 +274,12 @@ export function OwnedCalendarShell({
       collapsable={false}
       style={[styles.shell, { backgroundColor: theme.background }]}
     >
+      <OwnedCalendarDateHeader
+        columns={committedColumns}
+        locale={locale}
+        displayZone={displayZone}
+        todayKey={todayKey}
+      />
       <ScrollView
         ref={scrollRef}
         testID="owned-calendar-canvas"
@@ -335,7 +371,7 @@ export function OwnedCalendarShell({
                   },
                 ]}
               >
-                <WeekGrid direction={page.direction} />
+                <WeekGrid direction={page.direction} columns={page.columns} />
                 {__DEV__ && (
                   <View style={styles.preview} pointerEvents="none">
                     <ThemedText type="small">{page.key}</ThemedText>
@@ -356,7 +392,91 @@ export function OwnedCalendarShell({
   )
 }
 
-function WeekGrid({ direction }: { direction: number }) {
+function OwnedCalendarDateHeader({
+  columns,
+  locale,
+  displayZone,
+  todayKey,
+}: {
+  columns: WeekColumn[]
+  locale: AppLocale
+  displayZone: string
+  todayKey: string
+}) {
+  const { t } = useTranslation()
+  const theme = useTheme()
+  return (
+    <View
+      testID="owned-calendar-date-header"
+      style={[
+        styles.dateHeader,
+        {
+          backgroundColor: theme.backgroundElement,
+          borderColor: theme.separator,
+        },
+      ]}
+    >
+      <View
+        testID="owned-calendar-date-header-gutter"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        style={[styles.dateHeaderGutter, { borderColor: theme.separator }]}
+      />
+      {columns.map((column) => {
+        const parts = formatDayHeaderParts(column.date, locale, displayZone)
+        const isToday = column.key === todayKey
+        const dateLabel = `${parts.weekday} ${parts.dayOfMonth}`
+        return (
+          <View
+            key={column.key}
+            testID={`owned-calendar-date-${column.key}`}
+            accessible
+            accessibilityLabel={
+              isToday ? `${dateLabel}, ${t("calendar.today")}` : dateLabel
+            }
+            style={styles.dateHeaderCell}
+          >
+            <ThemedText
+              accessible={false}
+              type={isToday ? "smallBold" : "small"}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              style={styles.weekdayLabel}
+            >
+              {parts.weekday}
+            </ThemedText>
+            <View
+              accessible={false}
+              style={[
+                styles.dateBadge,
+                isToday && {
+                  borderColor: theme.primary,
+                  backgroundColor: theme.primarySoft,
+                },
+              ]}
+            >
+              <ThemedText
+                accessible={false}
+                type={isToday ? "smallBold" : "small"}
+              >
+                {parts.dayOfMonth}
+              </ThemedText>
+            </View>
+          </View>
+        )
+      })}
+    </View>
+  )
+}
+
+function WeekGrid({
+  direction,
+  columns,
+}: {
+  direction: number
+  columns: WeekColumn[]
+}) {
   const theme = useTheme()
   return (
     <View
@@ -364,6 +484,17 @@ function WeekGrid({ direction }: { direction: number }) {
       style={styles.clockPlane}
       pointerEvents="none"
     >
+      <View style={styles.dayColumns}>
+        {columns.map((column) => (
+          <View
+            key={column.key}
+            testID={`owned-calendar-column-${direction}-${column.key}`}
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.dayColumn, { borderColor: theme.separator }]}
+          />
+        ))}
+      </View>
       {MINOR_MINUTES.map((minute) => (
         <View
           key={`minor-${minute}`}
@@ -401,6 +532,32 @@ function WeekGrid({ direction }: { direction: number }) {
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
+  dateHeader: {
+    minHeight: 56,
+    flexDirection: "row",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  dateHeaderGutter: {
+    width: HOURS_COLUMN_WIDTH,
+    borderRightWidth: StyleSheet.hairlineWidth,
+  },
+  dateHeaderCell: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 4,
+  },
+  weekdayLabel: { maxWidth: "100%" },
+  dateBadge: {
+    minWidth: 28,
+    minHeight: 24,
+    borderWidth: 1,
+    borderColor: "transparent",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   viewport: { flex: 1 },
   scrollContent: { flexGrow: 1 },
   fullDayRow: {
@@ -426,6 +583,18 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: RENDER_HEIGHT,
+  },
+  dayColumns: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    flexDirection: "row",
+  },
+  dayColumn: {
+    flex: 1,
+    borderRightWidth: StyleSheet.hairlineWidth,
   },
   hourLabel: {
     position: "absolute",

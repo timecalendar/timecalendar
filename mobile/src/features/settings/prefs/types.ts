@@ -35,6 +35,7 @@ export const SETTINGS_KEYS = {
   theme: "settings.themePreference",
   language: "settings.languagePreference",
   timezone: "settings.timezonePreference",
+  showWeekends: "settings.showWeekends",
 } as const
 
 // Build a total parser over a preference union: a raw string in the union is

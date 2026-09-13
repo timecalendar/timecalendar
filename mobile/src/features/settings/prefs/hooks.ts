@@ -2,12 +2,13 @@ import { useCalendars } from "expo-localization"
 import { useCallback } from "react"
 
 import i18n from "@/i18n"
-import { useParsedStoredString } from "@/storage"
+import { useParsedStoredString, useStoredBoolean } from "@/storage"
 
 import {
   resolveLanguage,
   resolveTimezone,
   setLanguagePreference,
+  setShowWeekends,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
@@ -84,4 +85,14 @@ export function useDisplayZone(): string {
   )
   const deviceZone = useCalendars()[0]?.timeZone ?? null
   return resolveTimezone(preference, deviceZone)
+}
+
+export function useShowWeekendsPreference(): {
+  showWeekends: boolean
+  setShowWeekends: (showWeekends: boolean) => void
+} {
+  return {
+    showWeekends: useStoredBoolean(SETTINGS_KEYS.showWeekends) ?? true,
+    setShowWeekends,
+  }
 }

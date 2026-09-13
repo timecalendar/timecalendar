@@ -7,6 +7,7 @@ import { remove } from "@/storage"
 import {
   useDisplayZone,
   useLanguagePreference,
+  useShowWeekendsPreference,
   useThemePreference,
   useTimezonePreference,
 } from "./hooks"
@@ -22,6 +23,7 @@ describe("settings prefs hooks", () => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
+    remove(SETTINGS_KEYS.showWeekends)
   })
 
   describe("useThemePreference", () => {
@@ -64,6 +66,24 @@ describe("settings prefs hooks", () => {
 
       changeLanguage.mockRestore()
     })
+  })
+})
+
+describe("useShowWeekendsPreference", () => {
+  beforeEach(() => remove(SETTINGS_KEYS.showWeekends))
+
+  it("defaults on and reactively persists false then true", async () => {
+    const first = await renderHook(() => useShowWeekendsPreference())
+    expect(first.result.current.showWeekends).toBe(true)
+
+    await act(async () => first.result.current.setShowWeekends(false))
+    expect(first.result.current.showWeekends).toBe(false)
+    await act(async () => first.unmount())
+
+    const restarted = await renderHook(() => useShowWeekendsPreference())
+    expect(restarted.result.current.showWeekends).toBe(false)
+    await act(async () => restarted.result.current.setShowWeekends(true))
+    expect(restarted.result.current.showWeekends).toBe(true)
   })
 })
 

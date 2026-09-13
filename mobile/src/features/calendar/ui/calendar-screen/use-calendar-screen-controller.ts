@@ -114,6 +114,7 @@ export function useCalendarScreenController() {
     view,
     setView,
     selectedDate,
+    firstWeekday: LAUNCH_FIRST_WEEKDAY,
     displayZone,
     range: agendaRange,
     canGoToToday,

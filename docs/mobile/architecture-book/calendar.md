@@ -2,12 +2,12 @@
 
 ## Rendering
 
-The T03 week surface is a feature-owned React Native shell under
+The T04 week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
 native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
 shell keeps exactly the previous, current, and next empty pages mounted in the installed
-native `PagerView`. Each page draws
-the complete 00:00–24:00 major-hour and half-hour grid beside one horizontally pinned hour
+native `PagerView`. Each page draws five or seven equal-width dated columns over the complete
+00:00–24:00 major-hour and half-hour grid beside one horizontally pinned hour
 gutter. The gutter labels and pager share one full-day row inside a native vertical
 `ScrollView`, so UIKit and Android provide drag recognition, deceleration, bounce, and
 settlement while the screen-owned native heading stays outside the scroll content. A horizontal
@@ -21,8 +21,13 @@ UIKit's computed adjusted inset; restoration lets the native ScrollView clamp ag
 current geometry. Calendar tab reselect-to-top is disabled. The ScrollView
 exposes the committed localized week date as an adjustable accessibility label with
 translated previous/next actions.
-T04 places weekday/date labels in the Monday–Sunday columns beneath the native month title;
-there is no additional single-date header or permanent paging toolbar.
+One committed weekday/date row remains above vertical motion beneath the native month title. It
+uses the same fixed gutter and ordered column model as all three pages. Monday is an explicit
+launch input; the pure display-zone civil-week model returns Monday through Sunday by default and
+removes Saturday/Sunday by weekday identity when the persisted Show weekends preference is off.
+Paging and Agenda still advance and read seven civil days. Today is identified in the effective
+display zone and has both a typography/outlined-shape cue and localized semantics. There is no
+additional single-date header or permanent paging toolbar.
 
 Pager selection is recorded independently from pager state and commits only when the native
 pager reports idle at an edge. The accepted generation remounts the same three direct,
@@ -40,7 +45,7 @@ offsets, so accepted week revisions and Week/Agenda switches preserve the visibl
 without reporting frame-frequency values to React.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
-timed tiles, current-time presentation and positioning, weekday columns, weekend filtering,
+timed tiles, current-time presentation and positioning,
 day/week switching, pinch, and zoom are absent until their numbered owned-renderer slices
 land. Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. Paging remains bounded to one
@@ -153,11 +158,12 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers the T03 owned Week shell and Agenda, with platform-specific native chrome.
+- Calendar offers the T04 owned Week shell and Agenda, with platform-specific native chrome.
   Week has one full-day native vertical scroll surface, a horizontally pinned gutter, native
   pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
-  semantics, and accessible previous/next alternatives. Day/week switching, current-time
-  positioning, events, and visible weekday columns belong to later renderer slices.
+  semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
+  header aligned with every clock page. Day/week switching, current-time positioning, events,
+  selectable dates, and zoom belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.
@@ -182,4 +188,5 @@ three-page native pager and control behavior, native scroll settlement/restorati
 and selection, Agenda grouping/routing, filtering, sync orchestration, failure states, and
 the repository cutover contract. Native held-drag feel, fling continuity, assistive
 technology, platform chrome, and physical-device presentation remain recorded owner checks;
-native vertical feel, dense-calendar, and all-day-lane behavior is not claimed by T03.
+native readability/alignment, gesture feel, preference restart, dense-calendar, and all-day-lane
+behavior is not claimed by host automation for T04.
