@@ -45,6 +45,7 @@ const FLING_VELOCITY = 500
 const PAGE_DIRECTIONS = [-1, 0, 1] as const
 
 function restingTranslation(pagePosition: number, pageWidth: number) {
+  "worklet"
   return pagePosition === 0 ? 0 : -pagePosition * pageWidth
 }
 

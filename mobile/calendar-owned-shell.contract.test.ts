@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import { execFileSync } from "node:child_process"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
@@ -25,6 +26,27 @@ function productionCalendarFiles(): string[] {
 }
 
 describe("owned Calendar paging repository contract", () => {
+  it("compiles the resting-offset helper for the native UI runtime", () => {
+    // Jest's animation mocks do not enforce the native runtime boundary.
+    const compiled = execFileSync(
+      process.execPath,
+      [
+        "-e",
+        `const babel = require("@babel/core");
+         const result = babel.transformFileSync(
+           "src/features/calendar/renderer/owned-calendar-shell.tsx",
+           {
+             envName: "development",
+             caller: { name: "metro", platform: "ios", isDev: true }
+           }
+         );
+         process.stdout.write(result.code);`,
+      ],
+      { cwd: root, encoding: "utf8" },
+    )
+    expect(compiled).toMatch(/restingTranslation\.__workletHash\s*=/)
+  })
+
   it("keeps the vendor dependency, adapter, patch, and exclusive config absent", () => {
     expect(packageJson.dependencies).not.toHaveProperty(vendorPackage)
     expect(packageJson.devDependencies).not.toHaveProperty("patch-package")
