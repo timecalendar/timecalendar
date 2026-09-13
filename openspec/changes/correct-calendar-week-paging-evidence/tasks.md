@@ -43,7 +43,7 @@
       confirming the six retarget substitutions plus the footer replacement are the only evidence-note
       changes. Record the focused content assertion, Prettier, strict OpenSpec validation, diff check,
       scope review, and disclosure scan as the documentation-only local-green evidence.
-- [ ] 4.2 Push the implementation head and confirm the new PR's reported head SHA matches the exact
+- [x] 4.2 Push the implementation head and confirm the new PR's reported head SHA matches the exact
       commit tested by the standard CI run and every required check is green. Treat strict OpenSpec
       validation as the CI proof for the proposal contract and the focused content assertion as the
       direct proof of the documentation correction; do not claim that CI reran the historical mobile
