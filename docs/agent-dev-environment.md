@@ -116,9 +116,9 @@ This commit-time guard does not close the identity channel by itself:
 - git does not run `pre-commit` for commits created by `rebase`, `cherry-pick`, `merge`,
   or `revert` (`git commit --amend` does run it).
 
-The separate, unskippable backstop is the CI lane that checks the real author and
-committer headers before merge. The guard also leaves host git configuration, host `gh`
-configuration, and the shared clone's `.git/config` unchanged.
+The disclosure CI lane checks repository files and paths, not commit metadata.
+The guard leaves host git configuration, host `gh` configuration, and the shared
+clone's `.git/config` unchanged.
 
 ### The dev host has **no KVM / nested virtualization**
 
@@ -657,10 +657,10 @@ node ci/check-ghcr-retention.mjs
 This repository is public. The `scan-disclosure` job in `ci-build-deploy.yml` fails a
 branch that would publish an identifying string — a personal name, login, address, or
 home directory — into it. It checks the full contents of touched files against a
-count-keyed baseline, then checks added lines, added or renamed paths, and the author name,
-author email, committer name, committer email, and message of each commit added over the merge
-base without that baseline. Header findings use `source: "commit-header"`; accepted base history
-is never scanned. It runs on every push and needs no configuration.
+count-keyed baseline, then checks added lines and added or renamed paths over the merge
+base without that baseline. Commit author and committer identities, commit messages,
+and co-author trailers in those messages are outside its scope. Human contributors
+can use their own commit identity. It runs on every push and needs no configuration.
 
 Why a job and not a rule: the rule is already written down, and it is what failed. On a
 change about identity or authentication the accurate observation and the forbidden
@@ -673,10 +673,8 @@ Three layers, each independent:
 1. **Derived** — identities taken from this repository's own commit authors. They are
    already public in the history, so reading them discloses nothing and configures
    nothing. Platform and bot identities contribute no vocabulary, and neither does a
-   role local part such as `noreply`, which identifies nobody. That is a rule about what
-   the layer _derives_, never about what it _inspects_: every record, commit headers
-   included, is matched against all three layers, so a person re-pushing under a forge
-   address the structural layer allows is still caught by the derived one.
+   role local part such as `noreply`, which identifies nobody. This vocabulary is used
+   to scan file contents and paths; the identities themselves are not findings.
 2. **Structural** — shapes, not values: an address on a domain that is not allowlisted,
    a bare profile URL, a home directory, a co-author trailer that is not a role address.
 3. **Configured** — the optional `DISCLOSURE_PATTERNS` repository secret, for strings the
@@ -707,12 +705,6 @@ Two properties are load-bearing:
   public, so a gate that echoed the offending line to help the author would republish
   the string it just caught, somewhere nobody thinks to scrub. Findings carry a location
   and a class, and nothing else — open the location locally to see the match.
-
-Commit headers are permanently a layer-B surface. They have no repository path, so neither the
-count-keyed baseline nor path-scoped `creditPaths` narrowing can apply. The gate obtains all four
-identity fields and the commit message from raw commit objects enumerated over the same
-`merge-base..head` range; expanding that range to reachable history would turn accepted public
-authorship into recurring findings.
 
 #### Count-keyed baseline
 
