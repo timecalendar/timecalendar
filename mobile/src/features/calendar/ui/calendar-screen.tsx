@@ -43,6 +43,7 @@ export function CalendarScreen() {
     canGoToToday,
     goToToday,
     rendererGeneration,
+    rendererPagePosition,
     transitionRevision,
     acceptedTransitionRevision,
     requestTransition,
@@ -130,6 +131,7 @@ export function CalendarScreen() {
               anchor={selectedDate}
               displayZone={displayZone}
               generation={rendererGeneration}
+              pagePosition={rendererPagePosition}
               revisionFloor={transitionRevision}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}

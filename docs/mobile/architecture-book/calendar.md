@@ -4,11 +4,40 @@
 
 The T02 week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
-committed launch week as a localized semantic heading above a stable themed canvas. The
+native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
 shell keeps exactly the previous, current, and next empty pages mounted. A horizontal
-gesture or labelled previous/next action requests one whole week; transient translation
-stays on the UI thread, while one revisioned settle path commits the date, headings,
+gesture or labelled screen-reader increment/decrement action requests one whole week; transient translation
+stays on the UI thread, while one revisioned settle path commits the date, native title,
 Agenda range, page generation, and accessibility announcement together.
+
+The viewport is an `Animated.View` directly beneath `PanGestureHandler`, so Reanimated
+registers the native worklet events on the touch owner. It exposes the committed localized
+week date as an adjustable accessibility label with translated previous/next actions.
+Development builds show centered preview labels, Monday date keys, measured viewport bounds,
+and stable week tints. These are motion diagnostics, not permanent calendar chrome.
+T04 places weekday/date labels in the Monday–Sunday columns beneath the native month title;
+there is no additional single-date header or permanent paging toolbar.
+
+Movement and state-change events each have their own Reanimated `useEvent` holder and
+one event name. A holder is never shared across two native props: the installed
+Reanimated implementation keys registration IDs by view tag, so sharing a holder can
+overwrite IDs and leave stale callbacks registered after rebuild or unmount.
+
+A requested transition survives owner rerenders: callback identity does not cancel motion.
+The three pages occupy a horizontal strip at a controller-owned cumulative page position.
+An accepted destination already rests at its next position before the controller commit;
+the replacement generation moves the strip layout by the same amount while preserving the
+native transform. The destination therefore remains at the same physical coordinate without
+a post-commit wrong-week, blank, partial, or tint frame. New pans during an accepted settle
+are ignored until that commit.
+BEGAN records pan eligibility without cancelling animation. Only ACTIVE captures the drag
+origin and interrupts snap-back, because iOS can emit BEGAN while resetting after release.
+A drag interrupting snap-back starts from the current offset. Short releases, cancellations,
+and failed gestures start snap-back directly on the UI runtime; returning to the committed
+week does not depend on a queued JavaScript callback or its transition guards. Predominantly vertical
+motion cancels paging. AppState inactivity/backgrounding cancels pending motion and
+returns to the committed week; stale queued gesture work carries an invalidated motion
+epoch and cannot restart paging after foregrounding.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
 timed tiles, the 7:00–21:00 grid, current-time presentation, vertical scrolling, hour
@@ -38,7 +67,7 @@ preference.
 
 `CalendarScreen` owns one committed week anchor and resolves its localized heading in the
 effective display zone. A valid one-shot `focusDate` and the retained Today action
-normalize to the containing launch week and replace pending motion. Swipe and button
+normalize to the containing launch week and replace pending motion. Swipe and accessibility-action
 requests carry monotonic revisions; duplicate, cancelled, and stale completions cannot
 relabel the settled screen. Agenda reads the unchanged bounded seven-day event range and
 keeps checklist progress, refresh/retry, synced and personal event activation, and unified

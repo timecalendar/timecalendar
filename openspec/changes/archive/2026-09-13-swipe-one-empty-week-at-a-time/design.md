@@ -1,6 +1,6 @@
 ## Context
 
-T01 replaced the vendor timeline with a feature-private owned shell on the real Calendar route. The screen now owns one selected date and derives both the native month/year title and the visible localized date heading from it; the renderer owns only the heading and empty full-bleed canvas. Gesture Handler, Reanimated, Worklets, the root gesture owner, and their supported Jest setup remain installed, but the Calendar renderer has no gesture or transition state yet.
+T01 replaced the vendor timeline with a feature-private owned shell on the real Calendar route. The screen owns one selected date and derives the native month/year title and localized canvas label from it; the renderer owns only that accessible context and the empty full-bleed canvas. Gesture Handler, Reanimated, Worklets, the root gesture owner, and their supported Jest setup remain installed, but the Calendar renderer has no gesture or transition state yet.
 
 T02 must add one visible capability without prebuilding the later timeline: an empty week moves exactly one complete launch week per swipe or accessible action. The approved D02/D04/D05/D06 boundaries require UI-thread transient motion, a three-page mounted working set, explicit Monday-first policy input, atomic settled presentation, stale-completion rejection, and one settled accessibility announcement. The page remains empty: hour scrolling, weekday columns, events, weekend filtering, day mode, zoom, and far-date controls belong to later tickets.
 
@@ -9,10 +9,10 @@ T02 must add one visible capability without prebuilding the later timeline: an e
 **Goals:**
 
 - Page the empty owned week by exactly one complete week for either horizontal direction, independent of fling velocity.
-- Keep both date headings and the selected date on the old committed week while a drag is held, then update the page/date/headings together after an accepted settle.
+- Keep the native title, canvas label, and selected date on the old committed week while a drag is held, then update the page and date context together after an accepted settle.
 - Use display-zone calendar arithmetic across month, year, and daylight-saving boundaries, with Monday supplied as an explicit launch policy rather than embedded as an invariant.
 - Keep only previous/current/next pages mounted and at most one pending replacement generation; cancel or ignore obsolete motion and duplicate completions.
-- Provide translated previous/next actions with platform touch targets, deterministic focus semantics, reduced-motion behavior, and one announcement per accepted week.
+- Provide translated previous/next adjustable-canvas actions with deterministic focus semantics, reduced-motion behavior, and one announcement per accepted week.
 - Capture focused automated proof plus content-free native gesture/frame/retention evidence and a testable owner checklist.
 
 **Non-Goals:**
@@ -38,7 +38,7 @@ Alternatives considered:
 
 Extend the feature-private renderer into one horizontal strip containing exactly the immediate previous, current, and next empty week canvases. A Gesture Handler pan updates only a Reanimated shared translation during finger movement. No frame-frequency React state update, date formatting, event read, or page allocation occurs. The renderer measures its positive width, clamps drag resistance, chooses at most one direction from displacement/velocity, and settles to either one neighbour or the current page. Velocity can affect the decision and platform-tuned animation, never the number of pages crossed.
 
-After a completed destination settle is accepted on the JS side, replace the three week identities around the new anchor and recenter the shared translation without exposing a partial slot. A new pan/action or layout interruption cancels current animation and invalidates its completion. Reduced motion uses the same request/accept path but commits without nonessential travel animation. Exact thresholds and timing are tuning constants owned by implementation evidence rather than product contracts.
+The controller also keeps a cumulative page position. Each strip generation is laid out at that position, and a completed destination already rests at the next position before the JS acknowledgement. When the accepted commit replaces the three week identities around the new anchor, the destination page therefore remains at the same physical coordinate; there is no post-commit transform jump that can expose the wrong neighbour for a frame. A new pan/action or layout interruption cancels current animation and invalidates its completion. Reduced motion uses the same request/accept path but commits without nonessential travel animation. Exact thresholds and timing are tuning constants owned by implementation evidence rather than product contracts.
 
 Alternatives considered:
 
@@ -48,7 +48,7 @@ Alternatives considered:
 
 ## Decision: Commit week transitions through one revisioned controller path
 
-The screen/controller remains authoritative for committed selected date and headings. A page request carries a monotonic transition revision, direction, source, and current anchor. The renderer may move complete adjacent visuals while the old committed date and both headings remain unchanged. A settle acknowledgement is accepted once only when its revision is still current; acceptance changes the week anchor, native month/year title, visible date heading, renderer generation, and accessibility context in the same transition. Duplicate acknowledgement is idempotent, and any completion from a cancelled or superseded revision is discarded.
+The screen/controller remains authoritative for the committed selected date, native title, and canvas label. A page request carries a monotonic transition revision, direction, source, and current anchor. The renderer may move complete adjacent visuals while the old committed date context remains unchanged. A settle acknowledgement is accepted once only when its revision is still current; acceptance changes the week anchor, cumulative page position, native month/year title, renderer generation, and accessibility context in the same transition. Duplicate acknowledgement is idempotent, and any completion from a cancelled or superseded revision is discarded.
 
 Swipe and translated previous/next actions enter this same path. No hidden imperative ref or independent screen/renderer date state is introduced. Agenda continues to consume the committed selected-date range and stays unchanged otherwise; T18 retains ownership of bidirectional agenda date context.
 
@@ -60,9 +60,9 @@ Alternatives considered:
 
 ## Decision: Keep one accessible settled context and explicit alternatives
 
-The visible committed date remains a heading. Adjacent visual slots are hidden from the accessibility tree until committed so recycling never creates duplicate headings or canvas targets. Previous/next controls have typed French/English labels, button roles, and at least 44-point iOS / 48-dp Android targets. Both controls request exactly one week and remain usable without the swipe gesture.
+The native month/year title is the sole visible page header. The adjustable canvas exposes the localized committed week and translated increment/decrement actions. Adjacent visual slots are hidden from the accessibility tree until committed so recycling never creates duplicate contexts or canvas targets. Both actions request exactly one week and remain usable without the swipe gesture; no visible arrow toolbar is rendered.
 
-Only the accepted settle path announces the new localized week heading, once. Intermediate pan updates, cancelled motion, stale acknowledgements, and duplicate delivery do not announce. Focus remains on the activated previous/next button where the platform does so naturally, while swipe settlement keeps the committed heading as the predictable date context; full event-identity focus behavior remains with later event tickets.
+Only the accepted settle path announces the new localized week context once. Intermediate pan updates, cancelled motion, stale acknowledgements, and duplicate delivery do not announce. The adjustable canvas remains the predictable date context; full event-identity focus behavior remains with later event tickets.
 
 Alternatives considered:
 
@@ -72,7 +72,7 @@ Alternatives considered:
 
 ## Decision: Prove behavior at pure, component, screen, contract, and native boundaries
 
-Pure tests own week arithmetic and reducer/revision behavior. Renderer tests use the supported Gesture Handler/Reanimated Jest path and only add narrow wrappers to `mobile/jest/setup-reanimated.ts` when a lifecycle call must be observable; they do not emulate a worklet runtime. Component/screen tests cover held-drag heading stability, one-page settle, snap-back, reversal/cancellation, stale and duplicate completion, repeated controls, reduced motion, one announcement, and stable three-page retention. The repository contract is updated so it permits only the intended owned paging modules and continues to reject vendor/fallback/duplicate renderer paths.
+Pure tests own week arithmetic and reducer/revision behavior. Renderer tests use the supported Gesture Handler/Reanimated Jest path and only add narrow wrappers to `mobile/jest/setup-reanimated.ts` when a lifecycle call must be observable; they do not emulate a worklet runtime. Component/screen tests cover held-drag context stability, one-page settle, frame-coherent page-position replacement, snap-back, reversal/cancellation, stale and duplicate completion, repeated actions, reduced motion, one announcement, and stable three-page retention. The repository contract is updated so it permits only the intended owned paging modules and continues to reject vendor/fallback/duplicate renderer paths.
 
 Implementation also records content-free iOS/Android gesture evidence when available, including actual build/device/OS, active refresh rate for timing claims, held drag, fast fling, reversal, controls, settled announcement, frame observations, and retained-page/generation counts. Missing physical-device axes are recorded in a `(HUMAN: owner device verification)` migration inbox note and remain explicit for T28; automated tests do not claim native feel or screen-reader behavior.
 
@@ -91,7 +91,7 @@ Implementation also records content-free iOS/Android gesture evidence when avail
 
 1. Add and fully test the pure policy-driven week arithmetic and revisioned transition semantics.
 2. Extend the owned shell to the three-slot gesture surface and shared previous/next transition path.
-3. Wire accepted settlements into the existing Calendar controller/screen so selected date, both headings, range, and announcement share one commit.
+3. Wire accepted settlements into the existing Calendar controller/screen so selected date, page position, native title, canvas label, range, and announcement share one commit.
 4. Update focused tests, the owned-renderer repository contract, current Calendar Architecture Book guidance/changelog, and the owner-evidence note.
 5. Run scoped local-green and strict OpenSpec checks, push the implementation to the existing draft PR, and prepare the immutable build/checklist for the ticket-specific owner QA hold.
 

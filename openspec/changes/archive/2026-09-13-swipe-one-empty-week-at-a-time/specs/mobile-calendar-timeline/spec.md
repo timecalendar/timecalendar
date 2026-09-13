@@ -30,18 +30,18 @@ The owned Calendar week surface SHALL resolve its committed date to the week con
 
 ### Requirement: T02 commits one revisioned settled week context
 
-The Calendar controller SHALL remain the authority for the committed week date and all derived headings. During finger-held or interrupted movement, the committed selected date, native title, visible date heading, and accessibility context SHALL continue to represent the old settled week. An accepted destination acknowledgement SHALL publish the destination page, selected date, headings, dependent Agenda range, renderer generation, and accessibility context together. Each transition revision SHALL be accepted at most once; cancelled, duplicate, or stale acknowledgements MUST NOT change committed state.
+The Calendar controller SHALL remain the authority for the committed week date, native title, and canvas label. During finger-held or interrupted movement, the committed selected date, native title, and accessibility context SHALL continue to represent the old settled week. An accepted destination acknowledgement SHALL publish the destination page position, selected date, native title, dependent Agenda range, renderer generation, and accessibility context together. Each transition revision SHALL be accepted at most once; cancelled, duplicate, or stale acknowledgements MUST NOT change committed state.
 
 #### Scenario: Held drag preserves the old heading
 
 - **WHEN** the student drags a week partway and holds without settling
-- **THEN** both visible headings and the selected date continue to name the original committed week
+- **THEN** the native title, canvas label, and selected date continue to name the original committed week
 - **AND** no intermediate date is announced
 
 #### Scenario: Accepted settle commits one coherent destination
 
 - **WHEN** the current transition revision finishes on an adjacent page
-- **THEN** the page, selected date, native title, visible date heading, Agenda range, and accessibility context change to the same destination week in one accepted commit
+- **THEN** the page position, selected date, native title, Agenda range, and canvas accessibility context change to the same destination week in one accepted commit
 - **AND** no wrong-date, unexplained blank, or partial settled frame is exposed
 
 #### Scenario: Obsolete completion is discarded
@@ -65,10 +65,10 @@ The horizontal renderer SHALL mount only the committed week and its immediate pr
 - **THEN** complete previous, current, and next empty pages are available for movement
 - **AND** no fourth settled or cache page is mounted
 
-#### Scenario: Settle recenters the working set
+#### Scenario: Settle replaces the working set without a visual jump
 
 - **WHEN** an adjacent destination is accepted
-- **THEN** the renderer rebuilds the same three slots around the new committed week and recenters without an unexplained blank page
+- **THEN** the renderer rebuilds the same three slots around the new committed week at the already-visible destination position without a post-commit transform jump or unexplained blank page
 - **AND** no more than one replacement generation remains pending
 
 #### Scenario: Long paging remains bounded
@@ -79,11 +79,11 @@ The horizontal renderer SHALL mount only the committed week and its immediate pr
 
 ### Requirement: T02 paging is operable and announces only settled context
 
-The Calendar week surface SHALL provide translated previous-week and next-week buttons in addition to the horizontal gesture. Each button SHALL expose a button role, a French or English label, and at least a 44-point iOS or 48-dp Android target, and SHALL enter the same one-page revisioned transition path as a swipe. Only an accepted changed-week settle SHALL announce the localized destination week once. Adjacent recycled pages MUST NOT create duplicate native focus trees, and reduced-motion operation SHALL settle without nonessential travel animation.
+The Calendar week surface SHALL expose translated previous-week and next-week increment/decrement actions on its adjustable canvas in addition to the horizontal gesture. Each action SHALL expose a French or English label and enter the same one-page revisioned transition path as a swipe. The native month/year title SHALL remain the sole visible page header, with no secondary date row or arrow toolbar. Only an accepted changed-week settle SHALL announce the localized destination week once. Adjacent recycled pages MUST NOT create duplicate native focus trees, and reduced-motion operation SHALL settle without nonessential travel animation.
 
 #### Scenario: Previous and next actions move one week
 
-- **WHEN** the student activates the labelled previous-week or next-week action
+- **WHEN** the student activates the labelled previous-week or next-week adjustable action
 - **THEN** the corresponding adjacent week is requested through the same revisioned settle path as a swipe
 - **AND** the action remains operable without performing a gesture
 
@@ -96,7 +96,7 @@ The Calendar week surface SHALL provide translated previous-week and next-week b
 #### Scenario: Recycled neighbours are not duplicate semantics
 
 - **WHEN** assistive technology traverses the settled Calendar week
-- **THEN** it encounters one committed date heading/context plus the labelled paging controls
+- **THEN** it encounters one committed adjustable canvas context with labelled paging actions
 - **AND** offscreen previous/next visual slots are hidden from the accessibility tree until committed
 
 #### Scenario: Reduced motion settles directly
@@ -111,7 +111,7 @@ The change MUST prove pure week arithmetic, transition idempotence, three-page r
 #### Scenario: Focused automation covers deterministic behavior
 
 - **WHEN** the T02 data, renderer, controller/screen, i18n, and repository-contract suites run
-- **THEN** they cover boundary-safe whole-week arithmetic, one-page decisions, snap-back, cancellation, stale and duplicate acknowledgement, repeated controls, one announcement, stable three-page retention, and preserved T01/Agenda behavior
+- **THEN** they cover boundary-safe whole-week arithmetic, one-page decisions, snap-back, cancellation, stale and duplicate acknowledgement, frame-coherent page-position replacement, repeated actions, one announcement, stable three-page retention, and preserved T01/Agenda behavior
 - **AND** every edited suite runs through the supported Gesture Handler/Reanimated Jest setup without a handwritten worklet runtime
 
 #### Scenario: Native evidence records actual conditions
@@ -130,12 +130,12 @@ The change MUST prove pure week arithmetic, transition idempotence, three-page r
 
 ### Requirement: Day/week timeline screen as a brand surface
 
-At the T02 milestone, the feature `renderer/` sublayer SHALL provide a horizontally paged empty owned week surface on the real Calendar route as a designed brand surface themed from `@/theme` tokens. It SHALL render one committed localized date heading, complete previous/current/next empty canvases, and labelled one-week navigation without importing a vendor renderer. Timeline events, the 7:00–21:00 grid, current-time indicator, day/week switching, vertical scrolling, hour labels, weekday columns, weekend filtering, event activation, and zoom SHALL remain absent until their numbered slices land.
+At the T02 milestone, the feature `renderer/` sublayer SHALL provide a horizontally paged empty owned week surface on the real Calendar route as a designed brand surface themed from `@/theme` tokens. It SHALL render the native month/year title, complete previous/current/next empty canvases, and labelled screen-reader one-week actions without importing a vendor renderer. Timeline events, the 7:00–21:00 grid, current-time indicator, day/week switching, vertical scrolling, hour labels, weekday columns, weekend filtering, event activation, and zoom SHALL remain absent until their numbered slices land.
 
 #### Scenario: Owned paged shell renders on the real route
 
 - **WHEN** `timecalendar-dev://calendar` is opened
-- **THEN** the feature-owned committed heading and bounded paged canvas render through the existing thin Calendar route
+- **THEN** the native title and bounded paged canvas render through the existing thin Calendar route
 - **AND** no calendar-kit, fallback, compatibility, or duplicate renderer mounts
 
 #### Scenario: Brand surface uses owned tokens
@@ -155,18 +155,18 @@ At the T02 milestone, the feature `renderer/` sublayer SHALL provide a horizonta
 
 ### Requirement: Internationalization and accessibility
 
-Every user-facing string added or retained on the T02 Calendar week surface SHALL be translated in French and English with typed key parity. The committed visible date SHALL be locale- and display-zone-aware and exposed with heading semantics. Previous/next and retained interactive controls SHALL expose translated labels, valid roles/states, and platform minimum targets. Only an accepted changed-week settle SHALL announce the localized destination once; intermediate and recycled pages SHALL not create duplicate semantic context.
+Every user-facing string added or retained on the T02 Calendar week surface SHALL be translated in French and English with typed key parity. The native month/year title SHALL be the sole page header. The canvas SHALL expose the committed locale- and display-zone-aware week date as an adjustable accessibility label with translated increment/decrement actions. No secondary full-date row or arrow toolbar SHALL render. Retained interactive controls SHALL expose translated labels and valid roles/states. Only an accepted changed-week settle SHALL announce the localized destination once; intermediate and recycled pages SHALL not create duplicate semantic context.
 
-#### Scenario: French and English settled headings
+#### Scenario: French and English settled canvas labels
 
 - **WHEN** the paged shell settles the same launch week in French and English
-- **THEN** its committed heading uses the corresponding locale and effective display zone
+- **THEN** its committed canvas label uses the corresponding locale and effective display zone
 - **AND** neither catalog exposes a raw translation key
 
-#### Scenario: One committed date heading is accessible
+#### Scenario: One committed week context is accessible
 
 - **WHEN** assistive technology traverses the settled paged shell
-- **THEN** it discovers one visible localized date as a heading
+- **THEN** it discovers one localized committed week label on an adjustable canvas
 - **AND** adjacent recycled pages do not expose duplicate headings or canvas targets
 
 #### Scenario: Paging controls describe supported actions
@@ -183,12 +183,12 @@ Every user-facing string added or retained on the T02 Calendar week surface SHAL
 
 ### Requirement: Wiring proven in CI grid and performance on-device
 
-The change MUST prove bounded one-week paging, localized settled heading semantics, Calendar remount, shell/Agenda switching, retained agenda event activation, revision rejection, and current owned-renderer integrity with focused Jest and repository checks. It MUST preserve the three established Maestro journeys and their shared agenda helper. Native gesture feel, frame continuity, retained generations, settled announcement, mount/return, and agenda/details checks SHALL be recorded through the ticket's testable build and owner checklist rather than claimed from this host.
+The change MUST prove bounded one-week paging, localized settled date semantics, Calendar remount, shell/Agenda switching, retained agenda event activation, revision rejection, and current owned-renderer integrity with focused Jest and repository checks. It MUST preserve the three established Maestro journeys and their shared agenda helper. Native gesture feel, frame continuity, retained generations, settled announcement, mount/return, and agenda/details checks SHALL be recorded through the ticket's testable build and owner checklist rather than claimed from this host.
 
 #### Scenario: Owned paging is proven without a vendor mock
 
 - **WHEN** the focused renderer and Calendar screen suites run
-- **THEN** they exercise the three-page owned surface, one-page settle path, translated controls, and localized committed heading
+- **THEN** they exercise the three-page owned surface, one-page settle path, translated actions, and localized committed canvas label
 - **AND** they require no calendar-kit Jest setup, fallback renderer, or handwritten worklet runtime
 
 #### Scenario: Retained Agenda and details wiring is proven

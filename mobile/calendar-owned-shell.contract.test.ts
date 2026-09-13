@@ -74,6 +74,23 @@ describe("owned Calendar paging repository contract", () => {
     ).toBe(true)
   })
 
+  it("registers legacy native worklet events on the animated viewport", () => {
+    const renderer = readFileSync(
+      join(root, "src/features/calendar/renderer/owned-calendar-shell.tsx"),
+      "utf8",
+    )
+    expect(renderer).toMatch(/<PanGestureHandler\b[^>]*>\s*<Animated\.View\b/)
+  })
+
+  it("keeps snap-back on the UI runtime instead of queuing a guarded JS callback", () => {
+    const renderer = readFileSync(
+      join(root, "src/features/calendar/renderer/owned-calendar-shell.tsx"),
+      "utf8",
+    )
+    expect(renderer).toMatch(/const snapBack = \(\) => \{\s*"worklet"/)
+    expect(renderer).not.toMatch(/scheduleOnRN\(\s*snapBack/)
+  })
+
   it("pins the three journeys and retained Agenda helper", () => {
     const maestroRoot = join(root, ".maestro")
     const topLevel = readdirSync(maestroRoot, { withFileTypes: true })

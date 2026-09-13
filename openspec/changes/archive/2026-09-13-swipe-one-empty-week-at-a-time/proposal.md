@@ -6,9 +6,9 @@ The owned Calendar shell is stable but cannot move beyond its initially selected
 
 - Add horizontal paging to the empty owned Calendar shell with the existing Gesture Handler, Reanimated, and Worklets stack.
 - Normalize the week surface to an explicit Monday-first launch policy and shift weeks with display-zone-aware calendar arithmetic rather than fixed durations.
-- Keep the settled date and headings unchanged while a drag is held, then commit the destination page, date, headings, and accessibility context once after settle.
+- Keep the settled date, native title, and canvas label unchanged while a drag is held, then commit the destination page and date context once after settle.
 - Bound mounted work to the current week, its two immediate neighbours, and at most one pending replacement generation; invalidate interrupted and stale completions.
-- Add translated, platform-sized previous/next week actions that use the same revisioned transition path as swipes and announce only an accepted settled week.
+- Add translated previous/next week actions to the adjustable canvas that use the same revisioned transition path as swipes and announce only an accepted settled week.
 - Add focused unit, component, repository-contract, and native evidence requirements for one-page flings, cancellation/reversal, repeated delivery, retained-page stability, and month/year/DST boundaries.
 - Update current Calendar architecture guidance and the Architecture Book changelog for the T02 contract.
 

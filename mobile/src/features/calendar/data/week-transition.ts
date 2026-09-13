@@ -15,6 +15,7 @@ type PendingWeekTransition = WeekTransitionRequest & {
 
 export type WeekTransitionState = {
   anchor: Date
+  pagePosition: number
   lastRequestRevision: number
   generation: number
   acceptedRevision: number | null
@@ -28,6 +29,7 @@ export function createWeekTransitionState(
 ): WeekTransitionState {
   return {
     anchor: startOfWeekInZone(date, zone, firstWeekday),
+    pagePosition: 0,
     lastRequestRevision: 0,
     generation: 0,
     acceptedRevision: null,
@@ -79,6 +81,7 @@ export function settleWeekTransition(
     state: {
       ...state,
       anchor: state.pending.destination,
+      pagePosition: state.pagePosition + state.pending.direction,
       generation: state.generation + 1,
       acceptedRevision: revision,
       pending: null,
@@ -99,6 +102,7 @@ export function replaceWeekTransitionAnchor(
 
   return {
     anchor,
+    pagePosition: state.pagePosition,
     lastRequestRevision: state.lastRequestRevision + 1,
     generation: state.generation + 1,
     acceptedRevision: state.acceptedRevision,

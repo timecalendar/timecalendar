@@ -31,6 +31,7 @@ describe("week transition state", () => {
     expect(settled.accepted).toBe(true)
     expect(dayKey(settled.state.anchor, zone)).toBe("2026-09-21")
     expect(settled.state.generation).toBe(1)
+    expect(settled.state.pagePosition).toBe(1)
     expect(settleWeekTransition(settled.state, 1)).toEqual({
       accepted: false,
       state: settled.state,
@@ -45,7 +46,9 @@ describe("week transition state", () => {
       monday,
     )
     expect(dayKey(state.pending!.destination, zone)).toBe("2026-09-07")
-    expect(settleWeekTransition(state, 3).accepted).toBe(true)
+    const settled = settleWeekTransition(state, 3)
+    expect(settled.accepted).toBe(true)
+    expect(settled.state.pagePosition).toBe(-1)
   })
 
   it("rejects stale requests and completions", () => {
@@ -100,6 +103,7 @@ describe("week transition state", () => {
     expect(dayKey(replaced.anchor, zone)).toBe("2026-12-28")
     expect(replaced.pending).toBeNull()
     expect(replaced.lastRequestRevision).toBe(8)
+    expect(replaced.pagePosition).toBe(0)
     expect(settleWeekTransition(replaced, 7).accepted).toBe(false)
     expect(
       replaceWeekTransitionAnchor(
