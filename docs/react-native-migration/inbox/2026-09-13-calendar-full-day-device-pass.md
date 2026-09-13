@@ -5,7 +5,7 @@
 ## Testable build target
 
 Build a development app from immutable implementation revision
-`3ecc063d46c6c03c057598b69b977915905ff94d`. It renders an empty complete-day grid beside
+`3ecc063de70fa0ca7858344ccf19c69d787e4430`. It renders an empty complete-day grid beside
 one pinned gutter while retaining the accepted three-page week movement.
 
 Automated checks from `mobile/` at that implementation revision:
