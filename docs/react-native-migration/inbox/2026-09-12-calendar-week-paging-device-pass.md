@@ -2,7 +2,12 @@
 
 **For:** the human owner performing physical-device gesture and assistive-technology checks.
 
-## Current working-tree verification target
+## Correction build target
+
+The immutable corrected source revision is
+`763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`. Build a development app from that
+revision for the pending owner checks; no native result below is attributed to a different
+build.
 
 The native month/year title is the only page header. The calendar has no secondary
 full-date row or arrow buttons. Its animated viewport owns native pan events directly.
@@ -44,6 +49,13 @@ Current correction checks from `mobile/`:
 - `npx tsc --noEmit`: passed.
 - `npm run lint`: passed.
 - `npm run react-doctor:changed`: passed, no issues.
+- `npm test -- --coverage`: 177 suites and 1,658 tests passed; global coverage was 97.64%
+  statements and 92.12% branches.
+
+These commands ran against immutable source revision
+`763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`. The focused renderer test verifies that the
+destination animation target and replacement strip position keep the same page at the viewport
+origin, while the screen test pages beyond the initial slots in both directions.
 
 ## Historical handoff evidence
 
@@ -67,7 +79,8 @@ the automated results do not claim native feel or assistive-technology behavior.
 
 ## Build and fabricated fixture
 
-- Build kind: development build from the immutable correction revision recorded below.
+- Build kind: development build from revision
+  `763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`.
 - Install: run `npm ci` from `mobile/`, then `npm run ios` or `npm run android` with a supported
   device attached.
 - Reset: fully reload the development bundle so no interrupted Fast Refresh motion remains.
@@ -80,8 +93,9 @@ the automated results do not claim native feel or assistive-technology behavior.
 
 ## Environment record
 
-- Device / OS / platform: pending owner entry.
-- Build kind / revision: pending owner entry.
+- Device / OS / platform: pending owner entry; no corrected native result is claimed yet.
+- Installed build / revision: pending owner build from
+  `763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`.
 - Active refresh rate: pending owner entry; make no timing or smoothness claim without it.
 - VoiceOver or TalkBack enabled for announcement pass: pending owner entry.
 
