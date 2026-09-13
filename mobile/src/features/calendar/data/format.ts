@@ -21,11 +21,39 @@ const LOCALES = {
   en: enUS,
 } as const
 
+const HOUR_12_LOCALES: Record<AppLocale, string> = { fr: "fr-FR", en: "en-US" }
+const HOUR_12_FORMATTERS = new Map<AppLocale, Intl.DateTimeFormat>()
+
+function hour12Formatter(locale: AppLocale): Intl.DateTimeFormat {
+  const cached = HOUR_12_FORMATTERS.get(locale)
+  if (cached) return cached
+  const formatter = new Intl.DateTimeFormat(HOUR_12_LOCALES[locale], {
+    hour: "numeric",
+    hourCycle: "h12",
+    timeZone: "UTC",
+  })
+  HOUR_12_FORMATTERS.set(locale, formatter)
+  return formatter
+}
+
 // Map the i18next language tag (e.g. "fr", "fr-FR", "en-US") to the app locale —
 // FR for any `fr*`, EN otherwise (mirroring the EN-fallback detect-locale rule).
 // The single source for every screen that needs a date-fns-friendly locale.
 export function resolveLocale(language: string): AppLocale {
   return language.startsWith("fr") ? "fr" : "en"
+}
+
+/** Formats a normalized 0–23 hour start from an explicit device preference. */
+export function formatHourStartLabel(
+  hour: number,
+  locale: AppLocale,
+  uses24HourClock: boolean | null,
+): string {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+    throw new RangeError("hour must be an integer from 0 through 23")
+  }
+  if (uses24HourClock !== false) return `${String(hour).padStart(2, "0")}:00`
+  return hour12Formatter(locale).format(new Date(Date.UTC(2020, 0, 1, hour)))
 }
 
 // The day header's two parts (Flutter `fullDayToShortDay` + `day.day`): the short

@@ -1,9 +1,16 @@
 import {
+  clampVerticalOffset,
   DEFAULT_PIXELS_PER_HOUR,
   eventHeight,
+  FULL_DAY_END_MINUTE,
+  FULL_DAY_START_MINUTE,
+  fullDayMajorMinutes,
+  fullDayMinorMinutes,
   GRID_END_MINUTE,
   GRID_START_MINUTE,
+  gridContentHeight,
   hourLabels,
+  maxVerticalOffset,
   minuteToPixel,
   nowIndicatorPosition,
 } from "./time-grid"
@@ -13,6 +20,66 @@ describe("time-grid constants", () => {
     expect(GRID_START_MINUTE).toBe(7 * 60)
     expect(GRID_END_MINUTE).toBe(21 * 60)
     expect(DEFAULT_PIXELS_PER_HOUR).toBe(60)
+  })
+
+  it("names the complete 00:00–24:00 renderer window", () => {
+    expect(FULL_DAY_START_MINUTE).toBe(0)
+    expect(FULL_DAY_END_MINUTE).toBe(24 * 60)
+  })
+})
+
+describe("full-day geometry", () => {
+  it("uses one minute mapping for closing, major, and minor boundaries", () => {
+    expect(fullDayMajorMinutes()).toEqual(
+      Array.from({ length: 25 }, (_, hour) => hour * 60),
+    )
+    expect(fullDayMinorMinutes()).toEqual(
+      Array.from({ length: 24 }, (_, hour) => hour * 60 + 30),
+    )
+    expect(
+      fullDayMajorMinutes().map((minute) =>
+        minuteToPixel(minute, {
+          startMinute: FULL_DAY_START_MINUTE,
+        }),
+      ),
+    ).toEqual(Array.from({ length: 25 }, (_, hour) => hour * 60))
+    expect(
+      fullDayMinorMinutes().map((minute) =>
+        minuteToPixel(minute, {
+          startMinute: FULL_DAY_START_MINUTE,
+        }),
+      ),
+    ).toEqual(Array.from({ length: 24 }, (_, hour) => hour * 60 + 30))
+  })
+
+  it("scales the entire day and keeps positions monotonic", () => {
+    expect(gridContentHeight(FULL_DAY_START_MINUTE, FULL_DAY_END_MINUTE)).toBe(
+      1440,
+    )
+    expect(
+      gridContentHeight(FULL_DAY_START_MINUTE, FULL_DAY_END_MINUTE, 90),
+    ).toBe(2160)
+    const positions = fullDayMajorMinutes().map((minute) =>
+      minuteToPixel(minute, {
+        pixelsPerHour: 90,
+        startMinute: FULL_DAY_START_MINUTE,
+      }),
+    )
+    expect(
+      positions.every(
+        (position, index) => index === 0 || position > positions[index - 1]!,
+      ),
+    ).toBe(true)
+    expect(positions.at(-1)).toBe(gridContentHeight(0, 1440, 90))
+  })
+
+  it("clamps top, interior, bottom, and non-scrollable content", () => {
+    expect(maxVerticalOffset(1440, 500)).toBe(940)
+    expect(maxVerticalOffset(400, 500)).toBe(0)
+    expect(clampVerticalOffset(-1, 1440, 500)).toBe(0)
+    expect(clampVerticalOffset(420, 1440, 500)).toBe(420)
+    expect(clampVerticalOffset(2000, 1440, 500)).toBe(940)
+    expect(clampVerticalOffset(200, 400, 500)).toBe(0)
   })
 })
 

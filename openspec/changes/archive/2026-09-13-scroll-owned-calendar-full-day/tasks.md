@@ -1,0 +1,61 @@
+## 1. Lock pure geometry, format, and interaction semantics
+
+- [x] 1.1 Extend `mobile/src/features/calendar/data/time-grid.test.ts` first with explicit 00:00–24:00 bounds, 60/30-minute line positions, a non-default scale, content height, top/interior/bottom clamps, zero-scroll short content, monotonicity, and boundary properties; assert the existing no-option 07:00–21:00 labels and now-indicator behavior remain unchanged, then run this exact suite.
+- [x] 1.2 Add the named full-day bounds and pure geometry/clamp helpers to `time-grid.ts` and its data barrel without changing existing defaults; make every T03-introduced statement and branch reach 100% coverage and keep the module free of React, renderer, locale, and device imports.
+- [x] 1.3 Extend `mobile/src/features/calendar/data/format.test.ts` with explicit true, false, and null device-clock inputs at midnight, morning, noon, and evening in French and English; prove results are host-timezone independent and existing event-time formatters are unchanged, then run this exact suite.
+- [x] 1.4 Add a pure hour-start label formatter that accepts locale and nullable `uses24HourClock`, uses 24-hour output for true/null and 12-hour day periods for false, rejects or normalizes only the documented 0–23 input domain, and performs no Expo/device read; export and fully cover its introduced branches.
+- [x] 1.5 Add a focused pure gesture-state suite for undecided tap tolerance, horizontal/vertical dominance, near-diagonal waiting, immutable lock through reversal, press cancellation, terminal cancellation, and stale motion epochs; then implement the smallest feature-private helper/state seam that makes the suite pass with 100% introduced statement/branch coverage.
+
+## 2. Render one aligned full-day gutter and grid
+
+- [x] 2.1 Replace the T02 development placeholder inside each bounded week page with the T03 empty 00:00–24:00 major/minor grid, using theme tokens and the pure geometry outputs; keep exactly three pages and add no columns, events, current-time line, zoom, or data reads.
+- [x] 2.2 Place one fixed-width hour gutter outside the horizontal page strip, render hour starts 0–23 from the explicit format input, and drive gutter labels plus all page grid planes from the same vertical shared offset; add component assertions for exact line/label coordinates and absence of a terminal duplicate label.
+- [x] 2.3 Keep the native month/year heading outside the renderer's vertical coordinate plane, neighbour/grid decoration hidden from the accessibility tree, and the committed adjustable canvas as the single week context; verify no duplicate header, gutter, canvas target, or visible paging toolbar appears.
+- [x] 2.4 Measure content and viewport height, derive the maximum offset through the pure helper, clamp at both ends and after layout changes, and preserve valid offset during renderer rerenders/generation replacement; verify top, intermediate, bottom, short-viewport, and resized cases in the renderer suite.
+
+## 3. Add one-axis native motion without weakening T02
+
+- [x] 3.1 Extend the current one-finger `PanGestureHandler`/Reanimated event path so activation captures both resting origins, waits through tap/ambiguous movement, locks once to the dominant axis, and keeps that axis through diagonal continuation and reversal; set the supported native responder-cancellation/single-pointer inputs explicitly and test their rendered configuration.
+- [x] 3.2 Keep horizontal lock on T02's existing adjacent-page clamp, one-week revisioned settle, snap-back, reduced-motion, and separate worklet event-holder behavior while leaving vertical offset unchanged; rerun all existing renderer paging cases plus paging from a non-zero clock offset.
+- [x] 3.3 Make vertical lock update only the shared clamped clock offset on the UI runtime, settle bounded inertial motion, cancel press eligibility, and emit no week request/date announcement; cover slow drag, fling, quick reversal, exact limits, and diagonal follow-through in the focused renderer suite.
+- [x] 3.4 On failure, cancellation, layout change, background, unmount, or superseding input, cancel the relevant animation, preserve/recenter each axis to its valid resting value, increment the motion epoch, and reject stale completions; verify rapid reversal/background/layout sequences without queued motion restarting.
+- [x] 3.5 If the supported Jest setup needs observability for vertical decay or cancellation, add only a narrow wrapper in `mobile/jest/setup-reanimated.ts`, document why it mirrors rather than emulates native behavior, and run every existing Reanimated consumer suite affected by that shared setup.
+
+## 4. Wire explicit device preference and settled offset ownership
+
+- [x] 4.1 Read `useCalendars()[0].uses24hourClock` at the Calendar screen seam using the installed Expo 56 Localization API, preserve null, and pass it explicitly through the owned shell; extend the repository's existing Expo localization mocks rather than adding a platform-global fallback.
+- [x] 4.2 Add controller ownership for only the settled, clamped vertical offset; report no frame-frequency values to React, preserve the offset across accepted week revisions and Week/Agenda switches, and restore it when the owned shell remounts.
+- [x] 4.3 Preserve the revision-coherent selected date, native title, canvas label, Agenda range, page generation, and one accepted-week announcement while vertical motion changes none of them; prove horizontal paging and accessibility actions from a scrolled position retain that position.
+- [x] 4.4 Re-run the Calendar screen/controller suites for mount/remount, Today, focus date, Week/Agenda switching, refresh/retry, checklist state, fabricated synced/personal event activation, event-details navigation/return, Add, reduced motion, stale cancellation, and settled announcements; add only focused cases needed for T03 regressions.
+
+## 5. Reconcile repository contracts and current guidance
+
+- [x] 5.1 Update `mobile/calendar-owned-shell.contract.test.ts` for the intended T03 renderer/helper inventory and UI-runtime geometry/gesture boundaries while continuing to reject vendor, fallback, compatibility, duplicate renderer, alternate pager/scroll implementation, unbounded pages, unexpected sensitive-surface changes, or loss of the three Maestro journeys/Agenda helper; run the contract suite.
+- [x] 5.2 Update `docs/mobile/architecture-book/calendar.md` and `docs/mobile/architecture-book/CHANGELOG.md` with the current T03 full-day, shared-offset, axis-lock, hour-preference, restoration, and still-absent later-capability contract. Add no ADR unless implementation evidence changes an approved costly-to-reverse boundary.
+- [x] 5.3 Re-read the implemented delta against D02, D04, the canonical T03 ticket, `mobile/AGENTS.md`, and Expo SDK 56 Localization/Gesture Handler/Reanimated documentation; if real native evidence invalidates the single-handler design, stop and re-brief the Founding Engineer before introducing a comparator or changing scope.
+- [x] 5.4 Run `openspec validate scroll-owned-calendar-full-day --strict`; repair proposal, design, spec, and tasks together if implementation evidence changes the shape, and do not weaken a requirement to fit an implementation.
+- [x] 5.5 Create or update a migration inbox note tagged `(HUMAN: owner device verification)` with the immutable build/revision, fabricated empty-week fixture, reset/launch instructions, exact device/OS/physical-or-simulator/build fields, refresh rate for timing claims, and unchecked T03 owner checklist; record unavailable iOS/Android or assistive-technology axes explicitly for T28 rather than claiming them.
+
+## 6. Produce local-green and native evidence
+
+- [x] 6.1 From `mobile/`, run every edited suite plus the focused time-grid, format, interaction-state, renderer, controller, Calendar screen, i18n/localization-if-edited, Jest-setup-if-edited, repository-contract, Maestro selector, and harness tests with exact `npm test -- --runTestsByPath ...` paths; record command, suite/test counts, result, and tested Git revision.
+- [x] 6.2 Run focused coverage proving 100% statement/branch coverage for every introduced pure arithmetic/state module while preserving the project gates; also run `npx tsc --noEmit`, `npm run lint`, scoped `npx prettier --check <edited-files>`, `npm run react-doctor:changed`, `git diff --check`, and the applicable established Maestro selector/harness contract checks.
+- [x] 6.3 Record content-free evidence from each available iOS/Android runtime with exact build/device/OS and active refresh rate: top/bottom reachability, gutter/grid alignment, fixed heading/gutter axes, vertical drag/fling, horizontal page from a scrolled time, quick diagonal/reversal axis choice, press cancellation, device 12/24-hour toggle, reduced motion, frame continuity, three-page retention, and retained Calendar/Agenda behavior.
+- [x] 6.4 Mark every unavailable runtime observation pending for the ticket-specific owner QA instead of converting Jest or incomplete diagnostics into native claims; any explicitly accepted intermediate device deferral must name T28 and preserve the final product gates.
+- [x] 6.5 Run a final diff audit for unchanged shared 07:00–21:00 defaults, one authoritative offset, frame-frequency React updates, two-axis movement, stale animation work, duplicate semantics, unbounded pages/nodes, event/data mutations, later-slice scope, and changes under OpenAPI/generated API, server migrations, native/store config, deployment/CI, or legacy Flutter paths.
+
+## 7. Update the existing PR and pause for owner acceptance
+
+- [x] 7.1 Push the tested implementation revision to this same draft PR and update its feature-level body with exact local/native evidence, build/fixture instructions, sensitive-surface statement, T03 limitations, and remaining owner checks; run the required disclosure scan on the exact title/body before publication and re-read the stored PR body after every write.
+- [x] 7.2 Confirm the PR head SHA equals the exact revision used by the reported standard CI run and every required check is green; treat focused pure coverage and strict OpenSpec validation as the direct CI proof for the introduced contracts, and report any native evidence only from its named runtime.
+- [x] 7.3 Supply the testable build/revision and canonical T03 checklist for explicit owner QA, including all-hours reachability, gutter alignment, fixed heading, week paging from a scrolled time, diagonal/reversal behavior, device hour-format switching, and the prior accepted interaction; keep failures and focused retest evidence on this same ticket.
+- [x] 7.4 Keep the PR unmerged and auto-merge disabled while the board-user-required owner QA and human review are pending. Do not start, assign, or wake the next renderer slice until T03 has explicit owner acceptance and its PR has been human-merged.
+
+## 8. Repair owner-reported native motion and rendering failures
+
+- [x] 8.1 Replace custom vertical translation and timing projection with one first-descendant native ScrollView using automatic iOS content insets and native raw settled-offset restoration.
+- [x] 8.2 Replace the custom horizontal pan with the installed native PagerView, retaining exactly three pages, revisioned idle settlement, cancellation, reduced-motion actions, and generation-centered replacement.
+- [x] 8.3 Render filled physical-hairline grid lines with a drawable closing boundary and restore stable development-only week tints and diagnostics.
+- [x] 8.4 Preserve one committed-week accessibility context, disable Calendar tab reselect-to-top, and verify no duplicate pager/grid semantics or vertical date announcements.
+- [x] 8.5 Update focused renderer, screen, pager mock, repository-contract, OpenSpec, Architecture Book, and owner-device evidence for the native repair.
+- [x] 8.6 Run focused tests, TypeScript, lint, formatting, React Doctor, repository contracts, strict OpenSpec validation, and the available iOS/Android device checks; leave unavailable owner observations explicitly pending.

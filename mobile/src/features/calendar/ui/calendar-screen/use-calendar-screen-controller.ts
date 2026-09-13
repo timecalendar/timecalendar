@@ -40,6 +40,7 @@ export function useCalendarScreenController() {
   const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
   const displayZone = useDisplayZone()
   const [view, setView] = useState<CalendarView>("week")
+  const [verticalOffset, setVerticalOffset] = useState(0)
   const [transition, dispatchTransition] = useReducer(
     (
       state: ReturnType<typeof createWeekTransitionState>,
@@ -105,6 +106,9 @@ export function useCalendarScreenController() {
   const cancelTransition = (revision: number) => {
     dispatchTransition({ type: "cancel", revision })
   }
+  const settleVerticalOffset = (offset: number) => {
+    setVerticalOffset(Math.max(0, offset))
+  }
 
   return {
     view,
@@ -115,9 +119,10 @@ export function useCalendarScreenController() {
     canGoToToday,
     goToToday,
     rendererGeneration: transition.generation,
-    rendererPagePosition: transition.pagePosition,
     transitionRevision: transition.lastRequestRevision,
     acceptedTransitionRevision: transition.acceptedRevision,
+    verticalOffset,
+    settleVerticalOffset,
     requestTransition,
     settleTransition,
     cancelTransition,

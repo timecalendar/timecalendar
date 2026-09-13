@@ -17,7 +17,7 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="calendar">
+      <NativeTabs.Trigger name="calendar" disableScrollToTop>
         <NativeTabs.Trigger.Label>
           {t("calendar.tab.label")}
         </NativeTabs.Trigger.Label>

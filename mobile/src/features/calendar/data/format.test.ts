@@ -4,12 +4,43 @@ import {
   formatEventDateRange,
   formatFullDateTime,
   formatFullDay,
+  formatHourStartLabel,
   formatMonthYear,
   formatShortDateTime,
   formatTime,
   formatTimeRange,
   resolveLocale,
 } from "./format"
+
+describe("formatHourStartLabel", () => {
+  it.each(["en", "fr"] as const)(
+    "uses deterministic 24-hour labels for true and null in %s",
+    (locale) => {
+      for (const [hour, expected] of [
+        [0, "00:00"],
+        [8, "08:00"],
+        [12, "12:00"],
+        [20, "20:00"],
+      ] as const) {
+        expect(formatHourStartLabel(hour, locale, true)).toBe(expected)
+        expect(formatHourStartLabel(hour, locale, null)).toBe(expected)
+      }
+    },
+  )
+
+  it.each(["en", "fr"] as const)(
+    "uses 12-hour day periods for false in %s",
+    (locale) => {
+      expect(
+        [0, 8, 12, 20].map((hour) => formatHourStartLabel(hour, locale, false)),
+      ).toEqual(["12 AM", "8 AM", "12 PM", "8 PM"])
+    },
+  )
+
+  it.each([-1, 1.5, 24])("rejects the out-of-domain hour %s", (hour) => {
+    expect(() => formatHourStartLabel(hour, "en", true)).toThrow(RangeError)
+  })
+})
 
 // Fixtures are UTC INSTANTS and every assertion pins an explicit display zone,
 // so the suite proves zone re-projection and never depends on the machine TZ

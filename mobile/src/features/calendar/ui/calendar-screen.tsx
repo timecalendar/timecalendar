@@ -1,5 +1,6 @@
+import { useCalendars } from "expo-localization"
 import { router } from "expo-router"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AccessibilityInfo,
@@ -34,6 +35,7 @@ export function CalendarScreen() {
   const { t, i18n } = useTranslation()
   const theme = useTheme()
   const locale = resolveLocale(i18n.language)
+  const uses24HourClock = useCalendars()[0].uses24hourClock
   const {
     view,
     setView,
@@ -43,9 +45,10 @@ export function CalendarScreen() {
     canGoToToday,
     goToToday,
     rendererGeneration,
-    rendererPagePosition,
     transitionRevision,
     acceptedTransitionRevision,
+    verticalOffset,
+    settleVerticalOffset,
     requestTransition,
     settleTransition,
     cancelTransition,
@@ -64,7 +67,7 @@ export function CalendarScreen() {
     AccessibilityInfo.announceForAccessibility(weekHeading)
   }, [acceptedTransitionRevision, weekHeading])
   const events = useCalendarEvents(range)
-  const eventUids = useMemo(() => events.map((event) => event.id), [events])
+  const eventUids = events.map((event) => event.id)
   const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
   const agendaLayout = useAdaptiveLayout("standard")
@@ -94,7 +97,7 @@ export function CalendarScreen() {
   )
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView collapsable={false} style={styles.container}>
       <CalendarScreenHeader
         title={formatMonthYear(selectedDate, locale, displayZone)}
         view={view}
@@ -102,8 +105,16 @@ export function CalendarScreen() {
         onToday={canGoToToday ? goToToday : undefined}
         onAdd={onAdd}
       />
-      <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-        <View style={styles.calendar} testID="calendar-full-bleed-owner">
+      <SafeAreaView
+        collapsable={false}
+        style={styles.safeArea}
+        edges={["left", "right"]}
+      >
+        <View
+          collapsable={false}
+          style={styles.calendar}
+          testID="calendar-full-bleed-owner"
+        >
           {view === "agenda" ? (
             <View
               testID="calendar-agenda-responsive-owner"
@@ -130,12 +141,15 @@ export function CalendarScreen() {
               heading={weekHeading}
               anchor={selectedDate}
               displayZone={displayZone}
+              locale={locale}
+              uses24HourClock={uses24HourClock}
+              initialVerticalOffset={verticalOffset}
               generation={rendererGeneration}
-              pagePosition={rendererPagePosition}
               revisionFloor={transitionRevision}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}
               onTransitionCancelled={cancelTransition}
+              onVerticalOffsetSettled={settleVerticalOffset}
             />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}

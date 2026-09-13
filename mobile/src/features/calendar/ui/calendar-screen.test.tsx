@@ -6,10 +6,9 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react-native"
+import * as Localization from "expo-localization"
 import { router, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo, AppState, Platform, StyleSheet } from "react-native"
-import { State } from "react-native-gesture-handler"
-import { withTiming } from "react-native-reanimated"
 
 import {
   formatFullDay,
@@ -97,6 +96,21 @@ const mockPush = router.push as jest.Mock
 const mockSetParams = router.setParams as jest.Mock
 const mockSync = jest.fn()
 const mockAnnounce = jest.spyOn(AccessibilityInfo, "announceForAccessibility")
+const mockUseCalendars = jest.spyOn(Localization, "useCalendars")
+const pagerMock = jest.requireMock<{
+  __pagerMock: { deferNextTransition: () => void }
+}>("react-native-pager-view").__pagerMock
+
+function deviceCalendars(uses24hourClock: boolean | null) {
+  return [
+    {
+      calendar: "gregory",
+      uses24hourClock,
+      firstWeekday: 1,
+      timeZone: ZONE,
+    },
+  ] as unknown as ReturnType<typeof Localization.useCalendars>
+}
 
 function syncState(overrides = {}) {
   return {
@@ -136,9 +150,50 @@ beforeEach(() => {
   mockPush.mockReset()
   mockSetParams.mockReset()
   mockAnnounce.mockClear()
+  mockUseCalendars.mockReturnValue(deviceCalendars(true))
 })
 
 describe("CalendarScreen owned shell", () => {
+  it.each([
+    [false, "12 AM"],
+    [true, "00:00"],
+    [null, "00:00"],
+  ] as const)(
+    "passes the device clock preference %s to the gutter",
+    async (preference, midnight) => {
+      mockUseCalendars.mockReturnValue(deviceCalendars(preference))
+      await render(<CalendarScreen />)
+      expect(
+        screen.getByTestId("owned-calendar-hour-label-0", {
+          includeHiddenElements: true,
+        }),
+      ).toHaveTextContent(midnight)
+    },
+  )
+
+  it("restores a settled vertical offset after switching through Agenda", async () => {
+    await render(<CalendarScreen />)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "momentumScrollEnd",
+      {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 400 },
+          contentInset: { top: 0, bottom: 0, left: 0, right: 0 },
+          contentSize: { width: 320, height: 1441 },
+          layoutMeasurement: { width: 320, height: 500 },
+        },
+      },
+    )
+    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await fireEvent.press(screen.getByTestId("calendar-view-item-week"))
+    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+      "contentOffset",
+      { x: 0, y: 400 },
+    )
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
   it("mounts and remounts the localized heading and full-bleed canvas", async () => {
     const first = await render(<CalendarScreen />)
     const heading = formatFullDay(
@@ -267,21 +322,24 @@ describe("CalendarScreen owned shell", () => {
   it("commits a deferred settle after the request rerenders the controller", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
     await render(<CalendarScreen />)
-    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
-      nativeEvent: { layout: { width: 320, height: 500 } },
-    })
-    jest.mocked(withTiming).mockClear()
-    jest.mocked(withTiming).mockImplementationOnce((value) => value)
+    pagerMock.deferNextTransition()
     await fireEvent(
       screen.getByTestId("owned-calendar-canvas"),
       "accessibilityAction",
-      {
-        nativeEvent: { actionName: "increment" },
-      },
+      { nativeEvent: { actionName: "increment" } },
     )
-    const completion = jest.mocked(withTiming).mock.calls[0]?.[2]
-    expect(completion).toBeDefined()
-    await act(async () => completion?.(true, undefined))
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
     expect(
       screen.getByRole("adjustable", {
         name: formatFullDay(new Date(2026, 8, 14), "en", ZONE),
@@ -297,27 +355,20 @@ describe("CalendarScreen owned shell", () => {
     })
     let day = 7
     for (const direction of [1, 1, 1, 1, -1, -1, -1, -1, -1]) {
-      jest.mocked(withTiming).mockClear()
-      jest.mocked(withTiming).mockImplementationOnce((value) => value)
-      for (const state of [State.BEGAN, State.ACTIVE, State.END]) {
-        const canvas = screen.getByTestId("owned-calendar-canvas")
-        await fireEvent(canvas, "gestureHandlerStateChange", {
-          nativeEvent: {
-            handlerTag: canvas.props.handlerTag,
-            state,
-            translationX: -direction * 200,
-            velocityX: 0,
-          },
-        })
-      }
+      const pager = screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      })
+      await fireEvent(pager, "pageSelected", {
+        nativeEvent: { position: 1 + direction },
+      })
       expect(
         screen.getByRole("adjustable", {
           name: formatFullDay(new Date(2026, 8, day), "en", ZONE),
         }),
       ).toBeOnTheScreen()
-      const completion = jest.mocked(withTiming).mock.calls[0]?.[2]
-      expect(completion).toBeDefined()
-      await act(async () => completion?.(true, undefined))
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
       day += direction * 7
       expect(
         screen.getByRole("adjustable", {
@@ -340,17 +391,10 @@ describe("CalendarScreen owned shell", () => {
     const listener = jest.mocked(AppState.addEventListener)
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-07" })
     await render(<CalendarScreen />)
-    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
-      nativeEvent: { layout: { width: 320, height: 500 } },
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
     })
-    jest.mocked(withTiming).mockClear()
-    jest.mocked(withTiming).mockImplementationOnce((value) => value)
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
-    const completion = jest.mocked(withTiming).mock.calls[0]?.[2]
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
     const onState = listener.mock.calls.findLast(
       ([type]) => type === "change",
     )?.[1]
@@ -359,8 +403,10 @@ describe("CalendarScreen owned shell", () => {
       onState?.("inactive")
       onState?.("background")
     })
-    await act(async () => completion?.(true, undefined))
     await act(async () => onState?.("active"))
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
     expect(
       screen.getByRole("adjustable", {
         name: formatFullDay(new Date(2026, 8, 7), "en", ZONE),
@@ -382,23 +428,19 @@ describe("CalendarScreen owned shell", () => {
 
   it("discards a completion superseded by Today", async () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-08-31" })
-    jest.mocked(withTiming).mockImplementationOnce((value) => value)
     await render(<CalendarScreen />)
     await waitFor(() => {
       expect(screen.getByTestId("owned-calendar-canvas")).toBeOnTheScreen()
     })
-    await fireEvent(screen.getByTestId("owned-calendar-canvas"), "layout", {
-      nativeEvent: { layout: { width: 320, height: 500 } },
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
     })
-    await fireEvent(
-      screen.getByTestId("owned-calendar-canvas"),
-      "accessibilityAction",
-      { nativeEvent: { actionName: "increment" } },
-    )
-    const staleCompletion = jest.mocked(withTiming).mock.calls[0]?.[2]
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
 
     await fireEvent.press(screen.getByTestId("calendar-today"))
-    await act(async () => staleCompletion?.(true, undefined))
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
 
     const todayWeek = startOfWeekInZone(new Date(), ZONE, 1)
     expect(

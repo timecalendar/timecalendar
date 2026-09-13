@@ -1,61 +1,68 @@
-import {
-  useEffect,
-  useEffectEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useLayoutEffect, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import {
   AppState,
-  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  ScrollView,
   StyleSheet,
   View,
 } from "react-native"
-import {
-  type GestureEvent,
-  type HandlerStateChangeEvent,
-  PanGestureHandler,
-  type PanGestureHandlerEventPayload,
-  State,
-} from "react-native-gesture-handler"
-import Animated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useEvent,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated"
-import { scheduleOnRN } from "react-native-worklets"
+import PagerView, {
+  type PagerViewOnPageSelectedEvent,
+  type PageScrollStateChangedNativeEvent,
+} from "react-native-pager-view"
+import { useReducedMotion } from "react-native-reanimated"
 
 import { ThemedText } from "@/components/themed-text"
 import {
+  type AppLocale,
   dayKey,
+  DEFAULT_PIXELS_PER_HOUR,
+  formatHourStartLabel,
+  FULL_DAY_END_MINUTE,
+  FULL_DAY_START_MINUTE,
+  fullDayMajorMinutes,
+  fullDayMinorMinutes,
+  gridContentHeight,
+  HOURS_COLUMN_WIDTH,
+  minuteToPixel,
   shiftWeekInZone,
   type WeekDirection,
   type WeekTransitionRequest,
   type WeekTransitionSource,
 } from "@/features/calendar/data"
-import { Spacing, useTheme } from "@/theme"
+import { useTheme } from "@/theme"
 
-const SETTLE_DURATION_MS = 220
-const PAGE_THRESHOLD_RATIO = 0.2
-const FLING_VELOCITY = 500
 const PAGE_DIRECTIONS = [-1, 0, 1] as const
+const CENTER_PAGE = 1
+const CONTENT_HEIGHT = gridContentHeight(
+  FULL_DAY_START_MINUTE,
+  FULL_DAY_END_MINUTE,
+  DEFAULT_PIXELS_PER_HOUR,
+)
+const RENDER_HEIGHT = CONTENT_HEIGHT + StyleSheet.hairlineWidth
+const MAJOR_MINUTES = fullDayMajorMinutes()
+const MINOR_MINUTES = fullDayMinorMinutes()
 
-function restingTranslation(pagePosition: number, pageWidth: number) {
-  "worklet"
-  return pagePosition === 0 ? 0 : -pagePosition * pageWidth
+function stableTintIndex(key: string) {
+  return (
+    Array.from(key).reduce((total, character) => {
+      return total + character.charCodeAt(0)
+    }, 0) % 3
+  )
 }
 
 type OwnedCalendarShellProps = {
   heading: string
   anchor: Date
   displayZone: string
+  locale: AppLocale
+  uses24HourClock: boolean | null
+  initialVerticalOffset: number
   generation: number
-  pagePosition: number
   revisionFloor: number
+  onVerticalOffsetSettled: (offset: number) => void
   onTransitionRequest: (request: WeekTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
@@ -65,9 +72,12 @@ export function OwnedCalendarShell({
   heading,
   anchor,
   displayZone,
+  locale,
+  uses24HourClock,
+  initialVerticalOffset,
   generation,
-  pagePosition,
   revisionFloor,
+  onVerticalOffsetSettled,
   onTransitionRequest,
   onTransitionSettled,
   onTransitionCancelled,
@@ -75,367 +85,359 @@ export function OwnedCalendarShell({
   const { t } = useTranslation()
   const theme = useTheme()
   const reduceMotion = useReducedMotion()
-  const [layoutWidth, setLayoutWidth] = useState(0)
-  const [layoutHeight, setLayoutHeight] = useState(0)
-  const width = useSharedValue(0)
-  const translation = useSharedValue(0)
-  const dragOrigin = useSharedValue(0)
-  const dragging = useSharedValue(false)
-  const canStartDrag = useSharedValue(false)
-  const motionEpoch = useSharedValue(0)
-  const settling = useSharedValue(false)
-  const active = useSharedValue(AppState.currentState === "active")
-  const foregroundRef = useRef(AppState.currentState === "active")
+  const pagerRef = useRef<PagerView>(null)
+  const scrollRef = useRef<ScrollView>(null)
   const revisionRef = useRef(revisionFloor)
   const pendingRevisionRef = useRef<number | null>(null)
-
-  const cancelPending = () => {
-    const revision = pendingRevisionRef.current
-    if (revision === null) return
-    pendingRevisionRef.current = null
-    onTransitionCancelled(revision)
-  }
-
-  const finishTransition = (revision: number, finished: boolean) => {
-    if (!finished || pendingRevisionRef.current !== revision) return
-    pendingRevisionRef.current = null
-    onTransitionSettled(revision)
-  }
-
-  const startTransition = (
-    direction: WeekDirection,
-    source: WeekTransitionSource,
-    epoch?: number,
-  ) => {
-    if (
-      !foregroundRef.current ||
-      (epoch !== undefined && epoch !== motionEpoch.get())
-    )
-      return
-    cancelAnimation(translation)
-    cancelPending()
-    settling.set(true)
-    const revision = Math.max(revisionRef.current, revisionFloor) + 1
-    revisionRef.current = revision
-    pendingRevisionRef.current = revision
-    onTransitionRequest({ revision, direction, source })
-
-    if (reduceMotion || width.get() <= 0) {
-      finishTransition(revision, true)
-      return
-    }
-
-    translation.set(
-      withTiming(
-        restingTranslation(pagePosition + direction, width.get()),
-        { duration: SETTLE_DURATION_MS },
-        (finished) =>
-          scheduleOnRN(finishTransition, revision, finished === true),
-      ),
-    )
-  }
-
-  const snapBack = () => {
-    "worklet"
-    cancelAnimation(translation)
-    const restingPosition = restingTranslation(pagePosition, width.get())
-    if (reduceMotion) {
-      translation.set(restingPosition)
-    } else {
-      translation.set(
-        withTiming(restingPosition, { duration: SETTLE_DURATION_MS }),
-      )
-    }
-  }
-
-  // Callback identity is not a lifecycle boundary: requesting a page rerenders the owner.
-  const resetMotion = useEffectEvent(() => {
-    motionEpoch.set(motionEpoch.get() + 1)
-    cancelAnimation(translation)
-    translation.set(restingTranslation(pagePosition, width.get()))
-    dragging.set(false)
-    canStartDrag.set(false)
-    settling.set(false)
-    cancelPending()
-  })
-
-  useLayoutEffect(() => {
-    resetMotion()
-  }, [generation])
-
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      foregroundRef.current = state === "active"
-      active.set(foregroundRef.current)
-      resetMotion()
-    })
-    return () => {
-      subscription.remove()
-      resetMotion()
-    }
-  }, [active])
-
-  const handlePanEvent = (
-    event: PanGestureHandlerEventPayload & { state: State },
-  ) => {
-    "worklet"
-    if (!active.get()) return
-    if (event.state === State.BEGAN) {
-      canStartDrag.set(!settling.get() && width.get() > 0)
-      return
-    }
-    // iOS can emit BEGAN while resetting after release. Only activation may interrupt snap-back.
-    if (event.state === State.ACTIVE && !dragging.get()) {
-      if (!canStartDrag.get() || settling.get()) return
-      cancelAnimation(translation)
-      motionEpoch.set(motionEpoch.get() + 1)
-      dragOrigin.set(translation.get())
-      dragging.set(true)
-    }
-    if (!dragging.get()) return
-    if (
-      Math.abs(event.translationY) > 20 &&
-      Math.abs(event.translationY) > Math.abs(event.translationX)
-    ) {
-      dragging.set(false)
-      snapBack()
-      return
-    }
-    if (event.state === State.ACTIVE) {
-      const pageWidth = width.get()
-      translation.set(
-        Math.max(
-          -(pagePosition + 1) * pageWidth,
-          Math.min(
-            -(pagePosition - 1) * pageWidth,
-            dragOrigin.get() + event.translationX,
-          ),
-        ),
-      )
-      return
-    }
-    if (event.state === State.CANCELLED || event.state === State.FAILED) {
-      dragging.set(false)
-      snapBack()
-      return
-    }
-    if (event.state !== State.END) return
-    dragging.set(false)
-
-    const pageWidth = width.get()
-    const displacement =
-      dragOrigin.get() +
-      event.translationX -
-      restingTranslation(pagePosition, pageWidth)
-    const displacementQualifies =
-      pageWidth > 0 &&
-      Math.abs(displacement) >= pageWidth * PAGE_THRESHOLD_RATIO
-    const flingQualifies = Math.abs(event.velocityX) >= FLING_VELOCITY
-    const motion = displacementQualifies
-      ? displacement
-      : flingQualifies
-        ? event.velocityX
-        : 0
-
-    if (motion === 0) {
-      snapBack()
-    } else {
-      settling.set(true)
-      scheduleOnRN(
-        startTransition,
-        motion < 0 ? 1 : -1,
-        "gesture",
-        motionEpoch.get(),
-      )
-    }
-  }
-  // A handler holder must own one registration; sharing it across props leaks native listeners.
-  const panGestureEventHandler = useEvent(
-    handlePanEvent,
-    ["onGestureHandlerEvent"],
-    true,
-  ) as unknown as (event: GestureEvent<PanGestureHandlerEventPayload>) => void
-  const panStateChangeHandler = useEvent(
-    handlePanEvent,
-    ["onGestureHandlerStateChange"],
-    true,
-  ) as unknown as (
-    event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>,
-  ) => void
-
-  const stripStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translation.get() }],
-  }))
+  const onTransitionCancelledRef = useRef(onTransitionCancelled)
+  const selectedPageRef = useRef(CENTER_PAGE)
+  const consumedGenerationRef = useRef<number | null>(null)
+  const currentGenerationRef = useRef(generation)
+  const foregroundRef = useRef(AppState.currentState === "active")
+  const committedVerticalOffsetRef = useRef(initialVerticalOffset)
+  const verticalCandidateRef = useRef<number | null>(null)
+  const verticalFrameRef = useRef<number | null>(null)
   const pages = PAGE_DIRECTIONS.map((direction) => {
     const pageAnchor =
       direction === 0
         ? anchor
         : shiftWeekInZone(anchor, direction, displayZone, 1)
-    const key = dayKey(pageAnchor, displayZone)
-    // A civil-week identity keeps the tint stable when a neighbour becomes current.
-    const tintIndex = Math.abs(Math.floor(Date.parse(key) / (7 * 86400000))) % 3
-    return { direction, key, tintIndex }
+    return { direction, key: dayKey(pageAnchor, displayZone) }
   })
 
-  const onLayout = (event: LayoutChangeEvent) => {
-    motionEpoch.set(motionEpoch.get() + 1)
-    cancelAnimation(translation)
-    cancelPending()
-    dragging.set(false)
-    canStartDrag.set(false)
-    settling.set(false)
-    const nextWidth = Math.max(0, event.nativeEvent.layout.width)
-    width.set(nextWidth)
-    setLayoutWidth(nextWidth)
-    setLayoutHeight(Math.max(0, event.nativeEvent.layout.height))
-    translation.set(restingTranslation(pagePosition, nextWidth))
+  const cancelVerticalCandidate = () => {
+    if (verticalFrameRef.current !== null) {
+      cancelAnimationFrame(verticalFrameRef.current)
+      verticalFrameRef.current = null
+    }
+    verticalCandidateRef.current = null
   }
+
+  const beginTransition = (
+    direction: WeekDirection,
+    source: WeekTransitionSource,
+  ) => {
+    if (!foregroundRef.current || pendingRevisionRef.current !== null)
+      return null
+    const revision = Math.max(revisionRef.current, revisionFloor) + 1
+    revisionRef.current = revision
+    pendingRevisionRef.current = revision
+    onTransitionRequest({ revision, direction, source })
+    return revision
+  }
+
+  const settleSelectedPage = () => {
+    const position = selectedPageRef.current
+    if (
+      position === CENTER_PAGE ||
+      consumedGenerationRef.current === generation
+    )
+      return
+    if (pendingRevisionRef.current === null) {
+      const direction: WeekDirection = position < CENTER_PAGE ? -1 : 1
+      beginTransition(direction, "gesture")
+    }
+    const revision = pendingRevisionRef.current
+    if (revision === null) return
+    consumedGenerationRef.current = generation
+    selectedPageRef.current = CENTER_PAGE
+    pendingRevisionRef.current = null
+    onTransitionSettled(revision)
+  }
+
+  const onPageSelected = (event: PagerViewOnPageSelectedEvent) => {
+    if (currentGenerationRef.current !== generation) return
+    selectedPageRef.current = event.nativeEvent.position
+  }
+
+  const onPageScrollStateChanged = (
+    event: PageScrollStateChangedNativeEvent,
+  ) => {
+    if (currentGenerationRef.current !== generation) return
+    if (event.nativeEvent.pageScrollState === "idle") settleSelectedPage()
+  }
+
+  const requestAccessiblePage = (
+    direction: WeekDirection,
+    source: WeekTransitionSource,
+  ) => {
+    const revision = beginTransition(direction, source)
+    if (revision === null || pendingRevisionRef.current !== revision) return
+    const target = CENTER_PAGE + direction
+    selectedPageRef.current = target
+    if (reduceMotion) pagerRef.current?.setPageWithoutAnimation(target)
+    else pagerRef.current?.setPage(target)
+  }
+
+  const settleVertical = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    cancelVerticalCandidate()
+    const offset = event.nativeEvent.contentOffset.y
+    committedVerticalOffsetRef.current = offset
+    onVerticalOffsetSettled(offset)
+  }
+
+  const onScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    cancelVerticalCandidate()
+    verticalCandidateRef.current = event.nativeEvent.contentOffset.y
+    verticalFrameRef.current = requestAnimationFrame(() => {
+      verticalFrameRef.current = null
+      const offset = verticalCandidateRef.current
+      verticalCandidateRef.current = null
+      if (offset === null) return
+      committedVerticalOffsetRef.current = offset
+      onVerticalOffsetSettled(offset)
+    })
+  }
+
+  useEffect(() => {
+    onTransitionCancelledRef.current = onTransitionCancelled
+  }, [onTransitionCancelled])
+
+  useLayoutEffect(() => {
+    currentGenerationRef.current = generation
+    selectedPageRef.current = CENTER_PAGE
+    consumedGenerationRef.current = null
+    const revision = pendingRevisionRef.current
+    if (revision !== null) {
+      pendingRevisionRef.current = null
+      onTransitionCancelledRef.current(revision)
+    }
+  }, [generation])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      foregroundRef.current = state === "active"
+      if (foregroundRef.current) return
+      if (verticalFrameRef.current !== null) {
+        cancelAnimationFrame(verticalFrameRef.current)
+        verticalFrameRef.current = null
+      }
+      verticalCandidateRef.current = null
+      const revision = pendingRevisionRef.current
+      if (revision !== null) {
+        pendingRevisionRef.current = null
+        onTransitionCancelledRef.current(revision)
+      }
+      selectedPageRef.current = CENTER_PAGE
+      pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
+      scrollRef.current?.scrollTo({
+        y: committedVerticalOffsetRef.current,
+        animated: false,
+      })
+    })
+    return () => {
+      subscription.remove()
+      if (verticalFrameRef.current !== null) {
+        cancelAnimationFrame(verticalFrameRef.current)
+      }
+      const revision = pendingRevisionRef.current
+      if (revision !== null) {
+        pendingRevisionRef.current = null
+        onTransitionCancelledRef.current(revision)
+      }
+    }
+  }, [])
 
   return (
     <View
       testID="owned-calendar-shell"
+      collapsable={false}
       style={[styles.shell, { backgroundColor: theme.background }]}
     >
-      <PanGestureHandler
+      <ScrollView
+        ref={scrollRef}
         testID="owned-calendar-canvas"
-        activeOffsetX={[-10, 10]}
-        failOffsetY={[-20, 20]}
-        onGestureEvent={panGestureEventHandler}
-        onHandlerStateChange={panStateChangeHandler}
+        collapsable={false}
+        style={styles.viewport}
+        contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
+        contentOffset={{ x: 0, y: initialVerticalOffset }}
+        removeClippedSubviews={false}
+        directionalLockEnabled
+        nestedScrollEnabled
+        scrollEventThrottle={16}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollBegin={cancelVerticalCandidate}
+        onMomentumScrollEnd={settleVertical}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={heading}
+        accessibilityActions={[
+          { name: "decrement", label: t("calendar.previousWeekLabel") },
+          { name: "increment", label: t("calendar.nextWeekLabel") },
+        ]}
+        onAccessibilityAction={({ nativeEvent }) => {
+          if (nativeEvent.actionName === "increment")
+            requestAccessiblePage(1, "next")
+          if (nativeEvent.actionName === "decrement")
+            requestAccessiblePage(-1, "previous")
+        }}
       >
-        <Animated.View
-          onLayout={onLayout}
-          style={styles.viewport}
-          accessible
-          accessibilityRole="adjustable"
-          accessibilityLabel={heading}
-          accessibilityActions={[
-            { name: "decrement", label: t("calendar.previousWeekLabel") },
-            { name: "increment", label: t("calendar.nextWeekLabel") },
-          ]}
-          onAccessibilityAction={({ nativeEvent }) => {
-            if (nativeEvent.actionName === "increment")
-              startTransition(1, "next")
-            if (nativeEvent.actionName === "decrement")
-              startTransition(-1, "previous")
-          }}
-        >
-          <Animated.View
-            testID="owned-calendar-page-strip"
-            style={[
-              styles.strip,
-              {
-                left: (pagePosition - 1) * layoutWidth,
-                width: layoutWidth * 3,
-              },
-              stripStyle,
-            ]}
+        <View style={styles.fullDayRow} collapsable={false}>
+          <View
+            testID="owned-calendar-hour-gutter"
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.gutter, { borderColor: theme.separator }]}
+            pointerEvents="none"
+          >
+            {Array.from({ length: 24 }, (_, hour) => (
+              <ThemedText
+                key={hour}
+                type="small"
+                testID={`owned-calendar-hour-label-${hour}`}
+                style={[
+                  styles.hourLabel,
+                  {
+                    top: minuteToPixel(hour * 60, {
+                      startMinute: FULL_DAY_START_MINUTE,
+                    }),
+                  },
+                ]}
+              >
+                {formatHourStartLabel(hour, locale, uses24HourClock)}
+              </ThemedText>
+            ))}
+          </View>
+          <PagerView
+            ref={pagerRef}
+            key={generation}
+            testID="owned-calendar-pager"
+            style={styles.pager}
+            initialPage={CENTER_PAGE}
+            offscreenPageLimit={1}
+            overdrag={false}
+            onPageSelected={onPageSelected}
+            onPageScrollStateChanged={onPageScrollStateChanged}
+            accessible={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
           >
             {pages.map((page) => (
-              <WeekPage
+              <View
                 key={page.key}
-                dateKey={page.key}
-                direction={page.direction}
-                tintIndex={page.tintIndex}
-                width={layoutWidth}
-                height={layoutHeight}
-              />
+                testID={`owned-calendar-page-${page.direction}`}
+                collapsable={false}
+                accessible={false}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[
+                  styles.page,
+                  {
+                    backgroundColor: __DEV__
+                      ? [
+                          theme.backgroundElement,
+                          theme.homeHero,
+                          theme.backgroundSelected,
+                        ][stableTintIndex(page.key)]
+                      : theme.backgroundElement,
+                    borderColor: theme.separator,
+                  },
+                ]}
+              >
+                <WeekGrid direction={page.direction} />
+                {__DEV__ && (
+                  <View style={styles.preview} pointerEvents="none">
+                    <ThemedText type="small">{page.key}</ThemedText>
+                    <ThemedText type="small">
+                      {t("calendar.weekPagingSize", {
+                        width: "100%",
+                        height: CONTENT_HEIGHT,
+                      })}
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
             ))}
-          </Animated.View>
-        </Animated.View>
-      </PanGestureHandler>
+          </PagerView>
+        </View>
+      </ScrollView>
     </View>
   )
 }
 
-function WeekPage({
-  dateKey,
-  direction,
-  tintIndex,
-  width,
-  height,
-}: {
-  dateKey: string
-  direction: number
-  tintIndex: number
-  width: number
-  height: number
-}) {
+function WeekGrid({ direction }: { direction: number }) {
   const theme = useTheme()
   return (
     <View
-      testID={`owned-calendar-page-${direction}`}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      testID={`owned-calendar-page-clock-${direction}`}
+      style={styles.clockPlane}
       pointerEvents="none"
-      style={[
-        styles.page,
-        {
-          width,
-          backgroundColor: __DEV__
-            ? [
-                theme.homeHero,
-                theme.backgroundSelected,
-                theme.backgroundElement,
-              ][tintIndex]
-            : theme.backgroundElement,
-          borderColor: theme.separator,
-        },
-      ]}
     >
-      {__DEV__ && (
-        <WeekPagingPreview dateKey={dateKey} width={width} height={height} />
-      )}
-    </View>
-  )
-}
-
-function WeekPagingPreview({
-  dateKey,
-  width,
-  height,
-}: {
-  dateKey: string
-  width: number
-  height: number
-}) {
-  const { t } = useTranslation()
-  return (
-    <View style={styles.placeholder}>
-      <ThemedText>{t("calendar.weekPagingPlaceholder")}</ThemedText>
-      <ThemedText>{dateKey}</ThemedText>
-      <ThemedText type="small">
-        {t("calendar.weekPagingSize", {
-          width: Math.round(width),
-          height: Math.round(height),
-        })}
-      </ThemedText>
-      <ThemedText type="small">{t("calendar.weekPagingHint")}</ThemedText>
+      {MINOR_MINUTES.map((minute) => (
+        <View
+          key={`minor-${minute}`}
+          testID={`owned-calendar-minor-${direction}-${minute}`}
+          style={[
+            styles.gridLine,
+            styles.minorLine,
+            {
+              top: minuteToPixel(minute, {
+                startMinute: FULL_DAY_START_MINUTE,
+              }),
+              backgroundColor: theme.separator,
+            },
+          ]}
+        />
+      ))}
+      {MAJOR_MINUTES.map((minute) => (
+        <View
+          key={`major-${minute}`}
+          testID={`owned-calendar-major-${direction}-${minute}`}
+          style={[
+            styles.gridLine,
+            {
+              top: minuteToPixel(minute, {
+                startMinute: FULL_DAY_START_MINUTE,
+              }),
+              backgroundColor: theme.textSecondary,
+            },
+          ]}
+        />
+      ))}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
-  viewport: {
-    flex: 1,
-    overflow: "hidden",
+  viewport: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
+  fullDayRow: {
+    height: RENDER_HEIGHT,
+    flexDirection: "row",
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  strip: {
+  gutter: {
+    width: HOURS_COLUMN_WIDTH,
+    height: RENDER_HEIGHT,
+    borderRightWidth: StyleSheet.hairlineWidth,
+  },
+  pager: { flex: 1, height: RENDER_HEIGHT },
+  page: {
+    width: "100%",
+    height: RENDER_HEIGHT,
+    overflow: "hidden",
+    borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  clockPlane: {
     position: "absolute",
     top: 0,
-    bottom: 0,
-    flexDirection: "row",
+    left: 0,
+    right: 0,
+    height: RENDER_HEIGHT,
   },
-  page: {
-    height: "100%",
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    justifyContent: "center",
+  hourLabel: {
+    position: "absolute",
+    right: 6,
+    transform: [{ translateY: -8 }],
   },
-  placeholder: {
-    alignItems: "center",
-    padding: Spacing.four,
-    gap: Spacing.two,
+  gridLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
   },
+  minorLine: { opacity: 0.5 },
+  preview: { position: "absolute", top: 16, left: 16, gap: 4 },
 })

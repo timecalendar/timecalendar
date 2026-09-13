@@ -11,6 +11,9 @@ import { minuteOfDayInZone } from "./day-key"
 export const GRID_START_MINUTE = 7 * 60
 /** Grid window end, minutes from midnight (21:00). */
 export const GRID_END_MINUTE = 21 * 60
+/** Explicit bounds for the owned renderer's complete wall-clock day. */
+export const FULL_DAY_START_MINUTE = 0
+export const FULL_DAY_END_MINUTE = 24 * 60
 /** Default vertical scale. */
 export const DEFAULT_PIXELS_PER_HOUR = 60
 /** Width of the hours (time labels) column. */
@@ -57,6 +60,44 @@ export function hourLabels(
     labels.push(hour)
   }
   return labels
+}
+
+/** Major hour boundaries, including the closing 24:00 geometry boundary. */
+export function fullDayMajorMinutes(): number[] {
+  return Array.from({ length: 25 }, (_, hour) => hour * 60)
+}
+
+/** Minor half-hour boundaries within the complete day. */
+export function fullDayMinorMinutes(): number[] {
+  return Array.from({ length: 24 }, (_, hour) => hour * 60 + 30)
+}
+
+export function gridContentHeight(
+  startMinute: number,
+  endMinute: number,
+  pixelsPerHour: number = DEFAULT_PIXELS_PER_HOUR,
+): number {
+  return minuteToPixel(endMinute, { pixelsPerHour, startMinute })
+}
+
+export function maxVerticalOffset(
+  contentHeight: number,
+  viewportHeight: number,
+): number {
+  "worklet"
+  return Math.max(contentHeight - viewportHeight, 0)
+}
+
+export function clampVerticalOffset(
+  offset: number,
+  contentHeight: number,
+  viewportHeight: number,
+): number {
+  "worklet"
+  return Math.min(
+    Math.max(offset, 0),
+    maxVerticalOffset(contentHeight, viewportHeight),
+  )
 }
 
 export interface NowIndicator {
