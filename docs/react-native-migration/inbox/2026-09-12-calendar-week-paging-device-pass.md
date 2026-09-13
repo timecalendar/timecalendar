@@ -2,7 +2,7 @@
 
 **For:** the human owner performing physical-device gesture and assistive-technology checks.
 
-## Correction build target
+## Testable build target
 
 The immutable corrected source revision is
 `763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`. Build a development app from that
@@ -16,34 +16,7 @@ and stable week tints; these move with the finger. Screen-reader increment/decre
 actions on the adjustable canvas provide labelled next/previous navigation.
 The T04 weekday/date labels belong to the week columns, without an extra date toolbar.
 
-Historical short-release diagnostics were observed on 2026-09-13 on a physical iPhone 13 Pro
-using a development build of revision `4ee9df69b9a5ef56eff3f7e00b69b7f878d9799d`.
-The OS version was not recorded, so this observation is incomplete evidence and does not
-confirm the corrected build, full ticket acceptance, or Android coverage.
-
-The captured failure sequence is END at offset -42.6667 → snap-back starts → BEGAN with
-the previous drag coordinates → snap-back completion reports `finished=false` at -42.6667.
-The BEGAN event occurs during recognizer reset, before the logged touch-end event. Pan
-activation, rather than BEGAN, owns animation cancellation and drag-origin capture.
-BEGAN only records whether a new pan is eligible. A tiny touch that never activates cannot
-interrupt snap-back.
-
-Five subsequent physical-device snap-backs start at offsets -37.6667, -30.3333, -73.3333,
--58.6667, and -33. Every completion reports `finished=true` and `offset=0`.
-A regression test replays END → BEGAN with stale coordinates and a subsequent tiny
-BEGAN → FAILED sequence, asserting that neither cancels the running snap-back.
-
-The corrected renderer uses a cumulative-position three-page strip and separate native
-movement/state registration holders. Owner rerenders do not cancel requests. App inactivity
-cancels pending motion, and new pans cannot interrupt an accepted settle. The accepted page
-keeps the same physical coordinate across its replacement commit, removing the post-commit
-transform jump that caused the settle-time tint flicker. This correction still requires the
-owner frame-continuity retest below.
-
-Temporary per-event logging and offset observers are absent from the renderer. No transient
-runtime logs are part of the committed evidence.
-
-Current correction checks from `mobile/`:
+Automated checks from `mobile/`:
 
 - `npm test -- --runInBand src/features/calendar/renderer/owned-calendar-shell.test.tsx src/features/calendar/ui/calendar-screen.test.tsx src/features/calendar/data/week-transition.test.ts src/features/calendar/data/week.test.ts calendar-owned-shell.contract.test.ts`: 5 suites, 71 tests passed.
 - `npx tsc --noEmit`: passed.
@@ -56,26 +29,6 @@ These commands ran against immutable source revision
 `763ae5d20f99fa8d296d1ae8e2adcfce388acaeb`. The focused renderer test verifies that the
 destination animation target and replacement strip position keep the same page at the viewport
 origin, while the screen test pages beyond the initial slots in both directions.
-
-## Historical handoff evidence
-
-Revision `86ae8e0c1807bb5748b425299d68ec02d81090d5` implements one-week paging on the empty
-owned Calendar surface. It adds no native dependency or configuration change.
-
-Automated evidence on that source tree:
-
-- `npx tsc --noEmit` and `npm run lint`: passed.
-- `npm test -- --coverage`: 177 suites and 1,647 tests passed; global coverage was 97.63%
-  statements and 92.19% branches. The new pure week and transition modules each reached 100%
-  statements, branches, functions, and lines in their focused coverage run.
-- `npm run react-doctor:changed`: passed with no issues after removing manual memoization from the
-  compiler-managed Calendar controller.
-- The repaired Calendar screen and renderer run passed 2 suites and 33 tests. The Maestro selector
-  suite passed within the full Jest run, and both shell harnesses passed independently.
-
-No iOS runtime, Android runtime, or attached device was available on the development host. Device,
-OS, build, refresh-rate, native gesture, and screen-reader results below are intentionally pending;
-the automated results do not claim native feel or assistive-technology behavior.
 
 ## Build and fabricated fixture
 
