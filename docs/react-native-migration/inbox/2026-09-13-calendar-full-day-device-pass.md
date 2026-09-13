@@ -4,20 +4,23 @@
 
 ## Testable build target
 
-Build a development app from immutable final runtime revision
-`53a242f69707ebaa4c1304dda6f222f5630b27e2`. It renders an empty complete-day grid beside
-one pinned gutter while retaining the accepted three-page week movement.
+The earlier `53a242f69707ebaa4c1304dda6f222f5630b27e2` build is superseded after owner testing found
+blinking/missing hour lines, indistinguishable week movement, non-native vertical settlement,
+and iOS content hidden beneath the Liquid Glass tab bar. Build the repaired branch head after
+the implementation is committed and record that immutable revision below.
 
-Automated checks from `mobile/` at that runtime revision:
+Repaired build revision: pending commit.
 
-- Six focused suites: 106 tests passed (time geometry, hour formatting, gesture decisions,
-  renderer, Calendar screen/controller, and repository contract).
-- Introduced pure modules: 100% statements and branches in the focused coverage report.
-- `npx tsc --noEmit`: passed.
-- `npm run lint -- --quiet`: passed.
+Automated checks from `mobile/` at the repaired working revision:
 
-The final branch-head full coverage, formatting, React Doctor, harness, OpenSpec, and CI results
-are recorded on the delivery ticket and pull request after documentation-only completion.
+- Full Jest run under the repository's UTC test contract: 177 suites and 1,665 tests passed.
+- Focused Calendar/native-pager verification: 55 tests passed.
+- `npx tsc --noEmit`, lint, formatting, and `git diff --check`: passed.
+- React Doctor changed-code scan: no diagnostics.
+- Strict OpenSpec validation: 97 items passed.
+- Metro compiled the iOS development bundle and remains healthy on port 8081.
+
+Physical iOS/Android and assistive-technology observations remain pending below.
 
 ## Build and fabricated fixture
 
@@ -41,9 +44,11 @@ results are not native-feel, device-clock, frame-continuity, or screen-reader cl
 
 ## Owner checklist
 
-- [ ] Scroll to 00:00 and 24:00: both ends are reachable without settled blank overscroll.
+- [ ] Scroll to 00:00 and 24:00 on iOS: both ends are reachable above the Liquid Glass tab bar without settled blank overscroll.
+- [ ] Fling vertically and release: native momentum visibly continues, decelerates, and settles naturally.
+- [ ] Slowly scroll the full day on both platforms: every hour and half-hour line remains continuously visible without blinking.
 - [ ] At the top, middle, and bottom, gutter labels stay aligned with major grid lines while the native date heading remains fixed.
-- [ ] From mid-afternoon, page one week horizontally in both directions: the gutter stays fixed and the destination keeps the same visible clock position.
+- [ ] From mid-afternoon, page one week horizontally in both directions: native page motion is visible, development tint/date identity changes, the gutter stays fixed, and the destination keeps the same visible clock position.
 - [ ] Try slow diagonal movement, a fast diagonal, and quick reversal: only the first dominant axis moves and it does not switch during the gesture or jump on settlement.
 - [ ] Begin a press-like touch, then move beyond tolerance: movement wins without a tap result.
 - [ ] Change the device between 12-hour and 24-hour display and return to the app: hour labels follow the device behavior supported by that platform.

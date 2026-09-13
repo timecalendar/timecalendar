@@ -2,6 +2,11 @@
 
 ## 2026-09-12
 
+- Repaired T03 around platform-native motion: a native vertical ScrollView now owns inertia
+  and automatic tab-bar insets, the installed native PagerView owns week paging, filled
+  hairlines remain static in scroll content, and development pages regain stable week tints
+  and labels. Settled native clock offsets are retained and Calendar tab reselect no longer
+  resets the retained hour.
 - Added T03 full-day movement to the owned Calendar shell: explicit 00:00–24:00 major/minor
   geometry, one pinned hour gutter and shared vertical offset, immutable one-finger axis lock,
   explicit nullable device clock-format input, bounded inertial settlement, and retained clock

@@ -174,12 +174,12 @@ Every user-facing string added or retained on the T03 Calendar week surface SHAL
 
 ### Requirement: Wiring proven in CI grid and performance on-device
 
-The change MUST prove complete-day geometry, vertical clamps, label formatting input, one-axis/press state, aligned shared offsets, bounded one-week paging, localized settled semantics, Calendar remount and Week/Agenda offset restoration, retained Agenda event activation, revision rejection, and current owned-renderer integrity with focused Jest and repository checks. It MUST preserve the three established Maestro journeys and their shared Agenda helper. Native vertical feel, diagonal/reversal arbitration, frame continuity, gutter alignment, device clock toggling, retained generations, settled announcements, mount/return, and Agenda/details checks SHALL be recorded through the ticket's testable build and owner checklist rather than claimed from this host.
+The change MUST prove complete-day geometry, native settled-offset retention, label formatting input, native scroll/pager ownership, aligned native content, bounded one-week paging, localized settled semantics, Calendar remount and Week/Agenda offset restoration, retained Agenda event activation, revision rejection, and current owned-renderer integrity with focused Jest and repository checks. It MUST preserve the three established Maestro journeys and their shared Agenda helper. Native vertical feel, diagonal/reversal arbitration, frame continuity, gutter alignment, device clock toggling, retained generations, settled announcements, mount/return, and Agenda/details checks SHALL be recorded through the ticket's testable build and owner checklist rather than claimed from this host.
 
 #### Scenario: Full-day motion is proven without a vendor mock
 
 - **WHEN** focused pure and renderer suites run
-- **THEN** they exercise full-day positions, clamps, true/false/null clock formatting, axis locking, responder cancellation configuration, shared gutter/grid offsets, three-page continuity, and top/bottom reachability
+- **THEN** they exercise full-day positions, raw settled-offset retention, true/false/null clock formatting, native owner configuration, shared gutter/grid content, pager idle settlement, three-page continuity, and top/bottom reachability
 - **AND** they require no calendar-kit Jest setup, fallback renderer, handwritten worklet runtime, or host-locale assumption
 
 #### Scenario: Retained paging, Agenda, and details wiring is proven
@@ -458,7 +458,7 @@ The owned Calendar week surface SHALL render explicit 00:00–24:00 wall-clock g
 
 ### Requirement: T03 pins gutter and date context while preserving clock position
 
-The renderer SHALL place one left hour gutter outside the three-page horizontal translation and SHALL drive its vertical label plane and every page's vertical grid plane from one authoritative offset. The native Calendar date heading SHALL remain outside vertical motion. Horizontal week settlement, rerender, retained tab/view changes, and lifecycle/layout cancellation SHALL preserve the same visible clock position, except that a smaller viewport MAY clamp an otherwise invalid offset. Frame-frequency vertical values MUST remain off React state; only a settled, clamped offset MAY be reported for restoration.
+The renderer SHALL place one left hour gutter outside the three-page native pager and SHALL place the gutter and every page grid in one native vertical ScrollView content row. That ScrollView SHALL use automatic content-inset adjustment on the first native descendant chain so the iOS tab bar does not obscure the closing hours. The native Calendar date heading SHALL remain outside vertical motion. Horizontal week settlement, rerender, retained tab/view changes, and lifecycle/layout cancellation SHALL preserve the same visible clock position, except that native restoration MAY clamp an invalid offset against changed geometry. Frame-frequency values MUST remain off React state; only a settled native raw offset MAY be reported for restoration because React Native does not expose UIKit's computed adjusted inset in scroll events.
 
 #### Scenario: Vertical movement keeps labels aligned
 
@@ -484,39 +484,39 @@ The renderer SHALL place one left hour gutter outside the three-page horizontal 
 - **THEN** transient motion is cancelled and obsolete completion work is ignored
 - **AND** the preserved position is the prior settled offset or its new valid clamp rather than an unexplained jump
 
-### Requirement: T03 locks one-finger interaction to one axis and cancels presses
+### Requirement: T03 delegates one-finger motion to native axis owners
 
-One-finger movement on the timed surface SHALL remain undecided within tap tolerance, then lock to exactly one dominant horizontal or vertical axis. The chosen axis SHALL remain fixed through diagonal continuation and reversal until the gesture terminates. Horizontal lock SHALL drive only the T02 one-week path; vertical lock SHALL drive only the bounded clock offset and MUST NOT request or announce a week. Movement beyond tap tolerance SHALL cancel press eligibility and the native gesture owner SHALL cancel active JavaScript responders. Two-finger behavior remains reserved for the later pinch slice.
+The timed surface SHALL use one native vertical ScrollView and one native horizontal pager so UIKit and Android own drag recognition, deceleration, overscroll, and cancellation. A completed horizontal page SHALL drive only the T02 one-week path; vertical scrolling SHALL drive only the bounded clock offset and MUST NOT request or announce a week. The implementation MUST NOT add a parent custom pan recognizer or simultaneous transform path that can move both axes. Two-finger behavior remains reserved for the later pinch slice.
 
-#### Scenario: Horizontal movement cannot scroll vertically
+#### Scenario: Horizontal paging preserves vertical position
 
-- **WHEN** horizontal movement wins axis selection and later becomes diagonal or reverses
-- **THEN** only the bounded horizontal page transform changes
+- **WHEN** the native pager owns a horizontal movement that later becomes diagonal or reverses
+- **THEN** only the bounded horizontal page changes
 - **AND** the visible vertical clock offset remains unchanged
 
-#### Scenario: Vertical movement cannot page a week
+#### Scenario: Vertical scrolling cannot page a week
 
-- **WHEN** vertical movement wins axis selection and later becomes diagonal or reverses
+- **WHEN** the native ScrollView owns a vertical movement that later becomes diagonal or reverses
 - **THEN** only the bounded vertical offset changes
 - **AND** no week request, date revision, title change, or settled-week announcement occurs
 
-#### Scenario: Ambiguous diagonal movement waits for dominance
+#### Scenario: Platform arbitration avoids two-axis motion
 
-- **WHEN** one-finger displacement exceeds neither the tap tolerance nor the required axis dominance
-- **THEN** neither horizontal nor vertical movement is committed
-- **AND** a later dominant displacement selects one axis without a two-axis slide or settle jump
+- **WHEN** one-finger movement begins diagonally within the nested native surfaces
+- **THEN** platform recognizer arbitration selects the scroll or pager interaction
+- **AND** the surface does not visibly slide on both axes or jump when ownership settles
 
 #### Scenario: Movement cancels a pending press
 
-- **WHEN** movement exceeds tap tolerance before release
-- **THEN** the interaction becomes ineligible to activate a press
+- **WHEN** native scrolling or paging recognizes movement before release
+- **THEN** the platform cancels press activation in that subtree
 - **AND** scroll or page movement cannot also produce a tap result
 
 #### Scenario: Cancellation returns to valid resting state
 
-- **WHEN** an active or undecided gesture fails, is cancelled, backgrounds, resizes, or unmounts
+- **WHEN** native movement is cancelled, backgrounds, resizes, or unmounts
 - **THEN** both axes finish at their last valid committed or clamped resting values
-- **AND** stale horizontal or vertical completion callbacks cannot restart motion
+- **AND** stale page or scroll completion callbacks cannot restart motion
 
 ### Requirement: T03 hour labels follow explicit device clock preference
 

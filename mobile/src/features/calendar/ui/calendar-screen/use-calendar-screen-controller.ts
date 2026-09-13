@@ -119,7 +119,6 @@ export function useCalendarScreenController() {
     canGoToToday,
     goToToday,
     rendererGeneration: transition.generation,
-    rendererPagePosition: transition.pagePosition,
     transitionRevision: transition.lastRequestRevision,
     acceptedTransitionRevision: transition.acceptedRevision,
     verticalOffset,

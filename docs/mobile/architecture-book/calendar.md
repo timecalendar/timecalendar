@@ -5,44 +5,33 @@
 The T03 week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
 native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
-shell keeps exactly the previous, current, and next empty pages mounted. Each page draws
+shell keeps exactly the previous, current, and next empty pages mounted in the installed
+native `PagerView`. Each page draws
 the complete 00:00–24:00 major-hour and half-hour grid beside one horizontally pinned hour
-gutter. The gutter labels and all three page grids derive from the same minute mapping and
-one UI-runtime vertical offset; the screen-owned native heading stays outside that
-coordinate plane. A horizontal
-gesture or labelled screen-reader increment/decrement action requests one whole week; transient translation
-stays on the UI thread, while one revisioned settle path commits the date, native title,
+gutter. The gutter labels and pager share one full-day row inside a native vertical
+`ScrollView`, so UIKit and Android provide drag recognition, deceleration, bounce, and
+settlement while the screen-owned native heading stays outside the scroll content. A horizontal
+page or labelled screen-reader increment/decrement action requests one whole week; one revisioned idle-settle path commits the date, native title,
 Agenda range, page generation, and accessibility announcement together.
 
-The viewport is an `Animated.View` directly beneath `PanGestureHandler`, so Reanimated
-registers the native worklet events on the touch owner. It exposes the committed localized
-week date as an adjustable accessibility label with translated previous/next actions.
+The vertical ScrollView remains on the first native descendant chain and uses automatic
+content-inset adjustment, allowing iOS NativeTabs to account for the Liquid Glass tab bar.
+Only the settled native raw offset is retained because React Native events do not expose
+UIKit's computed adjusted inset; restoration lets the native ScrollView clamp against its
+current geometry. Calendar tab reselect-to-top is disabled. The ScrollView
+exposes the committed localized week date as an adjustable accessibility label with
+translated previous/next actions.
 T04 places weekday/date labels in the Monday–Sunday columns beneath the native month title;
 there is no additional single-date header or permanent paging toolbar.
 
-Movement and state-change events each have their own Reanimated `useEvent` holder and
-one event name. A holder is never shared across two native props: the installed
-Reanimated implementation keys registration IDs by view tag, so sharing a holder can
-overwrite IDs and leave stale callbacks registered after rebuild or unmount.
-
-A requested transition survives owner rerenders: callback identity does not cancel motion.
-The three pages occupy a horizontal strip at a controller-owned cumulative page position.
-An accepted destination already rests at its next position before the controller commit;
-the replacement generation moves the strip layout by the same amount while preserving the
-native transform. The destination therefore remains at the same physical coordinate without
-a post-commit wrong-week, blank, partial, or tint frame. New pans during an accepted settle
-are ignored until that commit.
-BEGAN records pan eligibility without cancelling animation. Only ACTIVE captures the drag
-origin and interrupts snap-back, because iOS can emit BEGAN while resetting after release.
-A drag interrupting snap-back starts from the current offset. Short releases, cancellations,
-and failed gestures start snap-back directly on the UI runtime; returning to the committed
-week does not depend on a queued JavaScript callback or its transition guards. One-finger
-movement waits inside tap tolerance and near the diagonal, then locks to one dominant axis
-for the gesture's lifetime. Horizontal lock retains the adjacent-week path without changing
-the clock offset. Vertical lock updates only the bounded clock offset, cancels press
-eligibility, and never requests or announces a week. AppState inactivity/backgrounding
-cancels pending motion and returns each axis to its valid resting position; stale queued
-gesture work carries an invalidated motion epoch and cannot restart motion after foregrounding.
+Pager selection is recorded independently from pager state and commits only when the native
+pager reports idle at an edge. The accepted generation remounts the same three direct,
+non-collapsible children around the new anchor, centered again at page 1. Development builds
+give each week a stable date label and contrasting tint so movement and the edge-to-center
+handoff remain inspectable; production omits those diagnostics. AppState inactivity cancels
+pending work and recenters on the committed week. The grid uses filled physical-hairline
+views in static scroll content, with one extra hairline of render height so the exact 24:00
+closing boundary is not clipped.
 
 `CalendarScreen` passes `useCalendars()[0].uses24hourClock` into pure gutter formatting.
 `true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
@@ -165,8 +154,8 @@ separate. The binding contract and regression scenarios live in the
 ## Surfaces
 
 - Calendar offers the T03 owned Week shell and Agenda, with platform-specific native chrome.
-  Week has one full-day vertically bounded clock surface, a pinned gutter, immutable one-axis
-  interaction, a three-page working set, reduced-motion settlement, hidden neighbour/grid
+  Week has one full-day native vertical scroll surface, a horizontally pinned gutter, native
+  pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
   semantics, and accessible previous/next alternatives. Day/week switching, current-time
   positioning, events, and visible weekday columns belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
@@ -189,7 +178,7 @@ separate. The binding contract and regression scenarios live in the
 ## Verification
 
 Unit/component tests cover display-zone week arithmetic, revision/cancellation semantics,
-three-page gesture and control behavior, atomic settled screen context, Calendar remount
+three-page native pager and control behavior, native scroll settlement/restoration, atomic settled screen context, Calendar remount
 and selection, Agenda grouping/routing, filtering, sync orchestration, failure states, and
 the repository cutover contract. Native held-drag feel, fling continuity, assistive
 technology, platform chrome, and physical-device presentation remain recorded owner checks;

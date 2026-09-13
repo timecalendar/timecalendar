@@ -50,3 +50,12 @@
 - [x] 7.2 Confirm the PR head SHA equals the exact revision used by the reported standard CI run and every required check is green; treat focused pure coverage and strict OpenSpec validation as the direct CI proof for the introduced contracts, and report any native evidence only from its named runtime.
 - [x] 7.3 Supply the testable build/revision and canonical T03 checklist for explicit owner QA, including all-hours reachability, gutter alignment, fixed heading, week paging from a scrolled time, diagonal/reversal behavior, device hour-format switching, and the prior accepted interaction; keep failures and focused retest evidence on this same ticket.
 - [x] 7.4 Keep the PR unmerged and auto-merge disabled while the board-user-required owner QA and human review are pending. Do not start, assign, or wake the next renderer slice until T03 has explicit owner acceptance and its PR has been human-merged.
+
+## 8. Repair owner-reported native motion and rendering failures
+
+- [x] 8.1 Replace custom vertical translation and timing projection with one first-descendant native ScrollView using automatic iOS content insets and native raw settled-offset restoration.
+- [x] 8.2 Replace the custom horizontal pan with the installed native PagerView, retaining exactly three pages, revisioned idle settlement, cancellation, reduced-motion actions, and generation-centered replacement.
+- [x] 8.3 Render filled physical-hairline grid lines with a drawable closing boundary and restore stable development-only week tints and diagnostics.
+- [x] 8.4 Preserve one committed-week accessibility context, disable Calendar tab reselect-to-top, and verify no duplicate pager/grid semantics or vertical date announcements.
+- [x] 8.5 Update focused renderer, screen, pager mock, repository-contract, OpenSpec, Architecture Book, and owner-device evidence for the native repair.
+- [x] 8.6 Run focused tests, TypeScript, lint, formatting, React Doctor, repository contracts, strict OpenSpec validation, and the available iOS/Android device checks; leave unavailable owner observations explicitly pending.

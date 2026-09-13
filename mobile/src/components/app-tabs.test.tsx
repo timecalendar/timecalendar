@@ -17,9 +17,17 @@ jest.mock("@/components/chrome", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Text, View } = require("react-native")
 
-  function Trigger(props: { name: string; children: React.ReactNode }) {
+  function Trigger(props: {
+    name: string
+    children: React.ReactNode
+    disableScrollToTop?: boolean
+  }) {
     return (
-      <View testID="trigger" accessibilityLabel={props.name}>
+      <View
+        testID="trigger"
+        accessibilityLabel={props.name}
+        disableScrollToTop={props.disableScrollToTop}
+      >
         {props.children}
       </View>
     )
@@ -71,5 +79,13 @@ describe("AppTabs", () => {
     expect(
       getAllByTestId("trigger-icon").at(-1)?.props.accessibilityLabel,
     ).toBe("gearshape:settings")
+  })
+
+  it("does not reset Calendar's retained hour on tab reselect", async () => {
+    const { getAllByTestId } = await render(<AppTabs />)
+    expect(getAllByTestId("trigger").at(1)).toHaveProp(
+      "disableScrollToTop",
+      true,
+    )
   })
 })

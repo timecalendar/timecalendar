@@ -43,16 +43,12 @@ function compileForNativeRuntime(path: string): string {
 }
 
 describe("owned Calendar paging repository contract", () => {
-  it("compiles the motion and gesture helpers for the native UI runtime", () => {
-    // Jest's animation mocks do not enforce the native runtime boundary.
+  it("compiles the native scroll and pager owner for the native runtime", () => {
     const compiled = compileForNativeRuntime(
       "src/features/calendar/renderer/owned-calendar-shell.tsx",
     )
-    expect(compiled).toMatch(/restingTranslation\.__workletHash\s*=/)
-    const gesture = compileForNativeRuntime(
-      "src/features/calendar/renderer/gesture-state.ts",
-    )
-    expect(gesture).toMatch(/updateGestureDecision\.__workletHash\s*=/)
+    expect(compiled).toContain("react-native-pager-view")
+    expect(compiled).toContain("contentInsetAdjustmentBehavior")
   })
 
   it("keeps the vendor dependency, adapter, patch, and exclusive config absent", () => {
@@ -78,8 +74,6 @@ describe("owned Calendar paging repository contract", () => {
   it("keeps one owned renderer with no vendor, fallback, or compatibility path", () => {
     const rendererRoot = join(root, "src", "features", "calendar", "renderer")
     expect(readdirSync(rendererRoot).sort()).toEqual([
-      "gesture-state.test.ts",
-      "gesture-state.ts",
       "index.ts",
       "owned-calendar-shell.test.tsx",
       "owned-calendar-shell.tsx",
@@ -90,11 +84,8 @@ describe("owned Calendar paging repository contract", () => {
       .join("\n")
     expect(sources).not.toContain(vendorPackage)
     expect(sources).not.toMatch(/fallback renderer|compatibility renderer/i)
-    expect(sources).not.toContain("react-native-pager-view")
     expect(packageJson.dependencies).toMatchObject({
-      "react-native-gesture-handler": expect.any(String),
-      "react-native-reanimated": expect.any(String),
-      "react-native-worklets": expect.any(String),
+      "react-native-pager-view": expect.any(String),
     })
     expect(
       existsSync(join(root, "src", "features", "calendar", "data", "week.ts")),
@@ -106,25 +97,16 @@ describe("owned Calendar paging repository contract", () => {
     ).toBe(true)
   })
 
-  it("registers legacy native worklet events on the animated viewport", () => {
+  it("keeps one native vertical owner and the installed native pager", () => {
     const renderer = readFileSync(
       join(root, "src/features/calendar/renderer/owned-calendar-shell.tsx"),
       "utf8",
     )
-    expect(renderer).toMatch(/<PanGestureHandler\b[^>]*>\s*<Animated\.View\b/)
-    expect(renderer).toMatch(/minPointers=\{1\}/)
-    expect(renderer).toMatch(/maxPointers=\{1\}/)
-    expect(renderer).toMatch(/cancelsTouchesInView/)
-    expect(renderer).toMatch(/shouldCancelWhenOutside=\{false\}/)
-  })
-
-  it("keeps snap-back on the UI runtime instead of queuing a guarded JS callback", () => {
-    const renderer = readFileSync(
-      join(root, "src/features/calendar/renderer/owned-calendar-shell.tsx"),
-      "utf8",
-    )
-    expect(renderer).toMatch(/const snapBack = \(\) => \{\s*"worklet"/)
-    expect(renderer).not.toMatch(/scheduleOnRN\(\s*snapBack/)
+    expect(renderer).toMatch(/<ScrollView\b/)
+    expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
+    expect(renderer).toMatch(/<PagerView\b/)
+    expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
+    expect(renderer).not.toMatch(/PanGestureHandler|withTiming|useSharedValue/)
   })
 
   it("pins the three journeys and retained Agenda helper", () => {
