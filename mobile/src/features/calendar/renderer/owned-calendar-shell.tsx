@@ -74,6 +74,67 @@ function restingTranslation(pagePosition: number, pageWidth: number) {
   return pagePosition === 0 ? 0 : -pagePosition * pageWidth
 }
 
+function applyLayout(
+  event: LayoutChangeEvent,
+  {
+    pagePosition,
+    motionEpoch,
+    translation,
+    verticalOffset,
+    verticalResting,
+    viewportHeight,
+    width,
+    gesture,
+    dragging,
+    canStartDrag,
+    settling,
+    setPageWidth,
+    cancelPending,
+    onVerticalOffsetSettled,
+  }: {
+    pagePosition: number
+    motionEpoch: SharedValue<number>
+    translation: SharedValue<number>
+    verticalOffset: SharedValue<number>
+    verticalResting: SharedValue<number>
+    viewportHeight: SharedValue<number>
+    width: SharedValue<number>
+    gesture: SharedValue<GestureDecision>
+    dragging: SharedValue<boolean>
+    canStartDrag: SharedValue<boolean>
+    settling: SharedValue<boolean>
+    setPageWidth: (width: number) => void
+    cancelPending: () => void
+    onVerticalOffsetSettled: (offset: number) => void
+  },
+) {
+  motionEpoch.set(motionEpoch.get() + 1)
+  cancelAnimation(translation)
+  cancelAnimation(verticalOffset)
+  cancelPending()
+  dragging.set(false)
+  canStartDrag.set(false)
+  settling.set(false)
+  const nextWidth = Math.max(
+    0,
+    event.nativeEvent.layout.width - HOURS_COLUMN_WIDTH,
+  )
+  const nextHeight = Math.max(0, event.nativeEvent.layout.height)
+  width.set(nextWidth)
+  viewportHeight.set(nextHeight)
+  setPageWidth(nextWidth)
+  translation.set(restingTranslation(pagePosition, nextWidth))
+  const clamped = clampVerticalOffset(
+    verticalResting.get(),
+    CONTENT_HEIGHT,
+    nextHeight,
+  )
+  verticalResting.set(clamped)
+  verticalOffset.set(clamped)
+  gesture.set(createGestureDecision(motionEpoch.get()))
+  onVerticalOffsetSettled(clamped)
+}
+
 type OwnedCalendarShellProps = {
   heading: string
   anchor: Date
@@ -105,8 +166,6 @@ export function OwnedCalendarShell({
   onTransitionSettled,
   onTransitionCancelled,
 }: OwnedCalendarShellProps) {
-  const { t } = useTranslation()
-  const theme = useTheme()
   const reduceMotion = useReducedMotion()
   const [pageWidth, setPageWidth] = useState(0)
   const width = useSharedValue(0)
@@ -353,6 +412,79 @@ export function OwnedCalendarShell({
   ) as unknown as (
     event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>,
   ) => void
+  const onLayout = (event: LayoutChangeEvent) =>
+    applyLayout(event, {
+      pagePosition,
+      motionEpoch,
+      translation,
+      verticalOffset,
+      verticalResting,
+      viewportHeight,
+      width,
+      gesture,
+      dragging,
+      canStartDrag,
+      settling,
+      setPageWidth,
+      cancelPending,
+      onVerticalOffsetSettled,
+    })
+
+  return (
+    <OwnedCalendarSurface
+      heading={heading}
+      anchor={anchor}
+      displayZone={displayZone}
+      locale={locale}
+      uses24HourClock={uses24HourClock}
+      pagePosition={pagePosition}
+      pageWidth={pageWidth}
+      translation={translation}
+      verticalOffset={verticalOffset}
+      onLayout={onLayout}
+      onGestureEvent={panGestureEventHandler}
+      onHandlerStateChange={panStateChangeHandler}
+      onAccessibilityTransition={startTransition}
+    />
+  )
+}
+
+function OwnedCalendarSurface({
+  heading,
+  anchor,
+  displayZone,
+  locale,
+  uses24HourClock,
+  pagePosition,
+  pageWidth,
+  translation,
+  verticalOffset,
+  onLayout,
+  onGestureEvent,
+  onHandlerStateChange,
+  onAccessibilityTransition,
+}: {
+  heading: string
+  anchor: Date
+  displayZone: string
+  locale: AppLocale
+  uses24HourClock: boolean | null
+  pagePosition: number
+  pageWidth: number
+  translation: SharedValue<number>
+  verticalOffset: SharedValue<number>
+  onLayout: (event: LayoutChangeEvent) => void
+  onGestureEvent: (event: GestureEvent<PanGestureHandlerEventPayload>) => void
+  onHandlerStateChange: (
+    event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>,
+  ) => void
+  onAccessibilityTransition: (
+    direction: WeekDirection,
+    source: WeekTransitionSource,
+  ) => void
+}) {
+  const { t } = useTranslation()
+  const theme = useTheme()
   const stripStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translation.get() }],
   }))
@@ -366,35 +498,6 @@ export function OwnedCalendarShell({
         : shiftWeekInZone(anchor, direction, displayZone, 1)
     return { direction, key: dayKey(pageAnchor, displayZone) }
   })
-
-  const onLayout = (event: LayoutChangeEvent) => {
-    motionEpoch.set(motionEpoch.get() + 1)
-    cancelAnimation(translation)
-    cancelAnimation(verticalOffset)
-    cancelPending()
-    dragging.set(false)
-    canStartDrag.set(false)
-    settling.set(false)
-    const nextWidth = Math.max(
-      0,
-      event.nativeEvent.layout.width - HOURS_COLUMN_WIDTH,
-    )
-    const nextHeight = Math.max(0, event.nativeEvent.layout.height)
-    width.set(nextWidth)
-    viewportHeight.set(nextHeight)
-    setPageWidth(nextWidth)
-    translation.set(restingTranslation(pagePosition, nextWidth))
-    const clamped = clampVerticalOffset(
-      verticalResting.get(),
-      CONTENT_HEIGHT,
-      nextHeight,
-    )
-    verticalResting.set(clamped)
-    verticalOffset.set(clamped)
-    gesture.set(createGestureDecision(motionEpoch.get()))
-    onVerticalOffsetSettled(clamped)
-  }
-
   return (
     <View
       testID="owned-calendar-shell"
@@ -407,8 +510,8 @@ export function OwnedCalendarShell({
         maxPointers={1}
         cancelsTouchesInView
         shouldCancelWhenOutside={false}
-        onGestureEvent={panGestureEventHandler}
-        onHandlerStateChange={panStateChangeHandler}
+        onGestureEvent={onGestureEvent}
+        onHandlerStateChange={onHandlerStateChange}
       >
         <Animated.View
           onLayout={onLayout}
@@ -422,9 +525,9 @@ export function OwnedCalendarShell({
           ]}
           onAccessibilityAction={({ nativeEvent }) => {
             if (nativeEvent.actionName === "increment")
-              startTransition(1, "next")
+              onAccessibilityTransition(1, "next")
             if (nativeEvent.actionName === "decrement")
-              startTransition(-1, "previous")
+              onAccessibilityTransition(-1, "previous")
           }}
         >
           <View

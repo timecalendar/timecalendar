@@ -2,10 +2,14 @@
 
 ## Rendering
 
-The T02 week surface is a feature-owned React Native shell under
+The T03 week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
 native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
-shell keeps exactly the previous, current, and next empty pages mounted. A horizontal
+shell keeps exactly the previous, current, and next empty pages mounted. Each page draws
+the complete 00:00–24:00 major-hour and half-hour grid beside one horizontally pinned hour
+gutter. The gutter labels and all three page grids derive from the same minute mapping and
+one UI-runtime vertical offset; the screen-owned native heading stays outside that
+coordinate plane. A horizontal
 gesture or labelled screen-reader increment/decrement action requests one whole week; transient translation
 stays on the UI thread, while one revisioned settle path commits the date, native title,
 Agenda range, page generation, and accessibility announcement together.
@@ -13,8 +17,6 @@ Agenda range, page generation, and accessibility announcement together.
 The viewport is an `Animated.View` directly beneath `PanGestureHandler`, so Reanimated
 registers the native worklet events on the touch owner. It exposes the committed localized
 week date as an adjustable accessibility label with translated previous/next actions.
-Development builds show centered preview labels, Monday date keys, measured viewport bounds,
-and stable week tints. These are motion diagnostics, not permanent calendar chrome.
 T04 places weekday/date labels in the Monday–Sunday columns beneath the native month title;
 there is no additional single-date header or permanent paging toolbar.
 
@@ -34,15 +36,25 @@ BEGAN records pan eligibility without cancelling animation. Only ACTIVE captures
 origin and interrupts snap-back, because iOS can emit BEGAN while resetting after release.
 A drag interrupting snap-back starts from the current offset. Short releases, cancellations,
 and failed gestures start snap-back directly on the UI runtime; returning to the committed
-week does not depend on a queued JavaScript callback or its transition guards. Predominantly vertical
-motion cancels paging. AppState inactivity/backgrounding cancels pending motion and
-returns to the committed week; stale queued gesture work carries an invalidated motion
-epoch and cannot restart paging after foregrounding.
+week does not depend on a queued JavaScript callback or its transition guards. One-finger
+movement waits inside tap tolerance and near the diagonal, then locks to one dominant axis
+for the gesture's lifetime. Horizontal lock retains the adjacent-week path without changing
+the clock offset. Vertical lock updates only the bounded clock offset, cancels press
+eligibility, and never requests or announces a week. AppState inactivity/backgrounding
+cancels pending motion and returns each axis to its valid resting position; stale queued
+gesture work carries an invalidated motion epoch and cannot restart motion after foregrounding.
+
+`CalendarScreen` passes `useCalendars()[0].uses24hourClock` into pure gutter formatting.
+`true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
+the deterministic 24-hour convention. The controller retains only settled, clamped clock
+offsets, so accepted week revisions and Week/Agenda switches preserve the visible time
+without reporting frame-frequency values to React.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
-timed tiles, the 7:00–21:00 grid, current-time presentation, vertical scrolling, hour
-labels, weekday columns, weekend filtering, day/week switching, pinch, and zoom are
-absent until their numbered owned-renderer slices land. Paging remains bounded to one
+timed tiles, current-time presentation and positioning, weekday columns, weekend filtering,
+day/week switching, pinch, and zoom are absent until their numbered owned-renderer slices
+land. Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
+explicit full-day bounds. Paging remains bounded to one
 adjacent empty week; there is no far-date pager. The blank shell never claims
 that stored event data is empty: Agenda remains the route for reading and opening stored
 events during this cut.
@@ -152,10 +164,11 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers the T02 owned Week shell and Agenda, with platform-specific native chrome.
-  Week paging has one three-page working set, reduced-motion settlement, hidden neighbour
-  semantics, and accessible previous/next alternatives. Day/week switching and visible
-  weekday columns belong to later renderer slices.
+- Calendar offers the T03 owned Week shell and Agenda, with platform-specific native chrome.
+  Week has one full-day vertically bounded clock surface, a pinned gutter, immutable one-axis
+  interaction, a three-page working set, reduced-motion settlement, hidden neighbour/grid
+  semantics, and accessible previous/next alternatives. Day/week switching, current-time
+  positioning, events, and visible weekday columns belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.
@@ -179,5 +192,5 @@ Unit/component tests cover display-zone week arithmetic, revision/cancellation s
 three-page gesture and control behavior, atomic settled screen context, Calendar remount
 and selection, Agenda grouping/routing, filtering, sync orchestration, failure states, and
 the repository cutover contract. Native held-drag feel, fling continuity, assistive
-technology, platform chrome, and physical-device presentation remain recorded owner
-checks; later scrolling, dense-calendar, and all-day-lane behavior is not claimed by T02.
+technology, platform chrome, and physical-device presentation remain recorded owner checks;
+native vertical feel, dense-calendar, and all-day-lane behavior is not claimed by T03.

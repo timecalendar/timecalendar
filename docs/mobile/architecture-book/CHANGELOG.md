@@ -2,6 +2,11 @@
 
 ## 2026-09-12
 
+- Added T03 full-day movement to the owned Calendar shell: explicit 00:00–24:00 major/minor
+  geometry, one pinned hour gutter and shared vertical offset, immutable one-finger axis lock,
+  explicit nullable device clock-format input, bounded inertial settlement, and retained clock
+  position across week revisions and Week/Agenda switches. Events, weekday columns, current-time
+  positioning, day mode, and pinch/zoom remain absent.
 - Added T02 one-week paging to the empty owned Calendar shell: explicit Monday-first civil
   arithmetic, a bounded previous/current/next strip, UI-thread gesture translation, revisioned
   atomic settlement, reduced-motion behavior, labelled platform-sized controls, hidden neighbour
