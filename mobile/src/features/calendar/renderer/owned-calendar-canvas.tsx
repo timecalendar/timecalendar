@@ -32,7 +32,11 @@ import {
 import { useTheme } from "@/theme"
 
 import type { CalendarPage } from "./owned-calendar-coordinator"
-import { AnimatedPagerView, type usePagerPageScroll } from "./pager-page-scroll"
+import {
+  AnimatedPagerView,
+  CENTER_PAGE,
+  type usePagerPageScroll,
+} from "./pager-page-scroll"
 
 const CONTENT_HEIGHT = gridContentHeight(
   FULL_DAY_START_MINUTE,
@@ -151,7 +155,7 @@ export function OwnedCalendarCanvas({
           key={generation}
           testID="owned-calendar-pager"
           style={styles.pager}
-          initialPage={1}
+          initialPage={CENTER_PAGE}
           offscreenPageLimit={1}
           overdrag={false}
           onPageScroll={

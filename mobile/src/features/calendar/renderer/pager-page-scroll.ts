@@ -8,7 +8,7 @@ import {
   useSharedValue,
 } from "react-native-reanimated"
 
-const CENTER_PAGE = 1
+export const CENTER_PAGE = 1
 
 type PageScrollEvent = {
   eventName?: string

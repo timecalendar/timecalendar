@@ -23,10 +23,11 @@ import {
   type WeekTransitionSource,
 } from "@/features/calendar/data"
 
-import { usePagerPageScroll } from "./pager-page-scroll"
+import { CENTER_PAGE, usePagerPageScroll } from "./pager-page-scroll"
+
+export { CENTER_PAGE } from "./pager-page-scroll"
 
 const PAGE_DIRECTIONS = [-1, 0, 1] as const
-export const CENTER_PAGE = 1
 
 export type CalendarPage = ReturnType<typeof calendarPages>[number]
 
