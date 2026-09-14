@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
-import { Animated, AppState, StyleSheet } from "react-native"
-import { useReducedMotion } from "react-native-reanimated"
+import { AppState, StyleSheet } from "react-native"
+import { useEvent, useReducedMotion } from "react-native-reanimated"
 
 import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
 import { Colors } from "@/theme"
@@ -57,13 +57,7 @@ describe("OwnedCalendarShell", () => {
         includeHiddenElements: true,
       }).props.style,
     )
-    const translateX = style.transform[0].translateX as
-      | number
-      | Animated.AnimatedNode
-    if (typeof translateX === "number") return translateX
-    return (
-      translateX as Animated.AnimatedNode & { __getValue: () => number }
-    ).__getValue()
+    return style.transform[0].translateX as number
   }
 
   const measureHeaderLane = async (width = 300) => {
@@ -73,29 +67,6 @@ describe("OwnedCalendarShell", () => {
       headerLaneLayout(width),
     )
   }
-
-  const mockNativePageScrollEvents = () =>
-    jest.spyOn(Animated, "event").mockImplementation(((
-      mapping: [
-        {
-          nativeEvent: {
-            position: Animated.Value
-            offset: Animated.Value
-          }
-        },
-      ],
-    ) => {
-      const AnimatedEvent = (
-        Animated as unknown as {
-          Event: new (
-            eventMapping: typeof mapping,
-            config: { useNativeDriver: boolean },
-          ) => ReturnType<typeof Animated.event>
-        }
-      ).Event
-
-      return new AnimatedEvent(mapping, { useNativeDriver: false })
-    }) as typeof Animated.event)
 
   beforeEach(() => {
     AppState.currentState = "active"
@@ -198,7 +169,6 @@ describe("OwnedCalendarShell", () => {
   ] as const)(
     "projects native page progress %s + %s onto the matching header direction",
     async (position, offset, expectedTranslateX) => {
-      const nativeEvent = mockNativePageScrollEvents()
       const view = await render(<OwnedCalendarShell {...props} />)
       await measureHeaderLane()
       const pager = screen.getByTestId("owned-calendar-pager", {
@@ -211,9 +181,10 @@ describe("OwnedCalendarShell", () => {
       await view.rerender(<OwnedCalendarShell {...props} />)
 
       expect(headerTranslateX()).toBe(expectedTranslateX)
-      expect(nativeEvent).toHaveBeenCalledWith(
-        expect.any(Array),
-        expect.objectContaining({ useNativeDriver: true }),
+      expect(useEvent).toHaveBeenCalledWith(
+        expect.any(Function),
+        ["onPageScroll"],
+        expect.any(Boolean),
       )
       expect(
         screen.getAllByTestId(/^owned-calendar-date--?\d-/, {
@@ -224,21 +195,17 @@ describe("OwnedCalendarShell", () => {
           includeHiddenElements: true,
         }).length,
       )
-      nativeEvent.mockRestore()
     },
   )
 
   it("passes a callable native page-scroll bridge to PagerView", async () => {
-    const nativeEvent = mockNativePageScrollEvents()
     await render(<OwnedCalendarShell {...props} />)
 
     const pager = screen.getByTestId("owned-calendar-pager", {
       includeHiddenElements: true,
     })
 
-    expect(typeof nativeEvent.mock.results[0]?.value).toBe("object")
     expect(typeof pager.props.onPageScroll).toBe("function")
-    nativeEvent.mockRestore()
   })
 
   it("keeps the measured header pinned during vertical movement", async () => {
@@ -275,6 +242,13 @@ describe("OwnedCalendarShell", () => {
       />,
     )
     await measureHeaderLane()
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
 
     expect(headerTranslateX()).toBe(0)
     expect(onTransitionSettled).toHaveBeenCalledTimes(1)
@@ -282,7 +256,6 @@ describe("OwnedCalendarShell", () => {
   })
 
   it("recenters a native snap-back without committing a transition", async () => {
-    const nativeEvent = mockNativePageScrollEvents()
     const view = await render(<OwnedCalendarShell {...props} />)
     await measureHeaderLane()
     const pager = screen.getByTestId("owned-calendar-pager", {
@@ -303,7 +276,6 @@ describe("OwnedCalendarShell", () => {
     expect(onTransitionRequest).not.toHaveBeenCalled()
     expect(onTransitionSettled).not.toHaveBeenCalled()
     expect(onTransitionCancelled).not.toHaveBeenCalled()
-    nativeEvent.mockRestore()
   })
 
   it("cancels and recenters pending motion when the app becomes inactive", async () => {
@@ -314,7 +286,6 @@ describe("OwnedCalendarShell", () => {
         appStateListener = listener
         return { remove: jest.fn() }
       })
-    const nativeEvent = mockNativePageScrollEvents()
     pagerMock.deferNextTransition()
     const view = await render(<OwnedCalendarShell {...props} />)
     await measureHeaderLane()
@@ -338,11 +309,9 @@ describe("OwnedCalendarShell", () => {
     expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
     expect(onTransitionCancelled).toHaveBeenCalledWith(1)
     expect(onTransitionSettled).not.toHaveBeenCalled()
-    nativeEvent.mockRestore()
   })
 
   it("cancels pending motion when weekend geometry is replaced", async () => {
-    const nativeEvent = mockNativePageScrollEvents()
     pagerMock.deferNextTransition()
     const view = await render(<OwnedCalendarShell {...props} />)
     await measureHeaderLane()
@@ -357,7 +326,6 @@ describe("OwnedCalendarShell", () => {
     expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
     expect(onTransitionCancelled).toHaveBeenCalledWith(1)
     expect(onTransitionSettled).not.toHaveBeenCalled()
-    nativeEvent.mockRestore()
   })
 
   it("cancels pending motion when the page generation is replaced", async () => {
@@ -523,8 +491,8 @@ describe("OwnedCalendarShell", () => {
   })
 
   it("ignores events queued by a replaced pager generation", async () => {
-    const nativeEvent = mockNativePageScrollEvents()
     const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
     const stalePager = screen.getByTestId("owned-calendar-pager", {
       includeHiddenElements: true,
     })
@@ -555,7 +523,6 @@ describe("OwnedCalendarShell", () => {
     expect(headerTranslateX()).toBe(0)
     expect(onTransitionRequest).not.toHaveBeenCalled()
     expect(onTransitionSettled).not.toHaveBeenCalled()
-    nativeEvent.mockRestore()
   })
 
   it.each([

@@ -23,9 +23,12 @@ exposes the committed localized week date as an adjustable accessibility label w
 translated previous/next actions.
 One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native
 month title. Its fixed spacer matches the hour gutter, and its previous/current/next slots reuse the
-same ordered column records as the three clock pages. The installed pager's native `position` and
-`offset` drive the strip transform across the measured content lane, so there is no second pager,
-responder, timer, or animation owner. Only the centered committed slot is accessible; moving
+same ordered column records as the three clock pages. A feature-private page-scroll hook wraps the
+installed pager with Reanimated `createAnimatedComponent` and attaches its callable `useHandler` /
+`useEvent` seam. Native `position` and `offset` write shared values whose `useAnimatedStyle`
+projection drives the strip across the measured content lane on the UI thread, so there is no
+React Native `Animated`, per-frame React state, second pager, responder, timer, or animation owner.
+Only the centered committed slot is accessible; moving
 neighbours stay hidden until accepted idle settlement rebuilds the centered generation. Snap-back,
 AppState inactivity, generation replacement, and preference or lane-geometry replacement recenter
 both surfaces without committing a week. Monday is an explicit launch input; the pure display-zone
@@ -34,6 +37,13 @@ identity when the persisted Show weekends preference is off. Paging and Agenda s
 read seven civil days. Today is identified in the effective display zone and has both a
 typography/outlined-shape cue and localized semantics. There is no additional single-date header or
 permanent paging toolbar.
+
+The renderer keeps a bounded composition boundary in `owned-calendar-shell`, one
+`owned-calendar-coordinator` hook for pager/scroll refs and cancellation/settlement lifecycle, and
+passive `owned-calendar-header` plus `owned-calendar-canvas` presentation units. The clock grid
+remains inside the canvas unit. These feature-private views receive complete page models and
+handlers; they do not import screen orchestration, storage, navigation, or event data. Ordinary
+models and closures rely on the enabled React Compiler rather than manual memoization.
 
 Pager selection is recorded independently from pager state and commits only when the native
 pager reports idle at an edge. The accepted generation remounts the same three direct,

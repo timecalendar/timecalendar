@@ -1,5 +1,13 @@
 # Architecture Book changelog
 
+## 2026-09-14
+
+- Reshaped the T04 owned renderer around PagerView's callable Reanimated event seam: native
+  fractional progress now writes shared values and drives the pinned header through an animated
+  style on the UI thread. The shell is a bounded composition over one coordinator and passive
+  header/canvas/grid units, with React Compiler ownership replacing manual memoization. Existing
+  five/seven-day presentation, seven-day paging and Agenda behavior remain unchanged.
+
 ## 2026-09-12
 
 - Added T04 dated week columns: one pinned localized header and matching five/seven-column
