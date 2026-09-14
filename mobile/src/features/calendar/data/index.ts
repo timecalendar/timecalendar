@@ -68,6 +68,8 @@ export {
   type FirstWeekday,
   shiftWeekInZone,
   startOfWeekInZone,
+  type WeekColumn,
+  weekColumns,
   type WeekDirection,
 } from "./week"
 export {

@@ -1,17 +1,20 @@
 export {
   useDisplayZone,
   useLanguagePreference,
+  useShowWeekendsPreference,
   useThemePreference,
   useTimezonePreference,
 } from "./hooks"
 export {
   getInitialLocale,
   getLanguagePreference,
+  getShowWeekends,
   getThemePreference,
   getTimezonePreference,
   resolveLanguage,
   resolveTimezone,
   setLanguagePreference,
+  setShowWeekends,
   setThemePreference,
   setTimezonePreference,
 } from "./store"

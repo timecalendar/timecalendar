@@ -1,7 +1,21 @@
 # Architecture Book changelog
 
+## 2026-09-14
+
+- Reshaped the T04 owned renderer around PagerView's callable Reanimated event seam: native
+  fractional progress now writes shared values and drives the pinned header through an animated
+  style on the UI thread. The shell is a bounded composition over one coordinator and passive
+  header/canvas/grid units, with React Compiler ownership replacing manual memoization. Existing
+  five/seven-day presentation, seven-day paging and Agenda behavior remain unchanged.
+
 ## 2026-09-12
 
+- Added T04 dated week columns: one pinned localized header and matching five/seven-column
+  full-day pages derive from an explicit Monday-first civil-week policy. A default-on,
+  environment-independent Show weekends switch lives beside calendar management in Settings;
+  hiding weekends leaves seven-day paging, Agenda dates/content, and settled clock offset intact.
+  Today has an outlined typography cue plus localized semantics. Event tiles, current time,
+  selectable dates, day mode, and zoom remain absent.
 - Repaired T03 around platform-native motion: a native vertical ScrollView now owns inertia
   and automatic tab-bar insets, the installed native PagerView owns week paging, filled
   hairlines remain static in scroll content, and development pages regain stable week tints

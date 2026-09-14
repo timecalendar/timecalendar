@@ -1,7 +1,7 @@
 import { getCalendars } from "expo-localization"
 
 import { detectLocale, type SupportedLocale } from "@/i18n/detect-locale"
-import { getString, setString } from "@/storage"
+import { getBoolean, getString, setBoolean, setString } from "@/storage"
 
 import {
   type LanguagePreference,
@@ -40,6 +40,14 @@ export function getTimezonePreference(): TimezonePreference {
 
 export function setTimezonePreference(preference: TimezonePreference): void {
   setString(SETTINGS_KEYS.timezone, preference)
+}
+
+export function getShowWeekends(): boolean {
+  return getBoolean(SETTINGS_KEYS.showWeekends) ?? true
+}
+
+export function setShowWeekends(showWeekends: boolean): void {
+  setBoolean(SETTINGS_KEYS.showWeekends, showWeekends)
 }
 
 // Resolve a timezone preference to the effective display zone: an explicit

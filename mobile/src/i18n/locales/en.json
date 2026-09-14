@@ -86,6 +86,7 @@
   "settingsHub.summary.schools_other": "{{count}} schools",
   "settingsHub.summary.accessibilityLabel": "{{primary}}, {{secondary}}",
   "settingsHub.summary.hint": "Opens calendar management",
+  "settingsHub.summary.showWeekends": "Show weekends",
   "environment.selector.section": "Test environment",
   "environment.selector.label": "Environment",
   "environment.selector.accessibilityLabel": "{{primary}}, {{secondary}}",

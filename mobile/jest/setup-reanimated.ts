@@ -9,10 +9,12 @@ jest.mock("react-native-reanimated", () => {
   // lifecycle functions makes scheduling and cancellation directly assertable.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const reanimated = require("react-native-reanimated/mock")
+  const implementation = reanimated.default ?? reanimated
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { useRef } = require("react") as typeof import("react")
   return {
     ...reanimated,
+    ...implementation,
     cancelAnimation: jest.fn(reanimated.cancelAnimation),
     // The package mock recreates shared values and returns an empty animated
     // style on rerender. Preserve the value like the native hook and evaluate
@@ -28,6 +30,10 @@ jest.mock("react-native-reanimated", () => {
         (event: Event | { nativeEvent: Event }) =>
           handler("nativeEvent" in event ? event.nativeEvent : event),
     ),
+    useHandler: jest.fn(() => ({
+      context: {},
+      doDependenciesDiffer: true,
+    })),
     useReducedMotion: jest.fn(() => false),
     useSharedValue: jest.fn(
       <Value>(initial: Value) =>

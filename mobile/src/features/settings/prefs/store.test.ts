@@ -5,10 +5,12 @@ import { remove, setString } from "@/storage"
 import {
   getInitialLocale,
   getLanguagePreference,
+  getShowWeekends,
   getThemePreference,
   getTimezonePreference,
   resolveTimezone,
   setLanguagePreference,
+  setShowWeekends,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
@@ -24,6 +26,7 @@ describe("settings prefs store", () => {
     remove(SETTINGS_KEYS.theme)
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
+    remove(SETTINGS_KEYS.showWeekends)
   })
 
   describe("theme preference", () => {
@@ -43,6 +46,21 @@ describe("settings prefs store", () => {
     it("reads a corrupt stored value as the system default", () => {
       setString(SETTINGS_KEYS.theme, "neon")
       expect(getThemePreference()).toBe("system")
+    })
+  })
+
+  describe("show weekends preference", () => {
+    it("defaults missing and malformed values to true", () => {
+      expect(getShowWeekends()).toBe(true)
+      setString(SETTINGS_KEYS.showWeekends, "false")
+      expect(getShowWeekends()).toBe(true)
+    })
+
+    it("round-trips explicit false and true across fresh reads", () => {
+      setShowWeekends(false)
+      expect(getShowWeekends()).toBe(false)
+      setShowWeekends(true)
+      expect(getShowWeekends()).toBe(true)
     })
   })
 

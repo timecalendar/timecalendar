@@ -18,7 +18,11 @@ import {
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
-import { setTimezonePreference, SETTINGS_KEYS } from "@/features/settings/prefs"
+import {
+  setShowWeekends,
+  setTimezonePreference,
+  SETTINGS_KEYS,
+} from "@/features/settings/prefs"
 import { remove } from "@/storage"
 import { resolveResponsiveLayout } from "@/theme"
 
@@ -151,6 +155,7 @@ beforeEach(() => {
   mockSetParams.mockReset()
   mockAnnounce.mockClear()
   mockUseCalendars.mockReturnValue(deviceCalendars(true))
+  remove(SETTINGS_KEYS.showWeekends)
 })
 
 describe("CalendarScreen owned shell", () => {
@@ -192,6 +197,51 @@ describe("CalendarScreen owned shell", () => {
       { x: 0, y: 400 },
     )
     expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("reactively changes only week presentation while retaining seven-day context and offset", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-14" })
+    mockUseCalendarEvents.mockReturnValue([
+      calendarEvent({
+        id: "weekend-1",
+        startsAt: new Date(2026, 8, 19, 9),
+        endsAt: new Date(2026, 8, 19, 10),
+      }),
+    ])
+    await render(<CalendarScreen />)
+    await waitFor(() => {
+      expect(
+        screen.getAllByTestId(/^owned-calendar-date-0-\d{4}-\d{2}-\d{2}$/),
+      ).toHaveLength(7)
+    })
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "momentumScrollEnd",
+      {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 360 },
+          contentInset: { top: 0, bottom: 0, left: 0, right: 0 },
+          contentSize: { width: 320, height: 1441 },
+          layoutMeasurement: { width: 320, height: 500 },
+        },
+      },
+    )
+
+    await act(async () => setShowWeekends(false))
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date-0-\d{4}-\d{2}-\d{2}$/),
+    ).toHaveLength(5)
+    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+      "contentOffset",
+      { x: 0, y: 360 },
+    )
+    const range = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
+    expect(range.from).toEqual(new Date(2026, 8, 14))
+    expect(range.to).toEqual(new Date(2026, 8, 21))
+    expect(mockAnnounce).not.toHaveBeenCalled()
+
+    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    expect(screen.getByText("Algorithms")).toBeOnTheScreen()
   })
 
   it("mounts and remounts the localized heading and full-bleed canvas", async () => {

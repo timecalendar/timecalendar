@@ -23,6 +23,7 @@ import {
 } from "@/features/calendar/data"
 import { OwnedCalendarShell } from "@/features/calendar/renderer"
 import { useChecklistProgress } from "@/features/event-checklists"
+import { useShowWeekendsPreference } from "@/features/settings/prefs"
 import { Spacing, useTheme } from "@/theme"
 
 import { AgendaList } from "./agenda-list"
@@ -40,6 +41,7 @@ export function CalendarScreen() {
     view,
     setView,
     selectedDate,
+    firstWeekday,
     displayZone,
     range,
     canGoToToday,
@@ -53,6 +55,7 @@ export function CalendarScreen() {
     settleTransition,
     cancelTransition,
   } = useCalendarScreenController()
+  const { showWeekends } = useShowWeekendsPreference()
   const weekHeading = formatFullDay(selectedDate, locale, displayZone)
   const announcedRevision = useRef<number | null>(null)
 
@@ -142,6 +145,9 @@ export function CalendarScreen() {
               anchor={selectedDate}
               displayZone={displayZone}
               locale={locale}
+              firstWeekday={firstWeekday}
+              showWeekends={showWeekends}
+              currentDate={new Date()}
               uses24HourClock={uses24HourClock}
               initialVerticalOffset={verticalOffset}
               generation={rendererGeneration}

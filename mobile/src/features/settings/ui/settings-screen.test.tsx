@@ -7,6 +7,8 @@ import {
   useUserCalendars,
   useUserCalendarsLoaded,
 } from "@/features/calendar-sources"
+import { getShowWeekends, SETTINGS_KEYS } from "@/features/settings/prefs"
+import { remove } from "@/storage"
 import { usePlatform } from "@/test-support/platform"
 
 import { SettingsScreen } from "./settings-screen"
@@ -60,6 +62,7 @@ beforeEach(() => {
   mockCapability = "production"
   mockActivityState.mockReturnValue({ unreadCount: 0 })
   mockPush.mockReset()
+  remove(SETTINGS_KEYS.showWeekends)
 })
 
 describe("SettingsScreen", () => {
@@ -79,6 +82,32 @@ describe("SettingsScreen", () => {
       }
       expect(view.queryByText("EVENTS")).toBeNull()
       expect(view.getByTestId("settings-section-events")).toBeOnTheScreen()
+    })
+
+    it("keeps calendar management before an accessible weekend switch", async () => {
+      await render(<SettingsScreen />)
+      const calendarSection = screen.getByTestId(
+        "settings-calendar-summary-section",
+      )
+      expect(calendarSection).toContainElement(
+        screen.getByTestId("settings-calendar-summary"),
+      )
+      const toggle = screen.getByTestId("settings-show-weekends-switch")
+      expect(toggle.props.accessibilityRole).toBe("switch")
+      expect(toggle.props.accessibilityLabel).toBe("Show weekends")
+      expect(toggle.props.accessibilityState).toEqual({ checked: true })
+      expect(
+        StyleSheet.flatten(
+          screen.getByTestId("settings-show-weekends-row").props.style,
+        ).minHeight,
+      ).toBe(platform === "ios" ? 44 : 48)
+
+      await fireEvent(toggle, "valueChange", false)
+      expect(getShowWeekends()).toBe(false)
+      expect(
+        screen.getByTestId("settings-show-weekends-switch").props
+          .accessibilityState,
+      ).toEqual({ checked: false })
     })
   })
 

@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { AppState, StyleSheet } from "react-native"
-import { useReducedMotion } from "react-native-reanimated"
+import { useEvent, useReducedMotion } from "react-native-reanimated"
 
+import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
 import { Colors } from "@/theme"
 
 import { OwnedCalendarShell } from "./owned-calendar-shell"
@@ -9,6 +10,7 @@ import { OwnedCalendarShell } from "./owned-calendar-shell"
 const pagerMock = jest.requireMock<{
   __pagerMock: {
     setPage: jest.Mock
+    setPageWithoutAnimation: jest.Mock
     deferNextTransition: () => void
   }
 }>("react-native-pager-view").__pagerMock
@@ -23,6 +25,9 @@ describe("OwnedCalendarShell", () => {
     anchor: new Date("2026-06-15T00:00:00.000Z"),
     displayZone: "UTC",
     locale: "en" as const,
+    firstWeekday: 1 as const,
+    showWeekends: true,
+    currentDate: new Date("2026-06-17T12:00:00.000Z"),
     uses24HourClock: true,
     initialVerticalOffset: 0,
     generation: 0,
@@ -40,6 +45,28 @@ describe("OwnedCalendarShell", () => {
       layoutMeasurement: { width: 320, height: 500 },
     },
   })
+  const headerLaneLayout = (width: number) => ({
+    nativeEvent: {
+      layout: { x: HOURS_COLUMN_WIDTH, y: 0, width, height: 56 },
+    },
+  })
+
+  const headerTranslateX = () => {
+    const style = StyleSheet.flatten(
+      screen.getByTestId("owned-calendar-date-header-strip", {
+        includeHiddenElements: true,
+      }).props.style,
+    )
+    return style.transform[0].translateX as number
+  }
+
+  const measureHeaderLane = async (width = 300) => {
+    await fireEvent(
+      screen.getByTestId("owned-calendar-date-header-viewport"),
+      "layout",
+      headerLaneLayout(width),
+    )
+  }
 
   beforeEach(() => {
     AppState.currentState = "active"
@@ -71,6 +98,274 @@ describe("OwnedCalendarShell", () => {
         includeHiddenElements: true,
       }),
     ).toHaveProp("offscreenPageLimit", 1)
+  })
+
+  it("renders one pinned seven-day header aligned with all three pages", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    const header = screen.getByTestId("owned-calendar-date-header")
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    expect(header.parent).toBe(canvas.parent)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-date-header-gutter", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).width,
+    ).toBe(HOURS_COLUMN_WIDTH)
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(7)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(21)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-column--?\d-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(21)
+    expect(screen.getByLabelText("MON 15")).toBeOnTheScreen()
+    expect(screen.getByLabelText("WED 17, Today")).toBeOnTheScreen()
+    expect(screen.getByTestId("owned-calendar-date-header-slot-0")).toHaveProp(
+      "accessibilityElementsHidden",
+      false,
+    )
+    for (const direction of [-1, 1]) {
+      expect(
+        screen.getByTestId(`owned-calendar-date-header-slot-${direction}`, {
+          includeHiddenElements: true,
+        }),
+      ).toHaveProp("importantForAccessibility", "no-hide-descendants")
+    }
+    expect(screen.queryByRole("button", { name: /Today/ })).toBeNull()
+  })
+
+  it("redistributes five weekday cells and restores seven without a generation change", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await view.rerender(<OwnedCalendarShell {...props} showWeekends={false} />)
+
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(5)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(15)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-column--?\d-\d{4}-\d{2}-\d{2}$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(15)
+    expect(screen.queryByLabelText("SAT 20")).toBeNull()
+    expect(screen.queryByLabelText("SUN 21")).toBeNull()
+
+    await view.rerender(<OwnedCalendarShell {...props} showWeekends />)
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(7)
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [1, 0.25, -75],
+    [0, 0.75, 75],
+  ] as const)(
+    "projects native page progress %s + %s onto the matching header direction",
+    async (position, offset, expectedTranslateX) => {
+      const view = await render(<OwnedCalendarShell {...props} />)
+      await measureHeaderLane()
+      const pager = screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      })
+
+      await fireEvent(pager, "pageScroll", {
+        nativeEvent: { position, offset },
+      })
+      await view.rerender(<OwnedCalendarShell {...props} />)
+
+      expect(headerTranslateX()).toBe(expectedTranslateX)
+      expect(useEvent).toHaveBeenCalledWith(
+        expect.any(Function),
+        ["onPageScroll"],
+        expect.any(Boolean),
+      )
+      expect(
+        screen.getAllByTestId(/^owned-calendar-date--?\d-/, {
+          includeHiddenElements: true,
+        }),
+      ).toHaveLength(
+        screen.getAllByTestId(/^owned-calendar-column--?\d-/, {
+          includeHiddenElements: true,
+        }).length,
+      )
+    },
+  )
+
+  it("passes a callable native page-scroll bridge to PagerView", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+
+    expect(typeof pager.props.onPageScroll).toBe("function")
+  })
+
+  it("keeps the measured header pinned during vertical movement", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    const header = screen.getByTestId("owned-calendar-date-header")
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+
+    await fireEvent(canvas, "scrollEndDrag", scrollEvent(480))
+
+    expect(header.parent).toBe(canvas.parent)
+    expect(headerTranslateX()).toBe(0)
+  })
+
+  it("replaces an accepted destination generation centered exactly once", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    await fireEvent(pager, "pageScroll", {
+      nativeEvent: { position: 1, offset: 1 },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
+    await measureHeaderLane()
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
+
+    expect(headerTranslateX()).toBe(0)
+    expect(onTransitionSettled).toHaveBeenCalledTimes(1)
+    expect(onTransitionCancelled).not.toHaveBeenCalled()
+  })
+
+  it("recenters a native snap-back without committing a transition", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    await fireEvent(pager, "pageScroll", {
+      nativeEvent: { position: 1, offset: 0.25 },
+    })
+    await view.rerender(<OwnedCalendarShell {...props} />)
+    expect(headerTranslateX()).toBe(-75)
+
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await view.rerender(<OwnedCalendarShell {...props} />)
+
+    expect(headerTranslateX()).toBe(0)
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+    expect(onTransitionCancelled).not.toHaveBeenCalled()
+  })
+
+  it("cancels and recenters pending motion when the app becomes inactive", async () => {
+    let appStateListener: ((state: "inactive") => void) | undefined
+    jest
+      .spyOn(AppState, "addEventListener")
+      .mockImplementationOnce((_type, listener) => {
+        appStateListener = listener
+        return { remove: jest.fn() }
+      })
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    await fireEvent(
+      screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      }),
+      "pageScroll",
+      { nativeEvent: { position: 1, offset: 0.4 } },
+    )
+
+    await act(async () => appStateListener?.("inactive"))
+    await view.rerender(<OwnedCalendarShell {...props} />)
+
+    expect(headerTranslateX()).toBe(0)
+    expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+  })
+
+  it("cancels pending motion when weekend geometry is replaced", async () => {
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    await view.rerender(<OwnedCalendarShell {...props} showWeekends={false} />)
+
+    expect(headerTranslateX()).toBe(0)
+    expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+  })
+
+  it("cancels pending motion when the page generation is replaced", async () => {
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
+
+    expect(headerTranslateX()).toBe(0)
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+  })
+
+  it("cancels pending motion when the measured lane width changes", async () => {
+    pagerMock.deferNextTransition()
+    await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "decrement" } },
+    )
+    await measureHeaderLane(280)
+
+    expect(headerTranslateX()).toBe(0)
+    expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
   })
 
   it("keeps three non-collapsible pages with development identities", async () => {
@@ -197,9 +492,11 @@ describe("OwnedCalendarShell", () => {
 
   it("ignores events queued by a replaced pager generation", async () => {
     const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
     const stalePager = screen.getByTestId("owned-calendar-pager", {
       includeHiddenElements: true,
     })
+    const staleScroll = stalePager.props.onPageScroll
     const staleSelected = stalePager.props.onPageSelected
     const staleState = stalePager.props.onPageScrollStateChanged
 
@@ -211,10 +508,19 @@ describe("OwnedCalendarShell", () => {
       />,
     )
     await act(async () => {
+      staleScroll({ nativeEvent: { position: 1, offset: 0.75 } })
       staleSelected({ nativeEvent: { position: 2 } })
       staleState({ nativeEvent: { pageScrollState: "idle" } })
     })
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
 
+    expect(headerTranslateX()).toBe(0)
     expect(onTransitionRequest).not.toHaveBeenCalled()
     expect(onTransitionSettled).not.toHaveBeenCalled()
   })

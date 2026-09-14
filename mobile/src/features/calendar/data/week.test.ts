@@ -1,7 +1,80 @@
 import { dayKey } from "./day-key"
-import { shiftWeekInZone, startOfWeekInZone } from "./week"
+import { shiftWeekInZone, startOfWeekInZone, weekColumns } from "./week"
 
 describe("display-zone week arithmetic", () => {
+  describe("weekColumns", () => {
+    it("returns Monday through Sunday with stable chronological keys", () => {
+      const columns = weekColumns(
+        new Date("2026-09-16T12:00:00.000Z"),
+        "UTC",
+        1,
+        true,
+      )
+
+      expect(columns.map(({ key }) => key)).toEqual([
+        "2026-09-14",
+        "2026-09-15",
+        "2026-09-16",
+        "2026-09-17",
+        "2026-09-18",
+        "2026-09-19",
+        "2026-09-20",
+      ])
+      expect(columns.map(({ weekday }) => weekday)).toEqual([
+        1, 2, 3, 4, 5, 6, 0,
+      ])
+      expect(columns.map(({ isWeekend }) => isWeekend)).toEqual([
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+      ])
+    })
+
+    it("filters Saturday and Sunday by identity under an alternate policy", () => {
+      const columns = weekColumns(
+        new Date("2026-09-16T12:00:00.000Z"),
+        "UTC",
+        0,
+        false,
+      )
+
+      expect(columns.map(({ key }) => key)).toEqual([
+        "2026-09-14",
+        "2026-09-15",
+        "2026-09-16",
+        "2026-09-17",
+        "2026-09-18",
+      ])
+      expect(columns.every(({ isWeekend }) => !isWeekend)).toBe(true)
+    })
+
+    it.each([
+      ["Europe/Paris", "2026-03-25", "2026-03-23", "2026-03-29"],
+      ["Europe/Paris", "2026-10-21", "2026-10-19", "2026-10-25"],
+      ["America/New_York", "2026-03-04", "2026-03-02", "2026-03-08"],
+      ["America/New_York", "2026-10-28", "2026-10-26", "2026-11-01"],
+      ["Pacific/Noumea", "2026-12-30", "2026-12-28", "2027-01-03"],
+    ] as const)(
+      "keeps consecutive civil keys across the %s boundary week containing %s",
+      (zone, anchor, first, last) => {
+        const columns = weekColumns(
+          new Date(`${anchor}T12:00:00.000Z`),
+          zone,
+          1,
+          true,
+        )
+        expect(columns).toHaveLength(7)
+        expect(columns[0]?.key).toBe(first)
+        expect(columns[6]?.key).toBe(last)
+        expect(new Set(columns.map(({ key }) => key)).size).toBe(7)
+      },
+    )
+  })
+
   it.each([
     ["2026-09-14", 1],
     ["2026-09-15", 1],

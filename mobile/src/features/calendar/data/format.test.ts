@@ -86,6 +86,22 @@ describe("formatDayHeaderParts", () => {
       formatDayHeaderParts(lateEvening, "en", "Pacific/Noumea").dayOfMonth,
     ).toBe("16")
   })
+
+  it.each([
+    ["en", "Europe/Paris", "TUE", "16"],
+    ["fr", "Europe/Paris", "MAR.", "16"],
+    ["en", "Pacific/Noumea", "TUE", "16"],
+    ["fr", "Pacific/Noumea", "MAR.", "16"],
+  ] as const)(
+    "returns compact %s parts at the %s day boundary",
+    (locale, zone, weekday, dayOfMonth) => {
+      const instant = new Date("2026-06-15T23:30:00.000Z")
+      expect(formatDayHeaderParts(instant, locale, zone)).toEqual({
+        weekday,
+        dayOfMonth,
+      })
+    },
+  )
 })
 
 describe("formatTimeRange / formatTime", () => {
