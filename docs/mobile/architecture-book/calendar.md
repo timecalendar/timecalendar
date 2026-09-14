@@ -22,8 +22,8 @@ content-inset adjustment, allowing iOS NativeTabs to account for the Liquid Glas
 Only the settled native raw offset is retained because React Native events do not expose
 UIKit's computed adjusted inset; restoration lets the native ScrollView clamp against its
 current geometry. Calendar tab reselect-to-top is disabled. The ScrollView
-exposes the committed localized week date as an adjustable accessibility label with
-translated previous/next actions.
+exposes the committed localized day or week date context as an adjustable accessibility label
+with mode-specific translated previous/next actions.
 One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native
 month title. Its fixed spacer matches the hour gutter, and its previous/current/next slots reuse the
 same ordered column records as the three clock pages. A feature-private page-scroll hook wraps the
@@ -34,10 +34,11 @@ React Native `Animated`, per-frame React state, second pager, responder, timer, 
 Only the centered committed slot is accessible; moving
 neighbours stay hidden until accepted idle settlement rebuilds the centered generation. Snap-back,
 AppState inactivity, generation replacement, and preference or lane-geometry replacement recenter
-both surfaces without committing a week. Monday is an explicit launch input; the pure display-zone
-civil-week model returns Monday through Sunday by default and removes Saturday/Sunday by weekday
-identity when the persisted Show weekends preference is off. Paging and Agenda still advance and
-read seven civil days. Today is identified in the effective display zone and has both a
+both surfaces without committing a destination. Monday is an explicit launch input; the pure
+display-zone transition model advances Day by one civil date and Week by one Monday-first civil
+week. Week presentation removes Saturday/Sunday by weekday identity when the persisted Show
+weekends preference is off, while Day still advances through them. Agenda retains its seven-day
+range. Today is identified in the effective display zone and has both a
 typography/outlined-shape cue and localized semantics. There is no additional single-date header or
 permanent paging toolbar.
 
@@ -51,31 +52,31 @@ models and closures rely on the enabled React Compiler rather than manual memoiz
 Pager selection is recorded independently from pager state and commits only when the native
 pager reports idle at an edge. The accepted generation remounts the same three direct,
 non-collapsible children around the new anchor, centered again at page 1. Development builds
-give each week a stable date label and contrasting tint so movement and the edge-to-center
-handoff remain inspectable; production omits those diagnostics. AppState inactivity cancels
-pending work and recenters on the committed week. The grid uses filled physical-hairline
+give each day or week page a stable date label and contrasting tint so movement and the
+edge-to-center handoff remain inspectable; production omits those diagnostics. AppState inactivity
+cancels pending work and recenters on the committed timeline anchor. The grid uses filled physical-hairline
 views in static scroll content, with one extra hairline of render height so the exact 24:00
 closing boundary is not clipped.
 
 `CalendarScreen` passes `useCalendars()[0].uses24hourClock` into pure gutter formatting.
 `true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
 the deterministic 24-hour convention. The controller retains only settled, clamped clock
-offsets, so accepted week revisions and Week/Agenda switches preserve the visible time
+offsets, so accepted day/week revisions and Day/Week/Agenda switches preserve the visible time
 without reporting frame-frequency values to React.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
 timed tiles, current-time presentation and positioning,
 pinch and zoom are absent until their numbered owned-renderer slices
 land. Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
-explicit full-day bounds. Paging remains bounded to one
-adjacent empty week; there is no far-date pager. The blank shell never claims
+explicit full-day bounds. Paging remains bounded to one adjacent empty day or week according to
+the committed mode; there is no far-date pager. The blank shell never claims
 that stored event data is empty: Agenda remains the route for reading and opening stored
 events during this cut.
 
 The app owns pure calendar primitives for grouping, time-grid math, overlap layout,
 day keys, and formatting. Home and Agenda use the applicable primitives without
-depending on the timeline renderer. The shell consumes a committed week anchor and
-display zone for its three page identities; retained time-grid and overlap primitives do
+depending on the timeline renderer. The shell consumes a committed timeline mode, civil anchor,
+and display zone for its three page identities; retained time-grid and overlap primitives do
 not imply that the shell renders a grid or events.
 
 Every displayed timed-event value and day boundary is computed in the effective display
@@ -206,10 +207,11 @@ separate. The binding contract and regression scenarios live in the
 
 ## Verification
 
-Unit/component tests cover display-zone week arithmetic, revision/cancellation semantics,
-three-page native pager and control behavior, native scroll settlement/restoration, atomic settled screen context, Calendar remount
-and selection, Agenda grouping/routing, filtering, sync orchestration, failure states, and
-the repository cutover contract. Native held-drag feel, fling continuity, assistive
-technology, platform chrome, and physical-device presentation remain recorded owner checks;
-native readability/alignment, gesture feel, preference restart, dense-calendar, and all-day-lane
-behavior is not claimed by host automation for T04.
+Unit/component tests cover display-zone day/week civil arithmetic, mode persistence and corrupt
+recovery, revision/cancellation semantics, one/five/seven-column geometry, three-page native pager
+and control behavior, native scroll settlement/restoration, atomic settled screen context,
+Calendar remount and selection, Agenda grouping/routing, filtering, sync orchestration, failure
+states, and the repository cutover contract. Native held-drag mode switching, visible-hour
+continuity, preference restart, weekend traversal, assistive technology, platform chrome, and
+physical-device presentation remain recorded owner checks and are not claimed by T05 host
+automation. Dense-calendar and all-day-lane behavior remain outside this empty-shell milestone.
