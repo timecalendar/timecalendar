@@ -106,7 +106,6 @@ export function useOwnedCalendarCoordinator({
   const selectedPageRef = useRef(CENTER_PAGE)
   const consumedGenerationRef = useRef<number | null>(null)
   const currentGenerationRef = useRef(generation)
-  const previousGenerationRef = useRef(generation)
   const foregroundRef = useRef(AppState.currentState === "active")
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
@@ -241,8 +240,7 @@ export function useOwnedCalendarCoordinator({
   }, [onTransitionCancelled])
 
   useLayoutEffect(() => {
-    if (previousGenerationRef.current === generation) return
-    previousGenerationRef.current = generation
+    if (currentGenerationRef.current === generation) return
     currentGenerationRef.current = generation
     consumedGenerationRef.current = null
     const revision = pendingRevisionRef.current

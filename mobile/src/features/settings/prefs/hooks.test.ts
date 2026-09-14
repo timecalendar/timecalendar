@@ -25,7 +25,6 @@ describe("settings prefs hooks", () => {
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
     remove(SETTINGS_KEYS.showWeekends)
-    remove(SETTINGS_KEYS.calendarView)
   })
 
   describe("useThemePreference", () => {

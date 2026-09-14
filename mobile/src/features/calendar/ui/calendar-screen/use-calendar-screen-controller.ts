@@ -3,7 +3,6 @@ import { useEffect, useReducer, useState } from "react"
 
 import {
   addDaysInZone,
-  type CalendarTimelineMode,
   type CalendarTransitionRequest,
   type CalendarTransitionState,
   cancelCalendarTransition,
@@ -31,12 +30,19 @@ type TransitionAction =
   | { type: "request"; request: CalendarTransitionRequest }
   | { type: "settle"; revision: number }
   | { type: "cancel"; revision: number }
-  | { type: "replace"; mode?: CalendarTimelineMode; date?: Date }
+  | { type: "replace"; date: Date }
   | { type: "view"; view: CalendarView }
 
 type CalendarControllerState = {
   view: CalendarView
   transition: CalendarTransitionState
+}
+
+function withTransition(
+  state: CalendarControllerState,
+  transition: CalendarTransitionState,
+): CalendarControllerState {
+  return transition === state.transition ? state : { ...state, transition }
 }
 
 // A `focusDate` param is a zone calendar day (`YYYY-MM-DD`); resolve it to the
@@ -58,41 +64,35 @@ export function useCalendarScreenController() {
     (state: CalendarControllerState, action: TransitionAction) => {
       switch (action.type) {
         case "request":
-          return {
-            ...state,
-            transition: requestCalendarTransition(
+          return withTransition(
+            state,
+            requestCalendarTransition(
               state.transition,
               action.request,
               displayZone,
               LAUNCH_FIRST_WEEKDAY,
             ),
-          }
+          )
         case "settle":
-          return {
-            ...state,
-            transition: settleCalendarTransition(
-              state.transition,
-              action.revision,
-            ).state,
-          }
+          return withTransition(
+            state,
+            settleCalendarTransition(state.transition, action.revision).state,
+          )
         case "cancel":
-          return {
-            ...state,
-            transition: cancelCalendarTransition(
-              state.transition,
-              action.revision,
-            ),
-          }
+          return withTransition(
+            state,
+            cancelCalendarTransition(state.transition, action.revision),
+          )
         case "replace":
-          return {
-            ...state,
-            transition: replaceCalendarTransition(
+          return withTransition(
+            state,
+            replaceCalendarTransition(
               state.transition,
-              { mode: action.mode, date: action.date },
+              { date: action.date },
               displayZone,
               LAUNCH_FIRST_WEEKDAY,
             ),
-          }
+          )
         case "view":
           return {
             view: action.view,

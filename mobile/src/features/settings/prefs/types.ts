@@ -41,27 +41,31 @@ export const SETTINGS_KEYS = {
 } as const
 
 // Build a total parser over a preference union: a raw string in the union is
-// returned as-is, anything else (unset / corrupt / legacy) falls back. Both
-// unions include "system", which is always the fallback.
+// returned as-is, while anything else (unset / corrupt / legacy) uses the
+// preference's explicit fallback.
 function makePreferenceParser<T extends string>(
   allowed: readonly T[],
+  fallback: T,
 ): (raw: string | undefined) => T {
-  return (raw) => (allowed.includes(raw as T) ? (raw as T) : ("system" as T))
+  return (raw) => (allowed.includes(raw as T) ? (raw as T) : fallback)
 }
 
-export const parseThemePreference = makePreferenceParser<ThemePreference>([
+export const parseThemePreference = makePreferenceParser<ThemePreference>(
+  ["system", "light", "dark"],
   "system",
-  "light",
-  "dark",
-])
+)
 
 export const parseLanguagePreference = makePreferenceParser<LanguagePreference>(
   ["system", "fr", "en"],
+  "system",
 )
 
 export const parseTimezonePreference = makePreferenceParser<TimezonePreference>(
   ["system", ...CURATED_TIMEZONES],
+  "system",
 )
 
-export const parseCalendarView = (raw: string | undefined): CalendarView =>
-  raw === "day" || raw === "week" || raw === "agenda" ? raw : "week"
+export const parseCalendarView = makePreferenceParser<CalendarView>(
+  ["day", "week", "agenda"],
+  "week",
+)
