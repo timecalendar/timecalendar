@@ -335,6 +335,8 @@
   "calendar.weekPagingPlaceholder": "Week paging preview",
   "calendar.weekPagingSize": "{{width}} × {{height}}",
   "calendar.weekPagingHint": "Swipe left or right",
+  "calendar.previousDayLabel": "Previous day",
+  "calendar.nextDayLabel": "Next day",
   "calendar.previousWeekLabel": "Previous week",
   "calendar.nextWeekLabel": "Next week",
   "calendar.add": "+",

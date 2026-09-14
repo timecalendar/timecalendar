@@ -2,16 +2,19 @@
 
 ## Rendering
 
-The T04 week surface is a feature-owned React Native shell under
+The T05 day/week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
 native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
 shell keeps exactly the previous, current, and next empty pages mounted in the installed
-native `PagerView`. Each page draws five or seven equal-width dated columns over the complete
+native `PagerView`. Day pages draw one dated column and advance by one display-zone civil date,
+including Saturday and Sunday when Show weekends is off. Week pages draw five or seven
+equal-width dated columns and advance by one complete Monday-first civil week over the complete
 00:00–24:00 major-hour and half-hour grid beside one horizontally pinned hour
 gutter. The gutter labels and pager share one full-day row inside a native vertical
 `ScrollView`, so UIKit and Android provide drag recognition, deceleration, bounce, and
 settlement while the screen-owned native heading stays outside the scroll content. A horizontal
-page or labelled screen-reader increment/decrement action requests one whole week; one revisioned idle-settle path commits the date, native title,
+page or labelled screen-reader increment/decrement action requests one day or week according to
+the committed mode; one revisioned idle-settle path commits the date, native title,
 Agenda range, page generation, and accessibility announcement together.
 
 The vertical ScrollView remains on the first native descendant chain and uses automatic
@@ -62,7 +65,7 @@ without reporting frame-frequency values to React.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
 timed tiles, current-time presentation and positioning,
-day/week switching, pinch, and zoom are absent until their numbered owned-renderer slices
+pinch and zoom are absent until their numbered owned-renderer slices
 land. Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. Paging remains bounded to one
 adjacent empty week; there is no far-date pager. The blank shell never claims
@@ -87,14 +90,18 @@ or `toLocaleString` is a defect. All-day events are
 the exception: they stay on the floating UTC-day-key path and never shift with the
 preference.
 
-`CalendarScreen` owns one committed week anchor and resolves its localized heading in the
-effective display zone. A valid one-shot `focusDate` and the retained Today action
-normalize to the containing launch week and replace pending motion. Swipe and accessibility-action
+`CalendarScreen` owns one committed timeline mode and civil anchor and resolves its localized
+heading in the effective display zone. Day→Week selects the containing Monday-first week;
+Week→Day selects its first date. The validated Day/Week/Agenda choice persists per installation,
+survives backend reset, and defaults to Week when missing or corrupt; selected date and clock
+offset remain fresh-process state. A valid one-shot `focusDate` and the retained Today action
+normalize to the target day or containing launch week and replace pending motion. Swipe and accessibility-action
 requests carry monotonic revisions; duplicate, cancelled, and stale completions cannot
 relabel the settled screen. Agenda reads the unchanged bounded seven-day event range and
 keeps checklist progress, refresh/retry, synced and personal event activation, and unified
-event-details navigation. The view selector offers only Week and Agenda until distinct
-day/week behavior exists.
+event-details navigation. Agenda retains the settled timeline anchor without claiming active-section
+transfer before T18. Initial current-time positioning remains T08 and complete Today/direct-date
+intent remains T17.
 
 ## Event source
 
@@ -174,12 +181,12 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers the T04 owned Week shell and Agenda, with platform-specific native chrome.
-  Week has one full-day native vertical scroll surface, a horizontally pinned gutter, native
+- Calendar offers the T05 owned Day/Week shell and Agenda, with platform-specific native chrome.
+  Day and Week share one full-day native vertical scroll surface, a horizontally pinned gutter, native
   pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
   semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
-  header aligned with every clock page. Day/week switching, current-time positioning, events,
-  selectable dates, and zoom belong to later renderer slices.
+  header aligned with every clock page. Day has one column; Week has five or seven. Current-time
+  positioning, events, selectable dates, and zoom belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.

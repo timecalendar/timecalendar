@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-14 — Calendar Day/Week mode (T05)
+
+- The owned timeline now renders Day and Week through the same three-page native pager and one
+  vertical scroll owner, with mode-aware civil stepping and stale-generation cancellation.
+- The validated Day/Week/Agenda choice persists per installation and survives backend reset;
+  date and clock offset remain fresh-process state.
+- Native partial-drag, restart, visible-hour and assistive-technology checks remain owner evidence;
+  current-time, complete direct-intent, and Agenda active-section transfer stay in later slices.
+
 ## 2026-09-14
 
 - Reshaped the T04 owned renderer around PagerView's callable Reanimated event seam: native

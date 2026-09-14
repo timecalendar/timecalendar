@@ -40,6 +40,7 @@ export function CalendarScreen() {
   const {
     view,
     setView,
+    timelineMode,
     selectedDate,
     firstWeekday,
     displayZone,
@@ -56,7 +57,7 @@ export function CalendarScreen() {
     cancelTransition,
   } = useCalendarScreenController()
   const { showWeekends } = useShowWeekendsPreference()
-  const weekHeading = formatFullDay(selectedDate, locale, displayZone)
+  const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
   const announcedRevision = useRef<number | null>(null)
 
   useEffect(() => {
@@ -67,8 +68,8 @@ export function CalendarScreen() {
       return
     }
     announcedRevision.current = acceptedTransitionRevision
-    AccessibilityInfo.announceForAccessibility(weekHeading)
-  }, [acceptedTransitionRevision, weekHeading])
+    AccessibilityInfo.announceForAccessibility(timelineHeading)
+  }, [acceptedTransitionRevision, timelineHeading])
   const events = useCalendarEvents(range)
   const eventUids = events.map((event) => event.id)
   const checklistProgress = useChecklistProgress(eventUids)
@@ -141,7 +142,8 @@ export function CalendarScreen() {
             </View>
           ) : (
             <OwnedCalendarShell
-              heading={weekHeading}
+              heading={timelineHeading}
+              mode={timelineMode}
               anchor={selectedDate}
               displayZone={displayZone}
               locale={locale}

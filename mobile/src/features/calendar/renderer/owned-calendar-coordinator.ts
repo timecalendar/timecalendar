@@ -14,13 +14,14 @@ import { useReducedMotion } from "react-native-reanimated"
 
 import {
   type AppLocale,
+  type CalendarTimelineMode,
+  type CalendarTransitionRequest,
+  type CalendarTransitionSource,
   dayKey,
   type FirstWeekday,
-  shiftWeekInZone,
-  weekColumns,
+  shiftTimelineAnchor,
+  timelineColumns,
   type WeekDirection,
-  type WeekTransitionRequest,
-  type WeekTransitionSource,
 } from "@/features/calendar/data"
 
 import { CENTER_PAGE, usePagerPageScroll } from "./pager-page-scroll"
@@ -33,6 +34,7 @@ export type CalendarPage = ReturnType<typeof calendarPages>[number]
 
 export type OwnedCalendarCoordinatorProps = {
   anchor: Date
+  mode: CalendarTimelineMode
   displayZone: string
   locale: AppLocale
   firstWeekday: FirstWeekday
@@ -42,13 +44,14 @@ export type OwnedCalendarCoordinatorProps = {
   generation: number
   revisionFloor: number
   onVerticalOffsetSettled: (offset: number) => void
-  onTransitionRequest: (request: WeekTransitionRequest) => void
+  onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
 }
 
 function calendarPages(
   anchor: Date,
+  mode: CalendarTimelineMode,
   displayZone: string,
   firstWeekday: FirstWeekday,
   showWeekends: boolean,
@@ -57,17 +60,30 @@ function calendarPages(
     const pageAnchor =
       direction === 0
         ? anchor
-        : shiftWeekInZone(anchor, direction, displayZone, firstWeekday)
+        : shiftTimelineAnchor(
+            anchor,
+            mode,
+            direction,
+            displayZone,
+            firstWeekday,
+          )
     return {
       direction,
       key: dayKey(pageAnchor, displayZone),
-      columns: weekColumns(pageAnchor, displayZone, firstWeekday, showWeekends),
+      columns: timelineColumns(
+        pageAnchor,
+        mode,
+        displayZone,
+        firstWeekday,
+        showWeekends,
+      ),
     }
   })
 }
 
 export function useOwnedCalendarCoordinator({
   anchor,
+  mode,
   displayZone,
   firstWeekday,
   showWeekends,
@@ -90,15 +106,22 @@ export function useOwnedCalendarCoordinator({
   const selectedPageRef = useRef(CENTER_PAGE)
   const consumedGenerationRef = useRef<number | null>(null)
   const currentGenerationRef = useRef(generation)
+  const previousGenerationRef = useRef(generation)
   const foregroundRef = useRef(AppState.currentState === "active")
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
   const previousShowWeekendsRef = useRef(showWeekends)
-  const progressContextKey = `${generation}:${headerLaneWidth}:${showWeekends}`
+  const progressContextKey = `${generation}:${mode}:${headerLaneWidth}:${showWeekends}`
   const { headerStripStyle, offset, onPageScroll, position } =
     usePagerPageScroll(headerLaneWidth, progressContextKey)
-  const pages = calendarPages(anchor, displayZone, firstWeekday, showWeekends)
+  const pages = calendarPages(
+    anchor,
+    mode,
+    displayZone,
+    firstWeekday,
+    showWeekends,
+  )
   const todayKey = dayKey(currentDate, displayZone)
 
   const resetHeaderProgress = () => {
@@ -134,7 +157,7 @@ export function useOwnedCalendarCoordinator({
 
   const beginTransition = (
     direction: WeekDirection,
-    source: WeekTransitionSource,
+    source: CalendarTransitionSource,
   ) => {
     if (!foregroundRef.current || pendingRevisionRef.current !== null)
       return null
@@ -183,7 +206,7 @@ export function useOwnedCalendarCoordinator({
 
   const requestAccessiblePage = (
     direction: WeekDirection,
-    source: WeekTransitionSource,
+    source: CalendarTransitionSource,
   ) => {
     const revision = beginTransition(direction, source)
     if (revision === null || pendingRevisionRef.current !== revision) return
@@ -218,6 +241,8 @@ export function useOwnedCalendarCoordinator({
   }, [onTransitionCancelled])
 
   useLayoutEffect(() => {
+    if (previousGenerationRef.current === generation) return
+    previousGenerationRef.current = generation
     currentGenerationRef.current = generation
     consumedGenerationRef.current = null
     const revision = pendingRevisionRef.current
@@ -228,6 +253,11 @@ export function useOwnedCalendarCoordinator({
     selectedPageRef.current = CENTER_PAGE
     position.set(CENTER_PAGE)
     offset.set(0)
+    pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
+    scrollRef.current?.scrollTo({
+      y: committedVerticalOffsetRef.current,
+      animated: false,
+    })
   }, [generation, offset, position])
 
   useLayoutEffect(() => {

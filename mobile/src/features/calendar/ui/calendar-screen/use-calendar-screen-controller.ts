@@ -3,29 +3,41 @@ import { useEffect, useReducer, useState } from "react"
 
 import {
   addDaysInZone,
-  cancelWeekTransition,
-  createWeekTransitionState,
+  type CalendarTimelineMode,
+  type CalendarTransitionRequest,
+  type CalendarTransitionState,
+  cancelCalendarTransition,
+  createCalendarTransitionState,
   type DateRange,
   dayKey,
   dayKeyToDate,
-  replaceWeekTransitionAnchor,
-  requestWeekTransition,
-  settleWeekTransition,
-  startOfWeekInZone,
-  type WeekTransitionRequest,
+  normalizeTimelineAnchor,
+  replaceCalendarTransition,
+  requestCalendarTransition,
+  settleCalendarTransition,
 } from "@/features/calendar/data"
-import { useDisplayZone } from "@/features/settings/prefs"
+import {
+  type CalendarView,
+  useCalendarViewPreference,
+  useDisplayZone,
+} from "@/features/settings/prefs"
 
-export type CalendarView = "week" | "agenda"
+export type { CalendarView } from "@/features/settings/prefs"
 
 const AGENDA_DAYS = 7
 const LAUNCH_FIRST_WEEKDAY = 1 as const
 
 type TransitionAction =
-  | { type: "request"; request: WeekTransitionRequest }
+  | { type: "request"; request: CalendarTransitionRequest }
   | { type: "settle"; revision: number }
   | { type: "cancel"; revision: number }
-  | { type: "replace"; date: Date }
+  | { type: "replace"; mode?: CalendarTimelineMode; date?: Date }
+  | { type: "view"; view: CalendarView }
+
+type CalendarControllerState = {
+  view: CalendarView
+  transition: CalendarTransitionState
+}
 
 // A `focusDate` param is a zone calendar day (`YYYY-MM-DD`); resolve it to the
 // display zone's midnight instant, rejecting malformed or non-existent dates
@@ -39,38 +51,76 @@ function parseFocusDate(value: string, zone: string): Date | undefined {
 export function useCalendarScreenController() {
   const { focusDate } = useLocalSearchParams<{ focusDate?: string }>()
   const displayZone = useDisplayZone()
-  const [view, setView] = useState<CalendarView>("week")
+  const { view: persistedView, setView: persistView } =
+    useCalendarViewPreference()
   const [verticalOffset, setVerticalOffset] = useState(0)
-  const [transition, dispatchTransition] = useReducer(
-    (
-      state: ReturnType<typeof createWeekTransitionState>,
-      action: TransitionAction,
-    ) => {
+  const [state, dispatchTransition] = useReducer(
+    (state: CalendarControllerState, action: TransitionAction) => {
       switch (action.type) {
         case "request":
-          return requestWeekTransition(
-            state,
-            action.request,
-            displayZone,
-            LAUNCH_FIRST_WEEKDAY,
-          )
+          return {
+            ...state,
+            transition: requestCalendarTransition(
+              state.transition,
+              action.request,
+              displayZone,
+              LAUNCH_FIRST_WEEKDAY,
+            ),
+          }
         case "settle":
-          return settleWeekTransition(state, action.revision).state
+          return {
+            ...state,
+            transition: settleCalendarTransition(
+              state.transition,
+              action.revision,
+            ).state,
+          }
         case "cancel":
-          return cancelWeekTransition(state, action.revision)
+          return {
+            ...state,
+            transition: cancelCalendarTransition(
+              state.transition,
+              action.revision,
+            ),
+          }
         case "replace":
-          return replaceWeekTransitionAnchor(
-            state,
-            action.date,
-            displayZone,
-            LAUNCH_FIRST_WEEKDAY,
-          )
+          return {
+            ...state,
+            transition: replaceCalendarTransition(
+              state.transition,
+              { mode: action.mode, date: action.date },
+              displayZone,
+              LAUNCH_FIRST_WEEKDAY,
+            ),
+          }
+        case "view":
+          return {
+            view: action.view,
+            transition:
+              action.view === "agenda"
+                ? state.transition
+                : replaceCalendarTransition(
+                    state.transition,
+                    { mode: action.view },
+                    displayZone,
+                    LAUNCH_FIRST_WEEKDAY,
+                  ),
+          }
       }
     },
     undefined,
     () =>
-      createWeekTransitionState(new Date(), displayZone, LAUNCH_FIRST_WEEKDAY),
+      ({
+        view: persistedView,
+        transition: createCalendarTransitionState(
+          new Date(),
+          persistedView === "day" ? "day" : "week",
+          displayZone,
+          LAUNCH_FIRST_WEEKDAY,
+        ),
+      }) satisfies CalendarControllerState,
   )
+  const { transition, view } = state
   const selectedDate = transition.anchor
 
   const agendaRange: DateRange = {
@@ -84,7 +134,12 @@ export function useCalendarScreenController() {
   const canGoToToday =
     dayKey(selectedDate, displayZone) !==
     dayKey(
-      startOfWeekInZone(new Date(), displayZone, LAUNCH_FIRST_WEEKDAY),
+      normalizeTimelineAnchor(
+        new Date(),
+        transition.mode,
+        displayZone,
+        LAUNCH_FIRST_WEEKDAY,
+      ),
       displayZone,
     )
 
@@ -97,7 +152,11 @@ export function useCalendarScreenController() {
     router.setParams({ focusDate: undefined })
   }, [focusDate, displayZone])
 
-  const requestTransition = (request: WeekTransitionRequest) => {
+  const setView = (nextView: CalendarView) => {
+    persistView(nextView)
+    dispatchTransition({ type: "view", view: nextView })
+  }
+  const requestTransition = (request: CalendarTransitionRequest) => {
     dispatchTransition({ type: "request", request })
   }
   const settleTransition = (revision: number) => {
@@ -113,6 +172,7 @@ export function useCalendarScreenController() {
   return {
     view,
     setView,
+    timelineMode: transition.mode,
     selectedDate,
     firstWeekday: LAUNCH_FIRST_WEEKDAY,
     displayZone,
