@@ -81,6 +81,12 @@ describe("calendar timeline policy", () => {
       "2026-09-19",
     )
   })
+
+  it("applies weekend visibility only to week columns", () => {
+    const anchor = new Date("2026-09-16T12:00:00.000Z")
+    expect(timelineColumns(anchor, "week", zone, monday, true)).toHaveLength(7)
+    expect(timelineColumns(anchor, "week", zone, monday, false)).toHaveLength(5)
+  })
 })
 
 describe("calendar transition state", () => {
