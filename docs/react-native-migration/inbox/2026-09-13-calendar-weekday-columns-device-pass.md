@@ -4,15 +4,15 @@
 
 ## Testable build target
 
-Implementation revision: `1a6960b0adbd64290400cf686fe4c7af48c19b36`.
+Implementation revision: `d9be51704873b927595a58ec03bff6b5e5146a0d`.
 
-Automated checks from `mobile/` passed at that implementation revision: 177 suites and 1,685 tests
-with coverage, 12 focused suites and 195 tests, 26 pure week-model tests at 100% statements and
-branches, TypeScript, lint, scoped formatting, React Doctor, repository contracts, and strict
-OpenSpec validation. Host automation verifies civil-date identity, five/seven structure,
-persistence semantics, seven-day Agenda/page ranges, native-owner inventory, and retained
-transition behavior. It does not claim native readability, alignment, gesture feel, restart
-behavior, contrast, or screen-reader results.
+Automated checks from `mobile/` passed at that implementation revision: 177 suites and 1,694 tests
+with coverage, TypeScript, zero-warning lint, focused renderer and repository-contract coverage,
+scoped formatting, React Doctor, repository contracts, and strict OpenSpec validation. Host
+automation verifies civil-date identity, five/seven structure, persistence semantics, seven-day
+Agenda/page ranges, native-owner inventory, synchronized header/pager progress, cancellation, and
+retained transition behavior. It does not claim native readability, alignment, gesture feel,
+restart behavior, contrast, or screen-reader results.
 
 ## Build and fabricated fixture
 
