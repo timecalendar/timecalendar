@@ -132,6 +132,7 @@ describe("storage seam", () => {
 
     it("preserves only global and reset-control values", () => {
       setString(STORAGE_KEYS.theme, "dark")
+      setString(STORAGE_KEYS.calendarView, "day")
       setBoolean(STORAGE_KEYS.showWeekends, false)
       setString(STORAGE_KEYS.selectedBackendEnvironment, "preprod")
       setString(STORAGE_KEYS.backendResetJournal, "journal")
@@ -142,6 +143,7 @@ describe("storage seam", () => {
       clearBackendBoundStorage()
 
       expect(getString(STORAGE_KEYS.theme)).toBe("dark")
+      expect(getString(STORAGE_KEYS.calendarView)).toBe("day")
       expect(getBoolean(STORAGE_KEYS.showWeekends)).toBe(false)
       expect(getString(STORAGE_KEYS.selectedBackendEnvironment)).toBe("preprod")
       expect(getString(STORAGE_KEYS.backendResetJournal)).toBe("journal")

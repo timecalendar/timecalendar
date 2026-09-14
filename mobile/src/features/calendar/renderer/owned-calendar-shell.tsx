@@ -3,8 +3,9 @@ import { StyleSheet, View } from "react-native"
 
 import type {
   AppLocale,
+  CalendarTimelineMode,
+  CalendarTransitionRequest,
   FirstWeekday,
-  WeekTransitionRequest,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
@@ -14,6 +15,7 @@ import { OwnedCalendarDateHeader } from "./owned-calendar-header"
 
 type OwnedCalendarShellProps = {
   heading: string
+  mode: CalendarTimelineMode
   anchor: Date
   displayZone: string
   locale: AppLocale
@@ -25,7 +27,7 @@ type OwnedCalendarShellProps = {
   generation: number
   revisionFloor: number
   onVerticalOffsetSettled: (offset: number) => void
-  onTransitionRequest: (request: WeekTransitionRequest) => void
+  onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
 }
@@ -52,6 +54,7 @@ export function OwnedCalendarShell(props: OwnedCalendarShellProps) {
       />
       <OwnedCalendarCanvas
         heading={props.heading}
+        mode={props.mode}
         locale={props.locale}
         uses24HourClock={props.uses24HourClock}
         initialVerticalOffset={props.initialVerticalOffset}

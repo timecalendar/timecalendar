@@ -22,6 +22,7 @@ describe("OwnedCalendarShell", () => {
   const onVerticalOffsetSettled = jest.fn()
   const props = {
     heading: "Monday, June 15th, 2026",
+    mode: "week" as const,
     anchor: new Date("2026-06-15T00:00:00.000Z"),
     displayZone: "UTC",
     locale: "en" as const,
@@ -138,6 +139,48 @@ describe("OwnedCalendarShell", () => {
       ).toHaveProp("importantForAccessibility", "no-hide-descendants")
     }
     expect(screen.queryByRole("button", { name: /Today/ })).toBeNull()
+  })
+
+  it("renders exactly three one-column day pages, including a hidden-weekend day", async () => {
+    await render(
+      <OwnedCalendarShell
+        {...props}
+        mode="day"
+        anchor={new Date("2026-06-20T00:00:00.000Z")}
+        showWeekends={false}
+      />,
+    )
+
+    expect(
+      screen.getAllByTestId(/^owned-calendar-page--?\d$/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(3)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-date--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(3)
+    expect(
+      screen.getAllByTestId(/^owned-calendar-column--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(3)
+    expect(screen.getByLabelText("SAT 20")).toBeOnTheScreen()
+  })
+
+  it.each([
+    ["day", "Previous day", "Next day"],
+    ["week", "Previous week", "Next week"],
+  ] as const)("labels %s paging by its unit", async (mode, previous, next) => {
+    await render(<OwnedCalendarShell {...props} mode={mode} />)
+    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+      "accessibilityActions",
+      [
+        { name: "decrement", label: previous },
+        { name: "increment", label: next },
+      ],
+    )
   })
 
   it("redistributes five weekday cells and restores seven without a generation change", async () => {

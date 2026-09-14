@@ -129,7 +129,8 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer.match(/<AnimatedPagerView\s+ref=/g)).toHaveLength(1)
     expect(progress).toContain("export const CENTER_PAGE = 1")
     expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
-    expect(renderer).toContain("weekColumns")
+    expect(renderer).toContain("timelineColumns")
+    expect(renderer).toContain("shiftTimelineAnchor")
     expect(renderer).toContain('testID="owned-calendar-date-header"')
     expect(renderer).toContain('testID="owned-calendar-date-header-viewport"')
     expect(renderer).toContain('testID="owned-calendar-date-header-strip"')
@@ -146,7 +147,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer).not.toMatch(/\buseMemo\b|\buseCallback\b/)
   })
 
-  it("keeps weekend persistence in the typed settings and storage seams", () => {
+  it("keeps view and weekend persistence in the typed settings and storage seams", () => {
     const week = readFileSync(
       join(root, "src/features/calendar/data/week.ts"),
       "utf8",
@@ -160,6 +161,14 @@ describe("owned Calendar paging repository contract", () => {
       "utf8",
     )
     const storage = readFileSync(join(root, "src/storage/index.ts"), "utf8")
+    const settingsTypes = readFileSync(
+      join(root, "src/features/settings/prefs/types.ts"),
+      "utf8",
+    )
+    const transition = readFileSync(
+      join(root, "src/features/calendar/data/week-transition.ts"),
+      "utf8",
+    )
 
     expect(week).toContain("startOfWeekInZone(anchor, zone, firstWeekday)")
     expect(week).toMatch(/weekday === 0 \|\| weekday === 6/)
@@ -171,6 +180,18 @@ describe("owned Calendar paging repository contract", () => {
     expect(storage).toContain(
       '[STORAGE_KEYS.showWeekends]: "environment-independent"',
     )
+    expect(settingsTypes).toContain(
+      'export type CalendarView = "day" | "week" | "agenda"',
+    )
+    expect(settingsStore).toContain("getCalendarView")
+    expect(settingsStore).toContain("setCalendarView")
+    expect(settingsHooks).toContain("useCalendarViewPreference")
+    expect(storage).toContain(
+      '[STORAGE_KEYS.calendarView]: "environment-independent"',
+    )
+    expect(transition).toContain('mode === "day"')
+    expect(transition).toContain("addDaysInZone")
+    expect(transition).not.toMatch(/86_?400_?000|24\s*\*\s*60\s*\*\s*60/)
 
     for (const source of productionCalendarFiles().map((file) =>
       readFileSync(file, "utf8"),

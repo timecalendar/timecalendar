@@ -4,7 +4,9 @@ import { detectLocale, type SupportedLocale } from "@/i18n/detect-locale"
 import { getBoolean, getString, setBoolean, setString } from "@/storage"
 
 import {
+  type CalendarView,
   type LanguagePreference,
+  parseCalendarView,
   parseLanguagePreference,
   parseThemePreference,
   parseTimezonePreference,
@@ -48,6 +50,14 @@ export function getShowWeekends(): boolean {
 
 export function setShowWeekends(showWeekends: boolean): void {
   setBoolean(SETTINGS_KEYS.showWeekends, showWeekends)
+}
+
+export function getCalendarView(): CalendarView {
+  return parseCalendarView(getString(SETTINGS_KEYS.calendarView))
+}
+
+export function setCalendarView(view: CalendarView): void {
+  setString(SETTINGS_KEYS.calendarView, view)
 }
 
 // Resolve a timezone preference to the effective display zone: an explicit

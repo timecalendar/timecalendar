@@ -62,7 +62,11 @@ tie-break. The cache does not parse the ids or reassemble fragments (ADR
 MMKV holds settings, notification preferences, query persistence, school/group identity,
 hidden-event identifiers, and Changelog acknowledgement. Keys are flat and namespaced.
 Reads are total and return a safe default for missing, malformed, or legacy values.
-The Settings-owned `settings.showWeekends` boolean is environment-independent: missing or
+The Settings-owned `settings.calendarView` closed `day | week | agenda` string is
+environment-independent: missing, malformed, legacy, or unsupported values resolve to `week`,
+and backend reset preserves the per-installation choice. Only the mode persists; Calendar derives
+its civil anchor and clock offset from fresh-open policy. The `settings.showWeekends` boolean is
+also environment-independent: missing or
 malformed reads resolve to `true`, explicit false/true values remain reactive across app starts,
 and backend reset preserves it.
 
@@ -107,7 +111,7 @@ an installed database is a data incident, and the mocked seam cannot catch one.
 ## Backend environment reset
 
 - `@/storage` centrally enumerates and classifies every known MMKV key. Theme, language,
-  display-timezone, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
+  display-timezone, Calendar view, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
   reset journal are controls; school/group selection, hidden events, notification values,
   remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
   backend-bound and are removed. The export-guide LKG registry is also backend-bound and is removed

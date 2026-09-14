@@ -7,13 +7,16 @@ import { useParsedStoredString, useStoredBoolean } from "@/storage"
 import {
   resolveLanguage,
   resolveTimezone,
+  setCalendarView,
   setLanguagePreference,
   setShowWeekends,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
 import {
+  type CalendarView,
   type LanguagePreference,
+  parseCalendarView,
   parseLanguagePreference,
   parseThemePreference,
   parseTimezonePreference,
@@ -94,5 +97,15 @@ export function useShowWeekendsPreference(): {
   return {
     showWeekends: useStoredBoolean(SETTINGS_KEYS.showWeekends) ?? true,
     setShowWeekends,
+  }
+}
+
+export function useCalendarViewPreference(): {
+  view: CalendarView
+  setView: (view: CalendarView) => void
+} {
+  return {
+    view: useParsedStoredString(SETTINGS_KEYS.calendarView, parseCalendarView),
+    setView: setCalendarView,
   }
 }
