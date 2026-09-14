@@ -50,6 +50,7 @@ import { useTheme } from "@/theme"
 
 const PAGE_DIRECTIONS = [-1, 0, 1] as const
 const CENTER_PAGE = 1
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 const CONTENT_HEIGHT = gridContentHeight(
   FULL_DAY_START_MINUTE,
   FULL_DAY_END_MINUTE,
@@ -420,7 +421,7 @@ export function OwnedCalendarShell({
               </ThemedText>
             ))}
           </View>
-          <PagerView
+          <AnimatedPagerView
             ref={pagerRef}
             key={generation}
             testID="owned-calendar-pager"
@@ -471,7 +472,7 @@ export function OwnedCalendarShell({
                 )}
               </View>
             ))}
-          </PagerView>
+          </AnimatedPagerView>
         </View>
       </ScrollView>
     </View>

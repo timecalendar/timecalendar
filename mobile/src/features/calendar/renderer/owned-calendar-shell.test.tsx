@@ -85,10 +85,16 @@ describe("OwnedCalendarShell", () => {
         },
       ],
     ) => {
-      return (event: { nativeEvent: { position: number; offset: number } }) => {
-        mapping[0].nativeEvent.position.setValue(event.nativeEvent.position)
-        mapping[0].nativeEvent.offset.setValue(event.nativeEvent.offset)
-      }
+      const AnimatedEvent = (
+        Animated as unknown as {
+          Event: new (
+            eventMapping: typeof mapping,
+            config: { useNativeDriver: boolean },
+          ) => ReturnType<typeof Animated.event>
+        }
+      ).Event
+
+      return new AnimatedEvent(mapping, { useNativeDriver: false })
     }) as typeof Animated.event)
 
   beforeEach(() => {
@@ -221,6 +227,19 @@ describe("OwnedCalendarShell", () => {
       nativeEvent.mockRestore()
     },
   )
+
+  it("passes a callable native page-scroll bridge to PagerView", async () => {
+    const nativeEvent = mockNativePageScrollEvents()
+    await render(<OwnedCalendarShell {...props} />)
+
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+
+    expect(typeof nativeEvent.mock.results[0]?.value).toBe("object")
+    expect(typeof pager.props.onPageScroll).toBe("function")
+    nativeEvent.mockRestore()
+  })
 
   it("keeps the measured header pinned during vertical movement", async () => {
     await render(<OwnedCalendarShell {...props} />)

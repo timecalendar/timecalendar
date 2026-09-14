@@ -32,6 +32,7 @@ jest.mock("react-native-pager-view", () => {
     },
     ref: unknown,
   ) {
+    const nativeRef = React.useRef(null)
     const emitPage = (position: number, animated: boolean) => {
       const observer = animated ? setPage : setPageWithoutAnimation
       observer(position)
@@ -49,14 +50,18 @@ jest.mock("react-native-pager-view", () => {
         nativeEvent: { pageScrollState: "idle" },
       })
     }
-    React.useImperativeHandle(ref, () => ({
-      setPage: (position: number) => emitPage(position, true),
-      setPageWithoutAnimation: (position: number) => emitPage(position, false),
-    }))
+    React.useImperativeHandle(ref, () =>
+      Object.assign(nativeRef.current, {
+        setPage: (position: number) => emitPage(position, true),
+        setPageWithoutAnimation: (position: number) =>
+          emitPage(position, false),
+      }),
+    )
 
     return React.createElement(
       View,
       {
+        ref: nativeRef,
         testID: props.testID,
         onPageScroll: props.onPageScroll,
         onPageSelected: props.onPageSelected,
