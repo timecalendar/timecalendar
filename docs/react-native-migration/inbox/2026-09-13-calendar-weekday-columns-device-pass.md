@@ -4,9 +4,9 @@
 
 ## Testable build target
 
-Implementation revision: `d9be51704873b927595a58ec03bff6b5e5146a0d`.
+Implementation revision: `ce1abd0913b94faacc6f6f03bd052146909c7cb2`.
 
-Automated checks from `mobile/` passed at that implementation revision: 177 suites and 1,694 tests
+Automated checks from `mobile/` passed at that implementation revision: 177 suites and 1,695 tests
 with coverage, TypeScript, zero-warning lint, focused renderer and repository-contract coverage,
 scoped formatting, React Doctor, repository contracts, and strict OpenSpec validation. Host
 automation verifies civil-date identity, five/seven structure, persistence semantics, seven-day
@@ -56,6 +56,6 @@ substitutes for device observations.
 - Checklist results / observations: pending owner entry.
 - Focused retest build and revision after any finding: pending if required.
 - Acceptance source and date: pending explicit owner acceptance.
-- Human review and merged revision: pending.
+- Reviewer verdict and merged revision: pending after owner acceptance.
 
-Do not begin the next renderer slice until this checklist has explicit owner acceptance and the pull request has been human-merged.
+Do not begin the next renderer slice until this checklist has explicit owner acceptance and the pull request is merged.
