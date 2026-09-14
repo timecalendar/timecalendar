@@ -20,8 +20,10 @@ shows a real problem; changing an approved decision still requires a recorded ap
 
 ## Current context and constraints
 
-Calendar currently composes an imperative calendar-kit facade with independent anchor/visible
-React state. Local hooks merge full-table synced and personal reads, then filter by range.
+Calendar currently composes the owned full-day ScrollView, three-page native PagerView and
+synchronized dated header. Its week-only revisioned controller retains settled native pixel
+offsets; mode persistence, zoom and the complete presentation snapshot remain later work.
+Local hooks merge full-table synced and personal reads, then filter by range.
 The synced replacement is transactional, but multiple live-query completions do not establish a
 single coherent presentation snapshot. Agenda groups only by start day. The native configuration
 is portrait-only with full-screen iPad. These are concrete gaps against P02, P03, P06 and P07.
@@ -60,8 +62,10 @@ migrated coherently, not hidden behind a calendar-kit compatibility API.
 
 ### Presentation and gesture runtime — D03, D04
 
-Use owned React Native View/Text/Pressable presentation, with the installed Gesture Handler and
-Reanimated/Worklets stack for gesture recognition and transient UI-thread motion. Static semantics
+Use owned React Native View/Text/Pressable presentation. Native ScrollView/PagerView own
+vertical/horizontal motion; Reanimated/Worklets project native pager progress into the dated
+header. T06 integrates pinch with the installed Gesture Handler stack and these native owners.
+Static semantics
 and event planning execute in pure TypeScript; per-frame input does not trigger database reads,
 event sorting, formatted labels, or React state writes. No additional native renderer is proposed.
 
@@ -72,9 +76,14 @@ the focal clock coordinate is (y + focalY) / s; updates solve the new y from tha
 then clamp at day boundaries. Menu zoom uses the viewport center. Boundary clamping, changing
 finger count and interruptions need explicit native proof, including reduced motion.
 
-If owned gesture motion fails its ticket acceptance, compare native ScrollView/pager-based
-motion using the installed pager dependency. Native paging may simplify physics but does not automatically prove one-page
-flings, recycling, pinch coexistence or atomic settle. Skia/custom native views remain escalation
+The native ScrollView/pager implementation is the accepted E01 baseline. Preserve one vertical
+owner, three pager pages, continuous dated-header alignment and automatic native insets.
+T06 first proves two-finger precedence over active native scrolling/paging on touch devices.
+Its clock coordinate uses the actual timed viewport and native inset convention, not an assumed
+zero-inset raw offset. Scale becomes dynamic across all grid lines, labels and content heights.
+T07 uses measured viewport width/height, cancels stale geometry/motion and preserves clock
+position with native-safe clamps. Native paging alone does not prove pinch coexistence.
+Skia/custom native views remain escalation
 options when evidence identifies a specific unsatisfied requirement, not assumed improvements.
 
 ### Navigation and atomic presentation — D02
@@ -189,11 +198,11 @@ Engineering owns release traces and regression diagnosis; product owns behavior/
 
 ## Rollout and rollback — D07
 
-The first small slice installs the owned shell on the real Calendar screen and removes
-calendar-kit, its facade/adapter/patch and exclusive mocks/lint allowances. It keeps the app
-buildable and preserves existing agenda/data/details flows. No vendor/owned switch or second
-renderer is introduced. Day/week capabilities are intentionally incomplete while later accepted
-slices add paging, vertical scrolling, columns, zoom and events. This is approved pre-launch
+E01 supplies the owned shell on the real Calendar screen; calendar-kit, its adapter/patch and
+exclusive mocks/lint allowances are absent. The app remains buildable with existing
+agenda/data/details flows. One native scroll/pager renderer supplies the empty full-day week
+and dated columns. Day mode, zoom, current-time positioning and events remain later slices.
+This is approved pre-launch
 sequencing, not a launch-quality exception or a license to leave defective finished capabilities.
 
 Each ticket normally produces one reviewable change. Stop for the owner's checklist and feedback,

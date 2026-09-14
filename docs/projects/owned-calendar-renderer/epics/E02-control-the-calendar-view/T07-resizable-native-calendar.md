@@ -25,6 +25,12 @@ The same calendar works in portrait, landscape and tablet split/resized windows 
 
 - Smoke-test shared navigation/chrome outside Calendar because native window policy affects the shell.
 
+- Extend existing header-width cancellation to complete timed-viewport width/height changes.
+  Snapshot date, mode, scale and clock anchor coherently; invalidate stale pager/header/pinch
+  completions and clamp against the resized native viewport without resetting clock position.
+- Preserve one vertical native owner and automatic insets, including Liquid Glass tab-bar reachability.
+  Recheck header/grid alignment at five, seven and one columns, including height-only window changes.
+
 ## Non-goals
 
 Hand-edited generated projects, OTA into an incompatible binary, or redesigning other screens.
@@ -65,7 +71,16 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - [ ] Open other tabs and return: navigation/chrome remains usable in the changed orientation.
 
+- [ ] Resize height without changing width and scroll to 24:00: the last boundary remains reachable above native chrome.
+
 - [ ] Repeat the previously accepted interaction(s) touched by this slice; record regressions before acceptance.
+
+## Baseline and regression checks
+
+Use [E01 completion and implementation baseline](../../research/results/E01/completion.md).
+Preserve native pager/header synchronization, three-page retention, one vertical scroll owner,
+weekend preferences and Agenda/details access. Run affected screen/renderer/repository-contract
+suites; update milestone-specific assertions only for this ticket's new behavior.
 
 ## Likely work sites and reading
 
@@ -81,8 +96,8 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - [Approved design](../../design.md), relevant D records in [the decision index](../../decisions/README.md), and product sections cited by this scope.
 
-Existing work sites were checked against local `main` and `origin/main` at
-`ca09257e1daa5d4794a80bbcf776c17be7ccaf90` on 2026-09-12. New owned modules/tests belong under
+Existing work sites were checked against local `main` and fetched `origin/main` at
+`d293988e9dbf64a592388c8796e816fe65f49e46` on 2026-09-14. New owned modules/tests belong under
 the listed existing directories; follow prerequisite outputs rather than reviving deleted vendor
 files. Revalidate paths against current code before implementation.
 

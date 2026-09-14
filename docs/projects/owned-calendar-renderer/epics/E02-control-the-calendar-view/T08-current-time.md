@@ -23,6 +23,16 @@ A fresh timeline opens around the current clock time and shows a current-time in
 
 - Preserve accepted mode/zoom rules; do not restore old process scroll offsets or choose the initial position from events.
 
+- Reuse T04's outlined/typographic Today date cue. Drive it and the time indicator from one injected,
+  foreground/focus-aware clock so both roll over together without resetting an already mounted view.
+- Pass explicit 00:00–24:00 bounds and the accepted dynamic scale to `nowIndicatorPosition`;
+  shared helper defaults remain 07:00–21:00 for other consumers. Make non-today-page and hidden
+  weekend-column visibility explicit in the slice tests and owner-reviewed presentation.
+- Position against the measured timed viewport and native inset convention. Background/tab changes
+  stop unnecessary recurring work; return refreshes clock meaning, not the user's scroll position.
+- Evolve the repository contract's blanket renderer timer prohibition into scoped lifecycle/cleanup
+  assertions for the displayed-precision timer. Preserve the ban on continuous idle animation.
+
 ## Non-goals
 
 Today button/direct date intent implementation, event-aware auto-scroll and continuous idle animation.
@@ -63,7 +73,16 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - [ ] Check light/dark appearance: the indicator and Today cue do not rely on color alone.
 
+- [ ] Use a weekend clock with weekends hidden and cross midnight: Today meaning and indicator visibility agree without an unsolicited scroll reset.
+
 - [ ] Repeat the previously accepted interaction(s) touched by this slice; record regressions before acceptance.
+
+## Baseline and regression checks
+
+Use [E01 completion and implementation baseline](../../research/results/E01/completion.md).
+Preserve native pager/header synchronization, three-page retention, one vertical scroll owner,
+weekend preferences and Agenda/details access. Run affected screen/renderer/repository-contract
+suites; update milestone-specific assertions only for this ticket's new behavior.
 
 ## Likely work sites and reading
 
@@ -75,8 +94,8 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - [Approved design](../../design.md), relevant D records in [the decision index](../../decisions/README.md), and product sections cited by this scope.
 
-Existing work sites were checked against local `main` and `origin/main` at
-`ca09257e1daa5d4794a80bbcf776c17be7ccaf90` on 2026-09-12. New owned modules/tests belong under
+Existing work sites were checked against local `main` and fetched `origin/main` at
+`d293988e9dbf64a592388c8796e816fe65f49e46` on 2026-09-14. New owned modules/tests belong under
 the listed existing directories; follow prerequisite outputs rather than reviving deleted vendor
 files. Revalidate paths against current code before implementation.
 

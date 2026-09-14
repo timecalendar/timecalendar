@@ -25,6 +25,10 @@ The completed calendar passes recorded human accessibility, gesture and supporte
 
 - Close each deferred intermediate QA item and record product-owner plus engineering/accessibility acceptance; do not create an extra implementation dump here.
 
+- Reconcile unrecorded E01 device/build/checklist observations listed in
+  [E01 completion evidence](../../research/results/E01/completion.md). Epic completion and host
+  tests do not count as a physical-device matrix pass; obtain evidence for every required case.
+
 ## Non-goals
 
 Assuming an unrun matrix passed, replacing human tests with agent inspection or blanket acceptance of lower-severity defects.

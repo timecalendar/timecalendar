@@ -29,12 +29,17 @@ these integration paths. No owned-renderer release measurements exist in this re
 
 ## Decision
 
-Use owned RN views and the existing Gesture Handler/Reanimated motion stack (B-011). Keep
-semantic event planning off the per-frame path. Validate horizontal motion, vertical arbitration
-and pinch in their individual implementation tickets. A passing implementation does not need an
-extra competing prototype merely to justify this approval. If evidence shows an unsatisfied
-requirement, compare native pager/scroll motion; Skia/custom native requires a documented decision
-change and the D08 dependency dossier.
+Use owned RN views with native ScrollView/PagerView motion and Reanimated header projection
+(B-011), the completed E01 implementation. T03 selected this documented alternative after owner
+QA exposed custom-motion and inset defects. The existing Gesture Handler stack remains the
+pinch integration path for T06; two-finger precedence must be demonstrated against both native
+scroll owners before adding the rest of zoom. Keep semantic event planning off the per-frame
+path. A passing slice needs no extra competing prototype. Skia/custom native requires a
+documented decision change and the D08 dependency dossier.
+
+[E01 completion and baseline](../research/results/E01/completion.md) records the implementation
+and evidence boundary. The owner authorized this documentation reconciliation on 2026-09-14;
+product behavior, native acceptance and final performance gates remain binding.
 
 ## Tradeoffs and consequences
 

@@ -9,8 +9,9 @@ status: approved
 
 The product owner approved all architecture decisions and the sequential small-slice delivery
 policy on 2026-09-12. This roadmap implements that approved policy. Epic grouping and ticket
-details are the planning decomposition; every ticket is `planned`, not implemented or owner-QA
-accepted. The owner’s next implementation acceptance applies to one tested slice at a time.
+details are the delivery decomposition. E01/T01–T04 are completed and merged; T05–T29 remain
+planned. See [E01 completion evidence](./research/results/E01/completion.md). The next
+implementation acceptance applies to T05, one tested slice at a time.
 
 ## Sequencing principles
 
@@ -111,7 +112,7 @@ revise ticket size/order below the approved product, architecture and epic outco
 changes. Preserve stable IDs, allocate unused IDs for added slices, update every reference and
 rerun readiness. Do not turn a failing slice into an accepted one by pushing its defect downstream.
 
-Current source was inspected at local `main` and local `origin/main`, both
-`ca09257e1daa5d4794a80bbcf776c17be7ccaf90`, on 2026-09-12. No remote fetch was performed. Revalidate
+E02 source was inspected at local `main` and fetched `origin/main`, both
+`d293988e9dbf64a592388c8796e816fe65f49e46`, on 2026-09-14. Revalidate
 against the actual default-branch revision before execution; never revive deleted adapter paths
 simply because an earlier inventory listed them.

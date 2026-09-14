@@ -39,6 +39,15 @@ and stop condition. If a slice grows, split it and update the canonical order be
 Use [delivery.md](../../delivery.md) for owner QA, merge and evidence gates; changing this epic’s
 observable outcome requires explicit owner review.
 
+## Implementation baseline
+
+E01/T01–T04 are complete at `d293988e`; see [completion evidence](../../research/results/E01/completion.md).
+Use the native ScrollView/PagerView and synchronized header already on main. T05 generalizes the
+week-only controller; T06 proves pinch coexistence before expanding zoom; T07 retains native
+insets during complete viewport resizing; T08 shares a lifecycle-aware clock with the Today cue.
+Product outcomes and T05 → T06 → T07 → T08 order are unchanged. Start only T05; each subsequent
+slice waits for explicit owner QA/acceptance and the previous PR merge.
+
 ## Tickets
 
 - [T05 — Switch between day and week without losing position](./T05-day-week-mode.md) — high confidence.

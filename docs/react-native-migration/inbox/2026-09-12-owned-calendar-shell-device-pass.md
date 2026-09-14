@@ -1,5 +1,13 @@
 # (HUMAN: owner device verification) T01 owned Calendar shell
 
+## Current delivery status
+
+E01 is completed and merged, confirmed by the owner on 2026-09-14 and by Paperclip
+TIM-544/TIM-545–TIM-548. See [completion evidence](../../projects/owned-calendar-renderer/research/results/E01/completion.md).
+The worksheet below preserves the recorded test target and observations; pending fields remain
+unrecorded evidence, not a claim that the completed epic is blocked or that every device check
+passed. T28 reconciles required matrix evidence.
+
 **For:** the human owner (physical-device rendering and assistive-technology verification).
 
 ## What I need

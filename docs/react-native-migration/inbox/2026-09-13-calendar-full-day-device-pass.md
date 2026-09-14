@@ -1,5 +1,13 @@
 # (HUMAN: owner device verification) T03 full-day Calendar movement
 
+## Current delivery status
+
+E01 is completed and merged, confirmed by the owner on 2026-09-14 and by Paperclip
+TIM-544/TIM-545–TIM-548. See [completion evidence](../../projects/owned-calendar-renderer/research/results/E01/completion.md).
+The worksheet below preserves the recorded test target and observations; pending fields remain
+unrecorded evidence, not a claim that the completed epic is blocked or that every device check
+passed. T28 reconciles required matrix evidence.
+
 **For:** the human owner performing physical-device gesture, clock-preference, and assistive-technology checks.
 
 ## Testable build target
@@ -64,4 +72,4 @@ results are not native-feel, device-clock, frame-continuity, or screen-reader cl
 - Acceptance source and date: pending explicit owner acceptance.
 - Human review and merged revision: pending.
 
-Do not begin the next renderer slice until this checklist has explicit owner acceptance and the pull request has been human-merged.
+The next slice follows the completion record above and the canonical delivery protocol.

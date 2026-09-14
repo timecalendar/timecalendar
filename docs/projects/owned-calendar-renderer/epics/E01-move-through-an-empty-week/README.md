@@ -1,7 +1,7 @@
 ---
 kind: epic
 id: E01
-status: planned
+status: completed
 traces-to: [P01, P02, P04, P05, P07, P08, D01, D02, D03, D04, D05, D06, D07]
 depends-on: []
 ---
@@ -48,3 +48,8 @@ observable outcome requires explicit owner review.
 - [T03 — Scroll all 24 hours beside the hour gutter](./T03-vertical-hours-scroll.md) — medium confidence.
 
 - [T04 — Read seven dated columns and hide weekends](./T04-weekday-columns.md) — high confidence.
+
+## Completion
+
+T01–T04 are merged and the owner confirmed epic completion on 2026-09-14.
+See [completion evidence](../../research/results/E01/completion.md). E02 is the next epic.

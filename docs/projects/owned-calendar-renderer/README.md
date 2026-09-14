@@ -16,29 +16,27 @@ synchronization, agenda, and event-details navigation outside the timeline bound
 
 ## State
 
-As of 2026-09-12:
+As of 2026-09-14:
 
 - Product: `approved`, `go`; P01–P08 and the detailed launch contract remain binding.
 - Design and architecture: `approved`; the owner approved D01–D08, explicitly including D04–D06
   with evidence collected during implementation.
 - Delivery policy: approved small vertical slices, one at a time. Agent implements/checks, owner
   tests/gives feedback, fixes are verified, owner accepts, the slice merges, then the next starts.
-- Roadmap: seven outcome groups and 29 planned tickets, each with a concrete owner QA checklist.
-- Readiness: `implementable` planning package. No ticket is implemented, tested, accepted or merged;
-  no native feasibility, performance or launch acceptance result is claimed.
+- Roadmap: seven outcome groups and 29 tickets; E01/T01–T04 are completed and merged.
+- Readiness: E02/T05–T08 are next, using the accepted native scroll/pager implementation.
+  [E01 completion evidence](./research/results/E01/completion.md) separates completion and host
+  regression checks from unrecorded device observations and final release gates.
 
-Start with [T01 — Open the owned Calendar shell](./epics/E01-move-through-an-empty-week/T01-owned-calendar-shell.md),
-then [T02 — Horizontal paging](./epics/E01-move-through-an-empty-week/T02-horizontal-week-paging.md),
-[T03 — Vertical hours](./epics/E01-move-through-an-empty-week/T03-vertical-hours-scroll.md), and
-[T04 — Weekday columns](./epics/E01-move-through-an-empty-week/T04-weekday-columns.md).
+Start E02 with [T05 — Day/week mode](./epics/E02-control-the-calendar-view/T05-day-week-mode.md),
+then deliver T06 zoom, T07 native resizing and T08 current time sequentially.
 The [roadmap](./roadmap.md) defines the full execution order; [delivery.md](./delivery.md) defines
 exactly when to stop for the owner. An epic is a grouping, never a batch to finish before QA.
 
 ## Position in the React Native migration
 
-The original Phase 04 Calendar work is code-complete around calendar-kit, but it is not the launch
-end state now being shaped. This replacement is a reopen/replan of the highest-risk part of
-Calendar core and must finish before Phase 10 parity and store cutover can honestly pass. It does
+Calendar uses the owned empty-week renderer; calendar-kit is absent. The remaining owned
+Calendar capabilities must finish before Phase 10 parity and store cutover can pass. This work does
 not reopen the already-owned local calendar data, sync, agenda, Home, or event-details work unless
 approved design evidence exposes a contradiction.
 
@@ -72,10 +70,14 @@ release infrastructure while parity, signed upgrade proof, hardening, and store 
   corresponding target design and this delivery policy are approved; individual implementation
   tickets remain planned until their real QA/merge evidence exists.
 
+- 2026-09-14: owner confirmed E01 completion and authorized refreshing the documents, committing
+  to main and dispatching E02. Product outcomes and sequential owner-QA gates remain binding.
+
 ## Residual risks and caveats
 
-- T01 intentionally makes day/week a minimal owned shell while preserving stored data and existing
-  agenda/details. Capabilities return one accepted brick at a time. The app must stay buildable;
+- E01 supplies an empty week with native paging, full-day scrolling and dated weekday columns,
+  preserving stored data and existing agenda/details. Further capabilities arrive one accepted
+  brick at a time. The app must stay buildable;
   the incomplete timeline cannot ship. This follows the approved pre-launch breaking replacement
   and avoids a vendor/owned dual path.
 - D04–D06 are approved starting choices, not measured guarantees. Each relevant ticket owns its
@@ -92,9 +94,10 @@ release infrastructure while parity, signed upgrade proof, hardening, and store 
   remain historical; no measurement is marked complete merely because architecture is approved.
 - A ticket accepted on an agreed narrow fixture/device does not establish the full final product
   matrix. Explicit intermediate deferrals have a destination ticket and must close before launch.
-- Ticket sites match local `main` and local `origin/main` at
-  `ca09257e1daa5d4794a80bbcf776c17be7ccaf90`; no remote fetch was performed. Revalidate actual default
-  branch state before execution. The unrelated workspace ICS file is not inspected or used.
+- E02 work sites were revalidated against local main and fetched origin/main at
+  `d293988e9dbf64a592388c8796e816fe65f49e46` on 2026-09-14. Later ticket inventories retain
+  their dated planning baseline and must be revalidated at execution. The unrelated workspace ICS
+  file is not inspected or used.
 
 ## Adversarial readiness review
 
@@ -107,7 +110,7 @@ A small page count alone cannot guarantee dense-event memory or accessible reach
 and T12 measure the separate data/visual/semantic costs; T27 measures long-session recovery.
 Unavailable workload data cannot be replaced by invented percentiles: T24 names the operator or
 explicit synthetic-assumption review required to proceed. These uncertainties affect downstream
-acceptance, not the ability to implement and test the first small shell.
+acceptance, not the readiness of the next E02 slice.
 
 ## Document validation
 
@@ -115,3 +118,8 @@ On 2026-09-12 the ready validator passed with zero errors/warnings. Active-docum
 29 ticket-specific QA checklists, all 29 research-to-ticket mappings and formatting also passed.
 Planning readiness means the next ticket is defined; it does not certify native behavior, imply owner QA happened,
 authorize automatic merges, or complete the broader React Native release process.
+
+On 2026-09-14, the mixed completed/planned project passes structural validation (`--mode draft`),
+modified-document relative-link checks and scoped Prettier checks. The planning-only `--mode ready`
+validator reports five status errors because it requires E01 and T01–T04 to remain planned;
+those completed records retain their accurate status. E02 itself has no reported readiness error.

@@ -23,9 +23,21 @@ Day and week switch predictably, retain the visible clock position, and remember
 
 - Persist day/week/agenda mode per installation; fresh installation defaults to week and restart follows the product fresh-date rule.
 
+- Generalize `data/week-transition.ts` and the coordinator from week-only normalization and
+  seven-day stepping to mode-aware day/week transitions. Day pages advance one civil date,
+  including Saturday/Sunday when Show weekends is off. Update both platform menus, date headers,
+  accessible previous/next labels and one-settlement announcements together.
+- Invalidate active/stale page callbacks on mode changes; retain three pages and continuous header
+  projection. Keep the existing Today/focusDate entry points coherent with day mode without
+  expanding into T17's complete direct-intent/current-time contract.
+- Add validated mode keys/parsers through settings and `mobile/src/storage`; preserve mode across
+  backend reset. Fresh day selects today; fresh week selects its containing Monday-first week.
+  Initial current-time scrolling is T08. Agenda transfer remains T18.
+
 ## Non-goals
 
-Today/deep-link behavior, agenda active-section feedback and zoom.
+Complete Today/deep-link intent semantics and current-time scrolling (T17/T08), agenda
+active-section feedback and zoom. Existing navigation must remain coherent with the selected mode.
 
 ## Dependencies and delivery order
 
@@ -63,7 +75,16 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - [ ] Choose day, restart, and confirm day remains selected while its date follows fresh-open rules.
 
+- [ ] Switch mode during a partial page drag: no stale date commit; page across a weekend with weekends hidden and confirm day mode still shows Saturday/Sunday.
+
 - [ ] Repeat the previously accepted interaction(s) touched by this slice; record regressions before acceptance.
+
+## Baseline and regression checks
+
+Use [E01 completion and implementation baseline](../../research/results/E01/completion.md).
+Preserve native pager/header synchronization, three-page retention, one vertical scroll owner,
+weekend preferences and Agenda/details access. Run affected screen/renderer/repository-contract
+suites; update milestone-specific assertions only for this ticket's new behavior.
 
 ## Likely work sites and reading
 
@@ -75,10 +96,16 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - `mobile/src/features/settings/prefs`
 
+- `mobile/src/storage`
+
+- `mobile/src/features/calendar/data/week-transition.ts`
+
+- `mobile/calendar-owned-shell.contract.test.ts`
+
 - [Approved design](../../design.md), relevant D records in [the decision index](../../decisions/README.md), and product sections cited by this scope.
 
-Existing work sites were checked against local `main` and `origin/main` at
-`ca09257e1daa5d4794a80bbcf776c17be7ccaf90` on 2026-09-12. New owned modules/tests belong under
+Existing work sites were checked against local `main` and fetched `origin/main` at
+`d293988e9dbf64a592388c8796e816fe65f49e46` on 2026-09-14. New owned modules/tests belong under
 the listed existing directories; follow prerequisite outputs rather than reviving deleted vendor
 files. Revalidate paths against current code before implementation.
 

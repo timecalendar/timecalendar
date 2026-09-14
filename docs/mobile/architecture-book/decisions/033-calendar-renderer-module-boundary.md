@@ -14,17 +14,19 @@ agenda orchestration. Replacing the renderer would still require rewriting the s
 ## Decision
 
 Expose a renderer-neutral `features/calendar/renderer` facade in domain terms. Keep the
-current calendar-kit implementation under `renderer/calendar-kit`, with one exact vendor
-module as the package's only permitted import site. The screen owns product orchestration,
+owned implementation under `renderer`, with native ScrollView/PagerView motion and a
+Reanimated dated-header projection. Calendar-kit, its adapter and vendor-only configuration
+are absent. The screen owns product orchestration,
 event loading, routes, and menus; the renderer owns timeline rendering and dependency
 adaptation. Pure reusable calendar logic remains in `calendar/data`.
 
 ## Consequences
 
-The current dependency can be replaced behind the facade without moving agenda or screen
-logic. Calendar-kit workarounds remain visible and removable as one adapter. Renderer
-presentation uses the UI coverage floor, while its pure event projection and window logic
-remain 90%-gated.
+The renderer evolves behind the facade without moving agenda or screen logic. The current
+private props expose week transitions and settled vertical offsets; E02 adds mode and zoom
+without promising a public API. Renderer presentation uses the UI coverage floor. Pure owned
+calendar semantics follow the coverage requirements in the
+[delivery protocol](../../../projects/owned-calendar-renderer/delivery.md).
 
 ## Revisit if
 

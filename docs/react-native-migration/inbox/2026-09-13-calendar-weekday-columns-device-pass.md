@@ -1,5 +1,13 @@
 # (HUMAN: owner device verification) T04 dated Calendar columns
 
+## Current delivery status
+
+E01 is completed and merged, confirmed by the owner on 2026-09-14 and by Paperclip
+TIM-544/TIM-545–TIM-548. See [completion evidence](../../projects/owned-calendar-renderer/research/results/E01/completion.md).
+The worksheet below preserves the recorded test target and observations; pending fields remain
+unrecorded evidence, not a claim that the completed epic is blocked or that every device check
+passed. T28 reconciles required matrix evidence.
+
 **For:** the human owner performing the ticket-specific iOS/Android layout, persistence, and assistive-technology checks.
 
 ## Testable build target
@@ -74,4 +82,4 @@ for these four observations. Repeat at both five and seven visible columns.
 - Acceptance source and date: pending an explicit owner statement accepting the exact tested pull-request head; no reply is not acceptance.
 - Reviewer verdict and merged revision: pending after owner acceptance.
 
-Do not begin the next renderer slice until this checklist has explicit owner acceptance and the pull request is merged.
+The next slice follows the completion record above and the canonical delivery protocol.

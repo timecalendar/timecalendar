@@ -1,5 +1,13 @@
 # (HUMAN: owner device verification) T02 empty-week paging
 
+## Current delivery status
+
+E01 is completed and merged, confirmed by the owner on 2026-09-14 and by Paperclip
+TIM-544/TIM-545–TIM-548. See [completion evidence](../../projects/owned-calendar-renderer/research/results/E01/completion.md).
+The worksheet below preserves the recorded test target and observations; pending fields remain
+unrecorded evidence, not a claim that the completed epic is blocked or that every device check
+passed. T28 reconciles required matrix evidence.
+
 **For:** the human owner performing physical-device gesture and assistive-technology checks.
 
 ## Testable build target
@@ -79,5 +87,4 @@ origin, while the screen test pages beyond the initial slots in both directions.
 - Acceptance source and date: pending explicit owner acceptance.
 
 PR #410 was human-merged as `ffc2bd88cedaeaa9d2d2e9a0739d9305f22d1a6d`. The owner checklist
-and explicit acceptance remain pending, so the next renderer slice remains paused for that
-acceptance.
+and exact device observations remain unrecorded here; current delivery completion is recorded above.

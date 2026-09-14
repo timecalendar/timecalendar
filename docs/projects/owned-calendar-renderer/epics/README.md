@@ -2,7 +2,8 @@
 
 Seven outcome groups contain 29 small sequential tickets. Every ticket has its own owner QA
 checklist and acceptance/merge pause; completing an epic is not a prerequisite for getting feedback.
-Product and architecture are approved. No implementation ticket has been accepted or merged.
+Product and architecture are approved. E01/T01–T04 are completed and merged; E02 is next.
+See [E01 completion evidence](../research/results/E01/completion.md).
 
 - [E01 — Move through an empty calendar week](./E01-move-through-an-empty-week/README.md)
 - [E02 — Control the calendar view on different screens](./E02-control-the-calendar-view/README.md)
@@ -13,5 +14,5 @@ Product and architecture are approved. No implementation ticket has been accepte
 - [E07 — Accept the complete calendar on supported devices](./E07-accept-the-complete-calendar/README.md)
 
 Use [the roadmap](../roadmap.md) for exact ticket order and [delivery.md](../delivery.md) for the
-working agreement. The first slice is the owned Calendar shell, followed immediately by horizontal
-paging, vertical hours and weekday columns.
+working agreement. The next slice is T05 day/week mode, followed by zoom, native resizing
+and current time, with separate owner QA and acceptance for each ticket.

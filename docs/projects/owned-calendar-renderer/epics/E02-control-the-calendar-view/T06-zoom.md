@@ -23,6 +23,19 @@ Pinch and menu zoom change hour spacing without moving the clock time under the 
 
 - Choose initial min/default/max from bounded readability experiments, record owner-tested values in the slice, and revisit with populated density in T25.
 
+- Start with a bounded native experiment: add the second finger during vertical drag/momentum
+  and horizontal drag/settle on iOS/Android. Pinch must take ownership without a page commit,
+  focal drift or release jump. If it fails, stop feature expansion, repair/review the integration
+  in this slice and repeat owner QA; do not replace accepted native motion speculatively.
+- Replace fixed 60 px/hour canvas constants with one dynamic scale for labels, grid lines,
+  closing boundary and content height. Track live scale/offset/focal geometry off the React
+  per-frame path; a last-settled pixel offset is insufficient during an active pinch.
+- Measure the timed viewport and account for native automatic insets when converting focal and
+  center positions to clock coordinates. Preserve the ScrollView's native chrome integration.
+- Persist validated shared zoom through typed settings/storage keys, including corrupt/out-of-range
+  recovery and backend-reset preservation. Evolve renderer inventory assertions as modules grow;
+  retain native owner counts and absence of per-frame React state writes.
+
 ## Non-goals
 
 Final populated-event density acceptance, event resizing or per-mode zoom settings.
@@ -65,7 +78,16 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - [ ] Switch day/week and restart: zoom persists; reset returns to the agreed default.
 
+- [ ] Repeat pinch after native vertical momentum and horizontal partial paging; confirm the dated header and grid stay aligned and no delayed week change occurs.
+
 - [ ] Repeat the previously accepted interaction(s) touched by this slice; record regressions before acceptance.
+
+## Baseline and regression checks
+
+Use [E01 completion and implementation baseline](../../research/results/E01/completion.md).
+Preserve native pager/header synchronization, three-page retention, one vertical scroll owner,
+weekend preferences and Agenda/details access. Run affected screen/renderer/repository-contract
+suites; update milestone-specific assertions only for this ticket's new behavior.
 
 ## Likely work sites and reading
 
@@ -77,10 +99,16 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 - `mobile/src/features/settings/prefs`
 
+- `mobile/src/storage`
+
+- `mobile/src/features/calendar/data/week-transition.ts`
+
+- `mobile/calendar-owned-shell.contract.test.ts`
+
 - [Approved design](../../design.md), relevant D records in [the decision index](../../decisions/README.md), and product sections cited by this scope.
 
-Existing work sites were checked against local `main` and `origin/main` at
-`ca09257e1daa5d4794a80bbcf776c17be7ccaf90` on 2026-09-12. New owned modules/tests belong under
+Existing work sites were checked against local `main` and fetched `origin/main` at
+`d293988e9dbf64a592388c8796e816fe65f49e46` on 2026-09-14. New owned modules/tests belong under
 the listed existing directories; follow prerequisite outputs rather than reviving deleted vendor
 files. Revalidate paths against current code before implementation.
 

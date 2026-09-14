@@ -2,7 +2,7 @@
 kind: ticket
 id: T03
 epic: E01
-status: planned
+status: completed
 traces-to: [P01, P02, P04, P05, D02, D04]
 depends-on: [T02]
 size: M
@@ -97,4 +97,7 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Completed: owner confirmed E01 completion on 2026-09-14; Paperclip TIM-547 is done.
+Merged PR #412 at `516b609b`. See [completion evidence](../../research/results/E01/completion.md)
+for source/test evidence and the boundary on unrecorded device observations. Unchecked boxes in the
+original QA checklist are not inferred device passes.

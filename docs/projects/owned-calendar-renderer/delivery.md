@@ -12,6 +12,15 @@ technical dependency. No downstream implementation starts while the current slic
 acceptance or merge. Read-only investigation and preparation may continue without building the
 next capability. Planning completion is distinct from accepting an implementation ticket.
 
+## Current delivery state
+
+E01/T01–T04 are completed and merged; see [completion evidence](./research/results/E01/completion.md).
+E02 executes T05 → T06 → T07 → T08. Each ticket still requires explicit owner QA and acceptance
+before merge and before the next implementation starts. Paperclip uses its standing Reviewer
+merge authority after acceptance and green checks on the exact PR head. This authority does not
+waive owner QA or authorize batching. Every ticket must update its canonical execution evidence,
+including acceptance source, merged revision and any unrecorded device checks.
+
 ## The loop for every ticket
 
 1. **Brief the owner.** Name the ticket, the one visible result, how to reach it, what is intentionally

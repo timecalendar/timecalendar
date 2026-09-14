@@ -4,7 +4,9 @@ This directory preserves discovery history and technical evidence. [product.md](
 is the approved consolidated contract as of 2026-09-12; historical discovery approval states remain
 historical. D01–D08 are separately approved with implementation-time evidence and a small-ticket QA loop.
 
-- [Technical system audit](./technical-system-audit.md): current flows, utility/workaround inventory,
+- [E01 completion and E02 baseline](./results/E01/completion.md): merged tickets, owner completion,
+  current native renderer and remaining device-evidence boundary.
+- [Technical system audit](./technical-system-audit.md): planning-time flows, utility/workaround inventory,
   compatibility sources and scoped documentation reconciliation.
 - [Technical acceptance research plan](./technical-acceptance-plan.md): incremental architecture
   evidence, release measurement protocol and complete remaining research disposition.
