@@ -1,8 +1,8 @@
 ## 1. Persist and validate the Calendar view
 
-- [ ] 1.1 Extend `mobile/src/features/settings/prefs/store.test.ts` first for all `day | week | agenda` round trips plus missing/corrupt fallback to week; add the namespaced key, closed type/parser, and imperative get/set functions through `@/storage`, then run the exact store suite.
-- [ ] 1.2 Extend `mobile/src/features/settings/prefs/hooks.test.ts` first for default week, reactive Day/Week/Agenda writes, remount/restart-shaped reads, and stable setter behavior; add/export the reactive Calendar view hook through the settings preference barrels and run the exact hook suite.
-- [ ] 1.3 Add the view key to `mobile/src/storage/index.ts` as environment-independent; extend `mobile/src/storage/storage.test.ts` and affected backend-reset tests to prove classification coverage and preservation beside Show weekends while backend-bound values clear, then run every edited storage/reset suite.
+- [x] 1.1 Extend `mobile/src/features/settings/prefs/store.test.ts` first for all `day | week | agenda` round trips plus missing/corrupt fallback to week; add the namespaced key, closed type/parser, and imperative get/set functions through `@/storage`, then run the exact store suite.
+- [x] 1.2 Extend `mobile/src/features/settings/prefs/hooks.test.ts` first for default week, reactive Day/Week/Agenda writes, remount/restart-shaped reads, and stable setter behavior; add/export the reactive Calendar view hook through the settings preference barrels and run the exact hook suite.
+- [x] 1.3 Add the view key to `mobile/src/storage/index.ts` as environment-independent; extend `mobile/src/storage/storage.test.ts` and affected backend-reset tests to prove classification coverage and preservation beside Show weekends while backend-bound values clear, then run every edited storage/reset suite.
 
 ## 2. Generalize civil transition policy
 

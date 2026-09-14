@@ -3,12 +3,14 @@ import * as Localization from "expo-localization"
 import { remove, setString } from "@/storage"
 
 import {
+  getCalendarView,
   getInitialLocale,
   getLanguagePreference,
   getShowWeekends,
   getThemePreference,
   getTimezonePreference,
   resolveTimezone,
+  setCalendarView,
   setLanguagePreference,
   setShowWeekends,
   setThemePreference,
@@ -27,6 +29,7 @@ describe("settings prefs store", () => {
     remove(SETTINGS_KEYS.language)
     remove(SETTINGS_KEYS.timezone)
     remove(SETTINGS_KEYS.showWeekends)
+    remove(SETTINGS_KEYS.calendarView)
   })
 
   describe("theme preference", () => {
@@ -61,6 +64,22 @@ describe("settings prefs store", () => {
       expect(getShowWeekends()).toBe(false)
       setShowWeekends(true)
       expect(getShowWeekends()).toBe(true)
+    })
+  })
+
+  describe("calendar view preference", () => {
+    it.each(["day", "week", "agenda"] as const)(
+      "round-trips %s across fresh reads",
+      (view) => {
+        setCalendarView(view)
+        expect(getCalendarView()).toBe(view)
+      },
+    )
+
+    it("defaults missing and corrupt values to week", () => {
+      expect(getCalendarView()).toBe("week")
+      setString(SETTINGS_KEYS.calendarView, "month")
+      expect(getCalendarView()).toBe("week")
     })
   })
 

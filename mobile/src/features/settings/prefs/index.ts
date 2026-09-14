@@ -1,4 +1,5 @@
 export {
+  useCalendarViewPreference,
   useDisplayZone,
   useLanguagePreference,
   useShowWeekendsPreference,
@@ -6,6 +7,7 @@ export {
   useTimezonePreference,
 } from "./hooks"
 export {
+  getCalendarView,
   getInitialLocale,
   getLanguagePreference,
   getShowWeekends,
@@ -13,15 +15,18 @@ export {
   getTimezonePreference,
   resolveLanguage,
   resolveTimezone,
+  setCalendarView,
   setLanguagePreference,
   setShowWeekends,
   setThemePreference,
   setTimezonePreference,
 } from "./store"
 export {
+  type CalendarView,
   CURATED_TIMEZONES,
   type CuratedTimezone,
   type LanguagePreference,
+  parseCalendarView,
   parseLanguagePreference,
   parseThemePreference,
   parseTimezonePreference,
