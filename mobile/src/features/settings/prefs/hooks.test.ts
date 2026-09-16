@@ -5,6 +5,7 @@ import i18n from "@/i18n"
 import { remove } from "@/storage"
 
 import {
+  useCalendarViewPreference,
   useDisplayZone,
   useLanguagePreference,
   useShowWeekendsPreference,
@@ -66,6 +67,26 @@ describe("settings prefs hooks", () => {
 
       changeLanguage.mockRestore()
     })
+  })
+})
+
+describe("useCalendarViewPreference", () => {
+  beforeEach(() => remove(SETTINGS_KEYS.calendarView))
+
+  it("defaults to week, reactively writes every view, and keeps a stable setter", async () => {
+    const first = await renderHook(() => useCalendarViewPreference())
+    expect(first.result.current.view).toBe("week")
+    const setter = first.result.current.setView
+
+    for (const view of ["day", "week", "agenda"] as const) {
+      await act(async () => first.result.current.setView(view))
+      expect(first.result.current.view).toBe(view)
+      expect(first.result.current.setView).toBe(setter)
+    }
+
+    await act(async () => first.unmount())
+    const restarted = await renderHook(() => useCalendarViewPreference())
+    expect(restarted.result.current.view).toBe("agenda")
   })
 })
 

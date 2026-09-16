@@ -9,7 +9,7 @@ import {
   Picker,
 } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
-import { type CalendarView } from "@/features/calendar/ui/calendar-screen/use-calendar-screen-controller"
+import { type CalendarView } from "@/features/settings/prefs"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 export function CalendarViewMenu({
@@ -28,6 +28,7 @@ export function CalendarViewMenu({
         selectedValue={view}
         onValueChange={(value) => onChange(value as CalendarView)}
       >
+        <Picker.Item label={t("calendar.view.day")} value="day" />
         <Picker.Item label={t("calendar.view.week")} value="week" />
         <Picker.Item label={t("calendar.view.agenda")} value="agenda" />
       </Picker>
@@ -46,6 +47,7 @@ export function CalendarAndroidViewMenu({
   const theme = useTheme()
   const menuRef = useRef<MenuComponentRef>(null)
   const labels: Record<CalendarView, string> = {
+    day: t("calendar.view.day"),
     week: t("calendar.view.week"),
     agenda: t("calendar.view.agenda"),
   }

@@ -1,7 +1,7 @@
 import { Stack } from "expo-router"
 import { Platform } from "react-native"
 
-import { type CalendarView } from "@/features/calendar/ui/calendar-screen/use-calendar-screen-controller"
+import { type CalendarView } from "@/features/settings/prefs"
 import { useTheme } from "@/theme"
 
 import { CalendarHeaderActions } from "./calendar-screen-actions"

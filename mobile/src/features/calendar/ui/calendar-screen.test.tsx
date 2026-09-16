@@ -19,6 +19,7 @@ import {
 } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
 import {
+  setCalendarView,
   setShowWeekends,
   setTimezonePreference,
   SETTINGS_KEYS,
@@ -156,9 +157,137 @@ beforeEach(() => {
   mockAnnounce.mockClear()
   mockUseCalendars.mockReturnValue(deviceCalendars(true))
   remove(SETTINGS_KEYS.showWeekends)
+  remove(SETTINGS_KEYS.calendarView)
 })
 
 describe("CalendarScreen owned shell", () => {
+  it("restores persisted Day with a fresh today anchor and one column", async () => {
+    setCalendarView("day")
+    await render(<CalendarScreen />)
+
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    expect(
+      screen.getByTestId("calendar-view-item-day").props.accessibilityState
+        .selected,
+    ).toBe(true)
+  })
+
+  it("keeps persisted Day after remount but derives a fresh date", async () => {
+    setCalendarView("day")
+    const first = await render(<CalendarScreen />)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    await first.unmount()
+    mockAnnounce.mockClear()
+
+    await render(<CalendarScreen />)
+    expect(
+      screen.getByRole("adjustable", {
+        name: formatFullDay(new Date(), "en", ZONE),
+      }),
+    ).toBeOnTheScreen()
+    expect(
+      screen.getByTestId("calendar-view-item-day").props.accessibilityState
+        .selected,
+    ).toBe(true)
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("switches Week to Monday Day and preserves the settled clock offset", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-16" })
+    await render(<CalendarScreen />)
+    await waitFor(() =>
+      expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(7),
+    )
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "momentumScrollEnd",
+      {
+        nativeEvent: {
+          contentOffset: { x: 0, y: 540 },
+          contentInset: { top: 0, bottom: 0, left: 0, right: 0 },
+          contentSize: { width: 320, height: 1441 },
+          layoutMeasurement: { width: 320, height: 500 },
+        },
+      },
+    )
+
+    await fireEvent.press(screen.getByTestId("calendar-view-item-day"))
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    expect(
+      screen.getByTestId("owned-calendar-date-0-2026-09-14"),
+    ).toBeOnTheScreen()
+    expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
+      "contentOffset",
+      { x: 0, y: 540 },
+    )
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("pages Day across a weekend then switches to its containing Week", async () => {
+    setCalendarView("day")
+    setShowWeekends(false)
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-18" })
+    await render(<CalendarScreen />)
+    await waitFor(() =>
+      expect(screen.getByLabelText("FRI 18")).toBeOnTheScreen(),
+    )
+
+    for (const label of ["SAT 19", "SUN 20"]) {
+      await fireEvent(
+        screen.getByTestId("owned-calendar-canvas"),
+        "accessibilityAction",
+        { nativeEvent: { actionName: "increment" } },
+      )
+      expect(screen.getByLabelText(label)).toBeOnTheScreen()
+    }
+
+    await fireEvent.press(screen.getByTestId("calendar-view-item-week"))
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(5)
+    expect(
+      screen.getByTestId("owned-calendar-date-0-2026-09-14"),
+    ).toBeOnTheScreen()
+    expect(mockAnnounce).toHaveBeenCalledTimes(2)
+  })
+
+  it("rejects callbacks from a partial Week drag after switching to Day", async () => {
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-16" })
+    await render(<CalendarScreen />)
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("owned-calendar-date-0-2026-09-14"),
+      ).toBeOnTheScreen(),
+    )
+    const stalePager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    const staleSelected = stalePager.props.onPageSelected
+    const staleState = stalePager.props.onPageScrollStateChanged
+    await fireEvent(stalePager, "pageScroll", {
+      nativeEvent: { position: 1, offset: 0.45 },
+    })
+
+    await fireEvent.press(screen.getByTestId("calendar-view-item-day"))
+    await act(async () => {
+      staleSelected({ nativeEvent: { position: 2 } })
+      staleState({ nativeEvent: { pageScrollState: "idle" } })
+    })
+
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    expect(
+      screen.getByTestId("owned-calendar-date-0-2026-09-14"),
+    ).toBeOnTheScreen()
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
   it.each([
     [false, "12 AM"],
     [true, "00:00"],
@@ -513,12 +642,12 @@ describe("CalendarScreen retained Agenda", () => {
     })
   }
 
-  it("offers only distinct Week and Agenda choices", async () => {
+  it("offers distinct Day, Week, and Agenda choices", async () => {
     await render(<CalendarScreen />)
 
     expect(screen.getByTestId("calendar-view-item-week")).toBeOnTheScreen()
     expect(screen.getByTestId("calendar-view-item-agenda")).toBeOnTheScreen()
-    expect(screen.queryByTestId("calendar-view-item-day")).toBeNull()
+    expect(screen.getByTestId("calendar-view-item-day")).toBeOnTheScreen()
     await openAgenda()
     expect(screen.queryByTestId("owned-calendar-canvas")).toBeNull()
     expect(screen.getByTestId("agenda-section-list")).toBeOnTheScreen()
@@ -605,7 +734,7 @@ describe("CalendarScreen platform chrome", () => {
     expect(mockPush).toHaveBeenCalledWith("/personal-event-form")
   })
 
-  it("keeps Android targets and offers only Week and Agenda", async () => {
+  it("keeps Android targets and offers Day, Week, and Agenda in order", async () => {
     const original = Platform.OS
     Platform.OS = "android"
     try {
@@ -614,10 +743,10 @@ describe("CalendarScreen platform chrome", () => {
       expect(StyleSheet.flatten(trigger.props.style).minHeight).toBe(48)
       await fireEvent.press(trigger)
       await waitFor(() => {
+        expect(screen.getByTestId("menu-action-day")).toBeOnTheScreen()
         expect(screen.getByTestId("menu-action-week")).toBeOnTheScreen()
       })
       expect(screen.getByTestId("menu-action-agenda")).toBeOnTheScreen()
-      expect(screen.queryByTestId("menu-action-day")).toBeNull()
       const fab = screen.getByTestId("calendar-fab")
       await fireEvent.press(fab)
       expect(mockPush).toHaveBeenCalledWith("/personal-event-form")

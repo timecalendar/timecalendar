@@ -16,6 +16,8 @@ import PagerView, {
 import { ThemedText } from "@/components/themed-text"
 import {
   type AppLocale,
+  type CalendarTimelineMode,
+  type CalendarTransitionSource,
   DEFAULT_PIXELS_PER_HOUR,
   formatHourStartLabel,
   FULL_DAY_END_MINUTE,
@@ -27,7 +29,6 @@ import {
   minuteToPixel,
   type WeekColumn,
   type WeekDirection,
-  type WeekTransitionSource,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
@@ -57,6 +58,7 @@ function stableTintIndex(key: string) {
 
 export function OwnedCalendarCanvas({
   heading,
+  mode,
   locale,
   uses24HourClock,
   initialVerticalOffset,
@@ -74,6 +76,7 @@ export function OwnedCalendarCanvas({
   t,
 }: {
   heading: string
+  mode: CalendarTimelineMode
   locale: AppLocale
   uses24HourClock: boolean | null
   initialVerticalOffset: number
@@ -89,7 +92,7 @@ export function OwnedCalendarCanvas({
   onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   onAccessiblePageRequest: (
     direction: WeekDirection,
-    source: WeekTransitionSource,
+    source: CalendarTransitionSource,
   ) => void
   t: TFunction
 }) {
@@ -114,8 +117,20 @@ export function OwnedCalendarCanvas({
       accessibilityRole="adjustable"
       accessibilityLabel={heading}
       accessibilityActions={[
-        { name: "decrement", label: t("calendar.previousWeekLabel") },
-        { name: "increment", label: t("calendar.nextWeekLabel") },
+        {
+          name: "decrement",
+          label: t(
+            mode === "day"
+              ? "calendar.previousDayLabel"
+              : "calendar.previousWeekLabel",
+          ),
+        },
+        {
+          name: "increment",
+          label: t(
+            mode === "day" ? "calendar.nextDayLabel" : "calendar.nextWeekLabel",
+          ),
+        },
       ]}
       onAccessibilityAction={({ nativeEvent }) => {
         if (nativeEvent.actionName === "increment")
@@ -191,7 +206,7 @@ export function OwnedCalendarCanvas({
                 },
               ]}
             >
-              <WeekGrid direction={page.direction} columns={page.columns} />
+              <CalendarGrid direction={page.direction} columns={page.columns} />
               {__DEV__ && (
                 <View style={styles.preview} pointerEvents="none">
                   <ThemedText type="small">{page.key}</ThemedText>
@@ -211,7 +226,7 @@ export function OwnedCalendarCanvas({
   )
 }
 
-function WeekGrid({
+function CalendarGrid({
   direction,
   columns,
 }: {
