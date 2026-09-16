@@ -2,7 +2,7 @@ import {
   DEFAULT_PIXELS_PER_HOUR,
   MAX_PIXELS_PER_HOUR,
   MIN_PIXELS_PER_HOUR,
-} from "@/features/calendar/data"
+} from "@/features/calendar/data/time-grid"
 
 // The three persisted Settings preferences (design D2). All default to "system"
 // so the app keeps following the device until the user explicitly overrides —
