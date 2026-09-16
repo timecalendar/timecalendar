@@ -1,5 +1,10 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { AppState, StyleSheet } from "react-native"
+import { State } from "react-native-gesture-handler"
+import {
+  fireGestureHandler,
+  getByGestureTestId,
+} from "react-native-gesture-handler/jest-utils"
 import { useEvent, useReducedMotion } from "react-native-reanimated"
 
 import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
@@ -67,6 +72,20 @@ describe("OwnedCalendarShell", () => {
       "layout",
       headerLaneLayout(width),
     )
+  }
+
+  const firePinch = (finalState: State = State.END) => {
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      {
+        state: State.ACTIVE,
+        numberOfPointers: 2,
+        focalX: 160,
+        focalY: 250,
+        scale: 1.1,
+      },
+      { state: finalState, numberOfPointers: 1 },
+    ])
   }
 
   beforeEach(() => {
@@ -344,6 +363,10 @@ describe("OwnedCalendarShell", () => {
       "pageScroll",
       { nativeEvent: { position: 1, offset: 0.4 } },
     )
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 2, scale: 1.1 },
+    ])
 
     await act(async () => appStateListener?.("inactive"))
     await view.rerender(<OwnedCalendarShell {...props} />)
@@ -627,6 +650,80 @@ describe("OwnedCalendarShell", () => {
     await act(async () => frame?.(0))
     expect(onVerticalOffsetSettled).toHaveBeenCalledWith(240)
     requestFrame.mockRestore()
+  })
+
+  it.each([State.END, State.CANCELLED])(
+    "gives a two-pointer pinch precedence and rejects the stale page on %s",
+    async (finalState) => {
+      pagerMock.deferNextTransition()
+      await render(<OwnedCalendarShell {...props} />)
+      const canvas = screen.getByTestId("owned-calendar-canvas")
+      const pager = screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      })
+      await fireEvent(canvas, "accessibilityAction", {
+        nativeEvent: { actionName: "increment" },
+      })
+
+      await act(async () => firePinch(finalState))
+      await fireEvent(pager, "pageSelected", {
+        nativeEvent: { position: 2 },
+      })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+
+      expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
+      expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+      expect(onTransitionSettled).not.toHaveBeenCalled()
+    },
+  )
+
+  it("invalidates an active pinch on generation replacement", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    const stalePager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    const staleSelected = stalePager.props.onPageSelected
+    const staleState = stalePager.props.onPageScrollStateChanged
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 2, scale: 1.1 },
+    ])
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
+    await act(async () => {
+      staleSelected({ nativeEvent: { position: 2 } })
+      staleState({ nativeEvent: { pageScrollState: "idle" } })
+    })
+
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+  })
+
+  it("cancels pending work on unmount during pinch ownership", async () => {
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 2, scale: 1.1 },
+    ])
+
+    await act(async () => view.unmount())
+
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
   })
 
   it("settles accessibility paging directly for reduced motion", async () => {

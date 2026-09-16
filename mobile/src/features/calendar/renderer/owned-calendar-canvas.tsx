@@ -7,6 +7,7 @@ import {
   StyleSheet,
   View,
 } from "react-native"
+import { GestureDetector, type GestureType } from "react-native-gesture-handler"
 import PagerView, {
   type PagerViewOnPageScrollEvent,
   type PagerViewOnPageSelectedEvent,
@@ -66,6 +67,8 @@ export function OwnedCalendarCanvas({
   pages,
   pagerRef,
   scrollRef,
+  nativeScrollGesture,
+  nativePagerGesture,
   onPageScroll,
   onPageSelected,
   onPageScrollStateChanged,
@@ -84,6 +87,8 @@ export function OwnedCalendarCanvas({
   pages: CalendarPage[]
   pagerRef: RefObject<PagerView | null>
   scrollRef: RefObject<ScrollView | null>
+  nativeScrollGesture: GestureType
+  nativePagerGesture: GestureType
   onPageScroll: ReturnType<typeof usePagerPageScroll>["onPageScroll"]
   onPageSelected: (event: PagerViewOnPageSelectedEvent) => void
   onPageScrollStateChanged: (event: PageScrollStateChangedNativeEvent) => void
@@ -98,131 +103,140 @@ export function OwnedCalendarCanvas({
 }) {
   const theme = useTheme()
   return (
-    <ScrollView
-      ref={scrollRef}
-      testID="owned-calendar-canvas"
-      collapsable={false}
-      style={styles.viewport}
-      contentContainerStyle={styles.scrollContent}
-      contentInsetAdjustmentBehavior="automatic"
-      contentOffset={{ x: 0, y: initialVerticalOffset }}
-      removeClippedSubviews={false}
-      directionalLockEnabled
-      nestedScrollEnabled
-      scrollEventThrottle={16}
-      onScrollEndDrag={onScrollEndDrag}
-      onMomentumScrollBegin={onMomentumScrollBegin}
-      onMomentumScrollEnd={onMomentumScrollEnd}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel={heading}
-      accessibilityActions={[
-        {
-          name: "decrement",
-          label: t(
-            mode === "day"
-              ? "calendar.previousDayLabel"
-              : "calendar.previousWeekLabel",
-          ),
-        },
-        {
-          name: "increment",
-          label: t(
-            mode === "day" ? "calendar.nextDayLabel" : "calendar.nextWeekLabel",
-          ),
-        },
-      ]}
-      onAccessibilityAction={({ nativeEvent }) => {
-        if (nativeEvent.actionName === "increment")
-          onAccessiblePageRequest(1, "next")
-        if (nativeEvent.actionName === "decrement")
-          onAccessiblePageRequest(-1, "previous")
-      }}
-    >
-      <View style={styles.fullDayRow} collapsable={false}>
-        <View
-          testID="owned-calendar-hour-gutter"
-          accessible={false}
-          importantForAccessibility="no-hide-descendants"
-          style={[styles.gutter, { borderColor: theme.separator }]}
-          pointerEvents="none"
-        >
-          {Array.from({ length: 24 }, (_, hour) => (
-            <ThemedText
-              key={hour}
-              type="small"
-              testID={`owned-calendar-hour-label-${hour}`}
-              style={[
-                styles.hourLabel,
-                {
-                  top: minuteToPixel(hour * 60, {
-                    startMinute: FULL_DAY_START_MINUTE,
-                  }),
-                },
-              ]}
-            >
-              {formatHourStartLabel(hour, locale, uses24HourClock)}
-            </ThemedText>
-          ))}
-        </View>
-        <AnimatedPagerView
-          ref={pagerRef}
-          key={generation}
-          testID="owned-calendar-pager"
-          style={styles.pager}
-          initialPage={CENTER_PAGE}
-          offscreenPageLimit={1}
-          overdrag={false}
-          onPageScroll={
-            onPageScroll as unknown as (
-              event: PagerViewOnPageScrollEvent,
-            ) => void
-          }
-          onPageSelected={onPageSelected}
-          onPageScrollStateChanged={onPageScrollStateChanged}
-          accessible={false}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          {pages.map((page) => (
-            <View
-              key={page.key}
-              testID={`owned-calendar-page-${page.direction}`}
-              collapsable={false}
+    <GestureDetector gesture={nativeScrollGesture}>
+      <ScrollView
+        ref={scrollRef}
+        testID="owned-calendar-canvas"
+        collapsable={false}
+        style={styles.viewport}
+        contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
+        contentOffset={{ x: 0, y: initialVerticalOffset }}
+        removeClippedSubviews={false}
+        directionalLockEnabled
+        nestedScrollEnabled
+        scrollEventThrottle={16}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel={heading}
+        accessibilityActions={[
+          {
+            name: "decrement",
+            label: t(
+              mode === "day"
+                ? "calendar.previousDayLabel"
+                : "calendar.previousWeekLabel",
+            ),
+          },
+          {
+            name: "increment",
+            label: t(
+              mode === "day"
+                ? "calendar.nextDayLabel"
+                : "calendar.nextWeekLabel",
+            ),
+          },
+        ]}
+        onAccessibilityAction={({ nativeEvent }) => {
+          if (nativeEvent.actionName === "increment")
+            onAccessiblePageRequest(1, "next")
+          if (nativeEvent.actionName === "decrement")
+            onAccessiblePageRequest(-1, "previous")
+        }}
+      >
+        <View style={styles.fullDayRow} collapsable={false}>
+          <View
+            testID="owned-calendar-hour-gutter"
+            accessible={false}
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.gutter, { borderColor: theme.separator }]}
+            pointerEvents="none"
+          >
+            {Array.from({ length: 24 }, (_, hour) => (
+              <ThemedText
+                key={hour}
+                type="small"
+                testID={`owned-calendar-hour-label-${hour}`}
+                style={[
+                  styles.hourLabel,
+                  {
+                    top: minuteToPixel(hour * 60, {
+                      startMinute: FULL_DAY_START_MINUTE,
+                    }),
+                  },
+                ]}
+              >
+                {formatHourStartLabel(hour, locale, uses24HourClock)}
+              </ThemedText>
+            ))}
+          </View>
+          <GestureDetector gesture={nativePagerGesture}>
+            <AnimatedPagerView
+              ref={pagerRef}
+              key={generation}
+              testID="owned-calendar-pager"
+              style={styles.pager}
+              initialPage={CENTER_PAGE}
+              offscreenPageLimit={1}
+              overdrag={false}
+              onPageScroll={
+                onPageScroll as unknown as (
+                  event: PagerViewOnPageScrollEvent,
+                ) => void
+              }
+              onPageSelected={onPageSelected}
+              onPageScrollStateChanged={onPageScrollStateChanged}
               accessible={false}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              style={[
-                styles.page,
-                {
-                  backgroundColor: __DEV__
-                    ? [
-                        theme.backgroundElement,
-                        theme.homeHero,
-                        theme.backgroundSelected,
-                      ][stableTintIndex(page.key)]
-                    : theme.backgroundElement,
-                  borderColor: theme.separator,
-                },
-              ]}
             >
-              <CalendarGrid direction={page.direction} columns={page.columns} />
-              {__DEV__ && (
-                <View style={styles.preview} pointerEvents="none">
-                  <ThemedText type="small">{page.key}</ThemedText>
-                  <ThemedText type="small">
-                    {t("calendar.weekPagingSize", {
-                      width: "100%",
-                      height: CONTENT_HEIGHT,
-                    })}
-                  </ThemedText>
+              {pages.map((page) => (
+                <View
+                  key={page.key}
+                  testID={`owned-calendar-page-${page.direction}`}
+                  collapsable={false}
+                  accessible={false}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={[
+                    styles.page,
+                    {
+                      backgroundColor: __DEV__
+                        ? [
+                            theme.backgroundElement,
+                            theme.homeHero,
+                            theme.backgroundSelected,
+                          ][stableTintIndex(page.key)]
+                        : theme.backgroundElement,
+                      borderColor: theme.separator,
+                    },
+                  ]}
+                >
+                  <CalendarGrid
+                    direction={page.direction}
+                    columns={page.columns}
+                  />
+                  {__DEV__ && (
+                    <View style={styles.preview} pointerEvents="none">
+                      <ThemedText type="small">{page.key}</ThemedText>
+                      <ThemedText type="small">
+                        {t("calendar.weekPagingSize", {
+                          width: "100%",
+                          height: CONTENT_HEIGHT,
+                        })}
+                      </ThemedText>
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
-          ))}
-        </AnimatedPagerView>
-      </View>
-    </ScrollView>
+              ))}
+            </AnimatedPagerView>
+          </GestureDetector>
+        </View>
+      </ScrollView>
+    </GestureDetector>
   )
 }
 

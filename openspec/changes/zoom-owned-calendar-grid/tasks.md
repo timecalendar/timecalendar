@@ -5,7 +5,7 @@
 
 ## 2. Prove native gesture arbitration before feature expansion
 
-- [ ] 2.1 Build the smallest real-route Gesture Handler/Reanimated pinch integration around the existing automatic-inset `ScrollView` and three-page `PagerView`, keeping one native vertical owner and one pager; add focused lifecycle/component proof for pointer-count changes, cancellation, generation replacement, backgrounding, unmount, and no stale page commit.
+- [x] 2.1 Build the smallest real-route Gesture Handler/Reanimated pinch integration around the existing automatic-inset `ScrollView` and three-page `PagerView`, keeping one native vertical owner and one pager; add focused lifecycle/component proof for pointer-count changes, cancellation, generation replacement, backgrounding, unmount, and no stale page commit.
 - [ ] 2.2 Run the bounded content-free iOS/Android experiment: add a second finger during vertical drag, vertical momentum, horizontal drag, and horizontal settle around a marked reference hour; record the exact revision/build, platform/device, focal drift/release result, header/page result, and low-end timing when available before continuing. If any arbitration case fails, repair it in this slice and repeat this task rather than replacing native motion or deferring the defect.
 
 ## 3. Implement live focal-preserving zoom

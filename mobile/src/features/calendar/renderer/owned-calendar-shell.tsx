@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
+import { GestureDetector } from "react-native-gesture-handler"
 
 import type {
   AppLocale,
@@ -38,40 +39,44 @@ export function OwnedCalendarShell(props: OwnedCalendarShellProps) {
   const coordinator = useOwnedCalendarCoordinator(props)
 
   return (
-    <View
-      testID="owned-calendar-shell"
-      collapsable={false}
-      style={[styles.shell, { backgroundColor: theme.background }]}
-    >
-      <OwnedCalendarDateHeader
-        pages={coordinator.pages}
-        locale={props.locale}
-        displayZone={props.displayZone}
-        todayKey={coordinator.todayKey}
-        todayLabel={t("calendar.today")}
-        stripStyle={coordinator.headerStripStyle}
-        onLaneLayout={coordinator.onHeaderLaneLayout}
-      />
-      <OwnedCalendarCanvas
-        heading={props.heading}
-        mode={props.mode}
-        locale={props.locale}
-        uses24HourClock={props.uses24HourClock}
-        initialVerticalOffset={props.initialVerticalOffset}
-        generation={props.generation}
-        pages={coordinator.pages}
-        pagerRef={coordinator.pagerRef}
-        scrollRef={coordinator.scrollRef}
-        onPageScroll={coordinator.onPageScroll}
-        onPageSelected={coordinator.onPageSelected}
-        onPageScrollStateChanged={coordinator.onPageScrollStateChanged}
-        onScrollEndDrag={coordinator.onScrollEndDrag}
-        onMomentumScrollBegin={coordinator.cancelVerticalCandidate}
-        onMomentumScrollEnd={coordinator.settleVertical}
-        onAccessiblePageRequest={coordinator.requestAccessiblePage}
-        t={t}
-      />
-    </View>
+    <GestureDetector gesture={coordinator.pinchGesture}>
+      <View
+        testID="owned-calendar-shell"
+        collapsable={false}
+        style={[styles.shell, { backgroundColor: theme.background }]}
+      >
+        <OwnedCalendarDateHeader
+          pages={coordinator.pages}
+          locale={props.locale}
+          displayZone={props.displayZone}
+          todayKey={coordinator.todayKey}
+          todayLabel={t("calendar.today")}
+          stripStyle={coordinator.headerStripStyle}
+          onLaneLayout={coordinator.onHeaderLaneLayout}
+        />
+        <OwnedCalendarCanvas
+          heading={props.heading}
+          mode={props.mode}
+          locale={props.locale}
+          uses24HourClock={props.uses24HourClock}
+          initialVerticalOffset={props.initialVerticalOffset}
+          generation={props.generation}
+          pages={coordinator.pages}
+          pagerRef={coordinator.pagerRef}
+          scrollRef={coordinator.scrollRef}
+          nativeScrollGesture={coordinator.nativeScrollGesture}
+          nativePagerGesture={coordinator.nativePagerGesture}
+          onPageScroll={coordinator.onPageScroll}
+          onPageSelected={coordinator.onPageSelected}
+          onPageScrollStateChanged={coordinator.onPageScrollStateChanged}
+          onScrollEndDrag={coordinator.onScrollEndDrag}
+          onMomentumScrollBegin={coordinator.cancelVerticalCandidate}
+          onMomentumScrollEnd={coordinator.settleVertical}
+          onAccessiblePageRequest={coordinator.requestAccessiblePage}
+          t={t}
+        />
+      </View>
+    </GestureDetector>
   )
 }
 
