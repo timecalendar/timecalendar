@@ -1,3 +1,9 @@
+import {
+  DEFAULT_PIXELS_PER_HOUR,
+  MAX_PIXELS_PER_HOUR,
+  MIN_PIXELS_PER_HOUR,
+} from "@/features/calendar/data"
+
 // The three persisted Settings preferences (design D2). All default to "system"
 // so the app keeps following the device until the user explicitly overrides —
 // matching the foundation's device-follows posture for theme, locale, and
@@ -38,7 +44,17 @@ export const SETTINGS_KEYS = {
   timezone: "settings.timezonePreference",
   showWeekends: "settings.showWeekends",
   calendarView: "settings.calendarView",
+  calendarZoomPixelsPerHour: "settings.calendarZoomPixelsPerHour",
 } as const
+
+export function parseCalendarZoomPixelsPerHour(raw: unknown): number {
+  return typeof raw === "number" &&
+    Number.isFinite(raw) &&
+    raw >= MIN_PIXELS_PER_HOUR &&
+    raw <= MAX_PIXELS_PER_HOUR
+    ? raw
+    : DEFAULT_PIXELS_PER_HOUR
+}
 
 // Build a total parser over a preference union: a raw string in the union is
 // returned as-is, while anything else (unset / corrupt / legacy) uses the

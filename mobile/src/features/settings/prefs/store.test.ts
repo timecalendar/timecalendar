@@ -1,9 +1,10 @@
 import * as Localization from "expo-localization"
 
-import { remove, setString } from "@/storage"
+import { remove, setNumber, setString } from "@/storage"
 
 import {
   getCalendarView,
+  getCalendarZoomPixelsPerHour,
   getInitialLocale,
   getLanguagePreference,
   getShowWeekends,
@@ -11,6 +12,7 @@ import {
   getTimezonePreference,
   resolveTimezone,
   setCalendarView,
+  setCalendarZoomPixelsPerHour,
   setLanguagePreference,
   setShowWeekends,
   setThemePreference,
@@ -30,6 +32,7 @@ describe("settings prefs store", () => {
     remove(SETTINGS_KEYS.timezone)
     remove(SETTINGS_KEYS.showWeekends)
     remove(SETTINGS_KEYS.calendarView)
+    remove(SETTINGS_KEYS.calendarZoomPixelsPerHour)
   })
 
   describe("theme preference", () => {
@@ -80,6 +83,36 @@ describe("settings prefs store", () => {
       expect(getCalendarView()).toBe("week")
       setString(SETTINGS_KEYS.calendarView, "month")
       expect(getCalendarView()).toBe("week")
+    })
+  })
+
+  describe("calendar zoom preference", () => {
+    it.each([40, 60, 75.5, 120])(
+      "round-trips %s pixels per hour across fresh reads",
+      (pixelsPerHour) => {
+        setCalendarZoomPixelsPerHour(pixelsPerHour)
+        expect(getCalendarZoomPixelsPerHour()).toBe(pixelsPerHour)
+      },
+    )
+
+    it.each([undefined, Number.NaN, Infinity, -Infinity, 39, 121])(
+      "recovers %s to the default",
+      (stored) => {
+        if (stored !== undefined) {
+          setNumber(SETTINGS_KEYS.calendarZoomPixelsPerHour, stored)
+        }
+        expect(getCalendarZoomPixelsPerHour()).toBe(60)
+      },
+    )
+
+    it("stores the safe default instead of an invalid write", () => {
+      setCalendarZoomPixelsPerHour(Number.NaN)
+      expect(getCalendarZoomPixelsPerHour()).toBe(60)
+    })
+
+    it("recovers a corrupt non-numeric value", () => {
+      setString(SETTINGS_KEYS.calendarZoomPixelsPerHour, "large")
+      expect(getCalendarZoomPixelsPerHour()).toBe(60)
     })
   })
 

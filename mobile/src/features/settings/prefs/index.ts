@@ -1,5 +1,6 @@
 export {
   useCalendarViewPreference,
+  useCalendarZoomPreference,
   useDisplayZone,
   useLanguagePreference,
   useShowWeekendsPreference,
@@ -8,6 +9,7 @@ export {
 } from "./hooks"
 export {
   getCalendarView,
+  getCalendarZoomPixelsPerHour,
   getInitialLocale,
   getLanguagePreference,
   getShowWeekends,
@@ -16,6 +18,7 @@ export {
   resolveLanguage,
   resolveTimezone,
   setCalendarView,
+  setCalendarZoomPixelsPerHour,
   setLanguagePreference,
   setShowWeekends,
   setThemePreference,
@@ -27,6 +30,7 @@ export {
   type CuratedTimezone,
   type LanguagePreference,
   parseCalendarView,
+  parseCalendarZoomPixelsPerHour,
   parseLanguagePreference,
   parseThemePreference,
   parseTimezonePreference,
