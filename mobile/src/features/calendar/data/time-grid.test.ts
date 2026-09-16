@@ -1,18 +1,30 @@
 import {
+  clampRawOffset,
   clampVerticalOffset,
+  clockHourAtFocalPoint,
   DEFAULT_PIXELS_PER_HOUR,
   eventHeight,
+  focalPreservingRawOffset,
   FULL_DAY_END_MINUTE,
   FULL_DAY_START_MINUTE,
+  fullDayContentHeight,
   fullDayMajorMinutes,
   fullDayMinorMinutes,
   GRID_END_MINUTE,
   GRID_START_MINUTE,
   gridContentHeight,
   hourLabels,
+  isValidPixelsPerHour,
+  MAX_PIXELS_PER_HOUR,
   maxVerticalOffset,
+  MIN_PIXELS_PER_HOUR,
   minuteToPixel,
   nowIndicatorPosition,
+  rawOffsetBounds,
+  resolvePixelsPerHour,
+  stepPixelsPerHour,
+  usableViewportCenterY,
+  ZOOM_PIXELS_PER_HOUR_STEP,
 } from "./time-grid"
 
 describe("time-grid constants", () => {
@@ -20,11 +32,153 @@ describe("time-grid constants", () => {
     expect(GRID_START_MINUTE).toBe(7 * 60)
     expect(GRID_END_MINUTE).toBe(21 * 60)
     expect(DEFAULT_PIXELS_PER_HOUR).toBe(60)
+    expect(MIN_PIXELS_PER_HOUR).toBe(40)
+    expect(MAX_PIXELS_PER_HOUR).toBe(120)
+    expect(ZOOM_PIXELS_PER_HOUR_STEP).toBe(10)
   })
 
   it("names the complete 00:00–24:00 renderer window", () => {
     expect(FULL_DAY_START_MINUTE).toBe(0)
     expect(FULL_DAY_END_MINUTE).toBe(24 * 60)
+  })
+})
+
+describe("calendar zoom geometry", () => {
+  it("totally validates and clamps scale values", () => {
+    for (const value of [
+      undefined,
+      null,
+      "60",
+      Number.NaN,
+      Infinity,
+      -Infinity,
+    ]) {
+      expect(resolvePixelsPerHour(value)).toBe(DEFAULT_PIXELS_PER_HOUR)
+      expect(isValidPixelsPerHour(value)).toBe(false)
+    }
+
+    expect(resolvePixelsPerHour(39)).toBe(MIN_PIXELS_PER_HOUR)
+    expect(resolvePixelsPerHour(80)).toBe(80)
+    expect(resolvePixelsPerHour(121)).toBe(MAX_PIXELS_PER_HOUR)
+    expect(isValidPixelsPerHour(39)).toBe(false)
+    expect(isValidPixelsPerHour(40)).toBe(true)
+    expect(isValidPixelsPerHour(80.5)).toBe(true)
+    expect(isValidPixelsPerHour(120)).toBe(true)
+    expect(isValidPixelsPerHour(121)).toBe(false)
+  })
+
+  it("derives complete-day height and repeated command limits", () => {
+    expect(fullDayContentHeight(40)).toBe(960)
+    expect(fullDayContentHeight(60)).toBe(1440)
+    expect(fullDayContentHeight(120)).toBe(2880)
+    expect(fullDayContentHeight(Number.NaN)).toBe(1440)
+
+    let scale = DEFAULT_PIXELS_PER_HOUR
+    for (let index = 0; index < 20; index++) {
+      scale = stepPixelsPerHour(scale, 1)
+    }
+    expect(scale).toBe(MAX_PIXELS_PER_HOUR)
+    for (let index = 0; index < 20; index++) {
+      scale = stepPixelsPerHour(scale, -1)
+    }
+    expect(scale).toBe(MIN_PIXELS_PER_HOUR)
+    expect(stepPixelsPerHour(Number.NaN, 1)).toBe(70)
+  })
+
+  it("models native automatic-inset raw offset bounds", () => {
+    const geometry = {
+      contentHeight: 1440,
+      viewportHeight: 500,
+      topInset: 20,
+      bottomInset: 30,
+    }
+    expect(rawOffsetBounds(geometry)).toEqual({ min: -20, max: 970 })
+    expect(clampRawOffset(-100, geometry)).toBe(-20)
+    expect(clampRawOffset(400, geometry)).toBe(400)
+    expect(clampRawOffset(2000, geometry)).toBe(970)
+    expect(clampRawOffset(Number.NaN, geometry)).toBe(-20)
+    expect(
+      rawOffsetBounds({
+        contentHeight: Number.NaN,
+        viewportHeight: -1,
+        topInset: Infinity,
+        bottomInset: -1,
+      }),
+    ).toEqual({ min: -0, max: 0 })
+    expect(
+      rawOffsetBounds({
+        contentHeight: 100,
+        viewportHeight: 500,
+        topInset: 20,
+        bottomInset: 0,
+      }),
+    ).toEqual({ min: -20, max: -20 })
+  })
+
+  it("finds the inset-aware usable viewport center", () => {
+    expect(usableViewportCenterY(500, 20, 40)).toBe(240)
+    expect(usableViewportCenterY(Number.NaN, Infinity, -1)).toBe(0)
+    expect(usableViewportCenterY(100, 120, 50)).toBe(100)
+  })
+
+  it("recovers finite focal inputs and clamps at day boundaries", () => {
+    const geometry = {
+      contentHeight: fullDayContentHeight(120),
+      viewportHeight: 500,
+      topInset: 20,
+      bottomInset: 30,
+    }
+    expect(clockHourAtFocalPoint(Number.NaN, Number.NaN, Number.NaN)).toBe(0)
+    expect(
+      focalPreservingRawOffset({
+        rawOffset: -100,
+        focalY: Number.NaN,
+        oldPixelsPerHour: 60,
+        newPixelsPerHour: 40,
+        geometry,
+      }),
+    ).toBe(-20)
+    expect(
+      focalPreservingRawOffset({
+        rawOffset: 2500,
+        focalY: 250,
+        oldPixelsPerHour: 60,
+        newPixelsPerHour: 120,
+        geometry,
+      }),
+    ).toBe(2410)
+  })
+
+  it("preserves the focal clock hour whenever the solution is unclamped", () => {
+    const oldScales = [40, 60, 90, 120]
+    const newScales = [40, 55, 80, 120]
+    const focals = [0, 120, 300, 499]
+
+    for (const oldScale of oldScales) {
+      for (const newScale of newScales) {
+        for (const focalY of focals) {
+          const rawOffset = 12 * oldScale - focalY
+          const geometry = {
+            contentHeight: fullDayContentHeight(newScale),
+            viewportHeight: 500,
+            topInset: 20,
+            bottomInset: 30,
+          }
+          const nextOffset = focalPreservingRawOffset({
+            rawOffset,
+            focalY,
+            oldPixelsPerHour: oldScale,
+            newPixelsPerHour: newScale,
+            geometry,
+          })
+          expect(clockHourAtFocalPoint(rawOffset, focalY, oldScale)).toBe(12)
+          expect(clockHourAtFocalPoint(nextOffset, focalY, newScale)).toBe(12)
+          const bounds = rawOffsetBounds(geometry)
+          expect(nextOffset).toBeGreaterThanOrEqual(bounds.min)
+          expect(nextOffset).toBeLessThanOrEqual(bounds.max)
+        }
+      }
+    }
   })
 })
 

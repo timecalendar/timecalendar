@@ -1,6 +1,6 @@
 ## 1. Establish the zoom domain and persistence
 
-- [ ] 1.1 Add named 40/60/120 px/hour bounds, the 10 px/hour command step, total scale validation, dynamic full-day height, inset-aware raw-offset bounds, and focal-preserving offset helpers to the pure Calendar data layer; verify every introduced statement/branch plus focal-invariance, finite-recovery, repeated-command, and clamp properties in `time-grid.test.ts`.
+- [x] 1.1 Add named 40/60/120 px/hour bounds, the 10 px/hour command step, total scale validation, dynamic full-day height, inset-aware raw-offset bounds, and focal-preserving offset helpers to the pure Calendar data layer; verify every introduced statement/branch plus focal-invariance, finite-recovery, repeated-command, and clamp properties in `time-grid.test.ts`.
 - [ ] 1.2 Add `settings.calendarZoomPixelsPerHour` to the Settings types/store/hooks and `@/storage` inventory as an environment-independent numeric key; verify valid intermediates/bounds, missing/corrupt/non-finite/out-of-range recovery, reactive Day/Week sharing, restart reads, classification coverage, and backend-reset preservation in the focused preference/storage suites.
 
 ## 2. Prove native gesture arbitration before feature expansion
