@@ -1,7 +1,6 @@
 import {
   DEFAULT_PIXELS_PER_HOUR,
-  MAX_PIXELS_PER_HOUR,
-  MIN_PIXELS_PER_HOUR,
+  isValidPixelsPerHour,
 } from "@/features/calendar/data/time-grid"
 
 // The three persisted Settings preferences (design D2). All default to "system"
@@ -48,12 +47,7 @@ export const SETTINGS_KEYS = {
 } as const
 
 export function parseCalendarZoomPixelsPerHour(raw: unknown): number {
-  return typeof raw === "number" &&
-    Number.isFinite(raw) &&
-    raw >= MIN_PIXELS_PER_HOUR &&
-    raw <= MAX_PIXELS_PER_HOUR
-    ? raw
-    : DEFAULT_PIXELS_PER_HOUR
+  return isValidPixelsPerHour(raw) ? raw : DEFAULT_PIXELS_PER_HOUR
 }
 
 // Build a total parser over a preference union: a raw string in the union is

@@ -203,8 +203,6 @@ export function useOwnedCalendarZoom({
   ])
 
   return {
-    bottomInset,
-    focalY,
     onScroll,
     onViewportLayout,
     pinchActive,
@@ -212,10 +210,7 @@ export function useOwnedCalendarZoom({
     pinchGesture,
     pinchSequence,
     pixelsPerHour,
-    rawOffset,
     requestZoom,
     scrollRef,
-    topInset,
-    viewportHeight,
   }
 }

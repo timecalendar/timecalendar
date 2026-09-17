@@ -87,4 +87,3 @@ and must be retested on the repaired revision.
   head; no reply is not acceptance.
 - Reviewer verdict and merged revision: pending after owner acceptance and green checks on that
   exact head.
-
