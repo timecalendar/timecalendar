@@ -38,6 +38,7 @@ export function minuteToPixel(
     startMinute = GRID_START_MINUTE,
   }: GridOptions = {},
 ): number {
+  "worklet"
   return ((minute - startMinute) / 60) * pixelsPerHour
 }
 
@@ -81,6 +82,7 @@ export function gridContentHeight(
   endMinute: number,
   pixelsPerHour: number = DEFAULT_PIXELS_PER_HOUR,
 ): number {
+  "worklet"
   return minuteToPixel(endMinute, { pixelsPerHour, startMinute })
 }
 
