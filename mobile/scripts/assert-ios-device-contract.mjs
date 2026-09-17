@@ -86,22 +86,26 @@ export const verifyInfoPlist = (infoPlist) => {
     "UIRequiresFullScreen must not disable iPad resizing",
   )
 
-  const orientationKey = Object.hasOwn(infoPlist, IPAD_ORIENTATIONS_KEY)
-    ? IPAD_ORIENTATIONS_KEY
-    : GENERIC_ORIENTATIONS_KEY
-  const orientations = infoPlist[orientationKey]
-  assert.ok(
-    Array.isArray(orientations) && orientations.length > 0,
-    `${orientationKey} must contain iPad orientations`,
-  )
-  for (const orientation of REQUIRED_ORIENTATIONS) {
+  const orientationsByKey = {}
+  for (const orientationKey of [
+    GENERIC_ORIENTATIONS_KEY,
+    IPAD_ORIENTATIONS_KEY,
+  ]) {
+    const orientations = infoPlist[orientationKey]
     assert.ok(
-      orientations.includes(orientation),
-      `${orientationKey} must contain ${orientation}; received ${orientations.join(",")}`,
+      Array.isArray(orientations) && orientations.length > 0,
+      `${orientationKey} must contain orientations`,
     )
+    for (const orientation of REQUIRED_ORIENTATIONS) {
+      assert.ok(
+        orientations.includes(orientation),
+        `${orientationKey} must contain ${orientation}; received ${orientations.join(",")}`,
+      )
+    }
+    orientationsByKey[orientationKey] = orientations
   }
 
-  return { orientationKey, orientations }
+  return { orientationsByKey }
 }
 
 const findProjectFile = (iosRoot) => {
@@ -143,12 +147,16 @@ export const verifyGeneratedProject = (iosRoot) => {
   )
 
   const infoPlist = plist.parse(fs.readFileSync(resolvedPlistPath, "utf8"))
-  const { orientationKey, orientations } = verifyInfoPlist(infoPlist)
+  const { orientationsByKey } = verifyInfoPlist(infoPlist)
 
   console.log(`Application target: ${unquote(applicationTarget.target.name)}`)
   console.log(`TARGETED_DEVICE_FAMILY=${family}`)
   console.log(`UIRequiresFullScreen=${infoPlist.UIRequiresFullScreen}`)
-  console.log(`${orientationKey}=${orientations.join(",")}`)
+  for (const [orientationKey, orientations] of Object.entries(
+    orientationsByKey,
+  )) {
+    console.log(`${orientationKey}=${orientations.join(",")}`)
+  }
 }
 
 const runSelfTest = () => {
@@ -186,20 +194,52 @@ const runSelfTest = () => {
         "UIInterfaceOrientationLandscapeLeft",
         "UIInterfaceOrientationLandscapeRight",
       ],
-    }),
-    {
-      orientationKey: GENERIC_ORIENTATIONS_KEY,
-      orientations: [
+      [IPAD_ORIENTATIONS_KEY]: [
         "UIInterfaceOrientationPortrait",
         "UIInterfaceOrientationLandscapeLeft",
         "UIInterfaceOrientationLandscapeRight",
       ],
+    }),
+    {
+      orientationsByKey: {
+        [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+        [IPAD_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+      },
     },
   )
   assert.throws(
     () =>
       verifyInfoPlist({
         UIRequiresFullScreen: false,
+        [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+        ],
+        [IPAD_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+      }),
+    /UISupportedInterfaceOrientations must contain UIInterfaceOrientationLandscapeRight/,
+  )
+  assert.throws(
+    () =>
+      verifyInfoPlist({
+        UIRequiresFullScreen: false,
+        [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
         [IPAD_ORIENTATIONS_KEY]: [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationLandscapeLeft",
@@ -212,6 +252,11 @@ const runSelfTest = () => {
       verifyInfoPlist({
         UIRequiresFullScreen: true,
         [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+        [IPAD_ORIENTATIONS_KEY]: [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight",
