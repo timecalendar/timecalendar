@@ -2,7 +2,7 @@
 
 ## Testable revision and scope
 
-Runtime revision: `132fae89b819a6be0d343d574241a900898bd3d2`.
+Runtime revision: `cced6208f4844607a634baf1acc15efe452d0e44`.
 
 Use the exact pull-request head containing that runtime revision for the installed development
 build. The implementation uses Expo `~56.0.11`, React Native `0.85.3`, Gesture Handler `~2.31.1`,
@@ -39,8 +39,9 @@ Run from `mobile/` unless stated otherwise:
 - `npx jest src/features/calendar/renderer/owned-calendar-shell.test.tsx
 src/features/calendar/ui/calendar-screen.test.tsx calendar-owned-shell.contract.test.ts
 --runInBand --coverage`: passed; 3 suites and 74 tests. The renderer integration emits repeated
-  delayed vertical and horizontal completions after one pinch, keeps the focal result/header
-  stable, and proves each native owner reopens only for a new gesture epoch.
+  delayed pre-pinch owner starts plus vertical and horizontal completions after one pinch, keeps
+  the focal result/header stable, and proves each gate reopens only from its native owner's new
+  UI-thread gesture epoch.
 - `npx prettier --check` over every changed TypeScript, TSX, setup, and locale file: passed.
 - `npm run react-doctor:changed`: passed with no diagnostics across 26 changed files.
 - `bash e2e/test_run_e2e.sh`: passed.
