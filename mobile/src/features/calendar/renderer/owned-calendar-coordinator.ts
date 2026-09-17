@@ -10,7 +10,7 @@ import PagerView, {
   type PagerViewOnPageSelectedEvent,
   type PageScrollStateChangedNativeEvent,
 } from "react-native-pager-view"
-import { useReducedMotion } from "react-native-reanimated"
+import { useReducedMotion, useSharedValue } from "react-native-reanimated"
 
 import {
   type AppLocale,
@@ -114,6 +114,8 @@ export function useOwnedCalendarCoordinator({
   const consumedGenerationRef = useRef<number | null>(null)
   const currentGenerationRef = useRef(generation)
   const foregroundRef = useRef(AppState.currentState === "active")
+  const verticalOwnerEpoch = useSharedValue(0)
+  const horizontalOwnerEpoch = useSharedValue(0)
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
@@ -152,12 +154,24 @@ export function useOwnedCalendarCoordinator({
       progressContextKey,
       horizontalCallbacksBlocked,
     )
-  const nativeScrollGesture = Gesture.Native().withTestId(
-    "owned-calendar-native-scroll",
-  )
-  const nativePagerGesture = Gesture.Native().withTestId(
-    "owned-calendar-native-pager",
-  )
+  const nativeScrollGesture = Gesture.Native()
+    .withTestId("owned-calendar-native-scroll")
+    .onStart(() => {
+      "worklet"
+      const epoch = pinchInterruptionSequence.get()
+      if (pinchActive.get() || epoch === verticalOwnerEpoch.get()) return
+      verticalOwnerEpoch.set(epoch)
+      verticalCallbacksBlocked.set(false)
+    })
+  const nativePagerGesture = Gesture.Native()
+    .withTestId("owned-calendar-native-pager")
+    .onStart(() => {
+      "worklet"
+      const epoch = pinchInterruptionSequence.get()
+      if (pinchActive.get() || epoch === horizontalOwnerEpoch.get()) return
+      horizontalOwnerEpoch.set(epoch)
+      horizontalCallbacksBlocked.set(false)
+    })
   const pinchGesture = zoom.pinchGesture.blocksExternalGesture(
     nativeScrollGesture,
     nativePagerGesture,
@@ -266,7 +280,6 @@ export function useOwnedCalendarCoordinator({
     if (currentGenerationRef.current !== generation) return
     observePinchInterruption()
     if (event.nativeEvent.pageScrollState === "dragging") {
-      if (!pinchActive.get()) horizontalCallbacksBlocked.set(false)
       return
     }
     if (horizontalCallbacksBlocked.get()) return
@@ -317,8 +330,7 @@ export function useOwnedCalendarCoordinator({
 
   const onScrollBeginDrag = () => {
     observePinchInterruption()
-    if (pinchActive.get()) return
-    verticalCallbacksBlocked.set(false)
+    if (verticalCallbacksBlocked.get()) return
     cancelVerticalCandidate()
   }
 

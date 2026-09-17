@@ -102,6 +102,15 @@ describe("OwnedCalendarShell", () => {
     ])
   }
 
+  const fireNativeOwnerStart = (
+    owner: "owned-calendar-native-scroll" | "owned-calendar-native-pager",
+  ) => {
+    fireGestureHandler(getByGestureTestId(owner), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 1 },
+    ])
+  }
+
   beforeEach(() => {
     AppState.currentState = "active"
     jest.clearAllMocks()
@@ -719,7 +728,7 @@ describe("OwnedCalendarShell", () => {
     },
   )
 
-  it("gates every delayed native completion until each owner starts a new epoch", async () => {
+  it("gates delayed pre-pinch owner starts and completions until each native owner starts a new epoch", async () => {
     let frame: FrameRequestCallback | undefined
     const requestFrame = jest
       .spyOn(global, "requestAnimationFrame")
@@ -741,9 +750,11 @@ describe("OwnedCalendarShell", () => {
     })
 
     await act(async () => firePinch(State.END))
+    await fireEvent(canvas, "scrollBeginDrag", scrollEvent(899, 12, 80))
     await fireEvent.scroll(canvas, scrollEvent(900, 12, 80))
     await fireEvent(canvas, "scrollEndDrag", scrollEvent(901, 12, 80))
     await fireEvent(canvas, "momentumScrollEnd", scrollEvent(902, 12, 80))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(903, 12, 80))
     await act(async () => frame?.(0))
     await fireEvent(pager, "pageScroll", {
       nativeEvent: { position: 1, offset: 0.7 },
@@ -752,6 +763,10 @@ describe("OwnedCalendarShell", () => {
     await fireEvent(pager, "pageScrollStateChanged", {
       nativeEvent: { pageScrollState: "settling" },
     })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 0 } })
     await fireEvent(pager, "pageScrollStateChanged", {
       nativeEvent: { pageScrollState: "idle" },
     })
@@ -785,11 +800,13 @@ describe("OwnedCalendarShell", () => {
     )
     expect(onZoomSettled.mock.lastCall?.[0].rawOffset).toBeCloseTo(61.52, 2)
 
+    await act(async () => fireNativeOwnerStart("owned-calendar-native-scroll"))
     await fireEvent(canvas, "scrollBeginDrag", scrollEvent(300, 12, 80))
     await fireEvent.scroll(canvas, scrollEvent(300, 12, 80))
     await fireEvent(canvas, "momentumScrollEnd", scrollEvent(300, 12, 80))
     expect(onVerticalOffsetSettled).toHaveBeenCalledWith(300)
 
+    await act(async () => fireNativeOwnerStart("owned-calendar-native-pager"))
     await fireEvent(pager, "pageScrollStateChanged", {
       nativeEvent: { pageScrollState: "dragging" },
     })
