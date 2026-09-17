@@ -131,7 +131,6 @@ export function useOwnedCalendarCoordinator({
   const settledZoomSequenceRef = useRef(0)
   const previousShowWeekendsRef = useRef(showWeekends)
   const progressContextKey = `${generation}:${geometryRevision}:${mode}:${headerLaneWidth}:${showWeekends}`
-  const renderGeometryRevision = geometryRevision
   const onViewportGeometryChange = (
     geometry: TimedViewportGeometry & { rawOffset?: number },
   ) => {
@@ -303,7 +302,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const onPageSelected = (event: PagerViewOnPageSelectedEvent) => {
-    if (renderGeometryRevision !== geometryRevisionRef.current) return
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (currentGenerationRef.current !== generation) return
     if (horizontalCallbacksAreBlocked()) return
     selectedPageRef.current = event.nativeEvent.position
@@ -312,7 +311,7 @@ export function useOwnedCalendarCoordinator({
   const onPageScrollStateChanged = (
     event: PageScrollStateChangedNativeEvent,
   ) => {
-    if (renderGeometryRevision !== geometryRevisionRef.current) return
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (currentGenerationRef.current !== generation) return
     observePinchInterruption()
     if (event.nativeEvent.pageScrollState === "dragging") {
@@ -331,7 +330,7 @@ export function useOwnedCalendarCoordinator({
     direction: WeekDirection,
     source: CalendarTransitionSource,
   ) => {
-    if (renderGeometryRevision !== geometryRevisionRef.current) return
+    if (geometryRevision !== geometryRevisionRef.current) return
     observePinchInterruption()
     if (pinchActive.get()) return
     horizontalCallbacksBlocked.set(false)
@@ -344,7 +343,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const settleVertical = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (renderGeometryRevision !== geometryRevisionRef.current) return
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
     const nextOffset = event.nativeEvent.contentOffset.y
@@ -353,11 +352,11 @@ export function useOwnedCalendarCoordinator({
   }
 
   const onScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (renderGeometryRevision !== geometryRevisionRef.current) return
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
     verticalCandidateRef.current = event.nativeEvent.contentOffset.y
-    const candidateGeometryRevision = renderGeometryRevision
+    const candidateGeometryRevision = geometryRevision
     verticalFrameRef.current = requestAnimationFrame(() => {
       verticalFrameRef.current = null
       const nextOffset = verticalCandidateRef.current

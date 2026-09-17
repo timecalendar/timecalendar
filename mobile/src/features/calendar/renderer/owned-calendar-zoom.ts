@@ -19,6 +19,8 @@ import {
   usableViewportCenterY,
 } from "@/features/calendar/data"
 
+import type { TimedViewportGeometry } from "./owned-calendar-resize"
+
 export type CalendarZoomCommand = "in" | "out" | "reset"
 
 export type CalendarZoomSettlement = {
@@ -42,13 +44,9 @@ export function useOwnedCalendarZoom({
   initialPixelsPerHour: number
   initialRawOffset: number
   onZoomSettled: (settlement: CalendarZoomSettlement) => void
-  onViewportGeometryChange: (geometry: {
-    width: number
-    height: number
-    topInset: number
-    bottomInset: number
-    rawOffset?: number
-  }) => void
+  onViewportGeometryChange: (
+    geometry: TimedViewportGeometry & { rawOffset?: number },
+  ) => void
   onInteractionInterrupted: () => void
 }) {
   const scrollRef = useAnimatedRef<ScrollView>()
@@ -175,12 +173,12 @@ export function useOwnedCalendarZoom({
         nextHeight !== viewportHeight.get() ||
         nextTopInset !== topInset.get() ||
         nextBottomInset !== bottomInset.get()
-      viewportWidth.set(nextWidth)
-      viewportHeight.set(nextHeight)
-      topInset.set(nextTopInset)
-      bottomInset.set(nextBottomInset)
       rawOffset.set(event.contentOffset.y)
       if (geometryChanged) {
+        viewportWidth.set(nextWidth)
+        viewportHeight.set(nextHeight)
+        topInset.set(nextTopInset)
+        bottomInset.set(nextBottomInset)
         scheduleOnRN(onViewportGeometryChange, {
           width: nextWidth,
           height: nextHeight,
@@ -292,7 +290,6 @@ export function useOwnedCalendarZoom({
   return {
     onScroll,
     onViewportLayout,
-    geometryRevision,
     invalidateForGeometry,
     pinchActive,
     pinchGeneration,
