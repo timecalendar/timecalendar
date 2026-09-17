@@ -2,7 +2,7 @@
 
 ## Testable revision and scope
 
-Runtime revision: `cc812570726f52811c12df53c5d10268181d5f64`.
+Runtime revision: `132fae89b819a6be0d343d574241a900898bd3d2`.
 
 Use the exact pull-request head containing that runtime revision for the installed development
 build. The implementation uses Expo `~56.0.11`, React Native `0.85.3`, Gesture Handler `~2.31.1`,
@@ -34,10 +34,15 @@ was added.
 
 Run from `mobile/` unless stated otherwise:
 
-- `npx tsc --noEmit && npm run lint && npm test -- --coverage`: passed; 177 suites and 1,747 tests,
+- `npx tsc --noEmit && npm run lint && npm test -- --coverage`: passed; 177 suites and 1,748 tests,
   with the configured coverage gates satisfied.
+- `npx jest src/features/calendar/renderer/owned-calendar-shell.test.tsx
+src/features/calendar/ui/calendar-screen.test.tsx calendar-owned-shell.contract.test.ts
+--runInBand --coverage`: passed; 3 suites and 74 tests. The renderer integration emits repeated
+  delayed vertical and horizontal completions after one pinch, keeps the focal result/header
+  stable, and proves each native owner reopens only for a new gesture epoch.
 - `npx prettier --check` over every changed TypeScript, TSX, setup, and locale file: passed.
-- `npm run react-doctor:changed`: passed with no diagnostics across 24 changed files.
+- `npm run react-doctor:changed`: passed with no diagnostics across 26 changed files.
 - `bash e2e/test_run_e2e.sh`: passed.
 - `bash e2e/test_ci_mobile_e2e.sh`: passed.
 - From the repository root, `openspec validate zoom-owned-calendar-grid`: passed.
