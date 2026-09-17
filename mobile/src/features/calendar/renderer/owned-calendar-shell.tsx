@@ -87,6 +87,7 @@ export const OwnedCalendarShell = forwardRef<
           onPageSelected={coordinator.onPageSelected}
           onPageScrollStateChanged={coordinator.onPageScrollStateChanged}
           onScroll={coordinator.onScroll}
+          onScrollBeginDrag={coordinator.onScrollBeginDrag}
           onScrollEndDrag={coordinator.onScrollEndDrag}
           onViewportLayout={coordinator.onViewportLayout}
           onMomentumScrollBegin={coordinator.cancelVerticalCandidate}

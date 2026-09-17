@@ -2,6 +2,7 @@ import { useLayoutEffect } from "react"
 import PagerView from "react-native-pager-view"
 import {
   createAnimatedComponent,
+  type SharedValue,
   useAnimatedStyle,
   useEvent,
   useHandler,
@@ -46,7 +47,11 @@ function usePageScrollHandler(
 
 export const AnimatedPagerView = createAnimatedComponent(PagerView)
 
-export function usePagerPageScroll(laneWidth: number, contextKey: string) {
+export function usePagerPageScroll(
+  laneWidth: number,
+  contextKey: string,
+  callbacksBlocked: SharedValue<boolean>,
+) {
   const position = useSharedValue(CENTER_PAGE)
   const offset = useSharedValue(0)
   const activeContextKey = useSharedValue(contextKey)
@@ -61,6 +66,7 @@ export function usePagerPageScroll(laneWidth: number, contextKey: string) {
     {
       onPageScroll: (event) => {
         "worklet"
+        if (callbacksBlocked.get()) return
         if (activeContextKey.get() !== contextKey) {
           position.set(CENTER_PAGE)
           offset.set(0)
@@ -70,7 +76,7 @@ export function usePagerPageScroll(laneWidth: number, contextKey: string) {
         offset.set(event.offset)
       },
     },
-    [activeContextKey, contextKey, offset, position],
+    [activeContextKey, callbacksBlocked, contextKey, offset, position],
   )
 
   const headerStripStyle = useAnimatedStyle(() => ({

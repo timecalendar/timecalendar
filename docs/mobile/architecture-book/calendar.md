@@ -22,7 +22,10 @@ content-inset adjustment, allowing iOS NativeTabs to account for the Liquid Glas
 Live native raw offset, measured viewport height and automatic top/bottom insets feed a
 feature-private Reanimated zoom coordinator. A two-finger pinch updates one bounded 40–120
 pixels-per-hour scale and a focal-preserving raw offset on the UI thread; React receives only the
-settled scale/offset. Calendar tab reselect-to-top is disabled. The ScrollView
+settled scale/offset. After pinch takes ownership, callbacks from the interrupted scroll and pager
+epochs stay gated through settlement; each native owner reopens only when a new drag begins, so
+queued offset, selection, and idle events cannot replace the focal result or dated header.
+Calendar tab reselect-to-top is disabled. The ScrollView
 exposes the committed localized day or week date context as an adjustable accessibility label
 with mode-specific translated previous/next actions.
 One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native

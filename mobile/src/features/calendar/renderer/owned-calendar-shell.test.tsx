@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import { createRef } from "react"
 import { AppState, StyleSheet } from "react-native"
 import { State } from "react-native-gesture-handler"
 import {
@@ -10,7 +11,10 @@ import { useEvent, useReducedMotion } from "react-native-reanimated"
 import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
 import { Colors } from "@/theme"
 
-import { OwnedCalendarShell } from "./owned-calendar-shell"
+import {
+  OwnedCalendarShell,
+  type OwnedCalendarShellHandle,
+} from "./owned-calendar-shell"
 
 const pagerMock = jest.requireMock<{
   __pagerMock: {
@@ -714,6 +718,93 @@ describe("OwnedCalendarShell", () => {
       expect(onTransitionSettled).not.toHaveBeenCalled()
     },
   )
+
+  it("gates every delayed native completion until each owner starts a new epoch", async () => {
+    let frame: FrameRequestCallback | undefined
+    const requestFrame = jest
+      .spyOn(global, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        frame = callback
+        return 1
+      })
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} ref={shellRef} />)
+    await measureHeaderLane()
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    await fireEvent.scroll(canvas, scrollEvent(0, 12, 80))
+    await fireEvent(canvas, "accessibilityAction", {
+      nativeEvent: { actionName: "increment" },
+    })
+
+    await act(async () => firePinch(State.END))
+    await fireEvent.scroll(canvas, scrollEvent(900, 12, 80))
+    await fireEvent(canvas, "scrollEndDrag", scrollEvent(901, 12, 80))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(902, 12, 80))
+    await act(async () => frame?.(0))
+    await fireEvent(pager, "pageScroll", {
+      nativeEvent: { position: 1, offset: 0.7 },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "settling" },
+    })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        ref={shellRef}
+        initialPixelsPerHour={66}
+        initialVerticalOffset={25}
+      />,
+    )
+
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
+    expect(onTransitionCancelled).toHaveBeenCalledTimes(1)
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+    expect(headerTranslateX()).toBe(0)
+
+    await act(async () => shellRef.current?.requestZoom("in"))
+    expect(onZoomSettled).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        generation: 0,
+        pixelsPerHour: 76,
+        sequence: 2,
+        source: "command",
+      }),
+    )
+    expect(onZoomSettled.mock.lastCall?.[0].rawOffset).toBeCloseTo(61.52, 2)
+
+    await fireEvent(canvas, "scrollBeginDrag", scrollEvent(300, 12, 80))
+    await fireEvent.scroll(canvas, scrollEvent(300, 12, 80))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(300, 12, 80))
+    expect(onVerticalOffsetSettled).toHaveBeenCalledWith(300)
+
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "dragging" },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    expect(onTransitionRequest).toHaveBeenLastCalledWith({
+      revision: 2,
+      direction: 1,
+      source: "gesture",
+    })
+    expect(onTransitionSettled).toHaveBeenCalledWith(2)
+    requestFrame.mockRestore()
+  })
 
   it("settles one focal-preserving zoom result only after a successful pinch", async () => {
     await render(<OwnedCalendarShell {...props} />)

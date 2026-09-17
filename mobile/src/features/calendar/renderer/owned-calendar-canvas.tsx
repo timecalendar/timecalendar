@@ -84,6 +84,7 @@ export function OwnedCalendarCanvas({
   onPageScroll,
   onPageSelected,
   onPageScrollStateChanged,
+  onScrollBeginDrag,
   onScrollEndDrag,
   onViewportLayout,
   onMomentumScrollBegin,
@@ -108,6 +109,7 @@ export function OwnedCalendarCanvas({
   onPageScroll: ReturnType<typeof usePagerPageScroll>["onPageScroll"]
   onPageSelected: (event: PagerViewOnPageSelectedEvent) => void
   onPageScrollStateChanged: (event: PageScrollStateChangedNativeEvent) => void
+  onScrollBeginDrag: () => void
   onScrollEndDrag: (event: NativeSyntheticEvent<NativeScrollEvent>) => void
   onViewportLayout: (event: LayoutChangeEvent) => void
   onMomentumScrollBegin: () => void
@@ -147,6 +149,7 @@ export function OwnedCalendarCanvas({
         scrollEventThrottle={16}
         onLayout={onViewportLayout}
         onScroll={onScroll}
+        onScrollBeginDrag={onScrollBeginDrag}
         onScrollEndDrag={onScrollEndDrag}
         onMomentumScrollBegin={onMomentumScrollBegin}
         onMomentumScrollEnd={onMomentumScrollEnd}

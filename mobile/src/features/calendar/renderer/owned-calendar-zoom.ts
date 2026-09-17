@@ -55,6 +55,9 @@ export function useOwnedCalendarZoom({
   const pinchActive = useSharedValue(false)
   const pinchGeneration = useSharedValue(generation)
   const pinchSequence = useSharedValue(0)
+  const pinchInterruptionSequence = useSharedValue(0)
+  const verticalCallbacksBlocked = useSharedValue(false)
+  const horizontalCallbacksBlocked = useSharedValue(false)
   const scrollRevision = useSharedValue(0)
   const pinchGesture = Gesture.Pinch()
     .withTestId("owned-calendar-pinch")
@@ -62,6 +65,9 @@ export function useOwnedCalendarZoom({
     .onStart((event) => {
       "worklet"
       pinchGeneration.set(generation)
+      verticalCallbacksBlocked.set(true)
+      horizontalCallbacksBlocked.set(true)
+      pinchInterruptionSequence.set(pinchInterruptionSequence.get() + 1)
       pinchSequence.set(pinchSequence.get() + 1)
       pinchBaselineScale.set(pixelsPerHour.get())
       pinchBaselineOffset.set(rawOffset.get())
@@ -130,6 +136,7 @@ export function useOwnedCalendarZoom({
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
+      if (verticalCallbacksBlocked.get()) return
       viewportHeight.set(event.layoutMeasurement.height)
       topInset.set(event.contentInset.top)
       bottomInset.set(event.contentInset.bottom)
@@ -180,6 +187,7 @@ export function useOwnedCalendarZoom({
   }
 
   useLayoutEffect(() => {
+    const generationChanged = pinchGeneration.get() !== generation
     const nextScale = resolvePixelsPerHour(initialPixelsPerHour)
     pixelsPerHour.set(nextScale)
     rawOffset.set(initialRawOffset)
@@ -187,9 +195,14 @@ export function useOwnedCalendarZoom({
     pinchBaselineOffset.set(initialRawOffset)
     pinchActive.set(false)
     pinchGeneration.set(generation)
+    if (generationChanged) {
+      verticalCallbacksBlocked.set(false)
+      horizontalCallbacksBlocked.set(false)
+    }
     scrollRef.current?.scrollTo({ y: initialRawOffset, animated: false })
   }, [
     generation,
+    horizontalCallbacksBlocked,
     initialPixelsPerHour,
     initialRawOffset,
     pinchActive,
@@ -200,6 +213,7 @@ export function useOwnedCalendarZoom({
     pixelsPerHour,
     rawOffset,
     scrollRef,
+    verticalCallbacksBlocked,
   ])
 
   return {
@@ -208,9 +222,12 @@ export function useOwnedCalendarZoom({
     pinchActive,
     pinchGeneration,
     pinchGesture,
+    pinchInterruptionSequence,
     pinchSequence,
     pixelsPerHour,
     requestZoom,
     scrollRef,
+    horizontalCallbacksBlocked,
+    verticalCallbacksBlocked,
   }
 }

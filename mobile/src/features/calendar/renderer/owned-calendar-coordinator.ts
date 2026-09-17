@@ -121,8 +121,6 @@ export function useOwnedCalendarCoordinator({
   const settledZoomSequenceRef = useRef(0)
   const previousShowWeekendsRef = useRef(showWeekends)
   const progressContextKey = `${generation}:${mode}:${headerLaneWidth}:${showWeekends}`
-  const { headerStripStyle, offset, onPageScroll, position } =
-    usePagerPageScroll(headerLaneWidth, progressContextKey)
   const zoom = useOwnedCalendarZoom({
     generation,
     initialPixelsPerHour,
@@ -139,7 +137,21 @@ export function useOwnedCalendarCoordinator({
       onZoomSettled(settlement)
     },
   })
-  const { pinchActive, pinchGeneration, pinchSequence, scrollRef } = zoom
+  const {
+    horizontalCallbacksBlocked,
+    pinchActive,
+    pinchGeneration,
+    pinchInterruptionSequence,
+    pinchSequence,
+    scrollRef,
+    verticalCallbacksBlocked,
+  } = zoom
+  const { headerStripStyle, offset, onPageScroll, position } =
+    usePagerPageScroll(
+      headerLaneWidth,
+      progressContextKey,
+      horizontalCallbacksBlocked,
+    )
   const nativeScrollGesture = Gesture.Native().withTestId(
     "owned-calendar-native-scroll",
   )
@@ -190,14 +202,24 @@ export function useOwnedCalendarCoordinator({
     verticalCandidateRef.current = null
   }
 
-  const consumePinchInterruption = () => {
+  const observePinchInterruption = () => {
     if (pinchGeneration.get() !== generation) return false
-    const sequence = pinchSequence.get()
+    const sequence = pinchInterruptionSequence.get()
     if (sequence === handledPinchSequenceRef.current) return false
     handledPinchSequenceRef.current = sequence
     cancelVerticalCandidate()
     cancelHorizontalTransition(true)
     return true
+  }
+
+  const verticalCallbacksAreBlocked = () => {
+    observePinchInterruption()
+    return verticalCallbacksBlocked.get()
+  }
+
+  const horizontalCallbacksAreBlocked = () => {
+    observePinchInterruption()
+    return horizontalCallbacksBlocked.get()
   }
 
   const beginTransition = (
@@ -234,7 +256,7 @@ export function useOwnedCalendarCoordinator({
 
   const onPageSelected = (event: PagerViewOnPageSelectedEvent) => {
     if (currentGenerationRef.current !== generation) return
-    if (consumePinchInterruption()) return
+    if (horizontalCallbacksAreBlocked()) return
     selectedPageRef.current = event.nativeEvent.position
   }
 
@@ -242,7 +264,12 @@ export function useOwnedCalendarCoordinator({
     event: PageScrollStateChangedNativeEvent,
   ) => {
     if (currentGenerationRef.current !== generation) return
-    if (consumePinchInterruption()) return
+    observePinchInterruption()
+    if (event.nativeEvent.pageScrollState === "dragging") {
+      if (!pinchActive.get()) horizontalCallbacksBlocked.set(false)
+      return
+    }
+    if (horizontalCallbacksBlocked.get()) return
     if (event.nativeEvent.pageScrollState !== "idle") return
     if (selectedPageRef.current === CENTER_PAGE) {
       cancelHorizontalTransition(false)
@@ -255,6 +282,9 @@ export function useOwnedCalendarCoordinator({
     direction: WeekDirection,
     source: CalendarTransitionSource,
   ) => {
+    observePinchInterruption()
+    if (pinchActive.get()) return
+    horizontalCallbacksBlocked.set(false)
     const revision = beginTransition(direction, source)
     if (revision === null || pendingRevisionRef.current !== revision) return
     const target = CENTER_PAGE + direction
@@ -264,7 +294,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const settleVertical = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (consumePinchInterruption()) return
+    if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
     const nextOffset = event.nativeEvent.contentOffset.y
     committedVerticalOffsetRef.current = nextOffset
@@ -272,7 +302,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const onScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (consumePinchInterruption()) return
+    if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
     verticalCandidateRef.current = event.nativeEvent.contentOffset.y
     verticalFrameRef.current = requestAnimationFrame(() => {
@@ -285,6 +315,13 @@ export function useOwnedCalendarCoordinator({
     })
   }
 
+  const onScrollBeginDrag = () => {
+    observePinchInterruption()
+    if (pinchActive.get()) return
+    verticalCallbacksBlocked.set(false)
+    cancelVerticalCandidate()
+  }
+
   useEffect(() => {
     onTransitionCancelledRef.current = onTransitionCancelled
   }, [onTransitionCancelled])
@@ -294,7 +331,7 @@ export function useOwnedCalendarCoordinator({
     currentGenerationRef.current = generation
     pinchActive.set(false)
     pinchGeneration.set(generation)
-    handledPinchSequenceRef.current = pinchSequence.get()
+    handledPinchSequenceRef.current = pinchInterruptionSequence.get()
     consumedGenerationRef.current = null
     const revision = pendingRevisionRef.current
     if (revision !== null) {
@@ -314,6 +351,7 @@ export function useOwnedCalendarCoordinator({
     offset,
     pinchActive,
     pinchGeneration,
+    pinchInterruptionSequence,
     pinchSequence,
     position,
     scrollRef,
@@ -381,6 +419,7 @@ export function useOwnedCalendarCoordinator({
     onPageScrollStateChanged,
     onPageSelected,
     onScroll: zoom.onScroll,
+    onScrollBeginDrag,
     onScrollEndDrag,
     onViewportLayout: zoom.onViewportLayout,
     nativePagerGesture,
