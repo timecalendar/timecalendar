@@ -1,3 +1,4 @@
+import { forwardRef, useImperativeHandle } from "react"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
@@ -13,6 +14,10 @@ import { useTheme } from "@/theme"
 import { OwnedCalendarCanvas } from "./owned-calendar-canvas"
 import { useOwnedCalendarCoordinator } from "./owned-calendar-coordinator"
 import { OwnedCalendarDateHeader } from "./owned-calendar-header"
+import type {
+  CalendarZoomCommand,
+  CalendarZoomSettlement,
+} from "./owned-calendar-zoom"
 
 type OwnedCalendarShellProps = {
   heading: string
@@ -25,35 +30,47 @@ type OwnedCalendarShellProps = {
   currentDate: Date
   uses24HourClock: boolean | null
   initialVerticalOffset: number
+  initialPixelsPerHour: number
   generation: number
   revisionFloor: number
   onVerticalOffsetSettled: (offset: number) => void
+  onZoomSettled: (settlement: CalendarZoomSettlement) => void
   onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
 }
 
-export function OwnedCalendarShell(props: OwnedCalendarShellProps) {
+export type OwnedCalendarShellHandle = {
+  requestZoom: (command: CalendarZoomCommand) => void
+}
+
+export const OwnedCalendarShell = forwardRef<
+  OwnedCalendarShellHandle,
+  OwnedCalendarShellProps
+>(function OwnedCalendarShell(props, ref) {
   const { t } = useTranslation()
   const theme = useTheme()
   const coordinator = useOwnedCalendarCoordinator(props)
+  useImperativeHandle(ref, () => ({ requestZoom: coordinator.requestZoom }), [
+    coordinator.requestZoom,
+  ])
 
   return (
-    <GestureDetector gesture={coordinator.pinchGesture}>
-      <View
-        testID="owned-calendar-shell"
-        collapsable={false}
-        style={[styles.shell, { backgroundColor: theme.background }]}
-      >
-        <OwnedCalendarDateHeader
-          pages={coordinator.pages}
-          locale={props.locale}
-          displayZone={props.displayZone}
-          todayKey={coordinator.todayKey}
-          todayLabel={t("calendar.today")}
-          stripStyle={coordinator.headerStripStyle}
-          onLaneLayout={coordinator.onHeaderLaneLayout}
-        />
+    <View
+      testID="owned-calendar-shell"
+      collapsable={false}
+      style={[styles.shell, { backgroundColor: theme.background }]}
+    >
+      <OwnedCalendarDateHeader
+        pages={coordinator.pages}
+        locale={props.locale}
+        displayZone={props.displayZone}
+        todayKey={coordinator.todayKey}
+        todayLabel={t("calendar.today")}
+        stripStyle={coordinator.headerStripStyle}
+        onLaneLayout={coordinator.onHeaderLaneLayout}
+      />
+      <GestureDetector gesture={coordinator.pinchGesture}>
         <OwnedCalendarCanvas
           heading={props.heading}
           mode={props.mode}
@@ -69,15 +86,19 @@ export function OwnedCalendarShell(props: OwnedCalendarShellProps) {
           onPageScroll={coordinator.onPageScroll}
           onPageSelected={coordinator.onPageSelected}
           onPageScrollStateChanged={coordinator.onPageScrollStateChanged}
+          onScroll={coordinator.onScroll}
           onScrollEndDrag={coordinator.onScrollEndDrag}
+          onViewportLayout={coordinator.onViewportLayout}
           onMomentumScrollBegin={coordinator.cancelVerticalCandidate}
           onMomentumScrollEnd={coordinator.settleVertical}
           onAccessiblePageRequest={coordinator.requestAccessiblePage}
+          pixelsPerHour={coordinator.pixelsPerHour}
+          settledPixelsPerHour={props.initialPixelsPerHour}
           t={t}
         />
-      </View>
-    </GestureDetector>
+      </GestureDetector>
+    </View>
   )
-}
+})
 
 const styles = StyleSheet.create({ shell: { flex: 1 } })

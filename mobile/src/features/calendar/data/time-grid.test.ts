@@ -180,6 +180,25 @@ describe("calendar zoom geometry", () => {
       }
     }
   })
+
+  it("tracks a moving focal point while preserving the captured clock hour", () => {
+    const nextOffset = focalPreservingRawOffset({
+      rawOffset: 480,
+      focalY: 240,
+      nextFocalY: 300,
+      oldPixelsPerHour: 60,
+      newPixelsPerHour: 90,
+      geometry: {
+        contentHeight: fullDayContentHeight(90),
+        viewportHeight: 500,
+        topInset: 20,
+        bottomInset: 80,
+      },
+    })
+
+    expect(clockHourAtFocalPoint(480, 240, 60)).toBe(12)
+    expect(clockHourAtFocalPoint(nextOffset, 300, 90)).toBe(12)
+  })
 })
 
 describe("full-day geometry", () => {

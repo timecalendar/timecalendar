@@ -47,6 +47,7 @@ describe("owned Calendar paging repository contract", () => {
     const compiled = [
       "src/features/calendar/renderer/owned-calendar-shell.tsx",
       "src/features/calendar/renderer/owned-calendar-canvas.tsx",
+      "src/features/calendar/renderer/owned-calendar-zoom.ts",
       "src/features/calendar/renderer/pager-page-scroll.ts",
     ]
       .map(compileForNativeRuntime)
@@ -55,6 +56,8 @@ describe("owned Calendar paging repository contract", () => {
     expect(compiled).toContain("contentInsetAdjustmentBehavior")
     expect(compiled).toContain("createAnimatedComponent")
     expect(compiled).toContain("useEvent")
+    expect(compiled).toContain("useAnimatedScrollHandler")
+    expect(compiled).toContain("Gesture.Pinch")
   })
 
   it("keeps the vendor dependency, adapter, patch, and exclusive config absent", () => {
@@ -86,6 +89,7 @@ describe("owned Calendar paging repository contract", () => {
       "owned-calendar-header.tsx",
       "owned-calendar-shell.test.tsx",
       "owned-calendar-shell.tsx",
+      "owned-calendar-zoom.ts",
       "pager-page-scroll.ts",
     ])
 
@@ -117,7 +121,7 @@ describe("owned Calendar paging repository contract", () => {
       join(rendererRoot, "pager-page-scroll.ts"),
       "utf8",
     )
-    expect(renderer).toMatch(/<ScrollView\b/)
+    expect(renderer).toMatch(/<Animated\.ScrollView\b/)
     expect(renderer).toMatch(/contentInsetAdjustmentBehavior="automatic"/)
     expect(progress).toContain("createAnimatedComponent(PagerView)")
     expect(progress).toContain("useHandler")
@@ -125,7 +129,7 @@ describe("owned Calendar paging repository contract", () => {
     expect(progress).toContain("useSharedValue")
     expect(progress).toContain("useAnimatedStyle")
     expect(renderer).toMatch(/<AnimatedPagerView\b/)
-    expect(renderer.match(/<ScrollView\s+ref=/g)).toHaveLength(1)
+    expect(renderer.match(/<Animated\.ScrollView\s+ref=/g)).toHaveLength(1)
     expect(renderer.match(/<AnimatedPagerView\s+ref=/g)).toHaveLength(1)
     expect(progress).toContain("export const CENTER_PAGE = 1")
     expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
@@ -145,6 +149,17 @@ describe("owned Calendar paging repository contract", () => {
       /PanGestureHandler|Animated\.timing|setInterval|setTimeout|runOnJS|import\s*\{[^}]*\bAnimated\b[^}]*\}\s*from "react-native"/,
     )
     expect(renderer).not.toMatch(/\buseMemo\b|\buseCallback\b/)
+
+    const zoom = readFileSync(
+      join(rendererRoot, "owned-calendar-zoom.ts"),
+      "utf8",
+    )
+    expect(zoom).toContain("Gesture.Pinch()")
+    expect(zoom).toContain("useAnimatedScrollHandler")
+    expect(zoom).toContain("useAnimatedReaction")
+    expect(zoom).toContain("useSharedValue")
+    expect(zoom).toContain("scheduleOnRN")
+    expect(zoom).not.toMatch(/\buseState\b|\brunOnJS\b/)
   })
 
   it("keeps view and weekend persistence in the typed settings and storage seams", () => {
@@ -188,6 +203,12 @@ describe("owned Calendar paging repository contract", () => {
     expect(settingsHooks).toContain("useCalendarViewPreference")
     expect(storage).toContain(
       '[STORAGE_KEYS.calendarView]: "environment-independent"',
+    )
+    expect(settingsStore).toContain("getCalendarZoomPixelsPerHour")
+    expect(settingsStore).toContain("setCalendarZoomPixelsPerHour")
+    expect(settingsHooks).toContain("useCalendarZoomPreference")
+    expect(storage).toContain(
+      '[STORAGE_KEYS.calendarZoomPixelsPerHour]: "environment-independent"',
     )
     expect(transition).toContain('mode === "day"')
     expect(transition).toContain("addDaysInZone")

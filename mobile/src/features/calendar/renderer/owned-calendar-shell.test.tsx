@@ -25,6 +25,7 @@ describe("OwnedCalendarShell", () => {
   const onTransitionSettled = jest.fn()
   const onTransitionCancelled = jest.fn()
   const onVerticalOffsetSettled = jest.fn()
+  const onZoomSettled = jest.fn()
   const props = {
     heading: "Monday, June 15th, 2026",
     mode: "week" as const,
@@ -36,12 +37,14 @@ describe("OwnedCalendarShell", () => {
     currentDate: new Date("2026-06-17T12:00:00.000Z"),
     uses24HourClock: true,
     initialVerticalOffset: 0,
+    initialPixelsPerHour: 60,
     generation: 0,
     revisionFloor: 0,
     onTransitionRequest,
     onTransitionSettled,
     onTransitionCancelled,
     onVerticalOffsetSettled,
+    onZoomSettled,
   }
   const scrollEvent = (y: number, top = 0, bottom = 0) => ({
     nativeEvent: {
@@ -77,6 +80,13 @@ describe("OwnedCalendarShell", () => {
   const firePinch = (finalState: State = State.END) => {
     fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
       { state: State.BEGAN, numberOfPointers: 1 },
+      {
+        state: State.ACTIVE,
+        numberOfPointers: 2,
+        focalX: 160,
+        focalY: 250,
+        scale: 1,
+      },
       {
         state: State.ACTIVE,
         numberOfPointers: 2,
@@ -468,6 +478,32 @@ describe("OwnedCalendarShell", () => {
     expect(style).not.toHaveProperty("borderTopWidth")
   })
 
+  it("drives labels, boundaries, pages, and content extent from one scale", async () => {
+    await render(<OwnedCalendarShell {...props} initialPixelsPerHour={90} />)
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-major-0-1440", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).top,
+    ).toBe(2160)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-hour-label-12", {
+          includeHiddenElements: true,
+        }).parent?.props.style,
+      ).top,
+    ).toBe(1080)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-page-0", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).height,
+    ).toBe(2160 + StyleSheet.hairlineWidth)
+  })
+
   it.each([
     [0, -1],
     [2, 1],
@@ -678,6 +714,29 @@ describe("OwnedCalendarShell", () => {
       expect(onTransitionSettled).not.toHaveBeenCalled()
     },
   )
+
+  it("settles one focal-preserving zoom result only after a successful pinch", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    await act(async () => firePinch(State.END))
+
+    expect(onZoomSettled).toHaveBeenCalledTimes(1)
+    expect(onZoomSettled).toHaveBeenCalledWith({
+      generation: 0,
+      pixelsPerHour: 66,
+      rawOffset: 25,
+      sequence: 1,
+      source: "pinch",
+    })
+  })
+
+  it("restores the baseline without persistence when pinch is cancelled", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    await act(async () => firePinch(State.CANCELLED))
+
+    expect(onZoomSettled).not.toHaveBeenCalled()
+  })
 
   it("invalidates an active pinch on generation replacement", async () => {
     const view = await render(<OwnedCalendarShell {...props} />)

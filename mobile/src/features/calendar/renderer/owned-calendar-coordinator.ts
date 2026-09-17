@@ -4,14 +4,13 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  ScrollView,
 } from "react-native"
 import { Gesture } from "react-native-gesture-handler"
 import PagerView, {
   type PagerViewOnPageSelectedEvent,
   type PageScrollStateChangedNativeEvent,
 } from "react-native-pager-view"
-import { useReducedMotion, useSharedValue } from "react-native-reanimated"
+import { useReducedMotion } from "react-native-reanimated"
 
 import {
   type AppLocale,
@@ -25,6 +24,10 @@ import {
   type WeekDirection,
 } from "@/features/calendar/data"
 
+import {
+  type CalendarZoomSettlement,
+  useOwnedCalendarZoom,
+} from "./owned-calendar-zoom"
 import { CENTER_PAGE, usePagerPageScroll } from "./pager-page-scroll"
 
 export { CENTER_PAGE } from "./pager-page-scroll"
@@ -42,9 +45,11 @@ export type OwnedCalendarCoordinatorProps = {
   showWeekends: boolean
   currentDate: Date
   initialVerticalOffset: number
+  initialPixelsPerHour: number
   generation: number
   revisionFloor: number
   onVerticalOffsetSettled: (offset: number) => void
+  onZoomSettled: (settlement: CalendarZoomSettlement) => void
   onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
@@ -90,16 +95,17 @@ export function useOwnedCalendarCoordinator({
   showWeekends,
   currentDate,
   initialVerticalOffset,
+  initialPixelsPerHour,
   generation,
   revisionFloor,
   onVerticalOffsetSettled,
+  onZoomSettled,
   onTransitionRequest,
   onTransitionSettled,
   onTransitionCancelled,
 }: OwnedCalendarCoordinatorProps) {
   const reduceMotion = useReducedMotion()
   const pagerRef = useRef<PagerView>(null)
-  const scrollRef = useRef<ScrollView>(null)
   const [headerLaneWidth, setHeaderLaneWidth] = useState(0)
   const revisionRef = useRef(revisionFloor)
   const pendingRevisionRef = useRef<number | null>(null)
@@ -112,33 +118,38 @@ export function useOwnedCalendarCoordinator({
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
   const handledPinchSequenceRef = useRef(0)
+  const settledZoomSequenceRef = useRef(0)
   const previousShowWeekendsRef = useRef(showWeekends)
   const progressContextKey = `${generation}:${mode}:${headerLaneWidth}:${showWeekends}`
   const { headerStripStyle, offset, onPageScroll, position } =
     usePagerPageScroll(headerLaneWidth, progressContextKey)
-  const pinchActive = useSharedValue(false)
-  const pinchGeneration = useSharedValue(generation)
-  const pinchSequence = useSharedValue(0)
+  const zoom = useOwnedCalendarZoom({
+    generation,
+    initialPixelsPerHour,
+    initialRawOffset: initialVerticalOffset,
+    onZoomSettled: (settlement) => {
+      if (
+        settlement.generation !== currentGenerationRef.current ||
+        settlement.sequence <= settledZoomSequenceRef.current
+      ) {
+        return
+      }
+      settledZoomSequenceRef.current = settlement.sequence
+      committedVerticalOffsetRef.current = settlement.rawOffset
+      onZoomSettled(settlement)
+    },
+  })
+  const { pinchActive, pinchGeneration, pinchSequence, scrollRef } = zoom
   const nativeScrollGesture = Gesture.Native().withTestId(
     "owned-calendar-native-scroll",
   )
   const nativePagerGesture = Gesture.Native().withTestId(
     "owned-calendar-native-pager",
   )
-  const pinchGesture = Gesture.Pinch()
-    .withTestId("owned-calendar-pinch")
-    .blocksExternalGesture(nativeScrollGesture, nativePagerGesture)
-    .cancelsTouchesInView(true)
-    .onStart(() => {
-      "worklet"
-      pinchGeneration.set(generation)
-      pinchSequence.set(pinchSequence.get() + 1)
-      pinchActive.set(true)
-    })
-    .onFinalize(() => {
-      "worklet"
-      pinchActive.set(false)
-    })
+  const pinchGesture = zoom.pinchGesture.blocksExternalGesture(
+    nativeScrollGesture,
+    nativePagerGesture,
+  )
   const pages = calendarPages(
     anchor,
     mode,
@@ -305,6 +316,7 @@ export function useOwnedCalendarCoordinator({
     pinchGeneration,
     pinchSequence,
     position,
+    scrollRef,
   ])
 
   useLayoutEffect(() => {
@@ -359,7 +371,7 @@ export function useOwnedCalendarCoordinator({
         onTransitionCancelledRef.current(revision)
       }
     }
-  }, [offset, pinchActive, pinchGeneration, position])
+  }, [offset, pinchActive, pinchGeneration, position, scrollRef])
 
   return {
     cancelVerticalCandidate,
@@ -368,13 +380,17 @@ export function useOwnedCalendarCoordinator({
     onPageScroll,
     onPageScrollStateChanged,
     onPageSelected,
+    onScroll: zoom.onScroll,
     onScrollEndDrag,
+    onViewportLayout: zoom.onViewportLayout,
     nativePagerGesture,
     nativeScrollGesture,
     pagerRef,
     pages,
     pinchGesture,
+    pixelsPerHour: zoom.pixelsPerHour,
     requestAccessiblePage,
+    requestZoom: zoom.requestZoom,
     scrollRef,
     settleVertical,
     todayKey,

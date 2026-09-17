@@ -14,14 +14,20 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAdaptiveLayout } from "@/components/adaptive-content"
 import { ThemedView } from "@/components/themed-view"
 import {
+  DEFAULT_PIXELS_PER_HOUR,
   eventRoute,
   formatFullDay,
   formatMonthYear,
+  MAX_PIXELS_PER_HOUR,
+  MIN_PIXELS_PER_HOUR,
   resolveLocale,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
-import { OwnedCalendarShell } from "@/features/calendar/renderer"
+import {
+  OwnedCalendarShell,
+  type OwnedCalendarShellHandle,
+} from "@/features/calendar/renderer"
 import { useChecklistProgress } from "@/features/event-checklists"
 import { useShowWeekendsPreference } from "@/features/settings/prefs"
 import { Spacing, useTheme } from "@/theme"
@@ -51,13 +57,16 @@ export function CalendarScreen() {
     transitionRevision,
     acceptedTransitionRevision,
     verticalOffset,
+    pixelsPerHour,
     settleVerticalOffset,
+    settleZoom,
     requestTransition,
     settleTransition,
     cancelTransition,
   } = useCalendarScreenController()
   const { showWeekends } = useShowWeekendsPreference()
   const timelineHeading = formatFullDay(selectedDate, locale, displayZone)
+  const calendarShellRef = useRef<OwnedCalendarShellHandle>(null)
   const announcedRevision = useRef<number | null>(null)
 
   useEffect(() => {
@@ -81,6 +90,17 @@ export function CalendarScreen() {
   const onSync = () => {
     void sync()
   }
+  const zoom =
+    view === "agenda"
+      ? null
+      : {
+          canZoomIn: pixelsPerHour < MAX_PIXELS_PER_HOUR,
+          canZoomOut: pixelsPerHour > MIN_PIXELS_PER_HOUR,
+          canResetZoom: pixelsPerHour !== DEFAULT_PIXELS_PER_HOUR,
+          onZoomIn: () => calendarShellRef.current?.requestZoom("in"),
+          onZoomOut: () => calendarShellRef.current?.requestZoom("out"),
+          onResetZoom: () => calendarShellRef.current?.requestZoom("reset"),
+        }
   const refreshControl = (
     <RefreshControl
       testID="calendar-refresh"
@@ -108,6 +128,7 @@ export function CalendarScreen() {
         onViewChange={setView}
         onToday={canGoToToday ? goToToday : undefined}
         onAdd={onAdd}
+        zoom={zoom}
       />
       <SafeAreaView
         collapsable={false}
@@ -142,6 +163,7 @@ export function CalendarScreen() {
             </View>
           ) : (
             <OwnedCalendarShell
+              ref={calendarShellRef}
               heading={timelineHeading}
               mode={timelineMode}
               anchor={selectedDate}
@@ -152,12 +174,26 @@ export function CalendarScreen() {
               currentDate={new Date()}
               uses24HourClock={uses24HourClock}
               initialVerticalOffset={verticalOffset}
+              initialPixelsPerHour={pixelsPerHour}
               generation={rendererGeneration}
               revisionFloor={transitionRevision}
               onTransitionRequest={requestTransition}
               onTransitionSettled={settleTransition}
               onTransitionCancelled={cancelTransition}
               onVerticalOffsetSettled={settleVerticalOffset}
+              onZoomSettled={(settlement) => {
+                settleZoom(settlement)
+                if (settlement.source === "command") {
+                  AccessibilityInfo.announceForAccessibility(
+                    t("calendar.zoom.announcement", {
+                      percent: Math.round(
+                        (settlement.pixelsPerHour / DEFAULT_PIXELS_PER_HOUR) *
+                          100,
+                      ),
+                    }),
+                  )
+                }
+              }}
             />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}

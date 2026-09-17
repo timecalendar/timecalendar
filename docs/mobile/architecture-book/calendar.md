@@ -2,7 +2,7 @@
 
 ## Rendering
 
-The T05 day/week surface is a feature-owned React Native shell under
+The T06 day/week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
 native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
 shell keeps exactly the previous, current, and next empty pages mounted in the installed
@@ -19,9 +19,10 @@ Agenda range, page generation, and accessibility announcement together.
 
 The vertical ScrollView remains on the first native descendant chain and uses automatic
 content-inset adjustment, allowing iOS NativeTabs to account for the Liquid Glass tab bar.
-Only the settled native raw offset is retained because React Native events do not expose
-UIKit's computed adjusted inset; restoration lets the native ScrollView clamp against its
-current geometry. Calendar tab reselect-to-top is disabled. The ScrollView
+Live native raw offset, measured viewport height and automatic top/bottom insets feed a
+feature-private Reanimated zoom coordinator. A two-finger pinch updates one bounded 40–120
+pixels-per-hour scale and a focal-preserving raw offset on the UI thread; React receives only the
+settled scale/offset. Calendar tab reselect-to-top is disabled. The ScrollView
 exposes the committed localized day or week date context as an adjustable accessibility label
 with mode-specific translated previous/next actions.
 One clipped three-slot weekday/date strip remains pinned above vertical motion beneath the native
@@ -43,8 +44,9 @@ typography/outlined-shape cue and localized semantics. There is no additional si
 permanent paging toolbar.
 
 The renderer keeps a bounded composition boundary in `owned-calendar-shell`, one
-`owned-calendar-coordinator` hook for pager/scroll refs and cancellation/settlement lifecycle, and
-passive `owned-calendar-header` plus `owned-calendar-canvas` presentation units. The clock grid
+`owned-calendar-coordinator` hook for pager/scroll refs and cancellation/settlement lifecycle, one
+`owned-calendar-zoom` hook for live scale/offset/inset geometry, and passive
+`owned-calendar-header` plus `owned-calendar-canvas` presentation units. The clock grid
 remains inside the canvas unit. These feature-private views receive complete page models and
 handlers; they do not import screen orchestration, storage, navigation, or event data. Ordinary
 models and closures rely on the enabled React Compiler rather than manual memoization.
@@ -62,12 +64,17 @@ closing boundary is not clipped.
 `true` produces 24-hour labels, `false` produces 12-hour day periods, and `null` retains
 the deterministic 24-hour convention. The controller retains only settled, clamped clock
 offsets, so accepted day/week revisions and Day/Week/Agenda switches preserve the visible time
-without reporting frame-frequency values to React.
+without reporting frame-frequency values to React. Gutter labels, minor and major lines, the
+24:00 closing boundary, columns, all three pages and scroll extent derive from the same scale.
+Day and Week share the validated environment-independent zoom preference; Agenda neither changes
+nor resets it. Their native platform menu offers 10-pixel Zoom in/out and Reset commands, anchors
+them at the live usable viewport center, disables them at 40/120/60, and announces one settled
+percentage.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
 timed tiles, current-time presentation and positioning,
-pinch and zoom are absent until their numbered owned-renderer slices
-land. Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
+populated-event density tuning remains pending until its numbered owned-renderer slice lands.
+Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. Paging remains bounded to one adjacent empty day or week according to
 the committed mode; there is no far-date pager. The blank shell never claims
 that stored event data is empty: Agenda remains the route for reading and opening stored
@@ -182,12 +189,13 @@ separate. The binding contract and regression scenarios live in the
 
 ## Surfaces
 
-- Calendar offers the T05 owned Day/Week shell and Agenda, with platform-specific native chrome.
+- Calendar offers the T06 owned Day/Week shell and Agenda, with platform-specific native chrome.
   Day and Week share one full-day native vertical scroll surface, a horizontally pinned gutter, native
   pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
   semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
-  header aligned with every clock page. Day has one column; Week has five or seven. Current-time
-  positioning, events, selectable dates, and zoom belong to later renderer slices.
+  header aligned with every clock page. Day has one column; Week has five or seven, and both use
+  bounded shared zoom with accessible native menu commands. Current-time positioning, events and
+  selectable dates belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.
@@ -211,7 +219,8 @@ Unit/component tests cover display-zone day/week civil arithmetic, mode persiste
 recovery, revision/cancellation semantics, one/five/seven-column geometry, three-page native pager
 and control behavior, native scroll settlement/restoration, atomic settled screen context,
 Calendar remount and selection, Agenda grouping/routing, filtering, sync orchestration, failure
-states, and the repository cutover contract. Native held-drag mode switching, visible-hour
-continuity, preference restart, weekend traversal, assistive technology, platform chrome, and
-physical-device presentation remain recorded owner checks and are not claimed by T05 host
-automation. Dense-calendar and all-day-lane behavior remain outside this empty-shell milestone.
+states, and the repository cutover contract. Native held-drag mode switching, pinch
+arbitration/focal stability, visible-hour continuity, preference restart, weekend traversal,
+assistive technology, platform chrome, and physical-device presentation remain recorded owner
+checks and are not claimed by host automation. Dense-calendar and all-day-lane behavior remain
+outside this empty-shell milestone.

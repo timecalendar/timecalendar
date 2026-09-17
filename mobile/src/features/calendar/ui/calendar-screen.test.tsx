@@ -19,7 +19,9 @@ import {
 } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
 import {
+  getCalendarZoomPixelsPerHour,
   setCalendarView,
+  setCalendarZoomPixelsPerHour,
   setShowWeekends,
   setTimezonePreference,
   SETTINGS_KEYS,
@@ -145,6 +147,18 @@ function calendarEvent(overrides = {}) {
   }
 }
 
+async function openCalendarMenu() {
+  await fireEvent.press(screen.getByTestId("calendar-view"))
+  await waitFor(() => {
+    expect(screen.getByTestId("menu-action-week")).toBeOnTheScreen()
+  })
+}
+
+async function chooseCalendarView(view: "day" | "week" | "agenda") {
+  await openCalendarMenu()
+  await fireEvent.press(screen.getByTestId(`menu-action-${view}`))
+}
+
 beforeEach(() => {
   AppState.currentState = "active"
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
@@ -158,6 +172,7 @@ beforeEach(() => {
   mockUseCalendars.mockReturnValue(deviceCalendars(true))
   remove(SETTINGS_KEYS.showWeekends)
   remove(SETTINGS_KEYS.calendarView)
+  remove(SETTINGS_KEYS.calendarZoomPixelsPerHour)
 })
 
 describe("CalendarScreen owned shell", () => {
@@ -171,9 +186,9 @@ describe("CalendarScreen owned shell", () => {
       }),
     ).toBeOnTheScreen()
     expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    await openCalendarMenu()
     expect(
-      screen.getByTestId("calendar-view-item-day").props.accessibilityState
-        .selected,
+      screen.getByTestId("menu-action-day").props.accessibilityState.selected,
     ).toBe(true)
   })
 
@@ -195,9 +210,9 @@ describe("CalendarScreen owned shell", () => {
         name: formatFullDay(new Date(), "en", ZONE),
       }),
     ).toBeOnTheScreen()
+    await openCalendarMenu()
     expect(
-      screen.getByTestId("calendar-view-item-day").props.accessibilityState
-        .selected,
+      screen.getByTestId("menu-action-day").props.accessibilityState.selected,
     ).toBe(true)
     expect(mockAnnounce).not.toHaveBeenCalled()
   })
@@ -221,7 +236,7 @@ describe("CalendarScreen owned shell", () => {
       },
     )
 
-    await fireEvent.press(screen.getByTestId("calendar-view-item-day"))
+    await chooseCalendarView("day")
     expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
     expect(
       screen.getByTestId("owned-calendar-date-0-2026-09-14"),
@@ -251,7 +266,7 @@ describe("CalendarScreen owned shell", () => {
       expect(screen.getByLabelText(label)).toBeOnTheScreen()
     }
 
-    await fireEvent.press(screen.getByTestId("calendar-view-item-week"))
+    await chooseCalendarView("week")
     expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(5)
     expect(
       screen.getByTestId("owned-calendar-date-0-2026-09-14"),
@@ -276,7 +291,7 @@ describe("CalendarScreen owned shell", () => {
       nativeEvent: { position: 1, offset: 0.45 },
     })
 
-    await fireEvent.press(screen.getByTestId("calendar-view-item-day"))
+    await chooseCalendarView("day")
     await act(async () => {
       staleSelected({ nativeEvent: { position: 2 } })
       staleState({ nativeEvent: { pageScrollState: "idle" } })
@@ -319,8 +334,8 @@ describe("CalendarScreen owned shell", () => {
         },
       },
     )
-    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
-    await fireEvent.press(screen.getByTestId("calendar-view-item-week"))
+    await chooseCalendarView("agenda")
+    await chooseCalendarView("week")
     expect(screen.getByTestId("owned-calendar-canvas")).toHaveProp(
       "contentOffset",
       { x: 0, y: 400 },
@@ -369,7 +384,7 @@ describe("CalendarScreen owned shell", () => {
     expect(range.to).toEqual(new Date(2026, 8, 21))
     expect(mockAnnounce).not.toHaveBeenCalled()
 
-    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await chooseCalendarView("agenda")
     expect(screen.getByText("Algorithms")).toBeOnTheScreen()
   })
 
@@ -633,10 +648,11 @@ describe("CalendarScreen owned shell", () => {
 
 describe("CalendarScreen retained Agenda", () => {
   async function openAgenda() {
-    await fireEvent.press(screen.getByTestId("calendar-view-item-agenda"))
+    await chooseCalendarView("agenda")
+    await openCalendarMenu()
     await waitFor(() => {
       expect(
-        screen.getByTestId("calendar-view-item-agenda").props.accessibilityState
+        screen.getByTestId("menu-action-agenda").props.accessibilityState
           .selected,
       ).toBe(true)
     })
@@ -645,9 +661,10 @@ describe("CalendarScreen retained Agenda", () => {
   it("offers distinct Day, Week, and Agenda choices", async () => {
     await render(<CalendarScreen />)
 
-    expect(screen.getByTestId("calendar-view-item-week")).toBeOnTheScreen()
-    expect(screen.getByTestId("calendar-view-item-agenda")).toBeOnTheScreen()
-    expect(screen.getByTestId("calendar-view-item-day")).toBeOnTheScreen()
+    await openCalendarMenu()
+    expect(screen.getByTestId("menu-action-week")).toBeOnTheScreen()
+    expect(screen.getByTestId("menu-action-agenda")).toBeOnTheScreen()
+    expect(screen.getByTestId("menu-action-day")).toBeOnTheScreen()
     await openAgenda()
     expect(screen.queryByTestId("owned-calendar-canvas")).toBeNull()
     expect(screen.getByTestId("agenda-section-list")).toBeOnTheScreen()
@@ -727,6 +744,71 @@ describe("CalendarScreen retained Agenda", () => {
 })
 
 describe("CalendarScreen platform chrome", () => {
+  it("offers inset-aware zoom commands and announces one settled percentage", async () => {
+    await render(<CalendarScreen />)
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    await fireEvent(canvas, "layout", {
+      nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 500 } },
+    })
+    await fireEvent.scroll(canvas, {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 480 },
+        contentInset: { top: 20, bottom: 80, left: 0, right: 0 },
+        contentSize: { width: 320, height: 1441 },
+        layoutMeasurement: { width: 320, height: 500 },
+      },
+    })
+
+    await openCalendarMenu()
+    expect(
+      screen.getByTestId("menu-action-zoom-reset").props.accessibilityState,
+    ).toMatchObject({ disabled: true })
+    await fireEvent.press(screen.getByTestId("menu-action-zoom-in"))
+
+    expect(getCalendarZoomPixelsPerHour()).toBe(70)
+    expect(mockAnnounce).toHaveBeenCalledTimes(1)
+    expect(mockAnnounce).toHaveBeenCalledWith("Calendar zoom 117%")
+    expect(
+      screen.getByTestId("owned-calendar-canvas").props.contentOffset.y,
+    ).toBeCloseTo(596.67, 2)
+
+    await chooseCalendarView("day")
+    expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-major-0-1440", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).top,
+    ).toBe(1680)
+
+    await openCalendarMenu()
+    expect(
+      screen.getByTestId("menu-action-zoom-reset").props.accessibilityState,
+    ).toMatchObject({ disabled: false })
+    await fireEvent.press(screen.getByTestId("menu-action-zoom-reset"))
+    expect(getCalendarZoomPixelsPerHour()).toBe(60)
+    expect(mockAnnounce).toHaveBeenNthCalledWith(2, "Calendar zoom 100%")
+    expect(
+      screen.getByTestId("owned-calendar-canvas").props.contentOffset.y,
+    ).toBeCloseTo(480, 2)
+  })
+
+  it("disables and communicates the inclusive zoom limits", async () => {
+    setCalendarZoomPixelsPerHour(120)
+    await render(<CalendarScreen />)
+    await openCalendarMenu()
+
+    expect(
+      screen.getByRole("button", {
+        name: "Zoom in (maximum reached)",
+      }).props.accessibilityState,
+    ).toMatchObject({ disabled: true })
+    expect(
+      screen.getByTestId("menu-action-zoom-out").props.accessibilityState,
+    ).toMatchObject({ disabled: false })
+  })
+
   it("keeps Add in the iOS header", async () => {
     await render(<CalendarScreen />)
     expect(screen.queryByTestId("calendar-today")).toBeNull()

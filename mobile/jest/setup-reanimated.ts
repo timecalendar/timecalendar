@@ -22,6 +22,18 @@ jest.mock("react-native-reanimated", () => {
     useAnimatedStyle: jest.fn((updater: () => Record<string, unknown>) =>
       updater(),
     ),
+    useAnimatedScrollHandler: jest.fn(
+      (
+        handlers:
+          | ((event: Record<string, unknown>) => void)
+          | { onScroll?: (event: Record<string, unknown>) => void },
+      ) => {
+        const handler =
+          typeof handlers === "function" ? handlers : handlers.onScroll
+        return (event: { nativeEvent?: Record<string, unknown> }) =>
+          handler?.(event.nativeEvent ?? event)
+      },
+    ),
     // The supported mock leaves useEvent inert. Preserve its handler shape so
     // Gesture Handler's Jest utility can deliver nativeEvent payloads through
     // the same production event seam.

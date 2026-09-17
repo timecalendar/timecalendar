@@ -5,7 +5,11 @@ import { type CalendarView } from "@/features/settings/prefs"
 import { useTheme } from "@/theme"
 
 import { CalendarHeaderActions } from "./calendar-screen-actions"
-import { CalendarAndroidViewMenu, CalendarViewMenu } from "./calendar-view-menu"
+import {
+  CalendarAndroidViewMenu,
+  CalendarViewMenu,
+  type CalendarZoomMenuState,
+} from "./calendar-view-menu"
 
 export function CalendarScreenHeader({
   title,
@@ -13,12 +17,14 @@ export function CalendarScreenHeader({
   onViewChange,
   onToday,
   onAdd,
+  zoom,
 }: {
   title: string
   view: CalendarView
   onViewChange: (view: CalendarView) => void
   onToday: (() => void) | undefined
   onAdd: () => void
+  zoom: CalendarZoomMenuState | null
 }) {
   const theme = useTheme()
   return (
@@ -30,9 +36,13 @@ export function CalendarScreenHeader({
         headerShadowVisible: false,
         headerLeft: () =>
           Platform.OS === "android" ? (
-            <CalendarAndroidViewMenu view={view} onChange={onViewChange} />
+            <CalendarAndroidViewMenu
+              view={view}
+              onChange={onViewChange}
+              zoom={zoom}
+            />
           ) : (
-            <CalendarViewMenu view={view} onChange={onViewChange} />
+            <CalendarViewMenu view={view} onChange={onViewChange} zoom={zoom} />
           ),
         headerRight: () => (
           <CalendarHeaderActions onToday={onToday} onAdd={onAdd} />

@@ -174,25 +174,28 @@ export function clockHourAtFocalPoint(
 export function focalPreservingRawOffset({
   rawOffset,
   focalY,
+  nextFocalY = focalY,
   oldPixelsPerHour,
   newPixelsPerHour,
   geometry,
 }: {
   rawOffset: number
   focalY: number
+  nextFocalY?: number
   oldPixelsPerHour: unknown
   newPixelsPerHour: unknown
   geometry: NativeVerticalGeometry
 }): number {
   "worklet"
   const safeFocalY = Number.isFinite(focalY) ? focalY : 0
+  const safeNextFocalY = Number.isFinite(nextFocalY) ? nextFocalY : safeFocalY
   const clockHour = clockHourAtFocalPoint(
     rawOffset,
     safeFocalY,
     oldPixelsPerHour,
   )
   const nextScale = resolvePixelsPerHour(newPixelsPerHour)
-  return clampRawOffset(clockHour * nextScale - safeFocalY, geometry)
+  return clampRawOffset(clockHour * nextScale - safeNextFocalY, geometry)
 }
 
 /** Center of the viewport area not occupied by automatic native insets. */
