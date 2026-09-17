@@ -1,6 +1,6 @@
 # EAS / distribution
 
-> R-1 pointer note: entries below are pointers plus the caveats tooling can't carry. The config is encoded in `mobile/eas.json` + `mobile/app.config.ts`; the operator guide is [`mobile/EAS.md`](../../../mobile/EAS.md); the load-bearing decisions are **ADR [006](./decisions/006-eas-distribution.md)** (fingerprint policy), **ADR [037](./decisions/037-self-hosted-ota-runtime.md)** (self-hosted OTA runtime), **ADR [040](./decisions/040-local-store-builds-and-store-preview.md)** (local store builds, store-distributed `preview`, no channel promotion), and **ADR [042](./decisions/042-iphone-ipad-portrait-contract.md)** (iPhone+iPad, portrait-only/full-screen).
+> R-1 pointer note: entries below are pointers plus the caveats tooling can't carry. The config is encoded in `mobile/eas.json` + `mobile/app.config.ts`; the operator guide is [`mobile/EAS.md`](../../../mobile/EAS.md); the load-bearing decisions are **ADR [006](./decisions/006-eas-distribution.md)** (fingerprint policy), **ADR [037](./decisions/037-self-hosted-ota-runtime.md)** (self-hosted OTA runtime), **ADR [040](./decisions/040-local-store-builds-and-store-preview.md)** (local store builds, store-distributed `preview`, no channel promotion), and **ADR [042](./decisions/042-iphone-ipad-portrait-contract.md)** (resizable iPhone+iPad windows).
 
 For the plain-language release flow, signing custody and current readiness audit, see the
 [mobile release guide](../releases/README.md). The `../ota/` folder is **exploration**, not
@@ -26,14 +26,13 @@ identity, Firebase, OTA header/signing, artifact or submission setting (ADR 043)
 
 ## iOS device-family and orientation contract
 
-Every variant supports iPhone and iPad while remaining portrait-only and full-screen. The source
-fields are `orientation: "portrait"`, `ios.supportsTablet: true`, and
-`ios.requireFullScreen: true` in `mobile/app.config.ts`; full-screen mode deliberately disables
-iPad Slide Over and Split View because Expo SDK 56 otherwise requires landscape orientations.
+Every variant supports iPhone and iPad in portrait, both landscape orientations, and resizable
+iPad windows. The source fields are `orientation: "default"`, `ios.supportsTablet: true`, and
+`ios.requireFullScreen: false` in `mobile/app.config.ts`.
 `mobile/app.config.test.ts` proves each resolved variant. From `mobile/`, run
-`npm run verify:ios-device-contract` to generate a clean preview project in a disposable directory
-and assert the application target has `TARGETED_DEVICE_FAMILY=1,2`, `UIRequiresFullScreen=true`,
-and portrait-only effective iPad orientations. Generated `mobile/ios/` remains uncommitted.
+`npm run verify:ios-device-contract` to generate clean preview projects in a disposable directory
+and assert families `1,2`, iOS 16.4, portrait plus both landscapes, no effective full-screen
+requirement, Android API 24, and no Android portrait/resize lock. Generated projects remain uncommitted.
 
 ## `runtimeVersion: { policy: "fingerprint" }`
 
@@ -148,6 +147,13 @@ fresh iOS and Android native builds before receiving this code. No `.fingerprint
 or broadened: excluding `app.config.ts` would weaken protection for plugins, signing and other
 native config. No build, submission, publish, promotion or rollout was performed.
 
+T07 changes the post-selector predecessor again: iOS preview
+`1fc4682e04c9d0029f21d38e6ed4cf359c6da8f3`, iOS production
+`b8ba89537f053eef31ca7c77a0ade94109b85e53`, Android preview
+`9ec6cd2ff58e8553743766ff79963abdfb75683e`, and Android production
+`2aa708357e46636cd088a6fdcfaf169a65f5d16b`. The orientation/full-screen source remains a
+fingerprint input, so every lane needs a fresh compatible binary. No delivery act was performed.
+
 ## Submit configuration, no secrets
 
 `submit.preview` and `submit.production` commit the existing iOS App Store Connect app ID
@@ -165,7 +171,7 @@ committed.**
 `mobile/app.config.test.ts` resolves isolated development, preview and production configs and parses
 `eas.json`. It enforces identity/Firebase selection, development OTA disablement, release endpoint,
 headers and certificate metadata, EAS-link independence, invalid-channel rejection, profile
-artifact guarantees, recursive absence of `channel` keys, and the tablet/full-screen/portrait
+artifact guarantees, recursive absence of `channel` keys, and the resizable tablet/orientation
 source contract. It also proves preview's exact App Store Connect destination, rejects an unresolved
 app-id placeholder there, and preserves the production submit shape. Pair it with
 `jq -e -r '.submit.preview.ios.ascAppId == "1479613630"' mobile/eas.json` from the repository root.

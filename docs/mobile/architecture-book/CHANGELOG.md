@@ -1,5 +1,12 @@
 # Architecture Book changelog
 
+## 2026-09-17 — Resizable native Calendar (T07)
+
+- Revised ADR 042 for portrait, both landscapes, and resized iPhone/iPad windows while retaining
+  iOS 16.4/Android API 24, automatic insets, CNG ownership, and fingerprint isolation.
+- Added atomic clock-anchor-preserving Calendar geometry revisions and disposable generated-native
+  proof for both platforms.
+
 ## 2026-09-17 — Calendar zoom (T06)
 
 - Added one continuous 40–120 px/hour Day/Week scale across every clock primitive and all three

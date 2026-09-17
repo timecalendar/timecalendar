@@ -75,6 +75,7 @@ export function OwnedCalendarCanvas({
   uses24HourClock,
   initialVerticalOffset,
   generation,
+  geometryRevision,
   pages,
   pagerRef,
   scrollRef,
@@ -100,6 +101,7 @@ export function OwnedCalendarCanvas({
   uses24HourClock: boolean | null
   initialVerticalOffset: number
   generation: number
+  geometryRevision: number
   pages: CalendarPage[]
   pagerRef: RefObject<PagerView | null>
   scrollRef: AnimatedRef<ScrollView>
@@ -208,7 +210,7 @@ export function OwnedCalendarCanvas({
           <GestureDetector gesture={nativePagerGesture}>
             <AnimatedPagerView
               ref={pagerRef}
-              key={generation}
+              key={`${generation}:${geometryRevision}`}
               testID="owned-calendar-pager"
               style={[styles.pager, pagerHeightStyle]}
               initialPage={CENTER_PAGE}

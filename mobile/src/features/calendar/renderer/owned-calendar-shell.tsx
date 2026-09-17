@@ -68,7 +68,6 @@ export const OwnedCalendarShell = forwardRef<
         todayKey={coordinator.todayKey}
         todayLabel={t("calendar.today")}
         stripStyle={coordinator.headerStripStyle}
-        onLaneLayout={coordinator.onHeaderLaneLayout}
       />
       <GestureDetector gesture={coordinator.pinchGesture}>
         <OwnedCalendarCanvas
@@ -78,6 +77,7 @@ export const OwnedCalendarShell = forwardRef<
           uses24HourClock={props.uses24HourClock}
           initialVerticalOffset={props.initialVerticalOffset}
           generation={props.generation}
+          geometryRevision={coordinator.geometryRevision}
           pages={coordinator.pages}
           pagerRef={coordinator.pagerRef}
           scrollRef={coordinator.scrollRef}

@@ -19,8 +19,12 @@ Agenda range, page generation, and accessibility announcement together.
 
 The vertical ScrollView remains on the first native descendant chain and uses automatic
 content-inset adjustment, allowing iOS NativeTabs to account for the Liquid Glass tab bar.
-Live native raw offset, measured viewport height and automatic top/bottom insets feed a
-feature-private Reanimated zoom coordinator. A two-finger pinch updates one bounded 40–120
+One complete timed-viewport width/height/inset measurement feeds a feature-private pure resize
+snapshot and monotonic geometry revision. Header lane, pager, canvas, and vertical bounds replace
+atomically. Replacement preserves selected date, explicit mode, scale, and the inset-aware clock
+coordinate at the usable center, clamping only at 00:00/24:00. It cancels old pager, header,
+queued scroll, native-owner, and pinch work before restoring without animation. Live raw offset
+and automatic top/bottom insets also feed the Reanimated zoom coordinator. A two-finger pinch updates one bounded 40–120
 pixels-per-hour scale and a focal-preserving raw offset on the UI thread; React receives only the
 settled scale/offset. After pinch takes ownership, callbacks from the interrupted scroll and pager
 epochs stay gated through settlement; each native owner reopens only when a new drag begins, so
@@ -37,7 +41,7 @@ projection drives the strip across the measured content lane on the UI thread, s
 React Native `Animated`, per-frame React state, second pager, responder, timer, or animation owner.
 Only the centered committed slot is accessible; moving
 neighbours stay hidden until accepted idle settlement rebuilds the centered generation. Snap-back,
-AppState inactivity, generation replacement, and preference or lane-geometry replacement recenter
+AppState inactivity, generation replacement, and preference or geometry-revision replacement recenter
 both surfaces without committing a destination. Monday is an explicit launch input; the pure
 display-zone transition model advances Day by one civil date and Week by one Monday-first civil
 week. Week presentation removes Saturday/Sunday by weekday identity when the persisted Show

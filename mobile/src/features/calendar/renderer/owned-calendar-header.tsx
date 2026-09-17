@@ -1,4 +1,4 @@
-import type { LayoutChangeEvent, ViewStyle } from "react-native"
+import type { ViewStyle } from "react-native"
 import { StyleSheet, View } from "react-native"
 import Animated, { type AnimatedStyle } from "react-native-reanimated"
 
@@ -19,7 +19,6 @@ export function OwnedCalendarDateHeader({
   todayKey,
   todayLabel,
   stripStyle,
-  onLaneLayout,
 }: {
   pages: CalendarPage[]
   locale: AppLocale
@@ -27,7 +26,6 @@ export function OwnedCalendarDateHeader({
   todayKey: string
   todayLabel: string
   stripStyle: AnimatedStyle<ViewStyle>
-  onLaneLayout: (event: LayoutChangeEvent) => void
 }) {
   const theme = useTheme()
   return (
@@ -50,7 +48,6 @@ export function OwnedCalendarDateHeader({
       <View
         testID="owned-calendar-date-header-viewport"
         style={styles.dateHeaderViewport}
-        onLayout={onLaneLayout}
       >
         <Animated.View
           testID="owned-calendar-date-header-strip"

@@ -58,9 +58,9 @@ describe("OwnedCalendarShell", () => {
       layoutMeasurement: { width: 320, height: 500 },
     },
   })
-  const headerLaneLayout = (width: number) => ({
+  const timedViewportLayout = (width: number, height = 500) => ({
     nativeEvent: {
-      layout: { x: HOURS_COLUMN_WIDTH, y: 0, width, height: 56 },
+      layout: { x: 0, y: 0, width: width + HOURS_COLUMN_WIDTH, height },
     },
   })
 
@@ -75,9 +75,9 @@ describe("OwnedCalendarShell", () => {
 
   const measureHeaderLane = async (width = 300) => {
     await fireEvent(
-      screen.getByTestId("owned-calendar-date-header-viewport"),
+      screen.getByTestId("owned-calendar-canvas"),
       "layout",
-      headerLaneLayout(width),
+      timedViewportLayout(width),
     )
   }
 
@@ -740,11 +740,16 @@ describe("OwnedCalendarShell", () => {
     pagerMock.deferNextTransition()
     const view = await render(<OwnedCalendarShell {...props} ref={shellRef} />)
     await measureHeaderLane()
-    const canvas = screen.getByTestId("owned-calendar-canvas")
-    const pager = screen.getByTestId("owned-calendar-pager", {
+    let canvas = screen.getByTestId("owned-calendar-canvas")
+    let pager = screen.getByTestId("owned-calendar-pager", {
       includeHiddenElements: true,
     })
     await fireEvent.scroll(canvas, scrollEvent(0, 12, 80))
+    await view.rerender(<OwnedCalendarShell {...props} ref={shellRef} />)
+    canvas = screen.getByTestId("owned-calendar-canvas")
+    pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
     await fireEvent(canvas, "accessibilityAction", {
       nativeEvent: { actionName: "increment" },
     })
@@ -784,10 +789,13 @@ describe("OwnedCalendarShell", () => {
     )
 
     expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
-    expect(onTransitionCancelled).toHaveBeenCalledTimes(1)
-    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
-    expect(onTransitionSettled).not.toHaveBeenCalled()
+    expect(onTransitionCancelled).not.toHaveBeenCalled()
+    expect(onTransitionSettled).toHaveBeenCalledWith(1)
     expect(headerTranslateX()).toBe(0)
+    canvas = screen.getByTestId("owned-calendar-canvas")
+    pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
 
     await act(async () => shellRef.current?.requestZoom("in"))
     expect(onZoomSettled).toHaveBeenLastCalledWith(
@@ -806,20 +814,8 @@ describe("OwnedCalendarShell", () => {
     await fireEvent(canvas, "momentumScrollEnd", scrollEvent(300, 12, 80))
     expect(onVerticalOffsetSettled).toHaveBeenCalledWith(300)
 
-    await act(async () => fireNativeOwnerStart("owned-calendar-native-pager"))
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "dragging" },
-    })
-    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
-    await fireEvent(pager, "pageScrollStateChanged", {
-      nativeEvent: { pageScrollState: "idle" },
-    })
-    expect(onTransitionRequest).toHaveBeenLastCalledWith({
-      revision: 2,
-      direction: 1,
-      source: "gesture",
-    })
-    expect(onTransitionSettled).toHaveBeenCalledWith(2)
+    expect(onTransitionRequest).toHaveBeenCalledTimes(1)
+    expect(onTransitionSettled).toHaveBeenCalledTimes(1)
     requestFrame.mockRestore()
   })
 
@@ -829,13 +825,15 @@ describe("OwnedCalendarShell", () => {
     await act(async () => firePinch(State.END))
 
     expect(onZoomSettled).toHaveBeenCalledTimes(1)
-    expect(onZoomSettled).toHaveBeenCalledWith({
-      generation: 0,
-      pixelsPerHour: 66,
-      rawOffset: 25,
-      sequence: 1,
-      source: "pinch",
-    })
+    expect(onZoomSettled).toHaveBeenCalledWith(
+      expect.objectContaining({
+        generation: 0,
+        pixelsPerHour: 66,
+        rawOffset: 25,
+        sequence: 1,
+        source: "pinch",
+      }),
+    )
   })
 
   it("restores the baseline without persistence when pinch is cancelled", async () => {

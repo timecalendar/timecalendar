@@ -23,6 +23,7 @@ export type CalendarZoomCommand = "in" | "out" | "reset"
 
 export type CalendarZoomSettlement = {
   generation: number
+  geometryRevision: number
   pixelsPerHour: number
   rawOffset: number
   sequence: number
@@ -34,11 +35,21 @@ export function useOwnedCalendarZoom({
   initialPixelsPerHour,
   initialRawOffset,
   onZoomSettled,
+  onViewportGeometryChange,
+  onInteractionInterrupted,
 }: {
   generation: number
   initialPixelsPerHour: number
   initialRawOffset: number
   onZoomSettled: (settlement: CalendarZoomSettlement) => void
+  onViewportGeometryChange: (geometry: {
+    width: number
+    height: number
+    topInset: number
+    bottomInset: number
+    rawOffset?: number
+  }) => void
+  onInteractionInterrupted: () => void
 }) {
   const scrollRef = useAnimatedRef<ScrollView>()
   const pixelsPerHour = useSharedValue(
@@ -46,6 +57,7 @@ export function useOwnedCalendarZoom({
   )
   const rawOffset = useSharedValue(initialRawOffset)
   const viewportHeight = useSharedValue(0)
+  const viewportWidth = useSharedValue(0)
   const topInset = useSharedValue(0)
   const bottomInset = useSharedValue(0)
   const focalY = useSharedValue(0)
@@ -59,16 +71,23 @@ export function useOwnedCalendarZoom({
   const verticalCallbacksBlocked = useSharedValue(false)
   const horizontalCallbacksBlocked = useSharedValue(false)
   const scrollRevision = useSharedValue(0)
+  const geometryRevision = useSharedValue(0)
+  const pinchGeometryRevision = useSharedValue(0)
   const pinchGesture = Gesture.Pinch()
     .withTestId("owned-calendar-pinch")
     .cancelsTouchesInView(true)
-    .onStart((event) => {
+    .onBegin(() => {
       "worklet"
       pinchGeneration.set(generation)
+      pinchGeometryRevision.set(geometryRevision.get())
       verticalCallbacksBlocked.set(true)
       horizontalCallbacksBlocked.set(true)
       pinchInterruptionSequence.set(pinchInterruptionSequence.get() + 1)
       pinchSequence.set(pinchSequence.get() + 1)
+      scheduleOnRN(onInteractionInterrupted)
+    })
+    .onStart((event) => {
+      "worklet"
       pinchBaselineScale.set(pixelsPerHour.get())
       pinchBaselineOffset.set(rawOffset.get())
       pinchBaselineFocalY.set(event.focalY)
@@ -77,7 +96,11 @@ export function useOwnedCalendarZoom({
     })
     .onUpdate((event) => {
       "worklet"
-      if (pinchGeneration.get() !== generation) return
+      if (
+        pinchGeneration.get() !== generation ||
+        pinchGeometryRevision.get() !== geometryRevision.get()
+      )
+        return
       const nextScale = resolvePixelsPerHour(
         pinchBaselineScale.get() * event.scale,
       )
@@ -104,12 +127,14 @@ export function useOwnedCalendarZoom({
     })
     .onEnd((_event, success) => {
       "worklet"
-      if (!success) return
+      if (!success || pinchGeometryRevision.get() !== geometryRevision.get())
+        return
       const settledScale = resolvePixelsPerHour(pixelsPerHour.get())
       const settledOffset = rawOffset.get()
       pinchActive.set(false)
       scheduleOnRN(onZoomSettled, {
         generation,
+        geometryRevision: geometryRevision.get(),
         pixelsPerHour: settledScale,
         rawOffset: settledOffset,
         sequence: pinchSequence.get(),
@@ -118,7 +143,11 @@ export function useOwnedCalendarZoom({
     })
     .onFinalize((_event, success) => {
       "worklet"
-      if (!success && pinchGeneration.get() === generation) {
+      if (
+        !success &&
+        pinchGeneration.get() === generation &&
+        pinchGeometryRevision.get() === geometryRevision.get()
+      ) {
         pixelsPerHour.set(pinchBaselineScale.get())
         rawOffset.set(pinchBaselineOffset.get())
         scrollRevision.set(scrollRevision.get() + 1)
@@ -137,15 +166,58 @@ export function useOwnedCalendarZoom({
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       if (verticalCallbacksBlocked.get()) return
-      viewportHeight.set(event.layoutMeasurement.height)
-      topInset.set(event.contentInset.top)
-      bottomInset.set(event.contentInset.bottom)
+      const nextWidth = event.layoutMeasurement.width
+      const nextHeight = event.layoutMeasurement.height
+      const nextTopInset = event.contentInset.top
+      const nextBottomInset = event.contentInset.bottom
+      const geometryChanged =
+        nextWidth !== viewportWidth.get() ||
+        nextHeight !== viewportHeight.get() ||
+        nextTopInset !== topInset.get() ||
+        nextBottomInset !== bottomInset.get()
+      viewportWidth.set(nextWidth)
+      viewportHeight.set(nextHeight)
+      topInset.set(nextTopInset)
+      bottomInset.set(nextBottomInset)
       rawOffset.set(event.contentOffset.y)
+      if (geometryChanged) {
+        scheduleOnRN(onViewportGeometryChange, {
+          width: nextWidth,
+          height: nextHeight,
+          topInset: nextTopInset,
+          bottomInset: nextBottomInset,
+          rawOffset: event.contentOffset.y,
+        })
+      }
     },
   })
 
   const onViewportLayout = (event: LayoutChangeEvent) => {
-    viewportHeight.set(event.nativeEvent.layout.height)
+    const { width, height } = event.nativeEvent.layout
+    viewportWidth.set(width)
+    viewportHeight.set(height)
+    onViewportGeometryChange({
+      width,
+      height,
+      topInset: topInset.get(),
+      bottomInset: bottomInset.get(),
+    })
+  }
+
+  const invalidateForGeometry = (
+    revision: number,
+    nextRawOffset: number,
+    cancelPrevious: boolean,
+  ) => {
+    geometryRevision.set(revision)
+    if (cancelPrevious) {
+      pinchActive.set(false)
+      pinchInterruptionSequence.set(pinchInterruptionSequence.get() + 1)
+      verticalCallbacksBlocked.set(true)
+      horizontalCallbacksBlocked.set(true)
+    }
+    rawOffset.set(nextRawOffset)
+    scrollRevision.set(scrollRevision.get() + 1)
   }
 
   const requestZoom = (nextCommand: CalendarZoomCommand) => {
@@ -179,6 +251,7 @@ export function useOwnedCalendarZoom({
     scrollRevision.set(scrollRevision.get() + 1)
     onZoomSettled({
       generation,
+      geometryRevision: geometryRevision.get(),
       pixelsPerHour: nextScale,
       rawOffset: nextOffset,
       sequence,
@@ -219,12 +292,15 @@ export function useOwnedCalendarZoom({
   return {
     onScroll,
     onViewportLayout,
+    geometryRevision,
+    invalidateForGeometry,
     pinchActive,
     pinchGeneration,
     pinchGesture,
     pinchInterruptionSequence,
     pinchSequence,
     pixelsPerHour,
+    rawOffset,
     requestZoom,
     scrollRef,
     horizontalCallbacksBlocked,

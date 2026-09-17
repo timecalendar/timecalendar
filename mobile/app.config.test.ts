@@ -53,12 +53,12 @@ describe("Expo distribution configuration", () => {
       bundleIdentifier: "fr.samuelprak.timecalendar.dev",
       googleServicesFile: "./firebase/GoogleService-Info.dev.plist",
       supportsTablet: true,
-      requireFullScreen: true,
+      requireFullScreen: false,
       infoPlist: {
         NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },
       },
     })
-    expect(config.orientation).toBe("portrait")
+    expect(config.orientation).toBe("default")
     expect(config.android).toMatchObject({
       package: "fr.samuelprak.timecalendar.dev",
       googleServicesFile: "./firebase/google-services.dev.json",
@@ -80,9 +80,9 @@ describe("Expo distribution configuration", () => {
         bundleIdentifier: "fr.samuelprak.timecalendar",
         googleServicesFile: "./firebase/GoogleService-Info.plist",
         supportsTablet: true,
-        requireFullScreen: true,
+        requireFullScreen: false,
       })
-      expect(config.orientation).toBe("portrait")
+      expect(config.orientation).toBe("default")
       expect(config.ios?.infoPlist).not.toHaveProperty("NSAppTransportSecurity")
       expect(config.android).toMatchObject({
         package: "fr.samuelprak.timecalendar",
