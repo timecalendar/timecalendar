@@ -2,47 +2,33 @@ import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, View } from "react-native"
 
-import {
-  Host,
-  type MenuComponentRef,
-  MenuView,
-  Picker,
-} from "@/components/chrome"
+import { type MenuComponentRef, MenuView } from "@/components/chrome"
 import { ThemedText } from "@/components/themed-text"
 import { type CalendarView } from "@/features/settings/prefs"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-export function CalendarViewMenu({
-  view,
-  onChange,
-}: {
-  view: CalendarView
-  onChange: (view: CalendarView) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <Host matchContents style={styles.viewMenu}>
-      <Picker
-        testID="calendar-view"
-        appearance="menu"
-        selectedValue={view}
-        onValueChange={(value) => onChange(value as CalendarView)}
-      >
-        <Picker.Item label={t("calendar.view.day")} value="day" />
-        <Picker.Item label={t("calendar.view.week")} value="week" />
-        <Picker.Item label={t("calendar.view.agenda")} value="agenda" />
-      </Picker>
-    </Host>
-  )
+export type CalendarZoomMenuState = {
+  canZoomIn: boolean
+  canZoomOut: boolean
+  canResetZoom: boolean
+  onZoomIn: () => void
+  onZoomOut: () => void
+  onResetZoom: () => void
 }
 
-export function CalendarAndroidViewMenu({
-  view,
-  onChange,
-}: {
+type CalendarPlatformMenuProps = {
   view: CalendarView
   onChange: (view: CalendarView) => void
-}) {
+  zoom: CalendarZoomMenuState | null
+  minimumTarget: 44 | 48
+}
+
+function CalendarPlatformMenu({
+  view,
+  onChange,
+  zoom,
+  minimumTarget,
+}: CalendarPlatformMenuProps) {
   const { t } = useTranslation()
   const theme = useTheme()
   const menuRef = useRef<MenuComponentRef>(null)
@@ -51,18 +37,53 @@ export function CalendarAndroidViewMenu({
     week: t("calendar.view.week"),
     agenda: t("calendar.view.agenda"),
   }
-  const actions = (Object.keys(labels) as CalendarView[]).map((value) => ({
-    id: value,
-    title: labels[value],
-    state: value === view ? ("on" as const) : ("off" as const),
-  }))
+  const actions = [
+    ...(Object.keys(labels) as CalendarView[]).map((value) => ({
+      id: value,
+      title: labels[value],
+      state: value === view ? ("on" as const) : ("off" as const),
+    })),
+    ...(zoom
+      ? [
+          {
+            id: "zoom-in",
+            title: t(
+              zoom.canZoomIn ? "calendar.zoom.in" : "calendar.zoom.inLimit",
+            ),
+            attributes: { disabled: !zoom.canZoomIn },
+          },
+          {
+            id: "zoom-out",
+            title: t(
+              zoom.canZoomOut ? "calendar.zoom.out" : "calendar.zoom.outLimit",
+            ),
+            attributes: { disabled: !zoom.canZoomOut },
+          },
+          {
+            id: "zoom-reset",
+            title: t(
+              zoom.canResetZoom
+                ? "calendar.zoom.reset"
+                : "calendar.zoom.resetDefault",
+            ),
+            attributes: { disabled: !zoom.canResetZoom },
+          },
+        ]
+      : []),
+  ]
+
+  const onPressAction = (action: string) => {
+    if (action === "zoom-in") zoom?.onZoomIn()
+    else if (action === "zoom-out") zoom?.onZoomOut()
+    else if (action === "zoom-reset") zoom?.onResetZoom()
+    else onChange(action as CalendarView)
+  }
+
   return (
     <MenuView
       ref={menuRef}
       actions={actions}
-      onPressAction={({ nativeEvent }) =>
-        onChange(nativeEvent.event as CalendarView)
-      }
+      onPressAction={({ nativeEvent }) => onPressAction(nativeEvent.event)}
     >
       <Pressable
         testID="calendar-view"
@@ -73,13 +94,10 @@ export function CalendarAndroidViewMenu({
         onAccessibilityAction={({ nativeEvent }) => {
           if (nativeEvent.actionName === "activate") menuRef.current?.show()
         }}
-        style={styles.androidTarget}
+        style={[styles.target, { minHeight: minimumTarget }]}
       >
         <View
-          style={[
-            styles.androidPill,
-            { backgroundColor: theme.backgroundElement },
-          ]}
+          style={[styles.pill, { backgroundColor: theme.backgroundElement }]}
         >
           <ThemedText type="smallBold">{labels[view]}</ThemedText>
           <View style={[styles.chevron, { borderColor: theme.primary }]} />
@@ -89,10 +107,21 @@ export function CalendarAndroidViewMenu({
   )
 }
 
+export function CalendarViewMenu(
+  props: Omit<CalendarPlatformMenuProps, "minimumTarget">,
+) {
+  return <CalendarPlatformMenu {...props} minimumTarget={44} />
+}
+
+export function CalendarAndroidViewMenu(
+  props: Omit<CalendarPlatformMenuProps, "minimumTarget">,
+) {
+  return <CalendarPlatformMenu {...props} minimumTarget={48} />
+}
+
 const styles = StyleSheet.create({
-  viewMenu: { minHeight: 44, justifyContent: "center" },
-  androidTarget: { minHeight: 48, justifyContent: "center" },
-  androidPill: {
+  target: { justifyContent: "center" },
+  pill: {
     minHeight: 36,
     minWidth: 88,
     paddingHorizontal: 12,

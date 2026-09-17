@@ -6,6 +6,7 @@ import { remove } from "@/storage"
 
 import {
   useCalendarViewPreference,
+  useCalendarZoomPreference,
   useDisplayZone,
   useLanguagePreference,
   useShowWeekendsPreference,
@@ -87,6 +88,29 @@ describe("useCalendarViewPreference", () => {
     await act(async () => first.unmount())
     const restarted = await renderHook(() => useCalendarViewPreference())
     expect(restarted.result.current.view).toBe("agenda")
+  })
+})
+
+describe("useCalendarZoomPreference", () => {
+  beforeEach(() => remove(SETTINGS_KEYS.calendarZoomPixelsPerHour))
+
+  it("shares one reactive value across Day and Week consumers and restart reads", async () => {
+    const first = await renderHook(() => ({
+      day: useCalendarZoomPreference(),
+      week: useCalendarZoomPreference(),
+    }))
+    expect(first.result.current.day.pixelsPerHour).toBe(60)
+    expect(first.result.current.week.pixelsPerHour).toBe(60)
+    const setter = first.result.current.day.setPixelsPerHour
+
+    await act(async () => setter(85))
+    expect(first.result.current.day.pixelsPerHour).toBe(85)
+    expect(first.result.current.week.pixelsPerHour).toBe(85)
+    expect(first.result.current.day.setPixelsPerHour).toBe(setter)
+
+    await act(async () => first.unmount())
+    const restarted = await renderHook(() => useCalendarZoomPreference())
+    expect(restarted.result.current.pixelsPerHour).toBe(85)
   })
 })
 

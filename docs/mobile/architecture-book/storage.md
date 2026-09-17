@@ -69,6 +69,10 @@ its civil anchor and clock offset from fresh-open policy. The `settings.showWeek
 also environment-independent: missing or
 malformed reads resolve to `true`, explicit false/true values remain reactive across app starts,
 and backend reset preserves it.
+The numeric `settings.calendarZoomPixelsPerHour` value is likewise environment-independent and
+shared by Calendar Day and Week. Only finite values from 40 through 120 are valid; missing,
+malformed, non-finite or out-of-range reads resolve to the 60 px/hour default. Backend reset
+preserves the per-installation value, while reinstall may remove it.
 
 The versioned export-guide LKG registry is a backend-bound rebuildable cache behind `@/storage`.
 Each logical record is isolated by requested locale, client schema, and active or exact-version
@@ -111,7 +115,7 @@ an installed database is a data incident, and the mocked seam cannot catch one.
 ## Backend environment reset
 
 - `@/storage` centrally enumerates and classifies every known MMKV key. Theme, language,
-  display-timezone, Calendar view, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
+  display-timezone, Calendar view, Calendar zoom, Show weekends, and Changelog acknowledgement survive; selected backend and the temporary
   reset journal are controls; school/group selection, hidden events, notification values,
   remembered feedback e-mail and persisted Query data are backend-bound. Unknown keys default to
   backend-bound and are removed. The export-guide LKG registry is also backend-bound and is removed

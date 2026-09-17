@@ -128,7 +128,12 @@ jest.mock("@expo/ui/community/menu", () => {
 
   const MenuView = React.forwardRef(function MenuView(
     props: {
-      actions: { id?: string; title: string; state?: string }[]
+      actions: {
+        id?: string
+        title: string
+        state?: string
+        attributes?: { disabled?: boolean }
+      }[]
       children?: unknown
       onPressAction?: (event: { nativeEvent: { event: string } }) => void
     },
@@ -153,6 +158,11 @@ jest.mock("@expo/ui/community/menu", () => {
               testID: `menu-action-${action.id ?? action.title}`,
               accessibilityRole: "button",
               accessibilityLabel: action.title,
+              accessibilityState: {
+                disabled: action.attributes?.disabled ?? false,
+                selected: action.state === "on",
+              },
+              disabled: action.attributes?.disabled,
               onPress: () => {
                 props.onPressAction?.({
                   nativeEvent: { event: action.id ?? action.title },

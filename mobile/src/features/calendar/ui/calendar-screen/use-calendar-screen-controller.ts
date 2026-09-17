@@ -18,6 +18,7 @@ import {
 import {
   type CalendarView,
   useCalendarViewPreference,
+  useCalendarZoomPreference,
   useDisplayZone,
 } from "@/features/settings/prefs"
 
@@ -59,6 +60,7 @@ export function useCalendarScreenController() {
   const displayZone = useDisplayZone()
   const { view: persistedView, setView: persistView } =
     useCalendarViewPreference()
+  const { pixelsPerHour, setPixelsPerHour } = useCalendarZoomPreference()
   const [verticalOffset, setVerticalOffset] = useState(0)
   const [state, dispatchTransition] = useReducer(
     (state: CalendarControllerState, action: TransitionAction) => {
@@ -166,7 +168,14 @@ export function useCalendarScreenController() {
     dispatchTransition({ type: "cancel", revision })
   }
   const settleVerticalOffset = (offset: number) => {
-    setVerticalOffset(Math.max(0, offset))
+    setVerticalOffset(Number.isFinite(offset) ? offset : 0)
+  }
+  const settleZoom = (settlement: {
+    pixelsPerHour: number
+    rawOffset: number
+  }) => {
+    setPixelsPerHour(settlement.pixelsPerHour)
+    settleVerticalOffset(settlement.rawOffset)
   }
 
   return {
@@ -183,7 +192,9 @@ export function useCalendarScreenController() {
     transitionRevision: transition.lastRequestRevision,
     acceptedTransitionRevision: transition.acceptedRevision,
     verticalOffset,
+    pixelsPerHour,
     settleVerticalOffset,
+    settleZoom,
     requestTransition,
     settleTransition,
     cancelTransition,

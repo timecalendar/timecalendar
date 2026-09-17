@@ -45,11 +45,15 @@ export {
   useSyncedEvents,
 } from "./sync"
 export {
+  clampRawOffset,
   clampVerticalOffset,
+  clockHourAtFocalPoint,
   DEFAULT_PIXELS_PER_HOUR,
   eventHeight,
+  focalPreservingRawOffset,
   FULL_DAY_END_MINUTE,
   FULL_DAY_START_MINUTE,
+  fullDayContentHeight,
   fullDayMajorMinutes,
   fullDayMinorMinutes,
   GRID_END_MINUTE,
@@ -57,11 +61,21 @@ export {
   gridContentHeight,
   hourLabels,
   HOURS_COLUMN_WIDTH,
+  isValidPixelsPerHour,
+  MAX_PIXELS_PER_HOUR,
   maxVerticalOffset,
+  MIN_PIXELS_PER_HOUR,
   MIN_TILE_WIDTH,
   minuteToPixel,
+  type NativeVerticalGeometry,
   type NowIndicator,
   nowIndicatorPosition,
+  type RawOffsetBounds,
+  rawOffsetBounds,
+  resolvePixelsPerHour,
+  stepPixelsPerHour,
+  usableViewportCenterY,
+  ZOOM_PIXELS_PER_HOUR_STEP,
 } from "./time-grid"
 export { type CalendarEvent } from "./types"
 export {

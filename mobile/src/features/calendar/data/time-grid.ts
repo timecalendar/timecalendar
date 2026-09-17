@@ -16,6 +16,10 @@ export const FULL_DAY_START_MINUTE = 0
 export const FULL_DAY_END_MINUTE = 24 * 60
 /** Default vertical scale. */
 export const DEFAULT_PIXELS_PER_HOUR = 60
+/** Initial inclusive zoom bounds and accessible command increment. */
+export const MIN_PIXELS_PER_HOUR = 40
+export const MAX_PIXELS_PER_HOUR = 120
+export const ZOOM_PIXELS_PER_HOUR_STEP = 10
 /** Width of the hours (time labels) column. */
 export const HOURS_COLUMN_WIDTH = 50
 /** Below this tile width, the renderer hides the tile text. */
@@ -78,6 +82,148 @@ export function gridContentHeight(
   pixelsPerHour: number = DEFAULT_PIXELS_PER_HOUR,
 ): number {
   return minuteToPixel(endMinute, { pixelsPerHour, startMinute })
+}
+
+/** A persisted or gesture-produced scale always resolves into the T06 domain. */
+export function resolvePixelsPerHour(value: unknown): number {
+  "worklet"
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return DEFAULT_PIXELS_PER_HOUR
+  }
+  return Math.min(Math.max(value, MIN_PIXELS_PER_HOUR), MAX_PIXELS_PER_HOUR)
+}
+
+export function isValidPixelsPerHour(value: unknown): value is number {
+  "worklet"
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= MIN_PIXELS_PER_HOUR &&
+    value <= MAX_PIXELS_PER_HOUR
+  )
+}
+
+/** Complete 00:00–24:00 content height at a validated zoom scale. */
+export function fullDayContentHeight(pixelsPerHour: unknown): number {
+  "worklet"
+  return 24 * resolvePixelsPerHour(pixelsPerHour)
+}
+
+export interface NativeVerticalGeometry {
+  contentHeight: number
+  viewportHeight: number
+  topInset: number
+  bottomInset: number
+}
+
+export interface RawOffsetBounds {
+  min: number
+  max: number
+}
+
+function finiteNonNegative(value: number): number {
+  "worklet"
+  return Number.isFinite(value) ? Math.max(value, 0) : 0
+}
+
+/** Native ScrollView raw content-offset range with automatic insets included. */
+export function rawOffsetBounds({
+  contentHeight,
+  viewportHeight,
+  topInset,
+  bottomInset,
+}: NativeVerticalGeometry): RawOffsetBounds {
+  "worklet"
+  const safeContentHeight = finiteNonNegative(contentHeight)
+  const safeViewportHeight = finiteNonNegative(viewportHeight)
+  const safeTopInset = finiteNonNegative(topInset)
+  const safeBottomInset = finiteNonNegative(bottomInset)
+  const min = -safeTopInset
+  return {
+    min,
+    max: Math.max(
+      safeContentHeight - safeViewportHeight + safeBottomInset,
+      min,
+    ),
+  }
+}
+
+export function clampRawOffset(
+  rawOffset: number,
+  geometry: NativeVerticalGeometry,
+): number {
+  "worklet"
+  const { min, max } = rawOffsetBounds(geometry)
+  const safeOffset = Number.isFinite(rawOffset) ? rawOffset : min
+  return Math.min(Math.max(safeOffset, min), max)
+}
+
+/** Wall-clock hour coordinate currently beneath a viewport focal position. */
+export function clockHourAtFocalPoint(
+  rawOffset: number,
+  focalY: number,
+  pixelsPerHour: unknown,
+): number {
+  "worklet"
+  const safeRawOffset = Number.isFinite(rawOffset) ? rawOffset : 0
+  const safeFocalY = Number.isFinite(focalY) ? focalY : 0
+  return (safeRawOffset + safeFocalY) / resolvePixelsPerHour(pixelsPerHour)
+}
+
+/** Solve and clamp the raw offset that keeps a clock hour under the focal point. */
+export function focalPreservingRawOffset({
+  rawOffset,
+  focalY,
+  nextFocalY = focalY,
+  oldPixelsPerHour,
+  newPixelsPerHour,
+  geometry,
+}: {
+  rawOffset: number
+  focalY: number
+  nextFocalY?: number
+  oldPixelsPerHour: unknown
+  newPixelsPerHour: unknown
+  geometry: NativeVerticalGeometry
+}): number {
+  "worklet"
+  const safeFocalY = Number.isFinite(focalY) ? focalY : 0
+  const safeNextFocalY = Number.isFinite(nextFocalY) ? nextFocalY : safeFocalY
+  const clockHour = clockHourAtFocalPoint(
+    rawOffset,
+    safeFocalY,
+    oldPixelsPerHour,
+  )
+  const nextScale = resolvePixelsPerHour(newPixelsPerHour)
+  return clampRawOffset(clockHour * nextScale - safeNextFocalY, geometry)
+}
+
+/** Center of the viewport area not occupied by automatic native insets. */
+export function usableViewportCenterY(
+  viewportHeight: number,
+  topInset: number,
+  bottomInset: number,
+): number {
+  "worklet"
+  const safeViewportHeight = finiteNonNegative(viewportHeight)
+  const safeTopInset = Math.min(finiteNonNegative(topInset), safeViewportHeight)
+  const safeBottomInset = Math.min(
+    finiteNonNegative(bottomInset),
+    safeViewportHeight - safeTopInset,
+  )
+  return (
+    safeTopInset + (safeViewportHeight - safeTopInset - safeBottomInset) / 2
+  )
+}
+
+export function stepPixelsPerHour(
+  pixelsPerHour: unknown,
+  direction: -1 | 1,
+): number {
+  "worklet"
+  return resolvePixelsPerHour(
+    resolvePixelsPerHour(pixelsPerHour) + direction * ZOOM_PIXELS_PER_HOUR_STEP,
+  )
 }
 
 export function maxVerticalOffset(

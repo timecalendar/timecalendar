@@ -1,11 +1,20 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
+import { createRef } from "react"
 import { AppState, StyleSheet } from "react-native"
+import { State } from "react-native-gesture-handler"
+import {
+  fireGestureHandler,
+  getByGestureTestId,
+} from "react-native-gesture-handler/jest-utils"
 import { useEvent, useReducedMotion } from "react-native-reanimated"
 
 import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
 import { Colors } from "@/theme"
 
-import { OwnedCalendarShell } from "./owned-calendar-shell"
+import {
+  OwnedCalendarShell,
+  type OwnedCalendarShellHandle,
+} from "./owned-calendar-shell"
 
 const pagerMock = jest.requireMock<{
   __pagerMock: {
@@ -20,6 +29,7 @@ describe("OwnedCalendarShell", () => {
   const onTransitionSettled = jest.fn()
   const onTransitionCancelled = jest.fn()
   const onVerticalOffsetSettled = jest.fn()
+  const onZoomSettled = jest.fn()
   const props = {
     heading: "Monday, June 15th, 2026",
     mode: "week" as const,
@@ -31,12 +41,14 @@ describe("OwnedCalendarShell", () => {
     currentDate: new Date("2026-06-17T12:00:00.000Z"),
     uses24HourClock: true,
     initialVerticalOffset: 0,
+    initialPixelsPerHour: 60,
     generation: 0,
     revisionFloor: 0,
     onTransitionRequest,
     onTransitionSettled,
     onTransitionCancelled,
     onVerticalOffsetSettled,
+    onZoomSettled,
   }
   const scrollEvent = (y: number, top = 0, bottom = 0) => ({
     nativeEvent: {
@@ -67,6 +79,36 @@ describe("OwnedCalendarShell", () => {
       "layout",
       headerLaneLayout(width),
     )
+  }
+
+  const firePinch = (finalState: State = State.END) => {
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      {
+        state: State.ACTIVE,
+        numberOfPointers: 2,
+        focalX: 160,
+        focalY: 250,
+        scale: 1,
+      },
+      {
+        state: State.ACTIVE,
+        numberOfPointers: 2,
+        focalX: 160,
+        focalY: 250,
+        scale: 1.1,
+      },
+      { state: finalState, numberOfPointers: 1 },
+    ])
+  }
+
+  const fireNativeOwnerStart = (
+    owner: "owned-calendar-native-scroll" | "owned-calendar-native-pager",
+  ) => {
+    fireGestureHandler(getByGestureTestId(owner), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 1 },
+    ])
   }
 
   beforeEach(() => {
@@ -344,6 +386,10 @@ describe("OwnedCalendarShell", () => {
       "pageScroll",
       { nativeEvent: { position: 1, offset: 0.4 } },
     )
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 2, scale: 1.1 },
+    ])
 
     await act(async () => appStateListener?.("inactive"))
     await view.rerender(<OwnedCalendarShell {...props} />)
@@ -443,6 +489,32 @@ describe("OwnedCalendarShell", () => {
       backgroundColor: Colors.light.textSecondary,
     })
     expect(style).not.toHaveProperty("borderTopWidth")
+  })
+
+  it("drives labels, boundaries, pages, and content extent from one scale", async () => {
+    await render(<OwnedCalendarShell {...props} initialPixelsPerHour={90} />)
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-major-0-1440", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).top,
+    ).toBe(2160)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-hour-label-12", {
+          includeHiddenElements: true,
+        }).parent?.props.style,
+      ).top,
+    ).toBe(1080)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-page-0", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).height,
+    ).toBe(2160 + StyleSheet.hairlineWidth)
   })
 
   it.each([
@@ -627,6 +699,198 @@ describe("OwnedCalendarShell", () => {
     await act(async () => frame?.(0))
     expect(onVerticalOffsetSettled).toHaveBeenCalledWith(240)
     requestFrame.mockRestore()
+  })
+
+  it.each([State.END, State.CANCELLED])(
+    "gives a two-pointer pinch precedence and rejects the stale page on %s",
+    async (finalState) => {
+      pagerMock.deferNextTransition()
+      await render(<OwnedCalendarShell {...props} />)
+      const canvas = screen.getByTestId("owned-calendar-canvas")
+      const pager = screen.getByTestId("owned-calendar-pager", {
+        includeHiddenElements: true,
+      })
+      await fireEvent(canvas, "accessibilityAction", {
+        nativeEvent: { actionName: "increment" },
+      })
+
+      await act(async () => firePinch(finalState))
+      await fireEvent(pager, "pageSelected", {
+        nativeEvent: { position: 2 },
+      })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+
+      expect(pagerMock.setPageWithoutAnimation).toHaveBeenCalledWith(1)
+      expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+      expect(onTransitionSettled).not.toHaveBeenCalled()
+    },
+  )
+
+  it("gates delayed pre-pinch owner starts and completions until each native owner starts a new epoch", async () => {
+    let frame: FrameRequestCallback | undefined
+    const requestFrame = jest
+      .spyOn(global, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        frame = callback
+        return 1
+      })
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} ref={shellRef} />)
+    await measureHeaderLane()
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    await fireEvent.scroll(canvas, scrollEvent(0, 12, 80))
+    await fireEvent(canvas, "accessibilityAction", {
+      nativeEvent: { actionName: "increment" },
+    })
+
+    await act(async () => firePinch(State.END))
+    await fireEvent(canvas, "scrollBeginDrag", scrollEvent(899, 12, 80))
+    await fireEvent.scroll(canvas, scrollEvent(900, 12, 80))
+    await fireEvent(canvas, "scrollEndDrag", scrollEvent(901, 12, 80))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(902, 12, 80))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(903, 12, 80))
+    await act(async () => frame?.(0))
+    await fireEvent(pager, "pageScroll", {
+      nativeEvent: { position: 1, offset: 0.7 },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "settling" },
+    })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 0 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        ref={shellRef}
+        initialPixelsPerHour={66}
+        initialVerticalOffset={25}
+      />,
+    )
+
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
+    expect(onTransitionCancelled).toHaveBeenCalledTimes(1)
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+    expect(headerTranslateX()).toBe(0)
+
+    await act(async () => shellRef.current?.requestZoom("in"))
+    expect(onZoomSettled).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        generation: 0,
+        pixelsPerHour: 76,
+        sequence: 2,
+        source: "command",
+      }),
+    )
+    expect(onZoomSettled.mock.lastCall?.[0].rawOffset).toBeCloseTo(61.52, 2)
+
+    await act(async () => fireNativeOwnerStart("owned-calendar-native-scroll"))
+    await fireEvent(canvas, "scrollBeginDrag", scrollEvent(300, 12, 80))
+    await fireEvent.scroll(canvas, scrollEvent(300, 12, 80))
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(300, 12, 80))
+    expect(onVerticalOffsetSettled).toHaveBeenCalledWith(300)
+
+    await act(async () => fireNativeOwnerStart("owned-calendar-native-pager"))
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "dragging" },
+    })
+    await fireEvent(pager, "pageSelected", { nativeEvent: { position: 2 } })
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    expect(onTransitionRequest).toHaveBeenLastCalledWith({
+      revision: 2,
+      direction: 1,
+      source: "gesture",
+    })
+    expect(onTransitionSettled).toHaveBeenCalledWith(2)
+    requestFrame.mockRestore()
+  })
+
+  it("settles one focal-preserving zoom result only after a successful pinch", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    await act(async () => firePinch(State.END))
+
+    expect(onZoomSettled).toHaveBeenCalledTimes(1)
+    expect(onZoomSettled).toHaveBeenCalledWith({
+      generation: 0,
+      pixelsPerHour: 66,
+      rawOffset: 25,
+      sequence: 1,
+      source: "pinch",
+    })
+  })
+
+  it("restores the baseline without persistence when pinch is cancelled", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    await act(async () => firePinch(State.CANCELLED))
+
+    expect(onZoomSettled).not.toHaveBeenCalled()
+  })
+
+  it("invalidates an active pinch on generation replacement", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    const stalePager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    const staleSelected = stalePager.props.onPageSelected
+    const staleState = stalePager.props.onPageScrollStateChanged
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 2, scale: 1.1 },
+    ])
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-22T00:00:00.000Z")}
+        generation={1}
+      />,
+    )
+    await act(async () => {
+      staleSelected({ nativeEvent: { position: 2 } })
+      staleState({ nativeEvent: { pageScrollState: "idle" } })
+    })
+
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+  })
+
+  it("cancels pending work on unmount during pinch ownership", async () => {
+    pagerMock.deferNextTransition()
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      { state: State.ACTIVE, numberOfPointers: 2, scale: 1.1 },
+    ])
+
+    await act(async () => view.unmount())
+
+    expect(onTransitionCancelled).toHaveBeenCalledWith(1)
+    expect(onTransitionSettled).not.toHaveBeenCalled()
   })
 
   it("settles accessibility paging directly for reduced motion", async () => {

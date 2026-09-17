@@ -2,12 +2,17 @@ import { useCalendars } from "expo-localization"
 import { useCallback } from "react"
 
 import i18n from "@/i18n"
-import { useParsedStoredString, useStoredBoolean } from "@/storage"
+import {
+  useParsedStoredString,
+  useStoredBoolean,
+  useStoredNumber,
+} from "@/storage"
 
 import {
   resolveLanguage,
   resolveTimezone,
   setCalendarView,
+  setCalendarZoomPixelsPerHour,
   setLanguagePreference,
   setShowWeekends,
   setThemePreference,
@@ -17,6 +22,7 @@ import {
   type CalendarView,
   type LanguagePreference,
   parseCalendarView,
+  parseCalendarZoomPixelsPerHour,
   parseLanguagePreference,
   parseThemePreference,
   parseTimezonePreference,
@@ -107,5 +113,17 @@ export function useCalendarViewPreference(): {
   return {
     view: useParsedStoredString(SETTINGS_KEYS.calendarView, parseCalendarView),
     setView: setCalendarView,
+  }
+}
+
+export function useCalendarZoomPreference(): {
+  pixelsPerHour: number
+  setPixelsPerHour: (pixelsPerHour: number) => void
+} {
+  return {
+    pixelsPerHour: parseCalendarZoomPixelsPerHour(
+      useStoredNumber(SETTINGS_KEYS.calendarZoomPixelsPerHour),
+    ),
+    setPixelsPerHour: setCalendarZoomPixelsPerHour,
   }
 }

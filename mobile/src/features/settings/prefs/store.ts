@@ -1,12 +1,20 @@
 import { getCalendars } from "expo-localization"
 
 import { detectLocale, type SupportedLocale } from "@/i18n/detect-locale"
-import { getBoolean, getString, setBoolean, setString } from "@/storage"
+import {
+  getBoolean,
+  getNumber,
+  getString,
+  setBoolean,
+  setNumber,
+  setString,
+} from "@/storage"
 
 import {
   type CalendarView,
   type LanguagePreference,
   parseCalendarView,
+  parseCalendarZoomPixelsPerHour,
   parseLanguagePreference,
   parseThemePreference,
   parseTimezonePreference,
@@ -58,6 +66,19 @@ export function getCalendarView(): CalendarView {
 
 export function setCalendarView(view: CalendarView): void {
   setString(SETTINGS_KEYS.calendarView, view)
+}
+
+export function getCalendarZoomPixelsPerHour(): number {
+  return parseCalendarZoomPixelsPerHour(
+    getNumber(SETTINGS_KEYS.calendarZoomPixelsPerHour),
+  )
+}
+
+export function setCalendarZoomPixelsPerHour(pixelsPerHour: number): void {
+  setNumber(
+    SETTINGS_KEYS.calendarZoomPixelsPerHour,
+    parseCalendarZoomPixelsPerHour(pixelsPerHour),
+  )
 }
 
 // Resolve a timezone preference to the effective display zone: an explicit

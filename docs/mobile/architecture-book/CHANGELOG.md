@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-17 — Calendar zoom (T06)
+
+- Added one continuous 40–120 px/hour Day/Week scale across every clock primitive and all three
+  native pages, with UI-thread focal-preserving pinch geometry over the existing native owners.
+- Added shared validated zoom persistence plus localized, bound-aware native menu commands that
+  preserve the inset-aware viewport center and announce one settled percentage.
+- Deterministic host coverage proves geometry, persistence, lifecycle and renderer inventory;
+  native arbitration, assistive behavior and low-end timing remain revision-bound device evidence.
+
 ## 2026-09-14 — Calendar Day/Week mode (T05)
 
 - The owned timeline now renders Day and Week through the same three-page native pager and one
