@@ -819,6 +819,69 @@ describe("OwnedCalendarShell", () => {
     requestFrame.mockRestore()
   })
 
+  it("observes automatic insets while blocked and rejects stale resize completions", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    await measureHeaderLane()
+    await view.rerender(<OwnedCalendarShell {...props} />)
+    const staleCanvas = screen.getByTestId("owned-calendar-canvas")
+    const staleMomentumEnd = staleCanvas.props.onMomentumScrollEnd
+    const stalePager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    const staleSelected = stalePager.props.onPageSelected
+    const staleState = stalePager.props.onPageScrollStateChanged
+
+    fireGestureHandler(getByGestureTestId("owned-calendar-pinch"), [
+      { state: State.BEGAN, numberOfPointers: 1 },
+      {
+        state: State.ACTIVE,
+        numberOfPointers: 2,
+        focalX: 160,
+        focalY: 250,
+        scale: 1.1,
+      },
+    ])
+    await fireEvent.scroll(
+      screen.getByTestId("owned-calendar-canvas"),
+      scrollEvent(700, 24, 96),
+    )
+    await view.rerender(<OwnedCalendarShell {...props} />)
+
+    const resizedPager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+    expect(resizedPager).not.toBe(stalePager)
+
+    await act(async () => {
+      staleMomentumEnd(scrollEvent(901, 24, 96))
+      staleSelected({ nativeEvent: { position: 2 } })
+      staleState({ nativeEvent: { pageScrollState: "idle" } })
+    })
+
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+
+    await act(async () => {
+      fireNativeOwnerStart("owned-calendar-native-scroll")
+      fireNativeOwnerStart("owned-calendar-native-pager")
+    })
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "momentumScrollEnd",
+      scrollEvent(902, 24, 96),
+    )
+    await fireEvent(resizedPager, "pageSelected", {
+      nativeEvent: { position: 2 },
+    })
+    await fireEvent(resizedPager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+
+    expect(onVerticalOffsetSettled).toHaveBeenCalledWith(902)
+    expect(onTransitionSettled).toHaveBeenCalledWith(1)
+  })
+
   it("settles one focal-preserving zoom result only after a successful pinch", async () => {
     await render(<OwnedCalendarShell {...props} />)
 

@@ -281,23 +281,6 @@ runtime/native baseline contract.
 - **THEN** `CHANGELOG.md` contains the signed xprem client-wiring and fingerprint-evidence entry
 - **AND** no duplicate Architecture Book or `architecture-changelog.md` is created
 
-### Requirement: The Architecture Book records the iPhone and iPad support contract
-
-The Architecture Book SHALL record that TimeCalendar supports iPhone and iPad while remaining portrait-only and full-screen on both device families. The rule SHALL be captured in an indexed ADR and current-state documentation SHALL point to the Expo source, source-config test, and generated-native verification that enforce it. The ADR SHALL identify disabled iPad multitasking as the consequence of retaining portrait-only behavior under Expo SDK 56.
-
-#### Scenario: Durable platform-support decision is indexed
-
-- **WHEN** the Architecture Book ADR index is read after implementation
-- **THEN** it links an accepted ADR for the iPhone+iPad, portrait-only, full-screen contract
-- **AND** the ADR records the App Store continuity constraint, CNG source-of-truth rule, consequences, and revisit triggers
-
-#### Scenario: Current-state guidance points to automated proof
-
-- **WHEN** the runtime and distribution guidance is read
-- **THEN** it identifies `mobile/app.config.ts` as the source of the device-family and orientation contract
-- **AND** it points to both focused source-config coverage and the disposable clean-prebuild assertion
-- **AND** the Architecture Book changelog records the new binding rule
-
 ### Requirement: The calendar naming and import epic's four decisions are ADR-backed
 
 The Architecture Book SHALL contain and index an ADR for each of the four load-bearing decisions the
@@ -346,3 +329,25 @@ time, because two ADRs sharing a number are two differently-named files that mer
 - **WHEN** the rename, convergence, and `/v1` paragraphs in `features.md` and `data.md` are read
 - **THEN** each links to the ADR recording the decision behind it
 - **AND** `CHANGELOG.md` carries a dated entry for the addition
+
+### Requirement: The Architecture Book records the resizable iPhone and iPad contract
+
+The Architecture Book SHALL record that TimeCalendar supports iPhone and iPad in portrait, landscape, and resizable native windows while preserving iOS 16.4, Android API 24, automatic native insets, and fingerprint runtime isolation. ADR 042 SHALL be revised and indexed as the load-bearing decision whose revisit fired. Current-state guidance SHALL identify Expo source configuration, focused source tests, disposable generated-native verification, and compatible binary/fingerprint evidence as distinct proof layers.
+
+#### Scenario: Durable platform-support decision is revised and indexed
+
+- **WHEN** the Architecture Book decision index and ADR 042 are read after implementation
+- **THEN** they describe the landscape-capable, resizable iPhone+iPad contract and preserve the App Store device-family continuity rule
+- **AND** they record CNG source ownership, OS-floor preservation, fingerprint consequence, rejected alternatives, and future revisit triggers
+
+#### Scenario: Current-state guidance points to executable proof
+
+- **WHEN** runtime, EAS/distribution, Calendar, and testing guidance is read
+- **THEN** it identifies `mobile/app.config.ts` as native policy authority and points to source-config and clean-prebuild checks
+- **AND** it distinguishes deterministic host proof from exact-build rotation, resized-window, navigation/chrome, automatic-inset, and gesture evidence
+
+#### Scenario: Architecture Book changelog records the rule change
+
+- **WHEN** Architecture Book history for T07 is inspected
+- **THEN** `CHANGELOG.md` records the transition from portrait-only full-screen to the resizable contract
+- **AND** no duplicate Architecture Book or hand-edited generated-native documentation tree is created

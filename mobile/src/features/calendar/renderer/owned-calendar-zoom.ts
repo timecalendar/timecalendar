@@ -163,7 +163,7 @@ export function useOwnedCalendarZoom({
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
-      if (verticalCallbacksBlocked.get()) return
+      const callbacksBlocked = verticalCallbacksBlocked.get()
       const nextWidth = event.layoutMeasurement.width
       const nextHeight = event.layoutMeasurement.height
       const nextTopInset = event.contentInset.top
@@ -173,7 +173,6 @@ export function useOwnedCalendarZoom({
         nextHeight !== viewportHeight.get() ||
         nextTopInset !== topInset.get() ||
         nextBottomInset !== bottomInset.get()
-      rawOffset.set(event.contentOffset.y)
       if (geometryChanged) {
         viewportWidth.set(nextWidth)
         viewportHeight.set(nextHeight)
@@ -184,9 +183,11 @@ export function useOwnedCalendarZoom({
           height: nextHeight,
           topInset: nextTopInset,
           bottomInset: nextBottomInset,
-          rawOffset: event.contentOffset.y,
+          ...(callbacksBlocked ? {} : { rawOffset: event.contentOffset.y }),
         })
       }
+      if (callbacksBlocked) return
+      rawOffset.set(event.contentOffset.y)
     },
   })
 
@@ -282,12 +283,14 @@ export function useOwnedCalendarZoom({
     pinchGeneration,
     pinchSequence,
     pixelsPerHour,
+    geometryRevision,
     rawOffset,
     scrollRef,
     verticalCallbacksBlocked,
   ])
 
   return {
+    geometryRevision,
     onScroll,
     onViewportLayout,
     invalidateForGeometry,

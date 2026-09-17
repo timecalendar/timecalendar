@@ -124,6 +124,8 @@ export function useOwnedCalendarCoordinator({
   const foregroundRef = useRef(AppState.currentState === "active")
   const verticalOwnerEpoch = useSharedValue(0)
   const horizontalOwnerEpoch = useSharedValue(0)
+  const verticalOwnerGeometryRevision = useSharedValue(0)
+  const horizontalOwnerGeometryRevision = useSharedValue(0)
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
@@ -154,6 +156,10 @@ export function useOwnedCalendarCoordinator({
       next.rawOffset,
       previous !== null,
     )
+    if (previous === null) {
+      verticalOwnerGeometryRevision.set(next.geometryRevision)
+      horizontalOwnerGeometryRevision.set(next.geometryRevision)
+    }
     setHeaderLaneWidth(Math.max(next.geometry.width - HOURS_COLUMN_WIDTH, 0))
     setGeometryRevision(next.geometryRevision)
   }
@@ -198,18 +204,22 @@ export function useOwnedCalendarCoordinator({
     .withTestId("owned-calendar-native-scroll")
     .onBegin(() => {
       "worklet"
+      if (geometryRevision !== zoom.geometryRevision.get()) return
       const epoch = pinchInterruptionSequence.get()
       if (pinchActive.get() || epoch === verticalOwnerEpoch.get()) return
       verticalOwnerEpoch.set(epoch)
+      verticalOwnerGeometryRevision.set(geometryRevision)
       verticalCallbacksBlocked.set(false)
     })
   const nativePagerGesture = Gesture.Native()
     .withTestId("owned-calendar-native-pager")
     .onBegin(() => {
       "worklet"
+      if (geometryRevision !== zoom.geometryRevision.get()) return
       const epoch = pinchInterruptionSequence.get()
       if (pinchActive.get() || epoch === horizontalOwnerEpoch.get()) return
       horizontalOwnerEpoch.set(epoch)
+      horizontalOwnerGeometryRevision.set(geometryRevision)
       horizontalCallbacksBlocked.set(false)
     })
   const pinchGesture = zoom.pinchGesture.blocksExternalGesture(
@@ -261,12 +271,18 @@ export function useOwnedCalendarCoordinator({
 
   const verticalCallbacksAreBlocked = () => {
     observePinchInterruption()
-    return verticalCallbacksBlocked.get()
+    return (
+      verticalCallbacksBlocked.get() ||
+      verticalOwnerGeometryRevision.get() !== geometryRevisionRef.current
+    )
   }
 
   const horizontalCallbacksAreBlocked = () => {
     observePinchInterruption()
-    return horizontalCallbacksBlocked.get()
+    return (
+      horizontalCallbacksBlocked.get() ||
+      horizontalOwnerGeometryRevision.get() !== geometryRevisionRef.current
+    )
   }
 
   const beginTransition = (
