@@ -12,7 +12,7 @@
 // state, and unmount clear the pending handle and schedule nothing.
 
 import { useFocusEffect } from "expo-router"
-import { useCallback, useState } from "react"
+import { useState } from "react"
 import { AppState } from "react-native"
 
 const MINUTE_MS = 60_000
@@ -31,36 +31,38 @@ export function useCalendarClock({
   now = systemNow,
 }: { now?: () => Date } = {}): Date {
   const [value, setValue] = useState(now)
+  // `now` is a construction-time dependency, like a clock passed to a service.
+  // Keep Expo Router's focus callback stable for this hook's mounted lifetime;
+  // changing its identity would tear down and re-arm the timer on every tick.
+  const [focusEffect] = useState(() => () => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const clear = () => {
+      if (timer === undefined) return
+      clearTimeout(timer)
+      timer = undefined
+    }
+    const tick = () => {
+      setValue(now())
+      timer = setTimeout(tick, msToNextMinute())
+    }
+    // Focus and every foreground return recompute the clock immediately, then
+    // re-arm exactly one timer — never two.
+    const arm = () => {
+      clear()
+      tick()
+    }
+    if (AppState.currentState === "active") arm()
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") arm()
+      else clear()
+    })
+    return () => {
+      clear()
+      subscription.remove()
+    }
+  })
 
-  useFocusEffect(
-    useCallback(() => {
-      let timer: ReturnType<typeof setTimeout> | undefined
-      const clear = () => {
-        if (timer === undefined) return
-        clearTimeout(timer)
-        timer = undefined
-      }
-      const tick = () => {
-        setValue(now())
-        timer = setTimeout(tick, msToNextMinute())
-      }
-      // Focus and every foreground return recompute the clock immediately, then
-      // re-arm exactly one timer — never two.
-      const arm = () => {
-        clear()
-        tick()
-      }
-      if (AppState.currentState === "active") arm()
-      const subscription = AppState.addEventListener("change", (state) => {
-        if (state === "active") arm()
-        else clear()
-      })
-      return () => {
-        clear()
-        subscription.remove()
-      }
-    }, [now]),
-  )
+  useFocusEffect(focusEffect)
 
   return value
 }
