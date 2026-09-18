@@ -138,6 +138,7 @@ export function useOwnedCalendarCoordinator({
   const settledZoomSequenceRef = useRef(0)
   const previousShowWeekendsRef = useRef(showWeekends)
   const progressContextKey = `${generation}:${geometryRevision}:${mode}:${headerLaneWidth}:${showWeekends}`
+  const nowMinuteOfDay = minuteOfDayInZone(currentDate, displayZone)
   const onViewportGeometryChange = (
     geometry: TimedViewportGeometry & { rawOffset?: number },
   ) => {
@@ -151,7 +152,7 @@ export function useOwnedCalendarCoordinator({
     const rawOffset =
       previous === null
         ? nowAnchoredRawOffset({
-            minuteOfDay: minuteOfDayInZone(currentDate, displayZone),
+            minuteOfDay: nowMinuteOfDay,
             pixelsPerHour,
             geometry: {
               viewportHeight: geometry.height,
@@ -260,7 +261,6 @@ export function useOwnedCalendarCoordinator({
     showWeekends,
   )
   const todayKey = dayKey(currentDate, displayZone)
-  const nowMinuteOfDay = minuteOfDayInZone(currentDate, displayZone)
   // Explicit full-day bounds and the settled scale — the helper's 07:00–21:00
   // defaults stay as they are for Home's mini timeline and the agenda.
   const nowIndicator = nowIndicatorPosition(currentDate, displayZone, {

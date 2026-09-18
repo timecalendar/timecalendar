@@ -62,6 +62,18 @@ function renderHeight(pixelsPerHour: number) {
   )
 }
 
+function useMinutePositionStyle(
+  minute: number,
+  pixelsPerHour: SharedValue<number>,
+) {
+  return useAnimatedStyle(() => ({
+    top: minuteToPixel(minute, {
+      startMinute: FULL_DAY_START_MINUTE,
+      pixelsPerHour: pixelsPerHour.get(),
+    }),
+  }))
+}
+
 function stableTintIndex(key: string) {
   return (
     Array.from(key).reduce((total, character) => {
@@ -283,12 +295,7 @@ function AnimatedHourLabel({
   label: string
   pixelsPerHour: SharedValue<number>
 }) {
-  const positionStyle = useAnimatedStyle(() => ({
-    top: minuteToPixel(hour * 60, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-  }))
+  const positionStyle = useMinutePositionStyle(hour * 60, pixelsPerHour)
   return (
     <Animated.View style={[styles.hourLabel, positionStyle]}>
       <ThemedText type="small" testID={`owned-calendar-hour-label-${hour}`}>
@@ -446,12 +453,7 @@ function AnimatedNowIndicator({
   pixelsPerHour: SharedValue<number>
   color: string
 }) {
-  const positionStyle = useAnimatedStyle(() => ({
-    top: minuteToPixel(minuteOfDay, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-  }))
+  const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
   return (
     <Animated.View
       testID={testID}
@@ -480,12 +482,7 @@ function AnimatedNowChip({
   pixelsPerHour: SharedValue<number>
 }) {
   const theme = useTheme()
-  const positionStyle = useAnimatedStyle(() => ({
-    top: minuteToPixel(minuteOfDay, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-  }))
+  const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
   return (
     <Animated.View style={[styles.nowChipAnchor, positionStyle]}>
       <View
@@ -518,12 +515,7 @@ function AnimatedGridLine({
   color: string
   minor?: boolean
 }) {
-  const positionStyle = useAnimatedStyle(() => ({
-    top: minuteToPixel(minute, {
-      startMinute: FULL_DAY_START_MINUTE,
-      pixelsPerHour: pixelsPerHour.get(),
-    }),
-  }))
+  const positionStyle = useMinutePositionStyle(minute, pixelsPerHour)
   return (
     <Animated.View
       testID={testID}
