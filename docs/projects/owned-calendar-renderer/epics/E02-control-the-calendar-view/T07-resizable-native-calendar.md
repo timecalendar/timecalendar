@@ -114,4 +114,23 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Implementation host evidence was produced on 2026-09-17; the exact pushed revision and final
+command results are recorded in the issue handoff. Source config resolves `orientation: default`,
+retains iPhone+iPad and both OS floors, and keeps fingerprint runtime isolation. Disposable clean
+preview prebuild proved iOS families `1,2`, portrait plus both landscapes,
+`UIRequiresFullScreen=false`, iOS 16.4, Android API 24, and an unlocked/resizable main activity.
+
+Resolved SDK 56 fingerprints (T06 predecessor → T07) are:
+
+| Platform | Lane       | T06 predecessor                            | T07                                        |
+| -------- | ---------- | ------------------------------------------ | ------------------------------------------ |
+| iOS      | preview    | `528a496b844aa35f469d21ab8950c7db3f0b382b` | `1fc4682e04c9d0029f21d38e6ed4cf359c6da8f3` |
+| iOS      | production | `bc617dff81b2f6592fd4e54b51fbd3c9c8937fc0` | `b8ba89537f053eef31ca7c77a0ade94109b85e53` |
+| Android  | preview    | `ed259cbefbe0cf6acc290ce242b547e69fb9a6a6` | `9ec6cd2ff58e8553743766ff79963abdfb75683e` |
+| Android  | production | `c6eafecd2ef61472381bfb8f663f36753918434f` | `2aa708357e46636cd088a6fdcfaf169a65f5d16b` |
+
+All lanes require fresh compatible binaries; no OTA, build, upload, submission, promotion, or
+rollout was performed. Physical rotation/resized-window evidence and explicit owner acceptance are
+not claimed. The exact-build worksheet and complete checklist are in
+`docs/react-native-migration/inbox/2026-09-17-t07-resizable-calendar-device-evidence.md`, with
+unavailable hardware execution explicitly deferred to T28.

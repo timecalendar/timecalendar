@@ -21,7 +21,7 @@
 ## Native projects: CNG
 
 - `mobile/ios/` and `mobile/android/` are **generated, gitignored, never hand-edited**. All native config flows through `app.config.ts` + config plugins; `npx expo prebuild --clean` is the only way native projects change.
-- **iPhone + iPad, portrait-only/full-screen** is the iOS platform contract (ADR [042](./decisions/042-iphone-ipad-portrait-contract.md)). `mobile/app.config.ts` owns `orientation`, `ios.supportsTablet`, and `ios.requireFullScreen`; `mobile/app.config.test.ts` checks every variant, and `cd mobile && npm run verify:ios-device-contract` proves a disposable preview prebuild generates application-target families `1,2`, full-screen presentation, and no iPad landscape orientation. iPad multitasking is intentionally disabled.
+- **iPhone + iPad, portrait + landscape + resized windows** is the native platform contract (ADR [042](./decisions/042-iphone-ipad-portrait-contract.md)). `mobile/app.config.ts` owns orientation, families, full-screen policy, and the iOS 16.4/Android API 24 floors. Source tests cover every variant; `cd mobile && npm run verify:ios-device-contract` proves disposable iOS/Android output has families `1,2`, portrait plus both landscapes, no effective iPad full-screen requirement, and no Android portrait/resize lock.
 
 ## Native deps & permission config
 

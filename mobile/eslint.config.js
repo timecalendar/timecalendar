@@ -9,6 +9,8 @@ const prettierRecommended = require("eslint-plugin-prettier/recommended")
 const reactNativeA11y = require("eslint-plugin-react-native-a11y")
 const simpleImportSort = require("eslint-plugin-simple-import-sort")
 
+const localRules = require("./tools/eslint-rules")
+
 // Canonical import/export order (autofixable). Groups here are disjoint, so the
 // longest-match-wins tie-break never bites, and no bare "^" catch-all is used —
 // every import here is a side-effect, a package,
@@ -195,6 +197,37 @@ const restrictedGlobals = [
       "All HTTP goes through the generated client; only src/api/mutator.ts may call fetch.",
   },
 ]
+
+// Worklet safety (TIM-554). A worklet may only call functions that are
+// themselves workletized; a plain JS call throws on the UI thread at runtime and
+// neither tsc (a string directive is invisible) nor Jest (Reanimated's mocks run
+// on the JS thread) can see it. The rule blesses call targets by name, and
+// time-grid.test.ts's "UI-thread (worklet) contract" suite proves every blessed
+// name below really carries the directive — lint answers "is this name
+// blessed?", the suite answers "is the blessed name actually a worklet?".
+const workletSafeImports = {
+  "@/features/calendar/data": [
+    "clampRawOffset",
+    "clampVerticalOffset",
+    "clockHourAtFocalPoint",
+    "eventHeight",
+    "focalPreservingRawOffset",
+    "fullDayContentHeight",
+    "fullDayMajorMinutes",
+    "fullDayMinorMinutes",
+    "gridContentHeight",
+    "hourLabels",
+    "isValidPixelsPerHour",
+    "maxVerticalOffset",
+    "minuteToPixel",
+    "rawOffsetBounds",
+    "resolvePixelsPerHour",
+    "stepPixelsPerHour",
+    "usableViewportCenterY",
+  ],
+  "react-native-reanimated": true,
+  "react-native-worklets": true,
+}
 
 module.exports = defineConfig([
   globalIgnores([".expo", "android", "ios", "dist", "expo-env.d.ts"]),
@@ -474,6 +507,17 @@ module.exports = defineConfig([
             },
           ],
         },
+      ],
+    },
+  },
+  {
+    name: "timecalendar/worklet-safety",
+    files: ["src/**/*.{ts,tsx}"],
+    plugins: { local: localRules },
+    rules: {
+      "local/no-js-call-in-worklet": [
+        "error",
+        { safeImports: workletSafeImports },
       ],
     },
   },

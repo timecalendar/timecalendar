@@ -35,7 +35,7 @@ decision changes; use Git for its history.
 | [039](./039-changelog-version-gating.md)                              | Gate bundled Changelog releases with an integer                                                   |
 | [040](./040-local-store-builds-and-store-preview.md)                  | Build store binaries locally and distribute `preview` through stores                              |
 | [041](./041-school-logo-theme-variants.md)                            | Keep a nullable dark school logo beside the required default logo                                 |
-| [042](./042-iphone-ipad-portrait-contract.md)                         | Support iPhone and iPad in portrait-only full-screen mode                                         |
+| [042](./042-iphone-ipad-portrait-contract.md)                         | Support iPhone and iPad in resizable portrait and landscape windows                               |
 | [043](./043-backend-environment-reset.md)                             | Authorize backend choices explicitly and switch via journaled reset                               |
 | [044](./044-jest-per-test-time-budget.md)                             | Set an explicit per-test time budget for the Jest harness                                         |
 | [046](./046-activity-cache-merge-and-server-read-watermark.md)        | Merge the Activity cache by log id and read it against server time                                |
@@ -48,9 +48,9 @@ decision changes; use Git for its history.
 | [053](./053-react-doctor-changed-code-gate.md)                        | Keep React Doctor advisory globally and blocking on changed code                                  |
 | [054](./054-shared-root-page-semantics.md)                            | Share root-page semantics while keeping platform placement native                                 |
 | [055](./055-native-e2e-daily-health-signal.md)                        | Run native E2E as a conditional daily/manual health signal                                        |
-| [056](./056-compose-native-dialog-behind-chrome.md)                   | Compose divergent native dialogs behind the chrome seam                                            |
+| [056](./056-compose-native-dialog-behind-chrome.md)                   | Compose divergent native dialogs behind the chrome seam                                           |
 | [057](./057-three-journey-native-smoke-budget.md)                     | Limit daily native smoke to three durable business journeys                                       |
-| [058](./058-activity-virtual-fragment-pagination.md)                  | Page Activity as stable byte-bounded virtual fragments                                             |
+| [058](./058-activity-virtual-fragment-pagination.md)                  | Page Activity as stable byte-bounded virtual fragments                                            |
 
 > `045` is intentionally left free: the open source-recovery PR carries an ADR
 > numbered `044` that collides with the merged one above and renumbers to `045`

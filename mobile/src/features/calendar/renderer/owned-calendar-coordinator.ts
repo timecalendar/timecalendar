@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   AppState,
-  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from "react-native"
@@ -19,11 +18,17 @@ import {
   type CalendarTransitionSource,
   dayKey,
   type FirstWeekday,
+  HOURS_COLUMN_WIDTH,
   shiftTimelineAnchor,
   timelineColumns,
   type WeekDirection,
 } from "@/features/calendar/data"
 
+import {
+  type CalendarResizeSnapshot,
+  replaceCalendarViewportGeometry,
+  type TimedViewportGeometry,
+} from "./owned-calendar-resize"
 import {
   type CalendarZoomSettlement,
   useOwnedCalendarZoom,
@@ -107,6 +112,9 @@ export function useOwnedCalendarCoordinator({
   const reduceMotion = useReducedMotion()
   const pagerRef = useRef<PagerView>(null)
   const [headerLaneWidth, setHeaderLaneWidth] = useState(0)
+  const [geometryRevision, setGeometryRevision] = useState(0)
+  const geometryRevisionRef = useRef(0)
+  const resizeSnapshotRef = useRef<CalendarResizeSnapshot | null>(null)
   const revisionRef = useRef(revisionFloor)
   const pendingRevisionRef = useRef<number | null>(null)
   const onTransitionCancelledRef = useRef(onTransitionCancelled)
@@ -116,20 +124,60 @@ export function useOwnedCalendarCoordinator({
   const foregroundRef = useRef(AppState.currentState === "active")
   const verticalOwnerEpoch = useSharedValue(0)
   const horizontalOwnerEpoch = useSharedValue(0)
+  const verticalOwnerGeometryRevision = useSharedValue(0)
+  const horizontalOwnerGeometryRevision = useSharedValue(0)
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
   const handledPinchSequenceRef = useRef(0)
   const settledZoomSequenceRef = useRef(0)
   const previousShowWeekendsRef = useRef(showWeekends)
-  const progressContextKey = `${generation}:${mode}:${headerLaneWidth}:${showWeekends}`
+  const progressContextKey = `${generation}:${geometryRevision}:${mode}:${headerLaneWidth}:${showWeekends}`
+  const onViewportGeometryChange = (
+    geometry: TimedViewportGeometry & { rawOffset?: number },
+  ) => {
+    const previous = resizeSnapshotRef.current
+    const next = replaceCalendarViewportGeometry(previous, geometry, {
+      dateIdentity: dayKey(anchor, displayZone),
+      mode,
+      rendererGeneration: generation,
+      pixelsPerHour: zoom.pixelsPerHour.get(),
+      rawOffset: geometry.rawOffset ?? zoom.rawOffset.get(),
+    })
+    if (next === previous) return
+
+    cancelVerticalCandidate()
+    cancelHorizontalTransition(previous !== null)
+    geometryRevisionRef.current = next.geometryRevision
+    resizeSnapshotRef.current = next
+    committedVerticalOffsetRef.current = next.rawOffset
+    const interruptionSequence = zoom.invalidateForGeometry(
+      next.geometryRevision,
+      next.rawOffset,
+      previous !== null,
+    )
+    if (interruptionSequence !== null)
+      handledPinchSequenceRef.current = interruptionSequence
+    if (previous === null) {
+      verticalOwnerGeometryRevision.set(next.geometryRevision)
+      horizontalOwnerGeometryRevision.set(next.geometryRevision)
+    }
+    setHeaderLaneWidth(Math.max(next.geometry.width - HOURS_COLUMN_WIDTH, 0))
+    setGeometryRevision(next.geometryRevision)
+  }
   const zoom = useOwnedCalendarZoom({
     generation,
     initialPixelsPerHour,
     initialRawOffset: initialVerticalOffset,
+    onViewportGeometryChange,
+    onInteractionInterrupted: () => {
+      cancelVerticalCandidate()
+      cancelHorizontalTransition(true)
+    },
     onZoomSettled: (settlement) => {
       if (
         settlement.generation !== currentGenerationRef.current ||
+        settlement.geometryRevision !== geometryRevisionRef.current ||
         settlement.sequence <= settledZoomSequenceRef.current
       ) {
         return
@@ -156,26 +204,31 @@ export function useOwnedCalendarCoordinator({
     )
   const nativeScrollGesture = Gesture.Native()
     .withTestId("owned-calendar-native-scroll")
-    .onStart(() => {
+    .onBegin(() => {
       "worklet"
+      if (geometryRevision !== zoom.geometryRevision.get()) return
       const epoch = pinchInterruptionSequence.get()
       if (pinchActive.get() || epoch === verticalOwnerEpoch.get()) return
       verticalOwnerEpoch.set(epoch)
+      verticalOwnerGeometryRevision.set(geometryRevision)
       verticalCallbacksBlocked.set(false)
     })
   const nativePagerGesture = Gesture.Native()
     .withTestId("owned-calendar-native-pager")
-    .onStart(() => {
+    .onBegin(() => {
       "worklet"
+      if (geometryRevision !== zoom.geometryRevision.get()) return
       const epoch = pinchInterruptionSequence.get()
       if (pinchActive.get() || epoch === horizontalOwnerEpoch.get()) return
       horizontalOwnerEpoch.set(epoch)
+      horizontalOwnerGeometryRevision.set(geometryRevision)
       horizontalCallbacksBlocked.set(false)
     })
-  const pinchGesture = zoom.pinchGesture.blocksExternalGesture(
-    nativeScrollGesture,
-    nativePagerGesture,
-  )
+  // nativePagerGesture stays out of the blocked list: on iOS RNGH resolves the
+  // pager's internal pan to that handler, so the pan would wait for a one-finger
+  // pinch to fail and only begin once the finger lifts.
+  const pinchGesture =
+    zoom.pinchGesture.blocksExternalGesture(nativeScrollGesture)
   const pages = calendarPages(
     anchor,
     mode,
@@ -201,13 +254,6 @@ export function useOwnedCalendarCoordinator({
     if (recenterPager) pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
   }
 
-  const onHeaderLaneLayout = (event: LayoutChangeEvent) => {
-    const width = event.nativeEvent.layout.width
-    if (width === headerLaneWidth) return
-    if (headerLaneWidth > 0) cancelHorizontalTransition(true)
-    setHeaderLaneWidth(width)
-  }
-
   const cancelVerticalCandidate = () => {
     if (verticalFrameRef.current !== null) {
       cancelAnimationFrame(verticalFrameRef.current)
@@ -228,12 +274,29 @@ export function useOwnedCalendarCoordinator({
 
   const verticalCallbacksAreBlocked = () => {
     observePinchInterruption()
-    return verticalCallbacksBlocked.get()
+    return (
+      verticalCallbacksBlocked.get() ||
+      verticalOwnerGeometryRevision.get() !== geometryRevisionRef.current
+    )
   }
 
   const horizontalCallbacksAreBlocked = () => {
     observePinchInterruption()
-    return horizontalCallbacksBlocked.get()
+    return (
+      horizontalCallbacksBlocked.get() ||
+      horizontalOwnerGeometryRevision.get() !== geometryRevisionRef.current
+    )
+  }
+
+  // RNGH's iOS native handler only mirrors gesture state for RN ScrollViews, so
+  // nativePagerGesture never reports onBegin around PagerView there; the pager's
+  // own drag start is the ownership signal both platforms deliver.
+  const claimHorizontalOwnership = () => {
+    const epoch = pinchInterruptionSequence.get()
+    if (pinchActive.get() || epoch === horizontalOwnerEpoch.get()) return
+    horizontalOwnerEpoch.set(epoch)
+    horizontalOwnerGeometryRevision.set(geometryRevision)
+    horizontalCallbacksBlocked.set(false)
   }
 
   const beginTransition = (
@@ -269,6 +332,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const onPageSelected = (event: PagerViewOnPageSelectedEvent) => {
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (currentGenerationRef.current !== generation) return
     if (horizontalCallbacksAreBlocked()) return
     selectedPageRef.current = event.nativeEvent.position
@@ -277,9 +341,11 @@ export function useOwnedCalendarCoordinator({
   const onPageScrollStateChanged = (
     event: PageScrollStateChangedNativeEvent,
   ) => {
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (currentGenerationRef.current !== generation) return
     observePinchInterruption()
     if (event.nativeEvent.pageScrollState === "dragging") {
+      claimHorizontalOwnership()
       return
     }
     if (horizontalCallbacksBlocked.get()) return
@@ -295,6 +361,7 @@ export function useOwnedCalendarCoordinator({
     direction: WeekDirection,
     source: CalendarTransitionSource,
   ) => {
+    if (geometryRevision !== geometryRevisionRef.current) return
     observePinchInterruption()
     if (pinchActive.get()) return
     horizontalCallbacksBlocked.set(false)
@@ -307,6 +374,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const settleVertical = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
     const nextOffset = event.nativeEvent.contentOffset.y
@@ -315,14 +383,20 @@ export function useOwnedCalendarCoordinator({
   }
 
   const onScrollEndDrag = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (geometryRevision !== geometryRevisionRef.current) return
     if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
     verticalCandidateRef.current = event.nativeEvent.contentOffset.y
+    const candidateGeometryRevision = geometryRevision
     verticalFrameRef.current = requestAnimationFrame(() => {
       verticalFrameRef.current = null
       const nextOffset = verticalCandidateRef.current
       verticalCandidateRef.current = null
-      if (nextOffset === null) return
+      if (
+        nextOffset === null ||
+        candidateGeometryRevision !== geometryRevisionRef.current
+      )
+        return
       committedVerticalOffsetRef.current = nextOffset
       onVerticalOffsetSettled(nextOffset)
     })
@@ -425,8 +499,8 @@ export function useOwnedCalendarCoordinator({
 
   return {
     cancelVerticalCandidate,
+    geometryRevision,
     headerStripStyle,
-    onHeaderLaneLayout,
     onPageScroll,
     onPageScrollStateChanged,
     onPageSelected,

@@ -16,6 +16,8 @@ anything that does not apply.
 - Interaction-heavy screens are checked on a representative low-end Android device.
 - Recoverable failures have useful UI; unexpected failures reach Crashlytics without
   personal data. Analytics are verified in Firebase DebugView when applicable.
+- UI-thread code (worklets, Reanimated styles, gesture callbacks) calls only worklets —
+  `local/no-js-call-in-worklet` and the worklet-hash contract suite are green.
 - Reusable current-state guidance is updated. Add an ADR only for a costly-to-reverse
   decision, following [the ADR policy](./decisions/README.md).
 

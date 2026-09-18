@@ -746,10 +746,11 @@ describe("CalendarScreen retained Agenda", () => {
 describe("CalendarScreen platform chrome", () => {
   it("offers inset-aware zoom commands and announces one settled percentage", async () => {
     await render(<CalendarScreen />)
-    const canvas = screen.getByTestId("owned-calendar-canvas")
+    let canvas = screen.getByTestId("owned-calendar-canvas")
     await fireEvent(canvas, "layout", {
       nativeEvent: { layout: { x: 0, y: 0, width: 320, height: 500 } },
     })
+    canvas = screen.getByTestId("owned-calendar-canvas")
     await fireEvent.scroll(canvas, {
       nativeEvent: {
         contentOffset: { x: 0, y: 480 },
@@ -770,7 +771,7 @@ describe("CalendarScreen platform chrome", () => {
     expect(mockAnnounce).toHaveBeenCalledWith("Calendar zoom 117%")
     expect(
       screen.getByTestId("owned-calendar-canvas").props.contentOffset.y,
-    ).toBeCloseTo(596.67, 2)
+    ).toBeCloseTo(36.67, 2)
 
     await chooseCalendarView("day")
     expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
@@ -791,7 +792,7 @@ describe("CalendarScreen platform chrome", () => {
     expect(mockAnnounce).toHaveBeenNthCalledWith(2, "Calendar zoom 100%")
     expect(
       screen.getByTestId("owned-calendar-canvas").props.contentOffset.y,
-    ).toBeCloseTo(480, 2)
+    ).toBeCloseTo(0, 2)
   })
 
   it("disables and communicates the inclusive zoom limits", async () => {

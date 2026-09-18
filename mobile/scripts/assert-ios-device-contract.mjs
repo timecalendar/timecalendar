@@ -11,9 +11,10 @@ const xcode = require("xcode")
 const APPLICATION_PRODUCT_TYPE = "com.apple.product-type.application"
 const IPAD_ORIENTATIONS_KEY = "UISupportedInterfaceOrientations~ipad"
 const GENERIC_ORIENTATIONS_KEY = "UISupportedInterfaceOrientations"
-const PORTRAIT_ORIENTATIONS = new Set([
+const REQUIRED_ORIENTATIONS = new Set([
   "UIInterfaceOrientationPortrait",
-  "UIInterfaceOrientationPortraitUpsideDown",
+  "UIInterfaceOrientationLandscapeLeft",
+  "UIInterfaceOrientationLandscapeRight",
 ])
 
 const unquote = (value) => String(value).replace(/^"|"$/g, "")
@@ -55,6 +56,11 @@ export const verifyTargetConfigurations = (configurations) => {
       "1,2",
       `${configuration.name} TARGETED_DEVICE_FAMILY must resolve exactly to 1,2`,
     )
+    assert.equal(
+      unquote(configuration.buildSettings.IPHONEOS_DEPLOYMENT_TARGET),
+      "16.4",
+      `${configuration.name} IPHONEOS_DEPLOYMENT_TARGET must remain 16.4`,
+    )
   }
 
   const plistPaths = new Set(
@@ -74,26 +80,32 @@ export const verifyTargetConfigurations = (configurations) => {
 }
 
 export const verifyInfoPlist = (infoPlist) => {
-  assert.equal(
+  assert.notEqual(
     infoPlist.UIRequiresFullScreen,
     true,
-    "UIRequiresFullScreen must be true",
+    "UIRequiresFullScreen must not disable iPad resizing",
   )
 
-  const orientationKey = Object.hasOwn(infoPlist, IPAD_ORIENTATIONS_KEY)
-    ? IPAD_ORIENTATIONS_KEY
-    : GENERIC_ORIENTATIONS_KEY
-  const orientations = infoPlist[orientationKey]
-  assert.ok(
-    Array.isArray(orientations) && orientations.length > 0,
-    `${orientationKey} must contain iPad orientations`,
-  )
-  assert.ok(
-    orientations.every((orientation) => PORTRAIT_ORIENTATIONS.has(orientation)),
-    `${orientationKey} must contain portrait orientations only; received ${orientations.join(",")}`,
-  )
+  const orientationsByKey = {}
+  for (const orientationKey of [
+    GENERIC_ORIENTATIONS_KEY,
+    IPAD_ORIENTATIONS_KEY,
+  ]) {
+    const orientations = infoPlist[orientationKey]
+    assert.ok(
+      Array.isArray(orientations) && orientations.length > 0,
+      `${orientationKey} must contain orientations`,
+    )
+    for (const orientation of REQUIRED_ORIENTATIONS) {
+      assert.ok(
+        orientations.includes(orientation),
+        `${orientationKey} must contain ${orientation}; received ${orientations.join(",")}`,
+      )
+    }
+    orientationsByKey[orientationKey] = orientations
+  }
 
-  return { orientationKey, orientations }
+  return { orientationsByKey }
 }
 
 const findProjectFile = (iosRoot) => {
@@ -135,12 +147,16 @@ export const verifyGeneratedProject = (iosRoot) => {
   )
 
   const infoPlist = plist.parse(fs.readFileSync(resolvedPlistPath, "utf8"))
-  const { orientationKey, orientations } = verifyInfoPlist(infoPlist)
+  const { orientationsByKey } = verifyInfoPlist(infoPlist)
 
   console.log(`Application target: ${unquote(applicationTarget.target.name)}`)
   console.log(`TARGETED_DEVICE_FAMILY=${family}`)
   console.log(`UIRequiresFullScreen=${infoPlist.UIRequiresFullScreen}`)
-  console.log(`${orientationKey}=${orientations.join(",")}`)
+  for (const [orientationKey, orientations] of Object.entries(
+    orientationsByKey,
+  )) {
+    console.log(`${orientationKey}=${orientations.join(",")}`)
+  }
 }
 
 const runSelfTest = () => {
@@ -148,6 +164,7 @@ const runSelfTest = () => {
     name: "Release",
     buildSettings: {
       INFOPLIST_FILE: '"TimeCalendar/Info.plist"',
+      IPHONEOS_DEPLOYMENT_TARGET: "16.4",
       TARGETED_DEVICE_FAMILY: '"1,2"',
     },
   }
@@ -171,32 +188,81 @@ const runSelfTest = () => {
 
   assert.deepEqual(
     verifyInfoPlist({
-      UIRequiresFullScreen: true,
-      [GENERIC_ORIENTATIONS_KEY]: ["UIInterfaceOrientationPortrait"],
+      UIRequiresFullScreen: false,
+      [GENERIC_ORIENTATIONS_KEY]: [
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight",
+      ],
+      [IPAD_ORIENTATIONS_KEY]: [
+        "UIInterfaceOrientationPortrait",
+        "UIInterfaceOrientationLandscapeLeft",
+        "UIInterfaceOrientationLandscapeRight",
+      ],
     }),
     {
-      orientationKey: GENERIC_ORIENTATIONS_KEY,
-      orientations: ["UIInterfaceOrientationPortrait"],
+      orientationsByKey: {
+        [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+        [IPAD_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+      },
     },
   )
   assert.throws(
     () =>
       verifyInfoPlist({
-        UIRequiresFullScreen: true,
-        [IPAD_ORIENTATIONS_KEY]: [
+        UIRequiresFullScreen: false,
+        [GENERIC_ORIENTATIONS_KEY]: [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationLandscapeLeft",
         ],
+        [IPAD_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
       }),
-    /portrait orientations only/,
+    /UISupportedInterfaceOrientations must contain UIInterfaceOrientationLandscapeRight/,
   )
   assert.throws(
     () =>
       verifyInfoPlist({
         UIRequiresFullScreen: false,
-        [GENERIC_ORIENTATIONS_KEY]: ["UIInterfaceOrientationPortrait"],
+        [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+        [IPAD_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+        ],
       }),
-    /UIRequiresFullScreen must be true/,
+    /must contain UIInterfaceOrientationLandscapeRight/,
+  )
+  assert.throws(
+    () =>
+      verifyInfoPlist({
+        UIRequiresFullScreen: true,
+        [GENERIC_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+        [IPAD_ORIENTATIONS_KEY]: [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+        ],
+      }),
+    /must not disable iPad resizing/,
   )
 
   console.log("iOS device-contract parser self-test passed")

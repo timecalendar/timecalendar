@@ -3,9 +3,7 @@
 ## Purpose
 
 TBD - created by archiving change add-mobile-eas. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: EAS build profiles aligned to the app variants
 
 The project SHALL define an `eas.json` with three build profiles — `development`, `preview`, and `production` — each setting build behavior consistent with the existing `APP_VARIANT` identity rules and an independent explicit backend-environment capability. The `development` profile SHALL build the development variant (`APP_VARIANT=development` → app id `fr.samuelprak.timecalendar.dev`) and set the development backend capability; the `preview` and `production` profiles SHALL build the production identity (`fr.samuelprak.timecalendar`, `APP_VARIANT` unset), set `OTA_CHANNEL` to their matching profile name, and independently set respectively the preview and production backend capability.
@@ -241,23 +239,6 @@ The mobile app SHALL support both iPhone and iPad for development, preview, and 
 - **THEN** the generated application target resolves `TARGETED_DEVICE_FAMILY` to `1,2`
 - **AND** no generated `mobile/ios/` project is committed as source
 
-### Requirement: iPad support remains portrait-only
-
-The app SHALL retain top-level Expo orientation `portrait` while supporting tablets and SHALL set `ios.requireFullScreen` to `true`. A clean iOS prebuild SHALL require full-screen presentation, expose only portrait orientations for iPad, and SHALL NOT enable either iPad landscape orientation. Side-by-side iPad multitasking is intentionally outside the supported contract because it requires landscape orientations.
-
-#### Scenario: Source configuration retains portrait intent
-
-- **WHEN** development, preview, and production Expo configurations are resolved
-- **THEN** each resolved configuration has `orientation` equal to `portrait`
-- **AND** each has `ios.requireFullScreen` set to `true`
-
-#### Scenario: Generated iPad orientations exclude landscape
-
-- **WHEN** the clean preview iOS prebuild is inspected
-- **THEN** `UIRequiresFullScreen` is true
-- **AND** the effective iPad-supported orientation list uses its iPad-specific value when present or the generic fallback and contains portrait orientation values only
-- **AND** `UIInterfaceOrientationLandscapeLeft` and `UIInterfaceOrientationLandscapeRight` are absent
-
 ### Requirement: Restored iPad support refreshes runtime compatibility evidence
 
 The repository SHALL resolve and record the post-change SDK 56 iOS runtime fingerprints for preview and production using the project-local managed-workflow commands. Documentation SHALL state that the native device-family change requires a fresh signed iOS binary and SHALL NOT be delivered to the rejected or previous shell as an OTA update. Fingerprint protection SHALL NOT be weakened to preserve an old hash.
@@ -293,3 +274,47 @@ The implementation SHALL recompute SDK 56 preview and production runtime fingerp
 - **WHEN** the documented commands run for both profiles and platforms
 - **THEN** the recorded hashes can be reproduced and compared with the prior baseline
 - **AND** release guidance states the native-build consequence without performing that release act
+
+### Requirement: iPhone and iPad builds support landscape and resized windows
+
+The mobile app SHALL preserve iPhone and iPad support in development, preview, and production while declaring the Expo all-orientation policy and allowing iPad windows outside full-screen presentation. `mobile/app.config.ts` SHALL remain the source of truth, retain `ios.supportsTablet: true`, retain the iOS 16.4 and Android API 24 floors, and SHALL NOT require iOS full-screen presentation. Generated native projects SHALL remain disposable and uncommitted.
+
+#### Scenario: Every Expo variant declares the resizable policy
+
+- **WHEN** development, preview, and production Expo configurations are resolved
+- **THEN** each configuration declares the same all-orientation policy, `ios.supportsTablet: true`, and no full-screen-only iPad requirement
+- **AND** each retains the configured iOS 16.4 and Android API 24 floors
+
+#### Scenario: Clean prebuild preserves families and orientations
+
+- **WHEN** the clean disposable preview native project is generated and inspected
+- **THEN** the iOS application target resolves device families `1,2`, supports portrait and both landscape orientations, and does not effectively require full screen
+- **AND** the generated deployment target remains iOS 16.4 with no generated project committed as source
+
+#### Scenario: Android is not portrait locked
+
+- **WHEN** the resolved source contract and applicable disposable Android output are inspected
+- **THEN** the main application is not locked to portrait or explicitly marked non-resizable
+- **AND** Android API 24 remains the minimum supported SDK
+
+### Requirement: Resizable native policy refreshes compatible runtime evidence
+
+The implementation SHALL resolve and record the post-change SDK 56 runtime fingerprints for every affected preview/production platform lane using repository-prescribed commands, compare them with the accepted predecessor, and preserve the fingerprint input set. It SHALL identify this orientation/full-screen change as requiring a fresh compatible native binary and SHALL NOT perform an OTA-only delivery to an older shell or weaken `.fingerprintignore` to preserve an old result.
+
+#### Scenario: Native-affecting fingerprints are reproducible
+
+- **WHEN** the documented fingerprint commands run against the applied source contract
+- **THEN** exact results and the predecessor comparison are recorded for the affected lanes
+- **AND** the native-policy input remains included in fingerprint calculation
+
+#### Scenario: Device testing names the compatible binary
+
+- **WHEN** actual rotation and resized-window evidence is collected
+- **THEN** it names the exact source revision, runtime fingerprint, native binary/build, device, and OS
+- **AND** a JS reload or OTA update on the accepted T06 binary does not count as T07 native-policy evidence
+
+#### Scenario: Engineering does not imply release deployment
+
+- **WHEN** the compatible test artifact and evidence are prepared
+- **THEN** no store submission, upload, promotion, or production rollout is implied by completing T07
+- **AND** any credential-bound install or console step is recorded through the repository's dated human inbox-note convention

@@ -87,6 +87,8 @@ describe("owned Calendar paging repository contract", () => {
       "owned-calendar-canvas.tsx",
       "owned-calendar-coordinator.ts",
       "owned-calendar-header.tsx",
+      "owned-calendar-resize.test.ts",
+      "owned-calendar-resize.ts",
       "owned-calendar-shell.test.tsx",
       "owned-calendar-shell.tsx",
       "owned-calendar-zoom.ts",

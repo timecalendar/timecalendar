@@ -125,6 +125,25 @@ truth; this file carries the caveats the config can't (R-1).
     `eslint-import-resolver-typescript` is an **explicit** devDependency — belt-and-
     braces so the gate can't go quiet if an expo-config bump drops the transitive
     resolver. `src/api/generated/**` + `*.test.*` are exempt.
+- **Worklet safety** (`local/no-js-call-in-worklet`, error, `src/**` — the repo-local
+  plugin in `mobile/tools/eslint-rules/`). Inside a worklet — a body carrying the
+  `"worklet"` directive, a callback handed to `useAnimatedStyle`/`useDerivedValue`/
+  `useAnimatedReaction`/`useAnimatedScrollHandler`/`runOnUI`/`withTiming` and friends, a
+  `Gesture.*().onUpdate(…)` handler, or any function nested inside one — a called
+  identifier must resolve to a worklet: a same-file helper carrying the directive, or an
+  import blessed by the `workletSafeImports` allowlist in `eslint.config.js`. A plain JS
+  call throws on the UI thread ("Tried to synchronously call a non-worklet function"),
+  which `tsc` cannot type and Jest cannot reach — its mocks run the styles on the JS
+  thread, where the call succeeds. Member calls (`scale.get()`, `Math.max(…)`) and
+  unresolved globals are out of scope: the rule guards accident, not evasion.
+  The allowlist is a name list, not a module blessing, because
+  `@/features/calendar/data` is one barrel over both UI-thread geometry and JS-thread
+  helpers like `formatHourStartLabel`. Lint answers "is this name blessed?";
+  time-grid's "UI-thread (worklet) contract" suite answers "is the blessed name actually
+  workletized?" — neither half is sufficient alone, since a blessed non-worklet would
+  otherwise pass both. Like the seam blocks above, a green lint run does not prove
+  the rule fires: it is verified by dropping a name from the allowlist and confirming the
+  call site fails, then reverting.
 - **Import/export order** (`simple-import-sort/imports` + `/exports`, error,
   autofixable; `importSortGroups` in the config). Canonical group order:
   **side-effect → Node builtins + third-party → `@/` alias → relative**, each group

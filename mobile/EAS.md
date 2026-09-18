@@ -53,17 +53,16 @@ production default in `app.config.ts`. Release config requires exactly `OTA_CHAN
 
 ## iPhone and iPad contract
 
-All variants support iPhone and iPad in portrait-only full-screen mode. The source contract lives
-in `app.config.ts`; `app.config.test.ts` proves each resolved variant. Verify Expo's generated
-preview target without leaving an `ios/` directory behind:
+All variants support iPhone and iPad in portrait, both landscapes, and resizable windows. The
+source contract lives in `app.config.ts`; `app.config.test.ts` proves each resolved variant. Verify
+Expo's generated preview targets without leaving native directories behind:
 
 ```bash
 npm run verify:ios-device-contract
 ```
 
-The command requires application-target `TARGETED_DEVICE_FAMILY=1,2`,
-`UIRequiresFullScreen=true`, and portrait-only effective iPad orientations. Full-screen mode means
-iPad Slide Over and Split View are intentionally unsupported.
+The command requires `TARGETED_DEVICE_FAMILY=1,2`, iOS 16.4, portrait plus both landscapes, no
+effective full-screen requirement, Android API 24, and no Android portrait/resize lock.
 
 ## Building
 
@@ -162,17 +161,17 @@ is not part of the mobile release path.
   are not a supported release path and provide no equivalent guarantee.
 
 SDK 56 fingerprints deliberately differ by lane because resolved native `expoConfig` includes the
-channel header and backend capability. The 2026-08-27 selector result is:
+channel header and backend capability. The T07 result is:
 
 | Platform | `preview`                                  | `production`                               |
 | -------- | ------------------------------------------ | ------------------------------------------ |
-| iOS      | `528a496b844aa35f469d21ab8950c7db3f0b382b` | `bc617dff81b2f6592fd4e54b51fbd3c9c8937fc0` |
-| Android  | `ed259cbefbe0cf6acc290ce242b547e69fb9a6a6` | `c6eafecd2ef61472381bfb8f663f36753918434f` |
+| iOS      | `1fc4682e04c9d0029f21d38e6ed4cf359c6da8f3` | `b8ba89537f053eef31ca7c77a0ade94109b85e53` |
+| Android  | `9ec6cd2ff58e8553743766ff79963abdfb75683e` | `2aa708357e46636cd088a6fdcfaf169a65f5d16b` |
 
 Reproduce with `OTA_CHANNEL=<lane> BACKEND_ENVIRONMENT_CAPABILITY=<lane> node
 ./node_modules/expo-updates/bin/cli.js runtimeversion:resolve --platform <ios|android> --workflow
-managed --debug`. All four differ from the retained iPad-restoration baseline: iOS `0fc2a429…` /
-`cc3763c9…` and Android `ffa945e7…` / `42ded73f…`. The next preview and production artifacts for
+managed --debug`. All four differ from the T06 predecessor: iOS `528a496b…` / `bc617dff…` and
+Android `ed259cbe…` / `c6eafecd…`. The next preview and production artifacts for
 both platforms must therefore be fresh native builds. No `.fingerprintignore` was added or
 broadened. This record performs no build or release act.
 

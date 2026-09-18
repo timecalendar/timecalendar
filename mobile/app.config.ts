@@ -58,7 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     name: isDev ? "TimeCalendar (Dev)" : "TimeCalendar",
     slug: "timecalendar",
     version: "4.0.0",
-    orientation: "portrait",
+    orientation: "default",
     icon: "./assets/images/icon.png",
     scheme: isDev ? "timecalendar-dev" : "timecalendar",
     userInterfaceStyle: "automatic",
@@ -72,9 +72,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       // No per-platform `icon` override and no Icon Composer `.icon` bundle: the
       // app ships the flat TimeCalendar brand mark, not a liquid-glass treatment.
       supportsTablet: true,
-      // Portrait-only on iPad requires full-screen presentation. Without this,
-      // iPad multitasking requires both landscape orientations as well.
-      requireFullScreen: true,
+      // Keep iPad windows resizable. The top-level `default` orientation lets
+      // Expo generate portrait and both landscape orientations for every lane.
+      requireFullScreen: false,
       bundleIdentifier: appId,
       googleServicesFile: googleServicesIOS,
       // Export-compliance: the app uses only standard/exempt encryption (HTTPS/TLS
