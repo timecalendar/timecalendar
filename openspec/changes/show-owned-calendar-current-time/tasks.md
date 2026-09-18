@@ -1,0 +1,41 @@
+## 1. Add the pure fresh-open geometry helper
+
+- [ ] 1.1 Add `NOW_VIEWPORT_FRACTION` (0.3) and a `"worklet"` `nowAnchoredRawOffset({ minuteOfDay, pixelsPerHour, geometry, viewportFraction })` helper to `mobile/src/features/calendar/data/time-grid.ts` that positions a minute-of-day at the given fraction of the usable inset-aware viewport and returns `clampRawOffset` against `fullDayContentHeight(pixelsPerHour)`; keep it Intl-free so the UI-thread contract suite's JS-thread-only set stays exactly `nowIndicatorPosition`, and export both through `data/index.ts`.
+- [ ] 1.2 Cover the helper to 100% statements and branches in `time-grid.test.ts` with deterministic tables and properties for 00:00, mid-morning, mid-afternoon, 23:5x, zero and non-zero top/bottom insets, 40/60/120 px per hour, a viewport taller than the full-day content, non-finite recovery, and the invariant that the result always lies inside `rawOffsetBounds`; add its name to the worklet-hash expectations.
+
+## 2. Own one lifecycle-scoped calendar clock
+
+- [ ] 2.1 Add `mobile/src/features/calendar/data/clock.ts` exporting `useCalendarClock({ now?: () => Date })` that seeds from the current instant and, only while the route is focused (`useFocusEffect`) and `AppState` is `active`, arms one `setTimeout` aligned to the next wall-clock minute (`60_050 - (Date.now() % 60_000)`), re-arms per tick, recomputes immediately on focus/foreground, and clears its handle on blur, non-active application state, and unmount; export it through `data/index.ts`.
+- [ ] 2.2 Add `clock.test.ts` proving, with controlled timers and a fixed system time: one aligned tick per minute and no sub-minute work; midnight rollover producing the next display-zone date; immediate recomputation on re-focus and on foreground; no pending handle after blur, background, or unmount; exactly one armed timer after re-focus; and the injected `now` factory path. Meet the 90% logic gate for the module.
+
+## 3. Wire the clock through the screen
+
+- [ ] 3.1 Consume `useCalendarClock` in `use-calendar-screen-controller.ts`, return `now`, and derive `canGoToToday`/`goToToday` from it instead of fresh `new Date()` reads; keep the reducer, `focusDate` handling, persisted view, zoom, and settled-offset behaviour unchanged.
+- [ ] 3.2 Pass `currentDate={now}` from `CalendarScreen` to `OwnedCalendarShell`, removing the per-render `new Date()`; verify in the controller/screen suites that a clock tick changes only Today meaning and the indicator — no transition request, geometry revision, Agenda-range change, accessibility announcement, persistence write, or scroll write.
+
+## 4. Position a fresh timeline at the current time
+
+- [ ] 4.1 In `owned-calendar-coordinator.ts`, apply the fresh-open offset exactly on the first complete timed-viewport geometry snapshot of a mount (the `previous === null` transition), solving it from the clock's display-zone minute-of-day, the settled scale, and the normalized inset-aware geometry, then committing it without animation through the existing `invalidateForGeometry`/`scrollRevision` path; leave every later geometry revision on T07's clock-anchor behaviour.
+- [ ] 4.2 Extend `owned-calendar-shell.test.tsx` for fresh-open positioning at a morning clock, the 00:00 and 24:00 clamps, one-time application across repeated layout events, and preservation of the mounted offset across a clock tick, a foreground return, a geometry replacement, a zoom settlement, and a generation replacement.
+
+## 5. Render the non-color current-time presentation
+
+- [ ] 5.1 Render, in `owned-calendar-canvas.tsx`, a per-page indicator on the column whose key matches `todayKey` — a rule across that column plus a filled leading cap as the shape cue — positioned by `useAnimatedStyle` over `minuteToPixel` and the live `pixelsPerHour`, with a stable `testID` per page and column; render nothing on a page with no today column.
+- [ ] 5.2 Add one hour-gutter current-time chip for the committed centre page only, showing `HH:mm` through the existing locale/zone/device-clock formatting seam; move the gutter's `accessible={false}` / `importantForAccessibility="no-hide-descendants"` props onto an inner wrapper around the 24 hour labels so the chip is the accessible node, and add EN/FR `calendar.nowLabel`-style keys with typed parity.
+- [ ] 5.3 Read `nowIndicatorPosition` with explicit `FULL_DAY_START_MINUTE`/`FULL_DAY_END_MINUTE` bounds and the settled scale for the JS-thread visibility read, leaving the helper's 07:00–21:00 defaults and Home's mini-timeline behaviour untouched; emit no accessibility announcement on a tick or rollover.
+- [ ] 5.4 Extend renderer and screen suites for indicator presence on today, absence on non-today pages, absence with a weekend clock while weekends are hidden, agreement between the Today cue and the indicator across a midnight crossing, and position tracking across the bounded zoom range.
+
+## 6. Scope the repository contract to the real timer
+
+- [ ] 6.1 In `mobile/calendar-owned-shell.contract.test.ts`, replace the blanket renderer timer text ban with scoped assertions: the displayed-precision timer exists only in `features/calendar/data/clock.ts` with minute alignment, focus and application-state gating, and teardown clearing; no other calendar production file arms a timer; and no calendar production file uses `withRepeat`, recursive `requestAnimationFrame`, or a repeating `withTiming` chain. Keep the renderer timer-free, update the renderer file inventory for any added file, and keep the one-vertical-owner, one-pager, three-page, automatic-inset, and no-second-renderer assertions.
+
+## 7. Reconcile the Architecture Book
+
+- [ ] 7.1 Update `docs/mobile/architecture-book/calendar.md` to describe the single controller-owned clock, the named fresh-open 30% rule and full-day clamp, the non-color indicator and gutter chip, the timer-free renderer, and the preserved 07:00–21:00 shared defaults; remove the "no event window or now indicator" and "initial current-time positioning remains T08" wording while keeping the genuinely pending capabilities accurate. Touch `testing.md` only where the clock/contract proof is named, and append a dated entry to the Architecture Book `CHANGELOG.md`. Write an ADR only if an indexed decision's rule is displaced, and revise it in place if so.
+- [ ] 7.2 Update the canonical `docs/projects/owned-calendar-renderer/epics/E02-control-the-calendar-view/T08-current-time.md` execution-evidence section with results actually produced, and add a dated `docs/react-native-migration/inbox/` note tagged `(HUMAN: …)` only for a genuinely credential-bound or device-install step; do not turn an owner check into an implementation blocker or claim an unexecuted check passed.
+
+## 8. Verify locally and prepare the acceptance gate
+
+- [ ] 8.1 From `mobile/`, run `npm test -- --runTestsByPath` over every edited suite — `src/features/calendar/data/time-grid.test.ts`, `src/features/calendar/data/clock.test.ts`, `src/features/calendar/renderer/owned-calendar-shell.test.tsx`, `src/features/calendar/ui/calendar-screen.test.tsx`, `calendar-owned-shell.contract.test.ts`, plus any i18n parity suite the new keys touch — and the applicable coverage run for `src/features/calendar/data`; record exact commands and outcomes.
+- [ ] 8.2 Run `npx tsc --noEmit`, `npm run lint` (including `local/no-js-call-in-worklet`), scoped Prettier checks on the changed files, and `npm run react-doctor:changed`; keep the three-journey Maestro inventory unchanged and record every command with its result.
+- [ ] 8.3 Supply the complete canonical owner checklist against the exact revision and build — fresh open with preceding-hour context, late-night/early-morning reachability, background-and-return without an unnecessary viewport reset, light/dark non-color legibility of both the indicator and the Today cue, a weekend clock with weekends hidden across midnight, and the touched T04/T05/T06/T07 interactions — naming the fabricated fixture setup, the deterministic host scenarios, the device-clock steps for the late-night rows, and the fact that the build carries no clock override. Pause on this ticket for explicit owner acceptance and address feedback on this branch before Reviewer merge.
