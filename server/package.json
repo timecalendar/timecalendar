@@ -115,7 +115,7 @@
     "lodash": "^4.17.21",
     "nanoid": "^3.3.6",
     "node-ical": "^0.26.1",
-    "nodemailer": "^8.0.7",
+    "nodemailer": "^9.1.1",
     "pg": "^8.11.1",
     "prettier": "^3.0.3",
     "reflect-metadata": "^0.2",
