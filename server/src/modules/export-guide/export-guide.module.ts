@@ -8,7 +8,10 @@ import {
 } from "modules/export-guide/assets/export-guide-asset-reader"
 import { ExportGuideAssetValidator } from "modules/export-guide/assets/export-guide-asset.validator"
 import { ExportGuideV1Controller } from "modules/export-guide/controllers/export-guide-v1.controller"
-import { INITIAL_EXPORT_GUIDE_ASSET_ORIGIN } from "modules/export-guide/data/initial-export-guide-catalogue"
+import {
+  E2E_EXPORT_GUIDE_ASSET_ORIGIN,
+  INITIAL_EXPORT_GUIDE_ASSET_ORIGIN,
+} from "modules/export-guide/data/initial-export-guide-catalogue"
 import { PackagedInitialExportGuideAssetReader } from "modules/export-guide/data/initial-export-guide-assets"
 import {
   EXPORT_GUIDE_CATALOGUE_DIRECTORY,
@@ -45,7 +48,12 @@ import { School } from "modules/school/models/school.entity"
           new PackagedInitialExportGuideAssetReader(
             join(__dirname, "data", "initial-assets"),
           ),
-          new ExportGuideUrlPolicy(INITIAL_EXPORT_GUIDE_ASSET_ORIGIN),
+          new ExportGuideUrlPolicy(
+            process.env.NODE_ENV === "test" &&
+            process.env.EXPORT_GUIDE_E2E_FIXTURES === "1"
+              ? E2E_EXPORT_GUIDE_ASSET_ORIGIN
+              : INITIAL_EXPORT_GUIDE_ASSET_ORIGIN,
+          ),
         ),
     },
     {
