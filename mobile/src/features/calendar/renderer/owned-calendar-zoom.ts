@@ -209,14 +209,17 @@ export function useOwnedCalendarZoom({
     cancelPrevious: boolean,
   ) => {
     geometryRevision.set(revision)
+    let interruptionSequence: number | null = null
     if (cancelPrevious) {
+      interruptionSequence = pinchInterruptionSequence.get() + 1
       pinchActive.set(false)
-      pinchInterruptionSequence.set(pinchInterruptionSequence.get() + 1)
+      pinchInterruptionSequence.set(interruptionSequence)
       verticalCallbacksBlocked.set(true)
       horizontalCallbacksBlocked.set(true)
     }
     rawOffset.set(nextRawOffset)
     scrollRevision.set(scrollRevision.get() + 1)
+    return interruptionSequence
   }
 
   const requestZoom = (nextCommand: CalendarZoomCommand) => {

@@ -151,11 +151,13 @@ export function useOwnedCalendarCoordinator({
     geometryRevisionRef.current = next.geometryRevision
     resizeSnapshotRef.current = next
     committedVerticalOffsetRef.current = next.rawOffset
-    zoom.invalidateForGeometry(
+    const interruptionSequence = zoom.invalidateForGeometry(
       next.geometryRevision,
       next.rawOffset,
       previous !== null,
     )
+    if (interruptionSequence !== null)
+      handledPinchSequenceRef.current = interruptionSequence
     if (previous === null) {
       verticalOwnerGeometryRevision.set(next.geometryRevision)
       horizontalOwnerGeometryRevision.set(next.geometryRevision)
@@ -222,10 +224,11 @@ export function useOwnedCalendarCoordinator({
       horizontalOwnerGeometryRevision.set(geometryRevision)
       horizontalCallbacksBlocked.set(false)
     })
-  const pinchGesture = zoom.pinchGesture.blocksExternalGesture(
-    nativeScrollGesture,
-    nativePagerGesture,
-  )
+  // nativePagerGesture stays out of the blocked list: on iOS RNGH resolves the
+  // pager's internal pan to that handler, so the pan would wait for a one-finger
+  // pinch to fail and only begin once the finger lifts.
+  const pinchGesture =
+    zoom.pinchGesture.blocksExternalGesture(nativeScrollGesture)
   const pages = calendarPages(
     anchor,
     mode,
@@ -285,6 +288,17 @@ export function useOwnedCalendarCoordinator({
     )
   }
 
+  // RNGH's iOS native handler only mirrors gesture state for RN ScrollViews, so
+  // nativePagerGesture never reports onBegin around PagerView there; the pager's
+  // own drag start is the ownership signal both platforms deliver.
+  const claimHorizontalOwnership = () => {
+    const epoch = pinchInterruptionSequence.get()
+    if (pinchActive.get() || epoch === horizontalOwnerEpoch.get()) return
+    horizontalOwnerEpoch.set(epoch)
+    horizontalOwnerGeometryRevision.set(geometryRevision)
+    horizontalCallbacksBlocked.set(false)
+  }
+
   const beginTransition = (
     direction: WeekDirection,
     source: CalendarTransitionSource,
@@ -331,6 +345,7 @@ export function useOwnedCalendarCoordinator({
     if (currentGenerationRef.current !== generation) return
     observePinchInterruption()
     if (event.nativeEvent.pageScrollState === "dragging") {
+      claimHorizontalOwnership()
       return
     }
     if (horizontalCallbacksBlocked.get()) return
