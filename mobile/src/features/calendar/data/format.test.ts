@@ -1,4 +1,5 @@
 import {
+  formatClockTime,
   formatDayHeaderParts,
   formatDayMonth,
   formatEventDateRange,
@@ -11,6 +12,28 @@ import {
   formatTimeRange,
   resolveLocale,
 } from "./format"
+
+describe("formatClockTime", () => {
+  const instant = new Date("2026-06-15T20:05:00.000Z")
+
+  it.each([true, null] as const)(
+    "uses the deterministic 24-hour convention for %s",
+    (uses24HourClock) => {
+      expect(
+        formatClockTime(instant, "en", "Pacific/Noumea", uses24HourClock),
+      ).toBe("07:05")
+    },
+  )
+
+  it("uses localized 12-hour clock text when the device requests it", () => {
+    expect(formatClockTime(instant, "en", "Pacific/Noumea", false)).toBe(
+      "7:05 AM",
+    )
+    expect(formatClockTime(instant, "fr", "Pacific/Noumea", false)).toBe(
+      "7:05 AM",
+    )
+  })
+})
 
 describe("formatHourStartLabel", () => {
   it.each(["en", "fr"] as const)(

@@ -143,6 +143,172 @@ describe("OwnedCalendarShell", () => {
     ).toHaveProp("offscreenPageLimit", 1)
   })
 
+  it("shows the current time on today's column with shape and typographic cues", async () => {
+    await render(<OwnedCalendarShell {...props} />)
+
+    const indicator = screen.getByTestId("owned-calendar-now-0-2026-06-17", {
+      includeHiddenElements: true,
+    })
+    expect(StyleSheet.flatten(indicator.props.style).top).toBe(720)
+    expect(indicator.children).toHaveLength(2)
+    expect(screen.getByTestId("owned-calendar-now-label")).toHaveProp(
+      "accessibilityLabel",
+      "Current time, 12:00",
+    )
+    expect(
+      screen.getAllByTestId(/^owned-calendar-now--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toHaveLength(1)
+  })
+
+  it("tracks the settled zoom scale without changing the shared time-grid defaults", async () => {
+    const view = await render(<OwnedCalendarShell {...props} />)
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-now-0-2026-06-17", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).top,
+    ).toBe(720)
+
+    await view.rerender(
+      <OwnedCalendarShell {...props} initialPixelsPerHour={120} />,
+    )
+    await view.rerender(
+      <OwnedCalendarShell {...props} initialPixelsPerHour={120} />,
+    )
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-now-0-2026-06-17", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).top,
+    ).toBe(1440)
+  })
+
+  it("renders no now presentation on a non-today page or a hidden weekend", async () => {
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-08-03T00:00:00.000Z")}
+      />,
+    )
+    expect(
+      screen.queryByTestId(/^owned-calendar-now--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull()
+    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        anchor={new Date("2026-06-15T00:00:00.000Z")}
+        currentDate={new Date("2026-06-20T12:00:00.000Z")}
+        showWeekends={false}
+      />,
+    )
+    expect(screen.queryByLabelText(/Today/)).toBeNull()
+    expect(
+      screen.queryByTestId(/^owned-calendar-now--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull()
+    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+  })
+
+  it("keeps hidden-weekend Today meaning and now visibility absent across midnight", async () => {
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        currentDate={new Date("2026-06-20T23:59:00.000Z")}
+        showWeekends={false}
+      />,
+    )
+    await measureHeaderLane()
+    jest.clearAllMocks()
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        currentDate={new Date("2026-06-21T00:00:00.000Z")}
+        showWeekends={false}
+      />,
+    )
+
+    expect(screen.queryByLabelText(/Today/)).toBeNull()
+    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+    expect(onTransitionSettled).not.toHaveBeenCalled()
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
+    expect(onZoomSettled).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["midnight", "2026-06-17T00:00:00.000Z", 41.67],
+    ["morning", "2026-06-17T09:00:00.000Z", 496.67],
+    ["late night", "2026-06-17T23:59:00.000Z", 1138.33],
+  ] as const)(
+    "applies the fresh-open %s clamp on the first complete viewport",
+    async (_label, currentDate, expectedZoomOffset) => {
+      const shellRef = createRef<OwnedCalendarShellHandle>()
+      await render(
+        <OwnedCalendarShell
+          {...props}
+          ref={shellRef}
+          currentDate={new Date(currentDate)}
+        />,
+      )
+      const canvas = screen.getByTestId("owned-calendar-canvas")
+      await act(async () => {
+        canvas.props.onLayout(timedViewportLayout(300))
+        shellRef.current?.requestZoom("in")
+      })
+      expect(onZoomSettled.mock.lastCall?.[0].rawOffset).toBeCloseTo(
+        expectedZoomOffset,
+        2,
+      )
+    },
+  )
+
+  it("does not seek again after a clock tick, resize, or generation replacement", async () => {
+    const shellRef = createRef<OwnedCalendarShellHandle>()
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        ref={shellRef}
+        currentDate={new Date("2026-06-17T09:00:00.000Z")}
+      />,
+    )
+    await measureHeaderLane()
+
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        ref={shellRef}
+        currentDate={new Date("2026-06-17T12:00:00.000Z")}
+        generation={1}
+      />,
+    )
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "layout",
+      timedViewportLayout(300, 600),
+    )
+
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-now-0-2026-06-17", {
+          includeHiddenElements: true,
+        }).props.style,
+      ).top,
+    ).toBe(720)
+    expect(onTransitionRequest).not.toHaveBeenCalled()
+    expect(onVerticalOffsetSettled).not.toHaveBeenCalled()
+    expect(onZoomSettled).not.toHaveBeenCalled()
+  })
+
   it("renders one pinned seven-day header aligned with all three pages", async () => {
     await render(<OwnedCalendarShell {...props} />)
 

@@ -46,6 +46,7 @@ export function CalendarScreen() {
   const {
     view,
     setView,
+    now,
     timelineMode,
     selectedDate,
     firstWeekday,
@@ -171,7 +172,7 @@ export function CalendarScreen() {
               locale={locale}
               firstWeekday={firstWeekday}
               showWeekends={showWeekends}
-              currentDate={new Date()}
+              currentDate={now}
               uses24HourClock={uses24HourClock}
               initialVerticalOffset={verticalOffset}
               initialPixelsPerHour={pixelsPerHour}

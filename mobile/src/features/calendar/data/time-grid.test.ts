@@ -20,6 +20,8 @@ import {
   maxVerticalOffset,
   MIN_PIXELS_PER_HOUR,
   minuteToPixel,
+  NOW_VIEWPORT_FRACTION,
+  nowAnchoredRawOffset,
   nowIndicatorPosition,
   rawOffsetBounds,
   resolvePixelsPerHour,
@@ -41,6 +43,7 @@ describe("time-grid constants", () => {
   it("names the complete 00:00–24:00 renderer window", () => {
     expect(FULL_DAY_START_MINUTE).toBe(0)
     expect(FULL_DAY_END_MINUTE).toBe(24 * 60)
+    expect(NOW_VIEWPORT_FRACTION).toBe(0.3)
   })
 })
 
@@ -120,6 +123,103 @@ describe("calendar zoom geometry", () => {
     expect(usableViewportCenterY(500, 20, 40)).toBe(240)
     expect(usableViewportCenterY(Number.NaN, Infinity, -1)).toBe(0)
     expect(usableViewportCenterY(100, 120, 50)).toBe(100)
+  })
+
+  describe("fresh-open now anchor", () => {
+    const cases = [
+      {
+        label: "midnight clamps to an automatic top inset",
+        minuteOfDay: 0,
+        pixelsPerHour: 60,
+        geometry: { viewportHeight: 500, topInset: 20, bottomInset: 30 },
+        expected: -20,
+      },
+      {
+        label: "mid-morning sits at 30% with zero insets",
+        minuteOfDay: 9 * 60,
+        pixelsPerHour: 60,
+        geometry: { viewportHeight: 500, topInset: 0, bottomInset: 0 },
+        expected: 390,
+      },
+      {
+        label: "mid-afternoon uses the bounded minimum scale and insets",
+        minuteOfDay: 15 * 60,
+        pixelsPerHour: 40,
+        geometry: { viewportHeight: 400, topInset: 20, bottomInset: 40 },
+        expected: 478,
+      },
+      {
+        label: "23:59 clamps to the full-day bottom at maximum scale",
+        minuteOfDay: 23 * 60 + 59,
+        pixelsPerHour: 120,
+        geometry: { viewportHeight: 500, topInset: 10, bottomInset: 50 },
+        expected: 2430,
+      },
+      {
+        label: "a viewport taller than the day stays at its top bound",
+        minuteOfDay: 12 * 60,
+        pixelsPerHour: 40,
+        geometry: { viewportHeight: 1_200, topInset: 24, bottomInset: 36 },
+        expected: -24,
+      },
+    ] as const
+
+    it.each(cases)(
+      "$label",
+      ({ minuteOfDay, pixelsPerHour, geometry, expected }) => {
+        expect(
+          nowAnchoredRawOffset({ minuteOfDay, pixelsPerHour, geometry }),
+        ).toBe(expected)
+      },
+    )
+
+    it("recovers non-finite inputs and clamps an explicit viewport fraction", () => {
+      const geometry = {
+        viewportHeight: Number.NaN,
+        topInset: Infinity,
+        bottomInset: -1,
+      }
+      expect(
+        nowAnchoredRawOffset({
+          minuteOfDay: Number.NaN,
+          pixelsPerHour: Number.NaN,
+          geometry,
+          viewportFraction: Number.NaN,
+        }),
+      ).toBe(0)
+      expect(
+        nowAnchoredRawOffset({
+          minuteOfDay: 12 * 60,
+          pixelsPerHour: 60,
+          geometry: { viewportHeight: 500, topInset: 20, bottomInset: 30 },
+          viewportFraction: 2,
+        }),
+      ).toBe(250)
+    })
+
+    it("always returns an offset inside the full-day raw bounds", () => {
+      for (const pixelsPerHour of [40, 60, 120]) {
+        for (const minuteOfDay of [0, 1, 9 * 60, 15 * 60, 23 * 60 + 59, 1440]) {
+          for (const geometry of [
+            { viewportHeight: 0, topInset: 0, bottomInset: 0 },
+            { viewportHeight: 500, topInset: 20, bottomInset: 60 },
+            { viewportHeight: 3_000, topInset: 40, bottomInset: 80 },
+          ]) {
+            const offset = nowAnchoredRawOffset({
+              minuteOfDay,
+              pixelsPerHour,
+              geometry,
+            })
+            const bounds = rawOffsetBounds({
+              ...geometry,
+              contentHeight: fullDayContentHeight(pixelsPerHour),
+            })
+            expect(offset).toBeGreaterThanOrEqual(bounds.min)
+            expect(offset).toBeLessThanOrEqual(bounds.max)
+          }
+        }
+      }
+    })
   })
 
   it("recovers finite focal inputs and clamps at day boundaries", () => {

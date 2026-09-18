@@ -18,7 +18,12 @@ import {
   type CalendarTransitionSource,
   dayKey,
   type FirstWeekday,
+  FULL_DAY_END_MINUTE,
+  FULL_DAY_START_MINUTE,
   HOURS_COLUMN_WIDTH,
+  minuteOfDayInZone,
+  nowAnchoredRawOffset,
+  nowIndicatorPosition,
   shiftTimelineAnchor,
   timelineColumns,
   type WeekDirection,
@@ -137,12 +142,30 @@ export function useOwnedCalendarCoordinator({
     geometry: TimedViewportGeometry & { rawOffset?: number },
   ) => {
     const previous = resizeSnapshotRef.current
+    const pixelsPerHour = zoom.pixelsPerHour.get()
+    // `previous === null` is the first complete timed-viewport measurement of
+    // this mount — the one moment the usable height and the automatic insets
+    // exist and no student scroll can be discarded. That is where a fresh
+    // timeline seeks the current minute; every later revision keeps T07's
+    // clock-anchor behaviour.
+    const rawOffset =
+      previous === null
+        ? nowAnchoredRawOffset({
+            minuteOfDay: minuteOfDayInZone(currentDate, displayZone),
+            pixelsPerHour,
+            geometry: {
+              viewportHeight: geometry.height,
+              topInset: geometry.topInset,
+              bottomInset: geometry.bottomInset,
+            },
+          })
+        : (geometry.rawOffset ?? zoom.rawOffset.get())
     const next = replaceCalendarViewportGeometry(previous, geometry, {
       dateIdentity: dayKey(anchor, displayZone),
       mode,
       rendererGeneration: generation,
-      pixelsPerHour: zoom.pixelsPerHour.get(),
-      rawOffset: geometry.rawOffset ?? zoom.rawOffset.get(),
+      pixelsPerHour,
+      rawOffset,
     })
     if (next === previous) return
 
@@ -237,6 +260,23 @@ export function useOwnedCalendarCoordinator({
     showWeekends,
   )
   const todayKey = dayKey(currentDate, displayZone)
+  const nowMinuteOfDay = minuteOfDayInZone(currentDate, displayZone)
+  // Explicit full-day bounds and the settled scale — the helper's 07:00–21:00
+  // defaults stay as they are for Home's mini timeline and the agenda.
+  const nowIndicator = nowIndicatorPosition(currentDate, displayZone, {
+    pixelsPerHour: initialPixelsPerHour,
+    startMinute: FULL_DAY_START_MINUTE,
+    endMinute: FULL_DAY_END_MINUTE,
+  })
+  // The gutter chip belongs to the committed centre page only, so it never
+  // contradicts the native title mid-drag. A page with no today column — an
+  // adjacent week, or a weekend clock with weekends hidden — carries neither
+  // the indicator nor the chip, which is how both signals stay in agreement
+  // with the header's Today cue without a special case.
+  const nowOnCommittedPage =
+    pages
+      .find((page) => page.direction === 0)
+      ?.columns.some((column) => column.key === todayKey) ?? false
 
   const resetHeaderProgress = () => {
     position.set(CENTER_PAGE)
@@ -501,6 +541,9 @@ export function useOwnedCalendarCoordinator({
     cancelVerticalCandidate,
     geometryRevision,
     headerStripStyle,
+    nowMinuteOfDay,
+    nowOnCommittedPage,
+    nowVisible: nowIndicator.visible,
     onPageScroll,
     onPageScrollStateChanged,
     onPageSelected,

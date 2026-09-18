@@ -91,6 +91,40 @@ export function formatTime(
   return formatInTimeZone(date, zone, "HH:mm", { locale: LOCALES[locale] })
 }
 
+const CLOCK_12_FORMATTERS = new Map<string, Intl.DateTimeFormat>()
+
+function clock12Formatter(
+  locale: AppLocale,
+  zone: string,
+): Intl.DateTimeFormat {
+  const key = `${locale}:${zone}`
+  const cached = CLOCK_12_FORMATTERS.get(key)
+  if (cached) return cached
+  const formatter = new Intl.DateTimeFormat(HOUR_12_LOCALES[locale], {
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h12",
+    timeZone: zone,
+  })
+  CLOCK_12_FORMATTERS.set(key, formatter)
+  return formatter
+}
+
+/**
+ * A wall-clock instant in the SAME convention as the grid's hour labels — the
+ * display zone, the app locale, and the device's 12/24-hour preference — so the
+ * timeline's current-time chip reads like the gutter it sits in.
+ */
+export function formatClockTime(
+  date: Date,
+  locale: AppLocale,
+  zone: string,
+  uses24HourClock: boolean | null,
+): string {
+  if (uses24HourClock !== false) return formatTime(date, locale, zone)
+  return clock12Formatter(locale, zone).format(date)
+}
+
 // A local-midnight proxy on a Date's UTC calendar day, so date-fns `format` (which
 // reads local fields) prints the RIGHT floating day for an all-day event. An all-day
 // event is stored as UTC midnight (a floating date — May 25 everywhere); formatting
