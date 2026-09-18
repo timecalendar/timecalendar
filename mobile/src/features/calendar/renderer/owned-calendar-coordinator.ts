@@ -224,11 +224,10 @@ export function useOwnedCalendarCoordinator({
       horizontalOwnerGeometryRevision.set(geometryRevision)
       horizontalCallbacksBlocked.set(false)
     })
-  // nativePagerGesture stays out of the blocked list: on iOS RNGH resolves the
-  // pager's internal pan to that handler, so the pan would wait for a one-finger
-  // pinch to fail and only begin once the finger lifts.
-  const pinchGesture =
-    zoom.pinchGesture.blocksExternalGesture(nativeScrollGesture)
+  // The pinch must not block either native owner: a one-finger pinch only fails
+  // when the finger lifts, so a blocked scroll or pager pan would wait for the
+  // release before it begins.
+  const pinchGesture = zoom.pinchGesture
   const pages = calendarPages(
     anchor,
     mode,
