@@ -118,6 +118,18 @@ event-details navigation. Agenda retains the settled timeline anchor without cla
 transfer before T18. Initial current-time positioning remains T08 and complete Today/direct-date
 intent remains T17.
 
+Every geometry helper the renderer reaches for on the UI thread lives in
+`features/calendar/data/time-grid.ts` and carries the `"worklet"` directive, transitively:
+a worklet that calls a plain JS function throws at runtime, and a `useAnimatedStyle`
+computing a top offset from `minuteToPixel` is exactly that shape. Neither `tsc` (the
+directive is a string) nor Jest (the Reanimated mocks evaluate on the JS thread) can see
+the fault, so a device is the only place it surfaces. Two gates stand in for the device:
+`local/no-js-call-in-worklet` rejects a UI-thread call to a helper that is not blessed
+worklet-safe, and time-grid's "UI-thread (worklet) contract" suite asserts Babel stamped
+`__workletHash` on every export but `nowIndicatorPosition`, which is Intl-bound and pinned
+JS-thread-only. New UI-thread math belongs in that module with the directive; anything a
+worklet calls must itself be a worklet.
+
 ## Event source
 
 `CalendarEvent` is the UI domain type. The single event-source seam:

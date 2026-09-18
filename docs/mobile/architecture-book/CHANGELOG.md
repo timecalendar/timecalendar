@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-18 — Worklet safety is machine-checked
+
+- `features/calendar/data/time-grid.ts` is worklet-by-default: every export carries the
+  `"worklet"` directive except Intl-bound `nowIndicatorPosition`, pinned JS-thread-only.
+- Added `local/no-js-call-in-worklet` (repo-local ESLint plugin, `mobile/tools/eslint-rules/`)
+  and time-grid's "UI-thread (worklet) contract" suite, so a non-worklet call from the UI
+  thread fails lint or CI instead of only the device.
+- Added the UI-thread line to the definition of done.
+
 ## 2026-09-17 — Resizable native Calendar (T07)
 
 - Revised ADR 042 for portrait, both landscapes, and resized iPhone/iPad windows while retaining

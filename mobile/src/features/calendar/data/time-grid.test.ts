@@ -1,3 +1,4 @@
+import * as timeGrid from "./time-grid"
 import {
   clampRawOffset,
   clampVerticalOffset,
@@ -322,4 +323,38 @@ describe("nowIndicatorPosition", () => {
     expect(nowIndicatorPosition(now, "Europe/London").pixel).toBe(120)
     expect(nowIndicatorPosition(now, "Pacific/Noumea").pixel).toBe(720)
   })
+})
+
+// The renderer calls this math from `useAnimatedStyle` and gesture callbacks, so
+// every helper must be workletized — a missing directive is a UI-thread crash
+// that no mocked Jest render and no type can reach. Babel stamps `__workletHash`
+// on the transformed function, which is the only off-device evidence there is.
+describe("UI-thread (worklet) contract", () => {
+  const JS_THREAD_ONLY = new Set(["nowIndicatorPosition"])
+
+  const exportedFunctions: [string, unknown][] = Object.entries(
+    timeGrid as Record<string, unknown>,
+  ).filter(([, value]) => typeof value === "function")
+
+  function workletHash(value: unknown) {
+    return (value as { __workletHash?: number }).__workletHash
+  }
+
+  it("covers every function export", () => {
+    expect(exportedFunctions.length).toBeGreaterThan(0)
+  })
+
+  it.each(exportedFunctions.filter(([name]) => !JS_THREAD_ONLY.has(name)))(
+    "workletizes %s",
+    (_name, fn) => {
+      expect(typeof workletHash(fn)).toBe("number")
+    },
+  )
+
+  it.each(exportedFunctions.filter(([name]) => JS_THREAD_ONLY.has(name)))(
+    "keeps %s off the UI thread",
+    (_name, fn) => {
+      expect(workletHash(fn)).toBeUndefined()
+    },
+  )
 })

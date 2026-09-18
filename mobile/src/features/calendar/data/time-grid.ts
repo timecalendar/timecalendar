@@ -3,6 +3,12 @@
 // hour-label / now-indicator math the agenda follow-up, home today-grid, and
 // later owned renderer slices consume. Pure: no React or renderer imports.
 
+// UI-thread contract: every function export here is a worklet, so the owned
+// renderer's `useAnimatedStyle`/gesture callbacks can call it directly. The one
+// exception is `nowIndicatorPosition` (Intl, through minuteOfDayInZone), which
+// the "UI-thread (worklet) contract" suite pins as JS-thread-only. Adding a
+// helper without the directive fails that suite, not the simulator.
+
 import { minuteOfDayInZone } from "./day-key"
 
 // Flutter-parity grid constants (read from the Flutter calendar module), as
@@ -38,6 +44,7 @@ export function minuteToPixel(
     startMinute = GRID_START_MINUTE,
   }: GridOptions = {},
 ): number {
+  "worklet"
   return ((minute - startMinute) / 60) * pixelsPerHour
 }
 
@@ -46,6 +53,7 @@ export function eventHeight(
   durationMinutes: number,
   pixelsPerHour: number = DEFAULT_PIXELS_PER_HOUR,
 ): number {
+  "worklet"
   return (durationMinutes / 60) * pixelsPerHour
 }
 
@@ -57,6 +65,7 @@ export function hourLabels(
   startMinute: number = GRID_START_MINUTE,
   endMinute: number = GRID_END_MINUTE,
 ): number[] {
+  "worklet"
   const startHour = Math.floor(startMinute / 60)
   const endHour = Math.ceil(endMinute / 60)
   const labels: number[] = []
@@ -68,11 +77,13 @@ export function hourLabels(
 
 /** Major hour boundaries, including the closing 24:00 geometry boundary. */
 export function fullDayMajorMinutes(): number[] {
+  "worklet"
   return Array.from({ length: 25 }, (_, hour) => hour * 60)
 }
 
 /** Minor half-hour boundaries within the complete day. */
 export function fullDayMinorMinutes(): number[] {
+  "worklet"
   return Array.from({ length: 24 }, (_, hour) => hour * 60 + 30)
 }
 
@@ -81,6 +92,7 @@ export function gridContentHeight(
   endMinute: number,
   pixelsPerHour: number = DEFAULT_PIXELS_PER_HOUR,
 ): number {
+  "worklet"
   return minuteToPixel(endMinute, { pixelsPerHour, startMinute })
 }
 
