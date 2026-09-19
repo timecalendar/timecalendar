@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useRef } from "react"
 
 import { useUserCalendars } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
@@ -53,27 +53,22 @@ function addCounts(
 
 function eventIntersectsRange(
   event: CalendarEvent,
-  from: Date,
-  to: Date,
-  civilFromDay: string,
-  civilToDay: string,
+  range: DateRange,
+  civil: { fromDay: string; toDay: string },
 ): boolean {
   return event.kind === "date-only"
-    ? event.startDay < civilToDay && event.endDay > civilFromDay
-    : event.startsAt < to && event.endsAt > from
+    ? event.startDay < civil.toDay && event.endDay > civil.fromDay
+    : event.startsAt < range.to && event.endsAt > range.from
 }
 
 export function intersectsRange(
   event: CalendarEvent,
   range: DateRange,
 ): boolean {
-  return eventIntersectsRange(
-    event,
-    range.from,
-    range.to,
-    range.civilFromDay ?? utcDayKey(range.from),
-    range.civilToDay ?? utcDayKey(range.to),
-  )
+  return eventIntersectsRange(event, range, {
+    fromDay: range.civilFromDay ?? utcDayKey(range.from),
+    toDay: range.civilToDay ?? utcDayKey(range.to),
+  })
 }
 
 function useRejectedRowDiagnostics(
@@ -101,63 +96,44 @@ function useRejectedRowDiagnostics(
 export function useCalendarEventsSnapshot(
   range: DateRange,
 ): CalendarEventsSnapshot {
-  const civil = useMemo(
-    () => ({
-      fromDay: range.civilFromDay ?? utcDayKey(range.from),
-      toDay: range.civilToDay ?? utcDayKey(range.to),
-    }),
-    [range],
-  )
+  const civil = {
+    fromDay: range.civilFromDay ?? utcDayKey(range.from),
+    toDay: range.civilToDay ?? utcDayKey(range.to),
+  }
   const synced = useSyncedEventRowsInRange({ instant: range, civil })
   const personal = usePersonalEventRowsInRange(range)
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   const calendars = useUserCalendars()
 
-  const decoded = useMemo(() => {
-    const syncedDecoded = decodeSyncedEventRows([
-      ...synced.timedRows,
-      ...synced.dateOnlyRows,
-    ])
-    const personalDecoded = decodePersonalEventRows(personal.rows)
-    return {
-      events: [...syncedDecoded.accepted, ...personalDecoded.accepted],
-      rejectedCounts: addCounts(
-        syncedDecoded.rejectedCounts,
-        personalDecoded.rejectedCounts,
-      ),
-    }
-  }, [personal.rows, synced.dateOnlyRows, synced.timedRows])
-  const events = useMemo(() => {
-    const hiddenUids = new Set(uidHiddenEvents)
-    const hiddenNames = new Set(namedHiddenEvents)
-    const visibleCalendarIds = new Set<string>()
-    for (const calendar of calendars) {
-      if (calendar.visible) visibleCalendarIds.add(calendar.id)
-    }
-    return decoded.events.filter(
-      (event) =>
-        !event.canceled &&
-        !hiddenUids.has(event.identity.uid) &&
-        !hiddenNames.has(event.title) &&
-        (event.identity.source === "personal" ||
-          (event.userCalendarId !== undefined &&
-            visibleCalendarIds.has(event.userCalendarId))) &&
-        eventIntersectsRange(
-          event,
-          range.from,
-          range.to,
-          civil.fromDay,
-          civil.toDay,
-        ),
-    )
-  }, [
-    calendars,
-    civil,
-    decoded.events,
-    namedHiddenEvents,
-    range,
-    uidHiddenEvents,
+  const syncedDecoded = decodeSyncedEventRows([
+    ...synced.timedRows,
+    ...synced.dateOnlyRows,
   ])
+  const personalDecoded = decodePersonalEventRows(personal.rows)
+  const decoded = {
+    events: [...syncedDecoded.accepted, ...personalDecoded.accepted],
+    rejectedCounts: addCounts(
+      syncedDecoded.rejectedCounts,
+      personalDecoded.rejectedCounts,
+    ),
+  }
+
+  const hiddenUids = new Set(uidHiddenEvents)
+  const hiddenNames = new Set(namedHiddenEvents)
+  const visibleCalendarIds = new Set<string>()
+  for (const calendar of calendars) {
+    if (calendar.visible) visibleCalendarIds.add(calendar.id)
+  }
+  const events = decoded.events.filter(
+    (event) =>
+      !event.canceled &&
+      !hiddenUids.has(event.identity.uid) &&
+      !hiddenNames.has(event.title) &&
+      (event.identity.source === "personal" ||
+        (event.userCalendarId !== undefined &&
+          visibleCalendarIds.has(event.userCalendarId))) &&
+      eventIntersectsRange(event, range, civil),
+  )
   const ready = synced.ready && personal.ready
   const revision = `${synced.revision}:${personal.revision}`
   useRejectedRowDiagnostics(ready, revision, decoded.rejectedCounts)
@@ -179,6 +155,5 @@ export function useCalendarEventsSnapshot(
 }
 
 export function useCalendarEvents(range: DateRange): CalendarEvent[] {
-  const events = useCalendarEventsSnapshot(range).events
-  return useMemo(() => [...events], [events])
+  return [...useCalendarEventsSnapshot(range).events]
 }

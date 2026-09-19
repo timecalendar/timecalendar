@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 
 import { useChecklistProgress } from "@/features/event-checklists"
 
@@ -24,88 +24,49 @@ export interface CalendarTimelinePresentationInput {
 export function useCalendarTimelinePresentation(
   input: CalendarTimelinePresentationInput,
 ) {
-  const { anchor, mode, displayZone, firstWeekday, showWeekends, generation } =
-    input
-  const range = useMemo(
-    () =>
-      planCalendarThreePageRange({
-        anchor,
-        mode,
-        displayZone,
-        firstWeekday,
-        showWeekends,
-      }),
-    [anchor, displayZone, firstWeekday, mode, showWeekends],
-  )
-  const snapshotRange = useMemo(
-    () => ({
-      ...range.instant,
-      civilFromDay: range.civil.fromDay,
-      civilToDay: range.civil.toDay,
-    }),
-    [range],
-  )
-  const snapshot = useCalendarEventsSnapshot(snapshotRange)
+  const range = planCalendarThreePageRange(input)
+  const snapshot = useCalendarEventsSnapshot({
+    ...range.instant,
+    civilFromDay: range.civil.fromDay,
+    civilToDay: range.civil.toDay,
+  })
   const [retained, setRetained] = useState<{
     key: string
     presentation: CalendarTimelinePresentationV1
   } | null>(null)
-  const loadedIdentityPresentation = useMemo(
-    () =>
-      snapshot.ready && snapshot.error === undefined
-        ? buildCalendarTimelinePresentation({
-            range,
-            generation,
-            events: snapshot.events,
-          })
-        : null,
-    [generation, range, snapshot.error, snapshot.events, snapshot.ready],
-  )
   const identityPresentation =
-    loadedIdentityPresentation ?? retained?.presentation ?? null
-  const scopedUids = useMemo(
-    () =>
-      identityPresentation === null
-        ? []
-        : timelinePresentationUids(identityPresentation),
-    [identityPresentation],
-  )
+    snapshot.ready && snapshot.error === undefined
+      ? buildCalendarTimelinePresentation({
+          range,
+          generation: input.generation,
+          events: snapshot.events,
+        })
+      : (retained?.presentation ?? null)
+  const scopedUids =
+    identityPresentation === null
+      ? []
+      : timelinePresentationUids(identityPresentation)
   const checklistProgress = useChecklistProgress(scopedUids)
 
-  const completePresentation = useMemo(
-    () =>
-      buildCalendarTimelinePresentation({
-        range,
-        generation,
-        events:
-          snapshot.ready && snapshot.error === undefined ? snapshot.events : [],
-        checklistProgress,
-      }),
-    [
-      checklistProgress,
-      generation,
-      range,
-      snapshot.error,
-      snapshot.events,
-      snapshot.ready,
-    ],
-  )
+  const completePresentation = buildCalendarTimelinePresentation({
+    range,
+    generation: input.generation,
+    events: snapshot.events,
+    checklistProgress,
+  })
   const progressKey = [...checklistProgress]
     .map(
       ([uid, value]) =>
         `${uid}:${value.completed}:${value.total}:${value.isComplete}`,
     )
     .join("|")
-  const completeKey = `${range.key}:${generation}:${snapshot.revision}:${progressKey}`
+  const completeKey = `${range.key}:${input.generation}:${snapshot.revision}:${progressKey}`
   if (
     snapshot.ready &&
     snapshot.error === undefined &&
     retained?.key !== completeKey
   ) {
-    setRetained({
-      key: completeKey,
-      presentation: completePresentation,
-    })
+    setRetained({ key: completeKey, presentation: completePresentation })
   }
 
   const presentation =
@@ -114,7 +75,7 @@ export function useCalendarTimelinePresentation(
       : (retained?.presentation ??
         buildCalendarTimelinePresentation({
           range,
-          generation,
+          generation: input.generation,
           events: [],
         }))
 
