@@ -1,4 +1,5 @@
 import { calendarEvents, personalEvents } from "@/db"
+import { parseJsonArray } from "@/storage"
 
 import { utcDayKey } from "./day-key"
 import { CALENDAR_EVENT_FALLBACK_COLOR, type CalendarEvent } from "./types"
@@ -63,18 +64,18 @@ function jsonValue(raw: unknown): unknown {
 }
 
 function stringArray(raw: unknown): readonly string[] {
-  const parsed = jsonValue(raw)
-  if (!Array.isArray(parsed)) return []
-  return parsed.flatMap((value) => {
+  return parseJsonArray<unknown>(
+    typeof raw === "string" ? raw : undefined,
+  ).flatMap((value) => {
     const narrowed = optionalString(value)
     return narrowed === undefined ? [] : [narrowed]
   })
 }
 
 function tagNames(raw: unknown): readonly string[] {
-  const parsed = jsonValue(raw)
-  if (!Array.isArray(parsed)) return []
-  return parsed.flatMap((value) => {
+  return parseJsonArray<unknown>(
+    typeof raw === "string" ? raw : undefined,
+  ).flatMap((value) => {
     if (value === null || typeof value !== "object") return []
     const narrowed = optionalString((value as { name?: unknown }).name)
     return narrowed === undefined ? [] : [narrowed]

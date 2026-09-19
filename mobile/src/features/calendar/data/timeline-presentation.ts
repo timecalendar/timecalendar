@@ -1,14 +1,12 @@
+import type { ChecklistProgress } from "@/features/event-checklists"
+
 import { dayKey, minuteOfDayInZone } from "./day-key"
 import { eventSurfaceColor } from "./event-color"
 import type { CalendarThreePageRangeV1 } from "./range-plan"
 import { classifyTimedEventSupport } from "./timed-support"
 import type { CalendarEvent, CalendarEventIdentityV1 } from "./types"
 
-export interface TimelineChecklistProgressV1 {
-  completed: number
-  total: number
-  isComplete: boolean
-}
+export type TimelineChecklistProgressV1 = ChecklistProgress
 
 export interface TimedTileV1 {
   version: 1

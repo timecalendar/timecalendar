@@ -1,3 +1,5 @@
+import { useMemo } from "react"
+
 import { and, calendarEvents, db, eq, gt, lt, useLiveQuery } from "@/db"
 import { decodeSyncedEventRows } from "@/features/calendar/data/event-decoder"
 import type { CalendarEvent } from "@/features/calendar/data/types"
@@ -10,7 +12,7 @@ import type { CalendarEvent } from "@/features/calendar/data/types"
 // too would be redundant).
 export function useSyncedEvents(): CalendarEvent[] {
   const { data } = useLiveQuery(db.select().from(calendarEvents))
-  return [...decodeSyncedEventRows(data).accepted]
+  return useMemo(() => [...decodeSyncedEventRows(data).accepted], [data])
 }
 
 export interface SyncedEventRowRange {

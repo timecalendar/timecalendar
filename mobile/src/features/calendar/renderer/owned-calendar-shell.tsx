@@ -48,6 +48,8 @@ export type OwnedCalendarShellHandle = {
   requestZoom: (command: CalendarZoomCommand) => void
 }
 
+const ignoreEventPress = () => undefined
+
 export const OwnedCalendarShell = forwardRef<
   OwnedCalendarShellHandle,
   OwnedCalendarShellProps
@@ -111,7 +113,7 @@ export const OwnedCalendarShell = forwardRef<
             props.uses24HourClock,
           )}
           t={t}
-          onEventPress={props.onEventPress ?? (() => undefined)}
+          onEventPress={props.onEventPress ?? ignoreEventPress}
         />
       </GestureDetector>
     </View>

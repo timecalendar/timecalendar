@@ -24,13 +24,11 @@ export function classifyTimedEventSupport(
   let startOffset: number
   let endOffset: number
   try {
+    const exclusiveEnd = new Date(event.endsAt.getTime() - 1)
     startKey = dayKey(event.startsAt, displayZone)
-    exclusiveEndKey = dayKey(new Date(event.endsAt.getTime() - 1), displayZone)
+    exclusiveEndKey = dayKey(exclusiveEnd, displayZone)
     startOffset = getTimezoneOffset(displayZone, event.startsAt)
-    endOffset = getTimezoneOffset(
-      displayZone,
-      new Date(event.endsAt.getTime() - 1),
-    )
+    endOffset = getTimezoneOffset(displayZone, exclusiveEnd)
   } catch {
     return { supported: false, reason: "spanning" }
   }
