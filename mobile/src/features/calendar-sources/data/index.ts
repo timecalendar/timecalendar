@@ -30,5 +30,6 @@ export {
   useUserCalendarActions,
   useUserCalendars,
   useUserCalendarsLoaded,
+  useUserCalendarsSnapshot,
 } from "./user-calendars"
 export { validateIcalUrl } from "./validate-url"

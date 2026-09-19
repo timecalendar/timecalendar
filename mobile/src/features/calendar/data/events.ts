@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 
-import { useUserCalendars } from "@/features/calendar-sources/data"
+import { useUserCalendarsSnapshot } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import { usePersonalEventRowsInRange } from "@/features/personal-events"
 import { recordError } from "@/firebase"
@@ -103,7 +103,7 @@ export function useCalendarEventsSnapshot(
   const synced = useSyncedEventRowsInRange({ instant: range, civil })
   const personal = usePersonalEventRowsInRange(range)
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
-  const calendars = useUserCalendars()
+  const calendarSources = useUserCalendarsSnapshot()
 
   const syncedDecoded = decodeSyncedEventRows([
     ...synced.timedRows,
@@ -121,7 +121,7 @@ export function useCalendarEventsSnapshot(
   const hiddenUids = new Set(uidHiddenEvents)
   const hiddenNames = new Set(namedHiddenEvents)
   const visibleCalendarIds = new Set<string>()
-  for (const calendar of calendars) {
+  for (const calendar of calendarSources.calendars) {
     if (calendar.visible) visibleCalendarIds.add(calendar.id)
   }
   const events = decoded.events.filter(
@@ -134,8 +134,8 @@ export function useCalendarEventsSnapshot(
           visibleCalendarIds.has(event.userCalendarId))) &&
       eventIntersectsRange(event, range, civil),
   )
-  const ready = synced.ready && personal.ready
-  const revision = `${synced.revision}:${personal.revision}`
+  const ready = synced.ready && personal.ready && calendarSources.ready
+  const revision = `${synced.revision}:${personal.revision}:${calendarSources.revision}`
   useRejectedRowDiagnostics(ready, revision, decoded.rejectedCounts)
 
   return {

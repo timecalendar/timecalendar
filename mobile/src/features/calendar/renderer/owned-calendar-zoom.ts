@@ -39,6 +39,7 @@ export function useOwnedCalendarZoom({
   onZoomSettled,
   onViewportGeometryChange,
   onInteractionInterrupted,
+  onInteractionFinished,
 }: {
   generation: number
   initialPixelsPerHour: number
@@ -48,6 +49,7 @@ export function useOwnedCalendarZoom({
     geometry: TimedViewportGeometry & { rawOffset?: number },
   ) => void
   onInteractionInterrupted: () => void
+  onInteractionFinished: () => void
 }) {
   const scrollRef = useAnimatedRef<ScrollView>()
   const pixelsPerHour = useSharedValue(
@@ -151,6 +153,7 @@ export function useOwnedCalendarZoom({
         scrollRevision.set(scrollRevision.get() + 1)
       }
       pinchActive.set(false)
+      scheduleOnRN(onInteractionFinished)
     })
 
   useAnimatedReaction(

@@ -251,6 +251,78 @@ describe("OwnedCalendarShell", () => {
     expect(onEventPress).toHaveBeenCalledWith("original-42")
   })
 
+  it("suppresses tile activation while scroll, pager, or pinch owns movement", async () => {
+    const onEventPress = jest.fn()
+    const event = {
+      version: 1,
+      kind: "timed",
+      allDay: false,
+      identity: { source: "synced", uid: "movement-event" },
+      id: "movement-event",
+      title: "Maths",
+      color: "#112233",
+      startsAt: new Date("2026-06-15T10:00:00.000Z"),
+      endsAt: new Date("2026-06-15T11:00:00.000Z"),
+      location: "B12",
+      description: undefined,
+      teachers: [],
+      tags: [],
+      canceled: false,
+      userCalendarId: "calendar-1",
+    } satisfies TimedCalendarEventV1
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: props.generation,
+      events: [event],
+    })
+    await render(
+      <OwnedCalendarShell
+        {...props}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+    const tile = screen.getByRole("button", {
+      name: "Maths, 10:00 – 11:00 B12",
+    })
+    const canvas = screen.getByTestId("owned-calendar-canvas")
+    const pager = screen.getByTestId("owned-calendar-pager", {
+      includeHiddenElements: true,
+    })
+
+    await fireEvent(canvas, "scrollBeginDrag", scrollEvent(20))
+    await fireEvent.press(tile)
+    expect(onEventPress).not.toHaveBeenCalled()
+
+    await fireEvent(canvas, "momentumScrollEnd", scrollEvent(20))
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "dragging" },
+    })
+    await fireEvent.press(tile)
+    expect(onEventPress).not.toHaveBeenCalled()
+
+    await fireEvent(pager, "pageScrollStateChanged", {
+      nativeEvent: { pageScrollState: "idle" },
+    })
+    const pinch = getByGestureTestId("owned-calendar-pinch") as unknown as {
+      handlers: {
+        onBegin: (event: Record<string, unknown>) => void
+        onStart: (event: Record<string, unknown>) => void
+        onFinalize: (event: Record<string, unknown>, success: boolean) => void
+      }
+    }
+    await act(async () => {
+      pinch.handlers.onBegin({})
+      pinch.handlers.onStart({ focalX: 160, focalY: 250, scale: 1.1 })
+    })
+    await fireEvent.press(tile)
+
+    expect(onEventPress).not.toHaveBeenCalled()
+    await act(async () => {
+      pinch.handlers.onFinalize({}, false)
+    })
+  })
+
   it("shows the current time on today's column with shape and typographic cues", async () => {
     await render(<OwnedCalendarShell {...props} />)
 

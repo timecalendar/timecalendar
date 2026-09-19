@@ -57,6 +57,11 @@ export const OwnedCalendarShell = forwardRef<
   const { t } = useTranslation()
   const theme = useTheme()
   const coordinator = useOwnedCalendarCoordinator(props)
+  const onEventPress = (uid: string) => {
+    if (coordinator.isEventActivationBlocked()) return
+    const eventPress = props.onEventPress ?? ignoreEventPress
+    eventPress(uid)
+  }
   useImperativeHandle(ref, () => ({ requestZoom: coordinator.requestZoom }), [
     coordinator.requestZoom,
   ])
@@ -97,7 +102,7 @@ export const OwnedCalendarShell = forwardRef<
           onScrollBeginDrag={coordinator.onScrollBeginDrag}
           onScrollEndDrag={coordinator.onScrollEndDrag}
           onViewportLayout={coordinator.onViewportLayout}
-          onMomentumScrollBegin={coordinator.cancelVerticalCandidate}
+          onMomentumScrollBegin={coordinator.onMomentumScrollBegin}
           onMomentumScrollEnd={coordinator.settleVertical}
           onAccessiblePageRequest={coordinator.requestAccessiblePage}
           pixelsPerHour={coordinator.pixelsPerHour}
@@ -113,7 +118,7 @@ export const OwnedCalendarShell = forwardRef<
             props.uses24HourClock,
           )}
           t={t}
-          onEventPress={props.onEventPress ?? ignoreEventPress}
+          onEventPress={onEventPress}
         />
       </GestureDetector>
     </View>

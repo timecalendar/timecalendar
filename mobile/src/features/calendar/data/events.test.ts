@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react-native"
 
-import { useUserCalendars } from "@/features/calendar-sources/data"
+import { useUserCalendarsSnapshot } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
 import { usePersonalEventRowsInRange } from "@/features/personal-events"
 import { recordError } from "@/firebase"
@@ -20,7 +20,7 @@ jest.mock("@/features/hidden-events/data", () => ({
   useHiddenEvents: jest.fn(),
 }))
 jest.mock("@/features/calendar-sources/data", () => ({
-  useUserCalendars: jest.fn(),
+  useUserCalendarsSnapshot: jest.fn(),
 }))
 jest.mock("./sync/hooks", () => ({
   useSyncedEventRowsInRange: jest.fn(),
@@ -29,7 +29,7 @@ jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
 
 const mockPersonal = usePersonalEventRowsInRange as jest.Mock
 const mockHidden = useHiddenEvents as jest.Mock
-const mockCalendars = useUserCalendars as jest.Mock
+const mockCalendarSources = useUserCalendarsSnapshot as jest.Mock
 const mockSynced = useSyncedEventRowsInRange as jest.Mock
 const mockRecordError = recordError as jest.Mock
 
@@ -93,7 +93,11 @@ beforeEach(() => {
     uidHiddenEvents: [],
     namedHiddenEvents: [],
   })
-  mockCalendars.mockReturnValue([{ id: "cal-1", visible: true }])
+  mockCalendarSources.mockReturnValue({
+    calendars: [{ id: "cal-1", visible: true }],
+    ready: true,
+    revision: "sources-1",
+  })
   mockRecordError.mockClear()
 })
 
@@ -165,10 +169,14 @@ describe("bounded calendar events seam", () => {
       uidHiddenEvents: ["hidden"],
       namedHiddenEvents: ["Secret"],
     })
-    mockCalendars.mockReturnValue([
-      { id: "cal-1", visible: true },
-      { id: "cal-2", visible: false },
-    ])
+    mockCalendarSources.mockReturnValue({
+      calendars: [
+        { id: "cal-1", visible: true },
+        { id: "cal-2", visible: false },
+      ],
+      ready: true,
+      revision: "sources-1",
+    })
 
     const { result } = await renderHook(() => useCalendarEventsSnapshot(range))
     expect(result.current.events.map(({ id }) => id)).toEqual([
@@ -219,14 +227,22 @@ describe("bounded calendar events seam", () => {
       ready: true,
       revision: "sync-1",
     })
-    mockCalendars.mockReturnValue([{ id: "cal-1", visible: false }])
+    mockCalendarSources.mockReturnValue({
+      calendars: [{ id: "cal-1", visible: false }],
+      ready: true,
+      revision: "sources-1",
+    })
     let currentRange: DateRange = range
     const { result, rerender } = await renderHook(() =>
       useCalendarEvents(currentRange),
     )
     expect(result.current).toEqual([])
 
-    mockCalendars.mockReturnValue([{ id: "cal-1", visible: true }])
+    mockCalendarSources.mockReturnValue({
+      calendars: [{ id: "cal-1", visible: true }],
+      ready: true,
+      revision: "sources-2",
+    })
     await rerender({})
     expect(result.current.map(({ id }) => id)).toEqual(["sync-1"])
 
@@ -241,6 +257,45 @@ describe("bounded calendar events seam", () => {
       instant: later,
       civil: { fromDay: "2026-09-20", toDay: "2026-09-21" },
     })
+  })
+
+  it("waits for source visibility before completing initial or replacement snapshots", async () => {
+    mockSynced.mockReturnValue({
+      timedRows: [syncedRow()],
+      dateOnlyRows: [],
+      error: undefined,
+      ready: true,
+      revision: "sync-1",
+    })
+    mockCalendarSources.mockReturnValue({
+      calendars: [],
+      ready: false,
+      revision: "pending",
+    })
+    const { result, rerender } = await renderHook(() =>
+      useCalendarEventsSnapshot(range),
+    )
+    expect(result.current.ready).toBe(false)
+    expect(result.current.events).toEqual([])
+    expect(result.current.revision).toBe("sync-1:personal-1:pending")
+
+    mockCalendarSources.mockReturnValue({
+      calendars: [{ id: "cal-1", visible: true }],
+      ready: true,
+      revision: "sources-1",
+    })
+    await rerender({})
+    expect(result.current.ready).toBe(true)
+    expect(result.current.events.map(({ id }) => id)).toEqual(["sync-1"])
+
+    mockCalendarSources.mockReturnValue({
+      calendars: [],
+      ready: false,
+      revision: "pending",
+    })
+    await rerender({})
+    expect(result.current.ready).toBe(false)
+    expect(result.current.revision).toBe("sync-1:personal-1:pending")
   })
 
   it("uses distinct instant and civil intersection semantics", () => {
