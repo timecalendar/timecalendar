@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-19 — Calendar reads and opens ordinary local timed classes (T09)
+
+- Added bounded three-page SQLite reads through a total V1 timed/date-only domain boundary with
+  shared visibility/hidden/cancelled filtering and aggregate-only malformed-row diagnostics.
+- Added immutable page models and ordinary same-day timed tiles with live-scale geometry,
+  title/location/checklist presentation, committed-page accessibility, and original-UID details routing.
+- Kept page navigation local-only and retained later slices for overlap, all-day, spanning, instant,
+  DST-transition, and density behavior; native owner acceptance remains required on the exact build.
+
 ## 2026-09-18 — Calendar opens around the current time (T08)
 
 - Added one controller-owned, lifecycle-scoped minute clock shared by Today and the owned timeline's

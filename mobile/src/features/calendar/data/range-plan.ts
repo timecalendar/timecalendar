@@ -70,7 +70,7 @@ export function planCalendarThreePageRange(input: {
         input.showWeekends,
       ),
     }
-  }) as CalendarThreePageRangeV1["pages"]
+  }) as unknown as CalendarThreePageRangeV1["pages"]
   const from = pages[0].anchor
   const to = addDaysInZone(
     pages[2].anchor,

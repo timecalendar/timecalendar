@@ -23,6 +23,20 @@
 - The Activity **page size is a client constant** (`ACTIVITY_PAGE_LIMIT = 50`), sent explicitly on every request rather than left to the server DTO default. It bounds virtual response items, not source logs; the server additionally packs the exact response envelope to a 900,000-byte target. Oversized logs become contiguous valid fragments whose first id replaces the cached source row and whose later sortable ids retain ascending fragment order under existing descending-id cache and UI tie-breaks (ADR [058](./decisions/058-activity-virtual-fragment-pagination.md)).
 - Only `src/features/activity/data/**` may import `@/api/generated/calendar-logs/**` or the `activityLogs` / `activityState` bindings from `@/db` — see `lint-format.md`.
 
+## Local Calendar read model
+
+- `features/calendar/data` owns a versioned tagged read boundary over unchanged SQLite rows.
+  Total synced/personal decoders accept valid timed and date-only facts, reject malformed rows
+  independently, and expose only allowlisted aggregate rejection counts; diagnostics never contain
+  row values or query inputs.
+- One pure planner defines exactly three retained Day/Week pages and their combined instant and
+  floating civil envelopes. Range repositories use those envelopes directly, then the shared seam
+  applies visibility, hidden, and cancellation filters before Home, Agenda, renderer semantics, or
+  checklist consumers see an event.
+- The renderer receives a complete immutable V1 presentation. Page navigation replaces local live
+  queries and presentation generations only; generated API hooks, the fetch mutator, and calendar
+  sync are outside that boundary.
+
 ## Single fetch mutator
 
 - Every generated operation uses the single request routine in `mobile/src/api/mutator.ts` for

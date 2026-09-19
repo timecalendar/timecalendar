@@ -11,11 +11,15 @@ import { router, useLocalSearchParams } from "expo-router"
 import { AccessibilityInfo, AppState, Platform, StyleSheet } from "react-native"
 
 import {
+  buildCalendarTimelinePresentation,
   formatFullDay,
   formatMonthYear,
+  planCalendarThreePageRange,
   startOfWeekInZone,
+  type TimedCalendarEventV1,
   useCalendarClock,
   useCalendarEvents,
+  useCalendarTimelinePresentation,
   useSyncCalendars,
 } from "@/features/calendar/data"
 import { useChecklistProgress } from "@/features/event-checklists"
@@ -33,11 +37,27 @@ import { resolveResponsiveLayout } from "@/theme"
 import { CalendarScreen } from "./calendar-screen"
 
 jest.mock("@/features/calendar/data", () => {
-  const actual = jest.requireActual("@/features/calendar/data")
+  const actual = jest.requireActual<typeof import("@/features/calendar/data")>(
+    "@/features/calendar/data",
+  )
   return {
     ...actual,
     useCalendarClock: jest.fn(),
     useCalendarEvents: jest.fn(),
+    useCalendarTimelinePresentation: jest.fn(
+      (
+        input: Parameters<typeof actual.useCalendarTimelinePresentation>[0],
+      ) => ({
+        presentation: actual.buildCalendarTimelinePresentation({
+          range: actual.planCalendarThreePageRange(input),
+          generation: input.generation,
+          events: [],
+          checklistProgress: new Map(),
+        }),
+        ready: true,
+        error: undefined,
+      }),
+    ),
     useSyncCalendars: jest.fn(),
   }
 })
@@ -98,6 +118,8 @@ jest.mock(
 
 const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
+const mockUseCalendarTimelinePresentation =
+  useCalendarTimelinePresentation as jest.Mock
 const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
@@ -132,9 +154,22 @@ function syncState(overrides = {}) {
   }
 }
 
-function calendarEvent(overrides = {}) {
+function calendarEvent(
+  overrides: Partial<TimedCalendarEventV1> = {},
+): TimedCalendarEventV1 {
+  const id = overrides.id ?? "synced-1"
+  const userCalendarId =
+    overrides.userCalendarId === undefined && overrides.id === "personal-1"
+      ? undefined
+      : (overrides.userCalendarId ?? "calendar-1")
   return {
-    id: "synced-1",
+    version: 1,
+    kind: "timed",
+    identity: {
+      source: userCalendarId === undefined ? "personal" : "synced",
+      uid: id,
+    },
+    id,
     title: "Algorithms",
     color: "#1E88E5",
     startsAt: new Date(2026, 5, 16, 9),
@@ -145,7 +180,7 @@ function calendarEvent(overrides = {}) {
     teachers: [],
     tags: [],
     canceled: false,
-    userCalendarId: "calendar-1",
+    userCalendarId,
     ...overrides,
   }
 }
@@ -165,6 +200,16 @@ async function chooseCalendarView(view: "day" | "week" | "agenda") {
 beforeEach(() => {
   AppState.currentState = "active"
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
+  mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+    presentation: buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(input),
+      generation: input.generation,
+      events: [],
+      checklistProgress: new Map(),
+    }),
+    ready: true,
+    error: undefined,
+  }))
   mockUseCalendarClock.mockReturnValue(new Date())
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
@@ -212,6 +257,93 @@ describe("CalendarScreen owned shell", () => {
     )
     expect(mockUseCalendarEvents).toHaveBeenLastCalledWith(agendaRange)
     expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("opens synced and personal timed tiles by their original UID", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const maths = calendarEvent({
+      identity: { source: "synced", uid: "class-original" },
+      id: "class-compatibility",
+      title: "Maths",
+      startsAt: new Date("2026-06-16T10:00:00.000Z"),
+      endsAt: new Date("2026-06-16T11:00:00.000Z"),
+      location: "B12",
+    })
+    const personal = calendarEvent({
+      identity: { source: "personal", uid: "personal-original" },
+      id: "personal-compatibility",
+      title: "Study",
+      startsAt: new Date("2026-06-16T12:00:00.000Z"),
+      endsAt: new Date("2026-06-16T13:00:00.000Z"),
+      location: undefined,
+      userCalendarId: undefined,
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [maths, personal],
+        checklistProgress: new Map(),
+      }),
+      ready: true,
+      error: undefined,
+    }))
+
+    await render(<CalendarScreen />)
+    await fireEvent.press(
+      await screen.findByRole("button", { name: /^Maths,/ }),
+    )
+    expect(mockPush).toHaveBeenLastCalledWith("/event-details/class-original")
+    await fireEvent.press(screen.getByRole("button", { name: /^Study,/ }))
+    expect(mockPush).toHaveBeenLastCalledWith(
+      "/event-details/personal-original",
+    )
+  })
+
+  it("pages away and back using only local presentation reads", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const maths = calendarEvent({
+      identity: { source: "synced", uid: "maths-offline" },
+      id: "maths-offline",
+      title: "Maths",
+      startsAt: new Date("2026-06-16T10:00:00.000Z"),
+      endsAt: new Date("2026-06-16T11:00:00.000Z"),
+      location: "B12",
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [maths],
+      }),
+      ready: true,
+      error: undefined,
+    }))
+    await render(<CalendarScreen />)
+    expect(
+      await screen.findByRole("button", { name: /^Maths,/ }),
+    ).toBeOnTheScreen()
+
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Maths,/ })).toBeNull(),
+    )
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "decrement" } },
+    )
+    expect(
+      await screen.findByRole("button", { name: /^Maths,/ }),
+    ).toBeOnTheScreen()
+    expect(mockSync).not.toHaveBeenCalled()
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it("restores persisted Day with a fresh today anchor and one column", async () => {
@@ -303,7 +435,9 @@ describe("CalendarScreen owned shell", () => {
         "accessibilityAction",
         { nativeEvent: { actionName: "increment" } },
       )
-      expect(screen.getByLabelText(label)).toBeOnTheScreen()
+      expect(
+        screen.getByLabelText(new RegExp(`^${label}(?:, Today)?$`)),
+      ).toBeOnTheScreen()
     }
 
     await chooseCalendarView("week")

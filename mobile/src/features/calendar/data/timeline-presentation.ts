@@ -98,11 +98,12 @@ export function buildCalendarTimelinePresentation(input: {
   checklistProgress?: ReadonlyMap<string, TimelineChecklistProgressV1>
 }): CalendarTimelinePresentationV1 {
   const tilesByDay = new Map<string, TimedTileV1[]>()
+  const displayZone = input.range.displayZone
   for (const event of input.events) {
-    const support = classifyTimedEventSupport(event, input.range.displayZone)
+    const support = classifyTimedEventSupport(event, displayZone)
     if (!support.supported) continue
     const supported = support.event
-    const key = dayKey(supported.startsAt, input.range.displayZone)
+    const key = dayKey(supported.startsAt, displayZone)
     const tile: TimedTileV1 = {
       version: 1,
       identity: { ...supported.identity },
@@ -112,11 +113,8 @@ export function buildCalendarTimelinePresentation(input: {
       surfaceColor: eventSurfaceColor(supported.color),
       startsAt: new Date(supported.startsAt),
       endsAt: new Date(supported.endsAt),
-      startMinute: minuteOfDayInZone(
-        supported.startsAt,
-        input.range.displayZone,
-      ),
-      endMinute: endMinute(supported, input.range.displayZone),
+      startMinute: minuteOfDayInZone(supported.startsAt, displayZone),
+      endMinute: endMinute(supported, displayZone),
       checklist: input.checklistProgress?.get(supported.identity.uid),
     }
     const current = tilesByDay.get(key)
@@ -140,7 +138,7 @@ export function buildCalendarTimelinePresentation(input: {
         }),
       ),
     }),
-  ) as CalendarTimelinePresentationV1["pages"]
+  ) as unknown as CalendarTimelinePresentationV1["pages"]
 
   return freezePresentation({
     version: 1,

@@ -20,7 +20,7 @@ export function OwnedCalendarDateHeader({
   todayLabel,
   stripStyle,
 }: {
-  pages: CalendarPage[]
+  pages: readonly CalendarPage[]
   locale: AppLocale
   displayZone: string
   todayKey: string

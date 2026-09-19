@@ -1,7 +1,7 @@
 import type { CalendarEventForPublic } from "@/api/generated/timeCalendar.schemas"
 import { calendarEvents } from "@/db"
 
-import { dtoToRow, rowToCalendarEvent } from "./types"
+import { decodeFields, dtoToRow, rowToCalendarEvent } from "./types"
 
 type CalendarEventRow = typeof calendarEvents.$inferSelect
 
@@ -126,6 +126,13 @@ describe("dtoToRow", () => {
 })
 
 describe("rowToCalendarEvent", () => {
+  it("totally decodes stored custom fields", () => {
+    expect(decodeFields(null)).toBeNull()
+    expect(decodeFields('{"canceled":true}')).toEqual({ canceled: true })
+    expect(decodeFields("42")).toBeNull()
+    expect(decodeFields("{")).toBeNull()
+  })
+
   it("maps a stored row to the (lossy) rendering domain event", () => {
     const back = rowToCalendarEvent(toRow(dtoEvent()))
     expect(back.id).toBe("srv-ev-1")
@@ -207,5 +214,13 @@ describe("rowToCalendarEvent", () => {
         }),
       ).canceled,
     ).toBe(false)
+  })
+
+  it("rejects an invalid legacy direct-read row", () => {
+    expect(() =>
+      rowToCalendarEvent(
+        toRow(dtoEvent(), "cal-1", { startsAt: "not-a-date" }),
+      ),
+    ).toThrow("Invalid calendar event row")
   })
 })

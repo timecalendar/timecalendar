@@ -6,11 +6,12 @@ import { usePersonalEventRowsInRange } from "@/features/personal-events"
 import { recordError } from "@/firebase"
 
 import {
+  type DateRange,
   intersectsRange,
   useCalendarEvents,
   useCalendarEventsSnapshot,
 } from "./events"
-import { useSyncedEventRowsInRange } from "./sync"
+import { useSyncedEventRowsInRange } from "./sync/hooks"
 
 jest.mock("@/features/personal-events", () => ({
   usePersonalEventRowsInRange: jest.fn(),
@@ -21,7 +22,7 @@ jest.mock("@/features/hidden-events/data", () => ({
 jest.mock("@/features/calendar-sources/data", () => ({
   useUserCalendars: jest.fn(),
 }))
-jest.mock("./sync", () => ({
+jest.mock("./sync/hooks", () => ({
   useSyncedEventRowsInRange: jest.fn(),
 }))
 jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
@@ -119,9 +120,9 @@ describe("bounded calendar events seam", () => {
       revision: "personal-1",
     })
 
-    const { result } = await renderHook(() => useCalendarEvents(range))
+    const { result } = await renderHook(() => useCalendarEventsSnapshot(range))
     expect(
-      result.current.map(({ kind, identity }) => ({ kind, identity })),
+      result.current.events.map(({ kind, identity }) => ({ kind, identity })),
     ).toEqual([
       { kind: "timed", identity: { source: "synced", uid: "sync-1" } },
       { kind: "date-only", identity: { source: "synced", uid: "day-1" } },
@@ -130,6 +131,13 @@ describe("bounded calendar events seam", () => {
         identity: { source: "personal", uid: "personal-1" },
       },
     ])
+    expect(result.current.counts).toEqual({
+      queriedSyncedTimed: 1,
+      queriedSyncedDateOnly: 1,
+      queriedPersonal: 1,
+      accepted: 3,
+      filtered: 0,
+    })
   })
 
   it("filters cancelled, hidden, named, invisible, and deleted sources before projection", async () => {
@@ -162,8 +170,18 @@ describe("bounded calendar events seam", () => {
       { id: "cal-2", visible: false },
     ])
 
-    const { result } = await renderHook(() => useCalendarEvents(range))
-    expect(result.current.map(({ id }) => id)).toEqual(["kept", "personal-1"])
+    const { result } = await renderHook(() => useCalendarEventsSnapshot(range))
+    expect(result.current.events.map(({ id }) => id)).toEqual([
+      "kept",
+      "personal-1",
+    ])
+    expect(result.current.counts).toEqual({
+      queriedSyncedTimed: 6,
+      queriedSyncedDateOnly: 0,
+      queriedPersonal: 1,
+      accepted: 7,
+      filtered: 5,
+    })
     expect(mockRecordError).not.toHaveBeenCalled()
   })
 
@@ -202,21 +220,22 @@ describe("bounded calendar events seam", () => {
       revision: "sync-1",
     })
     mockCalendars.mockReturnValue([{ id: "cal-1", visible: false }])
-    const { result, rerender } = await renderHook(
-      ({ currentRange }) => useCalendarEvents(currentRange),
-      { initialProps: { currentRange: range } },
+    let currentRange: DateRange = range
+    const { result, rerender } = await renderHook(() =>
+      useCalendarEvents(currentRange),
     )
     expect(result.current).toEqual([])
 
     mockCalendars.mockReturnValue([{ id: "cal-1", visible: true }])
-    await rerender({ currentRange: range })
+    await rerender({})
     expect(result.current.map(({ id }) => id)).toEqual(["sync-1"])
 
     const later = {
       from: new Date("2026-09-20T00:00:00.000Z"),
       to: new Date("2026-09-21T00:00:00.000Z"),
     }
-    await rerender({ currentRange: later })
+    currentRange = later
+    await rerender({})
     expect(result.current).toEqual([])
     expect(mockSynced).toHaveBeenLastCalledWith({
       instant: later,

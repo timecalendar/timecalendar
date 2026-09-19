@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useRef } from "react"
 
 import { useUserCalendars } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
@@ -11,7 +11,7 @@ import {
   decodePersonalEventRows,
   decodeSyncedEventRows,
 } from "./event-decoder"
-import { useSyncedEventRowsInRange } from "./sync"
+import { useSyncedEventRowsInRange } from "./sync/hooks"
 import { type CalendarEvent } from "./types"
 
 export interface DateRange {
@@ -96,57 +96,44 @@ function useRejectedRowDiagnostics(
 export function useCalendarEventsSnapshot(
   range: DateRange,
 ): CalendarEventsSnapshot {
-  const civil = useMemo(
-    () => ({
-      fromDay: range.civilFromDay ?? utcDayKey(range.from),
-      toDay: range.civilToDay ?? utcDayKey(range.to),
-    }),
-    [range.civilFromDay, range.civilToDay, range.from, range.to],
-  )
+  const civil = {
+    fromDay: range.civilFromDay ?? utcDayKey(range.from),
+    toDay: range.civilToDay ?? utcDayKey(range.to),
+  }
   const synced = useSyncedEventRowsInRange({ instant: range, civil })
   const personal = usePersonalEventRowsInRange(range)
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
   const calendars = useUserCalendars()
 
-  const decoded = useMemo(() => {
-    const syncedDecoded = decodeSyncedEventRows([
-      ...synced.timedRows,
-      ...synced.dateOnlyRows,
-    ])
-    const personalDecoded = decodePersonalEventRows(personal.rows)
-    return {
-      events: [...syncedDecoded.accepted, ...personalDecoded.accepted],
-      rejectedCounts: addCounts(
-        syncedDecoded.rejectedCounts,
-        personalDecoded.rejectedCounts,
-      ),
-    }
-  }, [personal.rows, synced.dateOnlyRows, synced.timedRows])
-
-  const events = useMemo(() => {
-    const hiddenUids = new Set(uidHiddenEvents)
-    const hiddenNames = new Set(namedHiddenEvents)
-    const visibleCalendarIds = new Set(
-      calendars.filter(({ visible }) => visible).map(({ id }) => id),
-    )
-    return decoded.events.filter(
-      (event) =>
-        !event.canceled &&
-        !hiddenUids.has(event.identity.uid) &&
-        !hiddenNames.has(event.title) &&
-        (event.identity.source === "personal" ||
-          (event.userCalendarId !== undefined &&
-            visibleCalendarIds.has(event.userCalendarId))) &&
-        eventIntersectsRange(event, range, civil),
-    )
-  }, [
-    calendars,
-    civil,
-    decoded.events,
-    namedHiddenEvents,
-    range,
-    uidHiddenEvents,
+  const syncedDecoded = decodeSyncedEventRows([
+    ...synced.timedRows,
+    ...synced.dateOnlyRows,
   ])
+  const personalDecoded = decodePersonalEventRows(personal.rows)
+  const decoded = {
+    events: [...syncedDecoded.accepted, ...personalDecoded.accepted],
+    rejectedCounts: addCounts(
+      syncedDecoded.rejectedCounts,
+      personalDecoded.rejectedCounts,
+    ),
+  }
+
+  const hiddenUids = new Set(uidHiddenEvents)
+  const hiddenNames = new Set(namedHiddenEvents)
+  const visibleCalendarIds = new Set<string>()
+  for (const calendar of calendars) {
+    if (calendar.visible) visibleCalendarIds.add(calendar.id)
+  }
+  const events = decoded.events.filter(
+    (event) =>
+      !event.canceled &&
+      !hiddenUids.has(event.identity.uid) &&
+      !hiddenNames.has(event.title) &&
+      (event.identity.source === "personal" ||
+        (event.userCalendarId !== undefined &&
+          visibleCalendarIds.has(event.userCalendarId))) &&
+      eventIntersectsRange(event, range, civil),
+  )
   const ready = synced.ready && personal.ready
   const revision = `${synced.revision}:${personal.revision}`
   useRejectedRowDiagnostics(ready, revision, decoded.rejectedCounts)

@@ -167,4 +167,43 @@ describe("calendar event row decoders", () => {
       canceled: false,
     })
   })
+
+  it("rejects non-string dates and defaults non-string JSON and titles", () => {
+    const syncedResult = decodeSyncedEventRows([
+      synced({ startsAt: null as unknown as string }),
+      synced({ uid: "bad-end", endsAt: 42 as unknown as string }),
+      synced({
+        uid: "defaults",
+        title: null as unknown as string,
+        teachers: null as unknown as string,
+        tags: null as unknown as string,
+        fields: null,
+      }),
+    ])
+    expect(syncedResult.accepted[0]).toMatchObject({
+      id: "defaults",
+      title: "",
+      teachers: [],
+      tags: [],
+      canceled: false,
+    })
+    expect(syncedResult.rejectedCounts).toMatchObject({
+      "invalid-start": 1,
+      "invalid-end": 1,
+    })
+
+    const personalResult = decodePersonalEventRows([
+      personal({ startsAt: null as unknown as string }),
+      personal({ uid: "bad-end", endsAt: null as unknown as string }),
+      personal({ uid: "defaults", title: null as unknown as string }),
+    ])
+    expect(personalResult.accepted[0]).toMatchObject({
+      id: "defaults",
+      title: "",
+    })
+    expect(personalResult.rejectedCounts).toMatchObject({
+      "invalid-start": 1,
+      "invalid-end": 1,
+    })
+  })
 })

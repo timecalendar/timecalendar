@@ -1,4 +1,9 @@
-import { type CalendarEvent } from "@/features/calendar/data"
+import {
+  type CalendarEvent,
+  type DateOnlyCalendarEventV1,
+  type TimedCalendarEventV1,
+  utcDayKey,
+} from "@/features/calendar/data"
 
 import {
   dayCaption,
@@ -16,21 +21,37 @@ function event(
   endsAt: Date,
   overrides: Partial<CalendarEvent> = {},
 ): CalendarEvent {
-  return {
+  const common = {
+    version: 1 as const,
+    identity: { source: "synced" as const, uid: id },
     id,
     title: id,
     color: "#1E88E5",
     startsAt,
     endsAt,
     location: undefined,
-    allDay: false,
     description: undefined,
     teachers: [],
     tags: [],
     canceled: false,
     userCalendarId: undefined,
-    ...overrides,
   }
+  if (overrides.allDay === true) {
+    return {
+      ...common,
+      ...overrides,
+      kind: "date-only",
+      allDay: true,
+      startDay: utcDayKey(startsAt),
+      endDay: utcDayKey(endsAt),
+    } as DateOnlyCalendarEventV1
+  }
+  return {
+    ...common,
+    ...overrides,
+    kind: "timed",
+    allDay: false,
+  } as TimedCalendarEventV1
 }
 
 const now = new Date(2026, 5, 16, 12, 0)

@@ -131,7 +131,7 @@ export function OwnedCalendarCanvas({
   initialVerticalOffset: number
   generation: number
   geometryRevision: number
-  pages: CalendarPage[]
+  pages: readonly CalendarPage[]
   pagerRef: RefObject<PagerView | null>
   scrollRef: AnimatedRef<ScrollView>
   nativeScrollGesture: GestureType
@@ -519,7 +519,7 @@ function CalendarGrid({
   nowMinuteOfDay,
 }: {
   direction: number
-  columns: WeekColumn[]
+  columns: readonly WeekColumn[]
   pixelsPerHour: SharedValue<number>
   todayKey: string | null
   nowMinuteOfDay: number
@@ -741,7 +741,11 @@ const styles = StyleSheet.create({
   minorLine: { opacity: 0.5 },
   preview: { position: "absolute", top: 16, left: 16, gap: 4 },
   tileColumns: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     flexDirection: "row",
   },
   tileColumn: { flex: 1, position: "relative" },

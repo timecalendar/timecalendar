@@ -8,7 +8,12 @@ import {
 } from "react-native-gesture-handler/jest-utils"
 import { useEvent, useReducedMotion } from "react-native-reanimated"
 
-import { HOURS_COLUMN_WIDTH } from "@/features/calendar/data"
+import {
+  buildCalendarTimelinePresentation,
+  HOURS_COLUMN_WIDTH,
+  planCalendarThreePageRange,
+  type TimedCalendarEventV1,
+} from "@/features/calendar/data"
 import { Colors } from "@/theme"
 
 import {
@@ -141,6 +146,109 @@ describe("OwnedCalendarShell", () => {
         includeHiddenElements: true,
       }),
     ).toHaveProp("offscreenPageLimit", 1)
+  })
+
+  it("renders a timed class at its actual time and opens its original UID", async () => {
+    const onEventPress = jest.fn()
+    const event = {
+      version: 1,
+      kind: "timed",
+      allDay: false,
+      identity: { source: "synced", uid: "original-42" },
+      id: "compatibility-alias",
+      title: "Maths",
+      color: "#112233",
+      startsAt: new Date("2026-06-15T10:00:00.000Z"),
+      endsAt: new Date("2026-06-15T11:00:00.000Z"),
+      location: "B12",
+      description: undefined,
+      teachers: [],
+      tags: [],
+      canceled: false,
+      userCalendarId: "calendar-1",
+    } satisfies TimedCalendarEventV1
+    const range = planCalendarThreePageRange({
+      anchor: props.anchor,
+      mode: props.mode,
+      displayZone: props.displayZone,
+      firstWeekday: props.firstWeekday,
+      showWeekends: props.showWeekends,
+    })
+    const presentation = buildCalendarTimelinePresentation({
+      range,
+      generation: props.generation,
+      events: [event],
+    })
+
+    const view = await render(
+      <OwnedCalendarShell
+        {...props}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+
+    const anchor = screen.getByTestId("owned-calendar-event-original-42")
+    expect(StyleSheet.flatten(anchor.props.style)).toMatchObject({
+      top: 600,
+      height: 60,
+    })
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        initialPixelsPerHour={40}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        initialPixelsPerHour={40}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-event-original-42").props.style,
+      ),
+    ).toMatchObject({
+      top: 400,
+      height: 40,
+    })
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        initialPixelsPerHour={120}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+    await view.rerender(
+      <OwnedCalendarShell
+        {...props}
+        initialPixelsPerHour={120}
+        presentation={presentation}
+        onEventPress={onEventPress}
+      />,
+    )
+    expect(
+      StyleSheet.flatten(
+        screen.getByTestId("owned-calendar-event-original-42").props.style,
+      ),
+    ).toMatchObject({
+      top: 1200,
+      height: 120,
+    })
+    const tile = screen.getByRole("button", {
+      name: "Maths, 10:00 – 11:00 B12",
+    })
+    expect(tile).toHaveProp("accessibilityHint", "View details")
+    expect(screen.getByText("Maths")).toBeOnTheScreen()
+    expect(screen.getByText("B12")).toBeOnTheScreen()
+    await fireEvent.press(tile)
+    expect(onEventPress).toHaveBeenCalledWith("original-42")
   })
 
   it("shows the current time on today's column with shape and typographic cues", async () => {

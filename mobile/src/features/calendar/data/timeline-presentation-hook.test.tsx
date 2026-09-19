@@ -71,9 +71,9 @@ describe("useCalendarTimelinePresentation", () => {
   })
 
   it("publishes empty, loaded, checklist-updated, and removal models", async () => {
-    const { result, rerender } = await renderHook(
-      ({ input }) => useCalendarTimelinePresentation(input),
-      { initialProps: { input: baseInput } },
+    let input = baseInput
+    const { result, rerender } = await renderHook(() =>
+      useCalendarTimelinePresentation(input),
     )
     expect(result.current.presentation.pages).toHaveLength(3)
     expect(mockProgress).toHaveBeenLastCalledWith([])
@@ -82,7 +82,7 @@ describe("useCalendarTimelinePresentation", () => {
     mockProgress.mockReturnValue(
       new Map([["maths", { completed: 1, total: 2, isComplete: false }]]),
     )
-    await rerender({ input: baseInput })
+    await rerender({})
     const tile = result.current.presentation.pages[1].columns[0]?.tiles[0]
     expect(tile?.identity.uid).toBe("maths")
     expect(tile?.checklist).toEqual({
@@ -93,7 +93,7 @@ describe("useCalendarTimelinePresentation", () => {
     expect(mockProgress).toHaveBeenLastCalledWith(["maths"])
 
     mockSnapshot.mockReturnValue(snapshot([]))
-    await rerender({ input: baseInput })
+    await rerender({})
     expect(
       result.current.presentation.pages.flatMap((page) =>
         page.columns.flatMap((column) => column.tiles),
@@ -103,9 +103,9 @@ describe("useCalendarTimelinePresentation", () => {
 
   it("retains the last complete generation during replacement and releases it on completion", async () => {
     mockSnapshot.mockReturnValue(snapshot([event("old")]))
-    const { result, rerender } = await renderHook(
-      ({ input }) => useCalendarTimelinePresentation(input),
-      { initialProps: { input: baseInput } },
+    let input = baseInput
+    const { result, rerender } = await renderHook(() =>
+      useCalendarTimelinePresentation(input),
     )
     expect(result.current.presentation.generation).toBe(1)
 
@@ -115,7 +115,8 @@ describe("useCalendarTimelinePresentation", () => {
       anchor: new Date("2026-09-15T12:00:00Z"),
       generation: 2,
     }
-    await rerender({ input: replacement })
+    input = replacement
+    await rerender({})
     expect(result.current.presentation.generation).toBe(1)
     expect(
       result.current.presentation.pages.flatMap((page) =>
@@ -128,7 +129,7 @@ describe("useCalendarTimelinePresentation", () => {
     mockSnapshot.mockReturnValue(
       snapshot([event("new", "2026-09-15T08:00:00Z")]),
     )
-    await rerender({ input: replacement })
+    await rerender({})
     expect(result.current.presentation.generation).toBe(2)
     expect(
       result.current.presentation.pages[1].columns[0]?.tiles[0]?.identity.uid,
@@ -137,14 +138,30 @@ describe("useCalendarTimelinePresentation", () => {
 
   it("keeps the complete model through a recoverable replacement error", async () => {
     mockSnapshot.mockReturnValue(snapshot([event("stable")]))
-    const { result, rerender } = await renderHook(
-      ({ input }) => useCalendarTimelinePresentation(input),
-      { initialProps: { input: baseInput } },
+    let input = baseInput
+    const { result, rerender } = await renderHook(() =>
+      useCalendarTimelinePresentation(input),
     )
     const failure = new Error("local read failed")
     mockSnapshot.mockReturnValue(snapshot([], true, failure))
-    await rerender({ input: { ...baseInput, generation: 2 } })
+    input = { ...baseInput, generation: 2 }
+    await rerender({})
     expect(result.current.error).toBe(failure)
     expect(result.current.presentation.generation).toBe(1)
+  })
+
+  it("publishes a bounded empty model while the initial local read is pending", async () => {
+    mockSnapshot.mockReturnValue(snapshot([], false))
+    const { result } = await renderHook(() =>
+      useCalendarTimelinePresentation(baseInput),
+    )
+    expect(result.current.ready).toBe(false)
+    expect(result.current.presentation.pages).toHaveLength(3)
+    expect(
+      result.current.presentation.pages.flatMap((page) =>
+        page.columns.flatMap((column) => column.tiles),
+      ),
+    ).toEqual([])
+    expect(mockProgress).toHaveBeenLastCalledWith([])
   })
 })

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 
 import { useChecklistProgress } from "@/features/event-checklists"
 
@@ -24,7 +24,7 @@ export interface CalendarTimelinePresentationInput {
 export function useCalendarTimelinePresentation(
   input: CalendarTimelinePresentationInput,
 ) {
-  const range = useMemo(() => planCalendarThreePageRange(input), [input])
+  const range = planCalendarThreePageRange(input)
   const snapshot = useCalendarEventsSnapshot({
     ...range.instant,
     civilFromDay: range.civil.fromDay,

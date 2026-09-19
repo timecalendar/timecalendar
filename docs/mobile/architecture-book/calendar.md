@@ -5,7 +5,7 @@
 The T06 day/week surface is a feature-owned React Native shell under
 `features/calendar/renderer`. It fills the Calendar content owner and presents the
 native month/year title above a stable themed canvas, with no secondary date toolbar or arrow buttons. The
-shell keeps exactly the previous, current, and next empty pages mounted in the installed
+shell keeps exactly the previous, current, and next pages mounted in the installed
 native `PagerView`. Day pages draw one dated column and advance by one display-zone civil date,
 including Saturday and Sunday when Show weekends is off. Week pages draw five or seven
 equal-width dated columns and advance by one complete Monday-first civil week over the complete
@@ -94,14 +94,12 @@ nor resets it. Their native platform menu offers 10-pixel Zoom in/out and Reset 
 them at the live usable viewport center, disables them at 40/120/60, and announces one settled
 percentage.
 
-This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
-timed tiles, and populated-event density tuning remain pending until their numbered owned-renderer
-slices land.
+This remains an intentionally incomplete pre-launch milestone. T09 adds ordinary positive-duration,
+same-display-date timed tiles; all-day lanes, instants, spanning/DST shapes, overlap packing, and
+populated-event density tuning remain pending until their numbered owned-renderer slices land.
 Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
-explicit full-day bounds. Paging remains bounded to one adjacent empty day or week according to
-the committed mode; there is no far-date pager. The blank shell never claims
-that stored event data is empty: Agenda remains the route for reading and opening stored
-events during this cut.
+explicit full-day bounds. Paging remains bounded to one adjacent day or week according to
+the committed mode; there is no far-date pager.
 
 The app owns pure calendar primitives for grouping, time-grid math, overlap layout,
 day keys, and formatting. Home and Agenda use the applicable primitives without
@@ -115,8 +113,9 @@ zone from `useDisplayZone()` and pass it explicitly to formatters, day-key and b
 helpers, and time-grid math; helpers never read the zone implicitly. `CalendarScreen`
 uses the same explicit zone for its selected-date heading and Agenda range. Launch weeks
 start on Monday through an explicit first-weekday input, and whole-week shifts compose
-civil day-key helpers rather than fixed-duration milliseconds. The shell has no event
-window. Deriving a displayed time or day from device-local `Date` fields
+civil day-key helpers rather than fixed-duration milliseconds. The three-page planner publishes
+one instant envelope and one floating civil-date envelope for the complete retained range.
+Deriving a displayed time or day from device-local `Date` fields
 or `toLocaleString` is a defect. All-day events are
 the exception: they stay on the floating UTC-day-key path and never shift with the
 preference.
@@ -147,12 +146,18 @@ worklet calls must itself be a worklet.
 
 ## Event source
 
-`CalendarEvent` is the UI domain type. The single event-source seam:
+`CalendarEvent` is a schema-versioned tagged UI domain: `TimedCalendarEventV1` carries validated
+instant bounds, while `DateOnlyCalendarEventV1` carries exclusive floating civil-day bounds without
+rewriting stored or wire facts. The single event-source seam:
 
-1. reads synced events and personal events;
-2. maps both to `CalendarEvent`;
-3. removes events from invisible calendars and the hidden-event store;
-4. returns the unified collection to Home, Calendar, and event details.
+1. plans exactly the previous/current/next page range and performs half-open, range-scoped live
+   reads for synced timed/date-only rows and personal timed rows;
+2. totally validates rows, isolates malformed siblings, and reports only static rejection reasons
+   plus aggregate counts once per completed snapshot revision;
+3. removes cancelled events, invisible/deleted sources, and hidden UID/name matches before any
+   visual, semantic, checklist, Home, or Agenda projection;
+4. publishes recursively immutable V1 pages whose sorted timed tiles retain original synced or
+   personal UID, minute geometry, safe color, title/location, and checklist summary.
 
 Do not duplicate these filters in screens. Synced rows remain verbatim cache data;
 formatting and all-day conversion are rendering projections.
@@ -164,7 +169,9 @@ Sync sends durable user-calendar tokens to the generated batch endpoint and repl
 last good local rows and produces a recoverable UI state. A local transaction failure
 is unexpected and is recorded through `@/firebase`.
 
-SQLite live reads are coalesced to one whole-table read per macrotask. Repositories must
+SQLite live reads are coalesced per macrotask. Calendar timeline reads use SQL half-open
+intersection predicates over the retained three-page instant/civil envelopes with no row limit;
+page navigation changes only these local subscriptions and never starts sync or network work. Repositories must
 use synchronous Drizzle transaction callbacks with `.run()` executors because the Expo
 SQLite synchronous driver does not await async callbacks.
 
@@ -229,8 +236,10 @@ separate. The binding contract and regression scenarios live in the
   semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
   header aligned with every clock page. Day has one column; Week has five or seven, and both use
   bounded shared zoom with accessible native menu commands. A fresh mount opens around the current
-  display-zone minute and shows the shaped column rule plus accessible gutter time chip; events and
-  selectable dates belong to later renderer slices.
+  display-zone minute and shows the shaped column rule plus accessible gutter time chip. Supported
+  ordinary timed tiles use live-scale minute geometry, show title/location/checklist progress, and
+  expose one localized button only on the committed page; activation passes the original UID to the
+  shared details route. Neighbour pages and decorative grid content stay hidden from accessibility.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.
@@ -254,10 +263,11 @@ Unit/component tests cover display-zone day/week civil arithmetic, mode persiste
 recovery, revision/cancellation semantics, one/five/seven-column geometry, three-page native pager
 and control behavior, native scroll settlement/restoration, atomic settled screen context,
 Calendar remount and selection, Agenda grouping/routing, filtering, sync orchestration, failure
-states, the lifecycle-scoped minute clock, fresh-open full-day clamps, indicator visibility, and the
-repository cutover contract. `calendar-owned-shell.contract.test.ts` pins the clock as the calendar's
+states, bounded query predicates, total row validation, malformed-sibling isolation, immutable page
+models, original-UID activation, the lifecycle-scoped minute clock, fresh-open full-day clamps,
+indicator visibility, and the repository cutover contract. `calendar-owned-shell.contract.test.ts` pins the clock as the calendar's
 only timer owner, keeps the renderer timer-free, and rejects repeating animation work. Native held-drag mode switching, pinch
 arbitration/focal stability, visible-hour continuity, preference restart, weekend traversal,
 assistive technology, platform chrome, and physical-device presentation remain recorded owner
 checks and are not claimed by host automation. Dense-calendar and all-day-lane behavior remain
-outside this empty-shell milestone.
+outside this ordinary timed-event milestone.

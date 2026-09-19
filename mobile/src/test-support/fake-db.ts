@@ -70,6 +70,12 @@ export interface FakeDb {
   seed(table: string, rows: Record<string, unknown>[]): void
   /** Number of currently mounted reactive-query consumers. */
   liveQueryListenerCount(): number
+  /** Queue one hook result to exercise pending/error branches before the default ready result. */
+  queueLiveQueryResult(result: {
+    data?: Row[]
+    error?: Error
+    updatedAt?: Date
+  }): void
 }
 
 type Row = Record<string, unknown>
@@ -100,6 +106,11 @@ export function createFakeDb(config: {
   // token object → table name, so a builder can route by identity.
   const tokenToName = new Map<Record<string, string>, string>()
   const listeners = new Set<() => void>()
+  const liveQueryResults: {
+    data?: Row[]
+    error?: Error
+    updatedAt?: Date
+  }[] = []
   let version = 0
 
   for (const name of names) {
@@ -421,7 +432,13 @@ export function createFakeDb(config: {
       () => version,
       () => version,
     )
-    return { data: query.all(), error: undefined, updatedAt: new Date(0) }
+    const queued = liveQueryResults.shift()
+    return {
+      data: queued?.data ?? query.all(),
+      error: queued?.error,
+      updatedAt: queued?.updatedAt,
+      ...(queued === undefined ? { updatedAt: new Date(0) } : {}),
+    }
   }
 
   const module: Record<string, unknown> = {
@@ -445,6 +462,7 @@ export function createFakeDb(config: {
     reset() {
       for (const store of stores.values()) store.clear()
       listeners.clear()
+      liveQueryResults.length = 0
       version = 0
       for (const spy of Object.values(spies)) spy.mockClear()
     },
@@ -455,6 +473,9 @@ export function createFakeDb(config: {
     },
     liveQueryListenerCount() {
       return listeners.size
+    },
+    queueLiveQueryResult(result) {
+      liveQueryResults.push(result)
     },
   }
 }

@@ -117,4 +117,47 @@ describe("bounded local calendar repositories", () => {
     )
     expect(mockFake.spies.limit).not.toHaveBeenCalled()
   })
+
+  it("publishes pending and error state without inventing a completed revision", async () => {
+    const failure = new Error("read failed")
+    mockFake.queueLiveQueryResult({ error: failure, updatedAt: new Date(7) })
+    mockFake.queueLiveQueryResult({})
+    const synced = await renderHook(() =>
+      useSyncedEventRowsInRange({
+        instant,
+        civil: { fromDay: "2026-09-14", toDay: "2026-09-17" },
+      }),
+    )
+    expect(synced.result.current).toMatchObject({
+      ready: false,
+      error: failure,
+      revision: "7:pending",
+    })
+    await synced.unmount()
+
+    mockFake.queueLiveQueryResult({})
+    mockFake.queueLiveQueryResult({ error: failure, updatedAt: new Date(9) })
+    const inverse = await renderHook(() =>
+      useSyncedEventRowsInRange({
+        instant,
+        civil: { fromDay: "2026-09-14", toDay: "2026-09-17" },
+      }),
+    )
+    expect(inverse.result.current).toMatchObject({
+      ready: false,
+      error: failure,
+      revision: "pending:9",
+    })
+    await inverse.unmount()
+
+    mockFake.queueLiveQueryResult({ error: failure })
+    const personal = await renderHook(() =>
+      usePersonalEventRowsInRange(instant),
+    )
+    expect(personal.result.current).toMatchObject({
+      ready: false,
+      error: failure,
+      revision: "pending",
+    })
+  })
 })

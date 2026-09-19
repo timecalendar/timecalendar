@@ -15,9 +15,10 @@ Bundled Drizzle migrations run before the application becomes ready. A migration
 blocks readiness and is recorded; the app must not continue against an unknown schema.
 
 Live queries observe SQLite update notifications and coalesce bursts into one read per
-macrotask. They ignore an in-flight result after unmount. Whole-table reads are intentional
-for the current data size; introduce scoped SQL queries if measured volume makes them too
-expensive.
+macrotask. They ignore an in-flight result after unmount. Calendar timeline repositories use
+SQL half-open intersection predicates over the complete three-page instant range, plus a separate
+UTC-midnight civil envelope for date-only rows; they apply no `LIMIT` and do not pre-read either
+event table. Other existing whole-table consumers remain intentional for their current data size.
 
 Checklist summary progress is the scoped-query case: the event-checklists data layer
 normalizes the rendered UID set and selects only `event_uid` plus `is_checked` through
