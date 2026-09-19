@@ -22,6 +22,7 @@ import {
   MIN_PIXELS_PER_HOUR,
   resolveLocale,
   useCalendarEvents,
+  useCalendarTimelinePresentation,
   useSyncCalendars,
 } from "@/features/calendar/data"
 import {
@@ -81,6 +82,14 @@ export function CalendarScreen() {
     AccessibilityInfo.announceForAccessibility(timelineHeading)
   }, [acceptedTransitionRevision, timelineHeading])
   const events = useCalendarEvents(range)
+  const timeline = useCalendarTimelinePresentation({
+    anchor: selectedDate,
+    mode: timelineMode,
+    displayZone,
+    firstWeekday,
+    showWeekends,
+    generation: rendererGeneration,
+  })
   const eventUids = events.map((event) => event.id)
   const checklistProgress = useChecklistProgress(eventUids)
   const { sync, isSyncing, isError } = useSyncCalendars()
@@ -195,6 +204,8 @@ export function CalendarScreen() {
                   )
                 }
               }}
+              presentation={timeline.presentation}
+              onEventPress={onPressEvent}
             />
           )}
           {Platform.OS === "android" && <CalendarAddFab onPress={onAdd} />}

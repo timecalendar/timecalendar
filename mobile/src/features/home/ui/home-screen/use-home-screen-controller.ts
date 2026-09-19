@@ -46,7 +46,13 @@ export function useHomeScreenController() {
 
   const range = useMemo(() => {
     const from = startOfDayInZone(now, displayZone)
-    return { from, to: addDaysInZone(from, FUTURE_WINDOW_DAYS, displayZone) }
+    const to = addDaysInZone(from, FUTURE_WINDOW_DAYS, displayZone)
+    return {
+      from,
+      to,
+      civilFromDay: dayKey(from, displayZone),
+      civilToDay: dayKey(to, displayZone),
+    }
   }, [now, displayZone])
   const events = useCalendarEvents(range)
   const todayEvents = useMemo(

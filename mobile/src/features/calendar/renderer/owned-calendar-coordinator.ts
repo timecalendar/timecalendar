@@ -13,7 +13,9 @@ import { useReducedMotion, useSharedValue } from "react-native-reanimated"
 
 import {
   type AppLocale,
+  buildCalendarTimelinePresentation,
   type CalendarTimelineMode,
+  type CalendarTimelinePresentationV1,
   type CalendarTransitionRequest,
   type CalendarTransitionSource,
   dayKey,
@@ -24,8 +26,7 @@ import {
   minuteOfDayInZone,
   nowAnchoredRawOffset,
   nowIndicatorPosition,
-  shiftTimelineAnchor,
-  timelineColumns,
+  planCalendarThreePageRange,
   type WeekDirection,
 } from "@/features/calendar/data"
 
@@ -42,9 +43,7 @@ import { CENTER_PAGE, usePagerPageScroll } from "./pager-page-scroll"
 
 export { CENTER_PAGE } from "./pager-page-scroll"
 
-const PAGE_DIRECTIONS = [-1, 0, 1] as const
-
-export type CalendarPage = ReturnType<typeof calendarPages>[number]
+export type CalendarPage = CalendarTimelinePresentationV1["pages"][number]
 
 export type OwnedCalendarCoordinatorProps = {
   anchor: Date
@@ -63,38 +62,7 @@ export type OwnedCalendarCoordinatorProps = {
   onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
-}
-
-function calendarPages(
-  anchor: Date,
-  mode: CalendarTimelineMode,
-  displayZone: string,
-  firstWeekday: FirstWeekday,
-  showWeekends: boolean,
-) {
-  return PAGE_DIRECTIONS.map((direction) => {
-    const pageAnchor =
-      direction === 0
-        ? anchor
-        : shiftTimelineAnchor(
-            anchor,
-            mode,
-            direction,
-            displayZone,
-            firstWeekday,
-          )
-    return {
-      direction,
-      key: dayKey(pageAnchor, displayZone),
-      columns: timelineColumns(
-        pageAnchor,
-        mode,
-        displayZone,
-        firstWeekday,
-        showWeekends,
-      ),
-    }
-  })
+  presentation?: CalendarTimelinePresentationV1
 }
 
 export function useOwnedCalendarCoordinator({
@@ -113,6 +81,7 @@ export function useOwnedCalendarCoordinator({
   onTransitionRequest,
   onTransitionSettled,
   onTransitionCancelled,
+  presentation,
 }: OwnedCalendarCoordinatorProps) {
   const reduceMotion = useReducedMotion()
   const pagerRef = useRef<PagerView>(null)
@@ -252,13 +221,19 @@ export function useOwnedCalendarCoordinator({
   // when the finger lifts, so a blocked scroll or pager pan would wait for the
   // release before it begins.
   const pinchGesture = zoom.pinchGesture
-  const pages = calendarPages(
-    anchor,
-    mode,
-    displayZone,
-    firstWeekday,
-    showWeekends,
-  )
+  const pages =
+    presentation?.pages ??
+    buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange({
+        anchor,
+        mode,
+        displayZone,
+        firstWeekday,
+        showWeekends,
+      }),
+      generation,
+      events: [],
+    }).pages
   const todayKey = dayKey(currentDate, displayZone)
   // Explicit full-day bounds and the settled scale — the helper's 07:00–21:00
   // defaults stay as they are for Home's mini timeline and the agenda.

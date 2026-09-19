@@ -6,6 +6,7 @@ import { GestureDetector } from "react-native-gesture-handler"
 import {
   type AppLocale,
   type CalendarTimelineMode,
+  type CalendarTimelinePresentationV1,
   type CalendarTransitionRequest,
   type FirstWeekday,
   formatClockTime,
@@ -39,6 +40,8 @@ type OwnedCalendarShellProps = {
   onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
+  presentation?: CalendarTimelinePresentationV1
+  onEventPress?: (uid: string) => void
 }
 
 export type OwnedCalendarShellHandle = {
@@ -75,6 +78,7 @@ export const OwnedCalendarShell = forwardRef<
           heading={props.heading}
           mode={props.mode}
           locale={props.locale}
+          displayZone={props.displayZone}
           uses24HourClock={props.uses24HourClock}
           initialVerticalOffset={props.initialVerticalOffset}
           generation={props.generation}
@@ -107,6 +111,7 @@ export const OwnedCalendarShell = forwardRef<
             props.uses24HourClock,
           )}
           t={t}
+          onEventPress={props.onEventPress ?? (() => undefined)}
         />
       </GestureDetector>
     </View>

@@ -1,4 +1,14 @@
-import { asc, desc, eq, inArray, lt, notInArray, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  inArray,
+  lt,
+  notInArray,
+  sql,
+} from "drizzle-orm"
 import { drizzle } from "drizzle-orm/expo-sqlite"
 import { openDatabaseSync } from "expo-sqlite"
 
@@ -54,7 +64,7 @@ export function resetBackendDatabase(): void {
 // newest-first read, `lt` for its one-year age cutoff, `notInArray` for its
 // ownership prune, `inArray` for the event-checklist progress UID-set read, and
 // `sql` for that read's unconditional always-false empty-set predicate.
-export { asc, desc, eq, inArray, lt, notInArray, sql, useLiveQuery }
+export { and, asc, desc, eq, gt, inArray, lt, notInArray, sql, useLiveQuery }
 
 // Feature code imports the tables from @/db too, so the schema's
 // drizzle-orm/sqlite-core import stays inside the seam dir.

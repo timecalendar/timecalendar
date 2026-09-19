@@ -45,6 +45,9 @@ function event(
   location?: string,
 ): CalendarEvent {
   return {
+    version: 1,
+    kind: "timed",
+    identity: { source: "synced", uid: id },
     id,
     title,
     color,

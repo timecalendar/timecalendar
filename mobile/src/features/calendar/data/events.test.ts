@@ -1,24 +1,19 @@
-import { renderHook } from "@testing-library/react-native"
+import { renderHook, waitFor } from "@testing-library/react-native"
 
 import { useUserCalendars } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
+import { usePersonalEventRowsInRange } from "@/features/personal-events"
+import { recordError } from "@/firebase"
+
 import {
-  type PersonalEvent,
-  usePersonalEvents,
-} from "@/features/personal-events"
-import { denseWeekFixture } from "@/test-support/calendar-dense-week"
+  intersectsRange,
+  useCalendarEvents,
+  useCalendarEventsSnapshot,
+} from "./events"
+import { useSyncedEventRowsInRange } from "./sync"
 
-import { useCalendarEvents } from "./events"
-import { useSyncedEvents } from "./sync"
-import type { CalendarEvent } from "./types"
-
-// The events-source seam now merges the synced calendar_events read with the
-// personal-events read (the sync ship's swap) and filters out hidden events (ADR
-// 023) — the fixture is no longer in the default runtime merge. All three sources
-// are mocked so the merge + hidden-filter + range-filter are asserted
-// deterministically without a SQLite/network/MMKV dependency.
 jest.mock("@/features/personal-events", () => ({
-  usePersonalEvents: jest.fn(),
+  usePersonalEventRowsInRange: jest.fn(),
 }))
 jest.mock("@/features/hidden-events/data", () => ({
   useHiddenEvents: jest.fn(),
@@ -27,259 +22,234 @@ jest.mock("@/features/calendar-sources/data", () => ({
   useUserCalendars: jest.fn(),
 }))
 jest.mock("./sync", () => ({
-  useSyncedEvents: jest.fn(),
+  useSyncedEventRowsInRange: jest.fn(),
 }))
+jest.mock("@/firebase", () => ({ recordError: jest.fn() }))
 
-const mockUsePersonalEvents = usePersonalEvents as jest.Mock
-const mockUseHiddenEvents = useHiddenEvents as jest.Mock
-const mockUseUserCalendars = useUserCalendars as jest.Mock
-const mockUseSyncedEvents = useSyncedEvents as jest.Mock
+const mockPersonal = usePersonalEventRowsInRange as jest.Mock
+const mockHidden = useHiddenEvents as jest.Mock
+const mockCalendars = useUserCalendars as jest.Mock
+const mockSynced = useSyncedEventRowsInRange as jest.Mock
+const mockRecordError = recordError as jest.Mock
 
-function thisWeekRange() {
-  const from = new Date()
-  from.setHours(0, 0, 0, 0)
-  from.setDate(from.getDate() - 7)
-  const to = new Date(from)
-  to.setDate(to.getDate() + 21)
-  return { from, to }
-}
-
-function personalEvent(overrides: Partial<PersonalEvent> = {}): PersonalEvent {
-  const startsAt = new Date()
-  startsAt.setHours(15, 0, 0, 0)
-  const endsAt = new Date(startsAt)
-  endsAt.setHours(16, 0, 0, 0)
+function syncedRow(overrides: Record<string, unknown> = {}) {
   return {
-    uid: "pe-1",
-    title: "Dentist",
-    color: "#123456",
-    startsAt,
-    endsAt,
-    exportedAt: new Date(),
-    location: "Downtown",
-    description: "Checkup",
-    ...overrides,
-  }
-}
-
-function syncedEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
-  const startsAt = new Date()
-  startsAt.setHours(9, 0, 0, 0)
-  const endsAt = new Date(startsAt)
-  endsAt.setHours(10, 30, 0, 0)
-  return {
-    id: "sync-1",
-    title: "Lecture",
-    color: "#1E88E5",
-    startsAt,
-    endsAt,
-    location: "Room A1",
+    uid: "sync-1",
+    title: "Maths",
+    color: "#112233",
+    groupColor: "#112233",
+    startsAt: "2026-09-14T08:00:00.000Z",
+    endsAt: "2026-09-14T09:00:00.000Z",
+    exportedAt: "2026-09-13T08:00:00.000Z",
+    location: "B12",
+    description: null,
     allDay: false,
-    description: undefined,
-    teachers: ["Dr. Ada"],
-    tags: ["CM"],
-    canceled: false,
+    teachers: "[]",
+    tags: "[]",
+    fields: null,
+    type: "cm",
     userCalendarId: "cal-1",
     ...overrides,
   }
 }
 
-function calendar(id: string, visible: boolean) {
-  return { id, visible }
+function personalRow(overrides: Record<string, unknown> = {}) {
+  return {
+    uid: "personal-1",
+    title: "Study",
+    color: "#334455",
+    startsAt: "2026-09-14T10:00:00.000Z",
+    endsAt: "2026-09-14T11:00:00.000Z",
+    exportedAt: "2026-09-13T08:00:00.000Z",
+    location: null,
+    description: null,
+    ...overrides,
+  }
+}
+
+const range = {
+  from: new Date("2026-09-14T00:00:00.000Z"),
+  to: new Date("2026-09-17T00:00:00.000Z"),
+  civilFromDay: "2026-09-14",
+  civilToDay: "2026-09-17",
 }
 
 beforeEach(() => {
-  mockUsePersonalEvents.mockReturnValue([])
-  mockUseSyncedEvents.mockReturnValue([])
-  mockUseHiddenEvents.mockReturnValue({
+  mockSynced.mockReturnValue({
+    timedRows: [],
+    dateOnlyRows: [],
+    error: undefined,
+    ready: true,
+    revision: "sync-1",
+  })
+  mockPersonal.mockReturnValue({
+    rows: [],
+    error: undefined,
+    ready: true,
+    revision: "personal-1",
+  })
+  mockHidden.mockReturnValue({
     uidHiddenEvents: [],
     namedHiddenEvents: [],
   })
-  // Every synced fixture belongs to cal-1; keep it visible by default so the
-  // existing merge/hide/range assertions are unaffected by the visibility filter.
-  mockUseUserCalendars.mockReturnValue([calendar("cal-1", true)])
+  mockCalendars.mockReturnValue([{ id: "cal-1", visible: true }])
+  mockRecordError.mockClear()
 })
 
-describe("useCalendarEvents", () => {
-  it("returns the synced events within the range", async () => {
-    mockUseSyncedEvents.mockReturnValue([syncedEvent()])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
+describe("bounded calendar events seam", () => {
+  it("decodes synced, date-only, and personal rows with source identity", async () => {
+    mockSynced.mockReturnValue({
+      timedRows: [syncedRow()],
+      dateOnlyRows: [
+        syncedRow({
+          uid: "day-1",
+          allDay: true,
+          startsAt: "2026-09-15T00:00:00.000Z",
+          endsAt: "2026-09-16T00:00:00.000Z",
+        }),
+      ],
+      error: undefined,
+      ready: true,
+      revision: "sync-1",
+    })
+    mockPersonal.mockReturnValue({
+      rows: [personalRow()],
+      error: undefined,
+      ready: true,
+      revision: "personal-1",
+    })
+
+    const { result } = await renderHook(() => useCalendarEvents(range))
+    expect(
+      result.current.map(({ kind, identity }) => ({ kind, identity })),
+    ).toEqual([
+      { kind: "timed", identity: { source: "synced", uid: "sync-1" } },
+      { kind: "date-only", identity: { source: "synced", uid: "day-1" } },
+      {
+        kind: "timed",
+        identity: { source: "personal", uid: "personal-1" },
+      },
+    ])
   })
 
-  it("does NOT include the dense-week fixture in the default merge", async () => {
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    const fixtureIds = new Set(denseWeekFixture().map((e) => e.id))
-    expect(result.current.some((e) => fixtureIds.has(e.id))).toBe(false)
+  it("filters cancelled, hidden, named, invisible, and deleted sources before projection", async () => {
+    mockSynced.mockReturnValue({
+      timedRows: [
+        syncedRow({ uid: "kept" }),
+        syncedRow({ uid: "cancelled", fields: '{"canceled":true}' }),
+        syncedRow({ uid: "hidden" }),
+        syncedRow({ uid: "named", title: "Secret" }),
+        syncedRow({ uid: "invisible", userCalendarId: "cal-2" }),
+        syncedRow({ uid: "deleted", userCalendarId: "cal-gone" }),
+      ],
+      dateOnlyRows: [],
+      error: undefined,
+      ready: true,
+      revision: "sync-1",
+    })
+    mockPersonal.mockReturnValue({
+      rows: [personalRow()],
+      error: undefined,
+      ready: true,
+      revision: "personal-1",
+    })
+    mockHidden.mockReturnValue({
+      uidHiddenEvents: ["hidden"],
+      namedHiddenEvents: ["Secret"],
+    })
+    mockCalendars.mockReturnValue([
+      { id: "cal-1", visible: true },
+      { id: "cal-2", visible: false },
+    ])
+
+    const { result } = await renderHook(() => useCalendarEvents(range))
+    expect(result.current.map(({ id }) => id)).toEqual(["kept", "personal-1"])
+    expect(mockRecordError).not.toHaveBeenCalled()
   })
 
-  it("maps personal events into CalendarEvent shape and merges them", async () => {
-    mockUsePersonalEvents.mockReturnValue([personalEvent()])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
+  it("isolates malformed siblings and emits aggregate-only diagnostics once per revision", async () => {
+    mockSynced.mockReturnValue({
+      timedRows: [syncedRow(), syncedRow({ uid: "bad", startsAt: "private" })],
+      dateOnlyRows: [],
+      error: undefined,
+      ready: true,
+      revision: "snapshot-7",
+    })
+    const { result, rerender } = await renderHook(() =>
+      useCalendarEventsSnapshot(range),
     )
-    const dentist = result.current.find((e) => e.id === "pe-1")
-    expect(dentist).toMatchObject({
-      title: "Dentist",
-      color: "#123456",
-      location: "Downtown",
-      description: "Checkup",
-      allDay: false,
+    expect(result.current.events.map(({ id }) => id)).toEqual(["sync-1"])
+    expect(result.current.rejectedCounts["invalid-start"]).toBe(1)
+    await waitFor(() => expect(mockRecordError).toHaveBeenCalledTimes(1))
+    expect(mockRecordError.mock.calls[0]?.[0].message).toBe(
+      "calendar-row-rejected:invalid-start:1",
+    )
+    expect(mockRecordError).toHaveBeenCalledWith(
+      expect.any(Error),
+      "calendar-local-read",
+    )
+    expect(JSON.stringify(mockRecordError.mock.calls)).not.toContain("private")
+    await rerender({})
+    expect(mockRecordError).toHaveBeenCalledTimes(1)
+  })
+
+  it("responds to visibility restore and range replacement", async () => {
+    mockSynced.mockReturnValue({
+      timedRows: [syncedRow()],
+      dateOnlyRows: [],
+      error: undefined,
+      ready: true,
+      revision: "sync-1",
+    })
+    mockCalendars.mockReturnValue([{ id: "cal-1", visible: false }])
+    const { result, rerender } = await renderHook(
+      ({ currentRange }) => useCalendarEvents(currentRange),
+      { initialProps: { currentRange: range } },
+    )
+    expect(result.current).toEqual([])
+
+    mockCalendars.mockReturnValue([{ id: "cal-1", visible: true }])
+    await rerender({ currentRange: range })
+    expect(result.current.map(({ id }) => id)).toEqual(["sync-1"])
+
+    const later = {
+      from: new Date("2026-09-20T00:00:00.000Z"),
+      to: new Date("2026-09-21T00:00:00.000Z"),
+    }
+    await rerender({ currentRange: later })
+    expect(result.current).toEqual([])
+    expect(mockSynced).toHaveBeenLastCalledWith({
+      instant: later,
+      civil: { fromDay: "2026-09-20", toDay: "2026-09-21" },
+    })
+  })
+
+  it("uses distinct instant and civil intersection semantics", () => {
+    const dateOnly = {
+      version: 1,
+      kind: "date-only",
+      allDay: true,
+      identity: { source: "synced", uid: "day" },
+      id: "day",
+      title: "Holiday",
+      color: "#112233",
+      startsAt: new Date("2026-09-14T00:00:00.000Z"),
+      endsAt: new Date("2026-09-15T00:00:00.000Z"),
+      startDay: "2026-09-14",
+      endDay: "2026-09-15",
+      location: undefined,
+      description: undefined,
       teachers: [],
       tags: [],
       canceled: false,
-      userCalendarId: undefined,
-    })
-  })
-
-  it("merges synced + personal events", async () => {
-    mockUseSyncedEvents.mockReturnValue([syncedEvent()])
-    mockUsePersonalEvents.mockReturnValue([personalEvent()])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
-    expect(result.current.some((e) => e.id === "pe-1")).toBe(true)
-  })
-
-  it("includes events intersecting the range and excludes those outside", async () => {
-    const inside = personalEvent({ uid: "pe-in" })
-    const outsideStart = new Date()
-    outsideStart.setFullYear(outsideStart.getFullYear() + 5)
-    const outsideEnd = new Date(outsideStart)
-    outsideEnd.setHours(outsideStart.getHours() + 1)
-    const outside = personalEvent({
-      uid: "pe-out",
-      startsAt: outsideStart,
-      endsAt: outsideEnd,
-    })
-    mockUsePersonalEvents.mockReturnValue([inside, outside])
-
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "pe-in")).toBe(true)
-    expect(result.current.some((e) => e.id === "pe-out")).toBe(false)
-  })
-
-  it("returns nothing for a range with no intersecting events", async () => {
-    const from = new Date()
-    from.setFullYear(from.getFullYear() + 10)
-    const to = new Date(from)
-    to.setDate(to.getDate() + 1)
-    const { result } = await renderHook(() => useCalendarEvents({ from, to }))
-    expect(result.current).toEqual([])
-  })
-
-  it("excludes a uid-hidden event from the merged result", async () => {
-    mockUseSyncedEvents.mockReturnValue([
-      syncedEvent({ id: "sync-1" }),
-      syncedEvent({ id: "sync-2", title: "Other" }),
-    ])
-    mockUseHiddenEvents.mockReturnValue({
-      uidHiddenEvents: ["sync-1"],
-      namedHiddenEvents: [],
-    })
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
-    expect(result.current.some((e) => e.id === "sync-2")).toBe(true)
-  })
-
-  it("excludes every same-titled event for a name-hidden title", async () => {
-    mockUseSyncedEvents.mockReturnValue([
-      syncedEvent({ id: "sync-1", title: "Lecture" }),
-      syncedEvent({ id: "sync-2", title: "Lecture" }),
-      syncedEvent({ id: "sync-3", title: "Lab" }),
-    ])
-    mockUseHiddenEvents.mockReturnValue({
-      uidHiddenEvents: [],
-      namedHiddenEvents: ["Lecture"],
-    })
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.map((e) => e.id)).toEqual(["sync-3"])
-  })
-
-  it("filters the merged list — a name-hidden title also hides a same-titled personal event (Flutter parity)", async () => {
-    mockUseSyncedEvents.mockReturnValue([
-      syncedEvent({ id: "sync-1", title: "Yoga" }),
-    ])
-    mockUsePersonalEvents.mockReturnValue([
-      personalEvent({ uid: "pe-1", title: "Yoga" }),
-    ])
-    mockUseHiddenEvents.mockReturnValue({
-      uidHiddenEvents: [],
-      namedHiddenEvents: ["Yoga"],
-    })
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current).toEqual([])
-  })
-
-  it("excludes nothing when the hidden set is empty", async () => {
-    mockUseSyncedEvents.mockReturnValue([syncedEvent({ id: "sync-1" })])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
-  })
-
-  it("excludes the synced events of a hidden (visible:false) calendar", async () => {
-    mockUseSyncedEvents.mockReturnValue([
-      syncedEvent({ id: "sync-1", userCalendarId: "cal-1" }),
-      syncedEvent({ id: "sync-2", userCalendarId: "cal-2" }),
-    ])
-    mockUseUserCalendars.mockReturnValue([
-      calendar("cal-1", false),
-      calendar("cal-2", true),
-    ])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
-    expect(result.current.some((e) => e.id === "sync-2")).toBe(true)
-  })
-
-  it("always keeps a personal event regardless of any calendar's visibility", async () => {
-    mockUsePersonalEvents.mockReturnValue([personalEvent({ uid: "pe-1" })])
-    mockUseUserCalendars.mockReturnValue([calendar("cal-1", false)])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "pe-1")).toBe(true)
-  })
-
-  it("re-includes a calendar's events when it is toggled back to visible", async () => {
-    mockUseSyncedEvents.mockReturnValue([
-      syncedEvent({ id: "sync-1", userCalendarId: "cal-1" }),
-    ])
-    mockUseUserCalendars.mockReturnValue([calendar("cal-1", false)])
-    const { result, rerender } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
-
-    mockUseUserCalendars.mockReturnValue([calendar("cal-1", true)])
-    await rerender({})
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(true)
-  })
-
-  it("excludes an event whose calendar no longer exists (a deleted calendar left the set)", async () => {
-    mockUseSyncedEvents.mockReturnValue([
-      syncedEvent({ id: "sync-1", userCalendarId: "cal-gone" }),
-    ])
-    mockUseUserCalendars.mockReturnValue([calendar("cal-1", true)])
-    const { result } = await renderHook(() =>
-      useCalendarEvents(thisWeekRange()),
-    )
-    expect(result.current.some((e) => e.id === "sync-1")).toBe(false)
+      userCalendarId: "cal-1",
+    } as const
+    expect(intersectsRange(dateOnly, range)).toBe(true)
+    expect(
+      intersectsRange(dateOnly, {
+        from: new Date("2026-09-15T00:00:00.000Z"),
+        to: new Date("2026-09-16T00:00:00.000Z"),
+      }),
+    ).toBe(false)
   })
 })

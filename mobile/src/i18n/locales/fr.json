@@ -353,6 +353,7 @@
   "calendar.allDay": "Toute la journée",
   "calendar.event.label": "{{title}}, {{time}} {{location}}",
   "calendar.event.labelWithProgress": "{{title}}, {{time}} {{location}}. {{progress}}",
+  "calendar.event.hint": "Voir les détails",
   "calendar.agenda.event.openLabel": "{{title}}, {{time}} {{location}}. Voir les détails",
   "calendar.agenda.event.openLabelWithProgress": "{{title}}, {{time}} {{location}}. {{progress}}. Voir les détails",
   "calendar.agenda.nowLabel": "À venir",
