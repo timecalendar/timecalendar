@@ -22,17 +22,23 @@ const LOCALES = {
 } as const
 
 const HOUR_12_LOCALES: Record<AppLocale, string> = { fr: "fr-FR", en: "en-US" }
-const HOUR_12_FORMATTERS = new Map<AppLocale, Intl.DateTimeFormat>()
+const HOUR_12_FORMATTERS = new Map<string, Intl.DateTimeFormat>()
 
-function hour12Formatter(locale: AppLocale): Intl.DateTimeFormat {
-  const cached = HOUR_12_FORMATTERS.get(locale)
+function hour12Formatter(
+  locale: AppLocale,
+  zone: string,
+  includesMinutes: boolean,
+): Intl.DateTimeFormat {
+  const key = `${locale}:${zone}:${includesMinutes}`
+  const cached = HOUR_12_FORMATTERS.get(key)
   if (cached) return cached
   const formatter = new Intl.DateTimeFormat(HOUR_12_LOCALES[locale], {
     hour: "numeric",
+    ...(includesMinutes ? { minute: "2-digit" as const } : {}),
     hourCycle: "h12",
-    timeZone: "UTC",
+    timeZone: zone,
   })
-  HOUR_12_FORMATTERS.set(locale, formatter)
+  HOUR_12_FORMATTERS.set(key, formatter)
   return formatter
 }
 
@@ -53,7 +59,9 @@ export function formatHourStartLabel(
     throw new RangeError("hour must be an integer from 0 through 23")
   }
   if (uses24HourClock !== false) return `${String(hour).padStart(2, "0")}:00`
-  return hour12Formatter(locale).format(new Date(Date.UTC(2020, 0, 1, hour)))
+  return hour12Formatter(locale, "UTC", false).format(
+    new Date(Date.UTC(2020, 0, 1, hour)),
+  )
 }
 
 // The day header's two parts (Flutter `fullDayToShortDay` + `day.day`): the short
@@ -89,6 +97,21 @@ export function formatTime(
   zone: string,
 ): string {
   return formatInTimeZone(date, zone, "HH:mm", { locale: LOCALES[locale] })
+}
+
+/**
+ * A wall-clock instant in the SAME convention as the grid's hour labels — the
+ * display zone, the app locale, and the device's 12/24-hour preference — so the
+ * timeline's current-time chip reads like the gutter it sits in.
+ */
+export function formatClockTime(
+  date: Date,
+  locale: AppLocale,
+  zone: string,
+  uses24HourClock: boolean | null,
+): string {
+  if (uses24HourClock !== false) return formatTime(date, locale, zone)
+  return hour12Formatter(locale, zone, true).format(date)
 }
 
 // A local-midnight proxy on a Date's UTC calendar day, so date-fns `format` (which

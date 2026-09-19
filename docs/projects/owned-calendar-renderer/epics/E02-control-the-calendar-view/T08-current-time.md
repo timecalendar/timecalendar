@@ -112,4 +112,59 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Implementation and host verification were completed on 2026-09-18 at final tested runtime
+revision `1a2ece9670cc7bdff8cbe1d84ebf2dc776854197`. The acceptance build is the normal mobile
+application from that revision: it uses the production real-clock path and contains no clock
+override. Later evidence-only documentation and OpenSpec archival commits do not change that
+runtime build. This host has no native simulator or emulator, so no installable native build or
+physical-device result is claimed here.
+
+### Automated verification
+
+- `npm test -- --runTestsByPath src/features/calendar/data/time-grid.test.ts src/features/calendar/data/clock.test.ts src/features/calendar/data/format.test.ts src/features/calendar/renderer/owned-calendar-shell.test.tsx src/features/calendar/ui/calendar-screen.test.tsx calendar-owned-shell.contract.test.ts src/i18n/i18n.test.tsx --runInBand` — passed: 7 suites, 179 tests.
+- `npm test -- --runTestsByPath src/features/calendar/data/time-grid.test.ts src/features/calendar/data/clock.test.ts src/features/calendar/data/format.test.ts --coverage --collectCoverageFrom='src/features/calendar/data/{clock,time-grid,format}.ts' --runInBand` — passed: 3 suites, 93 tests; 100% lines for all three modules, 100% branches for the clock and time-grid modules, and 95.23% branches for formatting.
+- `npm test -- --coverage` — passed: 180 suites, 1,814 tests.
+- `npx tsc --noEmit` — passed.
+- `npm run lint` — passed with zero warnings, including the calendar worklet rule.
+- `npm run react-doctor:changed` — passed with no issues.
+- `mobile/node_modules/.bin/prettier --check <changed TypeScript, JSON, Markdown, and OpenSpec files>` — passed.
+- The Maestro inventory diff is empty; the existing three-journey inventory is unchanged.
+
+The Reviewer independently repeated the full mobile verification at
+`1a2ece9670cc7bdff8cbe1d84ebf2dc776854197` on 2026-09-18: TypeScript and lint passed, and
+`npm test -- --coverage` passed all 180 suites and 1,814 tests.
+
+The host suites use fabricated calendar rows and fixed injected instants for morning, midnight,
+early-day, late-day, non-today, and hidden-weekend cases. They also prove timer teardown on blur,
+background, and unmount; one timer after refocus; shared Today/indicator rollover; full-day clamping;
+and preservation of the mounted viewport after clock and foreground updates.
+
+### Owner acceptance checklist
+
+Use the normal build identified above with representative fabricated events before and after the
+current time. These rows require an owner device and remain pending; automated evidence is not a
+substitute for the presentation check.
+
+- [ ] **Pending owner verdict — fresh open:** force-stop the app, open Calendar, and confirm the
+      current-time chip and shaped rule are visible around 30% from the top with preceding-hour
+      context.
+- [ ] **Pending owner verdict — bounds:** before each fresh launch, set the device clock first to
+      approximately 00:10 and then 23:50; confirm the indicator remains reachable and the view cannot
+      scroll beyond 00:00–24:00.
+- [ ] **Pending owner verdict — lifecycle:** scroll to a deliberate offset, switch tabs and background
+      the app, advance the device clock by at least one displayed minute, then return; confirm the
+      displayed time is current and the mounted viewport did not reset.
+- [ ] **Pending owner verdict — non-color cues:** repeat in light and dark appearance; confirm the
+      indicator has a leading cap, rule, and bordered typographic time chip, and that Today retains
+      its outlined typographic cue.
+- [ ] **Pending owner verdict — hidden weekend rollover:** hide weekends, set the device clock just
+      before a Friday-to-Saturday or Saturday-to-Sunday midnight, and cross midnight; confirm Today
+      meaning and indicator visibility agree and no unsolicited scroll reset occurs.
+- [ ] **Pending owner verdict — regression pass:** repeat the accepted T04–T07 interactions—three
+      retained pages, pinned-header paging synchronization, day/week switching, bounded zoom,
+      resize/rotation anchoring, Agenda, and event details—and record any regression before accepting.
+
+No owner acceptance or owner-authorized T28 deferral exists in the issue record as of 2026-09-18.
+The unchecked rows above therefore remain pending rather than being inferred from automation.
+Reviewer merge remains gated on an explicit owner verdict for every row, an explicit acceptance
+with its source and date, and green checks for the exact final PR head.

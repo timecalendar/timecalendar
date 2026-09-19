@@ -4,6 +4,7 @@
 // (useCalendarEvents), and the calendar-sync surface (the orchestrator + startup
 // trigger).
 export { type AgendaDay, groupEventsByDay } from "./agenda"
+export { useCalendarClock } from "./clock"
 export {
   addDaysInZone,
   atHourInZone,
@@ -24,6 +25,7 @@ export {
 export { type DateRange, useCalendarEvents } from "./events"
 export {
   type AppLocale,
+  formatClockTime,
   formatDayHeaderParts,
   formatDayMonth,
   formatEventDateRange,
@@ -68,13 +70,17 @@ export {
   MIN_TILE_WIDTH,
   minuteToPixel,
   type NativeVerticalGeometry,
+  NOW_VIEWPORT_FRACTION,
+  nowAnchoredRawOffset,
   type NowIndicator,
   nowIndicatorPosition,
   type RawOffsetBounds,
   rawOffsetBounds,
   resolvePixelsPerHour,
   stepPixelsPerHour,
+  type TimedViewportBounds,
   usableViewportCenterY,
+  usableViewportY,
   ZOOM_PIXELS_PER_HOUR_STEP,
 } from "./time-grid"
 export { type CalendarEvent } from "./types"

@@ -47,8 +47,24 @@ display-zone transition model advances Day by one civil date and Week by one Mon
 week. Week presentation removes Saturday/Sunday by weekday identity when the persisted Show
 weekends preference is off, while Day still advances through them. Agenda retains its seven-day
 range. Today is identified in the effective display zone and has both a
-typography/outlined-shape cue and localized semantics. There is no additional single-date header or
-permanent paging toolbar.
+typography/outlined-shape cue and localized semantics. One controller-owned clock in
+`features/calendar/data/clock.ts` drives that cue, the Today action, and the timeline's current-time
+presentation. It refreshes at the next displayed minute only while the route is focused and the app
+is active, recomputes immediately on focus or foreground return, and clears its pending timeout on
+blur, background, and unmount. The renderer receives the resulting `Date` value and remains
+timer-free. There is no additional single-date header or permanent paging toolbar.
+
+On the first complete timed-viewport measurement of a mount, `NOW_VIEWPORT_FRACTION` places the
+effective-zone current minute 30% down the usable automatic-inset viewport. The raw offset clamps
+against explicit 00:00–24:00 bounds at the settled scale. Later clock ticks, foreground returns,
+geometry revisions, zoom settlements, and accepted date or mode transitions preserve the mounted
+viewport instead of seeking again. Each page containing today's column draws a rule with a filled
+leading cap, and the committed centre page adds an accessible typographic time chip in the gutter;
+pages without today, including a hidden weekend, show neither. The live indicator coordinate follows
+the UI-thread scale while its minute changes only at displayed precision. The renderer passes explicit
+full-day bounds to `nowIndicatorPosition`; the shared helper's 07:00–21:00 defaults remain unchanged
+for Home and other consumers. Neither clock ticks nor midnight rollover announce or start continuous
+idle animation.
 
 The renderer keeps a bounded composition boundary in `owned-calendar-shell`, one
 `owned-calendar-coordinator` hook for pager/scroll refs and cancellation/settlement lifecycle, one
@@ -79,8 +95,8 @@ them at the live usable viewport center, disables them at 40/120/60, and announc
 percentage.
 
 This is an intentionally incomplete pre-launch milestone. Timeline events, all-day and
-timed tiles, current-time presentation and positioning,
-populated-event density tuning remains pending until its numbered owned-renderer slice lands.
+timed tiles, and populated-event density tuning remain pending until their numbered owned-renderer
+slices land.
 Shared time-grid helpers still default to 07:00–21:00; only the owned shell opts into
 explicit full-day bounds. Paging remains bounded to one adjacent empty day or week according to
 the committed mode; there is no far-date pager. The blank shell never claims
@@ -100,7 +116,7 @@ helpers, and time-grid math; helpers never read the zone implicitly. `CalendarSc
 uses the same explicit zone for its selected-date heading and Agenda range. Launch weeks
 start on Monday through an explicit first-weekday input, and whole-week shifts compose
 civil day-key helpers rather than fixed-duration milliseconds. The shell has no event
-window or now indicator. Deriving a displayed time or day from device-local `Date` fields
+window. Deriving a displayed time or day from device-local `Date` fields
 or `toLocaleString` is a defect. All-day events are
 the exception: they stay on the floating UTC-day-key path and never shift with the
 preference.
@@ -115,8 +131,7 @@ requests carry monotonic revisions; duplicate, cancelled, and stale completions 
 relabel the settled screen. Agenda reads the unchanged bounded seven-day event range and
 keeps checklist progress, refresh/retry, synced and personal event activation, and unified
 event-details navigation. Agenda retains the settled timeline anchor without claiming active-section
-transfer before T18. Initial current-time positioning remains T08 and complete Today/direct-date
-intent remains T17.
+transfer before T18. Complete Today/direct-date intent remains T17.
 
 Every geometry helper the renderer reaches for on the UI thread lives in
 `features/calendar/data/time-grid.ts` and carries the `"worklet"` directive, transitively:
@@ -213,7 +228,8 @@ separate. The binding contract and regression scenarios live in the
   pager arbitration, a three-page working set, reduced-motion settlement, hidden neighbour/grid
   semantics, accessible previous/next alternatives, and one pinned localized five/seven-date
   header aligned with every clock page. Day has one column; Week has five or seven, and both use
-  bounded shared zoom with accessible native menu commands. Current-time positioning, events and
+  bounded shared zoom with accessible native menu commands. A fresh mount opens around the current
+  display-zone minute and shows the shaped column rule plus accessible gutter time chip; events and
   selectable dates belong to later renderer slices.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
@@ -238,7 +254,9 @@ Unit/component tests cover display-zone day/week civil arithmetic, mode persiste
 recovery, revision/cancellation semantics, one/five/seven-column geometry, three-page native pager
 and control behavior, native scroll settlement/restoration, atomic settled screen context,
 Calendar remount and selection, Agenda grouping/routing, filtering, sync orchestration, failure
-states, and the repository cutover contract. Native held-drag mode switching, pinch
+states, the lifecycle-scoped minute clock, fresh-open full-day clamps, indicator visibility, and the
+repository cutover contract. `calendar-owned-shell.contract.test.ts` pins the clock as the calendar's
+only timer owner, keeps the renderer timer-free, and rejects repeating animation work. Native held-drag mode switching, pinch
 arbitration/focal stability, visible-hour continuity, preference restart, weekend traversal,
 assistive technology, platform chrome, and physical-device presentation remain recorded owner
 checks and are not claimed by host automation. Dense-calendar and all-day-lane behavior remain

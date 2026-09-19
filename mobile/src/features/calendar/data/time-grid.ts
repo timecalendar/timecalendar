@@ -26,6 +26,12 @@ export const DEFAULT_PIXELS_PER_HOUR = 60
 export const MIN_PIXELS_PER_HOUR = 40
 export const MAX_PIXELS_PER_HOUR = 120
 export const ZOOM_PIXELS_PER_HOUR_STEP = 10
+/**
+ * Where a freshly opened timeline puts the current minute, as a fraction of the
+ * usable timed viewport measured from its top — high enough to keep the
+ * preceding hours in view, low enough to show the rest of the day.
+ */
+export const NOW_VIEWPORT_FRACTION = 0.3
 /** Width of the hours (time labels) column. */
 export const HOURS_COLUMN_WIDTH = 50
 /** Below this tile width, the renderer hides the tile text. */
@@ -210,11 +216,12 @@ export function focalPreservingRawOffset({
   return clampRawOffset(clockHour * nextScale - safeNextFocalY, geometry)
 }
 
-/** Center of the viewport area not occupied by automatic native insets. */
-export function usableViewportCenterY(
+/** A fraction down the viewport area not occupied by automatic native insets. */
+export function usableViewportY(
   viewportHeight: number,
   topInset: number,
   bottomInset: number,
+  fraction: number,
 ): number {
   "worklet"
   const safeViewportHeight = finiteNonNegative(viewportHeight)
@@ -223,8 +230,65 @@ export function usableViewportCenterY(
     finiteNonNegative(bottomInset),
     safeViewportHeight - safeTopInset,
   )
+  const safeFraction = Number.isFinite(fraction)
+    ? Math.min(Math.max(fraction, 0), 1)
+    : 0
   return (
-    safeTopInset + (safeViewportHeight - safeTopInset - safeBottomInset) / 2
+    safeTopInset +
+    (safeViewportHeight - safeTopInset - safeBottomInset) * safeFraction
+  )
+}
+
+/** Center of the viewport area not occupied by automatic native insets. */
+export function usableViewportCenterY(
+  viewportHeight: number,
+  topInset: number,
+  bottomInset: number,
+): number {
+  "worklet"
+  return usableViewportY(viewportHeight, topInset, bottomInset, 0.5)
+}
+
+/** The usable-viewport half of {@link NativeVerticalGeometry}. */
+export type TimedViewportBounds = Omit<NativeVerticalGeometry, "contentHeight">
+
+/**
+ * The raw content offset that places a display-zone minute-of-day at
+ * `viewportFraction` of the usable timed viewport, clamped to the complete
+ * 00:00–24:00 day at `pixelsPerHour`. Intl-free: the caller resolves the minute
+ * in the display zone, so this stays callable from the UI thread.
+ */
+export function nowAnchoredRawOffset({
+  minuteOfDay,
+  pixelsPerHour,
+  geometry,
+  viewportFraction = NOW_VIEWPORT_FRACTION,
+}: {
+  minuteOfDay: number
+  pixelsPerHour: unknown
+  geometry: TimedViewportBounds
+  viewportFraction?: number
+}): number {
+  "worklet"
+  const scale = resolvePixelsPerHour(pixelsPerHour)
+  const minute = Number.isFinite(minuteOfDay)
+    ? Math.min(
+        Math.max(minuteOfDay, FULL_DAY_START_MINUTE),
+        FULL_DAY_END_MINUTE,
+      )
+    : FULL_DAY_START_MINUTE
+  const anchorY = usableViewportY(
+    geometry.viewportHeight,
+    geometry.topInset,
+    geometry.bottomInset,
+    viewportFraction,
+  )
+  return clampRawOffset(
+    minuteToPixel(minute, {
+      pixelsPerHour: scale,
+      startMinute: FULL_DAY_START_MINUTE,
+    }) - anchorY,
+    { ...geometry, contentHeight: fullDayContentHeight(scale) },
   )
 }
 

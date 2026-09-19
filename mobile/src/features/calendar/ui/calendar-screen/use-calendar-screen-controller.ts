@@ -14,6 +14,7 @@ import {
   replaceCalendarTransition,
   requestCalendarTransition,
   settleCalendarTransition,
+  useCalendarClock,
 } from "@/features/calendar/data"
 import {
   type CalendarView,
@@ -61,6 +62,10 @@ export function useCalendarScreenController() {
   const { view: persistedView, setView: persistView } =
     useCalendarViewPreference()
   const { pixelsPerHour, setPixelsPerHour } = useCalendarZoomPreference()
+  // The one clock on this route: the Today cue, the Today action, and the
+  // timeline's current-time indicator all read it, so they agree instant by
+  // instant and roll over midnight together.
+  const now = useCalendarClock()
   const [verticalOffset, setVerticalOffset] = useState(0)
   const [state, dispatchTransition] = useReducer(
     (state: CalendarControllerState, action: TransitionAction) => {
@@ -115,7 +120,7 @@ export function useCalendarScreenController() {
       ({
         view: persistedView,
         transition: createCalendarTransitionState(
-          new Date(),
+          now,
           persistedView === "day" ? "day" : "week",
           displayZone,
           LAUNCH_FIRST_WEEKDAY,
@@ -131,13 +136,13 @@ export function useCalendarScreenController() {
   }
 
   const goToToday = () => {
-    dispatchTransition({ type: "replace", date: new Date() })
+    dispatchTransition({ type: "replace", date: now })
   }
   const canGoToToday =
     dayKey(selectedDate, displayZone) !==
     dayKey(
       normalizeTimelineAnchor(
-        new Date(),
+        now,
         transition.mode,
         displayZone,
         LAUNCH_FIRST_WEEKDAY,
@@ -181,6 +186,7 @@ export function useCalendarScreenController() {
   return {
     view,
     setView,
+    now,
     timelineMode: transition.mode,
     selectedDate,
     firstWeekday: LAUNCH_FIRST_WEEKDAY,

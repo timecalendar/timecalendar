@@ -1,5 +1,14 @@
 # Architecture Book changelog
 
+## 2026-09-18 — Calendar opens around the current time (T08)
+
+- Added one controller-owned, lifecycle-scoped minute clock shared by Today and the owned timeline's
+  shaped current-time rule and accessible gutter chip.
+- Fresh mounts place now at the named 30% inset-aware viewport fraction, clamped to the complete day;
+  mounted views retain their scroll position across clock, foreground, geometry, and generation changes.
+- Replaced the broad timer assumption with executable ownership, cleanup, minute-alignment, and
+  no-continuous-animation contracts while keeping the renderer itself timer-free.
+
 ## 2026-09-18 — Worklet safety is machine-checked
 
 - `features/calendar/data/time-grid.ts` is worklet-by-default: every export carries the

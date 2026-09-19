@@ -14,6 +14,7 @@ import {
   formatFullDay,
   formatMonthYear,
   startOfWeekInZone,
+  useCalendarClock,
   useCalendarEvents,
   useSyncCalendars,
 } from "@/features/calendar/data"
@@ -35,6 +36,7 @@ jest.mock("@/features/calendar/data", () => {
   const actual = jest.requireActual("@/features/calendar/data")
   return {
     ...actual,
+    useCalendarClock: jest.fn(),
     useCalendarEvents: jest.fn(),
     useSyncCalendars: jest.fn(),
   }
@@ -96,6 +98,7 @@ jest.mock(
 
 const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
+const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
 const mockUseLocalSearchParams = useLocalSearchParams as jest.Mock
@@ -162,6 +165,7 @@ async function chooseCalendarView(view: "day" | "week" | "agenda") {
 beforeEach(() => {
   AppState.currentState = "active"
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
+  mockUseCalendarClock.mockReturnValue(new Date())
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
   mockUseLocalSearchParams.mockReturnValue({})
@@ -176,6 +180,40 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen owned shell", () => {
+  it("rolls Today and the indicator together without changing mounted screen state", async () => {
+    setShowWeekends(false)
+    mockUseCalendarClock.mockReturnValue(new Date("2026-06-19T23:59:00.000Z"))
+    const view = await render(<CalendarScreen />)
+    const agendaRange = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
+    const initialHeader = screen.getByTestId("calendar-header-title").props
+      .children
+
+    expect(screen.getByLabelText("FRI 19, Today")).toBeOnTheScreen()
+    expect(
+      screen.getByTestId("owned-calendar-now-0-2026-06-19", {
+        includeHiddenElements: true,
+      }),
+    ).toBeOnTheScreen()
+
+    mockAnnounce.mockClear()
+    mockUseCalendarEvents.mockClear()
+    mockUseCalendarClock.mockReturnValue(new Date("2026-06-20T00:00:00.000Z"))
+    await view.rerender(<CalendarScreen />)
+
+    expect(screen.queryByLabelText(/Today/)).toBeNull()
+    expect(
+      screen.queryByTestId(/^owned-calendar-now--?\d-/, {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull()
+    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+    expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
+      initialHeader,
+    )
+    expect(mockUseCalendarEvents).toHaveBeenLastCalledWith(agendaRange)
+    expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
   it("restores persisted Day with a fresh today anchor and one column", async () => {
     setCalendarView("day")
     await render(<CalendarScreen />)
@@ -254,7 +292,9 @@ describe("CalendarScreen owned shell", () => {
     mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-09-18" })
     await render(<CalendarScreen />)
     await waitFor(() =>
-      expect(screen.getByLabelText("FRI 18")).toBeOnTheScreen(),
+      expect(
+        screen.getByTestId("owned-calendar-date-0-2026-09-18"),
+      ).toBeOnTheScreen(),
     )
 
     for (const label of ["SAT 19", "SUN 20"]) {

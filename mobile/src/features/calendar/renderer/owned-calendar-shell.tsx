@@ -3,11 +3,12 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, View } from "react-native"
 import { GestureDetector } from "react-native-gesture-handler"
 
-import type {
-  AppLocale,
-  CalendarTimelineMode,
-  CalendarTransitionRequest,
-  FirstWeekday,
+import {
+  type AppLocale,
+  type CalendarTimelineMode,
+  type CalendarTransitionRequest,
+  type FirstWeekday,
+  formatClockTime,
 } from "@/features/calendar/data"
 import { useTheme } from "@/theme"
 
@@ -95,6 +96,16 @@ export const OwnedCalendarShell = forwardRef<
           onAccessiblePageRequest={coordinator.requestAccessiblePage}
           pixelsPerHour={coordinator.pixelsPerHour}
           settledPixelsPerHour={props.initialPixelsPerHour}
+          todayKey={coordinator.todayKey}
+          nowMinuteOfDay={coordinator.nowMinuteOfDay}
+          nowVisible={coordinator.nowVisible}
+          nowOnCommittedPage={coordinator.nowOnCommittedPage}
+          nowLabel={formatClockTime(
+            props.currentDate,
+            props.locale,
+            props.displayZone,
+            props.uses24HourClock,
+          )}
           t={t}
         />
       </GestureDetector>

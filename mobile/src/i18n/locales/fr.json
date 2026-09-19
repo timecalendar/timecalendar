@@ -346,6 +346,7 @@
   "calendar.nextDayLabel": "Jour suivant",
   "calendar.previousWeekLabel": "Semaine précédente",
   "calendar.nextWeekLabel": "Semaine suivante",
+  "calendar.nowLabel": "Heure actuelle, {{time}}",
   "calendar.add": "+",
   "calendar.addLabel": "Ajouter un événement",
   "calendar.empty": "Aucun événement sur cette période.",

@@ -164,6 +164,36 @@ describe("owned Calendar paging repository contract", () => {
     expect(zoom).not.toMatch(/\buseState\b|\brunOnJS\b/)
   })
 
+  it("scopes the displayed-precision clock and bans continuous calendar work", () => {
+    const calendarRoot = join(root, "src/features/calendar")
+    const productionFiles = productionCalendarFiles()
+    const timerOwners = productionFiles
+      .filter((file) =>
+        /\bset(?:Timeout|Interval)\s*\(/.test(readFileSync(file, "utf8")),
+      )
+      .map((file) => file.slice(calendarRoot.length + 1))
+
+    expect(timerOwners).toEqual(["data/clock.ts"])
+
+    const clock = readFileSync(join(calendarRoot, "data/clock.ts"), "utf8")
+    expect(clock).toContain("useFocusEffect")
+    expect(clock).toContain('AppState.currentState === "active"')
+    expect(clock).toContain('AppState.addEventListener("change"')
+    expect(clock).toContain("MINUTE_MS + BOUNDARY_GUARD_MS")
+    expect(clock).toContain("Date.now() % MINUTE_MS")
+    expect(clock).toContain("clearTimeout(timer)")
+    expect(clock).not.toContain("setInterval")
+
+    for (const file of productionFiles) {
+      const source = readFileSync(file, "utf8")
+      expect(source).not.toContain("withRepeat")
+      expect(source).not.toMatch(
+        /requestAnimationFrame\(\s*([A-Za-z_$][\w$]*)\s*\)/,
+      )
+      expect(source).not.toMatch(/withTiming\([^)]*\)[\s\S]{0,120}withTiming\(/)
+    }
+  })
+
   it("keeps view and weekend persistence in the typed settings and storage seams", () => {
     const week = readFileSync(
       join(root, "src/features/calendar/data/week.ts"),
