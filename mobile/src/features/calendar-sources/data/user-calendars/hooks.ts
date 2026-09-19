@@ -1,5 +1,3 @@
-import { useMemo } from "react"
-
 import { db, useLiveQuery, userCalendars } from "@/db"
 
 import { rowToCalendar, type UserCalendar } from "./types"
@@ -12,7 +10,7 @@ export interface UserCalendarsSnapshot {
 
 export function useUserCalendarsSnapshot(): UserCalendarsSnapshot {
   const { data, updatedAt } = useLiveQuery(db.select().from(userCalendars))
-  const calendars = useMemo(() => data.map(rowToCalendar), [data])
+  const calendars = data.map(rowToCalendar)
   return {
     calendars,
     ready: updatedAt !== undefined,
