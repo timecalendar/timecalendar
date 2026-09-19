@@ -133,6 +133,11 @@ export function useCalendarScreenController() {
   const agendaRange: DateRange = {
     from: selectedDate,
     to: addDaysInZone(selectedDate, AGENDA_DAYS, displayZone),
+    civilFromDay: dayKey(selectedDate, displayZone),
+    civilToDay: dayKey(
+      addDaysInZone(selectedDate, AGENDA_DAYS, displayZone),
+      displayZone,
+    ),
   }
 
   const goToToday = () => {

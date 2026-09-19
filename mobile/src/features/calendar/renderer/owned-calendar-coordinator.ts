@@ -13,7 +13,9 @@ import { useReducedMotion, useSharedValue } from "react-native-reanimated"
 
 import {
   type AppLocale,
+  buildCalendarTimelinePresentation,
   type CalendarTimelineMode,
+  type CalendarTimelinePresentationV1,
   type CalendarTransitionRequest,
   type CalendarTransitionSource,
   dayKey,
@@ -24,8 +26,7 @@ import {
   minuteOfDayInZone,
   nowAnchoredRawOffset,
   nowIndicatorPosition,
-  shiftTimelineAnchor,
-  timelineColumns,
+  planCalendarThreePageRange,
   type WeekDirection,
 } from "@/features/calendar/data"
 
@@ -42,9 +43,7 @@ import { CENTER_PAGE, usePagerPageScroll } from "./pager-page-scroll"
 
 export { CENTER_PAGE } from "./pager-page-scroll"
 
-const PAGE_DIRECTIONS = [-1, 0, 1] as const
-
-export type CalendarPage = ReturnType<typeof calendarPages>[number]
+export type CalendarPage = CalendarTimelinePresentationV1["pages"][number]
 
 export type OwnedCalendarCoordinatorProps = {
   anchor: Date
@@ -63,38 +62,7 @@ export type OwnedCalendarCoordinatorProps = {
   onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
-}
-
-function calendarPages(
-  anchor: Date,
-  mode: CalendarTimelineMode,
-  displayZone: string,
-  firstWeekday: FirstWeekday,
-  showWeekends: boolean,
-) {
-  return PAGE_DIRECTIONS.map((direction) => {
-    const pageAnchor =
-      direction === 0
-        ? anchor
-        : shiftTimelineAnchor(
-            anchor,
-            mode,
-            direction,
-            displayZone,
-            firstWeekday,
-          )
-    return {
-      direction,
-      key: dayKey(pageAnchor, displayZone),
-      columns: timelineColumns(
-        pageAnchor,
-        mode,
-        displayZone,
-        firstWeekday,
-        showWeekends,
-      ),
-    }
-  })
+  presentation?: CalendarTimelinePresentationV1
 }
 
 export function useOwnedCalendarCoordinator({
@@ -113,6 +81,7 @@ export function useOwnedCalendarCoordinator({
   onTransitionRequest,
   onTransitionSettled,
   onTransitionCancelled,
+  presentation,
 }: OwnedCalendarCoordinatorProps) {
   const reduceMotion = useReducedMotion()
   const pagerRef = useRef<PagerView>(null)
@@ -134,6 +103,7 @@ export function useOwnedCalendarCoordinator({
   const committedVerticalOffsetRef = useRef(initialVerticalOffset)
   const verticalCandidateRef = useRef<number | null>(null)
   const verticalFrameRef = useRef<number | null>(null)
+  const movementOwnedRef = useRef(false)
   const handledPinchSequenceRef = useRef(0)
   const settledZoomSequenceRef = useRef(0)
   const previousShowWeekendsRef = useRef(showWeekends)
@@ -195,8 +165,12 @@ export function useOwnedCalendarCoordinator({
     initialRawOffset: initialVerticalOffset,
     onViewportGeometryChange,
     onInteractionInterrupted: () => {
+      movementOwnedRef.current = true
       cancelVerticalCandidate()
       cancelHorizontalTransition(true)
+    },
+    onInteractionFinished: () => {
+      movementOwnedRef.current = false
     },
     onZoomSettled: (settlement) => {
       if (
@@ -252,13 +226,19 @@ export function useOwnedCalendarCoordinator({
   // when the finger lifts, so a blocked scroll or pager pan would wait for the
   // release before it begins.
   const pinchGesture = zoom.pinchGesture
-  const pages = calendarPages(
-    anchor,
-    mode,
-    displayZone,
-    firstWeekday,
-    showWeekends,
-  )
+  const pages =
+    presentation?.pages ??
+    buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange({
+        anchor,
+        mode,
+        displayZone,
+        firstWeekday,
+        showWeekends,
+      }),
+      generation,
+      events: [],
+    }).pages
   const todayKey = dayKey(currentDate, displayZone)
   // Explicit full-day bounds and the settled scale — the helper's 07:00–21:00
   // defaults stay as they are for Home's mini timeline and the agenda.
@@ -384,16 +364,22 @@ export function useOwnedCalendarCoordinator({
     if (currentGenerationRef.current !== generation) return
     observePinchInterruption()
     if (event.nativeEvent.pageScrollState === "dragging") {
+      movementOwnedRef.current = true
       claimHorizontalOwnership()
       return
+    }
+    if (event.nativeEvent.pageScrollState === "idle") {
+      movementOwnedRef.current = false
     }
     if (horizontalCallbacksBlocked.get()) return
     if (event.nativeEvent.pageScrollState !== "idle") return
     if (selectedPageRef.current === CENTER_PAGE) {
       cancelHorizontalTransition(false)
+      movementOwnedRef.current = false
       return
     }
     settleSelectedPage()
+    movementOwnedRef.current = false
   }
 
   const requestAccessiblePage = (
@@ -413,6 +399,7 @@ export function useOwnedCalendarCoordinator({
   }
 
   const settleVertical = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    movementOwnedRef.current = false
     if (geometryRevision !== geometryRevisionRef.current) return
     if (verticalCallbacksAreBlocked()) return
     cancelVerticalCandidate()
@@ -437,6 +424,7 @@ export function useOwnedCalendarCoordinator({
       )
         return
       committedVerticalOffsetRef.current = nextOffset
+      movementOwnedRef.current = false
       onVerticalOffsetSettled(nextOffset)
     })
   }
@@ -444,8 +432,17 @@ export function useOwnedCalendarCoordinator({
   const onScrollBeginDrag = () => {
     observePinchInterruption()
     if (verticalCallbacksBlocked.get()) return
+    movementOwnedRef.current = true
     cancelVerticalCandidate()
   }
+
+  const onMomentumScrollBegin = () => {
+    movementOwnedRef.current = true
+    cancelVerticalCandidate()
+  }
+
+  const isEventActivationBlocked = () =>
+    movementOwnedRef.current || pinchActive.get()
 
   useEffect(() => {
     onTransitionCancelledRef.current = onTransitionCancelled
@@ -464,6 +461,7 @@ export function useOwnedCalendarCoordinator({
       onTransitionCancelledRef.current(revision)
     }
     selectedPageRef.current = CENTER_PAGE
+    movementOwnedRef.current = false
     position.set(CENTER_PAGE)
     offset.set(0)
     pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
@@ -513,6 +511,7 @@ export function useOwnedCalendarCoordinator({
         onTransitionCancelledRef.current(revision)
       }
       selectedPageRef.current = CENTER_PAGE
+      movementOwnedRef.current = false
       position.set(CENTER_PAGE)
       offset.set(0)
       pagerRef.current?.setPageWithoutAnimation(CENTER_PAGE)
@@ -549,6 +548,7 @@ export function useOwnedCalendarCoordinator({
     onScroll: zoom.onScroll,
     onScrollBeginDrag,
     onScrollEndDrag,
+    onMomentumScrollBegin,
     onViewportLayout: zoom.onViewportLayout,
     nativePagerGesture,
     nativeScrollGesture,
@@ -558,6 +558,7 @@ export function useOwnedCalendarCoordinator({
     pixelsPerHour: zoom.pixelsPerHour,
     requestAccessiblePage,
     requestZoom: zoom.requestZoom,
+    isEventActivationBlocked,
     scrollRef,
     settleVertical,
     todayKey,

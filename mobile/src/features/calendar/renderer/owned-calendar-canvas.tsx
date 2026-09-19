@@ -4,6 +4,7 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -27,6 +28,7 @@ import {
   type CalendarTimelineMode,
   type CalendarTransitionSource,
   formatHourStartLabel,
+  formatTimeRange,
   FULL_DAY_END_MINUTE,
   FULL_DAY_START_MINUTE,
   fullDayMajorMinutes,
@@ -34,9 +36,14 @@ import {
   gridContentHeight,
   HOURS_COLUMN_WIDTH,
   minuteToPixel,
+  type TimedTileV1,
   type WeekColumn,
   type WeekDirection,
 } from "@/features/calendar/data"
+import {
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+} from "@/features/event-checklists"
 import { useTheme } from "@/theme"
 
 import type { CalendarPage } from "./owned-calendar-coordinator"
@@ -86,6 +93,7 @@ export function OwnedCalendarCanvas({
   heading,
   mode,
   locale,
+  displayZone,
   uses24HourClock,
   initialVerticalOffset,
   generation,
@@ -113,15 +121,17 @@ export function OwnedCalendarCanvas({
   nowOnCommittedPage,
   nowLabel,
   t,
+  onEventPress,
 }: {
   heading: string
   mode: CalendarTimelineMode
   locale: AppLocale
+  displayZone: string
   uses24HourClock: boolean | null
   initialVerticalOffset: number
   generation: number
   geometryRevision: number
-  pages: CalendarPage[]
+  pages: readonly CalendarPage[]
   pagerRef: RefObject<PagerView | null>
   scrollRef: AnimatedRef<ScrollView>
   nativeScrollGesture: GestureType
@@ -147,6 +157,7 @@ export function OwnedCalendarCanvas({
   nowOnCommittedPage: boolean
   nowLabel: string
   t: TFunction
+  onEventPress: (uid: string) => void
 }) {
   const theme = useTheme()
   const fullDayRowStyle = useAnimatedStyle(() => ({
@@ -264,8 +275,6 @@ export function OwnedCalendarCanvas({
               onPageSelected={onPageSelected}
               onPageScrollStateChanged={onPageScrollStateChanged}
               accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
             >
               {pages.map((page) => (
                 <CalendarPageCanvas
@@ -276,6 +285,9 @@ export function OwnedCalendarCanvas({
                   todayKey={nowVisible ? todayKey : null}
                   nowMinuteOfDay={nowMinuteOfDay}
                   t={t}
+                  locale={locale}
+                  displayZone={displayZone}
+                  onEventPress={onEventPress}
                 />
               ))}
             </AnimatedPagerView>
@@ -312,6 +324,9 @@ function CalendarPageCanvas({
   todayKey,
   nowMinuteOfDay,
   t,
+  locale,
+  displayZone,
+  onEventPress,
 }: {
   page: CalendarPage
   pixelsPerHour: SharedValue<number>
@@ -319,6 +334,9 @@ function CalendarPageCanvas({
   todayKey: string | null
   nowMinuteOfDay: number
   t: TFunction
+  locale: AppLocale
+  displayZone: string
+  onEventPress: (uid: string) => void
 }) {
   const theme = useTheme()
   const pageHeightStyle = useAnimatedStyle(() => ({
@@ -329,8 +347,10 @@ function CalendarPageCanvas({
       testID={`owned-calendar-page-${page.direction}`}
       collapsable={false}
       accessible={false}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      accessibilityElementsHidden={page.direction !== 0}
+      importantForAccessibility={
+        page.direction === 0 ? "yes" : "no-hide-descendants"
+      }
       style={[
         styles.page,
         {
@@ -353,6 +373,14 @@ function CalendarPageCanvas({
         todayKey={todayKey}
         nowMinuteOfDay={nowMinuteOfDay}
       />
+      <CalendarTiles
+        page={page}
+        locale={locale}
+        displayZone={displayZone}
+        pixelsPerHour={pixelsPerHour}
+        onEventPress={onEventPress}
+        t={t}
+      />
       {__DEV__ && (
         <View style={styles.preview} pointerEvents="none">
           <ThemedText type="small">{page.key}</ThemedText>
@@ -372,6 +400,117 @@ function CalendarPageCanvas({
   )
 }
 
+function CalendarTiles({
+  page,
+  locale,
+  displayZone,
+  pixelsPerHour,
+  onEventPress,
+  t,
+}: {
+  page: CalendarPage
+  locale: AppLocale
+  displayZone: string
+  pixelsPerHour: SharedValue<number>
+  onEventPress: (uid: string) => void
+  t: TFunction
+}) {
+  return (
+    <View pointerEvents="box-none" style={styles.tileColumns}>
+      {page.columns.map((column) => (
+        <View
+          key={column.key}
+          pointerEvents="box-none"
+          style={styles.tileColumn}
+        >
+          {column.tiles.map((tile) => (
+            <TimedCalendarTile
+              key={tile.key}
+              tile={tile}
+              locale={locale}
+              displayZone={displayZone}
+              pixelsPerHour={pixelsPerHour}
+              accessible={page.direction === 0}
+              onPress={() => onEventPress(tile.identity.uid)}
+              t={t}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  )
+}
+
+function TimedCalendarTile({
+  tile,
+  locale,
+  displayZone,
+  pixelsPerHour,
+  accessible,
+  onPress,
+  t,
+}: {
+  tile: TimedTileV1
+  locale: AppLocale
+  displayZone: string
+  pixelsPerHour: SharedValue<number>
+  accessible: boolean
+  onPress: () => void
+  t: TFunction
+}) {
+  const positionStyle = useAnimatedStyle(() => ({
+    top: minuteToPixel(tile.startMinute, {
+      startMinute: FULL_DAY_START_MINUTE,
+      pixelsPerHour: pixelsPerHour.get(),
+    }),
+    height: ((tile.endMinute - tile.startMinute) / 60) * pixelsPerHour.get(),
+  }))
+  const time = formatTimeRange(tile.startsAt, tile.endsAt, locale, displayZone)
+  const progress = checklistProgressLabel(t, tile.checklist)
+  const label = t(
+    progress === undefined
+      ? "calendar.event.label"
+      : "calendar.event.labelWithProgress",
+    {
+      title: tile.title,
+      time,
+      location: tile.location ?? "",
+      progress,
+    },
+  )
+  return (
+    <Animated.View
+      testID={`owned-calendar-event-${tile.identity.uid}`}
+      pointerEvents="box-none"
+      style={[styles.tileAnchor, positionStyle]}
+    >
+      <Pressable
+        accessible={accessible}
+        accessibilityElementsHidden={!accessible}
+        importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={t("calendar.event.hint")}
+        onPress={onPress}
+        style={[styles.tile, { backgroundColor: tile.surfaceColor }]}
+      >
+        <ThemedText accessible={false} type="smallBold" numberOfLines={1}>
+          {tile.title}
+        </ThemedText>
+        {tile.location !== undefined && (
+          <ThemedText accessible={false} type="captionSmall" numberOfLines={1}>
+            {tile.location}
+          </ThemedText>
+        )}
+        <ChecklistProgressIndicator
+          progress={tile.checklist}
+          variant="compact"
+        />
+      </Pressable>
+    </Animated.View>
+  )
+}
+
 function CalendarGrid({
   direction,
   columns,
@@ -380,7 +519,7 @@ function CalendarGrid({
   nowMinuteOfDay,
 }: {
   direction: number
-  columns: WeekColumn[]
+  columns: readonly WeekColumn[]
   pixelsPerHour: SharedValue<number>
   todayKey: string | null
   nowMinuteOfDay: number
@@ -601,4 +740,20 @@ const styles = StyleSheet.create({
   },
   minorLine: { opacity: 0.5 },
   preview: { position: "absolute", top: 16, left: 16, gap: 4 },
+  tileColumns: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    flexDirection: "row",
+  },
+  tileColumn: { flex: 1, position: "relative" },
+  tileAnchor: { position: "absolute", left: 2, right: 2 },
+  tile: {
+    flex: 1,
+    overflow: "hidden",
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
 })

@@ -3,7 +3,11 @@
 // without a real SQLite reactive query.
 import { renderHook } from "@testing-library/react-native"
 
-import { useUserCalendars, useUserCalendarsLoaded } from "./hooks"
+import {
+  useUserCalendars,
+  useUserCalendarsLoaded,
+  useUserCalendarsSnapshot,
+} from "./hooks"
 
 const mockUseLiveQuery = jest.fn()
 
@@ -30,6 +34,7 @@ describe("useUserCalendars", () => {
           visible: true,
         },
       ],
+      updatedAt: new Date(7),
     })
 
     const { result } = await renderHook(() => useUserCalendars())
@@ -38,6 +43,19 @@ describe("useUserCalendars", () => {
     expect(result.current[0]?.token).toBe("tok-1")
     expect(result.current[0]?.lastUpdatedAt).toBeInstanceOf(Date)
     expect(result.current[0]?.schoolName).toBeUndefined()
+  })
+
+  it("publishes visibility rows with their completion revision", async () => {
+    mockUseLiveQuery.mockReturnValue({
+      data: [],
+      updatedAt: new Date(7),
+    })
+    const { result } = await renderHook(() => useUserCalendarsSnapshot())
+    expect(result.current).toEqual({
+      calendars: [],
+      ready: true,
+      revision: "7",
+    })
   })
 
   it("keeps a stable array identity across renders (the events-seam memo depends on it)", async () => {

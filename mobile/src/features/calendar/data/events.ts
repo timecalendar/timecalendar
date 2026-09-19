@@ -1,105 +1,159 @@
-import { useMemo } from "react"
+import { useEffect, useRef } from "react"
 
-import { useUserCalendars } from "@/features/calendar-sources/data"
+import { useUserCalendarsSnapshot } from "@/features/calendar-sources/data"
 import { useHiddenEvents } from "@/features/hidden-events/data"
-import {
-  type PersonalEvent,
-  usePersonalEvents,
-} from "@/features/personal-events"
+import { usePersonalEventRowsInRange } from "@/features/personal-events"
+import { recordError } from "@/firebase"
 
-import { useSyncedEvents } from "./sync"
+import { utcDayKey } from "./day-key"
+import {
+  type CalendarEventRejectionCounts,
+  decodePersonalEventRows,
+  decodeSyncedEventRows,
+} from "./event-decoder"
+import { useSyncedEventRowsInRange } from "./sync/hooks"
 import { type CalendarEvent } from "./types"
 
 export interface DateRange {
   from: Date
   to: Date
+  civilFromDay?: string
+  civilToDay?: string
 }
 
-// Map a PersonalEvent (a real device row that already renders elsewhere) into a
-// CalendarEvent. Personal events are timed, single-calendar, and carry no
-// teachers/tags/cancellation — those sync-model fields stay empty.
-function personalToCalendarEvent(event: PersonalEvent): CalendarEvent {
-  return {
-    id: event.uid,
-    title: event.title,
-    color: event.color,
-    startsAt: event.startsAt,
-    endsAt: event.endsAt,
-    location: event.location,
-    allDay: false,
-    description: event.description,
-    teachers: [],
-    tags: [],
-    canceled: false,
-    userCalendarId: undefined,
+export interface CalendarEventsSnapshot {
+  events: readonly CalendarEvent[]
+  ready: boolean
+  error: Error | undefined
+  revision: string
+  rejectedCounts: CalendarEventRejectionCounts
+  counts: {
+    queriedSyncedTimed: number
+    queriedSyncedDateOnly: number
+    queriedPersonal: number
+    accepted: number
+    filtered: number
   }
 }
 
-// An event intersects the range when it starts before the range ends and ends
-// after the range starts (half-open, consistent with the overlap engine).
+function addCounts(
+  left: CalendarEventRejectionCounts,
+  right: CalendarEventRejectionCounts,
+): CalendarEventRejectionCounts {
+  return {
+    "invalid-identity": left["invalid-identity"] + right["invalid-identity"],
+    "invalid-start": left["invalid-start"] + right["invalid-start"],
+    "invalid-end": left["invalid-end"] + right["invalid-end"],
+    "non-positive-range":
+      left["non-positive-range"] + right["non-positive-range"],
+    "invalid-date-range":
+      left["invalid-date-range"] + right["invalid-date-range"],
+  }
+}
+
+function eventIntersectsRange(
+  event: CalendarEvent,
+  range: DateRange,
+  civil: { fromDay: string; toDay: string },
+): boolean {
+  return event.kind === "date-only"
+    ? event.startDay < civil.toDay && event.endDay > civil.fromDay
+    : event.startsAt < range.to && event.endsAt > range.from
+}
+
 export function intersectsRange(
   event: CalendarEvent,
   range: DateRange,
 ): boolean {
-  return event.startsAt < range.to && event.endsAt > range.from
+  return eventIntersectsRange(event, range, {
+    fromDay: range.civilFromDay ?? utcDayKey(range.from),
+    toDay: range.civilToDay ?? utcDayKey(range.to),
+  })
 }
 
-// THE single events-source seam (calendar.md). The screen must not know where
-// events come from. The calendar-sync ship swapped the source here: it now reads
-// the synced `calendar_events` rows (reactively, via useSyncedEvents) merged with
-// the existing personal-events read, mapped to CalendarEvent and range-filtered —
-// WITHOUT changing this hook's signature, the CalendarEvent shape, or any
-// consumer. The dense-week fixture is no longer merged at runtime (dev/test-only —
-// still exported from data/index for the primitive/screen tests + optional __DEV__
-// seeding). Personal events (device-local, not synced) render alongside the synced
-// timetable — the user's own events and their classes in one view (Flutter parity:
-// both EventKinds render together).
-//
-// Hidden-events filter (ADR 023 / Phase 05 Ship A): the seam was designed to
-// absorb exactly this. It reads the hidden set (useHiddenEvents — a data → data
-// cross-feature read, the legitimate edge the sync orchestrator + home selectors
-// already use) and excludes any event whose uid (event.id) is in uidHiddenEvents
-// OR whose title is in namedHiddenEvents, applied to the MERGED list (Flutter
-// EventsForViewNotifier parity — a hidden *name* can match a same-titled personal
-// event too) BEFORE the range filter. No consumer change: day/week, agenda, and
-// home all honor hiding through the unchanged signature + CalendarEvent shape.
-//
-// Calendar-visibility filter (ADR 031 / user-calendars ship): the same data →
-// data cross-feature edge reads useUserCalendars() and keeps a merged event iff
-// it is personal (no userCalendarId, always shown) OR its calendar is currently
-// visible. It is the single seam that makes `visible` a render-only flag across
-// day/week/agenda + home; a deleted calendar drops out of the visible set, so its
-// events vanish with no calendar_events purge (ADR 031). Applied on the merged
-// list, before the range filter, behind the unchanged signature.
-export function useCalendarEvents(range: DateRange): CalendarEvent[] {
-  const syncedEvents = useSyncedEvents()
-  const personalEvents = usePersonalEvents()
+function useRejectedRowDiagnostics(
+  ready: boolean,
+  revision: string,
+  counts: CalendarEventRejectionCounts,
+): void {
+  const reported = useRef(new Set<string>())
+  useEffect(() => {
+    if (!ready) return
+    for (const [reason, count] of Object.entries(counts)) {
+      if (count === 0) continue
+      const key = `${revision}:${reason}`
+      if (reported.current.has(key)) continue
+      reported.current.add(key)
+      recordError(
+        new Error(`calendar-row-rejected:${reason}:${count}`),
+        "calendar-local-read",
+      )
+    }
+  }, [counts, ready, revision])
+}
+
+/** Bounded, validated, shared local Calendar read. */
+export function useCalendarEventsSnapshot(
+  range: DateRange,
+): CalendarEventsSnapshot {
+  const civil = {
+    fromDay: range.civilFromDay ?? utcDayKey(range.from),
+    toDay: range.civilToDay ?? utcDayKey(range.to),
+  }
+  const synced = useSyncedEventRowsInRange({ instant: range, civil })
+  const personal = usePersonalEventRowsInRange(range)
   const { uidHiddenEvents, namedHiddenEvents } = useHiddenEvents()
-  const calendars = useUserCalendars()
-  return useMemo(() => {
-    const uidSet = new Set(uidHiddenEvents)
-    const nameSet = new Set(namedHiddenEvents)
-    const visibleIds = new Set(
-      calendars.filter((c) => c.visible).map((c) => c.id),
-    )
-    const merged = [
-      ...syncedEvents,
-      ...personalEvents.map(personalToCalendarEvent),
-    ]
-    return merged.filter(
-      (event) =>
-        !uidSet.has(event.id) &&
-        !nameSet.has(event.title) &&
-        (event.userCalendarId === undefined ||
-          visibleIds.has(event.userCalendarId)) &&
-        intersectsRange(event, range),
-    )
-  }, [
-    syncedEvents,
-    personalEvents,
-    uidHiddenEvents,
-    namedHiddenEvents,
-    calendars,
-    range,
+  const calendarSources = useUserCalendarsSnapshot()
+
+  const syncedDecoded = decodeSyncedEventRows([
+    ...synced.timedRows,
+    ...synced.dateOnlyRows,
   ])
+  const personalDecoded = decodePersonalEventRows(personal.rows)
+  const decoded = {
+    events: [...syncedDecoded.accepted, ...personalDecoded.accepted],
+    rejectedCounts: addCounts(
+      syncedDecoded.rejectedCounts,
+      personalDecoded.rejectedCounts,
+    ),
+  }
+
+  const hiddenUids = new Set(uidHiddenEvents)
+  const hiddenNames = new Set(namedHiddenEvents)
+  const visibleCalendarIds = new Set<string>()
+  for (const calendar of calendarSources.calendars) {
+    if (calendar.visible) visibleCalendarIds.add(calendar.id)
+  }
+  const events = decoded.events.filter(
+    (event) =>
+      !event.canceled &&
+      !hiddenUids.has(event.identity.uid) &&
+      !hiddenNames.has(event.title) &&
+      (event.identity.source === "personal" ||
+        (event.userCalendarId !== undefined &&
+          visibleCalendarIds.has(event.userCalendarId))) &&
+      eventIntersectsRange(event, range, civil),
+  )
+  const ready = synced.ready && personal.ready && calendarSources.ready
+  const revision = `${synced.revision}:${personal.revision}:${calendarSources.revision}`
+  useRejectedRowDiagnostics(ready, revision, decoded.rejectedCounts)
+
+  return {
+    events,
+    ready,
+    error: synced.error ?? personal.error,
+    revision,
+    rejectedCounts: decoded.rejectedCounts,
+    counts: {
+      queriedSyncedTimed: synced.timedRows.length,
+      queriedSyncedDateOnly: synced.dateOnlyRows.length,
+      queriedPersonal: personal.rows.length,
+      accepted: decoded.events.length,
+      filtered: decoded.events.length - events.length,
+    },
+  }
+}
+
+export function useCalendarEvents(range: DateRange): CalendarEvent[] {
+  return [...useCalendarEventsSnapshot(range).events]
 }

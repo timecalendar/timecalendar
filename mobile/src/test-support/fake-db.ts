@@ -57,6 +57,8 @@ export interface FakeDb {
     asc: jest.Mock
     desc: jest.Mock
     lt: jest.Mock
+    gt: jest.Mock
+    and: jest.Mock
     inArray: jest.Mock
     notInArray: jest.Mock
     sql: jest.Mock
@@ -68,6 +70,12 @@ export interface FakeDb {
   seed(table: string, rows: Record<string, unknown>[]): void
   /** Number of currently mounted reactive-query consumers. */
   liveQueryListenerCount(): number
+  /** Queue one hook result to exercise pending/error branches before the default ready result. */
+  queueLiveQueryResult(result: {
+    data?: Row[]
+    error?: Error
+    updatedAt?: Date
+  }): void
 }
 
 type Row = Record<string, unknown>
@@ -75,9 +83,10 @@ type Row = Record<string, unknown>
 // where-less read/write. Each operator resolves to its own leaf, so the
 // `spies.<op>(col, val)` contract consumers assert on is per-operator.
 type Condition =
-  | { op: "eq" | "lt"; field: string; val: unknown }
+  | { op: "eq" | "lt" | "gt"; field: string; val: unknown }
   | { op: "inArray"; field: string; val: readonly unknown[] }
   | { op: "notInArray"; field: string; val: readonly unknown[] }
+  | { op: "and"; conditions: readonly Condition[] }
   | { op: "alwaysFalse" }
   | null
 // A resolved `asc()` / `desc()` order. `orderBy` takes one or more.
@@ -97,6 +106,11 @@ export function createFakeDb(config: {
   // token object → table name, so a builder can route by identity.
   const tokenToName = new Map<Record<string, string>, string>()
   const listeners = new Set<() => void>()
+  const liveQueryResults: {
+    data?: Row[]
+    error?: Error
+    updatedAt?: Date
+  }[] = []
   let version = 0
 
   for (const name of names) {
@@ -131,12 +145,16 @@ export function createFakeDb(config: {
         return row[cond.field] === cond.val
       case "lt":
         return compare(row[cond.field], cond.val) < 0
+      case "gt":
+        return compare(row[cond.field], cond.val) > 0
       case "inArray":
         return cond.val.includes(row[cond.field])
       case "notInArray":
         return !cond.val.includes(row[cond.field])
       case "alwaysFalse":
         return false
+      case "and":
+        return cond.conditions.every((child) => matches(row, child))
     }
   }
 
@@ -157,6 +175,8 @@ export function createFakeDb(config: {
     asc: jest.fn(),
     desc: jest.fn(),
     lt: jest.fn(),
+    gt: jest.fn(),
+    and: jest.fn(),
     inArray: jest.fn(),
     notInArray: jest.fn(),
     sql: jest.fn(),
@@ -173,6 +193,14 @@ export function createFakeDb(config: {
   const lt = (col: string, val: unknown): Condition => {
     spies.lt(col, val)
     return { op: "lt", field: fieldOf(col), val }
+  }
+  const gt = (col: string, val: unknown): Condition => {
+    spies.gt(col, val)
+    return { op: "gt", field: fieldOf(col), val }
+  }
+  const and = (...conditions: Condition[]): Condition => {
+    spies.and(...conditions)
+    return { op: "and", conditions }
   }
   const inArray = (col: string, val: readonly unknown[]): Condition => {
     spies.inArray(col, val)
@@ -404,7 +432,13 @@ export function createFakeDb(config: {
       () => version,
       () => version,
     )
-    return { data: query.all() }
+    const queued = liveQueryResults.shift()
+    return {
+      data: queued?.data ?? query.all(),
+      error: queued?.error,
+      updatedAt: queued?.updatedAt,
+      ...(queued === undefined ? { updatedAt: new Date(0) } : {}),
+    }
   }
 
   const module: Record<string, unknown> = {
@@ -413,6 +447,8 @@ export function createFakeDb(config: {
     asc,
     desc,
     lt,
+    gt,
+    and,
     inArray,
     notInArray,
     sql,
@@ -426,6 +462,7 @@ export function createFakeDb(config: {
     reset() {
       for (const store of stores.values()) store.clear()
       listeners.clear()
+      liveQueryResults.length = 0
       version = 0
       for (const spy of Object.values(spies)) spy.mockClear()
     },
@@ -436,6 +473,9 @@ export function createFakeDb(config: {
     },
     liveQueryListenerCount() {
       return listeners.size
+    },
+    queueLiveQueryResult(result) {
+      liveQueryResults.push(result)
     },
   }
 }
