@@ -244,8 +244,11 @@ separate. The binding contract and regression scenarios live in the
   bounded shared zoom with accessible native menu commands. A fresh mount opens around the current
   display-zone minute and shows the shaped column rule plus accessible gutter time chip. Supported
   ordinary timed tiles use live-scale minute geometry, show title/location/checklist progress, and
-  expose one localized button only on the committed page; activation passes the original UID to the
-  shared details route. Neighbour pages and decorative grid content stay hidden from accessibility.
+  expose one localized button only on the committed page. Title and location share compact 11/13
+  typography, wrap without ellipses, and clip only at the event's actual time boundary; title weight
+  supplies the hierarchy. Rounded two-unit event surfaces begin flush with the left day boundary and
+  retain two units before the next separator. Activation passes the original UID to the shared details
+  route. Neighbour pages and decorative grid content stay hidden from accessibility.
 - The calendar screen owns product orchestration and event loading. Its controller owns
   view/selected-date state and one-shot focus selection; header and Agenda status UI are
   separate components.

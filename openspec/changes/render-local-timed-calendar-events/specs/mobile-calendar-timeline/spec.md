@@ -30,7 +30,7 @@ The Calendar data seam SHALL publish a `version: 1` presentation containing exac
 
 ### Requirement: T09 renders ordinary local timed classes at their clock coordinates
 
-For T09, each supported event SHALL be a positive-duration timed interval contained within one display-zone civil date and not crossing a timezone-offset transition. Its tile SHALL use the validated start/end minute inputs and the live Calendar pixels-per-hour scale to occupy its actual vertical clock range. The tile SHALL show its title, SHALL show location when present, SHALL use a safe event-derived surface color, and SHALL show checklist summary progress when one exists. Tile planning, sorting, formatting, and checklist aggregation SHALL execute only when the complete local presentation changes; a gesture frame SHALL perform only worklet-safe pixel projection from the already validated minute inputs.
+For T09, each supported event SHALL be a positive-duration timed interval contained within one display-zone civil date and not crossing a timezone-offset transition. Its tile SHALL use the validated start/end minute inputs and the live Calendar pixels-per-hour scale to occupy its actual vertical clock range. The tile SHALL show its title, SHALL show location when present, SHALL use a safe event-derived surface color, and SHALL show checklist summary progress when one exists. Title and location SHALL use the same compact text size and line height, with hierarchy expressed through weight. Neither text SHALL impose a line limit or ellipsis; native word/character wrapping SHALL continue until the rounded event surface clips content at its actual time boundary. Each full-column tile SHALL begin flush with its left day boundary, leave two native layout units before the next vertical separator, and use a two-unit corner radius. Tile planning, sorting, formatting, and checklist aggregation SHALL execute only when the complete local presentation changes; a gesture frame SHALL perform only worklet-safe pixel projection from the already validated minute inputs.
 
 #### Scenario: One-hour class appears at the right time
 
@@ -43,6 +43,12 @@ For T09, each supported event SHALL be a positive-duration timed interval contai
 - **WHEN** a valid positive-duration personal event falls on a visible date
 - **THEN** it receives the same timed-tile geometry and presentation model as a synced class
 - **AND** its original `personal` identity remains attached to activation
+
+#### Scenario: Narrow event content wraps without ellipses
+
+- **WHEN** an ordinary event has a title or location wider than its Day or Week column
+- **THEN** both fields use the same compact text size and wrap across native word or character boundaries without an ellipsis
+- **AND** the rounded tile starts flush with its left day boundary, retains two layout units before the next separator, and clips only at its actual vertical time boundary
 
 #### Scenario: Deferred event shapes are not misdrawn
 

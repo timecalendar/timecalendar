@@ -251,6 +251,74 @@ describe("OwnedCalendarShell", () => {
     expect(onEventPress).toHaveBeenCalledWith("original-42")
   })
 
+  it("wraps compact title and location text inside a rounded full-column tile", async () => {
+    const title = "Psychocologie du développement"
+    const location = "Amphithéâtre Léonard de Vinci"
+    const event = {
+      version: 1,
+      kind: "timed",
+      allDay: false,
+      identity: { source: "synced", uid: "long-content" },
+      id: "long-content",
+      title,
+      color: "#112233",
+      startsAt: new Date("2026-06-15T10:00:00.000Z"),
+      endsAt: new Date("2026-06-15T11:00:00.000Z"),
+      location,
+      description: undefined,
+      teachers: [],
+      tags: [],
+      canceled: false,
+      userCalendarId: "calendar-1",
+    } satisfies TimedCalendarEventV1
+    const presentation = buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(props),
+      generation: props.generation,
+      events: [event],
+    })
+
+    await render(
+      <OwnedCalendarShell
+        {...props}
+        presentation={presentation}
+        onEventPress={jest.fn()}
+      />,
+    )
+
+    const anchor = screen.getByTestId("owned-calendar-event-long-content")
+    expect(StyleSheet.flatten(anchor.props.style)).toMatchObject({
+      left: 0,
+      right: 2,
+    })
+
+    const tile = screen.getByRole("button", {
+      name: `${title}, 10:00 – 11:00 ${location}`,
+    })
+    expect(StyleSheet.flatten(tile.props.style)).toMatchObject({
+      borderRadius: 2,
+      overflow: "hidden",
+    })
+
+    const titleText = screen.getByText(title)
+    const locationText = screen.getByText(location)
+    expect(titleText.props).toMatchObject({ accessible: false })
+    expect(titleText.props.numberOfLines).toBeUndefined()
+    expect(titleText.props.ellipsizeMode).toBeUndefined()
+    expect(StyleSheet.flatten(titleText.props.style)).toMatchObject({
+      fontSize: 11,
+      lineHeight: 13,
+      fontWeight: 600,
+    })
+    expect(locationText.props).toMatchObject({ accessible: false })
+    expect(locationText.props.numberOfLines).toBeUndefined()
+    expect(locationText.props.ellipsizeMode).toBeUndefined()
+    expect(StyleSheet.flatten(locationText.props.style)).toMatchObject({
+      fontSize: 11,
+      lineHeight: 13,
+      fontWeight: 400,
+    })
+  })
+
   it("suppresses tile activation while scroll, pager, or pinch owns movement", async () => {
     const onEventPress = jest.fn()
     const event = {

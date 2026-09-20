@@ -494,11 +494,15 @@ function TimedCalendarTile({
         onPress={onPress}
         style={[styles.tile, { backgroundColor: tile.surfaceColor }]}
       >
-        <ThemedText accessible={false} type="smallBold" numberOfLines={1}>
+        <ThemedText
+          accessible={false}
+          type="captionSmall"
+          style={styles.tileTitle}
+        >
           {tile.title}
         </ThemedText>
         {tile.location !== undefined && (
-          <ThemedText accessible={false} type="captionSmall" numberOfLines={1}>
+          <ThemedText accessible={false} type="captionSmall">
             {tile.location}
           </ThemedText>
         )}
@@ -749,11 +753,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   tileColumn: { flex: 1, position: "relative" },
-  tileAnchor: { position: "absolute", left: 2, right: 2 },
+  tileAnchor: { position: "absolute", left: 0, right: 2 },
   tile: {
     flex: 1,
     overflow: "hidden",
+    borderRadius: 2,
     paddingHorizontal: 4,
     paddingVertical: 2,
   },
+  tileTitle: { fontWeight: 600 },
 })

@@ -21,7 +21,7 @@ A valid same-day local class appears at its actual time with title/location and 
 
 - Read the relevant local ranges through the data seam, including source visibility/hidden/cancelled filtering, and publish complete versioned event/page models.
 
-- Render normal title/location tiles, complete accessible labels and original-identity activation; preserve synced read-only/personal editable details and summary checklist progress.
+- Render compact multi-line title/location tiles without ellipses, with rounded asymmetric day-column geometry, complete accessible labels and original-identity activation; preserve synced read-only/personal editable details and summary checklist progress.
 
 - Keep event work off gesture frames, preserve current bounded pages, and make malformed rows unable to throw across the whole list.
 
@@ -57,9 +57,11 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 ## Owner QA checklist
 
-**Preparation:** Agent seeds Monday 2026-09-14 10:00–11:00 Europe/Paris with title “Maths” and room “B12”, plus one editable personal event and one hidden/cancelled event. Use a disposable offline test installation.
+**Preparation:** Agent seeds Monday 2026-09-14 10:00–11:00 Europe/Paris with title “Maths” and room “B12”, an 11:00–12:00 long-title/long-location event, plus one editable personal event and one hidden/cancelled event. Use a disposable offline test installation.
 
 - [ ] Find Maths in the 10:00–11:00 position with B12 visible.
+
+- [ ] In Day and Week, confirm “Psychocologie du développement” and “Amphithéâtre Léonard de Vinci” wrap across multiple compact lines without ellipses; the event is subtly rounded, flush with its left day boundary and separated by two units from the next vertical separator.
 
 - [ ] Tap the synced class: its existing details open read-only. Tap the personal event: existing editing remains available.
 
