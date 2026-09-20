@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import {
   type CalendarSyncOutcome,
@@ -12,6 +12,28 @@ export interface CalendarImportResultController {
   retry: () => void
 }
 
+interface ExecutionState {
+  active: { current: boolean }
+  inFlight: { current: boolean }
+}
+
+function executeSync(
+  sync: ReturnType<typeof useSyncCalendars>["sync"],
+  execution: ExecutionState,
+  setPhase: (phase: CalendarImportResultPhase) => void,
+) {
+  if (!execution.active.current || execution.inFlight.current) return
+  execution.inFlight.current = true
+  setPhase("loading")
+  void sync({ freshAfterCurrent: true })
+    .then((outcome) => {
+      if (execution.active.current) setPhase(phaseForOutcome(outcome))
+    })
+    .finally(() => {
+      execution.inFlight.current = false
+    })
+}
+
 function phaseForOutcome(
   outcome: CalendarSyncOutcome,
 ): CalendarImportResultPhase {
@@ -20,32 +42,21 @@ function phaseForOutcome(
 
 export function useCalendarImportResult(): CalendarImportResultController {
   const { sync } = useSyncCalendars()
-  const syncRef = useRef(sync)
   const [phase, setPhase] = useState<CalendarImportResultPhase>("loading")
   const activeRef = useRef(true)
   const inFlightRef = useRef(false)
 
-  const run = useCallback(() => {
-    if (!activeRef.current || inFlightRef.current) return
-    inFlightRef.current = true
-    setPhase("loading")
-    void syncRef
-      .current({ freshAfterCurrent: true })
-      .then((outcome) => {
-        if (activeRef.current) setPhase(phaseForOutcome(outcome))
-      })
-      .finally(() => {
-        inFlightRef.current = false
-      })
-  }, [])
-
   useEffect(() => {
     activeRef.current = true
-    run()
+    executeSync(sync, { active: activeRef, inFlight: inFlightRef }, setPhase)
     return () => {
       activeRef.current = false
     }
-  }, [run])
+  }, [sync])
 
-  return { phase, retry: run }
+  return {
+    phase,
+    retry: () =>
+      executeSync(sync, { active: activeRef, inFlight: inFlightRef }, setPhase),
+  }
 }
