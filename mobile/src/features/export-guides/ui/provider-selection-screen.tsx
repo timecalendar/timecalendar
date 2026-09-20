@@ -56,8 +56,16 @@ export default function ProviderSelectionScreen() {
   }, [load, state])
 
   if (!legal) return null
+  const header = (
+    <Stack.Screen options={{ title: t("exportGuide.provider.headerTitle") }} />
+  )
   if (state.phase === "blocked") {
-    return <GuideBlockingError retry={retry} busy={busy} />
+    return (
+      <>
+        {header}
+        <GuideBlockingError retry={retry} busy={busy} />
+      </>
+    )
   }
   const catalogue =
     state.phase === "selecting-provider"
@@ -72,7 +80,12 @@ export default function ProviderSelectionScreen() {
         ? state.selectionProviders
         : undefined
   if (catalogue === undefined || providers === undefined)
-    return <GuideLoading />
+    return (
+      <>
+        {header}
+        <GuideLoading />
+      </>
+    )
 
   const instructions = t("exportGuide.provider.instructions")
   const providerHint = t("exportGuide.provider.hint")
@@ -101,7 +114,7 @@ export default function ProviderSelectionScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t("exportGuide.provider.title") }} />
+      {header}
       <RootPage lane="readable" style={styles.fill}>
         {(layout) => (
           <FlatList
@@ -109,7 +122,12 @@ export default function ProviderSelectionScreen() {
             keyExtractor={(provider) => provider.slug}
             contentContainerStyle={[layout.laneStyle, styles.content]}
             accessibilityLabel={instructions}
-            ListHeaderComponent={<PageIntro caption={instructions} />}
+            ListHeaderComponent={
+              <PageIntro
+                title={t("exportGuide.provider.title")}
+                caption={instructions}
+              />
+            }
             renderItem={({ item: provider }) => (
               <Pressable
                 testID={`export-guide-provider-${provider.slug}`}

@@ -135,6 +135,10 @@ export default function RootLayout() {
                 name="onboarding"
                 options={{ headerShown: false }}
               />
+              <Stack.Screen
+                name="calendar-import-result"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="appearance-settings" />
               <Stack.Screen name="language-settings" />
               <Stack.Screen name="about" />

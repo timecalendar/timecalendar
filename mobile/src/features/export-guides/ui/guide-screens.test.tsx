@@ -418,6 +418,44 @@ describe("GuidePageScreen", () => {
 })
 
 describe("ProviderSelectionScreen", () => {
+  it.each([
+    [
+      "loading",
+      {
+        phase: "draft",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+      },
+    ],
+    [
+      "blocking error",
+      {
+        phase: "blocked",
+        draft: {
+          institution: { kind: "unlisted", schoolName: "School" },
+          calendarName: "",
+        },
+        draftRevision: 1,
+        gateProgress: "programme",
+        locale: "en",
+        selector: { kind: "active" },
+        failure: "network",
+        attempt: 1,
+      },
+    ],
+  ])("uses compact native chrome during %s", async (_label, state) => {
+    mockUseImportDraft.mockReturnValue({ state, dispatch })
+    await render(<ProviderSelectionScreen />)
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({ options: { title: "Export guide" } }),
+      undefined,
+    )
+  })
+
   it("recovers a listed direct entry instead of loading forever", async () => {
     mockUseImportDraft.mockReturnValue({
       state: {
@@ -481,6 +519,11 @@ describe("ProviderSelectionScreen", () => {
       dispatch,
     })
     const view = await render(<ProviderSelectionScreen />)
+    expect(mockStackScreen).toHaveBeenCalledWith(
+      expect.objectContaining({ options: { title: "Export guide" } }),
+      undefined,
+    )
+    expect(view.getByText("Choose your timetable service")).toBeTruthy()
     expect(
       view.getAllByRole("button").map((node) => node.props.accessibilityLabel),
     ).toEqual(["Future Provider", "Generic"])

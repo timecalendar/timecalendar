@@ -11,7 +11,7 @@ import { recordUnknownError } from "@/firebase"
 import { createTestQueryClient } from "@/test-support/query-client"
 
 import * as repository from "./repository"
-import { useSyncCalendars } from "./sync"
+import { resetCalendarSyncCoordinatorForTests, useSyncCalendars } from "./sync"
 
 // The sync-wiring proof: mocks at the customFetch mutator seam (the designed seam,
 // never the network) and drives the REAL generated sync mutation through a real
@@ -94,6 +94,7 @@ const syncResponse = [
 ]
 
 beforeEach(() => {
+  resetCalendarSyncCoordinatorForTests()
   jest.clearAllMocks()
   mockReplaceAll.mockResolvedValue(undefined)
   mockFindAll.mockResolvedValue([calendarToken])
@@ -112,8 +113,9 @@ describe("useSyncCalendars", () => {
     mockFetch.mockResolvedValueOnce(syncResponse)
 
     const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    let outcome
     await act(async () => {
-      await result.current.sync()
+      outcome = await result.current.sync()
     })
 
     // POST /calendars/sync with the held tokens (batch, one call).
@@ -134,19 +136,22 @@ describe("useSyncCalendars", () => {
       { name: "CM", color: "#FF0000", icon: "book" },
     ])
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
+    expect(outcome).toEqual({ status: "events-ready", metadata: "current" })
   })
 
   it("is a no-op (no request) when there are no tokens", async () => {
     mockFindAll.mockResolvedValue([])
 
     const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    let outcome
     await act(async () => {
-      await result.current.sync()
+      outcome = await result.current.sync()
     })
 
     expect(mockFetch).not.toHaveBeenCalled()
     expect(mockReplaceAll).not.toHaveBeenCalled()
     expect(result.current.isError).toBe(false)
+    expect(outcome).toEqual({ status: "no-calendars" })
   })
 
   it("flips isError without recordError when the fetch fails (recoverable)", async () => {
@@ -168,13 +173,15 @@ describe("useSyncCalendars", () => {
     mockReplaceAll.mockRejectedValueOnce(new Error("sqlite boom"))
 
     const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    let outcome
     await act(async () => {
-      await result.current.sync()
+      outcome = await result.current.sync()
     })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe("calendar/sync")
+    expect(outcome).toEqual({ status: "failed", reason: "event-write" })
   })
 
   it("records a dtoToRow mapping failure (a malformed DTO is crash-worthy, not a silent fetch error)", async () => {
@@ -274,8 +281,9 @@ describe("useSyncCalendars", () => {
       mockUpdateName.mockRejectedValueOnce(new Error("sqlite boom"))
 
       const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+      let outcome
       await act(async () => {
-        await result.current.sync()
+        outcome = await result.current.sync()
       })
 
       // The events the user came for stayed committed — the replace ran and was
@@ -288,6 +296,101 @@ describe("useSyncCalendars", () => {
       expect(mockRecordUnknownError.mock.calls[0]?.[1]).toBe(
         "calendar/sync-names",
       )
+      expect(outcome).toEqual({ status: "events-ready", metadata: "stale" })
+    })
+  })
+
+  describe("serial coordination", () => {
+    it("makes ordinary concurrent triggers join one pass", async () => {
+      const response = deferred<typeof syncResponse>()
+      mockFetch.mockReturnValueOnce(response.promise)
+      const first = await renderHook(() => useSyncCalendars(), { wrapper })
+      const second = await renderHook(() => useSyncCalendars(), { wrapper })
+
+      let firstPromise!: ReturnType<typeof first.result.current.sync>
+      let secondPromise!: ReturnType<typeof second.result.current.sync>
+      await act(async () => {
+        firstPromise = first.result.current.sync()
+        secondPromise = second.result.current.sync()
+        await Promise.resolve()
+      })
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        response.resolve(syncResponse)
+        await Promise.all([firstPromise, secondPromise])
+      })
+      expect(mockReplaceAll).toHaveBeenCalledTimes(1)
+      expect(mockRefreshActivity).toHaveBeenCalledTimes(1)
+    })
+
+    it.each(["success", "failure"] as const)(
+      "runs one coalesced fresh pass after older-pass %s and rereads tokens",
+      async (settlement) => {
+        const firstResponse = deferred<typeof syncResponse>()
+        const newCalendar = { ...calendarToken, id: "cal-2", token: "tok_456" }
+        mockFindAll
+          .mockResolvedValueOnce([calendarToken])
+          .mockResolvedValueOnce([calendarToken, newCalendar])
+        mockFetch.mockReturnValueOnce(firstResponse.promise)
+        if (settlement === "success") {
+          mockFetch.mockResolvedValueOnce(syncResponse)
+        } else {
+          mockFetch.mockRejectedValueOnce(new Error("fresh offline"))
+        }
+        const first = await renderHook(() => useSyncCalendars(), { wrapper })
+        const importer = await renderHook(() => useSyncCalendars(), { wrapper })
+
+        let oldPromise!: ReturnType<typeof first.result.current.sync>
+        let freshOne!: ReturnType<typeof importer.result.current.sync>
+        let freshTwo!: ReturnType<typeof importer.result.current.sync>
+        await act(async () => {
+          oldPromise = first.result.current.sync()
+          freshOne = importer.result.current.sync({ freshAfterCurrent: true })
+          freshTwo = importer.result.current.sync({ freshAfterCurrent: true })
+          await Promise.resolve()
+        })
+        expect(mockFetch).toHaveBeenCalledTimes(1)
+
+        await act(async () => {
+          firstResponse.resolve(syncResponse)
+          await Promise.all([oldPromise, freshOne, freshTwo])
+        })
+
+        expect(mockFetch).toHaveBeenCalledTimes(2)
+        expect(mockFindAll).toHaveBeenCalledTimes(2)
+        expect(mockFetch.mock.calls[1]?.[1].body).toBe(
+          JSON.stringify({ tokens: ["tok_123", "tok_456"] }),
+        )
+        expect(mockReplaceAll).toHaveBeenCalledTimes(
+          settlement === "success" ? 2 : 1,
+        )
+      },
+    )
+
+    it("starts the fresh pass after an older failure", async () => {
+      const oldResponse = deferred<typeof syncResponse>()
+      mockFetch
+        .mockReturnValueOnce(oldResponse.promise)
+        .mockResolvedValueOnce(syncResponse)
+      const first = await renderHook(() => useSyncCalendars(), { wrapper })
+      const importer = await renderHook(() => useSyncCalendars(), { wrapper })
+      mockReplaceAll.mockRejectedValueOnce(new Error("old write failed"))
+
+      let oldPromise!: ReturnType<typeof first.result.current.sync>
+      let freshPromise!: ReturnType<typeof importer.result.current.sync>
+      await act(async () => {
+        oldPromise = first.result.current.sync()
+        freshPromise = importer.result.current.sync({ freshAfterCurrent: true })
+        await Promise.resolve()
+      })
+
+      await act(async () => {
+        oldResponse.resolve(syncResponse)
+        await Promise.all([oldPromise, freshPromise])
+      })
+      expect(mockFetch).toHaveBeenCalledTimes(2)
+      expect(mockReplaceAll).toHaveBeenCalledTimes(2)
     })
   })
 

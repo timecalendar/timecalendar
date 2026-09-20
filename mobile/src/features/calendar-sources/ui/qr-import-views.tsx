@@ -9,6 +9,7 @@ import { ThemedView } from "@/components/themed-view"
 import { WriteErrorNotice } from "@/components/write-error-notice"
 import { Radii, Spacing, useTheme } from "@/theme"
 
+import { ImportProgressView } from "./import-progress-view"
 import { QrActionButton } from "./qr-action-button"
 
 interface ScannerProps {
@@ -35,27 +36,23 @@ export function QrScannerView({
   )
 }
 
-export function QrImportingView(props: ScannerProps) {
-  return <QrCameraFrame {...props} />
-}
-
-export function QrImportCompletedView(props: ScannerProps) {
-  return <QrCameraFrame {...props} />
+export function QrImportingView() {
+  const { t } = useTranslation()
+  return <ImportProgressView message={t("calendarImport.source.importing")} />
 }
 
 export function QrImportFailureView({
-  onBarcodeScanned,
   retry,
   scanAnother,
   enterManualUrl,
-}: ScannerProps & {
+}: {
   retry: () => void
   scanAnother: () => void
   enterManualUrl: () => void
 }) {
   const { t } = useTranslation()
   return (
-    <QrCameraFrame onBarcodeScanned={onBarcodeScanned}>
+    <ImportProgressViewFrame>
       <View style={styles.recoveryActions}>
         <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
         <QrActionButton
@@ -80,7 +77,20 @@ export function QrImportFailureView({
           disabled={false}
         />
       </View>
-    </QrCameraFrame>
+    </ImportProgressViewFrame>
+  )
+}
+
+function ImportProgressViewFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <SafeAreaView style={styles.readableFailure}>
+      <AdaptiveContent
+        lane="readable"
+        contentContainerStyle={styles.failureLane}
+      >
+        {children}
+      </AdaptiveContent>
+    </SafeAreaView>
   )
 }
 
@@ -140,4 +150,6 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     gap: Spacing.three,
   },
+  readableFailure: { flex: 1 },
+  failureLane: { flex: 1, justifyContent: "center" },
 })

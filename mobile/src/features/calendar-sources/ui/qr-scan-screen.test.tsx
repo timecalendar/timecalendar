@@ -86,6 +86,7 @@ jest.mock("expo-router", () => ({
     back: jest.fn(),
     canDismiss: jest.fn(() => true),
     dismissAll: jest.fn(),
+    dismissTo: jest.fn(),
     push: jest.fn(),
     replace: jest.fn(),
   },
@@ -160,6 +161,7 @@ jest.mock("@/features/onboarding/draft/context", () => ({
 const mockBack = router.back as jest.Mock
 const mockCanDismiss = router.canDismiss as jest.Mock
 const mockDismissAll = router.dismissAll as jest.Mock
+const mockDismissTo = router.dismissTo as jest.Mock
 const mockPush = router.push as jest.Mock
 const mockReplace = router.replace as jest.Mock
 const mockRecordUnknownError = recordUnknownError as jest.Mock
@@ -312,7 +314,7 @@ describe("QrScanScreen", () => {
 
   it("persists a scanned URL through the durable seam and dismisses", async () => {
     cameraState.nextScan = { data: "webcal://example.com/cal.ics", type: "qr" }
-    const { getByTestId } = await render(<QrScanScreen />)
+    const { getByTestId, queryByTestId } = await render(<QrScanScreen />)
 
     await act(async () => {
       fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
@@ -324,17 +326,17 @@ describe("QrScanScreen", () => {
       "https://example.com/cal.ics",
       { name: "L3 Informatique", schoolId: "univeiffel" },
     )
-    // Success leaves the whole journey rather than returning to the step that
-    // sent us here, and spends the draft.
-    await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
-    expect(mockClearDraft).toHaveBeenCalledTimes(1)
+    // Durable identity hands off to the root result. The onboarding provider
+    // clears the draft when root-targeted dismissal unmounts it.
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockDismissTo).toHaveBeenCalledWith("/calendar-import-result")
+    expect(queryByTestId("qr-scan-camera")).toBeNull()
+    expect(mockClearDraft).not.toHaveBeenCalled()
     expect(mockBack).not.toHaveBeenCalled()
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
 
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
     expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(1)
-    expect(mockClearDraft).toHaveBeenCalledTimes(1)
-    expect(mockDismissAll).toHaveBeenCalledTimes(1)
+    expect(mockDismissTo).toHaveBeenCalledTimes(1)
   })
 
   it("preserves the inert empty-field derivation in a seeded development journey", async () => {
@@ -351,13 +353,15 @@ describe("QrScanScreen", () => {
       "https://example.com/cal.ics",
       { name: "", schoolName: "" },
     )
-    await waitFor(() => expect(mockBack).toHaveBeenCalledTimes(1))
-    expect(mockDismissAll).not.toHaveBeenCalled()
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockDismissTo).toHaveBeenCalledWith("/calendar-import-result")
   })
 
   it("shows a recoverable message for a non-calendar QR without recording", async () => {
     cameraState.nextScan = { data: "BEGIN:VCARD", type: "qr" }
-    const { getByTestId, getByText } = await render(<QrScanScreen />)
+    const { getByTestId, getByText, queryByTestId } = await render(
+      <QrScanScreen />,
+    )
 
     await act(async () => {
       fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
@@ -373,6 +377,7 @@ describe("QrScanScreen", () => {
 
     cameraState.nextScan = { data: "https://other.example/new.ics", type: "qr" }
     await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
+    expect(queryByTestId("qr-scan-camera")).toBeNull()
     expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).not.toHaveBeenCalled()
   })
@@ -380,7 +385,7 @@ describe("QrScanScreen", () => {
   it("keeps a failed valid scan locked, preserves its fields, and records the invocation once", async () => {
     const firstAttempt = deferred<void>()
     mockAddCalendarFromUrl.mockReturnValueOnce(firstAttempt.promise)
-    const { getByTestId, getByText, queryByText } = await render(
+    const { getByTestId, getByText, queryByTestId, queryByText } = await render(
       <QrScanScreen />,
     )
 
@@ -389,8 +394,9 @@ describe("QrScanScreen", () => {
       data: "https://other.example/second.ics",
       type: "qr",
     }
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
     expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(1)
+    expect(queryByTestId("qr-scan-camera")).toBeNull()
+    expect(getByText("Adding your calendar…")).toBeTruthy()
 
     await act(async () => firstAttempt.reject(new Error("backend unavailable")))
 
@@ -404,6 +410,7 @@ describe("QrScanScreen", () => {
       getByText("Something went wrong while scanning. Please try again."),
     ).toBeTruthy()
     expect(getByTestId("qr-scan-retry")).toBeTruthy()
+    expect(queryByTestId("qr-scan-camera")).toBeNull()
     expect(getByTestId("qr-scan-another")).toBeTruthy()
     expect(getByTestId("qr-scan-manual-url")).toBeTruthy()
     for (const testID of [
@@ -420,7 +427,6 @@ describe("QrScanScreen", () => {
     expect(queryByText("L3 Informatique")).toBeNull()
     expect(queryByText("univeiffel")).toBeNull()
 
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
     expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(1)
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
     expect(mockClearDraft).not.toHaveBeenCalled()
@@ -444,8 +450,6 @@ describe("QrScanScreen", () => {
     const retryButton = getByTestId("qr-scan-retry")
     await fireEvent.press(retryButton)
     await fireEvent.press(retryButton)
-    await fireEvent.press(getByTestId("qr-scan-camera-simulate-scan"))
-
     expect(mockAddCalendarFromUrl).toHaveBeenCalledTimes(2)
     expect(mockAddCalendarFromUrl).toHaveBeenLastCalledWith(
       "https://example.com/cal.ics",
@@ -453,8 +457,8 @@ describe("QrScanScreen", () => {
     )
 
     await act(async () => retryAttempt.resolve())
-    await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
-    expect(mockClearDraft).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockClearDraft).not.toHaveBeenCalled()
     expect(mockRecordUnknownError).toHaveBeenCalledTimes(1)
   })
 
@@ -495,8 +499,8 @@ describe("QrScanScreen", () => {
       "https://other.example/new.ics",
       { name: "L3 Informatique", schoolId: "univeiffel" },
     )
-    await waitFor(() => expect(mockDismissAll).toHaveBeenCalledTimes(1))
-    expect(mockClearDraft).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(mockDismissTo).toHaveBeenCalledTimes(1))
+    expect(mockClearDraft).not.toHaveBeenCalled()
   })
 
   it("switches to manual iCal without clearing or exposing the captured attempt", async () => {
@@ -509,7 +513,8 @@ describe("QrScanScreen", () => {
     await waitFor(() => expect(getByTestId("qr-scan-manual-url")).toBeTruthy())
     await fireEvent.press(getByTestId("qr-scan-manual-url"))
 
-    expect(mockPush).toHaveBeenCalledWith("/onboarding/ical-url")
+    expect(mockReplace).toHaveBeenCalledWith("/onboarding/ical-url")
+    expect(mockPush).not.toHaveBeenCalled()
     expect(mockClearDraft).not.toHaveBeenCalled()
     expect(mockBack).not.toHaveBeenCalled()
     expect(mockDismissAll).not.toHaveBeenCalled()
