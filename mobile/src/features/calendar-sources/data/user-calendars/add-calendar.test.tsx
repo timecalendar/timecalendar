@@ -277,6 +277,28 @@ describe("useAddCalendar", () => {
     expect(mockUpsert).toHaveBeenCalledTimes(1)
   })
 
+  it("ignores a failed settlement after the consumer unmounts", async () => {
+    const create = deferred<{ token: string }>()
+    mockFetch.mockReturnValueOnce(create.promise)
+    const { result, unmount } = await renderHook(() => useAddCalendar(), {
+      wrapper,
+    })
+
+    let operation!: Promise<void>
+    await act(async () => {
+      operation = result.current.addCalendarFromUrl(
+        "https://example.com/cal.ics",
+        { name: "", schoolName: "" },
+      )
+      await Promise.resolve()
+    })
+    unmount()
+    create.reject(new Error("late create failure"))
+
+    await expect(operation).rejects.toThrow("late create failure")
+    expect(mockUpsert).not.toHaveBeenCalled()
+  })
+
   it("starts a clean checkpoint for a materially new source", async () => {
     mockFetch
       .mockResolvedValueOnce({ token: "tok_old" })
