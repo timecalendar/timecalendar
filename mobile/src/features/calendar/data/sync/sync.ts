@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react"
+import { useState } from "react"
 
 import { useCalendarSyncControllerSyncCalendars } from "@/api/generated/calendars/calendars"
 import { refreshNewestPage } from "@/features/activity"
@@ -68,17 +68,18 @@ export function resetCalendarSyncCoordinatorForTests(): void {
 }
 
 export function useSyncCalendars(): UseSyncCalendars {
-  const mutation = useCalendarSyncControllerSyncCalendars()
+  const { mutateAsync, reset: resetMutation } =
+    useCalendarSyncControllerSyncCalendars()
   const [isSyncing, setIsSyncing] = useState(false)
   const [isError, setIsError] = useState(false)
 
-  const runPass = useCallback(async (): Promise<CalendarSyncOutcome> => {
+  const runPass = async (): Promise<CalendarSyncOutcome> => {
     try {
       const calendars = await findAllUserCalendars()
       const tokens = calendars.map((calendar) => calendar.token)
       if (tokens.length === 0) return { status: "no-calendars" }
 
-      const result = await mutation.mutateAsync({ data: { tokens } })
+      const result = await mutateAsync({ data: { tokens } })
 
       try {
         const rows = result.flatMap((calendar) =>
@@ -114,31 +115,34 @@ export function useSyncCalendars(): UseSyncCalendars {
       // transactional replacement, so last-good offline rows remain intact.
       return { status: "failed", reason: "remote-read" }
     }
-  }, [mutation])
+  }
 
-  const sync = useCallback(
-    async (options: CalendarSyncOptions = {}): Promise<CalendarSyncOutcome> => {
-      setIsSyncing(true)
-      setIsError(false)
-      try {
-        const outcome = await coordinateSync(runPass, options)
+  const sync = async (
+    options: CalendarSyncOptions = {},
+  ): Promise<CalendarSyncOutcome> => {
+    setIsSyncing(true)
+    setIsError(false)
+    return coordinateSync(runPass, options).then(
+      (outcome) => {
         setIsError(
           outcome.status === "failed" ||
             (outcome.status === "events-ready" && outcome.metadata === "stale"),
         )
-        return outcome
-      } finally {
         setIsSyncing(false)
-      }
-    },
-    [runPass],
-  )
+        return outcome
+      },
+      (error: unknown) => {
+        setIsSyncing(false)
+        throw error
+      },
+    )
+  }
 
-  const reset = useCallback((): void => {
-    mutation.reset()
+  const reset = (): void => {
+    resetMutation()
     setIsError(false)
     setIsSyncing(false)
-  }, [mutation])
+  }
 
   return { sync, isSyncing, isError, reset }
 }
