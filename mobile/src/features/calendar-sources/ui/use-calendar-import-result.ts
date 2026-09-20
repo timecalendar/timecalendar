@@ -45,13 +45,19 @@ export function useCalendarImportResult(): CalendarImportResultController {
   const [phase, setPhase] = useState<CalendarImportResultPhase>("loading")
   const activeRef = useRef(true)
   const inFlightRef = useRef(false)
+  const startedRef = useRef(false)
 
   useEffect(() => {
     activeRef.current = true
-    executeSync(sync, { active: activeRef, inFlight: inFlightRef }, setPhase)
     return () => {
       activeRef.current = false
     }
+  }, [])
+
+  useEffect(() => {
+    if (startedRef.current) return
+    startedRef.current = true
+    executeSync(sync, { active: activeRef, inFlight: inFlightRef }, setPhase)
   }, [sync])
 
   return {

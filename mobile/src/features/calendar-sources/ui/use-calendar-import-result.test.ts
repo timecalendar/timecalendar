@@ -25,6 +25,9 @@ beforeEach(() => {
 describe("useCalendarImportResult", () => {
   it("requests one fresh pass on mount and accepts empty-event readiness", async () => {
     sync.mockResolvedValue({ status: "events-ready", metadata: "current" })
+    mockUseSyncCalendars.mockImplementation(() => ({
+      sync: (...args: Parameters<typeof sync>) => sync(...args),
+    }))
     const { result, rerender } = await renderHook(() =>
       useCalendarImportResult(),
     )
