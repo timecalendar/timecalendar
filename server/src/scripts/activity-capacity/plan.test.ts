@@ -9,12 +9,14 @@ import {
   unreadCountSql,
 } from "modules/calendar-log/repositories/activity-search.queries"
 import {
+  COHORTS,
   CohortSpec,
   SqlRunner,
   cohortCalendarIds,
   cohortTokens,
   seedFixtures,
 } from "./fixtures"
+import { redactPlan } from "./redact"
 
 /**
  * The plan regression tripwire (design decision D6).
@@ -41,14 +43,20 @@ import {
 // is the harness's job. Small enough to seed in a couple of seconds, large
 // enough that scanning it costs the planner far more than one index descent.
 const CI_SCALE = { backgroundCalendars: 400, backgroundLogs: 12_000 }
-const CI_COHORT: CohortSpec = { key: "c1-year", calendars: 1, variant: "year" }
+const requireCohort = (key: string): CohortSpec => {
+  const cohort = COHORTS.find((entry) => entry.key === key)
+  if (!cohort) throw new Error(`activity-capacity: fixture ${key} missing`)
+  return cohort
+}
+const CI_COHORT = requireCohort("c1-year")
+const CI_BOUNDED_COHORTS = [
+  CI_COHORT,
+  requireCohort("c10-year"),
+  requireCohort("c100-year"),
+]
 // The empty cohort is the one that exposed the planner cliff at full scale, and
 // it is the majority request in production: 75% of calendars carry no log.
-const CI_EMPTY_COHORT: CohortSpec = {
-  key: "c100-empty",
-  calendars: 100,
-  variant: "empty",
-}
+const CI_EMPTY_COHORT = requireCohort("c100-empty")
 const PAGE_SIZE = 50
 const SHAPES: PageShape[] = ["specification", "lateral"]
 
@@ -81,7 +89,15 @@ describe("activity-capacity plan tripwire", () => {
       `EXPLAIN (ANALYZE, BUFFERS) ${sql}`,
       params,
     )
-    return rows.map((row) => row["QUERY PLAN"]).join("\n")
+    return redactPlan(rows.map((row) => row["QUERY PLAN"]).join("\n"))
+  }
+
+  const expectBoundedLateralPlan = (plan: string) => {
+    expect(plan).not.toMatch(/Seq Scan on calendar_log/)
+    expect(plan).not.toMatch(
+      /Index Scan Backward using "IDX_calendar_log_createdAt" on calendar_log/,
+    )
+    expect(plan).toMatch(/IDX_calendar_log_calendar_createdAt/)
   }
 
   const pageParams = (cursor?: { createdAt: Date; id: string }) =>
@@ -101,6 +117,27 @@ describe("activity-capacity plan tripwire", () => {
       expect(plan).toMatch(/IDX_calendar_log_calendar_createdAt/)
     },
   )
+
+  it("keeps the shipped lateral plan bounded for one, ten, one-hundred and empty cohorts", async () => {
+    await seedFixtures(runner, {
+      scale: CI_SCALE,
+      cohorts: [...CI_BOUNDED_COHORTS, CI_EMPTY_COHORT],
+      vacuum: false,
+    })
+
+    for (const cohort of [...CI_BOUNDED_COHORTS, CI_EMPTY_COHORT]) {
+      const plan = await explain(
+        pageSqlForShape("lateral", false),
+        calendarLogPageParams({
+          calendarIds: cohortCalendarIds(cohort),
+          asOf: new Date(),
+          limit: PAGE_SIZE,
+        }),
+      )
+
+      expectBoundedLateralPlan(plan)
+    }
+  })
 
   it.each(SHAPES)(
     "does not sequentially scan calendar_log for a bounded following page (%s)",
@@ -179,6 +216,22 @@ describe("activity-capacity plan tripwire", () => {
     // One index descent per calendar, a handful of pages each. The
     // specification's shape reads the whole index here at production scale.
     expect(buffers).toBeLessThan(CI_EMPTY_COHORT.calendars * 10)
+  })
+
+  it("rejects the specification shape's full global-index walk for the empty cohort", async () => {
+    const plan = await explain(
+      pageSqlForShape("specification", false),
+      calendarLogPageParams({
+        calendarIds: cohortCalendarIds(CI_EMPTY_COHORT),
+        asOf: new Date(),
+        limit: PAGE_SIZE,
+      }),
+    )
+
+    expect(plan).toMatch(
+      /Index Scan Backward using "IDX_calendar_log_createdAt" on calendar_log/,
+    )
+    expect(() => expectBoundedLateralPlan(plan)).toThrow()
   })
 
   it("does not sequentially scan calendar_log for a bounded unread count", async () => {
