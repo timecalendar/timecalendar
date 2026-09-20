@@ -78,6 +78,16 @@ export function formatDayHeaderParts(
   }
 }
 
+export function formatNarrowWeekday(
+  day: Date,
+  locale: AppLocale,
+  zone: string,
+): string {
+  return formatInTimeZone(day, zone, "EEEEE", {
+    locale: LOCALES[locale],
+  }).toUpperCase()
+}
+
 // An event's time range "HH:mm – HH:mm" (24-hour, zero-padded). 24-hour is the
 // French-first default and reads cleanly in EN too (R-3 — the platform/brand
 // reference, not the Flutter `jm` AM/PM).

@@ -228,61 +228,63 @@ function GuidePageContent({
     <>
       <Stack.Screen options={{ title: t("exportGuide.page.title") }} />
       <RootPage testID="export-guide-page" lane="readable" style={styles.fill}>
-        <ScrollView
-          testID="export-guide-page-scroll"
-          contentContainerStyle={styles.content}
-        >
-          <View ref={heading} accessible accessibilityRole="header">
-            <ThemedText type="title">{page.title}</ThemedText>
-            <ThemedText
-              testID="export-guide-progress"
-              accessibilityLabel={progress}
-              themeColor="textSecondary"
-            >
-              {progress}
-            </ThemedText>
-          </View>
-          <ThemedText>{page.description}</ThemedText>
-          {page.image === undefined ? null : (
-            <ExportGuideImage
-              key={pageIndex}
-              image={page.image}
-              testID="export-guide-page-image"
-              onFailure={() => {
-                emitExportGuideEvent({
-                  name: "export_guide_image_failed",
-                  params: {
-                    provider_slug: state.snapshot.providerSlug,
-                    image_role: "page",
-                    page_index: pageIndex,
-                    failure: "load",
-                  },
-                })
-              }}
-            />
-          )}
-          <PrimaryAction
-            testID="export-guide-next"
-            label={
-              pageIndex === total - 1
-                ? t("exportGuide.finish")
-                : t("exportGuide.next")
-            }
-            disabled={state.phase !== "guide"}
-            onPress={next}
-          />
-          <Pressable
-            testID="export-guide-visible-back"
-            accessibilityRole="button"
-            accessibilityLabel={t("common.back")}
-            onPress={() => router.back()}
-            style={[styles.back, { borderColor: theme.primary }]}
+        {({ laneStyle }) => (
+          <ScrollView
+            testID="export-guide-page-scroll"
+            contentContainerStyle={[laneStyle, styles.content]}
           >
-            <ThemedText type="smallBold" themeColor="primary">
-              {t("common.back")}
-            </ThemedText>
-          </Pressable>
-        </ScrollView>
+            <View ref={heading} accessible accessibilityRole="header">
+              <ThemedText type="title">{page.title}</ThemedText>
+              <ThemedText
+                testID="export-guide-progress"
+                accessibilityLabel={progress}
+                themeColor="textSecondary"
+              >
+                {progress}
+              </ThemedText>
+            </View>
+            <ThemedText>{page.description}</ThemedText>
+            {page.image === undefined ? null : (
+              <ExportGuideImage
+                key={pageIndex}
+                image={page.image}
+                testID="export-guide-page-image"
+                onFailure={() => {
+                  emitExportGuideEvent({
+                    name: "export_guide_image_failed",
+                    params: {
+                      provider_slug: state.snapshot.providerSlug,
+                      image_role: "page",
+                      page_index: pageIndex,
+                      failure: "load",
+                    },
+                  })
+                }}
+              />
+            )}
+            <PrimaryAction
+              testID="export-guide-next"
+              label={
+                pageIndex === total - 1
+                  ? t("exportGuide.finish")
+                  : t("exportGuide.next")
+              }
+              disabled={state.phase !== "guide"}
+              onPress={next}
+            />
+            <Pressable
+              testID="export-guide-visible-back"
+              accessibilityRole="button"
+              accessibilityLabel={t("common.back")}
+              onPress={() => router.back()}
+              style={[styles.back, { borderColor: theme.primary }]}
+            >
+              <ThemedText type="smallBold" themeColor="primary">
+                {t("common.back")}
+              </ThemedText>
+            </Pressable>
+          </ScrollView>
+        )}
       </RootPage>
     </>
   )
@@ -290,7 +292,7 @@ function GuidePageContent({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  content: { gap: Spacing.four, paddingBottom: Spacing.four },
+  content: { gap: Spacing.four, paddingVertical: Spacing.four },
   back: {
     minHeight: 48,
     alignItems: "center",

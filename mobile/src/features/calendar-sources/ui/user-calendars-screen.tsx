@@ -105,39 +105,37 @@ export function UserCalendarsScreen() {
           }),
         }}
       />
-      <RootPage
-        testID="user-calendars-content"
-        lane="standard"
-        style={styles.page}
-      >
+      <RootPage testID="user-calendars-content" lane="standard">
         {(layout) => (
-          <View
-            testID="user-calendars-safe-area"
-            style={[layout.laneStyle, styles.safeArea]}
-          >
+          <View testID="user-calendars-safe-area" style={styles.safeArea}>
             {failed && (
-              <WriteErrorNotice
-                message={t("userCalendars.error")}
-                style={styles.error}
-              />
+              <View style={layout.laneStyle}>
+                <WriteErrorNotice
+                  message={t("userCalendars.error")}
+                  style={styles.error}
+                />
+              </View>
             )}
 
             {/* Gate the empty state on the read resolving: useLiveQuery starts empty
             and settles async, so rendering it before `loaded` would flash and
             false-announce "no calendars" on entry. */}
             {!loaded ? null : calendars.length === 0 ? (
-              <EmptyState
-                variant="screen"
-                title={t("userCalendars.emptyTitle")}
-                caption={t("userCalendars.empty")}
-                testID="user-calendars-empty"
-              />
+              <View style={[layout.laneStyle, styles.empty]}>
+                <EmptyState
+                  variant="screen"
+                  title={t("userCalendars.emptyTitle")}
+                  caption={t("userCalendars.empty")}
+                  testID="user-calendars-empty"
+                />
+              </View>
             ) : (
               <FlatList
                 testID="user-calendars-list"
                 data={calendars}
                 keyExtractor={(calendar) => calendar.id}
                 contentContainerStyle={[
+                  layout.laneStyle,
                   styles.content,
                   Platform.OS === "android" && styles.contentWithFab,
                 ]}
@@ -201,9 +199,7 @@ export function UserCalendarsScreen() {
 }
 
 const styles = StyleSheet.create({
-  page: {
-    paddingTop: 0,
-  },
+  empty: { flex: 1, paddingTop: Spacing.four },
   safeArea: {
     flex: 1,
     gap: Spacing.three,

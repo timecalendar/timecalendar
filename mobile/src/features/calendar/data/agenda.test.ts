@@ -4,6 +4,9 @@ import { type CalendarEvent } from "./types"
 
 function event(id: string, startsAt: Date, endsAt: Date): CalendarEvent {
   return {
+    version: 1,
+    kind: "timed",
+    identity: { source: "synced", uid: id },
     id,
     title: id,
     color: "#1E88E5",

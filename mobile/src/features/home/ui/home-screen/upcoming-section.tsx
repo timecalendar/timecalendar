@@ -1,5 +1,11 @@
 import { useTranslation } from "react-i18next"
-import { Platform, Pressable, StyleSheet, View } from "react-native"
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type ViewStyle,
+} from "react-native"
 
 import { EmptyState } from "@/components/empty-state"
 import { ThemedText } from "@/components/themed-text"
@@ -14,6 +20,8 @@ import { UpcomingScroller } from "@/features/home/ui/upcoming-scroller"
 import { Radii, Spacing, useTheme } from "@/theme"
 
 interface UpcomingSectionProps {
+  laneStyle: ViewStyle
+  contentInset: number
   now: Date
   locale: "fr" | "en"
   displayZone: string
@@ -26,6 +34,8 @@ interface UpcomingSectionProps {
 }
 
 export function UpcomingSection({
+  laneStyle,
+  contentInset,
   now,
   locale,
   displayZone,
@@ -42,7 +52,7 @@ export function UpcomingSection({
 
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeader}>
+      <View style={[laneStyle, styles.sectionHeader]}>
         {isEmpty ? (
           <EmptyState
             variant="section"
@@ -69,6 +79,7 @@ export function UpcomingSection({
       </View>
       {events.length > 0 ? (
         <UpcomingScroller
+          contentInset={contentInset}
           events={events}
           checklistProgress={checklistProgress}
           locale={locale}
@@ -76,18 +87,22 @@ export function UpcomingSection({
           onPressEvent={onPressEvent}
         />
       ) : todayEventCount > 0 ? (
-        <ThemedText themeColor="textSecondary">
-          {t("home.upcoming.finished")}
-        </ThemedText>
+        <View style={laneStyle}>
+          <ThemedText themeColor="textSecondary">
+            {t("home.upcoming.finished")}
+          </ThemedText>
+        </View>
       ) : nextDay !== undefined ? (
-        <NextDayCard
-          day={nextDay.day}
-          count={nextDay.events.length}
-          firstStart={nextDay.firstTimedStart}
-          locale={locale}
-          displayZone={displayZone}
-          onPress={() => onOpenCalendar(nextDay.day)}
-        />
+        <View style={laneStyle}>
+          <NextDayCard
+            day={nextDay.day}
+            count={nextDay.events.length}
+            firstStart={nextDay.firstTimedStart}
+            locale={locale}
+            displayZone={displayZone}
+            onPress={() => onOpenCalendar(nextDay.day)}
+          />
+        </View>
       ) : null}
     </View>
   )

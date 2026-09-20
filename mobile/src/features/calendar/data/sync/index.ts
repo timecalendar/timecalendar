@@ -2,7 +2,11 @@
 // sub-module imports the sibling sublayer files by their @/features/calendar/data
 // alias path (the ../ ban) — the specific files (types/events), never this barrel
 // nor the feature barrel.
-export { useSyncedEvents } from "./hooks"
+export {
+  type SyncedEventRowRange,
+  useSyncedEventRowsInRange,
+  useSyncedEvents,
+} from "./hooks"
 export { replaceAll } from "./repository"
 export { useStartupSync } from "./startup"
 export { type UseSyncCalendars, useSyncCalendars } from "./sync"

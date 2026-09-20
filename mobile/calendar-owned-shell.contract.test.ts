@@ -91,6 +91,7 @@ describe("owned Calendar paging repository contract", () => {
       "owned-calendar-resize.ts",
       "owned-calendar-shell.test.tsx",
       "owned-calendar-shell.tsx",
+      "owned-calendar-zoom.test.ts",
       "owned-calendar-zoom.ts",
       "pager-page-scroll.ts",
     ])
@@ -135,8 +136,9 @@ describe("owned Calendar paging repository contract", () => {
     expect(renderer.match(/<AnimatedPagerView\s+ref=/g)).toHaveLength(1)
     expect(progress).toContain("export const CENTER_PAGE = 1")
     expect(renderer).toMatch(/initialPage=\{CENTER_PAGE\}/)
-    expect(renderer).toContain("timelineColumns")
-    expect(renderer).toContain("shiftTimelineAnchor")
+    expect(renderer).not.toContain("timelineColumns")
+    expect(renderer).not.toContain("shiftTimelineAnchor")
+    expect(renderer).toContain("pages={coordinator.pages}")
     expect(renderer).toContain('testID="owned-calendar-date-header"')
     expect(renderer).toContain('testID="owned-calendar-date-header-viewport"')
     expect(renderer).toContain('testID="owned-calendar-date-header-strip"')
@@ -162,6 +164,46 @@ describe("owned Calendar paging repository contract", () => {
     expect(zoom).toContain("useSharedValue")
     expect(zoom).toContain("scheduleOnRN")
     expect(zoom).not.toMatch(/\buseState\b|\brunOnJS\b/)
+  })
+
+  it("pins bounded local presentation and original-identity activation", () => {
+    const dataRoot = join(root, "src/features/calendar/data")
+    const required = [
+      "event-decoder.ts",
+      "range-plan.ts",
+      "timed-support.ts",
+      "timeline-presentation.ts",
+      "timeline-presentation-hook.ts",
+    ]
+    for (const file of required) {
+      expect(existsSync(join(dataRoot, file))).toBe(true)
+    }
+
+    const range = readFileSync(join(dataRoot, "range-plan.ts"), "utf8")
+    const presentation = readFileSync(
+      join(dataRoot, "timeline-presentation.ts"),
+      "utf8",
+    )
+    const hook = readFileSync(
+      join(dataRoot, "timeline-presentation-hook.ts"),
+      "utf8",
+    )
+    const renderer = readFileSync(
+      join(root, "src/features/calendar/renderer/owned-calendar-canvas.tsx"),
+      "utf8",
+    )
+    const navigationBoundary = [range, presentation, hook, renderer].join("\n")
+
+    expect(range).toContain("const DIRECTIONS = [-1, 0, 1] as const")
+    expect(range).toContain("instant: { from, to }")
+    expect(range).toContain("civil: { fromDay, toDay }")
+    expect(presentation).toContain("CalendarTimelinePresentationV1")
+    expect(presentation).toContain("Object.freeze")
+    expect(renderer).toContain("onEventPress(tile.identity.uid)")
+    expect(renderer).not.toMatch(/onEventPress\([^)]*(?:index|direction|key)/)
+    expect(navigationBoundary).not.toMatch(
+      /@\/api|generated\/|customFetch|fetch\(|useSyncCalendars|syncCalendars/,
+    )
   })
 
   it("scopes the displayed-precision clock and bans continuous calendar work", () => {

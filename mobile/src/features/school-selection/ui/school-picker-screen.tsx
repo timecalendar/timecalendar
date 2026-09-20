@@ -134,7 +134,6 @@ export default function SchoolPickerScreen() {
       <RootPage testID="onboarding-school-content" lane="standard">
         {(schoolListLayout) => (
           <FlatList
-            style={schoolListLayout.laneStyle}
             data={visible}
             keyExtractor={(school) => school.id}
             renderItem={({ item }) => <SchoolRow school={item} />}
@@ -146,6 +145,8 @@ export default function SchoolPickerScreen() {
             keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={[
+              schoolListLayout.laneStyle,
+              { paddingTop: Spacing.four },
               styles.list,
               // Upper-third so the open search keyboard never covers the status.
               visible.length === 0 && { paddingTop: windowHeight * 0.15 },

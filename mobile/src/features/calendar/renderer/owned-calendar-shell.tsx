@@ -6,6 +6,7 @@ import { GestureDetector } from "react-native-gesture-handler"
 import {
   type AppLocale,
   type CalendarTimelineMode,
+  type CalendarTimelinePresentationV1,
   type CalendarTransitionRequest,
   type FirstWeekday,
   formatClockTime,
@@ -39,11 +40,15 @@ type OwnedCalendarShellProps = {
   onTransitionRequest: (request: CalendarTransitionRequest) => void
   onTransitionSettled: (revision: number) => void
   onTransitionCancelled: (revision: number) => void
+  presentation?: CalendarTimelinePresentationV1
+  onEventPress?: (uid: string) => void
 }
 
 export type OwnedCalendarShellHandle = {
   requestZoom: (command: CalendarZoomCommand) => void
 }
+
+const ignoreEventPress = () => undefined
 
 export const OwnedCalendarShell = forwardRef<
   OwnedCalendarShellHandle,
@@ -52,6 +57,11 @@ export const OwnedCalendarShell = forwardRef<
   const { t } = useTranslation()
   const theme = useTheme()
   const coordinator = useOwnedCalendarCoordinator(props)
+  const onEventPress = (uid: string) => {
+    if (coordinator.isEventActivationBlocked()) return
+    const eventPress = props.onEventPress ?? ignoreEventPress
+    eventPress(uid)
+  }
   useImperativeHandle(ref, () => ({ requestZoom: coordinator.requestZoom }), [
     coordinator.requestZoom,
   ])
@@ -75,6 +85,7 @@ export const OwnedCalendarShell = forwardRef<
           heading={props.heading}
           mode={props.mode}
           locale={props.locale}
+          displayZone={props.displayZone}
           uses24HourClock={props.uses24HourClock}
           initialVerticalOffset={props.initialVerticalOffset}
           generation={props.generation}
@@ -91,7 +102,7 @@ export const OwnedCalendarShell = forwardRef<
           onScrollBeginDrag={coordinator.onScrollBeginDrag}
           onScrollEndDrag={coordinator.onScrollEndDrag}
           onViewportLayout={coordinator.onViewportLayout}
-          onMomentumScrollBegin={coordinator.cancelVerticalCandidate}
+          onMomentumScrollBegin={coordinator.onMomentumScrollBegin}
           onMomentumScrollEnd={coordinator.settleVertical}
           onAccessiblePageRequest={coordinator.requestAccessiblePage}
           pixelsPerHour={coordinator.pixelsPerHour}
@@ -107,6 +118,7 @@ export const OwnedCalendarShell = forwardRef<
             props.uses24HourClock,
           )}
           t={t}
+          onEventPress={onEventPress}
         />
       </GestureDetector>
     </View>

@@ -1,28 +1,46 @@
-// The calendar's domain event shape. It exposes ergonomic domain types (`Date`
-// timestamps, a `#RRGGBB` color) and is DESIGNED AGAINST the eventual sync model:
-// the sync-model fields (allDay/teachers/tags/canceled/userCalendarId) mirror the
-// Flutter `calendar_event.toDbMap()` wire format so the later calendar-sync ship's
-// `calendar_events` table maps onto this shape with the ADR-011/018 importer-
-// fidelity posture — WITHOUT a shape change to any consumer.
-//
-// NOT persisted in this ship: the events-source seam (events.ts) feeds this from
-// a fixture + the personal-events read; the sync ship swaps the source behind the
-// unchanged hook. The optional/empty sync fields stay empty until then.
-export interface CalendarEvent {
-  /** uid. */
+export type CalendarEventSource = "synced" | "personal"
+
+export interface CalendarEventIdentityV1 {
+  source: CalendarEventSource
+  uid: string
+}
+
+interface CalendarEventBaseV1 {
+  version: 1
+  identity: CalendarEventIdentityV1
+  /** Compatibility alias used by existing Home/Agenda routes. */
   id: string
   title: string
-  /** #RRGGBB. */
+  /** Validated #RRGGBB surface input. */
   color: string
-  startsAt: Date
-  endsAt: Date
   location: string | undefined
-  allDay: boolean
   description: string | undefined
-  // Designed-in for sync (the sync ship populates these from calendar_events;
-  // empty/false until then):
-  teachers: string[]
-  tags: string[]
+  teachers: readonly string[]
+  tags: readonly string[]
   canceled: boolean
   userCalendarId: string | undefined
 }
+
+export interface TimedCalendarEventV1 extends CalendarEventBaseV1 {
+  kind: "timed"
+  allDay: false
+  startsAt: Date
+  endsAt: Date
+}
+
+export interface DateOnlyCalendarEventV1 extends CalendarEventBaseV1 {
+  kind: "date-only"
+  allDay: true
+  /** Floating Gregorian civil day, YYYY-MM-DD. */
+  startDay: string
+  /** Exclusive floating Gregorian civil day, YYYY-MM-DD. */
+  endDay: string
+  /** UTC-midnight compatibility values for existing Home/Agenda formatters. */
+  startsAt: Date
+  endsAt: Date
+}
+
+/** Validated, schema-versioned calendar rendering domain. */
+export type CalendarEvent = TimedCalendarEventV1 | DateOnlyCalendarEventV1
+
+export const CALENDAR_EVENT_FALLBACK_COLOR = "#64748B"

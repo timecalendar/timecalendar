@@ -140,16 +140,14 @@ describe("SchoolPickerScreen", () => {
     )
 
     const list = owner.children[0] as unknown as {
-      props: { style: unknown }
+      props: { contentContainerStyle: unknown }
     }
     const layout = resolveResponsiveLayout(1024, "standard")
-    expect(StyleSheet.flatten(list.props.style)).toMatchObject({
+    expect(StyleSheet.flatten(list.props.contentContainerStyle)).toMatchObject({
       maxWidth: layout.contentWidth + 2 * layout.gutter,
       paddingHorizontal: layout.gutter,
     })
-    expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
-      paddingTop: Spacing.four,
-    })
+    expect(StyleSheet.flatten(owner.props.style).paddingTop ?? 0).toBe(0)
   })
 
   describe("on Android", () => {
@@ -167,12 +165,14 @@ describe("SchoolPickerScreen", () => {
       }
 
       expect(StyleSheet.flatten(owner.props.style)).toMatchObject({
-        paddingTop: Spacing.four,
         paddingBottom: 24,
       })
       expect(
         StyleSheet.flatten(list.props.contentContainerStyle),
-      ).toMatchObject({ paddingBottom: Spacing.three })
+      ).toMatchObject({
+        paddingTop: Spacing.four,
+        paddingBottom: Spacing.three,
+      })
     })
   })
 

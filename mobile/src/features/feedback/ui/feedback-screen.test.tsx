@@ -10,7 +10,7 @@ import {
 } from "@/features/feedback/data"
 import i18n from "@/i18n"
 import { usePlatform } from "@/test-support/platform"
-import { Colors } from "@/theme"
+import { Colors, Spacing } from "@/theme"
 
 import FeedbackScreen, { normalizeFeedbackParam } from "./feedback-screen"
 
@@ -58,6 +58,15 @@ it.each([390, 768, 800, 1024])(
         },
       ),
     )
+    expect(
+      StyleSheet.flatten(view.getByTestId("feedback-layout-owner").props.style)
+        .paddingTop ?? 0,
+    ).toBe(0)
+    expect(
+      StyleSheet.flatten(
+        view.getByTestId("feedback-scroll-owner").props.contentContainerStyle,
+      ),
+    ).toMatchObject({ paddingTop: Spacing.four })
     for (const testID of ["feedback-scroll-owner", "feedback-action-region"]) {
       expect(
         StyleSheet.flatten(

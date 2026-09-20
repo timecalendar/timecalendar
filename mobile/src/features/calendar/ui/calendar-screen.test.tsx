@@ -8,16 +8,28 @@ import {
 } from "@testing-library/react-native"
 import * as Localization from "expo-localization"
 import { router, useLocalSearchParams } from "expo-router"
-import { AccessibilityInfo, AppState, Platform, StyleSheet } from "react-native"
+import {
+  AccessibilityInfo,
+  AppState,
+  Platform,
+  type ScrollView,
+  StyleSheet,
+} from "react-native"
+import * as Reanimated from "react-native-reanimated"
 
 import {
+  buildCalendarTimelinePresentation,
   formatFullDay,
   formatMonthYear,
+  planCalendarThreePageRange,
   startOfWeekInZone,
+  type TimedCalendarEventV1,
   useCalendarClock,
   useCalendarEvents,
+  useCalendarTimelinePresentation,
   useSyncCalendars,
 } from "@/features/calendar/data"
+import { useCalendarEventsSnapshot } from "@/features/calendar/data/events"
 import { useChecklistProgress } from "@/features/event-checklists"
 import {
   getCalendarZoomPixelsPerHour,
@@ -33,11 +45,27 @@ import { resolveResponsiveLayout } from "@/theme"
 import { CalendarScreen } from "./calendar-screen"
 
 jest.mock("@/features/calendar/data", () => {
-  const actual = jest.requireActual("@/features/calendar/data")
+  const actual = jest.requireActual<typeof import("@/features/calendar/data")>(
+    "@/features/calendar/data",
+  )
   return {
     ...actual,
     useCalendarClock: jest.fn(),
     useCalendarEvents: jest.fn(),
+    useCalendarTimelinePresentation: jest.fn(
+      (
+        input: Parameters<typeof actual.useCalendarTimelinePresentation>[0],
+      ) => ({
+        presentation: actual.buildCalendarTimelinePresentation({
+          range: actual.planCalendarThreePageRange(input),
+          generation: input.generation,
+          events: [],
+          checklistProgress: new Map(),
+        }),
+        ready: true,
+        error: undefined,
+      }),
+    ),
     useSyncCalendars: jest.fn(),
   }
 })
@@ -46,6 +74,11 @@ jest.mock("@/features/event-checklists", () => {
   const actual = jest.requireActual("@/features/event-checklists")
   return { ...actual, useChecklistProgress: jest.fn() }
 })
+
+jest.mock("@/features/calendar/data/events", () => ({
+  ...jest.requireActual("@/features/calendar/data/events"),
+  useCalendarEventsSnapshot: jest.fn(),
+}))
 
 jest.mock("expo-router", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -98,6 +131,8 @@ jest.mock(
 
 const ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
 const mockUseCalendarEvents = useCalendarEvents as jest.Mock
+const mockUseCalendarTimelinePresentation =
+  useCalendarTimelinePresentation as jest.Mock
 const mockUseCalendarClock = useCalendarClock as jest.Mock
 const mockUseSyncCalendars = useSyncCalendars as jest.Mock
 const mockUseChecklistProgress = useChecklistProgress as jest.Mock
@@ -132,9 +167,22 @@ function syncState(overrides = {}) {
   }
 }
 
-function calendarEvent(overrides = {}) {
+function calendarEvent(
+  overrides: Partial<TimedCalendarEventV1> = {},
+): TimedCalendarEventV1 {
+  const id = overrides.id ?? "synced-1"
+  const userCalendarId =
+    overrides.userCalendarId === undefined && overrides.id === "personal-1"
+      ? undefined
+      : (overrides.userCalendarId ?? "calendar-1")
   return {
-    id: "synced-1",
+    version: 1,
+    kind: "timed",
+    identity: {
+      source: userCalendarId === undefined ? "personal" : "synced",
+      uid: id,
+    },
+    id,
     title: "Algorithms",
     color: "#1E88E5",
     startsAt: new Date(2026, 5, 16, 9),
@@ -145,7 +193,7 @@ function calendarEvent(overrides = {}) {
     teachers: [],
     tags: [],
     canceled: false,
-    userCalendarId: "calendar-1",
+    userCalendarId,
     ...overrides,
   }
 }
@@ -165,6 +213,16 @@ async function chooseCalendarView(view: "day" | "week" | "agenda") {
 beforeEach(() => {
   AppState.currentState = "active"
   mockUseCalendarEvents.mockReturnValue([calendarEvent()])
+  mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+    presentation: buildCalendarTimelinePresentation({
+      range: planCalendarThreePageRange(input),
+      generation: input.generation,
+      events: [],
+      checklistProgress: new Map(),
+    }),
+    ready: true,
+    error: undefined,
+  }))
   mockUseCalendarClock.mockReturnValue(new Date())
   mockUseSyncCalendars.mockReturnValue(syncState())
   mockUseChecklistProgress.mockReturnValue(new Map())
@@ -180,9 +238,76 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen owned shell", () => {
+  it.each([
+    { position: 0, destination: "2026-06-08" },
+    { position: 2, destination: "2026-06-22" },
+  ])(
+    "keeps $destination visible while the swipe's local read is pending",
+    async ({ position, destination }) => {
+      setCalendarView("week")
+      mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-15" })
+      const adjacent = calendarEvent({
+        title: "Destination class",
+        startsAt: new Date(`${destination}T10:00:00Z`),
+        endsAt: new Date(`${destination}T11:00:00Z`),
+      })
+      const loaded = {
+        events: [adjacent],
+        ready: true,
+        error: undefined,
+        revision: "loaded",
+        counts: {},
+      }
+      const mockSnapshot = useCalendarEventsSnapshot as jest.Mock
+      mockSnapshot.mockReturnValue(loaded)
+      mockUseCalendarTimelinePresentation.mockImplementation(
+        jest.requireActual<typeof import("@/features/calendar/data")>(
+          "@/features/calendar/data",
+        ).useCalendarTimelinePresentation,
+      )
+      const view = await render(<CalendarScreen />)
+      const pager = screen.getByTestId("owned-calendar-pager")
+      mockSnapshot.mockReturnValue({
+        ...loaded,
+        events: [],
+        ready: false,
+        revision: "pending",
+      })
+
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "dragging" },
+      })
+      await fireEvent(pager, "pageSelected", { nativeEvent: { position } })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+
+      const centeredDate = screen.getByTestId(
+        `owned-calendar-date-0-${destination}`,
+      )
+      expect(centeredDate).toBeOnTheScreen()
+      expect(
+        screen.getByRole("button", { name: /^Destination class,/ }),
+      ).toBeOnTheScreen()
+      const centeredPager = screen.getByTestId("owned-calendar-pager")
+
+      mockSnapshot.mockReturnValue({ ...loaded, revision: "replacement" })
+      await view.rerender(<CalendarScreen />)
+      expect(screen.getByTestId("owned-calendar-pager")).toBe(centeredPager)
+      expect(screen.getByTestId(`owned-calendar-date-0-${destination}`)).toBe(
+        centeredDate,
+      )
+      expect(
+        screen.getByRole("button", { name: /^Destination class,/ }),
+      ).toBeOnTheScreen()
+      expect(mockAnnounce).toHaveBeenCalledTimes(1)
+      expect(mockSync).not.toHaveBeenCalled()
+    },
+  )
+
   it("rolls Today and the indicator together without changing mounted screen state", async () => {
     setShowWeekends(false)
-    mockUseCalendarClock.mockReturnValue(new Date("2026-06-19T23:59:00.000Z"))
+    mockUseCalendarClock.mockReturnValue(new Date("2026-06-19T23:59:00"))
     const view = await render(<CalendarScreen />)
     const agendaRange = mockUseCalendarEvents.mock.calls.at(-1)?.[0]
     const initialHeader = screen.getByTestId("calendar-header-title").props
@@ -197,7 +322,7 @@ describe("CalendarScreen owned shell", () => {
 
     mockAnnounce.mockClear()
     mockUseCalendarEvents.mockClear()
-    mockUseCalendarClock.mockReturnValue(new Date("2026-06-20T00:00:00.000Z"))
+    mockUseCalendarClock.mockReturnValue(new Date("2026-06-20T00:00:00"))
     await view.rerender(<CalendarScreen />)
 
     expect(screen.queryByLabelText(/Today/)).toBeNull()
@@ -206,12 +331,99 @@ describe("CalendarScreen owned shell", () => {
         includeHiddenElements: true,
       }),
     ).toBeNull()
-    expect(screen.queryByTestId("owned-calendar-now-label")).toBeNull()
+    expect(screen.queryByLabelText(/Current time/)).toBeNull()
     expect(screen.getByTestId("calendar-header-title")).toHaveTextContent(
       initialHeader,
     )
     expect(mockUseCalendarEvents).toHaveBeenLastCalledWith(agendaRange)
     expect(mockAnnounce).not.toHaveBeenCalled()
+  })
+
+  it("opens synced and personal timed tiles by their original UID", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const maths = calendarEvent({
+      identity: { source: "synced", uid: "class-original" },
+      id: "class-compatibility",
+      title: "Maths",
+      startsAt: new Date("2026-06-16T10:00:00.000Z"),
+      endsAt: new Date("2026-06-16T11:00:00.000Z"),
+      location: "B12",
+    })
+    const personal = calendarEvent({
+      identity: { source: "personal", uid: "personal-original" },
+      id: "personal-compatibility",
+      title: "Study",
+      startsAt: new Date("2026-06-16T12:00:00.000Z"),
+      endsAt: new Date("2026-06-16T13:00:00.000Z"),
+      location: undefined,
+      userCalendarId: undefined,
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [maths, personal],
+        checklistProgress: new Map(),
+      }),
+      ready: true,
+      error: undefined,
+    }))
+
+    await render(<CalendarScreen />)
+    await fireEvent.press(
+      await screen.findByRole("button", { name: /^Maths,/ }),
+    )
+    expect(mockPush).toHaveBeenLastCalledWith("/event-details/class-original")
+    await fireEvent.press(screen.getByRole("button", { name: /^Study,/ }))
+    expect(mockPush).toHaveBeenLastCalledWith(
+      "/event-details/personal-original",
+    )
+  })
+
+  it("pages away and back using only local presentation reads", async () => {
+    setCalendarView("day")
+    mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-16" })
+    const maths = calendarEvent({
+      identity: { source: "synced", uid: "maths-offline" },
+      id: "maths-offline",
+      title: "Maths",
+      startsAt: new Date("2026-06-16T10:00:00.000Z"),
+      endsAt: new Date("2026-06-16T11:00:00.000Z"),
+      location: "B12",
+    })
+    mockUseCalendarTimelinePresentation.mockImplementation((input) => ({
+      presentation: buildCalendarTimelinePresentation({
+        range: planCalendarThreePageRange(input),
+        generation: input.generation,
+        events: [maths],
+      }),
+      ready: true,
+      error: undefined,
+    }))
+    await render(<CalendarScreen />)
+    expect(
+      await screen.findByRole("button", { name: /^Maths,/ }),
+    ).toBeOnTheScreen()
+
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "increment" } },
+    )
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Maths,/ })).toBeNull(),
+    )
+    await fireEvent(
+      screen.getByTestId("owned-calendar-canvas"),
+      "accessibilityAction",
+      { nativeEvent: { actionName: "decrement" } },
+    )
+    expect(
+      await screen.findByRole("button", { name: /^Maths,/ }),
+    ).toBeOnTheScreen()
+    expect(mockSync).not.toHaveBeenCalled()
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it("restores persisted Day with a fresh today anchor and one column", async () => {
@@ -303,7 +515,9 @@ describe("CalendarScreen owned shell", () => {
         "accessibilityAction",
         { nativeEvent: { actionName: "increment" } },
       )
-      expect(screen.getByLabelText(label)).toBeOnTheScreen()
+      expect(
+        screen.getByLabelText(new RegExp(`^${label}(?:, Today)?$`)),
+      ).toBeOnTheScreen()
     }
 
     await chooseCalendarView("week")
@@ -344,19 +558,20 @@ describe("CalendarScreen owned shell", () => {
     expect(mockAnnounce).not.toHaveBeenCalled()
   })
   it.each([
-    [false, "12 AM"],
-    [true, "00:00"],
-    [null, "00:00"],
+    [false, "1 AM"],
+    [true, "01:00"],
+    [null, "01:00"],
   ] as const)(
     "passes the device clock preference %s to the gutter",
-    async (preference, midnight) => {
+    async (preference, firstVisibleHour) => {
       mockUseCalendars.mockReturnValue(deviceCalendars(preference))
       await render(<CalendarScreen />)
+      expect(screen.queryByTestId("owned-calendar-hour-label-0")).toBeNull()
       expect(
-        screen.getByTestId("owned-calendar-hour-label-0", {
+        screen.getByTestId("owned-calendar-hour-label-1", {
           includeHiddenElements: true,
         }),
-      ).toHaveTextContent(midnight)
+      ).toHaveTextContent(firstVisibleHour)
     },
   )
 
@@ -485,6 +700,49 @@ describe("CalendarScreen owned shell", () => {
       }),
     ).toBeOnTheScreen()
     expect(mockSetParams).toHaveBeenCalledWith({ focusDate: undefined })
+  })
+
+  it("returns to Today without scrolling the mounted timeline to midnight", async () => {
+    const scrollRef = { current: null } as ReturnType<
+      typeof Reanimated.useAnimatedRef
+    >
+    const refSpy = jest
+      .spyOn(Reanimated, "useAnimatedRef")
+      .mockReturnValue(scrollRef)
+    mockUseCalendarClock.mockReturnValue(new Date("2026-06-17T12:00:00"))
+    try {
+      await render(<CalendarScreen />)
+      const canvas = screen.getByTestId("owned-calendar-canvas")
+      await fireEvent(canvas, "layout", {
+        nativeEvent: { layout: { x: 0, y: 0, width: 360, height: 500 } },
+      })
+      const scrollTo = jest.spyOn(scrollRef.current as ScrollView, "scrollTo")
+      try {
+        await fireEvent(canvas, "accessibilityAction", {
+          nativeEvent: { actionName: "increment" },
+        })
+        expect(
+          screen.getByTestId("owned-calendar-date-0-2026-06-22"),
+        ).toBeOnTheScreen()
+        scrollTo.mockClear()
+
+        expect(canvas).toHaveProp("scrollsToTop", false)
+        await fireEvent.press(screen.getByTestId("calendar-today"))
+
+        expect(
+          screen.getByTestId("owned-calendar-date-0-2026-06-17"),
+        ).toBeOnTheScreen()
+        expect(screen.queryByTestId("calendar-today")).toBeNull()
+        expect(screen.getByTestId("owned-calendar-canvas")).toBe(canvas)
+        expect(canvas).toHaveProp("scrollsToTop", false)
+        expect(scrollTo).not.toHaveBeenCalled()
+      } finally {
+        scrollTo.mockRestore()
+      }
+    } finally {
+      await cleanup()
+      refSpy.mockRestore()
+    }
   })
 
   it("retains Today as an observable selected-date action", async () => {
@@ -811,7 +1069,7 @@ describe("CalendarScreen platform chrome", () => {
     expect(mockAnnounce).toHaveBeenCalledWith("Calendar zoom 117%")
     expect(
       screen.getByTestId("owned-calendar-canvas").props.contentOffset.y,
-    ).toBeCloseTo(36.67, 2)
+    ).toBeCloseTo(631.67, 2)
 
     await chooseCalendarView("day")
     expect(screen.getAllByTestId(/^owned-calendar-date-0-/)).toHaveLength(1)
@@ -832,7 +1090,7 @@ describe("CalendarScreen platform chrome", () => {
     expect(mockAnnounce).toHaveBeenNthCalledWith(2, "Calendar zoom 100%")
     expect(
       screen.getByTestId("owned-calendar-canvas").props.contentOffset.y,
-    ).toBeCloseTo(0, 2)
+    ).toBeCloseTo(510, 2)
   })
 
   it("disables and communicates the inclusive zoom limits", async () => {

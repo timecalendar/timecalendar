@@ -7,6 +7,7 @@ import {
   formatFullDay,
   formatHourStartLabel,
   formatMonthYear,
+  formatNarrowWeekday,
   formatShortDateTime,
   formatTime,
   formatTimeRange,
@@ -125,6 +126,28 @@ describe("formatDayHeaderParts", () => {
       })
     },
   )
+})
+
+describe("formatNarrowWeekday", () => {
+  const week = Array.from(
+    { length: 7 },
+    (_, offset) => new Date(Date.UTC(2026, 8, 14 + offset, 12)),
+  )
+
+  it("returns the system-language one-letter weekday sequence", () => {
+    expect(
+      week.map((day) => formatNarrowWeekday(day, "en", "Europe/Paris")),
+    ).toEqual(["M", "T", "W", "T", "F", "S", "S"])
+    expect(
+      week.map((day) => formatNarrowWeekday(day, "fr", "Europe/Paris")),
+    ).toEqual(["L", "M", "M", "J", "V", "S", "D"])
+  })
+
+  it("resolves the weekday after projecting into the display zone", () => {
+    const lateMonday = new Date("2026-09-14T23:30:00.000Z")
+    expect(formatNarrowWeekday(lateMonday, "en", "Pacific/Noumea")).toBe("T")
+    expect(formatNarrowWeekday(lateMonday, "fr", "Pacific/Noumea")).toBe("M")
+  })
 })
 
 describe("formatTimeRange / formatTime", () => {

@@ -52,7 +52,7 @@ describe("PersonalEventsList", () => {
       })
       const metrics = resolveResponsiveLayout(width, "standard")
       const style = StyleSheet.flatten(
-        getByTestId("personal-events-responsive-lane").props.style,
+        getByTestId("personal-events-list").props.contentContainerStyle,
       )
       expect(style.maxWidth).toBe(
         (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,

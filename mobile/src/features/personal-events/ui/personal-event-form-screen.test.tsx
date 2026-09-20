@@ -323,10 +323,10 @@ describe("PersonalEventFormScreen", () => {
       StyleSheet.flatten(
         view.getByTestId("personal-event-form-layout-owner").props.style,
       ),
-    ).toMatchObject({ paddingTop: Spacing.four })
+    ).not.toHaveProperty("paddingTop")
     expect(
       StyleSheet.flatten(scrollView.props.contentContainerStyle).paddingTop,
-    ).toBeUndefined()
+    ).toBe(Spacing.four)
 
     const owner = view.getByTestId(
       "personal-event-form-responsive-owner-window-owner",

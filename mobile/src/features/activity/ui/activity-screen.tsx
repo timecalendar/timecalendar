@@ -395,6 +395,7 @@ function OlderFooter({
 const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.four,
     gap: Spacing.two,
   },
@@ -406,7 +407,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
   },
   centeredText: { textAlign: "center" },
-  stateLane: { flex: 1 },
+  stateLane: { flex: 1, paddingTop: Spacing.four },
   groupHeader: { paddingTop: Spacing.four, gap: Spacing.half },
   item: {
     minHeight: 48,

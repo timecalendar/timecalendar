@@ -14,6 +14,15 @@ export {
   startOfDayInZone,
   utcDayKey,
 } from "./day-key"
+export { eventSurfaceColor } from "./event-color"
+export {
+  CALENDAR_EVENT_REJECTION_REASONS,
+  type CalendarEventDecodeResult,
+  type CalendarEventRejectionCounts,
+  type CalendarEventRejectionReason,
+  decodePersonalEventRows,
+  decodeSyncedEventRows,
+} from "./event-decoder"
 export {
   type EventDetails,
   type EventDetailsTag,
@@ -22,7 +31,12 @@ export {
   type UseEventDetails,
   useEventDetails,
 } from "./event-details"
-export { type DateRange, useCalendarEvents } from "./events"
+export {
+  type CalendarEventsSnapshot,
+  type DateRange,
+  useCalendarEvents,
+  useCalendarEventsSnapshot,
+} from "./events"
 export {
   type AppLocale,
   formatClockTime,
@@ -33,17 +47,25 @@ export {
   formatFullDay,
   formatHourStartLabel,
   formatMonthYear,
+  formatNarrowWeekday,
   formatShortDateTime,
   formatTime,
   formatTimeRange,
   resolveLocale,
 } from "./format"
 export { type Interval, layoutOverlaps, type Placed } from "./overlap-layout"
+export {
+  type CalendarPageDirection,
+  type CalendarRangePageV1,
+  type CalendarThreePageRangeV1,
+  planCalendarThreePageRange,
+} from "./range-plan"
 export { eventRoute } from "./routes"
 export {
   useStartupSync,
   type UseSyncCalendars,
   useSyncCalendars,
+  useSyncedEventRowsInRange,
   useSyncedEvents,
 } from "./sync"
 export {
@@ -83,7 +105,31 @@ export {
   usableViewportY,
   ZOOM_PIXELS_PER_HOUR_STEP,
 } from "./time-grid"
-export { type CalendarEvent } from "./types"
+export {
+  classifyTimedEventSupport,
+  type TimedEventSupport,
+} from "./timed-support"
+export {
+  buildCalendarTimelinePresentation,
+  type CalendarTimelineColumnV1,
+  type CalendarTimelinePageV1,
+  type CalendarTimelinePresentationV1,
+  type TimedTileV1,
+  type TimelineChecklistProgressV1,
+  timelinePresentationUids,
+} from "./timeline-presentation"
+export {
+  type CalendarTimelinePresentationInput,
+  useCalendarTimelinePresentation,
+} from "./timeline-presentation-hook"
+export {
+  CALENDAR_EVENT_FALLBACK_COLOR,
+  type CalendarEvent,
+  type CalendarEventIdentityV1,
+  type CalendarEventSource,
+  type DateOnlyCalendarEventV1,
+  type TimedCalendarEventV1,
+} from "./types"
 export {
   type FirstWeekday,
   shiftWeekInZone,

@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native"
 
 import { RootPage } from "@/components/root-page"
 import { ThemedText } from "@/components/themed-text"
+import { Spacing } from "@/theme"
 
 import { EventDetailsHeader } from "./event-details-actions"
 
@@ -60,6 +61,7 @@ function EventDetailsStatus({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   lane: {
     flex: 1,
+    paddingTop: Spacing.four,
   },
   loading: {
     flex: 1,

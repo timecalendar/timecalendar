@@ -21,7 +21,7 @@ A valid same-day local class appears at its actual time with title/location and 
 
 - Read the relevant local ranges through the data seam, including source visibility/hidden/cancelled filtering, and publish complete versioned event/page models.
 
-- Render normal title/location tiles, complete accessible labels and original-identity activation; preserve synced read-only/personal editable details and summary checklist progress.
+- Render compact multi-line title/location tiles without ellipses, with rounded asymmetric day-column geometry, complete accessible labels and original-identity activation; preserve synced read-only/personal editable details and summary checklist progress.
 
 - Keep event work off gesture frames, preserve current bounded pages, and make malformed rows unable to throw across the whole list.
 
@@ -57,9 +57,11 @@ There is no claim that unimplemented product-wide capabilities are complete.
 
 ## Owner QA checklist
 
-**Preparation:** Agent seeds Monday 2026-09-14 10:00–11:00 Europe/Paris with title “Maths” and room “B12”, plus one editable personal event and one hidden/cancelled event. Use a disposable offline test installation.
+**Preparation:** Agent seeds Monday 2026-09-14 10:00–11:00 Europe/Paris with title “Maths” and room “B12”, an 11:00–12:00 long-title/long-location event, plus one editable personal event and one hidden/cancelled event. Use a disposable offline test installation.
 
 - [ ] Find Maths in the 10:00–11:00 position with B12 visible.
+
+- [ ] In Day and Week, confirm “Psychocologie du développement” and “Amphithéâtre Léonard de Vinci” wrap across multiple compact lines without ellipses; the event is subtly rounded, flush with its left day boundary and separated by two units from the next vertical separator.
 
 - [ ] Tap the synced class: its existing details open read-only. Tap the personal event: existing editing remains available.
 
@@ -107,4 +109,48 @@ renderer, change stored event facts, or weaken a final product gate to make this
 
 ## Execution evidence
 
-Not started. Agent checks and owner QA have not run. No owner acceptance or merge is recorded.
+Implementation runtime revision: `8f98a4a16c584f2e5cbd22e9d12a670eed61f5c3` on PR #418.
+No native build or device result is claimed: this host has neither KVM nor an iOS simulator, so
+the mandatory owner run remains unchecked and no owner acceptance or merge is recorded.
+
+### Fabricated aggregate evidence
+
+The fixed ordinary-row suites use fabricated values only. Their complete-range samples recorded:
+
+- ordinary snapshot: 1 synced timed row, 1 synced date-only row, 1 personal row; 3 accepted,
+  0 rejected, 0 filtered;
+- filter snapshot: 6 synced timed rows and 1 personal row; 7 decoded, 5 filtered, 2 published;
+- presentation: exactly 3 retained pages, 1 ordinary rendered event, and at most the last complete
+  generation while one replacement is pending;
+- deterministic preparation command: `/usr/bin/time -f 'elapsed=%e user=%U system=%S max_rss_kb=%M' npx jest --ci --runInBand src/features/calendar/data/events.test.ts src/features/calendar/data/timeline-presentation.test.ts src/features/calendar/data/timeline-presentation-hook.test.tsx` — 3 suites / 12 tests passed, Jest 3.871 s, elapsed 5.95 s, user 6.33 s, system 1.28 s, maximum RSS 392920 KiB.
+
+This is a local Jest-harness preparation measurement, not release-render latency and not a
+production p50/p95 workload claim.
+
+### Owner preparation and reset
+
+1. Use a disposable development installation. Serve
+   `mobile/e2e/fixtures/t09-local-timed-event.ics` from the repository with
+   `python3 -m http.server --directory mobile/e2e/fixtures`, then import its reachable local
+   URL through the existing development calendar import flow while the test backend is running.
+2. Create one personal event on 2026-09-14 from 12:00 to 13:00, then open “Hidden fixture” and hide
+   it. Confirm the initial import is complete, stop the fixture server/backend, and perform the
+   checklist above offline.
+3. After the verdict, remove the disposable installation (or clear its application data) so its
+   imported source, personal event, hidden state, and checklist rows cannot affect another run.
+
+### Agent checks
+
+- `npx tsc --noEmit` — passed.
+- `npm run lint` — passed with zero warnings.
+- `npm test -- --coverage` — 188 suites / 1835 tests passed; global 97.45% statements,
+  92.30% branches, 97.26% functions, 98.24% lines.
+- Focused pure-module coverage for decoder/range/support/presentation — 4 suites / 15 tests passed;
+  each module reached 100% statements, branches, functions, and lines.
+- `npm run react-doctor:changed` — passed with no issues.
+- `bash e2e/test_run_e2e.sh`, `bash e2e/test_ci_mobile_e2e.sh`, and the Maestro selector suite —
+  passed; the established three top-level journeys remain unchanged.
+- `npx openspec validate render-local-timed-calendar-events --strict` — passed.
+
+Approved D01/D02/D05/D06 and ADR 033 remain sufficient. No API contract, migration, native/store
+configuration, CI/deploy, legacy Flutter, or infrastructure surface changed.

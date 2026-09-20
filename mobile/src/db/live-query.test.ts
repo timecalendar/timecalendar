@@ -70,6 +70,15 @@ async function settleReads(): Promise<void> {
   })
 }
 
+async function settleRead(index: number): Promise<void> {
+  const settle = pending[index]
+  if (settle === undefined) throw new Error(`No pending read at index ${index}`)
+  pending.splice(index, 1)
+  await act(async () => {
+    settle()
+  })
+}
+
 // The last-registered change-listener callback (the hook subscribes once per
 // effect run).
 function fireChange(tableName: string): void {
@@ -183,6 +192,40 @@ describe("useLiveQuery (coalescing seam reactive read)", () => {
     await settleReads()
 
     expect(view.result.current.data).toEqual([{ uid: "fresh" }])
+  })
+
+  it("keeps rapid range replacements pending until the exact range resolves", async () => {
+    nextRows = [{ uid: "range-0" }]
+    const view = await renderHook(
+      ({ range }: { range: string }) =>
+        useLiveQuery(
+          makeQuery() as unknown as Parameters<typeof useLiveQuery>[0],
+          [range],
+        ),
+      { initialProps: { range: "range-0" } },
+    )
+    await settleRead(0)
+    expect(view.result.current.data).toEqual([{ uid: "range-0" }])
+
+    nextRows = [{ uid: "range-1" }]
+    await view.rerender({ range: "range-1" })
+    expect(view.result.current.data).toEqual([])
+    expect(view.result.current.updatedAt).toBeUndefined()
+
+    nextRows = [{ uid: "range-2" }]
+    await view.rerender({ range: "range-2" })
+    expect(view.result.current.data).toEqual([])
+    expect(view.result.current.updatedAt).toBeUndefined()
+
+    // The superseded range resolves after range-2 was requested. It remains
+    // invisible and cannot make the current request look complete.
+    await settleRead(0)
+    expect(view.result.current.data).toEqual([])
+    expect(view.result.current.updatedAt).toBeUndefined()
+
+    await settleRead(0)
+    expect(view.result.current.data).toEqual([{ uid: "range-2" }])
+    expect(view.result.current.updatedAt).toBeInstanceOf(Date)
   })
 
   it("surfaces a read failure through error", async () => {

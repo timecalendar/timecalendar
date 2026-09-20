@@ -1,11 +1,10 @@
 import type {
   CalendarEventCustomFields,
   CalendarEventForPublic,
-  EventTag,
 } from "@/api/generated/timeCalendar.schemas"
-import { calendarEvents, isoToDate, nullToUndef } from "@/db"
+import { calendarEvents } from "@/db"
+import { decodeSyncedEventRows } from "@/features/calendar/data/event-decoder"
 import type { CalendarEvent } from "@/features/calendar/data/types"
-import { parseJsonArray } from "@/storage"
 
 // The DTO→row writer + the row→domain reader for synced calendar events (ADR 021,
 // building on ADR 011/018). They isolate the TEXT-ISO + JSON-as-TEXT storage
@@ -56,31 +55,9 @@ export function decodeFields(
 // tag objects (and `groupColor`/`type`/the rich `fields`) stay in the row, written
 // verbatim by dtoToRow. `canceled` derives from the decoded `fields?.canceled`.
 export function rowToCalendarEvent(row: CalendarEventRow): CalendarEvent {
-  // The shared @/storage total parser with NO guard — a corrupt/legacy/non-array
-  // value degrades to [] and never throws (the total-read posture; A Drizzle
-  // `mode: "json"` column would throw, which is why these are plain TEXT decoded
-  // by hand), casting `as T[]` without per-element validation (ADR 021 / D2).
-  const tags = parseJsonArray<EventTag>(row.tags)
-  const fields = decodeFields(row.fields)
-  return {
-    id: row.uid,
-    title: row.title,
-    color: row.color,
-    startsAt: isoToDate(row.startsAt),
-    endsAt: isoToDate(row.endsAt),
-    location: nullToUndef(row.location),
-    allDay: row.allDay,
-    description: nullToUndef(row.description),
-    teachers: parseJsonArray<string>(row.teachers),
-    tags: tags.map((tag) => tag.name),
-    // `=== true` (not `?? false`) so a corrupt/legacy non-boolean `canceled`
-    // (e.g. "yes") degrades to false rather than reaching the domain as a truthy
-    // non-boolean — the D2 defensive-decode posture applied at the field level.
-    canceled: fields?.canceled === true,
-    // userCalendarId is notNull (the DTO always carries the parent id) — a plain
-    // string, no null branch.
-    userCalendarId: row.userCalendarId,
-  }
+  const event = decodeSyncedEventRows([row]).accepted[0]
+  if (event === undefined) throw new TypeError("Invalid calendar event row")
+  return event
 }
 
 // Serialize the server CalendarEventForPublic DTO → a calendar_events ROW,

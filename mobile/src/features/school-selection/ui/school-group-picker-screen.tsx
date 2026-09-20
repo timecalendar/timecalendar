@@ -60,66 +60,75 @@ export default function SchoolGroupPickerScreen() {
         testID="onboarding-group-content"
         lane="standard"
         style={styles.fill}
-        contentContainerStyle={styles.safeArea}
       >
-        {isLoading && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("onboarding.group.loading")}
-          </ThemedText>
+        {({ laneStyle }) => (
+          <>
+            <ScrollView
+              testID="onboarding-group-scroll"
+              style={styles.fill}
+              contentContainerStyle={[laneStyle, styles.list]}
+            >
+              {isLoading && (
+                <ThemedText
+                  themeColor="textSecondary"
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole="text"
+                >
+                  {t("onboarding.group.loading")}
+                </ThemedText>
+              )}
+
+              {isError && <ErrorRetry onRetry={refetch} />}
+
+              {!isLoading && !isError && groups.length === 0 && (
+                <ThemedText
+                  themeColor="textSecondary"
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole="text"
+                >
+                  {t("onboarding.group.empty")}
+                </ThemedText>
+              )}
+
+              {groups.map((node) => (
+                <GroupNode
+                  key={node.value}
+                  node={node}
+                  selected={selected}
+                  onToggleLeaf={onToggleLeaf}
+                />
+              ))}
+            </ScrollView>
+
+            <View style={[laneStyle, styles.actions]}>
+              {showGuard && (
+                <ThemedText
+                  themeColor="textSecondary"
+                  accessibilityLiveRegion="polite"
+                  accessibilityRole="alert"
+                >
+                  {t("onboarding.group.empty.selectionGuard")}
+                </ThemedText>
+              )}
+
+              <Pressable
+                testID="onboarding-group-confirm"
+                accessibilityRole="button"
+                accessibilityLabel={t("onboarding.group.confirmLabel")}
+                hitSlop={Spacing.two}
+                onPress={onConfirm}
+                style={[
+                  styles.confirm,
+                  { backgroundColor: theme.backgroundSelected },
+                ]}
+              >
+                <ThemedText type="smallBold">
+                  {t("onboarding.group.confirm")}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </>
         )}
-
-        {isError && <ErrorRetry onRetry={refetch} />}
-
-        {!isLoading && !isError && groups.length === 0 && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="text"
-          >
-            {t("onboarding.group.empty")}
-          </ThemedText>
-        )}
-
-        <ScrollView contentContainerStyle={styles.list}>
-          {groups.map((node) => (
-            <GroupNode
-              key={node.value}
-              node={node}
-              selected={selected}
-              onToggleLeaf={onToggleLeaf}
-            />
-          ))}
-        </ScrollView>
-
-        {showGuard && (
-          <ThemedText
-            themeColor="textSecondary"
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
-          >
-            {t("onboarding.group.empty.selectionGuard")}
-          </ThemedText>
-        )}
-
-        <Pressable
-          testID="onboarding-group-confirm"
-          accessibilityRole="button"
-          accessibilityLabel={t("onboarding.group.confirmLabel")}
-          hitSlop={Spacing.two}
-          onPress={onConfirm}
-          style={[
-            styles.confirm,
-            { backgroundColor: theme.backgroundSelected },
-          ]}
-        >
-          <ThemedText type="smallBold">
-            {t("onboarding.group.confirm")}
-          </ThemedText>
-        </Pressable>
       </RootPage>
     </>
   )
@@ -224,9 +233,9 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
   },
-  safeArea: {
-    flex: 1,
+  actions: {
     gap: Spacing.three,
+    paddingVertical: Spacing.three,
   },
   errorBlock: {
     gap: Spacing.two,
@@ -239,6 +248,7 @@ const styles = StyleSheet.create({
     borderRadius: Radii.medium,
   },
   list: {
+    paddingVertical: Spacing.four,
     gap: Spacing.two,
   },
   branch: {

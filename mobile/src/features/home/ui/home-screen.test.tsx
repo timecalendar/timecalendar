@@ -102,7 +102,7 @@ beforeEach(() => {
 
 describe("HomeScreen", () => {
   it.each([390, 599, 600, 768, 800, 834, 1024])(
-    "uses one measured standard lane at %ipx",
+    "keeps section gutters inside a full-width scroll area at %ipx",
     async (width) => {
       mockUseCalendarEvents.mockReturnValue([todayEvent()])
       await render(<HomeScreen />)
@@ -125,6 +125,20 @@ describe("HomeScreen", () => {
         (metrics.maxContentWidth ?? 0) + 2 * metrics.gutter,
       )
       expect(style.paddingHorizontal).toBe(metrics.gutter)
+      const scroll = screen.getByTestId("home-scroll")
+      const upcoming = screen.getByTestId("upcoming-scroller")
+      expect(
+        StyleSheet.flatten(upcoming.props.contentContainerStyle),
+      ).toMatchObject({ paddingHorizontal: metrics.outerInset })
+      for (const scroller of [scroll, upcoming]) {
+        let ancestor = scroller.parent
+        while (ancestor !== null) {
+          const ancestorStyle = StyleSheet.flatten(ancestor.props.style) ?? {}
+          expect(ancestorStyle.paddingHorizontal ?? 0).toBe(0)
+          expect(ancestorStyle.maxWidth).toBeUndefined()
+          ancestor = ancestor.parent
+        }
+      }
       expect(
         StyleSheet.flatten(screen.getByTestId("upcoming-card-ev-1").props.style)
           .width,

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react-native"
 import { StyleSheet } from "react-native"
 
-import { type CalendarEvent } from "@/features/calendar/data"
+import { type TimedCalendarEventV1 } from "@/features/calendar/data"
 import { type HourRange } from "@/features/home/data"
 
 import { TodayTimeline } from "./today-timeline"
@@ -22,10 +22,15 @@ jest.mock("react-native/Libraries/Utilities/useWindowDimensions", () => ({
 // MEASURED tile-area width (R-3 responsiveness) instead of a fixed px multiplier,
 // and that taps route through.
 
-function event(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
+function event(
+  overrides: Partial<TimedCalendarEventV1> = {},
+): TimedCalendarEventV1 {
   const start = new Date(2026, 5, 15, 9, 0, 0, 0)
   const end = new Date(2026, 5, 15, 10, 0, 0, 0)
   return {
+    version: 1,
+    kind: "timed",
+    identity: { source: "synced", uid: "ev-1" },
     id: "ev-1",
     title: "Algorithms",
     color: "#1E88E5",

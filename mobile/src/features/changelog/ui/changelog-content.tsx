@@ -83,6 +83,7 @@ export function ChangelogContent({ releases, footer }: ChangelogContentProps) {
 
 const styles = StyleSheet.create({
   scrollContent: {
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
   },
   content: { gap: Spacing.four },

@@ -210,6 +210,7 @@ export function AboutScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: {
+    paddingTop: Spacing.four,
     paddingBottom: Spacing.six,
   },
   content: {

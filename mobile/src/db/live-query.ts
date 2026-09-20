@@ -25,13 +25,28 @@ import { useEffect, useState } from "react"
 // pinned by the deterministic burst-then-single-read test.
 const COALESCE_WINDOW_MS = 0
 
+function dependenciesMatch(left: unknown[], right: unknown[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => Object.is(value, right[index]))
+  )
+}
+
 export function useLiveQuery<T extends Pick<AnySQLiteSelect, "_" | "then">>(
   query: T,
   deps: unknown[] = [],
 ): { data: Awaited<T>; error: Error | undefined; updatedAt: Date | undefined } {
-  const [data, setData] = useState<Awaited<T>>([] as Awaited<T>)
-  const [error, setError] = useState<Error | undefined>(undefined)
-  const [updatedAt, setUpdatedAt] = useState<Date | undefined>(undefined)
+  const [result, setResult] = useState<{
+    request: unknown[] | null
+    data: Awaited<T>
+    error: Error | undefined
+    updatedAt: Date | undefined
+  }>({
+    request: null,
+    data: [] as Awaited<T>,
+    error: undefined,
+    updatedAt: undefined,
+  })
 
   // Resolve the observed table (the single drizzle-internal touchpoint) and its
   // name via the public getTableConfig — during render, so the "unsupported query"
@@ -55,11 +70,22 @@ export function useLiveQuery<T extends Pick<AnySQLiteSelect, "_" | "then">>(
       query
         .then((rows) => {
           if (!active) return
-          setData(rows as Awaited<T>)
-          setUpdatedAt(new Date())
+          setResult({
+            request: deps,
+            data: rows as Awaited<T>,
+            error: undefined,
+            updatedAt: new Date(),
+          })
         })
         .catch((e: unknown) => {
-          if (active) setError(e as Error)
+          if (active) {
+            setResult({
+              request: deps,
+              data: [] as Awaited<T>,
+              error: e as Error,
+              updatedAt: undefined,
+            })
+          }
         })
     }
 
@@ -89,6 +115,12 @@ export function useLiveQuery<T extends Pick<AnySQLiteSelect, "_" | "then">>(
     // hook this replaces.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
+
+  const isCurrentRequest =
+    result.request !== null && dependenciesMatch(result.request, deps)
+  const data = isCurrentRequest ? result.data : ([] as Awaited<T>)
+  const error = isCurrentRequest ? result.error : undefined
+  const updatedAt = isCurrentRequest ? result.updatedAt : undefined
 
   // An unsupported query (no observed table) has no subscription — surface it as a
   // derived error without ever writing state from the effect.

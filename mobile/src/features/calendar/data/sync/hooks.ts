@@ -1,9 +1,6 @@
-import { useMemo } from "react"
-
-import { calendarEvents, db, useLiveQuery } from "@/db"
+import { and, calendarEvents, db, eq, gt, lt, useLiveQuery } from "@/db"
+import { decodeSyncedEventRows } from "@/features/calendar/data/event-decoder"
 import type { CalendarEvent } from "@/features/calendar/data/types"
-
-import { rowToCalendarEvent } from "./types"
 
 // Reactive read over the seam's useLiveQuery (re-exported from @/db, never a
 // direct drizzle-orm import): re-renders the calendar views when a sync's
@@ -13,5 +10,51 @@ import { rowToCalendarEvent } from "./types"
 // too would be redundant).
 export function useSyncedEvents(): CalendarEvent[] {
   const { data } = useLiveQuery(db.select().from(calendarEvents))
-  return useMemo(() => data.map(rowToCalendarEvent), [data])
+  return [...decodeSyncedEventRows(data).accepted]
+}
+
+export interface SyncedEventRowRange {
+  instant: { from: Date; to: Date }
+  civil: { fromDay: string; toDay: string }
+}
+
+export function useSyncedEventRowsInRange(range: SyncedEventRowRange) {
+  const fromIso = range.instant.from.toISOString()
+  const toIso = range.instant.to.toISOString()
+  const fromDayIso = `${range.civil.fromDay}T00:00:00.000Z`
+  const toDayIso = `${range.civil.toDay}T00:00:00.000Z`
+  const timed = useLiveQuery(
+    db
+      .select()
+      .from(calendarEvents)
+      .where(
+        and(
+          eq(calendarEvents.allDay, false),
+          lt(calendarEvents.startsAt, toIso),
+          gt(calendarEvents.endsAt, fromIso),
+        ),
+      ),
+    [`timed:${fromIso}:${toIso}`],
+  )
+  const dateOnly = useLiveQuery(
+    db
+      .select()
+      .from(calendarEvents)
+      .where(
+        and(
+          eq(calendarEvents.allDay, true),
+          lt(calendarEvents.startsAt, toDayIso),
+          gt(calendarEvents.endsAt, fromDayIso),
+        ),
+      ),
+    [`date-only:${fromDayIso}:${toDayIso}`],
+  )
+
+  return {
+    timedRows: timed.data,
+    dateOnlyRows: dateOnly.data,
+    error: timed.error ?? dateOnly.error,
+    ready: timed.updatedAt !== undefined && dateOnly.updatedAt !== undefined,
+    revision: `${timed.updatedAt?.getTime() ?? "pending"}:${dateOnly.updatedAt?.getTime() ?? "pending"}`,
+  }
 }

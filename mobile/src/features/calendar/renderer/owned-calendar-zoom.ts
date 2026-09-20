@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react"
+import { useLayoutEffect, useRef } from "react"
 import { type LayoutChangeEvent, ScrollView } from "react-native"
 import { Gesture } from "react-native-gesture-handler"
 import {
@@ -39,6 +39,7 @@ export function useOwnedCalendarZoom({
   onZoomSettled,
   onViewportGeometryChange,
   onInteractionInterrupted,
+  onInteractionFinished,
 }: {
   generation: number
   initialPixelsPerHour: number
@@ -48,7 +49,12 @@ export function useOwnedCalendarZoom({
     geometry: TimedViewportGeometry & { rawOffset?: number },
   ) => void
   onInteractionInterrupted: () => void
+  onInteractionFinished: () => void
 }) {
+  const appliedInputs = useRef<{
+    generation: number
+    pixelsPerHour: number
+  } | null>(null)
   const scrollRef = useAnimatedRef<ScrollView>()
   const pixelsPerHour = useSharedValue(
     resolvePixelsPerHour(initialPixelsPerHour),
@@ -59,10 +65,14 @@ export function useOwnedCalendarZoom({
   const topInset = useSharedValue(0)
   const bottomInset = useSharedValue(0)
   const focalY = useSharedValue(0)
-  const pinchBaselineScale = useSharedValue(pixelsPerHour.get())
+  const pinchBaselineScale = useSharedValue(
+    resolvePixelsPerHour(initialPixelsPerHour),
+  )
   const pinchBaselineOffset = useSharedValue(initialRawOffset)
   const pinchBaselineFocalY = useSharedValue(0)
+  const pinchBaselinePointerCount = useSharedValue(0)
   const pinchActive = useSharedValue(false)
+  const pinchStarted = useSharedValue(false)
   const pinchGeneration = useSharedValue(generation)
   const pinchSequence = useSharedValue(0)
   const pinchInterruptionSequence = useSharedValue(0)
@@ -74,7 +84,7 @@ export function useOwnedCalendarZoom({
   const pinchGesture = Gesture.Pinch()
     .withTestId("owned-calendar-pinch")
     .cancelsTouchesInView(true)
-    .onBegin(() => {
+    .onStart((event) => {
       "worklet"
       pinchGeneration.set(generation)
       pinchGeometryRevision.set(geometryRevision.get())
@@ -82,22 +92,26 @@ export function useOwnedCalendarZoom({
       horizontalCallbacksBlocked.set(true)
       pinchInterruptionSequence.set(pinchInterruptionSequence.get() + 1)
       pinchSequence.set(pinchSequence.get() + 1)
-      scheduleOnRN(onInteractionInterrupted)
-    })
-    .onStart((event) => {
-      "worklet"
       pinchBaselineScale.set(pixelsPerHour.get())
       pinchBaselineOffset.set(rawOffset.get())
       pinchBaselineFocalY.set(event.focalY)
+      pinchBaselinePointerCount.set(event.numberOfPointers)
       focalY.set(event.focalY)
       pinchActive.set(true)
+      pinchStarted.set(true)
+      scheduleOnRN(onInteractionInterrupted)
     })
     .onUpdate((event) => {
       "worklet"
       if (
+        !pinchActive.get() ||
         pinchGeneration.get() !== generation ||
         pinchGeometryRevision.get() !== geometryRevision.get()
       )
+        return
+      // Lifting a finger changes the reported midpoint without moving the grid.
+      // Zero-touch trackpad pinches have no two-finger baseline to lose.
+      if (pinchBaselinePointerCount.get() >= 2 && event.numberOfPointers < 2)
         return
       const nextScale = resolvePixelsPerHour(
         pinchBaselineScale.get() * event.scale,
@@ -125,11 +139,15 @@ export function useOwnedCalendarZoom({
     })
     .onEnd((_event, success) => {
       "worklet"
-      if (!success || pinchGeometryRevision.get() !== geometryRevision.get())
+      if (
+        !success ||
+        !pinchActive.get() ||
+        pinchGeneration.get() !== generation ||
+        pinchGeometryRevision.get() !== geometryRevision.get()
+      )
         return
       const settledScale = resolvePixelsPerHour(pixelsPerHour.get())
       const settledOffset = rawOffset.get()
-      pinchActive.set(false)
       scheduleOnRN(onZoomSettled, {
         generation,
         geometryRevision: geometryRevision.get(),
@@ -141,6 +159,8 @@ export function useOwnedCalendarZoom({
     })
     .onFinalize((_event, success) => {
       "worklet"
+      if (!pinchStarted.get() || pinchGeneration.get() !== generation) return
+      pinchStarted.set(false)
       if (
         !success &&
         pinchGeneration.get() === generation &&
@@ -151,6 +171,7 @@ export function useOwnedCalendarZoom({
         scrollRevision.set(scrollRevision.get() + 1)
       }
       pinchActive.set(false)
+      scheduleOnRN(onInteractionFinished)
     })
 
   useAnimatedReaction(
@@ -262,18 +283,37 @@ export function useOwnedCalendarZoom({
   }
 
   useLayoutEffect(() => {
-    const generationChanged = pinchGeneration.get() !== generation
     const nextScale = resolvePixelsPerHour(initialPixelsPerHour)
+    const previousInputs = appliedInputs.current
+    appliedInputs.current = { generation, pixelsPerHour: nextScale }
+    if (previousInputs?.generation !== generation) {
+      if (previousInputs !== null && pinchActive.get()) {
+        pixelsPerHour.set(pinchBaselineScale.get())
+        rawOffset.set(pinchBaselineOffset.get())
+        scrollRevision.set(scrollRevision.get() + 1)
+      }
+      pinchActive.set(false)
+      pinchStarted.set(false)
+      pinchGeneration.set(generation)
+      verticalCallbacksBlocked.set(false)
+      horizontalCallbacksBlocked.set(false)
+    }
+    // Settled props acknowledge native motion. Replaying them with scrollTo
+    // clamps away UIKit's automatic tab-bar inset in React Native's iOS command.
+    // Date changes retain the mounted viewport, including its automatic seek.
+    if (
+      previousInputs !== null &&
+      (previousInputs.pixelsPerHour === nextScale ||
+        pixelsPerHour.get() === nextScale)
+    )
+      return
     pixelsPerHour.set(nextScale)
     rawOffset.set(initialRawOffset)
     pinchBaselineScale.set(nextScale)
     pinchBaselineOffset.set(initialRawOffset)
     pinchActive.set(false)
+    pinchStarted.set(false)
     pinchGeneration.set(generation)
-    if (generationChanged) {
-      verticalCallbacksBlocked.set(false)
-      horizontalCallbacksBlocked.set(false)
-    }
     scrollRef.current?.scrollTo({ y: initialRawOffset, animated: false })
   }, [
     generation,
@@ -285,10 +325,12 @@ export function useOwnedCalendarZoom({
     pinchBaselineScale,
     pinchGeneration,
     pinchSequence,
+    pinchStarted,
     pixelsPerHour,
     geometryRevision,
     rawOffset,
     scrollRef,
+    scrollRevision,
     verticalCallbacksBlocked,
   ])
 

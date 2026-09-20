@@ -4,6 +4,7 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -27,6 +28,7 @@ import {
   type CalendarTimelineMode,
   type CalendarTransitionSource,
   formatHourStartLabel,
+  formatTimeRange,
   FULL_DAY_END_MINUTE,
   FULL_DAY_START_MINUTE,
   fullDayMajorMinutes,
@@ -34,9 +36,14 @@ import {
   gridContentHeight,
   HOURS_COLUMN_WIDTH,
   minuteToPixel,
+  type TimedTileV1,
   type WeekColumn,
   type WeekDirection,
 } from "@/features/calendar/data"
+import {
+  ChecklistProgressIndicator,
+  checklistProgressLabel,
+} from "@/features/event-checklists"
 import { useTheme } from "@/theme"
 
 import type { CalendarPage } from "./owned-calendar-coordinator"
@@ -86,6 +93,7 @@ export function OwnedCalendarCanvas({
   heading,
   mode,
   locale,
+  displayZone,
   uses24HourClock,
   initialVerticalOffset,
   generation,
@@ -113,15 +121,17 @@ export function OwnedCalendarCanvas({
   nowOnCommittedPage,
   nowLabel,
   t,
+  onEventPress,
 }: {
   heading: string
   mode: CalendarTimelineMode
   locale: AppLocale
+  displayZone: string
   uses24HourClock: boolean | null
   initialVerticalOffset: number
   generation: number
   geometryRevision: number
-  pages: CalendarPage[]
+  pages: readonly CalendarPage[]
   pagerRef: RefObject<PagerView | null>
   scrollRef: AnimatedRef<ScrollView>
   nativeScrollGesture: GestureType
@@ -147,6 +157,7 @@ export function OwnedCalendarCanvas({
   nowOnCommittedPage: boolean
   nowLabel: string
   t: TFunction
+  onEventPress: (uid: string) => void
 }) {
   const theme = useTheme()
   const fullDayRowStyle = useAnimatedStyle(() => ({
@@ -169,6 +180,7 @@ export function OwnedCalendarCanvas({
         contentContainerStyle={styles.scrollContent}
         contentInsetAdjustmentBehavior="automatic"
         contentOffset={{ x: 0, y: initialVerticalOffset }}
+        scrollsToTop={false}
         removeClippedSubviews={false}
         directionalLockEnabled
         nestedScrollEnabled
@@ -208,7 +220,11 @@ export function OwnedCalendarCanvas({
         }}
       >
         <Animated.View
-          style={[styles.fullDayRow, fullDayRowStyle]}
+          style={[
+            styles.fullDayRow,
+            { borderColor: theme.separator },
+            fullDayRowStyle,
+          ]}
           collapsable={false}
         >
           <Animated.View
@@ -220,32 +236,23 @@ export function OwnedCalendarCanvas({
             ]}
             pointerEvents="none"
           >
-            {/* The 24 hour labels stay hidden from assistive technology; the
-                current-time chip beside them is the one node that is not, so it
-                can carry the localized "current time" semantics. */}
             <View
               testID="owned-calendar-hour-gutter-labels"
               accessible={false}
               importantForAccessibility="no-hide-descendants"
               style={StyleSheet.absoluteFill}
             >
-              {Array.from({ length: 24 }, (_, hour) => (
-                <AnimatedHourLabel
-                  key={hour}
-                  hour={hour}
-                  label={formatHourStartLabel(hour, locale, uses24HourClock)}
-                  pixelsPerHour={pixelsPerHour}
-                />
-              ))}
+              {Array.from({ length: 23 }, (_, index) => index + 1).map(
+                (hour) => (
+                  <AnimatedHourLabel
+                    key={hour}
+                    hour={hour}
+                    label={formatHourStartLabel(hour, locale, uses24HourClock)}
+                    pixelsPerHour={pixelsPerHour}
+                  />
+                ),
+              )}
             </View>
-            {nowVisible && nowOnCommittedPage && (
-              <AnimatedNowChip
-                minuteOfDay={nowMinuteOfDay}
-                label={nowLabel}
-                accessibilityLabel={t("calendar.nowLabel", { time: nowLabel })}
-                pixelsPerHour={pixelsPerHour}
-              />
-            )}
           </Animated.View>
           <GestureDetector gesture={nativePagerGesture}>
             <AnimatedPagerView
@@ -264,8 +271,6 @@ export function OwnedCalendarCanvas({
               onPageSelected={onPageSelected}
               onPageScrollStateChanged={onPageScrollStateChanged}
               accessible={false}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
             >
               {pages.map((page) => (
                 <CalendarPageCanvas
@@ -275,7 +280,15 @@ export function OwnedCalendarCanvas({
                   settledPixelsPerHour={settledPixelsPerHour}
                   todayKey={nowVisible ? todayKey : null}
                   nowMinuteOfDay={nowMinuteOfDay}
+                  nowAccessibilityLabel={
+                    nowOnCommittedPage
+                      ? t("calendar.nowLabel", { time: nowLabel })
+                      : undefined
+                  }
                   t={t}
+                  locale={locale}
+                  displayZone={displayZone}
+                  onEventPress={onEventPress}
                 />
               ))}
             </AnimatedPagerView>
@@ -298,7 +311,11 @@ function AnimatedHourLabel({
   const positionStyle = useMinutePositionStyle(hour * 60, pixelsPerHour)
   return (
     <Animated.View style={[styles.hourLabel, positionStyle]}>
-      <ThemedText type="small" testID={`owned-calendar-hour-label-${hour}`}>
+      <ThemedText
+        type="captionSmall"
+        themeColor="textSecondary"
+        testID={`owned-calendar-hour-label-${hour}`}
+      >
         {label}
       </ThemedText>
     </Animated.View>
@@ -311,14 +328,22 @@ function CalendarPageCanvas({
   settledPixelsPerHour,
   todayKey,
   nowMinuteOfDay,
+  nowAccessibilityLabel,
   t,
+  locale,
+  displayZone,
+  onEventPress,
 }: {
   page: CalendarPage
   pixelsPerHour: SharedValue<number>
   settledPixelsPerHour: number
   todayKey: string | null
   nowMinuteOfDay: number
+  nowAccessibilityLabel: string | undefined
   t: TFunction
+  locale: AppLocale
+  displayZone: string
+  onEventPress: (uid: string) => void
 }) {
   const theme = useTheme()
   const pageHeightStyle = useAnimatedStyle(() => ({
@@ -329,8 +354,10 @@ function CalendarPageCanvas({
       testID={`owned-calendar-page-${page.direction}`}
       collapsable={false}
       accessible={false}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      accessibilityElementsHidden={page.direction !== 0}
+      importantForAccessibility={
+        page.direction === 0 ? "yes" : "no-hide-descendants"
+      }
       style={[
         styles.page,
         {
@@ -352,6 +379,15 @@ function CalendarPageCanvas({
         pixelsPerHour={pixelsPerHour}
         todayKey={todayKey}
         nowMinuteOfDay={nowMinuteOfDay}
+        nowAccessibilityLabel={nowAccessibilityLabel}
+      />
+      <CalendarTiles
+        page={page}
+        locale={locale}
+        displayZone={displayZone}
+        pixelsPerHour={pixelsPerHour}
+        onEventPress={onEventPress}
+        t={t}
       />
       {__DEV__ && (
         <View style={styles.preview} pointerEvents="none">
@@ -372,18 +408,135 @@ function CalendarPageCanvas({
   )
 }
 
+function CalendarTiles({
+  page,
+  locale,
+  displayZone,
+  pixelsPerHour,
+  onEventPress,
+  t,
+}: {
+  page: CalendarPage
+  locale: AppLocale
+  displayZone: string
+  pixelsPerHour: SharedValue<number>
+  onEventPress: (uid: string) => void
+  t: TFunction
+}) {
+  return (
+    <View pointerEvents="box-none" style={styles.tileColumns}>
+      {page.columns.map((column) => (
+        <View
+          key={column.key}
+          pointerEvents="box-none"
+          style={styles.tileColumn}
+        >
+          {column.tiles.map((tile) => (
+            <TimedCalendarTile
+              key={tile.key}
+              tile={tile}
+              locale={locale}
+              displayZone={displayZone}
+              pixelsPerHour={pixelsPerHour}
+              accessible={page.direction === 0}
+              onPress={() => onEventPress(tile.identity.uid)}
+              t={t}
+            />
+          ))}
+        </View>
+      ))}
+    </View>
+  )
+}
+
+function TimedCalendarTile({
+  tile,
+  locale,
+  displayZone,
+  pixelsPerHour,
+  accessible,
+  onPress,
+  t,
+}: {
+  tile: TimedTileV1
+  locale: AppLocale
+  displayZone: string
+  pixelsPerHour: SharedValue<number>
+  accessible: boolean
+  onPress: () => void
+  t: TFunction
+}) {
+  const positionStyle = useAnimatedStyle(() => ({
+    top: minuteToPixel(tile.startMinute, {
+      startMinute: FULL_DAY_START_MINUTE,
+      pixelsPerHour: pixelsPerHour.get(),
+    }),
+    height: ((tile.endMinute - tile.startMinute) / 60) * pixelsPerHour.get(),
+  }))
+  const time = formatTimeRange(tile.startsAt, tile.endsAt, locale, displayZone)
+  const progress = checklistProgressLabel(t, tile.checklist)
+  const label = t(
+    progress === undefined
+      ? "calendar.event.label"
+      : "calendar.event.labelWithProgress",
+    {
+      title: tile.title,
+      time,
+      location: tile.location ?? "",
+      progress,
+    },
+  )
+  return (
+    <Animated.View
+      testID={`owned-calendar-event-${tile.identity.uid}`}
+      pointerEvents="box-none"
+      style={[styles.tileAnchor, positionStyle]}
+    >
+      <Pressable
+        accessible={accessible}
+        accessibilityElementsHidden={!accessible}
+        importantForAccessibility={accessible ? "yes" : "no-hide-descendants"}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={t("calendar.event.hint")}
+        onPress={onPress}
+        style={[styles.tile, { backgroundColor: tile.surfaceColor }]}
+      >
+        <ThemedText
+          accessible={false}
+          type="captionSmall"
+          style={styles.tileTitle}
+        >
+          {tile.title}
+        </ThemedText>
+        {tile.location !== undefined && (
+          <ThemedText accessible={false} type="captionSmall">
+            {tile.location}
+          </ThemedText>
+        )}
+        <ChecklistProgressIndicator
+          progress={tile.checklist}
+          variant="compact"
+        />
+      </Pressable>
+    </Animated.View>
+  )
+}
+
 function CalendarGrid({
   direction,
   columns,
   pixelsPerHour,
   todayKey,
   nowMinuteOfDay,
+  nowAccessibilityLabel,
 }: {
   direction: number
-  columns: WeekColumn[]
+  columns: readonly WeekColumn[]
   pixelsPerHour: SharedValue<number>
   todayKey: string | null
   nowMinuteOfDay: number
+  nowAccessibilityLabel: string | undefined
 }) {
   const theme = useTheme()
   const clockHeightStyle = useAnimatedStyle(() => ({
@@ -396,24 +549,33 @@ function CalendarGrid({
       pointerEvents="none"
     >
       <View style={styles.dayColumns}>
-        {columns.map((column) => (
-          <View
-            key={column.key}
-            testID={`owned-calendar-column-${direction}-${column.key}`}
-            accessible={false}
-            importantForAccessibility="no-hide-descendants"
-            style={[styles.dayColumn, { borderColor: theme.separator }]}
-          >
-            {column.key === todayKey && (
-              <AnimatedNowIndicator
-                testID={`owned-calendar-now-${direction}-${column.key}`}
-                minuteOfDay={nowMinuteOfDay}
-                pixelsPerHour={pixelsPerHour}
-                color={theme.primary}
-              />
-            )}
-          </View>
-        ))}
+        {columns.map((column) => {
+          const isToday = column.key === todayKey
+          const exposesNow = isToday && direction === 0
+          return (
+            <View
+              key={column.key}
+              testID={`owned-calendar-column-${direction}-${column.key}`}
+              accessible={false}
+              importantForAccessibility={
+                exposesNow ? "no" : "no-hide-descendants"
+              }
+              style={[styles.dayColumn, { borderColor: theme.separator }]}
+            >
+              {isToday && (
+                <AnimatedNowIndicator
+                  testID={`owned-calendar-now-${direction}-${column.key}`}
+                  minuteOfDay={nowMinuteOfDay}
+                  pixelsPerHour={pixelsPerHour}
+                  color={theme.primary}
+                  accessibilityLabel={
+                    exposesNow ? nowAccessibilityLabel : undefined
+                  }
+                />
+              )}
+            </View>
+          )
+        })}
       </View>
       {MINOR_MINUTES.map((minute) => (
         <AnimatedGridLine
@@ -431,7 +593,7 @@ function CalendarGrid({
           testID={`owned-calendar-major-${direction}-${minute}`}
           minute={minute}
           pixelsPerHour={pixelsPerHour}
-          color={theme.textSecondary}
+          color={theme.separator}
         />
       ))}
     </Animated.View>
@@ -447,57 +609,28 @@ function AnimatedNowIndicator({
   minuteOfDay,
   pixelsPerHour,
   color,
+  accessibilityLabel,
 }: {
   testID: string
   minuteOfDay: number
   pixelsPerHour: SharedValue<number>
   color: string
+  accessibilityLabel: string | undefined
 }) {
   const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
   return (
     <Animated.View
       testID={testID}
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
+      accessible={accessibilityLabel !== undefined}
+      accessibilityRole={accessibilityLabel === undefined ? undefined : "text"}
+      accessibilityLabel={accessibilityLabel}
+      importantForAccessibility={
+        accessibilityLabel === undefined ? "no-hide-descendants" : "yes"
+      }
       style={[styles.nowIndicator, positionStyle]}
     >
       <View style={[styles.nowIndicatorCap, { backgroundColor: color }]} />
       <View style={[styles.nowIndicatorRule, { backgroundColor: color }]} />
-    </Animated.View>
-  )
-}
-
-// The gutter's current-time chip — the TYPOGRAPHIC cue of the pair, and its one
-// accessible node. It reads the same locale, display zone, and 12/24-hour
-// convention as the hour labels it sits among.
-function AnimatedNowChip({
-  minuteOfDay,
-  label,
-  accessibilityLabel,
-  pixelsPerHour,
-}: {
-  minuteOfDay: number
-  label: string
-  accessibilityLabel: string
-  pixelsPerHour: SharedValue<number>
-}) {
-  const theme = useTheme()
-  const positionStyle = useMinutePositionStyle(minuteOfDay, pixelsPerHour)
-  return (
-    <Animated.View style={[styles.nowChipAnchor, positionStyle]}>
-      <View
-        testID="owned-calendar-now-label"
-        accessible
-        accessibilityLabel={accessibilityLabel}
-        style={[
-          styles.nowChip,
-          { borderColor: theme.primary, backgroundColor: theme.background },
-        ]}
-      >
-        <ThemedText accessible={false} type="smallBold" numberOfLines={1}>
-          {label}
-        </ThemedText>
-      </View>
     </Animated.View>
   )
 }
@@ -564,7 +697,7 @@ const styles = StyleSheet.create({
   hourLabel: {
     position: "absolute",
     right: 6,
-    transform: [{ translateY: -8 }],
+    transform: [{ translateY: -6.5 }],
   },
   gridLine: {
     position: "absolute",
@@ -586,19 +719,24 @@ const styles = StyleSheet.create({
     borderRadius: NOW_CAP_SIZE / 2,
   },
   nowIndicatorRule: { flex: 1, height: 2 },
-  nowChipAnchor: {
-    position: "absolute",
-    right: 4,
-    left: 2,
-    transform: [{ translateY: -10 }],
-  },
-  nowChip: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    alignItems: "center",
-  },
   minorLine: { opacity: 0.5 },
   preview: { position: "absolute", top: 16, left: 16, gap: 4 },
+  tileColumns: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    flexDirection: "row",
+  },
+  tileColumn: { flex: 1, position: "relative" },
+  tileAnchor: { position: "absolute", left: 0, right: 2 },
+  tile: {
+    flex: 1,
+    overflow: "hidden",
+    borderRadius: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  tileTitle: { fontWeight: 600 },
 })

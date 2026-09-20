@@ -15,7 +15,7 @@ import {
   resolveKeyboardAvoidingBehavior,
   resolveKeyboardVerticalOffset,
 } from "@/components/keyboard-avoiding-behavior"
-import type { ResponsiveLane } from "@/theme"
+import { type ResponsiveLane, Spacing } from "@/theme"
 
 type KeyboardSafeActionLayoutProps = {
   children: ReactNode
@@ -70,7 +70,11 @@ export function KeyboardSafeActionLayout({
           }
           style={styles.scroller}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={[laneStyle, contentContainerStyle]}
+          contentContainerStyle={[
+            laneStyle,
+            styles.content,
+            contentContainerStyle,
+          ]}
         >
           {children}
         </ScrollView>
@@ -91,4 +95,5 @@ export function KeyboardSafeActionLayout({
 const styles = StyleSheet.create({
   owner: { flex: 1 },
   scroller: { flex: 1 },
+  content: { paddingTop: Spacing.four },
 })

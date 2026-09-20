@@ -75,10 +75,10 @@ export function PageIntro({ title, caption, testID, style }: PageIntroProps) {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    paddingTop: Spacing.four,
   },
   lane: {
     flex: 1,
+    paddingTop: Spacing.four,
   },
   intro: {
     gap: Spacing.two,
