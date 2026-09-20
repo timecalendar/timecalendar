@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { calendarControllerFindCalendarByToken } from "@/api/generated/calendars/calendars"
 import type { CalendarForPublic } from "@/api/generated/timeCalendar.schemas"
@@ -39,39 +39,11 @@ export interface UseAddCalendar {
   reset: () => void
 }
 
-interface AddCalendarStatus {
-  isPending: boolean
-  isError: boolean
-}
-
-type AddCalendarStatusAction =
-  | { type: "start" }
-  | { type: "fail" }
-  | { type: "settle" }
-  | { type: "reset" }
-
-function statusReducer(
-  state: AddCalendarStatus,
-  action: AddCalendarStatusAction,
-): AddCalendarStatus {
-  switch (action.type) {
-    case "start":
-      return { isPending: true, isError: false }
-    case "fail":
-      return { ...state, isError: true }
-    case "settle":
-      return { ...state, isPending: false }
-    case "reset":
-      return { isPending: false, isError: false }
-  }
-}
+type AddCalendarStatus = "idle" | "pending" | "error"
 
 export function useAddCalendar(): UseAddCalendar {
   const { createCalendar, reset: resetCreate } = useCreateCalendar()
-  const [status, dispatchStatus] = useReducer(statusReducer, {
-    isPending: false,
-    isError: false,
-  })
+  const [status, setStatus] = useState<AddCalendarStatus>("idle")
   const mountedRef = useRef(true)
   const inFlightRef = useRef<Promise<void> | null>(null)
   const checkpointRef = useRef<{
@@ -118,7 +90,7 @@ export function useAddCalendar(): UseAddCalendar {
     if (checkpoint.completed) return Promise.resolve()
 
     if (mountedRef.current) {
-      dispatchStatus({ type: "start" })
+      setStatus("pending")
     }
 
     const work = Promise.resolve().then(async () => {
@@ -134,17 +106,16 @@ export function useAddCalendar(): UseAddCalendar {
       await upsert(fromCalendarForPublic(checkpoint.dto))
       checkpoint.completed = true
     })
-    const settle = () => {
+    const settle = (nextStatus: AddCalendarStatus) => {
       inFlightRef.current = null
-      if (mountedRef.current) dispatchStatus({ type: "settle" })
+      if (mountedRef.current) setStatus(nextStatus)
     }
     const operation = work.then(
       () => {
-        settle()
+        settle("idle")
       },
       (error: unknown) => {
-        if (mountedRef.current) dispatchStatus({ type: "fail" })
-        settle()
+        settle("error")
         throw error
       },
     )
@@ -155,8 +126,13 @@ export function useAddCalendar(): UseAddCalendar {
   const reset = (): void => {
     checkpointRef.current = null
     resetCreate()
-    if (mountedRef.current) dispatchStatus({ type: "reset" })
+    if (mountedRef.current) setStatus("idle")
   }
 
-  return { addCalendarFromUrl, ...status, reset }
+  return {
+    addCalendarFromUrl,
+    isPending: status === "pending",
+    isError: status === "error",
+    reset,
+  }
 }
