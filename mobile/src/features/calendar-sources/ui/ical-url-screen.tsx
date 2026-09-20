@@ -1,5 +1,5 @@
 import { router, Stack } from "expo-router"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Pressable, StyleSheet, TextInput, View } from "react-native"
 
@@ -12,13 +12,12 @@ import {
 } from "@/features/calendar-sources/data"
 import {
   useImportCreateFields,
-  useImportDraft,
   useProtectedImportRoute,
 } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 import { Radii, Spacing, useTheme } from "@/theme"
 
-import { leaveImportJourney } from "./leave-import-journey"
+import { ImportProgressView } from "./import-progress-view"
 
 // The support-report context for a failed attempt. Every field is optional and
 // omitted when empty — the /feedback DTO carries only what is actually known.
@@ -53,19 +52,28 @@ interface FailedIcalAttempt {
 export default function IcalUrlScreen() {
   const { t } = useTranslation()
   const theme = useTheme()
-  const { addCalendarFromUrl, isPending, isError, reset } = useAddCalendar()
+  const { addCalendarFromUrl, isPending, isError } = useAddCalendar()
   // Institution + programme come from the ephemeral journey draft, NOT from the
   // persisted school selection: a durable selection would attribute an import
   // made weeks later to a school the student is no longer importing from
   // (TIM-391 / design D3, D10). The derivation stays total during guarded
   // recovery, but no create action is reachable without current completion.
   const importFields = useImportCreateFields()
-  const { clearDraft } = useImportDraft()
   const legal = useProtectedImportRoute("ical", "/onboarding/ical-url")
   const [url, setUrl] = useState("")
   const [errorKey, setErrorKey] = useState<string | null>(null)
   const [failedAttempt, setFailedAttempt] = useState<FailedIcalAttempt | null>(
     null,
+  )
+  const [submitting, setSubmitting] = useState(false)
+  const activeRef = useRef(true)
+  const inFlightRef = useRef(false)
+
+  useEffect(
+    () => () => {
+      activeRef.current = false
+    },
+    [],
   )
 
   if (!legal) return null
@@ -79,6 +87,7 @@ export default function IcalUrlScreen() {
   }
 
   const submit = () => {
+    if (inFlightRef.current) return
     const validationKey = validateIcalUrl(url)
     if (validationKey !== null) {
       // Recoverable client pre-filter miss — inline, no submit, no recordError.
@@ -86,7 +95,6 @@ export default function IcalUrlScreen() {
       return
     }
     setErrorKey(null)
-    reset()
     setFailedAttempt(null)
     const attempt: FailedIcalAttempt = {
       calendarUrl: url.trim(),
@@ -96,12 +104,15 @@ export default function IcalUrlScreen() {
         : {}),
       ...(importFields.name ? { calendarName: importFields.name } : {}),
     }
+    inFlightRef.current = true
+    setSubmitting(true)
     void addCalendarFromUrl(url, importFields)
       .then(() => {
-        clearDraft()
-        leaveImportJourney()
+        if (!activeRef.current) return
+        router.dismissTo("/calendar-import-result")
       })
       .catch((error: unknown) => {
+        if (!activeRef.current) return
         // Genuine create / resolve / persist failure — record through the seam,
         // surface the a11y error + Retry. The draft and the typed URL are left
         // untouched so the student can retry or switch to the QR route without
@@ -109,6 +120,19 @@ export default function IcalUrlScreen() {
         recordUnknownError(error, "calendar-sources/ical-import")
         setFailedAttempt(attempt)
       })
+      .finally(() => {
+        inFlightRef.current = false
+        if (activeRef.current) setSubmitting(false)
+      })
+  }
+
+  if (submitting || isPending) {
+    return (
+      <>
+        <Stack.Screen options={{ title: t("calendarSources.icalUrl.title") }} />
+        <ImportProgressView message={t("calendarImport.source.importing")} />
+      </>
+    )
   }
 
   return (

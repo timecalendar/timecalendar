@@ -200,9 +200,16 @@ replacement read completes; event completion does not reorder the native pager's
 ## Sync and offline behavior
 
 Sync sends durable user-calendar tokens to the generated batch endpoint and replaces
-`calendar_events` in one synchronous SQLite transaction. A fetch failure keeps the
-last good local rows and produces a recoverable UI state. A local transaction failure
-is unexpected and is recorded through `@/firebase`.
+`calendar_events` in one synchronous SQLite transaction. One module-level coordinator serializes
+all hook instances: ordinary triggers join the active pass, while import requests one coalesced
+`freshAfterCurrent` pass that rereads durable tokens after the active pass settles, even after
+failure. No older response can therefore replace the imported calendar's later snapshot. The
+operation distinguishes events-ready (including valid empty content and stale-name metadata), no
+held calendars, and pre-commit remote/read or event-write failures. Import success is gated by the
+transactional event commit; later name convergence and fire-and-forget Activity refresh cannot
+revoke readiness. A fetch failure keeps the last good local rows and produces a recoverable UI
+state. A local transaction failure is unexpected and is recorded through `@/firebase` (ADR
+[059](./decisions/059-calendar-import-finalization.md)).
 
 SQLite live reads are coalesced per macrotask. Calendar timeline reads use SQL half-open
 intersection predicates over the retained three-page instant/civil envelopes with no row limit;

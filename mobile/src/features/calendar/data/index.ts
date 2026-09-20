@@ -70,6 +70,8 @@ export {
 } from "./range-plan"
 export { eventRoute } from "./routes"
 export {
+  type CalendarSyncOptions,
+  type CalendarSyncOutcome,
   useStartupSync,
   type UseSyncCalendars,
   useSyncCalendars,

@@ -49,8 +49,8 @@ interface UseQrImportControllerOptions {
     url: string,
     fields: CalendarImportFields,
   ) => Promise<void>
-  clearDraft: () => void
-  leaveJourney: () => void
+  resetAddCalendar: () => void
+  complete: () => void
   openManualUrl: () => void
   recordError: (error: unknown, context: string) => void
 }
@@ -63,8 +63,8 @@ const initialState: QrImportState = {
 export function useQrImportController({
   fields,
   addCalendarFromUrl,
-  clearDraft,
-  leaveJourney,
+  resetAddCalendar,
+  complete,
   openManualUrl,
   recordError,
 }: UseQrImportControllerOptions): QrImportController {
@@ -101,8 +101,7 @@ export function useQrImportController({
 
         completedRef.current = true
         setState({ phase: "completed" })
-        clearDraft()
-        leaveJourney()
+        complete()
       })
       .catch((error: unknown) => {
         if (!activeRef.current || completedRef.current) return
@@ -150,6 +149,7 @@ export function useQrImportController({
   const scanAnother = () => {
     if (stateRef.current.phase !== "failed" || inFlightRef.current) return
     scanClaimedRef.current = false
+    resetAddCalendar()
     setState(initialState)
   }
 

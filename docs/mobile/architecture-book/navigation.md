@@ -92,6 +92,15 @@ The nested `onboarding` group is **welcome-first** (ADR [015](./decisions/015-on
 
 From the school step the group carries the **import journey** (ADR [047](./decisions/047-ephemeral-calendar-import-draft.md)). Listed schools visit only their server-required Programme and safe Connect gates, then resolve their exact guide version at `onboarding/export-guide/0`. Unlisted schools visit the skippable Programme step, never Connect, and choose from the active catalogue at `onboarding/export-guide/providers`. `onboarding/export-guide/[pageIndex]` pushes one Stack entry per validated page; final Next records in-memory completion and pushes `onboarding/import`, which offers the existing `onboarding/qr-scan` and `onboarding/ical-url` siblings. Both export-guide routes are one-line exports from `@/features/export-guides/ui`; the remaining journey routes stay thin exports from their owning feature.
 
+Durable QR/iCal completion targets the headerless root sibling
+`/calendar-import-result` with `router.dismissTo`, removing the onboarding Stack while retaining the
+existing `(tabs)` anchor below it. The result owns the fresh event-sync pass and carries no import
+parameters. Its failure Continue and success action both use `dismissTo("/calendar")`, which pops
+to the existing tabs entry and selects Calendar rather than adding another tabs entry. QR's
+**Scan another** resets in place; its manual iCal recovery uses `replace`, so source switching does
+not grow native history. These contracts are recorded in ADR
+[059](./decisions/059-calendar-import-finalization.md).
+
 `onboarding/groups` (`…/onboarding/groups?schoolId=<id>`) is **off the normal path** — it persists a selection and dismisses without creating a calendar. It keeps its route and stays deep-linkable; deleting it is a separate cleanup.
 
 `src/app/onboarding/_layout.tsx` mounts `ImportDraftProvider` around the nested `Stack`, so one discriminated journey state wraps every route in the group. The state pins validated guide pages, locale, catalogue version, provider, draft revision, visited bound, completion, and guarded manual handoff only in branches where those values are legal. It survives backgrounding while the process and Stack stay mounted, but is never persisted. Manual import requires current completion; QR and iCal additionally require the matching manual-selector handoff. Illegal direct or restored routes replace themselves with provider selection for a complete unlisted draft, page 0 for a complete listed draft, or School otherwise. A recovery target equal to the current route renders closed recovery instead of replacing itself.

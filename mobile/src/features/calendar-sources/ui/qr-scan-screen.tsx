@@ -10,9 +10,7 @@ import {
 } from "@/features/onboarding"
 import { recordUnknownError } from "@/firebase"
 
-import { leaveImportJourney } from "./leave-import-journey"
 import {
-  QrImportCompletedView,
   QrImportFailureView,
   QrImportingView,
   QrScannerView,
@@ -27,18 +25,18 @@ import { useQrImportController } from "./use-qr-import-controller"
 export default function QrScanScreen() {
   const { t } = useTranslation()
   const [permission, requestPermission] = useCameraPermissions()
-  const { addCalendarFromUrl } = useAddCalendar()
+  const { addCalendarFromUrl, reset } = useAddCalendar()
   const fields = useImportCreateFields()
-  const { clearDraft, dispatch } = useImportDraft()
+  const { dispatch } = useImportDraft()
   const legal = useProtectedImportRoute("qr", "/onboarding/qr-scan")
   const controller = useQrImportController({
     fields,
     addCalendarFromUrl,
-    clearDraft,
-    leaveJourney: leaveImportJourney,
+    resetAddCalendar: reset,
+    complete: () => router.dismissTo("/calendar-import-result"),
     openManualUrl: () => {
       dispatch({ type: "set-manual-handoff", target: "ical" })
-      router.push("/onboarding/ical-url")
+      router.replace("/onboarding/ical-url")
     },
     recordError: recordUnknownError,
   })
@@ -62,14 +60,11 @@ export default function QrScanScreen() {
         )
         break
       case "importing":
-        content = (
-          <QrImportingView onBarcodeScanned={controller.handleBarcode} />
-        )
+        content = <QrImportingView />
         break
       case "failed":
         content = (
           <QrImportFailureView
-            onBarcodeScanned={controller.handleBarcode}
             retry={controller.retry}
             scanAnother={controller.scanAnother}
             enterManualUrl={controller.enterManualUrl}
@@ -77,9 +72,7 @@ export default function QrScanScreen() {
         )
         break
       case "completed":
-        content = (
-          <QrImportCompletedView onBarcodeScanned={controller.handleBarcode} />
-        )
+        content = <QrImportingView />
         break
     }
   return (

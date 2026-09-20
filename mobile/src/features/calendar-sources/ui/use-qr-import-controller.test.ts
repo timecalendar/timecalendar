@@ -23,8 +23,8 @@ function deferred<T>() {
 }
 
 const addCalendarFromUrl = jest.fn<Promise<void>, [string, unknown]>()
-const clearDraft = jest.fn()
-const leaveJourney = jest.fn()
+const resetAddCalendar = jest.fn()
+const complete = jest.fn()
 const openManualUrl = jest.fn()
 const recordError = jest.fn()
 
@@ -48,8 +48,8 @@ function renderController(
       useQrImportController({
         fields: currentFields,
         addCalendarFromUrl,
-        clearDraft,
-        leaveJourney,
+        resetAddCalendar,
+        complete,
         openManualUrl,
         recordError,
       }),
@@ -81,8 +81,7 @@ describe("useQrImportController", () => {
     await act(async () => invocation.resolve())
 
     expect(result.current.phase).toBe("completed")
-    expect(clearDraft).toHaveBeenCalledTimes(1)
-    expect(leaveJourney).toHaveBeenCalledTimes(1)
+    expect(complete).toHaveBeenCalledTimes(1)
     result.current.handleBarcode(scan("https://other.example/late.ics"))
     expect(addCalendarFromUrl).toHaveBeenCalledTimes(1)
   })
@@ -134,7 +133,7 @@ describe("useQrImportController", () => {
     await act(async () => retry.reject(new Error("retry")))
     expect(result.current.phase).toBe("failed")
     expect(recordError).toHaveBeenCalledTimes(2)
-    expect(clearDraft).not.toHaveBeenCalled()
+    expect(complete).not.toHaveBeenCalled()
   })
 
   it("retries captured fields, preserves failure for manual entry, and resets only for scan another", async () => {
@@ -159,7 +158,7 @@ describe("useQrImportController", () => {
     })
     expect(openManualUrl).toHaveBeenCalledTimes(1)
     expect(addCalendarFromUrl).toHaveBeenCalledTimes(1)
-    expect(clearDraft).not.toHaveBeenCalled()
+    expect(complete).not.toHaveBeenCalled()
 
     if (result.current.phase !== "failed") throw new Error("expected failure")
     const retryableFailure = result.current
@@ -179,6 +178,7 @@ describe("useQrImportController", () => {
       phase: "scanning",
       invalidPayload: false,
     })
+    expect(resetAddCalendar).toHaveBeenCalledTimes(1)
     await act(async () => {
       result.current.handleBarcode(scan("https://other.example/new.ics"))
     })
@@ -206,8 +206,7 @@ describe("useQrImportController", () => {
           else invocation.reject(new Error("late"))
         })
 
-        expect(clearDraft).not.toHaveBeenCalled()
-        expect(leaveJourney).not.toHaveBeenCalled()
+        expect(complete).not.toHaveBeenCalled()
         expect(openManualUrl).not.toHaveBeenCalled()
         expect(recordError).not.toHaveBeenCalled()
         expect(consoleError).not.toHaveBeenCalled()
