@@ -101,7 +101,7 @@ describe("useCalendarTimelinePresentation", () => {
     ).toEqual([])
   })
 
-  it("retains the last complete generation during replacement and releases it on completion", async () => {
+  it("keeps retained events on their dates in the requested generation while loading", async () => {
     mockSnapshot.mockReturnValue(snapshot([event("old")]))
     let input = baseInput
     const { result, rerender } = await renderHook(() =>
@@ -117,7 +117,12 @@ describe("useCalendarTimelinePresentation", () => {
     }
     input = replacement
     await rerender({})
-    expect(result.current.presentation.generation).toBe(1)
+    expect(result.current.presentation.generation).toBe(2)
+    expect(result.current.presentation.pages[1].key).toBe("2026-09-15")
+    expect(result.current.presentation.pages[1].columns[0]?.tiles).toEqual([])
+    expect(
+      result.current.presentation.pages[0].columns[0]?.tiles[0]?.identity.uid,
+    ).toBe("old")
     expect(
       result.current.presentation.pages.flatMap((page) =>
         page.columns.flatMap((column) =>
@@ -136,7 +141,7 @@ describe("useCalendarTimelinePresentation", () => {
     ).toBe("new")
   })
 
-  it("keeps the complete model through a recoverable replacement error", async () => {
+  it("keeps retained events in the requested generation through a read error", async () => {
     mockSnapshot.mockReturnValue(snapshot([event("stable")]))
     let input = baseInput
     const { result, rerender } = await renderHook(() =>
@@ -147,7 +152,64 @@ describe("useCalendarTimelinePresentation", () => {
     input = { ...baseInput, generation: 2 }
     await rerender({})
     expect(result.current.error).toBe(failure)
-    expect(result.current.presentation.generation).toBe(1)
+    expect(result.current.presentation.generation).toBe(2)
+    expect(
+      result.current.presentation.pages[1].columns[0]?.tiles[0]?.identity.uid,
+    ).toBe("stable")
+  })
+
+  it.each(["2026-09-07", "2026-09-21"])(
+    "keeps the swiped week %s centered before and after its read completes",
+    async (destination) => {
+      const old = event("old")
+      const adjacent = event("adjacent", `${destination}T08:00:00Z`)
+      mockSnapshot.mockReturnValue(snapshot([old, adjacent]))
+      let input = { ...baseInput, mode: "week" as const }
+      const { result, rerender } = await renderHook(() =>
+        useCalendarTimelinePresentation(input),
+      )
+
+      mockSnapshot.mockReturnValue(snapshot([], false))
+      input = {
+        ...input,
+        anchor: new Date(`${destination}T12:00:00Z`),
+        generation: 2,
+      }
+      await rerender({})
+      const pending = result.current.presentation
+      expect(pending.generation).toBe(2)
+      expect(pending.rangeKey).toBe(result.current.range.key)
+      expect(pending.pages[1].key).toBe(destination)
+      expect(pending.pages[1].columns[0]?.tiles[0]?.identity.uid).toBe(
+        "adjacent",
+      )
+
+      mockSnapshot.mockReturnValue(snapshot([old, adjacent]))
+      await rerender({})
+      expect(result.current.presentation).toEqual(pending)
+    },
+  )
+
+  it("does not put retained events on an unrelated date after a jump", async () => {
+    mockSnapshot.mockReturnValue(snapshot([event("old")]))
+    let input = baseInput
+    const { result, rerender } = await renderHook(() =>
+      useCalendarTimelinePresentation(input),
+    )
+    mockSnapshot.mockReturnValue(snapshot([], false))
+    input = {
+      ...baseInput,
+      anchor: new Date("2026-10-14T12:00:00Z"),
+      generation: 2,
+    }
+    await rerender({})
+    expect(result.current.presentation.pages[1].key).toBe("2026-10-14")
+    expect(
+      result.current.presentation.pages.flatMap((page) =>
+        page.columns.flatMap((column) => column.tiles),
+      ),
+    ).toEqual([])
+    expect(mockProgress).toHaveBeenLastCalledWith([])
   })
 
   it("publishes a bounded empty model while the initial local read is pending", async () => {

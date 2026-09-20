@@ -85,7 +85,7 @@ CalendarTimelinePageV1 {
 
 Each column owns chronologically sorted `TimedTileV1` records containing original identity, start/end minute inputs, title/location/color, full time-label input, and checklist summary. Sort order is start instant, end instant, then stable source/UID. Page and column construction happens on the JavaScript thread only when the settled generation or local snapshot changes. The renderer receives this complete model instead of rebuilding dates in its coordinator or importing event data.
 
-The hook retains the last complete model until every query needed for a replacement has resolved, then publishes one generation. Stale completions whose range key or renderer generation no longer matches are discarded. It never relabels old events as the new date. Within T09, data-driven visibility/removal publishes the next complete model immediately; the broader atomic environment/update protocol remains T19/T20.
+Page identities and generation follow the committed anchor synchronously with pager recentering. Until every query needed for a replacement has resolved, the hook projects the last complete event snapshot onto the requested three-page range using each event's actual date. Already-loaded adjacent pages retain their tiles; dates outside the retained snapshot remain empty until the read completes. Replacement event data fills the same page identities without reordering the native pager. Stale query completions are discarded. Within T09, data-driven visibility/removal publishes the next complete model immediately; the broader atomic environment/update protocol remains T19/T20.
 
 Alternatives considered: passing a flat event array leaves page/date assignment and identity rules inside presentation; rebuilding columns independently in the header and canvas permits drift; mutating page objects on live-query completion defeats revision reasoning; deriving tile data on worklet frames would move database/domain work onto gesture frames.
 
@@ -115,7 +115,7 @@ If implementation evidence requires a schema/index migration, alternate semantic
 
 ## Risks / Trade-offs
 
-- [Several reactive inputs can resolve at different times] → key them to one requested range/generation, retain the last complete model, and discard stale completions; focused tests force out-of-order completion.
+- [Several reactive inputs can resolve at different times] → key them to one requested range/generation, project the last complete event snapshot onto the requested pages, and discard stale completions; focused tests force out-of-order completion.
 - [SQLite text range predicates depend on canonical timestamps] → writers already canonicalize ISO UTC text; row validation still rejects corrupt values after the bounded query, and fabricated query tests cover exact half-open boundaries.
 - [Date-only rows use floating civil semantics while storage uses UTC fields] → plan a separate day-key envelope and decoder; do not reuse display-zone instant predicates for all-day rows.
 - [An offset transition can make endpoint minute geometry misleading] → tag the event but exclude offset-changing intervals from T09 tiles; T14 owns faithful DST pieces.

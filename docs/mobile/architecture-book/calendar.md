@@ -162,6 +162,12 @@ rewriting stored or wire facts. The single event-source seam:
 Do not duplicate these filters in screens. Synced rows remain verbatim cache data;
 formatting and all-day conversion are rendering projections.
 
+Page dates and generation always match the committed anchor, including while a local read is
+pending or fails. The presentation hook retains the last complete event snapshot and projects
+it onto the current three-page range. An already-loaded adjacent week therefore keeps its events
+when it becomes the centre page. Dates outside the retained snapshot have empty tiles until the
+replacement read completes; event completion does not reorder the native pager's pages.
+
 ## Sync and offline behavior
 
 Sync sends durable user-calendar tokens to the generated batch endpoint and replaces

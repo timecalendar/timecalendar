@@ -22,6 +22,7 @@ import {
   useCalendarTimelinePresentation,
   useSyncCalendars,
 } from "@/features/calendar/data"
+import { useCalendarEventsSnapshot } from "@/features/calendar/data/events"
 import { useChecklistProgress } from "@/features/event-checklists"
 import {
   getCalendarZoomPixelsPerHour,
@@ -66,6 +67,11 @@ jest.mock("@/features/event-checklists", () => {
   const actual = jest.requireActual("@/features/event-checklists")
   return { ...actual, useChecklistProgress: jest.fn() }
 })
+
+jest.mock("@/features/calendar/data/events", () => ({
+  ...jest.requireActual("@/features/calendar/data/events"),
+  useCalendarEventsSnapshot: jest.fn(),
+}))
 
 jest.mock("expo-router", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -225,6 +231,73 @@ beforeEach(() => {
 })
 
 describe("CalendarScreen owned shell", () => {
+  it.each([
+    { position: 0, destination: "2026-06-08" },
+    { position: 2, destination: "2026-06-22" },
+  ])(
+    "keeps $destination visible while the swipe's local read is pending",
+    async ({ position, destination }) => {
+      setCalendarView("week")
+      mockUseLocalSearchParams.mockReturnValue({ focusDate: "2026-06-15" })
+      const adjacent = calendarEvent({
+        title: "Destination class",
+        startsAt: new Date(`${destination}T10:00:00Z`),
+        endsAt: new Date(`${destination}T11:00:00Z`),
+      })
+      const loaded = {
+        events: [adjacent],
+        ready: true,
+        error: undefined,
+        revision: "loaded",
+        counts: {},
+      }
+      const mockSnapshot = useCalendarEventsSnapshot as jest.Mock
+      mockSnapshot.mockReturnValue(loaded)
+      mockUseCalendarTimelinePresentation.mockImplementation(
+        jest.requireActual<typeof import("@/features/calendar/data")>(
+          "@/features/calendar/data",
+        ).useCalendarTimelinePresentation,
+      )
+      const view = await render(<CalendarScreen />)
+      const pager = screen.getByTestId("owned-calendar-pager")
+      mockSnapshot.mockReturnValue({
+        ...loaded,
+        events: [],
+        ready: false,
+        revision: "pending",
+      })
+
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "dragging" },
+      })
+      await fireEvent(pager, "pageSelected", { nativeEvent: { position } })
+      await fireEvent(pager, "pageScrollStateChanged", {
+        nativeEvent: { pageScrollState: "idle" },
+      })
+
+      const centeredDate = screen.getByTestId(
+        `owned-calendar-date-0-${destination}`,
+      )
+      expect(centeredDate).toBeOnTheScreen()
+      expect(
+        screen.getByRole("button", { name: /^Destination class,/ }),
+      ).toBeOnTheScreen()
+      const centeredPager = screen.getByTestId("owned-calendar-pager")
+
+      mockSnapshot.mockReturnValue({ ...loaded, revision: "replacement" })
+      await view.rerender(<CalendarScreen />)
+      expect(screen.getByTestId("owned-calendar-pager")).toBe(centeredPager)
+      expect(screen.getByTestId(`owned-calendar-date-0-${destination}`)).toBe(
+        centeredDate,
+      )
+      expect(
+        screen.getByRole("button", { name: /^Destination class,/ }),
+      ).toBeOnTheScreen()
+      expect(mockAnnounce).toHaveBeenCalledTimes(1)
+      expect(mockSync).not.toHaveBeenCalled()
+    },
+  )
+
   it("rolls Today and the indicator together without changing mounted screen state", async () => {
     setShowWeekends(false)
     mockUseCalendarClock.mockReturnValue(new Date("2026-06-19T23:59:00.000Z"))

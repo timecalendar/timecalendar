@@ -6,9 +6,9 @@ import { useCalendarEventsSnapshot } from "./events"
 import { planCalendarThreePageRange } from "./range-plan"
 import {
   buildCalendarTimelinePresentation,
-  type CalendarTimelinePresentationV1,
   timelinePresentationUids,
 } from "./timeline-presentation"
+import type { CalendarEvent } from "./types"
 import type { FirstWeekday } from "./week"
 import type { CalendarTimelineMode } from "./week-transition"
 
@@ -32,52 +32,31 @@ export function useCalendarTimelinePresentation(
   })
   const [retained, setRetained] = useState<{
     key: string
-    presentation: CalendarTimelinePresentationV1
+    events: readonly CalendarEvent[]
   } | null>(null)
-  const identityPresentation =
-    snapshot.ready && snapshot.error === undefined
-      ? buildCalendarTimelinePresentation({
-          range,
-          generation: input.generation,
-          events: snapshot.events,
-        })
-      : (retained?.presentation ?? null)
-  const scopedUids =
-    identityPresentation === null
-      ? []
-      : timelinePresentationUids(identityPresentation)
-  const checklistProgress = useChecklistProgress(scopedUids)
-
-  const completePresentation = buildCalendarTimelinePresentation({
-    range,
-    generation: input.generation,
-    events: snapshot.events,
-    checklistProgress,
-  })
-  const progressKey = [...checklistProgress]
-    .map(
-      ([uid, value]) =>
-        `${uid}:${value.completed}:${value.total}:${value.isComplete}`,
-    )
-    .join("|")
-  const completeKey = `${range.key}:${input.generation}:${snapshot.revision}:${progressKey}`
-  if (
-    snapshot.ready &&
-    snapshot.error === undefined &&
-    retained?.key !== completeKey
-  ) {
-    setRetained({ key: completeKey, presentation: completePresentation })
+  const complete = snapshot.ready && snapshot.error === undefined
+  const completeKey = `${range.key}:${input.generation}:${snapshot.revision}`
+  if (complete && retained?.key !== completeKey) {
+    setRetained({ key: completeKey, events: snapshot.events })
   }
 
-  const presentation =
-    snapshot.ready && snapshot.error === undefined
-      ? completePresentation
-      : (retained?.presentation ??
-        buildCalendarTimelinePresentation({
-          range,
-          generation: input.generation,
-          events: [],
-        }))
+  // Paging recenters immediately, so only event data may lag behind the anchor.
+  // Reproject retained events onto the current dates instead of retaining pages.
+  const events = complete ? snapshot.events : (retained?.events ?? [])
+  const identityPresentation = buildCalendarTimelinePresentation({
+    range,
+    generation: input.generation,
+    events,
+  })
+  const scopedUids = timelinePresentationUids(identityPresentation)
+  const checklistProgress = useChecklistProgress(scopedUids)
+
+  const presentation = buildCalendarTimelinePresentation({
+    range,
+    generation: input.generation,
+    events,
+    checklistProgress,
+  })
 
   return {
     presentation,

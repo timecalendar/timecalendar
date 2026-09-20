@@ -2,7 +2,13 @@
 
 ### Requirement: T09 publishes one complete bounded V1 timeline presentation
 
-The Calendar data seam SHALL publish a `version: 1` presentation containing exactly the previous, committed, and next Day or Week pages for the settled renderer generation. Each page SHALL contain its ordered civil-date columns and every supported event tile belonging to those columns. A replacement range or renderer generation SHALL retain the last complete presentation until its required local reads resolve, SHALL discard stale completions, and SHALL publish the new page/date/event identities together without relabeling old events as a new date. Superseded page models and query results SHALL be released; no unbounded page cache or permanent full-event JavaScript index SHALL be introduced.
+The Calendar data seam SHALL publish a `version: 1` presentation containing exactly the previous, committed, and next Day or Week pages for the settled renderer generation. Each page SHALL contain its ordered civil-date columns and every supported event tile belonging to those columns. Page identities and generation SHALL follow the committed anchor synchronously with pager recentering. Until its required local reads resolve, a replacement range SHALL project the last complete event snapshot onto the requested dates without relabeling old events as a new date. Dates outside the retained snapshot SHALL have empty tiles until the read completes. Replacement event data SHALL preserve the requested page identities, and stale completions SHALL be discarded. Superseded page models and query results SHALL be released; no unbounded page cache or permanent full-event JavaScript index SHALL be introduced.
+
+#### Scenario: Swiping does not replay the previous week while a local read is pending
+
+- **WHEN** a swipe settles on either adjacent week and the replacement local read is still pending
+- **THEN** that week is immediately the centre page with its already-loaded event tiles
+- **AND** resolving the read updates tiles without changing page identities or replaying the swipe
 
 #### Scenario: Settled Week owns three complete populated pages
 
@@ -14,7 +20,7 @@ The Calendar data seam SHALL publish a `version: 1` presentation containing exac
 
 - **WHEN** a newer anchor or local-data generation supersedes a still-resolving range
 - **THEN** the stale completion is discarded and cannot overwrite the newer request
-- **AND** the previously complete presentation remains coherently labeled until one complete replacement publishes
+- **AND** retained events remain on their actual dates within the requested pages until one complete replacement snapshot publishes
 
 #### Scenario: Repeated local paging stays bounded
 
