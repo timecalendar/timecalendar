@@ -225,6 +225,18 @@ describe("useSyncCalendars", () => {
     mockReplaceAll.mockRejectedValueOnce(new Error("must not leak"))
   })
 
+  it("keeps the sync callback stable across its state-driven rerenders", async () => {
+    mockFetch.mockResolvedValueOnce(syncResponse)
+
+    const { result } = await renderHook(() => useSyncCalendars(), { wrapper })
+    const initialSync = result.current.sync
+    await act(async () => {
+      await initialSync()
+    })
+
+    expect(result.current.sync).toBe(initialSync)
+  })
+
   describe("name convergence", () => {
     const renamed = [
       {
