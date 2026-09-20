@@ -52,43 +52,35 @@ export function QrImportFailureView({
 }) {
   const { t } = useTranslation()
   return (
-    <ImportProgressViewFrame>
-      <View style={styles.recoveryActions}>
-        <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
-        <QrActionButton
-          testID="qr-scan-retry"
-          label={t("calendarSources.qrScan.retryLabel")}
-          text={t("calendarSources.qrScan.retry")}
-          onPress={retry}
-          disabled={false}
-        />
-        <QrActionButton
-          testID="qr-scan-another"
-          label={t("calendarSources.qrScan.scanAnotherLabel")}
-          text={t("calendarSources.qrScan.scanAnother")}
-          onPress={scanAnother}
-          disabled={false}
-        />
-        <QrActionButton
-          testID="qr-scan-manual-url"
-          label={t("calendarSources.qrScan.manualUrlLabel")}
-          text={t("calendarSources.qrScan.manualUrl")}
-          onPress={enterManualUrl}
-          disabled={false}
-        />
-      </View>
-    </ImportProgressViewFrame>
-  )
-}
-
-function ImportProgressViewFrame({ children }: { children: React.ReactNode }) {
-  return (
     <SafeAreaView style={styles.readableFailure}>
       <AdaptiveContent
         lane="readable"
         contentContainerStyle={styles.failureLane}
       >
-        {children}
+        <View style={styles.recoveryActions}>
+          <WriteErrorNotice message={t("calendarSources.qrScan.failure")} />
+          <QrActionButton
+            testID="qr-scan-retry"
+            label={t("calendarSources.qrScan.retryLabel")}
+            text={t("calendarSources.qrScan.retry")}
+            onPress={retry}
+            disabled={false}
+          />
+          <QrActionButton
+            testID="qr-scan-another"
+            label={t("calendarSources.qrScan.scanAnotherLabel")}
+            text={t("calendarSources.qrScan.scanAnother")}
+            onPress={scanAnother}
+            disabled={false}
+          />
+          <QrActionButton
+            testID="qr-scan-manual-url"
+            label={t("calendarSources.qrScan.manualUrlLabel")}
+            text={t("calendarSources.qrScan.manualUrl")}
+            onPress={enterManualUrl}
+            disabled={false}
+          />
+        </View>
       </AdaptiveContent>
     </SafeAreaView>
   )
